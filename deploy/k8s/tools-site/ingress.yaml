@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tools-site
+  namespace: tools-site
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: tools.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tools-site
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - tools.example.com
+      secretName: tools-site-tls

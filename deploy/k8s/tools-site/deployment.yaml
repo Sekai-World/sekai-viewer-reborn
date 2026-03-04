@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tools-site
+  namespace: tools-site
+  labels:
+    app: tools-site
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tools-site
+  template:
+    metadata:
+      labels:
+        app: tools-site
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/your-org/tools-site:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

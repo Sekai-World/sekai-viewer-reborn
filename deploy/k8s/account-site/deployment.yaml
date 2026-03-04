@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-site
+  namespace: account-site
+  labels:
+    app: account-site
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: account-site
+  template:
+    metadata:
+      labels:
+        app: account-site
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/your-org/account-site:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

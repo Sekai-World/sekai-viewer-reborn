@@ -1,0 +1,22 @@
+{
+  "name": "multisite-platform",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.6.0",
+  "scripts": {
+    "dev": "turbo dev --parallel",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "check": "turbo check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "eslint": "^9.21.0",
+    "prettier": "^3.5.2",
+    "turbo": "^2.4.4",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.25.0"
+  }
+}

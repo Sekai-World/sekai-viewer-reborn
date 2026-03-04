@@ -1,0 +1,49 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: multisite-shared-gateway
+  namespace: ingress-system
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+    - host: content.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: content-site
+                port:
+                  number: 80
+    - host: tools.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: tools-site
+                port:
+                  number: 80
+    - host: media-lab.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: media-lab-site
+                port:
+                  number: 80
+    - host: account.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: account-site
+                port:
+                  number: 80
