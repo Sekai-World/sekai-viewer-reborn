@@ -4,6 +4,7 @@
     primarySecondaryLabelByLocale,
     regionLabels
   } from "@platform/i18n-dicts";
+  import { getEventBannerAssetURL } from "$lib/assets";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { normalizeUiLocale } from "$lib/region";
   import type { PageData } from "./$types";
@@ -75,7 +76,17 @@
           <p class="text-sm">{startAtLabel}: {formatTime(card.event.startAt)}</p>
           <p class="text-sm">{endAtLabel}: {formatTime(card.event.endAt)}</p>
           {#if card.event.assetBundleName}
-            <p class="text-xs opacity-70">Asset: {card.event.assetBundleName}</p>
+            <p class="text-xs opacity-70">
+              Asset:
+              <a
+                class="link link-hover break-all"
+                href={getEventBannerAssetURL(card.event.assetBundleName, card.region)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {card.event.assetBundleName}
+              </a>
+            </p>
           {/if}
         {:else}
           <p class="text-sm opacity-70">{noEventLabel}</p>
