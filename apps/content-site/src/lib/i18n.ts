@@ -1,4 +1,5 @@
 import { browser } from "$app/environment";
+import { PUBLIC_SEKAI_I18N_BASE_URL } from "$env/static/public";
 import {
   regionRoleLabelsByLocale,
   repoLocaleByUiLocale,
@@ -11,7 +12,13 @@ import { derived, writable } from "svelte/store";
 import { normalizeUiLocale } from "$lib/region";
 
 const COMMON_NAMESPACE = "common";
-const SEKAI_I18N_BASE_URL = "https://raw.githubusercontent.com/Sekai-World/sekai-i18n/main";
+const extraCommonResourcesByLocale: Record<string, { remaining: string }> = {
+  en: { remaining: "Remaining" },
+  ja: { remaining: "残り時間" },
+  ko: { remaining: "남은 시간" },
+  "zh-CN": { remaining: "剩余时间" },
+  "zh-TW": { remaining: "剩餘時間" }
+};
 
 let initPromise: Promise<void> | null = null;
 const localeLoadingCount = writable(0);
@@ -19,6 +26,21 @@ const localeLoadingCount = writable(0);
 export const isLocaleLoading = derived(localeLoadingCount, (count) => count > 0);
 
 const toRepoLocale = (locale: SupportedUiLocale): string => repoLocaleByUiLocale[locale] ?? "en";
+
+const applyExtraCommonResources = (): void => {
+  for (const [locale, resources] of Object.entries(extraCommonResourcesByLocale)) {
+    i18next.addResourceBundle(locale, COMMON_NAMESPACE, resources, true, true);
+  }
+};
+
+const getI18nBaseUrl = (): string => {
+  const value = PUBLIC_SEKAI_I18N_BASE_URL?.trim();
+  if (!value) {
+    throw new Error("Missing required environment variable: PUBLIC_SEKAI_I18N_BASE_URL");
+  }
+
+  return value.replace(/\/+$/, "");
+};
 
 const ensureInitialized = async (locale: SupportedUiLocale): Promise<void> => {
   if (!browser) {
@@ -36,10 +58,12 @@ const ensureInitialized = async (locale: SupportedUiLocale): Promise<void> => {
         interpolation: { escapeValue: false },
         returnNull: false,
         backend: {
-          loadPath: `${SEKAI_I18N_BASE_URL}/{{lng}}/{{ns}}.json`
+          loadPath: `${getI18nBaseUrl()}/{{lng}}/{{ns}}.json`
         }
       })
-      .then(() => undefined);
+      .then(() => {
+        applyExtraCommonResources();
+      });
   }
 
   await initPromise;

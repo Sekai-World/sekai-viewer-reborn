@@ -4,7 +4,7 @@ import {
   supportedRegions,
   type SupportedRegion
 } from "@platform/i18n-dicts";
-import { env } from "$env/dynamic/private";
+import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
 
 type EventSummary = {
@@ -21,8 +21,6 @@ type RegionEventCard = {
   event: EventSummary | null;
   error: string | null;
 };
-
-const DEFAULT_API_BASE_URL = "http://localhost:8080/api/v1";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -126,7 +124,7 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
     id,
     title,
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
-    endAt: pickFirstDateValue(eventNode, ["aggregateAt", "endAt", "end_at", "endDate"]),
+    endAt: pickFirstDateValue(eventNode, ["aggregateAt", "aggregate_at", "endAt", "end_at", "endDate"]),
     assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"])
   };
 };
@@ -158,7 +156,7 @@ const toRegionEventCard = async (
 };
 
 export const load: PageServerLoad = async () => {
-  const baseUrl = env.SEKAI_MASTER_API_BASE_URL ?? DEFAULT_API_BASE_URL;
+  const baseUrl = getMasterApiBaseUrl();
   const cards = await Promise.all(
     supportedRegions.map(async (region) => {
       try {

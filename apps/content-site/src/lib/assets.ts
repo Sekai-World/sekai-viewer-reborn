@@ -1,9 +1,6 @@
 import { PUBLIC_REMOTE_ASSET_BASE_URL } from "$env/static/public";
 import type { SupportedRegion } from "@platform/i18n-dicts";
 
-const DEFAULT_STORAGE_PROXY_PATH = "/storage";
-const DEFAULT_REMOTE_ASSET_BASE_URL = "https://storage.sekai.best";
-
 const trimTrailingSlash = (value: string): string => {
   const trimmed = value.trim();
   if (trimmed.length === 0) {
@@ -16,11 +13,11 @@ const trimTrailingSlash = (value: string): string => {
 
 export const getRemoteAssetBaseURL = (): string => {
   const configuredBaseUrl = trimTrailingSlash(PUBLIC_REMOTE_ASSET_BASE_URL);
-  if (configuredBaseUrl.length > 0) {
-    return configuredBaseUrl;
+  if (!configuredBaseUrl) {
+    throw new Error("Missing required environment variable: PUBLIC_REMOTE_ASSET_BASE_URL");
   }
 
-  return import.meta.env.DEV ? DEFAULT_STORAGE_PROXY_PATH : DEFAULT_REMOTE_ASSET_BASE_URL;
+  return configuredBaseUrl;
 };
 
 export type AssetServer = SupportedRegion | "comic" | "musicChart" | "live2d" | "best";

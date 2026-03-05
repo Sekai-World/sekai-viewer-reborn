@@ -1,11 +1,11 @@
 import { getEventsByRegionById } from "@platform/sekai-master-api-sdk";
 import { regionLabels, type SupportedRegion } from "@platform/i18n-dicts";
-import { env } from "$env/dynamic/private";
 import {
   DEFAULT_PRIMARY_REGION,
   normalizeRegion,
   PRIMARY_REGION_COOKIE_NAME
 } from "$lib/region";
+import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
 
 type EventDetail = {
@@ -15,8 +15,6 @@ type EventDetail = {
   endAt: string | number | null;
   assetBundleName: string | null;
 };
-
-const DEFAULT_API_BASE_URL = "http://localhost:8080/api/v1";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -119,7 +117,7 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
     id,
     title,
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
-    endAt: pickFirstDateValue(eventNode, ["aggregateAt", "endAt", "end_at", "endDate"]),
+    endAt: pickFirstDateValue(eventNode, ["aggregateAt", "aggregate_at", "endAt", "end_at", "endDate"]),
     assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"])
   };
 };
@@ -132,7 +130,7 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
     regionFromQuery ?? regionFromCookie,
     DEFAULT_PRIMARY_REGION
   );
-  const baseUrl = env.SEKAI_MASTER_API_BASE_URL ?? DEFAULT_API_BASE_URL;
+  const baseUrl = getMasterApiBaseUrl();
 
   if (!eventId) {
     return {
