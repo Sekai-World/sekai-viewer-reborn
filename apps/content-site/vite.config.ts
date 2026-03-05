@@ -17,7 +17,15 @@ export default defineConfig(({ mode }) => {
               target: proxyTarget,
               changeOrigin: true,
               secure: true,
-              rewrite: (path) => path.replace(new RegExp(`^${proxyPath}`), "")
+              rewrite: (path) => path.replace(new RegExp(`^${proxyPath}`), ""),
+              configure: (proxy) => {
+                proxy.on("proxyReq", (proxyReq) => {
+                  // Remove 'Origin' header to prevent CORS issues
+                  proxyReq.removeHeader("origin");
+                  // Remove 'Referer' header to prevent potential issues with some servers
+                  proxyReq.removeHeader("referer");
+                });
+              }
             }
           }
         }
