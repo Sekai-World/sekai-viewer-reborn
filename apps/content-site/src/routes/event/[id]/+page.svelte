@@ -1,16 +1,20 @@
 <script lang="ts">
-  import { noEventTextByLocale, type SupportedRegion } from "@platform/i18n-dicts";
+  import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
   import { getEventBannerAssetURL } from "$lib/assets";
   import { setI18nLocale, tCommon } from "$lib/i18n";
-  import { normalizeUiLocale } from "$lib/region";
+  import { DEFAULT_UI_LOCALE } from "$lib/region";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+  const initialLocale = DEFAULT_UI_LOCALE;
   let displayLocale = $state<string>("en-US");
-  let homeLabel = $state("Home");
-  let startAtLabel = $state("Start");
-  let endAtLabel = $state("End");
-  let noEventLabel = $state("No current event data.");
+  let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
+  let startAtLabel = $state(getContentSiteCommonText(initialLocale, "startAt"));
+  let endAtLabel = $state(getContentSiteCommonText(initialLocale, "endAt"));
+  let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
+  let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
+  let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
+  let eventTitlePrefix = $state(getContentSiteCommonText(initialLocale, "pageTitle.eventPrefix"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
@@ -19,10 +23,13 @@
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
     const locale = await setI18nLocale(localeValue);
-    homeLabel = tCommon("home", "Home");
-    startAtLabel = tCommon("startAt", "Start");
-    endAtLabel = tCommon("endAt", "End");
-    noEventLabel = noEventTextByLocale[normalizeUiLocale(locale)];
+    homeLabel = tCommon(locale, "home");
+    startAtLabel = tCommon(locale, "startAt");
+    endAtLabel = tCommon(locale, "endAt");
+    idLabel = tCommon(locale, "idLabel");
+    bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
+    noEventLabel = tCommon(locale, "noCurrentEventData");
+    eventTitlePrefix = tCommon(locale, "pageTitle.eventPrefix");
   };
 
   const formatTime = (value: string | number | null): string => {
@@ -53,7 +60,7 @@
 </script>
 
 <svelte:head>
-  <title>{data.event ? `${data.event.title} - Sekai Viewer` : `Event ${data.eventId} - Sekai Viewer`}</title>
+  <title>{data.event ? `${data.event.title} - Sekai Viewer` : `${eventTitlePrefix} ${data.eventId} - Sekai Viewer`}</title>
 </svelte:head>
 
 <section class="mb-4 flex items-center justify-between gap-3">
@@ -85,14 +92,14 @@
     {#if data.event.assetBundleName}
       <img
         src={getEventBannerAssetURL(data.event.assetBundleName, data.region)}
-        alt={`${data.event.title} banner`}
+        alt={`${data.event.title} ${bannerAltSuffix}`}
         class="aspect-[61/26] w-full object-cover"
       />
     {/if}
 
     <div class="card-body gap-2">
       <h1 class="text-xl font-semibold leading-tight">{data.event.title}</h1>
-      <p class="text-sm opacity-80">ID: {data.event.id}</p>
+      <p class="text-sm opacity-80">{idLabel}: {data.event.id}</p>
       <p class="text-sm">{startAtLabel}: {formatTime(data.event.startAt)}</p>
       <p class="text-sm">{endAtLabel}: {formatTime(data.event.endAt)}</p>
     </div>

@@ -62,6 +62,9 @@ pnpm --filter <workspace-name> lint
   - `apps/content-site/src/lib/region.ts`
 - Read preferences from layout/server context rather than duplicating cookie parsing in each page:
   - `apps/content-site/src/routes/+layout.server.ts`
+- Keep `content-site` i18n strings centralized in `packages/i18n-dicts`.
+- For new text, prefer locale + namespace static dictionaries (e.g. `content-site/locales/<locale>/<ns>.ts`) so migration to Weblate is straightforward.
+- Avoid introducing new hardcoded user-facing strings directly in `apps/content-site`.
 
 ## Docker / Container Notes
 

@@ -1,9 +1,16 @@
 import { getEventsByRegionById } from "@platform/sekai-master-api-sdk";
-import { regionLabels, supportedRegions, type SupportedRegion } from "@platform/i18n-dicts";
+import {
+  getContentSiteServerText,
+  regionLabels,
+  supportedRegions,
+  type SupportedRegion
+} from "@platform/i18n-dicts";
 import {
   DEFAULT_PRIMARY_REGION,
   normalizeRegion,
-  PRIMARY_REGION_COOKIE_NAME
+  normalizeUiLocale,
+  PRIMARY_REGION_COOKIE_NAME,
+  UI_LOCALE_COOKIE_NAME
 } from "$lib/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
@@ -164,6 +171,13 @@ const fetchRegionEvent = async (
 
 export const load: PageServerLoad = async ({ params, url, cookies }) => {
   const eventId = params.id?.trim() ?? "";
+  const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
+  const invalidEventIdMessage = getContentSiteServerText(uiLocale, "invalidEventId");
+  const eventUnavailableInCurrentRegionMessage = getContentSiteServerText(
+    uiLocale,
+    "eventUnavailableInCurrentRegion"
+  );
+  const failedToLoadEventDataMessage = getContentSiteServerText(uiLocale, "failedToLoadEventData");
   const regionFromQuery = url.searchParams.get("region");
   const regionFromCookie = cookies.get(PRIMARY_REGION_COOKIE_NAME);
   const region: SupportedRegion = normalizeRegion(
@@ -179,7 +193,7 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
       regionLabel: regionLabels[region],
       availableRegions: [region],
       event: null,
-      error: "Invalid event id."
+      error: invalidEventIdMessage
     };
   }
 
@@ -210,8 +224,8 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
         event: null,
         error:
           detectedRegions.length > 0
-            ? "This event is not available in the current region. Switch region using the badges."
-            : "Failed to load event data."
+            ? eventUnavailableInCurrentRegionMessage
+            : failedToLoadEventDataMessage
       };
     }
 
@@ -230,7 +244,7 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
       regionLabel: regionLabels[region],
       availableRegions: [region],
       event: null,
-      error: "Failed to load event data."
+      error: failedToLoadEventDataMessage
     };
   }
 };

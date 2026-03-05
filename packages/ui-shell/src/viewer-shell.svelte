@@ -64,7 +64,7 @@
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-7xl px-4 pb-8 pt-6 md:px-6 lg:px-8">
+    <main class="mx-auto w-full max-w-[96rem] px-4 pb-8 pt-6 md:px-6 lg:px-8">
       {#if showTitle}
         <section class="py-12 text-center">
           <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">

@@ -1,12 +1,8 @@
 <script lang="ts">
-  import {
-    noEventTextByLocale,
-    primarySecondaryLabelByLocale,
-    regionLabels
-  } from "@platform/i18n-dicts";
+  import { getContentSiteCommonText, regionLabels } from "@platform/i18n-dicts";
   import { getEventBannerAssetURL } from "$lib/assets";
   import { setI18nLocale, tCommon } from "$lib/i18n";
-  import { normalizeUiLocale } from "$lib/region";
+  import { DEFAULT_UI_LOCALE } from "$lib/region";
   import { onMount } from "svelte";
   import type { PageData } from "./$types";
 
@@ -29,13 +25,26 @@
   };
 
   let { data }: { data: PageData } = $props();
-  let gameContentRegionLabel = $state("Game Content Region");
-  let primarySecondaryLabel = $state("Primary|Secondary");
-  let interfaceLanguageLabel = $state("Interface Language");
-  let startsInLabel = $state("Starts In");
-  let endsInLabel = $state("Ends In");
-  let eventEndedLabel = $state("Event Ended");
-  let noEventLabel = $state("No current event data.");
+  const initialLocale = DEFAULT_UI_LOCALE;
+  let gameContentRegionLabel = $state(
+    getContentSiteCommonText(initialLocale, "settings.gameContentRegion")
+  );
+  let primarySecondaryLabel = $state(
+    getContentSiteCommonText(initialLocale, "labels.primarySecondary")
+  );
+  let interfaceLanguageLabel = $state(
+    getContentSiteCommonText(initialLocale, "settings.interfaceLanguage")
+  );
+  let startsInLabel = $state(getContentSiteCommonText(initialLocale, "countdownStartsIn"));
+  let endsInLabel = $state(getContentSiteCommonText(initialLocale, "countdownEndsIn"));
+  let eventEndedLabel = $state(getContentSiteCommonText(initialLocale, "eventEnded"));
+  let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
+  let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
+  let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
+  let dayLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.day"));
+  let hourLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.hour"));
+  let minuteLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.minute"));
+  let secondLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.second"));
   let nowMs = $state(Date.now());
 
   $effect(() => {
@@ -44,13 +53,19 @@
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
     const locale = await setI18nLocale(localeValue);
-    gameContentRegionLabel = tCommon("settings.gameContentRegion", "Game Content Region");
-    interfaceLanguageLabel = tCommon("settings.interfaceLanguage", "Interface Language");
-    startsInLabel = tCommon("countdownStartsIn", "Starts In");
-    endsInLabel = tCommon("countdownEndsIn", "Ends In");
-    eventEndedLabel = tCommon("eventEnded", "Event Ended");
-    primarySecondaryLabel = primarySecondaryLabelByLocale[normalizeUiLocale(locale)];
-    noEventLabel = noEventTextByLocale[normalizeUiLocale(locale)];
+    gameContentRegionLabel = tCommon(locale, "settings.gameContentRegion");
+    interfaceLanguageLabel = tCommon(locale, "settings.interfaceLanguage");
+    startsInLabel = tCommon(locale, "countdownStartsIn");
+    endsInLabel = tCommon(locale, "countdownEndsIn");
+    eventEndedLabel = tCommon(locale, "eventEnded");
+    idLabel = tCommon(locale, "idLabel");
+    bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
+    primarySecondaryLabel = tCommon(locale, "labels.primarySecondary");
+    noEventLabel = tCommon(locale, "noCurrentEventData");
+    dayLabel = tCommon(locale, "labels.timeUnit.day");
+    hourLabel = tCommon(locale, "labels.timeUnit.hour");
+    minuteLabel = tCommon(locale, "labels.timeUnit.minute");
+    secondLabel = tCommon(locale, "labels.timeUnit.second");
   };
 
   const toTimestampMs = (value: string | number | null): number | null => {
@@ -204,36 +219,38 @@
   </div>
 </section>
 
-<section class="flex flex-col gap-4 md:flex-row md:flex-wrap md:justify-center">
+<section class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
   {#each data.cards as card (card.region)}
     {#if card.event}
       {@const countdown = getCountdownState(card.event.startAt, card.event.endAt)}
       <a
         id={`region-${card.region}`}
         href={toEventHref(card.event.id, card.region)}
-        class="card group w-full bg-base-100 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]"
+        class="card group w-full bg-base-100 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
       >
         <div class="card-body">
-          <div class="relative mb-3 aspect-[61/26] overflow-hidden rounded-xl border border-base-content/15 bg-base-200/50">
+          <div class="mb-2 flex items-center justify-center md:mb-3">
             {#if card.event.assetBundleName}
               <img
                 src={getEventBannerAssetURL(card.event.assetBundleName, card.region)}
-                alt={`${card.event.title} banner`}
+                alt={`${card.event.title} ${bannerAltSuffix}`}
                 loading="lazy"
-                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                class="mx-auto h-auto w-full max-w-full object-contain md:w-3/4 md:min-w-[min(200px,100%)]"
               />
             {:else}
               <div class="flex h-full w-full items-center justify-center text-sm opacity-70">
                 {card.label}
               </div>
             {/if}
-            <span class="badge badge-primary absolute right-2 top-2 border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-              {card.region.toUpperCase()}
-            </span>
           </div>
 
           <h3 class="text-base font-semibold leading-tight">{card.event.title}</h3>
-          <p class="text-sm opacity-70">ID: {card.event.id}</p>
+          <div class="flex items-center gap-2 text-sm opacity-70">
+            <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+              {card.region.toUpperCase()}
+            </span>
+            <p>{idLabel}: {card.event.id}</p>
+          </div>
 
           <div class="mt-1 rounded-xl border border-base-content/12 bg-base-200/45 p-2.5">
             {#if countdown.mode === "ended"}
@@ -247,13 +264,13 @@
                   <span class="countdown font-mono text-lg font-semibold">
                     <span style={countdownStyle(countdown.values.days)}>{countdown.values.days}</span>
                   </span>
-                  <p class="text-[0.62rem] opacity-80">天</p>
+                  <p class="text-[0.62rem] opacity-80">{dayLabel}</p>
                 </div>
                 <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
                   <span class="countdown font-mono text-lg font-semibold">
                     <span style={countdownStyle(countdown.values.hours)}>{countdown.values.hours}</span>
                   </span>
-                  <p class="text-[0.62rem] opacity-80">时</p>
+                  <p class="text-[0.62rem] opacity-80">{hourLabel}</p>
                 </div>
                 <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
                   <span class="countdown font-mono text-lg font-semibold">
@@ -261,7 +278,7 @@
                       {countdown.values.minutes}
                     </span>
                   </span>
-                  <p class="text-[0.62rem] opacity-80">分</p>
+                  <p class="text-[0.62rem] opacity-80">{minuteLabel}</p>
                 </div>
                 {#if countdown.showSeconds}
                   <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
@@ -270,7 +287,7 @@
                         {countdown.values.seconds}
                       </span>
                     </span>
-                    <p class="text-[0.62rem] opacity-80">秒</p>
+                    <p class="text-[0.62rem] opacity-80">{secondLabel}</p>
                   </div>
                 {/if}
               </div>
@@ -287,12 +304,12 @@
     {:else}
       <article
         id={`region-${card.region}`}
-        class="card w-full bg-base-100 shadow-sm md:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]"
+        class="card w-full bg-base-100 shadow-sm"
       >
         <div class="card-body">
-          <div class="relative mb-3 aspect-[61/26] overflow-hidden rounded-xl border border-base-content/15 bg-base-200/50">
-            <div class="flex h-full w-full items-center justify-center text-sm opacity-70">{card.label}</div>
-            <span class="badge badge-primary absolute right-2 top-2 border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+          <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
+          <div class="mb-1">
+            <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
               {card.region.toUpperCase()}
             </span>
           </div>

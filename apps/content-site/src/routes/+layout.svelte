@@ -4,6 +4,7 @@
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import {
+    getContentSiteCommonText,
     regionLabels,
     supportedRegions,
     supportedUiLocales,
@@ -45,6 +46,7 @@
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+  const initialLocale = DEFAULT_UI_LOCALE;
   let primaryRegion = $state<SupportedRegion>(DEFAULT_PRIMARY_REGION);
   let secondaryRegion = $state<SupportedRegion>(DEFAULT_SECONDARY_REGION);
   let uiLocale = $state<SupportedUiLocale>(DEFAULT_UI_LOCALE);
@@ -52,13 +54,24 @@
   let isRegionMenuOpen = $state(false);
   let isLocaleMenuOpen = $state(false);
 
-  let homeLabel = $state("Home");
-  let settingsLabel = $state("Settings");
-  let themeControlLabel = $state("Theme");
-  let primaryRegionLabel = $state("Primary");
-  let secondaryRegionLabel = $state("Secondary");
-  let gameContentRegionLabel = $state("Game Content Region");
-  let interfaceLanguageLabel = $state("Interface Language");
+  let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
+  let settingsLabel = $state(getContentSiteCommonText(initialLocale, "settings.title"));
+  let themeControlLabel = $state(getContentSiteCommonText(initialLocale, "darkmode"));
+  let primaryRegionLabel = $state(getContentSiteCommonText(initialLocale, "labels.primary"));
+  let secondaryRegionLabel = $state(getContentSiteCommonText(initialLocale, "labels.secondary"));
+  let gameContentRegionLabel = $state(
+    getContentSiteCommonText(initialLocale, "settings.gameContentRegion")
+  );
+  let interfaceLanguageLabel = $state(
+    getContentSiteCommonText(initialLocale, "settings.interfaceLanguage")
+  );
+  let loadingLanguagePackLabel = $state(
+    getContentSiteCommonText(initialLocale, "loadingLanguagePack")
+  );
+  let switchThemeAriaLabel = $state(getContentSiteCommonText(initialLocale, "aria.switchTheme"));
+  let switchUiLanguageCurrentLabel = $state(
+    getContentSiteCommonText(initialLocale, "aria.switchUiLanguageCurrent")
+  );
 
   const sidebarItems = $derived<SidebarItem[]>([
     { label: homeLabel, href: "/", active: true }
@@ -81,11 +94,14 @@
     const resolvedLocale = await setI18nLocale(localeValue);
     const regionRoleLabels = getRegionRoleLabels(resolvedLocale);
 
-    homeLabel = tCommon("home", "Home");
-    settingsLabel = tCommon("settings.title", "Settings");
-    themeControlLabel = tCommon("darkmode", "Theme");
-    gameContentRegionLabel = tCommon("settings.gameContentRegion", "Game Content Region");
-    interfaceLanguageLabel = tCommon("settings.interfaceLanguage", "Interface Language");
+    homeLabel = tCommon(resolvedLocale, "home");
+    settingsLabel = tCommon(resolvedLocale, "settings.title");
+    themeControlLabel = tCommon(resolvedLocale, "darkmode");
+    gameContentRegionLabel = tCommon(resolvedLocale, "settings.gameContentRegion");
+    interfaceLanguageLabel = tCommon(resolvedLocale, "settings.interfaceLanguage");
+    loadingLanguagePackLabel = tCommon(resolvedLocale, "loadingLanguagePack");
+    switchThemeAriaLabel = tCommon(resolvedLocale, "aria.switchTheme");
+    switchUiLanguageCurrentLabel = tCommon(resolvedLocale, "aria.switchUiLanguageCurrent");
     primaryRegionLabel = regionRoleLabels.primary;
     secondaryRegionLabel = regionRoleLabels.secondary;
   };
@@ -275,7 +291,7 @@
               {/each}
             </select>
             {#if $isLocaleLoading}
-              <span class="px-1 text-xs opacity-70">Loading language pack...</span>
+              <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
             {/if}
           </label>
         </div>
@@ -286,7 +302,7 @@
       <button
         type="button"
         class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
-        aria-label="Switch light and dark mode"
+        aria-label={switchThemeAriaLabel}
         title={themeModeLabel}
         onclick={toggleTheme}
       >
@@ -312,7 +328,7 @@
       <details class="dropdown dropdown-end" bind:open={isLocaleMenuOpen} ontoggle={handleLocaleMenuToggle}>
         <summary
           class={`btn btn-sm btn-outline rounded-full border-base-content/20 bg-base-100/65 px-2 text-xs sm:px-3 sm:text-sm hover:bg-base-100 ${$isLocaleLoading ? "pointer-events-none opacity-75" : ""}`}
-          aria-label={`Switch UI language. Current language: ${uiLocale}`}
+          aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
           title={`${interfaceLanguageLabel}: ${uiLocaleDisplayLabel}`}
           aria-busy={$isLocaleLoading}
           onclick={(event) => {

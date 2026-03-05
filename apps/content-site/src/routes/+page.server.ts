@@ -1,10 +1,12 @@
 import { getEventsByRegionCurrent } from "@platform/sekai-master-api-sdk";
 import {
+  getContentSiteServerText,
   regionLabels,
   supportedRegions,
   type SupportedRegion
 } from "@platform/i18n-dicts";
 import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
 import type { PageServerLoad } from "./$types";
 
 type EventSummary = {
@@ -131,7 +133,8 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
 
 const toRegionEventCard = async (
   baseUrl: string,
-  region: SupportedRegion
+  region: SupportedRegion,
+  unavailableErrorText: string
 ): Promise<RegionEventCard> => {
   const response = await getEventsByRegionCurrent({
     baseUrl,
@@ -143,7 +146,7 @@ const toRegionEventCard = async (
       region,
       label: regionLabels[region],
       event: null,
-      error: "活动数据暂不可用"
+      error: unavailableErrorText
     };
   }
 
@@ -155,18 +158,27 @@ const toRegionEventCard = async (
   };
 };
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ cookies }) => {
+  const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
+  const homeEventDataUnavailable = getContentSiteServerText(
+    uiLocale,
+    "homeEventDataUnavailable"
+  );
+  const homeEventDataRequestFailed = getContentSiteServerText(
+    uiLocale,
+    "homeEventDataRequestFailed"
+  );
   const baseUrl = getMasterApiBaseUrl();
   const cards = await Promise.all(
     supportedRegions.map(async (region) => {
       try {
-        return await toRegionEventCard(baseUrl, region);
+        return await toRegionEventCard(baseUrl, region, homeEventDataUnavailable);
       } catch {
         return {
           region,
           label: regionLabels[region],
           event: null,
-          error: "活动数据请求失败"
+          error: homeEventDataRequestFailed
         } satisfies RegionEventCard;
       }
     })
