@@ -14,6 +14,7 @@
     navActions?: Snippet;
     sidebarLabel?: string;
     sidebarItems?: SidebarItem[];
+    showTitle?: boolean;
     title?: string;
     titleBadge?: string;
     children?: Snippet;
@@ -26,6 +27,7 @@
     navActions,
     sidebarLabel = "导航",
     sidebarItems = [],
+    showTitle = true,
     title = "Sekai Viewer",
     titleBadge = "reborn",
     children
@@ -63,16 +65,18 @@
     </header>
 
     <main class="mx-auto w-full max-w-7xl px-4 pb-8 pt-6 md:px-6 lg:px-8">
-      <section class="py-12 text-center">
-        <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">
-          {title}
-          <span
-            class="badge badge-error absolute -right-11 -top-5 -rotate-12 border border-error-content/25 px-2.5 py-2 text-[0.62rem] leading-none font-black uppercase tracking-[0.16em] text-error-content shadow-sm"
-          >
-            {titleBadge}
-          </span>
-        </h1>
-      </section>
+      {#if showTitle}
+        <section class="py-12 text-center">
+          <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">
+            {title}
+            <span
+              class="badge badge-error absolute -right-11 -top-5 -rotate-12 border border-error-content/25 px-2.5 py-2 text-[0.62rem] leading-none font-black uppercase tracking-[0.16em] text-error-content shadow-sm"
+            >
+              {titleBadge}
+            </span>
+          </h1>
+        </section>
+      {/if}
 
       {@render children?.()}
     </main>

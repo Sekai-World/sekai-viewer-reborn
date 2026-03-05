@@ -17,19 +17,28 @@
     seconds: number;
   };
 
+  type CountdownMode = "untilStart" | "untilEnd" | "ended";
+
+  type CountdownState = {
+    mode: CountdownMode;
+    label: string;
+    values: CountdownValues;
+    toneClass: string;
+    showSeconds: boolean;
+    minuteProgress: number;
+  };
+
   let { data }: { data: PageData } = $props();
-  let displayLocale = $state<string>("en-US");
   let gameContentRegionLabel = $state("Game Content Region");
   let primarySecondaryLabel = $state("Primary|Secondary");
   let interfaceLanguageLabel = $state("Interface Language");
-  let startAtLabel = $state("Start");
-  let endAtLabel = $state("End");
-  let remainingLabel = $state("Remaining");
+  let startsInLabel = $state("Starts In");
+  let endsInLabel = $state("Ends In");
+  let eventEndedLabel = $state("Event Ended");
   let noEventLabel = $state("No current event data.");
   let nowMs = $state(Date.now());
 
   $effect(() => {
-    displayLocale = data.uiLocale;
     void refreshPageTranslations(data.uiLocale);
   });
 
@@ -37,9 +46,9 @@
     const locale = await setI18nLocale(localeValue);
     gameContentRegionLabel = tCommon("settings.gameContentRegion", "Game Content Region");
     interfaceLanguageLabel = tCommon("settings.interfaceLanguage", "Interface Language");
-    startAtLabel = tCommon("startAt", "Start");
-    endAtLabel = tCommon("endAt", "End");
-    remainingLabel = tCommon("remaining", "Remaining");
+    startsInLabel = tCommon("countdownStartsIn", "Starts In");
+    endsInLabel = tCommon("countdownEndsIn", "Ends In");
+    eventEndedLabel = tCommon("eventEnded", "Event Ended");
     primarySecondaryLabel = primarySecondaryLabelByLocale[normalizeUiLocale(locale)];
     noEventLabel = noEventTextByLocale[normalizeUiLocale(locale)];
   };
@@ -75,30 +84,8 @@
     return Number.isNaN(dateValue) ? null : dateValue;
   };
 
-  const formatTime = (value: string | number | null): string => {
-    const timestamp = toTimestampMs(value);
-    if (!timestamp) {
-      return "--";
-    }
-
-    return new Intl.DateTimeFormat(displayLocale, {
-      dateStyle: "medium",
-      timeStyle: "short"
-    }).format(timestamp);
-  };
-
-  const getRemaining = (value: string | number | null): CountdownValues => {
-    const endAtMs = toTimestampMs(value);
-    if (!endAtMs) {
-      return {
-        days: 0,
-        hours: 0,
-        minutes: 0,
-        seconds: 0
-      };
-    }
-
-    const diff = Math.max(0, endAtMs - nowMs);
+  const toCountdownValues = (diffMs: number): CountdownValues => {
+    const diff = Math.max(0, diffMs);
     const totalSeconds = Math.floor(diff / 1000);
     const days = Math.floor(totalSeconds / 86400);
     const hours = Math.floor((totalSeconds % 86400) / 3600);
@@ -108,16 +95,99 @@
     return { days, hours, minutes, seconds };
   };
 
+  const emptyCountdownValues = (): CountdownValues => ({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0
+  });
+
+  const getCountdownState = (
+    startAt: string | number | null,
+    endAt: string | number | null
+  ): CountdownState => {
+    const startAtMs = toTimestampMs(startAt);
+    const endAtMs = toTimestampMs(endAt);
+
+    if (startAtMs !== null && nowMs < startAtMs) {
+      const diffMs = startAtMs - nowMs;
+      return {
+        mode: "untilStart",
+        label: startsInLabel,
+        values: toCountdownValues(diffMs),
+        toneClass: "text-base-content",
+        showSeconds: diffMs < 24 * 60 * 60 * 1000,
+        minuteProgress: getMinuteProgressPercent(diffMs)
+      };
+    }
+
+    if (endAtMs !== null && nowMs < endAtMs) {
+      const endDiff = endAtMs - nowMs;
+      const toneClass =
+        endDiff < 6 * 60 * 60 * 1000
+          ? "text-error"
+          : endDiff < 24 * 60 * 60 * 1000
+            ? "text-warning"
+            : "text-base-content";
+
+      return {
+        mode: "untilEnd",
+        label: endsInLabel,
+        values: toCountdownValues(endDiff),
+        toneClass,
+        showSeconds: endDiff < 24 * 60 * 60 * 1000,
+        minuteProgress: getMinuteProgressPercent(endDiff)
+      };
+    }
+
+    return {
+      mode: "ended",
+      label: eventEndedLabel,
+      values: emptyCountdownValues(),
+      toneClass: "text-base-content",
+      showSeconds: false,
+      minuteProgress: 0
+    };
+  };
+
   const countdownStyle = (value: number, digits = 2): string =>
     `--value:${value}; --digits:${digits};`;
 
+  const getMinuteProgressPercent = (diffMs: number): number => {
+    if (diffMs <= 0) {
+      return 0;
+    }
+
+    const minuteRemainder = diffMs % 60000;
+    if (minuteRemainder === 0) {
+      return 100;
+    }
+
+    return (minuteRemainder / 60000) * 100;
+  };
+
+  const getMinuteBarClass = (toneClass: string): string => {
+    if (toneClass === "text-error") {
+      return "bg-error/85";
+    }
+
+    if (toneClass === "text-warning") {
+      return "bg-warning/90";
+    }
+
+    return "bg-primary/80";
+  };
+
   onMount(() => {
-    const timer = window.setInterval(() => {
+    let rafId = 0;
+    const tick = () => {
       nowMs = Date.now();
-    }, 1000);
+      rafId = window.requestAnimationFrame(tick);
+    };
+    rafId = window.requestAnimationFrame(tick);
 
     return () => {
-      window.clearInterval(timer);
+      window.cancelAnimationFrame(rafId);
     };
   });
 
@@ -137,6 +207,7 @@
 <section class="flex flex-col gap-4 md:flex-row md:flex-wrap md:justify-center">
   {#each data.cards as card (card.region)}
     {#if card.event}
+      {@const countdown = getCountdownState(card.event.startAt, card.event.endAt)}
       <a
         id={`region-${card.region}`}
         href={toEventHref(card.event.id, card.region)}
@@ -163,52 +234,61 @@
 
           <h3 class="text-base font-semibold leading-tight">{card.event.title}</h3>
           <p class="text-sm opacity-70">ID: {card.event.id}</p>
-          <p class="text-sm">{startAtLabel}: {formatTime(card.event.startAt)}</p>
-          <p class="text-sm">{endAtLabel}: {formatTime(card.event.endAt)}</p>
 
           <div class="mt-1 rounded-xl border border-base-content/12 bg-base-200/45 p-2.5">
-            <p class="mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] opacity-70">
-              {remainingLabel}
-            </p>
-            <div class="grid grid-cols-4 gap-1.5">
-              <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
-                <span class="countdown font-mono text-lg font-semibold">
-                  <span style={countdownStyle(getRemaining(card.event.endAt).days)}>
-                    {getRemaining(card.event.endAt).days}
+            {#if countdown.mode === "ended"}
+              <p class="text-sm font-semibold opacity-80">{countdown.label}</p>
+            {:else}
+              <p class={`mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${countdown.toneClass}`}>
+                {countdown.label}
+              </p>
+              <div class={`grid gap-1.5 ${countdown.showSeconds ? "grid-cols-4" : "grid-cols-3"} ${countdown.toneClass}`}>
+                <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
+                  <span class="countdown font-mono text-lg font-semibold">
+                    <span style={countdownStyle(countdown.values.days)}>{countdown.values.days}</span>
                   </span>
-                </span>
-                <p class="text-[0.62rem] opacity-70">天</p>
-              </div>
-              <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
-                <span class="countdown font-mono text-lg font-semibold">
-                  <span style={countdownStyle(getRemaining(card.event.endAt).hours)}>
-                    {getRemaining(card.event.endAt).hours}
+                  <p class="text-[0.62rem] opacity-80">天</p>
+                </div>
+                <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
+                  <span class="countdown font-mono text-lg font-semibold">
+                    <span style={countdownStyle(countdown.values.hours)}>{countdown.values.hours}</span>
                   </span>
-                </span>
-                <p class="text-[0.62rem] opacity-70">时</p>
-              </div>
-              <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
-                <span class="countdown font-mono text-lg font-semibold">
-                  <span style={countdownStyle(getRemaining(card.event.endAt).minutes)}>
-                    {getRemaining(card.event.endAt).minutes}
+                  <p class="text-[0.62rem] opacity-80">时</p>
+                </div>
+                <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
+                  <span class="countdown font-mono text-lg font-semibold">
+                    <span style={countdownStyle(countdown.values.minutes)}>
+                      {countdown.values.minutes}
+                    </span>
                   </span>
-                </span>
-                <p class="text-[0.62rem] opacity-70">分</p>
+                  <p class="text-[0.62rem] opacity-80">分</p>
+                </div>
+                {#if countdown.showSeconds}
+                  <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
+                    <span class="countdown font-mono text-lg font-semibold">
+                      <span style={countdownStyle(countdown.values.seconds)}>
+                        {countdown.values.seconds}
+                      </span>
+                    </span>
+                    <p class="text-[0.62rem] opacity-80">秒</p>
+                  </div>
+                {/if}
               </div>
-              <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
-                <span class="countdown font-mono text-lg font-semibold">
-                  <span style={countdownStyle(getRemaining(card.event.endAt).seconds)}>
-                    {getRemaining(card.event.endAt).seconds}
-                  </span>
-                </span>
-                <p class="text-[0.62rem] opacity-70">秒</p>
+              <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-base-content/14">
+                <div
+                  class={`h-full origin-right ${getMinuteBarClass(countdown.toneClass)}`}
+                  style={`width:${countdown.minuteProgress}%; margin-left:auto;`}
+                ></div>
               </div>
-            </div>
+            {/if}
           </div>
         </div>
       </a>
     {:else}
-      <article id={`region-${card.region}`} class="card w-full bg-base-100 shadow-sm md:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]">
+      <article
+        id={`region-${card.region}`}
+        class="card w-full bg-base-100 shadow-sm md:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]"
+      >
         <div class="card-body">
           <div class="relative mb-3 aspect-[61/26] overflow-hidden rounded-xl border border-base-content/15 bg-base-200/50">
             <div class="flex h-full w-full items-center justify-center text-sm opacity-70">{card.label}</div>

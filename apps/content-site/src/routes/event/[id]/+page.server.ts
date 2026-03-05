@@ -1,5 +1,5 @@
 import { getEventsByRegionById } from "@platform/sekai-master-api-sdk";
-import { regionLabels, type SupportedRegion } from "@platform/i18n-dicts";
+import { regionLabels, supportedRegions, type SupportedRegion } from "@platform/i18n-dicts";
 import {
   DEFAULT_PRIMARY_REGION,
   normalizeRegion,
@@ -14,6 +14,12 @@ type EventDetail = {
   startAt: string | number | null;
   endAt: string | number | null;
   assetBundleName: string | null;
+};
+
+type RegionEventLookup = {
+  region: SupportedRegion;
+  event: EventDetail | null;
+  exists: boolean;
 };
 
 const getString = (value: unknown): string | null =>
@@ -122,6 +128,40 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
   };
 };
 
+const fetchRegionEvent = async (
+  baseUrl: string,
+  region: SupportedRegion,
+  eventId: string
+): Promise<RegionEventLookup> => {
+  try {
+    const response = await getEventsByRegionById({
+      baseUrl,
+      path: { region, id: eventId }
+    });
+
+    if (response.error) {
+      return {
+        region,
+        event: null,
+        exists: false
+      };
+    }
+
+    const event = parseEventDetail(response.data);
+    return {
+      region,
+      event,
+      exists: event !== null
+    };
+  } catch {
+    return {
+      region,
+      event: null,
+      exists: false
+    };
+  }
+};
+
 export const load: PageServerLoad = async ({ params, url, cookies }) => {
   const eventId = params.id?.trim() ?? "";
   const regionFromQuery = url.searchParams.get("region");
@@ -137,24 +177,41 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
       eventId,
       region,
       regionLabel: regionLabels[region],
+      availableRegions: [region],
       event: null,
       error: "Invalid event id."
     };
   }
 
   try {
-    const response = await getEventsByRegionById({
-      baseUrl,
-      path: { region, id: eventId }
-    });
+    const lookups = await Promise.all(
+      supportedRegions.map(async (targetRegion) =>
+        fetchRegionEvent(baseUrl, targetRegion, eventId)
+      )
+    );
+    const currentLookup = lookups.find((lookup) => lookup.region === region) ?? {
+      region,
+      event: null,
+      exists: false
+    };
+    const detectedRegions = lookups
+      .filter((lookup) => lookup.exists)
+      .map((lookup) => lookup.region);
+    const availableRegions = detectedRegions.includes(region)
+      ? detectedRegions
+      : [region, ...detectedRegions];
 
-    if (response.error) {
+    if (!currentLookup.event) {
       return {
         eventId,
         region,
         regionLabel: regionLabels[region],
+        availableRegions,
         event: null,
-        error: "Failed to load event data."
+        error:
+          detectedRegions.length > 0
+            ? "This event is not available in the current region. Switch region using the badges."
+            : "Failed to load event data."
       };
     }
 
@@ -162,7 +219,8 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
       eventId,
       region,
       regionLabel: regionLabels[region],
-      event: parseEventDetail(response.data),
+      availableRegions,
+      event: currentLookup.event,
       error: null
     };
   } catch {
@@ -170,6 +228,7 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
       eventId,
       region,
       regionLabel: regionLabels[region],
+      availableRegions: [region],
       event: null,
       error: "Failed to load event data."
     };

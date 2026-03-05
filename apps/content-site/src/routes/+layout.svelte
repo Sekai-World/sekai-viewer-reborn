@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import { invalidateAll } from "$app/navigation";
+  import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import {
     regionLabels,
@@ -62,6 +63,7 @@
   const sidebarItems = $derived<SidebarItem[]>([
     { label: homeLabel, href: "/", active: true }
   ]);
+  const showPageTitle = $derived(page.url.pathname === "/");
   const themeModeLabel = $derived(getThemeModeLabel(uiLocale, themeMode));
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
@@ -176,7 +178,12 @@
   </div>
 {/if}
 
-<ViewerShell drawerId="content-site-drawer" navTitle="Sekai Viewer" sidebarItems={sidebarItems}>
+<ViewerShell
+  drawerId="content-site-drawer"
+  navTitle="Sekai Viewer"
+  sidebarItems={sidebarItems}
+  showTitle={showPageTitle}
+>
   {#snippet navActions()}
     <div class="sm:hidden">
       <details class="dropdown dropdown-end">

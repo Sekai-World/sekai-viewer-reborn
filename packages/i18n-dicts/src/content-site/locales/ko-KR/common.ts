@@ -1,0 +1,44 @@
+import type { ContentSiteCommonMessages } from "../../types";
+
+const commonKoKr: ContentSiteCommonMessages = {
+  home: "홈",
+  darkmode: "테마",
+  startAt: "시작",
+  endAt: "종료",
+  countdownStartsIn: "시작까지",
+  countdownEndsIn: "종료까지",
+  eventEnded: "이벤트 종료",
+  idLabel: "ID",
+  bannerAltSuffix: "배너",
+  noCurrentEventData: "현재 진행 중인 이벤트 데이터가 없습니다.",
+  loadingLanguagePack: "언어 팩을 불러오는 중...",
+  settings: {
+    title: "설정",
+    gameContentRegion: "게임 데이터 지역",
+    interfaceLanguage: "인터페이스 언어"
+  },
+  labels: {
+    primary: "주 지역",
+    secondary: "보조 지역",
+    primarySecondary: "주 지역|보조 지역",
+    timeUnit: {
+      day: "일",
+      hour: "시",
+      minute: "분",
+      second: "초"
+    }
+  },
+  aria: {
+    switchTheme: "라이트 모드와 다크 모드 전환",
+    switchUiLanguageCurrent: "UI 언어 변경. 현재 언어"
+  },
+  pageTitle: {
+    eventPrefix: "이벤트"
+  },
+  themeMode: {
+    light: "라이트 모드",
+    dark: "다크 모드"
+  }
+};
+
+export default commonKoKr;

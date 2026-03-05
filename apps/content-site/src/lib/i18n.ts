@@ -1,6 +1,8 @@
 import { browser } from "$app/environment";
 import { PUBLIC_SEKAI_I18N_BASE_URL } from "$env/static/public";
 import {
+  contentSiteCommonByRepoLocale,
+  getContentSiteCommonText,
   regionRoleLabelsByLocale,
   repoLocaleByUiLocale,
   themeModeLabelsByLocale,
@@ -12,13 +14,6 @@ import { derived, writable } from "svelte/store";
 import { normalizeUiLocale } from "$lib/region";
 
 const COMMON_NAMESPACE = "common";
-const extraCommonResourcesByLocale: Record<string, { remaining: string }> = {
-  en: { remaining: "Remaining" },
-  ja: { remaining: "残り時間" },
-  ko: { remaining: "남은 시간" },
-  "zh-CN": { remaining: "剩余时间" },
-  "zh-TW": { remaining: "剩餘時間" }
-};
 
 let initPromise: Promise<void> | null = null;
 const localeLoadingCount = writable(0);
@@ -28,7 +23,7 @@ export const isLocaleLoading = derived(localeLoadingCount, (count) => count > 0)
 const toRepoLocale = (locale: SupportedUiLocale): string => repoLocaleByUiLocale[locale] ?? "en";
 
 const applyExtraCommonResources = (): void => {
-  for (const [locale, resources] of Object.entries(extraCommonResourcesByLocale)) {
+  for (const [locale, resources] of Object.entries(contentSiteCommonByRepoLocale)) {
     i18next.addResourceBundle(locale, COMMON_NAMESPACE, resources, true, true);
   }
 };
@@ -90,13 +85,16 @@ export const setI18nLocale = async (localeValue: string): Promise<SupportedUiLoc
   return locale;
 };
 
-export const tCommon = (key: string, fallback: string): string => {
+export const tCommon = (localeValue: string, key: string, fallback?: string): string => {
+  const locale = normalizeUiLocale(localeValue);
+  const fallbackValue = getContentSiteCommonText(locale, key, fallback ?? key);
+
   if (!browser || !i18next.isInitialized) {
-    return fallback;
+    return fallbackValue;
   }
 
-  const value = i18next.t(key, { ns: COMMON_NAMESPACE, defaultValue: fallback });
-  return typeof value === "string" ? value : fallback;
+  const value = i18next.t(key, { ns: COMMON_NAMESPACE, defaultValue: fallbackValue });
+  return typeof value === "string" ? value : fallbackValue;
 };
 
 export const getThemeModeLabel = (

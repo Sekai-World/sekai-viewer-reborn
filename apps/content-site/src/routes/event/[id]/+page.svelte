@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { noEventTextByLocale } from "@platform/i18n-dicts";
+  import { noEventTextByLocale, type SupportedRegion } from "@platform/i18n-dicts";
   import { getEventBannerAssetURL } from "$lib/assets";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { normalizeUiLocale } from "$lib/region";
@@ -40,6 +40,16 @@
       timeStyle: "short"
     }).format(parsedDate);
   };
+
+  const regionDisplayOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
+  const regionOptions = $derived<SupportedRegion[]>(
+    regionDisplayOrder.filter(
+      (regionOption) => data.availableRegions.includes(regionOption) || regionOption === data.region
+    )
+  );
+
+  const toRegionHref = (targetRegion: SupportedRegion): string =>
+    `/event/${encodeURIComponent(data.eventId)}?region=${encodeURIComponent(targetRegion)}`;
 </script>
 
 <svelte:head>
@@ -48,7 +58,22 @@
 
 <section class="mb-4 flex items-center justify-between gap-3">
   <a class="btn btn-ghost btn-sm" href="/">← {homeLabel}</a>
-  <span class="badge badge-primary badge-outline font-semibold">{data.region.toUpperCase()}</span>
+  <div class="flex flex-wrap items-center justify-end gap-1.5">
+    {#each regionOptions as regionOption (regionOption)}
+      {#if regionOption === data.region}
+        <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+          {regionOption.toUpperCase()}
+        </span>
+      {:else}
+        <a
+          href={toRegionHref(regionOption)}
+          class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold"
+        >
+          {regionOption.toUpperCase()}
+        </a>
+      {/if}
+    {/each}
+  </div>
 </section>
 
 {#if data.error}

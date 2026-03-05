@@ -1,0 +1,12 @@
+import type { ContentSiteServerMessages } from "../../types";
+
+const serverJaJp: ContentSiteServerMessages = {
+  homeEventDataUnavailable: "イベントデータは一時的に利用できません。",
+  homeEventDataRequestFailed: "イベントデータの取得に失敗しました。",
+  invalidEventId: "無効なイベントIDです。",
+  eventUnavailableInCurrentRegion:
+    "このイベントは現在の地域では利用できません。バッジから地域を切り替えてください。",
+  failedToLoadEventData: "イベントデータの読み込みに失敗しました。"
+};
+
+export default serverJaJp;
