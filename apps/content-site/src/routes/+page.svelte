@@ -48,6 +48,9 @@
       timeStyle: "short"
     }).format(parsedDate);
   };
+
+  const toEventHref = (eventId: string, region: string): string =>
+    `/event/${encodeURIComponent(eventId)}?region=${encodeURIComponent(region)}`;
 </script>
 
 <section class="mb-4 flex justify-center">
@@ -63,10 +66,35 @@
   {#each data.cards as card (card.region)}
     <article id={`region-${card.region}`} class="card w-full bg-base-100 shadow-sm md:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]">
       <div class="card-body">
-        <div class="flex items-center justify-between">
-          <h2 class="card-title">{card.label}</h2>
-          <span class="badge badge-primary badge-outline">{card.region}</span>
-        </div>
+        {#if card.event}
+          <a
+            href={toEventHref(card.event.id, card.region)}
+            class="group relative mb-3 block overflow-hidden rounded-xl border border-base-content/15 bg-base-200/50"
+          >
+            {#if card.event.assetBundleName}
+              <img
+                src={getEventBannerAssetURL(card.event.assetBundleName, card.region)}
+                alt={`${card.event.title} banner`}
+                loading="lazy"
+                class="h-32 w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              />
+            {:else}
+              <div class="flex h-32 items-center justify-center text-sm opacity-70">
+                {card.label}
+              </div>
+            {/if}
+            <span class="badge badge-primary badge-outline absolute right-2 top-2 font-semibold">
+              {card.region.toUpperCase()}
+            </span>
+          </a>
+        {:else}
+          <div class="relative mb-3 overflow-hidden rounded-xl border border-base-content/15 bg-base-200/50">
+            <div class="flex h-32 items-center justify-center text-sm opacity-70">{card.label}</div>
+            <span class="badge badge-primary badge-outline absolute right-2 top-2 font-semibold">
+              {card.region.toUpperCase()}
+            </span>
+          </div>
+        {/if}
 
         {#if card.error}
           <p class="text-sm text-error">{card.error}</p>
