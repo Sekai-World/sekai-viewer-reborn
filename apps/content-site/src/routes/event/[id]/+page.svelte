@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
   import { getEventBannerAssetURL } from "$lib/assets";
   import { setI18nLocale, tCommon } from "$lib/i18n";
@@ -55,8 +56,6 @@
     )
   );
 
-  const toRegionHref = (targetRegion: SupportedRegion): string =>
-    `/event/${encodeURIComponent(data.eventId)}?region=${encodeURIComponent(targetRegion)}`;
 </script>
 
 <svelte:head>
@@ -64,7 +63,7 @@
 </svelte:head>
 
 <section class="mb-4 flex items-center justify-between gap-3">
-  <a class="btn btn-ghost btn-sm" href="/">← {homeLabel}</a>
+  <a class="btn btn-ghost btn-sm" href={resolve("/")}>← {homeLabel}</a>
   <div class="flex flex-wrap items-center justify-end gap-1.5">
     {#each regionOptions as regionOption (regionOption)}
       {#if regionOption === data.region}
@@ -72,8 +71,9 @@
           {regionOption.toUpperCase()}
         </span>
       {:else}
+        <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
         <a
-          href={toRegionHref(regionOption)}
+          href={`${resolve("/event/[id]", { id: data.eventId })}?region=${encodeURIComponent(regionOption)}`}
           class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold"
         >
           {regionOption.toUpperCase()}

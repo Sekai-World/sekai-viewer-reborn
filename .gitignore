@@ -92,6 +92,7 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+build/
 
 # Dependency directories
 node_modules/
@@ -190,6 +191,7 @@ dist
 
 # SvelteKit build / generate output
 .svelte-kit
+.turbo/
 
 ### Svelte ###
 # gitignore template for the SvelteKit, frontend web component framework
@@ -246,4 +248,3 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/windows,visualstudiocode,dotenv,linux,macos,node,svelte
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
-

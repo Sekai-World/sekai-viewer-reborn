@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host --port 5103",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts,.svelte"
   },
   "dependencies": {
     "@platform/auth-client": "workspace:*",

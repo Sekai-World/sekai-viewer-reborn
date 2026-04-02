@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { getContentSiteCommonText, regionLabels } from "@platform/i18n-dicts";
   import { getEventBannerAssetURL } from "$lib/assets";
   import { setI18nLocale, tCommon } from "$lib/i18n";
@@ -206,8 +207,6 @@
     };
   });
 
-  const toEventHref = (eventId: string, region: string): string =>
-    `/event/${encodeURIComponent(eventId)}?region=${encodeURIComponent(region)}`;
 </script>
 
 <section class="mb-4 flex justify-center">
@@ -223,9 +222,10 @@
   {#each data.cards as card (card.region)}
     {#if card.event}
       {@const countdown = getCountdownState(card.event.startAt, card.event.endAt)}
+      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
       <a
         id={`region-${card.region}`}
-        href={toEventHref(card.event.id, card.region)}
+        href={`${resolve("/event/[id]", { id: card.event.id })}?region=${encodeURIComponent(card.region)}`}
         class="card group w-full bg-base-100 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
       >
         <div class="card-body">

@@ -10,7 +10,8 @@
     type SupportedRegion
   } from "@platform/i18n-dicts";
 
-  let activeRegion = $state<SupportedRegion>(supportedRegions[0]);
+  let primaryRegion = $state<SupportedRegion>(supportedRegions[0]);
+  let secondaryRegion = $state<SupportedRegion>(supportedRegions[1] ?? supportedRegions[0]);
 
   const regionOptions = supportedRegions.map((region) => ({
     value: region,
@@ -29,9 +30,15 @@
 <ViewerShell drawerId="account-site-drawer" navTitle="Sekai Account" navBadge="Profile" sidebarItems={sidebarItems}>
   <RegionSwitcher
     options={regionOptions}
-    activeValue={activeRegion}
-    onSelect={(region) => {
-      activeRegion = region as SupportedRegion;
+    primaryValue={primaryRegion}
+    secondaryValue={secondaryRegion}
+    primaryTitle="Primary"
+    secondaryTitle="Secondary"
+    onSelectPrimary={(region) => {
+      primaryRegion = region as SupportedRegion;
+    }}
+    onSelectSecondary={(region) => {
+      secondaryRegion = region as SupportedRegion;
     }}
   />
 
@@ -41,7 +48,14 @@
         <div class="card-body">
           <div class="flex items-center justify-between">
             <h2 class="card-title">{regionLabels[region]}</h2>
-            <span class={`badge ${activeRegion === region ? "badge-primary" : "badge-ghost"}`}>{region}</span>
+            <div class="flex gap-1">
+              <span class={`badge ${primaryRegion === region ? "badge-primary" : "badge-ghost"}`}>
+                P
+              </span>
+              <span class={`badge ${secondaryRegion === region ? "badge-secondary" : "badge-ghost"}`}>
+                S
+              </span>
+            </div>
           </div>
           <p class="text-sm opacity-70">Account 模块预留：{regionLabels[region]} 区域账号服务入口</p>
         </div>
