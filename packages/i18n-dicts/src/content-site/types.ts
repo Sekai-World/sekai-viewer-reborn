@@ -17,6 +17,7 @@ export type ContentSiteCommonMessages = {
     background: string;
     characters: string;
   };
+  eventInfoTitle: string;
   settings: {
     title: string;
     gameContentRegion: string;

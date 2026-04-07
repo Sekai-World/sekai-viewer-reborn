@@ -19,6 +19,7 @@ const commonZhCn: ContentSiteCommonMessages = {
     background: "背景",
     characters: "角色"
   },
+  eventInfoTitle: "活动信息",
   settings: {
     title: "设置",
     gameContentRegion: "游戏内容地区",

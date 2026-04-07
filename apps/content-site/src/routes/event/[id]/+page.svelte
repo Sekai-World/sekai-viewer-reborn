@@ -29,6 +29,7 @@
   let charactersTabLabel = $state(
     getContentSiteCommonText(initialLocale, "eventAssetTabs.characters")
   );
+  let eventInfoTitle = $state(getContentSiteCommonText(initialLocale, "eventInfoTitle"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
@@ -49,6 +50,7 @@
     titleTabLabel = tCommon(locale, "eventAssetTabs.title");
     backgroundTabLabel = tCommon(locale, "eventAssetTabs.background");
     charactersTabLabel = tCommon(locale, "eventAssetTabs.characters");
+    eventInfoTitle = tCommon(locale, "eventInfoTitle");
   };
 
   const regionDisplayOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
@@ -204,9 +206,8 @@
           <div class="card-body gap-4 p-5">
             <div>
               <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                {eventTitlePrefix}
+                {eventInfoTitle}
               </p>
-              <h2 class="mt-2 text-lg font-semibold leading-tight">{data.event.title}</h2>
             </div>
 
             <dl class="space-y-3">

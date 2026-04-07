@@ -19,6 +19,7 @@ const commonEn: ContentSiteCommonMessages = {
     background: "Background",
     characters: "Characters"
   },
+  eventInfoTitle: "Event Info",
   settings: {
     title: "Settings",
     gameContentRegion: "Game Content Region",
