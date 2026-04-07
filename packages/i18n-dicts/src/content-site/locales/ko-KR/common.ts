@@ -9,9 +9,16 @@ const commonKoKr: ContentSiteCommonMessages = {
   countdownEndsIn: "종료까지",
   eventEnded: "이벤트 종료",
   idLabel: "ID",
+  nameLabel: "이름",
   bannerAltSuffix: "배너",
   noCurrentEventData: "현재 진행 중인 이벤트 데이터가 없습니다.",
   loadingLanguagePack: "언어 팩을 불러오는 중...",
+  eventAssetTabs: {
+    banner: "배너",
+    title: "제목",
+    background: "배경",
+    characters: "캐릭터"
+  },
   settings: {
     title: "설정",
     gameContentRegion: "게임 데이터 지역",
