@@ -22,6 +22,7 @@ packages/
   sekai-master-api-sdk/
   auth-client/
   i18n-dicts/
+  ui-shell/
   ui-tokens/
 deploy/
   k8s/
@@ -46,6 +47,7 @@ Each app includes a SvelteKit 2 starter page and Tailwind CSS 4 integration:
 - `@platform/sekai-master-api-sdk`: sekai-master-api OpenAPI SDK generator and client package
 - `@platform/auth-client`: Keycloak/OIDC helper URL builders
 - `@platform/i18n-dicts`: locale dictionary starter
+- `@platform/ui-shell`: shared Svelte shell and region-switcher components
 - `@platform/ui-tokens`: framework-agnostic design tokens (JSON + TS export)
 
 ## Prerequisites
@@ -101,6 +103,51 @@ Format:
 pnpm format
 pnpm format:check
 ```
+
+## Release And Changelog
+
+This repository now uses Changesets for workspace versioning and changelog generation.
+
+Create a changeset for a user-facing change:
+
+```bash
+pnpm changeset
+```
+
+Check pending release state:
+
+```bash
+pnpm changeset:status
+```
+
+Generate version bumps and `CHANGELOG.md` updates locally:
+
+```bash
+pnpm release:version
+```
+
+Create Git tags after the version commit is ready:
+
+```bash
+pnpm release:tag
+```
+
+Run both steps together:
+
+```bash
+pnpm release
+```
+
+Notes:
+
+- Pull requests that change `apps/*` or `packages/*` are checked by `.github/workflows/changeset.yml` and must include a changeset file, unless they are the auto-generated release PR.
+- `.github/workflows/ci.yml` runs `pnpm lint`, `pnpm check`, and `pnpm build` on pushes to `main` and on pull requests.
+- The GitHub Actions workflow at `.github/workflows/release.yml` opens or updates a release PR whenever changesets land on `main`.
+- After the release PR is merged, `.github/workflows/release.yml` creates any missing workspace tags for the changed package versions and then creates matching GitHub releases.
+- If you need to rerun just the GitHub Release publish step locally or in CI, use `pnpm release:github`.
+- All workspaces in this repo are private, so Changesets is configured to version and tag private packages too.
+- Changeset entries should be committed as markdown files under `.changeset/`.
+- If a code change should not produce a user-facing release note, use `pnpm changeset --empty`.
 
 ## Docker (Per App)
 

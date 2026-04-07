@@ -40,6 +40,11 @@ pnpm dev
 pnpm build
 pnpm check
 pnpm lint
+pnpm changeset
+pnpm changeset:status
+pnpm release:version
+pnpm release:tag
+pnpm release
 pnpm format
 pnpm format:check
 ```
@@ -54,9 +59,12 @@ pnpm --filter <workspace-name> lint
 ```
 
 Notes:
+
 - `turbo dev --parallel` is the root `pnpm dev` command.
 - Prefer targeted workspace commands for focused changes.
 - `@platform/ui-shell` currently does not define standalone `build` / `check` / `lint` scripts; validate consumers instead when editing that package.
+- Workspace versioning and changelog generation use Changesets.
+- Release automation is defined in `.github/workflows/release.yml`.
 
 ## Local Dev Ports
 
@@ -131,6 +139,7 @@ When changing shared packages:
 Location: `packages/sekai-master-api-sdk`
 
 Purpose:
+
 - Generated TypeScript SDK for `sekai-master-api` from OpenAPI.
 
 Generation command:
@@ -140,6 +149,7 @@ pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input <openapi-fi
 ```
 
 Notes:
+
 - `--input` is required.
 - Default output is `./src`.
 - Generating into `src` can overwrite generated SDK files.

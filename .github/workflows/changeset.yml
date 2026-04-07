@@ -1,0 +1,44 @@
+name: Changeset Check
+
+on:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changeset:
+    if: ${{ !startsWith(github.head_ref, 'changeset-release/') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for required changeset
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch origin "${BASE_REF}" --depth=1
+
+          changed_files="$(git diff --name-only "origin/${BASE_REF}...HEAD")"
+
+          if ! printf '%s\n' "${changed_files}" | grep -Eq '^(apps|packages)/'; then
+            echo "No app or package changes detected."
+            exit 0
+          fi
+
+          if printf '%s\n' "${changed_files}" | grep -Eq '^\.changeset/[^/]+\.md$'; then
+            echo "Changeset detected."
+            exit 0
+          fi
+
+          echo "Changes under apps/ or packages/ require a changeset."
+          echo "If this change is not user-facing, add an empty changeset with 'pnpm changeset --empty'."
+          exit 1

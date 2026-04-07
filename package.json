@@ -8,10 +8,18 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "check": "turbo check",
+    "changeset": "changeset",
+    "changeset:status": "changeset status --verbose",
+    "release:version": "changeset version",
+    "release:tag": "changeset tag",
+    "release:github": "node ./scripts/release/publish-workspace-releases.mjs",
+    "release:publish": "node ./scripts/release/publish-workspace-releases.mjs",
+    "release": "pnpm release:version && pnpm release:tag",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@changesets/cli": "2.30.0",
     "@eslint/js": "^9.21.0",
     "eslint": "^9.21.0",
     "eslint-plugin-svelte": "^3.16.0",
