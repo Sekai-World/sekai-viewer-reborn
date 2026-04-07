@@ -34,6 +34,10 @@ export const normalizeUiLocale = (
     return fallback;
   }
 
+  if (value === "en-US" || value === "en-GB") {
+    return "en";
+  }
+
   return supportedUiLocales.includes(value as SupportedUiLocale)
     ? (value as SupportedUiLocale)
     : fallback;

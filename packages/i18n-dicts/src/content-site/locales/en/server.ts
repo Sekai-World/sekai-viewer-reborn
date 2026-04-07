@@ -1,6 +1,6 @@
 import type { ContentSiteServerMessages } from "../../types";
 
-const serverEnUs: ContentSiteServerMessages = {
+const serverEn: ContentSiteServerMessages = {
   homeEventDataUnavailable: "Event data is temporarily unavailable.",
   homeEventDataRequestFailed: "Failed to request event data.",
   invalidEventId: "Invalid event id.",
@@ -9,4 +9,4 @@ const serverEnUs: ContentSiteServerMessages = {
   failedToLoadEventData: "Failed to load event data."
 };
 
-export default serverEnUs;
+export default serverEn;

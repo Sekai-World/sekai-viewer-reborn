@@ -8,7 +8,7 @@
 
   let { data }: { data: PageData } = $props();
   const initialLocale = DEFAULT_UI_LOCALE;
-  let displayLocale = $state<string>("en-US");
+  let displayLocale = $state<string>(initialLocale);
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
   let startAtLabel = $state(getContentSiteCommonText(initialLocale, "startAt"));
   let endAtLabel = $state(getContentSiteCommonText(initialLocale, "endAt"));
