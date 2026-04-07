@@ -20,6 +20,9 @@ const commonJaJp: ContentSiteCommonMessages = {
     characters: "キャラクター"
   },
   eventInfoTitle: "イベント情報",
+  debugEventJsonButton: "デバッグ JSON",
+  debugEventJsonTitle: "イベント JSON",
+  closeLabel: "閉じる",
   settings: {
     title: "設定",
     gameContentRegion: "ゲームデータ地域",
