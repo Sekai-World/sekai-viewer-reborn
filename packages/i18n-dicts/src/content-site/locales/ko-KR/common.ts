@@ -19,6 +19,7 @@ const commonKoKr: ContentSiteCommonMessages = {
     background: "배경",
     characters: "캐릭터"
   },
+  eventInfoTitle: "이벤트 정보",
   settings: {
     title: "설정",
     gameContentRegion: "게임 데이터 지역",

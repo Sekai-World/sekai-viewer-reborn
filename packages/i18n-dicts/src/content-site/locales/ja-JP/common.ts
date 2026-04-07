@@ -19,6 +19,7 @@ const commonJaJp: ContentSiteCommonMessages = {
     background: "背景",
     characters: "キャラクター"
   },
+  eventInfoTitle: "イベント情報",
   settings: {
     title: "設定",
     gameContentRegion: "ゲームデータ地域",
