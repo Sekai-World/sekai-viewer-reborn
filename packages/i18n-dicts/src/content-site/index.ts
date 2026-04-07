@@ -1,8 +1,6 @@
 import { repoLocaleByUiLocale, supportedUiLocales, type SupportedUiLocale } from "../ui-locales";
-import commonEnGb from "./locales/en-GB/common";
-import serverEnGb from "./locales/en-GB/server";
-import commonEnUs from "./locales/en-US/common";
-import serverEnUs from "./locales/en-US/server";
+import commonEn from "./locales/en/common";
+import serverEn from "./locales/en/server";
 import commonJaJp from "./locales/ja-JP/common";
 import serverJaJp from "./locales/ja-JP/server";
 import commonKoKr from "./locales/ko-KR/common";
@@ -24,8 +22,7 @@ export type {
 } from "./types";
 
 export const contentSiteCommonByUiLocale: Record<SupportedUiLocale, ContentSiteCommonMessages> = {
-  "en-US": commonEnUs,
-  "en-GB": commonEnGb,
+  en: commonEn,
   "ja-JP": commonJaJp,
   "ko-KR": commonKoKr,
   "zh-CN": commonZhCn,
@@ -33,8 +30,7 @@ export const contentSiteCommonByUiLocale: Record<SupportedUiLocale, ContentSiteC
 };
 
 export const contentSiteServerByUiLocale: Record<SupportedUiLocale, ContentSiteServerMessages> = {
-  "en-US": serverEnUs,
-  "en-GB": serverEnGb,
+  en: serverEn,
   "ja-JP": serverJaJp,
   "ko-KR": serverKoKr,
   "zh-CN": serverZhCn,

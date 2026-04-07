@@ -1,6 +1,6 @@
 import type { ContentSiteCommonMessages } from "../../types";
 
-const commonEnGb: ContentSiteCommonMessages = {
+const commonEn: ContentSiteCommonMessages = {
   home: "Home",
   darkmode: "Theme",
   startAt: "Start",
@@ -41,4 +41,4 @@ const commonEnGb: ContentSiteCommonMessages = {
   }
 };
 
-export default commonEnGb;
+export default commonEn;

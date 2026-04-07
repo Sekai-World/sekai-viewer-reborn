@@ -1,6 +1,5 @@
 export const supportedUiLocales = [
-  "en-US",
-  "en-GB",
+  "en",
   "ja-JP",
   "ko-KR",
   "zh-CN",
@@ -10,8 +9,7 @@ export const supportedUiLocales = [
 export type SupportedUiLocale = (typeof supportedUiLocales)[number];
 
 export const repoLocaleByUiLocale: Record<SupportedUiLocale, string> = {
-  "en-US": "en",
-  "en-GB": "en",
+  en: "en",
   "ja-JP": "ja",
   "ko-KR": "ko",
   "zh-CN": "zh-CN",
@@ -19,8 +17,7 @@ export const repoLocaleByUiLocale: Record<SupportedUiLocale, string> = {
 };
 
 export const uiLocaleNameByCode: Record<SupportedUiLocale, string> = {
-  "en-US": "American English",
-  "en-GB": "British English",
+  en: "English",
   "ja-JP": "日本語",
   "ko-KR": "한국어",
   "zh-CN": "简体中文",
