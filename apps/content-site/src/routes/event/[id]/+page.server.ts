@@ -1,3 +1,4 @@
+import { dev } from "$app/environment";
 import { getEventsByRegionById } from "@platform/sekai-master-api-sdk";
 import {
   getContentSiteServerText,
@@ -27,6 +28,7 @@ type RegionEventLookup = {
   region: SupportedRegion;
   event: EventDetail | null;
   exists: boolean;
+  rawPayloadJson: string | null;
 };
 
 const getString = (value: unknown): string | null =>
@@ -150,7 +152,8 @@ const fetchRegionEvent = async (
       return {
         region,
         event: null,
-        exists: false
+        exists: false,
+        rawPayloadJson: null
       };
     }
 
@@ -158,13 +161,15 @@ const fetchRegionEvent = async (
     return {
       region,
       event,
-      exists: event !== null
+      exists: event !== null,
+      rawPayloadJson: JSON.stringify(response.data, null, 2)
     };
   } catch {
     return {
       region,
       event: null,
-      exists: false
+      exists: false,
+      rawPayloadJson: null
     };
   }
 };
@@ -193,7 +198,8 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
       regionLabel: regionLabels[region],
       availableRegions: [region],
       event: null,
-      error: invalidEventIdMessage
+      error: invalidEventIdMessage,
+      debugEventJson: null
     };
   }
 
@@ -206,7 +212,8 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
     const currentLookup = lookups.find((lookup) => lookup.region === region) ?? {
       region,
       event: null,
-      exists: false
+      exists: false,
+      rawPayloadJson: null
     };
     const detectedRegions = lookups
       .filter((lookup) => lookup.exists)
@@ -222,6 +229,7 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
         regionLabel: regionLabels[region],
         availableRegions,
         event: null,
+        debugEventJson: dev ? currentLookup.rawPayloadJson : null,
         error:
           detectedRegions.length > 0
             ? eventUnavailableInCurrentRegionMessage
@@ -235,6 +243,7 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
       regionLabel: regionLabels[region],
       availableRegions,
       event: currentLookup.event,
+      debugEventJson: dev ? currentLookup.rawPayloadJson : null,
       error: null
     };
   } catch {
@@ -244,6 +253,7 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
       regionLabel: regionLabels[region],
       availableRegions: [region],
       event: null,
+      debugEventJson: null,
       error: failedToLoadEventDataMessage
     };
   }
