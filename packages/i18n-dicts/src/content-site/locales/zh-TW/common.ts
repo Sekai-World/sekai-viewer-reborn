@@ -9,9 +9,16 @@ const commonZhTw: ContentSiteCommonMessages = {
   countdownEndsIn: "距離結束",
   eventEnded: "活動已結束",
   idLabel: "ID",
+  nameLabel: "名稱",
   bannerAltSuffix: "橫幅",
   noCurrentEventData: "暫無活動資料。",
   loadingLanguagePack: "正在載入語言包...",
+  eventAssetTabs: {
+    banner: "橫幅",
+    title: "標題",
+    background: "背景",
+    characters: "角色"
+  },
   settings: {
     title: "設定",
     gameContentRegion: "遊戲內容地區",

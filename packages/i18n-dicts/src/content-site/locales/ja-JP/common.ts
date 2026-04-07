@@ -9,9 +9,16 @@ const commonJaJp: ContentSiteCommonMessages = {
   countdownEndsIn: "終了まで",
   eventEnded: "イベント終了",
   idLabel: "ID",
+  nameLabel: "名称",
   bannerAltSuffix: "バナー",
   noCurrentEventData: "現在のイベントデータはありません。",
   loadingLanguagePack: "言語パックを読み込み中...",
+  eventAssetTabs: {
+    banner: "バナー",
+    title: "タイトル",
+    background: "背景",
+    characters: "キャラクター"
+  },
   settings: {
     title: "設定",
     gameContentRegion: "ゲームデータ地域",

@@ -9,9 +9,16 @@ const commonEn: ContentSiteCommonMessages = {
   countdownEndsIn: "Ends In",
   eventEnded: "Event Ended",
   idLabel: "ID",
+  nameLabel: "Name",
   bannerAltSuffix: "banner",
   noCurrentEventData: "No current event data.",
   loadingLanguagePack: "Loading language pack...",
+  eventAssetTabs: {
+    banner: "Banner",
+    title: "Title",
+    background: "Background",
+    characters: "Characters"
+  },
   settings: {
     title: "Settings",
     gameContentRegion: "Game Content Region",

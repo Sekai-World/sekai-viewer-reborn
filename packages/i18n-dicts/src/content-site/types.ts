@@ -7,9 +7,16 @@ export type ContentSiteCommonMessages = {
   countdownEndsIn: string;
   eventEnded: string;
   idLabel: string;
+  nameLabel: string;
   bannerAltSuffix: string;
   noCurrentEventData: string;
   loadingLanguagePack: string;
+  eventAssetTabs: {
+    banner: string;
+    title: string;
+    background: string;
+    characters: string;
+  };
   settings: {
     title: string;
     gameContentRegion: string;
