@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
   import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
   import { getEventBannerAssetURL } from "$lib/assets";
@@ -10,6 +11,7 @@
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
   let { data }: { data: PageData } = $props();
+  let debugDialog: HTMLDialogElement | null = $state(null);
   const initialLocale = DEFAULT_UI_LOCALE;
   let displayLocale = $state<string>(initialLocale);
   let activeAssetTab = $state<EventAssetTab>("banner");
@@ -30,14 +32,27 @@
     getContentSiteCommonText(initialLocale, "eventAssetTabs.characters")
   );
   let eventInfoTitle = $state(getContentSiteCommonText(initialLocale, "eventInfoTitle"));
+  let debugEventJsonButtonLabel = $state(
+    getContentSiteCommonText(initialLocale, "debugEventJsonButton")
+  );
+  let debugEventJsonTitle = $state(getContentSiteCommonText(initialLocale, "debugEventJsonTitle"));
+  let closeLabel = $state(getContentSiteCommonText(initialLocale, "closeLabel"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
+    applyTranslations(data.uiLocale);
+  });
+
+  $effect(() => {
+    if (!browser) {
+      return;
+    }
+
     void refreshTranslations(data.uiLocale);
   });
 
-  const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue);
+  const applyTranslations = (localeValue: string): void => {
+    const locale = localeValue;
     homeLabel = tCommon(locale, "home");
     startAtLabel = tCommon(locale, "startAt");
     endAtLabel = tCommon(locale, "endAt");
@@ -51,6 +66,18 @@
     backgroundTabLabel = tCommon(locale, "eventAssetTabs.background");
     charactersTabLabel = tCommon(locale, "eventAssetTabs.characters");
     eventInfoTitle = tCommon(locale, "eventInfoTitle");
+    debugEventJsonButtonLabel = tCommon(locale, "debugEventJsonButton");
+    debugEventJsonTitle = tCommon(locale, "debugEventJsonTitle");
+    closeLabel = tCommon(locale, "closeLabel");
+  };
+
+  const refreshTranslations = async (localeValue: string): Promise<void> => {
+    const locale = await setI18nLocale(localeValue);
+    applyTranslations(locale);
+  };
+
+  const openDebugDialog = (): void => {
+    debugDialog?.showModal();
   };
 
   const regionDisplayOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
@@ -70,6 +97,15 @@
   <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
     <a class="btn btn-ghost btn-sm w-fit" href={resolve("/")}>← {homeLabel}</a>
     <div class="flex flex-wrap items-center gap-1.5 md:justify-end">
+      {#if dev && data.debugEventJson}
+        <button
+          type="button"
+          class="btn btn-outline btn-sm"
+          onclick={openDebugDialog}
+        >
+          {debugEventJsonButtonLabel}
+        </button>
+      {/if}
       {#each regionOptions as regionOption (regionOption)}
         {#if regionOption === data.region}
           <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
@@ -297,5 +333,22 @@
     </div>
   {:else if !data.error}
     <div class="alert">{noEventLabel}</div>
+  {/if}
+
+  {#if dev && data.debugEventJson}
+    <dialog bind:this={debugDialog} class="modal">
+      <div class="modal-box max-w-5xl">
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <h3 class="text-lg font-semibold">{debugEventJsonTitle}</h3>
+          <form method="dialog">
+            <button type="submit" class="btn btn-sm btn-ghost">{closeLabel}</button>
+          </form>
+        </div>
+        <pre class="max-h-[70vh] overflow-auto rounded-xl bg-base-200/55 p-4 text-xs leading-6"><code>{data.debugEventJson}</code></pre>
+      </div>
+      <form method="dialog" class="modal-backdrop">
+        <button type="submit">{closeLabel}</button>
+      </form>
+    </dialog>
   {/if}
 </section>
