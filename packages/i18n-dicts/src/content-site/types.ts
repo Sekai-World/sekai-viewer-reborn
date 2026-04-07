@@ -18,6 +18,9 @@ export type ContentSiteCommonMessages = {
     characters: string;
   };
   eventInfoTitle: string;
+  debugEventJsonButton: string;
+  debugEventJsonTitle: string;
+  closeLabel: string;
   settings: {
     title: string;
     gameContentRegion: string;

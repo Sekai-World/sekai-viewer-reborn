@@ -20,6 +20,9 @@ const commonZhTw: ContentSiteCommonMessages = {
     characters: "角色"
   },
   eventInfoTitle: "活動資訊",
+  debugEventJsonButton: "除錯 JSON",
+  debugEventJsonTitle: "活動 JSON",
+  closeLabel: "關閉",
   settings: {
     title: "設定",
     gameContentRegion: "遊戲內容地區",

@@ -20,6 +20,9 @@ const commonEn: ContentSiteCommonMessages = {
     characters: "Characters"
   },
   eventInfoTitle: "Event Info",
+  debugEventJsonButton: "Debug JSON",
+  debugEventJsonTitle: "Event JSON",
+  closeLabel: "Close",
   settings: {
     title: "Settings",
     gameContentRegion: "Game Content Region",

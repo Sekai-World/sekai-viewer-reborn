@@ -20,6 +20,9 @@ const commonKoKr: ContentSiteCommonMessages = {
     characters: "캐릭터"
   },
   eventInfoTitle: "이벤트 정보",
+  debugEventJsonButton: "디버그 JSON",
+  debugEventJsonTitle: "이벤트 JSON",
+  closeLabel: "닫기",
   settings: {
     title: "설정",
     gameContentRegion: "게임 데이터 지역",
