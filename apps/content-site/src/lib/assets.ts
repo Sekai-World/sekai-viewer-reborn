@@ -97,3 +97,27 @@ export const getEventBannerAssetURL = (
     server
   );
 };
+
+export const getEventLogoAssetURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp"
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL();
+  }
+
+  return buildServerAssetURL(`event/${normalizedAssetBundleName}/logo/logo.webp`, server);
+};
+
+export const getEventBackgroundAssetURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp"
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL();
+  }
+
+  return buildServerAssetURL(`event/${normalizedAssetBundleName}/screen/bg.webp`, server);
+};
