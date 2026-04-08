@@ -2,7 +2,12 @@
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
   import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
-  import { getEventBannerAssetURL } from "$lib/assets";
+  import { ImagePreviewDialog } from "@platform/ui-shell";
+  import {
+    getEventBackgroundAssetURL,
+    getEventBannerAssetURL,
+    getEventLogoAssetURL
+  } from "$lib/assets";
   import { formatDisplayDateTime } from "$lib/date-time";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { DEFAULT_UI_LOCALE } from "$lib/region";
@@ -188,32 +193,35 @@
                   </div>
                 {/if}
               {:else if activeAssetTab === "title"}
-                <div class="flex aspect-[16/10] items-end bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.22),transparent_42%),linear-gradient(135deg,rgba(0,0,0,0.04),rgba(0,0,0,0.16))] p-6 text-left md:p-8">
-                  <div class="max-w-3xl">
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                      {eventTitlePrefix}
-                    </p>
-                    <h3 class="mt-3 text-2xl font-semibold leading-tight md:text-4xl">
-                      {data.event.title}
-                    </h3>
-                  </div>
-                </div>
-              {:else if activeAssetTab === "background"}
-                <div class="relative aspect-[16/10] overflow-hidden">
-                  {#if data.event.assetBundleName}
+                {#if data.event.assetBundleName}
+                  <div class="flex aspect-[16/10] items-center justify-center p-4 md:p-6">
                     <img
-                      src={getEventBannerAssetURL(data.event.assetBundleName, data.region)}
-                      alt={`${data.event.title} ${bannerAltSuffix}`}
-                      class="h-full w-full scale-110 object-cover blur-sm"
+                      src={getEventLogoAssetURL(data.event.assetBundleName, data.region)}
+                      alt={data.event.title}
+                      class="h-auto max-h-full w-full object-contain"
                     />
-                  {:else}
-                    <div class="h-full w-full bg-[linear-gradient(135deg,rgba(0,0,0,0.05),rgba(0,0,0,0.18))]"></div>
-                  {/if}
-                  <div class="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.04),rgba(0,0,0,0.42))]"></div>
-                  <div class="absolute inset-x-0 bottom-0 p-6 text-left text-white md:p-8">
-                    <h3 class="text-2xl font-semibold leading-tight md:text-4xl">{data.event.title}</h3>
                   </div>
-                </div>
+                {:else}
+                  <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
+                    {data.event.title}
+                  </div>
+                {/if}
+              {:else if activeAssetTab === "background"}
+                {#if data.event.assetBundleName}
+                  <ImagePreviewDialog
+                    src={getEventBackgroundAssetURL(data.event.assetBundleName, data.region)}
+                    alt={data.event.title}
+                    closeLabel={closeLabel}
+                    formatOptions={["webp", "png"]}
+                    buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
+                    imageClass="h-full w-full object-cover"
+                    dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
+                  />
+                {:else}
+                  <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
+                    {data.event.title}
+                  </div>
+                {/if}
               {:else}
                 <div class="relative aspect-[16/10] overflow-hidden">
                   {#if data.event.assetBundleName}

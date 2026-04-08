@@ -1,0 +1,143 @@
+<script lang="ts">
+  import type { Snippet } from "svelte";
+
+  type Props = {
+    src: string;
+    alt?: string;
+    closeLabel?: string;
+    downloadLabel?: string;
+    openInNewWindowLabel?: string;
+    formatOptions?: string[];
+    buttonClass?: string;
+    imageClass?: string;
+    dialogBoxClass?: string;
+    dialogImageClass?: string;
+    children?: Snippet;
+  };
+
+  let {
+    src,
+    alt = "",
+    closeLabel = "Close",
+    downloadLabel = "Download",
+    openInNewWindowLabel = "Open in new window",
+    formatOptions = [],
+    buttonClass = "block w-full cursor-zoom-in",
+    imageClass = "h-auto max-h-full w-full object-contain",
+    dialogBoxClass = "relative flex max-w-[min(96vw,1800px)] items-center justify-center overflow-hidden bg-base-100/96 p-2 md:p-4",
+    dialogImageClass = "h-auto max-h-[88vh] w-auto max-w-full object-contain",
+    children
+  }: Props = $props();
+
+  let dialog: HTMLDialogElement | null = $state(null);
+  let currentFormat = $state("");
+
+  const getSrcExtension = (value: string): string => {
+    const match = value.match(/\.([a-z0-9]+)(?:[?#].*)?$/i);
+    return match?.[1]?.toLowerCase() ?? "";
+  };
+
+  const replaceSrcExtension = (value: string, extension: string): string => {
+    return value.replace(/(\.[a-z0-9]+)(?=([?#].*)?$)/i, `.${extension}`);
+  };
+
+  $effect(() => {
+    currentFormat = getSrcExtension(src);
+  });
+
+  const normalizedFormatOptions = $derived(
+    formatOptions.map((format) => format.trim().toLowerCase()).filter(Boolean)
+  );
+  const resolvedSrc = $derived(
+    currentFormat && normalizedFormatOptions.includes(currentFormat)
+      ? replaceSrcExtension(src, currentFormat)
+      : src
+  );
+
+  const openDialog = (): void => {
+    dialog?.showModal();
+  };
+</script>
+
+<button type="button" class={buttonClass} onclick={openDialog} aria-label={alt || closeLabel}>
+  {#if children}
+    {@render children()}
+  {:else}
+    <img src={resolvedSrc} alt={alt} class={imageClass} />
+  {/if}
+</button>
+
+<dialog bind:this={dialog} class="modal">
+  <div class={`modal-box ${dialogBoxClass}`}>
+    <div class="absolute left-3 top-3 z-10 flex items-center gap-2">
+      {#if normalizedFormatOptions.length > 0}
+        <div class="inline-flex rounded-full border border-base-content/10 bg-base-100/90 p-1 shadow-sm">
+          {#each normalizedFormatOptions as format (format)}
+            <button
+              type="button"
+              class={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide transition ${
+                currentFormat === format
+                  ? "bg-primary text-primary-content shadow-sm"
+                  : "text-base-content/70"
+              }`}
+              onclick={() => {
+                currentFormat = format;
+              }}
+            >
+              {format.toUpperCase()}
+            </button>
+          {/each}
+        </div>
+      {/if}
+
+      <a
+        href={resolvedSrc}
+        download
+        class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
+        aria-label={downloadLabel}
+        title={downloadLabel}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          class="h-4 w-4"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1" />
+        </svg>
+      </a>
+      <a
+        href={resolvedSrc}
+        target="_blank"
+        rel="noreferrer"
+        class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
+        aria-label={openInNewWindowLabel}
+        title={openInNewWindowLabel}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          class="h-4 w-4"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M14 5h5v5m0-5-7 7M10 7H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-3" />
+        </svg>
+      </a>
+      <form method="dialog">
+        <button type="submit" class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm">
+          ✕
+        </button>
+      </form>
+    </div>
+
+    <img src={resolvedSrc} alt={alt} class={dialogImageClass} />
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button type="submit">{closeLabel}</button>
+  </form>
+</dialog>
