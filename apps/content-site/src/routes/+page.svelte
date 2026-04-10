@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { getContentSiteCommonText, regionLabels } from "@platform/i18n-dicts";
+  import { getContentSiteCommonText, regionLabels, supportedRegions } from "@platform/i18n-dicts";
   import { getEventBannerAssetURL } from "$lib/assets";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { DEFAULT_UI_LOCALE } from "$lib/region";
@@ -219,108 +219,130 @@
 </section>
 
 <section class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-  {#each data.cards as card (card.region)}
-    {#if card.event}
-      {@const countdown = getCountdownState(card.event.startAt, card.event.endAt)}
-      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-      <a
-        id={`region-${card.region}`}
-        href={`${resolve("/event/[id]", { id: card.event.id })}?region=${encodeURIComponent(card.region)}`}
-        class="card group w-full bg-base-100 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <div class="card-body">
-          <div class="mb-2 flex items-center justify-center md:mb-3">
-            {#if card.event.assetBundleName}
-              <img
-                src={getEventBannerAssetURL(card.event.assetBundleName, card.region)}
-                alt={`${card.event.title} ${bannerAltSuffix}`}
-                loading="lazy"
-                class="mx-auto h-auto w-full max-w-full object-contain md:w-3/4 md:min-w-[min(200px,100%)]"
-              />
-            {:else}
-              <div class="flex h-full w-full items-center justify-center text-sm opacity-70">
-                {card.label}
-              </div>
-            {/if}
-          </div>
-
-          <h3 class="text-base font-semibold leading-tight">{card.event.title}</h3>
-          <div class="flex items-center gap-2 text-sm opacity-70">
-            <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-              {card.region.toUpperCase()}
-            </span>
-            <p>{idLabel}: {card.event.id}</p>
-          </div>
-
-          <div class="mt-1 rounded-xl border border-base-content/12 bg-base-200/45 p-2.5">
-            {#if countdown.mode === "ended"}
-              <p class="text-sm font-semibold opacity-80">{countdown.label}</p>
-            {:else}
-              <p class={`mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${countdown.toneClass}`}>
-                {countdown.label}
-              </p>
-              <div class={`grid gap-1.5 ${countdown.showSeconds ? "grid-cols-4" : "grid-cols-3"} ${countdown.toneClass}`}>
-                <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
-                  <span class="countdown font-mono text-lg font-semibold">
-                    <span style={countdownStyle(countdown.values.days)}>{countdown.values.days}</span>
-                  </span>
-                  <p class="text-[0.62rem] opacity-80">{dayLabel}</p>
-                </div>
-                <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
-                  <span class="countdown font-mono text-lg font-semibold">
-                    <span style={countdownStyle(countdown.values.hours)}>{countdown.values.hours}</span>
-                  </span>
-                  <p class="text-[0.62rem] opacity-80">{hourLabel}</p>
-                </div>
-                <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
-                  <span class="countdown font-mono text-lg font-semibold">
-                    <span style={countdownStyle(countdown.values.minutes)}>
-                      {countdown.values.minutes}
-                    </span>
-                  </span>
-                  <p class="text-[0.62rem] opacity-80">{minuteLabel}</p>
-                </div>
-                {#if countdown.showSeconds}
-                  <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
-                    <span class="countdown font-mono text-lg font-semibold">
-                      <span style={countdownStyle(countdown.values.seconds)}>
-                        {countdown.values.seconds}
-                      </span>
-                    </span>
-                    <p class="text-[0.62rem] opacity-80">{secondLabel}</p>
-                  </div>
-                {/if}
-              </div>
-              <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-base-content/14">
-                <div
-                  class={`h-full origin-right ${getMinuteBarClass(countdown.toneClass)}`}
-                  style={`width:${countdown.minuteProgress}%; margin-left:auto;`}
-                ></div>
-              </div>
-            {/if}
-          </div>
-        </div>
-      </a>
-    {:else}
+  {#await data.cards}
+    {#each supportedRegions as region (region)}
       <article
-        id={`region-${card.region}`}
+        id={`region-${region}`}
         class="card w-full bg-base-100 shadow-sm"
       >
         <div class="card-body">
-          <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
+          <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
           <div class="mb-1">
             <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-              {card.region.toUpperCase()}
+              {region.toUpperCase()}
             </span>
           </div>
-
-          {#if card.error}
-            <p class="text-sm text-error">{card.error}</p>
-          {:else}
-            <p class="text-sm opacity-70">{noEventLabel}</p>
-          {/if}
+          <div class="space-y-2">
+            <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
+            <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
+          </div>
         </div>
       </article>
-    {/if}
-  {/each}
+    {/each}
+  {:then cards}
+    {#each cards as card (card.region)}
+      {#if card.event}
+        {@const countdown = getCountdownState(card.event.startAt, card.event.endAt)}
+        <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+        <a
+          id={`region-${card.region}`}
+          href={`${resolve("/event/[id]", { id: card.event.id })}?region=${encodeURIComponent(card.region)}`}
+          class="card group w-full bg-base-100 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <div class="card-body">
+            <div class="mb-2 flex items-center justify-center md:mb-3">
+              {#if card.event.assetBundleName}
+                <img
+                  src={getEventBannerAssetURL(card.event.assetBundleName, card.region)}
+                  alt={`${card.event.title} ${bannerAltSuffix}`}
+                  loading="lazy"
+                  class="mx-auto h-auto w-full max-w-full object-contain md:w-3/4 md:min-w-[min(200px,100%)]"
+                />
+              {:else}
+                <div class="flex h-full w-full items-center justify-center text-sm opacity-70">
+                  {card.label}
+                </div>
+              {/if}
+            </div>
+
+            <h3 class="text-base font-semibold leading-tight">{card.event.title}</h3>
+            <div class="flex items-center gap-2 text-sm opacity-70">
+              <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+                {card.region.toUpperCase()}
+              </span>
+              <p>{idLabel}: {card.event.id}</p>
+            </div>
+
+            <div class="mt-1 rounded-xl border border-base-content/12 bg-base-200/45 p-2.5">
+              {#if countdown.mode === "ended"}
+                <p class="text-sm font-semibold opacity-80">{countdown.label}</p>
+              {:else}
+                <p class={`mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${countdown.toneClass}`}>
+                  {countdown.label}
+                </p>
+                <div class={`grid gap-1.5 ${countdown.showSeconds ? "grid-cols-4" : "grid-cols-3"} ${countdown.toneClass}`}>
+                  <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
+                    <span class="countdown font-mono text-lg font-semibold">
+                      <span style={countdownStyle(countdown.values.days)}>{countdown.values.days}</span>
+                    </span>
+                    <p class="text-[0.62rem] opacity-80">{dayLabel}</p>
+                  </div>
+                  <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
+                    <span class="countdown font-mono text-lg font-semibold">
+                      <span style={countdownStyle(countdown.values.hours)}>{countdown.values.hours}</span>
+                    </span>
+                    <p class="text-[0.62rem] opacity-80">{hourLabel}</p>
+                  </div>
+                  <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
+                    <span class="countdown font-mono text-lg font-semibold">
+                      <span style={countdownStyle(countdown.values.minutes)}>
+                        {countdown.values.minutes}
+                      </span>
+                    </span>
+                    <p class="text-[0.62rem] opacity-80">{minuteLabel}</p>
+                  </div>
+                  {#if countdown.showSeconds}
+                    <div class="rounded-lg bg-base-100/92 px-1 py-1.5 text-center shadow-sm">
+                      <span class="countdown font-mono text-lg font-semibold">
+                        <span style={countdownStyle(countdown.values.seconds)}>
+                          {countdown.values.seconds}
+                        </span>
+                      </span>
+                      <p class="text-[0.62rem] opacity-80">{secondLabel}</p>
+                    </div>
+                  {/if}
+                </div>
+                <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-base-content/14">
+                  <div
+                    class={`h-full origin-right ${getMinuteBarClass(countdown.toneClass)}`}
+                    style={`width:${countdown.minuteProgress}%; margin-left:auto;`}
+                  ></div>
+                </div>
+              {/if}
+            </div>
+          </div>
+        </a>
+      {:else}
+        <article
+          id={`region-${card.region}`}
+          class="card w-full bg-base-100 shadow-sm"
+        >
+          <div class="card-body">
+            <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
+            <div class="mb-1">
+              <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+                {card.region.toUpperCase()}
+              </span>
+            </div>
+
+            {#if card.error}
+              <p class="text-sm text-error">{card.error}</p>
+            {:else}
+              <p class="text-sm opacity-70">{noEventLabel}</p>
+            {/if}
+          </div>
+        </article>
+      {/if}
+    {/each}
+  {/await}
 </section>

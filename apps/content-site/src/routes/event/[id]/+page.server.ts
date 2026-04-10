@@ -31,6 +31,13 @@ type RegionEventLookup = {
   rawPayloadJson: string | null;
 };
 
+type EventPayload = {
+  availableRegions: SupportedRegion[];
+  event: EventDetail | null;
+  debugEventJson: string | null;
+  error: string | null;
+};
+
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
 
@@ -174,35 +181,19 @@ const fetchRegionEvent = async (
   }
 };
 
-export const load: PageServerLoad = async ({ params, url, cookies }) => {
-  const eventId = params.id?.trim() ?? "";
-  const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const invalidEventIdMessage = getContentSiteServerText(uiLocale, "invalidEventId");
-  const eventUnavailableInCurrentRegionMessage = getContentSiteServerText(
-    uiLocale,
-    "eventUnavailableInCurrentRegion"
-  );
-  const failedToLoadEventDataMessage = getContentSiteServerText(uiLocale, "failedToLoadEventData");
-  const regionFromQuery = url.searchParams.get("region");
-  const regionFromCookie = cookies.get(PRIMARY_REGION_COOKIE_NAME);
-  const region: SupportedRegion = normalizeRegion(
-    regionFromQuery ?? regionFromCookie,
-    DEFAULT_PRIMARY_REGION
-  );
-  const baseUrl = getMasterApiBaseUrl();
-
-  if (!eventId) {
-    return {
-      eventId,
-      region,
-      regionLabel: regionLabels[region],
-      availableRegions: [region],
-      event: null,
-      error: invalidEventIdMessage,
-      debugEventJson: null
-    };
-  }
-
+const fetchEventPayload = async ({
+  baseUrl,
+  eventId,
+  region,
+  eventUnavailableInCurrentRegionMessage,
+  failedToLoadEventDataMessage
+}: {
+  baseUrl: string;
+  eventId: string;
+  region: SupportedRegion;
+  eventUnavailableInCurrentRegionMessage: string;
+  failedToLoadEventDataMessage: string;
+}): Promise<EventPayload> => {
   try {
     const lookups = await Promise.all(
       supportedRegions.map(async (targetRegion) =>
@@ -224,9 +215,6 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
 
     if (!currentLookup.event) {
       return {
-        eventId,
-        region,
-        regionLabel: regionLabels[region],
         availableRegions,
         event: null,
         debugEventJson: dev ? currentLookup.rawPayloadJson : null,
@@ -238,9 +226,6 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
     }
 
     return {
-      eventId,
-      region,
-      regionLabel: regionLabels[region],
       availableRegions,
       event: currentLookup.event,
       debugEventJson: dev ? currentLookup.rawPayloadJson : null,
@@ -248,13 +233,55 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
     };
   } catch {
     return {
-      eventId,
-      region,
-      regionLabel: regionLabels[region],
       availableRegions: [region],
       event: null,
       debugEventJson: null,
       error: failedToLoadEventDataMessage
     };
   }
+};
+
+export const load: PageServerLoad = ({ params, url, cookies }) => {
+  const eventId = params.id?.trim() ?? "";
+  const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
+  const invalidEventIdMessage = getContentSiteServerText(uiLocale, "invalidEventId");
+  const eventUnavailableInCurrentRegionMessage = getContentSiteServerText(
+    uiLocale,
+    "eventUnavailableInCurrentRegion"
+  );
+  const failedToLoadEventDataMessage = getContentSiteServerText(uiLocale, "failedToLoadEventData");
+  const regionFromQuery = url.searchParams.get("region");
+  const regionFromCookie = cookies.get(PRIMARY_REGION_COOKIE_NAME);
+  const region: SupportedRegion = normalizeRegion(
+    regionFromQuery ?? regionFromCookie,
+    DEFAULT_PRIMARY_REGION
+  );
+  const baseUrl = getMasterApiBaseUrl();
+
+  if (!eventId) {
+    return {
+      eventId,
+      region,
+      regionLabel: regionLabels[region],
+      eventPayload: Promise.resolve({
+        availableRegions: [region],
+        event: null,
+        error: invalidEventIdMessage,
+        debugEventJson: null
+      } satisfies EventPayload)
+    };
+  }
+
+  return {
+    eventId,
+    region,
+    regionLabel: regionLabels[region],
+    eventPayload: fetchEventPayload({
+      baseUrl,
+      eventId,
+      region,
+      eventUnavailableInCurrentRegionMessage,
+      failedToLoadEventDataMessage
+    })
+  };
 };
