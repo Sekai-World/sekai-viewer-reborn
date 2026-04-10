@@ -33,7 +33,8 @@
   } from "$lib/region";
   import type { LayoutData } from "./$types";
 
-  type ThemeMode = "light" | "dark";
+  type ThemeMode = "light" | "dark" | "auto";
+  type ResolvedTheme = "light" | "dark";
   type UiLocaleOption = {
     code: SupportedUiLocale;
   };
@@ -50,9 +51,11 @@
   let primaryRegion = $state<SupportedRegion>(DEFAULT_PRIMARY_REGION);
   let secondaryRegion = $state<SupportedRegion>(DEFAULT_SECONDARY_REGION);
   let uiLocale = $state<SupportedUiLocale>(DEFAULT_UI_LOCALE);
-  let themeMode = $state<ThemeMode>("light");
+  let themeMode = $state<ThemeMode>("auto");
+  let resolvedTheme = $state<ResolvedTheme>("light");
   let isRegionMenuOpen = $state(false);
   let isLocaleMenuOpen = $state(false);
+  let systemThemeMediaQuery: MediaQueryList | null = null;
 
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
   let settingsLabel = $state(getContentSiteCommonText(initialLocale, "settings.title"));
@@ -78,6 +81,7 @@
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");
   const themeModeLabel = $derived(getThemeModeLabel(uiLocale, themeMode));
+  const resolvedThemeLabel = $derived(getThemeModeLabel(uiLocale, resolvedTheme));
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
   $effect(() => {
@@ -106,24 +110,63 @@
     secondaryRegionLabel = regionRoleLabels.secondary;
   };
 
-  const applyTheme = (nextTheme: ThemeMode): void => {
-    document.documentElement.setAttribute("data-theme", nextTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
-    themeMode = nextTheme;
+  const getSystemTheme = (): ResolvedTheme =>
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+  const resolveThemeMode = (themeModeValue: ThemeMode): ResolvedTheme =>
+    themeModeValue === "auto" ? getSystemTheme() : themeModeValue;
+
+  const applyTheme = (nextThemeMode: ThemeMode): void => {
+    const nextResolvedTheme = resolveThemeMode(nextThemeMode);
+    document.documentElement.setAttribute("data-theme", nextResolvedTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, nextThemeMode);
+    resolvedTheme = nextResolvedTheme;
+    themeMode = nextThemeMode;
+  };
+
+  const handleSystemThemeChange = (): void => {
+    if (themeMode === "auto") {
+      const nextResolvedTheme = getSystemTheme();
+      document.documentElement.setAttribute("data-theme", nextResolvedTheme);
+      resolvedTheme = nextResolvedTheme;
+    }
   };
 
   const resolvePreferredTheme = (): ThemeMode => {
     const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    if (storedTheme === "light" || storedTheme === "dark") {
+    if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "auto") {
       return storedTheme;
     }
 
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return "auto";
+  };
+
+  const getNextThemeMode = (currentThemeMode: ThemeMode): ThemeMode => {
+    if (currentThemeMode === "auto") {
+      return "light";
+    }
+
+    if (currentThemeMode === "light") {
+      return "dark";
+    }
+
+    return "auto";
+  };
+
+  const getThemeModeIcon = (themeModeValue: ThemeMode, resolvedThemeValue: ResolvedTheme): string => {
+    if (themeModeValue === "auto") {
+      return resolvedThemeValue === "dark" ? "mdi:theme-light-dark" : "mdi:brightness-auto";
+    }
+
+    return themeModeValue === "light" ? "mdi:white-balance-sunny" : "mdi:weather-night";
   };
 
   const toggleTheme = (): void => {
-    applyTheme(themeMode === "light" ? "dark" : "light");
+    applyTheme(getNextThemeMode(themeMode));
   };
+
+  const getThemeButtonTitle = (): string =>
+    themeMode === "auto" ? `${themeModeLabel} (${resolvedThemeLabel})` : themeModeLabel;
 
   const setRegionMenuOpen = (nextOpen: boolean): void => {
     isRegionMenuOpen = nextOpen;
@@ -174,10 +217,16 @@
   };
 
   onMount(() => {
+    systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     applyTheme(resolvePreferredTheme());
     primaryRegion = normalizeRegion(data.primaryRegion, DEFAULT_PRIMARY_REGION);
     secondaryRegion = normalizeRegion(data.secondaryRegion, DEFAULT_SECONDARY_REGION);
     uiLocale = normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE);
+
+    return () => {
+      systemThemeMediaQuery?.removeEventListener("change", handleSystemThemeChange);
+    };
   });
 </script>
 
@@ -220,12 +269,13 @@
             class="btn btn-sm justify-start rounded-lg border-base-content/15 bg-base-100"
             onclick={toggleTheme}
           >
-            {#if themeMode === "light"}
-              <Icon icon="mdi:white-balance-sunny" class="h-4 w-4" />
-            {:else}
-              <Icon icon="mdi:weather-night" class="h-4 w-4" />
-            {/if}
-            <span class="font-semibold">{themeControlLabel}: {themeModeLabel}</span>
+            <Icon icon={getThemeModeIcon(themeMode, resolvedTheme)} class="h-4 w-4" />
+            <span class="font-semibold">
+              {themeControlLabel}: {themeModeLabel}
+              {#if themeMode === "auto"}
+                ({resolvedThemeLabel})
+              {/if}
+            </span>
           </button>
 
           <div class="my-2 h-px bg-base-content/12"></div>
@@ -303,14 +353,10 @@
         type="button"
         class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
         aria-label={switchThemeAriaLabel}
-        title={themeModeLabel}
+        title={getThemeButtonTitle()}
         onclick={toggleTheme}
       >
-        {#if themeMode === "light"}
-          <Icon icon="mdi:white-balance-sunny" class="h-4 w-4" />
-        {:else}
-          <Icon icon="mdi:weather-night" class="h-4 w-4" />
-        {/if}
+        <Icon icon={getThemeModeIcon(themeMode, resolvedTheme)} class="h-4 w-4" />
       </button>
 
       <RegionSwitcher

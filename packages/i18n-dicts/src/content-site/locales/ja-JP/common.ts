@@ -40,7 +40,7 @@ const commonJaJp: ContentSiteCommonMessages = {
     }
   },
   aria: {
-    switchTheme: "ライトモードとダークモードを切り替え",
+    switchTheme: "テーマモードを切り替え",
     switchUiLanguageCurrent: "UI言語を切り替え。現在の言語"
   },
   pageTitle: {
@@ -48,7 +48,8 @@ const commonJaJp: ContentSiteCommonMessages = {
   },
   themeMode: {
     light: "ライトモード",
-    dark: "ダークモード"
+    dark: "ダークモード",
+    auto: "自動"
   }
 };
 

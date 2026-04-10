@@ -40,7 +40,7 @@ const commonZhTw: ContentSiteCommonMessages = {
     }
   },
   aria: {
-    switchTheme: "切換明亮與黑暗模式",
+    switchTheme: "切換主題模式",
     switchUiLanguageCurrent: "切換介面語言。目前語言"
   },
   pageTitle: {
@@ -48,7 +48,8 @@ const commonZhTw: ContentSiteCommonMessages = {
   },
   themeMode: {
     light: "明亮模式",
-    dark: "黑暗模式"
+    dark: "黑暗模式",
+    auto: "自動"
   }
 };
 

@@ -99,7 +99,7 @@ export const tCommon = (localeValue: string, key: string, fallback?: string): st
 
 export const getThemeModeLabel = (
   localeValue: string,
-  themeMode: "light" | "dark"
+  themeMode: "light" | "dark" | "auto"
 ): string => {
   const locale = normalizeUiLocale(localeValue);
   return themeModeLabelsByLocale[locale][themeMode];
