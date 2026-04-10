@@ -31,6 +31,8 @@
 
   let dialog: HTMLDialogElement | null = $state(null);
   let currentFormat = $state("");
+  let previewImageLoaded = $state(false);
+  let dialogImageLoaded = $state(false);
 
   const getSrcExtension = (value: string): string => {
     const match = value.match(/\.([a-z0-9]+)(?:[?#].*)?$/i);
@@ -54,6 +56,12 @@
       : src
   );
 
+  $effect(() => {
+    resolvedSrc;
+    previewImageLoaded = false;
+    dialogImageLoaded = false;
+  });
+
   const openDialog = (): void => {
     dialog?.showModal();
   };
@@ -63,33 +71,50 @@
   {#if children}
     {@render children()}
   {:else}
-    <img src={resolvedSrc} alt={alt} class={imageClass} />
+    <div class="relative h-full w-full overflow-hidden">
+      {#if !previewImageLoaded}
+        <div class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse">
+          <span class="loading loading-spinner loading-md text-base-content/60" aria-hidden="true"></span>
+        </div>
+      {/if}
+      <img
+        src={resolvedSrc}
+        alt={alt}
+        class={`${imageClass} transition-all duration-300 ease-out ${previewImageLoaded ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"}`}
+        onload={() => {
+          previewImageLoaded = true;
+        }}
+        onerror={() => {
+          previewImageLoaded = true;
+        }}
+      />
+    </div>
   {/if}
 </button>
 
 <dialog bind:this={dialog} class="modal">
   <div class={`modal-box ${dialogBoxClass}`}>
-    <div class="absolute left-3 top-3 z-10 flex items-center gap-2">
-      {#if normalizedFormatOptions.length > 0}
-        <div class="inline-flex rounded-full border border-base-content/10 bg-base-100/90 p-1 shadow-sm">
-          {#each normalizedFormatOptions as format (format)}
-            <button
-              type="button"
-              class={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide transition ${
-                currentFormat === format
-                  ? "bg-primary text-primary-content shadow-sm"
-                  : "text-base-content/70"
-              }`}
-              onclick={() => {
-                currentFormat = format;
-              }}
-            >
-              {format.toUpperCase()}
-            </button>
-          {/each}
-        </div>
-      {/if}
+    {#if normalizedFormatOptions.length > 0}
+      <div class="absolute left-3 top-3 z-10 inline-flex rounded-full border border-base-content/10 bg-base-100/90 p-1 shadow-sm">
+        {#each normalizedFormatOptions as format (format)}
+          <button
+            type="button"
+            class={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide transition ${
+              currentFormat === format
+                ? "bg-primary text-primary-content shadow-sm"
+                : "text-base-content/70"
+            }`}
+            onclick={() => {
+              currentFormat = format;
+            }}
+          >
+            {format.toUpperCase()}
+          </button>
+        {/each}
+      </div>
+    {/if}
 
+    <div class="absolute right-3 top-3 z-10 flex items-center justify-end gap-2">
       <a
         href={resolvedSrc}
         download
@@ -134,7 +159,24 @@
       </form>
     </div>
 
-    <img src={resolvedSrc} alt={alt} class={dialogImageClass} />
+    <div class="relative flex items-center justify-center">
+      {#if !dialogImageLoaded}
+        <div class="absolute inset-0 flex items-center justify-center rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(0,0,0,0.18))]">
+          <span class="loading loading-spinner loading-lg text-base-100 drop-shadow-sm" aria-hidden="true"></span>
+        </div>
+      {/if}
+      <img
+        src={resolvedSrc}
+        alt={alt}
+        class={`${dialogImageClass} transition-all duration-300 ease-out ${dialogImageLoaded ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"}`}
+        onload={() => {
+          dialogImageLoaded = true;
+        }}
+        onerror={() => {
+          dialogImageLoaded = true;
+        }}
+      />
+    </div>
   </div>
 
   <form method="dialog" class="modal-backdrop">
