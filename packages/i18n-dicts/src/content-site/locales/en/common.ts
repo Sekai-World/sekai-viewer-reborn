@@ -40,7 +40,7 @@ const commonEn: ContentSiteCommonMessages = {
     }
   },
   aria: {
-    switchTheme: "Switch light and dark mode",
+    switchTheme: "Switch theme mode",
     switchUiLanguageCurrent: "Switch UI language. Current language"
   },
   pageTitle: {
@@ -48,7 +48,8 @@ const commonEn: ContentSiteCommonMessages = {
   },
   themeMode: {
     light: "Light Mode",
-    dark: "Dark Mode"
+    dark: "Dark Mode",
+    auto: "Auto"
   }
 };
 

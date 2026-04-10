@@ -75,13 +75,13 @@ export const contentSiteCommonByRepoLocale: Record<string, ContentSiteCommonMess
 
 export const themeModeLabelsByLocale: Record<
   SupportedUiLocale,
-  { light: string; dark: string }
-> = supportedUiLocales.reduce<Record<SupportedUiLocale, { light: string; dark: string }>>(
+  { light: string; dark: string; auto: string }
+> = supportedUiLocales.reduce<Record<SupportedUiLocale, { light: string; dark: string; auto: string }>>(
   (acc, locale) => {
     acc[locale] = contentSiteCommonByUiLocale[locale].themeMode;
     return acc;
   },
-  {} as Record<SupportedUiLocale, { light: string; dark: string }>
+  {} as Record<SupportedUiLocale, { light: string; dark: string; auto: string }>
 );
 
 export const regionRoleLabelsByLocale: Record<

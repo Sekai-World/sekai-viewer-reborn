@@ -40,7 +40,7 @@ const commonKoKr: ContentSiteCommonMessages = {
     }
   },
   aria: {
-    switchTheme: "라이트 모드와 다크 모드 전환",
+    switchTheme: "테마 모드 전환",
     switchUiLanguageCurrent: "UI 언어 변경. 현재 언어"
   },
   pageTitle: {
@@ -48,7 +48,8 @@ const commonKoKr: ContentSiteCommonMessages = {
   },
   themeMode: {
     light: "라이트 모드",
-    dark: "다크 모드"
+    dark: "다크 모드",
+    auto: "자동"
   }
 };
 

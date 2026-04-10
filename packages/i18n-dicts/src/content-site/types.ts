@@ -47,6 +47,7 @@ export type ContentSiteCommonMessages = {
   themeMode: {
     light: string;
     dark: string;
+    auto: string;
   };
 };
 
