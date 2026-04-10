@@ -24,11 +24,14 @@ Guidance for coding agents working in this workspace.
 - Keep app boundaries explicit; do not couple app internals across `apps/*`.
 - Prefer shared logic in `packages/*` when reused by multiple apps.
 - Keep changes minimal and scoped to the request.
+- Commit messages must follow the Conventional Commits specification.
+- Changes under `apps/` or `packages/` require a Changeset; use `pnpm changeset --empty` when the change is not user-facing.
 - Preserve existing naming conventions:
   - apps: `@apps/*`
   - shared packages: `@platform/*`
 - Use ESM and strict TypeScript patterns already present in repo.
 - Assume the repo may already contain generated `dist/` output and `.turbo/` artifacts; do not hand-edit generated build output unless explicitly requested.
+- Match the CI/runtime toolchain already used in the repo: Node.js 24 and `pnpm@10.6.0`.
 
 ## Root Commands
 
@@ -44,6 +47,8 @@ pnpm changeset
 pnpm changeset:status
 pnpm release:version
 pnpm release:tag
+pnpm release:github
+pnpm release:publish
 pnpm release
 pnpm format
 pnpm format:check
@@ -64,7 +69,9 @@ Notes:
 - Prefer targeted workspace commands for focused changes.
 - `@platform/ui-shell` currently does not define standalone `build` / `check` / `lint` scripts; validate consumers instead when editing that package.
 - Workspace versioning and changelog generation use Changesets.
-- Release automation is defined in `.github/workflows/release.yml`.
+- `pnpm release` only runs `release:version` and `release:tag`; publishing GitHub releases is handled by `pnpm release:github` / `pnpm release:publish` and `.github/workflows/release.yml`.
+- CI validation is defined in `.github/workflows/ci.yml`.
+- Pull requests that modify `apps/` or `packages/` are checked by `.github/workflows/changeset.yml` for a Changeset file.
 
 ## Local Dev Ports
 
@@ -118,9 +125,9 @@ When changing shared packages:
   - UI locale
 - Cookie names and default values are defined in `apps/content-site/src/lib/region.ts`.
 - Normalize and read these preferences through `apps/content-site/src/routes/+layout.server.ts`; do not duplicate cookie parsing in page-level loaders.
-- In deep content pages:
-  - Use the primary region as the API `region` parameter for master data fetching.
-  - Use the secondary region for region-specific text or translation presentation when applicable.
+- The home page loader (`apps/content-site/src/routes/+page.server.ts`) fetches current event cards for all supported regions.
+- The event detail loader (`apps/content-site/src/routes/event/[id]/+page.server.ts`) resolves the API region from `?region=` first, then falls back to the primary-region cookie.
+- The secondary region is a persisted UI preference, but it is not currently used by server loaders as the event-detail fetch region.
 - Theme preference is handled separately on the client in `apps/content-site/src/routes/+layout.svelte`.
 
 ## `content-site` I18n Conventions
@@ -133,6 +140,13 @@ When changing shared packages:
   - `packages/i18n-dicts/src/content-site/index.ts`
 - Reuse existing helpers such as `getContentSiteCommonText` and `getContentSiteServerText` instead of reimplementing ad hoc lookup logic.
 - Avoid introducing new hardcoded user-facing strings directly in `apps/content-site` when they should be localized.
+- `content-site` currently also uses `tCommon`, `getThemeModeLabel`, and `getRegionRoleLabels` from `apps/content-site/src/lib/i18n.ts` to bridge runtime locale switching with shared dictionaries.
+
+## `content-site` Environment Variables
+
+- Server-side master API requests require `SEKAI_MASTER_API_BASE_URL`.
+- Public asset URL helpers require `PUBLIC_REMOTE_ASSET_BASE_URL`.
+- Client-side i18n loading requires `PUBLIC_SEKAI_I18N_BASE_URL`.
 
 ## Shared Package: `sekai-master-api-sdk`
 
