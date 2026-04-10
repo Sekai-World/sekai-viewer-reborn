@@ -6,6 +6,7 @@
   import {
     getEventBackgroundAssetURL,
     getEventBannerAssetURL,
+    getEventCharacterAssetURL,
     getEventLogoAssetURL
   } from "$lib/assets";
   import { formatDisplayDateTime } from "$lib/date-time";
@@ -219,13 +220,15 @@
               <div class="w-full overflow-hidden rounded-[1.75rem] bg-base-200/55">
                 {#if activeAssetTab === "banner"}
                   {#if payload.event.assetBundleName}
-                    <div class="flex aspect-[16/10] items-center justify-center p-4 md:p-6">
-                      <img
-                        src={getEventBannerAssetURL(payload.event.assetBundleName, data.region)}
-                        alt={`${payload.event.title} ${bannerAltSuffix}`}
-                        class="h-auto max-h-full w-full object-contain"
-                      />
-                    </div>
+                    <ImagePreviewDialog
+                      src={getEventBannerAssetURL(payload.event.assetBundleName, data.region)}
+                      alt={`${payload.event.title} ${bannerAltSuffix}`}
+                      closeLabel={closeLabel}
+                      formatOptions={["webp", "png"]}
+                      buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
+                      imageClass="h-full w-full object-contain p-4 md:p-6"
+                      dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
+                    />
                   {:else}
                     <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
@@ -233,13 +236,15 @@
                   {/if}
                 {:else if activeAssetTab === "title"}
                   {#if payload.event.assetBundleName}
-                    <div class="flex aspect-[16/10] items-center justify-center p-4 md:p-6">
-                      <img
-                        src={getEventLogoAssetURL(payload.event.assetBundleName, data.region)}
-                        alt={payload.event.title}
-                        class="h-auto max-h-full w-full object-contain"
-                      />
-                    </div>
+                    <ImagePreviewDialog
+                      src={getEventLogoAssetURL(payload.event.assetBundleName, data.region)}
+                      alt={payload.event.title}
+                      closeLabel={closeLabel}
+                      formatOptions={["webp", "png"]}
+                      buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
+                      imageClass="h-full w-full object-contain p-4 md:p-6"
+                      dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
+                    />
                   {:else}
                     <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
@@ -262,24 +267,21 @@
                     </div>
                   {/if}
                 {:else}
-                  <div class="relative aspect-[16/10] overflow-hidden">
-                    {#if payload.event.assetBundleName}
-                      <img
-                        src={getEventBannerAssetURL(payload.event.assetBundleName, data.region)}
-                        alt={`${payload.event.title} ${bannerAltSuffix}`}
-                        class="h-full w-full object-cover"
-                      />
-                    {:else}
-                      <div class="h-full w-full bg-[linear-gradient(135deg,rgba(0,0,0,0.05),rgba(0,0,0,0.18))]"></div>
-                    {/if}
-                    <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.35),rgba(0,0,0,0.08),rgba(0,0,0,0.35))]"></div>
-                    <div class="absolute inset-x-0 bottom-0 flex items-center justify-between gap-4 p-6 text-white md:p-8">
-                      <h3 class="text-left text-xl font-semibold leading-tight md:text-3xl">{payload.event.title}</h3>
-                      <span class="badge badge-outline border-white/55 bg-black/20 font-semibold text-white">
-                        {data.region.toUpperCase()}
-                      </span>
+                  {#if payload.event.assetBundleName}
+                    <ImagePreviewDialog
+                      src={getEventCharacterAssetURL(payload.event.assetBundleName, data.region)}
+                      alt={payload.event.title}
+                      closeLabel={closeLabel}
+                      formatOptions={["webp", "png"]}
+                      buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
+                      imageClass="h-full w-full object-contain"
+                      dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
+                    />
+                  {:else}
+                    <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
+                      {payload.event.title}
                     </div>
-                  </div>
+                  {/if}
                 {/if}
               </div>
             </div>
