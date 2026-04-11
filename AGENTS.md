@@ -94,6 +94,7 @@ Preview ports:
 ## SvelteKit / Frontend Conventions
 
 - Apps use SvelteKit 2, Svelte 5, Tailwind CSS 4, and `daisyui`.
+- Prefer Iconify icons via `@iconify/svelte` over inline SVG when a suitable icon exists.
 - App-level CSS lives in `src/app.css` and uses:
 
 ```css
