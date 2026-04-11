@@ -11,6 +11,7 @@ const commonJaJp: ContentSiteCommonMessages = {
   idLabel: "ID",
   nameLabel: "名称",
   bannerAltSuffix: "バナー",
+  imageUnavailable: "利用可能な画像がありません",
   noCurrentEventData: "現在のイベントデータはありません。",
   loadingLanguagePack: "言語パックを読み込み中...",
   eventAssetTabs: {

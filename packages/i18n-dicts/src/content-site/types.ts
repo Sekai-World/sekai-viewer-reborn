@@ -9,6 +9,7 @@ export type ContentSiteCommonMessages = {
   idLabel: string;
   nameLabel: string;
   bannerAltSuffix: string;
+  imageUnavailable: string;
   noCurrentEventData: string;
   loadingLanguagePack: string;
   eventAssetTabs: {

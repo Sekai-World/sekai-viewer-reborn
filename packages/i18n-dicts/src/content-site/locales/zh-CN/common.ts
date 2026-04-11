@@ -11,6 +11,7 @@ const commonZhCn: ContentSiteCommonMessages = {
   idLabel: "ID",
   nameLabel: "名称",
   bannerAltSuffix: "横幅",
+  imageUnavailable: "无可用图片",
   noCurrentEventData: "暂无活动数据。",
   loadingLanguagePack: "正在加载语言包...",
   eventAssetTabs: {

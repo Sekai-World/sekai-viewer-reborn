@@ -1,6 +1,7 @@
 <script lang="ts">
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
+  import Icon from "@iconify/svelte";
   import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import {
@@ -27,6 +28,7 @@
   let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
   let nameLabel = $state(getContentSiteCommonText(initialLocale, "nameLabel"));
   let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
+  let imageUnavailableLabel = $state(getContentSiteCommonText(initialLocale, "imageUnavailable"));
   let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
   let eventTitlePrefix = $state(getContentSiteCommonText(initialLocale, "pageTitle.eventPrefix"));
   let bannerTabLabel = $state(getContentSiteCommonText(initialLocale, "eventAssetTabs.banner"));
@@ -65,6 +67,7 @@
     idLabel = tCommon(locale, "idLabel");
     nameLabel = tCommon(locale, "nameLabel");
     bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
+    imageUnavailableLabel = tCommon(locale, "imageUnavailable");
     noEventLabel = tCommon(locale, "noCurrentEventData");
     eventTitlePrefix = tCommon(locale, "pageTitle.eventPrefix");
     bannerTabLabel = tCommon(locale, "eventAssetTabs.banner");
@@ -189,7 +192,11 @@
               <div class="tabs tabs-box w-full border border-base-content/10 bg-base-200/45 p-1">
                 <button
                   type="button"
-                  class={`tab flex-1 rounded-xl font-semibold ${activeAssetTab === "banner" ? "tab-active" : ""}`}
+                  class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
+                    activeAssetTab === "banner"
+                      ? "border-primary/45 bg-primary text-primary-content shadow-sm"
+                      : "text-base-content/70 hover:bg-base-100/80"
+                  }`}
                   onclick={() => {
                     activeAssetTab = "banner";
                   }}
@@ -198,7 +205,11 @@
                 </button>
                 <button
                   type="button"
-                  class={`tab flex-1 rounded-xl font-semibold ${activeAssetTab === "title" ? "tab-active" : ""}`}
+                  class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
+                    activeAssetTab === "title"
+                      ? "border-primary/45 bg-primary text-primary-content shadow-sm"
+                      : "text-base-content/70 hover:bg-base-100/80"
+                  }`}
                   onclick={() => {
                     activeAssetTab = "title";
                   }}
@@ -207,7 +218,11 @@
                 </button>
                 <button
                   type="button"
-                  class={`tab flex-1 rounded-xl font-semibold ${activeAssetTab === "background" ? "tab-active" : ""}`}
+                  class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
+                    activeAssetTab === "background"
+                      ? "border-primary/45 bg-primary text-primary-content shadow-sm"
+                      : "text-base-content/70 hover:bg-base-100/80"
+                  }`}
                   onclick={() => {
                     activeAssetTab = "background";
                   }}
@@ -216,7 +231,11 @@
                 </button>
                 <button
                   type="button"
-                  class={`tab flex-1 rounded-xl font-semibold ${activeAssetTab === "characters" ? "tab-active" : ""}`}
+                  class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
+                    activeAssetTab === "characters"
+                      ? "border-primary/45 bg-primary text-primary-content shadow-sm"
+                      : "text-base-content/70 hover:bg-base-100/80"
+                  }`}
                   onclick={() => {
                     activeAssetTab = "characters";
                   }}
@@ -279,6 +298,7 @@
                     <ImagePreviewDialog
                       src={getEventCharacterAssetURL(payload.event.assetBundleName, data.region)}
                       alt={payload.event.title}
+                      fallbackLabel={imageUnavailableLabel}
                       closeLabel={closeLabel}
                       formatOptions={["webp", "png"]}
                       buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
@@ -286,8 +306,13 @@
                       dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
                     />
                   {:else}
-                    <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
-                      {payload.event.title}
+                    <div class="flex aspect-[16/10] flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65">
+                      <Icon
+                        icon="mdi:file-remove-outline"
+                        class="h-10 w-10 opacity-75"
+                        aria-hidden="true"
+                      />
+                      <span class="font-medium">{imageUnavailableLabel}</span>
                     </div>
                   {/if}
                 {/if}
