@@ -25,7 +25,9 @@ Guidance for coding agents working in this workspace.
 - Prefer shared logic in `packages/*` when reused by multiple apps.
 - Keep changes minimal and scoped to the request.
 - Commit messages must follow the Conventional Commits specification.
-- Changes under `apps/` or `packages/` require a Changeset; use `pnpm changeset --empty` when the change is not user-facing.
+- Changes under `apps/` or `packages/` require Changeset coverage before merge.
+- Prefer updating an existing unpublished Changeset that already covers the same workspace instead of creating a new one for every commit.
+- Create a new Changeset only when no suitable existing one covers the affected workspace; use `pnpm changeset --empty` when the change is not user-facing.
 - Preserve existing naming conventions:
   - apps: `@apps/*`
   - shared packages: `@platform/*`
