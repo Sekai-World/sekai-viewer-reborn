@@ -5,30 +5,16 @@
   import Icon from "@iconify/svelte";
   import {
     getContentSiteCommonText,
-    regionLabels,
-    supportedRegions,
     supportedUiLocales,
     uiLocaleNameByCode,
-    type SupportedRegion,
     type SupportedUiLocale
   } from "@platform/i18n-dicts";
-  import { RegionSwitcher, ViewerShell, type RegionOption, type SidebarItem } from "@platform/ui-shell";
+  import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
+  import { isLocaleLoading, getThemeModeLabel, setI18nLocale, tCommon } from "$lib/i18n";
   import {
-    getRegionRoleLabels,
-    isLocaleLoading,
-    getThemeModeLabel,
-    setI18nLocale,
-    tCommon
-  } from "$lib/i18n";
-  import {
-    DEFAULT_PRIMARY_REGION,
-    DEFAULT_SECONDARY_REGION,
     DEFAULT_UI_LOCALE,
-    normalizeRegion,
     normalizeUiLocale,
-    PRIMARY_REGION_COOKIE_NAME,
-    SECONDARY_REGION_COOKIE_NAME,
     UI_LOCALE_COOKIE_NAME
   } from "$lib/region";
   import type { LayoutData } from "./$types";
@@ -40,31 +26,19 @@
   };
 
   const THEME_STORAGE_KEY = "content_site_theme_mode";
-  const regionOptions: RegionOption[] = supportedRegions.map((region) => ({
-    value: region,
-    label: regionLabels[region]
-  }));
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const initialLocale = DEFAULT_UI_LOCALE;
-  let primaryRegion = $state<SupportedRegion>(DEFAULT_PRIMARY_REGION);
-  let secondaryRegion = $state<SupportedRegion>(DEFAULT_SECONDARY_REGION);
   let uiLocale = $state<SupportedUiLocale>(DEFAULT_UI_LOCALE);
   let themeMode = $state<ThemeMode>("auto");
   let resolvedTheme = $state<ResolvedTheme>("light");
-  let isRegionMenuOpen = $state(false);
   let isLocaleMenuOpen = $state(false);
   let systemThemeMediaQuery: MediaQueryList | null = null;
 
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
   let settingsLabel = $state(getContentSiteCommonText(initialLocale, "settings.title"));
   let themeControlLabel = $state(getContentSiteCommonText(initialLocale, "darkmode"));
-  let primaryRegionLabel = $state(getContentSiteCommonText(initialLocale, "labels.primary"));
-  let secondaryRegionLabel = $state(getContentSiteCommonText(initialLocale, "labels.secondary"));
-  let gameContentRegionLabel = $state(
-    getContentSiteCommonText(initialLocale, "settings.gameContentRegion")
-  );
   let interfaceLanguageLabel = $state(
     getContentSiteCommonText(initialLocale, "settings.interfaceLanguage")
   );
@@ -85,8 +59,6 @@
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
   $effect(() => {
-    primaryRegion = normalizeRegion(data.primaryRegion, DEFAULT_PRIMARY_REGION);
-    secondaryRegion = normalizeRegion(data.secondaryRegion, DEFAULT_SECONDARY_REGION);
     uiLocale = normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE);
   });
 
@@ -96,18 +68,14 @@
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
     const resolvedLocale = await setI18nLocale(localeValue);
-    const regionRoleLabels = getRegionRoleLabels(resolvedLocale);
 
     homeLabel = tCommon(resolvedLocale, "home");
     settingsLabel = tCommon(resolvedLocale, "settings.title");
     themeControlLabel = tCommon(resolvedLocale, "darkmode");
-    gameContentRegionLabel = tCommon(resolvedLocale, "settings.gameContentRegion");
     interfaceLanguageLabel = tCommon(resolvedLocale, "settings.interfaceLanguage");
     loadingLanguagePackLabel = tCommon(resolvedLocale, "loadingLanguagePack");
     switchThemeAriaLabel = tCommon(resolvedLocale, "aria.switchTheme");
     switchUiLanguageCurrentLabel = tCommon(resolvedLocale, "aria.switchUiLanguageCurrent");
-    primaryRegionLabel = regionRoleLabels.primary;
-    secondaryRegionLabel = regionRoleLabels.secondary;
   };
 
   const getSystemTheme = (): ResolvedTheme =>
@@ -168,41 +136,9 @@
   const getThemeButtonTitle = (): string =>
     themeMode === "auto" ? `${themeModeLabel} (${resolvedThemeLabel})` : themeModeLabel;
 
-  const setRegionMenuOpen = (nextOpen: boolean): void => {
-    isRegionMenuOpen = nextOpen;
-    if (nextOpen) {
-      isLocaleMenuOpen = false;
-    }
-  };
-
   const handleLocaleMenuToggle = (event: Event): void => {
     const detailsElement = event.currentTarget as HTMLDetailsElement;
     isLocaleMenuOpen = detailsElement.open;
-    if (detailsElement.open) {
-      isRegionMenuOpen = false;
-    }
-  };
-
-  const setPrimaryRegion = async (regionValue: string): Promise<void> => {
-    const nextRegion = normalizeRegion(regionValue, DEFAULT_PRIMARY_REGION);
-    if (nextRegion === primaryRegion) {
-      return;
-    }
-
-    primaryRegion = nextRegion;
-    document.cookie = `${PRIMARY_REGION_COOKIE_NAME}=${nextRegion}; Path=/; Max-Age=31536000; SameSite=Lax`;
-    await invalidateAll();
-  };
-
-  const setSecondaryRegion = async (regionValue: string): Promise<void> => {
-    const nextRegion = normalizeRegion(regionValue, DEFAULT_SECONDARY_REGION);
-    if (nextRegion === secondaryRegion) {
-      return;
-    }
-
-    secondaryRegion = nextRegion;
-    document.cookie = `${SECONDARY_REGION_COOKIE_NAME}=${nextRegion}; Path=/; Max-Age=31536000; SameSite=Lax`;
-    await invalidateAll();
   };
 
   const setUiLocale = async (localeValue: string): Promise<void> => {
@@ -220,8 +156,6 @@
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     applyTheme(resolvePreferredTheme());
-    primaryRegion = normalizeRegion(data.primaryRegion, DEFAULT_PRIMARY_REGION);
-    secondaryRegion = normalizeRegion(data.secondaryRegion, DEFAULT_SECONDARY_REGION);
     uiLocale = normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE);
 
     return () => {
@@ -280,46 +214,6 @@
 
           <div class="my-2 h-px bg-base-content/12"></div>
 
-          <section class="space-y-1.5">
-            <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
-              {gameContentRegionLabel}
-            </p>
-
-            <label class="flex flex-col gap-1">
-              <span class="px-1 text-xs font-medium opacity-80">{primaryRegionLabel}</span>
-              <select
-                class="select select-sm w-full rounded-lg border-base-content/15 bg-base-100"
-                value={primaryRegion}
-                onchange={async (event) => {
-                  const nextValue = (event.currentTarget as HTMLSelectElement).value;
-                  await setPrimaryRegion(nextValue);
-                }}
-              >
-                {#each regionOptions as option (option.value)}
-                  <option value={option.value}>{option.label}</option>
-                {/each}
-              </select>
-            </label>
-
-            <label class="flex flex-col gap-1">
-              <span class="px-1 text-xs font-medium opacity-80">{secondaryRegionLabel}</span>
-              <select
-                class="select select-sm w-full rounded-lg border-base-content/15 bg-base-100"
-                value={secondaryRegion}
-                onchange={async (event) => {
-                  const nextValue = (event.currentTarget as HTMLSelectElement).value;
-                  await setSecondaryRegion(nextValue);
-                }}
-              >
-                {#each regionOptions as option (option.value)}
-                  <option value={option.value}>{option.label}</option>
-                {/each}
-              </select>
-            </label>
-          </section>
-
-          <div class="my-2 h-px bg-base-content/12"></div>
-
           <label class="flex flex-col gap-1">
             <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
               {interfaceLanguageLabel}
@@ -358,18 +252,6 @@
       >
         <Icon icon={getThemeModeIcon(themeMode, resolvedTheme)} class="h-4 w-4" />
       </button>
-
-      <RegionSwitcher
-        options={regionOptions}
-        primaryValue={primaryRegion}
-        secondaryValue={secondaryRegion}
-        primaryTitle={primaryRegionLabel}
-        secondaryTitle={secondaryRegionLabel}
-        isOpen={isRegionMenuOpen}
-        onOpenChange={setRegionMenuOpen}
-        onSelectPrimary={setPrimaryRegion}
-        onSelectSecondary={setSecondaryRegion}
-      />
 
       <details class="dropdown dropdown-end" bind:open={isLocaleMenuOpen} ontoggle={handleLocaleMenuToggle}>
         <summary

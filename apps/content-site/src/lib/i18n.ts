@@ -3,7 +3,6 @@ import { PUBLIC_SEKAI_I18N_BASE_URL } from "$env/static/public";
 import {
   contentSiteCommonByRepoLocale,
   getContentSiteCommonText,
-  regionRoleLabelsByLocale,
   repoLocaleByUiLocale,
   themeModeLabelsByLocale,
   type SupportedUiLocale
@@ -103,11 +102,4 @@ export const getThemeModeLabel = (
 ): string => {
   const locale = normalizeUiLocale(localeValue);
   return themeModeLabelsByLocale[locale][themeMode];
-};
-
-export const getRegionRoleLabels = (
-  localeValue: string
-): { primary: string; secondary: string } => {
-  const locale = normalizeUiLocale(localeValue);
-  return regionRoleLabelsByLocale[locale];
 };
