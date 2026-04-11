@@ -169,20 +169,18 @@ export const load: PageServerLoad = async ({ cookies }) => {
     "homeEventDataRequestFailed"
   );
   const baseUrl = getMasterApiBaseUrl();
-  const cards = Promise.all(
-    supportedRegions.map(async (region) => {
-      try {
-        return await toRegionEventCard(baseUrl, region, homeEventDataUnavailable);
-      } catch {
-        return {
-          region,
-          label: regionLabels[region],
-          event: null,
-          error: homeEventDataRequestFailed
-        } satisfies RegionEventCard;
-      }
-    })
-  );
+  const cards = supportedRegions.map(async (region) => {
+    try {
+      return await toRegionEventCard(baseUrl, region, homeEventDataUnavailable);
+    } catch {
+      return {
+        region,
+        label: regionLabels[region],
+        event: null,
+        error: homeEventDataRequestFailed
+      } satisfies RegionEventCard;
+    }
+  });
 
   return {
     cards
