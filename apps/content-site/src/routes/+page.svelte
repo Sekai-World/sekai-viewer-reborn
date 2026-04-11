@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { getContentSiteCommonText, regionLabels, supportedRegions } from "@platform/i18n-dicts";
+  import { getContentSiteCommonText, supportedRegions } from "@platform/i18n-dicts";
   import { getEventBannerAssetURL } from "$lib/assets";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { DEFAULT_UI_LOCALE } from "$lib/region";
@@ -27,12 +27,6 @@
 
   let { data }: { data: PageData } = $props();
   const initialLocale = DEFAULT_UI_LOCALE;
-  let gameContentRegionLabel = $state(
-    getContentSiteCommonText(initialLocale, "settings.gameContentRegion")
-  );
-  let primarySecondaryLabel = $state(
-    getContentSiteCommonText(initialLocale, "labels.primarySecondary")
-  );
   let interfaceLanguageLabel = $state(
     getContentSiteCommonText(initialLocale, "settings.interfaceLanguage")
   );
@@ -54,14 +48,12 @@
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
     const locale = await setI18nLocale(localeValue);
-    gameContentRegionLabel = tCommon(locale, "settings.gameContentRegion");
     interfaceLanguageLabel = tCommon(locale, "settings.interfaceLanguage");
     startsInLabel = tCommon(locale, "countdownStartsIn");
     endsInLabel = tCommon(locale, "countdownEndsIn");
     eventEndedLabel = tCommon(locale, "eventEnded");
     idLabel = tCommon(locale, "idLabel");
     bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
-    primarySecondaryLabel = tCommon(locale, "labels.primarySecondary");
     noEventLabel = tCommon(locale, "noCurrentEventData");
     dayLabel = tCommon(locale, "labels.timeUnit.day");
     hourLabel = tCommon(locale, "labels.timeUnit.hour");
@@ -195,15 +187,14 @@
   };
 
   onMount(() => {
-    let rafId = 0;
     const tick = () => {
       nowMs = Date.now();
-      rafId = window.requestAnimationFrame(tick);
     };
-    rafId = window.requestAnimationFrame(tick);
+    tick();
+    const intervalId = window.setInterval(tick, 1000);
 
     return () => {
-      window.cancelAnimationFrame(rafId);
+      window.clearInterval(intervalId);
     };
   });
 
@@ -211,16 +202,13 @@
 
 <section class="mb-4 flex justify-center">
   <div class="flex flex-wrap justify-center gap-2">
-    <p class="badge badge-outline px-4 py-3 text-sm">
-      {gameContentRegionLabel} ({primarySecondaryLabel}): {regionLabels[data.primaryRegion]} | {regionLabels[data.secondaryRegion]}
-    </p>
     <p class="badge badge-outline px-4 py-3 text-sm">{interfaceLanguageLabel}: {data.uiLocale}</p>
   </div>
 </section>
 
 <section class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
-  {#await data.cards}
-    {#each supportedRegions as region (region)}
+  {#each supportedRegions as region, index (region)}
+    {#await data.cards[index]}
       <article
         id={`region-${region}`}
         class="card w-full bg-base-100 shadow-sm"
@@ -238,9 +226,7 @@
           </div>
         </div>
       </article>
-    {/each}
-  {:then cards}
-    {#each cards as card (card.region)}
+    {:then card}
       {#if card.event}
         {@const countdown = getCountdownState(card.event.startAt, card.event.endAt)}
         <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
@@ -343,6 +329,6 @@
           </div>
         </article>
       {/if}
-    {/each}
-  {/await}
+    {/await}
+  {/each}
 </section>
