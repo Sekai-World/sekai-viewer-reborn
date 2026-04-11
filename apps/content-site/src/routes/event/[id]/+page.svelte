@@ -3,7 +3,7 @@
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
   import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
-  import { ImagePreviewDialog } from "@platform/ui-shell";
+  import { ImagePreviewDialog, ImagePreviewTrigger } from "@platform/ui-shell";
   import {
     getEventBackgroundAssetURL,
     getEventBannerAssetURL,
@@ -22,6 +22,8 @@
   const initialLocale = DEFAULT_UI_LOCALE;
   let displayLocale = $state<string>(initialLocale);
   let activeAssetTab = $state<EventAssetTab>("banner");
+  let assetPreviewOpen = $state(false);
+  let assetPreviewFormat = $state("");
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
   let startAtLabel = $state(getContentSiteCommonText(initialLocale, "startAt"));
   let endAtLabel = $state(getContentSiteCommonText(initialLocale, "endAt"));
@@ -89,6 +91,31 @@
     debugDialog?.showModal();
   };
 
+  const getSrcExtension = (value: string): string => {
+    const match = value.match(/\.([a-z0-9]+)(?:[?#].*)?$/i);
+    return match?.[1]?.toLowerCase() ?? "";
+  };
+
+  const replaceSrcExtension = (value: string, extension: string): string => {
+    return value.replace(/(\.[a-z0-9]+)(?=([?#].*)?$)/i, `.${extension}`);
+  };
+
+  const assetPreviewFormatOptions = ["webp", "png"];
+  const normalizedAssetPreviewFormatOptions = assetPreviewFormatOptions
+    .map((format) => format.trim().toLowerCase())
+    .filter(Boolean);
+  const getResolvedAssetPreviewSrc = (src: string): string =>
+    assetPreviewFormat && normalizedAssetPreviewFormatOptions.includes(assetPreviewFormat)
+      ? replaceSrcExtension(src, assetPreviewFormat)
+      : src;
+  const openAssetPreview = (src: string): void => {
+    if (!assetPreviewFormat) {
+      assetPreviewFormat = getSrcExtension(src);
+    }
+
+    assetPreviewOpen = true;
+  };
+
   const regionDisplayOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
   const getRegionOptions = (availableRegions: SupportedRegion[]): SupportedRegion[] =>
     regionDisplayOrder.filter(
@@ -101,6 +128,14 @@
       ? data.eventUnavailableInCurrentRegionMessage
       : data.failedToLoadEventDataMessage;
 
+  $effect(() => {
+    data.eventId;
+    data.region;
+    activeAssetTab;
+    assetPreviewOpen = false;
+    assetPreviewFormat = "";
+  });
+
 </script>
 
 <svelte:head>
@@ -110,6 +145,34 @@
     <title>{payload.event ? `${payload.event.title} - Sekai Viewer` : `${eventTitlePrefix} ${data.eventId} - Sekai Viewer`}</title>
   {/await}
 </svelte:head>
+
+{#snippet assetPreview(src: string, alt: string, imageClass: string, fallbackLabel: string)}
+  {@const resolvedSrc = getResolvedAssetPreviewSrc(src)}
+  <ImagePreviewTrigger
+    src={resolvedSrc}
+    {alt}
+    {fallbackLabel}
+    ariaLabel={alt || closeLabel}
+    buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
+    {imageClass}
+    onclick={() => {
+      openAssetPreview(src);
+    }}
+  />
+  <ImagePreviewDialog
+    bind:open={assetPreviewOpen}
+    src={resolvedSrc}
+    {alt}
+    {fallbackLabel}
+    closeLabel={closeLabel}
+    formatOptions={normalizedAssetPreviewFormatOptions}
+    currentFormat={assetPreviewFormat}
+    dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
+    onFormatChange={(format) => {
+      assetPreviewFormat = format;
+    }}
+  />
+{/snippet}
 
 <section class="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4">
   {#await data.eventPayload}
@@ -247,15 +310,12 @@
               <div class="w-full overflow-hidden rounded-[1.75rem] bg-base-200/55">
                 {#if activeAssetTab === "banner"}
                   {#if payload.event.assetBundleName}
-                    <ImagePreviewDialog
-                      src={getEventBannerAssetURL(payload.event.assetBundleName, data.region)}
-                      alt={`${payload.event.title} ${bannerAltSuffix}`}
-                      closeLabel={closeLabel}
-                      formatOptions={["webp", "png"]}
-                      buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
-                      imageClass="h-full w-full object-contain p-4 md:p-6"
-                      dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
-                    />
+                    {@render assetPreview(
+                      getEventBannerAssetURL(payload.event.assetBundleName, data.region),
+                      `${payload.event.title} ${bannerAltSuffix}`,
+                      "h-full w-full object-contain p-4 md:p-6",
+                      ""
+                    )}
                   {:else}
                     <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
@@ -263,15 +323,12 @@
                   {/if}
                 {:else if activeAssetTab === "title"}
                   {#if payload.event.assetBundleName}
-                    <ImagePreviewDialog
-                      src={getEventLogoAssetURL(payload.event.assetBundleName, data.region)}
-                      alt={payload.event.title}
-                      closeLabel={closeLabel}
-                      formatOptions={["webp", "png"]}
-                      buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
-                      imageClass="h-full w-full object-contain p-4 md:p-6"
-                      dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
-                    />
+                    {@render assetPreview(
+                      getEventLogoAssetURL(payload.event.assetBundleName, data.region),
+                      payload.event.title,
+                      "h-full w-full object-contain p-4 md:p-6",
+                      ""
+                    )}
                   {:else}
                     <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
@@ -279,15 +336,12 @@
                   {/if}
                 {:else if activeAssetTab === "background"}
                   {#if payload.event.assetBundleName}
-                    <ImagePreviewDialog
-                      src={getEventBackgroundAssetURL(payload.event.assetBundleName, data.region)}
-                      alt={payload.event.title}
-                      closeLabel={closeLabel}
-                      formatOptions={["webp", "png"]}
-                      buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
-                      imageClass="h-full w-full object-cover"
-                      dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
-                    />
+                    {@render assetPreview(
+                      getEventBackgroundAssetURL(payload.event.assetBundleName, data.region),
+                      payload.event.title,
+                      "h-full w-full object-cover",
+                      ""
+                    )}
                   {:else}
                     <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
@@ -295,16 +349,12 @@
                   {/if}
                 {:else}
                   {#if payload.event.assetBundleName}
-                    <ImagePreviewDialog
-                      src={getEventCharacterAssetURL(payload.event.assetBundleName, data.region)}
-                      alt={payload.event.title}
-                      fallbackLabel={imageUnavailableLabel}
-                      closeLabel={closeLabel}
-                      formatOptions={["webp", "png"]}
-                      buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
-                      imageClass="h-full w-full object-contain"
-                      dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
-                    />
+                    {@render assetPreview(
+                      getEventCharacterAssetURL(payload.event.assetBundleName, data.region),
+                      payload.event.title,
+                      "h-full w-full object-contain",
+                      imageUnavailableLabel
+                    )}
                   {:else}
                     <div class="flex aspect-[16/10] flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65">
                       <Icon
