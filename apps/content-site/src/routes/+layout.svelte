@@ -1,5 +1,6 @@
 <script lang="ts">
   import "../app.css";
+  import { asset } from "$app/paths";
   import { invalidateAll } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
@@ -30,7 +31,7 @@
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const initialLocale = DEFAULT_UI_LOCALE;
-  let uiLocale = $state<SupportedUiLocale>(DEFAULT_UI_LOCALE);
+  let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeMode = $state<ThemeMode>("auto");
   let resolvedTheme = $state<ResolvedTheme>("light");
   let isLocaleMenuOpen = $state(false);
@@ -57,10 +58,6 @@
   const themeModeLabel = $derived(getThemeModeLabel(uiLocale, themeMode));
   const resolvedThemeLabel = $derived(getThemeModeLabel(uiLocale, resolvedTheme));
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
-
-  $effect(() => {
-    uiLocale = normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE);
-  });
 
   $effect(() => {
     void refreshTranslations(uiLocale);
@@ -156,7 +153,6 @@
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     applyTheme(resolvePreferredTheme());
-    uiLocale = normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE);
 
     return () => {
       systemThemeMediaQuery?.removeEventListener("change", handleSystemThemeChange);
@@ -166,6 +162,7 @@
 
 <svelte:head>
   <title>Sekai Viewer</title>
+  <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
 {#if $isLocaleLoading}
