@@ -11,6 +11,7 @@ const commonEn: ContentSiteCommonMessages = {
   idLabel: "ID",
   nameLabel: "Name",
   bannerAltSuffix: "banner",
+  imageUnavailable: "Image unavailable",
   noCurrentEventData: "No current event data.",
   loadingLanguagePack: "Loading language pack...",
   eventAssetTabs: {

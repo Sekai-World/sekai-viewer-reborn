@@ -11,6 +11,7 @@ const commonKoKr: ContentSiteCommonMessages = {
   idLabel: "ID",
   nameLabel: "이름",
   bannerAltSuffix: "배너",
+  imageUnavailable: "사용 가능한 이미지가 없습니다",
   noCurrentEventData: "현재 진행 중인 이벤트 데이터가 없습니다.",
   loadingLanguagePack: "언어 팩을 불러오는 중...",
   eventAssetTabs: {

@@ -1,9 +1,11 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
   import type { Snippet } from "svelte";
 
   type Props = {
     src: string;
     alt?: string;
+    fallbackLabel?: string;
     closeLabel?: string;
     downloadLabel?: string;
     openInNewWindowLabel?: string;
@@ -18,6 +20,7 @@
   let {
     src,
     alt = "",
+    fallbackLabel = "",
     closeLabel = "Close",
     downloadLabel = "Download",
     openInNewWindowLabel = "Open in new window",
@@ -33,6 +36,8 @@
   let currentFormat = $state("");
   let previewImageLoaded = $state(false);
   let dialogImageLoaded = $state(false);
+  let previewImageFailed = $state(false);
+  let dialogImageFailed = $state(false);
 
   const getSrcExtension = (value: string): string => {
     const match = value.match(/\.([a-z0-9]+)(?:[?#].*)?$/i);
@@ -60,6 +65,8 @@
     resolvedSrc;
     previewImageLoaded = false;
     dialogImageLoaded = false;
+    previewImageFailed = false;
+    dialogImageFailed = false;
   });
 
   const openDialog = (): void => {
@@ -67,25 +74,41 @@
   };
 </script>
 
-<button type="button" class={buttonClass} onclick={openDialog} aria-label={alt || closeLabel}>
+<button
+  type="button"
+  class={`${buttonClass} ${previewImageFailed ? "cursor-default" : ""}`}
+  onclick={openDialog}
+  aria-label={previewImageFailed && fallbackLabel ? fallbackLabel : alt || closeLabel}
+  disabled={previewImageFailed}
+>
   {#if children}
     {@render children()}
   {:else}
     <div class="relative h-full w-full overflow-hidden">
-      {#if !previewImageLoaded}
+      {#if !previewImageLoaded && !previewImageFailed}
         <div class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse">
           <span class="loading loading-spinner loading-md text-base-content/60" aria-hidden="true"></span>
+        </div>
+      {/if}
+      {#if previewImageFailed}
+        <div class="flex h-full min-h-0 w-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65">
+          <Icon icon="mdi:file-remove-outline" class="h-10 w-10 opacity-75" aria-hidden="true" />
+          {#if fallbackLabel}
+            <span class="font-medium">{fallbackLabel}</span>
+          {/if}
         </div>
       {/if}
       <img
         src={resolvedSrc}
         alt={alt}
-        class={`${imageClass} transition-all duration-300 ease-out ${previewImageLoaded ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"}`}
+        class={`${imageClass} transition-all duration-300 ease-out ${previewImageLoaded && !previewImageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${previewImageFailed ? "pointer-events-none sr-only" : ""}`}
         onload={() => {
           previewImageLoaded = true;
+          previewImageFailed = false;
         }}
         onerror={() => {
           previewImageLoaded = true;
+          previewImageFailed = true;
         }}
       />
     </div>
@@ -94,7 +117,7 @@
 
 <dialog bind:this={dialog} class="modal">
   <div class={`modal-box ${dialogBoxClass}`}>
-    {#if normalizedFormatOptions.length > 0}
+    {#if normalizedFormatOptions.length > 0 && !dialogImageFailed}
       <div class="absolute left-3 top-3 z-10 inline-flex rounded-full border border-base-content/10 bg-base-100/90 p-1 shadow-sm">
         {#each normalizedFormatOptions as format (format)}
           <button
@@ -115,6 +138,7 @@
     {/if}
 
     <div class="absolute right-3 top-3 z-10 flex items-center justify-end gap-2">
+      {#if !dialogImageFailed}
       <a
         href={resolvedSrc}
         download
@@ -152,6 +176,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M14 5h5v5m0-5-7 7M10 7H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-3" />
         </svg>
       </a>
+      {/if}
       <form method="dialog">
         <button type="submit" class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm">
           ✕
@@ -160,20 +185,30 @@
     </div>
 
     <div class="relative flex items-center justify-center">
-      {#if !dialogImageLoaded}
+      {#if !dialogImageLoaded && !dialogImageFailed}
         <div class="absolute inset-0 flex items-center justify-center rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(0,0,0,0.18))]">
           <span class="loading loading-spinner loading-lg text-base-100 drop-shadow-sm" aria-hidden="true"></span>
+        </div>
+      {/if}
+      {#if dialogImageFailed}
+        <div class="flex min-h-[40vh] w-[min(70vw,32rem)] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-base-content/15 bg-base-200/40 px-8 py-10 text-center text-base text-base-content/70">
+          <Icon icon="mdi:file-remove-outline" class="h-12 w-12 opacity-75" aria-hidden="true" />
+          {#if fallbackLabel}
+            <p class="font-medium">{fallbackLabel}</p>
+          {/if}
         </div>
       {/if}
       <img
         src={resolvedSrc}
         alt={alt}
-        class={`${dialogImageClass} transition-all duration-300 ease-out ${dialogImageLoaded ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"}`}
+        class={`${dialogImageClass} transition-all duration-300 ease-out ${dialogImageLoaded && !dialogImageFailed ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"} ${dialogImageFailed ? "pointer-events-none sr-only" : ""}`}
         onload={() => {
           dialogImageLoaded = true;
+          dialogImageFailed = false;
         }}
         onerror={() => {
           dialogImageLoaded = true;
+          dialogImageFailed = true;
         }}
       />
     </div>
