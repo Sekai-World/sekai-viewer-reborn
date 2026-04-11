@@ -1,5 +1,8 @@
 import { dev } from "$app/environment";
-import { getEventsByRegionById } from "@platform/sekai-master-api-sdk";
+import {
+  getEventsByRegionById,
+  getEventsRegionsByIdAvailability
+} from "@platform/sekai-master-api-sdk";
 import {
   getContentSiteServerText,
   regionLabels,
@@ -7,10 +10,9 @@ import {
   type SupportedRegion
 } from "@platform/i18n-dicts";
 import {
-  DEFAULT_PRIMARY_REGION,
+  DEFAULT_REGION,
   normalizeRegion,
   normalizeUiLocale,
-  PRIMARY_REGION_COOKIE_NAME,
   UI_LOCALE_COOKIE_NAME
 } from "$lib/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
@@ -32,7 +34,6 @@ type RegionEventLookup = {
 };
 
 type EventPayload = {
-  availableRegions: SupportedRegion[];
   event: EventDetail | null;
   debugEventJson: string | null;
   error: string | null;
@@ -144,6 +145,74 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
   };
 };
 
+const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
+  const root = getObject(payload);
+
+  const toSupportedRegionList = (value: unknown): SupportedRegion[] => {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value.filter(
+      (region): region is SupportedRegion =>
+        typeof region === "string" && supportedRegions.includes(region as SupportedRegion)
+    );
+  };
+
+  const toSupportedRegionMap = (value: unknown): SupportedRegion[] => {
+    const record = getObject(value);
+    if (!record) {
+      return [];
+    }
+
+    return supportedRegions.filter((region) => {
+      const regionValue = record[region];
+
+      if (regionValue === true) {
+        return true;
+      }
+
+      const nested = getObject(regionValue);
+      return nested?.available === true || nested?.exists === true;
+    });
+  };
+
+  const fromRootArray = toSupportedRegionList(payload);
+  if (fromRootArray.length > 0) {
+    return fromRootArray;
+  }
+
+  if (!root) {
+    return [];
+  }
+
+  const candidateArrayKeys = ["availableRegions", "regions"];
+  for (const key of candidateArrayKeys) {
+    const regions = toSupportedRegionList(root[key]);
+    if (regions.length > 0) {
+      return regions;
+    }
+  }
+
+  const candidateMapKeys = ["availability", "availableRegions", "regions"];
+  for (const key of candidateMapKeys) {
+    const regions = toSupportedRegionMap(root[key]);
+    if (regions.length > 0) {
+      return regions;
+    }
+  }
+
+  const dataNode = getObject(root.data);
+  if (dataNode) {
+    const nestedRegions = normalizeAvailableRegions(dataNode);
+    if (nestedRegions.length > 0) {
+      return nestedRegions;
+    }
+  }
+
+  return [];
+};
+
 const fetchRegionEvent = async (
   baseUrl: string,
   region: SupportedRegion,
@@ -181,62 +250,69 @@ const fetchRegionEvent = async (
   }
 };
 
-const fetchEventPayload = async ({
+const fetchAvailableRegions = async ({
   baseUrl,
   eventId,
   region,
-  eventUnavailableInCurrentRegionMessage,
-  failedToLoadEventDataMessage
+  currentLookupPromise
 }: {
   baseUrl: string;
   eventId: string;
   region: SupportedRegion;
-  eventUnavailableInCurrentRegionMessage: string;
-  failedToLoadEventDataMessage: string;
-}): Promise<EventPayload> => {
+  currentLookupPromise: Promise<RegionEventLookup>;
+}): Promise<SupportedRegion[]> => {
   try {
-    const lookups = await Promise.all(
-      supportedRegions.map(async (targetRegion) =>
-        fetchRegionEvent(baseUrl, targetRegion, eventId)
-      )
-    );
-    const currentLookup = lookups.find((lookup) => lookup.region === region) ?? {
-      region,
-      event: null,
-      exists: false,
-      rawPayloadJson: null
-    };
-    const detectedRegions = lookups
-      .filter((lookup) => lookup.exists)
-      .map((lookup) => lookup.region);
-    const availableRegions = detectedRegions.includes(region)
-      ? detectedRegions
-      : [region, ...detectedRegions];
+    const [currentLookup, availabilityResponse] = await Promise.all([
+      currentLookupPromise,
+      getEventsRegionsByIdAvailability({
+        baseUrl,
+        path: { id: eventId }
+      })
+    ]);
+    const detectedRegions = availabilityResponse.error
+      ? []
+      : normalizeAvailableRegions(availabilityResponse.data);
 
-    if (!currentLookup.event) {
-      return {
-        availableRegions,
-        event: null,
-        debugEventJson: dev ? currentLookup.rawPayloadJson : null,
-        error:
-          detectedRegions.length > 0
-            ? eventUnavailableInCurrentRegionMessage
-            : failedToLoadEventDataMessage
-      };
+    if (currentLookup.exists && !detectedRegions.includes(region)) {
+      return [region, ...detectedRegions];
     }
 
+    return detectedRegions.includes(region)
+      ? detectedRegions
+      : [region, ...detectedRegions];
+  } catch {
+    return [region];
+  }
+};
+
+const fetchEventPayload = async ({
+  currentLookupPromise,
+  invalidEventIdMessage
+}: {
+  currentLookupPromise: Promise<RegionEventLookup>;
+  invalidEventIdMessage: string | null;
+}): Promise<EventPayload> => {
+  if (invalidEventIdMessage) {
     return {
-      availableRegions,
+      event: null,
+      debugEventJson: null,
+      error: invalidEventIdMessage
+    };
+  }
+
+  try {
+    const currentLookup = await currentLookupPromise;
+
+    return {
       event: currentLookup.event,
       debugEventJson: dev ? currentLookup.rawPayloadJson : null,
       error: null
     };
   } catch {
     return {
-      availableRegions: [region],
       event: null,
       debugEventJson: null,
-      error: failedToLoadEventDataMessage
+      error: null
     };
   }
 };
@@ -250,38 +326,34 @@ export const load: PageServerLoad = ({ params, url, cookies }) => {
     "eventUnavailableInCurrentRegion"
   );
   const failedToLoadEventDataMessage = getContentSiteServerText(uiLocale, "failedToLoadEventData");
-  const regionFromQuery = url.searchParams.get("region");
-  const regionFromCookie = cookies.get(PRIMARY_REGION_COOKIE_NAME);
-  const region: SupportedRegion = normalizeRegion(
-    regionFromQuery ?? regionFromCookie,
-    DEFAULT_PRIMARY_REGION
-  );
+  const region: SupportedRegion = normalizeRegion(url.searchParams.get("region"), DEFAULT_REGION);
   const baseUrl = getMasterApiBaseUrl();
-
-  if (!eventId) {
-    return {
-      eventId,
-      region,
-      regionLabel: regionLabels[region],
-      eventPayload: Promise.resolve({
-        availableRegions: [region],
+  const currentLookupPromise = eventId
+    ? fetchRegionEvent(baseUrl, region, eventId)
+    : Promise.resolve({
+        region,
         event: null,
-        error: invalidEventIdMessage,
-        debugEventJson: null
-      } satisfies EventPayload)
-    };
-  }
+        exists: false,
+        rawPayloadJson: null
+      } satisfies RegionEventLookup);
 
   return {
     eventId,
     region,
     regionLabel: regionLabels[region],
+    eventUnavailableInCurrentRegionMessage,
+    failedToLoadEventDataMessage,
+    availableRegions: eventId
+      ? fetchAvailableRegions({
+          baseUrl,
+          eventId,
+          region,
+          currentLookupPromise
+        })
+      : Promise.resolve([region] satisfies SupportedRegion[]),
     eventPayload: fetchEventPayload({
-      baseUrl,
-      eventId,
-      region,
-      eventUnavailableInCurrentRegionMessage,
-      failedToLoadEventDataMessage
+      currentLookupPromise,
+      invalidEventIdMessage: eventId ? null : invalidEventIdMessage
     })
   };
 };
