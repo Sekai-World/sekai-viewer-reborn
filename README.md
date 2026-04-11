@@ -1,6 +1,6 @@
 # Multi-Site Platform Monorepo
 
-> **Standalone project notice:** This is a brand new greenfield monorepo scaffold created at the workspace root. It is independent from any prior project structure.
+Monorepo for the Sekai viewer platform and related sites.
 
 ## Stack
 
@@ -35,7 +35,7 @@ deploy/
 
 ## Apps
 
-Each app includes a SvelteKit 2 starter page and Tailwind CSS 4 integration:
+Apps in this workspace:
 
 - `apps/content-site`
 - `apps/tools-site`
@@ -46,7 +46,7 @@ Each app includes a SvelteKit 2 starter page and Tailwind CSS 4 integration:
 
 - `@platform/sekai-master-api-sdk`: sekai-master-api OpenAPI SDK generator and client package
 - `@platform/auth-client`: Keycloak/OIDC helper URL builders
-- `@platform/i18n-dicts`: locale dictionary starter
+- `@platform/i18n-dicts`: shared region, locale, and site dictionaries
 - `@platform/ui-shell`: shared Svelte shell and region-switcher components
 - `@platform/ui-tokens`: framework-agnostic design tokens (JSON + TS export)
 
@@ -81,6 +81,12 @@ Run one app only:
 ```bash
 pnpm --filter @apps/content-site dev
 ```
+
+`content-site` currently depends on these environment variables:
+
+- `SEKAI_MASTER_API_BASE_URL`
+- `PUBLIC_REMOTE_ASSET_BASE_URL`
+- `PUBLIC_SEKAI_I18N_BASE_URL`
 
 ## Build, Check, Lint, Format
 
@@ -145,6 +151,7 @@ Notes:
 - The GitHub Actions workflow at `.github/workflows/release.yml` opens or updates a release PR whenever changesets land on `main`.
 - After the release PR is merged, `.github/workflows/release.yml` creates any missing workspace tags for the changed package versions and then creates matching GitHub releases.
 - If you need to rerun just the GitHub Release publish step locally or in CI, use `pnpm release:github`.
+- `pnpm release:publish` is an alias of `pnpm release:github`.
 - All workspaces in this repo are private, so Changesets is configured to version and tag private packages too.
 - Changeset entries should be committed as markdown files under `.changeset/`.
 - If a code change should not produce a user-facing release note, use `pnpm changeset --empty`.
