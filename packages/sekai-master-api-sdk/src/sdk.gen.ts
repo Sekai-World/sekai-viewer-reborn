@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetAdminProfileData, GetAdminProfileErrors, GetAdminProfileResponses, GetCardsByRegionByIdData, GetCardsByRegionByIdEpisodesData, GetCardsByRegionByIdEpisodesErrors, GetCardsByRegionByIdEpisodesResponses, GetCardsByRegionByIdErrors, GetCardsByRegionByIdParamsData, GetCardsByRegionByIdParamsErrors, GetCardsByRegionByIdParamsResponses, GetCardsByRegionByIdResponses, GetCardsByRegionListData, GetCardsByRegionListErrors, GetCardsByRegionListResponses, GetCardsByRegionSearchData, GetCardsByRegionSearchErrors, GetCardsByRegionSearchResponses, GetEventsByRegionByIdData, GetEventsByRegionByIdErrors, GetEventsByRegionByIdResponses, GetEventsByRegionByIdRewardsData, GetEventsByRegionByIdRewardsErrors, GetEventsByRegionByIdRewardsResponses, GetEventsByRegionCurrentData, GetEventsByRegionCurrentErrors, GetEventsByRegionCurrentResponses, GetHealthData, GetHealthResponses, GetMasterDataEventsData, GetMasterDataEventsErrors, GetMasterDataEventsResponses, GetMasterDataStatusData, GetMasterDataStatusErrors, GetMasterDataStatusResponses, PostAdminLoginData, PostAdminLoginErrors, PostAdminLoginResponses, PostAdminMasterDataSyncData, PostAdminMasterDataSyncErrors, PostAdminMasterDataSyncForceData, PostAdminMasterDataSyncForceErrors, PostAdminMasterDataSyncForceResponses, PostAdminMasterDataSyncResponses } from './types.gen';
+import type { GetAdminLoginData, GetAdminLoginErrors, GetAdminMasterDataEventsData, GetAdminMasterDataEventsErrors, GetAdminMasterDataEventsResponses, GetAdminMasterDataStatusData, GetAdminMasterDataStatusErrors, GetAdminMasterDataStatusResponses, GetAdminProfileData, GetAdminProfileErrors, GetAdminProfileResponses, GetCardsByRegionByIdData, GetCardsByRegionByIdEpisodesData, GetCardsByRegionByIdEpisodesErrors, GetCardsByRegionByIdEpisodesResponses, GetCardsByRegionByIdErrors, GetCardsByRegionByIdParamsData, GetCardsByRegionByIdParamsErrors, GetCardsByRegionByIdParamsResponses, GetCardsByRegionByIdResponses, GetCardsByRegionListData, GetCardsByRegionListErrors, GetCardsByRegionListResponses, GetCardsByRegionSearchData, GetCardsByRegionSearchErrors, GetCardsByRegionSearchResponses, GetCardsRegionsByIdAvailabilityData, GetCardsRegionsByIdAvailabilityErrors, GetCardsRegionsByIdAvailabilityResponses, GetEventsByRegionByIdData, GetEventsByRegionByIdErrors, GetEventsByRegionByIdResponses, GetEventsByRegionByIdRewardsData, GetEventsByRegionByIdRewardsErrors, GetEventsByRegionByIdRewardsResponses, GetEventsByRegionCurrentData, GetEventsByRegionCurrentErrors, GetEventsByRegionCurrentResponses, GetEventsRegionsByIdAvailabilityData, GetEventsRegionsByIdAvailabilityErrors, GetEventsRegionsByIdAvailabilityResponses, GetHealthData, GetHealthResponses, GetMusicsByRegionByIdData, GetMusicsByRegionByIdErrors, GetMusicsByRegionByIdResponses, GetMusicsByRegionListData, GetMusicsByRegionListErrors, GetMusicsByRegionListResponses, GetMusicsByRegionSearchData, GetMusicsByRegionSearchErrors, GetMusicsByRegionSearchResponses, GetMusicsRegionsByIdAvailabilityData, GetMusicsRegionsByIdAvailabilityErrors, GetMusicsRegionsByIdAvailabilityResponses, PostAdminMasterDataSyncData, PostAdminMasterDataSyncErrors, PostAdminMasterDataSyncForceData, PostAdminMasterDataSyncForceErrors, PostAdminMasterDataSyncForceResponses, PostAdminMasterDataSyncResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -19,15 +19,26 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 };
 
 /**
- * Login with Keycloak credentials
+ * Start admin login with OIDC provider
  */
-export const postAdminLogin = <ThrowOnError extends boolean = false>(options: Options<PostAdminLoginData, ThrowOnError>) => (options.client ?? client).post<PostAdminLoginResponses, PostAdminLoginErrors, ThrowOnError>({
-    url: '/admin/login',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
+export const getAdminLogin = <ThrowOnError extends boolean = false>(options?: Options<GetAdminLoginData, ThrowOnError>) => (options?.client ?? client).get<unknown, GetAdminLoginErrors, ThrowOnError>({ url: '/admin/login', ...options });
+
+/**
+ * Subscribe master-data sync events
+ */
+export const getAdminMasterDataEvents = <ThrowOnError extends boolean = false>(options?: Options<GetAdminMasterDataEventsData, ThrowOnError>) => (options?.client ?? client).sse.get<GetAdminMasterDataEventsResponses, GetAdminMasterDataEventsErrors, ThrowOnError>({
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/admin/master-data/events',
+    ...options
+});
+
+/**
+ * Get admin master-data sync status
+ */
+export const getAdminMasterDataStatus = <ThrowOnError extends boolean = false>(options?: Options<GetAdminMasterDataStatusData, ThrowOnError>) => (options?.client ?? client).get<GetAdminMasterDataStatusResponses, GetAdminMasterDataStatusErrors, ThrowOnError>({
+    security: [{ name: 'Authorization', type: 'apiKey' }],
+    url: '/admin/master-data/status',
+    ...options
 });
 
 /**
@@ -66,6 +77,11 @@ export const getAdminProfile = <ThrowOnError extends boolean = false>(options?: 
 });
 
 /**
+ * Get available regions for a card id
+ */
+export const getCardsRegionsByIdAvailability = <ThrowOnError extends boolean = false>(options: Options<GetCardsRegionsByIdAvailabilityData, ThrowOnError>) => (options.client ?? client).get<GetCardsRegionsByIdAvailabilityResponses, GetCardsRegionsByIdAvailabilityErrors, ThrowOnError>({ url: '/cards/regions/{id}/availability', ...options });
+
+/**
  * List cards by page
  */
 export const getCardsByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetCardsByRegionListData, ThrowOnError>) => (options.client ?? client).get<GetCardsByRegionListResponses, GetCardsByRegionListErrors, ThrowOnError>({ url: '/cards/{region}/list', ...options });
@@ -91,6 +107,11 @@ export const getCardsByRegionByIdEpisodes = <ThrowOnError extends boolean = fals
 export const getCardsByRegionByIdParams = <ThrowOnError extends boolean = false>(options: Options<GetCardsByRegionByIdParamsData, ThrowOnError>) => (options.client ?? client).get<GetCardsByRegionByIdParamsResponses, GetCardsByRegionByIdParamsErrors, ThrowOnError>({ url: '/cards/{region}/{id}/params', ...options });
 
 /**
+ * Get available regions for an event id
+ */
+export const getEventsRegionsByIdAvailability = <ThrowOnError extends boolean = false>(options: Options<GetEventsRegionsByIdAvailabilityData, ThrowOnError>) => (options.client ?? client).get<GetEventsRegionsByIdAvailabilityResponses, GetEventsRegionsByIdAvailabilityErrors, ThrowOnError>({ url: '/events/regions/{id}/availability', ...options });
+
+/**
  * Get current event by region
  */
 export const getEventsByRegionCurrent = <ThrowOnError extends boolean = false>(options: Options<GetEventsByRegionCurrentData, ThrowOnError>) => (options.client ?? client).get<GetEventsByRegionCurrentResponses, GetEventsByRegionCurrentErrors, ThrowOnError>({ url: '/events/{region}/current', ...options });
@@ -111,11 +132,21 @@ export const getEventsByRegionByIdRewards = <ThrowOnError extends boolean = fals
 export const getHealth = <ThrowOnError extends boolean = false>(options?: Options<GetHealthData, ThrowOnError>) => (options?.client ?? client).get<GetHealthResponses, unknown, ThrowOnError>({ url: '/health', ...options });
 
 /**
- * Subscribe master-data sync events
+ * Get available regions for a music id
  */
-export const getMasterDataEvents = <ThrowOnError extends boolean = false>(options?: Options<GetMasterDataEventsData, ThrowOnError>) => (options?.client ?? client).sse.get<GetMasterDataEventsResponses, GetMasterDataEventsErrors, ThrowOnError>({ url: '/master-data/events', ...options });
+export const getMusicsRegionsByIdAvailability = <ThrowOnError extends boolean = false>(options: Options<GetMusicsRegionsByIdAvailabilityData, ThrowOnError>) => (options.client ?? client).get<GetMusicsRegionsByIdAvailabilityResponses, GetMusicsRegionsByIdAvailabilityErrors, ThrowOnError>({ url: '/musics/regions/{id}/availability', ...options });
 
 /**
- * Get master-data sync status
+ * List musics by page
  */
-export const getMasterDataStatus = <ThrowOnError extends boolean = false>(options?: Options<GetMasterDataStatusData, ThrowOnError>) => (options?.client ?? client).get<GetMasterDataStatusResponses, GetMasterDataStatusErrors, ThrowOnError>({ url: '/master-data/status', ...options });
+export const getMusicsByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetMusicsByRegionListData, ThrowOnError>) => (options.client ?? client).get<GetMusicsByRegionListResponses, GetMusicsByRegionListErrors, ThrowOnError>({ url: '/musics/{region}/list', ...options });
+
+/**
+ * Search musics
+ */
+export const getMusicsByRegionSearch = <ThrowOnError extends boolean = false>(options: Options<GetMusicsByRegionSearchData, ThrowOnError>) => (options.client ?? client).get<GetMusicsByRegionSearchResponses, GetMusicsByRegionSearchErrors, ThrowOnError>({ url: '/musics/{region}/search', ...options });
+
+/**
+ * Get music by id
+ */
+export const getMusicsByRegionById = <ThrowOnError extends boolean = false>(options: Options<GetMusicsByRegionByIdData, ThrowOnError>) => (options.client ?? client).get<GetMusicsByRegionByIdResponses, GetMusicsByRegionByIdErrors, ThrowOnError>({ url: '/musics/{region}/{id}', ...options });
