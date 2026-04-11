@@ -119,15 +119,11 @@ When changing shared packages:
 
 ## `content-site` Region / Locale Conventions
 
-- `content-site` persists three preferences:
-  - primary data region
-  - secondary data region
-  - UI locale
-- Cookie names and default values are defined in `apps/content-site/src/lib/region.ts`.
-- Normalize and read these preferences through `apps/content-site/src/routes/+layout.server.ts`; do not duplicate cookie parsing in page-level loaders.
+- `content-site` currently persists the UI locale preference only.
+- Locale cookie names and defaults are defined in `apps/content-site/src/lib/region.ts`.
+- Normalize and read locale preference through `apps/content-site/src/routes/+layout.server.ts`; do not duplicate locale cookie parsing in page-level loaders.
 - The home page loader (`apps/content-site/src/routes/+page.server.ts`) fetches current event cards for all supported regions.
-- The event detail loader (`apps/content-site/src/routes/event/[id]/+page.server.ts`) resolves the API region from `?region=` first, then falls back to the primary-region cookie.
-- The secondary region is a persisted UI preference, but it is not currently used by server loaders as the event-detail fetch region.
+- The event detail loader (`apps/content-site/src/routes/event/[id]/+page.server.ts`) resolves the API region from `?region=` and otherwise falls back to the default region.
 - Theme preference is handled separately on the client in `apps/content-site/src/routes/+layout.svelte`.
 
 ## `content-site` I18n Conventions
@@ -140,7 +136,7 @@ When changing shared packages:
   - `packages/i18n-dicts/src/content-site/index.ts`
 - Reuse existing helpers such as `getContentSiteCommonText` and `getContentSiteServerText` instead of reimplementing ad hoc lookup logic.
 - Avoid introducing new hardcoded user-facing strings directly in `apps/content-site` when they should be localized.
-- `content-site` currently also uses `tCommon`, `getThemeModeLabel`, and `getRegionRoleLabels` from `apps/content-site/src/lib/i18n.ts` to bridge runtime locale switching with shared dictionaries.
+- `content-site` currently also uses `tCommon` and `getThemeModeLabel` from `apps/content-site/src/lib/i18n.ts` to bridge runtime locale switching with shared dictionaries.
 
 ## `content-site` Environment Variables
 
