@@ -4,4 +4,4 @@
 "@platform/ui-shell": patch
 ---
 
-Improve `content-site` event detail asset fallbacks, shared image preview failure states, and page streaming/favicon polish.
+Improve `content-site` event detail asset fallbacks, split shared image preview trigger/modal components, and page streaming/favicon polish.
