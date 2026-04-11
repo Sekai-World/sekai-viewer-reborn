@@ -91,6 +91,12 @@
     regionDisplayOrder.filter(
       (regionOption) => availableRegions.includes(regionOption) || regionOption === data.region
     );
+  const hasAlternativeRegion = (availableRegions: SupportedRegion[]): boolean =>
+    availableRegions.some((regionOption) => regionOption !== data.region);
+  const getUnavailableError = (availableRegions: SupportedRegion[]): string =>
+    hasAlternativeRegion(availableRegions)
+      ? data.eventUnavailableInCurrentRegionMessage
+      : data.failedToLoadEventDataMessage;
 
 </script>
 
@@ -138,7 +144,6 @@
       </article>
     </div>
   {:then payload}
-    {@const regionOptions = getRegionOptions(payload.availableRegions)}
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <a class="btn btn-ghost btn-sm w-fit" href={resolve("/")}>← {homeLabel}</a>
       <div class="flex flex-wrap items-center gap-1.5 md:justify-end">
@@ -151,21 +156,24 @@
             {debugEventJsonButtonLabel}
           </button>
         {/if}
-        {#each regionOptions as regionOption (regionOption)}
-          {#if regionOption === data.region}
-            <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-              {regionOption.toUpperCase()}
-            </span>
-          {:else}
-            <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-            <a
-              href={`${resolve("/event/[id]", { id: data.eventId })}?region=${encodeURIComponent(regionOption)}`}
-              class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold"
-            >
-              {regionOption.toUpperCase()}
-            </a>
-          {/if}
-        {/each}
+        {#await data.availableRegions then availableRegions}
+          {@const regionOptions = getRegionOptions(availableRegions)}
+          {#each regionOptions as regionOption (regionOption)}
+            {#if regionOption === data.region}
+              <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+                {regionOption.toUpperCase()}
+              </span>
+            {:else}
+              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+              <a
+                href={`${resolve("/event/[id]", { id: data.eventId })}?region=${encodeURIComponent(regionOption)}`}
+                class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold"
+              >
+                {regionOption.toUpperCase()}
+              </a>
+            {/if}
+          {/each}
+        {/await}
       </div>
     </div>
 
@@ -360,28 +368,38 @@
 
             <div class="rounded-[1.75rem] border border-base-content/10 bg-base-200/35 p-5">
               <div class="flex flex-wrap gap-1.5">
-                {#each regionOptions as regionOption (regionOption)}
-                  {#if regionOption === data.region}
-                    <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-                      {regionOption.toUpperCase()}
-                    </span>
-                  {:else}
-                    <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-                    <a
-                      href={`${resolve("/event/[id]", { id: data.eventId })}?region=${encodeURIComponent(regionOption)}`}
-                      class="badge badge-outline font-semibold"
-                    >
-                      {regionOption.toUpperCase()}
-                    </a>
-                  {/if}
-                {/each}
+                {#await data.availableRegions then availableRegions}
+                  {@const regionOptions = getRegionOptions(availableRegions)}
+                  {#each regionOptions as regionOption (regionOption)}
+                    {#if regionOption === data.region}
+                      <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+                        {regionOption.toUpperCase()}
+                      </span>
+                    {:else}
+                      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+                      <a
+                        href={`${resolve("/event/[id]", { id: data.eventId })}?region=${encodeURIComponent(regionOption)}`}
+                        class="badge badge-outline font-semibold"
+                      >
+                        {regionOption.toUpperCase()}
+                      </a>
+                    {/if}
+                  {/each}
+                {/await}
               </div>
             </div>
           </div>
         </article>
       </div>
     {:else if !payload.error}
-      <div class="alert">{noEventLabel}</div>
+      {#await data.availableRegions}
+        <div class="alert">
+          <span class="loading loading-spinner loading-sm"></span>
+          {noEventLabel}
+        </div>
+      {:then availableRegions}
+        <div class="alert alert-error">{getUnavailableError(availableRegions)}</div>
+      {/await}
     {/if}
 
     {#if dev && payload.debugEventJson}
