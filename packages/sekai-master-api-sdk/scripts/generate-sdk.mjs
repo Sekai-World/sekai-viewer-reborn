@@ -1,3 +1,5 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { createClient } from '@hey-api/openapi-ts';
 
 function parseArgs(argv) {
@@ -25,6 +27,39 @@ function parseArgs(argv) {
   return result;
 }
 
+async function patchGeneratedFile(filePath, transform) {
+  const source = await readFile(filePath, 'utf8');
+  const updated = transform(source);
+
+  if (updated !== source) {
+    await writeFile(filePath, updated);
+  }
+}
+
+async function normalizeGeneratedSdk(outputDir) {
+  const normalizedOutputDir = resolve(outputDir);
+
+  await patchGeneratedFile(resolve(normalizedOutputDir, 'client.gen.ts'), (source) =>
+    source.replace(
+      "baseUrl: 'http://localhost:8080/api/v1'",
+      "baseUrl: '/api/v1'"
+    )
+  );
+
+  await patchGeneratedFile(resolve(normalizedOutputDir, 'types.gen.ts'), (source) =>
+    source.replace(
+      "baseUrl: 'http://localhost:8080/api/v1' | (string & {});",
+      'baseUrl: string;'
+    )
+  );
+
+  await patchGeneratedFile(resolve(normalizedOutputDir, 'index.ts'), (source) =>
+    source
+      .replace('GetAdminLoginResponse, ', '')
+      .replace('GetAdminLoginResponses, ', '')
+  );
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
 
@@ -43,6 +78,8 @@ async function main() {
     input: args.input,
     output: args.output
   });
+
+  await normalizeGeneratedSdk(args.output);
 
   process.stdout.write(`SDK generated from ${args.input} to ${args.output}\n`);
 }
