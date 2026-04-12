@@ -30,10 +30,8 @@ Notes:
 
 ## Default base URL behavior
 
-- If `SEKAI_MASTER_API_BASE_URL` is set, SDK requests use that value.
-- Otherwise, if `NODE_ENV=test`, SDK defaults to `https://master-api-test.sekai.best/api/v1`.
-- Otherwise, if `NODE_ENV=production`, SDK defaults to `https://master-api.sekai.best/api/v1`.
-- Otherwise (development/local browser host on `localhost`/`127.0.0.1`/`[::1]`), SDK defaults to `http://localhost:8080/api/v1`.
+- The generated client defaults to the relative API root `/api/v1`.
+- Server-side callers or non-proxied deployments should pass an explicit `baseUrl`.
 
 ## Usage
 
@@ -51,7 +49,7 @@ const health = await getHealth();
 import { getCardsByRegionList } from '@platform/sekai-master-api-sdk';
 
 const cards = await getCardsByRegionList({
-  baseUrl: 'http://localhost:8080/api/v1',
+  baseUrl: '/api/v1',
   path: { region: 'jp' },
   query: { page: 1, page_size: 20 }
 });
@@ -77,7 +75,7 @@ const login = await postAdminLogin({
 import { getAdminProfile } from '@platform/sekai-master-api-sdk';
 
 const profile = await getAdminProfile({
-  baseUrl: 'http://localhost:8080/api/v1',
+  baseUrl: '/api/v1',
   headers: {
     Authorization: `Bearer ${token}`
   }

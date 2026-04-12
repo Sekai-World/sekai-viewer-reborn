@@ -128,7 +128,12 @@
         </a>
       {/if}
       <form method="dialog">
-        <button type="submit" class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm">
+        <button
+          type="submit"
+          class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
+          aria-label={closeLabel}
+          title={closeLabel}
+        >
           ✕
         </button>
       </form>
