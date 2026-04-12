@@ -16,7 +16,7 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     lib: {
-      entry: resolve(currentDir, "src/entry.ts"),
+      entry: resolve(currentDir, "src/index.ts"),
       formats: ["es"],
       fileName: () => "index.js"
     },
