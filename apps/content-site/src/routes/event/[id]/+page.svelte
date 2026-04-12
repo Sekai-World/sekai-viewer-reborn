@@ -127,11 +127,11 @@
     hasAlternativeRegion(availableRegions)
       ? data.eventUnavailableInCurrentRegionMessage
       : data.failedToLoadEventDataMessage;
+  const getAssetPreviewResetKey = (): string =>
+    `${data.eventId}:${data.region}:${activeAssetTab}`;
 
   $effect(() => {
-    data.eventId;
-    data.region;
-    activeAssetTab;
+    getAssetPreviewResetKey();
     assetPreviewOpen = false;
     assetPreviewFormat = "";
   });
