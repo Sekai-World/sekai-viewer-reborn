@@ -143,5 +143,5 @@ export const getEventBgmAssetURL = (
     return getRemoteAssetBaseURL();
   }
 
-  return buildServerAssetURL(`event/${normalizedAssetBundleName}.mp3`, server);
+  return buildServerAssetURL(`${normalizedAssetBundleName}.mp3`, server);
 };

@@ -20,7 +20,6 @@
     values: CountdownValues;
     toneClass: string;
     showSeconds: boolean;
-    minuteProgress: number;
   };
 
   let {
@@ -44,6 +43,11 @@
   let minuteLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.minute"));
   let secondLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.second"));
   let nowMs = $state(Date.now());
+  let progressNowMs = $state(Date.now());
+  let mounted = $state(false);
+  let progressAnimationFrameId = 0;
+  let lastProgressPaintAt = 0;
+  let lastRenderedSecond = -1;
 
   $effect(() => {
     applyTranslations(uiLocale);
@@ -134,6 +138,44 @@
     return (minuteRemainder / 60000) * 100;
   };
 
+  const isCountdownActiveAt = (
+    startAtValue: string | number | null,
+    endAtValue: string | number | null,
+    timestampMs: number
+  ): boolean => {
+    const startAtMs = toTimestampMs(startAtValue);
+    const endAtMs = toTimestampMs(endAtValue);
+
+    if (startAtMs !== null && timestampMs < startAtMs) {
+      return true;
+    }
+
+    if (endAtMs !== null && timestampMs < endAtMs) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const getMinuteProgressAt = (
+    startAtValue: string | number | null,
+    endAtValue: string | number | null,
+    timestampMs: number
+  ): number => {
+    const startAtMs = toTimestampMs(startAtValue);
+    const endAtMs = toTimestampMs(endAtValue);
+
+    if (startAtMs !== null && timestampMs < startAtMs) {
+      return getMinuteProgressPercent(startAtMs - timestampMs);
+    }
+
+    if (endAtMs !== null && timestampMs < endAtMs) {
+      return getMinuteProgressPercent(endAtMs - timestampMs);
+    }
+
+    return 0;
+  };
+
   const getCountdownState = (
     startAtValue: string | number | null,
     endAtValue: string | number | null
@@ -148,8 +190,7 @@
         label: startsInLabel,
         values: toCountdownValues(diffMs),
         toneClass: "text-base-content",
-        showSeconds: diffMs < 24 * 60 * 60 * 1000,
-        minuteProgress: getMinuteProgressPercent(diffMs)
+        showSeconds: diffMs < 24 * 60 * 60 * 1000
       };
     }
 
@@ -167,8 +208,7 @@
         label: endsInLabel,
         values: toCountdownValues(endDiff),
         toneClass,
-        showSeconds: endDiff < 24 * 60 * 60 * 1000,
-        minuteProgress: getMinuteProgressPercent(endDiff)
+        showSeconds: endDiff < 24 * 60 * 60 * 1000
       };
     }
 
@@ -177,8 +217,7 @@
       label: eventEndedLabel,
       values: emptyCountdownValues(),
       toneClass: "text-base-content",
-      showSeconds: false,
-      minuteProgress: 0
+      showSeconds: false
     };
   };
 
@@ -198,17 +237,90 @@
   };
 
   const countdown = $derived(getCountdownState(startAt, endAt));
+  const minuteProgress = $derived(getMinuteProgressAt(startAt, endAt, progressNowMs));
 
-  onMount(() => {
-    const tick = () => {
-      nowMs = Date.now();
+  const stopProgressLoop = (): void => {
+    if (progressAnimationFrameId) {
+      window.cancelAnimationFrame(progressAnimationFrameId);
+      progressAnimationFrameId = 0;
+    }
+
+    lastProgressPaintAt = 0;
+  };
+
+  const syncCountdownClock = (timestampMs = Date.now()): void => {
+    const nextSecond = Math.floor(timestampMs / 1000);
+
+    progressNowMs = timestampMs;
+
+    if (nextSecond !== lastRenderedSecond) {
+      lastRenderedSecond = nextSecond;
+      nowMs = timestampMs;
+    }
+  };
+
+  const startProgressLoop = (): void => {
+    if (!mounted || progressAnimationFrameId) {
+      return;
+    }
+
+    const tick = (frameTime: number): void => {
+      if (!mounted) {
+        stopProgressLoop();
+        return;
+      }
+
+      const timestampMs = Date.now();
+
+      if (lastProgressPaintAt === 0 || frameTime - lastProgressPaintAt >= 50) {
+        lastProgressPaintAt = frameTime;
+        progressNowMs = timestampMs;
+      }
+
+      const nextSecond = Math.floor(timestampMs / 1000);
+      if (nextSecond !== lastRenderedSecond) {
+        lastRenderedSecond = nextSecond;
+        nowMs = timestampMs;
+      }
+
+      if (!isCountdownActiveAt(startAt, endAt, timestampMs)) {
+        syncCountdownClock(timestampMs);
+        stopProgressLoop();
+        return;
+      }
+
+      progressAnimationFrameId = window.requestAnimationFrame(tick);
     };
 
-    tick();
-    const intervalId = window.setInterval(tick, 1000);
+    progressAnimationFrameId = window.requestAnimationFrame(tick);
+  };
+
+  $effect(() => {
+    if (!mounted) {
+      return;
+    }
+
+    const timestampMs = Date.now();
+    syncCountdownClock(timestampMs);
+
+    if (isCountdownActiveAt(startAt, endAt, timestampMs)) {
+      startProgressLoop();
+    } else {
+      stopProgressLoop();
+    }
 
     return () => {
-      window.clearInterval(intervalId);
+      stopProgressLoop();
+    };
+  });
+
+  onMount(() => {
+    mounted = true;
+    syncCountdownClock();
+
+    return () => {
+      stopProgressLoop();
+      mounted = false;
     };
   });
 </script>
@@ -251,7 +363,7 @@
     <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-base-content/14">
       <div
         class={`h-full origin-right ${getMinuteBarClass(countdown.toneClass)}`}
-        style={`width:${countdown.minuteProgress}%; margin-left:auto;`}
+        style={`width:${minuteProgress}%; margin-left:auto;`}
       ></div>
     </div>
   {/if}
