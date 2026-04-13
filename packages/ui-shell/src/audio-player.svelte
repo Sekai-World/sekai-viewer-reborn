@@ -749,7 +749,7 @@
                 max={duration > 0 ? duration : 0}
                 step="0.1"
                 value={displayedCurrentTime}
-                class="range range-primary range-sm w-full"
+                class="audio-player-range range range-primary range-sm w-full"
                 disabled={!isReady}
                 aria-label={seekLabel}
                 title={seekLabel}
@@ -768,7 +768,7 @@
                   max="1"
                   step="0.01"
                   value={volume}
-                  class="range range-secondary range-xs min-w-0 flex-1 md:w-24 md:flex-none"
+                  class="audio-player-range range range-primary range-sm min-w-0 flex-1 md:w-24 md:flex-none"
                   aria-label={volumeLabel}
                   title={volumeLabel}
                   oninput={handleVolumeChange}
@@ -813,3 +813,13 @@
     </div>
   </div>
 {/if}
+
+<style>
+  :global(.audio-player-range) {
+    --range-bg: color-mix(in oklab, var(--color-base-content) 14%, transparent);
+  }
+
+  :global(:root[data-theme="dark"]) .audio-player-range:disabled {
+    opacity: 1;
+  }
+</style>
