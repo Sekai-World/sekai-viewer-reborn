@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
 
   type HowlInstance = import("howler").Howl;
 
@@ -32,7 +32,7 @@
     unavailableLabel: string;
   } = $props();
 
-  let howl = $state<HowlInstance | null>(null);
+  let howl: HowlInstance | null = null;
   let currentTime = $state(0);
   let duration = $state(0);
   let volume = $state(0.85);
@@ -40,12 +40,17 @@
   let isPlaying = $state(false);
   let isLoading = $state(false);
   let hasError = $state(false);
-  let progressIntervalId = 0;
+  let isSeeking = $state(false);
+  let pendingSeekTime = $state<number | null>(null);
+  let progressAnimationFrameId = 0;
+  let lastProgressSyncAt = 0;
   let setupVersion = 0;
   let mounted = $state(false);
+  let requestedPlayback = false;
 
   const normalizedSrc = $derived(src?.trim() ?? "");
   const hasSource = $derived(normalizedSrc.length > 0);
+  const displayedCurrentTime = $derived(isSeeking && pendingSeekTime !== null ? pendingSeekTime : currentTime);
 
   const formatTime = (secondsValue: number): string => {
     const safeSeconds = Math.max(0, Math.floor(secondsValue));
@@ -68,27 +73,64 @@
       return;
     }
 
-    const seekValue = howl.seek();
-    currentTime = typeof seekValue === "number" ? seekValue : 0;
-    duration = Number.isFinite(howl.duration()) ? howl.duration() : 0;
-    isPlaying = howl.playing();
+    const nextCurrentTime = (() => {
+      const seekValue = howl.seek();
+      return typeof seekValue === "number" ? seekValue : 0;
+    })();
+    const nextDuration = Number.isFinite(howl.duration()) ? howl.duration() : 0;
+    const nextIsPlaying = howl.playing();
+
+    if (Math.abs(nextCurrentTime - currentTime) >= 0.05) {
+      currentTime = nextCurrentTime;
+    }
+
+    if (Math.abs(nextDuration - duration) >= 0.05) {
+      duration = nextDuration;
+    }
+
+    if (nextIsPlaying !== isPlaying) {
+      isPlaying = nextIsPlaying;
+    }
+  };
+
+  const resetSeekPreview = (): void => {
+    isSeeking = false;
+    pendingSeekTime = null;
   };
 
   const stopProgressLoop = (): void => {
-    if (progressIntervalId) {
-      window.clearInterval(progressIntervalId);
-      progressIntervalId = 0;
+    if (progressAnimationFrameId) {
+      window.cancelAnimationFrame(progressAnimationFrameId);
+      progressAnimationFrameId = 0;
     }
+    lastProgressSyncAt = 0;
   };
 
   const startProgressLoop = (): void => {
-    if (!mounted || progressIntervalId) {
+    if (!mounted || progressAnimationFrameId) {
       return;
     }
 
-    progressIntervalId = window.setInterval(() => {
+    const tick = (timestamp: number): void => {
+      if (!mounted || !howl?.playing()) {
+        progressAnimationFrameId = 0;
+        lastProgressSyncAt = 0;
+        return;
+      }
+
+      if (lastProgressSyncAt === 0 || timestamp - lastProgressSyncAt >= 125) {
+        lastProgressSyncAt = timestamp;
+        syncPlaybackState();
+      }
+
+      progressAnimationFrameId = window.requestAnimationFrame(tick);
+    };
+
+    progressAnimationFrameId = window.requestAnimationFrame((timestamp) => {
+      lastProgressSyncAt = timestamp;
       syncPlaybackState();
-    }, 250);
+      progressAnimationFrameId = window.requestAnimationFrame(tick);
+    });
   };
 
   const teardownPlayer = (): void => {
@@ -101,6 +143,8 @@
     isPlaying = false;
     isLoading = false;
     hasError = false;
+    requestedPlayback = false;
+    resetSeekPreview();
   };
 
   const initializePlayer = async (source: string, version: number): Promise<void> => {
@@ -125,6 +169,11 @@
           isLoading = false;
           hasError = false;
           syncPlaybackState();
+
+          if (requestedPlayback) {
+            requestedPlayback = false;
+            instance.play();
+          }
         },
         onloaderror: () => {
           if (version !== setupVersion) {
@@ -173,48 +222,99 @@
       return;
     }
 
-    const source = normalizedSrc;
+    normalizedSrc;
     setupVersion += 1;
-    const version = setupVersion;
 
-    teardownPlayer();
-
-    if (!source) {
-      return;
-    }
-
-    isLoading = true;
-    void initializePlayer(source, version);
+    untrack(() => {
+      teardownPlayer();
+    });
 
     return () => {
-      if (version === setupVersion) {
-        setupVersion += 1;
-      }
-      teardownPlayer();
+      setupVersion += 1;
+      untrack(() => {
+        teardownPlayer();
+      });
     };
   });
 
+  const requestPlayerLoad = (): void => {
+    const source = normalizedSrc;
+    if (!source || howl || isLoading || hasError) {
+      return;
+    }
+
+    setupVersion += 1;
+    const version = setupVersion;
+    isLoading = true;
+
+    untrack(() => {
+      void initializePlayer(source, version);
+    });
+  };
+
   const togglePlayback = (): void => {
-    if (!howl || !isReady || hasError) {
+    if (hasError) {
+      return;
+    }
+
+    if (!howl) {
+      requestedPlayback = true;
+      requestPlayerLoad();
+      return;
+    }
+
+    if (!isReady) {
+      requestedPlayback = true;
       return;
     }
 
     if (howl.playing()) {
+      requestedPlayback = false;
       howl.pause();
       return;
     }
 
+    requestedPlayback = false;
     howl.play();
   };
 
-  const handleSeek = (event: Event): void => {
-    if (!howl || !isReady || hasError) {
+  const handleSeekInput = (event: Event): void => {
+    if (!isReady || hasError) {
       return;
     }
 
     const nextTime = Number((event.currentTarget as HTMLInputElement).value);
+    if (!Number.isFinite(nextTime)) {
+      return;
+    }
+
+    isSeeking = true;
+    pendingSeekTime = nextTime;
+  };
+
+  const commitSeek = (event: Event): void => {
+    if (!howl || !isReady || hasError) {
+      resetSeekPreview();
+      return;
+    }
+
+    const nextTime = Number((event.currentTarget as HTMLInputElement).value);
+    if (!Number.isFinite(nextTime)) {
+      resetSeekPreview();
+      return;
+    }
+
     howl.seek(nextTime);
     currentTime = nextTime;
+    resetSeekPreview();
+  };
+
+  const cancelSeekPreview = (): void => {
+    if (!isSeeking) {
+      return;
+    }
+
+    resetSeekPreview();
   };
 
   const handleVolumeChange = (event: Event): void => {
@@ -251,19 +351,20 @@
       {/if}
     </div>
 
-    <div class="content-card-inset rounded-[1.75rem] p-5">
+    <div class="content-card-inset flex min-h-44 flex-1 rounded-[1.75rem] p-5">
       {#if !hasSource || hasError}
-        <div class="flex min-h-44 flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-dashed border-base-content/15 px-6 text-center">
+        <div class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-dashed border-base-content/15 px-6 text-center">
           <Icon icon="mdi:music-off" class="h-10 w-10 opacity-55" aria-hidden="true" />
           <p class="text-sm font-medium opacity-75">{unavailableLabel}</p>
         </div>
       {:else}
-        <div class="flex items-center gap-4">
+        <div class="w-full">
+          <div class="flex items-center gap-4">
           <button
             type="button"
             class="btn btn-primary btn-circle btn-lg shrink-0"
             onclick={togglePlayback}
-            disabled={!isReady || isLoading}
+            disabled={!hasSource || hasError || isLoading}
             aria-label={isPlaying ? pauseLabel : playLabel}
             title={isPlaying ? pauseLabel : playLabel}
           >
@@ -284,50 +385,53 @@
           <a
             href={normalizedSrc}
             download={downloadName}
-            class={`btn btn-outline btn-sm shrink-0 ${!isReady ? "pointer-events-none opacity-50" : ""}`}
+            class={`btn btn-outline btn-sm shrink-0 ${!hasSource ? "pointer-events-none opacity-50" : ""}`}
             aria-label={downloadLabel}
             title={downloadLabel}
           >
             <Icon icon="mdi:download" class="h-4 w-4" />
             <span class="hidden sm:inline">{downloadLabel}</span>
           </a>
-        </div>
-
-        <div class="mt-5">
-          <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium opacity-70">
-            <span class="font-mono tabular-nums">{formatTime(currentTime)}</span>
-            <span class="font-mono tabular-nums">{formatTime(duration)}</span>
           </div>
-          <input
-            type="range"
-            min="0"
-            max={duration > 0 ? duration : 0}
-            step="0.1"
-            value={currentTime}
-            class="range range-primary range-sm w-full"
-            disabled={!isReady}
-            aria-label={seekLabel}
-            title={seekLabel}
-            oninput={handleSeek}
-          />
-        </div>
 
-        <div class="mt-4 flex items-center gap-3">
-          <Icon icon="mdi:volume-high" class="h-5 w-5 shrink-0 opacity-75" aria-hidden="true" />
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            class="range range-xs flex-1"
-            aria-label={volumeLabel}
-            title={volumeLabel}
-            oninput={handleVolumeChange}
-          />
-          <span class="w-10 text-right text-xs font-medium tabular-nums opacity-70">
-            {Math.round(volume * 100)}%
-          </span>
+          <div class="mt-5">
+            <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium opacity-70">
+              <span class="font-mono tabular-nums">{formatTime(displayedCurrentTime)}</span>
+              <span class="font-mono tabular-nums">{formatTime(duration)}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={duration > 0 ? duration : 0}
+              step="0.1"
+              value={displayedCurrentTime}
+              class="range range-primary range-sm w-full"
+              disabled={!isReady}
+              aria-label={seekLabel}
+              title={seekLabel}
+              oninput={handleSeekInput}
+              onchange={commitSeek}
+              onblur={cancelSeekPreview}
+            />
+          </div>
+
+          <div class="mt-4 flex items-center gap-3">
+            <Icon icon="mdi:volume-high" class="h-5 w-5 shrink-0 opacity-75" aria-hidden="true" />
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              class="range range-xs flex-1"
+              aria-label={volumeLabel}
+              title={volumeLabel}
+              oninput={handleVolumeChange}
+            />
+            <span class="w-10 text-right text-xs font-medium tabular-nums opacity-70">
+              {Math.round(volume * 100)}%
+            </span>
+          </div>
         </div>
       {/if}
     </div>
