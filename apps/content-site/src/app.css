@@ -2,10 +2,34 @@
 @plugin "daisyui";
 @source "../../../packages/ui-shell/src";
 
+:root,
+:root[data-theme="light"],
+:root[data-theme="dark"] {
+  --color-primary: oklch(58% 0.233 277.117);
+  --color-primary-content: oklch(96% 0.018 272.314);
+}
+
 :root[data-theme="dark"] {
   --color-base-100: oklch(24.5% 0.018 252.42);
   --color-base-200: oklch(18.4% 0.015 253.1);
   --color-base-300: oklch(14.8% 0.012 254.09);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root,
+  :root * {
+    transition-property:
+      color,
+      background-color,
+      border-color,
+      text-decoration-color,
+      fill,
+      stroke,
+      outline-color,
+      box-shadow;
+    transition-duration: 180ms;
+    transition-timing-function: ease;
+  }
 }
 
 @layer components {
