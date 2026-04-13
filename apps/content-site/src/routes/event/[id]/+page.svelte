@@ -474,6 +474,8 @@
                     startAt={payload.event.startAt}
                     endAt={payload.event.endAt}
                     uiLocale={data.uiLocale}
+                    forceShowSeconds={true}
+                    showProgress={false}
                   />
                 </div>
               </article>
