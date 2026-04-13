@@ -19,6 +19,7 @@ apps/
   media-lab-site/
   account-site/
 packages/
+  sekai-api-sdk/
   sekai-master-api-sdk/
   auth-client/
   i18n-dicts/
@@ -44,6 +45,7 @@ Apps in this workspace:
 
 ## Shared Packages
 
+- `@platform/sekai-api-sdk`: sekai-api OpenAPI SDK generator scaffold
 - `@platform/sekai-master-api-sdk`: sekai-master-api OpenAPI SDK generator and client package
 - `@platform/auth-client`: Keycloak/OIDC helper URL builders
 - `@platform/i18n-dicts`: shared region, locale, and site dictionaries
@@ -85,6 +87,7 @@ pnpm --filter @apps/content-site dev
 `content-site` currently depends on these environment variables:
 
 - `SEKAI_MASTER_API_BASE_URL`
+- `SEKAI_API_BASE_URL`
 - `PUBLIC_REMOTE_ASSET_BASE_URL`
 - `PUBLIC_SEKAI_I18N_BASE_URL`
 
