@@ -16,6 +16,17 @@ export type ContentSiteCommonMessages = {
   audioVolumeLabel: string;
   audioSeekLabel: string;
   audioUnavailableLabel: string;
+  audioDownloadStages: {
+    preparing: string;
+    fetchingAudio: string;
+    fetchingCover: string;
+    writingMetadata: string;
+    finalizing: string;
+    ready: string;
+    failed: string;
+    cancelled: string;
+  };
+  audioDownloadCloseLabel: string;
   bannerAltSuffix: string;
   imageUnavailable: string;
   noCurrentEventData: string;

@@ -39,6 +39,33 @@
   let audioVolumeLabel = $state(getContentSiteCommonText(initialLocale, "audioVolumeLabel"));
   let audioSeekLabel = $state(getContentSiteCommonText(initialLocale, "audioSeekLabel"));
   let audioUnavailableLabel = $state(getContentSiteCommonText(initialLocale, "audioUnavailableLabel"));
+  let audioDownloadStagePreparingLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadStages.preparing")
+  );
+  let audioDownloadStageFetchingAudioLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadStages.fetchingAudio")
+  );
+  let audioDownloadStageFetchingCoverLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadStages.fetchingCover")
+  );
+  let audioDownloadStageWritingMetadataLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadStages.writingMetadata")
+  );
+  let audioDownloadStageFinalizingLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadStages.finalizing")
+  );
+  let audioDownloadStageReadyLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadStages.ready")
+  );
+  let audioDownloadStageFailedLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadStages.failed")
+  );
+  let audioDownloadStageCancelledLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadStages.cancelled")
+  );
+  let audioDownloadCloseLabel = $state(
+    getContentSiteCommonText(initialLocale, "audioDownloadCloseLabel")
+  );
   let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
   let imageUnavailableLabel = $state(getContentSiteCommonText(initialLocale, "imageUnavailable"));
   let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
@@ -86,6 +113,15 @@
     audioVolumeLabel = tCommon(locale, "audioVolumeLabel");
     audioSeekLabel = tCommon(locale, "audioSeekLabel");
     audioUnavailableLabel = tCommon(locale, "audioUnavailableLabel");
+    audioDownloadStagePreparingLabel = tCommon(locale, "audioDownloadStages.preparing");
+    audioDownloadStageFetchingAudioLabel = tCommon(locale, "audioDownloadStages.fetchingAudio");
+    audioDownloadStageFetchingCoverLabel = tCommon(locale, "audioDownloadStages.fetchingCover");
+    audioDownloadStageWritingMetadataLabel = tCommon(locale, "audioDownloadStages.writingMetadata");
+    audioDownloadStageFinalizingLabel = tCommon(locale, "audioDownloadStages.finalizing");
+    audioDownloadStageReadyLabel = tCommon(locale, "audioDownloadStages.ready");
+    audioDownloadStageFailedLabel = tCommon(locale, "audioDownloadStages.failed");
+    audioDownloadStageCancelledLabel = tCommon(locale, "audioDownloadStages.cancelled");
+    audioDownloadCloseLabel = tCommon(locale, "audioDownloadCloseLabel");
     bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
     imageUnavailableLabel = tCommon(locale, "imageUnavailable");
     noEventLabel = tCommon(locale, "noCurrentEventData");
@@ -145,6 +181,10 @@
     hasAlternativeRegion(availableRegions)
       ? data.eventUnavailableInCurrentRegionMessage
       : data.failedToLoadEventDataMessage;
+  const getEventBgmDownloadHref = (format: "mp3" | "wav"): string =>
+    `${resolve("/event/[id]/bgm", { id: data.eventId })}?region=${encodeURIComponent(data.region)}&format=${encodeURIComponent(format)}`;
+  const getEventBgmProgressHref = (): string =>
+    `${resolve("/event/[id]/bgm/progress", { id: data.eventId })}?region=${encodeURIComponent(data.region)}`;
   const getAssetPreviewResetKey = (): string =>
     `${data.eventId}:${data.region}:${activeAssetTab}`;
 
@@ -449,12 +489,36 @@
           }
           label={eventBgmTitle}
           title={payload.event.title}
-          subtitle={data.regionLabel}
-          badge={data.region.toUpperCase()}
+          subtitle={payload.event.unitName ?? ""}
           downloadName={`${payload.event.id}-${data.region}-event-bgm.mp3`}
+          downloadOptions={[
+            {
+              label: "MP3",
+              href: getEventBgmDownloadHref("mp3"),
+              progressHref: getEventBgmProgressHref(),
+              downloadName: `${payload.event.id}-${data.region}-event-bgm.mp3`
+            },
+            {
+              label: "WAV",
+              href: getEventBgmDownloadHref("wav"),
+              progressHref: getEventBgmProgressHref(),
+              downloadName: `${payload.event.id}-${data.region}-event-bgm.wav`
+            }
+          ]}
+          downloadProgressMessages={{
+            preparing: audioDownloadStagePreparingLabel,
+            fetchingAudio: audioDownloadStageFetchingAudioLabel,
+            fetchingCover: audioDownloadStageFetchingCoverLabel,
+            writingMetadata: audioDownloadStageWritingMetadataLabel,
+            finalizing: audioDownloadStageFinalizingLabel,
+            ready: audioDownloadStageReadyLabel,
+            failed: audioDownloadStageFailedLabel,
+            cancelled: audioDownloadStageCancelledLabel
+          }}
           playLabel={audioPlayLabel}
           pauseLabel={audioPauseLabel}
           downloadLabel={audioDownloadLabel}
+          downloadCloseLabel={audioDownloadCloseLabel}
           volumeLabel={audioVolumeLabel}
           seekLabel={audioSeekLabel}
           unavailableLabel={audioUnavailableLabel}

@@ -18,6 +18,17 @@ const commonEn: ContentSiteCommonMessages = {
   audioVolumeLabel: "Adjust volume",
   audioSeekLabel: "Seek audio",
   audioUnavailableLabel: "No event BGM available",
+  audioDownloadStages: {
+    preparing: "Preparing download",
+    fetchingAudio: "Downloading audio",
+    fetchingCover: "Downloading cover",
+    writingMetadata: "Writing metadata",
+    finalizing: "Finalizing file",
+    ready: "Download ready",
+    failed: "Download failed",
+    cancelled: "Download cancelled"
+  },
+  audioDownloadCloseLabel: "Close download dialog",
   bannerAltSuffix: "banner",
   imageUnavailable: "Image unavailable",
   noCurrentEventData: "No current event data.",

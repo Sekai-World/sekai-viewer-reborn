@@ -18,6 +18,17 @@ const commonKoKr: ContentSiteCommonMessages = {
   audioVolumeLabel: "볼륨 조절",
   audioSeekLabel: "재생 위치 조절",
   audioUnavailableLabel: "이벤트 BGM이 없습니다",
+  audioDownloadStages: {
+    preparing: "다운로드 준비 중",
+    fetchingAudio: "오디오 다운로드 중",
+    fetchingCover: "커버 이미지 다운로드 중",
+    writingMetadata: "메타데이터 작성 중",
+    finalizing: "파일 마무리 중",
+    ready: "다운로드 준비 완료",
+    failed: "다운로드 실패",
+    cancelled: "다운로드 취소됨"
+  },
+  audioDownloadCloseLabel: "다운로드 창 닫기",
   bannerAltSuffix: "배너",
   imageUnavailable: "사용 가능한 이미지가 없습니다",
   noCurrentEventData: "현재 진행 중인 이벤트 데이터가 없습니다.",
