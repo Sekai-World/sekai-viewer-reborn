@@ -1,5 +1,6 @@
 import { dev } from "$app/environment";
 import {
+  getEventsByRegionCurrent,
   getEventsByRegionById,
   getEventsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
@@ -21,6 +22,8 @@ import type { PageServerLoad } from "./$types";
 type EventDetail = {
   id: string;
   title: string;
+  unitName: string | null;
+  bgmAssetbundleName: string | null;
   startAt: string | number | null;
   endAt: string | number | null;
   assetBundleName: string | null;
@@ -128,7 +131,8 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
     return null;
   }
 
-  const eventNode = getNestedObject(root, ["event", "data"]) ?? root;
+  const eventNode = getNestedObject(root, ["event", "currentEvent", "data"]) ?? root;
+  const unitNode = getNestedObject(eventNode, ["unit"]);
   const id = pickFirstStringLike(eventNode, ["id", "eventId"]);
   const title = pickFirstString(eventNode, ["name", "title", "eventName"]);
 
@@ -139,6 +143,14 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
   return {
     id,
     title,
+    unitName:
+      pickFirstString(unitNode ?? eventNode, ["unitName", "name", "title"]) ??
+      pickFirstString(eventNode, ["unitName"]),
+    bgmAssetbundleName: pickFirstString(eventNode, [
+      "bgmAssetbundleName",
+      "bgm_assetbundle_name",
+      "bgmAssetBundleName"
+    ]),
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
     endAt: pickFirstDateValue(eventNode, ["aggregateAt", "aggregate_at", "endAt", "end_at", "endDate"]),
     assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"])
@@ -317,6 +329,37 @@ const fetchEventPayload = async ({
   }
 };
 
+const fetchIsCurrentEvent = async ({
+  baseUrl,
+  region,
+  eventId,
+  invalidEventIdMessage
+}: {
+  baseUrl: string;
+  region: SupportedRegion;
+  eventId: string;
+  invalidEventIdMessage: string | null;
+}): Promise<boolean> => {
+  if (invalidEventIdMessage) {
+    return false;
+  }
+
+  try {
+    const response = await getEventsByRegionCurrent({
+      baseUrl,
+      path: { region }
+    });
+
+    if (response.error) {
+      return false;
+    }
+
+    return parseEventDetail(response.data)?.id === eventId;
+  } catch {
+    return false;
+  }
+};
+
 export const load: PageServerLoad = ({ params, url, cookies }) => {
   const eventId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
@@ -353,6 +396,12 @@ export const load: PageServerLoad = ({ params, url, cookies }) => {
       : Promise.resolve([region] satisfies SupportedRegion[]),
     eventPayload: fetchEventPayload({
       currentLookupPromise,
+      invalidEventIdMessage: eventId ? null : invalidEventIdMessage
+    }),
+    isCurrentEvent: fetchIsCurrentEvent({
+      baseUrl,
+      region,
+      eventId,
       invalidEventIdMessage: eventId ? null : invalidEventIdMessage
     })
   };

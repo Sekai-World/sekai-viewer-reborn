@@ -1,3 +1,40 @@
 @import "tailwindcss";
 @plugin "daisyui";
 @source "../../../packages/ui-shell/src";
+
+:root[data-theme="dark"] {
+  --color-base-100: oklch(24.5% 0.018 252.42);
+  --color-base-200: oklch(18.4% 0.015 253.1);
+  --color-base-300: oklch(14.8% 0.012 254.09);
+}
+
+@layer components {
+  .content-card-shell {
+    background-color: var(--color-base-100);
+    border: 1px solid color-mix(in oklab, var(--color-base-content) 8%, transparent);
+  }
+
+  .content-card-inset {
+    background-color: color-mix(in oklab, var(--color-base-200) 80%, var(--color-base-100));
+    border: 1px solid color-mix(in oklab, var(--color-base-content) 8%, transparent);
+  }
+
+  .content-card-elevated {
+    background-color: color-mix(in oklab, var(--color-base-100) 92%, white 8%);
+    border: 1px solid color-mix(in oklab, var(--color-base-content) 8%, transparent);
+  }
+
+  :root[data-theme="dark"] .content-card-shell {
+    border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
+  }
+
+  :root[data-theme="dark"] .content-card-inset {
+    background-color: color-mix(in oklab, var(--color-base-200) 96%, var(--color-base-100));
+    border-color: color-mix(in oklab, var(--color-base-content) 13%, transparent);
+  }
+
+  :root[data-theme="dark"] .content-card-elevated {
+    background-color: color-mix(in oklab, var(--color-base-100) 84%, var(--color-base-content) 16%);
+    border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
+  }
+}

@@ -3,13 +3,15 @@
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
   import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
-  import { ImagePreviewDialog, ImagePreviewTrigger } from "@platform/ui-shell";
+  import { AudioPlayer, ImagePreviewDialog, ImagePreviewTrigger } from "@platform/ui-shell";
   import {
     getEventBackgroundAssetURL,
     getEventBannerAssetURL,
+    getEventBgmAssetURL,
     getEventCharacterAssetURL,
     getEventLogoAssetURL
   } from "$lib/assets";
+  import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";
   import { formatDisplayDateTime } from "$lib/date-time";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { DEFAULT_UI_LOCALE } from "$lib/region";
@@ -29,6 +31,14 @@
   let endAtLabel = $state(getContentSiteCommonText(initialLocale, "endAt"));
   let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
   let nameLabel = $state(getContentSiteCommonText(initialLocale, "nameLabel"));
+  let unitLabel = $state(getContentSiteCommonText(initialLocale, "unitLabel"));
+  let eventBgmTitle = $state(getContentSiteCommonText(initialLocale, "eventBgmTitle"));
+  let audioPlayLabel = $state(getContentSiteCommonText(initialLocale, "audioPlayLabel"));
+  let audioPauseLabel = $state(getContentSiteCommonText(initialLocale, "audioPauseLabel"));
+  let audioDownloadLabel = $state(getContentSiteCommonText(initialLocale, "audioDownloadLabel"));
+  let audioVolumeLabel = $state(getContentSiteCommonText(initialLocale, "audioVolumeLabel"));
+  let audioSeekLabel = $state(getContentSiteCommonText(initialLocale, "audioSeekLabel"));
+  let audioUnavailableLabel = $state(getContentSiteCommonText(initialLocale, "audioUnavailableLabel"));
   let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
   let imageUnavailableLabel = $state(getContentSiteCommonText(initialLocale, "imageUnavailable"));
   let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
@@ -68,6 +78,14 @@
     endAtLabel = tCommon(locale, "endAt");
     idLabel = tCommon(locale, "idLabel");
     nameLabel = tCommon(locale, "nameLabel");
+    unitLabel = tCommon(locale, "unitLabel");
+    eventBgmTitle = tCommon(locale, "eventBgmTitle");
+    audioPlayLabel = tCommon(locale, "audioPlayLabel");
+    audioPauseLabel = tCommon(locale, "audioPauseLabel");
+    audioDownloadLabel = tCommon(locale, "audioDownloadLabel");
+    audioVolumeLabel = tCommon(locale, "audioVolumeLabel");
+    audioSeekLabel = tCommon(locale, "audioSeekLabel");
+    audioUnavailableLabel = tCommon(locale, "audioUnavailableLabel");
     bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
     imageUnavailableLabel = tCommon(locale, "imageUnavailable");
     noEventLabel = tCommon(locale, "noCurrentEventData");
@@ -174,7 +192,7 @@
   />
 {/snippet}
 
-<section class="mx-auto flex w-full max-w-[1600px] flex-col gap-4 px-4">
+<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-4">
   {#await data.eventPayload}
     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
       <a class="btn btn-ghost btn-sm w-fit" href={resolve("/")}>← {homeLabel}</a>
@@ -186,17 +204,17 @@
     </div>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] md:items-start">
-      <article class="card overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
+      <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-4 p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
-          <div class="h-[240px] w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
+          <div class="h-60 w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
           <div class="space-y-2">
             <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
             <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
           </div>
         </div>
       </article>
-      <article class="card overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
+      <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-3 p-5">
           <div class="h-5 w-1/3 animate-pulse rounded bg-base-300"></div>
           <div class="h-10 w-2/3 animate-pulse rounded bg-base-300"></div>
@@ -250,9 +268,9 @@
     {#if payload.event}
       <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] md:items-start">
         <div class="flex flex-col gap-4">
-          <article class="card overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
-            <div class="card-body items-center gap-4 p-5 text-center">
-              <div class="tabs tabs-box w-full border border-base-content/10 bg-base-200/45 p-1">
+          <article class="card content-card-shell overflow-hidden shadow-sm">
+            <div class="card-body items-center gap-3 p-5 text-center">
+              <div class="tabs tabs-box content-card-inset w-full p-1">
                 <button
                   type="button"
                   class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
@@ -307,7 +325,7 @@
                 </button>
               </div>
 
-              <div class="w-full overflow-hidden rounded-[1.75rem] bg-base-200/55">
+              <div class="content-card-inset w-full overflow-hidden rounded-[1.75rem]">
                 {#if activeAssetTab === "banner"}
                   {#if payload.event.assetBundleName}
                     {@render assetPreview(
@@ -317,7 +335,7 @@
                       ""
                     )}
                   {:else}
-                    <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
+                    <div class="flex aspect-16/10 items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
                     </div>
                   {/if}
@@ -330,7 +348,7 @@
                       ""
                     )}
                   {:else}
-                    <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
+                    <div class="flex aspect-16/10 items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
                     </div>
                   {/if}
@@ -343,7 +361,7 @@
                       ""
                     )}
                   {:else}
-                    <div class="flex aspect-[16/10] items-center justify-center px-6 text-center text-sm opacity-70">
+                    <div class="flex aspect-16/10 items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
                     </div>
                   {/if}
@@ -356,7 +374,7 @@
                       imageUnavailableLabel
                     )}
                   {:else}
-                    <div class="flex aspect-[16/10] flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65">
+                    <div class="flex aspect-16/10 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65">
                       <Icon
                         icon="mdi:file-remove-outline"
                         class="h-10 w-10 opacity-75"
@@ -370,30 +388,35 @@
             </div>
           </article>
 
-          <article class="card border border-base-content/10 bg-base-100 shadow-sm">
+          <article class="card content-card-shell shadow-sm">
             <div class="card-body gap-4 p-5">
-              <div>
+              <div class="flex items-start justify-between gap-3">
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
                   {eventInfoTitle}
                 </p>
+                <span class="badge badge-outline border-base-content/20 font-semibold">
+                  {idLabel}: {payload.event.id}
+                </span>
               </div>
 
-              <dl class="space-y-3">
-                <div class="rounded-xl bg-base-200/45 px-4 py-3">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{idLabel}</dt>
-                  <dd class="mt-1 text-sm font-medium">{payload.event.id}</dd>
-                </div>
-                <div class="rounded-xl bg-base-200/45 px-4 py-3">
+              <dl class="space-y-2">
+                <div class="content-card-inset rounded-xl px-4 py-3">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
                   <dd class="mt-1 text-sm font-medium">{payload.event.title}</dd>
                 </div>
-                <div class="rounded-xl bg-base-200/45 px-4 py-3">
+                {#if payload.event.unitName}
+                  <div class="content-card-inset rounded-xl px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{unitLabel}</dt>
+                    <dd class="mt-1 text-sm font-medium">{payload.event.unitName}</dd>
+                  </div>
+                {/if}
+                <div class="content-card-inset rounded-xl px-4 py-3">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</dt>
                   <dd class="mt-1 text-sm font-medium">
                     {formatDisplayDateTime(payload.event.startAt, displayLocale)}
                   </dd>
                 </div>
-                <div class="rounded-xl bg-base-200/45 px-4 py-3">
+                <div class="content-card-inset rounded-xl px-4 py-3">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{endAtLabel}</dt>
                   <dd class="mt-1 text-sm font-medium">
                     {formatDisplayDateTime(payload.event.endAt, displayLocale)}
@@ -402,69 +425,40 @@
               </dl>
             </div>
           </article>
+
+          {#await data.isCurrentEvent then isCurrentEvent}
+            {#if isCurrentEvent}
+              <article class="card content-card-shell shadow-sm">
+                <div class="card-body p-5">
+                  <EventCountdownCard
+                    startAt={payload.event.startAt}
+                    endAt={payload.event.endAt}
+                    uiLocale={data.uiLocale}
+                  />
+                </div>
+              </article>
+            {/if}
+          {/await}
         </div>
 
-        <article class="card overflow-hidden border border-base-content/10 bg-base-100 shadow-sm">
-          <div class="card-body gap-5 p-5">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                  {data.regionLabel}
-                </p>
-                <h2 class="mt-2 text-xl font-semibold leading-tight">{payload.event.title}</h2>
-              </div>
-              <span class="badge badge-primary badge-lg border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-                {data.region.toUpperCase()}
-              </span>
-            </div>
-
-            <div class="grid gap-3 sm:grid-cols-2">
-              <div class="rounded-2xl bg-base-200/45 px-4 py-4">
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{idLabel}</p>
-                <p class="mt-2 text-lg font-semibold">{payload.event.id}</p>
-              </div>
-              <div class="rounded-2xl bg-base-200/45 px-4 py-4">
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</p>
-                <p class="mt-2 text-lg font-semibold leading-tight">{payload.event.title}</p>
-              </div>
-              <div class="rounded-2xl bg-base-200/45 px-4 py-4">
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</p>
-                <p class="mt-2 text-base font-medium">
-                  {formatDisplayDateTime(payload.event.startAt, displayLocale)}
-                </p>
-              </div>
-              <div class="rounded-2xl bg-base-200/45 px-4 py-4">
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{endAtLabel}</p>
-                <p class="mt-2 text-base font-medium">
-                  {formatDisplayDateTime(payload.event.endAt, displayLocale)}
-                </p>
-              </div>
-            </div>
-
-            <div class="rounded-[1.75rem] border border-base-content/10 bg-base-200/35 p-5">
-              <div class="flex flex-wrap gap-1.5">
-                {#await data.availableRegions then availableRegions}
-                  {@const regionOptions = getRegionOptions(availableRegions)}
-                  {#each regionOptions as regionOption (regionOption)}
-                    {#if regionOption === data.region}
-                      <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-                        {regionOption.toUpperCase()}
-                      </span>
-                    {:else}
-                      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-                      <a
-                        href={`${resolve("/event/[id]", { id: data.eventId })}?region=${encodeURIComponent(regionOption)}`}
-                        class="badge badge-outline font-semibold"
-                      >
-                        {regionOption.toUpperCase()}
-                      </a>
-                    {/if}
-                  {/each}
-                {/await}
-              </div>
-            </div>
-          </div>
-        </article>
+        <AudioPlayer
+          src={
+            payload.event.bgmAssetbundleName
+              ? getEventBgmAssetURL(payload.event.bgmAssetbundleName, data.region)
+              : null
+          }
+          label={eventBgmTitle}
+          title={payload.event.title}
+          subtitle={data.regionLabel}
+          badge={data.region.toUpperCase()}
+          downloadName={`${payload.event.id}-${data.region}-event-bgm.mp3`}
+          playLabel={audioPlayLabel}
+          pauseLabel={audioPauseLabel}
+          downloadLabel={audioDownloadLabel}
+          volumeLabel={audioVolumeLabel}
+          seekLabel={audioSeekLabel}
+          unavailableLabel={audioUnavailableLabel}
+        />
       </div>
     {:else if !payload.error}
       {#await data.availableRegions}
@@ -486,7 +480,7 @@
               <button type="submit" class="btn btn-sm btn-ghost">{closeLabel}</button>
             </form>
           </div>
-          <pre class="max-h-[70vh] overflow-auto rounded-xl bg-base-200/55 p-4 text-xs leading-6"><code>{payload.debugEventJson}</code></pre>
+          <pre class="content-card-inset max-h-[70vh] overflow-auto rounded-xl p-4 text-xs leading-6"><code>{payload.debugEventJson}</code></pre>
         </div>
         <form method="dialog" class="modal-backdrop">
           <button type="submit">{closeLabel}</button>

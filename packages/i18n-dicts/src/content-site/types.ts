@@ -8,6 +8,14 @@ export type ContentSiteCommonMessages = {
   eventEnded: string;
   idLabel: string;
   nameLabel: string;
+  unitLabel: string;
+  eventBgmTitle: string;
+  audioPlayLabel: string;
+  audioPauseLabel: string;
+  audioDownloadLabel: string;
+  audioVolumeLabel: string;
+  audioSeekLabel: string;
+  audioUnavailableLabel: string;
   bannerAltSuffix: string;
   imageUnavailable: string;
   noCurrentEventData: string;

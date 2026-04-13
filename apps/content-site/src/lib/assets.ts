@@ -133,3 +133,15 @@ export const getEventCharacterAssetURL = (
 
   return buildServerAssetURL(`event/${normalizedAssetBundleName}/screen/character.webp`, server);
 };
+
+export const getEventBgmAssetURL = (
+  bgmAssetbundleName: string,
+  server: AssetServer = "jp"
+): string => {
+  const normalizedAssetBundleName = bgmAssetbundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL();
+  }
+
+  return buildServerAssetURL(`event/${normalizedAssetBundleName}.mp3`, server);
+};

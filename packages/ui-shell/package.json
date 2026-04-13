@@ -11,7 +11,11 @@
     }
   },
   "dependencies": {
-    "@iconify/svelte": "^5.2.1"
+    "@iconify/svelte": "^5.2.1",
+    "howler": "^2.2.4"
+  },
+  "devDependencies": {
+    "@types/howler": "^2.2.12"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
