@@ -26,11 +26,15 @@
     startAt,
     endAt,
     uiLocale,
+    forceShowSeconds = false,
+    showProgress = true,
     class: className = ""
   }: {
     startAt: string | number | null;
     endAt: string | number | null;
     uiLocale: string;
+    forceShowSeconds?: boolean;
+    showProgress?: boolean;
     class?: string;
   } = $props();
 
@@ -190,7 +194,7 @@
         label: startsInLabel,
         values: toCountdownValues(diffMs),
         toneClass: "text-base-content",
-        showSeconds: diffMs < 24 * 60 * 60 * 1000
+        showSeconds: forceShowSeconds || diffMs < 24 * 60 * 60 * 1000
       };
     }
 
@@ -208,7 +212,7 @@
         label: endsInLabel,
         values: toCountdownValues(endDiff),
         toneClass,
-        showSeconds: endDiff < 24 * 60 * 60 * 1000
+        showSeconds: forceShowSeconds || endDiff < 24 * 60 * 60 * 1000
       };
     }
 
@@ -360,11 +364,13 @@
         </div>
       {/if}
     </div>
-    <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-base-content/14">
-      <div
-        class={`h-full origin-right ${getMinuteBarClass(countdown.toneClass)}`}
-        style={`width:${minuteProgress}%; margin-left:auto;`}
-      ></div>
-    </div>
+    {#if showProgress}
+      <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-base-content/14">
+        <div
+          class={`h-full origin-right ${getMinuteBarClass(countdown.toneClass)}`}
+          style={`width:${minuteProgress}%; margin-left:auto;`}
+        ></div>
+      </div>
+    {/if}
   {/if}
 </div>
