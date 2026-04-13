@@ -166,7 +166,7 @@
 </svelte:head>
 
 {#if $isLocaleLoading}
-  <div class="pointer-events-none fixed inset-x-0 top-2 z-[240] flex justify-center px-4">
+  <div class="pointer-events-none fixed inset-x-0 top-2 z-240 flex justify-center px-4">
     <div class="inline-flex items-center gap-2 rounded-full border border-base-content/20 bg-base-100/86 px-3 py-1 text-xs font-semibold shadow-lg backdrop-blur-md">
       <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
       <span>{interfaceLanguageLabel}: {uiLocaleDisplayLabel}</span>
@@ -190,7 +190,7 @@
         >
           <Icon icon="mdi:tune-variant" class="h-4 w-4" />
         </summary>
-        <div class="dropdown-content z-[130] mt-3 w-[16.5rem] rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
+        <div class="dropdown-content z-130 mt-3 w-66 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
           <p class="mb-1 px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
             {settingsLabel}
           </p>
@@ -263,12 +263,12 @@
           }}
         >
           <Icon icon="mdi:translate" class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          <span class="max-w-[8.5rem] truncate font-semibold sm:max-w-none">{uiLocaleDisplayLabel}</span>
+          <span class="max-w-34 truncate font-semibold sm:max-w-none">{uiLocaleDisplayLabel}</span>
           {#if $isLocaleLoading}
             <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
           {/if}
         </summary>
-        <ul class="menu dropdown-content z-[120] mt-3 w-56 rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm">
+        <ul class="menu dropdown-content z-120 mt-3 w-56 rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm">
           {#each uiLocaleOptions as localeOption (localeOption.code)}
             <li>
               <button
