@@ -768,7 +768,7 @@
                   max="1"
                   step="0.01"
                   value={volume}
-                  class="range range-xs min-w-0 flex-1 md:w-24 md:flex-none"
+                  class="range range-secondary range-xs min-w-0 flex-1 md:w-24 md:flex-none"
                   aria-label={volumeLabel}
                   title={volumeLabel}
                   oninput={handleVolumeChange}
