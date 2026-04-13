@@ -16,3 +16,11 @@ Use `requestAnimationFrame`-driven progress syncing in `AudioPlayer` to reduce t
 Lazy-load `AudioPlayer` audio only after the user clicks play, avoiding unnecessary audio initialization on page open.
 Drive `content-site` event countdown progress bars with `requestAnimationFrame` while keeping countdown digits on second-level updates.
 Fix `content-site` event BGM asset URLs to point directly to `<bgmAssetbundleName>.mp3`.
+Tighten the `content-site` favicon framing so the icon fills more of the canvas with less wasted transparent padding.
+Preload `AudioPlayer` track duration metadata before playback starts so the total time is visible earlier.
+Refine the `AudioPlayer` control layout so the volume slider is shorter and more visually distinct from the main seek bar.
+Move event BGM metadata embedding into the `content-site` server download route and offer MP3/WAV download actions from `AudioPlayer`.
+Speed up large event BGM downloads by using parallel byte-range fetches from remote storage when the upstream asset server supports them.
+Show an SSE-driven download progress bar for event BGM downloads and close the format menu immediately after the user picks a format.
+Present event BGM download progress in a non-dismissible floating panel and cancel unfinished downloads when the page closes.
+Allow `content-site` server-side BGM downloads to use a separately configured internal remote asset base URL.
