@@ -18,6 +18,17 @@ const commonZhCn: ContentSiteCommonMessages = {
   audioVolumeLabel: "调整音量",
   audioSeekLabel: "调整播放进度",
   audioUnavailableLabel: "暂无活动 BGM",
+  audioDownloadStages: {
+    preparing: "正在准备下载",
+    fetchingAudio: "正在下载音频",
+    fetchingCover: "正在下载封面",
+    writingMetadata: "正在写入音频信息",
+    finalizing: "正在整理文件",
+    ready: "下载已准备完成",
+    failed: "下载失败",
+    cancelled: "下载已取消"
+  },
+  audioDownloadCloseLabel: "关闭下载窗口",
   bannerAltSuffix: "横幅",
   imageUnavailable: "无可用图片",
   noCurrentEventData: "暂无活动数据。",

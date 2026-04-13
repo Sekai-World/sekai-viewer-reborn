@@ -18,6 +18,17 @@ const commonJaJp: ContentSiteCommonMessages = {
   audioVolumeLabel: "音量を調整",
   audioSeekLabel: "再生位置を調整",
   audioUnavailableLabel: "イベント BGM はありません",
+  audioDownloadStages: {
+    preparing: "ダウンロードを準備中",
+    fetchingAudio: "音声をダウンロード中",
+    fetchingCover: "カバー画像をダウンロード中",
+    writingMetadata: "メタデータを書き込み中",
+    finalizing: "ファイルを仕上げ中",
+    ready: "ダウンロードの準備が完了しました",
+    failed: "ダウンロードに失敗しました",
+    cancelled: "ダウンロードをキャンセルしました"
+  },
+  audioDownloadCloseLabel: "ダウンロードウィンドウを閉じる",
   bannerAltSuffix: "バナー",
   imageUnavailable: "利用可能な画像がありません",
   noCurrentEventData: "現在のイベントデータはありません。",
