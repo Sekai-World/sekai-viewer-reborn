@@ -1,5 +1,10 @@
 import { env } from "$env/dynamic/private";
 
+const trimTrailingSlash = (value: string): string => {
+  const normalized = value.replace(/\/+$/, "");
+  return normalized.length > 0 ? normalized : "/";
+};
+
 const getRequiredPrivateEnv = (name: keyof typeof env): string => {
   const rawValue = env[name];
   if (!rawValue) {
@@ -11,8 +16,10 @@ const getRequiredPrivateEnv = (name: keyof typeof env): string => {
     throw new Error(`Environment variable ${name} must not be empty.`);
   }
 
-  return value;
+  return trimTrailingSlash(value);
 };
 
 export const getMasterApiBaseUrl = (): string =>
   getRequiredPrivateEnv("SEKAI_MASTER_API_BASE_URL");
+
+export const getSekaiApiBaseUrl = (): string => getRequiredPrivateEnv("SEKAI_API_BASE_URL");

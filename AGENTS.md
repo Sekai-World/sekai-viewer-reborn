@@ -14,6 +14,7 @@ Guidance for coding agents working in this workspace.
 - Shared packages live in `packages/*`:
   - `auth-client` (`@platform/auth-client`)
   - `i18n-dicts` (`@platform/i18n-dicts`)
+  - `sekai-api-sdk` (`@platform/sekai-api-sdk`)
   - `sekai-master-api-sdk` (`@platform/sekai-master-api-sdk`)
   - `ui-shell` (`@platform/ui-shell`)
   - `ui-tokens` (`@platform/ui-tokens`)
@@ -111,6 +112,7 @@ Preview ports:
 
 - `@platform/auth-client`: shared auth/OIDC helpers.
 - `@platform/i18n-dicts`: shared region, locale, and site dictionary data.
+- `@platform/sekai-api-sdk`: generated API SDK plus generator script for `sekai-api`.
 - `@platform/sekai-master-api-sdk`: generated API SDK plus generator script.
 - `@platform/ui-shell`: shared Svelte shell components exported directly from `src`.
 - `@platform/ui-tokens`: shared design tokens exposed as JSON and TypeScript.
@@ -144,6 +146,7 @@ When changing shared packages:
 ## `content-site` Environment Variables
 
 - Server-side master API requests require `SEKAI_MASTER_API_BASE_URL`.
+- Server-side sekai-api requests require `SEKAI_API_BASE_URL`.
 - Public asset URL helpers require `PUBLIC_REMOTE_ASSET_BASE_URL`.
 - Client-side i18n loading requires `PUBLIC_SEKAI_I18N_BASE_URL`.
 

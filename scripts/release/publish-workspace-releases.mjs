@@ -15,13 +15,14 @@ function run(command, args, options = {}) {
     ...options
   });
 
+  const stdout = typeof result.stdout === "string" ? result.stdout.trim() : "";
+  const stderr = typeof result.stderr === "string" ? result.stderr.trim() : "";
+
   if (result.status !== 0) {
-    const stderr = result.stderr?.trim();
-    const stdout = result.stdout?.trim();
     throw new Error(stderr || stdout || `${command} ${args.join(" ")} failed`);
   }
 
-  return result.stdout.trim();
+  return stdout;
 }
 
 function tryRun(command, args, options = {}) {
@@ -33,8 +34,8 @@ function tryRun(command, args, options = {}) {
 
   return {
     status: result.status ?? 1,
-    stdout: result.stdout.trim(),
-    stderr: result.stderr.trim()
+    stdout: typeof result.stdout === "string" ? result.stdout.trim() : "",
+    stderr: typeof result.stderr === "string" ? result.stderr.trim() : ""
   };
 }
 

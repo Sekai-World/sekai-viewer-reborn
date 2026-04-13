@@ -1,0 +1,27 @@
+{
+  "name": "@platform/sekai-api-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src scripts --ext .ts,.mjs",
+    "generate:sdk": "node ./scripts/generate-sdk.mjs"
+  },
+  "dependencies": {
+    "@hey-api/openapi-ts": "0.93.1"
+  },
+  "devDependencies": {
+    "vite": "^6.4.1",
+    "vite-plugin-dts": "^4.5.4"
+  }
+}
