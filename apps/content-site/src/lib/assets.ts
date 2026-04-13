@@ -11,8 +11,8 @@ const trimTrailingSlash = (value: string): string => {
   return normalized.length > 0 ? normalized : "/";
 };
 
-export const getRemoteAssetBaseURL = (): string => {
-  const configuredBaseUrl = trimTrailingSlash(PUBLIC_REMOTE_ASSET_BASE_URL);
+export const getRemoteAssetBaseURL = (baseUrlOverride?: string | null): string => {
+  const configuredBaseUrl = trimTrailingSlash(baseUrlOverride ?? PUBLIC_REMOTE_ASSET_BASE_URL);
   if (!configuredBaseUrl) {
     throw new Error("Missing required environment variable: PUBLIC_REMOTE_ASSET_BASE_URL");
   }
@@ -40,8 +40,12 @@ const assetBucketByServer: Record<AssetServer, string> = {
   best: "sekai-best-assets"
 };
 
-const buildServerAssetURL = (endpoint: string, server: AssetServer): string => {
-  const baseURL = getRemoteAssetBaseURL().replace(/\/+$/, "");
+const buildServerAssetURL = (
+  endpoint: string,
+  server: AssetServer,
+  baseUrlOverride?: string | null
+): string => {
+  const baseURL = getRemoteAssetBaseURL(baseUrlOverride).replace(/\/+$/, "");
   const bucket = assetBucketByServer[server];
   const normalizedEndpoint = endpoint.trim().replace(/^\/+/, "");
   return `${baseURL}/${bucket}/${normalizedEndpoint}`;
@@ -85,63 +89,79 @@ export const getRemoteAssetURL = async (
 
 export const getEventBannerAssetURL = (
   assetBundleName: string,
-  server: AssetServer = "jp"
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
 ): string => {
   const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
   if (normalizedAssetBundleName.length === 0) {
-    return getRemoteAssetBaseURL();
+    return getRemoteAssetBaseURL(baseUrlOverride);
   }
 
   return buildServerAssetURL(
     `home/banner/${normalizedAssetBundleName}/${normalizedAssetBundleName}.webp`,
-    server
+    server,
+    baseUrlOverride
   );
 };
 
 export const getEventLogoAssetURL = (
   assetBundleName: string,
-  server: AssetServer = "jp"
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
 ): string => {
   const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
   if (normalizedAssetBundleName.length === 0) {
-    return getRemoteAssetBaseURL();
+    return getRemoteAssetBaseURL(baseUrlOverride);
   }
 
-  return buildServerAssetURL(`event/${normalizedAssetBundleName}/logo/logo.webp`, server);
+  return buildServerAssetURL(
+    `event/${normalizedAssetBundleName}/logo/logo.${extension}`,
+    server,
+    baseUrlOverride
+  );
 };
 
 export const getEventBackgroundAssetURL = (
   assetBundleName: string,
-  server: AssetServer = "jp"
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
 ): string => {
   const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
   if (normalizedAssetBundleName.length === 0) {
-    return getRemoteAssetBaseURL();
+    return getRemoteAssetBaseURL(baseUrlOverride);
   }
 
-  return buildServerAssetURL(`event/${normalizedAssetBundleName}/screen/bg.webp`, server);
+  return buildServerAssetURL(`event/${normalizedAssetBundleName}/screen/bg.webp`, server, baseUrlOverride);
 };
 
 export const getEventCharacterAssetURL = (
   assetBundleName: string,
-  server: AssetServer = "jp"
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
 ): string => {
   const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
   if (normalizedAssetBundleName.length === 0) {
-    return getRemoteAssetBaseURL();
+    return getRemoteAssetBaseURL(baseUrlOverride);
   }
 
-  return buildServerAssetURL(`event/${normalizedAssetBundleName}/screen/character.webp`, server);
+  return buildServerAssetURL(
+    `event/${normalizedAssetBundleName}/screen/character.webp`,
+    server,
+    baseUrlOverride
+  );
 };
 
 export const getEventBgmAssetURL = (
   bgmAssetbundleName: string,
-  server: AssetServer = "jp"
+  server: AssetServer = "jp",
+  extension = "mp3",
+  baseUrlOverride?: string | null
 ): string => {
   const normalizedAssetBundleName = bgmAssetbundleName.trim().replace(/^\/+|\/+$/g, "");
   if (normalizedAssetBundleName.length === 0) {
-    return getRemoteAssetBaseURL();
+    return getRemoteAssetBaseURL(baseUrlOverride);
   }
 
-  return buildServerAssetURL(`${normalizedAssetBundleName}.mp3`, server);
+  return buildServerAssetURL(`${normalizedAssetBundleName}.${extension}`, server, baseUrlOverride);
 };

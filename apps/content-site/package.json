@@ -18,7 +18,8 @@
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*",
     "i18next": "^25.6.0",
-    "i18next-http-backend": "^3.0.2"
+    "i18next-http-backend": "^3.0.2",
+    "taglib-wasm": "^1.1.2"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^5.3.1",
