@@ -19,7 +19,24 @@ const getRequiredPrivateEnv = (name: keyof typeof env): string => {
   return trimTrailingSlash(value);
 };
 
+const getOptionalPrivateEnv = (name: keyof typeof env): string | null => {
+  const rawValue = env[name];
+  if (!rawValue) {
+    return null;
+  }
+
+  const value = rawValue.trim();
+  if (value.length === 0) {
+    return null;
+  }
+
+  return trimTrailingSlash(value);
+};
+
 export const getMasterApiBaseUrl = (): string =>
   getRequiredPrivateEnv("SEKAI_MASTER_API_BASE_URL");
 
 export const getSekaiApiBaseUrl = (): string => getRequiredPrivateEnv("SEKAI_API_BASE_URL");
+
+export const getInternalRemoteAssetBaseUrl = (): string | null =>
+  getOptionalPrivateEnv("SEKAI_REMOTE_ASSET_BASE_URL");
