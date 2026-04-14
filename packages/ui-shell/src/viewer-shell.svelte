@@ -1,11 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-
-  export type SidebarItem = {
-    label: string;
-    href: string;
-    active?: boolean;
-  };
+  import type { SidebarItem } from "./viewer-shell.types";
 
   type Props = {
     drawerId: string;
