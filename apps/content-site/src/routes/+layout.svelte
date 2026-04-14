@@ -120,7 +120,7 @@
 
   const getThemeModeIcon = (themeModeValue: ThemeMode, resolvedThemeValue: ResolvedTheme): string => {
     if (themeModeValue === "auto") {
-      return resolvedThemeValue === "dark" ? "mdi:theme-light-dark" : "mdi:brightness-auto";
+      return "mdi:theme-light-dark";
     }
 
     return themeModeValue === "light" ? "mdi:white-balance-sunny" : "mdi:weather-night";
