@@ -32,6 +32,7 @@
   let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
   let nameLabel = $state(getContentSiteCommonText(initialLocale, "nameLabel"));
   let unitLabel = $state(getContentSiteCommonText(initialLocale, "unitLabel"));
+  let eventTypeLabel = $state(getContentSiteCommonText(initialLocale, "eventTypeLabel"));
   let eventBgmTitle = $state(getContentSiteCommonText(initialLocale, "eventBgmTitle"));
   let audioPlayLabel = $state(getContentSiteCommonText(initialLocale, "audioPlayLabel"));
   let audioPauseLabel = $state(getContentSiteCommonText(initialLocale, "audioPauseLabel"));
@@ -106,6 +107,7 @@
     idLabel = tCommon(locale, "idLabel");
     nameLabel = tCommon(locale, "nameLabel");
     unitLabel = tCommon(locale, "unitLabel");
+    eventTypeLabel = tCommon(locale, "eventTypeLabel");
     eventBgmTitle = tCommon(locale, "eventBgmTitle");
     audioPlayLabel = tCommon(locale, "audioPlayLabel");
     audioPauseLabel = tCommon(locale, "audioPauseLabel");
@@ -187,6 +189,18 @@
     `${resolve("/event/[id]/bgm/progress", { id: data.eventId })}?region=${encodeURIComponent(data.region)}`;
   const getAssetPreviewResetKey = (): string =>
     `${data.eventId}:${data.region}:${activeAssetTab}`;
+  const eventTypeDisplayMap = {
+    marathon: "Marathon",
+    cheerful_carnival: "Cheerful Carnival",
+    world_bloom: "World Link"
+  } as const;
+  const getEventTypeDisplay = (eventType: string | null): string | null => {
+    if (!eventType) {
+      return null;
+    }
+
+    return eventTypeDisplayMap[eventType as keyof typeof eventTypeDisplayMap] ?? eventType;
+  };
 
   $effect(() => {
     getAssetPreviewResetKey();
@@ -448,6 +462,16 @@
                   <div class="content-card-inset rounded-xl px-4 py-3">
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{unitLabel}</dt>
                     <dd class="mt-1 text-sm font-medium">{payload.event.unitName}</dd>
+                  </div>
+                {/if}
+                {#if payload.event.eventType}
+                  <div class="content-card-inset rounded-xl px-4 py-3">
+                    <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                      {eventTypeLabel}
+                    </dt>
+                    <dd class="mt-1 text-sm font-medium">
+                      {getEventTypeDisplay(payload.event.eventType)}
+                    </dd>
                   </div>
                 {/if}
                 <div class="content-card-inset rounded-xl px-4 py-3">

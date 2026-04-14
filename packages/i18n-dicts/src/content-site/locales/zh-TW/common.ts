@@ -11,6 +11,7 @@ const commonZhTw: ContentSiteCommonMessages = {
   idLabel: "ID",
   nameLabel: "名稱",
   unitLabel: "團體",
+  eventTypeLabel: "活動類型",
   eventBgmTitle: "活動 BGM",
   audioPlayLabel: "播放音訊",
   audioPauseLabel: "暫停音訊",
