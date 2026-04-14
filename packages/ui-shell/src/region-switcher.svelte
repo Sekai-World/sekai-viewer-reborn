@@ -1,10 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-
-  export type RegionOption = {
-    value: string;
-    label: string;
-  };
+  import type { RegionOption } from "./region-switcher.types";
 
   type Props = {
     options: ReadonlyArray<RegionOption>;
