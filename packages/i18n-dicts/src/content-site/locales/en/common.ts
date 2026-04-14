@@ -11,6 +11,7 @@ const commonEn: ContentSiteCommonMessages = {
   idLabel: "ID",
   nameLabel: "Name",
   unitLabel: "Unit",
+  eventTypeLabel: "Event Type",
   eventBgmTitle: "Event BGM",
   audioPlayLabel: "Play audio",
   audioPauseLabel: "Pause audio",

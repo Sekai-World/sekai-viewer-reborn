@@ -11,6 +11,7 @@ const commonKoKr: ContentSiteCommonMessages = {
   idLabel: "ID",
   nameLabel: "이름",
   unitLabel: "유닛",
+  eventTypeLabel: "이벤트 타입",
   eventBgmTitle: "이벤트 BGM",
   audioPlayLabel: "오디오 재생",
   audioPauseLabel: "오디오 일시정지",
