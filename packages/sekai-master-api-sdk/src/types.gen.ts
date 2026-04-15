@@ -374,6 +374,14 @@ export type GetCardsByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
     };
     url: '/cards/{region}/list';
 };
@@ -429,6 +437,14 @@ export type GetCardsByRegionSearchData = {
          * Max results
          */
         limit?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
     };
     url: '/cards/{region}/search';
 };
@@ -681,6 +697,128 @@ export type GetEventsByRegionCurrentResponses = {
 
 export type GetEventsByRegionCurrentResponse = GetEventsByRegionCurrentResponses[keyof GetEventsByRegionCurrentResponses];
 
+export type GetEventsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/events/{region}/list';
+};
+
+export type GetEventsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetEventsByRegionListError = GetEventsByRegionListErrors[keyof GetEventsByRegionListErrors];
+
+export type GetEventsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetEventsByRegionListResponse = GetEventsByRegionListResponses[keyof GetEventsByRegionListResponses];
+
+export type GetEventsByRegionSearchData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query: {
+        /**
+         * Search query
+         */
+        q: string;
+        /**
+         * Search field (name|unit), default=name
+         */
+        field?: string;
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Max results
+         */
+        limit?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/events/{region}/search';
+};
+
+export type GetEventsByRegionSearchErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetEventsByRegionSearchError = GetEventsByRegionSearchErrors[keyof GetEventsByRegionSearchErrors];
+
+export type GetEventsByRegionSearchResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetEventsByRegionSearchResponse = GetEventsByRegionSearchResponses[keyof GetEventsByRegionSearchResponses];
+
 export type GetEventsByRegionByIdData = {
     body?: never;
     path: {
@@ -850,6 +988,14 @@ export type GetMusicsByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
     };
     url: '/musics/{region}/list';
 };
@@ -915,6 +1061,14 @@ export type GetMusicsByRegionSearchData = {
          * Max results
          */
         limit?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
     };
     url: '/musics/{region}/search';
 };
@@ -994,3 +1148,357 @@ export type GetMusicsByRegionByIdResponses = {
 };
 
 export type GetMusicsByRegionByIdResponse = GetMusicsByRegionByIdResponses[keyof GetMusicsByRegionByIdResponses];
+
+export type GetVirtualLivesRegionsByIdAvailabilityData = {
+    body?: never;
+    path: {
+        /**
+         * Virtual Live ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/virtualLives/regions/{id}/availability';
+};
+
+export type GetVirtualLivesRegionsByIdAvailabilityErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetVirtualLivesRegionsByIdAvailabilityError = GetVirtualLivesRegionsByIdAvailabilityErrors[keyof GetVirtualLivesRegionsByIdAvailabilityErrors];
+
+export type GetVirtualLivesRegionsByIdAvailabilityResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetVirtualLivesRegionsByIdAvailabilityResponse = GetVirtualLivesRegionsByIdAvailabilityResponses[keyof GetVirtualLivesRegionsByIdAvailabilityResponses];
+
+export type GetVirtualLivesByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/virtualLives/{region}/list';
+};
+
+export type GetVirtualLivesByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetVirtualLivesByRegionListError = GetVirtualLivesByRegionListErrors[keyof GetVirtualLivesByRegionListErrors];
+
+export type GetVirtualLivesByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetVirtualLivesByRegionListResponse = GetVirtualLivesByRegionListResponses[keyof GetVirtualLivesByRegionListResponses];
+
+export type GetVirtualLivesByRegionSearchData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query: {
+        /**
+         * Search query
+         */
+        q: string;
+        /**
+         * Search field (name|type|assetbundle), default=name
+         */
+        field?: string;
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Max results
+         */
+        limit?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/virtualLives/{region}/search';
+};
+
+export type GetVirtualLivesByRegionSearchErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetVirtualLivesByRegionSearchError = GetVirtualLivesByRegionSearchErrors[keyof GetVirtualLivesByRegionSearchErrors];
+
+export type GetVirtualLivesByRegionSearchResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetVirtualLivesByRegionSearchResponse = GetVirtualLivesByRegionSearchResponses[keyof GetVirtualLivesByRegionSearchResponses];
+
+export type GetVirtualLivesByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Virtual Live ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/virtualLives/{region}/{id}';
+};
+
+export type GetVirtualLivesByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Not Found
+     */
+    404: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetVirtualLivesByRegionByIdError = GetVirtualLivesByRegionByIdErrors[keyof GetVirtualLivesByRegionByIdErrors];
+
+export type GetVirtualLivesByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetVirtualLivesByRegionByIdResponse = GetVirtualLivesByRegionByIdResponses[keyof GetVirtualLivesByRegionByIdResponses];
+
+export type GetVirtualLivesByRegionByIdItemsData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Virtual Live ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/virtualLives/{region}/{id}/items';
+};
+
+export type GetVirtualLivesByRegionByIdItemsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Not Found
+     */
+    404: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetVirtualLivesByRegionByIdItemsError = GetVirtualLivesByRegionByIdItemsErrors[keyof GetVirtualLivesByRegionByIdItemsErrors];
+
+export type GetVirtualLivesByRegionByIdItemsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetVirtualLivesByRegionByIdItemsResponse = GetVirtualLivesByRegionByIdItemsResponses[keyof GetVirtualLivesByRegionByIdItemsResponses];
+
+export type GetVirtualLivesByRegionByIdSchedulesData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Virtual Live ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/virtualLives/{region}/{id}/schedules';
+};
+
+export type GetVirtualLivesByRegionByIdSchedulesErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Not Found
+     */
+    404: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetVirtualLivesByRegionByIdSchedulesError = GetVirtualLivesByRegionByIdSchedulesErrors[keyof GetVirtualLivesByRegionByIdSchedulesErrors];
+
+export type GetVirtualLivesByRegionByIdSchedulesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetVirtualLivesByRegionByIdSchedulesResponse = GetVirtualLivesByRegionByIdSchedulesResponses[keyof GetVirtualLivesByRegionByIdSchedulesResponses];
+
+export type GetVirtualLivesByRegionByIdSetlistsData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Virtual Live ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/virtualLives/{region}/{id}/setlists';
+};
+
+export type GetVirtualLivesByRegionByIdSetlistsErrors = {
+    /**
+     * Bad Request
+     */
+    400: HandlerErrorResponse;
+    /**
+     * Not Found
+     */
+    404: HandlerErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: HandlerErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: HandlerErrorResponse;
+};
+
+export type GetVirtualLivesByRegionByIdSetlistsError = GetVirtualLivesByRegionByIdSetlistsErrors[keyof GetVirtualLivesByRegionByIdSetlistsErrors];
+
+export type GetVirtualLivesByRegionByIdSetlistsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetVirtualLivesByRegionByIdSetlistsResponse = GetVirtualLivesByRegionByIdSetlistsResponses[keyof GetVirtualLivesByRegionByIdSetlistsResponses];
