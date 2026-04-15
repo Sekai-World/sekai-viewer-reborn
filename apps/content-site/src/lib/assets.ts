@@ -165,3 +165,17 @@ export const getEventBgmAssetURL = (
 
   return buildServerAssetURL(`${normalizedAssetBundleName}.${extension}`, server, baseUrlOverride);
 };
+
+export const getEventPointIconAssetURL = (
+  eventPointIcon: string,
+  server: AssetServer = "jp",
+  suffix = "_1.webp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedEventPointIcon = eventPointIcon.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedEventPointIcon.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(`${normalizedEventPointIcon}${suffix}`, server, baseUrlOverride);
+};

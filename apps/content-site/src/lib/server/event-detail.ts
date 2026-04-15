@@ -3,6 +3,7 @@ type EventDetail = {
   title: string;
   unitName: string | null;
   eventType: string | null;
+  eventPointIcon: string | null;
   bgmAssetbundleName: string | null;
   startAt: string | number | null;
   endAt: string | number | null;
@@ -114,6 +115,7 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
       pickFirstString(unitNode ?? eventNode, ["unitName", "name", "title"]) ??
       pickFirstString(eventNode, ["unitName"]),
     eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
+    eventPointIcon: pickFirstString(eventNode, ["eventPointIcon", "event_point_icon"]),
     bgmAssetbundleName: pickFirstString(eventNode, [
       "bgmAssetbundleName",
       "bgm_assetbundle_name",
