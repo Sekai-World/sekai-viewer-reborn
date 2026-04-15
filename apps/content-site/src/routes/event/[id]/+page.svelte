@@ -9,7 +9,8 @@
     getEventBannerAssetURL,
     getEventBgmAssetURL,
     getEventCharacterAssetURL,
-    getEventLogoAssetURL
+    getEventLogoAssetURL,
+    getEventPointIconAssetURL
   } from "$lib/assets";
   import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";
   import { formatDisplayDateTime } from "$lib/date-time";
@@ -448,9 +449,21 @@
                 <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
                   {eventInfoTitle}
                 </p>
-                <span class="badge badge-outline border-base-content/20 font-semibold">
-                  {idLabel}: {payload.event.id}
-                </span>
+                <div class="flex items-center gap-1.5">
+                  {#if payload.event.eventPointIcon}
+                    <img
+                      src={getEventPointIconAssetURL(payload.event.eventPointIcon, data.region)}
+                      alt=""
+                      aria-hidden="true"
+                      class="h-6 w-6 shrink-0 object-contain"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  {/if}
+                  <span class="badge badge-outline border-base-content/20 font-semibold">
+                    {idLabel}: {payload.event.id}
+                  </span>
+                </div>
               </div>
 
               <dl class="space-y-2">

@@ -24,3 +24,4 @@ Speed up large event BGM downloads by using parallel byte-range fetches from rem
 Show an SSE-driven download progress bar for event BGM downloads and close the format menu immediately after the user picks a format.
 Present event BGM download progress in a non-dismissible floating panel and cancel unfinished downloads when the page closes.
 Allow `content-site` server-side BGM downloads to use a separately configured internal remote asset base URL.
+Show the event point icon on the event detail ID badge in `content-site`.
