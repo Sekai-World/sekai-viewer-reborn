@@ -41,11 +41,11 @@
       <article id={`region-${region}`} class="card content-card-shell w-full shadow-sm">
         <div class="card-body">
           <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
-          <div class="mb-1">
-            <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-              {region.toUpperCase()}
-            </span>
-          </div>
+            <div class="mb-1">
+              <span class="badge homepage-region-badge font-semibold shadow-sm">
+                {region.toUpperCase()}
+              </span>
+            </div>
           <div class="space-y-2">
             <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
             <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
@@ -58,16 +58,19 @@
         <a
           id={`region-${card.region}`}
           href={`${resolve("/event/[id]", { id: card.event.id })}?region=${encodeURIComponent(card.region)}`}
-          class="card content-card-shell group w-full shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          class="card content-card-shell homepage-event-card group relative w-full overflow-hidden transform-gpu hover:-translate-y-0.75 hover:scale-[1.014]"
         >
-          <div class="card-body">
-            <div class="mb-2 flex items-center justify-center md:mb-3">
+          <div
+            class="pointer-events-none absolute inset-x-6 top-0 h-24 rounded-full bg-linear-to-b from-primary/18 via-primary/8 to-transparent opacity-0 blur-2xl transition-opacity duration-[360ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:opacity-100"
+          ></div>
+          <div class="card-body relative z-10">
+            <div class="mb-2 flex items-center justify-center transition-transform duration-[460ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:-translate-y-0.5 md:mb-3">
               {#if card.event.assetBundleName}
                 <img
                   src={getEventBannerAssetURL(card.event.assetBundleName, card.region)}
                   alt={`${card.event.title} ${bannerAltSuffix}`}
                   loading="lazy"
-                  class="mx-auto h-auto w-full max-w-full object-contain md:w-3/4 md:min-w-[min(200px,100%)]"
+                  class="mx-auto h-auto w-full max-w-full object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.08)] transition-transform duration-[460ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:scale-[1.012] md:w-3/4 md:min-w-[min(200px,100%)]"
                 />
               {:else}
                 <div class="flex h-full w-full items-center justify-center text-sm opacity-70">
@@ -76,9 +79,11 @@
               {/if}
             </div>
 
-            <h3 class="text-base font-semibold leading-tight">{card.event.title}</h3>
+            <h3 class="text-base font-semibold leading-tight transition-transform duration-[460ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:-translate-y-0.5">
+              {card.event.title}
+            </h3>
             <div class="flex items-center gap-2 text-sm opacity-70">
-              <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+              <span class="badge homepage-region-badge font-semibold shadow-sm">
                 {card.region.toUpperCase()}
               </span>
               <p>{idLabel}: {card.event.id}</p>
@@ -88,7 +93,7 @@
               startAt={card.event.startAt}
               endAt={card.event.endAt}
               uiLocale={data.uiLocale}
-              class="mt-1"
+              class="mt-1 transition-[transform,box-shadow] duration-[460ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:-translate-y-0.5 group-hover:shadow-md"
             />
           </div>
         </a>
@@ -97,7 +102,7 @@
           <div class="card-body">
             <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
             <div class="mb-1">
-              <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+              <span class="badge homepage-region-badge font-semibold shadow-sm">
                 {card.region.toUpperCase()}
               </span>
             </div>
