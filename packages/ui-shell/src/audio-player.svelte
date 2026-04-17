@@ -78,11 +78,14 @@
   let pendingSeekTime = $state<number | null>(null);
   let progressAnimationFrameId = 0;
   let lastProgressSyncAt = 0;
+  let playbackFrameAnchorTime = 0;
+  let playbackFrameAnchorAt = 0;
   let setupVersion = 0;
   let metadataVersion = 0;
   let mounted = $state(false);
   let requestedPlayback = false;
   let downloadProgressSource: EventSource | null = null;
+  const progressSyncIntervalMs = 200;
 
   const normalizedSrc = $derived(src?.trim() ?? "");
   const hasSource = $derived(normalizedSrc.length > 0);
@@ -129,6 +132,10 @@
 
   const closeDownloadMenu = (): void => {
     (document.activeElement as HTMLElement | null)?.blur();
+  };
+
+  const getNow = (): number => {
+    return typeof performance !== "undefined" ? performance.now() : 0;
   };
 
   const formatTime = (secondsValue: number): string => {
@@ -311,11 +318,22 @@
     }
   };
 
-  const syncPlaybackState = (): void => {
+  const clearPlaybackFrameAnchor = (): void => {
+    playbackFrameAnchorTime = 0;
+    playbackFrameAnchorAt = 0;
+  };
+
+  const setPlaybackFrameAnchor = (time: number, timestamp: number): void => {
+    playbackFrameAnchorTime = Math.max(0, time);
+    playbackFrameAnchorAt = timestamp > 0 ? timestamp : 0;
+  };
+
+  const syncPlaybackState = (timestamp = 0): void => {
     if (!howl) {
       currentTime = 0;
       duration = 0;
       isPlaying = false;
+      clearPlaybackFrameAnchor();
       return;
     }
 
@@ -326,7 +344,7 @@
     const nextDuration = Number.isFinite(howl.duration()) ? howl.duration() : 0;
     const nextIsPlaying = howl.playing();
 
-    if (Math.abs(nextCurrentTime - currentTime) >= 0.05) {
+    if (!nextIsPlaying || Math.abs(nextCurrentTime - currentTime) >= 0.01) {
       currentTime = nextCurrentTime;
     }
 
@@ -336,6 +354,27 @@
 
     if (nextIsPlaying !== isPlaying) {
       isPlaying = nextIsPlaying;
+    }
+
+    if (nextIsPlaying) {
+      setPlaybackFrameAnchor(nextCurrentTime, timestamp);
+      return;
+    }
+
+    clearPlaybackFrameAnchor();
+  };
+
+  const updateInterpolatedPlaybackTime = (timestamp: number): void => {
+    if (isSeeking || playbackFrameAnchorAt === 0) {
+      return;
+    }
+
+    const elapsedSeconds = Math.max(0, timestamp - playbackFrameAnchorAt) / 1000;
+    const nextCurrentTime =
+      duration > 0 ? Math.min(duration, playbackFrameAnchorTime + elapsedSeconds) : playbackFrameAnchorTime + elapsedSeconds;
+
+    if (Math.abs(nextCurrentTime - currentTime) >= 0.016) {
+      currentTime = nextCurrentTime;
     }
   };
 
@@ -350,6 +389,7 @@
       progressAnimationFrameId = 0;
     }
     lastProgressSyncAt = 0;
+    clearPlaybackFrameAnchor();
   };
 
   const startProgressLoop = (): void => {
@@ -361,12 +401,15 @@
       if (!mounted || !howl?.playing()) {
         progressAnimationFrameId = 0;
         lastProgressSyncAt = 0;
+        clearPlaybackFrameAnchor();
         return;
       }
 
-      if (lastProgressSyncAt === 0 || timestamp - lastProgressSyncAt >= 125) {
+      updateInterpolatedPlaybackTime(timestamp);
+
+      if (lastProgressSyncAt === 0 || timestamp - lastProgressSyncAt >= progressSyncIntervalMs) {
         lastProgressSyncAt = timestamp;
-        syncPlaybackState();
+        syncPlaybackState(timestamp);
       }
 
       progressAnimationFrameId = window.requestAnimationFrame(tick);
@@ -374,7 +417,7 @@
 
     progressAnimationFrameId = window.requestAnimationFrame((timestamp) => {
       lastProgressSyncAt = timestamp;
-      syncPlaybackState();
+      syncPlaybackState(timestamp);
       progressAnimationFrameId = window.requestAnimationFrame(tick);
     });
   };
@@ -422,7 +465,7 @@
           isReady = true;
           isLoading = false;
           hasError = false;
-          syncPlaybackState();
+          syncPlaybackState(getNow());
 
           if (requestedPlayback) {
             requestedPlayback = false;
@@ -439,23 +482,23 @@
           hasError = true;
         },
         onplay: () => {
-          syncPlaybackState();
+          syncPlaybackState(getNow());
           startProgressLoop();
         },
         onpause: () => {
-          syncPlaybackState();
+          syncPlaybackState(getNow());
           stopProgressLoop();
         },
         onstop: () => {
-          syncPlaybackState();
+          syncPlaybackState(getNow());
           stopProgressLoop();
         },
         onend: () => {
-          syncPlaybackState();
+          syncPlaybackState(getNow());
           stopProgressLoop();
         },
         onseek: () => {
-          syncPlaybackState();
+          syncPlaybackState(getNow());
         }
       });
 
@@ -603,21 +646,55 @@
     pendingSeekTime = nextTime;
   };
 
-  const commitSeek = (event: Event): void => {
-    if (!howl || !isReady || hasError) {
-      resetSeekPreview();
-      return;
+  const getPendingSeekTime = (): number | null => {
+    if (pendingSeekTime !== null && Number.isFinite(pendingSeekTime)) {
+      return pendingSeekTime;
     }
 
-    const nextTime = Number((event.currentTarget as HTMLInputElement).value);
-    if (!Number.isFinite(nextTime)) {
+    return null;
+  };
+
+  const applySeek = (nextTime: number): void => {
+    if (!howl || !isReady || hasError) {
       resetSeekPreview();
       return;
     }
 
     howl.seek(nextTime);
     currentTime = nextTime;
+    if (howl.playing()) {
+      setPlaybackFrameAnchor(nextTime, getNow());
+    } else {
+      clearPlaybackFrameAnchor();
+    }
     resetSeekPreview();
+  };
+
+  const commitPendingSeek = (): void => {
+    const nextTime = getPendingSeekTime();
+    if (nextTime === null) {
+      resetSeekPreview();
+      return;
+    }
+
+    applySeek(nextTime);
+  };
+
+  const commitSeek = (event: Event): void => {
+    const nextTime = Number((event.currentTarget as HTMLInputElement).value);
+    if (Number.isFinite(nextTime)) {
+      pendingSeekTime = nextTime;
+    }
+
+    commitPendingSeek();
+  };
+
+  const handleSeekBlur = (): void => {
+    if (!isSeeking) {
+      return;
+    }
+
+    commitPendingSeek();
   };
 
   const cancelSeekPreview = (): void => {
@@ -755,7 +832,10 @@
                 title={seekLabel}
                 oninput={handleSeekInput}
                 onchange={commitSeek}
-                onblur={cancelSeekPreview}
+                onpointerup={commitSeek}
+                onpointercancel={cancelSeekPreview}
+                onkeyup={commitSeek}
+                onblur={handleSeekBlur}
               />
             </div>
 

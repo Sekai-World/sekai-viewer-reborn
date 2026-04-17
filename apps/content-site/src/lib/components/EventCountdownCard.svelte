@@ -50,7 +50,8 @@
   let progressNowMs = $state(Date.now());
   let mounted = $state(false);
   let progressAnimationFrameId = 0;
-  let lastProgressPaintAt = 0;
+  let progressClockBaseMs = 0;
+  let progressClockBaseFrame = 0;
   let lastRenderedSecond = -1;
 
   $effect(() => {
@@ -243,16 +244,31 @@
   const countdown = $derived(getCountdownState(startAt, endAt));
   const minuteProgress = $derived(getMinuteProgressAt(startAt, endAt, progressNowMs));
 
+  const syncProgressClockBase = (timestampMs = Date.now(), frameTime = 0): void => {
+    progressClockBaseMs = timestampMs;
+    progressClockBaseFrame = frameTime;
+  };
+
+  const getProgressTimestampMs = (frameTime: number): number => {
+    if (progressClockBaseMs === 0) {
+      syncProgressClockBase(Date.now(), frameTime);
+    }
+
+    return progressClockBaseMs + Math.max(0, frameTime - progressClockBaseFrame);
+  };
+
   const stopProgressLoop = (): void => {
     if (progressAnimationFrameId) {
       window.cancelAnimationFrame(progressAnimationFrameId);
       progressAnimationFrameId = 0;
     }
 
-    lastProgressPaintAt = 0;
+    progressClockBaseMs = 0;
+    progressClockBaseFrame = 0;
   };
 
-  const syncCountdownClock = (timestampMs = Date.now()): void => {
+  const syncCountdownClock = (timestampMs = Date.now(), frameTime = 0): void => {
+    syncProgressClockBase(timestampMs, frameTime);
     const nextSecond = Math.floor(timestampMs / 1000);
 
     progressNowMs = timestampMs;
@@ -274,21 +290,17 @@
         return;
       }
 
-      const timestampMs = Date.now();
-
-      if (lastProgressPaintAt === 0 || frameTime - lastProgressPaintAt >= 50) {
-        lastProgressPaintAt = frameTime;
-        progressNowMs = timestampMs;
-      }
+      let timestampMs = getProgressTimestampMs(frameTime);
+      progressNowMs = timestampMs;
 
       const nextSecond = Math.floor(timestampMs / 1000);
       if (nextSecond !== lastRenderedSecond) {
-        lastRenderedSecond = nextSecond;
-        nowMs = timestampMs;
+        timestampMs = Date.now();
+        syncCountdownClock(timestampMs, frameTime);
       }
 
       if (!isCountdownActiveAt(startAt, endAt, timestampMs)) {
-        syncCountdownClock(timestampMs);
+        syncCountdownClock(timestampMs, frameTime);
         stopProgressLoop();
         return;
       }
@@ -367,7 +379,7 @@
     {#if showProgress}
       <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-base-content/14">
         <div
-          class={`h-full origin-right ${getMinuteBarClass(countdown.toneClass)}`}
+          class={`h-full origin-right transition-[width] duration-100 ease-linear ${getMinuteBarClass(countdown.toneClass)}`}
           style={`width:${minuteProgress}%; margin-left:auto;`}
         ></div>
       </div>
