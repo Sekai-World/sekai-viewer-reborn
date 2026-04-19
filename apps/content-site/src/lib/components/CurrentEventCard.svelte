@@ -8,7 +8,7 @@
     CURRENT_EVENT_CARD_FRAME_CLASS,
     EVENT_CARD_IMAGE_CLASS,
     EVENT_CARD_MEDIA_CLASS
-  } from "$lib/components/event-card";
+  } from "$lib/styles/event-card";
 
   type CurrentEventSummary = {
     id: string;
