@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import { getContentSiteCommonText, supportedRegions } from "@platform/i18n-dicts";
-  import { getEventBannerAssetURL } from "$lib/assets";
-  import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";
+  import CurrentEventCard from "$lib/components/CurrentEventCard.svelte";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { DEFAULT_UI_LOCALE } from "$lib/region";
   import type { PageData } from "./$types";
@@ -54,49 +52,14 @@
       </article>
     {:then card}
       {#if card.event}
-        <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-        <a
-          id={`region-${card.region}`}
-          href={`${resolve("/event/[id]", { id: card.event.id })}?region=${encodeURIComponent(card.region)}`}
-          class="card content-card-shell homepage-event-card group relative w-full overflow-hidden transform-gpu hover:-translate-y-0.75 hover:scale-[1.014]"
-        >
-          <div
-            class="pointer-events-none absolute inset-x-6 top-0 h-24 rounded-full bg-linear-to-b from-primary/18 via-primary/8 to-transparent opacity-0 blur-2xl transition-opacity duration-[360ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:opacity-100"
-          ></div>
-          <div class="card-body relative z-10">
-            <div class="mb-2 flex items-center justify-center transition-transform duration-[460ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:-translate-y-0.5 md:mb-3">
-              {#if card.event.assetBundleName}
-                <img
-                  src={getEventBannerAssetURL(card.event.assetBundleName, card.region)}
-                  alt={`${card.event.title} ${bannerAltSuffix}`}
-                  loading="lazy"
-                  class="mx-auto h-auto w-full max-w-full object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.08)] transition-transform duration-[460ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:scale-[1.012] md:w-3/4 md:min-w-[min(200px,100%)]"
-                />
-              {:else}
-                <div class="flex h-full w-full items-center justify-center text-sm opacity-70">
-                  {card.label}
-                </div>
-              {/if}
-            </div>
-
-            <h3 class="text-base font-semibold leading-tight transition-transform duration-[460ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:-translate-y-0.5">
-              {card.event.title}
-            </h3>
-            <div class="flex items-center gap-2 text-sm opacity-70">
-              <span class="badge homepage-region-badge font-semibold shadow-sm">
-                {card.region.toUpperCase()}
-              </span>
-              <p>{idLabel}: {card.event.id}</p>
-            </div>
-
-            <EventCountdownCard
-              startAt={card.event.startAt}
-              endAt={card.event.endAt}
-              uiLocale={data.uiLocale}
-              class="mt-1 transition-[transform,box-shadow] duration-[460ms] ease-[cubic-bezier(0.2,0.72,0.2,1)] group-hover:-translate-y-0.5 group-hover:shadow-md"
-            />
-          </div>
-        </a>
+        <CurrentEventCard
+          region={card.region}
+          regionLabel={card.label}
+          event={card.event}
+          uiLocale={data.uiLocale}
+          {idLabel}
+          {bannerAltSuffix}
+        />
       {:else}
         <article id={`region-${card.region}`} class="card content-card-shell w-full shadow-sm">
           <div class="card-body">
