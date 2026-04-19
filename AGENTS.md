@@ -25,6 +25,8 @@ Guidance for coding agents working in this workspace.
 - Keep app boundaries explicit; do not couple app internals across `apps/*`.
 - Prefer shared logic in `packages/*` when reused by multiple apps.
 - Keep changes minimal and scoped to the request.
+- All coding agents and non-GitHub Copilot tools used in this workspace must also consult the applicable guidance under `.github/instructions/` and `.github/prompts/` before making changes.
+- Treat this file together with `.github/copilot-instructions.md` and the applicable files in `.github/instructions/` and `.github/prompts/` as the authoritative repository guidance.
 - Commit messages must follow the Conventional Commits specification.
 - Changes under `apps/` or `packages/` require Changeset coverage before merge.
 - Prefer updating an existing unpublished Changeset that already covers the same workspace instead of creating a new one for every commit.
@@ -107,6 +109,10 @@ Preview ports:
 - App Dockerfiles are located at `apps/*/Dockerfile`.
 - Shared Svelte UI lives in `packages/ui-shell/src`.
 - If you add Tailwind utility classes inside shared Svelte components, make sure the consuming app scans that source. `content-site` already does this via `@source "../../../packages/ui-shell/src";` in `apps/content-site/src/app.css`.
+- When overriding daisyUI component defaults globally, prefer `@utility` in app CSS over fighting `.card` / `.btn` / `.badge` defaults with business classes.
+- For one-off visual differences, prefer utility classes directly in Svelte markup over new global CSS.
+- Avoid broad transition rules like `:root *`; keep theme transition fallbacks narrow so local hover motion is not diluted or overridden.
+- For `content-site` card/shared UI conventions, read `docs/content-site-ui-conventions.md` before introducing new patterns.
 
 ## Shared Package Notes
 
@@ -128,8 +134,25 @@ When changing shared packages:
 - Locale cookie names and defaults are defined in `apps/content-site/src/lib/region.ts`.
 - Normalize and read locale preference through `apps/content-site/src/routes/+layout.server.ts`; do not duplicate locale cookie parsing in page-level loaders.
 - The home page loader (`apps/content-site/src/routes/+page.server.ts`) fetches current event cards for all supported regions.
-- The event detail loader (`apps/content-site/src/routes/event/[id]/+page.server.ts`) resolves the API region from `?region=` and otherwise falls back to the default region.
+- The event detail loader lives at `apps/content-site/src/routes/event/[region]/[id]/+page.server.ts`.
+- The event list loader lives at `apps/content-site/src/routes/events/[region]/+page.server.ts`.
+- Inside `content-site`, prefer path-param routes:
+  - event detail: `/event/:region/:id`
+  - event list: `/events/:region`
+- Keep old query/list routes only as redirects when backward compatibility is needed.
 - Theme preference is handled separately on the client in `apps/content-site/src/routes/+layout.svelte`.
+
+## `content-site` UI / Component Conventions
+
+- Shared card frame/header/nav patterns should be extracted before repeating complex layout markup across pages.
+- Current shared `content-site` UI primitives include:
+  - `apps/content-site/src/lib/components/EventCardFrame.svelte`
+  - `apps/content-site/src/lib/components/CurrentEventCard.svelte`
+  - `apps/content-site/src/lib/components/EventListCard.svelte`
+  - `apps/content-site/src/lib/components/PageHeader.svelte`
+  - `apps/content-site/src/lib/components/RegionBadgeSwitch.svelte`
+- Shared non-component style constants should live outside `src/lib/components`, for example under `apps/content-site/src/lib/styles`.
+- Sidebar structure for `content-site` is assembled in `apps/content-site/src/routes/+layout.svelte` and rendered by `packages/ui-shell/src/viewer-shell.svelte`; keep sidebar labels localized through `packages/i18n-dicts`.
 
 ## `content-site` I18n Conventions
 

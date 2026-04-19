@@ -36,6 +36,7 @@
 <EventCardFrame
   href={resolve("/event/[region]/[id]", { region, id: item.id })}
   frameClass={EVENT_LIST_CARD_FRAME_CLASS}
+  useBody={false}
 >
   <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
     {#if item.assetBundleName}
@@ -66,5 +67,7 @@
     {/if}
   </div>
 
-  <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
+  <div class="px-4 pb-4 pt-3">
+    <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
+  </div>
 </EventCardFrame>
