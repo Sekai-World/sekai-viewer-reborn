@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
   import type { Snippet } from "svelte";
   import type { SidebarItem } from "./viewer-shell.types";
 
@@ -85,8 +86,49 @@
         <label for={drawerId} class="btn btn-ghost btn-sm btn-circle" aria-label="Close sidebar">✕</label>
       </div>
       <ul>
-        {#each sidebarItems as item (item.href + item.label)}
-          <li><a href={item.href} class={item.active ? "active" : ""}>{item.label}</a></li>
+        {#each sidebarItems as item (`${item.type ?? "link"}:${item.label}`)}
+          {#if item.type === "section"}
+            <li class="px-2 pt-4 first:pt-0">
+              <div class="menu-title pointer-events-none px-0 py-1 select-none">
+                <span>{item.label}</span>
+              </div>
+            </li>
+          {:else if item.href && !item.disabled}
+            <li>
+              <a
+                href={item.href}
+                class={`grid grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 ${item.active ? "active" : ""}`}
+                onclick={() => {
+                  sidebarOpen = false;
+                }}
+              >
+                {#if item.icon}
+                  <span class="grid h-5 w-5 shrink-0 place-items-center">
+                    <Icon icon={item.icon} class="h-4 w-4 shrink-0" />
+                  </span>
+                {/if}
+                <span>{item.label}</span>
+              </a>
+            </li>
+          {:else}
+            <li>
+              <a
+                href={item.href ?? "#"}
+                aria-disabled="true"
+                class="grid grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 opacity-45"
+                onclick={(event) => {
+                  event.preventDefault();
+                }}
+              >
+                {#if item.icon}
+                  <span class="grid h-5 w-5 shrink-0 place-items-center">
+                    <Icon icon={item.icon} class="h-4 w-4 shrink-0" />
+                  </span>
+                {/if}
+                <span>{item.label}</span>
+              </a>
+            </li>
+          {/if}
         {/each}
       </ul>
     </aside>

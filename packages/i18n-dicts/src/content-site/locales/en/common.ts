@@ -60,6 +60,13 @@ const commonEn: ContentSiteCommonMessages = {
     gameContentRegion: "Game Content Region",
     interfaceLanguage: "Interface Language"
   },
+  navigation: {
+    database: "Database",
+    cards: "Cards",
+    songs: "Songs",
+    events: "Events",
+    virtualLives: "Virtual Lives"
+  },
   labels: {
     primary: "Primary",
     secondary: "Secondary",
