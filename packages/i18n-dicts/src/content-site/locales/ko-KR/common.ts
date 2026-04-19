@@ -46,6 +46,11 @@ const commonKoKr: ContentSiteCommonMessages = {
     background: "배경",
     characters: "캐릭터"
   },
+  eventTypeValues: {
+    marathon: "마라톤",
+    cheerfulCarnival: "치어풀 카니발",
+    worldLink: "월드 링크"
+  },
   eventInfoTitle: "이벤트 정보",
   debugEventJsonButton: "디버그 JSON",
   debugEventJsonTitle: "이벤트 JSON",

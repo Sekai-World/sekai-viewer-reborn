@@ -46,6 +46,11 @@ const commonJaJp: ContentSiteCommonMessages = {
     background: "背景",
     characters: "キャラクター"
   },
+  eventTypeValues: {
+    marathon: "マラソン",
+    cheerfulCarnival: "チアフルカーニバル",
+    worldLink: "ワールドリンク"
+  },
   eventInfoTitle: "イベント情報",
   debugEventJsonButton: "デバッグ JSON",
   debugEventJsonTitle: "イベント JSON",

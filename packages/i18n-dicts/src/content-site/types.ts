@@ -44,6 +44,11 @@ export type ContentSiteCommonMessages = {
     background: string;
     characters: string;
   };
+  eventTypeValues: {
+    marathon: string;
+    cheerfulCarnival: string;
+    worldLink: string;
+  };
   eventInfoTitle: string;
   debugEventJsonButton: string;
   debugEventJsonTitle: string;

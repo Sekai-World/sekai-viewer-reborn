@@ -12,8 +12,9 @@
     getEventLogoAssetURL,
     getEventPointIconAssetURL
   } from "$lib/assets";
-  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
   import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";
+  import PageHeader from "$lib/components/PageHeader.svelte";
+  import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/RegionBadgeSwitch.svelte";
   import { formatDisplayDateTime } from "$lib/date-time";
   import { getEventTypeDisplay } from "$lib/event";
   import { setI18nLocale, tCommon } from "$lib/i18n";
@@ -189,10 +190,10 @@
       ? data.eventUnavailableInCurrentRegionMessage
       : data.failedToLoadEventDataMessage;
   const getEventBgmDownloadHref = (format: "mp3" | "wav"): string =>
-    `${resolve("/event/[id]/bgm", { id: data.eventId })}?region=${encodeURIComponent(data.region)}&format=${encodeURIComponent(format)}`;
+    `${resolve("/event/[region]/[id]/bgm", { region: data.region, id: data.eventId })}?format=${encodeURIComponent(format)}`;
   const getEventBgmProgressHref = (): string =>
-    `${resolve("/event/[id]/bgm/progress", { id: data.eventId })}?region=${encodeURIComponent(data.region)}`;
-  const getEventListHref = (): string => resolve("/events/[region]/list", { region: data.region });
+    resolve("/event/[region]/[id]/bgm/progress", { region: data.region, id: data.eventId });
+  const getEventListHref = (): string => resolve("/events/[region]", { region: data.region });
   const getEventBreadcrumbItems = (currentLabel: string) => [
     {
       label: homeLabel,
@@ -204,6 +205,23 @@
     },
     {
       label: currentLabel
+    }
+  ];
+  const getRegionBadgeOptions = (regionOptions: SupportedRegion[]): RegionBadgeOption[] =>
+    regionOptions.map((regionOption) => ({
+      key: regionOption,
+      label: regionOption.toUpperCase(),
+      href:
+        regionOption === data.region
+          ? undefined
+          : resolve("/event/[region]/[id]", { region: regionOption, id: data.eventId }),
+      active: regionOption === data.region
+    }));
+  const getCurrentRegionBadgeOption = (): RegionBadgeOption[] => [
+    {
+      key: data.region,
+      label: data.region.toUpperCase(),
+      active: true
     }
   ];
   const toTimestampMs = (value: string | number | null): number | null => {
@@ -289,17 +307,14 @@
 
 <section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-4">
   {#await data.eventPayload}
-    <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-      <Breadcrumbs
-        items={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}
-        class="md:max-w-[68%]"
-      />
-      <div class="flex flex-wrap items-center gap-1.5 md:justify-end">
-        <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-          {data.region.toUpperCase()}
-        </span>
-      </div>
-    </div>
+    <PageHeader
+      breadcrumbs={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}
+      breadcrumbClass="md:max-w-[68%]"
+    >
+      {#snippet actions()}
+        <RegionBadgeSwitch options={getCurrentRegionBadgeOption()} />
+      {/snippet}
+    </PageHeader>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] md:items-start">
       <article class="card content-card-shell overflow-hidden shadow-sm">
@@ -326,12 +341,11 @@
       </article>
     </div>
   {:then payload}
-    <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-      <Breadcrumbs
-        items={getEventBreadcrumbItems(payload.event?.title ?? `${eventTitlePrefix} ${data.eventId}`)}
-        class="md:max-w-[68%]"
-      />
-      <div class="flex flex-wrap items-center gap-1.5 md:justify-end">
+    <PageHeader
+      breadcrumbs={getEventBreadcrumbItems(payload.event?.title ?? `${eventTitlePrefix} ${data.eventId}`)}
+      breadcrumbClass="md:max-w-[68%]"
+    >
+      {#snippet actions()}
         {#if dev && payload.debugEventJson}
           <button
             type="button"
@@ -342,25 +356,10 @@
           </button>
         {/if}
         {#await data.availableRegions then availableRegions}
-          {@const regionOptions = getRegionOptions(availableRegions)}
-          {#each regionOptions as regionOption (regionOption)}
-            {#if regionOption === data.region}
-              <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
-                {regionOption.toUpperCase()}
-              </span>
-            {:else}
-              <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-              <a
-                href={`${resolve("/event/[id]", { id: data.eventId })}?region=${encodeURIComponent(regionOption)}`}
-                class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold"
-              >
-                {regionOption.toUpperCase()}
-              </a>
-            {/if}
-          {/each}
+          <RegionBadgeSwitch options={getRegionBadgeOptions(getRegionOptions(availableRegions))} />
         {/await}
-      </div>
-    </div>
+      {/snippet}
+    </PageHeader>
 
     {#if payload.error}
       <div class="alert alert-error">{payload.error}</div>
@@ -529,7 +528,7 @@
                       {eventTypeLabel}
                     </dt>
                     <dd class="mt-1 text-sm font-medium">
-                      {getEventTypeDisplay(payload.event.eventType)}
+                      {getEventTypeDisplay(payload.event.eventType, data.uiLocale)}
                     </dd>
                   </div>
                 {/if}
