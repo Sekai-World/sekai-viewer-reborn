@@ -55,26 +55,30 @@
 
   .content-breadcrumb-link {
     border: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
-    background-color: color-mix(in oklab, var(--color-base-100) 90%, white 10%);
+    background-color: color-mix(in oklab, var(--color-base-100) 82%, transparent);
     color: color-mix(in oklab, var(--color-base-content) 76%, transparent);
+    box-shadow: none;
   }
 
   .content-breadcrumb-link:hover {
     border-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
-    background-color: color-mix(in oklab, var(--color-primary) 12%, var(--color-base-100));
+    background-color: color-mix(in oklab, var(--color-primary) 10%, var(--color-base-100));
     color: color-mix(in oklab, var(--color-base-content) 90%, transparent);
   }
 
   .content-breadcrumb-current {
-    border: 1px solid color-mix(in oklab, var(--color-primary) 24%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-primary) 70%, black 30%);
     background:
       linear-gradient(
         135deg,
-        color-mix(in oklab, var(--color-primary) 16%, var(--color-base-100)),
-        color-mix(in oklab, var(--color-base-100) 92%, white 8%)
+        color-mix(in oklab, var(--color-primary) 92%, white 8%),
+        color-mix(in oklab, var(--color-primary) 82%, black 18%)
       );
-    color: color-mix(in oklab, var(--color-base-content) 94%, transparent);
+    color: var(--color-primary-content);
     font-weight: 600;
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 18%, transparent),
+      0 6px 14px color-mix(in oklab, var(--color-primary) 18%, transparent);
   }
 
   .content-breadcrumb-separator {
@@ -96,6 +100,10 @@
       0 6px 14px color-mix(in oklab, var(--color-primary) 22%, transparent);
   }
 
+  .event-list-spoiler-overlay {
+    background-color: color-mix(in oklab, white 90%, transparent);
+  }
+
   :root[data-theme="dark"] .content-card-shell {
     border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
   }
@@ -112,8 +120,8 @@
 
   :root[data-theme="dark"] .content-breadcrumb-link {
     border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
-    background-color: color-mix(in oklab, var(--color-base-100) 76%, var(--color-base-content) 24%);
-    color: color-mix(in oklab, white 78%, var(--color-base-content) 22%);
+    background-color: color-mix(in oklab, var(--color-base-100) 62%, var(--color-base-content) 38%);
+    color: color-mix(in oklab, white 74%, var(--color-base-content) 26%);
   }
 
   :root[data-theme="dark"] .content-breadcrumb-link:hover {
@@ -123,14 +131,17 @@
   }
 
   :root[data-theme="dark"] .content-breadcrumb-current {
-    border-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
+    border-color: color-mix(in oklab, var(--color-primary) 78%, black 22%);
     background:
       linear-gradient(
         135deg,
-        color-mix(in oklab, var(--color-primary) 18%, var(--color-base-100)),
-        color-mix(in oklab, var(--color-base-100) 74%, var(--color-base-content) 26%)
+        color-mix(in oklab, var(--color-primary) 82%, white 18%),
+        color-mix(in oklab, var(--color-primary) 72%, black 28%)
       );
-    color: color-mix(in oklab, white 92%, transparent);
+    color: var(--color-primary-content);
+    box-shadow:
+      inset 0 1px 0 color-mix(in oklab, white 12%, transparent),
+      0 8px 18px color-mix(in oklab, black 38%, transparent);
   }
 
   :root[data-theme="dark"] .homepage-region-badge {
@@ -144,6 +155,10 @@
     box-shadow:
       inset 0 1px 0 color-mix(in oklab, white 12%, transparent),
       0 8px 18px color-mix(in oklab, black 38%, transparent);
+  }
+
+  :root[data-theme="dark"] .event-list-spoiler-overlay {
+    background-color: color-mix(in oklab, var(--color-base-100) 90%, transparent);
   }
 
 }
