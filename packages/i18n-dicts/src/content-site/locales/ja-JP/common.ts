@@ -33,6 +33,12 @@ const commonJaJp: ContentSiteCommonMessages = {
   bannerAltSuffix: "バナー",
   imageUnavailable: "利用可能な画像がありません",
   noCurrentEventData: "現在のイベントデータはありません。",
+  eventListTitle: "イベント一覧",
+  eventListEmpty: "イベントがありません。",
+  eventListLoadingMore: "イベントをさらに読み込み中...",
+  eventListLoadFailed: "イベントの読み込みに失敗しました。",
+  eventListRetry: "再試行",
+  eventListEnd: "これ以上イベントはありません。",
   loadingLanguagePack: "言語パックを読み込み中...",
   eventAssetTabs: {
     banner: "バナー",

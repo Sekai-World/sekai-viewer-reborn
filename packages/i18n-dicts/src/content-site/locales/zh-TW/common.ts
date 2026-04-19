@@ -33,6 +33,12 @@ const commonZhTw: ContentSiteCommonMessages = {
   bannerAltSuffix: "橫幅",
   imageUnavailable: "無可用圖片",
   noCurrentEventData: "暫無活動資料。",
+  eventListTitle: "活動列表",
+  eventListEmpty: "暫無活動。",
+  eventListLoadingMore: "正在載入更多活動...",
+  eventListLoadFailed: "活動載入失敗。",
+  eventListRetry: "重試",
+  eventListEnd: "沒有更多活動了。",
   loadingLanguagePack: "正在載入語言包...",
   eventAssetTabs: {
     banner: "橫幅",

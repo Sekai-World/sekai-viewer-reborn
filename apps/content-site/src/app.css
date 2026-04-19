@@ -48,6 +48,51 @@
     border: 1px solid color-mix(in oklab, var(--color-base-content) 8%, transparent);
   }
 
+  .content-breadcrumbs {
+    max-width: 100%;
+  }
+
+  .content-breadcrumb-link,
+  .content-breadcrumb-current {
+    display: inline-flex;
+    max-width: min(100%, 18rem);
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    box-shadow: 0 1px 2px color-mix(in oklab, black 5%, transparent);
+  }
+
+  .content-breadcrumb-link {
+    border: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
+    background-color: color-mix(in oklab, var(--color-base-100) 90%, white 10%);
+    color: color-mix(in oklab, var(--color-base-content) 76%, transparent);
+  }
+
+  .content-breadcrumb-link:hover {
+    border-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
+    background-color: color-mix(in oklab, var(--color-primary) 12%, var(--color-base-100));
+    color: color-mix(in oklab, var(--color-base-content) 90%, transparent);
+  }
+
+  .content-breadcrumb-current {
+    border: 1px solid color-mix(in oklab, var(--color-primary) 24%, transparent);
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in oklab, var(--color-primary) 16%, var(--color-base-100)),
+        color-mix(in oklab, var(--color-base-100) 92%, white 8%)
+      );
+    color: color-mix(in oklab, var(--color-base-content) 94%, transparent);
+    font-weight: 600;
+  }
+
+  .content-breadcrumb-separator {
+    color: color-mix(in oklab, var(--color-base-content) 32%, transparent);
+    font-size: 0.75rem;
+  }
+
   .homepage-region-badge {
     color: var(--color-primary-content);
     border-color: color-mix(in oklab, var(--color-primary) 88%, black 12%);
@@ -90,6 +135,29 @@
   :root[data-theme="dark"] .content-card-elevated {
     background-color: color-mix(in oklab, var(--color-base-100) 84%, var(--color-base-content) 16%);
     border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
+  }
+
+  :root[data-theme="dark"] .content-breadcrumb-link {
+    border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
+    background-color: color-mix(in oklab, var(--color-base-100) 76%, var(--color-base-content) 24%);
+    color: color-mix(in oklab, white 78%, var(--color-base-content) 22%);
+  }
+
+  :root[data-theme="dark"] .content-breadcrumb-link:hover {
+    border-color: color-mix(in oklab, var(--color-primary) 36%, transparent);
+    background-color: color-mix(in oklab, var(--color-primary) 18%, var(--color-base-100));
+    color: color-mix(in oklab, white 90%, transparent);
+  }
+
+  :root[data-theme="dark"] .content-breadcrumb-current {
+    border-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in oklab, var(--color-primary) 18%, var(--color-base-100)),
+        color-mix(in oklab, var(--color-base-100) 74%, var(--color-base-content) 26%)
+      );
+    color: color-mix(in oklab, white 92%, transparent);
   }
 
   :root[data-theme="dark"] .homepage-region-badge {
