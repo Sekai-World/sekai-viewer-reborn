@@ -36,9 +36,13 @@ const commonJaJp: ContentSiteCommonMessages = {
   eventListTitle: "イベント一覧",
   eventListEmpty: "イベントがありません。",
   eventListLoadingMore: "イベントをさらに読み込み中...",
+  eventListLoadMoreHintDesktop: "さらに下へスクロールすると読み込みます。",
+  eventListLoadMoreHintMobile: "さらに上へスワイプすると読み込みます。",
   eventListLoadFailed: "イベントの読み込みに失敗しました。",
   eventListRetry: "再試行",
   eventListEnd: "これ以上イベントはありません。",
+  eventListCurrentEvent: "開催中イベント",
+  spoilerContent: "ネタバレ内容",
   loadingLanguagePack: "言語パックを読み込み中...",
   eventAssetTabs: {
     banner: "バナー",
@@ -55,6 +59,7 @@ const commonJaJp: ContentSiteCommonMessages = {
   debugEventJsonButton: "デバッグ JSON",
   debugEventJsonTitle: "イベント JSON",
   closeLabel: "閉じる",
+  backToTopLabel: "トップへ戻る",
   settings: {
     title: "設定",
     gameContentRegion: "ゲームデータ地域",

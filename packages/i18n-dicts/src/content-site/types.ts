@@ -34,9 +34,13 @@ export type ContentSiteCommonMessages = {
   eventListTitle: string;
   eventListEmpty: string;
   eventListLoadingMore: string;
+  eventListLoadMoreHintDesktop: string;
+  eventListLoadMoreHintMobile: string;
   eventListLoadFailed: string;
   eventListRetry: string;
   eventListEnd: string;
+  eventListCurrentEvent: string;
+  spoilerContent: string;
   loadingLanguagePack: string;
   eventAssetTabs: {
     banner: string;
@@ -53,6 +57,7 @@ export type ContentSiteCommonMessages = {
   debugEventJsonButton: string;
   debugEventJsonTitle: string;
   closeLabel: string;
+  backToTopLabel: string;
   settings: {
     title: string;
     gameContentRegion: string;

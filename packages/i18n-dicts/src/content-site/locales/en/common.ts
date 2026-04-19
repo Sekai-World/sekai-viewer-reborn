@@ -36,9 +36,13 @@ const commonEn: ContentSiteCommonMessages = {
   eventListTitle: "Event List",
   eventListEmpty: "No events found.",
   eventListLoadingMore: "Loading more events...",
+  eventListLoadMoreHintDesktop: "Scroll down again to load more.",
+  eventListLoadMoreHintMobile: "Swipe up again to load more.",
   eventListLoadFailed: "Failed to load events.",
   eventListRetry: "Retry",
   eventListEnd: "No more events.",
+  eventListCurrentEvent: "Current Event",
+  spoilerContent: "Spoiler Content",
   loadingLanguagePack: "Loading language pack...",
   eventAssetTabs: {
     banner: "Banner",
@@ -55,6 +59,7 @@ const commonEn: ContentSiteCommonMessages = {
   debugEventJsonButton: "Debug JSON",
   debugEventJsonTitle: "Event JSON",
   closeLabel: "Close",
+  backToTopLabel: "Back to top",
   settings: {
     title: "Settings",
     gameContentRegion: "Game Content Region",

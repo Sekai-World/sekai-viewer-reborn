@@ -20,14 +20,25 @@
   let isLoading = $state(false);
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
+  let isLoadMoreHintVisible = $state(false);
+  let isTouchPointer = $state(false);
+  let lastTouchY = $state<number | null>(null);
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
   let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
   let eventListTitle = $state(getContentSiteCommonText(initialLocale, "eventListTitle"));
   let eventListEmpty = $state(getContentSiteCommonText(initialLocale, "eventListEmpty"));
   let eventListLoadingMore = $state(getContentSiteCommonText(initialLocale, "eventListLoadingMore"));
+  let eventListLoadMoreHintDesktop = $state(
+    getContentSiteCommonText(initialLocale, "eventListLoadMoreHintDesktop")
+  );
+  let eventListLoadMoreHintMobile = $state(
+    getContentSiteCommonText(initialLocale, "eventListLoadMoreHintMobile")
+  );
   let eventListLoadFailed = $state(getContentSiteCommonText(initialLocale, "eventListLoadFailed"));
   let eventListRetry = $state(getContentSiteCommonText(initialLocale, "eventListRetry"));
   let eventListEnd = $state(getContentSiteCommonText(initialLocale, "eventListEnd"));
+  let eventListCurrentEvent = $state(getContentSiteCommonText(initialLocale, "eventListCurrentEvent"));
+  let spoilerContentLabel = $state(getContentSiteCommonText(initialLocale, "spoilerContent"));
   let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
 
   $effect(() => {
@@ -48,17 +59,77 @@
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          void loadNextPage();
-        }
+        isLoadMoreHintVisible = entries.some((entry) => entry.isIntersecting);
       },
-      { rootMargin: "320px 0px" }
+      { threshold: 0.96 }
     );
 
     observer.observe(sentinel);
 
     return () => {
-      observer.disconnect();
+        observer.disconnect();
+      };
+  });
+
+  $effect(() => {
+    if (!browser) {
+      return;
+    }
+
+    isTouchPointer = window.matchMedia("(pointer: coarse)").matches;
+  });
+
+  $effect(() => {
+    if (!browser || !hasNext) {
+      return;
+    }
+
+    const triggerLoadMore = (): void => {
+      if (!isLoadMoreHintVisible || isLoading || !hasNext) {
+        return;
+      }
+
+      void loadNextPage();
+    };
+
+    const handleWheel = (event: WheelEvent): void => {
+      if (event.deltaY > 0) {
+        triggerLoadMore();
+      }
+    };
+
+    const handleTouchStart = (event: TouchEvent): void => {
+      lastTouchY = event.touches[0]?.clientY ?? null;
+    };
+
+    const handleTouchMove = (event: TouchEvent): void => {
+      const nextTouchY = event.touches[0]?.clientY ?? null;
+      if (lastTouchY === null || nextTouchY === null) {
+        lastTouchY = nextTouchY;
+        return;
+      }
+
+      const deltaY = lastTouchY - nextTouchY;
+      lastTouchY = nextTouchY;
+      if (deltaY > 12) {
+        triggerLoadMore();
+      }
+    };
+
+    const handleTouchEnd = (): void => {
+      lastTouchY = null;
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
   });
 
@@ -69,9 +140,13 @@
     eventListTitle = tCommon(locale, "eventListTitle");
     eventListEmpty = tCommon(locale, "eventListEmpty");
     eventListLoadingMore = tCommon(locale, "eventListLoadingMore");
+    eventListLoadMoreHintDesktop = tCommon(locale, "eventListLoadMoreHintDesktop");
+    eventListLoadMoreHintMobile = tCommon(locale, "eventListLoadMoreHintMobile");
     eventListLoadFailed = tCommon(locale, "eventListLoadFailed");
     eventListRetry = tCommon(locale, "eventListRetry");
     eventListEnd = tCommon(locale, "eventListEnd");
+    eventListCurrentEvent = tCommon(locale, "eventListCurrentEvent");
+    spoilerContentLabel = tCommon(locale, "spoilerContent");
     bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
   };
 
@@ -108,6 +183,7 @@
     }
 
     isLoading = true;
+    isLoadMoreHintVisible = false;
     errorMessage = null;
 
     try {
@@ -147,6 +223,9 @@
         <EventListCard
           region={data.region}
           {item}
+          currentEventId={data.currentEventId}
+          currentEventLabel={eventListCurrentEvent}
+          {spoilerContentLabel}
           uiLocale={data.uiLocale}
           {idLabel}
           {bannerAltSuffix}
@@ -164,10 +243,14 @@
     {/if}
 
     {#if hasNext}
-      <div bind:this={sentinel} class="flex min-h-16 items-center justify-center py-4">
+      <div bind:this={sentinel} class="flex min-h-24 items-center justify-center py-5">
         {#if isLoading}
           <span class="loading loading-spinner loading-md"></span>
           <span class="ml-3 text-sm opacity-70">{eventListLoadingMore}</span>
+        {:else}
+          <span class="text-sm opacity-60">
+            {isTouchPointer ? eventListLoadMoreHintMobile : eventListLoadMoreHintDesktop}
+          </span>
         {/if}
       </div>
     {:else if items.length > 0}

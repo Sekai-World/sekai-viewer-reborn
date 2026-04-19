@@ -1,5 +1,6 @@
-import { getEventsByRegionList } from "@platform/sekai-master-api-sdk";
+import { getEventsByRegionCurrent, getEventsByRegionList } from "@platform/sekai-master-api-sdk";
 import { normalizeRegion } from "$lib/region";
+import { parseEventDetail } from "$lib/server/event-detail";
 import { DEFAULT_EVENT_LIST_PAGE_SIZE, parseEventListPage } from "$lib/server/event-list";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
@@ -20,35 +21,47 @@ export const load: PageServerLoad = async ({ params }) => {
   const baseUrl = getMasterApiBaseUrl();
 
   try {
-    const response = await getEventsByRegionList({
-      baseUrl,
-      path: { region },
-      query: {
-        page: 1,
-        page_size: DEFAULT_EVENT_LIST_PAGE_SIZE,
-        sort_by: "id",
-        sort_order: "desc"
-      }
-    });
+    const [response, currentEventResponse] = await Promise.all([
+      getEventsByRegionList({
+        baseUrl,
+        path: { region },
+        query: {
+          page: 1,
+          page_size: DEFAULT_EVENT_LIST_PAGE_SIZE,
+          sort_by: "id",
+          sort_order: "desc"
+        }
+      }),
+      getEventsByRegionCurrent({
+        baseUrl,
+        path: { region }
+      }).catch(() => null)
+    ]);
 
     if (response.error) {
       return {
         region,
         initialPage: createEmptyPage(),
-        initialLoadFailed: true
+        initialLoadFailed: true,
+        currentEventId: null
       };
     }
 
     return {
       region,
       initialPage: parseEventListPage(response.data, 1, DEFAULT_EVENT_LIST_PAGE_SIZE),
-      initialLoadFailed: false
+      initialLoadFailed: false,
+      currentEventId:
+        currentEventResponse && !currentEventResponse.error
+          ? (parseEventDetail(currentEventResponse.data)?.id ?? null)
+          : null
     };
   } catch {
     return {
       region,
       initialPage: createEmptyPage(),
-      initialLoadFailed: true
+      initialLoadFailed: true,
+      currentEventId: null
     };
   }
 };

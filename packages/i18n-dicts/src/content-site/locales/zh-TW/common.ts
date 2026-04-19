@@ -36,9 +36,13 @@ const commonZhTw: ContentSiteCommonMessages = {
   eventListTitle: "活動列表",
   eventListEmpty: "暫無活動。",
   eventListLoadingMore: "正在載入更多活動...",
+  eventListLoadMoreHintDesktop: "繼續向下捲動載入更多。",
+  eventListLoadMoreHintMobile: "繼續上拉載入更多。",
   eventListLoadFailed: "活動載入失敗。",
   eventListRetry: "重試",
   eventListEnd: "沒有更多活動了。",
+  eventListCurrentEvent: "當前活動",
+  spoilerContent: "劇透內容",
   loadingLanguagePack: "正在載入語言包...",
   eventAssetTabs: {
     banner: "橫幅",
@@ -55,6 +59,7 @@ const commonZhTw: ContentSiteCommonMessages = {
   debugEventJsonButton: "除錯 JSON",
   debugEventJsonTitle: "活動 JSON",
   closeLabel: "關閉",
+  backToTopLabel: "回到頂部",
   settings: {
     title: "設定",
     gameContentRegion: "遊戲內容地區",
