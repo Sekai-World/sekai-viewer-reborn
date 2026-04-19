@@ -31,6 +31,12 @@ export type ContentSiteCommonMessages = {
   bannerAltSuffix: string;
   imageUnavailable: string;
   noCurrentEventData: string;
+  eventListTitle: string;
+  eventListEmpty: string;
+  eventListLoadingMore: string;
+  eventListLoadFailed: string;
+  eventListRetry: string;
+  eventListEnd: string;
   loadingLanguagePack: string;
   eventAssetTabs: {
     banner: string;

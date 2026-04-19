@@ -33,6 +33,12 @@ const commonKoKr: ContentSiteCommonMessages = {
   bannerAltSuffix: "배너",
   imageUnavailable: "사용 가능한 이미지가 없습니다",
   noCurrentEventData: "현재 진행 중인 이벤트 데이터가 없습니다.",
+  eventListTitle: "이벤트 목록",
+  eventListEmpty: "이벤트가 없습니다.",
+  eventListLoadingMore: "이벤트를 더 불러오는 중...",
+  eventListLoadFailed: "이벤트를 불러오지 못했습니다.",
+  eventListRetry: "다시 시도",
+  eventListEnd: "더 이상 이벤트가 없습니다.",
   loadingLanguagePack: "언어 팩을 불러오는 중...",
   eventAssetTabs: {
     banner: "배너",

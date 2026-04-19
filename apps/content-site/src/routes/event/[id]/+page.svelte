@@ -12,8 +12,10 @@
     getEventLogoAssetURL,
     getEventPointIconAssetURL
   } from "$lib/assets";
+  import Breadcrumbs from "$lib/components/Breadcrumbs.svelte";
   import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";
   import { formatDisplayDateTime } from "$lib/date-time";
+  import { getEventTypeDisplay } from "$lib/event";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { DEFAULT_UI_LOCALE } from "$lib/region";
   import type { PageData } from "./$types";
@@ -28,6 +30,7 @@
   let assetPreviewOpen = $state(false);
   let assetPreviewFormat = $state("");
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
+  let eventListTitle = $state(getContentSiteCommonText(initialLocale, "eventListTitle"));
   let startAtLabel = $state(getContentSiteCommonText(initialLocale, "startAt"));
   let endAtLabel = $state(getContentSiteCommonText(initialLocale, "endAt"));
   let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
@@ -103,6 +106,7 @@
   const applyTranslations = (localeValue: string): void => {
     const locale = localeValue;
     homeLabel = tCommon(locale, "home");
+    eventListTitle = tCommon(locale, "eventListTitle");
     startAtLabel = tCommon(locale, "startAt");
     endAtLabel = tCommon(locale, "endAt");
     idLabel = tCommon(locale, "idLabel");
@@ -188,20 +192,22 @@
     `${resolve("/event/[id]/bgm", { id: data.eventId })}?region=${encodeURIComponent(data.region)}&format=${encodeURIComponent(format)}`;
   const getEventBgmProgressHref = (): string =>
     `${resolve("/event/[id]/bgm/progress", { id: data.eventId })}?region=${encodeURIComponent(data.region)}`;
+  const getEventListHref = (): string => resolve("/events/[region]/list", { region: data.region });
+  const getEventBreadcrumbItems = (currentLabel: string) => [
+    {
+      label: homeLabel,
+      href: resolve("/")
+    },
+    {
+      label: eventListTitle,
+      href: getEventListHref()
+    },
+    {
+      label: currentLabel
+    }
+  ];
   const getAssetPreviewResetKey = (): string =>
     `${data.eventId}:${data.region}:${activeAssetTab}`;
-  const eventTypeDisplayMap = {
-    marathon: "Marathon",
-    cheerful_carnival: "Cheerful Carnival",
-    world_bloom: "World Link"
-  } as const;
-  const getEventTypeDisplay = (eventType: string | null): string | null => {
-    if (!eventType) {
-      return null;
-    }
-
-    return eventTypeDisplayMap[eventType as keyof typeof eventTypeDisplayMap] ?? eventType;
-  };
 
   $effect(() => {
     getAssetPreviewResetKey();
@@ -249,8 +255,11 @@
 
 <section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-4">
   {#await data.eventPayload}
-    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <a class="btn btn-ghost btn-sm w-fit" href={resolve("/")}>← {homeLabel}</a>
+    <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <Breadcrumbs
+        items={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}
+        class="md:max-w-[68%]"
+      />
       <div class="flex flex-wrap items-center gap-1.5 md:justify-end">
         <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
           {data.region.toUpperCase()}
@@ -283,8 +292,11 @@
       </article>
     </div>
   {:then payload}
-    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-      <a class="btn btn-ghost btn-sm w-fit" href={resolve("/")}>← {homeLabel}</a>
+    <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <Breadcrumbs
+        items={getEventBreadcrumbItems(payload.event?.title ?? `${eventTitlePrefix} ${data.eventId}`)}
+        class="md:max-w-[68%]"
+      />
       <div class="flex flex-wrap items-center gap-1.5 md:justify-end">
         {#if dev && payload.debugEventJson}
           <button

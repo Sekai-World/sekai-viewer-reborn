@@ -33,6 +33,12 @@ const commonEn: ContentSiteCommonMessages = {
   bannerAltSuffix: "banner",
   imageUnavailable: "Image unavailable",
   noCurrentEventData: "No current event data.",
+  eventListTitle: "Event List",
+  eventListEmpty: "No events found.",
+  eventListLoadingMore: "Loading more events...",
+  eventListLoadFailed: "Failed to load events.",
+  eventListRetry: "Retry",
+  eventListEnd: "No more events.",
   loadingLanguagePack: "Loading language pack...",
   eventAssetTabs: {
     banner: "Banner",
