@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { EVENT_CARD_BODY_CLASS, EVENT_CARD_GLOW_CLASS } from "$lib/components/event-card";
+  import { EVENT_CARD_BODY_CLASS, EVENT_CARD_GLOW_CLASS } from "$lib/styles/event-card";
 
   let {
     id,

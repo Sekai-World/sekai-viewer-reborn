@@ -9,7 +9,7 @@
     EVENT_LIST_CARD_IMAGE_CLASS,
     EVENT_LIST_CARD_MEDIA_CLASS,
     EVENT_LIST_CARD_TITLE_CLASS
-  } from "$lib/components/event-card";
+  } from "$lib/styles/event-card";
 
   type EventListCardItem = {
     id: string;
