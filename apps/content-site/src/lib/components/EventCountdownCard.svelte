@@ -234,8 +234,8 @@
       return "bg-error/85";
     }
 
-    if (toneClass === "text-warning") {
-      return "bg-warning/90";
+    if (toneClass.startsWith("text-warning")) {
+      return "bg-warning/80";
     }
 
     return "bg-primary/80";
