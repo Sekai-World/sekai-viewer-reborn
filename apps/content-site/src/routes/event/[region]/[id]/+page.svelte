@@ -3,7 +3,7 @@
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
   import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
-  import { AudioPlayer, ImagePreviewDialog, ImagePreviewTrigger } from "@platform/ui-shell";
+  import { AudioPlayer, ImagePreviewDialog } from "@platform/ui-shell";
   import {
     getEventBackgroundAssetURL,
     getEventBannerAssetURL,
@@ -13,6 +13,7 @@
     getEventPointIconAssetURL
   } from "$lib/assets";
   import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";
+  import EventAssetImage from "$lib/components/EventAssetImage.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/RegionBadgeSwitch.svelte";
   import { formatDisplayDateTime } from "$lib/date-time";
@@ -279,13 +280,13 @@
 
 {#snippet assetPreview(src: string, alt: string, imageClass: string, fallbackLabel: string)}
   {@const resolvedSrc = getResolvedAssetPreviewSrc(src)}
-  <ImagePreviewTrigger
+  <EventAssetImage
     src={resolvedSrc}
     {alt}
     {fallbackLabel}
-    ariaLabel={alt || closeLabel}
     buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
-    {imageClass}
+    interactive={true}
+    imageClass={imageClass}
     onclick={() => {
       openAssetPreview(src);
     }}

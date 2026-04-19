@@ -36,9 +36,13 @@ const commonKoKr: ContentSiteCommonMessages = {
   eventListTitle: "이벤트 목록",
   eventListEmpty: "이벤트가 없습니다.",
   eventListLoadingMore: "이벤트를 더 불러오는 중...",
+  eventListLoadMoreHintDesktop: "계속 아래로 스크롤하면 더 불러옵니다.",
+  eventListLoadMoreHintMobile: "계속 위로 밀면 더 불러옵니다.",
   eventListLoadFailed: "이벤트를 불러오지 못했습니다.",
   eventListRetry: "다시 시도",
   eventListEnd: "더 이상 이벤트가 없습니다.",
+  eventListCurrentEvent: "현재 이벤트",
+  spoilerContent: "스포일러 콘텐츠",
   loadingLanguagePack: "언어 팩을 불러오는 중...",
   eventAssetTabs: {
     banner: "배너",
@@ -55,6 +59,7 @@ const commonKoKr: ContentSiteCommonMessages = {
   debugEventJsonButton: "디버그 JSON",
   debugEventJsonTitle: "이벤트 JSON",
   closeLabel: "닫기",
+  backToTopLabel: "맨 위로",
   settings: {
     title: "설정",
     gameContentRegion: "게임 데이터 지역",

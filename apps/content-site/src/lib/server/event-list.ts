@@ -3,6 +3,7 @@ export type EventListItem = {
   title: string;
   eventType: string | null;
   assetBundleName: string | null;
+  startAt: string | number | null;
 };
 
 export type EventListPagination = {
@@ -41,6 +42,14 @@ const getNumber = (value: unknown): number | null =>
 
 const getBoolean = (value: unknown): boolean | null =>
   typeof value === "boolean" ? value : null;
+
+const getDateValue = (value: unknown): string | number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  return getString(value);
+};
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
@@ -112,6 +121,20 @@ const pickFirstNumber = (
   return null;
 };
 
+const pickFirstDateValue = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | number | null => {
+  for (const key of keys) {
+    const value = getDateValue(source[key]);
+    if (value !== null) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
 const parseEventListItem = (payload: unknown): EventListItem | null => {
   const root = getObject(payload);
   if (!root) {
@@ -130,7 +153,8 @@ const parseEventListItem = (payload: unknown): EventListItem | null => {
     id,
     title,
     eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
-    assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"])
+    assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"]),
+    startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"])
   };
 };
 

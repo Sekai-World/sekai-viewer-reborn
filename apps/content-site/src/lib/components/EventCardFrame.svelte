@@ -7,18 +7,20 @@
     href,
     frameClass,
     useBody = true,
+    onclick,
     children
   }: {
     id?: string;
     href: string;
     frameClass: string;
     useBody?: boolean;
+    onclick?: (event: MouseEvent) => void;
     children?: Snippet;
   } = $props();
 </script>
 
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-<a {id} {href} class={frameClass}>
+<a {id} {href} class={frameClass} {onclick}>
   <div class={EVENT_CARD_GLOW_CLASS}></div>
   {#if useBody}
     <div class={EVENT_CARD_BODY_CLASS}>
