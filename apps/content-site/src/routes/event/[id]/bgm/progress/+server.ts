@@ -1,75 +1,37 @@
-import { error, type RequestHandler } from "@sveltejs/kit";
-import {
-  cancelDownloadTask,
-  getDownloadTaskSnapshot,
-  subscribeDownloadTask,
-  type DownloadTaskSnapshot
-} from "$lib/server/download-progress";
+import { redirect, type RequestHandler } from "@sveltejs/kit";
+import { normalizeRegion } from "$lib/region";
 
-const formatSseMessage = (snapshot: DownloadTaskSnapshot): string =>
-  `data: ${JSON.stringify(snapshot)}\n\n`;
+const redirectToNewPath = ({
+  eventId,
+  region,
+  url
+}: {
+  eventId: string;
+  region: string;
+  url: URL;
+}): never => {
+  const searchParams = new URLSearchParams(url.searchParams);
+  searchParams.delete("region");
+  const query = searchParams.toString();
+  const location = `/event/${encodeURIComponent(region)}/${encodeURIComponent(eventId)}/bgm/progress${
+    query ? `?${query}` : ""
+  }`;
 
-export const GET: RequestHandler = async ({ url }) => {
-  const taskId = url.searchParams.get("taskId")?.trim() ?? "";
-  if (!taskId) {
-    throw error(400, "Missing download task id.");
-  }
+  throw redirect(308, location);
+};
 
-  let unsubscribe: (() => void) | null = null;
-  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-
-  const stream = new ReadableStream({
-    start(controller) {
-      const encoder = new TextEncoder();
-      const enqueueSnapshot = (snapshot: DownloadTaskSnapshot): void => {
-        controller.enqueue(encoder.encode(formatSseMessage(snapshot)));
-
-        if (snapshot.state === "done" || snapshot.state === "error") {
-          unsubscribe?.();
-          unsubscribe = null;
-          if (heartbeatTimer) {
-            clearInterval(heartbeatTimer);
-            heartbeatTimer = null;
-          }
-          controller.close();
-        }
-      };
-
-      unsubscribe = subscribeDownloadTask(taskId, enqueueSnapshot);
-      heartbeatTimer = setInterval(() => {
-        controller.enqueue(encoder.encode(": keep-alive\n\n"));
-      }, 15000);
-
-      enqueueSnapshot(getDownloadTaskSnapshot(taskId));
-    },
-    cancel() {
-      unsubscribe?.();
-      unsubscribe = null;
-      if (heartbeatTimer) {
-        clearInterval(heartbeatTimer);
-        heartbeatTimer = null;
-      }
-      return undefined;
-    }
-  });
-
-  return new Response(stream, {
-    headers: {
-      "content-type": "text/event-stream",
-      "cache-control": "no-store",
-      connection: "keep-alive"
-    }
+export const GET: RequestHandler = ({ params, url }) => {
+  return redirectToNewPath({
+    eventId: params.id?.trim() ?? "",
+    region: normalizeRegion(url.searchParams.get("region")),
+    url
   });
 };
 
-export const POST: RequestHandler = async ({ url }) => {
-  const taskId = url.searchParams.get("taskId")?.trim() ?? "";
-  if (!taskId) {
-    throw error(400, "Missing download task id.");
-  }
-
-  const cancelled = cancelDownloadTask(taskId);
-  return new Response(null, {
-    status: cancelled ? 202 : 404
+export const POST: RequestHandler = ({ params, url }) => {
+  return redirectToNewPath({
+    eventId: params.id?.trim() ?? "",
+    region: normalizeRegion(url.searchParams.get("region")),
+    url
   });
 };

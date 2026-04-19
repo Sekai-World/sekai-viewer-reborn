@@ -46,6 +46,11 @@ const commonZhTw: ContentSiteCommonMessages = {
     background: "背景",
     characters: "角色"
   },
+  eventTypeValues: {
+    marathon: "馬拉松",
+    cheerfulCarnival: "歡樂嘉年華",
+    worldLink: "世界綻放"
+  },
   eventInfoTitle: "活動資訊",
   debugEventJsonButton: "除錯 JSON",
   debugEventJsonTitle: "活動 JSON",

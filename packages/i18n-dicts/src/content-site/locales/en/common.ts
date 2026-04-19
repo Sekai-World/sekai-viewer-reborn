@@ -46,6 +46,11 @@ const commonEn: ContentSiteCommonMessages = {
     background: "Background",
     characters: "Characters"
   },
+  eventTypeValues: {
+    marathon: "Marathon",
+    cheerfulCarnival: "Cheerful Carnival",
+    worldLink: "World Link"
+  },
   eventInfoTitle: "Event Info",
   debugEventJsonButton: "Debug JSON",
   debugEventJsonTitle: "Event JSON",
