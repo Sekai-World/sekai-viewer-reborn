@@ -60,6 +60,13 @@ const commonZhCn: ContentSiteCommonMessages = {
     gameContentRegion: "游戏内容地区",
     interfaceLanguage: "界面语言"
   },
+  navigation: {
+    database: "数据库",
+    cards: "卡牌",
+    songs: "歌曲",
+    events: "活动",
+    virtualLives: "虚拟演出"
+  },
   labels: {
     primary: "主地区",
     secondary: "次地区",

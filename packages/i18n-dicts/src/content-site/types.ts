@@ -58,6 +58,13 @@ export type ContentSiteCommonMessages = {
     gameContentRegion: string;
     interfaceLanguage: string;
   };
+  navigation: {
+    database: string;
+    cards: string;
+    songs: string;
+    events: string;
+    virtualLives: string;
+  };
   labels: {
     primary: string;
     secondary: string;

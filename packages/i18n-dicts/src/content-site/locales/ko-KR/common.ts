@@ -60,6 +60,13 @@ const commonKoKr: ContentSiteCommonMessages = {
     gameContentRegion: "게임 데이터 지역",
     interfaceLanguage: "인터페이스 언어"
   },
+  navigation: {
+    database: "데이터베이스",
+    cards: "카드",
+    songs: "곡",
+    events: "이벤트",
+    virtualLives: "버추얼 라이브"
+  },
   labels: {
     primary: "주 지역",
     secondary: "보조 지역",

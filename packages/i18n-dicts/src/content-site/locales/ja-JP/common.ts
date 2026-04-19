@@ -60,6 +60,13 @@ const commonJaJp: ContentSiteCommonMessages = {
     gameContentRegion: "ゲームデータ地域",
     interfaceLanguage: "表示言語"
   },
+  navigation: {
+    database: "データベース",
+    cards: "カード",
+    songs: "楽曲",
+    events: "イベント",
+    virtualLives: "バーチャルライブ"
+  },
   labels: {
     primary: "メイン地域",
     secondary: "サブ地域",

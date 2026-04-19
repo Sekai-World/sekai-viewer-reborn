@@ -14,7 +14,9 @@
   import { onMount, type Snippet } from "svelte";
   import { isLocaleLoading, getThemeModeLabel, setI18nLocale, tCommon } from "$lib/i18n";
   import {
+    DEFAULT_REGION,
     DEFAULT_UI_LOCALE,
+    normalizeRegion,
     normalizeUiLocale,
     UI_LOCALE_COOKIE_NAME
   } from "$lib/region";
@@ -38,6 +40,11 @@
   let systemThemeMediaQuery: MediaQueryList | null = null;
 
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
+  let databaseLabel = $state(getContentSiteCommonText(initialLocale, "navigation.database"));
+  let cardsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.cards"));
+  let songsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.songs"));
+  let eventsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.events"));
+  let virtualLivesLabel = $state(getContentSiteCommonText(initialLocale, "navigation.virtualLives"));
   let settingsLabel = $state(getContentSiteCommonText(initialLocale, "settings.title"));
   let themeControlLabel = $state(getContentSiteCommonText(initialLocale, "darkmode"));
   let interfaceLanguageLabel = $state(
@@ -51,8 +58,48 @@
     getContentSiteCommonText(initialLocale, "aria.switchUiLanguageCurrent")
   );
 
+  const sidebarRegion = $derived.by<ReturnType<typeof normalizeRegion>>(() => {
+    const [first, second] = page.url.pathname.split("/").filter(Boolean);
+
+    if ((first === "event" || first === "events") && second) {
+      return normalizeRegion(second, DEFAULT_REGION);
+    }
+
+    return DEFAULT_REGION;
+  });
+
   const sidebarItems = $derived<SidebarItem[]>([
-    { label: homeLabel, href: "/", active: true }
+    {
+      label: homeLabel,
+      href: "/",
+      active: page.url.pathname === "/",
+      icon: "mdi:home-variant-outline"
+    },
+    {
+      type: "section",
+      label: databaseLabel
+    },
+    {
+      label: cardsLabel,
+      icon: "mdi:cards-outline",
+      disabled: true
+    },
+    {
+      label: songsLabel,
+      icon: "mdi:music-note-outline",
+      disabled: true
+    },
+    {
+      label: eventsLabel,
+      href: `/events/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/events/") || page.url.pathname.startsWith("/event/"),
+      icon: "mdi:calendar-star"
+    },
+    {
+      label: virtualLivesLabel,
+      icon: "mdi:account-voice",
+      disabled: true
+    }
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");
   const themeModeLabel = $derived(getThemeModeLabel(uiLocale, themeMode));
@@ -67,6 +114,11 @@
     const resolvedLocale = await setI18nLocale(localeValue);
 
     homeLabel = tCommon(resolvedLocale, "home");
+    databaseLabel = tCommon(resolvedLocale, "navigation.database");
+    cardsLabel = tCommon(resolvedLocale, "navigation.cards");
+    songsLabel = tCommon(resolvedLocale, "navigation.songs");
+    eventsLabel = tCommon(resolvedLocale, "navigation.events");
+    virtualLivesLabel = tCommon(resolvedLocale, "navigation.virtualLives");
     settingsLabel = tCommon(resolvedLocale, "settings.title");
     themeControlLabel = tCommon(resolvedLocale, "darkmode");
     interfaceLanguageLabel = tCommon(resolvedLocale, "settings.interfaceLanguage");
@@ -118,7 +170,7 @@
     return "auto";
   };
 
-  const getThemeModeIcon = (themeModeValue: ThemeMode, resolvedThemeValue: ResolvedTheme): string => {
+  const getThemeModeIcon = (themeModeValue: ThemeMode): string => {
     if (themeModeValue === "auto") {
       return "mdi:theme-light-dark";
     }
@@ -200,7 +252,7 @@
             class="btn btn-sm justify-start rounded-lg border-base-content/15 bg-base-100"
             onclick={toggleTheme}
           >
-            <Icon icon={getThemeModeIcon(themeMode, resolvedTheme)} class="h-4 w-4" />
+            <Icon icon={getThemeModeIcon(themeMode)} class="h-4 w-4" />
             <span class="font-semibold">
               {themeControlLabel}: {themeModeLabel}
               {#if themeMode === "auto"}
@@ -247,7 +299,7 @@
         title={getThemeButtonTitle()}
         onclick={toggleTheme}
       >
-        <Icon icon={getThemeModeIcon(themeMode, resolvedTheme)} class="h-4 w-4" />
+        <Icon icon={getThemeModeIcon(themeMode)} class="h-4 w-4" />
       </button>
 
       <details class="dropdown dropdown-end" bind:open={isLocaleMenuOpen} ontoggle={handleLocaleMenuToggle}>
