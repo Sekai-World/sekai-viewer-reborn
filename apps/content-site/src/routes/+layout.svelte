@@ -50,6 +50,7 @@
   let interfaceLanguageLabel = $state(
     getContentSiteCommonText(initialLocale, "settings.interfaceLanguage")
   );
+  let backToTopLabel = $state(getContentSiteCommonText(initialLocale, "backToTopLabel"));
   let loadingLanguagePackLabel = $state(
     getContentSiteCommonText(initialLocale, "loadingLanguagePack")
   );
@@ -57,6 +58,8 @@
   let switchUiLanguageCurrentLabel = $state(
     getContentSiteCommonText(initialLocale, "aria.switchUiLanguageCurrent")
   );
+  let showBackToTop = $state(false);
+  let backToTopAnimationFrame = 0;
 
   const sidebarRegion = $derived.by<ReturnType<typeof normalizeRegion>>(() => {
     const [first, second] = page.url.pathname.split("/").filter(Boolean);
@@ -122,6 +125,7 @@
     settingsLabel = tCommon(resolvedLocale, "settings.title");
     themeControlLabel = tCommon(resolvedLocale, "darkmode");
     interfaceLanguageLabel = tCommon(resolvedLocale, "settings.interfaceLanguage");
+    backToTopLabel = tCommon(resolvedLocale, "backToTopLabel");
     loadingLanguagePackLabel = tCommon(resolvedLocale, "loadingLanguagePack");
     switchThemeAriaLabel = tCommon(resolvedLocale, "aria.switchTheme");
     switchUiLanguageCurrentLabel = tCommon(resolvedLocale, "aria.switchUiLanguageCurrent");
@@ -201,12 +205,56 @@
     await invalidateAll();
   };
 
+  const updateBackToTopVisibility = (): void => {
+    showBackToTop = window.scrollY > 240;
+  };
+
+  const scrollToTop = (): void => {
+    if (backToTopAnimationFrame) {
+      window.cancelAnimationFrame(backToTopAnimationFrame);
+      backToTopAnimationFrame = 0;
+    }
+
+    const startY = window.scrollY;
+    if (startY <= 0) {
+      return;
+    }
+
+    const durationMs = 220;
+    const startTime = performance.now();
+    const easeOutCubic = (progress: number): number => 1 - Math.pow(1 - progress, 3);
+
+    const animate = (timestamp: number): void => {
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(1, elapsed / durationMs);
+      const easedProgress = easeOutCubic(progress);
+      window.scrollTo({ top: startY * (1 - easedProgress) });
+
+      if (progress < 1) {
+        backToTopAnimationFrame = window.requestAnimationFrame(animate);
+        return;
+      }
+
+      backToTopAnimationFrame = 0;
+      updateBackToTopVisibility();
+    };
+
+    backToTopAnimationFrame = window.requestAnimationFrame(animate);
+  };
+
   onMount(() => {
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     applyTheme(resolvePreferredTheme());
+    updateBackToTopVisibility();
+    window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
     return () => {
+      if (backToTopAnimationFrame) {
+        window.cancelAnimationFrame(backToTopAnimationFrame);
+        backToTopAnimationFrame = 0;
+      }
+      window.removeEventListener("scroll", updateBackToTopVisibility);
       systemThemeMediaQuery?.removeEventListener("change", handleSystemThemeChange);
     };
   });
@@ -346,3 +394,15 @@
 
   {@render children()}
 </ViewerShell>
+
+{#if showBackToTop}
+  <button
+    type="button"
+    class="fixed bottom-5 right-5 z-30 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl"
+    aria-label={backToTopLabel}
+    title={backToTopLabel}
+    onclick={scrollToTop}
+  >
+    <Icon icon="mdi:arrow-up" class="h-5 w-5" />
+  </button>
+{/if}

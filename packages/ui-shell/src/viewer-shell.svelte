@@ -36,7 +36,7 @@
   <input id={drawerId} type="checkbox" class="drawer-toggle" bind:checked={sidebarOpen} />
 
   <div class="drawer-content bg-base-200">
-    <header class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2 backdrop-blur-md backdrop-saturate-180">
+    <header class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2 backdrop-blur-sm backdrop-saturate-150">
       <div class="navbar relative z-10 min-h-14 px-2">
         <div class="navbar-start">
           <label for={drawerId} class="btn btn-ghost btn-circle" aria-label="Open sidebar">
@@ -140,26 +140,26 @@
     background:
       radial-gradient(
         140% 120% at 0% 0%,
-        color-mix(in oklab, var(--color-primary) 18%, transparent) 0%,
+        color-mix(in oklab, var(--color-primary) 10%, transparent) 0%,
         transparent 60%
       ),
       radial-gradient(
         120% 130% at 100% 100%,
-        color-mix(in oklab, var(--color-accent) 12%, transparent) 0%,
+        color-mix(in oklab, var(--color-accent) 7%, transparent) 0%,
         transparent 64%
       ),
       linear-gradient(
         135deg,
-        color-mix(in oklab, var(--color-base-100) 70%, transparent) 0%,
-        color-mix(in oklab, var(--color-base-100) 56%, transparent) 45%,
-        color-mix(in oklab, var(--color-primary) 12%, var(--color-base-100) 45%) 100%
+        color-mix(in oklab, var(--color-base-100) 58%, transparent) 0%,
+        color-mix(in oklab, var(--color-base-100) 46%, transparent) 45%,
+        color-mix(in oklab, var(--color-primary) 7%, var(--color-base-100) 38%) 100%
       );
     background-size: 180% 180%, 170% 170%, 130% 130%;
-    border-color: color-mix(in oklab, var(--color-base-content) 20%, transparent);
+    border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
     box-shadow:
-      0 14px 26px -22px color-mix(in oklab, var(--color-base-content) 54%, transparent),
-      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 90%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 10%, transparent);
+      0 10px 22px -24px color-mix(in oklab, var(--color-base-content) 38%, transparent),
+      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 72%, transparent),
+      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 6%, transparent);
   }
 
   .liquid-glass-nav::before {
@@ -171,65 +171,65 @@
     background:
       radial-gradient(
         120% 95% at 10% 0%,
-        color-mix(in oklab, white 52%, transparent),
+        color-mix(in oklab, white 34%, transparent),
         transparent 60%
       ),
       radial-gradient(
         95% 85% at 80% 100%,
-        color-mix(in oklab, var(--color-primary) 14%, transparent),
+        color-mix(in oklab, var(--color-primary) 8%, transparent),
         transparent 68%
       ),
       linear-gradient(
         110deg,
-        color-mix(in oklab, var(--color-base-100) 64%, transparent) 0%,
+        color-mix(in oklab, var(--color-base-100) 46%, transparent) 0%,
         transparent 28%,
         transparent 62%,
-        color-mix(in oklab, var(--color-base-content) 12%, transparent) 100%
+        color-mix(in oklab, var(--color-base-content) 8%, transparent) 100%
       );
     background-size: 170% 170%, 150% 150%, 130% 130%;
     mix-blend-mode: screen;
-    opacity: 0.56;
+    opacity: 0.34;
   }
 
   :global([data-theme="dark"]) .liquid-glass-nav {
     background:
       radial-gradient(
         130% 105% at 0% 0%,
-        color-mix(in oklab, var(--color-primary) 12%, transparent) 0%,
+        color-mix(in oklab, var(--color-primary) 8%, transparent) 0%,
         transparent 62%
       ),
       radial-gradient(
         115% 120% at 100% 100%,
-        color-mix(in oklab, var(--color-accent) 8%, transparent) 0%,
+        color-mix(in oklab, var(--color-accent) 5%, transparent) 0%,
         transparent 66%
       ),
       linear-gradient(
         135deg,
-        color-mix(in oklab, var(--color-base-100) 54%, transparent) 0%,
-        color-mix(in oklab, var(--color-base-100) 42%, transparent) 48%,
-        color-mix(in oklab, var(--color-base-content) 8%, var(--color-base-100) 40%) 100%
+        color-mix(in oklab, var(--color-base-100) 46%, transparent) 0%,
+        color-mix(in oklab, var(--color-base-100) 36%, transparent) 48%,
+        color-mix(in oklab, var(--color-base-content) 5%, var(--color-base-100) 34%) 100%
       );
     box-shadow:
-      0 14px 26px -24px color-mix(in oklab, black 72%, transparent),
-      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 36%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 8%, transparent);
+      0 10px 22px -24px color-mix(in oklab, black 58%, transparent),
+      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 24%, transparent),
+      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 5%, transparent);
   }
 
   :global([data-theme="dark"]) .liquid-glass-nav::before {
     background:
       radial-gradient(
         120% 88% at 12% 0%,
-        color-mix(in oklab, white 24%, transparent),
+        color-mix(in oklab, white 16%, transparent),
         transparent 64%
       ),
       linear-gradient(
         110deg,
-        color-mix(in oklab, var(--color-base-100) 38%, transparent) 0%,
+        color-mix(in oklab, var(--color-base-100) 28%, transparent) 0%,
         transparent 34%,
         transparent 74%,
-        color-mix(in oklab, var(--color-base-content) 7%, transparent) 100%
+        color-mix(in oklab, var(--color-base-content) 5%, transparent) 100%
       );
     mix-blend-mode: soft-light;
-    opacity: 0.24;
+    opacity: 0.16;
   }
 </style>

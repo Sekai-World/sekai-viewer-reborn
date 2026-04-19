@@ -17,7 +17,7 @@ export const EVENT_CARD_GLOW_CLASS =
 export const EVENT_CARD_BODY_CLASS = "card-body relative z-10";
 
 export const EVENT_CARD_MEDIA_CLASS =
-  `mb-2 flex items-center justify-center transition-transform ${EVENT_CARD_HOVER_TIMING_CLASS} group-hover:-translate-y-0.5 md:mb-3`;
+  `mb-2 flex items-center justify-center md:mb-3`;
 
 export const EVENT_CARD_IMAGE_CLASS =
   `mx-auto h-auto w-full max-w-full object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.08)] transition-transform ${EVENT_CARD_HOVER_TIMING_CLASS} group-hover:scale-[1.05] md:w-3/4 md:min-w-[min(200px,100%)]`;

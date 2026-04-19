@@ -53,15 +53,18 @@
         {regionLabel}
       </div>
     {/if}
+
+    <div class="absolute right-3 top-3">
+      <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
+        {region.toUpperCase()}
+      </span>
+    </div>
   </div>
 
   <h3 class="text-base font-semibold leading-tight">
     {event.title}
   </h3>
   <div class="flex items-center gap-2 text-sm opacity-70">
-    <span class="badge homepage-region-badge font-semibold shadow-sm">
-      {region.toUpperCase()}
-    </span>
     <p>{idLabel}: {event.id}</p>
   </div>
 
