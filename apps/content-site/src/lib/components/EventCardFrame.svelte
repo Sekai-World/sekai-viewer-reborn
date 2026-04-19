@@ -6,11 +6,13 @@
     id,
     href,
     frameClass,
+    useBody = true,
     children
   }: {
     id?: string;
     href: string;
     frameClass: string;
+    useBody?: boolean;
     children?: Snippet;
   } = $props();
 </script>
@@ -18,7 +20,13 @@
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 <a {id} {href} class={frameClass}>
   <div class={EVENT_CARD_GLOW_CLASS}></div>
-  <div class={EVENT_CARD_BODY_CLASS}>
-    {@render children?.()}
-  </div>
+  {#if useBody}
+    <div class={EVENT_CARD_BODY_CLASS}>
+      {@render children?.()}
+    </div>
+  {:else}
+    <div class="relative z-10">
+      {@render children?.()}
+    </div>
+  {/if}
 </a>
