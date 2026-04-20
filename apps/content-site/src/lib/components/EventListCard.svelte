@@ -42,6 +42,7 @@
 
   const isCurrentEvent = (): boolean => currentEventId === item.id;
   let spoilerRevealed = $state(false);
+  let lastSpoilerIdentity = $state("");
 
   const toTimestampMs = (value: string | number | null): number | null => {
     if (value === null) {
@@ -82,9 +83,11 @@
   const isSpoilerHidden = (): boolean => hasSpoiler() && !spoilerRevealed;
 
   $effect(() => {
-    region;
-    item.id;
-    spoilerRevealed = false;
+    const nextSpoilerIdentity = `${region}:${item.id}`;
+    if (lastSpoilerIdentity !== nextSpoilerIdentity) {
+      lastSpoilerIdentity = nextSpoilerIdentity;
+      spoilerRevealed = false;
+    }
   });
 
   const handleCardClick = (event: MouseEvent): void => {
