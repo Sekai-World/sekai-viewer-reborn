@@ -308,7 +308,7 @@
     formatOptions={normalizedAssetPreviewFormatOptions}
     currentFormat={assetPreviewFormat}
     dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
-    onFormatChange={(format) => {
+    onFormatChange={(format: string) => {
       assetPreviewFormat = format;
     }}
   />
@@ -503,7 +503,7 @@
             <div class="card-body gap-4 p-5">
               <div class="flex items-start justify-between gap-3">
                 <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                  <Icon icon="mdi:information-outline" class="h-3.5 w-3.5 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                  <Icon icon="mdi:information-outline" class="h-4 w-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
                   <span>{eventInfoTitle}</span>
                 </p>
                 <div class="flex items-center gap-1.5">
@@ -565,7 +565,7 @@
               <article class="card content-card-shell shadow-sm">
                 <div class="card-body gap-4 p-5">
                   <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                    <Icon icon="mdi:timer-sand" class="h-3.5 w-3.5 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                    <Icon icon="mdi:timer-sand" class="h-4 w-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
                     <span>{eventCountdownTitle}</span>
                   </p>
                   <EventCountdownCard
@@ -584,7 +584,7 @@
         <article class="card content-card-shell overflow-hidden shadow-sm">
           <div class="card-body gap-4 p-5">
             <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-              <Icon icon="mdi:music-note-outline" class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <Icon icon="mdi:music-note-outline" class="h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{eventBgmTitle}</span>
             </p>
             <div class="content-card-inset rounded-[1.75rem] p-4">
