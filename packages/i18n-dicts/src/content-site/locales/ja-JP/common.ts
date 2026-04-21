@@ -8,7 +8,7 @@ const commonJaJp: ContentSiteCommonMessages = {
   countdownStartsIn: "開始まで",
   countdownEndsIn: "終了まで",
   eventEnded: "イベント終了",
-  idLabel: "ID",
+  idLabel: "#",
   nameLabel: "名称",
   unitLabel: "ユニット",
   eventTypeLabel: "イベントタイプ",
@@ -56,6 +56,7 @@ const commonJaJp: ContentSiteCommonMessages = {
     worldLink: "ワールドリンク"
   },
   eventInfoTitle: "イベント情報",
+  eventCountdownTitle: "イベントカウントダウン",
   debugEventJsonButton: "デバッグ JSON",
   debugEventJsonTitle: "イベント JSON",
   closeLabel: "閉じる",

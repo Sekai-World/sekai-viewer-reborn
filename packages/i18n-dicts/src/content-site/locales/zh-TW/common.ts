@@ -8,7 +8,7 @@ const commonZhTw: ContentSiteCommonMessages = {
   countdownStartsIn: "距離開始",
   countdownEndsIn: "距離結束",
   eventEnded: "活動已結束",
-  idLabel: "ID",
+  idLabel: "#",
   nameLabel: "名稱",
   unitLabel: "團體",
   eventTypeLabel: "活動類型",
@@ -56,6 +56,7 @@ const commonZhTw: ContentSiteCommonMessages = {
     worldLink: "世界綻放"
   },
   eventInfoTitle: "活動資訊",
+  eventCountdownTitle: "活動倒數",
   debugEventJsonButton: "除錯 JSON",
   debugEventJsonTitle: "活動 JSON",
   closeLabel: "關閉",

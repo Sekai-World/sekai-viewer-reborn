@@ -86,6 +86,7 @@
     getContentSiteCommonText(initialLocale, "eventAssetTabs.characters")
   );
   let eventInfoTitle = $state(getContentSiteCommonText(initialLocale, "eventInfoTitle"));
+  let eventCountdownTitle = $state(getContentSiteCommonText(initialLocale, "eventCountdownTitle"));
   let debugEventJsonButtonLabel = $state(
     getContentSiteCommonText(initialLocale, "debugEventJsonButton")
   );
@@ -140,6 +141,7 @@
     backgroundTabLabel = tCommon(locale, "eventAssetTabs.background");
     charactersTabLabel = tCommon(locale, "eventAssetTabs.characters");
     eventInfoTitle = tCommon(locale, "eventInfoTitle");
+    eventCountdownTitle = tCommon(locale, "eventCountdownTitle");
     debugEventJsonButtonLabel = tCommon(locale, "debugEventJsonButton");
     debugEventJsonTitle = tCommon(locale, "debugEventJsonTitle");
     closeLabel = tCommon(locale, "closeLabel");
@@ -259,6 +261,12 @@
     const endAtMs = toTimestampMs(endAtValue);
     return endAtMs !== null && Date.now() >= endAtMs;
   };
+  const isWorldLinkEvent = (eventType: string | null | undefined): boolean =>
+    eventType === "world_bloom";
+  const shouldShowCharacterAssetTab = (eventType: string | null | undefined): boolean =>
+    !isWorldLinkEvent(eventType);
+  const getResolvedAssetTab = (eventType: string | null | undefined): EventAssetTab =>
+    isWorldLinkEvent(eventType) && activeAssetTab === "characters" ? "banner" : activeAssetTab;
   const getAssetPreviewResetKey = (): string =>
     `${data.eventId}:${data.region}:${activeAssetTab}`;
 
@@ -375,7 +383,7 @@
                 <button
                   type="button"
                   class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
-                    activeAssetTab === "banner"
+                    getResolvedAssetTab(payload.event.eventType) === "banner"
                       ? "border-primary/45 bg-primary text-primary-content shadow-sm"
                       : "text-base-content/70 hover:bg-base-100/80"
                   }`}
@@ -388,7 +396,7 @@
                 <button
                   type="button"
                   class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
-                    activeAssetTab === "title"
+                    getResolvedAssetTab(payload.event.eventType) === "title"
                       ? "border-primary/45 bg-primary text-primary-content shadow-sm"
                       : "text-base-content/70 hover:bg-base-100/80"
                   }`}
@@ -401,7 +409,7 @@
                 <button
                   type="button"
                   class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
-                    activeAssetTab === "background"
+                    getResolvedAssetTab(payload.event.eventType) === "background"
                       ? "border-primary/45 bg-primary text-primary-content shadow-sm"
                       : "text-base-content/70 hover:bg-base-100/80"
                   }`}
@@ -411,23 +419,25 @@
                 >
                   {backgroundTabLabel}
                 </button>
-                <button
-                  type="button"
-                  class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
-                    activeAssetTab === "characters"
-                      ? "border-primary/45 bg-primary text-primary-content shadow-sm"
-                      : "text-base-content/70 hover:bg-base-100/80"
-                  }`}
-                  onclick={() => {
-                    activeAssetTab = "characters";
-                  }}
-                >
-                  {charactersTabLabel}
-                </button>
+                {#if shouldShowCharacterAssetTab(payload.event.eventType)}
+                  <button
+                    type="button"
+                    class={`tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
+                      getResolvedAssetTab(payload.event.eventType) === "characters"
+                        ? "border-primary/45 bg-primary text-primary-content shadow-sm"
+                        : "text-base-content/70 hover:bg-base-100/80"
+                    }`}
+                    onclick={() => {
+                      activeAssetTab = "characters";
+                    }}
+                  >
+                    {charactersTabLabel}
+                  </button>
+                {/if}
               </div>
 
               <div class="content-card-inset w-full overflow-hidden rounded-[1.75rem]">
-                {#if activeAssetTab === "banner"}
+                {#if getResolvedAssetTab(payload.event.eventType) === "banner"}
                   {#if payload.event.assetBundleName}
                     {@render assetPreview(
                       getEventBannerAssetURL(payload.event.assetBundleName, data.region),
@@ -440,7 +450,7 @@
                       {payload.event.title}
                     </div>
                   {/if}
-                {:else if activeAssetTab === "title"}
+                {:else if getResolvedAssetTab(payload.event.eventType) === "title"}
                   {#if payload.event.assetBundleName}
                     {@render assetPreview(
                       getEventLogoAssetURL(payload.event.assetBundleName, data.region),
@@ -453,7 +463,7 @@
                       {payload.event.title}
                     </div>
                   {/if}
-                {:else if activeAssetTab === "background"}
+                {:else if getResolvedAssetTab(payload.event.eventType) === "background"}
                   {#if payload.event.assetBundleName}
                     {@render assetPreview(
                       getEventBackgroundAssetURL(payload.event.assetBundleName, data.region),
@@ -492,8 +502,9 @@
           <article class="card content-card-shell shadow-sm">
             <div class="card-body gap-4 p-5">
               <div class="flex items-start justify-between gap-3">
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                  {eventInfoTitle}
+                <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                  <Icon icon="mdi:information-outline" class="h-3.5 w-3.5 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                  <span>{eventInfoTitle}</span>
                 </p>
                 <div class="flex items-center gap-1.5">
                   {#if payload.event.eventPointIcon}
@@ -507,7 +518,7 @@
                     />
                   {/if}
                   <span class="badge badge-outline border-base-content/20 font-semibold">
-                    {idLabel}: {payload.event.id}
+                    {idLabel}{payload.event.id}
                   </span>
                 </div>
               </div>
@@ -552,7 +563,11 @@
           {#await data.isCurrentEvent then isCurrentEvent}
             {#if isCurrentEvent && !isEventEnded(payload.event.endAt)}
               <article class="card content-card-shell shadow-sm">
-                <div class="card-body p-5">
+                <div class="card-body gap-4 p-5">
+                  <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                    <Icon icon="mdi:timer-sand" class="h-3.5 w-3.5 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                    <span>{eventCountdownTitle}</span>
+                  </p>
                   <EventCountdownCard
                     startAt={payload.event.startAt}
                     endAt={payload.event.endAt}
@@ -566,48 +581,57 @@
           {/await}
         </div>
 
-        <AudioPlayer
-          src={
-            payload.event.bgmAssetbundleName
-              ? getEventBgmAssetURL(payload.event.bgmAssetbundleName, data.region)
-              : null
-          }
-          label={eventBgmTitle}
-          title={payload.event.title}
-          subtitle={payload.event.unitName ?? ""}
-          downloadName={`${payload.event.id}-${data.region}-event-bgm.mp3`}
-          downloadOptions={[
-            {
-              label: "MP3",
-              href: getEventBgmDownloadHref("mp3"),
-              progressHref: getEventBgmProgressHref(),
-              downloadName: `${payload.event.id}-${data.region}-event-bgm.mp3`
-            },
-            {
-              label: "WAV",
-              href: getEventBgmDownloadHref("wav"),
-              progressHref: getEventBgmProgressHref(),
-              downloadName: `${payload.event.id}-${data.region}-event-bgm.wav`
-            }
-          ]}
-          downloadProgressMessages={{
-            preparing: audioDownloadStagePreparingLabel,
-            fetchingAudio: audioDownloadStageFetchingAudioLabel,
-            fetchingCover: audioDownloadStageFetchingCoverLabel,
-            writingMetadata: audioDownloadStageWritingMetadataLabel,
-            finalizing: audioDownloadStageFinalizingLabel,
-            ready: audioDownloadStageReadyLabel,
-            failed: audioDownloadStageFailedLabel,
-            cancelled: audioDownloadStageCancelledLabel
-          }}
-          playLabel={audioPlayLabel}
-          pauseLabel={audioPauseLabel}
-          downloadLabel={audioDownloadLabel}
-          downloadCloseLabel={audioDownloadCloseLabel}
-          volumeLabel={audioVolumeLabel}
-          seekLabel={audioSeekLabel}
-          unavailableLabel={audioUnavailableLabel}
-        />
+        <article class="card content-card-shell overflow-hidden shadow-sm">
+          <div class="card-body gap-4 p-5">
+            <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+              <Icon icon="mdi:music-note-outline" class="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span>{eventBgmTitle}</span>
+            </p>
+            <div class="content-card-inset rounded-[1.75rem] p-4">
+            <AudioPlayer
+              src={
+                payload.event.bgmAssetbundleName
+                  ? getEventBgmAssetURL(payload.event.bgmAssetbundleName, data.region)
+                  : null
+              }
+              title={payload.event.title}
+              subtitle={payload.event.unitName ?? ""}
+              downloadName={`${payload.event.id}-${data.region}-event-bgm.mp3`}
+              downloadOptions={[
+                {
+                  label: "MP3",
+                  href: getEventBgmDownloadHref("mp3"),
+                  progressHref: getEventBgmProgressHref(),
+                  downloadName: `${payload.event.id}-${data.region}-event-bgm.mp3`
+                },
+                {
+                  label: "WAV",
+                  href: getEventBgmDownloadHref("wav"),
+                  progressHref: getEventBgmProgressHref(),
+                  downloadName: `${payload.event.id}-${data.region}-event-bgm.wav`
+                }
+              ]}
+              downloadProgressMessages={{
+                preparing: audioDownloadStagePreparingLabel,
+                fetchingAudio: audioDownloadStageFetchingAudioLabel,
+                fetchingCover: audioDownloadStageFetchingCoverLabel,
+                writingMetadata: audioDownloadStageWritingMetadataLabel,
+                finalizing: audioDownloadStageFinalizingLabel,
+                ready: audioDownloadStageReadyLabel,
+                failed: audioDownloadStageFailedLabel,
+                cancelled: audioDownloadStageCancelledLabel
+              }}
+              playLabel={audioPlayLabel}
+              pauseLabel={audioPauseLabel}
+              downloadLabel={audioDownloadLabel}
+              downloadCloseLabel={audioDownloadCloseLabel}
+              volumeLabel={audioVolumeLabel}
+              seekLabel={audioSeekLabel}
+              unavailableLabel={audioUnavailableLabel}
+            />
+            </div>
+          </div>
+        </article>
       </div>
     {:else if !payload.error}
       {#await data.availableRegions}

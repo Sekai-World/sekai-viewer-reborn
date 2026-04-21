@@ -30,9 +30,10 @@
   let previewImageFailed = $state(false);
 
   $effect(() => {
-    src;
+    if (src !== undefined) {
     previewImageLoaded = false;
     previewImageFailed = false;
+    }
   });
 </script>
 

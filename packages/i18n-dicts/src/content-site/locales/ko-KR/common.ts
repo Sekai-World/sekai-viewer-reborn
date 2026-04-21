@@ -8,7 +8,7 @@ const commonKoKr: ContentSiteCommonMessages = {
   countdownStartsIn: "시작까지",
   countdownEndsIn: "종료까지",
   eventEnded: "이벤트 종료",
-  idLabel: "ID",
+  idLabel: "#",
   nameLabel: "이름",
   unitLabel: "유닛",
   eventTypeLabel: "이벤트 타입",
@@ -56,6 +56,7 @@ const commonKoKr: ContentSiteCommonMessages = {
     worldLink: "월드 링크"
   },
   eventInfoTitle: "이벤트 정보",
+  eventCountdownTitle: "이벤트 카운트다운",
   debugEventJsonButton: "디버그 JSON",
   debugEventJsonTitle: "이벤트 JSON",
   closeLabel: "닫기",

@@ -8,7 +8,7 @@ const commonEn: ContentSiteCommonMessages = {
   countdownStartsIn: "Starts In",
   countdownEndsIn: "Ends In",
   eventEnded: "Event Ended",
-  idLabel: "ID",
+  idLabel: "#",
   nameLabel: "Name",
   unitLabel: "Unit",
   eventTypeLabel: "Event Type",
@@ -56,6 +56,7 @@ const commonEn: ContentSiteCommonMessages = {
     worldLink: "World Link"
   },
   eventInfoTitle: "Event Info",
+  eventCountdownTitle: "Event Countdown",
   debugEventJsonButton: "Debug JSON",
   debugEventJsonTitle: "Event JSON",
   closeLabel: "Close",

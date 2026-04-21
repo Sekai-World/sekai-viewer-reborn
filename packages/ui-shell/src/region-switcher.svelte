@@ -26,7 +26,7 @@
     onOpenChange
   }: Props = $props();
 
-  let menuOpen = $state(false);
+  let menuOpen = $derived(isOpen);
 
   const primaryRegionLabel = $derived(
     options.find((option) => option.value === primaryValue)?.label ?? primaryValue.toUpperCase()
@@ -34,10 +34,6 @@
   const secondaryRegionLabel = $derived(
     options.find((option) => option.value === secondaryValue)?.label ?? secondaryValue.toUpperCase()
   );
-
-  $effect(() => {
-    menuOpen = isOpen;
-  });
 
   const handleMenuToggle = (event: Event): void => {
     const detailsElement = event.currentTarget as HTMLDetailsElement;

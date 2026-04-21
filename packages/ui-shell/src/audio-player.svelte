@@ -28,7 +28,6 @@
 
   let {
     src,
-    label,
     title,
     downloadOptions = [],
     downloadProgressMessages,
@@ -43,7 +42,6 @@
     unavailableLabel
   }: {
     src: string | null;
-    label: string;
     title: string;
     downloadOptions?: DownloadOption[];
     downloadProgressMessages: DownloadProgressMessages;
@@ -92,7 +90,7 @@
   const displayedCurrentTime = $derived(isSeeking && pendingSeekTime !== null ? pendingSeekTime : currentTime);
   const normalizedDownloadOptions = $derived(
     (() => {
-      const seenKeys = new Set<string>();
+      const seenKeys: string[] = [];
       const items = downloadOptions
         .map((option) => ({
           label: option.label.trim(),
@@ -103,11 +101,11 @@
         .filter((option) => option.label.length > 0 && option.href.length > 0)
         .filter((option) => {
           const key = `${option.label}\u0000${option.href}\u0000${option.progressHref ?? ""}\u0000${option.downloadName ?? ""}`;
-          if (seenKeys.has(key)) {
+          if (seenKeys.includes(key)) {
             return false;
           }
 
-          seenKeys.add(key);
+          seenKeys.push(key);
           return true;
         });
 
@@ -123,6 +121,7 @@
         {
           label: "MP3",
           href: normalizedSrc,
+          progressHref: undefined,
           downloadName
         } satisfies DownloadOption
       ];
@@ -736,21 +735,14 @@
   });
 </script>
 
-<article class="card content-card-shell overflow-hidden shadow-sm">
-  <div class="card-body gap-4 p-5">
-    <div>
-      <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{label}</p>
-    </div>
-
-    <div class="content-card-inset flex min-h-36 flex-1 rounded-[1.75rem] p-4">
-      {#if !hasSource || hasError}
-        <div class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-dashed border-base-content/15 px-6 text-center">
-          <Icon icon="mdi:music-off" class="h-10 w-10 opacity-55" aria-hidden="true" />
-          <p class="text-sm font-medium opacity-75">{unavailableLabel}</p>
-        </div>
-      {:else}
-        <div class="w-full">
-          <div class="flex items-center gap-4">
+{#if !hasSource || hasError}
+  <div class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-dashed border-base-content/15 px-6 text-center">
+    <Icon icon="mdi:music-off" class="h-10 w-10 opacity-55" aria-hidden="true" />
+    <p class="text-sm font-medium opacity-75">{unavailableLabel}</p>
+  </div>
+{:else}
+  <div class="w-full">
+    <div class="flex items-center gap-4">
           <button
             type="button"
             class="btn btn-primary btn-circle btn-lg shrink-0"
@@ -766,104 +758,101 @@
             {/if}
           </button>
 
-          <div class="min-w-0 flex-1">
-            <p class="truncate text-base font-semibold">{title}</p>
-            {#if subtitle}
-              <p class="mt-1 truncate text-sm opacity-70">{subtitle}</p>
-            {/if}
-          </div>
-
-          <div class="dropdown dropdown-end shrink-0">
-            <button
-              type="button"
-              tabindex="0"
-              class={`btn btn-outline btn-square btn-sm ${!hasDownloadOptions ? "pointer-events-none opacity-50" : ""}`}
-              aria-label={downloadLabel}
-              title={downloadLabel}
-              disabled={!hasDownloadOptions || isDownloadLoading}
-            >
-              {#if isDownloadLoading}
-                <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
-              {:else}
-                <Icon icon="mdi:download" class="h-4 w-4" />
-              {/if}
-            </button>
-            <ul
-              class="dropdown-content menu z-10 mt-2 w-32 rounded-box border border-base-content/10 bg-base-100 p-2 shadow-lg"
-            >
-              {#each normalizedDownloadOptions as option}
-                <li>
-                  <button
-                    type="button"
-                    class="font-mono uppercase"
-                    disabled={isDownloadLoading}
-                    onclick={() => {
-                      void handleDownload(option);
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                </li>
-              {/each}
-            </ul>
-          </div>
-          </div>
-
-          <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-end">
-            <div class="min-w-0 flex-1">
-              <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium opacity-70">
-                <span class="font-mono tabular-nums">{formatTime(displayedCurrentTime)}</span>
-                <span class="flex items-center gap-2 font-mono tabular-nums">
-                  {#if isMetadataLoading && duration <= 0}
-                    <span class="loading loading-spinner loading-xs opacity-60" aria-hidden="true"></span>
-                  {/if}
-                  <span>{formatTime(duration)}</span>
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max={duration > 0 ? duration : 0}
-                step="0.1"
-                value={displayedCurrentTime}
-                class="audio-player-range range range-primary range-sm w-full"
-                disabled={!isReady}
-                aria-label={seekLabel}
-                title={seekLabel}
-                oninput={handleSeekInput}
-                onchange={commitSeek}
-                onpointerup={commitSeek}
-                onpointercancel={cancelSeekPreview}
-                onkeyup={commitSeek}
-                onblur={handleSeekBlur}
-              />
-            </div>
-
-            <div class="w-full md:w-auto md:shrink-0">
-              <div class="flex w-full items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-3 py-2 shadow-sm md:w-auto">
-                <Icon icon="mdi:volume-high" class="h-4 w-4 shrink-0 opacity-75" aria-hidden="true" />
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volume}
-                  class="audio-player-range range range-primary range-sm min-w-0 flex-1 md:w-24 md:flex-none"
-                  aria-label={volumeLabel}
-                  title={volumeLabel}
-                  oninput={handleVolumeChange}
-                />
-                <span class="w-9 text-right text-[0.7rem] font-medium tabular-nums opacity-70">
-                  {Math.round(volume * 100)}%
-                </span>
-              </div>
-            </div>
-          </div>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-base font-semibold">{title}</p>
+          {#if subtitle}
+            <p class="mt-1 truncate text-sm opacity-70">{subtitle}</p>
+          {/if}
         </div>
-      {/if}
+
+      <div class="dropdown dropdown-end shrink-0">
+        <button
+          type="button"
+          tabindex="0"
+          class={`btn btn-outline btn-square btn-sm ${!hasDownloadOptions ? "pointer-events-none opacity-50" : ""}`}
+          aria-label={downloadLabel}
+          title={downloadLabel}
+          disabled={!hasDownloadOptions || isDownloadLoading}
+        >
+          {#if isDownloadLoading}
+            <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+          {:else}
+            <Icon icon="mdi:download" class="h-4 w-4" />
+          {/if}
+        </button>
+        <ul
+          class="dropdown-content menu z-10 mt-2 w-32 rounded-box border border-base-content/10 bg-base-100 p-2 shadow-lg"
+        >
+          {#each normalizedDownloadOptions as option (`${option.label}:${option.href}:${option.progressHref ?? ""}:${option.downloadName ?? ""}`)}
+            <li>
+              <button
+                type="button"
+                class="font-mono uppercase"
+                disabled={isDownloadLoading}
+                onclick={() => {
+                  void handleDownload(option);
+                }}
+              >
+                {option.label}
+              </button>
+            </li>
+          {/each}
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-end">
+      <div class="min-w-0 flex-1">
+        <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium opacity-70">
+          <span class="font-mono tabular-nums">{formatTime(displayedCurrentTime)}</span>
+          <span class="flex items-center gap-2 font-mono tabular-nums">
+            {#if isMetadataLoading && duration <= 0}
+              <span class="loading loading-spinner loading-xs opacity-60" aria-hidden="true"></span>
+            {/if}
+            <span>{formatTime(duration)}</span>
+          </span>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max={duration > 0 ? duration : 0}
+          step="0.1"
+          value={displayedCurrentTime}
+          class="audio-player-range range range-primary range-sm w-full"
+          disabled={!isReady}
+          aria-label={seekLabel}
+          title={seekLabel}
+          oninput={handleSeekInput}
+          onchange={commitSeek}
+          onpointerup={commitSeek}
+          onpointercancel={cancelSeekPreview}
+          onkeyup={commitSeek}
+          onblur={handleSeekBlur}
+        />
+      </div>
+
+      <div class="w-full md:w-auto md:shrink-0">
+        <div class="flex w-full items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-3 py-2 shadow-sm md:w-auto">
+          <Icon icon="mdi:volume-high" class="h-4 w-4 shrink-0 opacity-75" aria-hidden="true" />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={volume}
+            class="audio-player-range range range-primary range-sm min-w-0 flex-1 md:w-24 md:flex-none"
+            aria-label={volumeLabel}
+            title={volumeLabel}
+            oninput={handleVolumeChange}
+          />
+          <span class="w-9 text-right text-[0.7rem] font-medium tabular-nums opacity-70">
+            {Math.round(volume * 100)}%
+          </span>
+        </div>
+      </div>
     </div>
   </div>
-</article>
+{/if}
 
 {#if isDownloadLoading}
   <div class="pointer-events-none fixed inset-x-3 bottom-3 z-50 md:inset-x-auto md:right-4 md:bottom-4 md:w-[22rem]">
