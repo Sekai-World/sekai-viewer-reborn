@@ -65,7 +65,7 @@
     {event.title}
   </h3>
   <div class="flex items-center gap-2 text-sm opacity-70">
-    <p>{idLabel}: {event.id}</p>
+    <p>{idLabel}{event.id}</p>
   </div>
 
   <EventCountdownCard
