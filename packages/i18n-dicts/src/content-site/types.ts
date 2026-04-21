@@ -54,6 +54,7 @@ export type ContentSiteCommonMessages = {
     worldLink: string;
   };
   eventInfoTitle: string;
+  eventCountdownTitle: string;
   debugEventJsonButton: string;
   debugEventJsonTitle: string;
   closeLabel: string;

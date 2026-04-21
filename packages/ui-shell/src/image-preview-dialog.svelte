@@ -36,9 +36,10 @@
   let dialogImageFailed = $state(false);
 
   $effect(() => {
-    src;
+    if (src !== undefined) {
     dialogImageLoaded = false;
     dialogImageFailed = false;
+    }
   });
 
   $effect(() => {
