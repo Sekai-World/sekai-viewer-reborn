@@ -127,7 +127,7 @@
 
       <div class="absolute left-3 top-3">
         <span class="badge border-none bg-base-100/92 font-semibold text-base-content shadow-sm backdrop-blur-sm">
-          {idLabel}: {item.id}
+          {idLabel}{item.id}
         </span>
       </div>
 
