@@ -65,7 +65,8 @@ const commonZhCn: ContentSiteCommonMessages = {
   settings: {
     title: "设置",
     gameContentRegion: "游戏内容地区",
-    interfaceLanguage: "界面语言"
+    interfaceLanguage: "界面语言",
+    currentLanguage: "当前"
   },
   navigation: {
     database: "数据库",

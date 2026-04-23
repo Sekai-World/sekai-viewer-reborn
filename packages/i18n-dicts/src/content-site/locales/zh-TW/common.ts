@@ -65,7 +65,8 @@ const commonZhTw: ContentSiteCommonMessages = {
   settings: {
     title: "設定",
     gameContentRegion: "遊戲內容地區",
-    interfaceLanguage: "介面語言"
+    interfaceLanguage: "介面語言",
+    currentLanguage: "目前"
   },
   navigation: {
     database: "資料庫",

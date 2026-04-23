@@ -65,7 +65,8 @@ const commonKoKr: ContentSiteCommonMessages = {
   settings: {
     title: "설정",
     gameContentRegion: "게임 데이터 지역",
-    interfaceLanguage: "인터페이스 언어"
+    interfaceLanguage: "인터페이스 언어",
+    currentLanguage: "현재"
   },
   navigation: {
     database: "데이터베이스",

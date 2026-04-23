@@ -65,7 +65,8 @@ const commonJaJp: ContentSiteCommonMessages = {
   settings: {
     title: "設定",
     gameContentRegion: "ゲームデータ地域",
-    interfaceLanguage: "表示言語"
+    interfaceLanguage: "表示言語",
+    currentLanguage: "現在"
   },
   navigation: {
     database: "データベース",

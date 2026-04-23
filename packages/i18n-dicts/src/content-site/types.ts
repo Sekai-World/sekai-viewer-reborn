@@ -64,6 +64,7 @@ export type ContentSiteCommonMessages = {
     title: string;
     gameContentRegion: string;
     interfaceLanguage: string;
+    currentLanguage: string;
   };
   navigation: {
     database: string;
