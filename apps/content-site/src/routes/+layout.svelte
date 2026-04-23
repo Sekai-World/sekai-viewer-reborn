@@ -368,7 +368,7 @@
             <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
           {/if}
         </summary>
-        <ul class="menu dropdown-content z-120 mt-3 w-56 rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm">
+        <ul class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm">
           {#each uiLocaleOptions as localeOption (localeOption.code)}
             <li>
               <button

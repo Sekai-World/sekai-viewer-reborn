@@ -9,6 +9,7 @@ export type ContentSiteCommonMessages = {
   idLabel: string;
   nameLabel: string;
   unitLabel: string;
+  mixedUnitLabel: string;
   eventTypeLabel: string;
   eventBgmTitle: string;
   audioPlayLabel: string;

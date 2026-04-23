@@ -112,8 +112,9 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
     id,
     title,
     unitName:
+      pickFirstString(eventNode, ["unitName", "unit"]) ??
       pickFirstString(unitNode ?? eventNode, ["unitName", "name", "title"]) ??
-      pickFirstString(eventNode, ["unitName"]),
+      null,
     eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
     eventPointIcon: pickFirstString(eventNode, ["eventPointIcon", "event_point_icon"]),
     bgmAssetbundleName: pickFirstString(eventNode, [
