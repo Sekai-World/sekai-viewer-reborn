@@ -65,7 +65,8 @@ const commonEn: ContentSiteCommonMessages = {
   settings: {
     title: "Settings",
     gameContentRegion: "Game Content Region",
-    interfaceLanguage: "Interface Language"
+    interfaceLanguage: "Interface Language",
+    currentLanguage: "Current"
   },
   navigation: {
     database: "Database",
