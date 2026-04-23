@@ -291,23 +291,25 @@
           <Icon icon="mdi:tune-variant" class="h-4 w-4" />
         </summary>
         <div class="dropdown-content z-130 mt-3 w-66 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
-          <p class="mb-1 px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
-            {settingsLabel}
-          </p>
-
-          <button
-            type="button"
-            class="btn btn-sm justify-start rounded-lg border-base-content/15 bg-base-100"
-            onclick={toggleTheme}
-          >
-            <Icon icon={getThemeModeIcon(themeMode)} class="h-4 w-4" />
-            <span class="font-semibold">
-              {themeControlLabel}: {themeModeLabel}
-              {#if themeMode === "auto"}
-                ({resolvedThemeLabel})
-              {/if}
+          <div class="flex flex-col gap-1">
+            <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
+              {themeControlLabel}
             </span>
-          </button>
+            <div class="grid gap-1">
+              {#each ["auto", "light", "dark"] as themeOption}
+                <button
+                  type="button"
+                  class={`btn btn-sm justify-start rounded-lg border-base-content/15 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
+                  onclick={() => {
+                    applyTheme(themeOption as ThemeMode);
+                  }}
+                >
+                  <Icon icon={getThemeModeIcon(themeOption as ThemeMode)} class="h-4 w-4" />
+                  <span class="font-semibold">{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
+                </button>
+              {/each}
+            </div>
+          </div>
 
           <div class="my-2 h-px bg-base-content/12"></div>
 
@@ -340,15 +342,34 @@
     </div>
 
     <div class="hidden items-center gap-2 sm:flex">
-      <button
-        type="button"
-        class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
-        aria-label={switchThemeAriaLabel}
-        title={getThemeButtonTitle()}
-        onclick={toggleTheme}
-      >
-        <Icon icon={getThemeModeIcon(themeMode)} class="h-4 w-4" />
-      </button>
+      <details class="dropdown dropdown-end">
+        <summary
+          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
+          aria-label={switchThemeAriaLabel}
+          title={getThemeButtonTitle()}
+        >
+          <Icon icon={getThemeModeIcon(themeMode)} class="h-4 w-4" />
+        </summary>
+        <ul class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm">
+          {#each ["auto", "light", "dark"] as themeOption}
+            <li>
+              <button
+                type="button"
+                class={themeMode === themeOption ? "menu-active font-semibold" : ""}
+                onclick={() => {
+                  applyTheme(themeOption as ThemeMode);
+                }}
+              >
+                <Icon icon={getThemeModeIcon(themeOption as ThemeMode)} class="h-4 w-4 opacity-80" />
+                <span>{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
+                {#if themeMode === themeOption}
+                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
+                {/if}
+              </button>
+            </li>
+          {/each}
+        </ul>
+      </details>
 
       <details class="dropdown dropdown-end" bind:open={isLocaleMenuOpen} ontoggle={handleLocaleMenuToggle}>
         <summary
