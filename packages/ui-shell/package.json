@@ -20,8 +20,8 @@
   },
   "devDependencies": {
     "@types/howler": "^2.2.12",
-    "svelte": "^5.23.0",
-    "svelte-check": "^4.1.4"
+    "svelte": "^5.55.4",
+    "svelte-check": "^4.4.6"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

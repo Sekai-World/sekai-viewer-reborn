@@ -18,10 +18,10 @@
     "generate:sdk": "node ./scripts/generate-sdk.mjs"
   },
   "dependencies": {
-    "@hey-api/openapi-ts": "0.93.1"
+    "@hey-api/openapi-ts": "0.96.1"
   },
   "devDependencies": {
-    "vite": "^6.4.1",
+    "vite": "^8.0.9",
     "vite-plugin-dts": "^4.5.4"
   }
 }
