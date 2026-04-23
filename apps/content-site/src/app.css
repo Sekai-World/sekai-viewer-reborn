@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 /* Tailwind v4 in this workspace mis-resolves package-name plugins during build.
    Keep daisyUI behind a local proxy module so CSS does not depend on node_modules layout. */
 @source not "../daisyui.mjs";
@@ -10,16 +11,22 @@
 }
 
 :root,
-:root[data-theme="light"],
-:root[data-theme="dark"] {
+:root[data-theme="default"] {
   --color-primary: oklch(58% 0.233 277.117);
   --color-primary-content: oklch(96% 0.018 272.314);
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98% 0 0);
+  --color-base-300: oklch(95% 0 0);
+  --color-base-content: oklch(21% 0.006 285.885);
+  color-scheme: light;
 }
 
-:root[data-theme="dark"] {
+:root.dark[data-theme="default"] {
   --color-base-100: oklch(24.5% 0.018 252.42);
   --color-base-200: oklch(18.4% 0.015 253.1);
   --color-base-300: oklch(14.8% 0.012 254.09);
+  --color-base-content: oklch(97.807% 0.029 256.847);
+  color-scheme: dark;
 }
 
 @layer components {
@@ -107,33 +114,33 @@
     background-color: color-mix(in oklab, white 90%, transparent);
   }
 
-  :root[data-theme="dark"] .content-card-shell {
+  :root.dark[data-theme="default"] .content-card-shell {
     border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
   }
 
-  :root[data-theme="dark"] .content-card-inset {
+  :root.dark[data-theme="default"] .content-card-inset {
     background-color: color-mix(in oklab, var(--color-base-200) 96%, var(--color-base-100));
     border-color: color-mix(in oklab, var(--color-base-content) 13%, transparent);
   }
 
-  :root[data-theme="dark"] .content-card-elevated {
+  :root.dark[data-theme="default"] .content-card-elevated {
     background-color: color-mix(in oklab, var(--color-base-100) 84%, var(--color-base-content) 16%);
     border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
   }
 
-  :root[data-theme="dark"] .content-breadcrumb-link {
+  :root.dark[data-theme="default"] .content-breadcrumb-link {
     border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
     background-color: color-mix(in oklab, var(--color-base-100) 62%, var(--color-base-content) 38%);
     color: color-mix(in oklab, white 74%, var(--color-base-content) 26%);
   }
 
-  :root[data-theme="dark"] .content-breadcrumb-link:hover {
+  :root.dark[data-theme="default"] .content-breadcrumb-link:hover {
     border-color: color-mix(in oklab, var(--color-primary) 36%, transparent);
     background-color: color-mix(in oklab, var(--color-primary) 18%, var(--color-base-100));
     color: color-mix(in oklab, white 90%, transparent);
   }
 
-  :root[data-theme="dark"] .content-breadcrumb-current {
+  :root.dark[data-theme="default"] .content-breadcrumb-current {
     border-color: color-mix(in oklab, var(--color-primary) 78%, black 22%);
     background:
       linear-gradient(
@@ -147,7 +154,7 @@
       0 8px 18px color-mix(in oklab, black 38%, transparent);
   }
 
-  :root[data-theme="dark"] .homepage-region-badge {
+  :root.dark[data-theme="default"] .homepage-region-badge {
     border-color: color-mix(in oklab, var(--color-primary) 78%, black 22%);
     background:
       linear-gradient(
@@ -160,7 +167,7 @@
       0 8px 18px color-mix(in oklab, black 38%, transparent);
   }
 
-  :root[data-theme="dark"] .event-list-spoiler-overlay {
+  :root.dark[data-theme="default"] .event-list-spoiler-overlay {
     background-color: color-mix(in oklab, var(--color-base-100) 90%, transparent);
   }
 
