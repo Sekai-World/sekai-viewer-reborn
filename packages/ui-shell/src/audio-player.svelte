@@ -888,7 +888,7 @@
     --range-bg: color-mix(in oklab, var(--color-base-content) 14%, transparent);
   }
 
-  :global(:root[data-theme="dark"]) .audio-player-range:disabled {
+  :global(:root.dark[data-theme="default"]) .audio-player-range:disabled {
     opacity: 1;
   }
 </style>

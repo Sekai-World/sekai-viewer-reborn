@@ -191,7 +191,7 @@
     opacity: 0.34;
   }
 
-  :global([data-theme="dark"]) .liquid-glass-nav {
+  :global(.dark[data-theme="default"]) .liquid-glass-nav {
     background:
       radial-gradient(
         130% 105% at 0% 0%,
@@ -215,7 +215,7 @@
       inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 5%, transparent);
   }
 
-  :global([data-theme="dark"]) .liquid-glass-nav::before {
+  :global(.dark[data-theme="default"]) .liquid-glass-nav::before {
     background:
       radial-gradient(
         120% 88% at 12% 0%,
