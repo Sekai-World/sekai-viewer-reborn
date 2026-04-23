@@ -146,7 +146,8 @@
 
   const applyTheme = (nextThemeMode: ThemeMode): void => {
     const nextResolvedTheme = resolveThemeMode(nextThemeMode);
-    document.documentElement.setAttribute("data-theme", nextResolvedTheme);
+    document.documentElement.setAttribute("data-theme", "default");
+    document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
     localStorage.setItem(THEME_STORAGE_KEY, nextThemeMode);
     resolvedTheme = nextResolvedTheme;
     themeMode = nextThemeMode;
@@ -155,7 +156,7 @@
   const handleSystemThemeChange = (): void => {
     if (themeMode === "auto") {
       const nextResolvedTheme = getSystemTheme();
-      document.documentElement.setAttribute("data-theme", nextResolvedTheme);
+      document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
       resolvedTheme = nextResolvedTheme;
     }
   };
@@ -383,7 +384,7 @@
     <div class="hidden items-center gap-2 sm:flex">
       <details class="dropdown dropdown-end" bind:this={desktopThemeMenu}>
         <summary
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
+          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
           aria-label={switchThemeAriaLabel}
           title={getThemeButtonTitle()}
         >
@@ -412,7 +413,7 @@
 
       <details class="dropdown dropdown-end" bind:this={localeMenu} bind:open={isLocaleMenuOpen} ontoggle={handleLocaleMenuToggle}>
         <summary
-          class={`btn btn-sm btn-outline rounded-full border-base-content/20 bg-base-100/65 px-2 text-xs sm:px-3 sm:text-sm hover:bg-base-100 ${$isLocaleLoading ? "pointer-events-none opacity-75" : ""}`}
+          class={`btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 ${$isLocaleLoading ? "pointer-events-none opacity-75" : ""}`}
           aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
           title={`${interfaceLanguageLabel}: ${uiLocaleDisplayLabel}`}
           aria-busy={$isLocaleLoading}
