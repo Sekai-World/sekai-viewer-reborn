@@ -19,15 +19,15 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@changesets/cli": "2.30.0",
-    "@eslint/js": "^9.21.0",
-    "eslint": "^9.21.0",
-    "eslint-plugin-svelte": "^3.16.0",
-    "globals": "^17.4.0",
-    "prettier": "^3.5.2",
+    "@changesets/cli": "2.31.0",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.1",
+    "eslint-plugin-svelte": "^3.17.0",
+    "globals": "^17.5.0",
+    "prettier": "^3.8.3",
     "svelte-eslint-parser": "^1.6.0",
-    "turbo": "^2.4.4",
-    "typescript": "^5.8.2",
-    "typescript-eslint": "^8.25.0"
+    "turbo": "^2.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.0"
   }
 }
