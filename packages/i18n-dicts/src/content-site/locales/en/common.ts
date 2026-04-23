@@ -2,7 +2,7 @@ import type { ContentSiteCommonMessages } from "../../types";
 
 const commonEn: ContentSiteCommonMessages = {
   home: "Home",
-  darkmode: "Theme",
+  darkmode: "Appearance",
   startAt: "Start",
   endAt: "End",
   countdownStartsIn: "Starts In",
@@ -64,6 +64,8 @@ const commonEn: ContentSiteCommonMessages = {
   backToTopLabel: "Back to top",
   settings: {
     title: "Settings",
+    appearance: "Appearance",
+    theme: "Theme",
     gameContentRegion: "Game Content Region",
     interfaceLanguage: "Interface Language",
     currentLanguage: "Current"

@@ -62,6 +62,8 @@ export type ContentSiteCommonMessages = {
   backToTopLabel: string;
   settings: {
     title: string;
+    appearance: string;
+    theme: string;
     gameContentRegion: string;
     interfaceLanguage: string;
     currentLanguage: string;

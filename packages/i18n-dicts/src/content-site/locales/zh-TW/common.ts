@@ -2,7 +2,7 @@ import type { ContentSiteCommonMessages } from "../../types";
 
 const commonZhTw: ContentSiteCommonMessages = {
   home: "首頁",
-  darkmode: "主題",
+  darkmode: "外觀",
   startAt: "開始時間",
   endAt: "結束時間",
   countdownStartsIn: "距離開始",
@@ -64,6 +64,8 @@ const commonZhTw: ContentSiteCommonMessages = {
   backToTopLabel: "回到頂部",
   settings: {
     title: "設定",
+    appearance: "外觀",
+    theme: "主題",
     gameContentRegion: "遊戲內容地區",
     interfaceLanguage: "介面語言",
     currentLanguage: "目前"

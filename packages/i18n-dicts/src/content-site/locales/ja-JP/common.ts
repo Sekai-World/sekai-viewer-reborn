@@ -2,7 +2,7 @@ import type { ContentSiteCommonMessages } from "../../types";
 
 const commonJaJp: ContentSiteCommonMessages = {
   home: "ホーム",
-  darkmode: "テーマ",
+  darkmode: "外観",
   startAt: "開始",
   endAt: "終了",
   countdownStartsIn: "開始まで",
@@ -64,6 +64,8 @@ const commonJaJp: ContentSiteCommonMessages = {
   backToTopLabel: "トップへ戻る",
   settings: {
     title: "設定",
+    appearance: "外観",
+    theme: "テーマ",
     gameContentRegion: "ゲームデータ地域",
     interfaceLanguage: "表示言語",
     currentLanguage: "現在"
