@@ -37,8 +37,8 @@
 
   $effect(() => {
     if (src !== undefined) {
-    dialogImageLoaded = false;
-    dialogImageFailed = false;
+      dialogImageLoaded = false;
+      dialogImageFailed = false;
     }
   });
 

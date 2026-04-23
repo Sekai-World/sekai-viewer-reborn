@@ -176,7 +176,7 @@
 
   const getThemeModeIcon = (themeModeValue: ThemeMode): string => {
     if (themeModeValue === "auto") {
-      return "mdi:theme-light-dark";
+      return "mdi:brightness-auto";
     }
 
     return themeModeValue === "light" ? "mdi:white-balance-sunny" : "mdi:weather-night";
@@ -398,7 +398,7 @@
 {#if showBackToTop}
   <button
     type="button"
-    class="fixed bottom-5 right-5 z-30 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl"
+    class="fixed bottom-5 right-5 z-30 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer"
     aria-label={backToTopLabel}
     title={backToTopLabel}
     onclick={scrollToTop}

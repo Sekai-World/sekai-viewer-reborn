@@ -31,8 +31,8 @@
 
   $effect(() => {
     if (src !== undefined) {
-    previewImageLoaded = false;
-    previewImageFailed = false;
+      previewImageLoaded = false;
+      previewImageFailed = false;
     }
   });
 </script>

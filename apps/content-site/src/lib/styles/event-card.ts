@@ -1,12 +1,12 @@
 export const EVENT_CARD_HOVER_TIMING_CLASS = "duration-[220ms] ease-out";
 
 const EVENT_CARD_BASE_SHADOW_CLASS =
-  "shadow-[0_10px_24px_rgba(0,0,0,0.08),0_2px_8px_rgba(0,0,0,0.05)] dark:shadow-[0_14px_32px_rgba(0,0,0,0.36),0_4px_14px_rgba(0,0,0,0.22)]";
+  "shadow-[0_5px_14px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.26),0_2px_8px_rgba(0,0,0,0.18)]";
 const EVENT_CARD_BASE_HOVER_SHADOW_CLASS =
-  "hover:shadow-[0_24px_44px_rgba(0,0,0,0.14),0_10px_24px_rgba(107,114,128,0.12)] dark:hover:shadow-[0_28px_58px_rgba(0,0,0,0.52),0_10px_24px_rgba(107,114,128,0.22)]";
+  "hover:shadow-[0_16px_30px_rgba(0,0,0,0.12),0_6px_16px_rgba(107,114,128,0.1)] dark:hover:shadow-[0_20px_38px_rgba(0,0,0,0.38),0_8px_18px_rgba(107,114,128,0.18)]";
 
 export const CURRENT_EVENT_CARD_FRAME_CLASS =
-  `card content-card-shell group relative w-full overflow-hidden transform-gpu transition-[transform,box-shadow] ${EVENT_CARD_HOVER_TIMING_CLASS} ${EVENT_CARD_BASE_SHADOW_CLASS} ${EVENT_CARD_BASE_HOVER_SHADOW_CLASS} hover:-translate-y-0.75 hover:scale-[1.014]`;
+  `card content-card-shell group relative w-full overflow-hidden transform-gpu transition-[transform,box-shadow] ${EVENT_CARD_HOVER_TIMING_CLASS} ${EVENT_CARD_BASE_SHADOW_CLASS} ${EVENT_CARD_BASE_HOVER_SHADOW_CLASS} hover:-translate-y-[0.32rem]`;
 
 export const EVENT_LIST_CARD_FRAME_CLASS =
   `card content-card-shell group relative w-full overflow-hidden transform-gpu transition-[transform,box-shadow] ${EVENT_CARD_HOVER_TIMING_CLASS} ${EVENT_CARD_BASE_SHADOW_CLASS} ${EVENT_CARD_BASE_HOVER_SHADOW_CLASS} hover:-translate-y-[0.32rem]`;
