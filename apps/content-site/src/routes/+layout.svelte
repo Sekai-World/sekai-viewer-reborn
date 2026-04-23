@@ -38,6 +38,9 @@
   let resolvedTheme = $state<ResolvedTheme>("light");
   let isLocaleMenuOpen = $state(false);
   let systemThemeMediaQuery: MediaQueryList | null = null;
+  let mobileSettingsMenu: HTMLDetailsElement | null = null;
+  let desktopThemeMenu: HTMLDetailsElement | null = null;
+  let localeMenu: HTMLDetailsElement | null = null;
 
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
   let databaseLabel = $state(getContentSiteCommonText(initialLocale, "navigation.database"));
@@ -49,6 +52,9 @@
   let themeControlLabel = $state(getContentSiteCommonText(initialLocale, "darkmode"));
   let interfaceLanguageLabel = $state(
     getContentSiteCommonText(initialLocale, "settings.interfaceLanguage")
+  );
+  let currentLanguageLabel = $state(
+    getContentSiteCommonText(initialLocale, "settings.currentLanguage")
   );
   let backToTopLabel = $state(getContentSiteCommonText(initialLocale, "backToTopLabel"));
   let loadingLanguagePackLabel = $state(
@@ -125,6 +131,7 @@
     settingsLabel = tCommon(resolvedLocale, "settings.title");
     themeControlLabel = tCommon(resolvedLocale, "darkmode");
     interfaceLanguageLabel = tCommon(resolvedLocale, "settings.interfaceLanguage");
+    currentLanguageLabel = tCommon(resolvedLocale, "settings.currentLanguage");
     backToTopLabel = tCommon(resolvedLocale, "backToTopLabel");
     loadingLanguagePackLabel = tCommon(resolvedLocale, "loadingLanguagePack");
     switchThemeAriaLabel = tCommon(resolvedLocale, "aria.switchTheme");
@@ -194,6 +201,21 @@
     isLocaleMenuOpen = detailsElement.open;
   };
 
+  const closeDropdownIfClickedOutside = (
+    detailsElement: HTMLDetailsElement | null,
+    target: EventTarget | null
+  ): void => {
+    if (!detailsElement?.open) {
+      return;
+    }
+
+    if (target instanceof Node && detailsElement.contains(target)) {
+      return;
+    }
+
+    detailsElement.open = false;
+  };
+
   const setUiLocale = async (localeValue: string): Promise<void> => {
     const nextLocale = normalizeUiLocale(localeValue, DEFAULT_UI_LOCALE);
     if (nextLocale === uiLocale) {
@@ -249,11 +271,22 @@
     updateBackToTopVisibility();
     window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
+    const handleDocumentClick = (event: MouseEvent): void => {
+      const target = event.target;
+      closeDropdownIfClickedOutside(mobileSettingsMenu, target);
+      closeDropdownIfClickedOutside(desktopThemeMenu, target);
+      closeDropdownIfClickedOutside(localeMenu, target);
+      isLocaleMenuOpen = localeMenu?.open ?? false;
+    };
+
+    document.addEventListener("click", handleDocumentClick);
+
     return () => {
       if (backToTopAnimationFrame) {
         window.cancelAnimationFrame(backToTopAnimationFrame);
         backToTopAnimationFrame = 0;
       }
+      document.removeEventListener("click", handleDocumentClick);
       window.removeEventListener("scroll", updateBackToTopVisibility);
       systemThemeMediaQuery?.removeEventListener("change", handleSystemThemeChange);
     };
@@ -282,7 +315,7 @@
 >
   {#snippet navActions()}
     <div class="sm:hidden">
-      <details class="dropdown dropdown-end">
+      <details class="dropdown dropdown-end" bind:this={mobileSettingsMenu}>
         <summary
           class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={settingsLabel}
@@ -317,22 +350,28 @@
             <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
               {interfaceLanguageLabel}
             </span>
-            <select
-              class="select select-sm w-full rounded-lg border-base-content/15 bg-base-100"
-              disabled={$isLocaleLoading}
-              aria-busy={$isLocaleLoading}
-              value={uiLocale}
-              onchange={async (event) => {
-                const nextValue = (event.currentTarget as HTMLSelectElement).value;
-                await setUiLocale(nextValue);
-              }}
-            >
+            <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
+              <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
+                {currentLanguageLabel}
+              </p>
+              <p class="px-1 pt-1 text-sm font-semibold">{uiLocaleDisplayLabel}</p>
+            </div>
+            <div class="grid gap-1">
               {#each uiLocaleOptions as localeOption (localeOption.code)}
-                <option value={localeOption.code}>
-                  {uiLocaleNameByCode[localeOption.code]}({localeOption.code})
-                </option>
+                {#if localeOption.code !== uiLocale}
+                  <button
+                    type="button"
+                    class="btn btn-sm justify-start rounded-lg border-base-content/15 bg-base-100"
+                    disabled={$isLocaleLoading}
+                    onclick={async () => {
+                      await setUiLocale(localeOption.code);
+                    }}
+                  >
+                    <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                  </button>
+                {/if}
               {/each}
-            </select>
+            </div>
             {#if $isLocaleLoading}
               <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
             {/if}
@@ -342,7 +381,7 @@
     </div>
 
     <div class="hidden items-center gap-2 sm:flex">
-      <details class="dropdown dropdown-end">
+      <details class="dropdown dropdown-end" bind:this={desktopThemeMenu}>
         <summary
           class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={switchThemeAriaLabel}
@@ -371,7 +410,7 @@
         </ul>
       </details>
 
-      <details class="dropdown dropdown-end" bind:open={isLocaleMenuOpen} ontoggle={handleLocaleMenuToggle}>
+      <details class="dropdown dropdown-end" bind:this={localeMenu} bind:open={isLocaleMenuOpen} ontoggle={handleLocaleMenuToggle}>
         <summary
           class={`btn btn-sm btn-outline rounded-full border-base-content/20 bg-base-100/65 px-2 text-xs sm:px-3 sm:text-sm hover:bg-base-100 ${$isLocaleLoading ? "pointer-events-none opacity-75" : ""}`}
           aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
@@ -384,31 +423,39 @@
           }}
         >
           <Icon icon="mdi:translate" class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          <span class="max-w-34 truncate font-semibold sm:max-w-none">{uiLocaleDisplayLabel}</span>
           {#if $isLocaleLoading}
             <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
           {/if}
         </summary>
-        <ul class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm">
-          {#each uiLocaleOptions as localeOption (localeOption.code)}
-            <li>
-              <button
-                type="button"
-                class={localeOption.code === uiLocale ? "menu-active font-semibold" : ""}
-                disabled={$isLocaleLoading}
-                onclick={async () => {
-                  await setUiLocale(localeOption.code);
-                  isLocaleMenuOpen = false;
-                }}
-              >
-                <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
-                {#if localeOption.code === uiLocale}
-                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
-                {/if}
-              </button>
-            </li>
-          {/each}
-        </ul>
+        <div class="dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
+          <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
+            <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
+              {currentLanguageLabel}
+            </p>
+            <p class="px-1 pt-1 text-sm font-semibold">{uiLocaleDisplayLabel}</p>
+          </div>
+
+          <div class="my-2 h-px bg-base-content/12"></div>
+
+          <ul class="menu p-0">
+            {#each uiLocaleOptions as localeOption (localeOption.code)}
+              {#if localeOption.code !== uiLocale}
+                <li>
+                  <button
+                    type="button"
+                    disabled={$isLocaleLoading}
+                    onclick={async () => {
+                      await setUiLocale(localeOption.code);
+                      isLocaleMenuOpen = false;
+                    }}
+                  >
+                    <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                  </button>
+                </li>
+              {/if}
+            {/each}
+          </ul>
+        </div>
       </details>
     </div>
   {/snippet}
