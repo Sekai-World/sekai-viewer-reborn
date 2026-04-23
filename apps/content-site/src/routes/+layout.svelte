@@ -23,17 +23,21 @@
   import type { LayoutData } from "./$types";
 
   type ThemeMode = "light" | "dark" | "auto";
+  type ThemeName = "default" | "sakura" | "mint";
   type ResolvedTheme = "light" | "dark";
   type UiLocaleOption = {
     code: SupportedUiLocale;
   };
 
   const THEME_STORAGE_KEY = "content_site_theme_mode";
+  const THEME_NAME_STORAGE_KEY = "content_site_theme_name";
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
+  const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const initialLocale = DEFAULT_UI_LOCALE;
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
+  let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
   let resolvedTheme = $state<ResolvedTheme>("light");
   let isLocaleMenuOpen = $state(false);
@@ -49,7 +53,8 @@
   let eventsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.events"));
   let virtualLivesLabel = $state(getContentSiteCommonText(initialLocale, "navigation.virtualLives"));
   let settingsLabel = $state(getContentSiteCommonText(initialLocale, "settings.title"));
-  let themeControlLabel = $state(getContentSiteCommonText(initialLocale, "darkmode"));
+  let themeControlLabel = $state(getContentSiteCommonText(initialLocale, "settings.appearance"));
+  let themePaletteLabel = $state(getContentSiteCommonText(initialLocale, "settings.theme"));
   let interfaceLanguageLabel = $state(
     getContentSiteCommonText(initialLocale, "settings.interfaceLanguage")
   );
@@ -129,7 +134,8 @@
     eventsLabel = tCommon(resolvedLocale, "navigation.events");
     virtualLivesLabel = tCommon(resolvedLocale, "navigation.virtualLives");
     settingsLabel = tCommon(resolvedLocale, "settings.title");
-    themeControlLabel = tCommon(resolvedLocale, "darkmode");
+    themeControlLabel = tCommon(resolvedLocale, "settings.appearance");
+    themePaletteLabel = tCommon(resolvedLocale, "settings.theme");
     interfaceLanguageLabel = tCommon(resolvedLocale, "settings.interfaceLanguage");
     currentLanguageLabel = tCommon(resolvedLocale, "settings.currentLanguage");
     backToTopLabel = tCommon(resolvedLocale, "backToTopLabel");
@@ -144,11 +150,13 @@
   const resolveThemeMode = (themeModeValue: ThemeMode): ResolvedTheme =>
     themeModeValue === "auto" ? getSystemTheme() : themeModeValue;
 
-  const applyTheme = (nextThemeMode: ThemeMode): void => {
+  const applyTheme = (nextThemeName: ThemeName, nextThemeMode: ThemeMode): void => {
     const nextResolvedTheme = resolveThemeMode(nextThemeMode);
-    document.documentElement.setAttribute("data-theme", "default");
+    document.documentElement.setAttribute("data-theme", nextThemeName);
     document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
+    localStorage.setItem(THEME_NAME_STORAGE_KEY, nextThemeName);
     localStorage.setItem(THEME_STORAGE_KEY, nextThemeMode);
+    themeName = nextThemeName;
     resolvedTheme = nextResolvedTheme;
     themeMode = nextThemeMode;
   };
@@ -170,16 +178,13 @@
     return "auto";
   };
 
-  const getNextThemeMode = (currentThemeMode: ThemeMode): ThemeMode => {
-    if (currentThemeMode === "auto") {
-      return "light";
+  const resolvePreferredThemeName = (): ThemeName => {
+    const storedThemeName = localStorage.getItem(THEME_NAME_STORAGE_KEY);
+    if (storedThemeName === "default" || storedThemeName === "sakura" || storedThemeName === "mint") {
+      return storedThemeName;
     }
 
-    if (currentThemeMode === "light") {
-      return "dark";
-    }
-
-    return "auto";
+    return "default";
   };
 
   const getThemeModeIcon = (themeModeValue: ThemeMode): string => {
@@ -190,12 +195,24 @@
     return themeModeValue === "light" ? "mdi:white-balance-sunny" : "mdi:weather-night";
   };
 
-  const toggleTheme = (): void => {
-    applyTheme(getNextThemeMode(themeMode));
+  const getThemeButtonTitle = (): string => {
+    const modeLabel =
+      themeMode === "auto" ? `${themeModeLabel} (${resolvedThemeLabel})` : themeModeLabel;
+
+    return `${themePaletteLabel}: ${getThemeNameLabel(themeName)} / ${modeLabel}`;
   };
 
-  const getThemeButtonTitle = (): string =>
-    themeMode === "auto" ? `${themeModeLabel} (${resolvedThemeLabel})` : themeModeLabel;
+  const getThemeNameLabel = (themeNameValue: ThemeName): string => {
+    if (themeNameValue === "sakura") {
+      return "Sakura";
+    }
+
+    if (themeNameValue === "mint") {
+      return "Mint";
+    }
+
+    return "Default";
+  };
 
   const handleLocaleMenuToggle = (event: Event): void => {
     const detailsElement = event.currentTarget as HTMLDetailsElement;
@@ -268,7 +285,7 @@
   onMount(() => {
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
-    applyTheme(resolvePreferredTheme());
+    applyTheme(resolvePreferredThemeName(), resolvePreferredTheme());
     updateBackToTopVisibility();
     window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
@@ -327,6 +344,27 @@
         <div class="dropdown-content z-130 mt-3 w-66 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
           <div class="flex flex-col gap-1">
             <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
+              {themePaletteLabel}
+            </span>
+            <div class="grid gap-1">
+              {#each themeNameOptions as themeNameOption}
+                <button
+                  type="button"
+                  class={`btn btn-sm justify-start rounded-lg border-base-content/15 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
+                  onclick={() => {
+                    applyTheme(themeNameOption, themeMode);
+                  }}
+                >
+                  <span class="font-semibold">{getThemeNameLabel(themeNameOption)}</span>
+                </button>
+              {/each}
+            </div>
+          </div>
+
+          <div class="my-2 h-px bg-base-content/12"></div>
+
+          <div class="flex flex-col gap-1">
+            <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
               {themeControlLabel}
             </span>
             <div class="grid gap-1">
@@ -335,7 +373,7 @@
                   type="button"
                   class={`btn btn-sm justify-start rounded-lg border-base-content/15 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
                   onclick={() => {
-                    applyTheme(themeOption as ThemeMode);
+                    applyTheme(themeName, themeOption as ThemeMode);
                   }}
                 >
                   <Icon icon={getThemeModeIcon(themeOption as ThemeMode)} class="h-4 w-4" />
@@ -347,17 +385,22 @@
 
           <div class="my-2 h-px bg-base-content/12"></div>
 
-          <label class="flex flex-col gap-1">
+          <div class="flex flex-col gap-1">
             <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
               {interfaceLanguageLabel}
             </span>
-            <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
-              <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
-                {currentLanguageLabel}
-              </p>
-              <p class="px-1 pt-1 text-sm font-semibold">{uiLocaleDisplayLabel}</p>
-            </div>
             <div class="grid gap-1">
+              {#each uiLocaleOptions as localeOption (localeOption.code)}
+                {#if localeOption.code === uiLocale}
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-primary justify-start rounded-lg border-base-content/15"
+                    disabled={true}
+                  >
+                    <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                  </button>
+                {/if}
+              {/each}
               {#each uiLocaleOptions as localeOption (localeOption.code)}
                 {#if localeOption.code !== uiLocale}
                   <button
@@ -376,7 +419,7 @@
             {#if $isLocaleLoading}
               <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
             {/if}
-          </label>
+          </div>
         </div>
       </details>
     </div>
@@ -388,16 +431,39 @@
           aria-label={switchThemeAriaLabel}
           title={getThemeButtonTitle()}
         >
-          <Icon icon={getThemeModeIcon(themeMode)} class="h-4 w-4" />
+          <Icon icon="mdi:palette-outline" class="h-4 w-4" />
         </summary>
         <ul class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm">
+          <li class="menu-title px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
+            {themePaletteLabel}
+          </li>
+          {#each themeNameOptions as themeNameOption}
+            <li>
+              <button
+                type="button"
+                class={themeName === themeNameOption ? "menu-active font-semibold" : ""}
+                onclick={() => {
+                  applyTheme(themeNameOption, themeMode);
+                }}
+              >
+                <span>{getThemeNameLabel(themeNameOption)}</span>
+                {#if themeName === themeNameOption}
+                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
+                {/if}
+              </button>
+            </li>
+          {/each}
+
+          <li class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
+            {themeControlLabel}
+          </li>
           {#each ["auto", "light", "dark"] as themeOption}
             <li>
               <button
                 type="button"
                 class={themeMode === themeOption ? "menu-active font-semibold" : ""}
                 onclick={() => {
-                  applyTheme(themeOption as ThemeMode);
+                  applyTheme(themeName, themeOption as ThemeMode);
                 }}
               >
                 <Icon icon={getThemeModeIcon(themeOption as ThemeMode)} class="h-4 w-4 opacity-80" />
