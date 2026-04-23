@@ -325,7 +325,7 @@
       {/snippet}
     </PageHeader>
 
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] md:items-start">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
       <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-4 p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
@@ -375,7 +375,7 @@
     {/if}
 
     {#if payload.event}
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] md:items-start">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
         <div class="flex flex-col gap-4">
           <article class="card content-card-shell overflow-hidden shadow-sm">
             <div class="card-body items-center gap-3 p-5 text-center">

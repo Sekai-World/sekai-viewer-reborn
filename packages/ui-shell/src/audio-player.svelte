@@ -60,7 +60,7 @@
   let metadataAudio: HTMLAudioElement | null = null;
   let currentTime = $state(0);
   let duration = $state(0);
-  let volume = $state(0.85);
+  let volume = $state(1);
   let isReady = $state(false);
   let isPlaying = $state(false);
   let isLoading = $state(false);
@@ -801,8 +801,8 @@
       </div>
     </div>
 
-    <div class="mt-4 flex flex-col gap-3 md:flex-row md:items-end">
-      <div class="min-w-0 flex-1">
+    <div class="mt-4 flex flex-col gap-3 md:grid md:grid-cols-2 md:items-end lg:grid-cols-[minmax(0,1fr)_auto]">
+      <div class="min-w-0 flex-1 md:col-span-2 lg:col-span-1">
         <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium opacity-70">
           <span class="font-mono tabular-nums">{formatTime(displayedCurrentTime)}</span>
           <span class="flex items-center gap-2 font-mono tabular-nums">
@@ -831,8 +831,8 @@
         />
       </div>
 
-      <div class="w-full md:w-auto md:shrink-0">
-        <div class="flex w-full items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-3 py-2 shadow-sm md:w-auto">
+      <div class="hidden w-full md:col-start-2 md:block lg:w-auto lg:shrink-0 lg:justify-self-end">
+        <div class="flex w-full items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-3 py-2 shadow-sm lg:w-auto">
           <Icon icon="mdi:volume-high" class="h-4 w-4 shrink-0 opacity-75" aria-hidden="true" />
           <input
             type="range"
@@ -840,7 +840,7 @@
             max="1"
             step="0.01"
             value={volume}
-            class="audio-player-range range range-primary range-sm min-w-0 flex-1 md:w-24 md:flex-none"
+            class="audio-player-range range range-primary range-sm min-w-0 flex-1 lg:w-24 lg:flex-none"
             aria-label={volumeLabel}
             title={volumeLabel}
             oninput={handleVolumeChange}
