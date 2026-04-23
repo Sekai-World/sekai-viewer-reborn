@@ -1,4 +1,4 @@
-import { getEventsByRegionCurrent } from "@platform/sekai-master-api-sdk";
+import { getEventsByRegionCurrent, getVersionsByRegion } from "@platform/sekai-master-api-sdk";
 import {
   getContentSiteServerText,
   regionLabels,
@@ -17,10 +17,17 @@ type EventSummary = {
   assetBundleName: string | null;
 };
 
+type RegionVersions = {
+  dataVersion: string | null;
+  assetVersion: string | null;
+  cdnVersion: string | null;
+};
+
 type RegionEventCard = {
   region: SupportedRegion;
   label: string;
   event: EventSummary | null;
+  versions: RegionVersions | null;
   error: string | null;
 };
 
@@ -107,6 +114,19 @@ const pickFirstDateValue = (
   return null;
 };
 
+const parseRegionVersions = (payload: unknown): RegionVersions | null => {
+  const root = getObject(payload);
+  if (!root) {
+    return null;
+  }
+
+  return {
+    dataVersion: pickFirstString(root, ["dataVersion", "data_version"]),
+    assetVersion: pickFirstString(root, ["assetVersion", "asset_version"]),
+    cdnVersion: pickFirstStringLike(root, ["cdnVersion", "cdn_version"])
+  };
+};
+
 const parseEventSummary = (payload: unknown): EventSummary | null => {
   const root = getObject(payload);
 
@@ -136,16 +156,25 @@ const toRegionEventCard = async (
   region: SupportedRegion,
   unavailableErrorText: string
 ): Promise<RegionEventCard> => {
-  const response = await getEventsByRegionCurrent({
-    baseUrl,
-    path: { region }
-  });
+  const [eventResponse, versionsResponse] = await Promise.all([
+    getEventsByRegionCurrent({
+      baseUrl,
+      path: { region }
+    }),
+    getVersionsByRegion({
+      baseUrl,
+      path: { region }
+    })
+  ]);
 
-  if (response.error) {
+  const versions = versionsResponse.error ? null : parseRegionVersions(versionsResponse.data);
+
+  if (eventResponse.error) {
     return {
       region,
       label: regionLabels[region],
       event: null,
+      versions,
       error: unavailableErrorText
     };
   }
@@ -153,7 +182,8 @@ const toRegionEventCard = async (
   return {
     region,
     label: regionLabels[region],
-    event: parseEventSummary(response.data),
+    event: parseEventSummary(eventResponse.data),
+    versions,
     error: null
   };
 };
@@ -177,6 +207,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
         region,
         label: regionLabels[region],
         event: null,
+        versions: null,
         error: homeEventDataRequestFailed
       } satisfies RegionEventCard;
     }

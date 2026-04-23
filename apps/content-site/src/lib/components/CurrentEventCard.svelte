@@ -18,10 +18,17 @@
     assetBundleName: string | null;
   };
 
+  type RegionVersions = {
+    dataVersion: string | null;
+    assetVersion: string | null;
+    cdnVersion: string | null;
+  };
+
   let {
     region,
     regionLabel,
     event,
+    versions = null,
     uiLocale,
     idLabel,
     bannerAltSuffix
@@ -29,10 +36,32 @@
     region: SupportedRegion;
     regionLabel: string;
     event: CurrentEventSummary;
+    versions?: RegionVersions | null;
     uiLocale: string;
     idLabel: string;
     bannerAltSuffix: string;
   } = $props();
+
+  const isNuverseRegion = (regionValue: SupportedRegion): boolean =>
+    regionValue === "tw" || regionValue === "kr" || regionValue === "cn";
+
+  const getDisplayAssetVersion = (
+    regionValue: SupportedRegion,
+    versionsValue: RegionVersions | null
+  ): string | null => {
+    if (!versionsValue?.assetVersion) {
+      return null;
+    }
+
+    if (isNuverseRegion(regionValue) && versionsValue.cdnVersion) {
+      return `${versionsValue.assetVersion} - ${versionsValue.cdnVersion}`;
+    }
+
+    return versionsValue.assetVersion;
+  };
+
+  const displayDataVersion = $derived(versions?.dataVersion ?? null);
+  const displayAssetVersion = $derived(getDisplayAssetVersion(region, versions));
 </script>
 
 <EventCardFrame
@@ -74,4 +103,19 @@
     {uiLocale}
     class="mt-1"
   />
+
+  {#if displayDataVersion || displayAssetVersion}
+    <div class="mt-3 flex flex-wrap gap-2">
+      {#if displayDataVersion}
+        <span class="badge badge-outline border-base-content/15 px-2.5 py-2 font-mono text-[0.68rem] uppercase tracking-[0.12em]">
+          DATA {displayDataVersion}
+        </span>
+      {/if}
+      {#if displayAssetVersion}
+        <span class="badge badge-outline border-base-content/15 px-2.5 py-2 font-mono text-[0.68rem] uppercase tracking-[0.12em]">
+          ASSET {displayAssetVersion}
+        </span>
+      {/if}
+    </div>
+  {/if}
 </EventCardFrame>

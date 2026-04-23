@@ -11,6 +11,7 @@ const commonJaJp: ContentSiteCommonMessages = {
   idLabel: "#",
   nameLabel: "名称",
   unitLabel: "ユニット",
+  mixedUnitLabel: "混合",
   eventTypeLabel: "イベントタイプ",
   eventBgmTitle: "イベント BGM",
   audioPlayLabel: "音声を再生",

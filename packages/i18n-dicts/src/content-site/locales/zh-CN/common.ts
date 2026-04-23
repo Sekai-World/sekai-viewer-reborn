@@ -11,6 +11,7 @@ const commonZhCn: ContentSiteCommonMessages = {
   idLabel: "#",
   nameLabel: "名称",
   unitLabel: "团体",
+  mixedUnitLabel: "混合",
   eventTypeLabel: "活动类型",
   eventBgmTitle: "活动 BGM",
   audioPlayLabel: "播放音频",
@@ -62,7 +63,7 @@ const commonZhCn: ContentSiteCommonMessages = {
   closeLabel: "关闭",
   backToTopLabel: "回到顶部",
   settings: {
-    title: "设置",
+    title: "外观",
     gameContentRegion: "游戏内容地区",
     interfaceLanguage: "界面语言"
   },

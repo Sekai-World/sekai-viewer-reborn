@@ -38,6 +38,7 @@
   let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
   let nameLabel = $state(getContentSiteCommonText(initialLocale, "nameLabel"));
   let unitLabel = $state(getContentSiteCommonText(initialLocale, "unitLabel"));
+  let mixedUnitLabel = $state(getContentSiteCommonText(initialLocale, "mixedUnitLabel"));
   let eventTypeLabel = $state(getContentSiteCommonText(initialLocale, "eventTypeLabel"));
   let eventBgmTitle = $state(getContentSiteCommonText(initialLocale, "eventBgmTitle"));
   let audioPlayLabel = $state(getContentSiteCommonText(initialLocale, "audioPlayLabel"));
@@ -115,6 +116,7 @@
     idLabel = tCommon(locale, "idLabel");
     nameLabel = tCommon(locale, "nameLabel");
     unitLabel = tCommon(locale, "unitLabel");
+    mixedUnitLabel = tCommon(locale, "mixedUnitLabel");
     eventTypeLabel = tCommon(locale, "eventTypeLabel");
     eventBgmTitle = tCommon(locale, "eventBgmTitle");
     audioPlayLabel = tCommon(locale, "audioPlayLabel");
@@ -260,6 +262,13 @@
   const isEventEnded = (endAtValue: string | number | null): boolean => {
     const endAtMs = toTimestampMs(endAtValue);
     return endAtMs !== null && Date.now() >= endAtMs;
+  };
+  const getDisplayUnitName = (unitName: string | null | undefined): string | null => {
+    if (!unitName) {
+      return null;
+    }
+
+    return unitName.trim().toLowerCase() === "none" ? mixedUnitLabel : unitName;
   };
   const isWorldLinkEvent = (eventType: string | null | undefined): boolean =>
     eventType === "world_bloom";
@@ -528,10 +537,10 @@
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
                   <dd class="mt-1 text-sm font-medium">{payload.event.title}</dd>
                 </div>
-                {#if payload.event.unitName}
+                {#if getDisplayUnitName(payload.event.unitName)}
                   <div class="content-card-inset rounded-xl px-4 py-3">
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{unitLabel}</dt>
-                    <dd class="mt-1 text-sm font-medium">{payload.event.unitName}</dd>
+                    <dd class="mt-1 text-sm font-medium">{getDisplayUnitName(payload.event.unitName)}</dd>
                   </div>
                 {/if}
                 {#if payload.event.eventType}
@@ -595,7 +604,7 @@
                   : null
               }
               title={payload.event.title}
-              subtitle={payload.event.unitName ?? ""}
+              subtitle={getDisplayUnitName(payload.event.unitName) ?? ""}
               downloadName={`${payload.event.id}-${data.region}-event-bgm.mp3`}
               downloadOptions={[
                 {

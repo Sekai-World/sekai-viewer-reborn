@@ -4,105 +4,7 @@ export type ClientOptions = {
     baseUrl: string;
 };
 
-export type HandlerCardListResponse = {
-    items?: Array<HandlerCardObjectResponse>;
-    pagination?: HandlerCardPagination;
-};
-
-export type HandlerCardObjectResponse = {
-    archivePublishedAt?: unknown;
-    assetbundleName?: unknown;
-    attr?: unknown;
-    cardParameters?: unknown;
-    cardRarity?: HandlerCardRarityResponse;
-    cardSkillName?: unknown;
-    cardSupply?: HandlerCardSupplyResponse;
-    character?: HandlerCharacterResponse;
-    flavorText?: unknown;
-    gachaPhrase?: unknown;
-    id?: unknown;
-    initialSpecialTrainingStatus?: unknown;
-    prefix?: unknown;
-    releaseAt?: unknown;
-    seq?: unknown;
-    skill?: HandlerSkillResponse;
-    specialTrainingPower1BonusFixed?: unknown;
-    specialTrainingPower2BonusFixed?: unknown;
-    specialTrainingPower3BonusFixed?: unknown;
-    supportUnit?: unknown;
-};
-
-export type HandlerCardPagination = {
-    has_next?: boolean;
-    page?: number;
-    page_size?: number;
-    total?: number;
-    total_pages?: number;
-};
-
-export type HandlerCardRarityResponse = {
-    [key: string]: unknown;
-};
-
-export type HandlerCardSupplyResponse = {
-    [key: string]: unknown;
-};
-
-export type HandlerCharacterResponse = {
-    [key: string]: unknown;
-};
-
-export type HandlerErrorBody = {
-    code?: string;
-    message?: string;
-};
-
-export type HandlerErrorResponse = {
-    error?: HandlerErrorBody;
-};
-
-export type HandlerHealthResponse = {
-    database?: string;
-    status?: string;
-};
-
-export type HandlerMasterDataAdminStatusResponse = {
-    items?: Array<MasterdataSyncStatus>;
-    regions?: Array<string>;
-    status?: string;
-    sync_running?: boolean;
-};
-
-export type HandlerMasterDataSyncResponse = {
-    items?: Array<MasterdataSyncStatus>;
-    regions?: Array<string>;
-    status?: string;
-    sync_running?: boolean;
-};
-
-export type HandlerProfileAuthDebug = {
-    admin_claim?: string;
-    claim_values?: Array<string>;
-    matched_values?: Array<string>;
-};
-
-export type HandlerProfileResponse = {
-    auth_debug?: HandlerProfileAuthDebug;
-    user?: HandlerProfileUser;
-};
-
-export type HandlerProfileUser = {
-    display_name?: string;
-    email?: string;
-    id?: string;
-    username?: string;
-};
-
-export type HandlerSkillResponse = {
-    [key: string]: unknown;
-};
-
-export type HandlerMasterDataSyncRequest = {
+export type AdminMasterDataSyncRequest = {
     region?: string;
 };
 
@@ -126,6 +28,104 @@ export type MasterdataSyncStatus = {
     updated_at?: string;
 };
 
+export type SharedCardListResponse = {
+    items?: Array<SharedCardObjectResponse>;
+    pagination?: SharedCardPagination;
+};
+
+export type SharedCardObjectResponse = {
+    archivePublishedAt?: unknown;
+    assetbundleName?: unknown;
+    attr?: unknown;
+    cardParameters?: unknown;
+    cardRarity?: SharedCardRarityResponse;
+    cardSkillName?: unknown;
+    cardSupply?: SharedCardSupplyResponse;
+    character?: SharedCharacterResponse;
+    flavorText?: unknown;
+    gachaPhrase?: unknown;
+    id?: unknown;
+    initialSpecialTrainingStatus?: unknown;
+    prefix?: unknown;
+    releaseAt?: unknown;
+    seq?: unknown;
+    skill?: SharedSkillResponse;
+    specialTrainingPower1BonusFixed?: unknown;
+    specialTrainingPower2BonusFixed?: unknown;
+    specialTrainingPower3BonusFixed?: unknown;
+    supportUnit?: unknown;
+};
+
+export type SharedCardPagination = {
+    has_next?: boolean;
+    page?: number;
+    page_size?: number;
+    total?: number;
+    total_pages?: number;
+};
+
+export type SharedCardRarityResponse = {
+    [key: string]: unknown;
+};
+
+export type SharedCardSupplyResponse = {
+    [key: string]: unknown;
+};
+
+export type SharedCharacterResponse = {
+    [key: string]: unknown;
+};
+
+export type SharedErrorBody = {
+    code?: string;
+    message?: string;
+};
+
+export type SharedErrorResponse = {
+    error?: SharedErrorBody;
+};
+
+export type SharedHealthResponse = {
+    database?: string;
+    status?: string;
+};
+
+export type SharedMasterDataAdminStatusResponse = {
+    items?: Array<MasterdataSyncStatus>;
+    regions?: Array<string>;
+    status?: string;
+    sync_running?: boolean;
+};
+
+export type SharedMasterDataSyncResponse = {
+    items?: Array<MasterdataSyncStatus>;
+    regions?: Array<string>;
+    status?: string;
+    sync_running?: boolean;
+};
+
+export type SharedProfileAuthDebug = {
+    admin_claim?: string;
+    claim_values?: Array<string>;
+    matched_values?: Array<string>;
+};
+
+export type SharedProfileResponse = {
+    auth_debug?: SharedProfileAuthDebug;
+    user?: SharedProfileUser;
+};
+
+export type SharedProfileUser = {
+    display_name?: string;
+    email?: string;
+    id?: string;
+    username?: string;
+};
+
+export type SharedSkillResponse = {
+    [key: string]: unknown;
+};
+
 export type GetAdminLoginData = {
     body?: never;
     path?: never;
@@ -137,7 +137,7 @@ export type GetAdminLoginErrors = {
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
 };
 
 export type GetAdminLoginError = GetAdminLoginErrors[keyof GetAdminLoginErrors];
@@ -153,15 +153,15 @@ export type GetAdminMasterDataEventsErrors = {
     /**
      * Unauthorized
      */
-    401: HandlerErrorResponse;
+    401: SharedErrorResponse;
     /**
      * Forbidden
      */
-    403: HandlerErrorResponse;
+    403: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetAdminMasterDataEventsError = GetAdminMasterDataEventsErrors[keyof GetAdminMasterDataEventsErrors];
@@ -186,15 +186,15 @@ export type GetAdminMasterDataStatusErrors = {
     /**
      * Unauthorized
      */
-    401: HandlerErrorResponse;
+    401: SharedErrorResponse;
     /**
      * Forbidden
      */
-    403: HandlerErrorResponse;
+    403: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
 };
 
 export type GetAdminMasterDataStatusError = GetAdminMasterDataStatusErrors[keyof GetAdminMasterDataStatusErrors];
@@ -203,7 +203,7 @@ export type GetAdminMasterDataStatusResponses = {
     /**
      * OK
      */
-    200: HandlerMasterDataAdminStatusResponse;
+    200: SharedMasterDataAdminStatusResponse;
 };
 
 export type GetAdminMasterDataStatusResponse = GetAdminMasterDataStatusResponses[keyof GetAdminMasterDataStatusResponses];
@@ -212,7 +212,7 @@ export type PostAdminMasterDataSyncData = {
     /**
      * Optional region-scoped sync payload
      */
-    body?: HandlerMasterDataSyncRequest;
+    body?: AdminMasterDataSyncRequest;
     path?: never;
     query?: never;
     url: '/admin/master-data/sync';
@@ -222,19 +222,19 @@ export type PostAdminMasterDataSyncErrors = {
     /**
      * Unauthorized
      */
-    401: HandlerErrorResponse;
+    401: SharedErrorResponse;
     /**
      * Forbidden
      */
-    403: HandlerErrorResponse;
+    403: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type PostAdminMasterDataSyncError = PostAdminMasterDataSyncErrors[keyof PostAdminMasterDataSyncErrors];
@@ -243,7 +243,7 @@ export type PostAdminMasterDataSyncResponses = {
     /**
      * OK
      */
-    200: HandlerMasterDataSyncResponse;
+    200: SharedMasterDataSyncResponse;
 };
 
 export type PostAdminMasterDataSyncResponse = PostAdminMasterDataSyncResponses[keyof PostAdminMasterDataSyncResponses];
@@ -252,7 +252,7 @@ export type PostAdminMasterDataSyncForceData = {
     /**
      * Optional region-scoped force sync payload
      */
-    body?: HandlerMasterDataSyncRequest;
+    body?: AdminMasterDataSyncRequest;
     path?: never;
     query?: never;
     url: '/admin/master-data/sync/force';
@@ -262,19 +262,19 @@ export type PostAdminMasterDataSyncForceErrors = {
     /**
      * Unauthorized
      */
-    401: HandlerErrorResponse;
+    401: SharedErrorResponse;
     /**
      * Forbidden
      */
-    403: HandlerErrorResponse;
+    403: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type PostAdminMasterDataSyncForceError = PostAdminMasterDataSyncForceErrors[keyof PostAdminMasterDataSyncForceErrors];
@@ -283,7 +283,7 @@ export type PostAdminMasterDataSyncForceResponses = {
     /**
      * OK
      */
-    200: HandlerMasterDataSyncResponse;
+    200: SharedMasterDataSyncResponse;
 };
 
 export type PostAdminMasterDataSyncForceResponse = PostAdminMasterDataSyncForceResponses[keyof PostAdminMasterDataSyncForceResponses];
@@ -299,11 +299,11 @@ export type GetAdminProfileErrors = {
     /**
      * Unauthorized
      */
-    401: HandlerErrorResponse;
+    401: SharedErrorResponse;
     /**
      * Forbidden
      */
-    403: HandlerErrorResponse;
+    403: SharedErrorResponse;
 };
 
 export type GetAdminProfileError = GetAdminProfileErrors[keyof GetAdminProfileErrors];
@@ -312,7 +312,7 @@ export type GetAdminProfileResponses = {
     /**
      * OK
      */
-    200: HandlerProfileResponse;
+    200: SharedProfileResponse;
 };
 
 export type GetAdminProfileResponse = GetAdminProfileResponses[keyof GetAdminProfileResponses];
@@ -333,15 +333,15 @@ export type GetCardsRegionsByIdAvailabilityErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetCardsRegionsByIdAvailabilityError = GetCardsRegionsByIdAvailabilityErrors[keyof GetCardsRegionsByIdAvailabilityErrors];
@@ -390,15 +390,15 @@ export type GetCardsByRegionListErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetCardsByRegionListError = GetCardsByRegionListErrors[keyof GetCardsByRegionListErrors];
@@ -407,7 +407,7 @@ export type GetCardsByRegionListResponses = {
     /**
      * OK
      */
-    200: HandlerCardListResponse;
+    200: SharedCardListResponse;
 };
 
 export type GetCardsByRegionListResponse = GetCardsByRegionListResponses[keyof GetCardsByRegionListResponses];
@@ -453,15 +453,15 @@ export type GetCardsByRegionSearchErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetCardsByRegionSearchError = GetCardsByRegionSearchErrors[keyof GetCardsByRegionSearchErrors];
@@ -470,7 +470,7 @@ export type GetCardsByRegionSearchResponses = {
     /**
      * OK
      */
-    200: HandlerCardListResponse;
+    200: SharedCardListResponse;
 };
 
 export type GetCardsByRegionSearchResponse = GetCardsByRegionSearchResponses[keyof GetCardsByRegionSearchResponses];
@@ -495,19 +495,19 @@ export type GetCardsByRegionByIdErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetCardsByRegionByIdError = GetCardsByRegionByIdErrors[keyof GetCardsByRegionByIdErrors];
@@ -516,7 +516,7 @@ export type GetCardsByRegionByIdResponses = {
     /**
      * OK
      */
-    200: HandlerCardObjectResponse;
+    200: SharedCardObjectResponse;
 };
 
 export type GetCardsByRegionByIdResponse = GetCardsByRegionByIdResponses[keyof GetCardsByRegionByIdResponses];
@@ -541,19 +541,19 @@ export type GetCardsByRegionByIdEpisodesErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetCardsByRegionByIdEpisodesError = GetCardsByRegionByIdEpisodesErrors[keyof GetCardsByRegionByIdEpisodesErrors];
@@ -562,7 +562,7 @@ export type GetCardsByRegionByIdEpisodesResponses = {
     /**
      * OK
      */
-    200: HandlerCardListResponse;
+    200: SharedCardListResponse;
 };
 
 export type GetCardsByRegionByIdEpisodesResponse = GetCardsByRegionByIdEpisodesResponses[keyof GetCardsByRegionByIdEpisodesResponses];
@@ -587,19 +587,19 @@ export type GetCardsByRegionByIdParamsErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetCardsByRegionByIdParamsError = GetCardsByRegionByIdParamsErrors[keyof GetCardsByRegionByIdParamsErrors];
@@ -608,7 +608,7 @@ export type GetCardsByRegionByIdParamsResponses = {
     /**
      * OK
      */
-    200: HandlerCardObjectResponse;
+    200: SharedCardObjectResponse;
 };
 
 export type GetCardsByRegionByIdParamsResponse = GetCardsByRegionByIdParamsResponses[keyof GetCardsByRegionByIdParamsResponses];
@@ -629,15 +629,15 @@ export type GetEventsRegionsByIdAvailabilityErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetEventsRegionsByIdAvailabilityError = GetEventsRegionsByIdAvailabilityErrors[keyof GetEventsRegionsByIdAvailabilityErrors];
@@ -669,19 +669,19 @@ export type GetEventsByRegionCurrentErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetEventsByRegionCurrentError = GetEventsByRegionCurrentErrors[keyof GetEventsByRegionCurrentErrors];
@@ -730,15 +730,15 @@ export type GetEventsByRegionListErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetEventsByRegionListError = GetEventsByRegionListErrors[keyof GetEventsByRegionListErrors];
@@ -795,15 +795,15 @@ export type GetEventsByRegionSearchErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetEventsByRegionSearchError = GetEventsByRegionSearchErrors[keyof GetEventsByRegionSearchErrors];
@@ -839,19 +839,19 @@ export type GetEventsByRegionByIdErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetEventsByRegionByIdError = GetEventsByRegionByIdErrors[keyof GetEventsByRegionByIdErrors];
@@ -866,6 +866,198 @@ export type GetEventsByRegionByIdResponses = {
 };
 
 export type GetEventsByRegionByIdResponse = GetEventsByRegionByIdResponses[keyof GetEventsByRegionByIdResponses];
+
+export type GetEventsByRegionByIdBonusesData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Event ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/events/{region}/{id}/bonuses';
+};
+
+export type GetEventsByRegionByIdBonusesErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetEventsByRegionByIdBonusesError = GetEventsByRegionByIdBonusesErrors[keyof GetEventsByRegionByIdBonusesErrors];
+
+export type GetEventsByRegionByIdBonusesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetEventsByRegionByIdBonusesResponse = GetEventsByRegionByIdBonusesResponses[keyof GetEventsByRegionByIdBonusesResponses];
+
+export type GetEventsByRegionByIdBreakTimesData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Event ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/events/{region}/{id}/break-times';
+};
+
+export type GetEventsByRegionByIdBreakTimesErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetEventsByRegionByIdBreakTimesError = GetEventsByRegionByIdBreakTimesErrors[keyof GetEventsByRegionByIdBreakTimesErrors];
+
+export type GetEventsByRegionByIdBreakTimesResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetEventsByRegionByIdBreakTimesResponse = GetEventsByRegionByIdBreakTimesResponses[keyof GetEventsByRegionByIdBreakTimesResponses];
+
+export type GetEventsByRegionByIdCardsData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Event ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/events/{region}/{id}/cards';
+};
+
+export type GetEventsByRegionByIdCardsErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetEventsByRegionByIdCardsError = GetEventsByRegionByIdCardsErrors[keyof GetEventsByRegionByIdCardsErrors];
+
+export type GetEventsByRegionByIdCardsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetEventsByRegionByIdCardsResponse = GetEventsByRegionByIdCardsResponses[keyof GetEventsByRegionByIdCardsResponses];
+
+export type GetEventsByRegionByIdMusicsData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Event ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/events/{region}/{id}/musics';
+};
+
+export type GetEventsByRegionByIdMusicsErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetEventsByRegionByIdMusicsError = GetEventsByRegionByIdMusicsErrors[keyof GetEventsByRegionByIdMusicsErrors];
+
+export type GetEventsByRegionByIdMusicsResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetEventsByRegionByIdMusicsResponse = GetEventsByRegionByIdMusicsResponses[keyof GetEventsByRegionByIdMusicsResponses];
 
 export type GetEventsByRegionByIdRewardsData = {
     body?: never;
@@ -887,19 +1079,19 @@ export type GetEventsByRegionByIdRewardsErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetEventsByRegionByIdRewardsError = GetEventsByRegionByIdRewardsErrors[keyof GetEventsByRegionByIdRewardsErrors];
@@ -926,10 +1118,60 @@ export type GetHealthResponses = {
     /**
      * OK
      */
-    200: HandlerHealthResponse;
+    200: SharedHealthResponse;
 };
 
 export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
+
+export type PostInternalGithubWebhooksMasterDataData = {
+    /**
+     * GitHub webhook payload
+     */
+    body: {
+        [key: string]: unknown;
+    };
+    headers: {
+        /**
+         * GitHub event type
+         */
+        'X-GitHub-Event': string;
+        /**
+         * GitHub HMAC SHA-256 signature
+         */
+        'X-Hub-Signature-256'?: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/internal/github/webhooks/master-data';
+};
+
+export type PostInternalGithubWebhooksMasterDataErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Unauthorized
+     */
+    401: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type PostInternalGithubWebhooksMasterDataError = PostInternalGithubWebhooksMasterDataErrors[keyof PostInternalGithubWebhooksMasterDataErrors];
+
+export type PostInternalGithubWebhooksMasterDataResponses = {
+    /**
+     * Accepted
+     */
+    202: {
+        [key: string]: unknown;
+    };
+};
+
+export type PostInternalGithubWebhooksMasterDataResponse = PostInternalGithubWebhooksMasterDataResponses[keyof PostInternalGithubWebhooksMasterDataResponses];
 
 export type GetMusicsRegionsByIdAvailabilityData = {
     body?: never;
@@ -947,15 +1189,15 @@ export type GetMusicsRegionsByIdAvailabilityErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetMusicsRegionsByIdAvailabilityError = GetMusicsRegionsByIdAvailabilityErrors[keyof GetMusicsRegionsByIdAvailabilityErrors];
@@ -1004,15 +1246,15 @@ export type GetMusicsByRegionListErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetMusicsByRegionListError = GetMusicsByRegionListErrors[keyof GetMusicsByRegionListErrors];
@@ -1077,15 +1319,15 @@ export type GetMusicsByRegionSearchErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetMusicsByRegionSearchError = GetMusicsByRegionSearchErrors[keyof GetMusicsByRegionSearchErrors];
@@ -1121,19 +1363,19 @@ export type GetMusicsByRegionByIdErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetMusicsByRegionByIdError = GetMusicsByRegionByIdErrors[keyof GetMusicsByRegionByIdErrors];
@@ -1148,6 +1390,50 @@ export type GetMusicsByRegionByIdResponses = {
 };
 
 export type GetMusicsByRegionByIdResponse = GetMusicsByRegionByIdResponses[keyof GetMusicsByRegionByIdResponses];
+
+export type GetVersionsByRegionData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: never;
+    url: '/versions/{region}';
+};
+
+export type GetVersionsByRegionErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetVersionsByRegionError = GetVersionsByRegionErrors[keyof GetVersionsByRegionErrors];
+
+export type GetVersionsByRegionResponses = {
+    /**
+     * OK
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type GetVersionsByRegionResponse = GetVersionsByRegionResponses[keyof GetVersionsByRegionResponses];
 
 export type GetVirtualLivesRegionsByIdAvailabilityData = {
     body?: never;
@@ -1165,15 +1451,15 @@ export type GetVirtualLivesRegionsByIdAvailabilityErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetVirtualLivesRegionsByIdAvailabilityError = GetVirtualLivesRegionsByIdAvailabilityErrors[keyof GetVirtualLivesRegionsByIdAvailabilityErrors];
@@ -1222,15 +1508,15 @@ export type GetVirtualLivesByRegionListErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetVirtualLivesByRegionListError = GetVirtualLivesByRegionListErrors[keyof GetVirtualLivesByRegionListErrors];
@@ -1287,15 +1573,15 @@ export type GetVirtualLivesByRegionSearchErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetVirtualLivesByRegionSearchError = GetVirtualLivesByRegionSearchErrors[keyof GetVirtualLivesByRegionSearchErrors];
@@ -1331,19 +1617,19 @@ export type GetVirtualLivesByRegionByIdErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetVirtualLivesByRegionByIdError = GetVirtualLivesByRegionByIdErrors[keyof GetVirtualLivesByRegionByIdErrors];
@@ -1379,19 +1665,19 @@ export type GetVirtualLivesByRegionByIdItemsErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetVirtualLivesByRegionByIdItemsError = GetVirtualLivesByRegionByIdItemsErrors[keyof GetVirtualLivesByRegionByIdItemsErrors];
@@ -1427,19 +1713,19 @@ export type GetVirtualLivesByRegionByIdSchedulesErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetVirtualLivesByRegionByIdSchedulesError = GetVirtualLivesByRegionByIdSchedulesErrors[keyof GetVirtualLivesByRegionByIdSchedulesErrors];
@@ -1475,19 +1761,19 @@ export type GetVirtualLivesByRegionByIdSetlistsErrors = {
     /**
      * Bad Request
      */
-    400: HandlerErrorResponse;
+    400: SharedErrorResponse;
     /**
      * Not Found
      */
-    404: HandlerErrorResponse;
+    404: SharedErrorResponse;
     /**
      * Internal Server Error
      */
-    500: HandlerErrorResponse;
+    500: SharedErrorResponse;
     /**
      * Service Unavailable
      */
-    503: HandlerErrorResponse;
+    503: SharedErrorResponse;
 };
 
 export type GetVirtualLivesByRegionByIdSetlistsError = GetVirtualLivesByRegionByIdSetlistsErrors[keyof GetVirtualLivesByRegionByIdSetlistsErrors];
