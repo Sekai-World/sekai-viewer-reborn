@@ -63,7 +63,7 @@ const commonZhCn: ContentSiteCommonMessages = {
   closeLabel: "关闭",
   backToTopLabel: "回到顶部",
   settings: {
-    title: "外观",
+    title: "设置",
     gameContentRegion: "游戏内容地区",
     interfaceLanguage: "界面语言"
   },
