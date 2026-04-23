@@ -2,7 +2,7 @@ import type { ContentSiteCommonMessages } from "../../types";
 
 const commonKoKr: ContentSiteCommonMessages = {
   home: "홈",
-  darkmode: "테마",
+  darkmode: "외관",
   startAt: "시작",
   endAt: "종료",
   countdownStartsIn: "시작까지",
@@ -64,6 +64,8 @@ const commonKoKr: ContentSiteCommonMessages = {
   backToTopLabel: "맨 위로",
   settings: {
     title: "설정",
+    appearance: "외관",
+    theme: "테마",
     gameContentRegion: "게임 데이터 지역",
     interfaceLanguage: "인터페이스 언어",
     currentLanguage: "현재"
