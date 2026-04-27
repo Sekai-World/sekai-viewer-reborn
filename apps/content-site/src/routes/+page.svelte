@@ -16,6 +16,7 @@
   let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
   let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
   let disclaimerText = $state(getContentSiteCommonText(initialLocale, "disclaimer"));
+  let currentEventLabel = $state(getContentSiteCommonText(initialLocale, "eventListCurrentEvent"));
   const homeCardItemClass =
     "w-full shrink-0 md:basis-[calc((100%-1rem)/2)] lg:basis-[calc((100%-2rem)/3)] 2xl:basis-[calc((100%-4rem)/5)]";
 
@@ -29,6 +30,7 @@
     bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
     noEventLabel = tCommon(locale, "noCurrentEventData");
     disclaimerText = tCommon(locale, "disclaimer");
+    currentEventLabel = tCommon(locale, "eventListCurrentEvent");
   };
 
   const isNuverseRegion = (region: SupportedRegion): boolean =>
@@ -62,6 +64,8 @@
     <p class="text-xs leading-relaxed">{disclaimerText}</p>
   </div>
 </div>
+
+<h2 class="mb-6 text-center text-base font-semibold tracking-wide text-base-content/70">{currentEventLabel}</h2>
 
 <section class="flex flex-wrap justify-center gap-4">
   {#each supportedRegions as region, index (region)}
