@@ -99,8 +99,8 @@ const commonJaJp: ContentSiteCommonMessages = {
     eventPrefix: "イベント"
   },
   themeMode: {
-    light: "ライトモード",
-    dark: "ダークモード",
+    light: "ライト",
+    dark: "ダーク",
     auto: "自動"
   },
   themeName: {

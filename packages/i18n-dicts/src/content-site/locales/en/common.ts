@@ -99,8 +99,8 @@ const commonEn: ContentSiteCommonMessages = {
     eventPrefix: "Event"
   },
   themeMode: {
-    light: "Light Mode",
-    dark: "Dark Mode",
+    light: "Light",
+    dark: "Dark",
     auto: "Auto"
   },
   themeName: {

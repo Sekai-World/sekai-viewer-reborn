@@ -99,8 +99,8 @@ const commonKoKr: ContentSiteCommonMessages = {
     eventPrefix: "이벤트"
   },
   themeMode: {
-    light: "라이트 모드",
-    dark: "다크 모드",
+    light: "라이트",
+    dark: "다크",
     auto: "자동"
   },
   themeName: {
