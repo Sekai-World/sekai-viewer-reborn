@@ -99,8 +99,8 @@ const commonZhTw: ContentSiteCommonMessages = {
     eventPrefix: "活動"
   },
   themeMode: {
-    light: "明亮模式",
-    dark: "黑暗模式",
+    light: "明亮",
+    dark: "黑暗",
     auto: "自動"  },
   themeName: {
     default: "預設",

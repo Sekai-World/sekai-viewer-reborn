@@ -346,16 +346,16 @@
         >
           <Icon icon="mdi:tune-variant" class="h-4 w-4" />
         </summary>
-        <div class="dropdown-content z-130 mt-3 w-66 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
+        <div class="dropdown-content z-130 mt-3 w-52 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
           <div class="flex flex-col gap-1">
             <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
               {themePaletteLabel}
             </span>
-            <div class="grid gap-1">
+            <div class="grid grid-cols-3 gap-1">
               {#each themeNameOptions as themeNameOption (themeNameOption)}
                 <button
                   type="button"
-                  class={`btn btn-sm justify-start rounded-lg border-base-content/15 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
+                  class={`btn btn-sm justify-center rounded-lg border-base-content/15 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
                   onclick={() => {
                     applyTheme(themeNameOption, themeMode);
                   }}
@@ -372,17 +372,17 @@
             <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
               {themeControlLabel}
             </span>
-            <div class="grid gap-1">
+            <div class="grid grid-cols-3 gap-1">
               {#each ["auto", "light", "dark"] as themeOption (themeOption)}
                 <button
                   type="button"
-                  class={`btn btn-sm justify-start rounded-lg border-base-content/15 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
+                  class={`btn btn-sm h-auto flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
                   onclick={() => {
                     applyTheme(themeName, themeOption as ThemeMode);
                   }}
                 >
-                  <Icon icon={getThemeModeIcon(themeOption as ThemeMode)} class="h-4 w-4" />
-                  <span class="font-semibold">{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
+                  <Icon icon={getThemeModeIcon(themeOption as ThemeMode)} class="h-5 w-5 shrink-0" />
+                  <span class="text-[0.6rem] font-semibold leading-none">{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
                 </button>
               {/each}
             </div>
