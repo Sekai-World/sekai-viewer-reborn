@@ -3,6 +3,7 @@
     key: string;
     label: string;
     href?: string;
+    onclick?: () => void;
     active: boolean;
   };
 
@@ -18,6 +19,13 @@
     <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
       {option.label}
     </span>
+  {:else if option.onclick}
+    <button
+      class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold cursor-pointer"
+      onclick={option.onclick}
+    >
+      {option.label}
+    </button>
   {:else}
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
     <a

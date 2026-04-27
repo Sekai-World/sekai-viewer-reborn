@@ -6,6 +6,7 @@
     type SupportedRegion
   } from "@platform/i18n-dicts";
   import CurrentEventCard from "$lib/components/CurrentEventCard.svelte";
+  import RegionBadgeSwitch from "$lib/components/RegionBadgeSwitch.svelte";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { DEFAULT_UI_LOCALE } from "$lib/region";
   import type { PageData } from "./$types";
@@ -23,6 +24,21 @@
   let versionAssetLabel = $state(getContentSiteCommonText(initialLocale, "versionInfo.assetLabel"));
   const homeCardItemClass =
     "w-full shrink-0 md:basis-[calc((100%-1rem)/2)] lg:basis-[calc((100%-2rem)/3)] 2xl:basis-[calc((100%-4rem)/5)]";
+
+  const MOBILE_REGION_STORAGE_KEY = "home-mobile-region";
+  let selectedRegion = $state<SupportedRegion>(supportedRegions[0]);
+
+  $effect(() => {
+    const saved = localStorage.getItem(MOBILE_REGION_STORAGE_KEY);
+    if (saved && (supportedRegions as readonly string[]).includes(saved)) {
+      selectedRegion = saved as SupportedRegion;
+    }
+  });
+
+  const selectRegion = (r: SupportedRegion): void => {
+    selectedRegion = r;
+    localStorage.setItem(MOBILE_REGION_STORAGE_KEY, r);
+  };
 
   $effect(() => {
     void refreshPageTranslations(data.uiLocale);
@@ -67,36 +83,45 @@
 </script>
 
 <div class="-mt-6 mb-10 flex justify-center px-2">
-  <div class="flex max-w-3xl gap-3 rounded-xl border border-info/25 bg-info/8 px-4 py-3 text-info-content/70">
+  <div class="flex max-w-3xl gap-3 rounded-xl border border-info/25 bg-info/8 px-4 py-3 text-base-content/70">
     <Icon icon="mdi:information-outline" class="mt-0.5 h-4 w-4 shrink-0 text-info/80" />
     <p class="text-xs leading-relaxed">{disclaimerText}</p>
   </div>
 </div>
 
-<h2 class="mb-6 text-center text-base font-semibold tracking-wide text-base-content/70">{currentEventLabel}</h2>
+<h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">{currentEventLabel}</h2>
+
+<div class="mb-6 flex flex-wrap justify-center gap-2 md:hidden">
+  <RegionBadgeSwitch
+    options={supportedRegions.map((r) => ({
+      key: r,
+      label: r.toUpperCase(),
+      active: r === selectedRegion,
+      onclick: r !== selectedRegion ? () => selectRegion(r) : undefined
+    }))}
+  />
+</div>
 
 <section class="flex flex-wrap justify-center gap-4">
   {#each supportedRegions as region, index (region)}
-    {#await data.cards[index]}
-      <div class={homeCardItemClass}>
+    <div class="{homeCardItemClass} {region !== selectedRegion ? 'max-md:hidden' : ''}">
+      {#await data.cards[index]}
         <article id={`region-${region}`} class="card content-card-shell w-full shadow-sm">
           <div class="card-body">
             <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
-              <div class="mb-1">
-                <span class="badge homepage-region-badge font-semibold shadow-sm">
-                  {region.toUpperCase()}
-                </span>
-              </div>
+            <div class="mb-1 max-md:hidden">
+              <span class="badge homepage-region-badge font-semibold shadow-sm">
+                {region.toUpperCase()}
+              </span>
+            </div>
             <div class="space-y-2">
               <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
               <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
             </div>
           </div>
         </article>
-      </div>
-    {:then card}
-      {#if card.event}
-        <div class={homeCardItemClass}>
+      {:then card}
+        {#if card.event}
           <CurrentEventCard
             region={card.region}
             regionLabel={card.label}
@@ -106,13 +131,11 @@
             {idLabel}
             {bannerAltSuffix}
           />
-        </div>
-      {:else}
-        <div class={homeCardItemClass}>
+        {:else}
           <article id={`region-${card.region}`} class="card content-card-shell w-full shadow-sm">
             <div class="card-body">
               <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
-              <div class="mb-1">
+              <div class="mb-1 max-md:hidden">
                 <span class="badge homepage-region-badge font-semibold shadow-sm">
                   {card.region.toUpperCase()}
                 </span>
@@ -125,9 +148,9 @@
               {/if}
             </div>
           </article>
-        </div>
-      {/if}
-    {/await}
+        {/if}
+      {/await}
+    </div>
   {/each}
 </section>
 
