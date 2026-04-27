@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
   import {
     getContentSiteCommonText,
     supportedRegions,
@@ -54,6 +55,13 @@
     return versions?.dataVersion ?? null;
   };
 </script>
+
+<div class="-mt-6 mb-10 flex justify-center px-2">
+  <div class="flex max-w-3xl gap-3 rounded-xl border border-info/25 bg-info/8 px-4 py-3 text-info-content/70">
+    <Icon icon="mdi:information-outline" class="mt-0.5 h-4 w-4 shrink-0 text-info/80" />
+    <p class="text-xs leading-relaxed">{disclaimerText}</p>
+  </div>
+</div>
 
 <section class="flex flex-wrap justify-center gap-4">
   {#each supportedRegions as region, index (region)}
@@ -125,7 +133,3 @@
     {/await}
   {/each}
 </section>
-
-<footer class="mt-10 border-t border-base-content/10 px-2 py-6 text-center text-xs leading-relaxed text-base-content/50">
-  <p>{disclaimerText}</p>
-</footer>
