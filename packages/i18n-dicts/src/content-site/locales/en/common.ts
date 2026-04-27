@@ -94,7 +94,7 @@ const commonEn: ContentSiteCommonMessages = {
     switchUiLanguageCurrent: "Switch UI language. Current language"
   },
   disclaimer:
-    "The game data displayed on this site is for research and educational purposes only. All copyrights belong to their respective owners, including but not limited to SEGA, Colorful Palette, and Crypton Future Media. This site is a fan-made research database and has no official affiliation with SEGA or Colorful Palette.",
+    "All game content and assets featured on this site remain the property of their respective copyright holders, including but not limited to SEGA, Colorful Palette, and Crypton Future Media. This is an independent, fan-made research database with no official affiliation with any of the above. Content is provided for informational and educational purposes only.",
   pageTitle: {
     eventPrefix: "Event"
   },

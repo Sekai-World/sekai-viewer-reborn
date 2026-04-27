@@ -94,7 +94,7 @@ const commonZhTw: ContentSiteCommonMessages = {
     switchUiLanguageCurrent: "切換介面語言。目前語言"
   },
   disclaimer:
-    "本站展示的造型資料僅供研究學習用途。所有版權歸其合法所有者所有，包括但不限於 Sega、Colorful Palette 和 Crypton Future Media。本網站是一個僅用於研究目的的同人資料庫，與 Sega 或 Colorful Palette 沒有任何官方關係。",
+    "本站展示的所有造型內容及素材均属其各自版權方所有，包括但不限於 Sega、Colorful Palette 及 Crypton Future Media。本站為完全獨立經營的同人資料庫，與上述任何公司均無官方關聯，所有內容僅供資訊參考與研究學習之用。",
   pageTitle: {
     eventPrefix: "活動"
   },

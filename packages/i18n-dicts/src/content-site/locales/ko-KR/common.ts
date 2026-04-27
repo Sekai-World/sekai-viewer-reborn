@@ -94,7 +94,7 @@ const commonKoKr: ContentSiteCommonMessages = {
     switchUiLanguageCurrent: "UI 언어 변경. 현재 언어"
   },
   disclaimer:
-    "이 사이트에 표시된 게임 데이터는 연구 및 교육 목적으로만 사용됩니다. 모든 저작권은 Sega, Colorful Palette, Crypton Future Media를 포함하지만 이에 국한되지 않는 합법적 소유자에게 있습니다. 이 사이트는 연구 목적으로만 제작된 팬메이드 데이터베이스이며 Sega 또는 Colorful Palette와 공식적인 관련이 없습니다.",
+    "이 사이트에 게시된 모든 게임 콘텐츠 및 소재의 저작권은 Sega, Colorful Palette, Crypton Future Media를 포함한(이에 한정되지 않는) 각 권리자에게 있습니다. 이 사이트는 위 회사들과 일체의 공식 관계가 없는 독립적인 팬메이드 데이터베이스로, 모든 콘텐츠는 정보 제공 및 연구·학습 목적으로만 제공됩니다.",
   pageTitle: {
     eventPrefix: "이벤트"
   },
