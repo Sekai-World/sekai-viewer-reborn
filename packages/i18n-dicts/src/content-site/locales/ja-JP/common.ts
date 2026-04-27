@@ -71,6 +71,7 @@ const commonJaJp: ContentSiteCommonMessages = {
     currentLanguage: "現在"
   },
   navigation: {
+    sidebarTitle: "ナビゲーション",
     database: "データベース",
     cards: "カード",
     songs: "楽曲",
@@ -92,6 +93,8 @@ const commonJaJp: ContentSiteCommonMessages = {
     switchTheme: "テーマモードを切り替え",
     switchUiLanguageCurrent: "UI言語を切り替え。現在の言語"
   },
+  disclaimer:
+    "当サイトに掲載されているゲームデータは研究・学習目的のみで利用されています。すべての著作権は Sega、Colorful Palette、Crypton Future Media を含む（ただしこれらに限定されない）正当な権利者に帰属します。当サイトは研究目的のみのファンメイドデータベースであり、Sega または Colorful Palette との公式な関係はありません。",
   pageTitle: {
     eventPrefix: "イベント"
   },
@@ -99,6 +102,11 @@ const commonJaJp: ContentSiteCommonMessages = {
     light: "ライトモード",
     dark: "ダークモード",
     auto: "自動"
+  },
+  themeName: {
+    default: "デフォルト",
+    sakura: "さくら",
+    mint: "ミント"
   }
 };
 

@@ -21,7 +21,7 @@
     navTitle,
     navBadge,
     navActions,
-    sidebarLabel = "导航",
+    sidebarLabel = "Navigation",
     sidebarItems = [],
     showTitle = true,
     title = "Sekai Viewer",
@@ -37,7 +37,7 @@
 
   <div class="drawer-content bg-base-200">
     <header class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2 backdrop-blur-sm backdrop-saturate-150">
-      <div class="navbar relative z-10 min-h-14 px-2">
+      <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-[96rem] px-2">
         <div class="navbar-start">
           <label for={drawerId} class="btn btn-ghost btn-circle" aria-label="Open sidebar">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

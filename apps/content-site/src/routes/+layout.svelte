@@ -47,6 +47,7 @@
   let localeMenu: HTMLDetailsElement | null = null;
 
   let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
+  let sidebarLabel = $state(getContentSiteCommonText(initialLocale, "navigation.sidebarTitle"));
   let databaseLabel = $state(getContentSiteCommonText(initialLocale, "navigation.database"));
   let cardsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.cards"));
   let songsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.songs"));
@@ -69,6 +70,11 @@
   let switchUiLanguageCurrentLabel = $state(
     getContentSiteCommonText(initialLocale, "aria.switchUiLanguageCurrent")
   );
+  let themeNameLabels = $state<Record<ThemeName, string>>({
+    default: getContentSiteCommonText(initialLocale, "themeName.default"),
+    sakura: getContentSiteCommonText(initialLocale, "themeName.sakura"),
+    mint: getContentSiteCommonText(initialLocale, "themeName.mint")
+  });
   let showBackToTop = $state(false);
   let backToTopAnimationFrame = 0;
 
@@ -128,6 +134,7 @@
     const resolvedLocale = await setI18nLocale(localeValue);
 
     homeLabel = tCommon(resolvedLocale, "home");
+    sidebarLabel = tCommon(resolvedLocale, "navigation.sidebarTitle");
     databaseLabel = tCommon(resolvedLocale, "navigation.database");
     cardsLabel = tCommon(resolvedLocale, "navigation.cards");
     songsLabel = tCommon(resolvedLocale, "navigation.songs");
@@ -142,6 +149,11 @@
     loadingLanguagePackLabel = tCommon(resolvedLocale, "loadingLanguagePack");
     switchThemeAriaLabel = tCommon(resolvedLocale, "aria.switchTheme");
     switchUiLanguageCurrentLabel = tCommon(resolvedLocale, "aria.switchUiLanguageCurrent");
+    themeNameLabels = {
+      default: tCommon(resolvedLocale, "themeName.default"),
+      sakura: tCommon(resolvedLocale, "themeName.sakura"),
+      mint: tCommon(resolvedLocale, "themeName.mint")
+    };
   };
 
   const getSystemTheme = (): ResolvedTheme =>
@@ -203,15 +215,7 @@
   };
 
   const getThemeNameLabel = (themeNameValue: ThemeName): string => {
-    if (themeNameValue === "sakura") {
-      return "Sakura";
-    }
-
-    if (themeNameValue === "mint") {
-      return "Mint";
-    }
-
-    return "Default";
+    return themeNameLabels[themeNameValue];
   };
 
   const handleLocaleMenuToggle = (event: Event): void => {
@@ -328,6 +332,7 @@
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
+  sidebarLabel={sidebarLabel}
   sidebarItems={sidebarItems}
   showTitle={showPageTitle}
 >
@@ -347,7 +352,7 @@
               {themePaletteLabel}
             </span>
             <div class="grid gap-1">
-              {#each themeNameOptions as themeNameOption}
+              {#each themeNameOptions as themeNameOption (themeNameOption)}
                 <button
                   type="button"
                   class={`btn btn-sm justify-start rounded-lg border-base-content/15 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
@@ -368,7 +373,7 @@
               {themeControlLabel}
             </span>
             <div class="grid gap-1">
-              {#each ["auto", "light", "dark"] as themeOption}
+              {#each ["auto", "light", "dark"] as themeOption (themeOption)}
                 <button
                   type="button"
                   class={`btn btn-sm justify-start rounded-lg border-base-content/15 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
@@ -437,7 +442,7 @@
           <li class="menu-title px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
             {themePaletteLabel}
           </li>
-          {#each themeNameOptions as themeNameOption}
+          {#each themeNameOptions as themeNameOption (themeNameOption)}
             <li>
               <button
                 type="button"
@@ -457,7 +462,7 @@
           <li class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
             {themeControlLabel}
           </li>
-          {#each ["auto", "light", "dark"] as themeOption}
+          {#each ["auto", "light", "dark"] as themeOption (themeOption)}
             <li>
               <button
                 type="button"

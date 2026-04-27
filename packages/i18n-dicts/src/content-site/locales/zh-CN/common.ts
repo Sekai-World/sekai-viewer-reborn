@@ -71,6 +71,7 @@ const commonZhCn: ContentSiteCommonMessages = {
     currentLanguage: "当前"
   },
   navigation: {
+    sidebarTitle: "导航",
     database: "数据库",
     cards: "卡牌",
     songs: "歌曲",
@@ -92,6 +93,8 @@ const commonZhCn: ContentSiteCommonMessages = {
     switchTheme: "切换主题模式",
     switchUiLanguageCurrent: "切换界面语言。当前语言"
   },
+  disclaimer:
+    "本站展示的游戏资料仅供研究学习用途。所有版权归其合法所有者所有，包括但不限于 Sega、Colorful Palette 和 Crypton Future Media。本网站是一个仅用于研究目的的同人数据库，与 Sega 或 Colorful Palette 没有任何官方关系。",
   pageTitle: {
     eventPrefix: "活动"
   },
@@ -99,6 +102,11 @@ const commonZhCn: ContentSiteCommonMessages = {
     light: "明亮模式",
     dark: "黑暗模式",
     auto: "自动"
+  },
+  themeName: {
+    default: "默认",
+    sakura: "樱花",
+    mint: "薄荷"
   }
 };
 
