@@ -94,7 +94,7 @@ const commonJaJp: ContentSiteCommonMessages = {
     switchUiLanguageCurrent: "UI言語を切り替え。現在の言語"
   },
   disclaimer:
-    "当サイトに掲載されているゲームデータは研究・学習目的のみで利用されています。すべての著作権は Sega、Colorful Palette、Crypton Future Media を含む（ただしこれらに限定されない）正当な権利者に帰属します。当サイトは研究目的のみのファンメイドデータベースであり、Sega または Colorful Palette との公式な関係はありません。",
+    "当サイトに撃示されているゲームコンテンツおよび素材の著作権は、Sega、Colorful Palette、Crypton Future Mediaを含む（ただしこれらに限定されない）各権利者に帰属します。当サイトは上記各社との公式な関係を一切持たないインディーペンデントなファンメイドデータベースであり、情報提供および研究・学習目的のみで運営しています。",
   pageTitle: {
     eventPrefix: "イベント"
   },
