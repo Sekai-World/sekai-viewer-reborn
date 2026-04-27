@@ -19,6 +19,7 @@
   };
 
   type RegionVersions = {
+    appVersion: string | null;
     dataVersion: string | null;
     assetVersion: string | null;
     cdnVersion: string | null;
@@ -103,19 +104,4 @@
     {uiLocale}
     class="mt-1"
   />
-
-  {#if displayDataVersion || displayAssetVersion}
-    <div class="mt-3 flex flex-wrap gap-2">
-      {#if displayDataVersion}
-        <span class="badge badge-outline border-base-content/15 px-2.5 py-2 font-mono text-[0.68rem] uppercase tracking-[0.12em]">
-          DATA {displayDataVersion}
-        </span>
-      {/if}
-      {#if displayAssetVersion}
-        <span class="badge badge-outline border-base-content/15 px-2.5 py-2 font-mono text-[0.68rem] uppercase tracking-[0.12em]">
-          ASSET {displayAssetVersion}
-        </span>
-      {/if}
-    </div>
-  {/if}
 </EventCardFrame>

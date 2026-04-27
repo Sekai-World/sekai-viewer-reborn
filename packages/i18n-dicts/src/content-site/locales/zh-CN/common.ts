@@ -107,6 +107,12 @@ const commonZhCn: ContentSiteCommonMessages = {
     default: "默认",
     sakura: "樱花",
     mint: "薄荷"
+  },
+  versionInfo: {
+    title: "版本信息",
+    appLabel: "APP",
+    dataLabel: "DATA",
+    assetLabel: "ASSET"
   }
 };
 

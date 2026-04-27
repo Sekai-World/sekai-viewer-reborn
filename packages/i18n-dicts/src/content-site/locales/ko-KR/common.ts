@@ -107,6 +107,12 @@ const commonKoKr: ContentSiteCommonMessages = {
     default: "기본",
     sakura: "사쿠라",
     mint: "민트"
+  },
+  versionInfo: {
+    title: "버전 정보",
+    appLabel: "APP",
+    dataLabel: "DATA",
+    assetLabel: "ASSET"
   }
 };
 

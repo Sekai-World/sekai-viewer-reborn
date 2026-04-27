@@ -17,6 +17,10 @@
   let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
   let disclaimerText = $state(getContentSiteCommonText(initialLocale, "disclaimer"));
   let currentEventLabel = $state(getContentSiteCommonText(initialLocale, "eventListCurrentEvent"));
+  let versionInfoTitle = $state(getContentSiteCommonText(initialLocale, "versionInfo.title"));
+  let versionAppLabel = $state(getContentSiteCommonText(initialLocale, "versionInfo.appLabel"));
+  let versionDataLabel = $state(getContentSiteCommonText(initialLocale, "versionInfo.dataLabel"));
+  let versionAssetLabel = $state(getContentSiteCommonText(initialLocale, "versionInfo.assetLabel"));
   const homeCardItemClass =
     "w-full shrink-0 md:basis-[calc((100%-1rem)/2)] lg:basis-[calc((100%-2rem)/3)] 2xl:basis-[calc((100%-4rem)/5)]";
 
@@ -31,6 +35,10 @@
     noEventLabel = tCommon(locale, "noCurrentEventData");
     disclaimerText = tCommon(locale, "disclaimer");
     currentEventLabel = tCommon(locale, "eventListCurrentEvent");
+    versionInfoTitle = tCommon(locale, "versionInfo.title");
+    versionAppLabel = tCommon(locale, "versionInfo.appLabel");
+    versionDataLabel = tCommon(locale, "versionInfo.dataLabel");
+    versionAssetLabel = tCommon(locale, "versionInfo.assetLabel");
   };
 
   const isNuverseRegion = (region: SupportedRegion): boolean =>
@@ -115,25 +123,45 @@
               {:else}
                 <p class="text-sm opacity-70">{noEventLabel}</p>
               {/if}
-
-              {#if getDisplayDataVersion(card.versions) || getDisplayAssetVersion(card.region, card.versions)}
-                <div class="mt-3 flex flex-wrap gap-2">
-                  {#if getDisplayDataVersion(card.versions)}
-                    <span class="badge badge-outline border-base-content/15 px-2.5 py-2 font-mono text-[0.68rem] uppercase tracking-[0.12em]">
-                      DATA {getDisplayDataVersion(card.versions)}
-                    </span>
-                  {/if}
-                  {#if getDisplayAssetVersion(card.region, card.versions)}
-                    <span class="badge badge-outline border-base-content/15 px-2.5 py-2 font-mono text-[0.68rem] uppercase tracking-[0.12em]">
-                      ASSET {getDisplayAssetVersion(card.region, card.versions)}
-                    </span>
-                  {/if}
-                </div>
-              {/if}
             </div>
           </article>
         </div>
       {/if}
     {/await}
   {/each}
+</section>
+
+<section class="mt-10">
+  <h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">{versionInfoTitle}</h2>
+  <div class="overflow-x-auto rounded-xl border border-base-content/10">
+    <table class="table table-sm w-full">
+      <thead>
+        <tr class="text-xs uppercase tracking-wider text-base-content/50">
+          <th></th>
+          <th>{versionAppLabel}</th>
+          <th>{versionDataLabel}</th>
+          <th>{versionAssetLabel}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each supportedRegions as region, index (region)}
+          {#await data.cards[index]}
+            <tr>
+              <td><span class="badge badge-sm homepage-region-badge font-semibold">{region.toUpperCase()}</span></td>
+              <td><span class="inline-block h-3 w-16 animate-pulse rounded bg-base-300"></span></td>
+              <td><span class="inline-block h-3 w-20 animate-pulse rounded bg-base-300"></span></td>
+              <td><span class="inline-block h-3 w-20 animate-pulse rounded bg-base-300"></span></td>
+            </tr>
+          {:then card}
+            <tr>
+              <td><span class="badge badge-sm homepage-region-badge font-semibold">{card.region.toUpperCase()}</span></td>
+              <td class="font-mono text-xs">{card.versions?.appVersion ?? "—"}</td>
+              <td class="font-mono text-xs">{getDisplayDataVersion(card.versions) ?? "—"}</td>
+              <td class="font-mono text-xs">{getDisplayAssetVersion(card.region, card.versions) ?? "—"}</td>
+            </tr>
+          {/await}
+        {/each}
+      </tbody>
+    </table>
+  </div>
 </section>

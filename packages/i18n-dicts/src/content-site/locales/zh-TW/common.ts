@@ -105,7 +105,13 @@ const commonZhTw: ContentSiteCommonMessages = {
   themeName: {
     default: "預設",
     sakura: "櫻花",
-    mint: "薄荷"  }
+    mint: "薄荷"  },
+  versionInfo: {
+    title: "版本資訊",
+    appLabel: "APP",
+    dataLabel: "DATA",
+    assetLabel: "ASSET"
+  }
 };
 
 export default commonZhTw;

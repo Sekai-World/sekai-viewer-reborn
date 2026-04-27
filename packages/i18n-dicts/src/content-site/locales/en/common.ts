@@ -107,6 +107,12 @@ const commonEn: ContentSiteCommonMessages = {
     default: "Default",
     sakura: "Sakura",
     mint: "Mint"
+  },
+  versionInfo: {
+    title: "Version Info",
+    appLabel: "APP",
+    dataLabel: "DATA",
+    assetLabel: "ASSET"
   }
 };
 

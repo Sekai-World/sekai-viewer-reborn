@@ -107,6 +107,12 @@ const commonJaJp: ContentSiteCommonMessages = {
     default: "デフォルト",
     sakura: "さくら",
     mint: "ミント"
+  },
+  versionInfo: {
+    title: "バージョン情報",
+    appLabel: "APP",
+    dataLabel: "DATA",
+    assetLabel: "ASSET"
   }
 };
 

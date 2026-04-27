@@ -18,6 +18,7 @@ type EventSummary = {
 };
 
 type RegionVersions = {
+  appVersion: string | null;
   dataVersion: string | null;
   assetVersion: string | null;
   cdnVersion: string | null;
@@ -121,6 +122,7 @@ const parseRegionVersions = (payload: unknown): RegionVersions | null => {
   }
 
   return {
+    appVersion: pickFirstString(root, ["appVersion", "app_version"]),
     dataVersion: pickFirstString(root, ["dataVersion", "data_version"]),
     assetVersion: pickFirstString(root, ["assetVersion", "asset_version"]),
     cdnVersion: pickFirstStringLike(root, ["cdnVersion", "cdn_version"])
