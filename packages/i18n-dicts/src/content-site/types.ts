@@ -69,6 +69,7 @@ export type ContentSiteCommonMessages = {
     currentLanguage: string;
   };
   navigation: {
+    sidebarTitle: string;
     database: string;
     cards: string;
     songs: string;
@@ -90,6 +91,7 @@ export type ContentSiteCommonMessages = {
     switchTheme: string;
     switchUiLanguageCurrent: string;
   };
+  disclaimer: string;
   pageTitle: {
     eventPrefix: string;
   };
@@ -97,6 +99,11 @@ export type ContentSiteCommonMessages = {
     light: string;
     dark: string;
     auto: string;
+  };
+  themeName: {
+    default: string;
+    sakura: string;
+    mint: string;
   };
 };
 

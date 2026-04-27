@@ -71,6 +71,7 @@ const commonEn: ContentSiteCommonMessages = {
     currentLanguage: "Current"
   },
   navigation: {
+    sidebarTitle: "Navigation",
     database: "Database",
     cards: "Cards",
     songs: "Songs",
@@ -92,6 +93,8 @@ const commonEn: ContentSiteCommonMessages = {
     switchTheme: "Switch theme mode",
     switchUiLanguageCurrent: "Switch UI language. Current language"
   },
+  disclaimer:
+    "The game data displayed on this site is for research and educational purposes only. All copyrights belong to their respective owners, including but not limited to SEGA, Colorful Palette, and Crypton Future Media. This site is a fan-made research database and has no official affiliation with SEGA or Colorful Palette.",
   pageTitle: {
     eventPrefix: "Event"
   },
@@ -99,6 +102,11 @@ const commonEn: ContentSiteCommonMessages = {
     light: "Light Mode",
     dark: "Dark Mode",
     auto: "Auto"
+  },
+  themeName: {
+    default: "Default",
+    sakura: "Sakura",
+    mint: "Mint"
   }
 };
 

@@ -71,6 +71,7 @@ const commonKoKr: ContentSiteCommonMessages = {
     currentLanguage: "현재"
   },
   navigation: {
+    sidebarTitle: "탐색",
     database: "데이터베이스",
     cards: "카드",
     songs: "곡",
@@ -92,6 +93,8 @@ const commonKoKr: ContentSiteCommonMessages = {
     switchTheme: "테마 모드 전환",
     switchUiLanguageCurrent: "UI 언어 변경. 현재 언어"
   },
+  disclaimer:
+    "이 사이트에 표시된 게임 데이터는 연구 및 교육 목적으로만 사용됩니다. 모든 저작권은 Sega, Colorful Palette, Crypton Future Media를 포함하지만 이에 국한되지 않는 합법적 소유자에게 있습니다. 이 사이트는 연구 목적으로만 제작된 팬메이드 데이터베이스이며 Sega 또는 Colorful Palette와 공식적인 관련이 없습니다.",
   pageTitle: {
     eventPrefix: "이벤트"
   },
@@ -99,6 +102,11 @@ const commonKoKr: ContentSiteCommonMessages = {
     light: "라이트 모드",
     dark: "다크 모드",
     auto: "자동"
+  },
+  themeName: {
+    default: "기본",
+    sakura: "사쿠라",
+    mint: "민트"
   }
 };
 

@@ -71,6 +71,7 @@ const commonZhTw: ContentSiteCommonMessages = {
     currentLanguage: "目前"
   },
   navigation: {
+    sidebarTitle: "導航",
     database: "資料庫",
     cards: "卡牌",
     songs: "歌曲",
@@ -92,14 +93,19 @@ const commonZhTw: ContentSiteCommonMessages = {
     switchTheme: "切換主題模式",
     switchUiLanguageCurrent: "切換介面語言。目前語言"
   },
+  disclaimer:
+    "本站展示的造型資料僅供研究學習用途。所有版權歸其合法所有者所有，包括但不限於 Sega、Colorful Palette 和 Crypton Future Media。本網站是一個僅用於研究目的的同人資料庫，與 Sega 或 Colorful Palette 沒有任何官方關係。",
   pageTitle: {
     eventPrefix: "活動"
   },
   themeMode: {
     light: "明亮模式",
     dark: "黑暗模式",
-    auto: "自動"
-  }
+    auto: "自動"  },
+  themeName: {
+    default: "預設",
+    sakura: "櫻花",
+    mint: "薄荷"  }
 };
 
 export default commonZhTw;
