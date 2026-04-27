@@ -84,7 +84,7 @@
       </div>
     {/if}
 
-    <div class="absolute right-3 top-3">
+    <div class="absolute right-3 top-3 max-md:hidden">
       <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
         {region.toUpperCase()}
       </span>

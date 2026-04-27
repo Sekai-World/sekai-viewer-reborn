@@ -414,6 +414,7 @@
                     disabled={$isLocaleLoading}
                     onclick={async () => {
                       await setUiLocale(localeOption.code);
+                      if (mobileSettingsMenu) mobileSettingsMenu.open = true;
                     }}
                   >
                     <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
