@@ -105,6 +105,12 @@ export type ContentSiteCommonMessages = {
     sakura: string;
     mint: string;
   };
+  versionInfo: {
+    title: string;
+    appLabel: string;
+    dataLabel: string;
+    assetLabel: string;
+  };
 };
 
 export type ContentSiteServerMessageKey =
