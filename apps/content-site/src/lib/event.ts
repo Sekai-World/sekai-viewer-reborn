@@ -1,4 +1,4 @@
-import { getContentSiteCommonText } from "@platform/i18n-dicts";
+import { getContentSiteCommonText } from "$lib/i18n-data";
 import { normalizeUiLocale } from "$lib/region";
 
 const eventTypeTextKeyMap = {

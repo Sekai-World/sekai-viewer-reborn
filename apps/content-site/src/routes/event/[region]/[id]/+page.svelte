@@ -2,7 +2,7 @@
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
-  import { getContentSiteCommonText, type SupportedRegion } from "@platform/i18n-dicts";
+  import { getContentSiteCommonText, type SupportedRegion } from "$lib/i18n-data";
   import { AudioPlayer, ImagePreviewDialog } from "@platform/ui-shell";
   import {
     getEventBackgroundAssetURL,

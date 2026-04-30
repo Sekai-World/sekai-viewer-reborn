@@ -4,7 +4,7 @@ import {
   regionLabels,
   supportedRegions,
   type SupportedRegion
-} from "@platform/i18n-dicts";
+} from "$lib/i18n-data";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
 import type { PageServerLoad } from "./$types";

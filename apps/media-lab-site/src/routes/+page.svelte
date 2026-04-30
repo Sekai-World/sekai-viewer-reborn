@@ -4,11 +4,16 @@
     ViewerShell,
     type SidebarItem
   } from "@platform/ui-shell";
-  import {
-    regionLabels,
-    supportedRegions,
-    type SupportedRegion
-  } from "@platform/i18n-dicts";
+
+  const supportedRegions = ["jp", "en", "tw", "kr", "cn"] as const;
+  type SupportedRegion = (typeof supportedRegions)[number];
+  const regionLabels: Record<SupportedRegion, string> = {
+    jp: "JP",
+    en: "EN",
+    tw: "TW",
+    kr: "KR",
+    cn: "CN"
+  };
 
   let primaryRegion = $state<SupportedRegion>(supportedRegions[0]);
   let secondaryRegion = $state<SupportedRegion>(supportedRegions[1] ?? supportedRegions[0]);

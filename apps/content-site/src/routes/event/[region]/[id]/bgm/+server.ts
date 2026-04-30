@@ -1,5 +1,5 @@
 import { getEventsByRegionById } from "@platform/sekai-master-api-sdk";
-import type { SupportedRegion } from "@platform/i18n-dicts";
+import type { SupportedRegion } from "$lib/i18n-data";
 import { error, type RequestEvent, type RequestHandler } from "@sveltejs/kit";
 import { getEventBgmAssetURL, getEventLogoAssetURL } from "$lib/assets";
 import { normalizeRegion } from "$lib/region";

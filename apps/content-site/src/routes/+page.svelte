@@ -4,7 +4,7 @@
     getContentSiteCommonText,
     supportedRegions,
     type SupportedRegion
-  } from "@platform/i18n-dicts";
+  } from "$lib/i18n-data";
   import CurrentEventCard from "$lib/components/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/RegionBadgeSwitch.svelte";
   import { setI18nLocale, tCommon } from "$lib/i18n";

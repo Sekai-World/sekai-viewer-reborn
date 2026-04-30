@@ -9,7 +9,7 @@ import {
   regionLabels,
   supportedRegions,
   type SupportedRegion
-} from "@platform/i18n-dicts";
+} from "$lib/i18n-data";
 import {
   normalizeRegion,
   normalizeUiLocale,

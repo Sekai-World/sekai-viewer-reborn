@@ -1,5 +1,5 @@
 import { PUBLIC_REMOTE_ASSET_BASE_URL } from "$env/static/public";
-import type { SupportedRegion } from "@platform/i18n-dicts";
+import type { SupportedRegion } from "$lib/i18n-data";
 
 const trimTrailingSlash = (value: string): string => {
   const trimmed = value.trim();

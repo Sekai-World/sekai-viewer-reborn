@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import type { SupportedRegion } from "@platform/i18n-dicts";
+  import type { SupportedRegion } from "$lib/i18n-data";
   import { getEventBannerAssetURL } from "$lib/assets";
   import EventCardFrame from "$lib/components/EventCardFrame.svelte";
   import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";

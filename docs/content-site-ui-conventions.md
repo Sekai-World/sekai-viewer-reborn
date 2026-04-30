@@ -121,7 +121,7 @@ Rules:
 - Use a section item for non-clickable group labels.
 - Disabled items should still use the same structural layout as enabled items for alignment consistency.
 - Sidebar links should close the drawer when clicked.
-- `content-site` sidebar labels must come from `packages/i18n-dicts`.
+- `content-site` sidebar labels must come from `apps/content-site/src/lib/i18n-data`.
 
 Current `content-site` sidebar groups:
 
@@ -145,7 +145,7 @@ Current helper:
 Rules:
 
 - Do not hardcode translated event type strings in page components.
-- Add user-facing navigation labels under `packages/i18n-dicts/src/content-site/locales/*/common.ts`.
+- Add user-facing navigation labels under `apps/content-site/src/lib/i18n-data/content-site/locales/*/common.ts`.
 
 ## Practical Modification Strategy
 
