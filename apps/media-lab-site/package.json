@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@platform/auth-client": "workspace:*",
-    "@platform/i18n-dicts": "workspace:*",
     "@platform/sekai-master-api-sdk": "workspace:*",
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*"

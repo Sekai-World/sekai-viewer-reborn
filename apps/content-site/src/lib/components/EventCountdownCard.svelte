@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { getContentSiteCommonText } from "@platform/i18n-dicts";
+  import { getContentSiteCommonText } from "$lib/i18n-data";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { DEFAULT_UI_LOCALE } from "$lib/region";
   import { onMount } from "svelte";

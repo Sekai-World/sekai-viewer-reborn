@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { resolve } from "$app/paths";
-  import { getContentSiteCommonText, regionLabels, supportedRegions } from "@platform/i18n-dicts";
+  import { getContentSiteCommonText, regionLabels, supportedRegions } from "$lib/i18n-data";
   import EventListCard from "$lib/components/EventListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/RegionBadgeSwitch.svelte";

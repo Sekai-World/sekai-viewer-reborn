@@ -9,7 +9,7 @@
     supportedUiLocales,
     uiLocaleNameByCode,
     type SupportedUiLocale
-  } from "@platform/i18n-dicts";
+  } from "$lib/i18n-data";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import { isLocaleLoading, getThemeModeLabel, setI18nLocale, tCommon } from "$lib/i18n";

@@ -13,7 +13,6 @@ Guidance for coding agents working in this workspace.
   - `account-site` (`@apps/account-site`)
 - Shared packages live in `packages/*`:
   - `auth-client` (`@platform/auth-client`)
-  - `i18n-dicts` (`@platform/i18n-dicts`)
   - `sekai-api-sdk` (`@platform/sekai-api-sdk`)
   - `sekai-master-api-sdk` (`@platform/sekai-master-api-sdk`)
   - `ui-shell` (`@platform/ui-shell`)
@@ -36,7 +35,7 @@ Guidance for coding agents working in this workspace.
   - shared packages: `@platform/*`
 - Use ESM and strict TypeScript patterns already present in repo.
 - Assume the repo may already contain generated `dist/` output and `.turbo/` artifacts; do not hand-edit generated build output unless explicitly requested.
-- Match the CI/runtime toolchain already used in the repo: Node.js 24 and `pnpm@10.6.0`.
+- Match the CI/runtime toolchain already used in the repo: Node.js 24 and `pnpm@11.0.2`.
 
 ## Root Commands
 
@@ -117,7 +116,6 @@ Preview ports:
 ## Shared Package Notes
 
 - `@platform/auth-client`: shared auth/OIDC helpers.
-- `@platform/i18n-dicts`: shared region, locale, and site dictionary data.
 - `@platform/sekai-api-sdk`: generated API SDK plus generator script for `sekai-api`.
 - `@platform/sekai-master-api-sdk`: generated API SDK plus generator script.
 - `@platform/ui-shell`: shared Svelte shell components exported directly from `src`.
@@ -152,16 +150,16 @@ When changing shared packages:
   - `apps/content-site/src/lib/components/PageHeader.svelte`
   - `apps/content-site/src/lib/components/RegionBadgeSwitch.svelte`
 - Shared non-component style constants should live outside `src/lib/components`, for example under `apps/content-site/src/lib/styles`.
-- Sidebar structure for `content-site` is assembled in `apps/content-site/src/routes/+layout.svelte` and rendered by `packages/ui-shell/src/viewer-shell.svelte`; keep sidebar labels localized through `packages/i18n-dicts`.
+- Sidebar structure for `content-site` is assembled in `apps/content-site/src/routes/+layout.svelte` and rendered by `packages/ui-shell/src/viewer-shell.svelte`; keep sidebar labels localized through `apps/content-site/src/lib/i18n-data`.
 
 ## `content-site` I18n Conventions
 
-- Keep `content-site` user-facing strings centralized in `packages/i18n-dicts`.
+- Keep `content-site` user-facing strings centralized in `apps/content-site/src/lib/i18n-data`.
 - Current dictionaries live under:
-  - `packages/i18n-dicts/src/content-site/locales/<locale>/common.ts`
-  - `packages/i18n-dicts/src/content-site/locales/<locale>/server.ts`
+  - `apps/content-site/src/lib/i18n-data/content-site/locales/<locale>/common.ts`
+  - `apps/content-site/src/lib/i18n-data/content-site/locales/<locale>/server.ts`
 - Dictionary entrypoints and helpers live in:
-  - `packages/i18n-dicts/src/content-site/index.ts`
+  - `apps/content-site/src/lib/i18n-data/content-site/index.ts`
 - Reuse existing helpers such as `getContentSiteCommonText` and `getContentSiteServerText` instead of reimplementing ad hoc lookup logic.
 - Avoid introducing new hardcoded user-facing strings directly in `apps/content-site` when they should be localized.
 - `content-site` currently also uses `tCommon` and `getThemeModeLabel` from `apps/content-site/src/lib/i18n.ts` to bridge runtime locale switching with shared dictionaries.

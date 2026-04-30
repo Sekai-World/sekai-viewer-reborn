@@ -1,30 +1,37 @@
 import { browser } from "$app/environment";
 import { PUBLIC_SEKAI_I18N_BASE_URL } from "$env/static/public";
 import {
-  contentSiteCommonByRepoLocale,
   getContentSiteCommonText,
   repoLocaleByUiLocale,
+  supportedUiLocales,
   themeModeLabelsByLocale,
   type SupportedUiLocale
-} from "@platform/i18n-dicts";
-import i18next from "i18next";
-import HttpBackend from "i18next-http-backend";
-import { derived, writable } from "svelte/store";
+} from "$lib/i18n-data";
+import { _, init, isLoading, locale as svelteLocale, register, waitLocale } from "svelte-i18n";
+import { derived, get, writable } from "svelte/store";
 import { normalizeUiLocale } from "$lib/region";
 
-const COMMON_NAMESPACE = "common";
+const toRepoLocale = (uiLocale: SupportedUiLocale): string => repoLocaleByUiLocale[uiLocale] ?? "en";
 
-let initPromise: Promise<void> | null = null;
-const localeLoadingCount = writable(0);
-
-export const isLocaleLoading = derived(localeLoadingCount, (count) => count > 0);
-
-const toRepoLocale = (locale: SupportedUiLocale): string => repoLocaleByUiLocale[locale] ?? "en";
-
-const applyExtraCommonResources = (): void => {
-  for (const [locale, resources] of Object.entries(contentSiteCommonByRepoLocale)) {
-    i18next.addResourceBundle(locale, COMMON_NAMESPACE, resources, true, true);
+/**
+ * Converts flat JSON (dot-separated keys) to a nested object.
+ * e.g. { "a.b": "c" } -> { a: { b: "c" } }
+ * Required because Weblate outputs flat JSON and svelte-i18n does dot-path lookups.
+ */
+const unflattenObject = (flat: Record<string, string>): Record<string, unknown> => {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(flat)) {
+    const parts = key.split(".");
+    let current: Record<string, unknown> = result;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (typeof current[parts[i]] !== "object" || current[parts[i]] === null) {
+        current[parts[i]] = {};
+      }
+      current = current[parts[i]] as Record<string, unknown>;
+    }
+    current[parts[parts.length - 1]] = value;
   }
+  return result;
 };
 
 const getI18nBaseUrl = (): string => {
@@ -32,67 +39,77 @@ const getI18nBaseUrl = (): string => {
   if (!value) {
     throw new Error("Missing required environment variable: PUBLIC_SEKAI_I18N_BASE_URL");
   }
-
   return value.replace(/\/+$/, "");
 };
 
-const ensureInitialized = async (locale: SupportedUiLocale): Promise<void> => {
-  if (!browser) {
-    return;
+let initialized = false;
+
+// Track explicit locale-switch loading separately from svelte-i18n's internal isLoading.
+// This lets the UI show a spinner only for user-triggered locale changes.
+const localeLoadingCount = writable(0);
+export const isLocaleLoading = derived(
+  [localeLoadingCount, isLoading],
+  ([count, loading]) => count > 0 || loading
+);
+
+const setupI18n = (initialUiLocale: SupportedUiLocale): void => {
+  if (initialized) return;
+  initialized = true;
+
+  const baseUrl = getI18nBaseUrl();
+  const seenRepoLocales = new Set<string>();
+
+  for (const uiLocale of supportedUiLocales) {
+    const repoLocale = toRepoLocale(uiLocale);
+    if (seenRepoLocales.has(repoLocale)) continue;
+    seenRepoLocales.add(repoLocale);
+
+    register(repoLocale, () =>
+      fetch(`${baseUrl}/${repoLocale}/common.json`)
+        .then((r) => {
+          if (!r.ok) throw new Error(`${r.status}`);
+          return r.json();
+        })
+        .then((flat: Record<string, string>) => unflattenObject(flat))
+        .catch(() => ({})) // on CDN failure, bundled TS fallback is used via tCommon
+    );
   }
 
-  if (!initPromise) {
-    initPromise = i18next
-      .use(HttpBackend)
-      .init({
-        lng: toRepoLocale(locale),
-        fallbackLng: "en",
-        defaultNS: COMMON_NAMESPACE,
-        ns: [COMMON_NAMESPACE],
-        interpolation: { escapeValue: false },
-        returnNull: false,
-        backend: {
-          loadPath: `${getI18nBaseUrl()}/{{lng}}/{{ns}}.json`
-        }
-      })
-      .then(() => {
-        applyExtraCommonResources();
-      });
-  }
-
-  await initPromise;
+  init({
+    fallbackLocale: "en",
+    initialLocale: toRepoLocale(initialUiLocale)
+  });
 };
 
 export const setI18nLocale = async (localeValue: string): Promise<SupportedUiLocale> => {
-  const locale = normalizeUiLocale(localeValue);
-  if (!browser) {
-    return locale;
-  }
+  const uiLocale = normalizeUiLocale(localeValue);
+  if (!browser) return uiLocale;
 
-  localeLoadingCount.update((count) => count + 1);
+  const repoLocale = toRepoLocale(uiLocale);
+  setupI18n(uiLocale);
+
+  localeLoadingCount.update((n) => n + 1);
   try {
-    await ensureInitialized(locale);
-
-    const repoLocale = toRepoLocale(locale);
-    if (i18next.language !== repoLocale) {
-      await i18next.changeLanguage(repoLocale);
+    if (get(svelteLocale) !== repoLocale) {
+      svelteLocale.set(repoLocale);
     }
+    await waitLocale(repoLocale);
   } finally {
-    localeLoadingCount.update((count) => Math.max(0, count - 1));
+    localeLoadingCount.update((n) => Math.max(0, n - 1));
   }
 
-  return locale;
+  return uiLocale;
 };
 
 export const tCommon = (localeValue: string, key: string, fallback?: string): string => {
-  const locale = normalizeUiLocale(localeValue);
-  const fallbackValue = getContentSiteCommonText(locale, key, fallback ?? key);
+  const uiLocale = normalizeUiLocale(localeValue);
+  // Bundled TS translation is always the fallback (works on SSR + CDN failure)
+  const fallbackValue = getContentSiteCommonText(uiLocale, key, fallback ?? key);
 
-  if (!browser || !i18next.isInitialized) {
-    return fallbackValue;
-  }
+  if (!browser || !initialized) return fallbackValue;
 
-  const value = i18next.t(key, { ns: COMMON_NAMESPACE, defaultValue: fallbackValue });
+  const translateFn = get(_);
+  const value = translateFn(key, { default: fallbackValue });
   return typeof value === "string" ? value : fallbackValue;
 };
 

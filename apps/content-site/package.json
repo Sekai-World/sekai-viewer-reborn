@@ -13,12 +13,10 @@
   "dependencies": {
     "@iconify/svelte": "^5.2.1",
     "@platform/auth-client": "workspace:*",
-    "@platform/i18n-dicts": "workspace:*",
     "@platform/sekai-master-api-sdk": "workspace:*",
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*",
-    "i18next": "^26.0.6",
-    "i18next-http-backend": "^3.0.5",
+    "svelte-i18n": "^4.0.1",
     "taglib-wasm": "^1.1.2"
   },
   "devDependencies": {

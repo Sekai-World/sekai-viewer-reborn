@@ -1,6 +1,8 @@
 ---
 "@apps/content-site": patch
-"@platform/i18n-dicts": patch
+"@apps/account-site": patch
+"@apps/media-lab-site": patch
+"@apps/tools-site": patch
 "@platform/sekai-api-sdk": patch
 "@platform/ui-shell": patch
 ---
@@ -25,3 +27,4 @@ Show an SSE-driven download progress bar for event BGM downloads and close the f
 Present event BGM download progress in a non-dismissible floating panel and cancel unfinished downloads when the page closes.
 Allow `content-site` server-side BGM downloads to use a separately configured internal remote asset base URL.
 Show the event point icon on the event detail ID badge in `content-site`.
+Remove the obsolete `@platform/i18n-dicts` workspace after moving `content-site` i18n data into the app and keeping placeholder site region metadata local.

@@ -3,7 +3,7 @@ import {
   supportedUiLocales,
   type SupportedRegion,
   type SupportedUiLocale
-} from "@platform/i18n-dicts";
+} from "$lib/i18n-data";
 
 export const UI_LOCALE_COOKIE_NAME = "content_site_ui_locale";
 
