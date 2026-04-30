@@ -126,7 +126,6 @@
             region={card.region}
             regionLabel={card.label}
             event={card.event}
-            versions={card.versions}
             uiLocale={data.uiLocale}
             {idLabel}
             {bannerAltSuffix}

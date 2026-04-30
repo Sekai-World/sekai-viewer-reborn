@@ -18,18 +18,10 @@
     assetBundleName: string | null;
   };
 
-  type RegionVersions = {
-    appVersion: string | null;
-    dataVersion: string | null;
-    assetVersion: string | null;
-    cdnVersion: string | null;
-  };
-
   let {
     region,
     regionLabel,
     event,
-    versions = null,
     uiLocale,
     idLabel,
     bannerAltSuffix
@@ -37,32 +29,10 @@
     region: SupportedRegion;
     regionLabel: string;
     event: CurrentEventSummary;
-    versions?: RegionVersions | null;
     uiLocale: string;
     idLabel: string;
     bannerAltSuffix: string;
   } = $props();
-
-  const isNuverseRegion = (regionValue: SupportedRegion): boolean =>
-    regionValue === "tw" || regionValue === "kr" || regionValue === "cn";
-
-  const getDisplayAssetVersion = (
-    regionValue: SupportedRegion,
-    versionsValue: RegionVersions | null
-  ): string | null => {
-    if (!versionsValue?.assetVersion) {
-      return null;
-    }
-
-    if (isNuverseRegion(regionValue) && versionsValue.cdnVersion) {
-      return `${versionsValue.assetVersion} - ${versionsValue.cdnVersion}`;
-    }
-
-    return versionsValue.assetVersion;
-  };
-
-  const displayDataVersion = $derived(versions?.dataVersion ?? null);
-  const displayAssetVersion = $derived(getDisplayAssetVersion(region, versions));
 </script>
 
 <EventCardFrame
