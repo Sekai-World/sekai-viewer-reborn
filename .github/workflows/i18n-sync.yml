@@ -1,0 +1,69 @@
+name: Sync I18n Source
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/content-site/src/lib/i18n-source/**"
+      - "scripts/i18n/**"
+      - ".github/workflows/i18n-sync.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout app repository
+        uses: actions/checkout@v5
+        with:
+          path: app
+
+      - name: Checkout translation repository
+        uses: actions/checkout@v5
+        with:
+          repository: Sekai-World/sekai-i18n-reborn
+          token: ${{ secrets.I18N_SYNC_TOKEN }}
+          path: i18n
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 11.0.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: app
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync source dictionaries
+        working-directory: app
+        run: pnpm i18n:sync --target ../i18n
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.I18N_SYNC_TOKEN }}
+          path: i18n
+          branch: sync/content-site-i18n-source
+          delete-branch: true
+          commit-message: "chore(content-site): sync i18n source strings"
+          title: "chore(content-site): sync i18n source strings"
+          body: |
+            Automated sync from `Sekai-World/sekai-viewer-reborn`.
+
+            This updates the English source dictionaries used by Weblate.
