@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "apps/content-site/src/lib/i18n-source/**"
+      - "packages/i18n-source/**"
       - "scripts/i18n/**"
       - ".github/workflows/i18n-sync.yml"
   workflow_dispatch:

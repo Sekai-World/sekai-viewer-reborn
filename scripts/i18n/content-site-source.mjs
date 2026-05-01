@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const contentSiteRoot = path.join(repoRoot, "apps/content-site");
-const sourceDir = path.join(contentSiteRoot, "src/lib/i18n-source");
+const sourceDir = path.join(repoRoot, "packages/i18n-source/content-site");
 const scannedFiles = [
   "src/lib",
   "src/routes"

@@ -247,6 +247,8 @@ importers:
         specifier: ^5.55.4
         version: 5.55.4(@typescript-eslint/types@8.59.0)
 
+  packages/i18n-source: {}
+
   packages/sekai-api-sdk:
     dependencies:
       '@hey-api/openapi-ts':
