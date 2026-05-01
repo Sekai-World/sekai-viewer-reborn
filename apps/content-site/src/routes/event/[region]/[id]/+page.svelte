@@ -1,6 +1,6 @@
 <script lang="ts">
   import { browser, dev } from "$app/environment";
-  import { resolve } from "$app/paths";
+  import { asset, resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
   import type { SupportedRegion } from "$lib/regions";
   import { AudioPlayer, ImagePreviewDialog } from "@platform/ui-shell";
@@ -22,6 +22,7 @@
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
+  const unitIconSlugs = new Set(["idol", "light_sound", "piapro", "school_refusal", "street", "theme_park"]);
 
   let { data }: { data: PageData } = $props();
   const getInitialCommonText = (key: string): string =>
@@ -256,7 +257,20 @@
       return null;
     }
 
-    return unitName.trim().toLowerCase() === "none" ? mixedUnitLabel : unitName;
+    const normalizedUnitName = unitName.trim().toLowerCase();
+    return normalizedUnitName === "none" || normalizedUnitName === "-" ? mixedUnitLabel : unitName;
+  };
+  const getUnitIconUrl = (unit: string | null | undefined): string | null => {
+    if (!unit) {
+      return null;
+    }
+
+    const slug = unit.trim().toLowerCase();
+    if (!unitIconSlugs.has(slug)) {
+      return null;
+    }
+
+    return slug ? asset(`/icon_${slug}.png`) : null;
   };
   const isWorldLinkEvent = (eventType: string | null | undefined): boolean =>
     eventType === "world_bloom";
@@ -535,9 +549,23 @@
                   <dd class="mt-1 text-sm font-medium">{payload.event.title}</dd>
                 </div>
                 {#if getDisplayUnitName(payload.event.unitName)}
-                  <div class="content-card-inset rounded-xl px-4 py-3">
-                    <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{unitLabel}</dt>
-                    <dd class="mt-1 text-sm font-medium">{getDisplayUnitName(payload.event.unitName)}</dd>
+                  <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-4 py-3">
+                    <div class="min-w-0">
+                      <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{unitLabel}</dt>
+                      <dd class="mt-1 truncate text-sm font-medium">{getDisplayUnitName(payload.event.unitName)}</dd>
+                    </div>
+                    {#if getUnitIconUrl(payload.event.unit)}
+                      <span class="unit-icon-frame flex h-11 w-11 shrink-0 items-center justify-center rounded-full">
+                        <img
+                          src={getUnitIconUrl(payload.event.unit)}
+                          alt=""
+                          aria-hidden="true"
+                          class="h-12 w-12 max-w-none object-contain"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      </span>
+                    {/if}
                   </div>
                 {/if}
                 {#if payload.event.eventType}
