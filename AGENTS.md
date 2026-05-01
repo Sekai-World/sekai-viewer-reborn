@@ -150,19 +150,15 @@ When changing shared packages:
   - `apps/content-site/src/lib/components/PageHeader.svelte`
   - `apps/content-site/src/lib/components/RegionBadgeSwitch.svelte`
 - Shared non-component style constants should live outside `src/lib/components`, for example under `apps/content-site/src/lib/styles`.
-- Sidebar structure for `content-site` is assembled in `apps/content-site/src/routes/+layout.svelte` and rendered by `packages/ui-shell/src/viewer-shell.svelte`; keep sidebar labels localized through `apps/content-site/src/lib/i18n-data`.
+- Sidebar structure for `content-site` is assembled in `apps/content-site/src/routes/+layout.svelte` and rendered by `packages/ui-shell/src/viewer-shell.svelte`; keep sidebar labels localized through the CDN dictionaries loaded by `apps/content-site/src/lib/i18n.ts`.
 
 ## `content-site` I18n Conventions
 
-- Keep `content-site` user-facing strings centralized in `apps/content-site/src/lib/i18n-data`.
-- Current dictionaries live under:
-  - `apps/content-site/src/lib/i18n-data/content-site/locales/<locale>/common.ts`
-  - `apps/content-site/src/lib/i18n-data/content-site/locales/<locale>/server.ts`
-- Dictionary entrypoints and helpers live in:
-  - `apps/content-site/src/lib/i18n-data/content-site/index.ts`
-- Reuse existing helpers such as `getContentSiteCommonText` and `getContentSiteServerText` instead of reimplementing ad hoc lookup logic.
+- Keep `content-site` user-facing strings in the external `sekai-i18n-reborn` dictionaries.
+- `apps/content-site/src/lib/i18n.ts` loads `common.json` and `server.json` from `PUBLIC_SEKAI_I18N_BASE_URL` and registers them with `svelte-i18n`.
+- Reuse `createCommonTranslator`, `setI18nLocale`, `tCommon`, and `getServerI18nText` instead of adding local dictionary files.
 - Avoid introducing new hardcoded user-facing strings directly in `apps/content-site` when they should be localized.
-- `content-site` currently also uses `tCommon` and `getThemeModeLabel` from `apps/content-site/src/lib/i18n.ts` to bridge runtime locale switching with shared dictionaries.
+- Locale and region metadata live in `apps/content-site/src/lib/i18n-config.ts` and `apps/content-site/src/lib/regions.ts`.
 
 ## `content-site` Environment Variables
 
@@ -170,7 +166,7 @@ When changing shared packages:
 - In development, `SEKAI_MASTER_API_BASE_URL` must use the local API URL defined for the dev environment (for example `apps/content-site/.env.development`); do not try to access an online `master-api` endpoint while developing.
 - Server-side sekai-api requests require `SEKAI_API_BASE_URL`.
 - Public asset URL helpers require `PUBLIC_REMOTE_ASSET_BASE_URL`.
-- Client-side i18n loading requires `PUBLIC_SEKAI_I18N_BASE_URL`.
+- Client/server i18n loading uses `PUBLIC_SEKAI_I18N_BASE_URL`; the default is `https://sekai-world.github.io/sekai-i18n-reborn`.
 
 ## Shared Package: `sekai-master-api-sdk`
 

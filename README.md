@@ -87,7 +87,7 @@ pnpm --filter @apps/content-site dev
 - `SEKAI_MASTER_API_BASE_URL`
 - `SEKAI_API_BASE_URL`
 - `PUBLIC_REMOTE_ASSET_BASE_URL`
-- `PUBLIC_SEKAI_I18N_BASE_URL`
+- `PUBLIC_SEKAI_I18N_BASE_URL` (defaults to `https://sekai-world.github.io/sekai-i18n-reborn`)
 
 ## Build, Check, Lint, Format
 

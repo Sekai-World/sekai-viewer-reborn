@@ -121,7 +121,7 @@ Rules:
 - Use a section item for non-clickable group labels.
 - Disabled items should still use the same structural layout as enabled items for alignment consistency.
 - Sidebar links should close the drawer when clicked.
-- `content-site` sidebar labels must come from `apps/content-site/src/lib/i18n-data`.
+- `content-site` sidebar labels must come from the CDN dictionaries loaded through `apps/content-site/src/lib/i18n.ts`.
 
 Current `content-site` sidebar groups:
 
@@ -136,7 +136,7 @@ Only the events entry currently has a real destination.
 
 ## I18n Rules
 
-Event-type display text is localized through shared dictionaries.
+Event-type display text is localized through `svelte-i18n`.
 
 Current helper:
 
@@ -145,7 +145,7 @@ Current helper:
 Rules:
 
 - Do not hardcode translated event type strings in page components.
-- Add user-facing navigation labels under `apps/content-site/src/lib/i18n-data/content-site/locales/*/common.ts`.
+- Add user-facing navigation labels to the external `sekai-i18n-reborn` dictionaries.
 
 ## Practical Modification Strategy
 
