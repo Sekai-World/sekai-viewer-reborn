@@ -118,8 +118,8 @@ pnpm format:check
 
 `content-site` source strings live in:
 
-- `apps/content-site/src/lib/i18n-source/common.json`
-- `apps/content-site/src/lib/i18n-source/server.json`
+- `packages/i18n-source/content-site/common.json`
+- `packages/i18n-source/content-site/server.json`
 
 `pnpm i18n:check` verifies referenced keys are present. On `main`, `.github/workflows/i18n-sync.yml` syncs these English source files to `Sekai-World/sekai-i18n-reborn` and opens a pull request for Weblate ingestion.
 

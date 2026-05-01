@@ -146,7 +146,7 @@ Rules:
 
 - Do not hardcode translated event type strings in page components.
 - Add user-facing navigation labels to the external `sekai-i18n-reborn` dictionaries.
-- Add new source keys first to `apps/content-site/src/lib/i18n-source/common.json` or `apps/content-site/src/lib/i18n-source/server.json`; the sync workflow opens the translation-repo PR.
+- Add new source keys first to `packages/i18n-source/content-site/common.json` or `packages/i18n-source/content-site/server.json`; the sync workflow opens the translation-repo PR.
 
 ## Practical Modification Strategy
 
