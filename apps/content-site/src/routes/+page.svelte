@@ -157,7 +157,7 @@
 
 <section class="mt-10">
   <h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">{versionInfoTitle}</h2>
-  <div class="overflow-x-auto rounded-xl border border-base-content/10">
+  <div class="mx-auto max-w-3xl overflow-x-auto rounded-xl border border-base-content/10">
     <table class="table table-sm w-full">
       <thead>
         <tr class="text-xs uppercase tracking-wider text-base-content/50">
