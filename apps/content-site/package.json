@@ -13,6 +13,7 @@
   "dependencies": {
     "@iconify/svelte": "^5.2.1",
     "@platform/auth-client": "workspace:*",
+    "@platform/i18n-runtime": "workspace:*",
     "@platform/sekai-master-api-sdk": "workspace:*",
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*",

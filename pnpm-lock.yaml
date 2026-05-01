@@ -93,6 +93,9 @@ importers:
       '@platform/auth-client':
         specifier: workspace:*
         version: link:../../packages/auth-client
+      '@platform/i18n-runtime':
+        specifier: workspace:*
+        version: link:../../packages/i18n-runtime
       '@platform/sekai-master-api-sdk':
         specifier: workspace:*
         version: link:../../packages/sekai-master-api-sdk
@@ -233,6 +236,16 @@ importers:
         version: 8.0.9(@types/node@25.6.0)(jiti@2.6.1)(yaml@2.8.3)
 
   packages/auth-client: {}
+
+  packages/i18n-runtime:
+    dependencies:
+      svelte-i18n:
+        specifier: ^4.0.1
+        version: 4.0.1(svelte@5.55.4(@typescript-eslint/types@8.59.0))
+    devDependencies:
+      svelte:
+        specifier: ^5.55.4
+        version: 5.55.4(@typescript-eslint/types@8.59.0)
 
   packages/sekai-api-sdk:
     dependencies:
