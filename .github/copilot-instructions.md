@@ -4,7 +4,7 @@
 - This is a greenfield monorepo for 4 independently deployable SvelteKit sites plus shared TypeScript packages.
 - Workspace layout is fixed: `apps/*` for deployable frontends, `packages/*` for shared libraries, `deploy/k8s/*` for per-app manifests.
 - Keep app boundaries explicit: each site (`content-site`, `tools-site`, `media-lab-site`, `account-site`) should remain runnable and deployable on its own.
-- Shared logic belongs in `packages/` when reused across apps (API, auth, i18n, tokens).
+- Shared logic belongs in `packages/` when reused across apps (API, auth, tokens).
 
 ## Tooling and Build Graph
 - Use pnpm workspaces (`pnpm-workspace.yaml`) and Turborepo (`turbo.json`) for all orchestration.
@@ -21,7 +21,7 @@
 ## Shared Package Contracts
 - `packages/sekai-master-api-sdk`: sekai-master-api OpenAPI SDK package (auto-detects exposed OpenAPI json/yaml from base URL and generates SDK output).
 - `packages/auth-client`: Keycloak/OIDC URL helpers (`buildLoginUrl`, `buildLogoutUrl`).
-- `packages/i18n-dicts`: locale dictionaries and `SupportedLocale` type.
+- `content-site` loads UI dictionaries from the external `sekai-i18n-reborn` CDN through `svelte-i18n`.
 - `packages/ui-tokens`: framework-agnostic tokens in JSON (`src/design-tokens.json`) exported through TypeScript.
 
 ## Deployment and Container Conventions
