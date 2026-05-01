@@ -6,6 +6,7 @@
     { "path": "./apps/media-lab-site" },
     { "path": "./apps/tools-site" },
     { "path": "./packages/auth-client" },
+    { "path": "./packages/i18n-runtime" },
     { "path": "./packages/sekai-api-sdk" },
     { "path": "./packages/sekai-master-api-sdk" },
     { "path": "./packages/ui-shell" },
