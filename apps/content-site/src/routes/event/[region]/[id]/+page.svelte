@@ -264,6 +264,7 @@
     !isWorldLinkEvent(eventType);
   const getResolvedAssetTab = (eventType: string | null | undefined): EventAssetTab =>
     isWorldLinkEvent(eventType) && activeAssetTab === "characters" ? "banner" : activeAssetTab;
+  const isCompactAssetTab = (tab: EventAssetTab): boolean => tab === "banner" || tab === "title";
   const getAssetPreviewResetKey = (): string =>
     `${data.eventId}:${data.region}:${activeAssetTab}`;
 
@@ -283,13 +284,13 @@
   {/await}
 </svelte:head>
 
-{#snippet assetPreview(src: string, alt: string, imageClass: string, fallbackLabel: string)}
+{#snippet assetPreview(src: string, alt: string, imageClass: string, fallbackLabel: string, buttonClass: string)}
   {@const resolvedSrc = getResolvedAssetPreviewSrc(src)}
   <EventAssetImage
     src={resolvedSrc}
     {alt}
     {fallbackLabel}
-    buttonClass="block aspect-[16/10] w-full cursor-zoom-in overflow-hidden"
+    {buttonClass}
     interactive={true}
     imageClass={imageClass}
     onclick={() => {
@@ -433,17 +434,22 @@
                 {/if}
               </div>
 
-              <div class="content-card-inset w-full overflow-hidden rounded-[1.75rem]">
+              <div
+                class={`content-card-inset w-full overflow-hidden rounded-[1.75rem] transition-[aspect-ratio] duration-300 ease-out ${
+                  isCompactAssetTab(getResolvedAssetTab(payload.event.eventType)) ? "aspect-[16/7]" : "aspect-[16/10]"
+                }`}
+              >
                 {#if getResolvedAssetTab(payload.event.eventType) === "banner"}
                   {#if payload.event.assetBundleName}
                     {@render assetPreview(
                       getEventBannerAssetURL(payload.event.assetBundleName, data.region),
                       `${payload.event.title} ${bannerAltSuffix}`,
                       "h-full w-full object-contain p-4 md:p-6",
-                      ""
+                      "",
+                      "block h-full w-full cursor-zoom-in overflow-hidden"
                     )}
                   {:else}
-                    <div class="flex aspect-16/10 items-center justify-center px-6 text-center text-sm opacity-70">
+                    <div class="flex h-full items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
                     </div>
                   {/if}
@@ -453,10 +459,11 @@
                       getEventLogoAssetURL(payload.event.assetBundleName, data.region),
                       payload.event.title,
                       "h-full w-full object-contain p-4 md:p-6",
-                      ""
+                      "",
+                      "block h-full w-full cursor-zoom-in overflow-hidden"
                     )}
                   {:else}
-                    <div class="flex aspect-16/10 items-center justify-center px-6 text-center text-sm opacity-70">
+                    <div class="flex h-full items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
                     </div>
                   {/if}
@@ -466,10 +473,11 @@
                       getEventBackgroundAssetURL(payload.event.assetBundleName, data.region),
                       payload.event.title,
                       "h-full w-full object-cover",
-                      ""
+                      "",
+                      "block h-full w-full cursor-zoom-in overflow-hidden"
                     )}
                   {:else}
-                    <div class="flex aspect-16/10 items-center justify-center px-6 text-center text-sm opacity-70">
+                    <div class="flex h-full items-center justify-center px-6 text-center text-sm opacity-70">
                       {payload.event.title}
                     </div>
                   {/if}
@@ -479,10 +487,11 @@
                       getEventCharacterAssetURL(payload.event.assetBundleName, data.region),
                       payload.event.title,
                       "h-full w-full object-contain",
-                      imageUnavailableLabel
+                      imageUnavailableLabel,
+                      "block h-full w-full cursor-zoom-in overflow-hidden"
                     )}
                   {:else}
-                    <div class="flex aspect-16/10 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65">
+                    <div class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65">
                       <Icon
                         icon="mdi:file-remove-outline"
                         class="h-10 w-10 opacity-75"

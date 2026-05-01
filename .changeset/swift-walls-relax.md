@@ -3,6 +3,7 @@
 "@apps/account-site": patch
 "@apps/media-lab-site": patch
 "@apps/tools-site": patch
+"@platform/i18n-source": patch
 "@platform/i18n-runtime": patch
 "@platform/sekai-api-sdk": patch
 "@platform/ui-shell": patch
@@ -31,3 +32,6 @@ Show the event point icon on the event detail ID badge in `content-site`.
 Remove the obsolete `@platform/i18n-dicts` workspace and load `content-site` i18n dictionaries from the external `sekai-i18n-reborn` CDN through `svelte-i18n`.
 Extract remote i18n loading and `svelte-i18n` registration into the shared `@platform/i18n-runtime` package so other apps can reuse the same CDN-backed runtime.
 Add `content-site` i18n source manifests plus CI and GitHub Actions automation to sync source strings into the translation repository through a pull request.
+Move app-scoped i18n source manifests into the shared `@platform/i18n-source` package.
+Constrain the `content-site` home page version info table width for easier reading.
+Render `content-site` home page current event banners through the shared event image component.

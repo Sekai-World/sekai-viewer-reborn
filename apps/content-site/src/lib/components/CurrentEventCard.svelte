@@ -2,6 +2,7 @@
   import { resolve } from "$app/paths";
   import type { SupportedRegion } from "$lib/regions";
   import { getEventBannerAssetURL } from "$lib/assets";
+  import EventAssetImage from "$lib/components/EventAssetImage.svelte";
   import EventCardFrame from "$lib/components/EventCardFrame.svelte";
   import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";
   import {
@@ -42,11 +43,11 @@
 >
   <div class={EVENT_CARD_MEDIA_CLASS}>
     {#if event.assetBundleName}
-      <img
+      <EventAssetImage
         src={getEventBannerAssetURL(event.assetBundleName, region)}
         alt={`${event.title} ${bannerAltSuffix}`}
-        loading="lazy"
-        class={EVENT_CARD_IMAGE_CLASS}
+        imageClass={EVENT_CARD_IMAGE_CLASS}
+        buttonClass="block w-full overflow-hidden"
       />
     {:else}
       <div class="flex h-full w-full items-center justify-center text-sm opacity-70">
