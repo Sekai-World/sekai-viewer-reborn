@@ -41,5 +41,8 @@ jobs:
       - name: Check types
         run: pnpm check
 
+      - name: Check i18n source keys
+        run: pnpm i18n:check
+
       - name: Build
         run: pnpm build

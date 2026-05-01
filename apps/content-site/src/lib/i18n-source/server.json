@@ -1,0 +1,7 @@
+{
+  "eventUnavailableInCurrentRegion": "This event is not available in the current region. Switch region using the badges.",
+  "failedToLoadEventData": "Failed to load event data.",
+  "homeEventDataRequestFailed": "Failed to request event data.",
+  "homeEventDataUnavailable": "Event data is temporarily unavailable.",
+  "invalidEventId": "Invalid event id."
+}

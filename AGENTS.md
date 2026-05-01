@@ -48,6 +48,7 @@ pnpm dev
 pnpm build
 pnpm check
 pnpm lint
+pnpm i18n:check
 pnpm changeset
 pnpm changeset:status
 pnpm release:version
@@ -158,6 +159,9 @@ When changing shared packages:
 
 - Keep `content-site` user-facing strings in the external `sekai-i18n-reborn` dictionaries.
 - `apps/content-site/src/lib/i18n.ts` configures `@platform/i18n-runtime` to load `common.json` and `server.json` from `PUBLIC_SEKAI_I18N_BASE_URL`.
+- New `content-site` source strings must be added to `apps/content-site/src/lib/i18n-source/common.json` or `apps/content-site/src/lib/i18n-source/server.json`.
+- `pnpm i18n:check` verifies referenced keys are present in the source files.
+- `.github/workflows/i18n-sync.yml` syncs the English source files to `Sekai-World/sekai-i18n-reborn` and opens a PR for Weblate ingestion.
 - Reuse `createCommonTranslator`, `setI18nLocale`, `tCommon`, and `getServerI18nText` instead of adding local dictionary files.
 - Avoid introducing new hardcoded user-facing strings directly in `apps/content-site` when they should be localized.
 - Locale and region metadata live in `apps/content-site/src/lib/i18n-config.ts` and `apps/content-site/src/lib/regions.ts`.

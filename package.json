@@ -15,6 +15,8 @@
     "release:github": "node ./scripts/release/publish-workspace-releases.mjs",
     "release:publish": "node ./scripts/release/publish-workspace-releases.mjs",
     "release": "pnpm release:version && pnpm release:tag",
+    "i18n:check": "node ./scripts/i18n/content-site-source.mjs check",
+    "i18n:sync": "node ./scripts/i18n/content-site-source.mjs sync",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
