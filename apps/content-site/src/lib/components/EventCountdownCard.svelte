@@ -1,8 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { getContentSiteCommonText } from "$lib/i18n-data";
   import { setI18nLocale, tCommon } from "$lib/i18n";
-  import { DEFAULT_UI_LOCALE } from "$lib/region";
   import { onMount } from "svelte";
 
   type CountdownValues = {
@@ -38,14 +36,14 @@
     class?: string;
   } = $props();
 
-  const initialLocale = DEFAULT_UI_LOCALE;
-  let startsInLabel = $state(getContentSiteCommonText(initialLocale, "countdownStartsIn"));
-  let endsInLabel = $state(getContentSiteCommonText(initialLocale, "countdownEndsIn"));
-  let eventEndedLabel = $state(getContentSiteCommonText(initialLocale, "eventEnded"));
-  let dayLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.day"));
-  let hourLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.hour"));
-  let minuteLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.minute"));
-  let secondLabel = $state(getContentSiteCommonText(initialLocale, "labels.timeUnit.second"));
+  const getInitialLabel = (key: string): string => tCommon(uiLocale, key);
+  let startsInLabel = $state(getInitialLabel("countdownStartsIn"));
+  let endsInLabel = $state(getInitialLabel("countdownEndsIn"));
+  let eventEndedLabel = $state(getInitialLabel("eventEnded"));
+  let dayLabel = $state(getInitialLabel("labels.timeUnit.day"));
+  let hourLabel = $state(getInitialLabel("labels.timeUnit.hour"));
+  let minuteLabel = $state(getInitialLabel("labels.timeUnit.minute"));
+  let secondLabel = $state(getInitialLabel("labels.timeUnit.second"));
   let nowMs = $state(Date.now());
   let progressNowMs = $state(Date.now());
   let mounted = $state(false);

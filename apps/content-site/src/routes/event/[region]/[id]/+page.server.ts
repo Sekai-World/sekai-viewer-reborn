@@ -4,12 +4,8 @@ import {
   getEventsByRegionById,
   getEventsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import {
-  getContentSiteServerText,
-  regionLabels,
-  supportedRegions,
-  type SupportedRegion
-} from "$lib/i18n-data";
+import { getServerI18nText } from "$lib/i18n";
+import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/regions";
 import {
   normalizeRegion,
   normalizeUiLocale,
@@ -238,15 +234,18 @@ const fetchIsCurrentEvent = async ({
   }
 };
 
-export const load: PageServerLoad = ({ params, cookies }) => {
+export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const eventId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const invalidEventIdMessage = getContentSiteServerText(uiLocale, "invalidEventId");
-  const eventUnavailableInCurrentRegionMessage = getContentSiteServerText(
-    uiLocale,
-    "eventUnavailableInCurrentRegion"
-  );
-  const failedToLoadEventDataMessage = getContentSiteServerText(uiLocale, "failedToLoadEventData");
+  const [
+    invalidEventIdMessage,
+    eventUnavailableInCurrentRegionMessage,
+    failedToLoadEventDataMessage
+  ] = await Promise.all([
+    getServerI18nText(uiLocale, "invalidEventId", fetch),
+    getServerI18nText(uiLocale, "eventUnavailableInCurrentRegion", fetch),
+    getServerI18nText(uiLocale, "failedToLoadEventData", fetch)
+  ]);
   const region: SupportedRegion = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const currentLookupPromise = eventId

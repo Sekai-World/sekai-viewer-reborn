@@ -1,27 +1,23 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import {
-    getContentSiteCommonText,
-    supportedRegions,
-    type SupportedRegion
-  } from "$lib/i18n-data";
+  import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
+  import { supportedRegions, type SupportedRegion } from "$lib/regions";
   import CurrentEventCard from "$lib/components/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/RegionBadgeSwitch.svelte";
-  import { setI18nLocale, tCommon } from "$lib/i18n";
-  import { DEFAULT_UI_LOCALE } from "$lib/region";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
-  const initialLocale = DEFAULT_UI_LOCALE;
-  let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
-  let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
-  let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
-  let disclaimerText = $state(getContentSiteCommonText(initialLocale, "disclaimer"));
-  let currentEventLabel = $state(getContentSiteCommonText(initialLocale, "eventListCurrentEvent"));
-  let versionInfoTitle = $state(getContentSiteCommonText(initialLocale, "versionInfo.title"));
-  let versionAppLabel = $state(getContentSiteCommonText(initialLocale, "versionInfo.appLabel"));
-  let versionDataLabel = $state(getContentSiteCommonText(initialLocale, "versionInfo.dataLabel"));
-  let versionAssetLabel = $state(getContentSiteCommonText(initialLocale, "versionInfo.assetLabel"));
+  const getInitialCommonText = (key: string): string =>
+    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
+  let idLabel = $state(getInitialCommonText("idLabel"));
+  let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
+  let noEventLabel = $state(getInitialCommonText("noCurrentEventData"));
+  let disclaimerText = $state(getInitialCommonText("disclaimer"));
+  let currentEventLabel = $state(getInitialCommonText("eventListCurrentEvent"));
+  let versionInfoTitle = $state(getInitialCommonText("versionInfo.title"));
+  let versionAppLabel = $state(getInitialCommonText("versionInfo.appLabel"));
+  let versionDataLabel = $state(getInitialCommonText("versionInfo.dataLabel"));
+  let versionAssetLabel = $state(getInitialCommonText("versionInfo.assetLabel"));
   const homeCardItemClass =
     "w-full shrink-0 md:basis-[calc((100%-1rem)/2)] lg:basis-[calc((100%-2rem)/3)] 2xl:basis-[calc((100%-4rem)/5)]";
 
@@ -41,20 +37,26 @@
   };
 
   $effect(() => {
+    const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
+    applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
 
+  const applyTranslations = (translate: (key: string) => string): void => {
+    idLabel = translate("idLabel");
+    bannerAltSuffix = translate("bannerAltSuffix");
+    noEventLabel = translate("noCurrentEventData");
+    disclaimerText = translate("disclaimer");
+    currentEventLabel = translate("eventListCurrentEvent");
+    versionInfoTitle = translate("versionInfo.title");
+    versionAppLabel = translate("versionInfo.appLabel");
+    versionDataLabel = translate("versionInfo.dataLabel");
+    versionAssetLabel = translate("versionInfo.assetLabel");
+  };
+
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue);
-    idLabel = tCommon(locale, "idLabel");
-    bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
-    noEventLabel = tCommon(locale, "noCurrentEventData");
-    disclaimerText = tCommon(locale, "disclaimer");
-    currentEventLabel = tCommon(locale, "eventListCurrentEvent");
-    versionInfoTitle = tCommon(locale, "versionInfo.title");
-    versionAppLabel = tCommon(locale, "versionInfo.appLabel");
-    versionDataLabel = tCommon(locale, "versionInfo.dataLabel");
-    versionAssetLabel = tCommon(locale, "versionInfo.assetLabel");
+    const locale = await setI18nLocale(localeValue, data.commonMessages);
+    applyTranslations((key) => tCommon(locale, key));
   };
 
   const isNuverseRegion = (region: SupportedRegion): boolean =>

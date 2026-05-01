@@ -4,15 +4,16 @@
   import { invalidateAll } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
-  import {
-    getContentSiteCommonText,
-    supportedUiLocales,
-    uiLocaleNameByCode,
-    type SupportedUiLocale
-  } from "$lib/i18n-data";
+  import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n-config";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
-  import { isLocaleLoading, getThemeModeLabel, setI18nLocale, tCommon } from "$lib/i18n";
+  import {
+    createCommonTranslator,
+    isLocaleLoading,
+    getThemeModeLabel,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n";
   import {
     DEFAULT_REGION,
     DEFAULT_UI_LOCALE,
@@ -35,7 +36,8 @@
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
-  const initialLocale = DEFAULT_UI_LOCALE;
+  const getInitialCommonText = (key: string): string =>
+    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
@@ -46,34 +48,26 @@
   let desktopThemeMenu: HTMLDetailsElement | null = null;
   let localeMenu: HTMLDetailsElement | null = null;
 
-  let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
-  let sidebarLabel = $state(getContentSiteCommonText(initialLocale, "navigation.sidebarTitle"));
-  let databaseLabel = $state(getContentSiteCommonText(initialLocale, "navigation.database"));
-  let cardsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.cards"));
-  let songsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.songs"));
-  let eventsLabel = $state(getContentSiteCommonText(initialLocale, "navigation.events"));
-  let virtualLivesLabel = $state(getContentSiteCommonText(initialLocale, "navigation.virtualLives"));
-  let settingsLabel = $state(getContentSiteCommonText(initialLocale, "settings.title"));
-  let themeControlLabel = $state(getContentSiteCommonText(initialLocale, "settings.appearance"));
-  let themePaletteLabel = $state(getContentSiteCommonText(initialLocale, "settings.theme"));
-  let interfaceLanguageLabel = $state(
-    getContentSiteCommonText(initialLocale, "settings.interfaceLanguage")
-  );
-  let currentLanguageLabel = $state(
-    getContentSiteCommonText(initialLocale, "settings.currentLanguage")
-  );
-  let backToTopLabel = $state(getContentSiteCommonText(initialLocale, "backToTopLabel"));
-  let loadingLanguagePackLabel = $state(
-    getContentSiteCommonText(initialLocale, "loadingLanguagePack")
-  );
-  let switchThemeAriaLabel = $state(getContentSiteCommonText(initialLocale, "aria.switchTheme"));
-  let switchUiLanguageCurrentLabel = $state(
-    getContentSiteCommonText(initialLocale, "aria.switchUiLanguageCurrent")
-  );
+  let homeLabel = $state(getInitialCommonText("home"));
+  let sidebarLabel = $state(getInitialCommonText("navigation.sidebarTitle"));
+  let databaseLabel = $state(getInitialCommonText("navigation.database"));
+  let cardsLabel = $state(getInitialCommonText("navigation.cards"));
+  let songsLabel = $state(getInitialCommonText("navigation.songs"));
+  let eventsLabel = $state(getInitialCommonText("navigation.events"));
+  let virtualLivesLabel = $state(getInitialCommonText("navigation.virtualLives"));
+  let settingsLabel = $state(getInitialCommonText("settings.title"));
+  let themeControlLabel = $state(getInitialCommonText("settings.appearance"));
+  let themePaletteLabel = $state(getInitialCommonText("settings.theme"));
+  let interfaceLanguageLabel = $state(getInitialCommonText("settings.interfaceLanguage"));
+  let currentLanguageLabel = $state(getInitialCommonText("settings.currentLanguage"));
+  let backToTopLabel = $state(getInitialCommonText("backToTopLabel"));
+  let loadingLanguagePackLabel = $state(getInitialCommonText("loadingLanguagePack"));
+  let switchThemeAriaLabel = $state(getInitialCommonText("aria.switchTheme"));
+  let switchUiLanguageCurrentLabel = $state(getInitialCommonText("aria.switchUiLanguageCurrent"));
   let themeNameLabels = $state<Record<ThemeName, string>>({
-    default: getContentSiteCommonText(initialLocale, "themeName.default"),
-    sakura: getContentSiteCommonText(initialLocale, "themeName.sakura"),
-    mint: getContentSiteCommonText(initialLocale, "themeName.mint")
+    default: getInitialCommonText("themeName.default"),
+    sakura: getInitialCommonText("themeName.sakura"),
+    mint: getInitialCommonText("themeName.mint")
   });
   let showBackToTop = $state(false);
   let backToTopAnimationFrame = 0;
@@ -127,33 +121,38 @@
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
   $effect(() => {
+    const translate = createCommonTranslator(uiLocale, data.commonMessages);
+    applyTranslations(translate);
     void refreshTranslations(uiLocale);
   });
 
-  const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(localeValue);
-
-    homeLabel = tCommon(resolvedLocale, "home");
-    sidebarLabel = tCommon(resolvedLocale, "navigation.sidebarTitle");
-    databaseLabel = tCommon(resolvedLocale, "navigation.database");
-    cardsLabel = tCommon(resolvedLocale, "navigation.cards");
-    songsLabel = tCommon(resolvedLocale, "navigation.songs");
-    eventsLabel = tCommon(resolvedLocale, "navigation.events");
-    virtualLivesLabel = tCommon(resolvedLocale, "navigation.virtualLives");
-    settingsLabel = tCommon(resolvedLocale, "settings.title");
-    themeControlLabel = tCommon(resolvedLocale, "settings.appearance");
-    themePaletteLabel = tCommon(resolvedLocale, "settings.theme");
-    interfaceLanguageLabel = tCommon(resolvedLocale, "settings.interfaceLanguage");
-    currentLanguageLabel = tCommon(resolvedLocale, "settings.currentLanguage");
-    backToTopLabel = tCommon(resolvedLocale, "backToTopLabel");
-    loadingLanguagePackLabel = tCommon(resolvedLocale, "loadingLanguagePack");
-    switchThemeAriaLabel = tCommon(resolvedLocale, "aria.switchTheme");
-    switchUiLanguageCurrentLabel = tCommon(resolvedLocale, "aria.switchUiLanguageCurrent");
+  const applyTranslations = (translate: (key: string) => string): void => {
+    homeLabel = translate("home");
+    sidebarLabel = translate("navigation.sidebarTitle");
+    databaseLabel = translate("navigation.database");
+    cardsLabel = translate("navigation.cards");
+    songsLabel = translate("navigation.songs");
+    eventsLabel = translate("navigation.events");
+    virtualLivesLabel = translate("navigation.virtualLives");
+    settingsLabel = translate("settings.title");
+    themeControlLabel = translate("settings.appearance");
+    themePaletteLabel = translate("settings.theme");
+    interfaceLanguageLabel = translate("settings.interfaceLanguage");
+    currentLanguageLabel = translate("settings.currentLanguage");
+    backToTopLabel = translate("backToTopLabel");
+    loadingLanguagePackLabel = translate("loadingLanguagePack");
+    switchThemeAriaLabel = translate("aria.switchTheme");
+    switchUiLanguageCurrentLabel = translate("aria.switchUiLanguageCurrent");
     themeNameLabels = {
-      default: tCommon(resolvedLocale, "themeName.default"),
-      sakura: tCommon(resolvedLocale, "themeName.sakura"),
-      mint: tCommon(resolvedLocale, "themeName.mint")
+      default: translate("themeName.default"),
+      sakura: translate("themeName.sakura"),
+      mint: translate("themeName.mint")
     };
+  };
+
+  const refreshTranslations = async (localeValue: string): Promise<void> => {
+    const resolvedLocale = await setI18nLocale(localeValue, data.commonMessages);
+    applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 
   const getSystemTheme = (): ResolvedTheme =>
