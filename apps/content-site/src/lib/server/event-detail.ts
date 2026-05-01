@@ -1,6 +1,7 @@
 type EventDetail = {
   id: string;
   title: string;
+  unit: string | null;
   unitName: string | null;
   eventType: string | null;
   eventPointIcon: string | null;
@@ -111,9 +112,9 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
   return {
     id,
     title,
+    unit: pickFirstString(unitNode ?? eventNode, ["unit"]),
     unitName:
-      pickFirstString(eventNode, ["unitName", "unit"]) ??
-      pickFirstString(unitNode ?? eventNode, ["unitName", "name", "title"]) ??
+      pickFirstString(unitNode ?? eventNode, ["unitName", "unit"]) ??
       null,
     eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
     eventPointIcon: pickFirstString(eventNode, ["eventPointIcon", "event_point_icon"]),
