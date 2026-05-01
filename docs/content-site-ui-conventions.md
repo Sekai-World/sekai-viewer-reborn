@@ -121,7 +121,7 @@ Rules:
 - Use a section item for non-clickable group labels.
 - Disabled items should still use the same structural layout as enabled items for alignment consistency.
 - Sidebar links should close the drawer when clicked.
-- `content-site` sidebar labels must come from the CDN dictionaries loaded through `apps/content-site/src/lib/i18n.ts`.
+- `content-site` sidebar labels must come from the CDN dictionaries loaded through `@platform/i18n-runtime`.
 
 Current `content-site` sidebar groups:
 

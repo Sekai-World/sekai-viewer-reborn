@@ -13,6 +13,7 @@ Guidance for coding agents working in this workspace.
   - `account-site` (`@apps/account-site`)
 - Shared packages live in `packages/*`:
   - `auth-client` (`@platform/auth-client`)
+  - `i18n-runtime` (`@platform/i18n-runtime`)
   - `sekai-api-sdk` (`@platform/sekai-api-sdk`)
   - `sekai-master-api-sdk` (`@platform/sekai-master-api-sdk`)
   - `ui-shell` (`@platform/ui-shell`)
@@ -116,6 +117,7 @@ Preview ports:
 ## Shared Package Notes
 
 - `@platform/auth-client`: shared auth/OIDC helpers.
+- `@platform/i18n-runtime`: shared remote dictionary loading, caching, and `svelte-i18n` runtime helpers.
 - `@platform/sekai-api-sdk`: generated API SDK plus generator script for `sekai-api`.
 - `@platform/sekai-master-api-sdk`: generated API SDK plus generator script.
 - `@platform/ui-shell`: shared Svelte shell components exported directly from `src`.
@@ -155,7 +157,7 @@ When changing shared packages:
 ## `content-site` I18n Conventions
 
 - Keep `content-site` user-facing strings in the external `sekai-i18n-reborn` dictionaries.
-- `apps/content-site/src/lib/i18n.ts` loads `common.json` and `server.json` from `PUBLIC_SEKAI_I18N_BASE_URL` and registers them with `svelte-i18n`.
+- `apps/content-site/src/lib/i18n.ts` configures `@platform/i18n-runtime` to load `common.json` and `server.json` from `PUBLIC_SEKAI_I18N_BASE_URL`.
 - Reuse `createCommonTranslator`, `setI18nLocale`, `tCommon`, and `getServerI18nText` instead of adding local dictionary files.
 - Avoid introducing new hardcoded user-facing strings directly in `apps/content-site` when they should be localized.
 - Locale and region metadata live in `apps/content-site/src/lib/i18n-config.ts` and `apps/content-site/src/lib/regions.ts`.
