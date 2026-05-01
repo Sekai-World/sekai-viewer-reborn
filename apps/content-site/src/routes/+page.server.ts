@@ -1,10 +1,6 @@
 import { getEventsByRegionCurrent, getVersionsByRegion } from "@platform/sekai-master-api-sdk";
-import {
-  getContentSiteServerText,
-  regionLabels,
-  supportedRegions,
-  type SupportedRegion
-} from "$lib/i18n-data";
+import { getServerI18nText } from "$lib/i18n";
+import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
 import type { PageServerLoad } from "./$types";
@@ -190,16 +186,12 @@ const toRegionEventCard = async (
   };
 };
 
-export const load: PageServerLoad = async ({ cookies }) => {
+export const load: PageServerLoad = async ({ cookies, fetch }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const homeEventDataUnavailable = getContentSiteServerText(
-    uiLocale,
-    "homeEventDataUnavailable"
-  );
-  const homeEventDataRequestFailed = getContentSiteServerText(
-    uiLocale,
-    "homeEventDataRequestFailed"
-  );
+  const [homeEventDataUnavailable, homeEventDataRequestFailed] = await Promise.all([
+    getServerI18nText(uiLocale, "homeEventDataUnavailable", fetch),
+    getServerI18nText(uiLocale, "homeEventDataRequestFailed", fetch)
+  ]);
   const baseUrl = getMasterApiBaseUrl();
   const cards = supportedRegions.map(async (region) => {
     try {

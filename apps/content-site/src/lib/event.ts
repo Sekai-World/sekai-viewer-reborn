@@ -1,5 +1,4 @@
-import { getContentSiteCommonText } from "$lib/i18n-data";
-import { normalizeUiLocale } from "$lib/region";
+import { tCommon } from "$lib/i18n";
 
 const eventTypeTextKeyMap = {
   marathon: "eventTypeValues.marathon",
@@ -17,5 +16,5 @@ export const getEventTypeDisplay = (eventType: string | null, localeValue: strin
     return eventType;
   }
 
-  return getContentSiteCommonText(normalizeUiLocale(localeValue), key, eventType);
+  return tCommon(localeValue, key, eventType);
 };

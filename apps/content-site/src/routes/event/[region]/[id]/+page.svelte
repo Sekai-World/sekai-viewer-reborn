@@ -2,7 +2,7 @@
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
-  import { getContentSiteCommonText, type SupportedRegion } from "$lib/i18n-data";
+  import type { SupportedRegion } from "$lib/regions";
   import { AudioPlayer, ImagePreviewDialog } from "@platform/ui-shell";
   import {
     getEventBackgroundAssetURL,
@@ -18,85 +18,74 @@
   import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/RegionBadgeSwitch.svelte";
   import { formatDisplayDateTime } from "$lib/date-time";
   import { getEventTypeDisplay } from "$lib/event";
-  import { setI18nLocale, tCommon } from "$lib/i18n";
-  import { DEFAULT_UI_LOCALE } from "$lib/region";
+  import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
   let { data }: { data: PageData } = $props();
+  const getInitialCommonText = (key: string): string =>
+    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
   let debugDialog: HTMLDialogElement | null = $state(null);
-  const initialLocale = DEFAULT_UI_LOCALE;
-  let displayLocale = $state<string>(initialLocale);
+  let displayLocale = $state<string>("");
   let activeAssetTab = $state<EventAssetTab>("banner");
   let assetPreviewOpen = $state(false);
   let assetPreviewFormat = $state("");
-  let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
-  let eventListTitle = $state(getContentSiteCommonText(initialLocale, "eventListTitle"));
-  let startAtLabel = $state(getContentSiteCommonText(initialLocale, "startAt"));
-  let endAtLabel = $state(getContentSiteCommonText(initialLocale, "endAt"));
-  let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
-  let nameLabel = $state(getContentSiteCommonText(initialLocale, "nameLabel"));
-  let unitLabel = $state(getContentSiteCommonText(initialLocale, "unitLabel"));
-  let mixedUnitLabel = $state(getContentSiteCommonText(initialLocale, "mixedUnitLabel"));
-  let eventTypeLabel = $state(getContentSiteCommonText(initialLocale, "eventTypeLabel"));
-  let eventBgmTitle = $state(getContentSiteCommonText(initialLocale, "eventBgmTitle"));
-  let audioPlayLabel = $state(getContentSiteCommonText(initialLocale, "audioPlayLabel"));
-  let audioPauseLabel = $state(getContentSiteCommonText(initialLocale, "audioPauseLabel"));
-  let audioDownloadLabel = $state(getContentSiteCommonText(initialLocale, "audioDownloadLabel"));
-  let audioVolumeLabel = $state(getContentSiteCommonText(initialLocale, "audioVolumeLabel"));
-  let audioSeekLabel = $state(getContentSiteCommonText(initialLocale, "audioSeekLabel"));
-  let audioUnavailableLabel = $state(getContentSiteCommonText(initialLocale, "audioUnavailableLabel"));
+  let homeLabel = $state(getInitialCommonText("home"));
+  let eventListTitle = $state(getInitialCommonText("eventListTitle"));
+  let startAtLabel = $state(getInitialCommonText("startAt"));
+  let endAtLabel = $state(getInitialCommonText("endAt"));
+  let idLabel = $state(getInitialCommonText("idLabel"));
+  let nameLabel = $state(getInitialCommonText("nameLabel"));
+  let unitLabel = $state(getInitialCommonText("unitLabel"));
+  let mixedUnitLabel = $state(getInitialCommonText("mixedUnitLabel"));
+  let eventTypeLabel = $state(getInitialCommonText("eventTypeLabel"));
+  let eventBgmTitle = $state(getInitialCommonText("eventBgmTitle"));
+  let audioPlayLabel = $state(getInitialCommonText("audioPlayLabel"));
+  let audioPauseLabel = $state(getInitialCommonText("audioPauseLabel"));
+  let audioDownloadLabel = $state(getInitialCommonText("audioDownloadLabel"));
+  let audioVolumeLabel = $state(getInitialCommonText("audioVolumeLabel"));
+  let audioSeekLabel = $state(getInitialCommonText("audioSeekLabel"));
+  let audioUnavailableLabel = $state(getInitialCommonText("audioUnavailableLabel"));
   let audioDownloadStagePreparingLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadStages.preparing")
+    getInitialCommonText("audioDownloadStages.preparing")
   );
   let audioDownloadStageFetchingAudioLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadStages.fetchingAudio")
+    getInitialCommonText("audioDownloadStages.fetchingAudio")
   );
   let audioDownloadStageFetchingCoverLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadStages.fetchingCover")
+    getInitialCommonText("audioDownloadStages.fetchingCover")
   );
   let audioDownloadStageWritingMetadataLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadStages.writingMetadata")
+    getInitialCommonText("audioDownloadStages.writingMetadata")
   );
   let audioDownloadStageFinalizingLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadStages.finalizing")
+    getInitialCommonText("audioDownloadStages.finalizing")
   );
-  let audioDownloadStageReadyLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadStages.ready")
-  );
-  let audioDownloadStageFailedLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadStages.failed")
-  );
+  let audioDownloadStageReadyLabel = $state(getInitialCommonText("audioDownloadStages.ready"));
+  let audioDownloadStageFailedLabel = $state(getInitialCommonText("audioDownloadStages.failed"));
   let audioDownloadStageCancelledLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadStages.cancelled")
+    getInitialCommonText("audioDownloadStages.cancelled")
   );
-  let audioDownloadCloseLabel = $state(
-    getContentSiteCommonText(initialLocale, "audioDownloadCloseLabel")
-  );
-  let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
-  let imageUnavailableLabel = $state(getContentSiteCommonText(initialLocale, "imageUnavailable"));
-  let noEventLabel = $state(getContentSiteCommonText(initialLocale, "noCurrentEventData"));
-  let eventTitlePrefix = $state(getContentSiteCommonText(initialLocale, "pageTitle.eventPrefix"));
-  let bannerTabLabel = $state(getContentSiteCommonText(initialLocale, "eventAssetTabs.banner"));
-  let titleTabLabel = $state(getContentSiteCommonText(initialLocale, "eventAssetTabs.title"));
-  let backgroundTabLabel = $state(
-    getContentSiteCommonText(initialLocale, "eventAssetTabs.background")
-  );
-  let charactersTabLabel = $state(
-    getContentSiteCommonText(initialLocale, "eventAssetTabs.characters")
-  );
-  let eventInfoTitle = $state(getContentSiteCommonText(initialLocale, "eventInfoTitle"));
-  let eventCountdownTitle = $state(getContentSiteCommonText(initialLocale, "eventCountdownTitle"));
-  let debugEventJsonButtonLabel = $state(
-    getContentSiteCommonText(initialLocale, "debugEventJsonButton")
-  );
-  let debugEventJsonTitle = $state(getContentSiteCommonText(initialLocale, "debugEventJsonTitle"));
-  let closeLabel = $state(getContentSiteCommonText(initialLocale, "closeLabel"));
+  let audioDownloadCloseLabel = $state(getInitialCommonText("audioDownloadCloseLabel"));
+  let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
+  let imageUnavailableLabel = $state(getInitialCommonText("imageUnavailable"));
+  let noEventLabel = $state(getInitialCommonText("noCurrentEventData"));
+  let eventTitlePrefix = $state(getInitialCommonText("pageTitle.eventPrefix"));
+  let bannerTabLabel = $state(getInitialCommonText("eventAssetTabs.banner"));
+  let titleTabLabel = $state(getInitialCommonText("eventAssetTabs.title"));
+  let backgroundTabLabel = $state(getInitialCommonText("eventAssetTabs.background"));
+  let charactersTabLabel = $state(getInitialCommonText("eventAssetTabs.characters"));
+  let eventInfoTitle = $state(getInitialCommonText("eventInfoTitle"));
+  let eventCountdownTitle = $state(getInitialCommonText("eventCountdownTitle"));
+  let debugEventJsonButtonLabel = $state(getInitialCommonText("debugEventJsonButton"));
+  let debugEventJsonTitle = $state(getInitialCommonText("debugEventJsonTitle"));
+  let closeLabel = $state(getInitialCommonText("closeLabel"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    applyTranslations(data.uiLocale);
+    const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
+    applyTranslations(translate);
   });
 
   $effect(() => {
@@ -107,51 +96,50 @@
     void refreshTranslations(data.uiLocale);
   });
 
-  const applyTranslations = (localeValue: string): void => {
-    const locale = localeValue;
-    homeLabel = tCommon(locale, "home");
-    eventListTitle = tCommon(locale, "eventListTitle");
-    startAtLabel = tCommon(locale, "startAt");
-    endAtLabel = tCommon(locale, "endAt");
-    idLabel = tCommon(locale, "idLabel");
-    nameLabel = tCommon(locale, "nameLabel");
-    unitLabel = tCommon(locale, "unitLabel");
-    mixedUnitLabel = tCommon(locale, "mixedUnitLabel");
-    eventTypeLabel = tCommon(locale, "eventTypeLabel");
-    eventBgmTitle = tCommon(locale, "eventBgmTitle");
-    audioPlayLabel = tCommon(locale, "audioPlayLabel");
-    audioPauseLabel = tCommon(locale, "audioPauseLabel");
-    audioDownloadLabel = tCommon(locale, "audioDownloadLabel");
-    audioVolumeLabel = tCommon(locale, "audioVolumeLabel");
-    audioSeekLabel = tCommon(locale, "audioSeekLabel");
-    audioUnavailableLabel = tCommon(locale, "audioUnavailableLabel");
-    audioDownloadStagePreparingLabel = tCommon(locale, "audioDownloadStages.preparing");
-    audioDownloadStageFetchingAudioLabel = tCommon(locale, "audioDownloadStages.fetchingAudio");
-    audioDownloadStageFetchingCoverLabel = tCommon(locale, "audioDownloadStages.fetchingCover");
-    audioDownloadStageWritingMetadataLabel = tCommon(locale, "audioDownloadStages.writingMetadata");
-    audioDownloadStageFinalizingLabel = tCommon(locale, "audioDownloadStages.finalizing");
-    audioDownloadStageReadyLabel = tCommon(locale, "audioDownloadStages.ready");
-    audioDownloadStageFailedLabel = tCommon(locale, "audioDownloadStages.failed");
-    audioDownloadStageCancelledLabel = tCommon(locale, "audioDownloadStages.cancelled");
-    audioDownloadCloseLabel = tCommon(locale, "audioDownloadCloseLabel");
-    bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
-    imageUnavailableLabel = tCommon(locale, "imageUnavailable");
-    noEventLabel = tCommon(locale, "noCurrentEventData");
-    eventTitlePrefix = tCommon(locale, "pageTitle.eventPrefix");
-    bannerTabLabel = tCommon(locale, "eventAssetTabs.banner");
-    titleTabLabel = tCommon(locale, "eventAssetTabs.title");
-    backgroundTabLabel = tCommon(locale, "eventAssetTabs.background");
-    charactersTabLabel = tCommon(locale, "eventAssetTabs.characters");
-    eventInfoTitle = tCommon(locale, "eventInfoTitle");
-    eventCountdownTitle = tCommon(locale, "eventCountdownTitle");
-    debugEventJsonButtonLabel = tCommon(locale, "debugEventJsonButton");
-    debugEventJsonTitle = tCommon(locale, "debugEventJsonTitle");
-    closeLabel = tCommon(locale, "closeLabel");
+  const applyTranslations = (translate: (key: string) => string): void => {
+    homeLabel = translate("home");
+    eventListTitle = translate("eventListTitle");
+    startAtLabel = translate("startAt");
+    endAtLabel = translate("endAt");
+    idLabel = translate("idLabel");
+    nameLabel = translate("nameLabel");
+    unitLabel = translate("unitLabel");
+    mixedUnitLabel = translate("mixedUnitLabel");
+    eventTypeLabel = translate("eventTypeLabel");
+    eventBgmTitle = translate("eventBgmTitle");
+    audioPlayLabel = translate("audioPlayLabel");
+    audioPauseLabel = translate("audioPauseLabel");
+    audioDownloadLabel = translate("audioDownloadLabel");
+    audioVolumeLabel = translate("audioVolumeLabel");
+    audioSeekLabel = translate("audioSeekLabel");
+    audioUnavailableLabel = translate("audioUnavailableLabel");
+    audioDownloadStagePreparingLabel = translate("audioDownloadStages.preparing");
+    audioDownloadStageFetchingAudioLabel = translate("audioDownloadStages.fetchingAudio");
+    audioDownloadStageFetchingCoverLabel = translate("audioDownloadStages.fetchingCover");
+    audioDownloadStageWritingMetadataLabel = translate("audioDownloadStages.writingMetadata");
+    audioDownloadStageFinalizingLabel = translate("audioDownloadStages.finalizing");
+    audioDownloadStageReadyLabel = translate("audioDownloadStages.ready");
+    audioDownloadStageFailedLabel = translate("audioDownloadStages.failed");
+    audioDownloadStageCancelledLabel = translate("audioDownloadStages.cancelled");
+    audioDownloadCloseLabel = translate("audioDownloadCloseLabel");
+    bannerAltSuffix = translate("bannerAltSuffix");
+    imageUnavailableLabel = translate("imageUnavailable");
+    noEventLabel = translate("noCurrentEventData");
+    eventTitlePrefix = translate("pageTitle.eventPrefix");
+    bannerTabLabel = translate("eventAssetTabs.banner");
+    titleTabLabel = translate("eventAssetTabs.title");
+    backgroundTabLabel = translate("eventAssetTabs.background");
+    charactersTabLabel = translate("eventAssetTabs.characters");
+    eventInfoTitle = translate("eventInfoTitle");
+    eventCountdownTitle = translate("eventCountdownTitle");
+    debugEventJsonButtonLabel = translate("debugEventJsonButton");
+    debugEventJsonTitle = translate("debugEventJsonTitle");
+    closeLabel = translate("closeLabel");
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue);
-    applyTranslations(locale);
+    const locale = await setI18nLocale(localeValue, data.commonMessages);
+    applyTranslations((key) => tCommon(locale, key));
   };
 
   const openDebugDialog = (): void => {

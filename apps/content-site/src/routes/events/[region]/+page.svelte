@@ -1,19 +1,19 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { resolve } from "$app/paths";
-  import { getContentSiteCommonText, regionLabels, supportedRegions } from "$lib/i18n-data";
+  import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
+  import { regionLabels, supportedRegions } from "$lib/regions";
   import EventListCard from "$lib/components/EventListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/RegionBadgeSwitch.svelte";
-  import { setI18nLocale, tCommon } from "$lib/i18n";
-  import { DEFAULT_UI_LOCALE } from "$lib/region";
   import type { PageData } from "./$types";
 
   type EventListPagePayload = PageData["initialPage"];
   type EventListItem = EventListPagePayload["items"][number];
 
   let { data }: { data: PageData } = $props();
-  const initialLocale = DEFAULT_UI_LOCALE;
+  const getInitialCommonText = (key: string): string =>
+    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -23,23 +23,19 @@
   let isLoadMoreHintVisible = $state(false);
   let isTouchPointer = $state(false);
   let lastTouchY = $state<number | null>(null);
-  let homeLabel = $state(getContentSiteCommonText(initialLocale, "home"));
-  let idLabel = $state(getContentSiteCommonText(initialLocale, "idLabel"));
-  let eventListTitle = $state(getContentSiteCommonText(initialLocale, "eventListTitle"));
-  let eventListEmpty = $state(getContentSiteCommonText(initialLocale, "eventListEmpty"));
-  let eventListLoadingMore = $state(getContentSiteCommonText(initialLocale, "eventListLoadingMore"));
-  let eventListLoadMoreHintDesktop = $state(
-    getContentSiteCommonText(initialLocale, "eventListLoadMoreHintDesktop")
-  );
-  let eventListLoadMoreHintMobile = $state(
-    getContentSiteCommonText(initialLocale, "eventListLoadMoreHintMobile")
-  );
-  let eventListLoadFailed = $state(getContentSiteCommonText(initialLocale, "eventListLoadFailed"));
-  let eventListRetry = $state(getContentSiteCommonText(initialLocale, "eventListRetry"));
-  let eventListEnd = $state(getContentSiteCommonText(initialLocale, "eventListEnd"));
-  let eventListCurrentEvent = $state(getContentSiteCommonText(initialLocale, "eventListCurrentEvent"));
-  let spoilerContentLabel = $state(getContentSiteCommonText(initialLocale, "spoilerContent"));
-  let bannerAltSuffix = $state(getContentSiteCommonText(initialLocale, "bannerAltSuffix"));
+  let homeLabel = $state(getInitialCommonText("home"));
+  let idLabel = $state(getInitialCommonText("idLabel"));
+  let eventListTitle = $state(getInitialCommonText("eventListTitle"));
+  let eventListEmpty = $state(getInitialCommonText("eventListEmpty"));
+  let eventListLoadingMore = $state(getInitialCommonText("eventListLoadingMore"));
+  let eventListLoadMoreHintDesktop = $state(getInitialCommonText("eventListLoadMoreHintDesktop"));
+  let eventListLoadMoreHintMobile = $state(getInitialCommonText("eventListLoadMoreHintMobile"));
+  let eventListLoadFailed = $state(getInitialCommonText("eventListLoadFailed"));
+  let eventListRetry = $state(getInitialCommonText("eventListRetry"));
+  let eventListEnd = $state(getInitialCommonText("eventListEnd"));
+  let eventListCurrentEvent = $state(getInitialCommonText("eventListCurrentEvent"));
+  let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
+  let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
 
   $effect(() => {
     items = data.initialPage.items;
@@ -49,6 +45,8 @@
   });
 
   $effect(() => {
+    const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
+    applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
 
@@ -67,8 +65,8 @@
     observer.observe(sentinel);
 
     return () => {
-        observer.disconnect();
-      };
+      observer.disconnect();
+    };
   });
 
   $effect(() => {
@@ -133,21 +131,25 @@
     };
   });
 
+  const applyTranslations = (translate: (key: string) => string): void => {
+    homeLabel = translate("home");
+    idLabel = translate("idLabel");
+    eventListTitle = translate("eventListTitle");
+    eventListEmpty = translate("eventListEmpty");
+    eventListLoadingMore = translate("eventListLoadingMore");
+    eventListLoadMoreHintDesktop = translate("eventListLoadMoreHintDesktop");
+    eventListLoadMoreHintMobile = translate("eventListLoadMoreHintMobile");
+    eventListLoadFailed = translate("eventListLoadFailed");
+    eventListRetry = translate("eventListRetry");
+    eventListEnd = translate("eventListEnd");
+    eventListCurrentEvent = translate("eventListCurrentEvent");
+    spoilerContentLabel = translate("spoilerContent");
+    bannerAltSuffix = translate("bannerAltSuffix");
+  };
+
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue);
-    homeLabel = tCommon(locale, "home");
-    idLabel = tCommon(locale, "idLabel");
-    eventListTitle = tCommon(locale, "eventListTitle");
-    eventListEmpty = tCommon(locale, "eventListEmpty");
-    eventListLoadingMore = tCommon(locale, "eventListLoadingMore");
-    eventListLoadMoreHintDesktop = tCommon(locale, "eventListLoadMoreHintDesktop");
-    eventListLoadMoreHintMobile = tCommon(locale, "eventListLoadMoreHintMobile");
-    eventListLoadFailed = tCommon(locale, "eventListLoadFailed");
-    eventListRetry = tCommon(locale, "eventListRetry");
-    eventListEnd = tCommon(locale, "eventListEnd");
-    eventListCurrentEvent = tCommon(locale, "eventListCurrentEvent");
-    spoilerContentLabel = tCommon(locale, "spoilerContent");
-    bannerAltSuffix = tCommon(locale, "bannerAltSuffix");
+    const locale = await setI18nLocale(localeValue, data.commonMessages);
+    applyTranslations((key) => tCommon(locale, key));
   };
 
   const getDataHref = (page: number): string =>
