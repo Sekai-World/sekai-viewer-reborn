@@ -21,6 +21,7 @@
 ## Shared Package Contracts
 - `packages/sekai-master-api-sdk`: sekai-master-api OpenAPI SDK package (auto-detects exposed OpenAPI json/yaml from base URL and generates SDK output).
 - `packages/auth-client`: Keycloak/OIDC URL helpers (`buildLoginUrl`, `buildLogoutUrl`).
+- `packages/i18n-runtime`: shared remote dictionary loader and `svelte-i18n` runtime wrapper.
 - `content-site` loads UI dictionaries from the external `sekai-i18n-reborn` CDN through `svelte-i18n`.
 - `packages/ui-tokens`: framework-agnostic tokens in JSON (`src/design-tokens.json`) exported through TypeScript.
 

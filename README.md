@@ -19,6 +19,7 @@ apps/
   media-lab-site/
   account-site/
 packages/
+  i18n-runtime/
   sekai-api-sdk/
   sekai-master-api-sdk/
   auth-client/
@@ -47,6 +48,7 @@ Apps in this workspace:
 - `@platform/sekai-api-sdk`: sekai-api OpenAPI SDK generator scaffold
 - `@platform/sekai-master-api-sdk`: sekai-master-api OpenAPI SDK generator and client package
 - `@platform/auth-client`: Keycloak/OIDC helper URL builders
+- `@platform/i18n-runtime`: shared remote dictionary loader and `svelte-i18n` runtime wrapper
 - `@platform/ui-shell`: shared Svelte shell and region-switcher components
 - `@platform/ui-tokens`: framework-agnostic design tokens (JSON + TS export)
 
