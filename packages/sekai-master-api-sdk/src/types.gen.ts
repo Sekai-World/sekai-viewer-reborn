@@ -64,6 +64,14 @@ export type SharedCardPagination = {
     total_pages?: number;
 };
 
+export type SharedCardParamsResponse = {
+    cardParameters?: unknown;
+    id?: unknown;
+    specialTrainingPower1BonusFixed?: unknown;
+    specialTrainingPower2BonusFixed?: unknown;
+    specialTrainingPower3BonusFixed?: unknown;
+};
+
 export type SharedCardRarityResponse = {
     [key: string]: unknown;
 };
@@ -76,6 +84,17 @@ export type SharedCharacterResponse = {
     [key: string]: unknown;
 };
 
+export type SharedCurrentEventResponse = {
+    aggregateAt?: unknown;
+    assetbundleName?: unknown;
+    closedAt?: unknown;
+    eventType?: unknown;
+    id?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+    unit?: unknown;
+};
+
 export type SharedErrorBody = {
     code?: string;
     message?: string;
@@ -83,6 +102,140 @@ export type SharedErrorBody = {
 
 export type SharedErrorResponse = {
     error?: SharedErrorBody;
+};
+
+export type SharedEventBonusesResponse = {
+    eventCardBonusLimits?: Array<SharedEventCardBonusLimitResponse>;
+    eventDeckBonuses?: Array<SharedEventDeckBonusResponse>;
+    eventHonorBonuses?: Array<SharedEventHonorBonusResponse>;
+    eventMysekaiFixtureGameCharacterPerformanceBonusLimits?: Array<SharedEventMysekaiFixtureGameCharacterPerformanceBonusLimitResponse>;
+    eventRarityBonusRates?: Array<SharedEventRarityBonusRateResponse>;
+};
+
+export type SharedEventCardBonusLimitResponse = {
+    eventId?: number;
+    memberCountLimit?: number;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedEventCardResponse = {
+    bonusRate?: number;
+    cardId?: number;
+    eventId?: number;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedEventCardsResponse = {
+    items?: Array<SharedEventCardResponse>;
+};
+
+export type SharedEventDeckBonusResponse = {
+    bonusRate?: number;
+    cardAttr?: string;
+    eventId?: number;
+    gameCharacterUnitId?: number;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedEventHonorBonusResponse = {
+    bonusRate?: number;
+    eventId?: number;
+    honorId?: number;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedEventListResponse = {
+    items?: Array<SharedEventObjectResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedEventMusicResponse = {
+    eventId?: number;
+    musicId?: number;
+    releaseCondition?: SharedReleaseConditionResponse;
+    seq?: number;
+};
+
+export type SharedEventMusicsResponse = {
+    items?: Array<SharedEventMusicResponse>;
+};
+
+export type SharedEventMysekaiFixtureGameCharacterPerformanceBonusLimitResponse = {
+    bonusRateLimit?: number;
+    eventId?: number;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedEventObjectResponse = {
+    aggregateAt?: unknown;
+    assetbundleName?: unknown;
+    bgmAssetbundleName?: unknown;
+    closedAt?: unknown;
+    eventBreakTimeId?: unknown;
+    eventPointIcon?: unknown;
+    eventType?: unknown;
+    id?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+    unit?: SharedEventUnitResponse;
+    virtualLive?: SharedEventVirtualLiveResponse;
+};
+
+export type SharedEventRankingRewardResponse = {
+    conditionValue?: number;
+    eventRankingRewardRangeId?: number;
+    id?: number;
+    resourceBoxId?: number;
+    rewardConditionType?: string;
+    seq?: number;
+};
+
+export type SharedEventRarityBonusRateResponse = {
+    bonusRate?: number;
+    cardRarityType?: string;
+    masterRank?: number;
+};
+
+export type SharedEventRewardRangeResponse = {
+    eventId?: number;
+    eventRankingRewards?: Array<SharedEventRankingRewardResponse>;
+    fromRank?: number;
+    id?: number;
+    isToRankBorder?: boolean;
+    toRank?: number;
+};
+
+export type SharedEventRewardsResponse = {
+    items?: Array<SharedEventRewardRangeResponse>;
+};
+
+export type SharedEventUnitResponse = {
+    colorCode?: unknown;
+    unit?: unknown;
+    unitName?: unknown;
+};
+
+export type SharedEventVirtualLiveResponse = {
+    assetbundleName?: unknown;
+    endAt?: unknown;
+    id?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+    virtualLiveType?: unknown;
+};
+
+export type SharedGenericItemsResponse = {
+    items?: Array<unknown>;
+};
+
+export type SharedGenericObjectResponse = {
+    [key: string]: unknown;
+};
+
+export type SharedGitHubWebhookResponse = {
+    reason?: string;
+    region?: string;
+    status?: string;
 };
 
 export type SharedHealthResponse = {
@@ -93,6 +246,7 @@ export type SharedHealthResponse = {
 export type SharedMasterDataAdminStatusResponse = {
     items?: Array<MasterdataSyncStatus>;
     regions?: Array<string>;
+    startup_ready?: boolean;
     status?: string;
     sync_running?: boolean;
 };
@@ -100,8 +254,32 @@ export type SharedMasterDataAdminStatusResponse = {
 export type SharedMasterDataSyncResponse = {
     items?: Array<MasterdataSyncStatus>;
     regions?: Array<string>;
+    startup_ready?: boolean;
     status?: string;
     sync_running?: boolean;
+};
+
+export type SharedMasterDataVersionsResponse = {
+    appVersion?: string;
+    assetVersion?: string;
+    dataVersion?: string;
+};
+
+export type SharedMusicListResponse = {
+    items?: Array<SharedMusicObjectResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedMusicObjectResponse = {
+    [key: string]: unknown;
+};
+
+export type SharedPaginationResponse = {
+    has_next?: boolean;
+    page?: number;
+    page_size?: number;
+    total?: number;
+    total_pages?: number;
 };
 
 export type SharedProfileAuthDebug = {
@@ -122,7 +300,32 @@ export type SharedProfileUser = {
     username?: string;
 };
 
+export type SharedRecordItemsResponse = {
+    items?: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+export type SharedRegionAvailabilityResponse = {
+    regions?: Array<string>;
+};
+
+export type SharedReleaseConditionResponse = {
+    id?: number;
+    releaseConditionType?: string;
+    sentence?: string;
+};
+
 export type SharedSkillResponse = {
+    [key: string]: unknown;
+};
+
+export type SharedVirtualLiveListResponse = {
+    items?: Array<SharedVirtualLiveObjectResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedVirtualLiveObjectResponse = {
     [key: string]: unknown;
 };
 
@@ -350,9 +553,7 @@ export type GetCardsRegionsByIdAvailabilityResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedRegionAvailabilityResponse;
 };
 
 export type GetCardsRegionsByIdAvailabilityResponse = GetCardsRegionsByIdAvailabilityResponses[keyof GetCardsRegionsByIdAvailabilityResponses];
@@ -562,7 +763,7 @@ export type GetCardsByRegionByIdEpisodesResponses = {
     /**
      * OK
      */
-    200: SharedCardListResponse;
+    200: SharedRecordItemsResponse;
 };
 
 export type GetCardsByRegionByIdEpisodesResponse = GetCardsByRegionByIdEpisodesResponses[keyof GetCardsByRegionByIdEpisodesResponses];
@@ -608,7 +809,7 @@ export type GetCardsByRegionByIdParamsResponses = {
     /**
      * OK
      */
-    200: SharedCardObjectResponse;
+    200: SharedCardParamsResponse;
 };
 
 export type GetCardsByRegionByIdParamsResponse = GetCardsByRegionByIdParamsResponses[keyof GetCardsByRegionByIdParamsResponses];
@@ -646,9 +847,7 @@ export type GetEventsRegionsByIdAvailabilityResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedRegionAvailabilityResponse;
 };
 
 export type GetEventsRegionsByIdAvailabilityResponse = GetEventsRegionsByIdAvailabilityResponses[keyof GetEventsRegionsByIdAvailabilityResponses];
@@ -690,9 +889,7 @@ export type GetEventsByRegionCurrentResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedCurrentEventResponse;
 };
 
 export type GetEventsByRegionCurrentResponse = GetEventsByRegionCurrentResponses[keyof GetEventsByRegionCurrentResponses];
@@ -747,9 +944,7 @@ export type GetEventsByRegionListResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedEventListResponse;
 };
 
 export type GetEventsByRegionListResponse = GetEventsByRegionListResponses[keyof GetEventsByRegionListResponses];
@@ -812,9 +1007,7 @@ export type GetEventsByRegionSearchResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedEventListResponse;
 };
 
 export type GetEventsByRegionSearchResponse = GetEventsByRegionSearchResponses[keyof GetEventsByRegionSearchResponses];
@@ -860,9 +1053,7 @@ export type GetEventsByRegionByIdResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedEventObjectResponse;
 };
 
 export type GetEventsByRegionByIdResponse = GetEventsByRegionByIdResponses[keyof GetEventsByRegionByIdResponses];
@@ -908,9 +1099,7 @@ export type GetEventsByRegionByIdBonusesResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedEventBonusesResponse;
 };
 
 export type GetEventsByRegionByIdBonusesResponse = GetEventsByRegionByIdBonusesResponses[keyof GetEventsByRegionByIdBonusesResponses];
@@ -956,9 +1145,7 @@ export type GetEventsByRegionByIdBreakTimesResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedGenericObjectResponse;
 };
 
 export type GetEventsByRegionByIdBreakTimesResponse = GetEventsByRegionByIdBreakTimesResponses[keyof GetEventsByRegionByIdBreakTimesResponses];
@@ -1004,9 +1191,7 @@ export type GetEventsByRegionByIdCardsResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedEventCardsResponse;
 };
 
 export type GetEventsByRegionByIdCardsResponse = GetEventsByRegionByIdCardsResponses[keyof GetEventsByRegionByIdCardsResponses];
@@ -1052,9 +1237,7 @@ export type GetEventsByRegionByIdMusicsResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedEventMusicsResponse;
 };
 
 export type GetEventsByRegionByIdMusicsResponse = GetEventsByRegionByIdMusicsResponses[keyof GetEventsByRegionByIdMusicsResponses];
@@ -1100,9 +1283,7 @@ export type GetEventsByRegionByIdRewardsResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedEventRewardsResponse;
 };
 
 export type GetEventsByRegionByIdRewardsResponse = GetEventsByRegionByIdRewardsResponses[keyof GetEventsByRegionByIdRewardsResponses];
@@ -1166,9 +1347,7 @@ export type PostInternalGithubWebhooksMasterDataResponses = {
     /**
      * Accepted
      */
-    202: {
-        [key: string]: unknown;
-    };
+    202: SharedGitHubWebhookResponse;
 };
 
 export type PostInternalGithubWebhooksMasterDataResponse = PostInternalGithubWebhooksMasterDataResponses[keyof PostInternalGithubWebhooksMasterDataResponses];
@@ -1206,9 +1385,7 @@ export type GetMusicsRegionsByIdAvailabilityResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedRegionAvailabilityResponse;
 };
 
 export type GetMusicsRegionsByIdAvailabilityResponse = GetMusicsRegionsByIdAvailabilityResponses[keyof GetMusicsRegionsByIdAvailabilityResponses];
@@ -1263,9 +1440,7 @@ export type GetMusicsByRegionListResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedMusicListResponse;
 };
 
 export type GetMusicsByRegionListResponse = GetMusicsByRegionListResponses[keyof GetMusicsByRegionListResponses];
@@ -1336,9 +1511,7 @@ export type GetMusicsByRegionSearchResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedMusicListResponse;
 };
 
 export type GetMusicsByRegionSearchResponse = GetMusicsByRegionSearchResponses[keyof GetMusicsByRegionSearchResponses];
@@ -1384,9 +1557,7 @@ export type GetMusicsByRegionByIdResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedMusicObjectResponse;
 };
 
 export type GetMusicsByRegionByIdResponse = GetMusicsByRegionByIdResponses[keyof GetMusicsByRegionByIdResponses];
@@ -1428,9 +1599,7 @@ export type GetVersionsByRegionResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedMasterDataVersionsResponse;
 };
 
 export type GetVersionsByRegionResponse = GetVersionsByRegionResponses[keyof GetVersionsByRegionResponses];
@@ -1468,9 +1637,7 @@ export type GetVirtualLivesRegionsByIdAvailabilityResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedRegionAvailabilityResponse;
 };
 
 export type GetVirtualLivesRegionsByIdAvailabilityResponse = GetVirtualLivesRegionsByIdAvailabilityResponses[keyof GetVirtualLivesRegionsByIdAvailabilityResponses];
@@ -1525,9 +1692,7 @@ export type GetVirtualLivesByRegionListResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedVirtualLiveListResponse;
 };
 
 export type GetVirtualLivesByRegionListResponse = GetVirtualLivesByRegionListResponses[keyof GetVirtualLivesByRegionListResponses];
@@ -1590,9 +1755,7 @@ export type GetVirtualLivesByRegionSearchResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedVirtualLiveListResponse;
 };
 
 export type GetVirtualLivesByRegionSearchResponse = GetVirtualLivesByRegionSearchResponses[keyof GetVirtualLivesByRegionSearchResponses];
@@ -1638,9 +1801,7 @@ export type GetVirtualLivesByRegionByIdResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedVirtualLiveObjectResponse;
 };
 
 export type GetVirtualLivesByRegionByIdResponse = GetVirtualLivesByRegionByIdResponses[keyof GetVirtualLivesByRegionByIdResponses];
@@ -1686,9 +1847,7 @@ export type GetVirtualLivesByRegionByIdItemsResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedGenericItemsResponse;
 };
 
 export type GetVirtualLivesByRegionByIdItemsResponse = GetVirtualLivesByRegionByIdItemsResponses[keyof GetVirtualLivesByRegionByIdItemsResponses];
@@ -1734,9 +1893,7 @@ export type GetVirtualLivesByRegionByIdSchedulesResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedGenericItemsResponse;
 };
 
 export type GetVirtualLivesByRegionByIdSchedulesResponse = GetVirtualLivesByRegionByIdSchedulesResponses[keyof GetVirtualLivesByRegionByIdSchedulesResponses];
@@ -1782,9 +1939,7 @@ export type GetVirtualLivesByRegionByIdSetlistsResponses = {
     /**
      * OK
      */
-    200: {
-        [key: string]: unknown;
-    };
+    200: SharedGenericItemsResponse;
 };
 
 export type GetVirtualLivesByRegionByIdSetlistsResponse = GetVirtualLivesByRegionByIdSetlistsResponses[keyof GetVirtualLivesByRegionByIdSetlistsResponses];
