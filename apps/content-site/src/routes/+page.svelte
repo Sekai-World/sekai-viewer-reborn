@@ -19,7 +19,7 @@
   let versionDataLabel = $state(getInitialCommonText("versionInfo.dataLabel"));
   let versionAssetLabel = $state(getInitialCommonText("versionInfo.assetLabel"));
   const homeCardItemClass =
-    "w-full shrink-0 md:basis-[calc((100%-1rem)/2)] lg:basis-[calc((100%-2rem)/3)] 2xl:basis-[calc((100%-4rem)/5)]";
+    "w-full shrink-0 md:basis-[calc((100%-2rem)/3)] lg:basis-[calc((100%-4rem)/5)]";
 
   const MOBILE_REGION_STORAGE_KEY = "home-mobile-region";
   let selectedRegion = $state<SupportedRegion>(supportedRegions[0]);
