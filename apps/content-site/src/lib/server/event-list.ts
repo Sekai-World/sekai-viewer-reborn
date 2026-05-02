@@ -40,8 +40,7 @@ const getStringLike = (value: unknown): string | null => {
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
-const getBoolean = (value: unknown): boolean | null =>
-  typeof value === "boolean" ? value : null;
+const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const getDateValue = (value: unknown): string | number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -68,7 +67,10 @@ const getNestedObject = (
   return null;
 };
 
-const getNestedArray = (source: Record<string, unknown>, keys: readonly string[]): unknown[] | null => {
+const getNestedArray = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): unknown[] | null => {
   for (const key of keys) {
     const value = source[key];
     if (Array.isArray(value)) {
@@ -166,9 +168,11 @@ const parsePagination = (
 ): EventListPagination => {
   const root = getObject(payload);
   const paginationNode =
-    (root && (getNestedObject(root, ["pagination", "meta"]) ?? getNestedObject(root, ["data"]))) ?? null;
+    (root && (getNestedObject(root, ["pagination", "meta"]) ?? getNestedObject(root, ["data"]))) ??
+    null;
   const page = pickFirstNumber(paginationNode ?? {}, ["page"]) ?? fallbackPage;
-  const pageSize = pickFirstNumber(paginationNode ?? {}, ["page_size", "pageSize"]) ?? fallbackPageSize;
+  const pageSize =
+    pickFirstNumber(paginationNode ?? {}, ["page_size", "pageSize"]) ?? fallbackPageSize;
   const total = pickFirstNumber(paginationNode ?? {}, ["total"]);
   const totalPages = pickFirstNumber(paginationNode ?? {}, ["total_pages", "totalPages"]);
   const hasNextFlag = getBoolean((paginationNode ?? {})["has_next"]);
@@ -196,7 +200,9 @@ export const parseEventListPage = (
       (getNestedArray(root, ["items", "events"]) ??
         getNestedArray(getNestedObject(root, ["data"]) ?? {}, ["items", "events"]))) ??
     [];
-  const items = itemsSource.map(parseEventListItem).filter((item): item is EventListItem => item !== null);
+  const items = itemsSource
+    .map(parseEventListItem)
+    .filter((item): item is EventListItem => item !== null);
 
   return {
     items,

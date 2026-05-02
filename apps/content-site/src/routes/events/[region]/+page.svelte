@@ -5,7 +5,9 @@
   import { regionLabels, supportedRegions } from "$lib/regions";
   import EventListCard from "$lib/components/EventListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
-  import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/RegionBadgeSwitch.svelte";
+  import RegionBadgeSwitch, {
+    type RegionBadgeOption
+  } from "$lib/components/RegionBadgeSwitch.svelte";
   import type { PageData } from "./$types";
 
   type EventListPagePayload = PageData["initialPage"];
@@ -164,8 +166,7 @@
     }
   ];
   const regionDisplayOrder = supportedRegions;
-  const getEventListHref = (region: string): string =>
-    resolve("/events/[region]", { region });
+  const getEventListHref = (region: string): string => resolve("/events/[region]", { region });
   const getRegionBadgeOptions = (): RegionBadgeOption[] =>
     regionDisplayOrder.map((regionOption) => ({
       key: regionOption,
@@ -174,7 +175,10 @@
       active: regionOption === data.region
     }));
 
-  const mergeItems = (currentItems: EventListItem[], nextItems: EventListItem[]): EventListItem[] => {
+  const mergeItems = (
+    currentItems: EventListItem[],
+    nextItems: EventListItem[]
+  ): EventListItem[] => {
     const existingIds = new Set(currentItems.map((item) => item.id));
     return [...currentItems, ...nextItems.filter((item) => !existingIds.has(item.id))];
   };

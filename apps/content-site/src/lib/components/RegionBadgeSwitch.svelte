@@ -16,7 +16,9 @@
 
 {#each options as option (option.key)}
   {#if option.active}
-    <span class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm">
+    <span
+      class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm"
+    >
       {option.label}
     </span>
   {:else if option.onclick}

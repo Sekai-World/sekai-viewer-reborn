@@ -23,7 +23,9 @@ const normalizeMessages = (payload: unknown): I18nMessages => {
   }
 
   return Object.fromEntries(
-    Object.entries(payload).filter((entry): entry is [string, string] => typeof entry[1] === "string")
+    Object.entries(payload).filter(
+      (entry): entry is [string, string] => typeof entry[1] === "string"
+    )
   );
 };
 

@@ -2,6 +2,7 @@
   import { resolve } from "$app/paths";
   import type { SupportedRegion } from "$lib/regions";
   import { getEventBannerAssetURL } from "$lib/assets";
+  import { toTimestampMs } from "$lib/date-time";
   import EventAssetImage from "$lib/components/EventAssetImage.svelte";
   import { getEventTypeDisplay } from "$lib/event";
   import EventCardFrame from "$lib/components/EventCardFrame.svelte";
@@ -43,37 +44,6 @@
   const isCurrentEvent = (): boolean => currentEventId === item.id;
   let spoilerRevealed = $state(false);
   let lastSpoilerIdentity = $state("");
-
-  const toTimestampMs = (value: string | number | null): number | null => {
-    if (value === null) {
-      return null;
-    }
-
-    if (typeof value === "number") {
-      if (!Number.isFinite(value)) {
-        return null;
-      }
-
-      return value > 1e12 ? value : value * 1000;
-    }
-
-    const normalized = value.trim();
-    if (!normalized) {
-      return null;
-    }
-
-    if (/^\d+$/.test(normalized)) {
-      const parsed = Number(normalized);
-      if (!Number.isFinite(parsed)) {
-        return null;
-      }
-
-      return parsed > 1e12 ? parsed : parsed * 1000;
-    }
-
-    const dateValue = new Date(normalized).getTime();
-    return Number.isNaN(dateValue) ? null : dateValue;
-  };
 
   const hasSpoiler = (): boolean => {
     const startAtMs = toTimestampMs(item.startAt);
@@ -120,20 +90,26 @@
           buttonClass="block h-full w-full overflow-hidden"
         />
       {:else}
-        <div class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70">
+        <div
+          class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
+        >
           {item.title}
         </div>
       {/if}
 
       <div class="absolute left-3 top-3">
-        <span class="badge border-none bg-base-100/92 font-semibold text-base-content shadow-sm backdrop-blur-sm">
+        <span
+          class="badge border-none bg-base-100/92 font-semibold text-base-content shadow-sm backdrop-blur-sm"
+        >
           {idLabel}{item.id}
         </span>
       </div>
 
       <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
         {#if getEventTypeDisplay(item.eventType, uiLocale)}
-          <span class="badge border-none bg-base-100/92 font-semibold text-base-content shadow-sm backdrop-blur-sm">
+          <span
+            class="badge border-none bg-base-100/92 font-semibold text-base-content shadow-sm backdrop-blur-sm"
+          >
             {getEventTypeDisplay(item.eventType, uiLocale)}
           </span>
         {/if}
@@ -152,8 +128,12 @@
   </div>
 
   {#if isSpoilerHidden()}
-    <div class="event-list-spoiler-overlay absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-[4px]">
-      <div class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error">
+    <div
+      class="event-list-spoiler-overlay absolute inset-0 z-20 flex cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-[4px]"
+    >
+      <div
+        class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
+      >
         !
       </div>
       <span class="text-sm font-semibold tracking-[0.12em] text-error">{spoilerContentLabel}</span>

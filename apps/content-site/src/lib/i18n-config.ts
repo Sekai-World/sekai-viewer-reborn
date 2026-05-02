@@ -1,10 +1,4 @@
-export const supportedUiLocales = [
-  "en",
-  "ja-JP",
-  "ko-KR",
-  "zh-CN",
-  "zh-TW"
-] as const;
+export const supportedUiLocales = ["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"] as const;
 
 export type SupportedUiLocale = (typeof supportedUiLocales)[number];
 

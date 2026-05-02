@@ -9,10 +9,7 @@ export const buildSekaiApiUrl = (path: string): string => {
   return normalizedPath ? `${baseUrl}/${normalizedPath}` : baseUrl;
 };
 
-export const fetchSekaiApiJson = async <T>(
-  path: string,
-  init?: RequestInit
-): Promise<T> => {
+export const fetchSekaiApiJson = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(buildSekaiApiUrl(path), init);
 
   if (!response.ok) {

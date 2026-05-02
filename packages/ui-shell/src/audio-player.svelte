@@ -87,7 +87,9 @@
 
   const normalizedSrc = $derived(src?.trim() ?? "");
   const hasSource = $derived(normalizedSrc.length > 0);
-  const displayedCurrentTime = $derived(isSeeking && pendingSeekTime !== null ? pendingSeekTime : currentTime);
+  const displayedCurrentTime = $derived(
+    isSeeking && pendingSeekTime !== null ? pendingSeekTime : currentTime
+  );
   const normalizedDownloadOptions = $derived(
     (() => {
       const seenKeys: string[] = [];
@@ -370,7 +372,9 @@
 
     const elapsedSeconds = Math.max(0, timestamp - playbackFrameAnchorAt) / 1000;
     const nextCurrentTime =
-      duration > 0 ? Math.min(duration, playbackFrameAnchorTime + elapsedSeconds) : playbackFrameAnchorTime + elapsedSeconds;
+      duration > 0
+        ? Math.min(duration, playbackFrameAnchorTime + elapsedSeconds)
+        : playbackFrameAnchorTime + elapsedSeconds;
 
     if (Math.abs(nextCurrentTime - currentTime) >= 0.016) {
       currentTime = nextCurrentTime;
@@ -736,34 +740,36 @@
 </script>
 
 {#if !hasSource || hasError}
-  <div class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-dashed border-base-content/15 px-6 text-center">
+  <div
+    class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-dashed border-base-content/15 px-6 text-center"
+  >
     <Icon icon="mdi:music-off" class="h-10 w-10 opacity-55" aria-hidden="true" />
     <p class="text-sm font-medium opacity-75">{unavailableLabel}</p>
   </div>
 {:else}
   <div class="w-full">
     <div class="flex items-center gap-4">
-          <button
-            type="button"
-            class="btn btn-primary btn-circle btn-lg shrink-0"
-            onclick={togglePlayback}
-            disabled={!hasSource || hasError || isLoading}
-            aria-label={isPlaying ? pauseLabel : playLabel}
-            title={isPlaying ? pauseLabel : playLabel}
-          >
-            {#if isLoading}
-              <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
-            {:else}
-              <Icon icon={isPlaying ? "mdi:pause" : "mdi:play"} class="h-6 w-6" />
-            {/if}
-          </button>
+      <button
+        type="button"
+        class="btn btn-primary btn-circle btn-lg shrink-0"
+        onclick={togglePlayback}
+        disabled={!hasSource || hasError || isLoading}
+        aria-label={isPlaying ? pauseLabel : playLabel}
+        title={isPlaying ? pauseLabel : playLabel}
+      >
+        {#if isLoading}
+          <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+        {:else}
+          <Icon icon={isPlaying ? "mdi:pause" : "mdi:play"} class="h-6 w-6" />
+        {/if}
+      </button>
 
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-base font-semibold">{title}</p>
-          {#if subtitle}
-            <p class="mt-1 truncate text-sm opacity-70">{subtitle}</p>
-          {/if}
-        </div>
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-base font-semibold">{title}</p>
+        {#if subtitle}
+          <p class="mt-1 truncate text-sm opacity-70">{subtitle}</p>
+        {/if}
+      </div>
 
       <div class="dropdown dropdown-end shrink-0">
         <button
@@ -801,7 +807,9 @@
       </div>
     </div>
 
-    <div class="mt-4 flex flex-col gap-3 md:grid md:grid-cols-2 md:items-end lg:grid-cols-[minmax(0,1fr)_auto]">
+    <div
+      class="mt-4 flex flex-col gap-3 md:grid md:grid-cols-2 md:items-end lg:grid-cols-[minmax(0,1fr)_auto]"
+    >
       <div class="min-w-0 flex-1 md:col-span-2 lg:col-span-1">
         <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium opacity-70">
           <span class="font-mono tabular-nums">{formatTime(displayedCurrentTime)}</span>
@@ -832,7 +840,9 @@
       </div>
 
       <div class="hidden w-full md:col-start-2 md:block lg:w-auto lg:shrink-0 lg:justify-self-end">
-        <div class="flex w-full items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-3 py-2 shadow-sm lg:w-auto">
+        <div
+          class="flex w-full items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-3 py-2 shadow-sm lg:w-auto"
+        >
           <Icon icon="mdi:volume-high" class="h-4 w-4 shrink-0 opacity-75" aria-hidden="true" />
           <input
             type="range"
@@ -855,18 +865,26 @@
 {/if}
 
 {#if isDownloadLoading}
-  <div class="pointer-events-none fixed inset-x-3 bottom-3 z-50 md:inset-x-auto md:right-4 md:bottom-4 md:w-[22rem]">
-    <div class="pointer-events-auto rounded-[1.5rem] border border-base-content/10 bg-base-100/94 px-4 py-4 shadow-2xl backdrop-blur">
+  <div
+    class="pointer-events-none fixed inset-x-3 bottom-3 z-50 md:inset-x-auto md:right-4 md:bottom-4 md:w-[22rem]"
+  >
+    <div
+      class="pointer-events-auto rounded-[1.5rem] border border-base-content/10 bg-base-100/94 px-4 py-4 shadow-2xl backdrop-blur"
+    >
       <div class="mb-3 flex items-start justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{downloadLabel}</p>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+            {downloadLabel}
+          </p>
           <p class="mt-1 truncate text-sm font-semibold">{activeDownloadName}</p>
           {#if activeDownloadDetail}
             <p class="mt-1 text-xs opacity-65">{activeDownloadDetail}</p>
           {/if}
         </div>
         <div class="flex items-start gap-2">
-          <span class="pt-0.5 text-sm font-semibold tabular-nums">{Math.round(downloadProgress)}%</span>
+          <span class="pt-0.5 text-sm font-semibold tabular-nums"
+            >{Math.round(downloadProgress)}%</span
+          >
           <button
             type="button"
             class="btn btn-ghost btn-square btn-xs"
@@ -878,7 +896,8 @@
           </button>
         </div>
       </div>
-      <progress class="progress progress-primary h-2 w-full" max="100" value={downloadProgress}></progress>
+      <progress class="progress progress-primary h-2 w-full" max="100" value={downloadProgress}
+      ></progress>
     </div>
   </div>
 {/if}

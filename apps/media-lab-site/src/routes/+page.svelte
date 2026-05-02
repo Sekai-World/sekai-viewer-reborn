@@ -1,9 +1,5 @@
 <script lang="ts">
-  import {
-    RegionSwitcher,
-    ViewerShell,
-    type SidebarItem
-  } from "@platform/ui-shell";
+  import { RegionSwitcher, ViewerShell, type SidebarItem } from "@platform/ui-shell";
 
   const supportedRegions = ["jp", "en", "tw", "kr", "cn"] as const;
   type SupportedRegion = (typeof supportedRegions)[number];
@@ -32,7 +28,12 @@
   ];
 </script>
 
-<ViewerShell drawerId="media-lab-site-drawer" navTitle="Sekai Media Lab" navBadge="Lab" sidebarItems={sidebarItems}>
+<ViewerShell
+  drawerId="media-lab-site-drawer"
+  navTitle="Sekai Media Lab"
+  navBadge="Lab"
+  {sidebarItems}
+>
   <RegionSwitcher
     options={regionOptions}
     primaryValue={primaryRegion}
@@ -49,7 +50,10 @@
 
   <section class="flex flex-col gap-4 md:flex-row md:flex-wrap md:justify-center">
     {#each supportedRegions as region (region)}
-      <article id={`region-${region}`} class="card w-full bg-base-100 shadow-sm md:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]">
+      <article
+        id={`region-${region}`}
+        class="card w-full bg-base-100 shadow-sm md:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]"
+      >
         <div class="card-body">
           <div class="flex items-center justify-between">
             <h2 class="card-title">{regionLabels[region]}</h2>
@@ -57,7 +61,9 @@
               <span class={`badge ${primaryRegion === region ? "badge-primary" : "badge-ghost"}`}>
                 P
               </span>
-              <span class={`badge ${secondaryRegion === region ? "badge-secondary" : "badge-ghost"}`}>
+              <span
+                class={`badge ${secondaryRegion === region ? "badge-secondary" : "badge-ghost"}`}
+              >
                 S
               </span>
             </div>

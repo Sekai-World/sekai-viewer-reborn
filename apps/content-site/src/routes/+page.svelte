@@ -85,13 +85,17 @@
 </script>
 
 <div class="-mt-6 mb-10 flex justify-center px-2">
-  <div class="flex max-w-3xl gap-3 rounded-xl border border-info/25 bg-info/8 px-4 py-3 text-base-content/70">
+  <div
+    class="flex max-w-3xl gap-3 rounded-xl border border-info/25 bg-info/8 px-4 py-3 text-base-content/70"
+  >
     <Icon icon="mdi:information-outline" class="mt-0.5 h-4 w-4 shrink-0 text-info/80" />
     <p class="text-xs leading-relaxed">{disclaimerText}</p>
   </div>
 </div>
 
-<h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">{currentEventLabel}</h2>
+<h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">
+  {currentEventLabel}
+</h2>
 
 <div class="mb-6 flex flex-wrap justify-center gap-2 md:hidden">
   <RegionBadgeSwitch
@@ -156,7 +160,9 @@
 </section>
 
 <section class="mt-10">
-  <h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">{versionInfoTitle}</h2>
+  <h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">
+    {versionInfoTitle}
+  </h2>
   <div class="mx-auto max-w-3xl overflow-x-auto rounded-xl border border-base-content/10">
     <table class="table table-sm w-full">
       <thead>
@@ -171,17 +177,27 @@
         {#each supportedRegions as region, index (region)}
           {#await data.cards[index]}
             <tr>
-              <td><span class="badge badge-sm homepage-region-badge font-semibold">{region.toUpperCase()}</span></td>
+              <td
+                ><span class="badge badge-sm homepage-region-badge font-semibold"
+                  >{region.toUpperCase()}</span
+                ></td
+              >
               <td><span class="inline-block h-3 w-16 animate-pulse rounded bg-base-300"></span></td>
               <td><span class="inline-block h-3 w-20 animate-pulse rounded bg-base-300"></span></td>
               <td><span class="inline-block h-3 w-20 animate-pulse rounded bg-base-300"></span></td>
             </tr>
           {:then card}
             <tr>
-              <td><span class="badge badge-sm homepage-region-badge font-semibold">{card.region.toUpperCase()}</span></td>
+              <td
+                ><span class="badge badge-sm homepage-region-badge font-semibold"
+                  >{card.region.toUpperCase()}</span
+                ></td
+              >
               <td class="font-mono text-xs">{card.versions?.appVersion ?? "—"}</td>
               <td class="font-mono text-xs">{getDisplayDataVersion(card.versions) ?? "—"}</td>
-              <td class="font-mono text-xs">{getDisplayAssetVersion(card.region, card.versions) ?? "—"}</td>
+              <td class="font-mono text-xs"
+                >{getDisplayAssetVersion(card.region, card.versions) ?? "—"}</td
+              >
             </tr>
           {/await}
         {/each}

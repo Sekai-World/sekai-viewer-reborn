@@ -35,3 +35,34 @@ export const formatDisplayDateTime = (
 
   return getFormatter(localeValue).format(parsedDate);
 };
+
+export const toTimestampMs = (value: string | number | null): number | null => {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      return null;
+    }
+
+    return value > 1e12 ? value : value * 1000;
+  }
+
+  const normalized = value.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  if (/^\d+$/.test(normalized)) {
+    const parsed = Number(normalized);
+    if (!Number.isFinite(parsed)) {
+      return null;
+    }
+
+    return parsed > 1e12 ? parsed : parsed * 1000;
+  }
+
+  const dateValue = new Date(normalized).getTime();
+  return Number.isNaN(dateValue) ? null : dateValue;
+};

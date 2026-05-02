@@ -191,7 +191,11 @@
 
   const resolvePreferredThemeName = (): ThemeName => {
     const storedThemeName = localStorage.getItem(THEME_NAME_STORAGE_KEY);
-    if (storedThemeName === "default" || storedThemeName === "sakura" || storedThemeName === "mint") {
+    if (
+      storedThemeName === "default" ||
+      storedThemeName === "sakura" ||
+      storedThemeName === "mint"
+    ) {
       return storedThemeName;
     }
 
@@ -321,7 +325,9 @@
 
 {#if $isLocaleLoading}
   <div class="pointer-events-none fixed inset-x-0 top-2 z-240 flex justify-center px-4">
-    <div class="inline-flex items-center gap-2 rounded-full border border-base-content/20 bg-base-100/86 px-3 py-1 text-xs font-semibold shadow-lg backdrop-blur-md">
+    <div
+      class="inline-flex items-center gap-2 rounded-full border border-base-content/20 bg-base-100/86 px-3 py-1 text-xs font-semibold shadow-lg backdrop-blur-md"
+    >
       <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
       <span>{interfaceLanguageLabel}: {uiLocaleDisplayLabel}</span>
     </div>
@@ -331,8 +337,8 @@
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
-  sidebarLabel={sidebarLabel}
-  sidebarItems={sidebarItems}
+  {sidebarLabel}
+  {sidebarItems}
   showTitle={showPageTitle}
 >
   {#snippet navActions()}
@@ -345,7 +351,9 @@
         >
           <Icon icon="mdi:tune-variant" class="h-4 w-4" />
         </summary>
-        <div class="dropdown-content z-130 mt-3 w-52 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
+        <div
+          class="dropdown-content z-130 mt-3 w-52 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm"
+        >
           <div class="flex flex-col gap-1">
             <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
               {themePaletteLabel}
@@ -380,8 +388,13 @@
                     applyTheme(themeName, themeOption as ThemeMode);
                   }}
                 >
-                  <Icon icon={getThemeModeIcon(themeOption as ThemeMode)} class="h-5 w-5 shrink-0" />
-                  <span class="text-[0.6rem] font-semibold leading-none">{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
+                  <Icon
+                    icon={getThemeModeIcon(themeOption as ThemeMode)}
+                    class="h-5 w-5 shrink-0"
+                  />
+                  <span class="text-[0.6rem] font-semibold leading-none"
+                    >{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span
+                  >
                 </button>
               {/each}
             </div>
@@ -438,7 +451,9 @@
         >
           <Icon icon="mdi:palette-outline" class="h-4 w-4" />
         </summary>
-        <ul class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm">
+        <ul
+          class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm"
+        >
           <li class="menu-title px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
             {themePaletteLabel}
           </li>
@@ -459,7 +474,9 @@
             </li>
           {/each}
 
-          <li class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
+          <li
+            class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60"
+          >
             {themeControlLabel}
           </li>
           {#each ["auto", "light", "dark"] as themeOption (themeOption)}
@@ -471,7 +488,10 @@
                   applyTheme(themeName, themeOption as ThemeMode);
                 }}
               >
-                <Icon icon={getThemeModeIcon(themeOption as ThemeMode)} class="h-4 w-4 opacity-80" />
+                <Icon
+                  icon={getThemeModeIcon(themeOption as ThemeMode)}
+                  class="h-4 w-4 opacity-80"
+                />
                 <span>{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
                 {#if themeMode === themeOption}
                   <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
@@ -482,7 +502,12 @@
         </ul>
       </details>
 
-      <details class="dropdown dropdown-end" bind:this={localeMenu} bind:open={isLocaleMenuOpen} ontoggle={handleLocaleMenuToggle}>
+      <details
+        class="dropdown dropdown-end"
+        bind:this={localeMenu}
+        bind:open={isLocaleMenuOpen}
+        ontoggle={handleLocaleMenuToggle}
+      >
         <summary
           class={`btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 ${$isLocaleLoading ? "pointer-events-none opacity-75" : ""}`}
           aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
@@ -499,7 +524,9 @@
             <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
           {/if}
         </summary>
-        <div class="dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm">
+        <div
+          class="dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm"
+        >
           <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
             <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
               {currentLanguageLabel}

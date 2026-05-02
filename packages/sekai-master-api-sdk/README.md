@@ -38,7 +38,7 @@ Notes:
 ### Basic call
 
 ```ts
-import { getHealth } from '@platform/sekai-master-api-sdk';
+import { getHealth } from "@platform/sekai-master-api-sdk";
 
 const health = await getHealth();
 ```
@@ -46,11 +46,11 @@ const health = await getHealth();
 ### Path + query parameters
 
 ```ts
-import { getCardsByRegionList } from '@platform/sekai-master-api-sdk';
+import { getCardsByRegionList } from "@platform/sekai-master-api-sdk";
 
 const cards = await getCardsByRegionList({
-  baseUrl: '/api/v1',
-  path: { region: 'jp' },
+  baseUrl: "/api/v1",
+  path: { region: "jp" },
   query: { page: 1, page_size: 20 }
 });
 ```
@@ -58,13 +58,13 @@ const cards = await getCardsByRegionList({
 ### Request body
 
 ```ts
-import { postAdminLogin } from '@platform/sekai-master-api-sdk';
+import { postAdminLogin } from "@platform/sekai-master-api-sdk";
 
 const login = await postAdminLogin({
-  baseUrl: 'http://localhost:8080/api/v1',
+  baseUrl: "http://localhost:8080/api/v1",
   body: {
-    username: 'admin',
-    password: 'your-password'
+    username: "admin",
+    password: "your-password"
   }
 });
 ```
@@ -72,10 +72,10 @@ const login = await postAdminLogin({
 ### Authenticated endpoint
 
 ```ts
-import { getAdminProfile } from '@platform/sekai-master-api-sdk';
+import { getAdminProfile } from "@platform/sekai-master-api-sdk";
 
 const profile = await getAdminProfile({
-  baseUrl: '/api/v1',
+  baseUrl: "/api/v1",
   headers: {
     Authorization: `Bearer ${token}`
   }
@@ -90,7 +90,7 @@ import type {
   GetCardsByRegionListResponse,
   PostAdminLoginData,
   PostAdminLoginResponse
-} from '@platform/sekai-master-api-sdk';
+} from "@platform/sekai-master-api-sdk";
 ```
 
 ## Build and checks

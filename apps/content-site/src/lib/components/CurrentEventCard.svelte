@@ -69,10 +69,5 @@
     <p>{idLabel}{event.id}</p>
   </div>
 
-  <EventCountdownCard
-    startAt={event.startAt}
-    endAt={event.endAt}
-    {uiLocale}
-    class="mt-1"
-  />
+  <EventCountdownCard startAt={event.startAt} endAt={event.endAt} {uiLocale} class="mt-1" />
 </EventCardFrame>

@@ -77,10 +77,7 @@ const publishDownloadTask = (
 const getDownloadTaskSnapshot = (taskId: string): DownloadTaskSnapshot =>
   taskSnapshots.get(taskId) ?? DEFAULT_SNAPSHOT;
 
-const subscribeDownloadTask = (
-  taskId: string,
-  listener: DownloadTaskListener
-): (() => void) => {
+const subscribeDownloadTask = (taskId: string, listener: DownloadTaskListener): (() => void) => {
   const listeners = taskListeners.get(taskId) ?? new Set<DownloadTaskListener>();
   listeners.add(listener);
   taskListeners.set(taskId, listeners);
