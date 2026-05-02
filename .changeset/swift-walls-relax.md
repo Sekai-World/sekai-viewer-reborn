@@ -37,3 +37,5 @@ Move app-scoped i18n source manifests into the shared `@platform/i18n-source` pa
 Constrain the `content-site` home page version info table width for easier reading.
 Render `content-site` home page current event banners through the shared event image component.
 Show unit icons next to the `content-site` event detail unit field.
+Show compact unit markers next to current event ids on `content-site` home cards.
+Show unit icons on `content-site` event list card banners and move the current-event badge to the banner footer.

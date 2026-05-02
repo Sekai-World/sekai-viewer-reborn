@@ -2,6 +2,7 @@ export type EventListItem = {
   id: string;
   title: string;
   eventType: string | null;
+  unit: string | null;
   assetBundleName: string | null;
   startAt: string | number | null;
 };
@@ -137,6 +138,15 @@ const pickFirstDateValue = (
   return null;
 };
 
+const normalizeUnitCode = (unit: string | null): string | null => {
+  if (!unit) {
+    return null;
+  }
+
+  const normalizedUnit = unit.trim().toLowerCase();
+  return normalizedUnit === "none" || normalizedUnit === "-" ? "mixed" : normalizedUnit;
+};
+
 const parseEventListItem = (payload: unknown): EventListItem | null => {
   const root = getObject(payload);
   if (!root) {
@@ -144,6 +154,7 @@ const parseEventListItem = (payload: unknown): EventListItem | null => {
   }
 
   const eventNode = getNestedObject(root, ["event", "data"]) ?? root;
+  const unitNode = getNestedObject(eventNode, ["unit"]);
   const id = pickFirstStringLike(eventNode, ["id", "eventId"]);
   const title = pickFirstString(eventNode, ["name", "title", "eventName"]);
 
@@ -155,6 +166,7 @@ const parseEventListItem = (payload: unknown): EventListItem | null => {
     id,
     title,
     eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
+    unit: normalizeUnitCode(pickFirstString(unitNode ?? eventNode, ["unit"])),
     assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"]),
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"])
   };
