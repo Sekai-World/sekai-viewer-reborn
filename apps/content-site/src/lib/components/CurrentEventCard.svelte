@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { asset, resolve } from "$app/paths";
   import type { SupportedRegion } from "$lib/regions";
   import { getEventBannerAssetURL } from "$lib/assets";
   import EventAssetImage from "$lib/components/EventAssetImage.svelte";
@@ -14,10 +14,20 @@
   type CurrentEventSummary = {
     id: string;
     title: string;
+    unit: string | null;
     startAt: string | number | null;
     endAt: string | number | null;
     assetBundleName: string | null;
   };
+
+  const unitIconSlugs = new Set([
+    "idol",
+    "light_sound",
+    "piapro",
+    "school_refusal",
+    "street",
+    "theme_park"
+  ]);
 
   let {
     region,
@@ -25,6 +35,7 @@
     event,
     uiLocale,
     idLabel,
+    mixedUnitLabel,
     bannerAltSuffix
   }: {
     region: SupportedRegion;
@@ -32,8 +43,30 @@
     event: CurrentEventSummary;
     uiLocale: string;
     idLabel: string;
+    mixedUnitLabel: string;
     bannerAltSuffix: string;
   } = $props();
+
+  const getUnitIconUrl = (unit: string | null | undefined): string | null => {
+    if (!unit) {
+      return null;
+    }
+
+    const slug = unit.trim().toLowerCase();
+    return unitIconSlugs.has(slug) ? asset(`/icon_${slug}.png`) : null;
+  };
+
+  const getDisplayUnit = (unit: string | null | undefined): string | null => {
+    if (!unit) {
+      return null;
+    }
+
+    const normalizedUnit = unit.trim().toLowerCase();
+    return normalizedUnit === "none" || normalizedUnit === "-" ? mixedUnitLabel : normalizedUnit;
+  };
+
+  const unitIconUrl = $derived(getUnitIconUrl(event.unit));
+  const displayUnit = $derived(getDisplayUnit(event.unit));
 </script>
 
 <EventCardFrame
@@ -65,8 +98,26 @@
   <h3 class="text-base font-semibold leading-tight">
     {event.title}
   </h3>
-  <div class="flex items-center gap-2 text-sm opacity-70">
-    <p>{idLabel}{event.id}</p>
+  <div class="flex items-center gap-2 text-sm">
+    <p class="opacity-70">{idLabel}{event.id}</p>
+    {#if displayUnit}
+      <span
+        class="{unitIconUrl ? 'unit-icon-frame h-8 w-8' : 'h-7 min-w-7 border-base-content/15 px-1'} inline-flex items-center justify-center rounded-full border text-[0.65rem] font-semibold leading-none"
+      >
+        {#if unitIconUrl}
+          <img
+            src={unitIconUrl}
+            alt=""
+            aria-hidden="true"
+            class="h-9 w-9 max-w-none shrink-0 object-contain"
+            loading="lazy"
+            decoding="async"
+          />
+        {:else}
+          <span class="opacity-70">{displayUnit}</span>
+        {/if}
+      </span>
+    {/if}
   </div>
 
   <EventCountdownCard startAt={event.startAt} endAt={event.endAt} {uiLocale} class="mt-1" />

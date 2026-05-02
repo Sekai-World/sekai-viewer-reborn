@@ -8,6 +8,7 @@ import type { PageServerLoad } from "./$types";
 type EventSummary = {
   id: string;
   title: string;
+  unit: string | null;
   startAt: string | number | null;
   endAt: string | number | null;
   assetBundleName: string | null;
@@ -133,6 +134,7 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
   }
 
   const eventNode = getNestedObject(root, ["event", "currentEvent", "data"]) ?? root;
+  const unitNode = getNestedObject(eventNode, ["unit"]);
   const id = pickFirstStringLike(eventNode, ["id", "eventId"]);
   const title = pickFirstString(eventNode, ["name", "title", "eventName"]);
 
@@ -143,6 +145,7 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
   return {
     id,
     title,
+    unit: pickFirstString(unitNode ?? eventNode, ["unit"]),
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
     endAt: pickFirstDateValue(eventNode, [
       "aggregateAt",

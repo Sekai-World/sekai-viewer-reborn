@@ -17,6 +17,7 @@
     id: string;
     title: string;
     eventType: string | null;
+    unit: string | null;
     assetBundleName: string | null;
     startAt: string | number | null;
   };
@@ -44,6 +45,23 @@
   const isCurrentEvent = (): boolean => currentEventId === item.id;
   let spoilerRevealed = $state(false);
   let lastSpoilerIdentity = $state("");
+
+  const unitIconClassByUnit: Record<string, string> = {
+    idol: "event-list-unit-idol",
+    light_sound: "event-list-unit-light-sound",
+    piapro: "event-list-unit-piapro",
+    school_refusal: "event-list-unit-school-refusal",
+    street: "event-list-unit-street",
+    theme_park: "event-list-unit-theme-park"
+  };
+
+  const getUnitIconClass = (unit: string | null | undefined): string => {
+    if (!unit) {
+      return "";
+    }
+
+    return unitIconClassByUnit[unit] ?? "";
+  };
 
   const hasSpoiler = (): boolean => {
     const startAtMs = toTimestampMs(item.startAt);
@@ -81,7 +99,7 @@
       isSpoilerHidden() ? "scale-[1.01] blur-md" : ""
     }`}
   >
-    <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
+    <div class={`${EVENT_LIST_CARD_MEDIA_CLASS} ${getUnitIconClass(item.unit)}`}>
       {#if item.assetBundleName}
         <EventAssetImage
           src={getEventBannerAssetURL(item.assetBundleName, region)}
@@ -113,13 +131,15 @@
             {getEventTypeDisplay(item.eventType, uiLocale)}
           </span>
         {/if}
+      </div>
 
-        {#if isCurrentEvent()}
+      {#if isCurrentEvent()}
+        <div class="absolute bottom-3 right-3">
           <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
             {currentEventLabel}
           </span>
-        {/if}
-      </div>
+        </div>
+      {/if}
     </div>
 
     <div class="px-4 pb-4 pt-3">

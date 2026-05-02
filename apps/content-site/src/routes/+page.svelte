@@ -14,6 +14,7 @@
   let noEventLabel = $state(getInitialCommonText("noCurrentEventData"));
   let disclaimerText = $state(getInitialCommonText("disclaimer"));
   let currentEventLabel = $state(getInitialCommonText("eventListCurrentEvent"));
+  let mixedUnitLabel = $state(getInitialCommonText("mixedUnitLabel"));
   let versionInfoTitle = $state(getInitialCommonText("versionInfo.title"));
   let versionAppLabel = $state(getInitialCommonText("versionInfo.appLabel"));
   let versionDataLabel = $state(getInitialCommonText("versionInfo.dataLabel"));
@@ -48,6 +49,7 @@
     noEventLabel = translate("noCurrentEventData");
     disclaimerText = translate("disclaimer");
     currentEventLabel = translate("eventListCurrentEvent");
+    mixedUnitLabel = translate("mixedUnitLabel");
     versionInfoTitle = translate("versionInfo.title");
     versionAppLabel = translate("versionInfo.appLabel");
     versionDataLabel = translate("versionInfo.dataLabel");
@@ -134,6 +136,7 @@
             event={card.event}
             uiLocale={data.uiLocale}
             {idLabel}
+            {mixedUnitLabel}
             {bannerAltSuffix}
           />
         {:else}
