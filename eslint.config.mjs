@@ -5,7 +5,13 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: ["**/node_modules/**", "**/.svelte-kit/**", "**/.turbo/**", "**/dist/**", "**/build/**"]
+    ignores: [
+      "**/node_modules/**",
+      "**/.svelte-kit/**",
+      "**/.turbo/**",
+      "**/dist/**",
+      "**/build/**"
+    ]
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

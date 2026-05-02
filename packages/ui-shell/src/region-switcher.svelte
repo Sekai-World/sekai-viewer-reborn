@@ -52,10 +52,14 @@
       {primaryRegionLabel} | {secondaryRegionLabel}
     </span>
   </summary>
-  <div class="dropdown-content z-[120] mt-3 w-[16.5rem] rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm sm:w-[18rem]">
+  <div
+    class="dropdown-content z-[120] mt-3 w-[16.5rem] rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm sm:w-[18rem]"
+  >
     <div class="grid grid-cols-[1fr_auto_1fr] gap-2">
       <section>
-        <p class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide opacity-70">{primaryTitle}</p>
+        <p class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide opacity-70">
+          {primaryTitle}
+        </p>
         <ul class="menu gap-0.5 p-0">
           {#each options as option (option.value)}
             <li>
@@ -81,7 +85,9 @@
       <div class="my-1 w-px bg-base-content/12"></div>
 
       <section>
-        <p class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide opacity-70">{secondaryTitle}</p>
+        <p class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide opacity-70">
+          {secondaryTitle}
+        </p>
         <ul class="menu gap-0.5 p-0">
           {#each options as option (option.value)}
             <li>

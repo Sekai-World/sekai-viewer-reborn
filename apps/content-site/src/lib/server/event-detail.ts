@@ -1,15 +1,4 @@
-type EventDetail = {
-  id: string;
-  title: string;
-  unit: string | null;
-  unitName: string | null;
-  eventType: string | null;
-  eventPointIcon: string | null;
-  bgmAssetbundleName: string | null;
-  startAt: string | number | null;
-  endAt: string | number | null;
-  assetBundleName: string | null;
-};
+import type { EventDetail } from "$lib/event-detail";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -113,9 +102,7 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
     id,
     title,
     unit: pickFirstString(unitNode ?? eventNode, ["unit"]),
-    unitName:
-      pickFirstString(unitNode ?? eventNode, ["unitName", "unit"]) ??
-      null,
+    unitName: pickFirstString(unitNode ?? eventNode, ["unitName", "unit"]) ?? null,
     eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
     eventPointIcon: pickFirstString(eventNode, ["eventPointIcon", "event_point_icon"]),
     bgmAssetbundleName: pickFirstString(eventNode, [
@@ -124,7 +111,13 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
       "bgmAssetBundleName"
     ]),
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
-    endAt: pickFirstDateValue(eventNode, ["aggregateAt", "aggregate_at", "endAt", "end_at", "endDate"]),
+    endAt: pickFirstDateValue(eventNode, [
+      "aggregateAt",
+      "aggregate_at",
+      "endAt",
+      "end_at",
+      "endDate"
+    ]),
     assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"])
   };
 };

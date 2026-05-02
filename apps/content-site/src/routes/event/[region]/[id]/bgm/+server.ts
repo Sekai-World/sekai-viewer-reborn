@@ -33,7 +33,7 @@ const sanitizeFilename = (value: string): string => {
   const sanitized = Array.from(value.trim(), (character) => {
     const codePoint = character.codePointAt(0) ?? 0;
     const isControlCharacter = codePoint <= 0x1f || codePoint === 0x7f;
-    return isControlCharacter || "<>:\"/\\|?*".includes(character) ? "-" : character;
+    return isControlCharacter || '<>:"/\\|?*'.includes(character) ? "-" : character;
   })
     .join("")
     .replace(/\s+/g, " ")
@@ -74,11 +74,7 @@ const createProgressReporter = (taskId: string | null) => {
     }
 
     const normalizedProgress = Math.max(0, Math.min(100, Math.round(progress)));
-    if (
-      state === lastState &&
-      normalizedProgress === lastProgress &&
-      detail === lastDetail
-    ) {
+    if (state === lastState && normalizedProgress === lastProgress && detail === lastDetail) {
       return null;
     }
 
@@ -268,16 +264,23 @@ const fetchBinaryWithAcceleration = async ({
           nextRangeIndex += 1;
           const { start, end } = ranges[currentIndex];
           let previousLoadedBytes = 0;
-          const chunk = await fetchBinaryRange(fetchFn, url, start, end, signal, (rangeLoadedBytes) => {
-            const delta = rangeLoadedBytes - previousLoadedBytes;
-            if (delta <= 0) {
-              return;
-            }
+          const chunk = await fetchBinaryRange(
+            fetchFn,
+            url,
+            start,
+            end,
+            signal,
+            (rangeLoadedBytes) => {
+              const delta = rangeLoadedBytes - previousLoadedBytes;
+              if (delta <= 0) {
+                return;
+              }
 
-            previousLoadedBytes = rangeLoadedBytes;
-            loadedBytes += delta;
-            onProgress?.(loadedBytes, probe.size);
-          });
+              previousLoadedBytes = rangeLoadedBytes;
+              loadedBytes += delta;
+              onProgress?.(loadedBytes, probe.size);
+            }
+          );
           merged.set(chunk, start);
         }
       })

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import { toTimestampMs } from "$lib/date-time";
   import { setI18nLocale, tCommon } from "$lib/i18n";
   import { onMount } from "svelte";
 
@@ -77,37 +78,6 @@
   const refreshTranslations = async (localeValue: string): Promise<void> => {
     const locale = await setI18nLocale(localeValue);
     applyTranslations(locale);
-  };
-
-  const toTimestampMs = (value: string | number | null): number | null => {
-    if (value === null) {
-      return null;
-    }
-
-    if (typeof value === "number") {
-      if (!Number.isFinite(value)) {
-        return null;
-      }
-
-      return value > 1e12 ? value : value * 1000;
-    }
-
-    const normalized = value.trim();
-    if (!normalized) {
-      return null;
-    }
-
-    if (/^\d+$/.test(normalized)) {
-      const parsed = Number(normalized);
-      if (!Number.isFinite(parsed)) {
-        return null;
-      }
-
-      return parsed > 1e12 ? parsed : parsed * 1000;
-    }
-
-    const dateValue = new Date(normalized).getTime();
-    return Number.isNaN(dateValue) ? null : dateValue;
   };
 
   const toCountdownValues = (diffMs: number): CountdownValues => {
@@ -343,10 +313,14 @@
   {#if countdown.mode === "ended"}
     <p class="text-sm font-semibold opacity-80">{countdown.label}</p>
   {:else}
-    <p class={`mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${countdown.toneClass}`}>
+    <p
+      class={`mb-2 text-[0.68rem] font-semibold uppercase tracking-[0.14em] ${countdown.toneClass}`}
+    >
       {countdown.label}
     </p>
-    <div class={`grid gap-1.5 ${countdown.showSeconds ? "grid-cols-4" : "grid-cols-3"} ${countdown.toneClass}`}>
+    <div
+      class={`grid gap-1.5 ${countdown.showSeconds ? "grid-cols-4" : "grid-cols-3"} ${countdown.toneClass}`}
+    >
       <div class="content-card-elevated rounded-lg px-1 py-1.5 text-center shadow-sm">
         <span class="countdown font-mono text-lg font-semibold">
           <span style={countdownStyle(countdown.values.days)}>{countdown.values.days}</span>

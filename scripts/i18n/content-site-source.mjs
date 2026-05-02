@@ -5,18 +5,13 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const contentSiteRoot = path.join(repoRoot, "apps/content-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/content-site");
-const scannedFiles = [
-  "src/lib",
-  "src/routes"
-];
+const scannedFiles = ["src/lib", "src/routes"];
 
 const commonKeyPatterns = [
   /(?:tCommon|getInitialCommonText|getInitialLabel|translate)\(\s*["']([^"'`]+)["']/g,
   /createCommonTranslator\([^)]*\)\(\s*["']([^"'`]+)["']/g
 ];
-const serverKeyPatterns = [
-  /getServerI18nText\(\s*[^,]+,\s*["']([^"'`]+)["']/g
-];
+const serverKeyPatterns = [/getServerI18nText\(\s*[^,]+,\s*["']([^"'`]+)["']/g];
 
 const readJson = async (filePath) => JSON.parse(await readFile(filePath, "utf8"));
 
@@ -87,10 +82,14 @@ const check = async () => {
 
   if (missingCommon.length > 0 || missingServer.length > 0) {
     if (missingCommon.length > 0) {
-      console.error(`Missing common i18n keys:\n${missingCommon.map((key) => `  - ${key}`).join("\n")}`);
+      console.error(
+        `Missing common i18n keys:\n${missingCommon.map((key) => `  - ${key}`).join("\n")}`
+      );
     }
     if (missingServer.length > 0) {
-      console.error(`Missing server i18n keys:\n${missingServer.map((key) => `  - ${key}`).join("\n")}`);
+      console.error(
+        `Missing server i18n keys:\n${missingServer.map((key) => `  - ${key}`).join("\n")}`
+      );
     }
     process.exitCode = 1;
     return;

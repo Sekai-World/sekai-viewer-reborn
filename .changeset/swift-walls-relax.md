@@ -29,6 +29,7 @@ Show an SSE-driven download progress bar for event BGM downloads and close the f
 Present event BGM download progress in a non-dismissible floating panel and cancel unfinished downloads when the page closes.
 Allow `content-site` server-side BGM downloads to use a separately configured internal remote asset base URL.
 Show the event point icon on the event detail ID badge in `content-site`.
+Split `content-site` event detail presentation into focused Svelte components and reuse shared date parsing helpers.
 Remove the obsolete `@platform/i18n-dicts` workspace and load `content-site` i18n dictionaries from the external `sekai-i18n-reborn` CDN through `svelte-i18n`.
 Extract remote i18n loading and `svelte-i18n` registration into the shared `@platform/i18n-runtime` package so other apps can reuse the same CDN-backed runtime.
 Add `content-site` i18n source manifests plus CI and GitHub Actions automation to sync source strings into the translation repository through a pull request.

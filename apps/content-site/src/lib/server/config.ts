@@ -33,8 +33,7 @@ const getOptionalPrivateEnv = (name: keyof typeof env): string | null => {
   return trimTrailingSlash(value);
 };
 
-export const getMasterApiBaseUrl = (): string =>
-  getRequiredPrivateEnv("SEKAI_MASTER_API_BASE_URL");
+export const getMasterApiBaseUrl = (): string => getRequiredPrivateEnv("SEKAI_MASTER_API_BASE_URL");
 
 export const getSekaiApiBaseUrl = (): string => getRequiredPrivateEnv("SEKAI_API_BASE_URL");
 

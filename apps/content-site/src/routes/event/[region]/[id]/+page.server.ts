@@ -6,11 +6,7 @@ import {
 } from "@platform/sekai-master-api-sdk";
 import { getServerI18nText } from "$lib/i18n";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/regions";
-import {
-  normalizeRegion,
-  normalizeUiLocale,
-  UI_LOCALE_COOKIE_NAME
-} from "$lib/region";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { parseEventDetail, type EventDetail } from "$lib/server/event-detail";
 import type { PageServerLoad } from "./$types";
@@ -163,9 +159,7 @@ const fetchAvailableRegions = async ({
       return [region, ...detectedRegions];
     }
 
-    return detectedRegions.includes(region)
-      ? detectedRegions
-      : [region, ...detectedRegions];
+    return detectedRegions.includes(region) ? detectedRegions : [region, ...detectedRegions];
   } catch {
     return [region];
   }

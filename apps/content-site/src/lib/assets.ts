@@ -132,7 +132,11 @@ export const getEventBackgroundAssetURL = (
     return getRemoteAssetBaseURL(baseUrlOverride);
   }
 
-  return buildServerAssetURL(`event/${normalizedAssetBundleName}/screen/bg.webp`, server, baseUrlOverride);
+  return buildServerAssetURL(
+    `event/${normalizedAssetBundleName}/screen/bg.webp`,
+    server,
+    baseUrlOverride
+  );
 };
 
 export const getEventCharacterAssetURL = (

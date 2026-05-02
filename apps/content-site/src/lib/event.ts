@@ -6,7 +6,10 @@ const eventTypeTextKeyMap = {
   world_bloom: "eventTypeValues.worldLink"
 } as const;
 
-export const getEventTypeDisplay = (eventType: string | null, localeValue: string): string | null => {
+export const getEventTypeDisplay = (
+  eventType: string | null,
+  localeValue: string
+): string | null => {
   if (!eventType) {
     return null;
   }

@@ -6,13 +6,11 @@ import {
   type I18nMessages,
   type I18nTranslator
 } from "@platform/i18n-runtime";
-import {
-  repoLocaleByUiLocale,
-  type SupportedUiLocale
-} from "$lib/i18n-config";
+import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n-config";
 import { normalizeUiLocale } from "$lib/region";
 
-const toRepoLocale = (uiLocale: SupportedUiLocale): string => repoLocaleByUiLocale[uiLocale] ?? "en";
+const toRepoLocale = (uiLocale: SupportedUiLocale): string =>
+  repoLocaleByUiLocale[uiLocale] ?? "en";
 
 export type I18nNamespace = "common" | "server";
 export type CommonTranslator = I18nTranslator;

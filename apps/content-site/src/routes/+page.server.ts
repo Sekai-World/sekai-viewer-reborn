@@ -144,7 +144,13 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
     id,
     title,
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
-    endAt: pickFirstDateValue(eventNode, ["aggregateAt", "aggregate_at", "endAt", "end_at", "endDate"]),
+    endAt: pickFirstDateValue(eventNode, [
+      "aggregateAt",
+      "aggregate_at",
+      "endAt",
+      "end_at",
+      "endDate"
+    ]),
     assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"])
   };
 };
