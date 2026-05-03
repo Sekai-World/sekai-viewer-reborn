@@ -37,7 +37,7 @@
 
   <div class="drawer-content bg-base-200">
     <header
-      class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2 backdrop-blur-sm backdrop-saturate-150"
+      class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2 backdrop-blur-sm"
     >
       <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-[96rem] px-2">
         <div class="navbar-start">
