@@ -20,6 +20,6 @@ export const EVENT_CARD_IMAGE_CLASS = `mx-auto h-auto w-full max-w-full object-c
 
 export const EVENT_LIST_CARD_MEDIA_CLASS = `relative flex h-40 items-center justify-center overflow-hidden bg-linear-to-br from-base-200/78 via-base-100 to-base-200/52 p-2 sm:p-3`;
 
-export const EVENT_LIST_CARD_IMAGE_CLASS = `h-full w-full object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.08)] transition-[filter] ${EVENT_CARD_HOVER_TIMING_CLASS} group-hover:brightness-[1.02]`;
+export const EVENT_LIST_CARD_IMAGE_CLASS = `h-full w-full object-contain transition-[filter] ${EVENT_CARD_HOVER_TIMING_CLASS} group-hover:brightness-[1.02]`;
 
 export const EVENT_LIST_CARD_TITLE_CLASS = `line-clamp-2 text-base font-semibold leading-tight`;
