@@ -6,9 +6,9 @@ const EVENT_CARD_BASE_SHADOW_CLASS =
 const EVENT_CARD_BASE_HOVER_SHADOW_CLASS =
   "hover:shadow-[0_16px_30px_rgba(0,0,0,0.12),0_6px_16px_rgba(107,114,128,0.1)] dark:hover:shadow-[0_20px_38px_rgba(0,0,0,0.38),0_8px_18px_rgba(107,114,128,0.18)]";
 
-export const CURRENT_EVENT_CARD_FRAME_CLASS = `card content-card-shell group relative w-full overflow-hidden transform-gpu transition-[transform,box-shadow] ${EVENT_CARD_HOVER_TIMING_CLASS} ${EVENT_CARD_BASE_SHADOW_CLASS} ${EVENT_CARD_BASE_HOVER_SHADOW_CLASS} hover:-translate-y-[0.32rem]`;
+export const CURRENT_EVENT_CARD_FRAME_CLASS = `card content-card-shell group relative w-full overflow-hidden transition-[transform,box-shadow] ${EVENT_CARD_HOVER_TIMING_CLASS} ${EVENT_CARD_BASE_SHADOW_CLASS} ${EVENT_CARD_BASE_HOVER_SHADOW_CLASS} hover:-translate-y-[0.32rem]`;
 
-export const EVENT_LIST_CARD_FRAME_CLASS = `card content-card-shell group relative w-full overflow-hidden transform-gpu transition-[transform,box-shadow] ${EVENT_LIST_CARD_HOVER_TIMING_CLASS} ${EVENT_CARD_BASE_SHADOW_CLASS} ${EVENT_CARD_BASE_HOVER_SHADOW_CLASS} hover:-translate-y-0.5 hover:border-base-content/14 hover:bg-base-100/95 dark:hover:border-base-content/20 dark:hover:bg-base-100/92 dark:hover:shadow-[0_18px_34px_rgba(0,0,0,0.34),0_0_0_1px_rgba(255,255,255,0.045)] motion-reduce:transition-none motion-reduce:hover:translate-y-0`;
+export const EVENT_LIST_CARD_FRAME_CLASS = `card content-card-shell group relative w-full overflow-hidden transition-[transform,box-shadow] ${EVENT_LIST_CARD_HOVER_TIMING_CLASS} ${EVENT_CARD_BASE_SHADOW_CLASS} ${EVENT_CARD_BASE_HOVER_SHADOW_CLASS} hover:-translate-y-0.5 hover:border-base-content/14 hover:bg-base-100/95 dark:hover:border-base-content/20 dark:hover:bg-base-100/92 dark:hover:shadow-[0_18px_34px_rgba(0,0,0,0.34),0_0_0_1px_rgba(255,255,255,0.045)] motion-reduce:transition-none motion-reduce:hover:translate-y-0`;
 
 export const EVENT_CARD_GLOW_CLASS = `pointer-events-none absolute inset-x-6 top-0 h-24 rounded-full bg-linear-to-b from-primary/18 via-primary/8 to-transparent opacity-0 blur-2xl transition-opacity ${EVENT_CARD_HOVER_TIMING_CLASS} group-hover:opacity-100`;
 
