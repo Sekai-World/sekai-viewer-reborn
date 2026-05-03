@@ -113,6 +113,7 @@ Preview ports:
 - When overriding daisyUI component defaults globally, prefer `@utility` in app CSS over fighting `.card` / `.btn` / `.badge` defaults with business classes.
 - For one-off visual differences, prefer utility classes directly in Svelte markup over new global CSS.
 - Avoid broad transition rules like `:root *`; keep theme transition fallbacks narrow so local hover motion is not diluted or overridden.
+- Avoid unnecessary expensive CSS effects that can slow rendering, such as heavy blur, large shadows, excessive filters, or broad animations.
 - For `content-site` card/shared UI conventions, read `docs/content-site-ui-conventions.md` before introducing new patterns.
 
 ## Shared Package Notes
