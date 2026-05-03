@@ -36,8 +36,17 @@
   <input id={drawerId} type="checkbox" class="drawer-toggle" bind:checked={sidebarOpen} />
 
   <div class="drawer-content bg-base-200">
+    <!-- Hidden SVG filter for liquid glass distortion effect (article Demo 2 technique) -->
+    <svg aria-hidden="true" focusable="false" class="pointer-events-none absolute h-0 w-0 overflow-hidden">
+      <defs>
+        <filter id="liquid-glass-distort" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="turbulence" baseFrequency="0.018 0.012" numOctaves="3" seed="5" result="turb" />
+          <feDisplacementMap in="SourceGraphic" in2="turb" scale="6" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+    </svg>
     <header
-      class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2 backdrop-blur-sm"
+      class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2"
     >
       <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-[96rem] px-2">
         <div class="navbar-start">
