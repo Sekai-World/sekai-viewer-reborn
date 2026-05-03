@@ -117,7 +117,7 @@
 
       <div class="absolute left-3 top-3">
         <span
-          class="badge border-none bg-base-100/92 font-semibold text-base-content shadow-sm backdrop-blur-sm"
+          class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
         >
           {idLabel}{item.id}
         </span>
@@ -126,7 +126,7 @@
       <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
         {#if getEventTypeDisplay(item.eventType, uiLocale)}
           <span
-            class="badge border-none bg-base-100/92 font-semibold text-base-content shadow-sm backdrop-blur-sm"
+            class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
           >
             {getEventTypeDisplay(item.eventType, uiLocale)}
           </span>
