@@ -1,3 +1,38 @@
+[settings]
+experimental = true
+
+[env]
+_.path = ["{{config_root}}/node_modules/.bin"]
+
 [tools]
-node = "lts"
-pnpm = "11.0.2"
+node = "24"
+
+[hooks]
+postinstall = "npx corepack enable"
+
+[tasks.pnpm-install]
+alias = "i"
+description = "Install workspace dependencies with pnpm"
+run = "pnpm install"
+sources = ["package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", "mise.toml"]
+outputs = ["node_modules/.pnpm/lock.yaml"]
+
+[tasks.dev]
+description = "Start all app dev servers"
+run = "pnpm dev"
+depends = ["pnpm-install"]
+
+[tasks.build]
+description = "Build all workspaces"
+run = "pnpm build"
+depends = ["pnpm-install"]
+
+[tasks.check]
+description = "Run workspace checks"
+run = "pnpm check"
+depends = ["pnpm-install"]
+
+[tasks.lint]
+description = "Run workspace lint"
+run = "pnpm lint"
+depends = ["pnpm-install"]
