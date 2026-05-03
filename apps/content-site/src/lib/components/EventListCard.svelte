@@ -95,7 +95,7 @@
   onclick={handleCardClick}
 >
   <div
-    class={`transition-[filter,transform,opacity] duration-150 ease-out ${
+    class={`transition-[filter,transform] duration-150 ease-out ${
       isSpoilerHidden() ? "scale-[1.01] blur-md" : ""
     }`}
   >
