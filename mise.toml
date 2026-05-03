@@ -22,6 +22,26 @@ description = "Start all app dev servers"
 run = "pnpm dev"
 depends = ["pnpm-install"]
 
+[tasks.dev-content]
+description = "Start content-site on port 4101"
+run = "pnpm --filter @apps/content-site dev"
+depends = ["pnpm-install"]
+
+[tasks.dev-tools]
+description = "Start tools-site on port 4102"
+run = "pnpm --filter @apps/tools-site dev"
+depends = ["pnpm-install"]
+
+[tasks.dev-media-lab]
+description = "Start media-lab-site on port 4103"
+run = "pnpm --filter @apps/media-lab-site dev"
+depends = ["pnpm-install"]
+
+[tasks.dev-account]
+description = "Start account-site on port 4104"
+run = "pnpm --filter @apps/account-site dev"
+depends = ["pnpm-install"]
+
 [tasks.build]
 description = "Build all workspaces"
 run = "pnpm build"
@@ -35,4 +55,14 @@ depends = ["pnpm-install"]
 [tasks.lint]
 description = "Run workspace lint"
 run = "pnpm lint"
+depends = ["pnpm-install"]
+
+[tasks.update-sekai-api-sdk]
+description = "Regenerate sekai-api SDK from an OpenAPI path or URL"
+run = "pnpm --filter @platform/sekai-api-sdk generate:sdk -- --input \"$1\""
+depends = ["pnpm-install"]
+
+[tasks.update-sekai-master-api-sdk]
+description = "Regenerate sekai-master-api SDK from an OpenAPI path or URL"
+run = "pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input \"$1\""
 depends = ["pnpm-install"]
