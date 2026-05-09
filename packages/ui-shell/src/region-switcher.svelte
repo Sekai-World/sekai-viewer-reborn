@@ -22,11 +22,9 @@
     onSelectSecondary,
     primaryTitle = "Primary",
     secondaryTitle = "Secondary",
-    isOpen = false,
+    isOpen = $bindable(false),
     onOpenChange
   }: Props = $props();
-
-  let menuOpen = $derived(isOpen);
 
   const primaryRegionLabel = $derived(
     options.find((option) => option.value === primaryValue)?.label ?? primaryValue.toUpperCase()
@@ -41,7 +39,7 @@
   };
 </script>
 
-<details class="dropdown dropdown-end" bind:open={menuOpen} ontoggle={handleMenuToggle}>
+<details class="dropdown dropdown-end" bind:open={isOpen} ontoggle={handleMenuToggle}>
   <summary
     class="btn btn-sm btn-outline rounded-full border-base-content/20 bg-base-100/65 px-2 text-xs sm:px-3 sm:text-sm hover:bg-base-100"
     aria-label={`Switch data regions. ${primaryTitle}: ${primaryRegionLabel}. ${secondaryTitle}: ${secondaryRegionLabel}`}
@@ -68,7 +66,7 @@
                 class={option.value === primaryValue ? "menu-active font-semibold" : ""}
                 onclick={() => {
                   onSelectPrimary(option.value);
-                  menuOpen = false;
+                  isOpen = false;
                   onOpenChange?.(false);
                 }}
               >
@@ -96,7 +94,7 @@
                 class={option.value === secondaryValue ? "menu-active font-semibold" : ""}
                 onclick={() => {
                   onSelectSecondary(option.value);
-                  menuOpen = false;
+                  isOpen = false;
                   onOpenChange?.(false);
                 }}
               >

@@ -44,7 +44,7 @@ export const createClient = (config: Config = {}): Client => {
       ...options,
       fetch: options.fetch ?? _config.fetch ?? globalThis.fetch,
       headers: mergeHeaders(_config.headers, options.headers),
-      serializedBody: undefined as string | undefined,
+      serializedBody: undefined as RequestInit['body'],
     };
 
     if (opts.security) {
@@ -59,7 +59,7 @@ export const createClient = (config: Config = {}): Client => {
     }
 
     if (opts.body !== undefined && opts.bodySerializer) {
-      opts.serializedBody = opts.bodySerializer(opts.body) as string | undefined;
+      opts.serializedBody = opts.bodySerializer(opts.body) as RequestInit['body'];
     }
 
     // remove Content-Type header if body is empty to avoid sending invalid requests
