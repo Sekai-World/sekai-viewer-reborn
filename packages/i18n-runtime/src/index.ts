@@ -87,6 +87,7 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
 
   const addLocaleMessages = (localeValue: string, messages: I18nMessages): string => {
     const locale = options.normalizeLocale(localeValue);
+    setupI18n(locale);
     addMessages(options.toRemoteLocale(locale), messages);
     return locale;
   };
@@ -104,6 +105,7 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
 
   const setLocale = async (localeValue: string, messages?: I18nMessages): Promise<string> => {
     const locale = options.normalizeLocale(localeValue);
+    setupI18n(locale);
     const isBrowser = options.isBrowser?.() ?? typeof window !== "undefined";
     if (!isBrowser) {
       if (messages) {
@@ -111,8 +113,6 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
       }
       return locale;
     }
-
-    setupI18n(locale);
 
     localeLoadingCount.update((n) => n + 1);
     try {
@@ -130,6 +130,7 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
 
   const translate = (localeValue: string, key: string, fallback?: string): string => {
     const locale = options.normalizeLocale(localeValue);
+    setupI18n(locale);
     const translateFn = get(_);
     const fallbackValue = fallback ?? key;
     const value = translateFn(key, {

@@ -50,6 +50,38 @@ async function normalizeGeneratedSdk(outputDir) {
   await patchGeneratedFile(resolve(normalizedOutputDir, "index.ts"), (source) =>
     source.replace("GetAdminLoginResponse, ", "").replace("GetAdminLoginResponses, ", "")
   );
+
+  await patchGeneratedFile(resolve(normalizedOutputDir, "client/types.gen.ts"), (source) =>
+    source.replace("serializedBody?: string;", "serializedBody?: RequestInit['body'];")
+  );
+
+  await patchGeneratedFile(resolve(normalizedOutputDir, "client/client.gen.ts"), (source) =>
+    source
+      .replace(
+        "serializedBody: undefined as string | undefined,",
+        "serializedBody: undefined as RequestInit['body'],"
+      )
+      .replace(
+        "opts.serializedBody = opts.bodySerializer(opts.body) as string | undefined;",
+        "opts.serializedBody = opts.bodySerializer(opts.body) as RequestInit['body'];"
+      )
+  );
+
+  await patchGeneratedFile(resolve(normalizedOutputDir, "core/bodySerializer.gen.ts"), (source) =>
+    source
+      .replace(
+        "export type BodySerializer = (body: unknown) => unknown;",
+        "export type BodySerializer = (body: unknown) => RequestInit['body'];"
+      )
+      .replace(
+        "type QuerySerializerOptionsObject = {",
+        "const isSerializableRecord = (body: unknown): body is Record<string, unknown> =>\n  body !== null && typeof body === 'object' && !Array.isArray(body);\n\ntype QuerySerializerOptionsObject = {"
+      )
+      .replaceAll(
+        "Object.entries(body as Record<string, unknown>).forEach(([key, value]) => {",
+        "if (!isSerializableRecord(body)) {\n      throw new TypeError('Body must be a non-array object for form serialization');\n    }\n\n    Object.entries(body).forEach(([key, value]) => {"
+      )
+  );
 }
 
 async function main() {

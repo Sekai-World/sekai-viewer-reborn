@@ -4,7 +4,10 @@ import type { ArrayStyle, ObjectStyle, SerializerOptions } from './pathSerialize
 
 export type QuerySerializer = (query: Record<string, unknown>) => string;
 
-export type BodySerializer = (body: unknown) => unknown;
+export type BodySerializer = (body: unknown) => RequestInit['body'];
+
+const isSerializableRecord = (body: unknown): body is Record<string, unknown> =>
+  body !== null && typeof body === 'object' && !Array.isArray(body);
 
 type QuerySerializerOptionsObject = {
   allowReserved?: boolean;
@@ -42,7 +45,11 @@ export const formDataBodySerializer = {
   bodySerializer: (body: unknown): FormData => {
     const data = new FormData();
 
-    Object.entries(body as Record<string, unknown>).forEach(([key, value]) => {
+    if (!isSerializableRecord(body)) {
+      throw new TypeError('Body must be a non-array object for form serialization');
+    }
+
+    Object.entries(body).forEach(([key, value]) => {
       if (value === undefined || value === null) {
         return;
       }
@@ -66,7 +73,11 @@ export const urlSearchParamsBodySerializer = {
   bodySerializer: (body: unknown): string => {
     const data = new URLSearchParams();
 
-    Object.entries(body as Record<string, unknown>).forEach(([key, value]) => {
+    if (!isSerializableRecord(body)) {
+      throw new TypeError('Body must be a non-array object for form serialization');
+    }
+
+    Object.entries(body).forEach(([key, value]) => {
       if (value === undefined || value === null) {
         return;
       }
