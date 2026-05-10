@@ -7,6 +7,8 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.js
 COPY apps/content-site/package.json apps/content-site/package.json
 COPY packages/sekai-master-api-sdk/package.json packages/sekai-master-api-sdk/package.json
 COPY packages/auth-client/package.json packages/auth-client/package.json
+COPY packages/i18n-runtime/package.json packages/i18n-runtime/package.json
+COPY packages/ui-shell/package.json packages/ui-shell/package.json
 COPY packages/ui-tokens/package.json packages/ui-tokens/package.json
 
 RUN pnpm install --frozen-lockfile

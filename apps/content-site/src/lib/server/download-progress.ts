@@ -44,6 +44,7 @@ const scheduleTaskCleanup = (taskId: string): void => {
       taskSnapshots.delete(taskId);
       taskListeners.delete(taskId);
       taskCleanupTimers.delete(taskId);
+      taskAbortHandlers.delete(taskId);
     }, TASK_TTL_MS)
   );
 };
