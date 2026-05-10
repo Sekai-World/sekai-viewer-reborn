@@ -2,6 +2,7 @@ import { error, type RequestHandler } from "@sveltejs/kit";
 import {
   cancelDownloadTask,
   getDownloadTaskSnapshot,
+  hasDownloadTask,
   subscribeDownloadTask,
   type DownloadTaskSnapshot
 } from "$lib/server/download-progress";
@@ -13,6 +14,10 @@ export const GET: RequestHandler = async ({ url }) => {
   const taskId = url.searchParams.get("taskId")?.trim() ?? "";
   if (!taskId) {
     throw error(400, "Missing download task id.");
+  }
+
+  if (!hasDownloadTask(taskId)) {
+    throw error(404, "Download task not found.");
   }
 
   let unsubscribe: (() => void) | null = null;

@@ -74,7 +74,7 @@ export const urlSearchParamsBodySerializer = {
     const data = new URLSearchParams();
 
     if (!isSerializableRecord(body)) {
-      throw new TypeError('Body must be a non-array object for form serialization');
+      throw new TypeError('Body must be a non-array object for URLSearchParams serialization');
     }
 
     Object.entries(body).forEach(([key, value]) => {

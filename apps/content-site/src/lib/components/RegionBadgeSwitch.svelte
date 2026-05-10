@@ -1,11 +1,14 @@
 <script lang="ts">
-  export type RegionBadgeOption = {
+  type BaseRegionBadgeOption = {
     key: string;
     label: string;
-    href?: string;
-    onclick?: () => void;
     active: boolean;
   };
+
+  export type RegionBadgeOption =
+    | (BaseRegionBadgeOption & { href: string; onclick?: never })
+    | (BaseRegionBadgeOption & { href?: never; onclick: () => void })
+    | (BaseRegionBadgeOption & { href?: never; onclick?: never });
 
   let {
     options
@@ -23,12 +26,13 @@
     </span>
   {:else if option.onclick}
     <button
+      type="button"
       class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold cursor-pointer"
       onclick={option.onclick}
     >
       {option.label}
     </button>
-  {:else}
+  {:else if option.href}
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
     <a
       href={option.href}
@@ -36,5 +40,9 @@
     >
       {option.label}
     </a>
+  {:else}
+    <span class="badge badge-outline border-base-content/20 bg-base-100/60 font-semibold opacity-60">
+      {option.label}
+    </span>
   {/if}
 {/each}

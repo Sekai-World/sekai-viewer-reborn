@@ -167,15 +167,20 @@
     }
   ];
   const getRegionBadgeOptions = (regionOptions: SupportedRegion[]): RegionBadgeOption[] =>
-    regionOptions.map((regionOption) => ({
-      key: regionOption,
-      label: regionOption.toUpperCase(),
-      href:
-        regionOption === data.region
-          ? undefined
-          : resolve("/event/[region]/[id]", { region: regionOption, id: data.eventId }),
-      active: regionOption === data.region
-    }));
+    regionOptions.map((regionOption) =>
+      regionOption === data.region
+        ? {
+            key: regionOption,
+            label: regionOption.toUpperCase(),
+            active: true
+          }
+        : {
+            key: regionOption,
+            label: regionOption.toUpperCase(),
+            href: resolve("/event/[region]/[id]", { region: regionOption, id: data.eventId }),
+            active: false
+          }
+    );
   const getCurrentRegionBadgeOption = (): RegionBadgeOption[] => [
     {
       key: data.region,

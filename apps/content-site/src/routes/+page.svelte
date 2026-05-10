@@ -101,12 +101,20 @@
 
 <div class="mb-6 flex flex-wrap justify-center gap-2 md:hidden">
   <RegionBadgeSwitch
-    options={supportedRegions.map((r) => ({
-      key: r,
-      label: r.toUpperCase(),
-      active: r === selectedRegion,
-      onclick: r !== selectedRegion ? () => selectRegion(r) : undefined
-    }))}
+    options={supportedRegions.map((r) =>
+      r === selectedRegion
+        ? {
+            key: r,
+            label: r.toUpperCase(),
+            active: true
+          }
+        : {
+            key: r,
+            label: r.toUpperCase(),
+            active: false,
+            onclick: () => selectRegion(r)
+          }
+    )}
   />
 </div>
 
