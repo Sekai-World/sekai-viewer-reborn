@@ -168,12 +168,20 @@
   const regionDisplayOrder = supportedRegions;
   const getEventListHref = (region: string): string => resolve("/events/[region]", { region });
   const getRegionBadgeOptions = (): RegionBadgeOption[] =>
-    regionDisplayOrder.map((regionOption) => ({
-      key: regionOption,
-      label: regionLabels[regionOption],
-      href: regionOption === data.region ? undefined : getEventListHref(regionOption),
-      active: regionOption === data.region
-    }));
+    regionDisplayOrder.map((regionOption) =>
+      regionOption === data.region
+        ? {
+            key: regionOption,
+            label: regionLabels[regionOption],
+            active: true
+          }
+        : {
+            key: regionOption,
+            label: regionLabels[regionOption],
+            href: getEventListHref(regionOption),
+            active: false
+          }
+    );
 
   const mergeItems = (
     currentItems: EventListItem[],

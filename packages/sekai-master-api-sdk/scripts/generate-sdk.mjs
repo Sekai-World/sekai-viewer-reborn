@@ -81,6 +81,10 @@ async function normalizeGeneratedSdk(outputDir) {
         "Object.entries(body as Record<string, unknown>).forEach(([key, value]) => {",
         "if (!isSerializableRecord(body)) {\n      throw new TypeError('Body must be a non-array object for form serialization');\n    }\n\n    Object.entries(body).forEach(([key, value]) => {"
       )
+      .replace(
+        "throw new TypeError('Body must be a non-array object for form serialization');\n    }\n\n    Object.entries(body).forEach(([key, value]) => {\n      if (value === undefined || value === null) {\n        return;\n      }\n      if (Array.isArray(value)) {\n        value.forEach((v) => serializeUrlSearchParamsPair(data, key, v));",
+        "throw new TypeError('Body must be a non-array object for URLSearchParams serialization');\n    }\n\n    Object.entries(body).forEach(([key, value]) => {\n      if (value === undefined || value === null) {\n        return;\n      }\n      if (Array.isArray(value)) {\n        value.forEach((v) => serializeUrlSearchParamsPair(data, key, v));"
+      )
   );
 }
 

@@ -78,6 +78,8 @@ const publishDownloadTask = (
 const getDownloadTaskSnapshot = (taskId: string): DownloadTaskSnapshot =>
   taskSnapshots.get(taskId) ?? DEFAULT_SNAPSHOT;
 
+const hasDownloadTask = (taskId: string): boolean => taskSnapshots.has(taskId);
+
 const subscribeDownloadTask = (taskId: string, listener: DownloadTaskListener): (() => void) => {
   const listeners = taskListeners.get(taskId) ?? new Set<DownloadTaskListener>();
   listeners.add(listener);
@@ -127,6 +129,7 @@ export type { DownloadTaskSnapshot, DownloadTaskState };
 export {
   cancelDownloadTask,
   getDownloadTaskSnapshot,
+  hasDownloadTask,
   publishDownloadTask,
   registerDownloadTaskAbort,
   subscribeDownloadTask,
