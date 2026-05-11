@@ -8,8 +8,8 @@ const sourceDir = path.join(repoRoot, "packages/i18n-source/content-site");
 const scannedFiles = ["src/lib", "src/routes"];
 
 const commonKeyPatterns = [
-  /(?:tCommon|getInitialCommonText|getInitialLabel|translate)\(\s*["']([^"'`]+)["']/g,
-  /createCommonTranslator\([^)]*\)\(\s*["']([^"'`]+)["']/g
+  /(?:tCommon|getInitialCommonText|getInitialLabel|translate)\(\s*(?:[^,]+,\s*)?["']([^"'`]+)["']/g,
+  /createCommonTranslator\([^)]*\)\(\s*(?:[^,]+,\s*)?["']([^"'`]+)["']/g
 ];
 const serverKeyPatterns = [/getServerI18nText\(\s*[^,]+,\s*["']([^"'`]+)["']/g];
 
