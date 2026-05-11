@@ -162,7 +162,7 @@ const fetchBinary = async (
   ensureNotAborted(signal);
   const response = await fetchFn(url, { signal });
   if (!response.ok) {
-    throw error(response.status, `Failed to fetch remote asset: ${url}`);
+    throw error(response.status, "Failed to fetch remote asset.");
   }
 
   return readBinaryResponse(response, onProgress);

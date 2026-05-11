@@ -17,7 +17,6 @@
     "@platform/sekai-master-api-sdk": "workspace:*",
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*",
-    "svelte-i18n": "^4.0.1",
     "taglib-wasm": "^1.1.2"
   },
   "devDependencies": {

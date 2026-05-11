@@ -2,7 +2,6 @@ import { error, type RequestHandler } from "@sveltejs/kit";
 import {
   cancelDownloadTask,
   getDownloadTaskSnapshot,
-  hasDownloadTask,
   subscribeDownloadTask,
   type DownloadTaskSnapshot
 } from "$lib/server/download-progress";
@@ -16,17 +15,24 @@ export const GET: RequestHandler = async ({ url }) => {
     throw error(400, "Missing download task id.");
   }
 
-  if (!hasDownloadTask(taskId)) {
-    throw error(404, "Download task not found.");
-  }
-
   let unsubscribe: (() => void) | null = null;
   let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder();
+      const clearIdleTimer = (): void => {
+        if (!idleTimer) {
+          return;
+        }
+
+        clearTimeout(idleTimer);
+        idleTimer = null;
+      };
+
       const enqueueSnapshot = (snapshot: DownloadTaskSnapshot): void => {
+        clearIdleTimer();
         controller.enqueue(encoder.encode(formatSseMessage(snapshot)));
 
         if (snapshot.state === "done" || snapshot.state === "error") {
@@ -41,15 +47,31 @@ export const GET: RequestHandler = async ({ url }) => {
       };
 
       unsubscribe = subscribeDownloadTask(taskId, enqueueSnapshot);
+      idleTimer = setTimeout(() => {
+        unsubscribe?.();
+        unsubscribe = null;
+        if (heartbeatTimer) {
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = null;
+        }
+        controller.close();
+      }, 15_000);
       heartbeatTimer = setInterval(() => {
         controller.enqueue(encoder.encode(": keep-alive\n\n"));
       }, 15000);
 
-      enqueueSnapshot(getDownloadTaskSnapshot(taskId));
+      const initialSnapshot = getDownloadTaskSnapshot(taskId);
+      if (initialSnapshot.state !== "waiting" || initialSnapshot.updatedAt > 0) {
+        enqueueSnapshot(initialSnapshot);
+      }
     },
     cancel() {
       unsubscribe?.();
       unsubscribe = null;
+      if (idleTimer) {
+        clearTimeout(idleTimer);
+        idleTimer = null;
+      }
       if (heartbeatTimer) {
         clearInterval(heartbeatTimer);
         heartbeatTimer = null;
