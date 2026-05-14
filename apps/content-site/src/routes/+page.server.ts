@@ -1,4 +1,4 @@
-import { getEventsByRegionCurrent, getVersionsByRegion } from "@platform/sekai-master-api-sdk";
+import { getEventsByRegionCurrent, getVersions } from "@platform/sekai-master-api-sdk";
 import { getServerI18nText } from "$lib/i18n";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
@@ -28,6 +28,8 @@ type RegionEventCard = {
   versions: RegionVersions | null;
   error: string | null;
 };
+
+type VersionsByRegion = Partial<Record<SupportedRegion, RegionVersions | null>>;
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -126,6 +128,18 @@ const parseRegionVersions = (payload: unknown): RegionVersions | null => {
   };
 };
 
+const parseVersionsByRegion = (payload: unknown): VersionsByRegion => {
+  const root = getObject(payload);
+  if (!root) {
+    return {};
+  }
+
+  return supportedRegions.reduce<VersionsByRegion>((accumulator, region) => {
+    accumulator[region] = parseRegionVersions(root[region]);
+    return accumulator;
+  }, {});
+};
+
 const parseEventSummary = (payload: unknown): EventSummary | null => {
   const root = getObject(payload);
 
@@ -161,20 +175,14 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
 const toRegionEventCard = async (
   baseUrl: string,
   region: SupportedRegion,
-  unavailableErrorText: string
+  unavailableErrorText: string,
+  versionsByRegion: VersionsByRegion
 ): Promise<RegionEventCard> => {
-  const [eventResponse, versionsResponse] = await Promise.all([
-    getEventsByRegionCurrent({
-      baseUrl,
-      path: { region }
-    }),
-    getVersionsByRegion({
-      baseUrl,
-      path: { region }
-    })
-  ]);
-
-  const versions = versionsResponse.error ? null : parseRegionVersions(versionsResponse.data);
+  const eventResponse = await getEventsByRegionCurrent({
+    baseUrl,
+    path: { region }
+  });
+  const versions = versionsByRegion[region] ?? null;
 
   if (eventResponse.error) {
     return {
@@ -202,9 +210,22 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
     getServerI18nText(uiLocale, "homeEventDataRequestFailed", fetch)
   ]);
   const baseUrl = getMasterApiBaseUrl();
+  const versionsByRegion = await (async (): Promise<VersionsByRegion> => {
+    try {
+      const response = await getVersions({ baseUrl });
+      if (response.error) {
+        return {};
+      }
+
+      return parseVersionsByRegion(response.data);
+    } catch {
+      return {};
+    }
+  })();
+
   const cards = supportedRegions.map(async (region) => {
     try {
-      return await toRegionEventCard(baseUrl, region, homeEventDataUnavailable);
+      return await toRegionEventCard(baseUrl, region, homeEventDataUnavailable, versionsByRegion);
     } catch {
       return {
         region,

@@ -259,9 +259,14 @@ export type SharedMasterDataSyncResponse = {
     sync_running?: boolean;
 };
 
+export type SharedMasterDataVersionsByRegionResponse = {
+    [key: string]: SharedMasterDataVersionsResponse;
+};
+
 export type SharedMasterDataVersionsResponse = {
     appVersion?: string;
     assetVersion?: string;
+    cdnVersion?: number;
     dataVersion?: string;
 };
 
@@ -613,69 +618,6 @@ export type GetCardsByRegionListResponses = {
 
 export type GetCardsByRegionListResponse = GetCardsByRegionListResponses[keyof GetCardsByRegionListResponses];
 
-export type GetCardsByRegionSearchData = {
-    body?: never;
-    path: {
-        /**
-         * Region
-         */
-        region: string;
-    };
-    query: {
-        /**
-         * Prefix query
-         */
-        q: string;
-        /**
-         * Search field (name|skill), default=name
-         */
-        field?: string;
-        /**
-         * Page number
-         */
-        page?: number;
-        /**
-         * Max results
-         */
-        limit?: number;
-        /**
-         * Sort field
-         */
-        sort_by?: string;
-        /**
-         * Sort order (asc|desc)
-         */
-        sort_order?: string;
-    };
-    url: '/cards/{region}/search';
-};
-
-export type GetCardsByRegionSearchErrors = {
-    /**
-     * Bad Request
-     */
-    400: SharedErrorResponse;
-    /**
-     * Internal Server Error
-     */
-    500: SharedErrorResponse;
-    /**
-     * Service Unavailable
-     */
-    503: SharedErrorResponse;
-};
-
-export type GetCardsByRegionSearchError = GetCardsByRegionSearchErrors[keyof GetCardsByRegionSearchErrors];
-
-export type GetCardsByRegionSearchResponses = {
-    /**
-     * OK
-     */
-    200: SharedCardListResponse;
-};
-
-export type GetCardsByRegionSearchResponse = GetCardsByRegionSearchResponses[keyof GetCardsByRegionSearchResponses];
-
 export type GetCardsByRegionByIdData = {
     body?: never;
     path: {
@@ -912,7 +854,23 @@ export type GetEventsByRegionListData = {
          */
         page_size?: number;
         /**
-         * Sort field
+         * Event ID
+         */
+        id?: string;
+        /**
+         * Event name
+         */
+        name?: string;
+        /**
+         * Event unit
+         */
+        unit?: string;
+        /**
+         * Event type
+         */
+        event_type?: string;
+        /**
+         * Sort field (id|startAt)
          */
         sort_by?: string;
         /**
@@ -948,69 +906,6 @@ export type GetEventsByRegionListResponses = {
 };
 
 export type GetEventsByRegionListResponse = GetEventsByRegionListResponses[keyof GetEventsByRegionListResponses];
-
-export type GetEventsByRegionSearchData = {
-    body?: never;
-    path: {
-        /**
-         * Region
-         */
-        region: string;
-    };
-    query: {
-        /**
-         * Search query
-         */
-        q: string;
-        /**
-         * Search field (name|unit), default=name
-         */
-        field?: string;
-        /**
-         * Page number
-         */
-        page?: number;
-        /**
-         * Max results
-         */
-        limit?: number;
-        /**
-         * Sort field
-         */
-        sort_by?: string;
-        /**
-         * Sort order (asc|desc)
-         */
-        sort_order?: string;
-    };
-    url: '/events/{region}/search';
-};
-
-export type GetEventsByRegionSearchErrors = {
-    /**
-     * Bad Request
-     */
-    400: SharedErrorResponse;
-    /**
-     * Internal Server Error
-     */
-    500: SharedErrorResponse;
-    /**
-     * Service Unavailable
-     */
-    503: SharedErrorResponse;
-};
-
-export type GetEventsByRegionSearchError = GetEventsByRegionSearchErrors[keyof GetEventsByRegionSearchErrors];
-
-export type GetEventsByRegionSearchResponses = {
-    /**
-     * OK
-     */
-    200: SharedEventListResponse;
-};
-
-export type GetEventsByRegionSearchResponse = GetEventsByRegionSearchResponses[keyof GetEventsByRegionSearchResponses];
 
 export type GetEventsByRegionByIdData = {
     body?: never;
@@ -1445,77 +1340,6 @@ export type GetMusicsByRegionListResponses = {
 
 export type GetMusicsByRegionListResponse = GetMusicsByRegionListResponses[keyof GetMusicsByRegionListResponses];
 
-export type GetMusicsByRegionSearchData = {
-    body?: never;
-    path: {
-        /**
-         * Region
-         */
-        region: string;
-    };
-    query?: {
-        /**
-         * Keyword for title field
-         */
-        title?: string;
-        /**
-         * Keyword for lyricist field
-         */
-        lyricist?: string;
-        /**
-         * Keyword for composer field
-         */
-        composer?: string;
-        /**
-         * Keyword for arranger field
-         */
-        arranger?: string;
-        /**
-         * Page number
-         */
-        page?: number;
-        /**
-         * Max results
-         */
-        limit?: number;
-        /**
-         * Sort field
-         */
-        sort_by?: string;
-        /**
-         * Sort order (asc|desc)
-         */
-        sort_order?: string;
-    };
-    url: '/musics/{region}/search';
-};
-
-export type GetMusicsByRegionSearchErrors = {
-    /**
-     * Bad Request
-     */
-    400: SharedErrorResponse;
-    /**
-     * Internal Server Error
-     */
-    500: SharedErrorResponse;
-    /**
-     * Service Unavailable
-     */
-    503: SharedErrorResponse;
-};
-
-export type GetMusicsByRegionSearchError = GetMusicsByRegionSearchErrors[keyof GetMusicsByRegionSearchErrors];
-
-export type GetMusicsByRegionSearchResponses = {
-    /**
-     * OK
-     */
-    200: SharedMusicListResponse;
-};
-
-export type GetMusicsByRegionSearchResponse = GetMusicsByRegionSearchResponses[keyof GetMusicsByRegionSearchResponses];
-
 export type GetMusicsByRegionByIdData = {
     body?: never;
     path: {
@@ -1561,6 +1385,35 @@ export type GetMusicsByRegionByIdResponses = {
 };
 
 export type GetMusicsByRegionByIdResponse = GetMusicsByRegionByIdResponses[keyof GetMusicsByRegionByIdResponses];
+
+export type GetVersionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/versions';
+};
+
+export type GetVersionsErrors = {
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetVersionsError = GetVersionsErrors[keyof GetVersionsErrors];
+
+export type GetVersionsResponses = {
+    /**
+     * OK
+     */
+    200: SharedMasterDataVersionsByRegionResponse;
+};
+
+export type GetVersionsResponse = GetVersionsResponses[keyof GetVersionsResponses];
 
 export type GetVersionsByRegionData = {
     body?: never;
@@ -1696,69 +1549,6 @@ export type GetVirtualLivesByRegionListResponses = {
 };
 
 export type GetVirtualLivesByRegionListResponse = GetVirtualLivesByRegionListResponses[keyof GetVirtualLivesByRegionListResponses];
-
-export type GetVirtualLivesByRegionSearchData = {
-    body?: never;
-    path: {
-        /**
-         * Region
-         */
-        region: string;
-    };
-    query: {
-        /**
-         * Search query
-         */
-        q: string;
-        /**
-         * Search field (name|type|assetbundle), default=name
-         */
-        field?: string;
-        /**
-         * Page number
-         */
-        page?: number;
-        /**
-         * Max results
-         */
-        limit?: number;
-        /**
-         * Sort field
-         */
-        sort_by?: string;
-        /**
-         * Sort order (asc|desc)
-         */
-        sort_order?: string;
-    };
-    url: '/virtualLives/{region}/search';
-};
-
-export type GetVirtualLivesByRegionSearchErrors = {
-    /**
-     * Bad Request
-     */
-    400: SharedErrorResponse;
-    /**
-     * Internal Server Error
-     */
-    500: SharedErrorResponse;
-    /**
-     * Service Unavailable
-     */
-    503: SharedErrorResponse;
-};
-
-export type GetVirtualLivesByRegionSearchError = GetVirtualLivesByRegionSearchErrors[keyof GetVirtualLivesByRegionSearchErrors];
-
-export type GetVirtualLivesByRegionSearchResponses = {
-    /**
-     * OK
-     */
-    200: SharedVirtualLiveListResponse;
-};
-
-export type GetVirtualLivesByRegionSearchResponse = GetVirtualLivesByRegionSearchResponses[keyof GetVirtualLivesByRegionSearchResponses];
 
 export type GetVirtualLivesByRegionByIdData = {
     body?: never;

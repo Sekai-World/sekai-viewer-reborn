@@ -2,7 +2,7 @@
 
 import type { Client, Options as Options2, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetAdminLoginData, GetAdminLoginErrors, GetAdminMasterDataEventsData, GetAdminMasterDataEventsErrors, GetAdminMasterDataEventsResponse, GetAdminMasterDataEventsResponses, GetAdminMasterDataStatusData, GetAdminMasterDataStatusErrors, GetAdminMasterDataStatusResponses, GetAdminProfileData, GetAdminProfileErrors, GetAdminProfileResponses, GetCardsByRegionByIdData, GetCardsByRegionByIdEpisodesData, GetCardsByRegionByIdEpisodesErrors, GetCardsByRegionByIdEpisodesResponses, GetCardsByRegionByIdErrors, GetCardsByRegionByIdParamsData, GetCardsByRegionByIdParamsErrors, GetCardsByRegionByIdParamsResponses, GetCardsByRegionByIdResponses, GetCardsByRegionListData, GetCardsByRegionListErrors, GetCardsByRegionListResponses, GetCardsByRegionSearchData, GetCardsByRegionSearchErrors, GetCardsByRegionSearchResponses, GetCardsRegionsByIdAvailabilityData, GetCardsRegionsByIdAvailabilityErrors, GetCardsRegionsByIdAvailabilityResponses, GetEventsByRegionByIdBonusesData, GetEventsByRegionByIdBonusesErrors, GetEventsByRegionByIdBonusesResponses, GetEventsByRegionByIdBreakTimesData, GetEventsByRegionByIdBreakTimesErrors, GetEventsByRegionByIdBreakTimesResponses, GetEventsByRegionByIdCardsData, GetEventsByRegionByIdCardsErrors, GetEventsByRegionByIdCardsResponses, GetEventsByRegionByIdData, GetEventsByRegionByIdErrors, GetEventsByRegionByIdMusicsData, GetEventsByRegionByIdMusicsErrors, GetEventsByRegionByIdMusicsResponses, GetEventsByRegionByIdResponses, GetEventsByRegionByIdRewardsData, GetEventsByRegionByIdRewardsErrors, GetEventsByRegionByIdRewardsResponses, GetEventsByRegionCurrentData, GetEventsByRegionCurrentErrors, GetEventsByRegionCurrentResponses, GetEventsByRegionListData, GetEventsByRegionListErrors, GetEventsByRegionListResponses, GetEventsByRegionSearchData, GetEventsByRegionSearchErrors, GetEventsByRegionSearchResponses, GetEventsRegionsByIdAvailabilityData, GetEventsRegionsByIdAvailabilityErrors, GetEventsRegionsByIdAvailabilityResponses, GetHealthData, GetHealthResponses, GetMusicsByRegionByIdData, GetMusicsByRegionByIdErrors, GetMusicsByRegionByIdResponses, GetMusicsByRegionListData, GetMusicsByRegionListErrors, GetMusicsByRegionListResponses, GetMusicsByRegionSearchData, GetMusicsByRegionSearchErrors, GetMusicsByRegionSearchResponses, GetMusicsRegionsByIdAvailabilityData, GetMusicsRegionsByIdAvailabilityErrors, GetMusicsRegionsByIdAvailabilityResponses, GetVersionsByRegionData, GetVersionsByRegionErrors, GetVersionsByRegionResponses, GetVirtualLivesByRegionByIdData, GetVirtualLivesByRegionByIdErrors, GetVirtualLivesByRegionByIdItemsData, GetVirtualLivesByRegionByIdItemsErrors, GetVirtualLivesByRegionByIdItemsResponses, GetVirtualLivesByRegionByIdResponses, GetVirtualLivesByRegionByIdSchedulesData, GetVirtualLivesByRegionByIdSchedulesErrors, GetVirtualLivesByRegionByIdSchedulesResponses, GetVirtualLivesByRegionByIdSetlistsData, GetVirtualLivesByRegionByIdSetlistsErrors, GetVirtualLivesByRegionByIdSetlistsResponses, GetVirtualLivesByRegionListData, GetVirtualLivesByRegionListErrors, GetVirtualLivesByRegionListResponses, GetVirtualLivesByRegionSearchData, GetVirtualLivesByRegionSearchErrors, GetVirtualLivesByRegionSearchResponses, GetVirtualLivesRegionsByIdAvailabilityData, GetVirtualLivesRegionsByIdAvailabilityErrors, GetVirtualLivesRegionsByIdAvailabilityResponses, PostAdminMasterDataSyncData, PostAdminMasterDataSyncErrors, PostAdminMasterDataSyncForceData, PostAdminMasterDataSyncForceErrors, PostAdminMasterDataSyncForceResponses, PostAdminMasterDataSyncResponses, PostInternalGithubWebhooksMasterDataData, PostInternalGithubWebhooksMasterDataErrors, PostInternalGithubWebhooksMasterDataResponses } from './types.gen';
+import type { GetAdminLoginData, GetAdminLoginErrors, GetAdminMasterDataEventsData, GetAdminMasterDataEventsErrors, GetAdminMasterDataEventsResponse, GetAdminMasterDataEventsResponses, GetAdminMasterDataStatusData, GetAdminMasterDataStatusErrors, GetAdminMasterDataStatusResponses, GetAdminProfileData, GetAdminProfileErrors, GetAdminProfileResponses, GetCardsByRegionByIdData, GetCardsByRegionByIdEpisodesData, GetCardsByRegionByIdEpisodesErrors, GetCardsByRegionByIdEpisodesResponses, GetCardsByRegionByIdErrors, GetCardsByRegionByIdParamsData, GetCardsByRegionByIdParamsErrors, GetCardsByRegionByIdParamsResponses, GetCardsByRegionByIdResponses, GetCardsByRegionListData, GetCardsByRegionListErrors, GetCardsByRegionListResponses, GetCardsRegionsByIdAvailabilityData, GetCardsRegionsByIdAvailabilityErrors, GetCardsRegionsByIdAvailabilityResponses, GetEventsByRegionByIdBonusesData, GetEventsByRegionByIdBonusesErrors, GetEventsByRegionByIdBonusesResponses, GetEventsByRegionByIdBreakTimesData, GetEventsByRegionByIdBreakTimesErrors, GetEventsByRegionByIdBreakTimesResponses, GetEventsByRegionByIdCardsData, GetEventsByRegionByIdCardsErrors, GetEventsByRegionByIdCardsResponses, GetEventsByRegionByIdData, GetEventsByRegionByIdErrors, GetEventsByRegionByIdMusicsData, GetEventsByRegionByIdMusicsErrors, GetEventsByRegionByIdMusicsResponses, GetEventsByRegionByIdResponses, GetEventsByRegionByIdRewardsData, GetEventsByRegionByIdRewardsErrors, GetEventsByRegionByIdRewardsResponses, GetEventsByRegionCurrentData, GetEventsByRegionCurrentErrors, GetEventsByRegionCurrentResponses, GetEventsByRegionListData, GetEventsByRegionListErrors, GetEventsByRegionListResponses, GetEventsRegionsByIdAvailabilityData, GetEventsRegionsByIdAvailabilityErrors, GetEventsRegionsByIdAvailabilityResponses, GetHealthData, GetHealthResponses, GetMusicsByRegionByIdData, GetMusicsByRegionByIdErrors, GetMusicsByRegionByIdResponses, GetMusicsByRegionListData, GetMusicsByRegionListErrors, GetMusicsByRegionListResponses, GetMusicsRegionsByIdAvailabilityData, GetMusicsRegionsByIdAvailabilityErrors, GetMusicsRegionsByIdAvailabilityResponses, GetVersionsByRegionData, GetVersionsByRegionErrors, GetVersionsByRegionResponses, GetVersionsData, GetVersionsErrors, GetVersionsResponses, GetVirtualLivesByRegionByIdData, GetVirtualLivesByRegionByIdErrors, GetVirtualLivesByRegionByIdItemsData, GetVirtualLivesByRegionByIdItemsErrors, GetVirtualLivesByRegionByIdItemsResponses, GetVirtualLivesByRegionByIdResponses, GetVirtualLivesByRegionByIdSchedulesData, GetVirtualLivesByRegionByIdSchedulesErrors, GetVirtualLivesByRegionByIdSchedulesResponses, GetVirtualLivesByRegionByIdSetlistsData, GetVirtualLivesByRegionByIdSetlistsErrors, GetVirtualLivesByRegionByIdSetlistsResponses, GetVirtualLivesByRegionListData, GetVirtualLivesByRegionListErrors, GetVirtualLivesByRegionListResponses, GetVirtualLivesRegionsByIdAvailabilityData, GetVirtualLivesRegionsByIdAvailabilityErrors, GetVirtualLivesRegionsByIdAvailabilityResponses, PostAdminMasterDataSyncData, PostAdminMasterDataSyncErrors, PostAdminMasterDataSyncForceData, PostAdminMasterDataSyncForceErrors, PostAdminMasterDataSyncForceResponses, PostAdminMasterDataSyncResponses, PostInternalGithubWebhooksMasterDataData, PostInternalGithubWebhooksMasterDataErrors, PostInternalGithubWebhooksMasterDataResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -87,11 +87,6 @@ export const getCardsRegionsByIdAvailability = <ThrowOnError extends boolean = f
 export const getCardsByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetCardsByRegionListData, ThrowOnError>) => (options.client ?? client).get<GetCardsByRegionListResponses, GetCardsByRegionListErrors, ThrowOnError>({ url: '/cards/{region}/list', ...options });
 
 /**
- * Search cards by prefix
- */
-export const getCardsByRegionSearch = <ThrowOnError extends boolean = false>(options: Options<GetCardsByRegionSearchData, ThrowOnError>) => (options.client ?? client).get<GetCardsByRegionSearchResponses, GetCardsByRegionSearchErrors, ThrowOnError>({ url: '/cards/{region}/search', ...options });
-
-/**
  * Get card basic info by id
  */
 export const getCardsByRegionById = <ThrowOnError extends boolean = false>(options: Options<GetCardsByRegionByIdData, ThrowOnError>) => (options.client ?? client).get<GetCardsByRegionByIdResponses, GetCardsByRegionByIdErrors, ThrowOnError>({ url: '/cards/{region}/{id}', ...options });
@@ -120,11 +115,6 @@ export const getEventsByRegionCurrent = <ThrowOnError extends boolean = false>(o
  * List events by page
  */
 export const getEventsByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetEventsByRegionListData, ThrowOnError>) => (options.client ?? client).get<GetEventsByRegionListResponses, GetEventsByRegionListErrors, ThrowOnError>({ url: '/events/{region}/list', ...options });
-
-/**
- * Search events
- */
-export const getEventsByRegionSearch = <ThrowOnError extends boolean = false>(options: Options<GetEventsByRegionSearchData, ThrowOnError>) => (options.client ?? client).get<GetEventsByRegionSearchResponses, GetEventsByRegionSearchErrors, ThrowOnError>({ url: '/events/{region}/search', ...options });
 
 /**
  * Get event basic info by id
@@ -184,14 +174,14 @@ export const getMusicsRegionsByIdAvailability = <ThrowOnError extends boolean = 
 export const getMusicsByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetMusicsByRegionListData, ThrowOnError>) => (options.client ?? client).get<GetMusicsByRegionListResponses, GetMusicsByRegionListErrors, ThrowOnError>({ url: '/musics/{region}/list', ...options });
 
 /**
- * Search musics
- */
-export const getMusicsByRegionSearch = <ThrowOnError extends boolean = false>(options: Options<GetMusicsByRegionSearchData, ThrowOnError>) => (options.client ?? client).get<GetMusicsByRegionSearchResponses, GetMusicsByRegionSearchErrors, ThrowOnError>({ url: '/musics/{region}/search', ...options });
-
-/**
  * Get music by id
  */
 export const getMusicsByRegionById = <ThrowOnError extends boolean = false>(options: Options<GetMusicsByRegionByIdData, ThrowOnError>) => (options.client ?? client).get<GetMusicsByRegionByIdResponses, GetMusicsByRegionByIdErrors, ThrowOnError>({ url: '/musics/{region}/{id}', ...options });
+
+/**
+ * Get cached versions.json for all configured regions
+ */
+export const getVersions = <ThrowOnError extends boolean = false>(options?: Options<GetVersionsData, ThrowOnError>) => (options?.client ?? client).get<GetVersionsResponses, GetVersionsErrors, ThrowOnError>({ url: '/versions', ...options });
 
 /**
  * Get cached versions.json by region
@@ -207,11 +197,6 @@ export const getVirtualLivesRegionsByIdAvailability = <ThrowOnError extends bool
  * List virtual lives by page
  */
 export const getVirtualLivesByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetVirtualLivesByRegionListData, ThrowOnError>) => (options.client ?? client).get<GetVirtualLivesByRegionListResponses, GetVirtualLivesByRegionListErrors, ThrowOnError>({ url: '/virtualLives/{region}/list', ...options });
-
-/**
- * Search virtual lives
- */
-export const getVirtualLivesByRegionSearch = <ThrowOnError extends boolean = false>(options: Options<GetVirtualLivesByRegionSearchData, ThrowOnError>) => (options.client ?? client).get<GetVirtualLivesByRegionSearchResponses, GetVirtualLivesByRegionSearchErrors, ThrowOnError>({ url: '/virtualLives/{region}/search', ...options });
 
 /**
  * Get virtual live by id

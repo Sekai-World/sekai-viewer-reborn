@@ -6,6 +6,7 @@
 "@platform/i18n-source": patch
 "@platform/i18n-runtime": patch
 "@platform/sekai-api-sdk": patch
+"@platform/sekai-master-api-sdk": patch
 "@platform/ui-shell": patch
 ---
 
@@ -39,3 +40,4 @@ Render `content-site` home page current event banners through the shared event i
 Show unit icons next to the `content-site` event detail unit field.
 Show compact unit markers next to current event ids on `content-site` home cards.
 Show unit icons on `content-site` event list card banners and move the current-event badge to the banner footer.
+Update `@platform/sekai-master-api-sdk` generated client to include the new aggregated `/versions` endpoint and switch `content-site` home page version loading to use it.
