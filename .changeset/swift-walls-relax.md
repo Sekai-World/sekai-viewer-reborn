@@ -44,3 +44,6 @@ Update `@platform/sekai-master-api-sdk` generated client to include the new aggr
 Regenerate `@platform/sekai-master-api-sdk` to add `gameCharacters`, `gameCharacterUnits`, and `unitProfiles` endpoints from the latest API spec.
 Display the banner game character's portrait and name in the left info section of `content-site` event detail pages.
 Remove legacy `content-site` event routes that redirected `/event/:id` URLs to region-scoped event URLs.
+Use local `chr_il` static assets for banner character icons on `content-site` event detail pages.
+Use theme-aware border and background colors for banner character icons on `content-site` event detail pages.
+Use matching theme-aware border and background colors for unit icons on `content-site` event detail pages.

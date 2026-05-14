@@ -1,6 +1,6 @@
 <script lang="ts">
   import { asset } from "$app/paths";
-  import { getCharacterThumbnailAssetURL, getEventPointIconAssetURL } from "$lib/assets";
+  import { getEventPointIconAssetURL } from "$lib/assets";
   import { formatDisplayDateTime } from "$lib/date-time";
   import type { BannerGameCharacter, EventDetail } from "$lib/event-detail";
   import { getEventTypeDisplay } from "$lib/event";
@@ -66,6 +66,8 @@
     const slug = unit.trim().toLowerCase();
     return unitIconSlugs.has(slug) ? asset(`/icons/icon_${slug}.png`) : null;
   };
+  const getCharacterIconUrl = (characterId: number): string =>
+    asset(`/chr_il/chr_il_${characterId}.png`);
 </script>
 
 <article class="card content-card-shell shadow-sm">
@@ -115,7 +117,7 @@
           </div>
           {#if getUnitIconUrl(event.unit)}
             <span
-              class="unit-icon-frame flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+              class="unit-icon-frame flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
             >
               <img
                 src={getUnitIconUrl(event.unit)}
@@ -153,9 +155,7 @@
       </div>
       {#if event.bannerGameCharacter}
         {@const char = event.bannerGameCharacter}
-        <div
-          class="content-card-inset flex items-center gap-3 rounded-xl px-4 py-3"
-        >
+        <div class="content-card-inset flex items-center gap-3 rounded-xl px-4 py-3">
           <div class="min-w-0 flex-1">
             <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
               {bannerCharacterLabel}
@@ -163,11 +163,10 @@
             <dd class="mt-1 text-sm font-medium">{getCharacterDisplayName(char)}</dd>
           </div>
           <span
-            class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2"
-            style="border-color: {char.colorCode ?? 'var(--color-base-content)'}33; background-color: {char.colorCode ?? 'var(--color-base-content)'}11;"
+            class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-base-content/15 bg-base-100/70"
           >
             <img
-              src={getCharacterThumbnailAssetURL(char.id, region)}
+              src={getCharacterIconUrl(char.id)}
               alt={getCharacterDisplayName(char)}
               class="h-12 w-12 max-w-none object-cover"
               loading="lazy"

@@ -87,12 +87,6 @@
     border-radius: 1rem;
   }
 
-  .unit-icon-frame {
-    background-color: transparent;
-    border: 1px solid transparent;
-    box-shadow: none;
-  }
-
   .event-list-unit-idol::after,
   .event-list-unit-light-sound::after,
   .event-list-unit-piapro::after,
@@ -220,14 +214,6 @@
   :root.dark[data-theme="default"] .content-card-elevated {
     background-color: color-mix(in oklab, var(--color-base-100) 84%, var(--color-base-content) 16%);
     border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
-  }
-
-  :root.dark .unit-icon-frame {
-    background-color: oklch(96% 0 0);
-    border-color: color-mix(in oklab, white 18%, transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, white 50%, transparent),
-      0 6px 14px color-mix(in oklab, black 18%, transparent);
   }
 
   :root.dark[data-theme="default"] .content-breadcrumb-link {
