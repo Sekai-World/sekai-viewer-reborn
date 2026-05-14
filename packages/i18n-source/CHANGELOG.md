@@ -1,6 +1,6 @@
-# @apps/content-site
+# @platform/i18n-source
 
-## 0.1.2
+## 0.1.1
 
 ### Patch Changes
 
@@ -41,17 +41,3 @@
   Use local `chr_il` static assets for banner character icons on `content-site` event detail pages.
   Use theme-aware border and background colors for banner character icons on `content-site` event detail pages.
   Use matching theme-aware border and background colors for unit icons on `content-site` event detail pages.
-- Updated dependencies [6721ff0]
-  - @platform/i18n-runtime@0.1.1
-  - @platform/sekai-master-api-sdk@0.1.2
-  - @platform/ui-shell@0.1.2
-
-## 0.1.1
-
-### Patch Changes
-
-- ab99d20: Improve `content-site` event detail asset fallbacks, split shared image preview trigger/modal components, and page streaming/favicon polish.
-- Updated dependencies [ab99d20]
-- Updated dependencies [2be6c80]
-  - @platform/ui-shell@0.1.1
-  - @platform/sekai-master-api-sdk@0.1.1
