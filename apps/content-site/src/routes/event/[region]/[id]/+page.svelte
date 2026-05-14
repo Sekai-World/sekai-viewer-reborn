@@ -72,6 +72,7 @@
   let debugEventJsonButtonLabel = $state(getInitialCommonText("debugEventJsonButton"));
   let debugEventJsonTitle = $state(getInitialCommonText("debugEventJsonTitle"));
   let closeLabel = $state(getInitialCommonText("closeLabel"));
+  let bannerCharacterLabel = $state(getInitialCommonText("bannerCharacterLabel"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
@@ -126,6 +127,7 @@
     debugEventJsonButtonLabel = translate("debugEventJsonButton");
     debugEventJsonTitle = translate("debugEventJsonTitle");
     closeLabel = translate("closeLabel");
+    bannerCharacterLabel = translate("bannerCharacterLabel");
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
@@ -301,6 +303,7 @@
             {eventTypeLabel}
             {startAtLabel}
             {endAtLabel}
+            {bannerCharacterLabel}
           />
 
           {#await data.isCurrentEvent then isCurrentEvent}

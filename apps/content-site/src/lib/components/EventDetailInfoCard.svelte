@@ -1,8 +1,8 @@
 <script lang="ts">
   import { asset } from "$app/paths";
-  import { getEventPointIconAssetURL } from "$lib/assets";
+  import { getCharacterThumbnailAssetURL, getEventPointIconAssetURL } from "$lib/assets";
   import { formatDisplayDateTime } from "$lib/date-time";
-  import type { EventDetail } from "$lib/event-detail";
+  import type { BannerGameCharacter, EventDetail } from "$lib/event-detail";
   import { getEventTypeDisplay } from "$lib/event";
   import type { SupportedRegion } from "$lib/regions";
   import Icon from "@iconify/svelte";
@@ -28,7 +28,8 @@
     mixedUnitLabel,
     eventTypeLabel,
     startAtLabel,
-    endAtLabel
+    endAtLabel,
+    bannerCharacterLabel
   }: {
     event: EventDetail;
     region: SupportedRegion;
@@ -42,7 +43,12 @@
     eventTypeLabel: string;
     startAtLabel: string;
     endAtLabel: string;
+    bannerCharacterLabel: string;
   } = $props();
+  const getCharacterDisplayName = (char: BannerGameCharacter): string => {
+    const parts = [char.firstName, char.givenName].filter(Boolean);
+    return parts.length > 0 ? parts.join(" ") : String(char.id);
+  };
 
   const getDisplayUnitName = (unitName: string | null | undefined): string | null => {
     if (!unitName) {
@@ -145,6 +151,31 @@
           {formatDisplayDateTime(event.endAt, displayLocale)}
         </dd>
       </div>
+      {#if event.bannerGameCharacter}
+        {@const char = event.bannerGameCharacter}
+        <div
+          class="content-card-inset flex items-center gap-3 rounded-xl px-4 py-3"
+        >
+          <div class="min-w-0 flex-1">
+            <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+              {bannerCharacterLabel}
+            </dt>
+            <dd class="mt-1 text-sm font-medium">{getCharacterDisplayName(char)}</dd>
+          </div>
+          <span
+            class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2"
+            style="border-color: {char.colorCode ?? 'var(--color-base-content)'}33; background-color: {char.colorCode ?? 'var(--color-base-content)'}11;"
+          >
+            <img
+              src={getCharacterThumbnailAssetURL(char.id, region)}
+              alt={getCharacterDisplayName(char)}
+              class="h-12 w-12 max-w-none object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </span>
+        </div>
+      {/if}
     </dl>
   </div>
 </article>

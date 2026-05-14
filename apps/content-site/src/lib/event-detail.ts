@@ -1,3 +1,11 @@
+type BannerGameCharacter = {
+  id: number;
+  firstName: string | null;
+  givenName: string | null;
+  unit: string | null;
+  colorCode: string | null;
+};
+
 type EventDetail = {
   id: string;
   title: string;
@@ -9,6 +17,7 @@ type EventDetail = {
   startAt: string | number | null;
   endAt: string | number | null;
   assetBundleName: string | null;
+  bannerGameCharacter: BannerGameCharacter | null;
 };
 
-export type { EventDetail };
+export type { BannerGameCharacter, EventDetail };

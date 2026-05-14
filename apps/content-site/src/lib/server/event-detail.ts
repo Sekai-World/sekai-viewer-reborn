@@ -1,4 +1,4 @@
-import type { EventDetail } from "$lib/event-detail";
+import type { BannerGameCharacter, EventDetail } from "$lib/event-detail";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -83,6 +83,31 @@ const pickFirstDateValue = (
   return null;
 };
 
+const getNumber = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const parseBannerGameCharacter = (
+  source: Record<string, unknown>
+): BannerGameCharacter | null => {
+  const node = getObject(source["bannerGameCharacter"]);
+  if (!node) {
+    return null;
+  }
+
+  const id = getNumber(node["gameCharacterId"]);
+  if (id === null) {
+    return null;
+  }
+
+  return {
+    id,
+    firstName: getString(node["firstName"]),
+    givenName: getString(node["givenName"]),
+    unit: getString(node["unit"]),
+    colorCode: getString(node["colorCode"])
+  };
+};
+
 const parseEventDetail = (payload: unknown): EventDetail | null => {
   const root = getObject(payload);
   if (!root) {
@@ -118,7 +143,8 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
       "end_at",
       "endDate"
     ]),
-    assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"])
+    assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"]),
+    bannerGameCharacter: parseBannerGameCharacter(eventNode)
   };
 };
 
