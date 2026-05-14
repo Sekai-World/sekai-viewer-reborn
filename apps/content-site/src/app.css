@@ -114,27 +114,27 @@
   }
 
   .event-list-unit-idol::after {
-    background-image: url("/icon_idol.png");
+    background-image: url("/icons/icon_idol.png");
   }
 
   .event-list-unit-light-sound::after {
-    background-image: url("/icon_light_sound.png");
+    background-image: url("/icons/icon_light_sound.png");
   }
 
   .event-list-unit-piapro::after {
-    background-image: url("/icon_piapro.png");
+    background-image: url("/icons/icon_piapro.png");
   }
 
   .event-list-unit-school-refusal::after {
-    background-image: url("/icon_school_refusal.png");
+    background-image: url("/icons/icon_school_refusal.png");
   }
 
   .event-list-unit-street::after {
-    background-image: url("/icon_street.png");
+    background-image: url("/icons/icon_street.png");
   }
 
   .event-list-unit-theme-park::after {
-    background-image: url("/icon_theme_park.png");
+    background-image: url("/icons/icon_theme_park.png");
   }
 
   .content-breadcrumbs {

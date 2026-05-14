@@ -53,7 +53,7 @@
     }
 
     const slug = unit.trim().toLowerCase();
-    return unitIconSlugs.has(slug) ? asset(`/icon_${slug}.png`) : null;
+    return unitIconSlugs.has(slug) ? asset(`/icons/icon_${slug}.png`) : null;
   };
 
   const getDisplayUnit = (unit: string | null | undefined): string | null => {
