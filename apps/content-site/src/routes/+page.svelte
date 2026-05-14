@@ -189,7 +189,7 @@
           {#await data.cards[index]}
             <tr>
               <td
-                ><span class="badge badge-sm homepage-region-badge font-semibold"
+                ><span class="badge badge-sm homepage-region-badge version-region-badge font-semibold"
                   >{region.toUpperCase()}</span
                 ></td
               >
@@ -200,7 +200,7 @@
           {:then card}
             <tr>
               <td
-                ><span class="badge badge-sm homepage-region-badge font-semibold"
+                ><span class="badge badge-sm homepage-region-badge version-region-badge font-semibold"
                   >{card.region.toUpperCase()}</span
                 ></td
               >
