@@ -43,3 +43,4 @@ Show unit icons on `content-site` event list card banners and move the current-e
 Update `@platform/sekai-master-api-sdk` generated client to include the new aggregated `/versions` endpoint and switch `content-site` home page version loading to use it.
 Regenerate `@platform/sekai-master-api-sdk` to add `gameCharacters`, `gameCharacterUnits`, and `unitProfiles` endpoints from the latest API spec.
 Display the banner game character's portrait and name in the left info section of `content-site` event detail pages.
+Remove legacy `content-site` event routes that redirected `/event/:id` URLs to region-scoped event URLs.
