@@ -126,6 +126,23 @@
 
   const hasNonDefaultSort = (): boolean => sortBy !== "id" || sortOrder !== "desc";
 
+  const hasExplicitQueryStateInUrl = (): boolean => {
+    if (!browser) {
+      return false;
+    }
+
+    const searchParams = new URLSearchParams(window.location.search);
+    return [
+      "sort_by",
+      "sort_order",
+      "name",
+      "event_type",
+      "unit",
+      "banner_unit",
+      "banner_game_character_unit"
+    ].some((key) => searchParams.has(key));
+  };
+
   const getFilterStorageKey = (): string => `content-site:event-list-filters:${data.region}`;
 
   const getInitialStateKey = (): string =>
@@ -235,7 +252,8 @@
     syncDraftFiltersFromCurrent();
     errorMessage = data.initialLoadFailed ? getInitialCommonText("eventListLoadFailed") : null;
 
-    if (browser) {
+    // Do not overwrite persisted state on plain route entry without query params.
+    if (browser && hasExplicitQueryStateInUrl()) {
       persistAppliedFilters();
     }
   });
