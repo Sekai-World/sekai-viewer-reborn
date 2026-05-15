@@ -47,6 +47,9 @@
   let mobileSettingsMenu: HTMLDetailsElement | null = null;
   let desktopThemeMenu: HTMLDetailsElement | null = null;
   let localeMenu: HTMLDetailsElement | null = null;
+  let localeLoadingProgress = $state(0);
+  let localeLoadingInterval: ReturnType<typeof setInterval> | null = null;
+  let localeProgressResetTimeout: ReturnType<typeof setTimeout> | null = null;
 
   let homeLabel = $state(getInitialCommonText("home"));
   let sidebarLabel = $state(getInitialCommonText("navigation.sidebarTitle"));
@@ -124,6 +127,65 @@
     const translate = createCommonTranslator(uiLocale, data.commonMessages);
     applyTranslations(translate);
     void refreshTranslations(uiLocale);
+  });
+
+  const stopLocaleProgressTimers = (): void => {
+    if (localeLoadingInterval !== null) {
+      clearInterval(localeLoadingInterval);
+      localeLoadingInterval = null;
+    }
+
+    if (localeProgressResetTimeout !== null) {
+      clearTimeout(localeProgressResetTimeout);
+      localeProgressResetTimeout = null;
+    }
+  };
+
+  const startLocaleProgress = (): void => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    stopLocaleProgressTimers();
+    localeLoadingProgress = 8;
+
+    localeLoadingInterval = setInterval(() => {
+      // Smoothly approach 92% until remote dictionary loading finishes.
+      const remaining = 92 - localeLoadingProgress;
+      if (remaining <= 0) {
+        return;
+      }
+
+      const step = Math.max(1, Math.ceil(remaining * 0.18));
+      localeLoadingProgress = Math.min(92, localeLoadingProgress + step);
+    }, 140);
+  };
+
+  const finishLocaleProgress = (): void => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    stopLocaleProgressTimers();
+
+    if (localeLoadingProgress === 0) {
+      return;
+    }
+
+    localeLoadingProgress = 100;
+    localeProgressResetTimeout = setTimeout(() => {
+      localeLoadingProgress = 0;
+      localeProgressResetTimeout = null;
+    }, 220);
+  };
+
+  $effect(() => {
+    if ($isLocaleLoading) {
+      startLocaleProgress();
+      return;
+    }
+
+    finishLocaleProgress();
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
@@ -307,6 +369,7 @@
     document.addEventListener("click", handleDocumentClick);
 
     return () => {
+      stopLocaleProgressTimers();
       if (backToTopAnimationFrame) {
         window.cancelAnimationFrame(backToTopAnimationFrame);
         backToTopAnimationFrame = 0;
@@ -323,13 +386,26 @@
   <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
-{#if $isLocaleLoading}
+{#if $isLocaleLoading || localeLoadingProgress > 0}
   <div class="pointer-events-none fixed inset-x-0 top-2 z-240 flex justify-center px-4">
     <div
-      class="inline-flex items-center gap-2 rounded-full border border-base-content/20 bg-base-100/86 px-3 py-1 text-xs font-semibold shadow-lg backdrop-blur-md"
+      class="w-full max-w-xs rounded-xl border border-base-content/20 bg-base-100/92 px-3 py-2 shadow-lg backdrop-blur-md"
+      role="status"
+      aria-live="polite"
     >
-      <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
-      <span>{interfaceLanguageLabel}: {uiLocaleDisplayLabel}</span>
+      <div class="mb-1 flex items-center justify-between gap-2 text-xs font-semibold">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+          <span>{loadingLanguagePackLabel}</span>
+        </span>
+        <span>{localeLoadingProgress}%</span>
+      </div>
+      <progress
+        class="progress progress-primary h-1.5 w-full"
+        max="100"
+        value={localeLoadingProgress}
+        aria-label={loadingLanguagePackLabel}
+      ></progress>
     </div>
   </div>
 {/if}

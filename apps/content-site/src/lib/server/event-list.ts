@@ -1,3 +1,5 @@
+import type { GetEventsByRegionListData } from "@platform/sekai-master-api-sdk";
+
 export type EventListItem = {
   id: string;
   title: string;
@@ -20,7 +22,97 @@ export type EventListPage = {
   pagination: EventListPagination;
 };
 
+export type EventListSortBy = "id" | "startAt";
+export type EventListSortOrder = "asc" | "desc";
+
+export type EventListQueryState = {
+  sortBy: EventListSortBy;
+  sortOrder: EventListSortOrder;
+  name: string;
+  eventType: string[];
+  unit: string[];
+  bannerUnit: string[];
+};
+
 export const DEFAULT_EVENT_LIST_PAGE_SIZE = 20;
+
+const DEFAULT_EVENT_LIST_QUERY_STATE: EventListQueryState = {
+  sortBy: "id",
+  sortOrder: "desc",
+  name: "",
+  eventType: [],
+  unit: [],
+  bannerUnit: []
+};
+
+const getTrimmedSearchParam = (value: string | null): string => {
+  if (!value) {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : "";
+};
+
+const parseSortBy = (value: string | null): EventListSortBy =>
+  value === "startAt" ? "startAt" : "id";
+
+const parseSortOrder = (value: string | null): EventListSortOrder =>
+  value === "asc" ? "asc" : "desc";
+
+const parseMultiValueParam = (searchParams: URLSearchParams, key: string): string[] => {
+  const values = searchParams.getAll(key).map((v) => v.trim()).filter((v) => v.length > 0);
+  return [...new Set(values)]; // Remove duplicates
+};
+
+export const parseEventListQueryState = (searchParams: URLSearchParams): EventListQueryState => ({
+  sortBy: parseSortBy(searchParams.get("sort_by")),
+  sortOrder: parseSortOrder(searchParams.get("sort_order")),
+  name: getTrimmedSearchParam(searchParams.get("name")),
+  eventType: parseMultiValueParam(searchParams, "event_type"),
+  unit: parseMultiValueParam(searchParams, "unit"),
+  bannerUnit: (() => {
+    const bannerUnit = parseMultiValueParam(searchParams, "banner_unit");
+    if (bannerUnit.length > 0) {
+      return bannerUnit;
+    }
+
+    return parseMultiValueParam(searchParams, "banner_game_character_unit");
+  })()
+});
+
+export const createEventListRequestQuery = (
+  queryState: EventListQueryState,
+  page: number,
+  pageSize: number
+): GetEventsByRegionListData["query"] => {
+  const query: NonNullable<GetEventsByRegionListData["query"]> = {
+    page,
+    page_size: pageSize,
+    sort_by: queryState.sortBy,
+    sort_order: queryState.sortOrder
+  };
+
+  if (queryState.name) {
+    query.name = queryState.name;
+  }
+
+  if (queryState.eventType.length > 0) {
+    query.event_type = queryState.eventType;
+  }
+
+  if (queryState.unit.length > 0) {
+    query.unit = queryState.unit;
+  }
+
+  // Keep bannerUnit in state for potential future API support; current OpenAPI does not define it.
+
+  return query;
+};
+
+export const getDefaultEventListQueryState = (): EventListQueryState => ({
+  ...DEFAULT_EVENT_LIST_QUERY_STATE
+});
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;

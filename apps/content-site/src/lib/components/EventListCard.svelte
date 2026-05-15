@@ -100,7 +100,7 @@
     }`}
   >
     <div class={`${EVENT_LIST_CARD_MEDIA_CLASS} ${getUnitIconClass(item.unit)}`}>
-      {#if item.assetBundleName}
+      {#if item.assetBundleName && !isSpoilerHidden()}
         <EventAssetImage
           src={getEventBannerAssetURL(item.assetBundleName, region)}
           alt={`${item.title} ${bannerAltSuffix}`}
@@ -109,7 +109,9 @@
         />
       {:else}
         <div
-          class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
+          class={`flex h-full w-full items-center justify-center px-6 text-center text-sm ${
+            isSpoilerHidden() ? "bg-base-200/30 opacity-60" : "opacity-70"
+          }`}
         >
           {item.title}
         </div>
