@@ -1,7 +1,12 @@
 import { getEventsByRegionCurrent, getEventsByRegionList } from "@platform/sekai-master-api-sdk";
 import { normalizeRegion } from "$lib/region";
 import { parseEventDetail } from "$lib/server/event-detail";
-import { DEFAULT_EVENT_LIST_PAGE_SIZE, parseEventListPage } from "$lib/server/event-list";
+import {
+  createEventListRequestQuery,
+  DEFAULT_EVENT_LIST_PAGE_SIZE,
+  parseEventListPage,
+  parseEventListQueryState
+} from "$lib/server/event-list";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
 
@@ -16,21 +21,17 @@ const createEmptyPage = () => ({
   }
 });
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
+  const queryState = parseEventListQueryState(url.searchParams);
 
   try {
     const [response, currentEventResponse] = await Promise.all([
       getEventsByRegionList({
         baseUrl,
         path: { region },
-        query: {
-          page: 1,
-          page_size: DEFAULT_EVENT_LIST_PAGE_SIZE,
-          sort_by: "id",
-          sort_order: "desc"
-        }
+        query: createEventListRequestQuery(queryState, 1, DEFAULT_EVENT_LIST_PAGE_SIZE)
       }),
       getEventsByRegionCurrent({
         baseUrl,
@@ -43,6 +44,7 @@ export const load: PageServerLoad = async ({ params }) => {
         region,
         initialPage: createEmptyPage(),
         initialLoadFailed: true,
+        initialQuery: queryState,
         currentEventId: null
       };
     }
@@ -51,6 +53,7 @@ export const load: PageServerLoad = async ({ params }) => {
       region,
       initialPage: parseEventListPage(response.data, 1, DEFAULT_EVENT_LIST_PAGE_SIZE),
       initialLoadFailed: false,
+      initialQuery: queryState,
       currentEventId:
         currentEventResponse && !currentEventResponse.error
           ? (parseEventDetail(currentEventResponse.data)?.id ?? null)
@@ -61,6 +64,7 @@ export const load: PageServerLoad = async ({ params }) => {
       region,
       initialPage: createEmptyPage(),
       initialLoadFailed: true,
+      initialQuery: queryState,
       currentEventId: null
     };
   }
