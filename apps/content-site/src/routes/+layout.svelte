@@ -1,12 +1,13 @@
 <script lang="ts">
   import "../app.css";
   import { asset } from "$app/paths";
-  import { invalidateAll } from "$app/navigation";
+  import { invalidateAll, onNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n-config";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
+  import { fade } from "svelte/transition";
   import {
     createCommonTranslator,
     isLocaleLoading,
@@ -50,6 +51,8 @@
   let localeLoadingProgress = $state(0);
   let localeLoadingInterval: ReturnType<typeof setInterval> | null = null;
   let localeProgressResetTimeout: ReturnType<typeof setTimeout> | null = null;
+  let useFallbackRouteTransition = $state(true);
+  let navigationTransitionKey = $state(`${page.url.pathname}${page.url.search}`);
 
   let homeLabel = $state(getInitialCommonText("home"));
   let sidebarLabel = $state(getInitialCommonText("navigation.sidebarTitle"));
@@ -186,6 +189,10 @@
     }
 
     finishLocaleProgress();
+  });
+
+  $effect(() => {
+    navigationTransitionKey = `${page.url.pathname}${page.url.search}`;
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
@@ -353,6 +360,37 @@
 
   onMount(() => {
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const documentWithViewTransition = (
+      document as Document & {
+        startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
+      }
+    );
+    const supportsViewTransition =
+      typeof documentWithViewTransition.startViewTransition === "function";
+    useFallbackRouteTransition = !supportsViewTransition || prefersReducedMotion;
+
+    const maybeDisposeNavigationTransition =
+      supportsViewTransition && !prefersReducedMotion
+        ? onNavigate((navigation) => {
+            if (!documentWithViewTransition.startViewTransition) {
+              return;
+            }
+
+            return new Promise<void>((resolve) => {
+              documentWithViewTransition.startViewTransition(async () => {
+                resolve();
+                await navigation.complete;
+              });
+            });
+          })
+        : undefined;
+
+    const disposeNavigationTransition =
+      typeof maybeDisposeNavigationTransition === "function"
+        ? maybeDisposeNavigationTransition
+        : () => {};
+
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     applyTheme(resolvePreferredThemeName(), resolvePreferredTheme());
     updateBackToTopVisibility();
@@ -374,6 +412,7 @@
         window.cancelAnimationFrame(backToTopAnimationFrame);
         backToTopAnimationFrame = 0;
       }
+      disposeNavigationTransition();
       document.removeEventListener("click", handleDocumentClick);
       window.removeEventListener("scroll", updateBackToTopVisibility);
       systemThemeMediaQuery?.removeEventListener("change", handleSystemThemeChange);
@@ -635,7 +674,21 @@
     </div>
   {/snippet}
 
-  {@render children()}
+  {#if useFallbackRouteTransition}
+    {#key navigationTransitionKey}
+      <div
+        class="page-switch-shell"
+        in:fade|local={{ duration: 150 }}
+        out:fade|local={{ duration: 110 }}
+      >
+        {@render children()}
+      </div>
+    {/key}
+  {:else}
+    <div class="page-switch-shell">
+      {@render children()}
+    </div>
+  {/if}
 </ViewerShell>
 
 {#if showBackToTop}
