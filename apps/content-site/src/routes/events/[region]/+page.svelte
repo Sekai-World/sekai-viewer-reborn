@@ -124,6 +124,8 @@
     unitFilter.length > 0 ||
     bannerUnitFilter.length > 0;
 
+  const hasNonDefaultSort = (): boolean => sortBy !== "id" || sortOrder !== "desc";
+
   const getFilterStorageKey = (): string => `content-site:event-list-filters:${data.region}`;
 
   const getInitialStateKey = (): string =>
@@ -146,6 +148,8 @@
     }
 
     const payload = {
+      sortBy,
+      sortOrder,
       name: nameFilter,
       eventType: eventTypeFilter,
       unit: unitFilter,
@@ -167,12 +171,16 @@
 
     try {
       const parsed = JSON.parse(raw) as {
+        sortBy?: unknown;
+        sortOrder?: unknown;
         name?: unknown;
         eventType?: unknown;
         unit?: unknown;
         bannerUnit?: unknown;
       };
 
+      const nextSortBy = parsed.sortBy === "startAt" ? "startAt" : "id";
+      const nextSortOrder = parsed.sortOrder === "asc" ? "asc" : "desc";
       const nextName = typeof parsed.name === "string" ? parsed.name.trim() : "";
       const nextEventType = Array.isArray(parsed.eventType)
         ? parsed.eventType.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
@@ -185,6 +193,8 @@
         : [];
 
       if (
+        nextSortBy === sortBy &&
+        nextSortOrder === sortOrder &&
         nextName.length === 0 &&
         nextEventType.length === 0 &&
         nextUnit.length === 0 &&
@@ -193,6 +203,8 @@
         return false;
       }
 
+      sortBy = nextSortBy;
+      sortOrder = nextSortOrder;
       nameFilter = nextName;
       eventTypeFilter = nextEventType;
       unitFilter = nextUnit;
@@ -235,7 +247,7 @@
 
     hasTriedRestorePersistedFilters = true;
 
-    if (hasAnyAppliedFilters()) {
+    if (hasAnyAppliedFilters() || hasNonDefaultSort()) {
       return;
     }
 
@@ -512,6 +524,7 @@
       sortOrder = sortOrder === "desc" ? "asc" : "desc";
     }
 
+    persistAppliedFilters();
     void reloadFirstPage();
   };
 
@@ -555,7 +568,7 @@
   };
 
   const getSortOrderIcon = (targetSortBy: EventListSortBy): string =>
-    sortBy === targetSortBy && sortOrder === "asc" ? "mdi:sort-ascending" : "mdi:sort-descending";
+    sortBy === targetSortBy && sortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down";
 
   const getSortButtonClass = (targetSortBy: EventListSortBy): string =>
     sortBy === targetSortBy ? "btn-primary" : "btn-outline border-primary text-primary";
@@ -680,7 +693,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getEventTypeOptions() as option (option.value)}
             <label
-              class={`btn btn-sm join-item ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline"}`}
+              class={`btn btn-sm join-item ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
               title={option.label}
             >
               <input
