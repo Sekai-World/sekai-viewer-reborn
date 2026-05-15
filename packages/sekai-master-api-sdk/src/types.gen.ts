@@ -925,11 +925,11 @@ export type GetEventsByRegionListData = {
         /**
          * Event unit (matched against eventStoryUnits.unit)
          */
-        unit?: string;
+        unit?: Array<string>;
         /**
          * Event type
          */
-        event_type?: string;
+        event_type?: Array<string>;
         /**
          * Sort field (id|startAt)
          */
