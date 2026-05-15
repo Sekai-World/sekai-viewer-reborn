@@ -153,8 +153,21 @@ export type SharedEventHonorBonusResponse = {
     releaseCondition?: SharedReleaseConditionResponse;
 };
 
+export type SharedEventListItemResponse = {
+    aggregateAt?: unknown;
+    assetbundleName?: unknown;
+    bannerGameCharacterId?: unknown;
+    closedAt?: unknown;
+    eventType?: unknown;
+    id?: unknown;
+    isCountLeaderCharacterPlay?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+    unit?: unknown;
+};
+
 export type SharedEventListResponse = {
-    items?: Array<SharedEventObjectResponse>;
+    items?: Array<SharedEventListItemResponse>;
     pagination?: SharedPaginationResponse;
 };
 
@@ -910,7 +923,7 @@ export type GetEventsByRegionListData = {
          */
         name?: string;
         /**
-         * Event unit
+         * Event unit (matched against eventStoryUnits.unit)
          */
         unit?: string;
         /**
