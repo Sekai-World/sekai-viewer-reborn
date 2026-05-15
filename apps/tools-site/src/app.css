@@ -3,3 +3,54 @@
    Keep daisyUI behind a local proxy module so CSS does not depend on node_modules layout. */
 @source not "../daisyui.mjs";
 @plugin "../daisyui.mjs";
+
+.page-switch-shell {
+   isolation: isolate;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+   @supports (view-transition-name: tools-site-main) {
+      .page-switch-shell {
+         view-transition-name: tools-site-main;
+         will-change: transform, opacity;
+      }
+
+      ::view-transition-old(tools-site-main),
+      ::view-transition-new(tools-site-main) {
+         animation-duration: 220ms;
+         animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      ::view-transition-old(tools-site-main) {
+         animation-name: tools-site-page-old;
+      }
+
+      ::view-transition-new(tools-site-main) {
+         animation-name: tools-site-page-new;
+      }
+
+      @keyframes tools-site-page-old {
+         from {
+            opacity: 1;
+            transform: translateY(0);
+         }
+
+         to {
+            opacity: 0;
+            transform: translateY(-8px);
+         }
+      }
+
+      @keyframes tools-site-page-new {
+         from {
+            opacity: 0;
+            transform: translateY(10px);
+         }
+
+         to {
+            opacity: 1;
+            transform: translateY(0);
+         }
+      }
+   }
+}
