@@ -189,6 +189,18 @@ Generation command:
 pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input <openapi-file-path-or-url> --output <output-dir>
 ```
 
+Local default OpenAPI URL:
+
+```bash
+http://localhost:8080/docs/openapi.json
+```
+
+Mise task for local refresh:
+
+```bash
+mise run update-sekai-master-api-sdk-local
+```
+
 Notes:
 
 - `--input` is required.

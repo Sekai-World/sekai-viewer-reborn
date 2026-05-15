@@ -16,9 +16,16 @@ From repository root:
 pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input <openapi-file-path-or-url> --output <output-dir>
 ```
 
+Local quick command:
+
+```bash
+mise run update-sekai-master-api-sdk-local
+```
+
 Examples:
 
 ```bash
+pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input http://localhost:8080/docs/openapi.json
 pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input F:\sekai-master-api\docs\swagger.json
 pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input F:\sekai-master-api\docs\swagger.json --output F:\sekai-viewer-reborn\packages\sekai-master-api-sdk\src
 ```
