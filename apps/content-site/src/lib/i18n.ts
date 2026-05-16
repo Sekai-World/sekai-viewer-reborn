@@ -12,6 +12,8 @@ import { normalizeUiLocale } from "$lib/region";
 const toRepoLocale = (uiLocale: SupportedUiLocale): string =>
   repoLocaleByUiLocale[uiLocale] ?? "en";
 
+const FALLBACK_UI_LOCALE: SupportedUiLocale = "en";
+
 export type I18nNamespace = "common" | "server";
 export type CommonTranslator = I18nTranslator;
 export type ContentSiteServerMessageKey =
@@ -38,11 +40,40 @@ const i18nRuntime = createRemoteI18nRuntime({
 
 export const isLocaleLoading = i18nRuntime.isLocaleLoading;
 
+const loadNamespaceMessagesWithFallback = async (
+  localeValue: string,
+  namespace: I18nNamespace,
+  fetcher?: I18nFetcher,
+  primaryMessages?: I18nMessages
+): Promise<I18nMessages> => {
+  const locale = normalizeUiLocale(localeValue);
+  const primaryRemoteLocale = toRepoLocale(locale);
+  const fallbackRemoteLocale = toRepoLocale(FALLBACK_UI_LOCALE);
+
+  const primaryMessagesPromise = primaryMessages
+    ? Promise.resolve(primaryMessages)
+    : i18nRuntime.loadMessages(locale, namespace, fetcher);
+
+  if (primaryRemoteLocale === fallbackRemoteLocale) {
+    return primaryMessagesPromise;
+  }
+
+  const [messages, fallbackMessages] = await Promise.all([
+    primaryMessagesPromise,
+    i18nRuntime.loadMessages(FALLBACK_UI_LOCALE, namespace, fetcher)
+  ]);
+
+  return {
+    ...fallbackMessages,
+    ...messages
+  };
+};
+
 export const loadI18nMessages = (
   localeValue: string,
   namespace: I18nNamespace,
   fetcher?: I18nFetcher
-): Promise<I18nMessages> => i18nRuntime.loadMessages(localeValue, namespace, fetcher);
+): Promise<I18nMessages> => loadNamespaceMessagesWithFallback(localeValue, namespace, fetcher);
 
 export const createCommonTranslator = (
   localeValue: string,
@@ -53,13 +84,18 @@ export const getServerI18nText = async (
   localeValue: string,
   key: ContentSiteServerMessageKey,
   fetcher?: I18nFetcher
-): Promise<string> => i18nRuntime.getServerText(localeValue, "server", key, fetcher);
+): Promise<string> => {
+  const messages = await loadNamespaceMessagesWithFallback(localeValue, "server", fetcher);
+  return messages[key] ?? key;
+};
 
 export const setI18nLocale = (
   localeValue: string,
   messages?: I18nMessages
 ): Promise<SupportedUiLocale> =>
-  i18nRuntime.setLocale(localeValue, messages).then((locale) => normalizeUiLocale(locale));
+  loadNamespaceMessagesWithFallback(localeValue, "common", undefined, messages)
+    .then((resolvedMessages) => i18nRuntime.setLocale(localeValue, resolvedMessages))
+    .then((locale) => normalizeUiLocale(locale));
 
 export const tCommon = (localeValue: string, key: string, fallback?: string): string =>
   i18nRuntime.translate(localeValue, key, fallback);
