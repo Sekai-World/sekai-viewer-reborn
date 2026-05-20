@@ -102,7 +102,7 @@
     <p class="opacity-70">{idLabel}{event.id}</p>
     {#if displayUnit}
       <span
-        class="{unitIconUrl ? 'unit-icon-frame h-8 w-8' : 'h-7 min-w-7 border-base-content/15 px-1'} inline-flex items-center justify-center rounded-full border text-[0.65rem] font-semibold leading-none"
+        class="{unitIconUrl ? 'unit-icon-frame h-8 w-8 border-base-content/15' : 'h-7 min-w-7 border-base-content/15 px-1'} inline-flex items-center justify-center rounded-full border text-[0.65rem] font-semibold leading-none"
       >
         {#if unitIconUrl}
           <img
