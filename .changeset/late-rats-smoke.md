@@ -4,4 +4,4 @@
 "@platform/sekai-master-api-sdk": patch
 ---
 
-Enhance event list filtering and locale-loading UX in content-site, reduce navbar blur, soften current event unit icon borders, and regenerate sekai-master-api-sdk for updated events list query capabilities.
+Enhance event list filtering and locale-loading UX in content-site, add local event filter debug logging, reduce navbar blur, soften current event unit icon borders, and regenerate sekai-master-api-sdk for updated events list query capabilities.

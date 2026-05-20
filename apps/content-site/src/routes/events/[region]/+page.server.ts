@@ -4,6 +4,7 @@ import { parseEventDetail } from "$lib/server/event-detail";
 import {
   createEventListRequestQuery,
   DEFAULT_EVENT_LIST_PAGE_SIZE,
+  logEventListFilterDebug,
   parseEventListPage,
   parseEventListQueryState
 } from "$lib/server/event-list";
@@ -25,13 +26,20 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseEventListQueryState(url.searchParams);
+  const requestQuery = createEventListRequestQuery(queryState, 1, DEFAULT_EVENT_LIST_PAGE_SIZE);
+
+  logEventListFilterDebug("initial request", {
+    region,
+    queryState,
+    requestQuery
+  });
 
   try {
     const [response, currentEventResponse] = await Promise.all([
       getEventsByRegionList({
         baseUrl,
         path: { region },
-        query: createEventListRequestQuery(queryState, 1, DEFAULT_EVENT_LIST_PAGE_SIZE)
+        query: requestQuery
       }),
       getEventsByRegionCurrent({
         baseUrl,
@@ -40,6 +48,12 @@ export const load: PageServerLoad = async ({ params, url }) => {
     ]);
 
     if (response.error) {
+      logEventListFilterDebug("initial error", {
+        region,
+        queryState,
+        error: response.error
+      });
+
       return {
         region,
         initialPage: createEmptyPage(),
@@ -49,9 +63,18 @@ export const load: PageServerLoad = async ({ params, url }) => {
       };
     }
 
+    const initialPage = parseEventListPage(response.data, 1, DEFAULT_EVENT_LIST_PAGE_SIZE);
+
+    logEventListFilterDebug("initial response", {
+      region,
+      queryState,
+      itemCount: initialPage.items.length,
+      pagination: initialPage.pagination
+    });
+
     return {
       region,
-      initialPage: parseEventListPage(response.data, 1, DEFAULT_EVENT_LIST_PAGE_SIZE),
+      initialPage,
       initialLoadFailed: false,
       initialQuery: queryState,
       currentEventId:
@@ -59,7 +82,13 @@ export const load: PageServerLoad = async ({ params, url }) => {
           ? (parseEventDetail(currentEventResponse.data)?.id ?? null)
           : null
     };
-  } catch {
+  } catch (error) {
+    logEventListFilterDebug("initial exception", {
+      region,
+      queryState,
+      error
+    });
+
     return {
       region,
       initialPage: createEmptyPage(),

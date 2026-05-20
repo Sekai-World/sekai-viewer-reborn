@@ -1,4 +1,5 @@
 import type { GetEventsByRegionListData } from "@platform/sekai-master-api-sdk";
+import { dev } from "$app/environment";
 
 export type EventListItem = {
   id: string;
@@ -108,6 +109,17 @@ export const createEventListRequestQuery = (
   // Keep bannerUnit in state for potential future API support; current OpenAPI does not define it.
 
   return query;
+};
+
+export const logEventListFilterDebug = (
+  label: string,
+  details: Record<string, unknown>
+): void => {
+  if (!dev) {
+    return;
+  }
+
+  console.debug("[content-site:event-filter]", label, details);
 };
 
 export const getDefaultEventListQueryState = (): EventListQueryState => ({
