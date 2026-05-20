@@ -4,6 +4,7 @@ import { normalizeRegion } from "$lib/region";
 import {
   createEventListRequestQuery,
   DEFAULT_EVENT_LIST_PAGE_SIZE,
+  logEventListFilterDebug,
   parseEventListPage,
   parseEventListQueryState
 } from "$lib/server/event-list";
@@ -24,20 +25,52 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const page = parsePageNumber(url.searchParams.get("page"));
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseEventListQueryState(url.searchParams);
+  const requestQuery = createEventListRequestQuery(queryState, page, DEFAULT_EVENT_LIST_PAGE_SIZE);
+
+  logEventListFilterDebug("data request", {
+    region,
+    page,
+    queryState,
+    requestQuery
+  });
 
   try {
     const response = await getEventsByRegionList({
       baseUrl,
       path: { region },
-      query: createEventListRequestQuery(queryState, page, DEFAULT_EVENT_LIST_PAGE_SIZE)
+      query: requestQuery
     });
 
     if (response.error) {
+      logEventListFilterDebug("data error", {
+        region,
+        page,
+        queryState,
+        error: response.error
+      });
+
       return json({ error: true }, { status: 500 });
     }
 
-    return json(parseEventListPage(response.data, page, DEFAULT_EVENT_LIST_PAGE_SIZE));
-  } catch {
+    const eventListPage = parseEventListPage(response.data, page, DEFAULT_EVENT_LIST_PAGE_SIZE);
+
+    logEventListFilterDebug("data response", {
+      region,
+      page,
+      queryState,
+      itemCount: eventListPage.items.length,
+      pagination: eventListPage.pagination
+    });
+
+    return json(eventListPage);
+  } catch (error) {
+    logEventListFilterDebug("data exception", {
+      region,
+      page,
+      queryState,
+      error
+    });
+
     return json({ error: true }, { status: 500 });
   }
 };
