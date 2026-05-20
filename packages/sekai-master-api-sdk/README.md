@@ -25,7 +25,7 @@ mise run update-sekai-master-api-sdk-local
 Examples:
 
 ```bash
-pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input http://localhost:8080/docs/openapi.json
+pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input http://localhost:18080/docs/openapi.json
 pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input F:\sekai-master-api\docs\swagger.json
 pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input F:\sekai-master-api\docs\swagger.json --output F:\sekai-viewer-reborn\packages\sekai-master-api-sdk\src
 ```
@@ -68,7 +68,7 @@ const cards = await getCardsByRegionList({
 import { postAdminLogin } from "@platform/sekai-master-api-sdk";
 
 const login = await postAdminLogin({
-  baseUrl: "http://localhost:8080/api/v1",
+  baseUrl: "http://localhost:18080/api/v1",
   body: {
     username: "admin",
     password: "your-password"

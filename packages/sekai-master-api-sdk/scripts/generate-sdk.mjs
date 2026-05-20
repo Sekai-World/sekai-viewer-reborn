@@ -38,13 +38,16 @@ async function patchGeneratedFile(filePath, transform) {
 
 async function normalizeGeneratedSdk(outputDir) {
   const normalizedOutputDir = resolve(outputDir);
+  const localApiBaseUrlPattern = /baseUrl: 'http:\/\/localhost:(?:8080|18080)\/api\/v1'/g;
+  const localApiBaseUrlTypePattern =
+    /baseUrl: 'http:\/\/localhost:(?:8080|18080)\/api\/v1' \| \(string & \{\}\);/g;
 
   await patchGeneratedFile(resolve(normalizedOutputDir, "client.gen.ts"), (source) =>
-    source.replace("baseUrl: 'http://localhost:8080/api/v1'", "baseUrl: '/api/v1'")
+    source.replace(localApiBaseUrlPattern, "baseUrl: '/api/v1'")
   );
 
   await patchGeneratedFile(resolve(normalizedOutputDir, "types.gen.ts"), (source) =>
-    source.replace("baseUrl: 'http://localhost:8080/api/v1' | (string & {});", "baseUrl: string;")
+    source.replace(localApiBaseUrlTypePattern, "baseUrl: string;")
   );
 
   await patchGeneratedFile(resolve(normalizedOutputDir, "index.ts"), (source) =>

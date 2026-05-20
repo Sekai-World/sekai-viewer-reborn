@@ -24,7 +24,7 @@
 
 ## Shared Package Contracts
 
-- `packages/sekai-master-api-sdk`: sekai-master-api OpenAPI SDK package (generated from an explicit OpenAPI input URL/path; local default is `http://localhost:8080/docs/openapi.json`).
+- `packages/sekai-master-api-sdk`: sekai-master-api OpenAPI SDK package (generated from an explicit OpenAPI input URL/path; local default is `http://localhost:18080/docs/openapi.json`).
 - `packages/auth-client`: Keycloak/OIDC URL helpers (`buildLoginUrl`, `buildLogoutUrl`).
 - `packages/i18n-runtime`: shared remote dictionary loader and `svelte-i18n` runtime wrapper.
 - `content-site` loads UI dictionaries from the external `sekai-i18n-reborn` CDN through `svelte-i18n`.

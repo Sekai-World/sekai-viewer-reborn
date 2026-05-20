@@ -192,7 +192,7 @@ pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input <openapi-fi
 Local default OpenAPI URL:
 
 ```bash
-http://localhost:8080/docs/openapi.json
+http://localhost:18080/docs/openapi.json
 ```
 
 Mise task for local refresh:
