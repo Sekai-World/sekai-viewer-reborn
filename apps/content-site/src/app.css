@@ -273,7 +273,7 @@
     );
     border-color: color-mix(in oklab, white 62%, transparent);
     /* brightness(1.05) simulates glass focusing light (lens effect) */
-    backdrop-filter: blur(20px) saturate(1.6) brightness(1.05);
+    backdrop-filter: blur(10px) saturate(1.6) brightness(1.05);
     /* 4-sided inset shadows to simulate glass edge refractions */
     box-shadow:
       inset 0 1.5px 0 color-mix(in oklab, white 90%, transparent),
@@ -292,7 +292,7 @@
     position: absolute;
     inset: 2px;
     border-radius: inherit;
-    backdrop-filter: blur(1px);
+    backdrop-filter: blur(0.5px);
     background: radial-gradient(
       ellipse 58% 80% at 32% -15%,
       color-mix(in oklab, white 32%, transparent),
@@ -328,7 +328,7 @@
       color-mix(in oklab, var(--color-base-100) 82%, transparent) 100%
     );
     border-color: color-mix(in oklab, white 14%, transparent);
-    backdrop-filter: blur(20px) saturate(1.4) brightness(0.98);
+    backdrop-filter: blur(10px) saturate(1.4) brightness(0.98);
     box-shadow:
       inset 0 1px 0 color-mix(in oklab, white 14%, transparent),
       inset 0 -0.5px 0 color-mix(in oklab, white 7%, transparent),
