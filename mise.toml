@@ -59,12 +59,14 @@ depends = ["pnpm-install"]
 
 [tasks.update-sekai-api-sdk]
 description = "Regenerate sekai-api SDK from an OpenAPI path or URL"
-run = "pnpm --filter @platform/sekai-api-sdk generate:sdk -- --input \"$1\""
+usage = 'arg "<input>" help="OpenAPI path or URL"'
+run = 'pnpm --filter @platform/sekai-api-sdk generate:sdk -- --input "${usage_input?}"'
 depends = ["pnpm-install"]
 
 [tasks.update-sekai-master-api-sdk]
 description = "Regenerate sekai-master-api SDK from an OpenAPI path or URL"
-run = "pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input \"$1\""
+usage = 'arg "<input>" help="OpenAPI path or URL"'
+run = 'pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input "${usage_input?}"'
 depends = ["pnpm-install"]
 
 [tasks.update-sekai-master-api-sdk-local]
