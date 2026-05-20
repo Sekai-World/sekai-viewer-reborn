@@ -69,5 +69,5 @@ depends = ["pnpm-install"]
 
 [tasks.update-sekai-master-api-sdk-local]
 description = "Regenerate sekai-master-api SDK from local OpenAPI URL"
-run = "pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input \"http://localhost:8080/docs/openapi.json\""
+run = "pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input \"http://localhost:18080/docs/openapi.json\""
 depends = ["pnpm-install"]
