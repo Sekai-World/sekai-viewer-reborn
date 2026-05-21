@@ -1,5 +1,13 @@
 # @apps/media-lab-site
 
+## 0.1.3
+
+### Patch Changes
+
+- 409b987: Add smooth page transition effects with View Transition API support and reduced-motion-safe fallback animations across tools-site, media-lab-site, and account-site.
+- Updated dependencies [3522a93]
+  - @platform/sekai-master-api-sdk@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
