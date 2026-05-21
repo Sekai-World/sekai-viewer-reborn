@@ -37,7 +37,7 @@ export type EventListQueryState = {
 export const DEFAULT_EVENT_LIST_PAGE_SIZE = 20;
 
 const DEFAULT_EVENT_LIST_QUERY_STATE: EventListQueryState = {
-  sortBy: "id",
+  sortBy: "startAt",
   sortOrder: "desc",
   name: "",
   eventType: [],
@@ -54,7 +54,7 @@ const getTrimmedSearchParam = (value: string | null): string => {
 };
 
 const parseSortBy = (value: string | null): EventListSortBy =>
-  value === "startAt" ? "startAt" : "id";
+  value === "id" ? "id" : "startAt";
 
 const parseSortOrder = (value: string | null): EventListSortOrder =>
   value === "asc" ? "asc" : "desc";

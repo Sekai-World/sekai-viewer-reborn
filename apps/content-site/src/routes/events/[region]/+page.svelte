@@ -28,7 +28,7 @@
   let isLoadMoreHintVisible = $state(false);
   let isTouchPointer = $state(false);
   let lastTouchY = $state<number | null>(null);
-  let sortBy = $state<EventListSortBy>("id");
+  let sortBy = $state<EventListSortBy>("startAt");
   let sortOrder = $state<EventListSortOrder>("desc");
   let nameFilter = $state("");
   let eventTypeFilter = $state<string[]>([]);
@@ -116,7 +116,7 @@
   const hasAnyAppliedFilters = (): boolean =>
     nameFilter.length > 0 || eventTypeFilter.length > 0 || unitFilter.length > 0;
 
-  const hasNonDefaultSort = (): boolean => sortBy !== "id" || sortOrder !== "desc";
+  const hasNonDefaultSort = (): boolean => sortBy !== "startAt" || sortOrder !== "desc";
 
   const hasExplicitQueryStateInUrl = (): boolean => {
     if (!browser) {
