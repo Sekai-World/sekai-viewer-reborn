@@ -7,11 +7,7 @@
 
   let { children }: { children: Snippet } = $props();
   let useFallbackRouteTransition = $state(true);
-  let navigationTransitionKey = $state(`${page.url.pathname}${page.url.search}`);
-
-  $effect(() => {
-    navigationTransitionKey = `${page.url.pathname}${page.url.search}`;
-  });
+  const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
 
   onMount(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

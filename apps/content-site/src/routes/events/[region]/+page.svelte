@@ -1,6 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { asset, resolve } from "$app/paths";
+  import { SvelteURLSearchParams } from "svelte/reactivity";
   import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
   import Icon from "@iconify/svelte";
@@ -376,8 +377,8 @@
     applyTranslations((key) => tCommon(locale, key));
   };
 
-  const createListSearchParams = (page: number): URLSearchParams => {
-    const searchParams = new URLSearchParams();
+  const createListSearchParams = (page: number): SvelteURLSearchParams => {
+    const searchParams = new SvelteURLSearchParams();
     searchParams.set("page", String(page));
     searchParams.set("sort_by", sortBy);
     searchParams.set("sort_order", sortOrder);
