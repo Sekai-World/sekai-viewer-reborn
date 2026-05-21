@@ -20,13 +20,24 @@
   } = $props();
 </script>
 
-<ImagePreviewTrigger
-  {src}
-  {alt}
-  {fallbackLabel}
-  ariaLabel={alt || fallbackLabel}
-  {buttonClass}
-  {imageClass}
-  disabled={!interactive}
-  {onclick}
-/>
+{#if interactive}
+  <ImagePreviewTrigger
+    {src}
+    {alt}
+    {fallbackLabel}
+    ariaLabel={alt || fallbackLabel}
+    {buttonClass}
+    {imageClass}
+    {onclick}
+  />
+{:else}
+  <div class={buttonClass}>
+    <img
+      {src}
+      {alt}
+      class={imageClass}
+      loading="lazy"
+      decoding="async"
+    />
+  </div>
+{/if}
