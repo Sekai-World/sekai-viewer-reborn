@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { EVENT_CARD_BODY_CLASS, EVENT_CARD_GLOW_CLASS } from "$lib/styles/event-card";
+  import { EVENT_CARD_BODY_CLASS, EVENT_CARD_SURFACE_CLASS } from "$lib/styles/event-card";
 
   let {
     id,
@@ -21,14 +21,23 @@
 
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 <a {id} {href} class={frameClass} {onclick}>
-  <div class={EVENT_CARD_GLOW_CLASS}></div>
-  {#if useBody}
-    <div class={EVENT_CARD_BODY_CLASS}>
-      {@render children?.()}
-    </div>
-  {:else}
-    <div class="relative z-10">
-      {@render children?.()}
-    </div>
-  {/if}
+  <div class={EVENT_CARD_SURFACE_CLASS}>
+    {#if useBody}
+      <div class={EVENT_CARD_BODY_CLASS}>
+        {@render children?.()}
+      </div>
+    {:else}
+      <div class="relative z-10">
+        {@render children?.()}
+      </div>
+    {/if}
+  </div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
 </a>
