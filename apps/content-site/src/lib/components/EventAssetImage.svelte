@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
   import { ImagePreviewTrigger } from "@platform/ui-shell";
 
   let {
@@ -55,6 +56,7 @@
         <div
           class="flex h-full min-h-0 w-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65"
         >
+          <Icon icon="mdi:file-remove-outline" class="h-10 w-10 opacity-75" aria-hidden="true" />
           {#if fallbackLabel}
             <span class="font-medium">{fallbackLabel}</span>
           {/if}
