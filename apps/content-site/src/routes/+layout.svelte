@@ -52,7 +52,7 @@
   let localeLoadingInterval: ReturnType<typeof setInterval> | null = null;
   let localeProgressResetTimeout: ReturnType<typeof setTimeout> | null = null;
   let useFallbackRouteTransition = $state(true);
-  let navigationTransitionKey = $state(`${page.url.pathname}${page.url.search}`);
+  const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
 
   let homeLabel = $state(getInitialCommonText("home"));
   let sidebarLabel = $state(getInitialCommonText("navigation.sidebarTitle"));
@@ -189,10 +189,6 @@
     }
 
     finishLocaleProgress();
-  });
-
-  $effect(() => {
-    navigationTransitionKey = `${page.url.pathname}${page.url.search}`;
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
