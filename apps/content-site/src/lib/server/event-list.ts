@@ -32,7 +32,6 @@ export type EventListQueryState = {
   name: string;
   eventType: string[];
   unit: string[];
-  bannerUnit: string[];
 };
 
 export const DEFAULT_EVENT_LIST_PAGE_SIZE = 20;
@@ -42,8 +41,7 @@ const DEFAULT_EVENT_LIST_QUERY_STATE: EventListQueryState = {
   sortOrder: "desc",
   name: "",
   eventType: [],
-  unit: [],
-  bannerUnit: []
+  unit: []
 };
 
 const getTrimmedSearchParam = (value: string | null): string => {
@@ -71,15 +69,7 @@ export const parseEventListQueryState = (searchParams: URLSearchParams): EventLi
   sortOrder: parseSortOrder(searchParams.get("sort_order")),
   name: getTrimmedSearchParam(searchParams.get("name")),
   eventType: parseMultiValueParam(searchParams, "event_type"),
-  unit: parseMultiValueParam(searchParams, "unit"),
-  bannerUnit: (() => {
-    const bannerUnit = parseMultiValueParam(searchParams, "banner_unit");
-    if (bannerUnit.length > 0) {
-      return bannerUnit;
-    }
-
-    return parseMultiValueParam(searchParams, "banner_game_character_unit");
-  })()
+  unit: parseMultiValueParam(searchParams, "unit")
 });
 
 export const createEventListRequestQuery = (
@@ -105,8 +95,6 @@ export const createEventListRequestQuery = (
   if (queryState.unit.length > 0) {
     query.unit = queryState.unit;
   }
-
-  // Keep bannerUnit in state for potential future API support; current OpenAPI does not define it.
 
   return query;
 };

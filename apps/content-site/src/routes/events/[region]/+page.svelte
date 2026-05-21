@@ -33,11 +33,9 @@
   let nameFilter = $state("");
   let eventTypeFilter = $state<string[]>([]);
   let unitFilter = $state<string[]>([]);
-  let bannerUnitFilter = $state<string[]>([]);
   let filterNameDraft = $state("");
   let filterEventTypeDraft = $state<string[]>([]);
   let filterUnitDraft = $state<string[]>([]);
-  let filterBannerUnitDraft = $state<string[]>([]);
   let filterDialog: HTMLDialogElement | null = $state(null);
   let hasTriedRestorePersistedFilters = $state(false);
   let initialStateAppliedKey = $state("");
@@ -62,8 +60,6 @@
   let eventListFilterNamePlaceholder = $state(getInitialCommonText("eventListFilterNamePlaceholder"));
   let eventListFilterEventTypeLabel = $state(getInitialCommonText("eventListFilterEventTypeLabel"));
   let eventListFilterUnitLabel = $state(getInitialCommonText("eventListFilterUnitLabel"));
-  let eventListFilterBannerUnitLabel = $state(getInitialCommonText("eventListFilterBannerUnitLabel"));
-  let eventListFilterAny = $state(getInitialCommonText("eventListFilterAny"));
   let eventListFilterReset = $state(getInitialCommonText("eventListFilterReset"));
   let eventListFilterApply = $state(getInitialCommonText("eventListFilterApply"));
   let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
@@ -115,14 +111,10 @@
     filterNameDraft = nameFilter;
     filterEventTypeDraft = [...eventTypeFilter];
     filterUnitDraft = [...unitFilter];
-    filterBannerUnitDraft = [...bannerUnitFilter];
   };
 
   const hasAnyAppliedFilters = (): boolean =>
-    nameFilter.length > 0 ||
-    eventTypeFilter.length > 0 ||
-    unitFilter.length > 0 ||
-    bannerUnitFilter.length > 0;
+    nameFilter.length > 0 || eventTypeFilter.length > 0 || unitFilter.length > 0;
 
   const hasNonDefaultSort = (): boolean => sortBy !== "id" || sortOrder !== "desc";
 
@@ -137,9 +129,7 @@
       "sort_order",
       "name",
       "event_type",
-      "unit",
-      "banner_unit",
-      "banner_game_character_unit"
+      "unit"
     ].some((key) => searchParams.has(key));
   };
 
@@ -153,7 +143,6 @@
       data.initialQuery.name,
       data.initialQuery.eventType,
       data.initialQuery.unit,
-      data.initialQuery.bannerUnit,
       data.initialPage.pagination.page,
       data.initialPage.items.length,
       data.currentEventId ?? ""
@@ -169,8 +158,7 @@
       sortOrder,
       name: nameFilter,
       eventType: eventTypeFilter,
-      unit: unitFilter,
-      bannerUnit: bannerUnitFilter
+      unit: unitFilter
     };
 
     window.localStorage.setItem(getFilterStorageKey(), JSON.stringify(payload));
@@ -193,7 +181,6 @@
         name?: unknown;
         eventType?: unknown;
         unit?: unknown;
-        bannerUnit?: unknown;
       };
 
       const nextSortBy = parsed.sortBy === "startAt" ? "startAt" : "id";
@@ -205,17 +192,13 @@
       const nextUnit = Array.isArray(parsed.unit)
         ? parsed.unit.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
         : [];
-      const nextBannerUnit = Array.isArray(parsed.bannerUnit)
-        ? parsed.bannerUnit.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
-        : [];
 
       if (
         nextSortBy === sortBy &&
         nextSortOrder === sortOrder &&
         nextName.length === 0 &&
         nextEventType.length === 0 &&
-        nextUnit.length === 0 &&
-        nextBannerUnit.length === 0
+        nextUnit.length === 0
       ) {
         return false;
       }
@@ -225,7 +208,6 @@
       nameFilter = nextName;
       eventTypeFilter = nextEventType;
       unitFilter = nextUnit;
-      bannerUnitFilter = nextBannerUnit;
       syncDraftFiltersFromCurrent();
       return true;
     } catch {
@@ -248,7 +230,6 @@
     nameFilter = data.initialQuery.name;
     eventTypeFilter = [...data.initialQuery.eventType];
     unitFilter = [...data.initialQuery.unit];
-    bannerUnitFilter = [...data.initialQuery.bannerUnit];
     syncDraftFiltersFromCurrent();
     errorMessage = data.initialLoadFailed ? getInitialCommonText("eventListLoadFailed") : null;
 
@@ -384,8 +365,6 @@
     eventListFilterNamePlaceholder = translate("eventListFilterNamePlaceholder");
     eventListFilterEventTypeLabel = translate("eventListFilterEventTypeLabel");
     eventListFilterUnitLabel = translate("eventListFilterUnitLabel");
-    eventListFilterBannerUnitLabel = translate("eventListFilterBannerUnitLabel");
-    eventListFilterAny = translate("eventListFilterAny");
     eventListFilterReset = translate("eventListFilterReset");
     eventListFilterApply = translate("eventListFilterApply");
     spoilerContentLabel = translate("spoilerContent");
@@ -413,10 +392,6 @@
 
     unitFilter.forEach((value) => {
       searchParams.append("unit", value);
-    });
-
-    bannerUnitFilter.forEach((value) => {
-      searchParams.append("banner_unit", value);
     });
 
     return searchParams;
@@ -555,28 +530,23 @@
     filterNameDraft = "";
     filterEventTypeDraft = [];
     filterUnitDraft = [];
-    filterBannerUnitDraft = [];
   };
 
   const applyFilters = (): void => {
     const nextName = filterNameDraft.trim();
     const nextEventType = filterEventTypeDraft;
     const nextUnit = filterUnitDraft;
-    const nextBannerUnit = filterBannerUnitDraft;
 
     const hasChanged =
       nextName !== nameFilter ||
       nextEventType.length !== eventTypeFilter.length ||
       nextEventType.some((v, i) => v !== eventTypeFilter[i]) ||
       nextUnit.length !== unitFilter.length ||
-      nextUnit.some((v, i) => v !== unitFilter[i]) ||
-      nextBannerUnit.length !== bannerUnitFilter.length ||
-      nextBannerUnit.some((v, i) => v !== bannerUnitFilter[i]);
+      nextUnit.some((v, i) => v !== unitFilter[i]);
 
     nameFilter = nextName;
     eventTypeFilter = nextEventType;
     unitFilter = nextUnit;
-    bannerUnitFilter = nextBannerUnit;
     persistAppliedFilters();
     filterDialog?.close();
 
@@ -750,44 +720,6 @@
                     filterUnitDraft = [...filterUnitDraft, option.value];
                   } else {
                     filterUnitDraft = filterUnitDraft.filter((v) => v !== option.value);
-                  }
-                }}
-                aria-label={option.label}
-              />
-              {#if option.value === "mixed"}
-                <Icon icon="mdi:puzzle" class="h-4 w-4" aria-hidden="true" />
-              {:else if getUnitIconUrl(option.value)}
-                <img
-                  src={getUnitIconUrl(option.value) ?? ""}
-                  alt=""
-                  aria-hidden="true"
-                  class="h-7 w-7 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-              {/if}
-            </label>
-          {/each}
-        </div>
-      </fieldset>
-
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{eventListFilterBannerUnitLabel}</legend>
-        <div class="join flex w-full flex-wrap">
-          {#each getUnitOptions() as option (`banner:${option.value}`)}
-            <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterBannerUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-              title={option.label}
-            >
-              <input
-                type="checkbox"
-                class="sr-only"
-                checked={filterBannerUnitDraft.includes(option.value)}
-                onchange={(e) => {
-                  if (e.currentTarget.checked) {
-                    filterBannerUnitDraft = [...filterBannerUnitDraft, option.value];
-                  } else {
-                    filterBannerUnitDraft = filterBannerUnitDraft.filter((v) => v !== option.value);
                   }
                 }}
                 aria-label={option.label}
