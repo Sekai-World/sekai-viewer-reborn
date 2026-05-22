@@ -642,6 +642,10 @@ export type GetCardsByRegionListData = {
          */
         page_size?: number;
         /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
          * Sort field
          */
         sort_by?: string;
@@ -930,6 +934,10 @@ export type GetEventsByRegionListData = {
          * Event type filter (comma-separated values)
          */
         event_type?: string;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
         /**
          * Sort field (id|startAt)
          */
@@ -1300,6 +1308,10 @@ export type GetGameCharacterUnitsByRegionListData = {
          */
         page_size?: number;
         /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
          * Sort field
          */
         sort_by?: string;
@@ -1438,6 +1450,10 @@ export type GetGameCharactersByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
         /**
          * Sort field
          */
@@ -1642,6 +1658,10 @@ export type GetMusicsByRegionListData = {
          */
         page_size?: number;
         /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
          * Sort field
          */
         sort_by?: string;
@@ -1780,6 +1800,10 @@ export type GetUnitProfilesByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
         /**
          * Sort field
          */
@@ -1990,6 +2014,10 @@ export type GetVirtualLivesByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
         /**
          * Sort field
          */
