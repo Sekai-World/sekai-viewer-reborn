@@ -114,11 +114,7 @@ export const getEventsByRegionCurrent = <ThrowOnError extends boolean = false>(o
 /**
  * List events by page
  */
-export const getEventsByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetEventsByRegionListData, ThrowOnError>) => (options.client ?? client).get<GetEventsByRegionListResponses, GetEventsByRegionListErrors, ThrowOnError>({
-    querySerializer: { parameters: { unit: { array: { explode: false } }, event_type: { array: { explode: false } } } },
-    url: '/events/{region}/list',
-    ...options
-});
+export const getEventsByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetEventsByRegionListData, ThrowOnError>) => (options.client ?? client).get<GetEventsByRegionListResponses, GetEventsByRegionListErrors, ThrowOnError>({ url: '/events/{region}/list', ...options });
 
 /**
  * Get event basic info by id

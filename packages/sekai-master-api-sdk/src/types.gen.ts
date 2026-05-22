@@ -923,13 +923,13 @@ export type GetEventsByRegionListData = {
          */
         name?: string;
         /**
-         * Event unit (matched against eventStoryUnits.unit)
+         * Event unit filter (comma-separated values)
          */
-        unit?: Array<string>;
+        unit?: string;
         /**
-         * Event type
+         * Event type filter (comma-separated values)
          */
-        event_type?: Array<string>;
+        event_type?: string;
         /**
          * Sort field (id|startAt)
          */
