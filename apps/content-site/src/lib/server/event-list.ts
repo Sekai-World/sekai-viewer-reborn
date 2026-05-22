@@ -89,11 +89,11 @@ export const createEventListRequestQuery = (
   }
 
   if (queryState.eventType.length > 0) {
-    query.event_type = queryState.eventType;
+    query.event_type = queryState.eventType.join(",");
   }
 
   if (queryState.unit.length > 0) {
-    query.unit = queryState.unit;
+    query.unit = queryState.unit.join(",");
   }
 
   return query;
