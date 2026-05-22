@@ -369,12 +369,8 @@
 
     spoilerContentAppliedState = nextShowSpoilerContent;
 
-    if (!nextShowSpoilerContent) {
-      return;
-    }
-
     const hasSpoilerQueryParam = new URL(window.location.href).searchParams.get("spoiler") === "true";
-    if (!hasSpoilerQueryParam) {
+    if (hasSpoilerQueryParam !== nextShowSpoilerContent) {
       void reloadFirstPage();
     }
   });
@@ -518,16 +514,6 @@
       isLoading = false;
     }
   };
-
-  $effect(() => {
-    if (!browser) {
-      return;
-    }
-
-    if (contentDisplaySettings.showSpoilerContent) {
-      void reloadFirstPage();
-    }
-  });
 
   const reloadFirstPage = async (): Promise<void> => {
     if (isLoading) {
