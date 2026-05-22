@@ -25,11 +25,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const page = parsePageNumber(url.searchParams.get("page"));
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseEventListQueryState(url.searchParams);
+  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
   const requestQuery = createEventListRequestQuery(
     queryState,
     page,
     DEFAULT_EVENT_LIST_PAGE_SIZE,
-    true
+    includeSpoilerContent
   );
 
   logEventListFilterDebug("data request", {

@@ -26,11 +26,12 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseEventListQueryState(url.searchParams);
+  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
   const requestQuery = createEventListRequestQuery(
     queryState,
     1,
     DEFAULT_EVENT_LIST_PAGE_SIZE,
-    true
+    includeSpoilerContent
   );
 
   logEventListFilterDebug("initial request", {

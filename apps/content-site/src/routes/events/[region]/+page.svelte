@@ -42,6 +42,7 @@
   let filterDialog: HTMLDialogElement | null = $state(null);
   let hasTriedRestorePersistedFilters = $state(false);
   let initialStateAppliedKey = $state("");
+  let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialCommonText("home"));
   let idLabel = $state(getInitialCommonText("idLabel"));
   let closeLabel = $state(getInitialCommonText("closeLabel"));
@@ -141,13 +142,9 @@
     }
 
     const searchParams = new URLSearchParams(window.location.search);
-    return [
-      "sort_by",
-      "sort_order",
-      "name",
-      "event_type",
-      "unit"
-    ].some((key) => searchParams.has(key));
+    return ["sort_by", "sort_order", "name", "event_type", "unit", "spoiler"].some((key) =>
+      searchParams.has(key)
+    );
   };
 
   const getFilterStorageKey = (): string => `content-site:event-list-filters:${data.region}`;
@@ -360,6 +357,28 @@
     };
   });
 
+  $effect(() => {
+    if (!browser) {
+      return;
+    }
+
+    const nextShowSpoilerContent = contentDisplaySettings.showSpoilerContent;
+    if (spoilerContentAppliedState === nextShowSpoilerContent) {
+      return;
+    }
+
+    spoilerContentAppliedState = nextShowSpoilerContent;
+
+    if (!nextShowSpoilerContent) {
+      return;
+    }
+
+    const hasSpoilerQueryParam = new URL(window.location.href).searchParams.get("spoiler") === "true";
+    if (!hasSpoilerQueryParam) {
+      void reloadFirstPage();
+    }
+  });
+
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
     idLabel = translate("idLabel");
@@ -398,6 +417,7 @@
     searchParams.set("page", String(page));
     searchParams.set("sort_by", sortBy);
     searchParams.set("sort_order", sortOrder);
+    searchParams.set("spoiler", String(contentDisplaySettings.showSpoilerContent));
 
     if (nameFilter) {
       searchParams.set("name", nameFilter);
@@ -498,6 +518,16 @@
       isLoading = false;
     }
   };
+
+  $effect(() => {
+    if (!browser) {
+      return;
+    }
+
+    if (contentDisplaySettings.showSpoilerContent) {
+      void reloadFirstPage();
+    }
+  });
 
   const reloadFirstPage = async (): Promise<void> => {
     if (isLoading) {

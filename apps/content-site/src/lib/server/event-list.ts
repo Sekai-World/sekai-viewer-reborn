@@ -76,7 +76,7 @@ export const createEventListRequestQuery = (
   queryState: EventListQueryState,
   page: number,
   pageSize: number,
-  includeSpoilerContent = true
+  includeSpoilerContent: boolean
 ): GetEventsByRegionListData["query"] => {
   const query: NonNullable<GetEventsByRegionListData["query"]> = {
     page,
