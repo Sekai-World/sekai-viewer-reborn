@@ -25,7 +25,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const page = parsePageNumber(url.searchParams.get("page"));
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseEventListQueryState(url.searchParams);
-  const requestQuery = createEventListRequestQuery(queryState, page, DEFAULT_EVENT_LIST_PAGE_SIZE);
+  const requestQuery = createEventListRequestQuery(
+    queryState,
+    page,
+    DEFAULT_EVENT_LIST_PAGE_SIZE,
+    true
+  );
 
   logEventListFilterDebug("data request", {
     region,

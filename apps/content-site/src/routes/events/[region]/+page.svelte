@@ -2,6 +2,8 @@
   import { browser } from "$app/environment";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { toTimestampMs } from "$lib/date-time";
+  import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
   import Icon from "@iconify/svelte";
@@ -65,6 +67,7 @@
   let eventListFilterApply = $state(getInitialCommonText("eventListFilterApply"));
   let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
   let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
+  const contentDisplaySettings = getContentDisplaySettings();
 
   const unitFilterValues = [
     "idol",
@@ -107,6 +110,19 @@
 
     return asset(`/icons/icon_${value}.png`);
   };
+
+  const isSpoilerEvent = (item: EventListItem): boolean => {
+    const startAtMs = toTimestampMs(item.startAt);
+    return startAtMs !== null && startAtMs > Date.now();
+  };
+
+  const visibleItems = $derived.by(() => {
+    if (contentDisplaySettings.showSpoilerContent) {
+      return items;
+    }
+
+    return items.filter((item) => !isSpoilerEvent(item));
+  });
 
   const syncDraftFiltersFromCurrent = (): void => {
     filterNameDraft = nameFilter;
@@ -618,7 +634,7 @@
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {#each items as item (item.id)}
+      {#each visibleItems as item (item.id)}
         <EventListCard
           region={data.region}
           {item}
@@ -652,11 +668,11 @@
           </span>
         {/if}
       </div>
-    {:else if items.length > 0}
+    {:else if visibleItems.length > 0}
       <div class="py-2 text-center text-sm opacity-60">{eventListEnd}</div>
     {/if}
 
-    {#if items.length === 0 && !errorMessage}
+    {#if visibleItems.length === 0 && !errorMessage}
       <div class="py-12 text-center text-sm opacity-70">{eventListEmpty}</div>
     {/if}
   {/if}

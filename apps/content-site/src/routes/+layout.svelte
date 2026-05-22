@@ -4,6 +4,10 @@
   import { invalidateAll, onNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
+  import {
+    setContentDisplaySettings,
+    type ContentDisplaySettingsState
+  } from "$lib/content-display-settings";
   import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n-config";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
@@ -33,6 +37,7 @@
 
   const THEME_STORAGE_KEY = "content_site_theme_mode";
   const THEME_NAME_STORAGE_KEY = "content_site_theme_name";
+  const CONTENT_DISPLAY_STORAGE_KEY = "content_site_content_display_settings";
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
 
@@ -46,6 +51,7 @@
   let isLocaleMenuOpen = $state(false);
   let systemThemeMediaQuery: MediaQueryList | null = null;
   let mobileSettingsMenu: HTMLDetailsElement | null = null;
+  let desktopSettingsMenu: HTMLDetailsElement | null = null;
   let desktopThemeMenu: HTMLDetailsElement | null = null;
   let localeMenu: HTMLDetailsElement | null = null;
   let localeLoadingProgress = $state(0);
@@ -66,6 +72,11 @@
   let themePaletteLabel = $state(getInitialCommonText("settings.theme"));
   let interfaceLanguageLabel = $state(getInitialCommonText("settings.interfaceLanguage"));
   let currentLanguageLabel = $state(getInitialCommonText("settings.currentLanguage"));
+  let contentDisplayLabel = $state(getInitialCommonText("settings.contentDisplay"));
+  let showSpoilerContentLabel = $state(getInitialCommonText("settings.showSpoilerContent"));
+  let mosaickedSpoilerContentLabel = $state(
+    getInitialCommonText("settings.mosaickedSpoilerContent")
+  );
   let backToTopLabel = $state(getInitialCommonText("backToTopLabel"));
   let loadingLanguagePackLabel = $state(getInitialCommonText("loadingLanguagePack"));
   let switchThemeAriaLabel = $state(getInitialCommonText("aria.switchTheme"));
@@ -77,6 +88,12 @@
   });
   let showBackToTop = $state(false);
   let backToTopAnimationFrame = 0;
+  let contentDisplaySettings = $state<ContentDisplaySettingsState>({
+    showSpoilerContent: false,
+    mosaickedSpoilerContent: true
+  });
+
+  setContentDisplaySettings(contentDisplaySettings);
 
   const sidebarRegion = $derived.by<ReturnType<typeof normalizeRegion>>(() => {
     const [first, second] = page.url.pathname.split("/").filter(Boolean);
@@ -204,6 +221,9 @@
     themePaletteLabel = translate("settings.theme");
     interfaceLanguageLabel = translate("settings.interfaceLanguage");
     currentLanguageLabel = translate("settings.currentLanguage");
+    contentDisplayLabel = translate("settings.contentDisplay");
+    showSpoilerContentLabel = translate("settings.showSpoilerContent");
+    mosaickedSpoilerContentLabel = translate("settings.mosaickedSpoilerContent");
     backToTopLabel = translate("backToTopLabel");
     loadingLanguagePackLabel = translate("loadingLanguagePack");
     switchThemeAriaLabel = translate("aria.switchTheme");
@@ -267,6 +287,39 @@
     return "default";
   };
 
+  const resolvePreferredContentDisplaySettings = (): ContentDisplaySettingsState => {
+    const defaultSettings: ContentDisplaySettingsState = {
+      showSpoilerContent: false,
+      mosaickedSpoilerContent: true
+    };
+    const storedSettings = localStorage.getItem(CONTENT_DISPLAY_STORAGE_KEY);
+
+    if (!storedSettings) {
+      return defaultSettings;
+    }
+
+    try {
+      const parsed = JSON.parse(storedSettings) as Partial<ContentDisplaySettingsState>;
+      return {
+        showSpoilerContent: parsed.showSpoilerContent === true,
+        mosaickedSpoilerContent:
+          parsed.mosaickedSpoilerContent === false ? false : defaultSettings.mosaickedSpoilerContent
+      };
+    } catch {
+      return defaultSettings;
+    }
+  };
+
+  const persistContentDisplaySettings = (): void => {
+    localStorage.setItem(
+      CONTENT_DISPLAY_STORAGE_KEY,
+      JSON.stringify({
+        showSpoilerContent: contentDisplaySettings.showSpoilerContent,
+        mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent
+      })
+    );
+  };
+
   const getThemeModeIcon = (themeModeValue: ThemeMode): string => {
     if (themeModeValue === "auto") {
       return "mdi:brightness-auto";
@@ -280,6 +333,18 @@
       themeMode === "auto" ? `${themeModeLabel} (${resolvedThemeLabel})` : themeModeLabel;
 
     return `${themePaletteLabel}: ${getThemeNameLabel(themeName)} / ${modeLabel}`;
+  };
+
+  const handleShowSpoilerContentChange = (event: Event): void => {
+    contentDisplaySettings.showSpoilerContent = (event.currentTarget as HTMLInputElement).checked;
+    persistContentDisplaySettings();
+  };
+
+  const handleMosaickedSpoilerContentChange = (event: Event): void => {
+    contentDisplaySettings.mosaickedSpoilerContent = (
+      event.currentTarget as HTMLInputElement
+    ).checked;
+    persistContentDisplaySettings();
   };
 
   const getThemeNameLabel = (themeNameValue: ThemeName): string => {
@@ -389,12 +454,18 @@
 
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     applyTheme(resolvePreferredThemeName(), resolvePreferredTheme());
+    const preferredContentDisplaySettings = resolvePreferredContentDisplaySettings();
+    contentDisplaySettings.showSpoilerContent = preferredContentDisplaySettings.showSpoilerContent;
+    contentDisplaySettings.mosaickedSpoilerContent =
+      preferredContentDisplaySettings.mosaickedSpoilerContent;
+    persistContentDisplaySettings();
     updateBackToTopVisibility();
     window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
     const handleDocumentClick = (event: MouseEvent): void => {
       const target = event.target;
       closeDropdownIfClickedOutside(mobileSettingsMenu, target);
+      closeDropdownIfClickedOutside(desktopSettingsMenu, target);
       closeDropdownIfClickedOutside(desktopThemeMenu, target);
       closeDropdownIfClickedOutside(localeMenu, target);
       isLocaleMenuOpen = localeMenu?.open ?? false;
@@ -445,6 +516,44 @@
   </div>
 {/if}
 
+{#snippet contentDisplaySection()}
+  <div class="flex flex-col gap-2">
+    <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
+      {contentDisplayLabel}
+    </span>
+    <label
+      class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
+    >
+      <span class="min-w-0 whitespace-normal break-words text-sm font-medium leading-snug"
+        >{showSpoilerContentLabel}</span
+      >
+      <input
+        type="checkbox"
+        class="toggle toggle-primary shrink-0"
+        checked={contentDisplaySettings.showSpoilerContent}
+        onchange={handleShowSpoilerContentChange}
+        aria-label={showSpoilerContentLabel}
+      />
+    </label>
+    {#if contentDisplaySettings.showSpoilerContent}
+      <label
+        class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
+      >
+        <span class="min-w-0 whitespace-normal break-words text-sm font-medium leading-snug"
+          >{mosaickedSpoilerContentLabel}</span
+        >
+        <input
+          type="checkbox"
+          class="toggle toggle-primary shrink-0"
+          checked={contentDisplaySettings.mosaickedSpoilerContent}
+          onchange={handleMosaickedSpoilerContentChange}
+          aria-label={mosaickedSpoilerContentLabel}
+        />
+      </label>
+    {/if}
+  </div>
+{/snippet}
+
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
@@ -453,6 +562,137 @@
   showTitle={showPageTitle}
 >
   {#snippet navActions()}
+    <div class="hidden items-center gap-2 sm:flex">
+      <details class="dropdown dropdown-end" bind:this={desktopSettingsMenu}>
+        <summary
+          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
+          aria-label={settingsLabel}
+          title={settingsLabel}
+        >
+          <Icon icon="mdi:cog-outline" class="h-4 w-4" />
+        </summary>
+        <div
+          class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-3 shadow-xl backdrop-blur-sm"
+        >
+          {@render contentDisplaySection()}
+        </div>
+      </details>
+
+      <details class="dropdown dropdown-end" bind:this={desktopThemeMenu}>
+        <summary
+          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
+          aria-label={switchThemeAriaLabel}
+          title={getThemeButtonTitle()}
+        >
+          <Icon icon="mdi:palette-outline" class="h-4 w-4" />
+        </summary>
+        <ul
+          class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm"
+        >
+          <li class="menu-title px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
+            {themePaletteLabel}
+          </li>
+          {#each themeNameOptions as themeNameOption (themeNameOption)}
+            <li>
+              <button
+                type="button"
+                class={themeName === themeNameOption ? "menu-active font-semibold" : ""}
+                onclick={() => {
+                  applyTheme(themeNameOption, themeMode);
+                }}
+              >
+                <span>{getThemeNameLabel(themeNameOption)}</span>
+                {#if themeName === themeNameOption}
+                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
+                {/if}
+              </button>
+            </li>
+          {/each}
+
+          <li
+            class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60"
+          >
+            {themeControlLabel}
+          </li>
+          {#each ["auto", "light", "dark"] as themeOption (themeOption)}
+            <li>
+              <button
+                type="button"
+                class={themeMode === themeOption ? "menu-active font-semibold" : ""}
+                onclick={() => {
+                  applyTheme(themeName, themeOption as ThemeMode);
+                }}
+              >
+                <Icon
+                  icon={getThemeModeIcon(themeOption as ThemeMode)}
+                  class="h-4 w-4 opacity-80"
+                />
+                <span>{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
+                {#if themeMode === themeOption}
+                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
+                {/if}
+              </button>
+            </li>
+          {/each}
+        </ul>
+      </details>
+
+      <details
+        class="dropdown dropdown-end"
+        bind:this={localeMenu}
+        bind:open={isLocaleMenuOpen}
+        ontoggle={handleLocaleMenuToggle}
+      >
+        <summary
+          class={`btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 ${$isLocaleLoading ? "pointer-events-none opacity-75" : ""}`}
+          aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
+          title={`${interfaceLanguageLabel}: ${uiLocaleDisplayLabel}`}
+          aria-busy={$isLocaleLoading}
+          onclick={(event) => {
+            if ($isLocaleLoading) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <Icon icon="mdi:translate" class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          {#if $isLocaleLoading}
+            <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
+          {/if}
+        </summary>
+        <div
+          class="dropdown-content z-120 mt-3 w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm"
+        >
+          <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
+            <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
+              {currentLanguageLabel}
+            </p>
+            <p class="px-1 pt-1 text-sm font-semibold leading-snug">{uiLocaleDisplayLabel}</p>
+          </div>
+
+          <div class="my-2 h-px bg-base-content/12"></div>
+
+          <ul class="menu p-0">
+            {#each uiLocaleOptions as localeOption (localeOption.code)}
+              {#if localeOption.code !== uiLocale}
+                <li>
+                  <button
+                    type="button"
+                    disabled={$isLocaleLoading}
+                    onclick={async () => {
+                      await setUiLocale(localeOption.code);
+                      isLocaleMenuOpen = false;
+                    }}
+                  >
+                    <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                  </button>
+                </li>
+              {/if}
+            {/each}
+          </ul>
+        </div>
+      </details>
+    </div>
+
     <div class="sm:hidden">
       <details class="dropdown dropdown-end" bind:this={mobileSettingsMenu}>
         <summary
@@ -463,8 +703,12 @@
           <Icon icon="mdi:tune-variant" class="h-4 w-4" />
         </summary>
         <div
-          class="dropdown-content z-130 mt-3 w-52 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm"
+          class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm"
         >
+          {@render contentDisplaySection()}
+
+          <div class="my-2 h-px bg-base-content/12"></div>
+
           <div class="flex flex-col gap-1">
             <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
               {themePaletteLabel}
@@ -549,122 +793,6 @@
               <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
             {/if}
           </div>
-        </div>
-      </details>
-    </div>
-
-    <div class="hidden items-center gap-2 sm:flex">
-      <details class="dropdown dropdown-end" bind:this={desktopThemeMenu}>
-        <summary
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
-          aria-label={switchThemeAriaLabel}
-          title={getThemeButtonTitle()}
-        >
-          <Icon icon="mdi:palette-outline" class="h-4 w-4" />
-        </summary>
-        <ul
-          class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm"
-        >
-          <li class="menu-title px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
-            {themePaletteLabel}
-          </li>
-          {#each themeNameOptions as themeNameOption (themeNameOption)}
-            <li>
-              <button
-                type="button"
-                class={themeName === themeNameOption ? "menu-active font-semibold" : ""}
-                onclick={() => {
-                  applyTheme(themeNameOption, themeMode);
-                }}
-              >
-                <span>{getThemeNameLabel(themeNameOption)}</span>
-                {#if themeName === themeNameOption}
-                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
-                {/if}
-              </button>
-            </li>
-          {/each}
-
-          <li
-            class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60"
-          >
-            {themeControlLabel}
-          </li>
-          {#each ["auto", "light", "dark"] as themeOption (themeOption)}
-            <li>
-              <button
-                type="button"
-                class={themeMode === themeOption ? "menu-active font-semibold" : ""}
-                onclick={() => {
-                  applyTheme(themeName, themeOption as ThemeMode);
-                }}
-              >
-                <Icon
-                  icon={getThemeModeIcon(themeOption as ThemeMode)}
-                  class="h-4 w-4 opacity-80"
-                />
-                <span>{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
-                {#if themeMode === themeOption}
-                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
-                {/if}
-              </button>
-            </li>
-          {/each}
-        </ul>
-      </details>
-
-      <details
-        class="dropdown dropdown-end"
-        bind:this={localeMenu}
-        bind:open={isLocaleMenuOpen}
-        ontoggle={handleLocaleMenuToggle}
-      >
-        <summary
-          class={`btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 ${$isLocaleLoading ? "pointer-events-none opacity-75" : ""}`}
-          aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
-          title={`${interfaceLanguageLabel}: ${uiLocaleDisplayLabel}`}
-          aria-busy={$isLocaleLoading}
-          onclick={(event) => {
-            if ($isLocaleLoading) {
-              event.preventDefault();
-            }
-          }}
-        >
-          <Icon icon="mdi:translate" class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          {#if $isLocaleLoading}
-            <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
-          {/if}
-        </summary>
-        <div
-          class="dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm"
-        >
-          <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
-            <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
-              {currentLanguageLabel}
-            </p>
-            <p class="px-1 pt-1 text-sm font-semibold">{uiLocaleDisplayLabel}</p>
-          </div>
-
-          <div class="my-2 h-px bg-base-content/12"></div>
-
-          <ul class="menu p-0">
-            {#each uiLocaleOptions as localeOption (localeOption.code)}
-              {#if localeOption.code !== uiLocale}
-                <li>
-                  <button
-                    type="button"
-                    disabled={$isLocaleLoading}
-                    onclick={async () => {
-                      await setUiLocale(localeOption.code);
-                      isLocaleMenuOpen = false;
-                    }}
-                  >
-                    <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
-                  </button>
-                </li>
-              {/if}
-            {/each}
-          </ul>
         </div>
       </details>
     </div>

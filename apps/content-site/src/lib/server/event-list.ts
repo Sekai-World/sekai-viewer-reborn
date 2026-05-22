@@ -75,11 +75,13 @@ export const parseEventListQueryState = (searchParams: URLSearchParams): EventLi
 export const createEventListRequestQuery = (
   queryState: EventListQueryState,
   page: number,
-  pageSize: number
+  pageSize: number,
+  includeSpoilerContent = true
 ): GetEventsByRegionListData["query"] => {
   const query: NonNullable<GetEventsByRegionListData["query"]> = {
     page,
     page_size: pageSize,
+    spoiler: includeSpoilerContent,
     sort_by: queryState.sortBy,
     sort_order: queryState.sortOrder
   };

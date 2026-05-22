@@ -1,9 +1,9 @@
 const EVENT_CARD_BASE_SHADOW_CLASS =
   "shadow-[0_5px_14px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.26),0_2px_8px_rgba(0,0,0,0.18)]";
 
-export const CURRENT_EVENT_CARD_FRAME_CLASS = "hover-3d relative w-full";
+export const CURRENT_EVENT_CARD_FRAME_CLASS = "hover-3d relative isolate w-full";
 
-export const EVENT_LIST_CARD_FRAME_CLASS = "hover-3d relative w-full";
+export const EVENT_LIST_CARD_FRAME_CLASS = "hover-3d relative isolate w-full";
 
 export const EVENT_CARD_SURFACE_CLASS = `card content-card-shell overflow-hidden ${EVENT_CARD_BASE_SHADOW_CLASS}`;
 

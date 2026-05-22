@@ -202,6 +202,10 @@
     background-color: color-mix(in oklab, white 90%, transparent);
   }
 
+  .event-list-spoiler-mosaic-overlay {
+    background-color: color-mix(in oklab, white 42%, transparent);
+  }
+
   :root.dark[data-theme="default"] .content-card-shell {
     border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
   }
@@ -261,6 +265,10 @@
 
   :root.dark[data-theme="default"] .event-list-spoiler-overlay {
     background-color: color-mix(in oklab, var(--color-base-100) 90%, transparent);
+  }
+
+  :root.dark[data-theme="default"] .event-list-spoiler-mosaic-overlay {
+    background-color: color-mix(in oklab, var(--color-base-100) 42%, transparent);
   }
 
   .liquid-glass-nav {

@@ -26,7 +26,12 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseEventListQueryState(url.searchParams);
-  const requestQuery = createEventListRequestQuery(queryState, 1, DEFAULT_EVENT_LIST_PAGE_SIZE);
+  const requestQuery = createEventListRequestQuery(
+    queryState,
+    1,
+    DEFAULT_EVENT_LIST_PAGE_SIZE,
+    true
+  );
 
   logEventListFilterDebug("initial request", {
     region,
