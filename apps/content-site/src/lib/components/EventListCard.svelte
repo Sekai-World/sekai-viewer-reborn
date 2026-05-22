@@ -113,44 +113,54 @@
   overlay={isSpoilerContentMosaicked() ? mosaicOverlay : undefined}
   onclick={handleCardClick}
 >
-  <div class={`${EVENT_LIST_CARD_MEDIA_CLASS} ${getUnitIconClass(item.unit)}`}>
-    {#if item.assetBundleName}
-      <EventAssetImage
-        src={getEventBannerAssetURL(item.assetBundleName, region)}
-        alt={`${item.title} ${bannerAltSuffix}`}
-        imageClass={EVENT_LIST_CARD_IMAGE_CLASS}
-        buttonClass="block h-full w-full overflow-hidden"
-      />
-    {:else}
-      <div class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70">
-        {item.title}
-      </div>
-    {/if}
-
-    <div class="absolute left-3 top-3">
-      <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
-        {idLabel}{item.id}
-      </span>
+  {#if isSpoilerContentMosaicked()}
+    <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
+      <div class="h-full w-full rounded-xl bg-base-200/60"></div>
     </div>
 
-    <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-      {#if getEventTypeDisplay(item.eventType, uiLocale)}
+    <div class="px-4 pb-4 pt-3">
+      <div class="h-10 rounded-lg bg-base-200/60"></div>
+    </div>
+  {:else}
+    <div class={`${EVENT_LIST_CARD_MEDIA_CLASS} ${getUnitIconClass(item.unit)}`}>
+      {#if item.assetBundleName}
+        <EventAssetImage
+          src={getEventBannerAssetURL(item.assetBundleName, region)}
+          alt={`${item.title} ${bannerAltSuffix}`}
+          imageClass={EVENT_LIST_CARD_IMAGE_CLASS}
+          buttonClass="block h-full w-full overflow-hidden"
+        />
+      {:else}
+        <div class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70">
+          {item.title}
+        </div>
+      {/if}
+
+      <div class="absolute left-3 top-3">
         <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
-          {getEventTypeDisplay(item.eventType, uiLocale)}
+          {idLabel}{item.id}
         </span>
+      </div>
+
+      <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
+        {#if getEventTypeDisplay(item.eventType, uiLocale)}
+          <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
+            {getEventTypeDisplay(item.eventType, uiLocale)}
+          </span>
+        {/if}
+      </div>
+
+      {#if isCurrentEvent()}
+        <div class="absolute bottom-3 right-3">
+          <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
+            {currentEventLabel}
+          </span>
+        </div>
       {/if}
     </div>
 
-    {#if isCurrentEvent()}
-      <div class="absolute bottom-3 right-3">
-        <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
-          {currentEventLabel}
-        </span>
-      </div>
-    {/if}
-  </div>
-
-  <div class="px-4 pb-4 pt-3">
-    <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
-  </div>
+    <div class="px-4 pb-4 pt-3">
+      <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
+    </div>
+  {/if}
 </EventCardFrame>
