@@ -45,6 +45,8 @@
 
   const isCurrentEvent = (): boolean => currentEventId === item.id;
   const contentDisplaySettings = getContentDisplaySettings();
+  let spoilerRevealed = $state(false);
+  let lastSpoilerIdentity = $state("");
 
   const unitIconClassByUnit: Record<string, string> = {
     idol: "event-list-unit-idol",
@@ -69,7 +71,26 @@
   };
 
   const isSpoilerContentMosaicked = (): boolean =>
-    hasSpoiler() && contentDisplaySettings.mosaickedSpoilerContent;
+    hasSpoiler() && contentDisplaySettings.mosaickedSpoilerContent && !spoilerRevealed;
+
+  $effect(() => {
+    const nextSpoilerIdentity = `${region}:${item.id}`;
+    if (lastSpoilerIdentity === nextSpoilerIdentity) {
+      return;
+    }
+
+    lastSpoilerIdentity = nextSpoilerIdentity;
+    spoilerRevealed = false;
+  });
+
+  const handleCardClick = (event: MouseEvent): void => {
+    if (!isSpoilerContentMosaicked()) {
+      return;
+    }
+
+    event.preventDefault();
+    spoilerRevealed = true;
+  };
 </script>
 
 {#snippet mosaicOverlay()}
@@ -90,6 +111,7 @@
   frameClass={EVENT_LIST_CARD_FRAME_CLASS}
   useBody={false}
   overlay={isSpoilerContentMosaicked() ? mosaicOverlay : undefined}
+  onclick={handleCardClick}
 >
   <div class={`${EVENT_LIST_CARD_MEDIA_CLASS} ${getUnitIconClass(item.unit)}`}>
     {#if item.assetBundleName}

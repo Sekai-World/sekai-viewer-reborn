@@ -33,6 +33,11 @@
         {@render children?.()}
       </div>
     {/if}
+    {#if overlay}
+      <div class="absolute inset-0 z-30">
+        {@render overlay()}
+      </div>
+    {/if}
   </div>
   <div></div>
   <div></div>
@@ -42,9 +47,4 @@
   <div></div>
   <div></div>
   <div></div>
-  {#if overlay}
-    <div class="pointer-events-none absolute inset-0 z-30">
-      {@render overlay()}
-    </div>
-  {/if}
 </a>
