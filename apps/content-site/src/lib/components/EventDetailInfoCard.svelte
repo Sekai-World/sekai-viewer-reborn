@@ -67,7 +67,7 @@
     return unitIconSlugs.has(slug) ? asset(`/icons/icon_${slug}.png`) : null;
   };
   const getCharacterIconUrl = (characterId: number): string =>
-    asset(`/chr_il/chr_il_${characterId}.png`);
+    asset(`/chr_ts/chr_ts_${characterId}_g1.png`);
 </script>
 
 <article class="card content-card-shell shadow-sm">
@@ -163,12 +163,12 @@
             <dd class="mt-1 text-sm font-medium">{getCharacterDisplayName(char)}</dd>
           </div>
           <span
-            class="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-base-content/15 bg-base-100/70"
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
           >
             <img
               src={getCharacterIconUrl(char.id)}
               alt={getCharacterDisplayName(char)}
-              class="h-12 w-12 max-w-none object-cover"
+              class="h-11 w-11 rounded-full object-contain"
               loading="lazy"
               decoding="async"
             />
