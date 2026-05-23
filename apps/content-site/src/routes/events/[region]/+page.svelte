@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { toTimestampMs } from "$lib/date-time";
@@ -20,12 +21,14 @@
   type EventListSortOrder = "asc" | "desc";
 
   let { data }: { data: PageData } = $props();
-  const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
+  const eventListLoadingFallback = "Loading events...";
+  const getInitialCommonText = (key: string, fallback?: string): string =>
+    createCommonTranslator(data.uiLocale, data.commonMessages)(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isLoading = $state(false);
+  let isReloadingFirstPage = $state(false);
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
   let isLoadMoreHintVisible = $state(false);
@@ -49,6 +52,7 @@
   let mixedUnitLabel = $state(getInitialCommonText("mixedUnitLabel"));
   let eventListTitle = $state(getInitialCommonText("eventListTitle"));
   let eventListEmpty = $state(getInitialCommonText("eventListEmpty"));
+  let eventListLoading = $state(getInitialCommonText("eventListLoading", eventListLoadingFallback));
   let eventListLoadingMore = $state(getInitialCommonText("eventListLoadingMore"));
   let eventListLoadMoreHintDesktop = $state(getInitialCommonText("eventListLoadMoreHintDesktop"));
   let eventListLoadMoreHintMobile = $state(getInitialCommonText("eventListLoadMoreHintMobile"));
@@ -375,13 +379,14 @@
     }
   });
 
-  const applyTranslations = (translate: (key: string) => string): void => {
+  const applyTranslations = (translate: (key: string, fallback?: string) => string): void => {
     homeLabel = translate("home");
     idLabel = translate("idLabel");
     closeLabel = translate("closeLabel");
     mixedUnitLabel = translate("mixedUnitLabel");
     eventListTitle = translate("eventListTitle");
     eventListEmpty = translate("eventListEmpty");
+    eventListLoading = translate("eventListLoading", eventListLoadingFallback);
     eventListLoadingMore = translate("eventListLoadingMore");
     eventListLoadMoreHintDesktop = translate("eventListLoadMoreHintDesktop");
     eventListLoadMoreHintMobile = translate("eventListLoadMoreHintMobile");
@@ -405,7 +410,7 @@
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
     const locale = await setI18nLocale(localeValue, data.commonMessages);
-    applyTranslations((key) => tCommon(locale, key));
+    applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
   };
 
   const createListSearchParams = (page: number): SvelteURLSearchParams => {
@@ -445,7 +450,7 @@
     const pathname = resolve("/events/[region]", { region: data.region });
     const query = searchParams.toString();
     const nextUrl = query.length > 0 ? `${pathname}?${query}` : pathname;
-    window.history.replaceState(window.history.state, "", nextUrl);
+    replaceState(nextUrl, {});
   };
 
   const getBreadcrumbItems = () => [
@@ -521,6 +526,7 @@
     }
 
     isLoading = true;
+    isReloadingFirstPage = true;
     errorMessage = null;
     isLoadMoreHintVisible = false;
 
@@ -538,6 +544,7 @@
     } catch {
       errorMessage = eventListLoadFailed;
     } finally {
+      isReloadingFirstPage = false;
       isLoading = false;
     }
   };
@@ -646,7 +653,12 @@
     </button>
   </div>
 
-  {#if items.length === 0 && errorMessage}
+  {#if isReloadingFirstPage}
+    <div class="content-card-shell flex min-h-48 items-center justify-center rounded-2xl p-8 shadow-sm">
+      <span class="loading loading-spinner loading-md"></span>
+      <span class="ml-3 text-sm opacity-70">{eventListLoading}</span>
+    </div>
+  {:else if items.length === 0 && errorMessage}
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">

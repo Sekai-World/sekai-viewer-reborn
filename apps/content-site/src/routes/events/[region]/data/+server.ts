@@ -11,6 +11,19 @@ import {
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { RequestHandler } from "./$types";
 
+const summarizeResponse = (
+  response: { response: Response },
+  durationMs: number
+): Record<string, unknown> => ({
+  contentLength: response.response.headers.get("content-length"),
+  contentType: response.response.headers.get("content-type"),
+  durationMs,
+  ok: response.response.ok,
+  requestId: response.response.headers.get("x-request-id"),
+  status: response.response.status,
+  url: response.response.url
+});
+
 const parsePageNumber = (value: string | null): number => {
   if (!value) {
     return 1;
@@ -41,6 +54,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
   });
 
   try {
+    const startedAt = performance.now();
     const response = await getEventsByRegionList({
       baseUrl,
       path: { region },
@@ -52,6 +66,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
         region,
         page,
         queryState,
+        ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
         error: response.error
       });
 
@@ -64,6 +79,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       region,
       page,
       queryState,
+      ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
+      rawItemCount: response.data?.items?.length ?? null,
       itemCount: eventListPage.items.length,
       pagination: eventListPage.pagination
     });

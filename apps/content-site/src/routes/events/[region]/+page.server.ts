@@ -11,6 +11,19 @@ import {
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
 
+const summarizeResponse = (
+  response: { response: Response },
+  durationMs: number
+): Record<string, unknown> => ({
+  contentLength: response.response.headers.get("content-length"),
+  contentType: response.response.headers.get("content-type"),
+  durationMs,
+  ok: response.response.ok,
+  requestId: response.response.headers.get("x-request-id"),
+  status: response.response.status,
+  url: response.response.url
+});
+
 const createEmptyPage = () => ({
   items: [],
   pagination: {
@@ -41,6 +54,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
   });
 
   try {
+    const startedAt = performance.now();
     const [response, currentEventResponse] = await Promise.all([
       getEventsByRegionList({
         baseUrl,
@@ -57,6 +71,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
       logEventListFilterDebug("initial error", {
         region,
         queryState,
+        ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
         error: response.error
       });
 
@@ -74,6 +89,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
     logEventListFilterDebug("initial response", {
       region,
       queryState,
+      ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
+      rawItemCount: response.data?.items?.length ?? null,
       itemCount: initialPage.items.length,
       pagination: initialPage.pagination
     });
