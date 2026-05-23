@@ -1,0 +1,118 @@
+import { getCardsByRegionList } from "@platform/sekai-master-api-sdk";
+import { normalizeRegion } from "$lib/region";
+import {
+  createCardListRequestQuery,
+  DEFAULT_CARD_LIST_PAGE_SIZE,
+  getDefaultCardListFilterMeta,
+  hasCardListFilters,
+  logCardListFilterDebug,
+  parseCardListPage,
+  parseCardListQueryState,
+  type CardListPage
+} from "$lib/server/card-list";
+import { getMasterApiBaseUrl } from "$lib/server/config";
+import type { PageServerLoad } from "./$types";
+
+const summarizeResponse = (
+  response: { response: Response },
+  durationMs: number
+): Record<string, unknown> => ({
+  contentLength: response.response.headers.get("content-length"),
+  contentType: response.response.headers.get("content-type"),
+  durationMs,
+  ok: response.response.ok,
+  requestId: response.response.headers.get("x-request-id"),
+  status: response.response.status,
+  url: response.response.url
+});
+
+const createEmptyPage = (): CardListPage => ({
+  items: [],
+  pagination: {
+    page: 1,
+    pageSize: DEFAULT_CARD_LIST_PAGE_SIZE,
+    hasNext: false,
+    total: null,
+    totalPages: null
+  }
+});
+
+export const load: PageServerLoad = async ({ params, url }) => {
+  const region = normalizeRegion(params.region);
+  const baseUrl = getMasterApiBaseUrl();
+  const queryState = parseCardListQueryState(url.searchParams);
+  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
+  const hasFilters = hasCardListFilters(queryState);
+  const filterMeta = getDefaultCardListFilterMeta();
+
+  logCardListFilterDebug("initial request", {
+    region,
+    queryState,
+    hasFilters
+  });
+
+  try {
+    const startedAt = performance.now();
+    const response = await getCardsByRegionList({
+      baseUrl,
+      path: { region },
+      query: createCardListRequestQuery(
+        queryState,
+        1,
+        DEFAULT_CARD_LIST_PAGE_SIZE,
+        includeSpoilerContent
+      )
+    });
+
+    if (response.error) {
+      logCardListFilterDebug("initial error", {
+        region,
+        queryState,
+        ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
+        error: response.error
+      });
+
+      return {
+        region,
+        initialPage: createEmptyPage(),
+        initialLoadFailed: true,
+        initialQuery: queryState,
+        filterMeta
+      };
+    }
+
+    const parsedPage = parseCardListPage(response.data, 1, DEFAULT_CARD_LIST_PAGE_SIZE);
+
+    logCardListFilterDebug("initial response", {
+      region,
+      queryState,
+      hasFilters,
+      ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
+      rawItemCount: response.data?.items?.length ?? null,
+      parsedItemCount: parsedPage.items.length,
+      pagination: parsedPage.pagination
+    });
+
+    return {
+      region,
+      initialPage: parsedPage,
+      initialLoadFailed: false,
+      initialQuery: queryState,
+      filterMeta
+    };
+  } catch (error) {
+    logCardListFilterDebug("initial exception", {
+      region,
+      queryState,
+      error
+    });
+
+    return {
+      region,
+      initialPage: createEmptyPage(),
+      initialLoadFailed: true,
+      initialQuery: queryState,
+      filterMeta
+    };
+  }
+};

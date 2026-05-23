@@ -98,6 +98,10 @@
   const sidebarRegion = $derived.by<ReturnType<typeof normalizeRegion>>(() => {
     const [first, second] = page.url.pathname.split("/").filter(Boolean);
 
+    if (first === "cards" && second) {
+      return normalizeRegion(second, DEFAULT_REGION);
+    }
+
     if ((first === "event" || first === "events") && second) {
       return normalizeRegion(second, DEFAULT_REGION);
     }
@@ -119,7 +123,8 @@
     {
       label: cardsLabel,
       icon: "mdi:cards-outline",
-      disabled: true
+      href: `/cards/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/cards/")
     },
     {
       label: songsLabel,
