@@ -45,8 +45,11 @@
 
   const isCurrentEvent = (): boolean => currentEventId === item.id;
   const contentDisplaySettings = getContentDisplaySettings();
+  const spoilerRevealAnimationMs = 180;
   let spoilerRevealed = $state(false);
+  let spoilerRevealAnimating = $state(false);
   let lastSpoilerIdentity = $state("");
+  let spoilerRevealTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const unitIconClassByUnit: Record<string, string> = {
     idol: "event-list-unit-idol",
@@ -73,14 +76,32 @@
   const isSpoilerContentMosaicked = (): boolean =>
     hasSpoiler() && contentDisplaySettings.mosaickedSpoilerContent && !spoilerRevealed;
 
+  const isSpoilerPlaceholderVisible = (): boolean =>
+    hasSpoiler() &&
+    contentDisplaySettings.mosaickedSpoilerContent &&
+    (!spoilerRevealed || spoilerRevealAnimating);
+
+  const clearSpoilerRevealTimeout = (): void => {
+    if (spoilerRevealTimeout === null) {
+      return;
+    }
+
+    clearTimeout(spoilerRevealTimeout);
+    spoilerRevealTimeout = null;
+  };
+
   $effect(() => {
     const nextSpoilerIdentity = `${region}:${item.id}`;
     if (lastSpoilerIdentity === nextSpoilerIdentity) {
       return;
     }
 
+    clearSpoilerRevealTimeout();
     lastSpoilerIdentity = nextSpoilerIdentity;
     spoilerRevealed = false;
+    spoilerRevealAnimating = false;
+
+    return clearSpoilerRevealTimeout;
   });
 
   const handleCardClick = (event: MouseEvent): void => {
@@ -89,13 +110,19 @@
     }
 
     event.preventDefault();
-    spoilerRevealed = true;
+    spoilerRevealAnimating = true;
+    clearSpoilerRevealTimeout();
+    spoilerRevealTimeout = setTimeout(() => {
+      spoilerRevealed = true;
+      spoilerRevealAnimating = false;
+      spoilerRevealTimeout = null;
+    }, spoilerRevealAnimationMs);
   };
 </script>
 
 {#snippet mosaicOverlay()}
   <div
-    class="event-list-spoiler-mosaic-overlay flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl"
+    class={`event-list-spoiler-mosaic-overlay flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
   >
     <div
       class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
@@ -110,10 +137,10 @@
   href={resolve("/event/[region]/[id]", { region, id: item.id })}
   frameClass={EVENT_LIST_CARD_FRAME_CLASS}
   useBody={false}
-  overlay={isSpoilerContentMosaicked() ? mosaicOverlay : undefined}
+  overlay={isSpoilerPlaceholderVisible() ? mosaicOverlay : undefined}
   onclick={handleCardClick}
 >
-  {#if isSpoilerContentMosaicked()}
+  {#if isSpoilerPlaceholderVisible()}
     <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
       <div class="h-full w-full rounded-xl bg-base-200/60"></div>
     </div>
