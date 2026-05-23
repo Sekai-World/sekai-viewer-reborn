@@ -37,7 +37,7 @@ export type SharedCardObjectResponse = {
     archivePublishedAt?: unknown;
     assetbundleName?: unknown;
     attr?: unknown;
-    cardParameters?: unknown;
+    cardParameters?: Array<SharedCardParameterResponse>;
     cardRarity?: SharedCardRarityResponse;
     cardSkillName?: unknown;
     cardSupply?: SharedCardSupplyResponse;
@@ -64,8 +64,16 @@ export type SharedCardPagination = {
     total_pages?: number;
 };
 
+export type SharedCardParameterResponse = {
+    cardId?: number;
+    cardLevel?: number;
+    cardParameterType?: string;
+    id?: number;
+    power?: number;
+};
+
 export type SharedCardParamsResponse = {
-    cardParameters?: unknown;
+    cardParameters?: Array<SharedCardParameterResponse>;
     id?: unknown;
     specialTrainingPower1BonusFixed?: unknown;
     specialTrainingPower2BonusFixed?: unknown;
@@ -73,15 +81,33 @@ export type SharedCardParamsResponse = {
 };
 
 export type SharedCardRarityResponse = {
-    [key: string]: unknown;
+    cardRarityType?: string;
+    maxLevel?: number;
+    maxSkillLevel?: number;
+    seq?: number;
+    trainingMaxLevel?: number;
 };
 
 export type SharedCardSupplyResponse = {
-    [key: string]: unknown;
+    assetbundleName?: string;
+    cardSupplyType?: string;
+    id?: number;
 };
 
 export type SharedCharacterResponse = {
-    [key: string]: unknown;
+    firstName?: string;
+    firstNameEnglish?: string;
+    firstNameRuby?: string;
+    gender?: string;
+    givenName?: string;
+    givenNameEnglish?: string;
+    givenNameRuby?: string;
+    height?: number;
+    id?: number;
+    resourceId?: number;
+    seq?: number;
+    supportUnitType?: string;
+    unit?: string;
 };
 
 export type SharedCurrentEventResponse = {
@@ -370,8 +396,48 @@ export type SharedReleaseConditionResponse = {
     sentence?: string;
 };
 
+export type SharedSkillEffectDetailResponse = {
+    activateEffectDuration?: number;
+    activateEffectValue?: number;
+    activateEffectValue2?: number;
+    activateEffectValueType?: string;
+    id?: number;
+    level?: number;
+};
+
+export type SharedSkillEffectResponse = {
+    activateCharacterRank?: number;
+    activateLife?: number;
+    activateNotesJudgmentType?: string;
+    activateUnitCount?: number;
+    conditionType?: string;
+    id?: number;
+    skillEffectDetails?: Array<SharedSkillEffectDetailResponse>;
+    skillEffectType?: string;
+    skillEnhance?: SharedSkillEnhanceResponse;
+};
+
+export type SharedSkillEnhanceConditionResponse = {
+    id?: number;
+    seq?: number;
+    unit?: string;
+};
+
+export type SharedSkillEnhanceResponse = {
+    activateEffectValue?: number;
+    activateEffectValueType?: string;
+    id?: number;
+    skillEnhanceCondition?: SharedSkillEnhanceConditionResponse;
+    skillEnhanceType?: string;
+};
+
 export type SharedSkillResponse = {
-    [key: string]: unknown;
+    description?: string;
+    descriptionSpriteName?: string;
+    id?: number;
+    shortDescription?: string;
+    skillEffects?: Array<SharedSkillEffectResponse>;
+    skillFilterId?: number;
 };
 
 export type SharedUnitProfileListResponse = {
@@ -645,6 +711,38 @@ export type GetCardsByRegionListData = {
          * Include spoiler content
          */
         spoiler?: boolean;
+        /**
+         * Comma-separated character units
+         */
+        unit?: string;
+        /**
+         * Comma-separated character IDs
+         */
+        character?: string;
+        /**
+         * Comma-separated skill descriptionSpriteName values
+         */
+        skill?: string;
+        /**
+         * Comma-separated card supply IDs or card supply types
+         */
+        type?: string;
+        /**
+         * Comma-separated card attributes
+         */
+        attr?: string;
+        /**
+         * Comma-separated card rarity types
+         */
+        rarity?: string;
+        /**
+         * Comma-separated support units
+         */
+        supportUnit?: string;
+        /**
+         * Include cards that have another3dmvCutIns entries
+         */
+        has3dmvCutIn?: boolean;
         /**
          * Sort field
          */
