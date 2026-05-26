@@ -13,6 +13,7 @@
     rarityType: string | null;
     characterId: number | null;
     characterName: string | null;
+    unit: string | null;
     supportUnit: string | null;
     initialSpecialTrainingStatus: string | null;
     releaseAt: string | number | null;
@@ -74,8 +75,15 @@
     const rarityValue = getRarityValue();
     return rarityValue > 0 ? String(rarityValue) : null;
   };
-  const getAttrIconUrl = (): string | null =>
-    item.attr ? asset(`/card_attr/icon_attribute_${item.attr}_64.png`) : null;
+  const getAttrIconUrl = (size: 64 | 88 = 64): string | null =>
+    item.attr ? asset(`/card_attr/icon_attribute_${item.attr}_${size}.png`) : null;
+  const getUnitIconUrl = (unit: string | null): string | null => {
+    if (!unit) {
+      return null;
+    }
+
+    return asset(`/icons/icon_${unit === "none" ? "piapro" : unit}.png`);
+  };
   const getCardFrameUrl = (size: "L" | "S"): string | null => {
     const rarityFrameLevel = getRarityFrameLevel();
     return rarityFrameLevel ? asset(`/card_frame/cardFrame_${size}_${rarityFrameLevel}.png`) : null;
@@ -222,53 +230,90 @@
   {/if}
 {/snippet}
 
-{#snippet attrIcon(sizeClass: string)}
-  {@const attrIconUrl = getAttrIconUrl()}
-  {#if attrIconUrl}
-    <img
-      src={attrIconUrl}
-      alt=""
-      aria-hidden="true"
-      class={`pointer-events-none absolute left-0 top-0 z-20 object-contain drop-shadow ${sizeClass}`}
-      loading="lazy"
-      decoding="async"
-    />
-  {/if}
-{/snippet}
-
-{#snippet rarityIcons(trained: boolean, layout: "vertical" | "horizontal")}
+{#snippet thumbIcons(trained: boolean)}
+  {@const attrIconUrl = getAttrIconUrl(88)}
   {@const rarityIconUrl = getRarityIconUrl(trained)}
   {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
-  {#if rarityIconUrl && rarityCount > 0}
-    <div
-      class={`pointer-events-none absolute bottom-1.5 left-1.5 z-20 flex ${layout === "vertical" ? "flex-col-reverse" : "flex-row"} gap-0`}
-      aria-hidden="true"
-    >
-      {#each Array.from({ length: rarityCount }) as _, index (`rarity-${layout}-${trained}-${index}`)}
-        <img
-          src={rarityIconUrl}
-          alt=""
-          class={layout === "vertical" ? "h-7 w-7 object-contain drop-shadow" : "h-5 w-5 object-contain drop-shadow"}
-          loading="lazy"
-          decoding="async"
-        />
+  <svg
+    class="pointer-events-none absolute inset-0 z-20 h-full w-full"
+    viewBox="0 0 100 100"
+    aria-hidden="true"
+  >
+    {#if attrIconUrl}
+      <image href={attrIconUrl} x="71" y="0" width="29" height="29" class="drop-shadow" />
+    {/if}
+    {#if rarityIconUrl && rarityCount > 0}
+      {#each Array.from(Array(rarityCount).keys()) as index (`rarity-thumb-${trained}-${index}`)}
+        <image href={rarityIconUrl} x={2 + index * 21} y="73" width="22" height="22" class="drop-shadow" />
       {/each}
-    </div>
-  {/if}
+    {/if}
+  </svg>
+{/snippet}
+
+{#snippet largeIcons()}
+  {@const attrIconUrl = getAttrIconUrl()}
+  {@const normalRarityIconUrl = getRarityIconUrl(false)}
+  {@const trainedRarityIconUrl = getRarityIconUrl(true)}
+  {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
+  <svg
+    class="pointer-events-none absolute inset-0 z-20 h-full w-full"
+    viewBox="0 0 160 90"
+    aria-hidden="true"
+  >
+    {#if attrIconUrl}
+      <image href={attrIconUrl} x="0" y="0" width="21" height="21" class="drop-shadow" />
+    {/if}
+    {#if normalRarityIconUrl && rarityCount > 0}
+      <g class={isTrainableCard() ? "card-grid-rarity-stack card-grid-rarity-stack-left" : ""}>
+        {#each Array.from(Array(rarityCount).keys()) as index (`rarity-large-normal-${index}`)}
+          <image
+            href={normalRarityIconUrl}
+            x="5"
+            y={71 - index * 13}
+            width="14"
+            height="14"
+            class="drop-shadow"
+          />
+        {/each}
+      </g>
+    {/if}
+    {#if isTrainableCard() && trainedRarityIconUrl && rarityCount > 0}
+      <g class="card-grid-rarity-stack card-grid-rarity-stack-right">
+        {#each Array.from(Array(rarityCount).keys()) as index (`rarity-large-trained-${index}`)}
+          <image
+            href={trainedRarityIconUrl}
+            x="141"
+            y={71 - index * 13}
+            width="14"
+            height="14"
+            class="drop-shadow"
+          />
+        {/each}
+      </g>
+    {/if}
+  </svg>
 {/snippet}
 
 {#snippet metaBadges()}
+  {@const unitIconUrl = getUnitIconUrl(item.unit)}
+  {@const supportUnitIconUrl =
+    item.unit === "piapro" && item.supportUnit !== "none" ? getUnitIconUrl(item.supportUnit) : null}
   <div class="flex flex-wrap gap-1.5">
     <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
       {idLabel}{item.id}
     </span>
-    {#if item.supportUnit}
-      <span class="badge badge-sm badge-outline capitalize">{item.supportUnit.replaceAll("_", " ")}</span>
+    {#if unitIconUrl}
+      <img src={unitIconUrl} alt="" aria-hidden="true" class="h-6 w-6 object-contain" loading="lazy" decoding="async" />
     {/if}
-    {#if getRarityValue() > 0}
-      <span class="badge badge-sm badge-outline">
-        {item.rarityType === "rarity_birthday" ? "BD" : `${getRarityValue()}*`}
-      </span>
+    {#if supportUnitIconUrl}
+      <img
+        src={supportUnitIconUrl}
+        alt=""
+        aria-hidden="true"
+        class="h-6 w-6 object-contain"
+        loading="lazy"
+        decoding="async"
+      />
     {/if}
   </div>
 {/snippet}
@@ -287,8 +332,7 @@
       />
     {/if}
     {@render cardFrame("S")}
-    {@render attrIcon("h-7 w-7")}
-    {@render rarityIcons(trained, "horizontal")}
+    {@render thumbIcons(trained)}
   </div>
 {/snippet}
 
@@ -395,8 +439,7 @@
           {/if}
         </div>
         {@render cardFrame("L")}
-        {@render attrIcon("h-10 w-10")}
-        {@render rarityIcons(isTrainableCard(), "vertical")}
+        {@render largeIcons()}
       </div>
     </div>
     <div class="card-body gap-1.5 p-4">
@@ -483,6 +526,10 @@
     right: 0;
   }
 
+  .card-grid-rarity-stack {
+    transition: opacity 0.2s ease-out;
+  }
+
   .card-grid-hover-area-left:hover ~ .card-grid-content .card-grid-split-wrapper-left {
     width: 100%;
   }
@@ -491,11 +538,19 @@
     width: 0;
   }
 
+  .card-grid-hover-area-left:hover ~ .card-grid-content .card-grid-rarity-stack-right {
+    opacity: 0;
+  }
+
   .card-grid-hover-area-right:hover ~ .card-grid-content .card-grid-split-wrapper-left {
     width: 0;
   }
 
   .card-grid-hover-area-right:hover ~ .card-grid-content .card-grid-split-wrapper-right {
     width: 100%;
+  }
+
+  .card-grid-hover-area-right:hover ~ .card-grid-content .card-grid-rarity-stack-left {
+    opacity: 0;
   }
 </style>
