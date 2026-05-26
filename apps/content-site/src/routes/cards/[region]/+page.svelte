@@ -927,7 +927,7 @@
 
   const getListGridClass = (): string => {
     if (viewMode === "agenda") {
-      return "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4";
+      return "grid grid-cols-1 gap-4 lg:grid-cols-2 2xl:grid-cols-3";
     }
 
     if (viewMode === "comfy") {
