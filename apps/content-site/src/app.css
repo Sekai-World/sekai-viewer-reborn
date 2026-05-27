@@ -11,7 +11,8 @@
 }
 
 :root,
-:root[data-theme="default"] {
+:root[data-theme="default"],
+.theme-palette-preview[data-theme="default"] {
   --color-primary: oklch(58% 0.233 277.117);
   --color-primary-content: oklch(96% 0.018 272.314);
   --color-base-100: oklch(100% 0 0);
@@ -21,7 +22,8 @@
   color-scheme: light;
 }
 
-:root.dark[data-theme="default"] {
+:root.dark[data-theme="default"],
+.theme-palette-preview.dark[data-theme="default"] {
   --color-base-100: oklch(24.5% 0.018 252.42);
   --color-base-200: oklch(18.4% 0.015 253.1);
   --color-base-300: oklch(14.8% 0.012 254.09);
@@ -29,7 +31,8 @@
   color-scheme: dark;
 }
 
-:root[data-theme="sakura"] {
+:root[data-theme="sakura"],
+.theme-palette-preview[data-theme="sakura"] {
   --color-primary: oklch(70% 0.18 350);
   --color-primary-content: oklch(98% 0.01 345);
   --color-base-100: oklch(100% 0 0);
@@ -39,7 +42,8 @@
   color-scheme: light;
 }
 
-:root.dark[data-theme="sakura"] {
+:root.dark[data-theme="sakura"],
+.theme-palette-preview.dark[data-theme="sakura"] {
   --color-primary: oklch(76% 0.17 350);
   --color-primary-content: oklch(18% 0.03 340);
   --color-base-100: oklch(25% 0.02 312);
@@ -49,7 +53,8 @@
   color-scheme: dark;
 }
 
-:root[data-theme="mint"] {
+:root[data-theme="mint"],
+.theme-palette-preview[data-theme="mint"] {
   --color-primary: oklch(72% 0.14 170);
   --color-primary-content: oklch(20% 0.03 175);
   --color-base-100: oklch(100% 0 0);
@@ -59,7 +64,8 @@
   color-scheme: light;
 }
 
-:root.dark[data-theme="mint"] {
+:root.dark[data-theme="mint"],
+.theme-palette-preview.dark[data-theme="mint"] {
   --color-primary: oklch(78% 0.13 170);
   --color-primary-content: oklch(18% 0.03 175);
   --color-base-100: oklch(24% 0.014 210);

@@ -559,6 +559,15 @@
   </div>
 {/snippet}
 
+{#snippet themePalettePreview(themeNameOption: ThemeName)}
+  <span
+    class="theme-palette-preview h-4 w-4 shrink-0 rounded-full border border-base-content/15 bg-primary"
+    class:dark={resolvedTheme === "dark"}
+    data-theme={themeNameOption}
+    aria-hidden="true"
+  ></span>
+{/snippet}
+
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
@@ -606,6 +615,7 @@
                   applyTheme(themeNameOption, themeMode);
                 }}
               >
+                {@render themePalettePreview(themeNameOption)}
                 <span>{getThemeNameLabel(themeNameOption)}</span>
                 {#if themeName === themeNameOption}
                   <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
@@ -722,12 +732,15 @@
               {#each themeNameOptions as themeNameOption (themeNameOption)}
                 <button
                   type="button"
-                  class={`btn btn-sm justify-center rounded-lg border-base-content/15 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
+                  class={`btn btn-sm h-auto flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
                   onclick={() => {
                     applyTheme(themeNameOption, themeMode);
                   }}
                 >
-                  <span class="font-semibold">{getThemeNameLabel(themeNameOption)}</span>
+                  {@render themePalettePreview(themeNameOption)}
+                  <span class="text-[0.6rem] font-semibold leading-none"
+                    >{getThemeNameLabel(themeNameOption)}</span
+                  >
                 </button>
               {/each}
             </div>
