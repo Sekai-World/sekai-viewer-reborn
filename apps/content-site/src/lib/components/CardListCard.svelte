@@ -294,6 +294,21 @@
   </svg>
 {/snippet}
 
+{#snippet unitIcon(iconUrl: string)}
+  <span
+    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-base-content/15 bg-base-100/70 dark:bg-gray-300"
+  >
+    <img
+      src={iconUrl}
+      alt=""
+      aria-hidden="true"
+      class="h-7 w-7 max-w-none object-contain"
+      loading="lazy"
+      decoding="async"
+    />
+  </span>
+{/snippet}
+
 {#snippet metaBadges()}
   {@const unitIconUrl = getUnitIconUrl(item.unit)}
   {@const supportUnitIconUrl =
@@ -303,17 +318,10 @@
       {idLabel}{item.id}
     </span>
     {#if unitIconUrl}
-      <img src={unitIconUrl} alt="" aria-hidden="true" class="h-6 w-6 object-contain" loading="lazy" decoding="async" />
+      {@render unitIcon(unitIconUrl)}
     {/if}
     {#if supportUnitIconUrl}
-      <img
-        src={supportUnitIconUrl}
-        alt=""
-        aria-hidden="true"
-        class="h-6 w-6 object-contain"
-        loading="lazy"
-        decoding="async"
-      />
+      {@render unitIcon(supportUnitIconUrl)}
     {/if}
   </div>
 {/snippet}

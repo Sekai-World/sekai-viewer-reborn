@@ -8,3 +8,5 @@ Fix event list request query serialization for the updated `sekai-master-api-sdk
 Add a card list page with region switching, sorting, filtering, pagination, and multiple view modes. Extend the card filters with unit, character, skill, and 3DMV cut-in controls backed by the updated `/cards/:region/list` query params without preloading every card page.
 
 Add color previews to the content-site theme selector.
+
+Give card list unit icons rounded surfaces for dark theme readability.
