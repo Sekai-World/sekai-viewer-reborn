@@ -102,7 +102,7 @@
       return normalizeRegion(second, DEFAULT_REGION);
     }
 
-    if ((first === "event" || first === "events") && second) {
+    if ((first === "event" || first === "events" || first === "musics") && second) {
       return normalizeRegion(second, DEFAULT_REGION);
     }
 
@@ -129,7 +129,8 @@
     {
       label: songsLabel,
       icon: "mdi:music-note-outline",
-      disabled: true
+      href: `/musics/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/musics/")
     },
     {
       label: eventsLabel,

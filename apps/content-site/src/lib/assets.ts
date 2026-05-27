@@ -232,3 +232,20 @@ export const getCardThumbnailAssetURL = (
     baseUrlOverride
   );
 };
+
+export const getMusicJacketAssetURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `music/jacket/${normalizedAssetBundleName}/${normalizedAssetBundleName}.webp`,
+    server,
+    baseUrlOverride
+  );
+};

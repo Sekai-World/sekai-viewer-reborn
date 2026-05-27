@@ -10,3 +10,5 @@ Add a card list page with region switching, sorting, filtering, pagination, and 
 Add color previews to the content-site theme selector.
 
 Give card list unit icons rounded surfaces for dark theme readability.
+
+Add a regional song list with jacket artwork, grid and agenda layouts, and searchable, clearable filters for title, MV type, and creator credits.
