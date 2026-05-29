@@ -47,46 +47,8 @@
   };
 
   let { data }: { data: CardListPageData } = $props();
-  const fallbackMessages: Record<string, string> = {
-    cardImageAltSuffix: "card image",
-    cardListCharacterFallback: "Unknown Character",
-    cardListEmpty: "No cards found.",
-    cardListEnd: "No more cards.",
-    cardListFilterApply: "Apply Filters",
-    cardListFilterAttrLabel: "Attribute",
-    cardListFilterCharacterLabel: "Character",
-    cardListFilter3dmvCutInLabel: "3DMV Cut-In",
-    cardListFilterNameLabel: "Card Name",
-    cardListFilterNamePlaceholder: "Fuzzy search by card name",
-    cardListFilterRarityLabel: "Rarity",
-    cardListFilterReset: "Reset",
-    cardListFilterSkillLabel: "Skill",
-    cardListFilterSupportUnitLabel: "Support Unit",
-    cardListFilterTypeLabel: "Type",
-    cardListFilterUnitLabel: "Unit",
-    cardListFiltersTitle: "Filters",
-    cardListLoading: "Loading cards...",
-    cardListLoadFailed: "Failed to load cards.",
-    cardListLoadMoreHintDesktop: "Scroll down again to load more.",
-    cardListLoadMoreHintMobile: "Swipe up again to load more.",
-    cardListLoadingMore: "Loading more cards...",
-    cardListOpenFilters: "Open Filters",
-    cardListReleaseLabel: "Release",
-    cardListRetry: "Retry",
-    cardListSortById: "Sort by ID",
-    cardListSortByReleaseAt: "Sort by Release Time",
-    cardListTitle: "Card List",
-    cardListViewAgenda: "Agenda View",
-    cardListViewComfy: "Comfy View",
-    cardListViewGrid: "Grid View",
-    cool: "Cool",
-    cute: "Cute",
-    happy: "Happy",
-    mysterious: "Mysterious",
-    pure: "Pure"
-  };
   const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key, fallbackMessages[key]);
+    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
   let items = $state<CardListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -145,7 +107,9 @@
   let cardListFilter3dmvCutInLabel = $state(getInitialCommonText("cardListFilter3dmvCutInLabel"));
   let cardListFilterRarityLabel = $state(getInitialCommonText("cardListFilterRarityLabel"));
   let cardListFilterSkillLabel = $state(getInitialCommonText("cardListFilterSkillLabel"));
-  let cardListFilterSupportUnitLabel = $state(getInitialCommonText("cardListFilterSupportUnitLabel"));
+  let cardListFilterSupportUnitLabel = $state(
+    getInitialCommonText("cardListFilterSupportUnitLabel")
+  );
   let cardListFilterTypeLabel = $state(getInitialCommonText("cardListFilterTypeLabel"));
   let cardListFilterUnitLabel = $state(getInitialCommonText("cardListFilterUnitLabel"));
   let cardListFilterReset = $state(getInitialCommonText("cardListFilterReset"));
@@ -167,7 +131,13 @@
   };
 
   const attrOptions = ["cute", "mysterious", "cool", "happy", "pure"] as const;
-  const rarityOptions = ["rarity_1", "rarity_2", "rarity_3", "rarity_4", "rarity_birthday"] as const;
+  const rarityOptions = [
+    "rarity_1",
+    "rarity_2",
+    "rarity_3",
+    "rarity_4",
+    "rarity_birthday"
+  ] as const;
   const supportUnitOptions = [
     "none",
     "theme_park",
@@ -179,7 +149,7 @@
   const filterMeta = $derived.by(() => data.filterMeta ?? emptyFilterMeta);
 
   const formatOptionLabel = (value: string): string =>
-    tCommon(data.uiLocale, value, fallbackMessages[value] ?? value)
+    tCommon(data.uiLocale, value, value)
       .split("_")
       .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
       .join(" ");
@@ -375,13 +345,22 @@
             .filter((v: string) => v.length > 0)
         : [];
       const nextAttr = Array.isArray(parsed.attr)
-        ? parsed.attr.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
+        ? parsed.attr
+            .filter((v) => typeof v === "string")
+            .map((v: string) => v.trim())
+            .filter((v: string) => v.length > 0)
         : [];
       const nextRarity = Array.isArray(parsed.rarity)
-        ? parsed.rarity.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
+        ? parsed.rarity
+            .filter((v) => typeof v === "string")
+            .map((v: string) => v.trim())
+            .filter((v: string) => v.length > 0)
         : [];
       const nextSupportUnit = Array.isArray(parsed.supportUnit)
-        ? parsed.supportUnit.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
+        ? parsed.supportUnit
+            .filter((v) => typeof v === "string")
+            .map((v: string) => v.trim())
+            .filter((v: string) => v.length > 0)
         : [];
       const nextHas3dmvCutIn = parsed.has3dmvCutIn === true;
 
@@ -584,95 +563,54 @@
 
     spoilerContentAppliedState = nextShowSpoilerContent;
 
-    const hasSpoilerQueryParam = new URL(window.location.href).searchParams.get("spoiler") === "true";
+    const hasSpoilerQueryParam =
+      new URL(window.location.href).searchParams.get("spoiler") === "true";
     if (hasSpoilerQueryParam !== nextShowSpoilerContent) {
       void reloadFirstPage();
     }
   });
 
-  const applyTranslations = (translate: (key: string, fallback?: string) => string): void => {
+  const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
     idLabel = translate("idLabel");
     closeLabel = translate("closeLabel");
-    cardListTitle = translate("cardListTitle", fallbackMessages.cardListTitle);
-    cardListEmpty = translate("cardListEmpty", fallbackMessages.cardListEmpty);
-    cardListLoadingMore = translate("cardListLoadingMore", fallbackMessages.cardListLoadingMore);
-    cardListLoadMoreHintDesktop = translate(
-      "cardListLoadMoreHintDesktop",
-      fallbackMessages.cardListLoadMoreHintDesktop
-    );
-    cardListLoadMoreHintMobile = translate(
-      "cardListLoadMoreHintMobile",
-      fallbackMessages.cardListLoadMoreHintMobile
-    );
-    cardListLoadFailed = translate("cardListLoadFailed", fallbackMessages.cardListLoadFailed);
-    cardListRetry = translate("cardListRetry", fallbackMessages.cardListRetry);
-    cardListEnd = translate("cardListEnd", fallbackMessages.cardListEnd);
-    cardListSortById = translate("cardListSortById", fallbackMessages.cardListSortById);
-    cardListSortByReleaseAt = translate(
-      "cardListSortByReleaseAt",
-      fallbackMessages.cardListSortByReleaseAt
-    );
-    cardListOpenFilters = translate("cardListOpenFilters", fallbackMessages.cardListOpenFilters);
-    cardListFiltersTitle = translate("cardListFiltersTitle", fallbackMessages.cardListFiltersTitle);
-    cardListFilterNameLabel = translate(
-      "cardListFilterNameLabel",
-      fallbackMessages.cardListFilterNameLabel
-    );
-    cardListFilterNamePlaceholder = translate(
-      "cardListFilterNamePlaceholder",
-      fallbackMessages.cardListFilterNamePlaceholder
-    );
-    cardListFilterAttrLabel = translate(
-      "cardListFilterAttrLabel",
-      fallbackMessages.cardListFilterAttrLabel
-    );
-    cardListFilterCharacterLabel = translate(
-      "cardListFilterCharacterLabel",
-      fallbackMessages.cardListFilterCharacterLabel
-    );
-    cardListFilter3dmvCutInLabel = translate(
-      "cardListFilter3dmvCutInLabel",
-      fallbackMessages.cardListFilter3dmvCutInLabel
-    );
-    cardListFilterRarityLabel = translate(
-      "cardListFilterRarityLabel",
-      fallbackMessages.cardListFilterRarityLabel
-    );
-    cardListFilterSkillLabel = translate(
-      "cardListFilterSkillLabel",
-      fallbackMessages.cardListFilterSkillLabel
-    );
-    cardListFilterSupportUnitLabel = translate(
-      "cardListFilterSupportUnitLabel",
-      fallbackMessages.cardListFilterSupportUnitLabel
-    );
-    cardListFilterTypeLabel = translate(
-      "cardListFilterTypeLabel",
-      fallbackMessages.cardListFilterTypeLabel
-    );
-    cardListFilterUnitLabel = translate(
-      "cardListFilterUnitLabel",
-      fallbackMessages.cardListFilterUnitLabel
-    );
-    cardListFilterReset = translate("cardListFilterReset", fallbackMessages.cardListFilterReset);
-    cardListFilterApply = translate("cardListFilterApply", fallbackMessages.cardListFilterApply);
-    cardListLoading = translate("cardListLoading", fallbackMessages.cardListLoading);
-    cardListViewGrid = translate("cardListViewGrid", fallbackMessages.cardListViewGrid);
-    cardListViewAgenda = translate("cardListViewAgenda", fallbackMessages.cardListViewAgenda);
-    cardListViewComfy = translate("cardListViewComfy", fallbackMessages.cardListViewComfy);
-    cardListCharacterFallback = translate(
-      "cardListCharacterFallback",
-      fallbackMessages.cardListCharacterFallback
-    );
-    cardListReleaseLabel = translate("cardListReleaseLabel", fallbackMessages.cardListReleaseLabel);
-    cardImageAltSuffix = translate("cardImageAltSuffix", fallbackMessages.cardImageAltSuffix);
+    cardListTitle = translate("cardListTitle");
+    cardListEmpty = translate("cardListEmpty");
+    cardListLoadingMore = translate("cardListLoadingMore");
+    cardListLoadMoreHintDesktop = translate("cardListLoadMoreHintDesktop");
+    cardListLoadMoreHintMobile = translate("cardListLoadMoreHintMobile");
+    cardListLoadFailed = translate("cardListLoadFailed");
+    cardListRetry = translate("cardListRetry");
+    cardListEnd = translate("cardListEnd");
+    cardListSortById = translate("cardListSortById");
+    cardListSortByReleaseAt = translate("cardListSortByReleaseAt");
+    cardListOpenFilters = translate("cardListOpenFilters");
+    cardListFiltersTitle = translate("cardListFiltersTitle");
+    cardListFilterNameLabel = translate("cardListFilterNameLabel");
+    cardListFilterNamePlaceholder = translate("cardListFilterNamePlaceholder");
+    cardListFilterAttrLabel = translate("cardListFilterAttrLabel");
+    cardListFilterCharacterLabel = translate("cardListFilterCharacterLabel");
+    cardListFilter3dmvCutInLabel = translate("cardListFilter3dmvCutInLabel");
+    cardListFilterRarityLabel = translate("cardListFilterRarityLabel");
+    cardListFilterSkillLabel = translate("cardListFilterSkillLabel");
+    cardListFilterSupportUnitLabel = translate("cardListFilterSupportUnitLabel");
+    cardListFilterTypeLabel = translate("cardListFilterTypeLabel");
+    cardListFilterUnitLabel = translate("cardListFilterUnitLabel");
+    cardListFilterReset = translate("cardListFilterReset");
+    cardListFilterApply = translate("cardListFilterApply");
+    cardListLoading = translate("cardListLoading");
+    cardListViewGrid = translate("cardListViewGrid");
+    cardListViewAgenda = translate("cardListViewAgenda");
+    cardListViewComfy = translate("cardListViewComfy");
+    cardListCharacterFallback = translate("cardListCharacterFallback");
+    cardListReleaseLabel = translate("cardListReleaseLabel");
+    cardImageAltSuffix = translate("cardImageAltSuffix");
     spoilerContentLabel = translate("spoilerContent");
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
     const locale = await setI18nLocale(localeValue, data.commonMessages);
-    applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
+    applyTranslations((key: string) => tCommon(locale, key));
   };
 
   const createListSearchParams = (page: number): SvelteURLSearchParams => {
@@ -1028,7 +966,9 @@
   </div>
 
   {#if isReloadingFirstPage}
-    <div class="content-card-shell flex min-h-48 items-center justify-center rounded-2xl p-8 shadow-sm">
+    <div
+      class="content-card-shell flex min-h-48 items-center justify-center rounded-2xl p-8 shadow-sm"
+    >
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{cardListLoading}</span>
     </div>
@@ -1234,7 +1174,11 @@
                 class="sr-only"
                 checked={filterAttrDraft.includes(option)}
                 onchange={(e) => {
-                  filterAttrDraft = toggleDraftValue(filterAttrDraft, option, e.currentTarget.checked);
+                  filterAttrDraft = toggleDraftValue(
+                    filterAttrDraft,
+                    option,
+                    e.currentTarget.checked
+                  );
                 }}
                 aria-label={formatOptionLabel(option)}
               />
@@ -1264,7 +1208,11 @@
                 class="sr-only"
                 checked={filterRarityDraft.includes(option)}
                 onchange={(e) => {
-                  filterRarityDraft = toggleDraftValue(filterRarityDraft, option, e.currentTarget.checked);
+                  filterRarityDraft = toggleDraftValue(
+                    filterRarityDraft,
+                    option,
+                    e.currentTarget.checked
+                  );
                 }}
                 aria-label={getRarityLabel(option)}
               />
@@ -1310,7 +1258,9 @@
         </div>
       </fieldset>
 
-      <label class="flex items-center justify-between gap-3 rounded-box border border-base-300 px-3 py-2">
+      <label
+        class="flex items-center justify-between gap-3 rounded-box border border-base-300 px-3 py-2"
+      >
         <span class="text-sm font-medium">{cardListFilter3dmvCutInLabel}</span>
         <input
           type="checkbox"

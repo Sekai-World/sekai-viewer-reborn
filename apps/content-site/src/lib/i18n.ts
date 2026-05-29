@@ -6,6 +6,8 @@ import {
   type I18nMessages,
   type I18nTranslator
 } from "@platform/i18n-runtime";
+import commonSourceMessages from "@platform/i18n-source/content-site/common.json";
+import serverSourceMessages from "@platform/i18n-source/content-site/server.json";
 import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n-config";
 import { normalizeUiLocale } from "$lib/region";
 
@@ -24,6 +26,10 @@ export type ContentSiteServerMessageKey =
   | "failedToLoadEventData";
 
 const DEFAULT_SEKAI_I18N_BASE_URL = "https://sekai-world.github.io/sekai-i18n-reborn";
+const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
+  common: commonSourceMessages,
+  server: serverSourceMessages
+};
 
 const getI18nBaseUrl = (): string => {
   const value = PUBLIC_SEKAI_I18N_BASE_URL?.trim() || DEFAULT_SEKAI_I18N_BASE_URL;
@@ -54,8 +60,14 @@ const loadNamespaceMessagesWithFallback = async (
     ? Promise.resolve(primaryMessages)
     : i18nRuntime.loadMessages(locale, namespace, fetcher);
 
+  const localSourceMessages = localSourceMessagesByNamespace[namespace];
+
   if (primaryRemoteLocale === fallbackRemoteLocale) {
-    return primaryMessagesPromise;
+    const messages = await primaryMessagesPromise;
+    return {
+      ...localSourceMessages,
+      ...messages
+    };
   }
 
   const [messages, fallbackMessages] = await Promise.all([
@@ -64,6 +76,7 @@ const loadNamespaceMessagesWithFallback = async (
   ]);
 
   return {
+    ...localSourceMessages,
     ...fallbackMessages,
     ...messages
   };

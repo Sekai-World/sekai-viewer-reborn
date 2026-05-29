@@ -428,11 +428,9 @@
   onMount(() => {
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const documentWithViewTransition = (
-      document as Document & {
-        startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-      }
-    );
+    const documentWithViewTransition = document as Document & {
+      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
+    };
     const supportsViewTransition =
       typeof documentWithViewTransition.startViewTransition === "function";
     useFallbackRouteTransition = !supportsViewTransition || prefersReducedMotion;

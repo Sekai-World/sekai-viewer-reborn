@@ -2,5 +2,9 @@
   "name": "@platform/i18n-source",
   "version": "0.1.2",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "exports": {
+    "./content-site/common.json": "./content-site/common.json",
+    "./content-site/server.json": "./content-site/server.json"
+  }
 }

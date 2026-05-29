@@ -21,37 +21,8 @@
   type MusicListViewMode = "grid" | "agenda";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages: Record<string, string> = {
-    clearLabel: "Clear",
-    musicJacketAltSuffix: "jacket",
-    musicListArrangerLabel: "Arranger",
-    musicListCategoryImage: "Image",
-    musicListCategoryMv: "3D MV",
-    musicListCategoryMv2d: "2D MV",
-    musicListCategoryOriginal: "Original MV",
-    musicListComposerLabel: "Composer",
-    musicListCreatorLabel: "Composer",
-    musicListEmpty: "No songs found.",
-    musicListEnd: "No more songs.",
-    musicListFilterApply: "Apply Filters",
-    musicListFilterCategoryLabel: "MV Type",
-    musicListFilterNameLabel: "Song Title",
-    musicListFilterNamePlaceholder: "Fuzzy search by song title",
-    musicListFilterReset: "Reset",
-    musicListFiltersTitle: "Filters",
-    musicListListLoading: "Loading songs...",
-    musicListLoadFailed: "Failed to load songs.",
-    musicListLoadMore: "Load more songs",
-    musicListLyricistLabel: "Lyricist",
-    musicListOpenFilters: "Open Filters",
-    musicListSortById: "Sort by ID",
-    musicListSortByPublishedAt: "Sort by Release Time",
-    musicListTitle: "Song List",
-    musicListViewAgenda: "Agenda View",
-    musicListViewGrid: "Grid View"
-  };
   const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key, fallbackMessages[key]);
+    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
 
   let items = $state<MusicListItem[]>([]);
   let currentPage = $state(1);
@@ -108,13 +79,7 @@
   let musicJacketAltSuffix = $state(getInitialCommonText("musicJacketAltSuffix"));
 
   const getCategoryLabel = (category: string): string =>
-    tCommon(
-      data.uiLocale,
-      `musicListCategory.${category}`,
-      fallbackMessages[
-        `musicListCategory${category === "mv_2d" ? "Mv2d" : category.slice(0, 1).toUpperCase() + category.slice(1)}`
-      ] ?? category
-    );
+    tCommon(data.uiLocale, `musicListCategory.${category}`, category);
 
   const hasFilters = (): boolean =>
     Boolean(
@@ -215,65 +180,38 @@
     }
   });
 
-  const applyTranslations = (translate: (key: string, fallback?: string) => string): void => {
+  const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
     idLabel = translate("idLabel");
     closeLabel = translate("closeLabel");
-    clearLabel = translate("clearLabel", fallbackMessages.clearLabel);
-    musicListTitle = translate("musicListTitle", fallbackMessages.musicListTitle);
-    musicListEmpty = translate("musicListEmpty", fallbackMessages.musicListEmpty);
-    musicListEnd = translate("musicListEnd", fallbackMessages.musicListEnd);
-    musicListLoading = translate("musicListListLoading", fallbackMessages.musicListListLoading);
-    musicListLoadFailed = translate("musicListLoadFailed", fallbackMessages.musicListLoadFailed);
-    musicListLoadMore = translate("musicListLoadMore", fallbackMessages.musicListLoadMore);
-    musicListOpenFilters = translate("musicListOpenFilters", fallbackMessages.musicListOpenFilters);
-    musicListFiltersTitle = translate(
-      "musicListFiltersTitle",
-      fallbackMessages.musicListFiltersTitle
-    );
-    musicListFilterNameLabel = translate(
-      "musicListFilterNameLabel",
-      fallbackMessages.musicListFilterNameLabel
-    );
-    musicListFilterNamePlaceholder = translate(
-      "musicListFilterNamePlaceholder",
-      fallbackMessages.musicListFilterNamePlaceholder
-    );
-    musicListFilterCategoryLabel = translate(
-      "musicListFilterCategoryLabel",
-      fallbackMessages.musicListFilterCategoryLabel
-    );
-    musicListComposerLabel = translate(
-      "musicListComposerLabel",
-      fallbackMessages.musicListComposerLabel
-    );
-    musicListArrangerLabel = translate(
-      "musicListArrangerLabel",
-      fallbackMessages.musicListArrangerLabel
-    );
-    musicListLyricistLabel = translate(
-      "musicListLyricistLabel",
-      fallbackMessages.musicListLyricistLabel
-    );
-    musicListFilterReset = translate("musicListFilterReset", fallbackMessages.musicListFilterReset);
-    musicListFilterApply = translate("musicListFilterApply", fallbackMessages.musicListFilterApply);
-    musicListSortById = translate("musicListSortById", fallbackMessages.musicListSortById);
-    musicListSortByPublishedAt = translate(
-      "musicListSortByPublishedAt",
-      fallbackMessages.musicListSortByPublishedAt
-    );
-    musicListViewGrid = translate("musicListViewGrid", fallbackMessages.musicListViewGrid);
-    musicListViewAgenda = translate("musicListViewAgenda", fallbackMessages.musicListViewAgenda);
-    musicListCreatorLabel = translate(
-      "musicListCreatorLabel",
-      fallbackMessages.musicListCreatorLabel
-    );
-    musicJacketAltSuffix = translate("musicJacketAltSuffix", fallbackMessages.musicJacketAltSuffix);
+    clearLabel = translate("clearLabel");
+    musicListTitle = translate("musicListTitle");
+    musicListEmpty = translate("musicListEmpty");
+    musicListEnd = translate("musicListEnd");
+    musicListLoading = translate("musicListListLoading");
+    musicListLoadFailed = translate("musicListLoadFailed");
+    musicListLoadMore = translate("musicListLoadMore");
+    musicListOpenFilters = translate("musicListOpenFilters");
+    musicListFiltersTitle = translate("musicListFiltersTitle");
+    musicListFilterNameLabel = translate("musicListFilterNameLabel");
+    musicListFilterNamePlaceholder = translate("musicListFilterNamePlaceholder");
+    musicListFilterCategoryLabel = translate("musicListFilterCategoryLabel");
+    musicListComposerLabel = translate("musicListComposerLabel");
+    musicListArrangerLabel = translate("musicListArrangerLabel");
+    musicListLyricistLabel = translate("musicListLyricistLabel");
+    musicListFilterReset = translate("musicListFilterReset");
+    musicListFilterApply = translate("musicListFilterApply");
+    musicListSortById = translate("musicListSortById");
+    musicListSortByPublishedAt = translate("musicListSortByPublishedAt");
+    musicListViewGrid = translate("musicListViewGrid");
+    musicListViewAgenda = translate("musicListViewAgenda");
+    musicListCreatorLabel = translate("musicListCreatorLabel");
+    musicJacketAltSuffix = translate("musicJacketAltSuffix");
   };
 
   const refreshTranslations = async (locale: string): Promise<void> => {
     const resolvedLocale = await setI18nLocale(locale, data.commonMessages);
-    applyTranslations((key, fallback) => tCommon(resolvedLocale, key, fallback));
+    applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 
   const createSearchParams = (page: number): SvelteURLSearchParams => {

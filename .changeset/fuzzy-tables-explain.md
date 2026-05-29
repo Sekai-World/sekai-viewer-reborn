@@ -1,5 +1,6 @@
 ---
 "@apps/content-site": patch
+"@platform/i18n-source": patch
 "@platform/sekai-master-api-sdk": patch
 ---
 
@@ -12,3 +13,5 @@ Add color previews to the content-site theme selector.
 Give card list unit icons rounded surfaces for dark theme readability.
 
 Add a regional song list with jacket artwork, grid and agenda layouts, and searchable, clearable filters for title, MV type, and creator credits.
+
+Use the checked-in content-site i18n source messages as the runtime fallback for missing remote dictionary keys.
