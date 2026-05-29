@@ -4,7 +4,8 @@ import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   createMusicListPage,
   fetchMusicCatalog,
-  logMusicListDebug,
+  hasMusicListFilters,
+  logMusicListFilterDebug,
   parseMusicListQueryState
 } from "$lib/server/music-list";
 import type { RequestHandler } from "./$types";
@@ -19,12 +20,42 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const page = parsePageNumber(url.searchParams.get("page"));
   const queryState = parseMusicListQueryState(url.searchParams);
   const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
+  const hasFilters = hasMusicListFilters(queryState);
+
+  logMusicListFilterDebug("data request", {
+    region,
+    page,
+    queryState,
+    hasFilters,
+    includeSpoilerContent
+  });
 
   try {
+    const startedAt = performance.now();
     const catalog = await fetchMusicCatalog(getMasterApiBaseUrl(), region, includeSpoilerContent);
-    return json(createMusicListPage(catalog, queryState, page));
+    const musicListPage = createMusicListPage(catalog, queryState, page);
+
+    logMusicListFilterDebug("data response", {
+      region,
+      page,
+      queryState,
+      hasFilters,
+      durationMs: Math.round(performance.now() - startedAt),
+      catalogItemCount: catalog.length,
+      itemCount: musicListPage.items.length,
+      itemIds: musicListPage.items.map((item) => item.id),
+      pagination: musicListPage.pagination
+    });
+
+    return json(musicListPage);
   } catch (error) {
-    logMusicListDebug("data exception", { region, page, queryState, error });
+    logMusicListFilterDebug("data exception", {
+      region,
+      page,
+      queryState,
+      hasFilters,
+      error
+    });
     return json({ error: true }, { status: 500 });
   }
 };

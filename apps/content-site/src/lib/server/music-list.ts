@@ -135,10 +135,19 @@ export const parseMusicListQueryState = (searchParams: URLSearchParams): MusicLi
   lyricist: searchParams.get("lyricist")?.trim() ?? ""
 });
 
-export const logMusicListDebug = (label: string, details: Record<string, unknown>): void => {
-  if (dev) {
-    console.debug("[content-site:music-list]", label, details);
+export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>
+  queryState.name.length > 0 ||
+  queryState.categories.length > 0 ||
+  queryState.composer.length > 0 ||
+  queryState.arranger.length > 0 ||
+  queryState.lyricist.length > 0;
+
+export const logMusicListFilterDebug = (label: string, details: Record<string, unknown>): void => {
+  if (!dev) {
+    return;
   }
+
+  console.debug("[content-site:music-filter]", label, details);
 };
 
 export const fetchMusicCatalog = async (

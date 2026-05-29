@@ -4,7 +4,8 @@ import {
   buildMusicListFilterMeta,
   createMusicListPage,
   fetchMusicCatalog,
-  logMusicListDebug,
+  hasMusicListFilters,
+  logMusicListFilterDebug,
   parseMusicListQueryState
 } from "$lib/server/music-list";
 import type { PageServerLoad } from "./$types";
@@ -13,19 +14,46 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const queryState = parseMusicListQueryState(url.searchParams);
   const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
+  const hasFilters = hasMusicListFilters(queryState);
+
+  logMusicListFilterDebug("initial request", {
+    region,
+    queryState,
+    hasFilters,
+    includeSpoilerContent
+  });
 
   try {
+    const startedAt = performance.now();
     const catalog = await fetchMusicCatalog(getMasterApiBaseUrl(), region, includeSpoilerContent);
+    const initialPage = createMusicListPage(catalog, queryState, 1);
+    const filterMeta = buildMusicListFilterMeta(catalog);
+
+    logMusicListFilterDebug("initial response", {
+      region,
+      queryState,
+      hasFilters,
+      durationMs: Math.round(performance.now() - startedAt),
+      catalogItemCount: catalog.length,
+      itemCount: initialPage.items.length,
+      itemIds: initialPage.items.map((item) => item.id),
+      pagination: initialPage.pagination
+    });
 
     return {
       region,
-      initialPage: createMusicListPage(catalog, queryState, 1),
+      initialPage,
       initialQuery: queryState,
-      filterMeta: buildMusicListFilterMeta(catalog),
+      filterMeta,
       initialLoadFailed: false
     };
   } catch (error) {
-    logMusicListDebug("initial exception", { region, queryState, error });
+    logMusicListFilterDebug("initial exception", {
+      region,
+      queryState,
+      hasFilters,
+      error
+    });
 
     return {
       region,
