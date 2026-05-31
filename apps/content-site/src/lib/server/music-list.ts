@@ -9,6 +9,11 @@ export type MusicListItem = {
   composer: string | null;
   arranger: string | null;
   lyricist: string | null;
+  vocalCharacters: string[];
+  vocalUnits: string[];
+  tags: string[];
+  difficulties: string[];
+  levels: string[];
   publishedAt: string | number | null;
 };
 
@@ -28,6 +33,11 @@ export type MusicListFilterMeta = {
   composers: string[];
   arrangers: string[];
   lyricists: string[];
+  vocalCharacters: string[];
+  vocalUnits: string[];
+  tags: string[];
+  difficulties: string[];
+  levels: string[];
 };
 
 export type MusicListSortBy = "publishedAt" | "id";
@@ -41,6 +51,11 @@ export type MusicListQueryState = {
   composer: string;
   arranger: string;
   lyricist: string;
+  vocalCharacter: string[];
+  vocalUnit: string[];
+  tag: string;
+  difficulty: string[];
+  level: string;
 };
 
 export const DEFAULT_MUSIC_LIST_PAGE_SIZE = 24;
@@ -71,6 +86,43 @@ const getDateValue = (value: unknown): string | number | null => {
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
 
+const getStringList = (
+  value: unknown,
+  objectKeys: readonly string[] = ["id", "characterId", "gameCharacterId", "unit", "name", "tag"]
+): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => {
+        if (typeof entry === "string" || typeof entry === "number") {
+          return String(entry).trim();
+        }
+
+        const object = getObject(entry);
+        if (!object) {
+          return "";
+        }
+
+        return pickString(object, objectKeys) ?? "";
+      })
+      .filter(Boolean);
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    return String(value)
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
+  const object = getObject(value);
+  if (object) {
+    const result = pickString(object, objectKeys);
+    return result ? [result] : [];
+  }
+
+  return [];
+};
+
 const pickString = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
   for (const key of keys) {
     const value = getString(source[key]);
@@ -80,6 +132,21 @@ const pickString = (source: Record<string, unknown>, keys: readonly string[]): s
   }
 
   return null;
+};
+
+const pickStringList = (
+  source: Record<string, unknown>,
+  keys: readonly string[],
+  objectKeys?: readonly string[]
+): string[] => {
+  for (const key of keys) {
+    const values = getStringList(source[key], objectKeys);
+    if (values.length > 0) {
+      return [...new Set(values)];
+    }
+  }
+
+  return [];
 };
 
 const parseMusicListItem = (payload: unknown): MusicListItem | null => {
@@ -106,6 +173,22 @@ const parseMusicListItem = (payload: unknown): MusicListItem | null => {
     composer: pickString(root, ["composer"]),
     arranger: pickString(root, ["arranger"]),
     lyricist: pickString(root, ["lyricist"]),
+    vocalCharacters: pickStringList(root, [
+      "vocalCharacters",
+      "vocalCharacterIds",
+      "vocal_character",
+      "vocalCharactersIds"
+    ]),
+    vocalUnits: pickStringList(root, ["vocalUnits", "vocalUnit", "vocal_unit"]).map((value) =>
+      value.toLocaleLowerCase()
+    ),
+    tags: pickStringList(root, ["tags", "musicTags", "music_tag"]),
+    difficulties: pickStringList(
+      root,
+      ["difficulties", "difficulty"],
+      ["difficulty", "musicDifficulty", "name", "id"]
+    ).map((value) => value.toLocaleLowerCase()),
+    levels: pickStringList(root, ["levels", "level"], ["level", "playLevel", "musicLevel", "name"]),
     publishedAt: getDateValue(root.publishedAt ?? root.published_at)
   };
 };
@@ -132,7 +215,12 @@ export const parseMusicListQueryState = (searchParams: URLSearchParams): MusicLi
   categories: parseMultiValueParam(searchParams, "category"),
   composer: searchParams.get("composer")?.trim() ?? "",
   arranger: searchParams.get("arranger")?.trim() ?? "",
-  lyricist: searchParams.get("lyricist")?.trim() ?? ""
+  lyricist: searchParams.get("lyricist")?.trim() ?? "",
+  vocalCharacter: parseMultiValueParam(searchParams, "vocal_character"),
+  vocalUnit: parseMultiValueParam(searchParams, "vocal_unit"),
+  tag: searchParams.get("music_tag")?.trim() ?? "",
+  difficulty: parseMultiValueParam(searchParams, "difficulty"),
+  level: searchParams.get("level")?.trim() ?? ""
 });
 
 export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>
@@ -140,7 +228,12 @@ export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>
   queryState.categories.length > 0 ||
   queryState.composer.length > 0 ||
   queryState.arranger.length > 0 ||
-  queryState.lyricist.length > 0;
+  queryState.lyricist.length > 0 ||
+  queryState.vocalCharacter.length > 0 ||
+  queryState.vocalUnit.length > 0 ||
+  queryState.tag.length > 0 ||
+  queryState.difficulty.length > 0 ||
+  queryState.level.length > 0;
 
 export const logMusicListFilterDebug = (label: string, details: Record<string, unknown>): void => {
   if (!dev) {
@@ -216,8 +309,97 @@ export const buildMusicListFilterMeta = (items: MusicListItem[]): MusicListFilte
     ...new Set(
       items.map((item) => item.lyricist).filter((value): value is string => Boolean(value))
     )
-  ].sort()
+  ].sort(),
+  vocalCharacters: [...new Set(items.flatMap((item) => item.vocalCharacters))].sort(),
+  vocalUnits: [...new Set(items.flatMap((item) => item.vocalUnits))].sort(),
+  tags: [...new Set(items.flatMap((item) => item.tags))].sort(),
+  difficulties: [...new Set(items.flatMap((item) => item.difficulties))].sort(),
+  levels: [...new Set(items.flatMap((item) => item.levels))].sort((left, right) => {
+    const numericCompare = Number(left) - Number(right);
+    return Number.isFinite(numericCompare) && numericCompare !== 0
+      ? numericCompare
+      : left.localeCompare(right);
+  })
 });
+
+type LevelCondition =
+  | { type: "exact"; value: number }
+  | { type: "range"; min: number; max: number }
+  | { type: "gt" | "gte" | "lt" | "lte"; value: number }
+  | { type: "raw"; value: string }
+  | null;
+
+const parseLevelCondition = (value: string): LevelCondition => {
+  const input = value.trim();
+  if (!input) {
+    return null;
+  }
+
+  const range = input.match(/^(\d+)\s*-\s*(\d+)$/);
+  if (range) {
+    const min = Number(range[1]);
+    const max = Number(range[2]);
+    return { type: "range", min: Math.min(min, max), max: Math.max(min, max) };
+  }
+
+  const comparison = input.match(/^(>=|>|<=|<)\s*(\d+)$/);
+  if (comparison) {
+    const valueNumber = Number(comparison[2]);
+    const typeByOperator = {
+      ">": "gt",
+      ">=": "gte",
+      "<": "lt",
+      "<=": "lte"
+    } as const;
+    return {
+      type: typeByOperator[comparison[1] as keyof typeof typeByOperator],
+      value: valueNumber
+    };
+  }
+
+  if (/^\d+$/.test(input)) {
+    return { type: "exact", value: Number(input) };
+  }
+
+  return { type: "raw", value: input };
+};
+
+const matchesLevelCondition = (level: string, condition: LevelCondition): boolean => {
+  if (!condition) {
+    return true;
+  }
+
+  if (condition.type === "raw") {
+    return level === condition.value;
+  }
+
+  const numericLevel = Number(level);
+  if (!Number.isFinite(numericLevel)) {
+    return false;
+  }
+
+  if (condition.type === "exact") {
+    return numericLevel === condition.value;
+  }
+
+  if (condition.type === "range") {
+    return numericLevel >= condition.min && numericLevel <= condition.max;
+  }
+
+  if (condition.type === "gt") {
+    return numericLevel > condition.value;
+  }
+
+  if (condition.type === "gte") {
+    return numericLevel >= condition.value;
+  }
+
+  if (condition.type === "lt") {
+    return numericLevel < condition.value;
+  }
+
+  return numericLevel <= condition.value;
+};
 
 export const createMusicListPage = (
   catalog: MusicListItem[],
@@ -226,6 +408,7 @@ export const createMusicListPage = (
   pageSize = DEFAULT_MUSIC_LIST_PAGE_SIZE
 ): MusicListPage => {
   const needle = queryState.name.toLocaleLowerCase();
+  const levelCondition = parseLevelCondition(queryState.level);
   const filtered = catalog.filter((item) => {
     if (needle && !item.title.toLocaleLowerCase().includes(needle)) {
       return false;
@@ -241,7 +424,16 @@ export const createMusicListPage = (
     return (
       (!queryState.composer || item.composer === queryState.composer) &&
       (!queryState.arranger || item.arranger === queryState.arranger) &&
-      (!queryState.lyricist || item.lyricist === queryState.lyricist)
+      (!queryState.lyricist || item.lyricist === queryState.lyricist) &&
+      (queryState.vocalCharacter.length === 0 ||
+        queryState.vocalCharacter.some((value) => item.vocalCharacters.includes(value))) &&
+      (queryState.vocalUnit.length === 0 ||
+        queryState.vocalUnit.some((value) => item.vocalUnits.includes(value))) &&
+      (!queryState.tag || item.tags.includes(queryState.tag)) &&
+      (queryState.difficulty.length === 0 ||
+        queryState.difficulty.some((value) => item.difficulties.includes(value))) &&
+      (!queryState.level ||
+        item.levels.some((value) => matchesLevelCondition(value, levelCondition)))
     );
   });
 
