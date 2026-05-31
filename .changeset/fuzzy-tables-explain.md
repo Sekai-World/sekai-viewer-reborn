@@ -15,3 +15,9 @@ Give card list unit icons rounded surfaces for dark theme readability.
 Add a regional song list with jacket artwork, grid and agenda layouts, and searchable, clearable filters for title, MV type, and creator credits.
 
 Use the checked-in content-site i18n source messages as the runtime fallback for missing remote dictionary keys.
+
+Prepare the song list filters for vocal character, vocal unit, tag, difficulty, and level fields.
+
+Add song filter hints, multi-select difficulty, game character and unit pickers, and level condition matching.
+
+Make song list vocal filters use game character and unit selectors, add multi-select song difficulty filtering, and support level filter conditions.
