@@ -4,6 +4,7 @@
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
+  import { toTimestampMs } from "$lib/date-time";
   import MusicListCard from "$lib/components/MusicListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, {
@@ -38,6 +39,10 @@
   let isLoading = $state(false);
   let isReloading = $state(false);
   let errorMessage = $state<string | null>(null);
+  let sentinel: HTMLDivElement | null = $state(null);
+  let isLoadMoreHintVisible = $state(false);
+  let isTouchPointer = $state(false);
+  let lastTouchY = $state<number | null>(null);
   let sortBy = $state<MusicListSortBy>("publishedAt");
   let sortOrder = $state<MusicListSortOrder>("desc");
   let nameFilter = $state("");
@@ -50,6 +55,7 @@
   let tagFilter = $state("");
   let difficultyFilter = $state<string[]>([]);
   let levelFilter = $state("");
+  let spoilerFilter = $state(false);
   let nameDraft = $state("");
   let categoryDraft = $state<string[]>([]);
   let composerDraft = $state("");
@@ -75,8 +81,10 @@
   let musicListEmpty = $state(getInitialCommonText("musicListEmpty"));
   let musicListEnd = $state(getInitialCommonText("musicListEnd"));
   let musicListLoading = $state(getInitialCommonText("musicListListLoading"));
+  let musicListLoadingMore = $state(getInitialCommonText("musicListLoadingMore"));
+  let musicListLoadMoreHintDesktop = $state(getInitialCommonText("musicListLoadMoreHintDesktop"));
+  let musicListLoadMoreHintMobile = $state(getInitialCommonText("musicListLoadMoreHintMobile"));
   let musicListLoadFailed = $state(getInitialCommonText("musicListLoadFailed"));
-  let musicListLoadMore = $state(getInitialCommonText("musicListLoadMore"));
   let musicListOpenFilters = $state(getInitialCommonText("musicListOpenFilters"));
   let musicListFiltersTitle = $state(getInitialCommonText("musicListFiltersTitle"));
   let musicListFilterNameLabel = $state(getInitialCommonText("musicListFilterNameLabel"));
@@ -105,6 +113,7 @@
   let musicListViewAgenda = $state(getInitialCommonText("musicListViewAgenda"));
   let musicListCreatorLabel = $state(getInitialCommonText("musicListCreatorLabel"));
   let musicJacketAltSuffix = $state(getInitialCommonText("musicJacketAltSuffix"));
+  let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
   const unitFilterValues = [
     "idol",
     "light_sound",
@@ -188,6 +197,19 @@
     return asset(`/chr_ts/chr_ts_${id}_g1.png`);
   };
 
+  const isSpoilerMusic = (item: MusicListItem): boolean => {
+    const publishedAtMs = toTimestampMs(item.publishedAt);
+    return publishedAtMs !== null && publishedAtMs > Date.now();
+  };
+
+  const visibleItems = $derived.by(() => {
+    if (spoilerFilter) {
+      return items;
+    }
+
+    return items.filter((item) => !isSpoilerMusic(item));
+  });
+
   const hasFilters = (): boolean =>
     Boolean(
       nameFilter ||
@@ -219,7 +241,7 @@
   const getViewKey = (): string => "content-site:music-list-view-mode";
 
   $effect(() => {
-    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.vocalUnit}|${data.initialQuery.tag}|${data.initialQuery.difficulty}|${data.initialQuery.level}`;
+    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.vocalUnit}|${data.initialQuery.tag}|${data.initialQuery.difficulty}|${data.initialQuery.level}|${data.initialQuery.spoiler ? "1" : "0"}`;
     if (key === initialStateKey) {
       return;
     }
@@ -240,6 +262,7 @@
     tagFilter = data.initialQuery.tag;
     difficultyFilter = [...data.initialQuery.difficulty];
     levelFilter = data.initialQuery.level;
+    spoilerFilter = data.initialQuery.spoiler;
     syncDrafts();
     errorMessage = data.initialLoadFailed ? musicListLoadFailed : null;
   });
@@ -248,6 +271,87 @@
     const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
     applyTranslations(translate);
     void refreshTranslations(data.uiLocale);
+  });
+
+  $effect(() => {
+    if (!browser || !sentinel || !hasNext) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        isLoadMoreHintVisible = entries.some((entry) => entry.isIntersecting);
+      },
+      { threshold: 0.96 }
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  });
+
+  $effect(() => {
+    if (!browser) {
+      return;
+    }
+
+    isTouchPointer = window.matchMedia("(pointer: coarse)").matches;
+  });
+
+  $effect(() => {
+    if (!browser || !hasNext) {
+      return;
+    }
+
+    const triggerLoadMore = (): void => {
+      if (!isLoadMoreHintVisible || isLoading || !hasNext) {
+        return;
+      }
+
+      void loadMore();
+    };
+
+    const handleWheel = (event: WheelEvent): void => {
+      if (event.deltaY > 0) {
+        triggerLoadMore();
+      }
+    };
+
+    const handleTouchStart = (event: TouchEvent): void => {
+      lastTouchY = event.touches[0]?.clientY ?? null;
+    };
+
+    const handleTouchMove = (event: TouchEvent): void => {
+      const nextTouchY = event.touches[0]?.clientY ?? null;
+      if (lastTouchY === null || nextTouchY === null) {
+        lastTouchY = nextTouchY;
+        return;
+      }
+
+      const deltaY = lastTouchY - nextTouchY;
+      lastTouchY = nextTouchY;
+      if (deltaY > 12) {
+        triggerLoadMore();
+      }
+    };
+
+    const handleTouchEnd = (): void => {
+      lastTouchY = null;
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   });
 
   $effect(() => {
@@ -311,14 +415,21 @@
     }
 
     const showSpoilerContent = contentDisplaySettings.showSpoilerContent;
+    const isInitialSpoilerState = spoilerContentAppliedState === null;
     if (spoilerContentAppliedState === showSpoilerContent) {
       return;
     }
 
     spoilerContentAppliedState = showSpoilerContent;
-    const requestIncludesSpoilers =
-      new URL(window.location.href).searchParams.get("spoiler") === "true";
+    const searchParams = new URL(window.location.href).searchParams;
+    const hasSpoilerQueryParam = searchParams.has("spoiler");
+    const requestIncludesSpoilers = searchParams.get("spoiler") === "true";
+    if (isInitialSpoilerState && hasSpoilerQueryParam) {
+      return;
+    }
+
     if (requestIncludesSpoilers !== showSpoilerContent) {
+      spoilerFilter = showSpoilerContent;
       void reloadFirstPage();
     }
   });
@@ -332,8 +443,10 @@
     musicListEmpty = translate("musicListEmpty");
     musicListEnd = translate("musicListEnd");
     musicListLoading = translate("musicListListLoading");
+    musicListLoadingMore = translate("musicListLoadingMore");
+    musicListLoadMoreHintDesktop = translate("musicListLoadMoreHintDesktop");
+    musicListLoadMoreHintMobile = translate("musicListLoadMoreHintMobile");
     musicListLoadFailed = translate("musicListLoadFailed");
-    musicListLoadMore = translate("musicListLoadMore");
     musicListOpenFilters = translate("musicListOpenFilters");
     musicListFiltersTitle = translate("musicListFiltersTitle");
     musicListFilterNameLabel = translate("musicListFilterNameLabel");
@@ -360,6 +473,7 @@
     musicListViewAgenda = translate("musicListViewAgenda");
     musicListCreatorLabel = translate("musicListCreatorLabel");
     musicJacketAltSuffix = translate("musicJacketAltSuffix");
+    spoilerContentLabel = translate("spoilerContent");
   };
 
   const refreshTranslations = async (locale: string): Promise<void> => {
@@ -372,7 +486,7 @@
     params.set("page", String(page));
     params.set("sort_by", sortBy);
     params.set("sort_order", sortOrder);
-    params.set("spoiler", String(contentDisplaySettings.showSpoilerContent));
+    params.set("spoiler", String(spoilerFilter));
     if (nameFilter) params.set("name", nameFilter);
     categoryFilter.forEach((value) => params.append("category", value));
     if (composerFilter) params.set("composer", composerFilter);
@@ -430,6 +544,7 @@
     isLoading = true;
     isReloading = true;
     errorMessage = null;
+    isLoadMoreHintVisible = false;
     try {
       const nextPage = await fetchPage(1);
       items = nextPage.items;
@@ -445,13 +560,22 @@
     }
   };
 
+  const mergeItems = (
+    currentItems: MusicListItem[],
+    nextItems: MusicListItem[]
+  ): MusicListItem[] => {
+    const existingIds = new Set(currentItems.map((item) => item.id));
+    return [...currentItems, ...nextItems.filter((item) => !existingIds.has(item.id))];
+  };
+
   const loadMore = async (): Promise<void> => {
     if (isLoading || !hasNext) return;
     isLoading = true;
+    isLoadMoreHintVisible = false;
     errorMessage = null;
     try {
       const nextPage = await fetchPage(currentPage + 1);
-      items = [...items, ...nextPage.items];
+      items = mergeItems(items, nextPage.items);
       currentPage = nextPage.pagination.page;
       hasNext = nextPage.pagination.hasNext;
     } catch {
@@ -609,7 +733,7 @@
         ? "grid grid-cols-1 gap-4 lg:grid-cols-2"
         : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}
     >
-      {#each items as item (item.id)}
+      {#each visibleItems as item (item.id)}
         <MusicListCard
           region={data.region}
           {item}
@@ -617,29 +741,29 @@
           {idLabel}
           jacketAltSuffix={musicJacketAltSuffix}
           creatorLabel={musicListCreatorLabel}
+          {spoilerContentLabel}
           {getCategoryLabel}
         />
       {/each}
     </div>
-    {#if items.length === 0 && !errorMessage}
+    {#if visibleItems.length === 0 && !errorMessage}
       <p class="py-12 text-center text-sm opacity-70">{musicListEmpty}</p>
     {/if}
     {#if errorMessage}
       <div class="alert alert-error">{errorMessage}</div>
     {/if}
     {#if hasNext}
-      <div class="flex justify-center py-5">
-        <button
-          type="button"
-          class="btn btn-outline btn-sm"
-          disabled={isLoading}
-          onclick={() => void loadMore()}
-        >
-          {#if isLoading}<span class="loading loading-spinner loading-xs"></span>{/if}
-          {musicListLoadMore}
-        </button>
+      <div bind:this={sentinel} class="flex min-h-24 items-center justify-center py-5">
+        {#if isLoading}
+          <span class="loading loading-spinner loading-md"></span>
+          <span class="ml-3 text-sm opacity-70">{musicListLoadingMore}</span>
+        {:else}
+          <span class="text-sm opacity-60">
+            {isTouchPointer ? musicListLoadMoreHintMobile : musicListLoadMoreHintDesktop}
+          </span>
+        {/if}
       </div>
-    {:else if items.length > 0}
+    {:else if visibleItems.length > 0}
       <p class="py-2 text-center text-sm opacity-60">{musicListEnd}</p>
     {/if}
   {/if}
