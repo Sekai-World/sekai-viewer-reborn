@@ -20,4 +20,12 @@ Prepare the song list filters for vocal character, vocal unit, tag, difficulty, 
 
 Add song filter hints, multi-select difficulty, game character and unit pickers, and level condition matching.
 
+Respect spoiler content display settings on the song list and mosaic unrevealed future songs when enabled.
+
+Use the same scroll-to-load-more sentinel behavior on the song list as card and event lists.
+
+Refresh the sekai-master-api SDK after card and song list spoiler query support landed upstream.
+
+Drive card and song list spoiler loading from the `spoiler` query parameter.
+
 Make song list vocal filters use game character and unit selectors, add multi-select song difficulty filtering, and support level filter conditions.
