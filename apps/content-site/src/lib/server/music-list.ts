@@ -56,6 +56,7 @@ export type MusicListQueryState = {
   tag: string;
   difficulty: string[];
   level: string;
+  spoiler: boolean;
 };
 
 export const DEFAULT_MUSIC_LIST_PAGE_SIZE = 24;
@@ -220,7 +221,8 @@ export const parseMusicListQueryState = (searchParams: URLSearchParams): MusicLi
   vocalUnit: parseMultiValueParam(searchParams, "vocal_unit"),
   tag: searchParams.get("music_tag")?.trim() ?? "",
   difficulty: parseMultiValueParam(searchParams, "difficulty"),
-  level: searchParams.get("level")?.trim() ?? ""
+  level: searchParams.get("level")?.trim() ?? "",
+  spoiler: searchParams.get("spoiler") === "true"
 });
 
 export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>

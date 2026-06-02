@@ -41,7 +41,6 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseCardListQueryState(url.searchParams);
-  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
   const hasFilters = hasCardListFilters(queryState);
   const filterMeta = getDefaultCardListFilterMeta();
 
@@ -56,12 +55,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
     const response = await getCardsByRegionList({
       baseUrl,
       path: { region },
-      query: createCardListRequestQuery(
-        queryState,
-        1,
-        DEFAULT_CARD_LIST_PAGE_SIZE,
-        includeSpoilerContent
-      )
+      query: createCardListRequestQuery(queryState, 1, DEFAULT_CARD_LIST_PAGE_SIZE)
     });
 
     if (response.error) {

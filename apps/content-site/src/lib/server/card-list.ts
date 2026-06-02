@@ -1,4 +1,7 @@
-import type { GetCardsByRegionListData, SharedCardListResponse } from "@platform/sekai-master-api-sdk";
+import type {
+  GetCardsByRegionListData,
+  SharedCardListResponse
+} from "@platform/sekai-master-api-sdk";
 import { dev } from "$app/environment";
 
 export type CardListItem = {
@@ -59,6 +62,7 @@ export type CardListQueryState = {
   rarity: string[];
   supportUnit: string[];
   has3dmvCutIn: boolean;
+  spoiler: boolean;
 };
 
 export const DEFAULT_CARD_LIST_PAGE_SIZE = 24;
@@ -75,7 +79,8 @@ const DEFAULT_CARD_LIST_QUERY_STATE: CardListQueryState = {
   attr: [],
   rarity: [],
   supportUnit: [],
-  has3dmvCutIn: false
+  has3dmvCutIn: false,
+  spoiler: false
 };
 
 const getTrimmedSearchParam = (value: string | null): string => {
@@ -99,7 +104,10 @@ const parseSortOrder = (value: string | null): CardListSortOrder =>
   value === "asc" ? "asc" : "desc";
 
 const parseMultiValueParam = (searchParams: URLSearchParams, key: string): string[] => {
-  const values = searchParams.getAll(key).map((v) => v.trim()).filter((v) => v.length > 0);
+  const values = searchParams
+    .getAll(key)
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
   return [...new Set(values)];
 };
 
@@ -114,19 +122,19 @@ export const parseCardListQueryState = (searchParams: URLSearchParams): CardList
   attr: parseMultiValueParam(searchParams, "attr"),
   rarity: parseMultiValueParam(searchParams, "rarity"),
   supportUnit: parseMultiValueParam(searchParams, "support_unit"),
-  has3dmvCutIn: searchParams.get("has_3dmv_cut_in") === "true"
+  has3dmvCutIn: searchParams.get("has_3dmv_cut_in") === "true",
+  spoiler: searchParams.get("spoiler") === "true"
 });
 
 export const createCardListRequestQuery = (
   queryState: CardListQueryState,
   page: number,
-  pageSize: number,
-  includeSpoilerContent: boolean
+  pageSize: number
 ): GetCardsByRegionListData["query"] => {
   const query: NonNullable<GetCardsByRegionListData["query"]> = {
     page,
     page_size: pageSize,
-    spoiler: includeSpoilerContent,
+    spoiler: queryState.spoiler,
     sort_by: queryState.sortBy,
     sort_order: queryState.sortOrder
   };
@@ -181,10 +189,7 @@ export const hasCardListFilters = (queryState: CardListQueryState): boolean =>
   queryState.supportUnit.length > 0 ||
   queryState.has3dmvCutIn;
 
-export const logCardListFilterDebug = (
-  label: string,
-  details: Record<string, unknown>
-): void => {
+export const logCardListFilterDebug = (label: string, details: Record<string, unknown>): void => {
   if (!dev) {
     return;
   }
@@ -329,7 +334,9 @@ const parseCharacterName = (characterNode: Record<string, unknown> | null): stri
 
   const firstName = pickFirstString(characterNode, ["firstName"]);
   const givenName = pickFirstString(characterNode, ["givenName"]);
-  return [firstName, givenName].filter((value): value is string => value !== null).join(" ") || null;
+  return (
+    [firstName, givenName].filter((value): value is string => value !== null).join(" ") || null
+  );
 };
 
 const parseSkillKey = (
@@ -354,7 +361,10 @@ const parseSkillKey = (
           return "perfect_score_up";
         }
 
-        const skillEffectType = pickFirstString(firstEffect, ["skillEffectType", "skill_effect_type"]);
+        const skillEffectType = pickFirstString(firstEffect, [
+          "skillEffectType",
+          "skill_effect_type"
+        ]);
         if (skillEffectType === "score_up_condition_life") {
           return "life_score_up";
         }
@@ -399,7 +409,11 @@ const parseCardListItem = (payload: unknown): CardListItem | null => {
     prefix: pickFirstString(cardNode, ["prefix", "name", "title"]) ?? `#${id}`,
     assetBundleName: pickFirstString(cardNode, ["assetbundleName", "assetBundleName"]),
     attr: pickFirstString(cardNode, ["attr", "attribute"]),
-    rarityType: pickFirstString(rarityNode ?? cardNode, ["cardRarityType", "card_rarity_type", "rarityType"]),
+    rarityType: pickFirstString(rarityNode ?? cardNode, [
+      "cardRarityType",
+      "card_rarity_type",
+      "rarityType"
+    ]),
     characterId:
       pickFirstNumber(characterNode ?? {}, ["gameCharacterId", "characterId", "id"]) ??
       pickFirstNumber(cardNode, ["characterId", "gameCharacterId"]),
@@ -417,7 +431,10 @@ const parseCardListItem = (payload: unknown): CardListItem | null => {
       "initial_special_training_status"
     ]),
     releaseAt: pickFirstDateValue(cardNode, ["releaseAt", "release_at"]),
-    archivePublishedAt: pickFirstDateValue(cardNode, ["archivePublishedAt", "archive_published_at"]),
+    archivePublishedAt: pickFirstDateValue(cardNode, [
+      "archivePublishedAt",
+      "archive_published_at"
+    ]),
     seq: pickFirstDateValue(cardNode, ["seq"])
   };
 };
@@ -494,7 +511,10 @@ export const filterCardListItems = (
       return false;
     }
 
-    if (queryState.skill.length > 0 && (!item.skillKey || !queryState.skill.includes(item.skillKey))) {
+    if (
+      queryState.skill.length > 0 &&
+      (!item.skillKey || !queryState.skill.includes(item.skillKey))
+    ) {
       return false;
     }
 
@@ -602,7 +622,10 @@ export const buildCardListFilterMeta = (items: CardListItem[]): CardListFilterMe
     }
   }
 
-  const sortByOrder = (order: readonly string[], entries: Map<string, string>): CardListFilterOption[] =>
+  const sortByOrder = (
+    order: readonly string[],
+    entries: Map<string, string>
+  ): CardListFilterOption[] =>
     order
       .filter((value) => entries.has(value))
       .map((value) => ({ value, label: entries.get(value) ?? formatLabel(value) }))

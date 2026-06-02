@@ -26,7 +26,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const page = parsePageNumber(url.searchParams.get("page"));
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseCardListQueryState(url.searchParams);
-  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
   const hasFilters = hasCardListFilters(queryState);
 
   logCardListFilterDebug("data request", {
@@ -40,12 +39,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     const response = await getCardsByRegionList({
       baseUrl,
       path: { region },
-      query: createCardListRequestQuery(
-        queryState,
-        page,
-        DEFAULT_CARD_LIST_PAGE_SIZE,
-        includeSpoilerContent
-      )
+      query: createCardListRequestQuery(queryState, page, DEFAULT_CARD_LIST_PAGE_SIZE)
     });
 
     if (response.error) {

@@ -13,19 +13,18 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const queryState = parseMusicListQueryState(url.searchParams);
-  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
   const hasFilters = hasMusicListFilters(queryState);
 
   logMusicListFilterDebug("initial request", {
     region,
     queryState,
     hasFilters,
-    includeSpoilerContent
+    includeSpoilerContent: queryState.spoiler
   });
 
   try {
     const startedAt = performance.now();
-    const catalog = await fetchMusicCatalog(getMasterApiBaseUrl(), region, includeSpoilerContent);
+    const catalog = await fetchMusicCatalog(getMasterApiBaseUrl(), region, queryState.spoiler);
     const initialPage = createMusicListPage(catalog, queryState, 1);
     const filterMeta = buildMusicListFilterMeta(catalog);
 

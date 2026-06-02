@@ -19,7 +19,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const page = parsePageNumber(url.searchParams.get("page"));
   const queryState = parseMusicListQueryState(url.searchParams);
-  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
   const hasFilters = hasMusicListFilters(queryState);
 
   logMusicListFilterDebug("data request", {
@@ -27,12 +26,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
     page,
     queryState,
     hasFilters,
-    includeSpoilerContent
+    includeSpoilerContent: queryState.spoiler
   });
 
   try {
     const startedAt = performance.now();
-    const catalog = await fetchMusicCatalog(getMasterApiBaseUrl(), region, includeSpoilerContent);
+    const catalog = await fetchMusicCatalog(getMasterApiBaseUrl(), region, queryState.spoiler);
     const musicListPage = createMusicListPage(catalog, queryState, page);
 
     logMusicListFilterDebug("data response", {

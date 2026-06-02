@@ -1760,6 +1760,34 @@ export type GetMusicsByRegionListData = {
          */
         spoiler?: boolean;
         /**
+         * Fuzzy music name
+         */
+        name?: string;
+        /**
+         * Comma-separated music categories
+         */
+        category?: string;
+        /**
+         * Comma-separated composer names
+         */
+        composer?: string;
+        /**
+         * Comma-separated arranger names
+         */
+        arranger?: string;
+        /**
+         * Comma-separated lyricist names
+         */
+        lyricist?: string;
+        /**
+         * Comma-separated music tags
+         */
+        tag?: string;
+        /**
+         * Music difficulty playLevel. Supports 30, >30, >=30, <30, <=30, or 26-30
+         */
+        playLevel?: string;
+        /**
          * Sort field
          */
         sort_by?: string;

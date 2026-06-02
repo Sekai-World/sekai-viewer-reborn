@@ -30,6 +30,7 @@
     rarity: string[];
     supportUnit: string[];
     has3dmvCutIn: boolean;
+    spoiler: boolean;
   };
   type CardListFilterMeta = {
     unit: CardListFilterOption[];
@@ -70,6 +71,7 @@
   let rarityFilter = $state<string[]>([]);
   let supportUnitFilter = $state<string[]>([]);
   let has3dmvCutInFilter = $state(false);
+  let spoilerFilter = $state(false);
   let filterNameDraft = $state("");
   let filterUnitDraft = $state<string[]>([]);
   let filterCharacterDraft = $state<string[]>([]);
@@ -187,7 +189,7 @@
   };
 
   const visibleItems = $derived.by(() => {
-    if (contentDisplaySettings.showSpoilerContent) {
+    if (spoilerFilter) {
       return items;
     }
 
@@ -258,6 +260,7 @@
       data.initialQuery.rarity,
       data.initialQuery.supportUnit,
       data.initialQuery.has3dmvCutIn ? "1" : "0",
+      data.initialQuery.spoiler ? "1" : "0",
       data.initialPage.pagination.page,
       data.initialPage.items.length
     ].join("|");
@@ -430,6 +433,7 @@
     rarityFilter = [...data.initialQuery.rarity];
     supportUnitFilter = [...data.initialQuery.supportUnit];
     has3dmvCutInFilter = data.initialQuery.has3dmvCutIn;
+    spoilerFilter = data.initialQuery.spoiler;
     syncDraftFiltersFromCurrent();
     errorMessage = data.initialLoadFailed ? getInitialCommonText("cardListLoadFailed") : null;
 
@@ -557,15 +561,22 @@
     }
 
     const nextShowSpoilerContent = contentDisplaySettings.showSpoilerContent;
+    const isInitialSpoilerState = spoilerContentAppliedState === null;
     if (spoilerContentAppliedState === nextShowSpoilerContent) {
       return;
     }
 
     spoilerContentAppliedState = nextShowSpoilerContent;
 
-    const hasSpoilerQueryParam =
-      new URL(window.location.href).searchParams.get("spoiler") === "true";
-    if (hasSpoilerQueryParam !== nextShowSpoilerContent) {
+    const searchParams = new URL(window.location.href).searchParams;
+    const hasSpoilerQueryParam = searchParams.has("spoiler");
+    const requestIncludesSpoilers = searchParams.get("spoiler") === "true";
+    if (isInitialSpoilerState && hasSpoilerQueryParam) {
+      return;
+    }
+
+    if (requestIncludesSpoilers !== nextShowSpoilerContent) {
+      spoilerFilter = nextShowSpoilerContent;
       void reloadFirstPage();
     }
   });
@@ -618,7 +629,7 @@
     searchParams.set("page", String(page));
     searchParams.set("sort_by", sortBy);
     searchParams.set("sort_order", sortOrder);
-    searchParams.set("spoiler", String(contentDisplaySettings.showSpoilerContent));
+    searchParams.set("spoiler", String(spoilerFilter));
 
     if (nameFilter) {
       searchParams.set("name", nameFilter);
