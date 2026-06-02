@@ -58,15 +58,19 @@
     rarity_birthday: 1
   };
 
-  const isTrainableCard = (): boolean => item.rarityType === "rarity_3" || item.rarityType === "rarity_4";
+  const isTrainableCard = (): boolean =>
+    item.rarityType === "rarity_3" || item.rarityType === "rarity_4";
   const isTrainedOnlyCard = (): boolean =>
     item.initialSpecialTrainingStatus === "done" && isTrainableCard();
   const getReleaseAt = (): string | number | null => item.releaseAt ?? item.archivePublishedAt;
   const getCardTitle = (): string => item.prefix;
   const getCharacterLabel = (): string =>
     item.characterName ??
-    (item.characterId !== null ? `${cardListCharacterFallback} ${item.characterId}` : cardListCharacterFallback);
-  const getRarityValue = (): number => (item.rarityType ? (rarityValueByType[item.rarityType] ?? 0) : 0);
+    (item.characterId !== null
+      ? `${cardListCharacterFallback} ${item.characterId}`
+      : cardListCharacterFallback);
+  const getRarityValue = (): number =>
+    item.rarityType ? (rarityValueByType[item.rarityType] ?? 0) : 0;
   const getRarityFrameLevel = (): string | null => {
     if (item.rarityType === "rarity_birthday") {
       return "bd";
@@ -180,11 +184,7 @@
       : getThumbnailImageUrl(trained, fallbackRegion);
   };
 
-  const handleCardImageError = (
-    event: Event,
-    kind: CardImageKind,
-    trained: boolean
-  ): void => {
+  const handleCardImageError = (event: Event, kind: CardImageKind, trained: boolean): void => {
     const image = event.currentTarget;
     if (!(image instanceof HTMLImageElement) || image.dataset.fallbackApplied === "true") {
       return;
@@ -244,7 +244,14 @@
     {/if}
     {#if rarityIconUrl && rarityCount > 0}
       {#each Array.from(Array(rarityCount).keys()) as index (`rarity-thumb-${trained}-${index}`)}
-        <image href={rarityIconUrl} x={2 + index * 21} y="73" width="22" height="22" class="drop-shadow" />
+        <image
+          href={rarityIconUrl}
+          x={2 + index * 21}
+          y="73"
+          width="22"
+          height="22"
+          class="drop-shadow"
+        />
       {/each}
     {/if}
   </svg>
@@ -313,7 +320,7 @@
   {@const unitIconUrl = getUnitIconUrl(item.unit)}
   {@const supportUnitIconUrl =
     item.unit === "piapro" && item.supportUnit !== "none" ? getUnitIconUrl(item.supportUnit) : null}
-  <div class="flex flex-wrap gap-1.5">
+  <div class="flex flex-wrap items-center gap-1.5">
     <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
       {idLabel}{item.id}
     </span>
@@ -348,7 +355,9 @@
   class={`card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
 >
   {#if isSpoilerPlaceholderVisible()}
-    <div class={viewMode === "grid" ? "aspect-video bg-base-200/60" : "min-h-32 bg-base-200/60"}></div>
+    <div
+      class={viewMode === "grid" ? "aspect-video bg-base-200/60" : "min-h-32 bg-base-200/60"}
+    ></div>
     <div class="card-body gap-2 p-4">
       <div class="h-5 w-3/4 rounded bg-base-200/70"></div>
       <div class="h-4 w-1/3 rounded bg-base-200/70"></div>
@@ -441,7 +450,9 @@
               onerror={(event) => handleCardImageError(event, "small", false)}
             />
           {:else}
-            <div class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70">
+            <div
+              class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
+            >
               {getCardTitle()}
             </div>
           {/if}
