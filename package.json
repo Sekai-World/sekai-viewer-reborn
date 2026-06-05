@@ -3,6 +3,13 @@
   "private": true,
   "version": "0.1.0",
   "packageManager": "pnpm@11.0.2",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.0.2",
+      "onFail": "download"
+    }
+  },
   "scripts": {
     "dev": "turbo dev --parallel",
     "build": "turbo build",
