@@ -65,7 +65,9 @@
   let eventListOpenFilters = $state(getInitialCommonText("eventListOpenFilters"));
   let eventListFiltersTitle = $state(getInitialCommonText("eventListFiltersTitle"));
   let eventListFilterNameLabel = $state(getInitialCommonText("eventListFilterNameLabel"));
-  let eventListFilterNamePlaceholder = $state(getInitialCommonText("eventListFilterNamePlaceholder"));
+  let eventListFilterNamePlaceholder = $state(
+    getInitialCommonText("eventListFilterNamePlaceholder")
+  );
   let eventListFilterEventTypeLabel = $state(getInitialCommonText("eventListFilterEventTypeLabel"));
   let eventListFilterUnitLabel = $state(getInitialCommonText("eventListFilterUnitLabel"));
   let eventListFilterReset = $state(getInitialCommonText("eventListFilterReset"));
@@ -101,7 +103,10 @@
       value: "cheerful_carnival",
       label: tCommon(data.uiLocale, "eventTypeValues.cheerfulCarnival", "cheerful_carnival")
     },
-    { value: "world_bloom", label: tCommon(data.uiLocale, "eventTypeValues.worldLink", "world_bloom") }
+    {
+      value: "world_bloom",
+      label: tCommon(data.uiLocale, "eventTypeValues.worldLink", "world_bloom")
+    }
   ];
 
   const getUnitOptions = (): Array<{ value: string; label: string }> => [
@@ -205,10 +210,16 @@
       const nextSortOrder = parsed.sortOrder === "asc" ? "asc" : "desc";
       const nextName = typeof parsed.name === "string" ? parsed.name.trim() : "";
       const nextEventType = Array.isArray(parsed.eventType)
-        ? parsed.eventType.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
+        ? parsed.eventType
+            .filter((v) => typeof v === "string")
+            .map((v: string) => v.trim())
+            .filter((v: string) => v.length > 0)
         : [];
       const nextUnit = Array.isArray(parsed.unit)
-        ? parsed.unit.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
+        ? parsed.unit
+            .filter((v) => typeof v === "string")
+            .map((v: string) => v.trim())
+            .filter((v: string) => v.length > 0)
         : [];
 
       if (
@@ -373,7 +384,8 @@
 
     spoilerContentAppliedState = nextShowSpoilerContent;
 
-    const hasSpoilerQueryParam = new URL(window.location.href).searchParams.get("spoiler") === "true";
+    const hasSpoilerQueryParam =
+      new URL(window.location.href).searchParams.get("spoiler") === "true";
     if (hasSpoilerQueryParam !== nextShowSpoilerContent) {
       void reloadFirstPage();
     }
@@ -654,7 +666,9 @@
   </div>
 
   {#if isReloadingFirstPage}
-    <div class="content-card-shell flex min-h-48 items-center justify-center rounded-2xl p-8 shadow-sm">
+    <div
+      class="content-card-shell flex min-h-48 items-center justify-center rounded-2xl p-8 shadow-sm"
+    >
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{eventListLoading}</span>
     </div>

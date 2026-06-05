@@ -327,7 +327,7 @@
       color-mix(in oklab, white 18%, transparent),
       transparent 55%
     );
-    filter: url('#liquid-glass-distort');
+    filter: url("#liquid-glass-distort");
     opacity: 0.6;
     mix-blend-mode: overlay;
     pointer-events: none;

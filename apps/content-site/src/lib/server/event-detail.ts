@@ -86,9 +86,7 @@ const pickFirstDateValue = (
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
-const parseBannerGameCharacter = (
-  source: Record<string, unknown>
-): BannerGameCharacter | null => {
+const parseBannerGameCharacter = (source: Record<string, unknown>): BannerGameCharacter | null => {
   const node = getObject(source["bannerGameCharacter"]);
   if (!node) {
     return null;

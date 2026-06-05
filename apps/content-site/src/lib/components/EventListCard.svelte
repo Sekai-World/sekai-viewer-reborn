@@ -158,7 +158,9 @@
           buttonClass="block h-full w-full overflow-hidden"
         />
       {:else}
-        <div class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70">
+        <div
+          class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
+        >
           {item.title}
         </div>
       {/if}
