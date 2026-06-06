@@ -27,11 +27,20 @@ jobs:
         with:
           path: app
 
+      - name: Create i18n app token
+        id: i18n-app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.I18N_SYNC_APP_ID }}
+          private-key: ${{ secrets.I18N_SYNC_APP_PRIVATE_KEY }}
+          owner: Sekai-World
+          repositories: sekai-i18n-reborn
+
       - name: Checkout translation repository
         uses: actions/checkout@v5
         with:
           repository: Sekai-World/sekai-i18n-reborn
-          token: ${{ secrets.I18N_SYNC_TOKEN }}
+          token: ${{ steps.i18n-app-token.outputs.token }}
           path: i18n
 
       - name: Setup mise tools
@@ -51,7 +60,7 @@ jobs:
       - name: Create pull request
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.I18N_SYNC_TOKEN }}
+          token: ${{ steps.i18n-app-token.outputs.token }}
           path: i18n
           branch: sync/content-site-i18n-source
           delete-branch: true
