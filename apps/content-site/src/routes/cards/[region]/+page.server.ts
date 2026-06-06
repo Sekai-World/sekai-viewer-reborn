@@ -14,16 +14,16 @@ import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
 
 const summarizeResponse = (
-  response: { response: Response },
+  result: { response?: Response },
   durationMs: number
 ): Record<string, unknown> => ({
-  contentLength: response.response.headers.get("content-length"),
-  contentType: response.response.headers.get("content-type"),
+  contentLength: result.response?.headers.get("content-length") ?? null,
+  contentType: result.response?.headers.get("content-type") ?? null,
   durationMs,
-  ok: response.response.ok,
-  requestId: response.response.headers.get("x-request-id"),
-  status: response.response.status,
-  url: response.response.url
+  ok: result.response?.ok ?? null,
+  requestId: result.response?.headers.get("x-request-id") ?? null,
+  status: result.response?.status ?? null,
+  url: result.response?.url ?? null
 });
 
 const createEmptyPage = (): CardListPage => ({

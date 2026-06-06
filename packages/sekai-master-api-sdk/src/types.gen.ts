@@ -1788,6 +1788,10 @@ export type GetMusicsByRegionListData = {
          */
         playLevel?: string;
         /**
+         * Filter musics by whether they have append difficulty
+         */
+        hasAppend?: boolean;
+        /**
          * Sort field
          */
         sort_by?: string;
