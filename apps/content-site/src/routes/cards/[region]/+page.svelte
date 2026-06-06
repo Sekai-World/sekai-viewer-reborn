@@ -887,7 +887,7 @@
   };
 
   const getSelectedFilterButtonClass = (selected: boolean): string =>
-    selected ? "btn-primary" : "btn-outline border-primary text-primary";
+    selected ? "btn-primary" : "btn-outline border-base-content/20 text-primary";
 
   const getFilterButtonClass = (values: string[], value: string): string =>
     getSelectedFilterButtonClass(values.includes(value));
@@ -1177,7 +1177,7 @@
         <div class="join flex w-full flex-wrap">
           {#each attrOptions as option (option)}
             <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterAttrDraft.includes(option) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterAttrDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={formatOptionLabel(option)}
             >
               <input
@@ -1211,7 +1211,7 @@
         <div class="join flex w-full flex-wrap">
           {#each rarityOptions as option (option)}
             <label
-              class={`btn btn-sm join-item ${filterRarityDraft.includes(option) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm join-item ${filterRarityDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={getRarityLabel(option)}
             >
               <input
@@ -1270,7 +1270,7 @@
       </fieldset>
 
       <label
-        class="flex items-center justify-between gap-3 rounded-box border border-base-300 px-3 py-2"
+        class="flex items-center justify-between gap-3 rounded-box border border-base-content/20 px-3 py-2"
       >
         <span class="text-sm font-medium">{cardListFilter3dmvCutInLabel}</span>
         <input

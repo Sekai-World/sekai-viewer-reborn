@@ -740,7 +740,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getEventTypeOptions() as option (option.value)}
             <label
-              class={`btn btn-sm join-item ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm join-item ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={option.label}
             >
               <input
@@ -767,7 +767,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getUnitOptions() as option (`unit:${option.value}`)}
             <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={option.label}
             >
               <input
