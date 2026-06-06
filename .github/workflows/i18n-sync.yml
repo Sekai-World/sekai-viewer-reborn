@@ -31,7 +31,7 @@ jobs:
         id: i18n-app-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.I18N_SYNC_APP_ID }}
+          client-id: ${{ vars.I18N_SYNC_CLIENT_ID }}
           private-key: ${{ secrets.I18N_SYNC_APP_PRIVATE_KEY }}
           owner: Sekai-World
           repositories: sekai-i18n-reborn
