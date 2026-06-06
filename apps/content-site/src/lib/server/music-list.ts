@@ -54,7 +54,7 @@ export type MusicListQueryState = {
   vocalCharacter: string[];
   vocalUnit: string[];
   tag: string;
-  difficulty: string[];
+  hasAppend: boolean;
   level: string;
   spoiler: boolean;
 };
@@ -220,7 +220,10 @@ export const parseMusicListQueryState = (searchParams: URLSearchParams): MusicLi
   vocalCharacter: parseMultiValueParam(searchParams, "vocal_character"),
   vocalUnit: parseMultiValueParam(searchParams, "vocal_unit"),
   tag: searchParams.get("music_tag")?.trim() ?? "",
-  difficulty: parseMultiValueParam(searchParams, "difficulty"),
+  hasAppend:
+    searchParams.get("hasAppend") === "true" ||
+    searchParams.get("has_append") === "true" ||
+    parseMultiValueParam(searchParams, "difficulty").includes("append"),
   level: searchParams.get("level")?.trim() ?? "",
   spoiler: searchParams.get("spoiler") === "true"
 });
@@ -234,7 +237,7 @@ export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>
   queryState.vocalCharacter.length > 0 ||
   queryState.vocalUnit.length > 0 ||
   queryState.tag.length > 0 ||
-  queryState.difficulty.length > 0 ||
+  queryState.hasAppend ||
   queryState.level.length > 0;
 
 export const logMusicListFilterDebug = (label: string, details: Record<string, unknown>): void => {
@@ -248,9 +251,10 @@ export const logMusicListFilterDebug = (label: string, details: Record<string, u
 export const fetchMusicCatalog = async (
   baseUrl: string,
   region: string,
-  includeSpoilerContent: boolean
+  includeSpoilerContent: boolean,
+  hasAppend: boolean
 ): Promise<MusicListItem[]> => {
-  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}`;
+  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}`;
   const now = Date.now();
   const cached = catalogCache.get(key);
   if (cached && cached.expiresAt > now) {
@@ -269,6 +273,7 @@ export const fetchMusicCatalog = async (
         page,
         page_size: MUSIC_CATALOG_REQUEST_PAGE_SIZE,
         spoiler: includeSpoilerContent,
+        hasAppend: hasAppend || undefined,
         sort_by: "publishedAt",
         sort_order: "desc"
       }
@@ -432,8 +437,6 @@ export const createMusicListPage = (
       (queryState.vocalUnit.length === 0 ||
         queryState.vocalUnit.some((value) => item.vocalUnits.includes(value))) &&
       (!queryState.tag || item.tags.includes(queryState.tag)) &&
-      (queryState.difficulty.length === 0 ||
-        queryState.difficulty.some((value) => item.difficulties.includes(value))) &&
       (!queryState.level ||
         item.levels.some((value) => matchesLevelCondition(value, levelCondition)))
     );

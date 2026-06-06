@@ -28,4 +28,4 @@ Refresh the sekai-master-api SDK after card and song list spoiler query support 
 
 Drive card and song list spoiler loading from the `spoiler` query parameter.
 
-Make song list vocal filters use game character and unit selectors, add multi-select song difficulty filtering, and support level filter conditions.
+Make song list vocal filters use game character and unit selectors, add a song-has-append-difficulty switch, and support level filter conditions.

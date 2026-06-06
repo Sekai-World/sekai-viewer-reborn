@@ -31,7 +31,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
   try {
     const startedAt = performance.now();
-    const catalog = await fetchMusicCatalog(getMasterApiBaseUrl(), region, queryState.spoiler);
+    const catalog = await fetchMusicCatalog(
+      getMasterApiBaseUrl(),
+      region,
+      queryState.spoiler,
+      queryState.hasAppend
+    );
     const musicListPage = createMusicListPage(catalog, queryState, page);
 
     logMusicListFilterDebug("data response", {

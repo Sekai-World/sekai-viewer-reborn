@@ -53,7 +53,7 @@
   let vocalCharacterFilter = $state<string[]>([]);
   let vocalUnitFilter = $state<string[]>([]);
   let tagFilter = $state("");
-  let difficultyFilter = $state<string[]>([]);
+  let hasAppendFilter = $state(false);
   let levelFilter = $state("");
   let spoilerFilter = $state(false);
   let nameDraft = $state("");
@@ -64,7 +64,7 @@
   let vocalCharacterDraft = $state<string[]>([]);
   let vocalUnitDraft = $state<string[]>([]);
   let tagDraft = $state("");
-  let difficultyDraft = $state<string[]>([]);
+  let hasAppendDraft = $state(false);
   let levelDraft = $state("");
   let viewMode = $state<MusicListViewMode>("grid");
   let filterDialog: HTMLDialogElement | null = $state(null);
@@ -103,6 +103,9 @@
   let musicListTagLabel = $state(getInitialCommonText("musicListTagLabel"));
   let musicListTagPlaceholder = $state(getInitialCommonText("musicListTagPlaceholder"));
   let musicListDifficultyLabel = $state(getInitialCommonText("musicListDifficultyLabel"));
+  let musicListHasAppendDifficultyLabel = $state(
+    getInitialCommonText("musicListHasAppendDifficultyLabel")
+  );
   let musicListLevelLabel = $state(getInitialCommonText("musicListLevelLabel"));
   let musicListLevelPlaceholder = $state(getInitialCommonText("musicListLevelPlaceholder"));
   let musicListFilterReset = $state(getInitialCommonText("musicListFilterReset"));
@@ -123,9 +126,16 @@
     "piapro"
   ] as const;
   const gameCharacterValues = Array.from({ length: 26 }, (_, index) => String(index + 1));
-  const difficultyOptions = ["easy", "normal", "hard", "expert", "master", "append"] as const;
 
   const textFilters = $derived.by((): MusicTextFilter[] => [
+    {
+      value: levelDraft,
+      label: musicListLevelLabel,
+      listId: "music-levels",
+      options: data.filterMeta.levels,
+      placeholder: musicListLevelPlaceholder,
+      set: (value: string) => (levelDraft = value)
+    },
     {
       value: composerDraft,
       label: musicListComposerLabel,
@@ -157,14 +167,6 @@
       options: data.filterMeta.tags,
       placeholder: musicListTagPlaceholder,
       set: (value: string) => (tagDraft = value)
-    },
-    {
-      value: levelDraft,
-      label: musicListLevelLabel,
-      listId: "music-levels",
-      options: data.filterMeta.levels,
-      placeholder: musicListLevelPlaceholder,
-      set: (value: string) => (levelDraft = value)
     }
   ]);
 
@@ -176,9 +178,6 @@
       .split("_")
       .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
       .join(" ");
-
-  const formatDifficultyLabel = (value: string): string =>
-    tCommon(data.uiLocale, `musicDifficulty.${value}`, value);
 
   const getFilterButtonClass = (values: string[], value: string): string =>
     values.includes(value) ? "btn-primary" : "btn-outline border-primary text-primary";
@@ -220,7 +219,7 @@
       vocalCharacterFilter.length ||
       vocalUnitFilter.length ||
       tagFilter ||
-      difficultyFilter.length ||
+      hasAppendFilter ||
       levelFilter
     );
 
@@ -233,7 +232,7 @@
     vocalCharacterDraft = [...vocalCharacterFilter];
     vocalUnitDraft = [...vocalUnitFilter];
     tagDraft = tagFilter;
-    difficultyDraft = [...difficultyFilter];
+    hasAppendDraft = hasAppendFilter;
     levelDraft = levelFilter;
   };
 
@@ -241,7 +240,7 @@
   const getViewKey = (): string => "content-site:music-list-view-mode";
 
   $effect(() => {
-    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.vocalUnit}|${data.initialQuery.tag}|${data.initialQuery.difficulty}|${data.initialQuery.level}|${data.initialQuery.spoiler ? "1" : "0"}`;
+    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.vocalUnit}|${data.initialQuery.tag}|${data.initialQuery.hasAppend ? "1" : "0"}|${data.initialQuery.level}|${data.initialQuery.spoiler ? "1" : "0"}`;
     if (key === initialStateKey) {
       return;
     }
@@ -260,7 +259,7 @@
     vocalCharacterFilter = [...data.initialQuery.vocalCharacter];
     vocalUnitFilter = [...data.initialQuery.vocalUnit];
     tagFilter = data.initialQuery.tag;
-    difficultyFilter = [...data.initialQuery.difficulty];
+    hasAppendFilter = data.initialQuery.hasAppend;
     levelFilter = data.initialQuery.level;
     spoilerFilter = data.initialQuery.spoiler;
     syncDrafts();
@@ -396,11 +395,10 @@
           ? [stored.vocalUnit]
           : [];
       tagFilter = typeof stored.tag === "string" ? stored.tag : "";
-      difficultyFilter = Array.isArray(stored.difficulty)
-        ? stored.difficulty.filter((value): value is string => typeof value === "string")
-        : typeof stored.difficulty === "string" && stored.difficulty
-          ? [stored.difficulty]
-          : [];
+      hasAppendFilter =
+        stored.hasAppend === true ||
+        (Array.isArray(stored.difficulty) && stored.difficulty.includes("append")) ||
+        stored.difficulty === "append";
       levelFilter = typeof stored.level === "string" ? stored.level : "";
       syncDrafts();
       void reloadFirstPage();
@@ -463,6 +461,7 @@
     musicListTagLabel = translate("musicListTagLabel");
     musicListTagPlaceholder = translate("musicListTagPlaceholder");
     musicListDifficultyLabel = translate("musicListDifficultyLabel");
+    musicListHasAppendDifficultyLabel = translate("musicListHasAppendDifficultyLabel");
     musicListLevelLabel = translate("musicListLevelLabel");
     musicListLevelPlaceholder = translate("musicListLevelPlaceholder");
     musicListFilterReset = translate("musicListFilterReset");
@@ -495,7 +494,7 @@
     vocalCharacterFilter.forEach((value) => params.append("vocal_character", value));
     vocalUnitFilter.forEach((value) => params.append("vocal_unit", value));
     if (tagFilter) params.set("music_tag", tagFilter);
-    difficultyFilter.forEach((value) => params.append("difficulty", value));
+    if (hasAppendFilter) params.set("hasAppend", "true");
     if (levelFilter) params.set("level", levelFilter);
     return params;
   };
@@ -515,7 +514,7 @@
         vocalCharacter: vocalCharacterFilter,
         vocalUnit: vocalUnitFilter,
         tag: tagFilter,
-        difficulty: difficultyFilter,
+        hasAppend: hasAppendFilter,
         level: levelFilter
       })
     );
@@ -614,7 +613,7 @@
     vocalCharacterDraft = [];
     vocalUnitDraft = [];
     tagDraft = "";
-    difficultyDraft = [];
+    hasAppendDraft = false;
     levelDraft = "";
   };
 
@@ -627,7 +626,7 @@
     vocalCharacterFilter = [...vocalCharacterDraft];
     vocalUnitFilter = [...vocalUnitDraft];
     tagFilter = tagDraft.trim();
-    difficultyFilter = [...difficultyDraft];
+    hasAppendFilter = hasAppendDraft;
     levelFilter = levelDraft.trim();
     filterDialog?.close();
     void reloadFirstPage();
@@ -880,29 +879,17 @@
       </fieldset>
       <fieldset class="form-control gap-2">
         <legend class="label-text text-sm font-medium">{musicListDifficultyLabel}</legend>
-        <div class="flex flex-wrap gap-1.5">
-          {#each difficultyOptions as difficulty (`difficulty:${difficulty}`)}
-            <label
-              class={`btn btn-sm ${getFilterButtonClass(difficultyDraft, difficulty)}`}
-              title={formatDifficultyLabel(difficulty)}
-            >
-              <input
-                class="sr-only"
-                type="checkbox"
-                checked={difficultyDraft.includes(difficulty)}
-                onchange={(event) => {
-                  difficultyDraft = toggleDraftValue(
-                    difficultyDraft,
-                    difficulty,
-                    event.currentTarget.checked
-                  );
-                }}
-                aria-label={formatDifficultyLabel(difficulty)}
-              />
-              {formatDifficultyLabel(difficulty)}
-            </label>
-          {/each}
-        </div>
+        <label
+          class="flex min-h-10 items-center justify-between gap-3 rounded-box border border-base-content/20 px-3 py-2"
+        >
+          <span class="text-sm">{musicListHasAppendDifficultyLabel}</span>
+          <input
+            type="checkbox"
+            class="toggle toggle-primary"
+            checked={hasAppendDraft}
+            onchange={(event) => (hasAppendDraft = event.currentTarget.checked)}
+          />
+        </label>
       </fieldset>
       {#each textFilters as filter (filter.label)}
         <label class="form-control">
