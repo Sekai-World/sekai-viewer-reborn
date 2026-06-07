@@ -163,6 +163,7 @@
           alt={`${item.title} ${jacketAltSuffix}`}
           imageClass="h-full w-full object-cover"
           buttonClass="block aspect-square w-full overflow-hidden rounded-xl"
+          loadMode="visible"
         />
       {:else}
         <div class="aspect-square rounded-xl bg-base-200"></div>
@@ -212,6 +213,7 @@
           alt={`${item.title} ${jacketAltSuffix}`}
           imageClass="h-full w-full object-cover"
           buttonClass="block h-full w-full overflow-hidden"
+          loadMode="visible"
         />
       {:else}
         <div class="h-full w-full bg-base-200"></div>

@@ -156,6 +156,7 @@
           alt={`${item.title} ${bannerAltSuffix}`}
           imageClass={EVENT_LIST_CARD_IMAGE_CLASS}
           buttonClass="block h-full w-full overflow-hidden"
+          loadMode="visible"
         />
       {:else}
         <div
