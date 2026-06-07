@@ -97,7 +97,8 @@ const fetchUnitProfilesForCache = async (
   baseUrl: string,
   region: string,
   key: string,
-  versionKey: string | null
+  versionKey: string | null,
+  previousEntry: UnitProfileCacheEntry | undefined
 ): Promise<UnitProfile[]> => {
   const response = await getUnitProfilesByRegionList({
     baseUrl,
@@ -111,7 +112,13 @@ const fetchUnitProfilesForCache = async (
   });
 
   if (response.error) {
-    return unitProfileCache.get(key)?.items ?? [];
+    if (previousEntry) {
+      unitProfileCache.set(key, previousEntry);
+      return previousEntry.items;
+    }
+
+    unitProfileCache.delete(key);
+    return [];
   }
 
   const items = (response.data?.items ?? [])
@@ -146,7 +153,7 @@ export const fetchUnitProfiles = async (
     return cached.promise;
   }
 
-  const promise = fetchUnitProfilesForCache(baseUrl, region, key, versionKey).finally(() => {
+  const promise = fetchUnitProfilesForCache(baseUrl, region, key, versionKey, cached).finally(() => {
     const latest = unitProfileCache.get(key);
     if (latest?.promise === promise) {
       delete latest.promise;
