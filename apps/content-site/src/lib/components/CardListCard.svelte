@@ -49,6 +49,7 @@
   let spoilerRevealAnimating = $state(false);
   let lastSpoilerIdentity = $state("");
   let spoilerRevealTimeout: ReturnType<typeof setTimeout> | null = null;
+  let visibleImageKeys = $state<Record<string, boolean>>({});
 
   const rarityValueByType: Record<string, number> = {
     rarity_1: 1,
@@ -137,6 +138,7 @@
     lastSpoilerIdentity = nextSpoilerIdentity;
     spoilerRevealed = false;
     spoilerRevealAnimating = false;
+    visibleImageKeys = {};
 
     return clearSpoilerRevealTimeout;
   });
@@ -198,6 +200,41 @@
     image.dataset.fallbackApplied = "true";
     image.src = fallbackUrl;
   };
+
+  const markImageVisible = (key: string): void => {
+    if (visibleImageKeys[key]) {
+      return;
+    }
+
+    visibleImageKeys = { ...visibleImageKeys, [key]: true };
+  };
+
+  const loadWhenVisible = (node: HTMLElement, key: string) => {
+    if (typeof IntersectionObserver === "undefined") {
+      markImageVisible(key);
+      return {};
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) {
+          return;
+        }
+
+        markImageVisible(key);
+        observer.disconnect();
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(node);
+
+    return {
+      destroy() {
+        observer.disconnect();
+      }
+    };
+  };
 </script>
 
 {#snippet spoilerOverlay()}
@@ -216,9 +253,9 @@
   </button>
 {/snippet}
 
-{#snippet cardFrame(size: "L" | "S")}
+{#snippet cardFrame(size: "L" | "S", visible: boolean)}
   {@const frameUrl = getCardFrameUrl(size)}
-  {#if frameUrl}
+  {#if frameUrl && visible}
     <img
       src={frameUrl}
       alt=""
@@ -335,8 +372,13 @@
 
 {#snippet thumbImage(trained: boolean, sizeClass: string)}
   {@const thumbUrl = getThumbnailImageUrl(trained)}
-  <div class={`relative overflow-hidden rounded-xl bg-base-200 ${sizeClass}`}>
-    {#if thumbUrl}
+  {@const imageKey = `thumb:${trained ? "trained" : "normal"}`}
+  {@const isVisible = visibleImageKeys[imageKey] === true}
+  <div
+    class={`relative overflow-hidden rounded-xl bg-base-200 ${sizeClass}`}
+    use:loadWhenVisible={imageKey}
+  >
+    {#if thumbUrl && isVisible}
       <img
         src={thumbUrl}
         alt={`${getCardTitle()} ${cardImageAltSuffix}`}
@@ -346,8 +388,10 @@
         onerror={(event) => handleCardImageError(event, "thumbnail", trained)}
       />
     {/if}
-    {@render cardFrame("S")}
-    {@render thumbIcons(trained)}
+    {@render cardFrame("S", isVisible)}
+    {#if isVisible}
+      {@render thumbIcons(trained)}
+    {/if}
   </div>
 {/snippet}
 
@@ -406,9 +450,9 @@
         <div class="card-grid-hover-area card-grid-hover-area-left"></div>
         <div class="card-grid-hover-area card-grid-hover-area-right"></div>
       {/if}
-      <div class="card-grid-content">
+      <div class="card-grid-content" use:loadWhenVisible={"grid"}>
         <div class="card-grid-image-container">
-          {#if isTrainedOnlyCard() && trainedUrl}
+          {#if isTrainedOnlyCard() && trainedUrl && visibleImageKeys.grid === true}
             <img
               src={trainedUrl}
               alt={`${getCardTitle()} ${cardImageAltSuffix}`}
@@ -417,7 +461,7 @@
               decoding="async"
               onerror={(event) => handleCardImageError(event, "small", true)}
             />
-          {:else if isTrainableCard() && trainedUrl && normalUrl}
+          {:else if isTrainableCard() && trainedUrl && normalUrl && visibleImageKeys.grid === true}
             <div class="card-grid-split-stage">
               <div class="card-grid-split-wrapper card-grid-split-wrapper-left">
                 <img
@@ -440,7 +484,7 @@
                 />
               </div>
             </div>
-          {:else if normalUrl}
+          {:else if normalUrl && visibleImageKeys.grid === true}
             <img
               src={normalUrl}
               alt={`${getCardTitle()} ${cardImageAltSuffix}`}
@@ -457,8 +501,10 @@
             </div>
           {/if}
         </div>
-        {@render cardFrame("L")}
-        {@render largeIcons()}
+        {@render cardFrame("L", visibleImageKeys.grid === true)}
+        {#if visibleImageKeys.grid === true}
+          {@render largeIcons()}
+        {/if}
       </div>
     </div>
     <div class="card-body gap-1.5 p-4">
