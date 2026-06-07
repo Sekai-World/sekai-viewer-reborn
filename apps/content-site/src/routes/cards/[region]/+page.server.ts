@@ -11,6 +11,7 @@ import {
   type CardListPage
 } from "$lib/server/card-list";
 import { getMasterApiBaseUrl } from "$lib/server/config";
+import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 const summarizeResponse = (
@@ -42,7 +43,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseCardListQueryState(url.searchParams);
   const hasFilters = hasCardListFilters(queryState);
-  const filterMeta = getDefaultCardListFilterMeta();
+  const unitProfiles = toUnitProfileMap(await fetchUnitProfiles(baseUrl, region));
+  const filterMeta = getDefaultCardListFilterMeta(unitProfiles);
 
   logCardListFilterDebug("initial request", {
     region,

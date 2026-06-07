@@ -36,7 +36,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       region,
       queryState.spoiler,
       queryState.hasAppend,
-      queryState.tags
+      queryState.tags,
+      queryState.level
     );
     const musicListPage = createMusicListPage(catalog, queryState, page);
 

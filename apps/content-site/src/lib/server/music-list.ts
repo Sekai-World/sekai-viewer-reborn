@@ -1,5 +1,6 @@
 import { dev } from "$app/environment";
 import { getMusicsByRegionList } from "@platform/sekai-master-api-sdk";
+import { musicTagByUnitCode } from "$lib/server/unit-profiles";
 
 export type MusicListItem = {
   id: string;
@@ -10,7 +11,6 @@ export type MusicListItem = {
   arranger: string | null;
   lyricist: string | null;
   vocalCharacters: string[];
-  vocalUnits: string[];
   tags: string[];
   difficulties: string[];
   difficultyLevels: { difficulty: string; level: string }[];
@@ -35,7 +35,6 @@ export type MusicListFilterMeta = {
   arrangers: string[];
   lyricists: string[];
   vocalCharacters: string[];
-  vocalUnits: string[];
   tags: string[];
   difficulties: string[];
   levels: string[];
@@ -53,7 +52,6 @@ export type MusicListQueryState = {
   arranger: string;
   lyricist: string;
   vocalCharacter: string[];
-  vocalUnit: string[];
   tags: string[];
   hasAppend: boolean;
   level: string;
@@ -222,9 +220,6 @@ const parseMusicListItem = (payload: unknown): MusicListItem | null => {
       "vocal_character",
       "vocalCharactersIds"
     ]),
-    vocalUnits: pickStringList(root, ["vocalUnits", "vocalUnit", "vocal_unit"]).map((value) =>
-      value.toLocaleLowerCase()
-    ),
     tags: pickStringList(root, ["tags", "musicTags", "music_tag"]),
     difficulties: pickStringList(
       root,
@@ -234,7 +229,7 @@ const parseMusicListItem = (payload: unknown): MusicListItem | null => {
     difficultyLevels,
     levels: pickStringList(
       root,
-      ["musicDifficulties", "levels", "level"],
+      ["musicDifficulties", "difficulties", "levels", "level"],
       ["level", "playLevel", "musicLevel", "name"]
     ),
     publishedAt: getDateValue(root.publishedAt ?? root.published_at)
@@ -259,24 +254,35 @@ const parseMultiValueParam = (searchParams: URLSearchParams, key: string): strin
 const normalizeMusicTagFilters = (values: string[]): string[] =>
   values.includes("all") ? [] : values;
 
-export const parseMusicListQueryState = (searchParams: URLSearchParams): MusicListQueryState => ({
-  sortBy: parseSortBy(searchParams.get("sort_by")),
-  sortOrder: parseSortOrder(searchParams.get("sort_order")),
-  name: searchParams.get("name")?.trim() ?? "",
-  categories: parseMultiValueParam(searchParams, "category"),
-  composer: searchParams.get("composer")?.trim() ?? "",
-  arranger: searchParams.get("arranger")?.trim() ?? "",
-  lyricist: searchParams.get("lyricist")?.trim() ?? "",
-  vocalCharacter: parseMultiValueParam(searchParams, "vocal_character"),
-  vocalUnit: parseMultiValueParam(searchParams, "vocal_unit"),
-  tags: normalizeMusicTagFilters(parseMultiValueParam(searchParams, "music_tag")),
-  hasAppend:
-    searchParams.get("hasAppend") === "true" ||
-    searchParams.get("has_append") === "true" ||
-    parseMultiValueParam(searchParams, "difficulty").includes("append"),
-  level: searchParams.get("level")?.trim() ?? "",
-  spoiler: searchParams.get("spoiler") === "true"
-});
+const normalizeLegacyVocalUnitFilters = (values: string[]): string[] =>
+  values.map((value) => musicTagByUnitCode[value] ?? value);
+
+export const parseMusicListQueryState = (searchParams: URLSearchParams): MusicListQueryState => {
+  const legacyVocalUnitTags = normalizeLegacyVocalUnitFilters(
+    parseMultiValueParam(searchParams, "vocal_unit")
+  );
+
+  return {
+    sortBy: parseSortBy(searchParams.get("sort_by")),
+    sortOrder: parseSortOrder(searchParams.get("sort_order")),
+    name: searchParams.get("name")?.trim() ?? "",
+    categories: parseMultiValueParam(searchParams, "category"),
+    composer: searchParams.get("composer")?.trim() ?? "",
+    arranger: searchParams.get("arranger")?.trim() ?? "",
+    lyricist: searchParams.get("lyricist")?.trim() ?? "",
+    vocalCharacter: parseMultiValueParam(searchParams, "vocal_character"),
+    tags: normalizeMusicTagFilters([
+      ...parseMultiValueParam(searchParams, "music_tag"),
+      ...legacyVocalUnitTags
+    ]),
+    hasAppend:
+      searchParams.get("hasAppend") === "true" ||
+      searchParams.get("has_append") === "true" ||
+      parseMultiValueParam(searchParams, "difficulty").includes("append"),
+    level: (searchParams.get("playLevel") ?? searchParams.get("level"))?.trim() ?? "",
+    spoiler: searchParams.get("spoiler") === "true"
+  };
+};
 
 export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>
   queryState.name.length > 0 ||
@@ -285,7 +291,6 @@ export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>
   queryState.arranger.length > 0 ||
   queryState.lyricist.length > 0 ||
   queryState.vocalCharacter.length > 0 ||
-  queryState.vocalUnit.length > 0 ||
   queryState.tags.length > 0 ||
   queryState.hasAppend ||
   queryState.level.length > 0;
@@ -303,11 +308,13 @@ export const fetchMusicCatalog = async (
   region: string,
   includeSpoilerContent: boolean,
   hasAppend: boolean,
-  tags: string[]
+  tags: string[],
+  playLevel: string
 ): Promise<MusicListItem[]> => {
   const normalizedTags = normalizeMusicTagFilters(tags);
   const tagQuery = normalizedTags.join(",");
-  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}|${tagQuery}`;
+  const normalizedPlayLevel = playLevel.trim();
+  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}|${tagQuery}|${normalizedPlayLevel}`;
   const now = Date.now();
   const cached = catalogCache.get(key);
   if (cached && cached.expiresAt > now) {
@@ -327,6 +334,7 @@ export const fetchMusicCatalog = async (
         page_size: MUSIC_CATALOG_REQUEST_PAGE_SIZE,
         spoiler: includeSpoilerContent,
         tag: tagQuery || undefined,
+        playLevel: normalizedPlayLevel || undefined,
         hasAppend: hasAppend || undefined,
         sort_by: "publishedAt",
         sort_order: "desc"
@@ -372,7 +380,6 @@ export const buildMusicListFilterMeta = (items: MusicListItem[]): MusicListFilte
     )
   ].sort(),
   vocalCharacters: [...new Set(items.flatMap((item) => item.vocalCharacters))].sort(),
-  vocalUnits: [...new Set(items.flatMap((item) => item.vocalUnits))].sort(),
   tags: [...new Set(items.flatMap((item) => item.tags))].sort(),
   difficulties: [...new Set(items.flatMap((item) => item.difficulties))].sort(),
   levels: [...new Set(items.flatMap((item) => item.levels))].sort((left, right) => {
@@ -488,8 +495,6 @@ export const createMusicListPage = (
       (!queryState.lyricist || item.lyricist === queryState.lyricist) &&
       (queryState.vocalCharacter.length === 0 ||
         queryState.vocalCharacter.some((value) => item.vocalCharacters.includes(value))) &&
-      (queryState.vocalUnit.length === 0 ||
-        queryState.vocalUnit.some((value) => item.vocalUnits.includes(value))) &&
       (!queryState.level ||
         item.levels.some((value) => matchesLevelCondition(value, levelCondition)))
     );

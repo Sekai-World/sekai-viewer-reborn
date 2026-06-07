@@ -7,6 +7,7 @@
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
+  import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
   import EventListCard from "$lib/components/EventListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
@@ -52,7 +53,7 @@
   let mixedUnitLabel = $state(getInitialCommonText("mixedUnitLabel"));
   let eventListTitle = $state(getInitialCommonText("eventListTitle"));
   let eventListEmpty = $state(getInitialCommonText("eventListEmpty"));
-  let eventListLoading = $state(getInitialCommonText("eventListLoading", eventListLoadingFallback));
+  let eventListLoading = $state(getInitialCommonText("eventListLoading"));
   let eventListLoadingMore = $state(getInitialCommonText("eventListLoadingMore"));
   let eventListLoadMoreHintDesktop = $state(getInitialCommonText("eventListLoadMoreHintDesktop"));
   let eventListLoadMoreHintMobile = $state(getInitialCommonText("eventListLoadMoreHintMobile"));
@@ -76,25 +77,14 @@
   let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
   const contentDisplaySettings = getContentDisplaySettings();
 
-  const unitFilterValues = [
-    "idol",
-    "light_sound",
-    "street",
-    "theme_park",
-    "school_refusal",
-    "piapro",
-    "mixed"
-  ] as const;
+  const unitFilterValues = [...UNIT_CODE_ORDER, "mixed"] as const;
 
   const formatUnitLabel = (value: string): string => {
     if (value === "mixed") {
       return mixedUnitLabel;
     }
 
-    return value
-      .split("_")
-      .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
-      .join(" ");
+    return data.unitProfiles[value] ?? formatUnitFallbackLabel(value);
   };
 
   const getEventTypeOptions = (): Array<{ value: string; label: string }> => [

@@ -145,6 +145,7 @@
             uiLocale={data.uiLocale}
             {idLabel}
             {mixedUnitLabel}
+            unitProfiles={card.unitProfiles}
             {bannerAltSuffix}
           />
         {:else}

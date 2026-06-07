@@ -31,3 +31,13 @@ Drive card and song list spoiler loading from the `spoiler` query parameter.
 Make song list vocal filters use game character and unit selectors, add a song-has-append-difficulty switch, and support level filter conditions.
 
 Regenerate the sekai-master-api SDK for the music difficulties endpoint and make the song tag filter use the fixed multi-select tag set.
+
+Show song tags as localized badges above song titles in the music list cards.
+
+Forward the song play level filter to the master API and parse list response difficulty levels correctly.
+
+Merge the song vocal unit filter into the tag filter with unit-style icons and legacy vocal unit filter migration.
+
+Resolve unit display names from the regional unit profile API instead of hardcoded translations.
+
+Cache regional unit profiles until the `/versions/:region` data version changes.

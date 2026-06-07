@@ -9,6 +9,7 @@ import {
   parseEventListQueryState
 } from "$lib/server/event-list";
 import { getMasterApiBaseUrl } from "$lib/server/config";
+import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 const summarizeResponse = (
@@ -38,6 +39,7 @@ const createEmptyPage = () => ({
 export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
+  const unitProfiles = toUnitProfileMap(await fetchUnitProfiles(baseUrl, region));
   const queryState = parseEventListQueryState(url.searchParams);
   const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
   const requestQuery = createEventListRequestQuery(
@@ -80,7 +82,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
         initialPage: createEmptyPage(),
         initialLoadFailed: true,
         initialQuery: queryState,
-        currentEventId: null
+        currentEventId: null,
+        unitProfiles
       };
     }
 
@@ -100,6 +103,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
       initialPage,
       initialLoadFailed: false,
       initialQuery: queryState,
+      unitProfiles,
       currentEventId:
         currentEventResponse && !currentEventResponse.error
           ? (parseEventDetail(currentEventResponse.data)?.id ?? null)
@@ -117,7 +121,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
       initialPage: createEmptyPage(),
       initialLoadFailed: true,
       initialQuery: queryState,
-      currentEventId: null
+      currentEventId: null,
+      unitProfiles
     };
   }
 };

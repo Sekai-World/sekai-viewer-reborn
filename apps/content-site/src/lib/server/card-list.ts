@@ -3,6 +3,11 @@ import type {
   SharedCardListResponse
 } from "@platform/sekai-master-api-sdk";
 import { dev } from "$app/environment";
+import {
+  formatUnitFallbackLabel,
+  UNIT_CODE_ORDER,
+  type UnitProfileMap
+} from "$lib/server/unit-profiles";
 
 export type CardListItem = {
   id: string;
@@ -547,15 +552,6 @@ export const filterCardListItems = (
   });
 };
 
-const CARD_LIST_UNIT_ORDER = [
-  "light_sound",
-  "idol",
-  "street",
-  "theme_park",
-  "school_refusal",
-  "piapro"
-] as const;
-
 const CARD_LIST_SKILL_ORDER = [
   "score_up",
   "judgment_up",
@@ -585,8 +581,13 @@ const formatLabel = (value: string): string =>
 const toOptionList = (entries: Map<string, string>): CardListFilterOption[] =>
   [...entries.entries()].map(([value, label]) => ({ value, label }));
 
-export const getDefaultCardListFilterMeta = (): CardListFilterMeta => ({
-  unit: CARD_LIST_UNIT_ORDER.map((value) => ({ value, label: formatLabel(value) })),
+const getUnitLabel = (unitProfiles: UnitProfileMap, value: string): string =>
+  unitProfiles[value] ?? formatUnitFallbackLabel(value);
+
+export const getDefaultCardListFilterMeta = (
+  unitProfiles: UnitProfileMap = {}
+): CardListFilterMeta => ({
+  unit: UNIT_CODE_ORDER.map((value) => ({ value, label: getUnitLabel(unitProfiles, value) })),
   character: Array.from({ length: 26 }, (_, index) => {
     const value = String(index + 1);
     return { value, label: `Character ${value}` };
@@ -595,7 +596,10 @@ export const getDefaultCardListFilterMeta = (): CardListFilterMeta => ({
   type: CARD_LIST_TYPE_ORDER.map((value) => ({ value, label: formatLabel(value) }))
 });
 
-export const buildCardListFilterMeta = (items: CardListItem[]): CardListFilterMeta => {
+export const buildCardListFilterMeta = (
+  items: CardListItem[],
+  unitProfiles: UnitProfileMap = {}
+): CardListFilterMeta => {
   const units = new Map<string, string>();
   const characters = new Map<string, string>();
   const skills = new Map<string, string>();
@@ -603,7 +607,7 @@ export const buildCardListFilterMeta = (items: CardListItem[]): CardListFilterMe
 
   for (const item of items) {
     if (item.unit && !units.has(item.unit)) {
-      units.set(item.unit, formatLabel(item.unit));
+      units.set(item.unit, getUnitLabel(unitProfiles, item.unit));
     }
 
     if (item.characterId !== null) {
@@ -637,7 +641,7 @@ export const buildCardListFilterMeta = (items: CardListItem[]): CardListFilterMe
       );
 
   return {
-    unit: sortByOrder(CARD_LIST_UNIT_ORDER, units),
+    unit: sortByOrder(UNIT_CODE_ORDER, units),
     character: toOptionList(
       new Map([...characters.entries()].sort((left, right) => Number(left[0]) - Number(right[0])))
     ),

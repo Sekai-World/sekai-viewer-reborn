@@ -12,6 +12,11 @@
   } from "$lib/components/RegionBadgeSwitch.svelte";
   import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
+  import {
+    formatUnitFallbackLabel,
+    musicTagByUnitCode,
+    unitCodeByMusicTag
+  } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
   import type { PageData } from "./$types";
 
@@ -51,7 +56,6 @@
   let arrangerFilter = $state("");
   let lyricistFilter = $state("");
   let vocalCharacterFilter = $state<string[]>([]);
-  let vocalUnitFilter = $state<string[]>([]);
   let tagFilter = $state<string[]>([]);
   let hasAppendFilter = $state(false);
   let levelFilter = $state("");
@@ -62,7 +66,6 @@
   let arrangerDraft = $state("");
   let lyricistDraft = $state("");
   let vocalCharacterDraft = $state<string[]>([]);
-  let vocalUnitDraft = $state<string[]>([]);
   let tagDraft = $state<string[]>([]);
   let hasAppendDraft = $state(false);
   let levelDraft = $state("");
@@ -99,8 +102,7 @@
   let musicListLyricistLabel = $state(getInitialCommonText("musicListLyricistLabel"));
   let musicListLyricistPlaceholder = $state(getInitialCommonText("musicListLyricistPlaceholder"));
   let musicListVocalCharacterLabel = $state(getInitialCommonText("musicListVocalCharacterLabel"));
-  let musicListVocalUnitLabel = $state(getInitialCommonText("musicListVocalUnitLabel"));
-  let musicListTagLabel = $state(getInitialCommonText("musicListTagLabel"));
+  let musicListTagLabel = $state(getInitialCommonText("musicListVocalUnitTagLabel"));
   let musicListDifficultyLabel = $state(getInitialCommonText("musicListDifficultyLabel"));
   let musicListHasAppendDifficultyLabel = $state(
     getInitialCommonText("musicListHasAppendDifficultyLabel")
@@ -116,14 +118,6 @@
   let musicListCreatorLabel = $state(getInitialCommonText("musicListCreatorLabel"));
   let musicJacketAltSuffix = $state(getInitialCommonText("musicJacketAltSuffix"));
   let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
-  const unitFilterValues = [
-    "idol",
-    "light_sound",
-    "street",
-    "theme_park",
-    "school_refusal",
-    "piapro"
-  ] as const;
   const gameCharacterValues = Array.from({ length: 26 }, (_, index) => String(index + 1));
   const musicTagOptions = [
     "all",
@@ -175,13 +169,17 @@
     tCommon(data.uiLocale, `musicListCategory.${category}`, category);
 
   const formatOptionLabel = (value: string): string =>
-    tCommon(data.uiLocale, value, value)
-      .split("_")
+    value
+      .replaceAll("_", " ")
+      .split(" ")
       .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
       .join(" ");
 
   const getMusicTagLabel = (value: string): string =>
-    tCommon(data.uiLocale, `musicListTag.${value}`, formatOptionLabel(value));
+    unitCodeByMusicTag[value]
+      ? (data.unitProfiles[unitCodeByMusicTag[value]] ??
+        formatUnitFallbackLabel(unitCodeByMusicTag[value]))
+      : tCommon(data.uiLocale, `musicListTag.${value}`, formatOptionLabel(value));
 
   const getFilterButtonClass = (values: string[], value: string): string =>
     values.includes(value) ? "btn-primary" : "btn-outline border-primary text-primary";
@@ -189,7 +187,13 @@
   const toggleDraftValue = (values: string[], value: string, checked: boolean): string[] =>
     checked ? [...new Set([...values, value])] : values.filter((entry) => entry !== value);
 
-  const getUnitIconUrl = (value: string): string => asset(`/icons/icon_${value}.png`);
+  const getMusicTagIconUrl = (value: (typeof musicTagOptions)[number]): string | null => {
+    const icon = unitCodeByMusicTag[value];
+    return icon ? asset(`/icons/icon_${icon}.png`) : null;
+  };
+
+  const mapLegacyVocalUnitToTag = (value: string): string =>
+    musicTagByUnitCode[value] ?? value;
 
   const getCharacterThumbnailUrl = (value: string): string | null => {
     const id = Number.parseInt(value, 10);
@@ -221,7 +225,6 @@
       arrangerFilter ||
       lyricistFilter ||
       vocalCharacterFilter.length ||
-      vocalUnitFilter.length ||
       tagFilter.length ||
       hasAppendFilter ||
       levelFilter
@@ -234,7 +237,6 @@
     arrangerDraft = arrangerFilter;
     lyricistDraft = lyricistFilter;
     vocalCharacterDraft = [...vocalCharacterFilter];
-    vocalUnitDraft = [...vocalUnitFilter];
     tagDraft = [...tagFilter];
     hasAppendDraft = hasAppendFilter;
     levelDraft = levelFilter;
@@ -244,7 +246,7 @@
   const getViewKey = (): string => "content-site:music-list-view-mode";
 
   $effect(() => {
-    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.vocalUnit}|${data.initialQuery.tags}|${data.initialQuery.hasAppend ? "1" : "0"}|${data.initialQuery.level}|${data.initialQuery.spoiler ? "1" : "0"}`;
+    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.tags}|${data.initialQuery.hasAppend ? "1" : "0"}|${data.initialQuery.level}|${data.initialQuery.spoiler ? "1" : "0"}`;
     if (key === initialStateKey) {
       return;
     }
@@ -261,7 +263,6 @@
     arrangerFilter = data.initialQuery.arranger;
     lyricistFilter = data.initialQuery.lyricist;
     vocalCharacterFilter = [...data.initialQuery.vocalCharacter];
-    vocalUnitFilter = [...data.initialQuery.vocalUnit];
     tagFilter = [...data.initialQuery.tags];
     hasAppendFilter = data.initialQuery.hasAppend;
     levelFilter = data.initialQuery.level;
@@ -393,16 +394,19 @@
         : typeof stored.vocalCharacter === "string" && stored.vocalCharacter
           ? [stored.vocalCharacter]
           : [];
-      vocalUnitFilter = Array.isArray(stored.vocalUnit)
-        ? stored.vocalUnit.filter((value): value is string => typeof value === "string")
-        : typeof stored.vocalUnit === "string" && stored.vocalUnit
-          ? [stored.vocalUnit]
-          : [];
-      tagFilter = Array.isArray(stored.tags)
+      const storedTags = Array.isArray(stored.tags)
         ? stored.tags.filter((value): value is string => typeof value === "string")
         : typeof stored.tag === "string" && stored.tag
           ? [stored.tag]
           : [];
+      const storedVocalUnitTags = Array.isArray(stored.vocalUnit)
+        ? stored.vocalUnit
+            .filter((value): value is string => typeof value === "string")
+            .map(mapLegacyVocalUnitToTag)
+        : typeof stored.vocalUnit === "string" && stored.vocalUnit
+          ? [mapLegacyVocalUnitToTag(stored.vocalUnit)]
+          : [];
+      tagFilter = [...new Set([...storedTags, ...storedVocalUnitTags])];
       hasAppendFilter =
         stored.hasAppend === true ||
         (Array.isArray(stored.difficulty) && stored.difficulty.includes("append")) ||
@@ -465,8 +469,7 @@
     musicListLyricistLabel = translate("musicListLyricistLabel");
     musicListLyricistPlaceholder = translate("musicListLyricistPlaceholder");
     musicListVocalCharacterLabel = translate("musicListVocalCharacterLabel");
-    musicListVocalUnitLabel = translate("musicListVocalUnitLabel");
-    musicListTagLabel = translate("musicListTagLabel");
+    musicListTagLabel = translate("musicListVocalUnitTagLabel");
     musicListDifficultyLabel = translate("musicListDifficultyLabel");
     musicListHasAppendDifficultyLabel = translate("musicListHasAppendDifficultyLabel");
     musicListLevelLabel = translate("musicListLevelLabel");
@@ -499,10 +502,9 @@
     if (arrangerFilter) params.set("arranger", arrangerFilter);
     if (lyricistFilter) params.set("lyricist", lyricistFilter);
     vocalCharacterFilter.forEach((value) => params.append("vocal_character", value));
-    vocalUnitFilter.forEach((value) => params.append("vocal_unit", value));
     tagFilter.forEach((value) => params.append("music_tag", value));
     if (hasAppendFilter) params.set("hasAppend", "true");
-    if (levelFilter) params.set("level", levelFilter);
+    if (levelFilter) params.set("playLevel", levelFilter);
     return params;
   };
 
@@ -519,7 +521,6 @@
         arranger: arrangerFilter,
         lyricist: lyricistFilter,
         vocalCharacter: vocalCharacterFilter,
-        vocalUnit: vocalUnitFilter,
         tags: tagFilter,
         hasAppend: hasAppendFilter,
         level: levelFilter
@@ -618,7 +619,6 @@
     arrangerDraft = "";
     lyricistDraft = "";
     vocalCharacterDraft = [];
-    vocalUnitDraft = [];
     tagDraft = [];
     hasAppendDraft = false;
     levelDraft = "";
@@ -631,7 +631,6 @@
     arrangerFilter = arrangerDraft.trim();
     lyricistFilter = lyricistDraft.trim();
     vocalCharacterFilter = [...vocalCharacterDraft];
-    vocalUnitFilter = [...vocalUnitDraft];
     tagFilter = [...tagDraft];
     hasAppendFilter = hasAppendDraft;
     levelFilter = levelDraft.trim();
@@ -762,6 +761,7 @@
           creatorLabel={musicListCreatorLabel}
           {spoilerContentLabel}
           {getCategoryLabel}
+          getTagLabel={getMusicTagLabel}
         />
       {/each}
     </div>
@@ -833,10 +833,11 @@
       </fieldset>
       <fieldset class="form-control gap-2">
         <legend class="label-text text-sm font-medium">{musicListTagLabel}</legend>
-        <div class="flex flex-wrap gap-1.5">
+        <div class="join flex w-full flex-wrap">
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
+            {@const tagIconUrl = getMusicTagIconUrl(tag)}
             <label
-              class={`btn btn-sm ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
+              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
               title={getMusicTagLabel(tag)}
             >
               <input
@@ -846,40 +847,22 @@
                 onchange={(event) => toggleMusicTag(tag, event.currentTarget.checked)}
                 aria-label={getMusicTagLabel(tag)}
               />
-              {getMusicTagLabel(tag)}
-            </label>
-          {/each}
-        </div>
-      </fieldset>
-      <fieldset class="form-control gap-2">
-        <legend class="label-text text-sm font-medium">{musicListVocalUnitLabel}</legend>
-        <div class="join flex w-full flex-wrap">
-          {#each unitFilterValues as unit (`vocal-unit:${unit}`)}
-            <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(vocalUnitDraft, unit)}`}
-              title={formatOptionLabel(unit)}
-            >
-              <input
-                class="sr-only"
-                type="checkbox"
-                checked={vocalUnitDraft.includes(unit)}
-                onchange={(event) => {
-                  vocalUnitDraft = toggleDraftValue(
-                    vocalUnitDraft,
-                    unit,
-                    event.currentTarget.checked
-                  );
-                }}
-                aria-label={formatOptionLabel(unit)}
-              />
-              <img
-                src={getUnitIconUrl(unit)}
-                alt=""
-                aria-hidden="true"
-                class="h-7 w-7 object-contain"
-                loading="lazy"
-                decoding="async"
-              />
+              {#if tagIconUrl}
+                <img
+                  src={tagIconUrl}
+                  alt=""
+                  aria-hidden="true"
+                  class="h-7 w-7 object-contain"
+                  loading="lazy"
+                  decoding="async"
+                />
+              {:else}
+                <Icon
+                  icon={tag === "all" ? "mdi:apps" : "mdi:dots-horizontal-circle-outline"}
+                  class="h-6 w-6"
+                  aria-hidden="true"
+                />
+              {/if}
             </label>
           {/each}
         </div>

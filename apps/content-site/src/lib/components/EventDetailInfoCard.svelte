@@ -5,6 +5,7 @@
   import type { BannerGameCharacter, EventDetail } from "$lib/event-detail";
   import { getEventTypeDisplay } from "$lib/event";
   import type { SupportedRegion } from "$lib/regions";
+  import { formatUnitFallbackLabel } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
 
   const unitIconSlugs = new Set([
@@ -26,6 +27,7 @@
     nameLabel,
     unitLabel,
     mixedUnitLabel,
+    unitProfiles,
     eventTypeLabel,
     startAtLabel,
     endAtLabel,
@@ -40,6 +42,7 @@
     nameLabel: string;
     unitLabel: string;
     mixedUnitLabel: string;
+    unitProfiles: Record<string, string>;
     eventTypeLabel: string;
     startAtLabel: string;
     endAtLabel: string;
@@ -50,13 +53,15 @@
     return parts.length > 0 ? parts.join(" ") : String(char.id);
   };
 
-  const getDisplayUnitName = (unitName: string | null | undefined): string | null => {
-    if (!unitName) {
+  const getDisplayUnitName = (unit: string | null | undefined): string | null => {
+    if (!unit) {
       return null;
     }
 
-    const normalizedUnitName = unitName.trim().toLowerCase();
-    return normalizedUnitName === "none" || normalizedUnitName === "-" ? mixedUnitLabel : unitName;
+    const normalizedUnit = unit.trim().toLowerCase();
+    return normalizedUnit === "none" || normalizedUnit === "-"
+      ? mixedUnitLabel
+      : (unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit));
   };
   const getUnitIconUrl = (unit: string | null | undefined): string | null => {
     if (!unit) {
@@ -105,7 +110,7 @@
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{event.title}</dd>
       </div>
-      {#if getDisplayUnitName(event.unitName)}
+      {#if getDisplayUnitName(event.unit)}
         <div
           class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-4 py-3"
         >
@@ -113,7 +118,7 @@
             <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
               {unitLabel}
             </dt>
-            <dd class="mt-1 truncate text-sm font-medium">{getDisplayUnitName(event.unitName)}</dd>
+            <dd class="mt-1 truncate text-sm font-medium">{getDisplayUnitName(event.unit)}</dd>
           </div>
           {#if getUnitIconUrl(event.unit)}
             <span

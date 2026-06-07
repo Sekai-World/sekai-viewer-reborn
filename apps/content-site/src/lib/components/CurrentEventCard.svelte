@@ -10,6 +10,7 @@
     EVENT_CARD_IMAGE_CLASS,
     EVENT_CARD_MEDIA_CLASS
   } from "$lib/styles/event-card";
+  import { formatUnitFallbackLabel } from "$lib/unit-profile";
 
   type CurrentEventSummary = {
     id: string;
@@ -36,6 +37,7 @@
     uiLocale,
     idLabel,
     mixedUnitLabel,
+    unitProfiles,
     bannerAltSuffix
   }: {
     region: SupportedRegion;
@@ -44,6 +46,7 @@
     uiLocale: string;
     idLabel: string;
     mixedUnitLabel: string;
+    unitProfiles: Record<string, string>;
     bannerAltSuffix: string;
   } = $props();
 
@@ -62,7 +65,9 @@
     }
 
     const normalizedUnit = unit.trim().toLowerCase();
-    return normalizedUnit === "none" || normalizedUnit === "-" ? mixedUnitLabel : normalizedUnit;
+    return normalizedUnit === "none" || normalizedUnit === "-"
+      ? mixedUnitLabel
+      : (unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit));
   };
 
   const unitIconUrl = $derived(getUnitIconUrl(event.unit));

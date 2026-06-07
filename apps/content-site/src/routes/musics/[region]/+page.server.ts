@@ -8,6 +8,7 @@ import {
   logMusicListFilterDebug,
   parseMusicListQueryState
 } from "$lib/server/music-list";
+import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params, url }) => {
@@ -24,13 +25,18 @@ export const load: PageServerLoad = async ({ params, url }) => {
 
   try {
     const startedAt = performance.now();
-    const catalog = await fetchMusicCatalog(
-      getMasterApiBaseUrl(),
-      region,
-      queryState.spoiler,
-      queryState.hasAppend,
-      queryState.tags
-    );
+    const baseUrl = getMasterApiBaseUrl();
+    const [catalog, unitProfiles] = await Promise.all([
+      fetchMusicCatalog(
+        baseUrl,
+        region,
+        queryState.spoiler,
+        queryState.hasAppend,
+        queryState.tags,
+        queryState.level
+      ),
+      fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap)
+    ]);
     const initialPage = createMusicListPage(catalog, queryState, 1);
     const filterMeta = buildMusicListFilterMeta(catalog);
 
@@ -50,6 +56,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
       initialPage,
       initialQuery: queryState,
       filterMeta,
+      unitProfiles,
       initialLoadFailed: false
     };
   } catch (error) {
@@ -65,6 +72,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
       initialPage: createMusicListPage([], queryState, 1),
       initialQuery: queryState,
       filterMeta: buildMusicListFilterMeta([]),
+      unitProfiles: {},
       initialLoadFailed: true
     };
   }

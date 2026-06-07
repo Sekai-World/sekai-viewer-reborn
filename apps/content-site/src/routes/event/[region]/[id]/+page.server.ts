@@ -9,6 +9,7 @@ import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/regio
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { parseEventDetail, type EventDetail } from "$lib/server/event-detail";
+import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 type RegionEventLookup = {
@@ -269,6 +270,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
       currentLookupPromise,
       invalidEventIdMessage: eventId ? null : invalidEventIdMessage
     }),
+    unitProfiles: fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap),
     isCurrentEvent: fetchIsCurrentEvent({
       baseUrl,
       region,

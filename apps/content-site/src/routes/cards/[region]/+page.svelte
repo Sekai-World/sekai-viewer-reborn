@@ -7,6 +7,7 @@
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
+  import { UNIT_CODE_ORDER } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
   import CardListCard from "$lib/components/CardListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
@@ -140,19 +141,13 @@
     "rarity_4",
     "rarity_birthday"
   ] as const;
-  const supportUnitOptions = [
-    "none",
-    "theme_park",
-    "street",
-    "idol",
-    "school_refusal",
-    "light_sound"
-  ] as const;
+  const supportUnitOptions = ["none", ...UNIT_CODE_ORDER.filter((unit) => unit !== "piapro")];
   const filterMeta = $derived.by(() => data.filterMeta ?? emptyFilterMeta);
 
   const formatOptionLabel = (value: string): string =>
-    tCommon(data.uiLocale, value, value)
-      .split("_")
+    value
+      .replaceAll("_", " ")
+      .split(" ")
       .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
       .join(" ");
 
@@ -171,6 +166,12 @@
 
     return asset(`/icons/icon_${value}.png`);
   };
+
+  const getUnitOptionLabel = (value: string): string =>
+    filterMeta.unit.find((option) => option.value === value)?.label ?? formatOptionLabel(value);
+
+  const getSupportUnitOptionLabel = (value: string): string =>
+    value === "none" ? getUnitOptionLabel("piapro") : getUnitOptionLabel(value);
 
   const getAttrIconUrl = (value: string): string => asset(`/card_attr/icon_attribute_${value}.png`);
 
@@ -1052,7 +1053,7 @@
           {#each filterMeta.unit as option (option.value)}
             <label
               class={`btn btn-sm h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(filterUnitDraft, option.value)}`}
-              title={formatOptionLabel(option.value)}
+              title={option.label}
             >
               <input
                 type="checkbox"
@@ -1065,7 +1066,7 @@
                     e.currentTarget.checked
                   );
                 }}
-                aria-label={formatOptionLabel(option.value)}
+                aria-label={option.label}
               />
               {#if getUnitIconUrl(option.value)}
                 <img
@@ -1239,7 +1240,7 @@
           {#each supportUnitOptions as option (`support-unit:${option}`)}
             <label
               class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
-              title={formatOptionLabel(option === "none" ? "piapro" : option)}
+              title={getSupportUnitOptionLabel(option)}
             >
               <input
                 type="checkbox"
@@ -1252,7 +1253,7 @@
                     e.currentTarget.checked
                   );
                 }}
-                aria-label={formatOptionLabel(option === "none" ? "piapro" : option)}
+                aria-label={getSupportUnitOptionLabel(option)}
               />
               {#if getUnitIconUrl(option)}
                 <img

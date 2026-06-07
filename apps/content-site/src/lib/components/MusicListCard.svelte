@@ -10,6 +10,7 @@
     title: string;
     assetBundleName: string | null;
     categories: string[];
+    tags: string[];
     composer: string | null;
     difficultyLevels: { difficulty: string; level: string }[];
     publishedAt: string | number | null;
@@ -23,7 +24,8 @@
     jacketAltSuffix,
     creatorLabel,
     spoilerContentLabel,
-    getCategoryLabel
+    getCategoryLabel,
+    getTagLabel
   }: {
     region: SupportedRegion;
     item: MusicListItem;
@@ -33,6 +35,7 @@
     creatorLabel: string;
     spoilerContentLabel: string;
     getCategoryLabel: (value: string) => string;
+    getTagLabel: (value: string) => string;
   } = $props();
 
   const contentDisplaySettings = getContentDisplaySettings();
@@ -134,6 +137,18 @@
   </button>
 {/snippet}
 
+{#snippet musicTagBadges(sizeClass: string)}
+  {#if item.tags.length > 0}
+    <div class="flex flex-wrap gap-1">
+      {#each item.tags as tag (`music-tag:${tag}`)}
+        <span class={`badge badge-outline border-base-content/15 font-medium ${sizeClass}`}>
+          {getTagLabel(tag)}
+        </span>
+      {/each}
+    </div>
+  {/if}
+{/snippet}
+
 <article class="card content-card-shell relative overflow-hidden shadow-sm">
   {#if isSpoilerPlaceholderVisible()}
     {@render spoilerOverlay()}
@@ -161,6 +176,7 @@
           <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
             {idLabel}{item.id}
           </span>
+          {@render musicTagBadges("badge-sm")}
           <h2 class="line-clamp-2 font-semibold leading-snug">{item.title}</h2>
           {#if item.composer}
             <p class="truncate text-sm opacity-70">{creatorLabel}: {item.composer}</p>
@@ -219,6 +235,7 @@
     </div>
     {#if !isSpoilerPlaceholderVisible()}
       <div class="card-body gap-2 p-4">
+        {@render musicTagBadges("badge-xs")}
         <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{item.title}</h2>
         {#if item.composer}
           <p class="truncate text-xs opacity-70">{item.composer}</p>
