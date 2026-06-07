@@ -52,7 +52,7 @@
   let lyricistFilter = $state("");
   let vocalCharacterFilter = $state<string[]>([]);
   let vocalUnitFilter = $state<string[]>([]);
-  let tagFilter = $state("");
+  let tagFilter = $state<string[]>([]);
   let hasAppendFilter = $state(false);
   let levelFilter = $state("");
   let spoilerFilter = $state(false);
@@ -63,7 +63,7 @@
   let lyricistDraft = $state("");
   let vocalCharacterDraft = $state<string[]>([]);
   let vocalUnitDraft = $state<string[]>([]);
-  let tagDraft = $state("");
+  let tagDraft = $state<string[]>([]);
   let hasAppendDraft = $state(false);
   let levelDraft = $state("");
   let viewMode = $state<MusicListViewMode>("grid");
@@ -101,7 +101,6 @@
   let musicListVocalCharacterLabel = $state(getInitialCommonText("musicListVocalCharacterLabel"));
   let musicListVocalUnitLabel = $state(getInitialCommonText("musicListVocalUnitLabel"));
   let musicListTagLabel = $state(getInitialCommonText("musicListTagLabel"));
-  let musicListTagPlaceholder = $state(getInitialCommonText("musicListTagPlaceholder"));
   let musicListDifficultyLabel = $state(getInitialCommonText("musicListDifficultyLabel"));
   let musicListHasAppendDifficultyLabel = $state(
     getInitialCommonText("musicListHasAppendDifficultyLabel")
@@ -126,6 +125,16 @@
     "piapro"
   ] as const;
   const gameCharacterValues = Array.from({ length: 26 }, (_, index) => String(index + 1));
+  const musicTagOptions = [
+    "all",
+    "vocaloid",
+    "theme_park",
+    "street",
+    "idol",
+    "school_refusal",
+    "light_music_club",
+    "other"
+  ] as const;
 
   const textFilters = $derived.by((): MusicTextFilter[] => [
     {
@@ -159,14 +168,6 @@
       options: data.filterMeta.lyricists,
       placeholder: musicListLyricistPlaceholder,
       set: (value: string) => (lyricistDraft = value)
-    },
-    {
-      value: tagDraft,
-      label: musicListTagLabel,
-      listId: "music-tags",
-      options: data.filterMeta.tags,
-      placeholder: musicListTagPlaceholder,
-      set: (value: string) => (tagDraft = value)
     }
   ]);
 
@@ -178,6 +179,9 @@
       .split("_")
       .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
       .join(" ");
+
+  const getMusicTagLabel = (value: string): string =>
+    tCommon(data.uiLocale, `musicListTag.${value}`, formatOptionLabel(value));
 
   const getFilterButtonClass = (values: string[], value: string): string =>
     values.includes(value) ? "btn-primary" : "btn-outline border-primary text-primary";
@@ -218,7 +222,7 @@
       lyricistFilter ||
       vocalCharacterFilter.length ||
       vocalUnitFilter.length ||
-      tagFilter ||
+      tagFilter.length ||
       hasAppendFilter ||
       levelFilter
     );
@@ -231,7 +235,7 @@
     lyricistDraft = lyricistFilter;
     vocalCharacterDraft = [...vocalCharacterFilter];
     vocalUnitDraft = [...vocalUnitFilter];
-    tagDraft = tagFilter;
+    tagDraft = [...tagFilter];
     hasAppendDraft = hasAppendFilter;
     levelDraft = levelFilter;
   };
@@ -240,7 +244,7 @@
   const getViewKey = (): string => "content-site:music-list-view-mode";
 
   $effect(() => {
-    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.vocalUnit}|${data.initialQuery.tag}|${data.initialQuery.hasAppend ? "1" : "0"}|${data.initialQuery.level}|${data.initialQuery.spoiler ? "1" : "0"}`;
+    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.vocalUnit}|${data.initialQuery.tags}|${data.initialQuery.hasAppend ? "1" : "0"}|${data.initialQuery.level}|${data.initialQuery.spoiler ? "1" : "0"}`;
     if (key === initialStateKey) {
       return;
     }
@@ -258,7 +262,7 @@
     lyricistFilter = data.initialQuery.lyricist;
     vocalCharacterFilter = [...data.initialQuery.vocalCharacter];
     vocalUnitFilter = [...data.initialQuery.vocalUnit];
-    tagFilter = data.initialQuery.tag;
+    tagFilter = [...data.initialQuery.tags];
     hasAppendFilter = data.initialQuery.hasAppend;
     levelFilter = data.initialQuery.level;
     spoilerFilter = data.initialQuery.spoiler;
@@ -394,7 +398,11 @@
         : typeof stored.vocalUnit === "string" && stored.vocalUnit
           ? [stored.vocalUnit]
           : [];
-      tagFilter = typeof stored.tag === "string" ? stored.tag : "";
+      tagFilter = Array.isArray(stored.tags)
+        ? stored.tags.filter((value): value is string => typeof value === "string")
+        : typeof stored.tag === "string" && stored.tag
+          ? [stored.tag]
+          : [];
       hasAppendFilter =
         stored.hasAppend === true ||
         (Array.isArray(stored.difficulty) && stored.difficulty.includes("append")) ||
@@ -459,7 +467,6 @@
     musicListVocalCharacterLabel = translate("musicListVocalCharacterLabel");
     musicListVocalUnitLabel = translate("musicListVocalUnitLabel");
     musicListTagLabel = translate("musicListTagLabel");
-    musicListTagPlaceholder = translate("musicListTagPlaceholder");
     musicListDifficultyLabel = translate("musicListDifficultyLabel");
     musicListHasAppendDifficultyLabel = translate("musicListHasAppendDifficultyLabel");
     musicListLevelLabel = translate("musicListLevelLabel");
@@ -493,7 +500,7 @@
     if (lyricistFilter) params.set("lyricist", lyricistFilter);
     vocalCharacterFilter.forEach((value) => params.append("vocal_character", value));
     vocalUnitFilter.forEach((value) => params.append("vocal_unit", value));
-    if (tagFilter) params.set("music_tag", tagFilter);
+    tagFilter.forEach((value) => params.append("music_tag", value));
     if (hasAppendFilter) params.set("hasAppend", "true");
     if (levelFilter) params.set("level", levelFilter);
     return params;
@@ -513,7 +520,7 @@
         lyricist: lyricistFilter,
         vocalCharacter: vocalCharacterFilter,
         vocalUnit: vocalUnitFilter,
-        tag: tagFilter,
+        tags: tagFilter,
         hasAppend: hasAppendFilter,
         level: levelFilter
       })
@@ -612,7 +619,7 @@
     lyricistDraft = "";
     vocalCharacterDraft = [];
     vocalUnitDraft = [];
-    tagDraft = "";
+    tagDraft = [];
     hasAppendDraft = false;
     levelDraft = "";
   };
@@ -625,7 +632,7 @@
     lyricistFilter = lyricistDraft.trim();
     vocalCharacterFilter = [...vocalCharacterDraft];
     vocalUnitFilter = [...vocalUnitDraft];
-    tagFilter = tagDraft.trim();
+    tagFilter = [...tagDraft];
     hasAppendFilter = hasAppendDraft;
     levelFilter = levelDraft.trim();
     filterDialog?.close();
@@ -660,6 +667,19 @@
     categoryDraft = checked
       ? [...categoryDraft, value]
       : categoryDraft.filter((category) => category !== value);
+  };
+
+  const toggleMusicTag = (value: string, checked: boolean): void => {
+    if (value === "all") {
+      if (checked) {
+        tagDraft = [];
+      }
+      return;
+    }
+
+    tagDraft = checked
+      ? [...new Set([...tagDraft, value])]
+      : tagDraft.filter((entry) => entry !== value);
   };
 </script>
 
@@ -807,6 +827,26 @@
                 onchange={(event) => toggleCategory(category, event.currentTarget.checked)}
               />
               {getCategoryLabel(category)}
+            </label>
+          {/each}
+        </div>
+      </fieldset>
+      <fieldset class="form-control gap-2">
+        <legend class="label-text text-sm font-medium">{musicListTagLabel}</legend>
+        <div class="flex flex-wrap gap-1.5">
+          {#each musicTagOptions as tag (`music-tag:${tag}`)}
+            <label
+              class={`btn btn-sm ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
+              title={getMusicTagLabel(tag)}
+            >
+              <input
+                class="sr-only"
+                type="checkbox"
+                checked={tag === "all" ? tagDraft.length === 0 : tagDraft.includes(tag)}
+                onchange={(event) => toggleMusicTag(tag, event.currentTarget.checked)}
+                aria-label={getMusicTagLabel(tag)}
+              />
+              {getMusicTagLabel(tag)}
             </label>
           {/each}
         </div>

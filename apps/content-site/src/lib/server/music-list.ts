@@ -13,6 +13,7 @@ export type MusicListItem = {
   vocalUnits: string[];
   tags: string[];
   difficulties: string[];
+  difficultyLevels: { difficulty: string; level: string }[];
   levels: string[];
   publishedAt: string | number | null;
 };
@@ -53,7 +54,7 @@ export type MusicListQueryState = {
   lyricist: string;
   vocalCharacter: string[];
   vocalUnit: string[];
-  tag: string;
+  tags: string[];
   hasAppend: boolean;
   level: string;
   spoiler: boolean;
@@ -103,7 +104,7 @@ const getStringList = (
           return "";
         }
 
-        return pickString(object, objectKeys) ?? "";
+        return pickStringLike(object, objectKeys) ?? "";
       })
       .filter(Boolean);
   }
@@ -117,7 +118,7 @@ const getStringList = (
 
   const object = getObject(value);
   if (object) {
-    const result = pickString(object, objectKeys);
+    const result = pickStringLike(object, objectKeys);
     return result ? [result] : [];
   }
 
@@ -127,6 +128,20 @@ const getStringList = (
 const pickString = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
   for (const key of keys) {
     const value = getString(source[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
+const pickStringLike = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | null => {
+  for (const key of keys) {
+    const value = getStringLike(source[key]);
     if (value) {
       return value;
     }
@@ -150,6 +165,32 @@ const pickStringList = (
   return [];
 };
 
+const pickMusicDifficultyLevels = (
+  source: Record<string, unknown>
+): { difficulty: string; level: string }[] => {
+  for (const key of ["musicDifficulties", "difficulties", "difficulty"]) {
+    const value = source[key];
+    if (!Array.isArray(value)) {
+      continue;
+    }
+
+    return value
+      .map((entry) => {
+        const object = getObject(entry);
+        if (!object) {
+          return null;
+        }
+
+        const difficulty = pickStringLike(object, ["difficulty", "musicDifficulty", "name"]);
+        const level = pickStringLike(object, ["level", "playLevel", "musicLevel"]);
+        return difficulty && level ? { difficulty: difficulty.toLocaleLowerCase(), level } : null;
+      })
+      .filter((entry): entry is { difficulty: string; level: string } => entry !== null);
+  }
+
+  return [];
+};
+
 const parseMusicListItem = (payload: unknown): MusicListItem | null => {
   const root = getObject(payload);
   if (!root) {
@@ -165,6 +206,7 @@ const parseMusicListItem = (payload: unknown): MusicListItem | null => {
   const categories = Array.isArray(root.categories)
     ? root.categories.map(getString).filter((value): value is string => value !== null)
     : [];
+  const difficultyLevels = pickMusicDifficultyLevels(root);
 
   return {
     id,
@@ -186,10 +228,15 @@ const parseMusicListItem = (payload: unknown): MusicListItem | null => {
     tags: pickStringList(root, ["tags", "musicTags", "music_tag"]),
     difficulties: pickStringList(
       root,
-      ["difficulties", "difficulty"],
+      ["musicDifficulties", "difficulties", "difficulty"],
       ["difficulty", "musicDifficulty", "name", "id"]
     ).map((value) => value.toLocaleLowerCase()),
-    levels: pickStringList(root, ["levels", "level"], ["level", "playLevel", "musicLevel", "name"]),
+    difficultyLevels,
+    levels: pickStringList(
+      root,
+      ["musicDifficulties", "levels", "level"],
+      ["level", "playLevel", "musicLevel", "name"]
+    ),
     publishedAt: getDateValue(root.publishedAt ?? root.published_at)
   };
 };
@@ -209,6 +256,9 @@ const parseMultiValueParam = (searchParams: URLSearchParams, key: string): strin
   )
 ];
 
+const normalizeMusicTagFilters = (values: string[]): string[] =>
+  values.includes("all") ? [] : values;
+
 export const parseMusicListQueryState = (searchParams: URLSearchParams): MusicListQueryState => ({
   sortBy: parseSortBy(searchParams.get("sort_by")),
   sortOrder: parseSortOrder(searchParams.get("sort_order")),
@@ -219,7 +269,7 @@ export const parseMusicListQueryState = (searchParams: URLSearchParams): MusicLi
   lyricist: searchParams.get("lyricist")?.trim() ?? "",
   vocalCharacter: parseMultiValueParam(searchParams, "vocal_character"),
   vocalUnit: parseMultiValueParam(searchParams, "vocal_unit"),
-  tag: searchParams.get("music_tag")?.trim() ?? "",
+  tags: normalizeMusicTagFilters(parseMultiValueParam(searchParams, "music_tag")),
   hasAppend:
     searchParams.get("hasAppend") === "true" ||
     searchParams.get("has_append") === "true" ||
@@ -236,7 +286,7 @@ export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>
   queryState.lyricist.length > 0 ||
   queryState.vocalCharacter.length > 0 ||
   queryState.vocalUnit.length > 0 ||
-  queryState.tag.length > 0 ||
+  queryState.tags.length > 0 ||
   queryState.hasAppend ||
   queryState.level.length > 0;
 
@@ -252,9 +302,12 @@ export const fetchMusicCatalog = async (
   baseUrl: string,
   region: string,
   includeSpoilerContent: boolean,
-  hasAppend: boolean
+  hasAppend: boolean,
+  tags: string[]
 ): Promise<MusicListItem[]> => {
-  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}`;
+  const normalizedTags = normalizeMusicTagFilters(tags);
+  const tagQuery = normalizedTags.join(",");
+  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}|${tagQuery}`;
   const now = Date.now();
   const cached = catalogCache.get(key);
   if (cached && cached.expiresAt > now) {
@@ -273,6 +326,7 @@ export const fetchMusicCatalog = async (
         page,
         page_size: MUSIC_CATALOG_REQUEST_PAGE_SIZE,
         spoiler: includeSpoilerContent,
+        tag: tagQuery || undefined,
         hasAppend: hasAppend || undefined,
         sort_by: "publishedAt",
         sort_order: "desc"
@@ -436,7 +490,6 @@ export const createMusicListPage = (
         queryState.vocalCharacter.some((value) => item.vocalCharacters.includes(value))) &&
       (queryState.vocalUnit.length === 0 ||
         queryState.vocalUnit.some((value) => item.vocalUnits.includes(value))) &&
-      (!queryState.tag || item.tags.includes(queryState.tag)) &&
       (!queryState.level ||
         item.levels.some((value) => matchesLevelCondition(value, levelCondition)))
     );

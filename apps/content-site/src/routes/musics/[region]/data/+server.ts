@@ -35,7 +35,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       getMasterApiBaseUrl(),
       region,
       queryState.spoiler,
-      queryState.hasAppend
+      queryState.hasAppend,
+      queryState.tags
     );
     const musicListPage = createMusicListPage(catalog, queryState, page);
 

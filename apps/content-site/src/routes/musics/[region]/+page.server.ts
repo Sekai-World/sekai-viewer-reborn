@@ -28,7 +28,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
       getMasterApiBaseUrl(),
       region,
       queryState.spoiler,
-      queryState.hasAppend
+      queryState.hasAppend,
+      queryState.tags
     );
     const initialPage = createMusicListPage(catalog, queryState, 1);
     const filterMeta = buildMusicListFilterMeta(catalog);

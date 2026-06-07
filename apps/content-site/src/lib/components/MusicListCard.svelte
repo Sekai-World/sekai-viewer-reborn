@@ -11,6 +11,7 @@
     assetBundleName: string | null;
     categories: string[];
     composer: string | null;
+    difficultyLevels: { difficulty: string; level: string }[];
     publishedAt: string | number | null;
   };
 
@@ -91,6 +92,30 @@
   const handleRevealClick = (): void => {
     revealSpoiler();
   };
+
+  const difficultyOrder = ["easy", "normal", "hard", "expert", "master", "append"];
+  const difficultyClassByType: Record<string, string> = {
+    easy: "bg-[#86DA45] text-black",
+    normal: "bg-[#5FB8E6] text-black",
+    hard: "bg-[#F3AE3C] text-black",
+    expert: "bg-[#DC5268] text-white",
+    master: "bg-[#AC3EE6] text-white",
+    append: "bg-[#FF82C4] text-black"
+  };
+
+  const getDifficultyClass = (difficulty: string): string =>
+    difficultyClassByType[difficulty] ?? "bg-base-300 text-base-content";
+
+  const sortedDifficultyLevels = $derived.by(() =>
+    [...item.difficultyLevels].sort((left, right) => {
+      const leftIndex = difficultyOrder.indexOf(left.difficulty);
+      const rightIndex = difficultyOrder.indexOf(right.difficulty);
+      return (
+        (leftIndex === -1 ? difficultyOrder.length : leftIndex) -
+        (rightIndex === -1 ? difficultyOrder.length : rightIndex)
+      );
+    })
+  );
 </script>
 
 {#snippet spoilerOverlay()}
@@ -140,6 +165,17 @@
           {#if item.composer}
             <p class="truncate text-sm opacity-70">{creatorLabel}: {item.composer}</p>
           {/if}
+          {#if sortedDifficultyLevels.length > 0}
+            <div class="flex flex-wrap gap-1">
+              {#each sortedDifficultyLevels as difficultyLevel (`agenda-difficulty:${difficultyLevel.difficulty}`)}
+                <span
+                  class={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none ${getDifficultyClass(difficultyLevel.difficulty)}`}
+                >
+                  {difficultyLevel.level}
+                </span>
+              {/each}
+            </div>
+          {/if}
           <div class="flex flex-wrap gap-1">
             {#each item.categories as category (category)}
               <span class="badge badge-sm badge-outline border-base-content/15">
@@ -186,6 +222,17 @@
         <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{item.title}</h2>
         {#if item.composer}
           <p class="truncate text-xs opacity-70">{item.composer}</p>
+        {/if}
+        {#if sortedDifficultyLevels.length > 0}
+          <div class="flex flex-wrap gap-1">
+            {#each sortedDifficultyLevels as difficultyLevel (`grid-difficulty:${difficultyLevel.difficulty}`)}
+              <span
+                class={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none ${getDifficultyClass(difficultyLevel.difficulty)}`}
+              >
+                {difficultyLevel.level}
+              </span>
+            {/each}
+          </div>
         {/if}
       </div>
     {/if}
