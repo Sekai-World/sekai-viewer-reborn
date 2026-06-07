@@ -318,6 +318,11 @@ export type SharedHealthResponse = {
     status?: string;
 };
 
+export type SharedLiveStageResponse = {
+    id?: unknown;
+    name?: unknown;
+};
+
 export type SharedMasterDataAdminStatusResponse = {
     items?: Array<MasterdataSyncStatus>;
     regions?: Array<string>;
@@ -345,13 +350,71 @@ export type SharedMasterDataVersionsResponse = {
     dataVersion?: string;
 };
 
+export type SharedMusicArtistResponse = {
+    id?: unknown;
+    name?: unknown;
+};
+
+export type SharedMusicDifficultiesResponse = {
+    items?: Array<SharedMusicDifficultyDetailResponse>;
+};
+
+export type SharedMusicDifficultyDetailResponse = {
+    id?: unknown;
+    musicDifficulty?: unknown;
+    musicId?: unknown;
+    playLevel?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+    totalNoteCount?: unknown;
+};
+
+export type SharedMusicDifficultyResponse = {
+    musicDifficulty?: unknown;
+    playLevel?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedMusicListItemResponse = {
+    arranger?: unknown;
+    assetbundleName?: unknown;
+    composer?: unknown;
+    creatorArtist?: SharedMusicArtistResponse;
+    dancerCount?: unknown;
+    difficulties?: Array<SharedMusicDifficultyResponse>;
+    fillerSec?: unknown;
+    id?: unknown;
+    liveStage?: SharedLiveStageResponse;
+    lyricist?: unknown;
+    pronunciation?: unknown;
+    publishedAt?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+    selfDancerPosition?: unknown;
+    seq?: unknown;
+    tags?: Array<string>;
+    title?: unknown;
+};
+
 export type SharedMusicListResponse = {
-    items?: Array<SharedMusicObjectResponse>;
+    items?: Array<SharedMusicListItemResponse>;
     pagination?: SharedPaginationResponse;
 };
 
 export type SharedMusicObjectResponse = {
-    [key: string]: unknown;
+    arranger?: unknown;
+    assetbundleName?: unknown;
+    composer?: unknown;
+    creatorArtist?: SharedMusicArtistResponse;
+    dancerCount?: unknown;
+    fillerSec?: unknown;
+    id?: unknown;
+    liveStage?: SharedLiveStageResponse;
+    lyricist?: unknown;
+    pronunciation?: unknown;
+    publishedAt?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+    selfDancerPosition?: unknown;
+    seq?: unknown;
+    title?: unknown;
 };
 
 export type SharedPaginationResponse = {
@@ -1874,6 +1937,52 @@ export type GetMusicsByRegionByIdResponses = {
 };
 
 export type GetMusicsByRegionByIdResponse = GetMusicsByRegionByIdResponses[keyof GetMusicsByRegionByIdResponses];
+
+export type GetMusicsByRegionByIdDifficultiesData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Music ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/musics/{region}/{id}/difficulties';
+};
+
+export type GetMusicsByRegionByIdDifficultiesErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMusicsByRegionByIdDifficultiesError = GetMusicsByRegionByIdDifficultiesErrors[keyof GetMusicsByRegionByIdDifficultiesErrors];
+
+export type GetMusicsByRegionByIdDifficultiesResponses = {
+    /**
+     * OK
+     */
+    200: SharedMusicDifficultiesResponse;
+};
+
+export type GetMusicsByRegionByIdDifficultiesResponse = GetMusicsByRegionByIdDifficultiesResponses[keyof GetMusicsByRegionByIdDifficultiesResponses];
 
 export type GetUnitProfilesRegionsByUnitAvailabilityData = {
     body?: never;
