@@ -173,6 +173,11 @@
   const getSupportUnitOptionLabel = (value: string): string =>
     value === "none" ? getUnitOptionLabel("piapro") : getUnitOptionLabel(value);
 
+  const isPiaproUnitSelected = (values: string[]): boolean => values.includes("piapro");
+
+  const getVisibleSupportUnitFilter = (units: string[], supportUnits: string[]): string[] =>
+    isPiaproUnitSelected(units) ? supportUnits : [];
+
   const getAttrIconUrl = (value: string): string => asset(`/card_attr/icon_attribute_${value}.png`);
 
   const getCharacterThumbnailUrl = (value: string): string | null => {
@@ -660,7 +665,7 @@
       searchParams.append("rarity", value);
     });
 
-    supportUnitFilter.forEach((value) => {
+    getVisibleSupportUnitFilter(unitFilter, supportUnitFilter).forEach((value) => {
       searchParams.append("support_unit", value);
     });
 
@@ -825,7 +830,7 @@
     const nextType = filterTypeDraft;
     const nextAttr = filterAttrDraft;
     const nextRarity = filterRarityDraft;
-    const nextSupportUnit = filterSupportUnitDraft;
+    const nextSupportUnit = getVisibleSupportUnitFilter(nextUnit, filterSupportUnitDraft);
     const nextHas3dmvCutIn = has3dmvCutInDraft;
 
     const hasChanged =
@@ -1083,6 +1088,44 @@
         </div>
       </fieldset>
 
+      {#if isPiaproUnitSelected(filterUnitDraft)}
+        <fieldset class="form-control w-full gap-2">
+          <legend class="label-text text-sm font-medium">{cardListFilterSupportUnitLabel}</legend>
+          <div class="join flex w-full flex-wrap">
+            {#each supportUnitOptions as option (`support-unit:${option}`)}
+              <label
+                class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
+                title={getSupportUnitOptionLabel(option)}
+              >
+                <input
+                  type="checkbox"
+                  class="sr-only"
+                  checked={filterSupportUnitDraft.includes(option)}
+                  onchange={(e) => {
+                    filterSupportUnitDraft = toggleDraftValue(
+                      filterSupportUnitDraft,
+                      option,
+                      e.currentTarget.checked
+                    );
+                  }}
+                  aria-label={getSupportUnitOptionLabel(option)}
+                />
+                {#if getUnitIconUrl(option)}
+                  <img
+                    src={getUnitIconUrl(option) ?? ""}
+                    alt=""
+                    aria-hidden="true"
+                    class="h-7 w-7 object-contain"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                {/if}
+              </label>
+            {/each}
+          </div>
+        </fieldset>
+      {/if}
+
       <fieldset class="form-control w-full gap-2">
         <legend class="label-text text-sm font-medium">{cardListFilterCharacterLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
@@ -1229,42 +1272,6 @@
                 aria-label={getRarityLabel(option)}
               />
               <span>{getRarityLabel(option)}</span>
-            </label>
-          {/each}
-        </div>
-      </fieldset>
-
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{cardListFilterSupportUnitLabel}</legend>
-        <div class="join flex w-full flex-wrap">
-          {#each supportUnitOptions as option (`support-unit:${option}`)}
-            <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
-              title={getSupportUnitOptionLabel(option)}
-            >
-              <input
-                type="checkbox"
-                class="sr-only"
-                checked={filterSupportUnitDraft.includes(option)}
-                onchange={(e) => {
-                  filterSupportUnitDraft = toggleDraftValue(
-                    filterSupportUnitDraft,
-                    option,
-                    e.currentTarget.checked
-                  );
-                }}
-                aria-label={getSupportUnitOptionLabel(option)}
-              />
-              {#if getUnitIconUrl(option)}
-                <img
-                  src={getUnitIconUrl(option) ?? ""}
-                  alt=""
-                  aria-hidden="true"
-                  class="h-7 w-7 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-              {/if}
             </label>
           {/each}
         </div>
