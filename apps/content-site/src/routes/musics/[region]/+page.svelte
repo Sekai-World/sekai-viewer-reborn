@@ -192,8 +192,7 @@
     return icon ? asset(`/icons/icon_${icon}.png`) : null;
   };
 
-  const mapLegacyVocalUnitToTag = (value: string): string =>
-    musicTagByUnitCode[value] ?? value;
+  const mapLegacyVocalUnitToTag = (value: string): string => musicTagByUnitCode[value] ?? value;
 
   const getCharacterThumbnailUrl = (value: string): string | null => {
     const id = Number.parseInt(value, 10);
@@ -722,26 +721,29 @@
           type="button"
           class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           title={musicListViewGrid}
+          aria-label={musicListViewGrid}
           onclick={() => setViewMode("grid")}
         >
-          <Icon icon="mdi:view-grid-outline" class="h-4 w-4" />
+          <Icon icon="mdi:view-grid-outline" class="h-4 w-4" aria-hidden="true" />
         </button>
         <button
           type="button"
           class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           title={musicListViewAgenda}
+          aria-label={musicListViewAgenda}
           onclick={() => setViewMode("agenda")}
         >
-          <Icon icon="mdi:view-agenda-outline" class="h-4 w-4" />
+          <Icon icon="mdi:view-agenda-outline" class="h-4 w-4" aria-hidden="true" />
         </button>
       </div>
       <button
         type="button"
         class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
         title={musicListOpenFilters}
+        aria-label={musicListOpenFilters}
         onclick={openFilters}
       >
-        <Icon icon="mdi:funnel" class="h-4 w-4" />
+        <Icon icon="mdi:funnel" class="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   </div>
@@ -756,7 +758,7 @@
   {:else}
     <div
       class={viewMode === "agenda"
-        ? "grid grid-cols-1 gap-4 lg:grid-cols-2"
+        ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
         : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}
     >
       {#each visibleItems as item (item.id)}

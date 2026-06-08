@@ -93,6 +93,28 @@
     border-radius: 1rem;
   }
 
+  .hover-3d {
+    transform-style: preserve-3d;
+    transition:
+      transform 180ms ease-out,
+      box-shadow 180ms ease-out;
+  }
+
+  :root:not([data-low-motion]) .hover-3d:hover {
+    transform: perspective(900px) rotateX(1.4deg) rotateY(-1.8deg) translateY(-0.25rem);
+    box-shadow: 0 16px 28px color-mix(in oklab, var(--color-base-content) 12%, transparent) !important;
+  }
+
+  :root[data-low-motion] .hover-3d {
+    transform-style: flat;
+    transition: box-shadow 1ms linear !important;
+  }
+
+  :root[data-low-motion] .hover-3d:hover {
+    transform: none !important;
+    box-shadow: 0 8px 16px color-mix(in oklab, var(--color-base-content) 10%, transparent) !important;
+  }
+
   .event-list-unit-idol::after,
   .event-list-unit-light-sound::after,
   .event-list-unit-piapro::after,
@@ -212,6 +234,41 @@
     background-color: color-mix(in oklab, white 42%, transparent);
   }
 
+  .music-difficulty-badge {
+    color: var(--music-difficulty-foreground);
+    background-color: var(--music-difficulty-background);
+  }
+
+  .music-difficulty-easy {
+    --music-difficulty-background: oklch(80% 0.19 134);
+    --music-difficulty-foreground: oklch(18% 0.04 134);
+  }
+
+  .music-difficulty-normal {
+    --music-difficulty-background: oklch(75% 0.13 226);
+    --music-difficulty-foreground: oklch(18% 0.04 226);
+  }
+
+  .music-difficulty-hard {
+    --music-difficulty-background: oklch(78% 0.16 76);
+    --music-difficulty-foreground: oklch(20% 0.04 76);
+  }
+
+  .music-difficulty-expert {
+    --music-difficulty-background: oklch(51% 0.17 18);
+    --music-difficulty-foreground: oklch(98% 0.01 18);
+  }
+
+  .music-difficulty-master {
+    --music-difficulty-background: oklch(54% 0.22 300);
+    --music-difficulty-foreground: oklch(98% 0.01 300);
+  }
+
+  .music-difficulty-append {
+    --music-difficulty-background: oklch(76% 0.16 340);
+    --music-difficulty-foreground: oklch(18% 0.04 340);
+  }
+
   :root.dark[data-theme="default"] .content-card-shell {
     border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
   }
@@ -276,123 +333,63 @@
   :root.dark[data-theme="default"] .event-list-spoiler-mosaic-overlay {
     background-color: color-mix(in oklab, var(--color-base-100) 42%, transparent);
   }
-
-  .liquid-glass-nav {
-    background:
-      radial-gradient(
-        120% 115% at 8% 0%,
-        color-mix(in oklab, var(--color-primary) 8%, transparent),
-        transparent 60%
-      ),
-      linear-gradient(
-        135deg,
-        color-mix(in oklab, var(--color-base-100) 96%, transparent) 0%,
-        color-mix(in oklab, var(--color-base-100) 90%, var(--color-base-200)) 100%
-      );
-    border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 84%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 6%, transparent),
-      0 2px 8px color-mix(in oklab, var(--color-base-content) 9%, transparent);
-  }
-
-  .liquid-glass-nav::before {
-    content: "";
-    position: absolute;
-    inset: 1px;
-    border-radius: inherit;
-    background: linear-gradient(
-      110deg,
-      color-mix(in oklab, var(--color-base-100) 36%, transparent) 0%,
-      transparent 42%,
-      color-mix(in oklab, var(--color-base-content) 5%, transparent) 100%
-    );
-    pointer-events: none;
-    opacity: 0.28;
-    z-index: 1;
-  }
-
-  .liquid-glass-nav::after {
-    content: none;
-  }
-
-  :root.dark .liquid-glass-nav {
-    background:
-      radial-gradient(
-        120% 115% at 8% 0%,
-        color-mix(in oklab, var(--color-primary) 7%, transparent),
-        transparent 62%
-      ),
-      linear-gradient(
-        135deg,
-        color-mix(in oklab, var(--color-base-100) 92%, transparent) 0%,
-        color-mix(in oklab, var(--color-base-100) 86%, var(--color-base-200)) 100%
-      );
-    border-color: color-mix(in oklab, var(--color-base-content) 16%, transparent);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 30%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 5%, transparent),
-      0 2px 8px color-mix(in oklab, black 24%, transparent);
-  }
-
-  :root.dark .liquid-glass-nav::before {
-    background: linear-gradient(
-      110deg,
-      color-mix(in oklab, var(--color-base-100) 20%, transparent) 0%,
-      transparent 45%,
-      color-mix(in oklab, var(--color-base-content) 4%, transparent) 100%
-    );
-    opacity: 0.14;
-  }
 }
 
 .page-switch-shell {
   isolation: isolate;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  @supports (view-transition-name: content-site-main) {
-    .page-switch-shell {
-      view-transition-name: content-site-main;
-      will-change: transform, opacity;
+@supports (view-transition-name: content-site-main) {
+  :root:not([data-low-motion]) .page-switch-shell {
+    view-transition-name: content-site-main;
+    will-change: transform, opacity;
+  }
+
+  :root:not([data-low-motion])::view-transition-old(content-site-main),
+  :root:not([data-low-motion])::view-transition-new(content-site-main) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  :root:not([data-low-motion])::view-transition-old(content-site-main) {
+    animation-name: content-site-page-old;
+  }
+
+  :root:not([data-low-motion])::view-transition-new(content-site-main) {
+    animation-name: content-site-page-new;
+  }
+
+  @keyframes content-site-page-old {
+    from {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    ::view-transition-old(content-site-main),
-    ::view-transition-new(content-site-main) {
-      animation-duration: 220ms;
-      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    ::view-transition-old(content-site-main) {
-      animation-name: content-site-page-old;
-    }
-
-    ::view-transition-new(content-site-main) {
-      animation-name: content-site-page-new;
-    }
-
-    @keyframes content-site-page-old {
-      from {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      to {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-    }
-
-    @keyframes content-site-page-new {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    to {
+      opacity: 0;
+      transform: translateY(-8px);
     }
   }
+
+  @keyframes content-site-page-new {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+:root[data-low-motion] *,
+:root[data-low-motion] *::before,
+:root[data-low-motion] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-delay: 0ms !important;
+  transition-duration: 1ms !important;
 }

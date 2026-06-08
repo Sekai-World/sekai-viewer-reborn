@@ -45,7 +45,7 @@
 
   <div class="drawer-content bg-base-200">
     <header
-      class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2"
+      class="viewer-shell-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2"
     >
       <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-[96rem] px-2">
         <div class="navbar-start">
@@ -85,7 +85,7 @@
           <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">
             {title}
             <span
-              class="badge badge-error absolute -right-11 -top-5 -rotate-12 border border-error-content/25 px-2.5 py-2 text-[0.62rem] leading-none font-black uppercase tracking-[0.16em] text-error-content shadow-sm"
+              class="badge badge-error absolute -right-11 -top-5 -rotate-12 border border-error-content/25 px-2.5 py-2 text-[0.62rem] leading-none font-black uppercase tracking-wide text-error-content shadow-sm"
             >
               {titleBadge}
             </span>
@@ -169,23 +169,8 @@
 </div>
 
 <style>
-  .liquid-glass-nav {
-    background:
-      radial-gradient(
-        140% 120% at 0% 0%,
-        color-mix(in oklab, var(--color-primary) 8%, transparent) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        120% 130% at 100% 100%,
-        color-mix(in oklab, var(--color-accent) 6%, transparent) 0%,
-        transparent 64%
-      ),
-      linear-gradient(
-        135deg,
-        color-mix(in oklab, var(--color-base-100) 96%, transparent) 0%,
-        color-mix(in oklab, var(--color-base-100) 90%, var(--color-base-200)) 100%
-      );
+  .viewer-shell-nav {
+    background: color-mix(in oklab, var(--color-base-100) 94%, var(--color-base-200));
     border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
     box-shadow:
       0 2px 8px color-mix(in oklab, var(--color-base-content) 9%, transparent),
@@ -193,7 +178,7 @@
       inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 6%, transparent);
   }
 
-  .liquid-glass-nav::before {
+  .viewer-shell-nav::before {
     content: "";
     position: absolute;
     inset: 1px;
@@ -208,30 +193,15 @@
     opacity: 0.28;
   }
 
-  :global(.dark[data-theme="default"]) .liquid-glass-nav {
-    background:
-      radial-gradient(
-        130% 105% at 0% 0%,
-        color-mix(in oklab, var(--color-primary) 7%, transparent) 0%,
-        transparent 62%
-      ),
-      radial-gradient(
-        115% 120% at 100% 100%,
-        color-mix(in oklab, var(--color-accent) 5%, transparent) 0%,
-        transparent 66%
-      ),
-      linear-gradient(
-        135deg,
-        color-mix(in oklab, var(--color-base-100) 92%, transparent) 0%,
-        color-mix(in oklab, var(--color-base-100) 86%, var(--color-base-200)) 100%
-      );
+  :global(.dark[data-theme="default"]) .viewer-shell-nav {
+    background: color-mix(in oklab, var(--color-base-100) 90%, var(--color-base-200));
     box-shadow:
       0 2px 8px color-mix(in oklab, black 24%, transparent),
       inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 30%, transparent),
       inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 5%, transparent);
   }
 
-  :global(.dark[data-theme="default"]) .liquid-glass-nav::before {
+  :global(.dark[data-theme="default"]) .viewer-shell-nav::before {
     background: linear-gradient(
       110deg,
       color-mix(in oklab, var(--color-base-100) 20%, transparent) 0%,

@@ -80,6 +80,7 @@
   let mosaickedSpoilerContentLabel = $state(
     getInitialCommonText("settings.mosaickedSpoilerContent")
   );
+  let lowMotionModeLabel = $state(getInitialCommonText("settings.lowMotionMode"));
   let backToTopLabel = $state(getInitialCommonText("backToTopLabel"));
   let loadingLanguagePackLabel = $state(getInitialCommonText("loadingLanguagePack"));
   let switchThemeAriaLabel = $state(getInitialCommonText("aria.switchTheme"));
@@ -93,7 +94,8 @@
   let backToTopAnimationFrame = 0;
   let contentDisplaySettings = $state<ContentDisplaySettingsState>({
     showSpoilerContent: false,
-    mosaickedSpoilerContent: true
+    mosaickedSpoilerContent: true,
+    lowMotionMode: false
   });
 
   setContentDisplaySettings(contentDisplaySettings);
@@ -233,6 +235,7 @@
     contentDisplayLabel = translate("settings.contentDisplay");
     showSpoilerContentLabel = translate("settings.showSpoilerContent");
     mosaickedSpoilerContentLabel = translate("settings.mosaickedSpoilerContent");
+    lowMotionModeLabel = translate("settings.lowMotionMode");
     backToTopLabel = translate("backToTopLabel");
     loadingLanguagePackLabel = translate("loadingLanguagePack");
     switchThemeAriaLabel = translate("aria.switchTheme");
@@ -299,7 +302,10 @@
   const resolvePreferredContentDisplaySettings = (): ContentDisplaySettingsState => {
     const defaultSettings: ContentDisplaySettingsState = {
       showSpoilerContent: false,
-      mosaickedSpoilerContent: true
+      mosaickedSpoilerContent: true,
+      lowMotionMode:
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
     };
     const storedSettings = localStorage.getItem(CONTENT_DISPLAY_STORAGE_KEY);
 
@@ -312,7 +318,13 @@
       return {
         showSpoilerContent: parsed.showSpoilerContent === true,
         mosaickedSpoilerContent:
-          parsed.mosaickedSpoilerContent === false ? false : defaultSettings.mosaickedSpoilerContent
+          parsed.mosaickedSpoilerContent === false
+            ? false
+            : defaultSettings.mosaickedSpoilerContent,
+        lowMotionMode:
+          typeof parsed.lowMotionMode === "boolean"
+            ? parsed.lowMotionMode
+            : defaultSettings.lowMotionMode
       };
     } catch {
       return defaultSettings;
@@ -324,8 +336,16 @@
       CONTENT_DISPLAY_STORAGE_KEY,
       JSON.stringify({
         showSpoilerContent: contentDisplaySettings.showSpoilerContent,
-        mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent
+        mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent,
+        lowMotionMode: contentDisplaySettings.lowMotionMode
       })
+    );
+  };
+
+  const applyMotionPreference = (): void => {
+    document.documentElement.toggleAttribute(
+      "data-low-motion",
+      contentDisplaySettings.lowMotionMode
     );
   };
 
@@ -353,6 +373,12 @@
     contentDisplaySettings.mosaickedSpoilerContent = (
       event.currentTarget as HTMLInputElement
     ).checked;
+    persistContentDisplaySettings();
+  };
+
+  const handleLowMotionModeChange = (event: Event): void => {
+    contentDisplaySettings.lowMotionMode = (event.currentTarget as HTMLInputElement).checked;
+    applyMotionPreference();
     persistContentDisplaySettings();
   };
 
@@ -398,6 +424,12 @@
       return;
     }
 
+    if (contentDisplaySettings.lowMotionMode) {
+      window.scrollTo({ top: 0 });
+      updateBackToTopVisibility();
+      return;
+    }
+
     const durationMs = 220;
     const startTime = performance.now();
     const easeOutCubic = (progress: number): number => 1 - Math.pow(1 - progress, 3);
@@ -422,29 +454,30 @@
 
   onMount(() => {
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const documentWithViewTransition = document as Document & {
       startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
     };
     const supportsViewTransition =
       typeof documentWithViewTransition.startViewTransition === "function";
-    useFallbackRouteTransition = !supportsViewTransition || prefersReducedMotion;
+    useFallbackRouteTransition = !supportsViewTransition;
 
-    const maybeDisposeNavigationTransition =
-      supportsViewTransition && !prefersReducedMotion
-        ? onNavigate((navigation) => {
-            if (!documentWithViewTransition.startViewTransition) {
-              return;
-            }
+    const maybeDisposeNavigationTransition = supportsViewTransition
+      ? onNavigate((navigation) => {
+          if (
+            contentDisplaySettings.lowMotionMode ||
+            !documentWithViewTransition.startViewTransition
+          ) {
+            return;
+          }
 
-            return new Promise<void>((resolve) => {
-              documentWithViewTransition.startViewTransition(async () => {
-                resolve();
-                await navigation.complete;
-              });
+          return new Promise<void>((resolve) => {
+            documentWithViewTransition.startViewTransition(async () => {
+              resolve();
+              await navigation.complete;
             });
-          })
-        : undefined;
+          });
+        })
+      : undefined;
 
     const disposeNavigationTransition =
       typeof maybeDisposeNavigationTransition === "function"
@@ -457,6 +490,8 @@
     contentDisplaySettings.showSpoilerContent = preferredContentDisplaySettings.showSpoilerContent;
     contentDisplaySettings.mosaickedSpoilerContent =
       preferredContentDisplaySettings.mosaickedSpoilerContent;
+    contentDisplaySettings.lowMotionMode = preferredContentDisplaySettings.lowMotionMode;
+    applyMotionPreference();
     persistContentDisplaySettings();
     updateBackToTopVisibility();
     window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
@@ -532,7 +567,7 @@
 
 {#snippet contentDisplaySection()}
   <div class="flex flex-col gap-2">
-    <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
+    <span class="px-1 text-xs font-semibold opacity-70">
       {contentDisplayLabel}
     </span>
     <label
@@ -565,6 +600,20 @@
         />
       </label>
     {/if}
+    <label
+      class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
+    >
+      <span class="min-w-0 whitespace-normal break-words text-sm font-medium leading-snug"
+        >{lowMotionModeLabel}</span
+      >
+      <input
+        type="checkbox"
+        class="toggle toggle-primary shrink-0"
+        checked={contentDisplaySettings.lowMotionMode}
+        onchange={handleLowMotionModeChange}
+        aria-label={lowMotionModeLabel}
+      />
+    </label>
   </div>
 {/snippet}
 
@@ -636,7 +685,7 @@
             class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl"
             role="menu"
           >
-            <li class="menu-title px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
+            <li class="menu-title px-2 py-1 text-xs font-semibold opacity-60">
               {themePaletteLabel}
             </li>
             {#each themeNameOptions as themeNameOption (themeNameOption)}
@@ -658,9 +707,7 @@
               </li>
             {/each}
 
-            <li
-              class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60"
-            >
+            <li class="menu-title mt-2 px-2 py-1 text-xs font-semibold opacity-60">
               {themeControlLabel}
             </li>
             {#each ["auto", "light", "dark"] as themeOption (themeOption)}
@@ -717,7 +764,7 @@
             class="dropdown-content z-120 mt-3 w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
           >
             <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
-              <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
+              <p class="px-1 text-xs font-semibold opacity-60">
                 {currentLanguageLabel}
               </p>
               <p class="px-1 pt-1 text-sm font-semibold leading-snug">{uiLocaleDisplayLabel}</p>
@@ -771,104 +818,104 @@
           <div
             class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
           >
-          {@render contentDisplaySection()}
+            {@render contentDisplaySection()}
 
-          <div class="my-2 h-px bg-base-content/12"></div>
+            <div class="my-2 h-px bg-base-content/12"></div>
 
-          <div class="flex flex-col gap-1">
-            <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
-              {themePaletteLabel}
-            </span>
-            <div class="grid grid-cols-3 gap-1">
-              {#each themeNameOptions as themeNameOption (themeNameOption)}
-                <button
-                  type="button"
-                  class={`btn btn-sm h-auto !min-h-12 flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
-                  onclick={() => {
-                    applyTheme(themeNameOption, themeMode);
-                  }}
-                >
-                  {@render themePalettePreview(themeNameOption)}
-                  <span class="text-[0.6rem] font-semibold leading-none"
-                    >{getThemeNameLabel(themeNameOption)}</span
-                  >
-                </button>
-              {/each}
-            </div>
-          </div>
-
-          <div class="my-2 h-px bg-base-content/12"></div>
-
-          <div class="flex flex-col gap-1">
-            <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
-              {themeControlLabel}
-            </span>
-            <div class="grid grid-cols-3 gap-1">
-              {#each ["auto", "light", "dark"] as themeOption (themeOption)}
-                <button
-                  type="button"
-                  class={`btn btn-sm h-auto !min-h-12 flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
-                  onclick={() => {
-                    applyTheme(themeName, themeOption as ThemeMode);
-                  }}
-                >
-                  <Icon
-                    icon={getThemeModeIcon(themeOption as ThemeMode)}
-                    class="h-5 w-5 shrink-0"
-                  />
-                  <span class="text-[0.6rem] font-semibold leading-none"
-                    >{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span
-                  >
-                </button>
-              {/each}
-            </div>
-          </div>
-
-          <div class="my-2 h-px bg-base-content/12"></div>
-
-          <div class="flex flex-col gap-1">
-            <span class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-70">
-              {interfaceLanguageLabel}
-            </span>
-            <div class="grid gap-1">
-              {#each uiLocaleOptions as localeOption (localeOption.code)}
-                {#if localeOption.code === uiLocale}
+            <div class="flex flex-col gap-1">
+              <span class="px-1 text-xs font-semibold opacity-70">
+                {themePaletteLabel}
+              </span>
+              <div class="grid grid-cols-3 gap-1">
+                {#each themeNameOptions as themeNameOption (themeNameOption)}
                   <button
                     type="button"
-                    class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 btn-primary"
-                    disabled={true}
-                  >
-                    <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
-                  </button>
-                {/if}
-              {/each}
-              {#each uiLocaleOptions as localeOption (localeOption.code)}
-                {#if localeOption.code !== uiLocale}
-                  <button
-                    type="button"
-                    class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 bg-base-100"
-                    disabled={$isLocaleLoading}
-                    onclick={async () => {
-                      await setUiLocale(localeOption.code);
-                      isMobileSettingsMenuOpen = true;
+                    class={`btn btn-sm h-auto !min-h-12 flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
+                    onclick={() => {
+                      applyTheme(themeNameOption, themeMode);
                     }}
                   >
-                    <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                    {@render themePalettePreview(themeNameOption)}
+                    <span class="text-[0.6rem] font-semibold leading-none"
+                      >{getThemeNameLabel(themeNameOption)}</span
+                    >
                   </button>
-                {/if}
-              {/each}
+                {/each}
+              </div>
             </div>
-            {#if $isLocaleLoading}
-              <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
-            {/if}
-          </div>
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
+            <div class="flex flex-col gap-1">
+              <span class="px-1 text-xs font-semibold opacity-70">
+                {themeControlLabel}
+              </span>
+              <div class="grid grid-cols-3 gap-1">
+                {#each ["auto", "light", "dark"] as themeOption (themeOption)}
+                  <button
+                    type="button"
+                    class={`btn btn-sm h-auto !min-h-12 flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
+                    onclick={() => {
+                      applyTheme(themeName, themeOption as ThemeMode);
+                    }}
+                  >
+                    <Icon
+                      icon={getThemeModeIcon(themeOption as ThemeMode)}
+                      class="h-5 w-5 shrink-0"
+                    />
+                    <span class="text-[0.6rem] font-semibold leading-none"
+                      >{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span
+                    >
+                  </button>
+                {/each}
+              </div>
+            </div>
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
+            <div class="flex flex-col gap-1">
+              <span class="px-1 text-xs font-semibold opacity-70">
+                {interfaceLanguageLabel}
+              </span>
+              <div class="grid gap-1">
+                {#each uiLocaleOptions as localeOption (localeOption.code)}
+                  {#if localeOption.code === uiLocale}
+                    <button
+                      type="button"
+                      class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 btn-primary"
+                      disabled={true}
+                    >
+                      <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                    </button>
+                  {/if}
+                {/each}
+                {#each uiLocaleOptions as localeOption (localeOption.code)}
+                  {#if localeOption.code !== uiLocale}
+                    <button
+                      type="button"
+                      class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 bg-base-100"
+                      disabled={$isLocaleLoading}
+                      onclick={async () => {
+                        await setUiLocale(localeOption.code);
+                        isMobileSettingsMenuOpen = true;
+                      }}
+                    >
+                      <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                    </button>
+                  {/if}
+                {/each}
+              </div>
+              {#if $isLocaleLoading}
+                <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
+              {/if}
+            </div>
           </div>
         {/if}
       </div>
     </div>
   {/snippet}
 
-  {#if useFallbackRouteTransition}
+  {#if useFallbackRouteTransition && !contentDisplaySettings.lowMotionMode}
     {#key navigationTransitionKey}
       <div
         class="page-switch-shell"

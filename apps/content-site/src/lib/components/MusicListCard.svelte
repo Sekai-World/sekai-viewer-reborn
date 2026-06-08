@@ -98,12 +98,12 @@
 
   const difficultyOrder = ["easy", "normal", "hard", "expert", "master", "append"];
   const difficultyClassByType: Record<string, string> = {
-    easy: "bg-[#86DA45] text-black",
-    normal: "bg-[#5FB8E6] text-black",
-    hard: "bg-[#F3AE3C] text-black",
-    expert: "bg-[#DC5268] text-white",
-    master: "bg-[#AC3EE6] text-white",
-    append: "bg-[#FF82C4] text-black"
+    easy: "music-difficulty-easy",
+    normal: "music-difficulty-normal",
+    hard: "music-difficulty-hard",
+    expert: "music-difficulty-expert",
+    master: "music-difficulty-master",
+    append: "music-difficulty-append"
   };
 
   const getDifficultyClass = (difficulty: string): string =>
@@ -149,111 +149,123 @@
   {/if}
 {/snippet}
 
-<article class="card content-card-shell relative overflow-hidden shadow-sm">
-  {#if isSpoilerPlaceholderVisible()}
-    {@render spoilerOverlay()}
-  {/if}
-  {#if viewMode === "agenda"}
-    <div class="grid grid-cols-[5.5rem_1fr] gap-3 p-3 sm:grid-cols-[6.5rem_1fr]">
-      {#if isSpoilerPlaceholderVisible()}
-        <div class="aspect-square rounded-xl bg-base-200/60"></div>
-      {:else if item.assetBundleName}
-        <EventAssetImage
-          src={getMusicJacketAssetURL(item.assetBundleName, region)}
-          alt={`${item.title} ${jacketAltSuffix}`}
-          imageClass="h-full w-full object-cover"
-          buttonClass="block aspect-square w-full overflow-hidden rounded-xl"
-          loadMode="visible"
-        />
-      {:else}
-        <div class="aspect-square rounded-xl bg-base-200"></div>
-      {/if}
-      <div class="flex min-w-0 flex-col justify-center gap-2">
+<div class="hover-3d relative isolate w-full">
+  <article class="card content-card-shell relative overflow-hidden shadow-sm">
+    {#if isSpoilerPlaceholderVisible()}
+      {@render spoilerOverlay()}
+    {/if}
+    {#if viewMode === "agenda"}
+      <div class="grid grid-cols-[5.5rem_1fr] items-center gap-3 p-3 sm:grid-cols-[6.5rem_1fr]">
         {#if isSpoilerPlaceholderVisible()}
-          <div class="h-5 w-16 rounded-full bg-base-200/60"></div>
-          <div class="h-11 rounded-lg bg-base-200/60"></div>
-          <div class="h-4 rounded bg-base-200/60"></div>
+          <div class="aspect-square rounded-xl bg-base-200/60"></div>
+        {:else if item.assetBundleName}
+          <EventAssetImage
+            src={getMusicJacketAssetURL(item.assetBundleName, region)}
+            alt={`${item.title} ${jacketAltSuffix}`}
+            imageClass="h-full w-full object-cover"
+            buttonClass="block aspect-square w-full overflow-hidden rounded-xl"
+            loadMode="visible"
+          />
         {:else}
-          <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
-            {idLabel}{item.id}
-          </span>
-          {@render musicTagBadges("badge-sm")}
-          <h2 class="line-clamp-2 font-semibold leading-snug">{item.title}</h2>
-          {#if item.composer}
-            <p class="truncate text-sm opacity-70">{creatorLabel}: {item.composer}</p>
-          {/if}
-          {#if sortedDifficultyLevels.length > 0}
+          <div class="aspect-square rounded-xl bg-base-200"></div>
+        {/if}
+        <div class="flex min-w-0 flex-col justify-center gap-2">
+          {#if isSpoilerPlaceholderVisible()}
+            <div class="h-5 w-16 rounded-full bg-base-200/60"></div>
+            <div class="h-11 rounded-lg bg-base-200/60"></div>
+            <div class="h-4 rounded bg-base-200/60"></div>
+          {:else}
+            <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
+              {idLabel}{item.id}
+            </span>
+            {@render musicTagBadges("badge-sm")}
+            <h2 class="line-clamp-2 font-semibold leading-snug">{item.title}</h2>
+            {#if item.composer}
+              <p class="truncate text-sm opacity-70">{creatorLabel}: {item.composer}</p>
+            {/if}
+            {#if sortedDifficultyLevels.length > 0}
+              <div class="flex flex-wrap gap-1">
+                {#each sortedDifficultyLevels as difficultyLevel (`agenda-difficulty:${difficultyLevel.difficulty}`)}
+                  <span
+                    class={`music-difficulty-badge inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none ${getDifficultyClass(difficultyLevel.difficulty)}`}
+                  >
+                    {difficultyLevel.level}
+                  </span>
+                {/each}
+              </div>
+            {/if}
             <div class="flex flex-wrap gap-1">
-              {#each sortedDifficultyLevels as difficultyLevel (`agenda-difficulty:${difficultyLevel.difficulty}`)}
-                <span
-                  class={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none ${getDifficultyClass(difficultyLevel.difficulty)}`}
-                >
-                  {difficultyLevel.level}
+              {#each item.categories as category (category)}
+                <span class="badge badge-sm badge-outline border-base-content/15">
+                  {getCategoryLabel(category)}
                 </span>
               {/each}
             </div>
           {/if}
-          <div class="flex flex-wrap gap-1">
+        </div>
+      </div>
+    {:else}
+      <div class="relative aspect-square overflow-hidden">
+        {#if isSpoilerPlaceholderVisible()}
+          <div class="h-full w-full bg-base-200/60"></div>
+        {:else if item.assetBundleName}
+          <EventAssetImage
+            src={getMusicJacketAssetURL(item.assetBundleName, region)}
+            alt={`${item.title} ${jacketAltSuffix}`}
+            imageClass="h-full w-full object-cover"
+            buttonClass="block h-full w-full overflow-hidden"
+            loadMode="visible"
+          />
+        {:else}
+          <div class="h-full w-full bg-base-200"></div>
+        {/if}
+        {#if !isSpoilerPlaceholderVisible()}
+          <div class="absolute left-3 top-3">
+            <span
+              class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
+            >
+              {idLabel}{item.id}
+            </span>
+          </div>
+          <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
             {#each item.categories as category (category)}
-              <span class="badge badge-sm badge-outline border-base-content/15">
+              <span
+                class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
+              >
                 {getCategoryLabel(category)}
               </span>
             {/each}
           </div>
         {/if}
       </div>
-    </div>
-  {:else}
-    <div class="relative aspect-square overflow-hidden">
-      {#if isSpoilerPlaceholderVisible()}
-        <div class="h-full w-full bg-base-200/60"></div>
-      {:else if item.assetBundleName}
-        <EventAssetImage
-          src={getMusicJacketAssetURL(item.assetBundleName, region)}
-          alt={`${item.title} ${jacketAltSuffix}`}
-          imageClass="h-full w-full object-cover"
-          buttonClass="block h-full w-full overflow-hidden"
-          loadMode="visible"
-        />
-      {:else}
-        <div class="h-full w-full bg-base-200"></div>
-      {/if}
       {#if !isSpoilerPlaceholderVisible()}
-        <div class="absolute left-3 top-3">
-          <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
-            {idLabel}{item.id}
-          </span>
-        </div>
-        <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-          {#each item.categories as category (category)}
-            <span
-              class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
-            >
-              {getCategoryLabel(category)}
-            </span>
-          {/each}
+        <div class="card-body gap-2 p-4">
+          {@render musicTagBadges("badge-xs")}
+          <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{item.title}</h2>
+          {#if item.composer}
+            <p class="truncate text-xs opacity-70">{item.composer}</p>
+          {/if}
+          {#if sortedDifficultyLevels.length > 0}
+            <div class="flex flex-wrap gap-1">
+              {#each sortedDifficultyLevels as difficultyLevel (`grid-difficulty:${difficultyLevel.difficulty}`)}
+                <span
+                  class={`music-difficulty-badge inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none ${getDifficultyClass(difficultyLevel.difficulty)}`}
+                >
+                  {difficultyLevel.level}
+                </span>
+              {/each}
+            </div>
+          {/if}
         </div>
       {/if}
-    </div>
-    {#if !isSpoilerPlaceholderVisible()}
-      <div class="card-body gap-2 p-4">
-        {@render musicTagBadges("badge-xs")}
-        <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{item.title}</h2>
-        {#if item.composer}
-          <p class="truncate text-xs opacity-70">{item.composer}</p>
-        {/if}
-        {#if sortedDifficultyLevels.length > 0}
-          <div class="flex flex-wrap gap-1">
-            {#each sortedDifficultyLevels as difficultyLevel (`grid-difficulty:${difficultyLevel.difficulty}`)}
-              <span
-                class={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none ${getDifficultyClass(difficultyLevel.difficulty)}`}
-              >
-                {difficultyLevel.level}
-              </span>
-            {/each}
-          </div>
-        {/if}
-      </div>
     {/if}
-  {/if}
-</article>
+  </article>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+</div>

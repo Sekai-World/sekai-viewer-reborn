@@ -395,127 +395,153 @@
   </div>
 {/snippet}
 
-<article
-  class={`card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
->
-  {#if isSpoilerPlaceholderVisible()}
-    <div
-      class={viewMode === "grid" ? "aspect-video bg-base-200/60" : "min-h-32 bg-base-200/60"}
-    ></div>
-    <div class="card-body gap-2 p-4">
-      <div class="h-5 w-3/4 rounded bg-base-200/70"></div>
-      <div class="h-4 w-1/3 rounded bg-base-200/70"></div>
-    </div>
-    <div class="absolute inset-0 z-20">
-      {@render spoilerOverlay()}
-    </div>
-  {:else if viewMode === "agenda"}
-    <div class="grid grid-cols-[7.5rem_1fr] gap-4 p-3 sm:grid-cols-[10rem_1fr]">
-      <div class="grid grid-cols-2 gap-2 self-center">
-        {#if !isTrainedOnlyCard()}
-          {@render thumbImage(false, "aspect-square")}
-        {/if}
-        {#if isTrainableCard()}
-          {@render thumbImage(true, "aspect-square")}
-        {/if}
+<div class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`}>
+  <article
+    class={`card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
+  >
+    {#if isSpoilerPlaceholderVisible()}
+      <div
+        class={viewMode === "grid" ? "aspect-video bg-base-200/60" : "min-h-32 bg-base-200/60"}
+      ></div>
+      <div class="card-body gap-2 p-4">
+        <div class="h-5 w-3/4 rounded bg-base-200/70"></div>
+        <div class="h-4 w-1/3 rounded bg-base-200/70"></div>
       </div>
-      <div class="flex min-w-0 flex-col justify-center gap-2">
-        {@render metaBadges()}
-        <h2 class="line-clamp-2 text-base font-semibold leading-snug">{getCardTitle()}</h2>
-        <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
-        {#if getReleaseAt() !== null}
-          <p class="text-xs opacity-55">{cardListReleaseLabel}</p>
-        {/if}
+      <div class="absolute inset-0 z-20">
+        {@render spoilerOverlay()}
       </div>
-    </div>
-  {:else if viewMode === "comfy"}
-    <div class="card-body items-center gap-3 p-4 text-center">
-      <div class="grid w-full max-w-34 grid-cols-2 gap-2">
-        {#if !isTrainedOnlyCard()}
-          {@render thumbImage(false, "aspect-square")}
-        {/if}
-        {#if isTrainableCard()}
-          {@render thumbImage(true, "aspect-square")}
-        {/if}
-      </div>
-      {@render metaBadges()}
-      <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{getCardTitle()}</h2>
-      <p class="line-clamp-1 text-xs opacity-70">{getCharacterLabel()}</p>
-    </div>
-  {:else}
-    {@const normalUrl = getSmallImageUrl(false)}
-    {@const trainedUrl = getSmallImageUrl(true)}
-    <div class="card-grid-stage">
-      {#if isTrainableCard() && normalUrl && trainedUrl && !isTrainedOnlyCard()}
-        <div class="card-grid-hover-area card-grid-hover-area-left"></div>
-        <div class="card-grid-hover-area card-grid-hover-area-right"></div>
-      {/if}
-      <div class="card-grid-content" use:loadWhenVisible={"grid"}>
-        <div class="card-grid-image-container">
-          {#if isTrainedOnlyCard() && trainedUrl && visibleImageKeys.grid === true}
-            <img
-              src={trainedUrl}
-              alt={`${getCardTitle()} ${cardImageAltSuffix}`}
-              class="card-grid-single-image"
-              loading="lazy"
-              decoding="async"
-              onerror={(event) => handleCardImageError(event, "small", true)}
-            />
-          {:else if isTrainableCard() && trainedUrl && normalUrl && visibleImageKeys.grid === true}
-            <div class="card-grid-split-stage">
-              <div class="card-grid-split-wrapper card-grid-split-wrapper-left">
-                <img
-                  src={normalUrl}
-                  alt={`${getCardTitle()} ${cardImageAltSuffix}`}
-                  class="card-grid-split-image card-grid-split-image-left"
-                  loading="lazy"
-                  decoding="async"
-                  onerror={(event) => handleCardImageError(event, "small", false)}
-                />
-              </div>
-              <div class="card-grid-split-wrapper card-grid-split-wrapper-right">
-                <img
-                  src={trainedUrl}
-                  alt={`${getCardTitle()} ${cardImageAltSuffix}`}
-                  class="card-grid-split-image card-grid-split-image-right"
-                  loading="lazy"
-                  decoding="async"
-                  onerror={(event) => handleCardImageError(event, "small", true)}
-                />
-              </div>
-            </div>
-          {:else if normalUrl && visibleImageKeys.grid === true}
-            <img
-              src={normalUrl}
-              alt={`${getCardTitle()} ${cardImageAltSuffix}`}
-              class="card-grid-single-image"
-              loading="lazy"
-              decoding="async"
-              onerror={(event) => handleCardImageError(event, "small", false)}
-            />
-          {:else}
-            <div
-              class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
-            >
-              {getCardTitle()}
-            </div>
+    {:else if viewMode === "agenda"}
+      <div class="grid grid-cols-[7.5rem_1fr] gap-4 p-3 sm:grid-cols-[10rem_1fr]">
+        <div class="grid grid-cols-2 gap-2 self-center">
+          {#if !isTrainedOnlyCard()}
+            {@render thumbImage(false, "aspect-square")}
+          {/if}
+          {#if isTrainableCard()}
+            {@render thumbImage(true, "aspect-square")}
           {/if}
         </div>
-        {@render cardFrame("L", visibleImageKeys.grid === true)}
-        {#if visibleImageKeys.grid === true}
-          {@render largeIcons()}
-        {/if}
+        <div class="flex min-w-0 flex-col justify-center gap-2">
+          {@render metaBadges()}
+          <h2 class="line-clamp-2 text-base font-semibold leading-snug">{getCardTitle()}</h2>
+          <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
+          {#if getReleaseAt() !== null}
+            <p class="text-xs opacity-55">{cardListReleaseLabel}</p>
+          {/if}
+        </div>
       </div>
-    </div>
-    <div class="card-body gap-1.5 p-4">
-      <h2 class="line-clamp-2 text-base font-semibold leading-snug">{getCardTitle()}</h2>
-      {@render metaBadges()}
-      <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
-    </div>
-  {/if}
-</article>
+    {:else if viewMode === "comfy"}
+      <div class="card-body items-center gap-3 p-4 text-center">
+        <div class="grid w-full max-w-34 grid-cols-2 gap-2">
+          {#if !isTrainedOnlyCard()}
+            {@render thumbImage(false, "aspect-square")}
+          {/if}
+          {#if isTrainableCard()}
+            {@render thumbImage(true, "aspect-square")}
+          {/if}
+        </div>
+        {@render metaBadges()}
+        <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{getCardTitle()}</h2>
+        <p class="line-clamp-1 text-xs opacity-70">{getCharacterLabel()}</p>
+      </div>
+    {:else}
+      {@const normalUrl = getSmallImageUrl(false)}
+      {@const trainedUrl = getSmallImageUrl(true)}
+      <div class="card-grid-stage">
+        {#if isTrainableCard() && normalUrl && trainedUrl && !isTrainedOnlyCard()}
+          <div class="card-grid-hover-area card-grid-hover-area-left"></div>
+          <div class="card-grid-hover-area card-grid-hover-area-right"></div>
+        {/if}
+        <div class="card-grid-content" use:loadWhenVisible={"grid"}>
+          <div class="card-grid-image-container">
+            {#if isTrainedOnlyCard() && trainedUrl && visibleImageKeys.grid === true}
+              <img
+                src={trainedUrl}
+                alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+                class="card-grid-single-image"
+                loading="lazy"
+                decoding="async"
+                onerror={(event) => handleCardImageError(event, "small", true)}
+              />
+            {:else if isTrainableCard() && trainedUrl && normalUrl && visibleImageKeys.grid === true}
+              <div class="card-grid-split-stage">
+                <div class="card-grid-split-wrapper card-grid-split-wrapper-left">
+                  <img
+                    src={normalUrl}
+                    alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+                    class="card-grid-split-image card-grid-split-image-left"
+                    loading="lazy"
+                    decoding="async"
+                    onerror={(event) => handleCardImageError(event, "small", false)}
+                  />
+                </div>
+                <div class="card-grid-split-wrapper card-grid-split-wrapper-right">
+                  <img
+                    src={trainedUrl}
+                    alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+                    class="card-grid-split-image card-grid-split-image-right"
+                    loading="lazy"
+                    decoding="async"
+                    onerror={(event) => handleCardImageError(event, "small", true)}
+                  />
+                </div>
+              </div>
+            {:else if normalUrl && visibleImageKeys.grid === true}
+              <img
+                src={normalUrl}
+                alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+                class="card-grid-single-image"
+                loading="lazy"
+                decoding="async"
+                onerror={(event) => handleCardImageError(event, "small", false)}
+              />
+            {:else}
+              <div
+                class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
+              >
+                {getCardTitle()}
+              </div>
+            {/if}
+          </div>
+          {@render cardFrame("L", visibleImageKeys.grid === true)}
+          {#if visibleImageKeys.grid === true}
+            {@render largeIcons()}
+          {/if}
+        </div>
+      </div>
+      <div class="card-body gap-1.5 p-4">
+        <h2 class="line-clamp-2 text-base font-semibold leading-snug">{getCardTitle()}</h2>
+        {@render metaBadges()}
+        <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
+      </div>
+    {/if}
+  </article>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+  <div></div>
+</div>
 
 <style>
+  .card-grid-hover-lift {
+    transition: box-shadow 160ms ease-out;
+  }
+
+  :global(:root:not([data-low-motion])) .card-grid-hover-lift:hover > article {
+    box-shadow: 0 12px 20px color-mix(in oklab, var(--color-base-content) 12%, transparent);
+  }
+
+  :global(:root[data-low-motion]) .card-grid-hover-lift {
+    transition: box-shadow 1ms linear !important;
+  }
+
+  :global(:root[data-low-motion]) .card-grid-hover-lift:hover > article {
+    box-shadow: 0 7px 12px color-mix(in oklab, var(--color-base-content) 10%, transparent);
+  }
+
   .card-grid-stage {
     position: relative;
     aspect-ratio: 16 / 9;
@@ -551,6 +577,7 @@
     top: 0;
     height: 100%;
     overflow: hidden;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .card-grid-split-wrapper-left {
