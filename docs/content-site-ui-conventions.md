@@ -81,13 +81,18 @@ Direct image scaling can make banners feel soft or blurry due to browser resampl
 Current shared card system:
 
 - `apps/content-site/src/lib/components/EventCardFrame.svelte`
+- `apps/content-site/src/lib/components/CardListCard.svelte`
 - `apps/content-site/src/lib/components/CurrentEventCard.svelte`
 - `apps/content-site/src/lib/components/EventListCard.svelte`
+- `apps/content-site/src/lib/components/MusicListCard.svelte`
+- `apps/content-site/src/lib/components/EventAssetImage.svelte`
 - `apps/content-site/src/lib/styles/event-card.ts`
 
 Rules:
 
 - Shared card frame logic belongs in `EventCardFrame.svelte`.
+- Shared non-interactive event/music media should use `EventAssetImage.svelte`.
+- For long lists, card artwork should not attach image `src` before the card is visible. Use `EventAssetImage` with `loadMode="visible"` for event/music list artwork, or the existing visibility-gated pattern in `CardListCard.svelte`.
 - Shared animation class constants belong under `src/lib/styles`, not next to `.svelte` component files.
 - Page files should pass data into shared card components instead of inlining card structure repeatedly.
 
@@ -132,19 +137,24 @@ Current `content-site` sidebar groups:
   - Events
   - Virtual Lives
 
-Only the events entry currently has a real destination.
+Cards, Songs, and Events have real destinations. Virtual Lives is currently disabled.
 
 ## I18n Rules
 
-Event-type display text is localized through `svelte-i18n`.
+Event-type display text is localized through `svelte-i18n`. Unit display names come from the master API unit profile list.
 
 Current helper:
 
 - `apps/content-site/src/lib/event.ts`
+- `apps/content-site/src/lib/unit-profile.ts`
+- `apps/content-site/src/lib/server/unit-profiles.ts`
 
 Rules:
 
 - Do not hardcode translated event type strings in page components.
+- Do not hardcode unit names in page components or filter metadata. Use `/unitProfiles/{region}/list` through `fetchUnitProfiles`, and fall back with `formatUnitFallbackLabel`.
+- Keep server-side unit profile caching in `apps/content-site/src/lib/server/unit-profiles.ts`; cache validation should use the version key from `/versions/{region}`.
+- Keep music tag to unit-code mapping in `apps/content-site/src/lib/unit-profile.ts` because some API tag values differ from unit codes.
 - Add user-facing navigation labels to the external `sekai-i18n-reborn` dictionaries.
 - Add new source keys first to `packages/i18n-source/content-site/common.json` or `packages/i18n-source/content-site/server.json`; the sync workflow opens the translation-repo PR.
 

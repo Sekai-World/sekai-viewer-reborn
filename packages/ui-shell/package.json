@@ -19,9 +19,9 @@
     "howler": "^2.2.4"
   },
   "devDependencies": {
-    "@types/howler": "^2.2.12",
-    "svelte": "^5.55.4",
-    "svelte-check": "^4.4.6"
+    "@types/howler": "^2.2.13",
+    "svelte": "^5.56.2",
+    "svelte-check": "^4.6.0"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

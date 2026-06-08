@@ -12,6 +12,7 @@ import {
 } from "$lib/server/download-progress";
 import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "$lib/server/config";
 import { parseEventDetail } from "$lib/server/event-detail";
+import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "$lib/server/unit-profiles";
 import { TagLib, type Picture } from "taglib-wasm";
 
 const SUPPORTED_DOWNLOAD_FORMATS = new Set(["mp3", "wav"]);
@@ -341,6 +342,11 @@ export const GET: RequestHandler = async ({ params, fetch, request, url }) => {
     if (!event?.bgmAssetbundleName) {
       throw error(404, "Event BGM not available.");
     }
+    const unitName = getUnitName(
+      toUnitProfileMap(await fetchUnitProfiles(baseUrl, region)),
+      event.unit,
+      ""
+    );
 
     const internalRemoteAssetBaseUrl = getInternalRemoteAssetBaseUrl();
     const audioUrl = getEventBgmAssetURL(
@@ -389,9 +395,9 @@ export const GET: RequestHandler = async ({ params, fetch, request, url }) => {
         const tag = file.tag();
         tag.setTitle(event.title);
 
-        if (event.unitName) {
-          tag.setArtist(event.unitName);
-          file.setProperty("albumArtist", event.unitName);
+        if (unitName) {
+          tag.setArtist(unitName);
+          file.setProperty("albumArtist", unitName);
         }
 
         tag.setAlbum(event.title);

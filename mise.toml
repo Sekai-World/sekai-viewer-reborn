@@ -5,10 +5,11 @@ experimental = true
 _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tools]
+pnpm = "11.5.2"
 node = "24"
 
 [hooks]
-postinstall = "npx corepack enable"
+postinstall = "mise reshim"
 
 [tasks.pnpm-install]
 alias = "i"

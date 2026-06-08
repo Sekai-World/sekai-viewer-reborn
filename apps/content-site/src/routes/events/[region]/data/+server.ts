@@ -11,6 +11,19 @@ import {
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { RequestHandler } from "./$types";
 
+const summarizeResponse = (
+  result: { response?: Response },
+  durationMs: number
+): Record<string, unknown> => ({
+  contentLength: result.response?.headers.get("content-length") ?? null,
+  contentType: result.response?.headers.get("content-type") ?? null,
+  durationMs,
+  ok: result.response?.ok ?? null,
+  requestId: result.response?.headers.get("x-request-id") ?? null,
+  status: result.response?.status ?? null,
+  url: result.response?.url ?? null
+});
+
 const parsePageNumber = (value: string | null): number => {
   if (!value) {
     return 1;
@@ -25,7 +38,13 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const page = parsePageNumber(url.searchParams.get("page"));
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseEventListQueryState(url.searchParams);
-  const requestQuery = createEventListRequestQuery(queryState, page, DEFAULT_EVENT_LIST_PAGE_SIZE);
+  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
+  const requestQuery = createEventListRequestQuery(
+    queryState,
+    page,
+    DEFAULT_EVENT_LIST_PAGE_SIZE,
+    includeSpoilerContent
+  );
 
   logEventListFilterDebug("data request", {
     region,
@@ -35,6 +54,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
   });
 
   try {
+    const startedAt = performance.now();
     const response = await getEventsByRegionList({
       baseUrl,
       path: { region },
@@ -46,6 +66,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
         region,
         page,
         queryState,
+        ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
         error: response.error
       });
 
@@ -58,6 +79,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       region,
       page,
       queryState,
+      ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
+      rawItemCount: response.data?.items?.length ?? null,
       itemCount: eventListPage.items.length,
       pagination: eventListPage.pagination
     });

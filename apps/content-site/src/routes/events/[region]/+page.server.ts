@@ -9,7 +9,21 @@ import {
   parseEventListQueryState
 } from "$lib/server/event-list";
 import { getMasterApiBaseUrl } from "$lib/server/config";
+import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
+
+const summarizeResponse = (
+  result: { response?: Response },
+  durationMs: number
+): Record<string, unknown> => ({
+  contentLength: result.response?.headers.get("content-length") ?? null,
+  contentType: result.response?.headers.get("content-type") ?? null,
+  durationMs,
+  ok: result.response?.ok ?? null,
+  requestId: result.response?.headers.get("x-request-id") ?? null,
+  status: result.response?.status ?? null,
+  url: result.response?.url ?? null
+});
 
 const createEmptyPage = () => ({
   items: [],
@@ -25,8 +39,15 @@ const createEmptyPage = () => ({
 export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
+  const unitProfiles = toUnitProfileMap(await fetchUnitProfiles(baseUrl, region));
   const queryState = parseEventListQueryState(url.searchParams);
-  const requestQuery = createEventListRequestQuery(queryState, 1, DEFAULT_EVENT_LIST_PAGE_SIZE);
+  const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
+  const requestQuery = createEventListRequestQuery(
+    queryState,
+    1,
+    DEFAULT_EVENT_LIST_PAGE_SIZE,
+    includeSpoilerContent
+  );
 
   logEventListFilterDebug("initial request", {
     region,
@@ -35,6 +56,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
   });
 
   try {
+    const startedAt = performance.now();
     const [response, currentEventResponse] = await Promise.all([
       getEventsByRegionList({
         baseUrl,
@@ -51,6 +73,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
       logEventListFilterDebug("initial error", {
         region,
         queryState,
+        ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
         error: response.error
       });
 
@@ -59,7 +82,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
         initialPage: createEmptyPage(),
         initialLoadFailed: true,
         initialQuery: queryState,
-        currentEventId: null
+        currentEventId: null,
+        unitProfiles
       };
     }
 
@@ -68,6 +92,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
     logEventListFilterDebug("initial response", {
       region,
       queryState,
+      ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
+      rawItemCount: response.data?.items?.length ?? null,
       itemCount: initialPage.items.length,
       pagination: initialPage.pagination
     });
@@ -77,6 +103,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
       initialPage,
       initialLoadFailed: false,
       initialQuery: queryState,
+      unitProfiles,
       currentEventId:
         currentEventResponse && !currentEventResponse.error
           ? (parseEventDetail(currentEventResponse.data)?.id ?? null)
@@ -94,7 +121,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
       initialPage: createEmptyPage(),
       initialLoadFailed: true,
       initialQuery: queryState,
-      currentEventId: null
+      currentEventId: null,
+      unitProfiles
     };
   }
 };

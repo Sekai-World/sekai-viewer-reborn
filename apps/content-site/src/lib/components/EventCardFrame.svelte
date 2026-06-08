@@ -7,6 +7,7 @@
     href,
     frameClass,
     useBody = true,
+    overlay,
     onclick,
     children
   }: {
@@ -14,6 +15,7 @@
     href: string;
     frameClass: string;
     useBody?: boolean;
+    overlay?: Snippet;
     onclick?: (event: MouseEvent) => void;
     children?: Snippet;
   } = $props();
@@ -29,6 +31,11 @@
     {:else}
       <div class="relative z-10">
         {@render children?.()}
+      </div>
+    {/if}
+    {#if overlay}
+      <div class="absolute inset-0 z-30">
+        {@render overlay()}
       </div>
     {/if}
   </div>

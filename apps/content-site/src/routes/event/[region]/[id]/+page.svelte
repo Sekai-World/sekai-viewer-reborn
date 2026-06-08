@@ -12,6 +12,7 @@
     type RegionBadgeOption
   } from "$lib/components/RegionBadgeSwitch.svelte";
   import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
+  import { formatUnitFallbackLabel } from "$lib/unit-profile";
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
@@ -190,13 +191,18 @@
       active: true
     }
   ];
-  const getDisplayUnitName = (unitName: string | null | undefined): string | null => {
-    if (!unitName) {
+  const getDisplayUnitName = (
+    unitProfiles: Record<string, string>,
+    unit: string | null | undefined
+  ): string | null => {
+    if (!unit) {
       return null;
     }
 
-    const normalizedUnitName = unitName.trim().toLowerCase();
-    return normalizedUnitName === "none" || normalizedUnitName === "-" ? mixedUnitLabel : unitName;
+    const normalizedUnit = unit.trim().toLowerCase();
+    return normalizedUnit === "none" || normalizedUnit === "-"
+      ? mixedUnitLabel
+      : (unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit));
   };
 </script>
 
@@ -290,21 +296,24 @@
             {closeLabel}
           />
 
-          <EventDetailInfoCard
-            event={payload.event}
-            region={data.region}
-            uiLocale={data.uiLocale}
-            {displayLocale}
-            title={eventInfoTitle}
-            {idLabel}
-            {nameLabel}
-            {unitLabel}
-            {mixedUnitLabel}
-            {eventTypeLabel}
-            {startAtLabel}
-            {endAtLabel}
-            {bannerCharacterLabel}
-          />
+          {#await data.unitProfiles then unitProfiles}
+            <EventDetailInfoCard
+              event={payload.event}
+              region={data.region}
+              uiLocale={data.uiLocale}
+              {displayLocale}
+              title={eventInfoTitle}
+              {idLabel}
+              {nameLabel}
+              {unitLabel}
+              {mixedUnitLabel}
+              {unitProfiles}
+              {eventTypeLabel}
+              {startAtLabel}
+              {endAtLabel}
+              {bannerCharacterLabel}
+            />
+          {/await}
 
           {#await data.isCurrentEvent then isCurrentEvent}
             <EventDetailCountdownCard
@@ -316,31 +325,33 @@
           {/await}
         </div>
 
-        <EventDetailBgmCard
-          event={payload.event}
-          region={data.region}
-          title={eventBgmTitle}
-          unitName={getDisplayUnitName(payload.event.unitName) ?? ""}
-          bgmDownloadHref={getEventBgmDownloadHref}
-          bgmProgressHref={getEventBgmProgressHref()}
-          downloadProgressMessages={{
-            preparing: audioDownloadStagePreparingLabel,
-            fetchingAudio: audioDownloadStageFetchingAudioLabel,
-            fetchingCover: audioDownloadStageFetchingCoverLabel,
-            writingMetadata: audioDownloadStageWritingMetadataLabel,
-            finalizing: audioDownloadStageFinalizingLabel,
-            ready: audioDownloadStageReadyLabel,
-            failed: audioDownloadStageFailedLabel,
-            cancelled: audioDownloadStageCancelledLabel
-          }}
-          playLabel={audioPlayLabel}
-          pauseLabel={audioPauseLabel}
-          downloadLabel={audioDownloadLabel}
-          downloadCloseLabel={audioDownloadCloseLabel}
-          volumeLabel={audioVolumeLabel}
-          seekLabel={audioSeekLabel}
-          unavailableLabel={audioUnavailableLabel}
-        />
+        {#await data.unitProfiles then unitProfiles}
+          <EventDetailBgmCard
+            event={payload.event}
+            region={data.region}
+            title={eventBgmTitle}
+            unitName={getDisplayUnitName(unitProfiles, payload.event.unit) ?? ""}
+            bgmDownloadHref={getEventBgmDownloadHref}
+            bgmProgressHref={getEventBgmProgressHref()}
+            downloadProgressMessages={{
+              preparing: audioDownloadStagePreparingLabel,
+              fetchingAudio: audioDownloadStageFetchingAudioLabel,
+              fetchingCover: audioDownloadStageFetchingCoverLabel,
+              writingMetadata: audioDownloadStageWritingMetadataLabel,
+              finalizing: audioDownloadStageFinalizingLabel,
+              ready: audioDownloadStageReadyLabel,
+              failed: audioDownloadStageFailedLabel,
+              cancelled: audioDownloadStageCancelledLabel
+            }}
+            playLabel={audioPlayLabel}
+            pauseLabel={audioPauseLabel}
+            downloadLabel={audioDownloadLabel}
+            downloadCloseLabel={audioDownloadCloseLabel}
+            volumeLabel={audioVolumeLabel}
+            seekLabel={audioSeekLabel}
+            unavailableLabel={audioUnavailableLabel}
+          />
+        {/await}
       </div>
     {:else if !payload.error}
       {#await data.availableRegions}

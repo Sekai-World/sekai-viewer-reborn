@@ -37,11 +37,27 @@
 
   <div class="drawer-content bg-base-200">
     <!-- Hidden SVG filter for liquid glass distortion effect (article Demo 2 technique) -->
-    <svg aria-hidden="true" focusable="false" class="pointer-events-none absolute h-0 w-0 overflow-hidden">
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      class="pointer-events-none absolute h-0 w-0 overflow-hidden"
+    >
       <defs>
         <filter id="liquid-glass-distort" x="-10%" y="-10%" width="120%" height="120%">
-          <feTurbulence type="turbulence" baseFrequency="0.018 0.012" numOctaves="3" seed="5" result="turb" />
-          <feDisplacementMap in="SourceGraphic" in2="turb" scale="6" xChannelSelector="R" yChannelSelector="G" />
+          <feTurbulence
+            type="turbulence"
+            baseFrequency="0.018 0.012"
+            numOctaves="3"
+            seed="5"
+            result="turb"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="turb"
+            scale="6"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
         </filter>
       </defs>
     </svg>

@@ -3,6 +3,7 @@ import { getServerI18nText } from "$lib/i18n";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
+import { fetchUnitProfiles, toUnitProfileMap, type UnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 type EventSummary = {
@@ -26,6 +27,7 @@ type RegionEventCard = {
   label: string;
   event: EventSummary | null;
   versions: RegionVersions | null;
+  unitProfiles: UnitProfileMap;
   error: string | null;
 };
 
@@ -178,10 +180,13 @@ const toRegionEventCard = async (
   unavailableErrorText: string,
   versionsByRegion: VersionsByRegion
 ): Promise<RegionEventCard> => {
-  const eventResponse = await getEventsByRegionCurrent({
-    baseUrl,
-    path: { region }
-  });
+  const [eventResponse, unitProfiles] = await Promise.all([
+    getEventsByRegionCurrent({
+      baseUrl,
+      path: { region }
+    }),
+    fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap)
+  ]);
   const versions = versionsByRegion[region] ?? null;
 
   if (eventResponse.error) {
@@ -190,6 +195,7 @@ const toRegionEventCard = async (
       label: regionLabels[region],
       event: null,
       versions,
+      unitProfiles,
       error: unavailableErrorText
     };
   }
@@ -199,6 +205,7 @@ const toRegionEventCard = async (
     label: regionLabels[region],
     event: parseEventSummary(eventResponse.data),
     versions,
+    unitProfiles,
     error: null
   };
 };
@@ -232,6 +239,7 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
         label: regionLabels[region],
         event: null,
         versions: null,
+        unitProfiles: {},
         error: homeEventDataRequestFailed
       } satisfies RegionEventCard;
     }
