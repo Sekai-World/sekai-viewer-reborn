@@ -914,7 +914,7 @@
     <div class="join">
       <button
         type="button"
-        class={`btn join-item btn-sm ${getSortButtonClass("releaseAt")}`}
+        class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("releaseAt")}`}
         onclick={() => toggleSortBy("releaseAt")}
         title={cardListSortByReleaseAt}
         aria-label={`${cardListSortByReleaseAt} (${sortBy === "releaseAt" ? sortOrder : "desc"})`}
@@ -927,7 +927,7 @@
 
       <button
         type="button"
-        class={`btn join-item btn-sm ${getSortButtonClass("id")}`}
+        class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("id")}`}
         onclick={() => toggleSortBy("id")}
         title={cardListSortById}
         aria-label={`${cardListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
@@ -943,7 +943,7 @@
       <div class="join">
         <button
           type="button"
-          class={`btn join-item btn-sm ${getViewButtonClass("grid")}`}
+          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getViewButtonClass("grid")}`}
           onclick={() => setViewMode("grid")}
           title={cardListViewGrid}
           aria-label={cardListViewGrid}
@@ -952,7 +952,7 @@
         </button>
         <button
           type="button"
-          class={`btn join-item btn-sm ${getViewButtonClass("agenda")}`}
+          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getViewButtonClass("agenda")}`}
           onclick={() => setViewMode("agenda")}
           title={cardListViewAgenda}
           aria-label={cardListViewAgenda}
@@ -961,7 +961,7 @@
         </button>
         <button
           type="button"
-          class={`btn join-item btn-sm ${getViewButtonClass("comfy")}`}
+          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getViewButtonClass("comfy")}`}
           onclick={() => setViewMode("comfy")}
           title={cardListViewComfy}
           aria-label={cardListViewComfy}
@@ -972,7 +972,7 @@
 
       <button
         type="button"
-        class={`btn btn-sm ${hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+        class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
         onclick={openFilterDialog}
         title={cardListOpenFilters}
         aria-label={cardListOpenFilters}
@@ -1010,7 +1010,11 @@
     {#if errorMessage}
       <div class="flex items-center justify-center gap-3">
         <div class="alert alert-error max-w-xl flex-1">{errorMessage}</div>
-        <button type="button" class="btn btn-outline btn-sm" onclick={() => void loadNextPage()}>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm !min-h-12 sm:!min-h-8"
+          onclick={() => void loadNextPage()}
+        >
           {cardListRetry}
         </button>
       </div>
@@ -1057,7 +1061,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.unit as option (option.value)}
             <label
-              class={`btn btn-sm h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(filterUnitDraft, option.value)}`}
+              class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(filterUnitDraft, option.value)}`}
               title={option.label}
             >
               <input
@@ -1094,7 +1098,7 @@
           <div class="join flex w-full flex-wrap">
             {#each supportUnitOptions as option (`support-unit:${option}`)}
               <label
-                class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
+                class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
                 title={getSupportUnitOptionLabel(option)}
               >
                 <input
@@ -1131,7 +1135,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.character as option (option.value)}
             <label
-              class={`btn btn-sm h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(filterCharacterDraft, option.value)}`}
+              class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(filterCharacterDraft, option.value)}`}
               title={option.label}
             >
               <input
@@ -1167,7 +1171,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.skill as option (option.value)}
             <label
-              class={`btn btn-sm ${getFilterButtonClass(filterSkillDraft, option.value)}`}
+              class={`btn btn-sm !min-h-12 ${getFilterButtonClass(filterSkillDraft, option.value)}`}
               title={formatOptionLabel(option.value)}
             >
               <input
@@ -1194,7 +1198,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.type as option (option.value)}
             <label
-              class={`btn btn-sm ${getFilterButtonClass(filterTypeDraft, option.value)}`}
+              class={`btn btn-sm !min-h-12 ${getFilterButtonClass(filterTypeDraft, option.value)}`}
               title={formatOptionLabel(option.value)}
             >
               <input
@@ -1221,7 +1225,7 @@
         <div class="join flex w-full flex-wrap">
           {#each attrOptions as option (option)}
             <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterAttrDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+              class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${filterAttrDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={formatOptionLabel(option)}
             >
               <input
@@ -1255,7 +1259,7 @@
         <div class="join flex w-full flex-wrap">
           {#each rarityOptions as option (option)}
             <label
-              class={`btn btn-sm join-item ${filterRarityDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+              class={`btn btn-sm join-item !min-h-12 !min-w-12 ${filterRarityDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={getRarityLabel(option)}
             >
               <input
@@ -1291,14 +1295,14 @@
     </div>
 
     <div class="modal-action flex-wrap gap-2">
-      <button type="button" class="btn btn-outline" onclick={resetFilterDrafts}>
+      <button type="button" class="btn btn-outline !min-h-12" onclick={resetFilterDrafts}>
         {cardListFilterReset}
       </button>
-      <button type="button" class="btn btn-primary" onclick={applyFilters}>
+      <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}>
         {cardListFilterApply}
       </button>
       <form method="dialog">
-        <button type="submit" class="btn">{closeLabel}</button>
+        <button type="submit" class="btn !min-h-12">{closeLabel}</button>
       </form>
     </div>
   </div>

@@ -696,7 +696,7 @@
       {#each [{ value: "publishedAt", icon: "mdi:clock-outline", label: musicListSortByPublishedAt }, { value: "id", icon: "mdi:numeric", label: musicListSortById }] as option (option.value)}
         <button
           type="button"
-          class={`btn join-item btn-sm ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           title={option.label}
           aria-label={option.label}
           onclick={() => toggleSort(option.value as MusicListSortBy)}
@@ -712,7 +712,7 @@
       <div class="join">
         <button
           type="button"
-          class={`btn join-item btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           title={musicListViewGrid}
           onclick={() => setViewMode("grid")}
         >
@@ -720,7 +720,7 @@
         </button>
         <button
           type="button"
-          class={`btn join-item btn-sm ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           title={musicListViewAgenda}
           onclick={() => setViewMode("agenda")}
         >
@@ -729,7 +729,7 @@
       </div>
       <button
         type="button"
-        class={`btn btn-sm ${hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+        class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
         title={musicListOpenFilters}
         onclick={openFilters}
       >
@@ -803,7 +803,7 @@
           {#if nameDraft}
             <button
               type="button"
-              class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-2 -translate-y-1/2"
+              class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-1 !h-12 !min-h-12 !w-12 -translate-y-1/2"
               title={`${clearLabel}: ${musicListFilterNameLabel}`}
               aria-label={`${clearLabel}: ${musicListFilterNameLabel}`}
               onclick={() => (nameDraft = "")}
@@ -818,7 +818,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each data.filterMeta.categories as category (category)}
             <label
-              class={`btn btn-sm ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm !min-h-12 ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
             >
               <input
                 class="sr-only"
@@ -837,7 +837,7 @@
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
             {@const tagIconUrl = getMusicTagIconUrl(tag)}
             <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
+              class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
               title={getMusicTagLabel(tag)}
             >
               <input
@@ -872,7 +872,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each gameCharacterValues as character (character)}
             <label
-              class={`btn btn-sm h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(vocalCharacterDraft, character)}`}
+              class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(vocalCharacterDraft, character)}`}
               title={character}
             >
               <input
@@ -935,7 +935,7 @@
             {#if filter.value}
               <button
                 type="button"
-                class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-2 -translate-y-1/2"
+                class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-1 !h-12 !min-h-12 !w-12 -translate-y-1/2"
                 title={`${clearLabel}: ${filter.label}`}
                 aria-label={`${clearLabel}: ${filter.label}`}
                 onclick={() => filter.set("")}
@@ -948,13 +948,13 @@
       {/each}
     </div>
     <div class="modal-action">
-      <button type="button" class="btn btn-outline" onclick={resetDrafts}
+      <button type="button" class="btn btn-outline !min-h-12" onclick={resetDrafts}
         >{musicListFilterReset}</button
       >
-      <button type="button" class="btn btn-primary" onclick={applyFilters}
+      <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}
         >{musicListFilterApply}</button
       >
-      <form method="dialog"><button type="submit" class="btn">{closeLabel}</button></form>
+      <form method="dialog"><button type="submit" class="btn !min-h-12">{closeLabel}</button></form>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop"><button type="submit">{closeLabel}</button></form>
