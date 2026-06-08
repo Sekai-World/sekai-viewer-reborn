@@ -37,7 +37,7 @@ export type SharedCardObjectResponse = {
     archivePublishedAt?: unknown;
     assetbundleName?: unknown;
     attr?: unknown;
-    cardParameters?: unknown;
+    cardParameters?: Array<SharedCardParameterResponse>;
     cardRarity?: SharedCardRarityResponse;
     cardSkillName?: unknown;
     cardSupply?: SharedCardSupplyResponse;
@@ -64,8 +64,16 @@ export type SharedCardPagination = {
     total_pages?: number;
 };
 
+export type SharedCardParameterResponse = {
+    cardId?: number;
+    cardLevel?: number;
+    cardParameterType?: string;
+    id?: number;
+    power?: number;
+};
+
 export type SharedCardParamsResponse = {
-    cardParameters?: unknown;
+    cardParameters?: Array<SharedCardParameterResponse>;
     id?: unknown;
     specialTrainingPower1BonusFixed?: unknown;
     specialTrainingPower2BonusFixed?: unknown;
@@ -73,15 +81,33 @@ export type SharedCardParamsResponse = {
 };
 
 export type SharedCardRarityResponse = {
-    [key: string]: unknown;
+    cardRarityType?: string;
+    maxLevel?: number;
+    maxSkillLevel?: number;
+    seq?: number;
+    trainingMaxLevel?: number;
 };
 
 export type SharedCardSupplyResponse = {
-    [key: string]: unknown;
+    assetbundleName?: string;
+    cardSupplyType?: string;
+    id?: number;
 };
 
 export type SharedCharacterResponse = {
-    [key: string]: unknown;
+    firstName?: string;
+    firstNameEnglish?: string;
+    firstNameRuby?: string;
+    gender?: string;
+    givenName?: string;
+    givenNameEnglish?: string;
+    givenNameRuby?: string;
+    height?: number;
+    id?: number;
+    resourceId?: number;
+    seq?: number;
+    supportUnitType?: string;
+    unit?: string;
 };
 
 export type SharedCurrentEventResponse = {
@@ -292,6 +318,11 @@ export type SharedHealthResponse = {
     status?: string;
 };
 
+export type SharedLiveStageResponse = {
+    id?: unknown;
+    name?: unknown;
+};
+
 export type SharedMasterDataAdminStatusResponse = {
     items?: Array<MasterdataSyncStatus>;
     regions?: Array<string>;
@@ -319,13 +350,71 @@ export type SharedMasterDataVersionsResponse = {
     dataVersion?: string;
 };
 
+export type SharedMusicArtistResponse = {
+    id?: unknown;
+    name?: unknown;
+};
+
+export type SharedMusicDifficultiesResponse = {
+    items?: Array<SharedMusicDifficultyDetailResponse>;
+};
+
+export type SharedMusicDifficultyDetailResponse = {
+    id?: unknown;
+    musicDifficulty?: unknown;
+    musicId?: unknown;
+    playLevel?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+    totalNoteCount?: unknown;
+};
+
+export type SharedMusicDifficultyResponse = {
+    musicDifficulty?: unknown;
+    playLevel?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedMusicListItemResponse = {
+    arranger?: unknown;
+    assetbundleName?: unknown;
+    composer?: unknown;
+    creatorArtist?: SharedMusicArtistResponse;
+    dancerCount?: unknown;
+    difficulties?: Array<SharedMusicDifficultyResponse>;
+    fillerSec?: unknown;
+    id?: unknown;
+    liveStage?: SharedLiveStageResponse;
+    lyricist?: unknown;
+    pronunciation?: unknown;
+    publishedAt?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+    selfDancerPosition?: unknown;
+    seq?: unknown;
+    tags?: Array<string>;
+    title?: unknown;
+};
+
 export type SharedMusicListResponse = {
-    items?: Array<SharedMusicObjectResponse>;
+    items?: Array<SharedMusicListItemResponse>;
     pagination?: SharedPaginationResponse;
 };
 
 export type SharedMusicObjectResponse = {
-    [key: string]: unknown;
+    arranger?: unknown;
+    assetbundleName?: unknown;
+    composer?: unknown;
+    creatorArtist?: SharedMusicArtistResponse;
+    dancerCount?: unknown;
+    fillerSec?: unknown;
+    id?: unknown;
+    liveStage?: SharedLiveStageResponse;
+    lyricist?: unknown;
+    pronunciation?: unknown;
+    publishedAt?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+    selfDancerPosition?: unknown;
+    seq?: unknown;
+    title?: unknown;
 };
 
 export type SharedPaginationResponse = {
@@ -370,8 +459,48 @@ export type SharedReleaseConditionResponse = {
     sentence?: string;
 };
 
+export type SharedSkillEffectDetailResponse = {
+    activateEffectDuration?: number;
+    activateEffectValue?: number;
+    activateEffectValue2?: number;
+    activateEffectValueType?: string;
+    id?: number;
+    level?: number;
+};
+
+export type SharedSkillEffectResponse = {
+    activateCharacterRank?: number;
+    activateLife?: number;
+    activateNotesJudgmentType?: string;
+    activateUnitCount?: number;
+    conditionType?: string;
+    id?: number;
+    skillEffectDetails?: Array<SharedSkillEffectDetailResponse>;
+    skillEffectType?: string;
+    skillEnhance?: SharedSkillEnhanceResponse;
+};
+
+export type SharedSkillEnhanceConditionResponse = {
+    id?: number;
+    seq?: number;
+    unit?: string;
+};
+
+export type SharedSkillEnhanceResponse = {
+    activateEffectValue?: number;
+    activateEffectValueType?: string;
+    id?: number;
+    skillEnhanceCondition?: SharedSkillEnhanceConditionResponse;
+    skillEnhanceType?: string;
+};
+
 export type SharedSkillResponse = {
-    [key: string]: unknown;
+    description?: string;
+    descriptionSpriteName?: string;
+    id?: number;
+    shortDescription?: string;
+    skillEffects?: Array<SharedSkillEffectResponse>;
+    skillFilterId?: number;
 };
 
 export type SharedUnitProfileListResponse = {
@@ -641,6 +770,42 @@ export type GetCardsByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Comma-separated character units
+         */
+        unit?: string;
+        /**
+         * Comma-separated character IDs
+         */
+        character?: string;
+        /**
+         * Comma-separated skill descriptionSpriteName values
+         */
+        skill?: string;
+        /**
+         * Comma-separated card supply IDs or card supply types
+         */
+        type?: string;
+        /**
+         * Comma-separated card attributes
+         */
+        attr?: string;
+        /**
+         * Comma-separated card rarity types
+         */
+        rarity?: string;
+        /**
+         * Comma-separated support units
+         */
+        supportUnit?: string;
+        /**
+         * Include cards that have another3dmvCutIns entries
+         */
+        has3dmvCutIn?: boolean;
         /**
          * Sort field
          */
@@ -923,13 +1088,17 @@ export type GetEventsByRegionListData = {
          */
         name?: string;
         /**
-         * Event unit (matched against eventStoryUnits.unit)
+         * Event unit filter (comma-separated values)
          */
-        unit?: Array<string>;
+        unit?: string;
         /**
-         * Event type
+         * Event type filter (comma-separated values)
          */
-        event_type?: Array<string>;
+        event_type?: string;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
         /**
          * Sort field (id|startAt)
          */
@@ -1300,6 +1469,10 @@ export type GetGameCharacterUnitsByRegionListData = {
          */
         page_size?: number;
         /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
          * Sort field
          */
         sort_by?: string;
@@ -1438,6 +1611,10 @@ export type GetGameCharactersByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
         /**
          * Sort field
          */
@@ -1642,6 +1819,42 @@ export type GetMusicsByRegionListData = {
          */
         page_size?: number;
         /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Fuzzy music name
+         */
+        name?: string;
+        /**
+         * Comma-separated music categories
+         */
+        category?: string;
+        /**
+         * Comma-separated composer names
+         */
+        composer?: string;
+        /**
+         * Comma-separated arranger names
+         */
+        arranger?: string;
+        /**
+         * Comma-separated lyricist names
+         */
+        lyricist?: string;
+        /**
+         * Comma-separated music tags
+         */
+        tag?: string;
+        /**
+         * Music difficulty playLevel. Supports 30, >30, >=30, <30, <=30, or 26-30
+         */
+        playLevel?: string;
+        /**
+         * Filter musics by whether they have append difficulty
+         */
+        hasAppend?: boolean;
+        /**
          * Sort field
          */
         sort_by?: string;
@@ -1725,6 +1938,52 @@ export type GetMusicsByRegionByIdResponses = {
 
 export type GetMusicsByRegionByIdResponse = GetMusicsByRegionByIdResponses[keyof GetMusicsByRegionByIdResponses];
 
+export type GetMusicsByRegionByIdDifficultiesData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Music ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/musics/{region}/{id}/difficulties';
+};
+
+export type GetMusicsByRegionByIdDifficultiesErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMusicsByRegionByIdDifficultiesError = GetMusicsByRegionByIdDifficultiesErrors[keyof GetMusicsByRegionByIdDifficultiesErrors];
+
+export type GetMusicsByRegionByIdDifficultiesResponses = {
+    /**
+     * OK
+     */
+    200: SharedMusicDifficultiesResponse;
+};
+
+export type GetMusicsByRegionByIdDifficultiesResponse = GetMusicsByRegionByIdDifficultiesResponses[keyof GetMusicsByRegionByIdDifficultiesResponses];
+
 export type GetUnitProfilesRegionsByUnitAvailabilityData = {
     body?: never;
     path: {
@@ -1780,6 +2039,10 @@ export type GetUnitProfilesByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
         /**
          * Sort field
          */
@@ -1990,6 +2253,10 @@ export type GetVirtualLivesByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
         /**
          * Sort field
          */

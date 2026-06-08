@@ -53,14 +53,16 @@ const getTrimmedSearchParam = (value: string | null): string => {
   return trimmed.length > 0 ? trimmed : "";
 };
 
-const parseSortBy = (value: string | null): EventListSortBy =>
-  value === "id" ? "id" : "startAt";
+const parseSortBy = (value: string | null): EventListSortBy => (value === "id" ? "id" : "startAt");
 
 const parseSortOrder = (value: string | null): EventListSortOrder =>
   value === "asc" ? "asc" : "desc";
 
 const parseMultiValueParam = (searchParams: URLSearchParams, key: string): string[] => {
-  const values = searchParams.getAll(key).map((v) => v.trim()).filter((v) => v.length > 0);
+  const values = searchParams
+    .getAll(key)
+    .map((v) => v.trim())
+    .filter((v) => v.length > 0);
   return [...new Set(values)]; // Remove duplicates
 };
 
@@ -75,11 +77,13 @@ export const parseEventListQueryState = (searchParams: URLSearchParams): EventLi
 export const createEventListRequestQuery = (
   queryState: EventListQueryState,
   page: number,
-  pageSize: number
+  pageSize: number,
+  includeSpoilerContent: boolean
 ): GetEventsByRegionListData["query"] => {
   const query: NonNullable<GetEventsByRegionListData["query"]> = {
     page,
     page_size: pageSize,
+    spoiler: includeSpoilerContent,
     sort_by: queryState.sortBy,
     sort_order: queryState.sortOrder
   };
@@ -89,20 +93,17 @@ export const createEventListRequestQuery = (
   }
 
   if (queryState.eventType.length > 0) {
-    query.event_type = queryState.eventType;
+    query.event_type = queryState.eventType.join(",");
   }
 
   if (queryState.unit.length > 0) {
-    query.unit = queryState.unit;
+    query.unit = queryState.unit.join(",");
   }
 
   return query;
 };
 
-export const logEventListFilterDebug = (
-  label: string,
-  details: Record<string, unknown>
-): void => {
+export const logEventListFilterDebug = (label: string, details: Record<string, unknown>): void => {
   if (!dev) {
     return;
   }

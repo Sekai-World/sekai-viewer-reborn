@@ -1,0 +1,621 @@
+<script lang="ts">
+  import { asset } from "$app/paths";
+  import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets";
+  import { toTimestampMs } from "$lib/date-time";
+  import { getContentDisplaySettings } from "$lib/content-display-settings";
+  import type { SupportedRegion } from "$lib/regions";
+
+  type CardListCardItem = {
+    id: string;
+    prefix: string;
+    assetBundleName: string | null;
+    attr: string | null;
+    rarityType: string | null;
+    characterId: number | null;
+    characterName: string | null;
+    unit: string | null;
+    supportUnit: string | null;
+    initialSpecialTrainingStatus: string | null;
+    releaseAt: string | number | null;
+    archivePublishedAt: string | number | null;
+  };
+
+  type CardListViewMode = "grid" | "agenda" | "comfy";
+  type CardImageKind = "small" | "thumbnail";
+
+  let {
+    region,
+    item,
+    viewMode,
+    idLabel,
+    spoilerContentLabel,
+    cardListCharacterFallback,
+    cardListReleaseLabel,
+    cardImageAltSuffix
+  }: {
+    region: SupportedRegion;
+    item: CardListCardItem;
+    viewMode: CardListViewMode;
+    idLabel: string;
+    spoilerContentLabel: string;
+    cardListCharacterFallback: string;
+    cardListReleaseLabel: string;
+    cardImageAltSuffix: string;
+  } = $props();
+
+  const contentDisplaySettings = getContentDisplaySettings();
+  const spoilerRevealAnimationMs = 180;
+  let spoilerRevealed = $state(false);
+  let spoilerRevealAnimating = $state(false);
+  let lastSpoilerIdentity = $state("");
+  let spoilerRevealTimeout: ReturnType<typeof setTimeout> | null = null;
+  let visibleImageKeys = $state<Record<string, boolean>>({});
+
+  const rarityValueByType: Record<string, number> = {
+    rarity_1: 1,
+    rarity_2: 2,
+    rarity_3: 3,
+    rarity_4: 4,
+    rarity_birthday: 1
+  };
+
+  const isTrainableCard = (): boolean =>
+    item.rarityType === "rarity_3" || item.rarityType === "rarity_4";
+  const isTrainedOnlyCard = (): boolean =>
+    item.initialSpecialTrainingStatus === "done" && isTrainableCard();
+  const getReleaseAt = (): string | number | null => item.releaseAt ?? item.archivePublishedAt;
+  const getCardTitle = (): string => item.prefix;
+  const getCharacterLabel = (): string =>
+    item.characterName ??
+    (item.characterId !== null
+      ? `${cardListCharacterFallback} ${item.characterId}`
+      : cardListCharacterFallback);
+  const getRarityValue = (): number =>
+    item.rarityType ? (rarityValueByType[item.rarityType] ?? 0) : 0;
+  const getRarityFrameLevel = (): string | null => {
+    if (item.rarityType === "rarity_birthday") {
+      return "bd";
+    }
+
+    const rarityValue = getRarityValue();
+    return rarityValue > 0 ? String(rarityValue) : null;
+  };
+  const getAttrIconUrl = (size: 64 | 88 = 64): string | null =>
+    item.attr ? asset(`/card_attr/icon_attribute_${item.attr}_${size}.png`) : null;
+  const getUnitIconUrl = (unit: string | null): string | null => {
+    if (!unit) {
+      return null;
+    }
+
+    return asset(`/icons/icon_${unit === "none" ? "piapro" : unit}.png`);
+  };
+  const getCardFrameUrl = (size: "L" | "S"): string | null => {
+    const rarityFrameLevel = getRarityFrameLevel();
+    return rarityFrameLevel ? asset(`/card_frame/cardFrame_${size}_${rarityFrameLevel}.png`) : null;
+  };
+  const getRarityIconUrl = (trained: boolean): string | null => {
+    if (item.rarityType === "rarity_birthday") {
+      return asset("/card_rarity/rarity_birthday.png");
+    }
+
+    if (getRarityValue() <= 0) {
+      return null;
+    }
+
+    return asset(
+      trained ? "/card_rarity/rarity_star_afterTraining.png" : "/card_rarity/rarity_star_normal.png"
+    );
+  };
+  const hasSpoiler = (): boolean => {
+    const releaseAtMs = toTimestampMs(getReleaseAt());
+    return releaseAtMs !== null && releaseAtMs > Date.now();
+  };
+
+  const isSpoilerContentMosaicked = (): boolean =>
+    hasSpoiler() && contentDisplaySettings.mosaickedSpoilerContent && !spoilerRevealed;
+
+  const isSpoilerPlaceholderVisible = (): boolean =>
+    hasSpoiler() &&
+    contentDisplaySettings.mosaickedSpoilerContent &&
+    (!spoilerRevealed || spoilerRevealAnimating);
+
+  const clearSpoilerRevealTimeout = (): void => {
+    if (spoilerRevealTimeout === null) {
+      return;
+    }
+
+    clearTimeout(spoilerRevealTimeout);
+    spoilerRevealTimeout = null;
+  };
+
+  $effect(() => {
+    const nextSpoilerIdentity = `${region}:${item.id}`;
+    if (lastSpoilerIdentity === nextSpoilerIdentity) {
+      return;
+    }
+
+    clearSpoilerRevealTimeout();
+    lastSpoilerIdentity = nextSpoilerIdentity;
+    spoilerRevealed = false;
+    spoilerRevealAnimating = false;
+    visibleImageKeys = {};
+
+    return clearSpoilerRevealTimeout;
+  });
+
+  const revealSpoiler = (): void => {
+    if (!isSpoilerContentMosaicked()) {
+      return;
+    }
+
+    spoilerRevealAnimating = true;
+    clearSpoilerRevealTimeout();
+    spoilerRevealTimeout = setTimeout(() => {
+      spoilerRevealed = true;
+      spoilerRevealAnimating = false;
+      spoilerRevealTimeout = null;
+    }, spoilerRevealAnimationMs);
+  };
+
+  const getPrimaryCardAssetRegion = (): SupportedRegion => "jp";
+  const getFallbackCardAssetRegion = (): SupportedRegion | null =>
+    region === "jp" ? null : region;
+
+  const getSmallImageUrl = (
+    trained: boolean,
+    assetRegion = getPrimaryCardAssetRegion()
+  ): string | null =>
+    item.assetBundleName ? getCardSmallAssetURL(item.assetBundleName, trained, assetRegion) : null;
+
+  const getThumbnailImageUrl = (
+    trained: boolean,
+    assetRegion = getPrimaryCardAssetRegion()
+  ): string | null =>
+    item.assetBundleName
+      ? getCardThumbnailAssetURL(item.assetBundleName, trained, assetRegion)
+      : null;
+
+  const getFallbackImageUrl = (kind: CardImageKind, trained: boolean): string | null => {
+    const fallbackRegion = getFallbackCardAssetRegion();
+    if (!fallbackRegion) {
+      return null;
+    }
+
+    return kind === "small"
+      ? getSmallImageUrl(trained, fallbackRegion)
+      : getThumbnailImageUrl(trained, fallbackRegion);
+  };
+
+  const handleCardImageError = (event: Event, kind: CardImageKind, trained: boolean): void => {
+    const image = event.currentTarget;
+    if (!(image instanceof HTMLImageElement) || image.dataset.fallbackApplied === "true") {
+      return;
+    }
+
+    const fallbackUrl = getFallbackImageUrl(kind, trained);
+    if (!fallbackUrl) {
+      return;
+    }
+
+    image.dataset.fallbackApplied = "true";
+    image.src = fallbackUrl;
+  };
+
+  const markImageVisible = (key: string): void => {
+    if (visibleImageKeys[key]) {
+      return;
+    }
+
+    visibleImageKeys = { ...visibleImageKeys, [key]: true };
+  };
+
+  const loadWhenVisible = (node: HTMLElement, key: string) => {
+    if (typeof IntersectionObserver === "undefined") {
+      markImageVisible(key);
+      return {};
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) {
+          return;
+        }
+
+        markImageVisible(key);
+        observer.disconnect();
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(node);
+
+    return {
+      destroy() {
+        observer.disconnect();
+      }
+    };
+  };
+</script>
+
+{#snippet spoilerOverlay()}
+  <button
+    type="button"
+    class={`event-list-spoiler-mosaic-overlay flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
+    onclick={revealSpoiler}
+  >
+    <span
+      class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
+      aria-hidden="true"
+    >
+      !
+    </span>
+    <span class="text-sm font-semibold tracking-[0.12em] text-error">{spoilerContentLabel}</span>
+  </button>
+{/snippet}
+
+{#snippet cardFrame(size: "L" | "S", visible: boolean)}
+  {@const frameUrl = getCardFrameUrl(size)}
+  {#if frameUrl && visible}
+    <img
+      src={frameUrl}
+      alt=""
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-0 z-10 h-full w-full object-fill"
+      loading="lazy"
+      decoding="async"
+    />
+  {/if}
+{/snippet}
+
+{#snippet thumbIcons(trained: boolean)}
+  {@const attrIconUrl = getAttrIconUrl(88)}
+  {@const rarityIconUrl = getRarityIconUrl(trained)}
+  {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
+  <svg
+    class="pointer-events-none absolute inset-0 z-20 h-full w-full"
+    viewBox="0 0 100 100"
+    aria-hidden="true"
+  >
+    {#if attrIconUrl}
+      <image href={attrIconUrl} x="71" y="0" width="29" height="29" class="drop-shadow" />
+    {/if}
+    {#if rarityIconUrl && rarityCount > 0}
+      {#each Array.from(Array(rarityCount).keys()) as index (`rarity-thumb-${trained}-${index}`)}
+        <image
+          href={rarityIconUrl}
+          x={2 + index * 21}
+          y="73"
+          width="22"
+          height="22"
+          class="drop-shadow"
+        />
+      {/each}
+    {/if}
+  </svg>
+{/snippet}
+
+{#snippet largeIcons()}
+  {@const attrIconUrl = getAttrIconUrl()}
+  {@const normalRarityIconUrl = getRarityIconUrl(false)}
+  {@const trainedRarityIconUrl = getRarityIconUrl(true)}
+  {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
+  <svg
+    class="pointer-events-none absolute inset-0 z-20 h-full w-full"
+    viewBox="0 0 160 90"
+    aria-hidden="true"
+  >
+    {#if attrIconUrl}
+      <image href={attrIconUrl} x="0" y="0" width="21" height="21" class="drop-shadow" />
+    {/if}
+    {#if normalRarityIconUrl && rarityCount > 0}
+      <g class={isTrainableCard() ? "card-grid-rarity-stack card-grid-rarity-stack-left" : ""}>
+        {#each Array.from(Array(rarityCount).keys()) as index (`rarity-large-normal-${index}`)}
+          <image
+            href={normalRarityIconUrl}
+            x="5"
+            y={71 - index * 13}
+            width="14"
+            height="14"
+            class="drop-shadow"
+          />
+        {/each}
+      </g>
+    {/if}
+    {#if isTrainableCard() && trainedRarityIconUrl && rarityCount > 0}
+      <g class="card-grid-rarity-stack card-grid-rarity-stack-right">
+        {#each Array.from(Array(rarityCount).keys()) as index (`rarity-large-trained-${index}`)}
+          <image
+            href={trainedRarityIconUrl}
+            x="141"
+            y={71 - index * 13}
+            width="14"
+            height="14"
+            class="drop-shadow"
+          />
+        {/each}
+      </g>
+    {/if}
+  </svg>
+{/snippet}
+
+{#snippet unitIcon(iconUrl: string)}
+  <span
+    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-base-content/15 bg-base-100/70 dark:bg-gray-300"
+  >
+    <img
+      src={iconUrl}
+      alt=""
+      aria-hidden="true"
+      class="h-7 w-7 max-w-none object-contain"
+      loading="lazy"
+      decoding="async"
+    />
+  </span>
+{/snippet}
+
+{#snippet metaBadges()}
+  {@const unitIconUrl = getUnitIconUrl(item.unit)}
+  {@const supportUnitIconUrl =
+    item.unit === "piapro" && item.supportUnit !== "none" ? getUnitIconUrl(item.supportUnit) : null}
+  <div class="flex flex-wrap items-center gap-1.5">
+    <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
+      {idLabel}{item.id}
+    </span>
+    {#if unitIconUrl}
+      {@render unitIcon(unitIconUrl)}
+    {/if}
+    {#if supportUnitIconUrl}
+      {@render unitIcon(supportUnitIconUrl)}
+    {/if}
+  </div>
+{/snippet}
+
+{#snippet thumbImage(trained: boolean, sizeClass: string)}
+  {@const thumbUrl = getThumbnailImageUrl(trained)}
+  {@const imageKey = `thumb:${trained ? "trained" : "normal"}`}
+  {@const isVisible = visibleImageKeys[imageKey] === true}
+  <div
+    class={`relative overflow-hidden rounded-xl bg-base-200 ${sizeClass}`}
+    use:loadWhenVisible={imageKey}
+  >
+    {#if thumbUrl && isVisible}
+      <img
+        src={thumbUrl}
+        alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+        class="h-full w-full object-cover"
+        loading="lazy"
+        decoding="async"
+        onerror={(event) => handleCardImageError(event, "thumbnail", trained)}
+      />
+    {/if}
+    {@render cardFrame("S", isVisible)}
+    {#if isVisible}
+      {@render thumbIcons(trained)}
+    {/if}
+  </div>
+{/snippet}
+
+<article
+  class={`card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
+>
+  {#if isSpoilerPlaceholderVisible()}
+    <div
+      class={viewMode === "grid" ? "aspect-video bg-base-200/60" : "min-h-32 bg-base-200/60"}
+    ></div>
+    <div class="card-body gap-2 p-4">
+      <div class="h-5 w-3/4 rounded bg-base-200/70"></div>
+      <div class="h-4 w-1/3 rounded bg-base-200/70"></div>
+    </div>
+    <div class="absolute inset-0 z-20">
+      {@render spoilerOverlay()}
+    </div>
+  {:else if viewMode === "agenda"}
+    <div class="grid grid-cols-[7.5rem_1fr] gap-4 p-3 sm:grid-cols-[10rem_1fr]">
+      <div class="grid grid-cols-2 gap-2 self-center">
+        {#if !isTrainedOnlyCard()}
+          {@render thumbImage(false, "aspect-square")}
+        {/if}
+        {#if isTrainableCard()}
+          {@render thumbImage(true, "aspect-square")}
+        {/if}
+      </div>
+      <div class="flex min-w-0 flex-col justify-center gap-2">
+        {@render metaBadges()}
+        <h2 class="line-clamp-2 text-base font-semibold leading-snug">{getCardTitle()}</h2>
+        <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
+        {#if getReleaseAt() !== null}
+          <p class="text-xs opacity-55">{cardListReleaseLabel}</p>
+        {/if}
+      </div>
+    </div>
+  {:else if viewMode === "comfy"}
+    <div class="card-body items-center gap-3 p-4 text-center">
+      <div class="grid w-full max-w-34 grid-cols-2 gap-2">
+        {#if !isTrainedOnlyCard()}
+          {@render thumbImage(false, "aspect-square")}
+        {/if}
+        {#if isTrainableCard()}
+          {@render thumbImage(true, "aspect-square")}
+        {/if}
+      </div>
+      {@render metaBadges()}
+      <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{getCardTitle()}</h2>
+      <p class="line-clamp-1 text-xs opacity-70">{getCharacterLabel()}</p>
+    </div>
+  {:else}
+    {@const normalUrl = getSmallImageUrl(false)}
+    {@const trainedUrl = getSmallImageUrl(true)}
+    <div class="card-grid-stage">
+      {#if isTrainableCard() && normalUrl && trainedUrl && !isTrainedOnlyCard()}
+        <div class="card-grid-hover-area card-grid-hover-area-left"></div>
+        <div class="card-grid-hover-area card-grid-hover-area-right"></div>
+      {/if}
+      <div class="card-grid-content" use:loadWhenVisible={"grid"}>
+        <div class="card-grid-image-container">
+          {#if isTrainedOnlyCard() && trainedUrl && visibleImageKeys.grid === true}
+            <img
+              src={trainedUrl}
+              alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+              class="card-grid-single-image"
+              loading="lazy"
+              decoding="async"
+              onerror={(event) => handleCardImageError(event, "small", true)}
+            />
+          {:else if isTrainableCard() && trainedUrl && normalUrl && visibleImageKeys.grid === true}
+            <div class="card-grid-split-stage">
+              <div class="card-grid-split-wrapper card-grid-split-wrapper-left">
+                <img
+                  src={normalUrl}
+                  alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+                  class="card-grid-split-image card-grid-split-image-left"
+                  loading="lazy"
+                  decoding="async"
+                  onerror={(event) => handleCardImageError(event, "small", false)}
+                />
+              </div>
+              <div class="card-grid-split-wrapper card-grid-split-wrapper-right">
+                <img
+                  src={trainedUrl}
+                  alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+                  class="card-grid-split-image card-grid-split-image-right"
+                  loading="lazy"
+                  decoding="async"
+                  onerror={(event) => handleCardImageError(event, "small", true)}
+                />
+              </div>
+            </div>
+          {:else if normalUrl && visibleImageKeys.grid === true}
+            <img
+              src={normalUrl}
+              alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+              class="card-grid-single-image"
+              loading="lazy"
+              decoding="async"
+              onerror={(event) => handleCardImageError(event, "small", false)}
+            />
+          {:else}
+            <div
+              class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
+            >
+              {getCardTitle()}
+            </div>
+          {/if}
+        </div>
+        {@render cardFrame("L", visibleImageKeys.grid === true)}
+        {#if visibleImageKeys.grid === true}
+          {@render largeIcons()}
+        {/if}
+      </div>
+    </div>
+    <div class="card-body gap-1.5 p-4">
+      <h2 class="line-clamp-2 text-base font-semibold leading-snug">{getCardTitle()}</h2>
+      {@render metaBadges()}
+      <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
+    </div>
+  {/if}
+</article>
+
+<style>
+  .card-grid-stage {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: color-mix(in oklab, var(--color-base-200) 86%, var(--color-base-100));
+  }
+
+  .card-grid-content {
+    position: absolute;
+    inset: 0;
+  }
+
+  .card-grid-image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .card-grid-single-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-grid-split-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .card-grid-split-wrapper {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    overflow: hidden;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-grid-split-wrapper-left {
+    left: 0;
+    width: 50%;
+  }
+
+  .card-grid-split-wrapper-right {
+    right: 0;
+    width: 50%;
+  }
+
+  .card-grid-split-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-grid-split-image-left,
+  .card-grid-split-image-right {
+    object-position: center;
+  }
+
+  .card-grid-hover-area {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    z-index: 5;
+  }
+
+  .card-grid-hover-area-left {
+    left: 0;
+  }
+
+  .card-grid-hover-area-right {
+    right: 0;
+  }
+
+  .card-grid-rarity-stack {
+    transition: opacity 0.2s ease-out;
+  }
+
+  .card-grid-hover-area-left:hover ~ .card-grid-content .card-grid-split-wrapper-left {
+    width: 100%;
+  }
+
+  .card-grid-hover-area-left:hover ~ .card-grid-content .card-grid-split-wrapper-right {
+    width: 0;
+  }
+
+  .card-grid-hover-area-left:hover ~ .card-grid-content .card-grid-rarity-stack-right {
+    opacity: 0;
+  }
+
+  .card-grid-hover-area-right:hover ~ .card-grid-content .card-grid-split-wrapper-left {
+    width: 0;
+  }
+
+  .card-grid-hover-area-right:hover ~ .card-grid-content .card-grid-split-wrapper-right {
+    width: 100%;
+  }
+
+  .card-grid-hover-area-right:hover ~ .card-grid-content .card-grid-rarity-stack-left {
+    opacity: 0;
+  }
+</style>

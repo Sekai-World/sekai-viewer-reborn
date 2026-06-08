@@ -41,7 +41,9 @@
       {option.label}
     </a>
   {:else}
-    <span class="badge badge-outline border-base-content/20 bg-base-100/60 font-semibold opacity-60">
+    <span
+      class="badge badge-outline border-base-content/20 bg-base-100/60 font-semibold opacity-60"
+    >
       {option.label}
     </span>
   {/if}

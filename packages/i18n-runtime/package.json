@@ -20,7 +20,7 @@
     "svelte-i18n": "^4.0.1"
   },
   "devDependencies": {
-    "svelte": "^5.55.4"
+    "svelte": "^5.56.2"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

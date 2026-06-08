@@ -43,17 +43,11 @@ jobs:
           token: ${{ steps.i18n-app-token.outputs.token }}
           path: i18n
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v5
+      - name: Setup mise tools
+        uses: jdx/mise-action@v3
         with:
-          version: 11.0.2
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: app/pnpm-lock.yaml
+          experimental: true
+          working_directory: app
 
       - name: Install dependencies
         working-directory: app

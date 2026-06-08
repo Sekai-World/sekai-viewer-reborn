@@ -1,9 +1,13 @@
 <script lang="ts">
   import { browser } from "$app/environment";
+  import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { toTimestampMs } from "$lib/date-time";
+  import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
+  import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
   import EventListCard from "$lib/components/EventListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
@@ -18,12 +22,14 @@
   type EventListSortOrder = "asc" | "desc";
 
   let { data }: { data: PageData } = $props();
-  const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
+  const eventListLoadingFallback = "Loading events...";
+  const getInitialCommonText = (key: string, fallback?: string): string =>
+    createCommonTranslator(data.uiLocale, data.commonMessages)(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isLoading = $state(false);
+  let isReloadingFirstPage = $state(false);
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
   let isLoadMoreHintVisible = $state(false);
@@ -40,12 +46,14 @@
   let filterDialog: HTMLDialogElement | null = $state(null);
   let hasTriedRestorePersistedFilters = $state(false);
   let initialStateAppliedKey = $state("");
+  let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialCommonText("home"));
   let idLabel = $state(getInitialCommonText("idLabel"));
   let closeLabel = $state(getInitialCommonText("closeLabel"));
   let mixedUnitLabel = $state(getInitialCommonText("mixedUnitLabel"));
   let eventListTitle = $state(getInitialCommonText("eventListTitle"));
   let eventListEmpty = $state(getInitialCommonText("eventListEmpty"));
+  let eventListLoading = $state(getInitialCommonText("eventListLoading"));
   let eventListLoadingMore = $state(getInitialCommonText("eventListLoadingMore"));
   let eventListLoadMoreHintDesktop = $state(getInitialCommonText("eventListLoadMoreHintDesktop"));
   let eventListLoadMoreHintMobile = $state(getInitialCommonText("eventListLoadMoreHintMobile"));
@@ -58,33 +66,25 @@
   let eventListOpenFilters = $state(getInitialCommonText("eventListOpenFilters"));
   let eventListFiltersTitle = $state(getInitialCommonText("eventListFiltersTitle"));
   let eventListFilterNameLabel = $state(getInitialCommonText("eventListFilterNameLabel"));
-  let eventListFilterNamePlaceholder = $state(getInitialCommonText("eventListFilterNamePlaceholder"));
+  let eventListFilterNamePlaceholder = $state(
+    getInitialCommonText("eventListFilterNamePlaceholder")
+  );
   let eventListFilterEventTypeLabel = $state(getInitialCommonText("eventListFilterEventTypeLabel"));
   let eventListFilterUnitLabel = $state(getInitialCommonText("eventListFilterUnitLabel"));
   let eventListFilterReset = $state(getInitialCommonText("eventListFilterReset"));
   let eventListFilterApply = $state(getInitialCommonText("eventListFilterApply"));
   let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
   let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
+  const contentDisplaySettings = getContentDisplaySettings();
 
-  const unitFilterValues = [
-    "idol",
-    "light_sound",
-    "street",
-    "theme_park",
-    "school_refusal",
-    "piapro",
-    "mixed"
-  ] as const;
+  const unitFilterValues = [...UNIT_CODE_ORDER, "mixed"] as const;
 
   const formatUnitLabel = (value: string): string => {
     if (value === "mixed") {
       return mixedUnitLabel;
     }
 
-    return value
-      .split("_")
-      .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
-      .join(" ");
+    return data.unitProfiles[value] ?? formatUnitFallbackLabel(value);
   };
 
   const getEventTypeOptions = (): Array<{ value: string; label: string }> => [
@@ -93,7 +93,10 @@
       value: "cheerful_carnival",
       label: tCommon(data.uiLocale, "eventTypeValues.cheerfulCarnival", "cheerful_carnival")
     },
-    { value: "world_bloom", label: tCommon(data.uiLocale, "eventTypeValues.worldLink", "world_bloom") }
+    {
+      value: "world_bloom",
+      label: tCommon(data.uiLocale, "eventTypeValues.worldLink", "world_bloom")
+    }
   ];
 
   const getUnitOptions = (): Array<{ value: string; label: string }> => [
@@ -107,6 +110,19 @@
 
     return asset(`/icons/icon_${value}.png`);
   };
+
+  const isSpoilerEvent = (item: EventListItem): boolean => {
+    const startAtMs = toTimestampMs(item.startAt);
+    return startAtMs !== null && startAtMs > Date.now();
+  };
+
+  const visibleItems = $derived.by(() => {
+    if (contentDisplaySettings.showSpoilerContent) {
+      return items;
+    }
+
+    return items.filter((item) => !isSpoilerEvent(item));
+  });
 
   const syncDraftFiltersFromCurrent = (): void => {
     filterNameDraft = nameFilter;
@@ -125,13 +141,9 @@
     }
 
     const searchParams = new URLSearchParams(window.location.search);
-    return [
-      "sort_by",
-      "sort_order",
-      "name",
-      "event_type",
-      "unit"
-    ].some((key) => searchParams.has(key));
+    return ["sort_by", "sort_order", "name", "event_type", "unit", "spoiler"].some((key) =>
+      searchParams.has(key)
+    );
   };
 
   const getFilterStorageKey = (): string => `content-site:event-list-filters:${data.region}`;
@@ -184,14 +196,20 @@
         unit?: unknown;
       };
 
-      const nextSortBy = parsed.sortBy === "startAt" ? "startAt" : "id";
+      const nextSortBy = parsed.sortBy === "id" ? "id" : "startAt";
       const nextSortOrder = parsed.sortOrder === "asc" ? "asc" : "desc";
       const nextName = typeof parsed.name === "string" ? parsed.name.trim() : "";
       const nextEventType = Array.isArray(parsed.eventType)
-        ? parsed.eventType.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
+        ? parsed.eventType
+            .filter((v) => typeof v === "string")
+            .map((v: string) => v.trim())
+            .filter((v: string) => v.length > 0)
         : [];
       const nextUnit = Array.isArray(parsed.unit)
-        ? parsed.unit.filter((v) => typeof v === "string").map((v: string) => v.trim()).filter((v: string) => v.length > 0)
+        ? parsed.unit
+            .filter((v) => typeof v === "string")
+            .map((v: string) => v.trim())
+            .filter((v: string) => v.length > 0)
         : [];
 
       if (
@@ -344,13 +362,33 @@
     };
   });
 
-  const applyTranslations = (translate: (key: string) => string): void => {
+  $effect(() => {
+    if (!browser) {
+      return;
+    }
+
+    const nextShowSpoilerContent = contentDisplaySettings.showSpoilerContent;
+    if (spoilerContentAppliedState === nextShowSpoilerContent) {
+      return;
+    }
+
+    spoilerContentAppliedState = nextShowSpoilerContent;
+
+    const hasSpoilerQueryParam =
+      new URL(window.location.href).searchParams.get("spoiler") === "true";
+    if (hasSpoilerQueryParam !== nextShowSpoilerContent) {
+      void reloadFirstPage();
+    }
+  });
+
+  const applyTranslations = (translate: (key: string, fallback?: string) => string): void => {
     homeLabel = translate("home");
     idLabel = translate("idLabel");
     closeLabel = translate("closeLabel");
     mixedUnitLabel = translate("mixedUnitLabel");
     eventListTitle = translate("eventListTitle");
     eventListEmpty = translate("eventListEmpty");
+    eventListLoading = translate("eventListLoading", eventListLoadingFallback);
     eventListLoadingMore = translate("eventListLoadingMore");
     eventListLoadMoreHintDesktop = translate("eventListLoadMoreHintDesktop");
     eventListLoadMoreHintMobile = translate("eventListLoadMoreHintMobile");
@@ -374,7 +412,7 @@
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
     const locale = await setI18nLocale(localeValue, data.commonMessages);
-    applyTranslations((key) => tCommon(locale, key));
+    applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
   };
 
   const createListSearchParams = (page: number): SvelteURLSearchParams => {
@@ -382,6 +420,7 @@
     searchParams.set("page", String(page));
     searchParams.set("sort_by", sortBy);
     searchParams.set("sort_order", sortOrder);
+    searchParams.set("spoiler", String(contentDisplaySettings.showSpoilerContent));
 
     if (nameFilter) {
       searchParams.set("name", nameFilter);
@@ -413,7 +452,7 @@
     const pathname = resolve("/events/[region]", { region: data.region });
     const query = searchParams.toString();
     const nextUrl = query.length > 0 ? `${pathname}?${query}` : pathname;
-    window.history.replaceState(window.history.state, "", nextUrl);
+    replaceState(nextUrl, {});
   };
 
   const getBreadcrumbItems = () => [
@@ -489,6 +528,7 @@
     }
 
     isLoading = true;
+    isReloadingFirstPage = true;
     errorMessage = null;
     isLoadMoreHintVisible = false;
 
@@ -506,6 +546,7 @@
     } catch {
       errorMessage = eventListLoadFailed;
     } finally {
+      isReloadingFirstPage = false;
       isLoading = false;
     }
   };
@@ -614,11 +655,18 @@
     </button>
   </div>
 
-  {#if items.length === 0 && errorMessage}
+  {#if isReloadingFirstPage}
+    <div
+      class="content-card-shell flex min-h-48 items-center justify-center rounded-2xl p-8 shadow-sm"
+    >
+      <span class="loading loading-spinner loading-md"></span>
+      <span class="ml-3 text-sm opacity-70">{eventListLoading}</span>
+    </div>
+  {:else if items.length === 0 && errorMessage}
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {#each items as item (item.id)}
+      {#each visibleItems as item (item.id)}
         <EventListCard
           region={data.region}
           {item}
@@ -652,11 +700,11 @@
           </span>
         {/if}
       </div>
-    {:else if items.length > 0}
+    {:else if visibleItems.length > 0}
       <div class="py-2 text-center text-sm opacity-60">{eventListEnd}</div>
     {/if}
 
-    {#if items.length === 0 && !errorMessage}
+    {#if visibleItems.length === 0 && !errorMessage}
       <div class="py-12 text-center text-sm opacity-70">{eventListEmpty}</div>
     {/if}
   {/if}
@@ -682,7 +730,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getEventTypeOptions() as option (option.value)}
             <label
-              class={`btn btn-sm join-item ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm join-item ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={option.label}
             >
               <input
@@ -709,7 +757,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getUnitOptions() as option (`unit:${option.value}`)}
             <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={option.label}
             >
               <input

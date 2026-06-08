@@ -196,3 +196,56 @@ export const getCharacterThumbnailAssetURL = (
     baseUrlOverride
   );
 };
+
+export const getCardSmallAssetURL = (
+  assetBundleName: string,
+  trained = false,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `character/member_small/${normalizedAssetBundleName}/card_${trained ? "after_training" : "normal"}.webp`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getCardThumbnailAssetURL = (
+  assetBundleName: string,
+  trained = false,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `thumbnail/chara/${normalizedAssetBundleName}_${trained ? "after_training" : "normal"}.webp`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getMusicJacketAssetURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `music/jacket/${normalizedAssetBundleName}/${normalizedAssetBundleName}.webp`,
+    server,
+    baseUrlOverride
+  );
+};

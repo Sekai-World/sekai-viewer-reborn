@@ -8,6 +8,7 @@
     fallbackLabel = "",
     imageClass = "h-full w-full object-contain",
     buttonClass = "block w-full overflow-hidden",
+    loadMode = "immediate",
     interactive = false,
     onclick
   }: {
@@ -16,18 +17,50 @@
     fallbackLabel?: string;
     imageClass?: string;
     buttonClass?: string;
+    loadMode?: "immediate" | "visible";
     interactive?: boolean;
     onclick?: () => void;
   } = $props();
 
   let previewImageLoaded = $state(false);
   let previewImageFailed = $state(false);
+  let imageVisible = $state(false);
+  let observedNode: HTMLDivElement | null = $state(null);
+  const shouldRenderImage = $derived(loadMode === "immediate" || imageVisible);
 
   $effect(() => {
     if (src !== undefined) {
       previewImageLoaded = false;
       previewImageFailed = false;
+      imageVisible = loadMode === "immediate";
     }
+  });
+
+  $effect(() => {
+    if (loadMode !== "visible" || imageVisible || !observedNode) {
+      return;
+    }
+
+    if (typeof IntersectionObserver === "undefined") {
+      imageVisible = true;
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          imageVisible = true;
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.01 }
+    );
+
+    observer.observe(observedNode);
+
+    return () => {
+      observer.disconnect();
+    };
   });
 </script>
 
@@ -43,8 +76,8 @@
   />
 {:else}
   <div class={buttonClass}>
-    <div class="relative h-full w-full overflow-hidden">
-      {#if !previewImageLoaded && !previewImageFailed}
+    <div class="relative h-full w-full overflow-hidden" bind:this={observedNode}>
+      {#if !shouldRenderImage || (!previewImageLoaded && !previewImageFailed)}
         <div
           class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse"
         >
@@ -62,19 +95,23 @@
           {/if}
         </div>
       {/if}
-      <img
-        {src}
-        {alt}
-        class={`${imageClass} transition-all duration-300 ease-out ${previewImageLoaded && !previewImageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${previewImageFailed ? "pointer-events-none sr-only" : ""}`}
-        onload={() => {
-          previewImageLoaded = true;
-          previewImageFailed = false;
-        }}
-        onerror={() => {
-          previewImageLoaded = true;
-          previewImageFailed = true;
-        }}
-      />
+      {#if shouldRenderImage}
+        <img
+          {src}
+          {alt}
+          loading="eager"
+          decoding="async"
+          class={`${imageClass} transition-all duration-300 ease-out ${previewImageLoaded && !previewImageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${previewImageFailed ? "pointer-events-none sr-only" : ""}`}
+          onload={() => {
+            previewImageLoaded = true;
+            previewImageFailed = false;
+          }}
+          onerror={() => {
+            previewImageLoaded = true;
+            previewImageFailed = true;
+          }}
+        />
+      {/if}
     </div>
   </div>
 {/if}
