@@ -696,14 +696,22 @@
       {#each [{ value: "publishedAt", icon: "mdi:clock-outline", label: musicListSortByPublishedAt }, { value: "id", icon: "mdi:numeric", label: musicListSortById }] as option (option.value)}
         <button
           type="button"
-          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+          class={`btn join-item btn-sm relative !h-12 !min-h-12 !w-12 overflow-visible p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           title={option.label}
           aria-label={option.label}
           onclick={() => toggleSort(option.value as MusicListSortBy)}
         >
           <Icon icon={option.icon} class="h-4 w-4" />
           {#if sortBy === option.value}
-            <Icon icon={sortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"} class="h-4 w-4" />
+            <span
+              class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary sm:bottom-0.5 sm:right-0.5 sm:h-3 sm:w-3"
+              aria-hidden="true"
+            >
+              <Icon
+                icon={sortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
+                class="h-2.5 w-2.5"
+              />
+            </span>
           {/if}
         </button>
       {/each}

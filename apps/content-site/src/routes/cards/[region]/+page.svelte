@@ -914,27 +914,37 @@
     <div class="join">
       <button
         type="button"
-        class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("releaseAt")}`}
+        class={`btn join-item btn-sm relative !h-12 !min-h-12 !w-12 overflow-visible p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("releaseAt")}`}
         onclick={() => toggleSortBy("releaseAt")}
         title={cardListSortByReleaseAt}
         aria-label={`${cardListSortByReleaseAt} (${sortBy === "releaseAt" ? sortOrder : "desc"})`}
       >
         <Icon icon="mdi:clock-outline" class="h-4 w-4" aria-hidden="true" />
         {#if sortBy === "releaseAt"}
-          <Icon icon={getSortOrderIcon("releaseAt")} class="h-4 w-4" aria-hidden="true" />
+          <span
+            class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary sm:bottom-0.5 sm:right-0.5 sm:h-3 sm:w-3"
+            aria-hidden="true"
+          >
+            <Icon icon={getSortOrderIcon("releaseAt")} class="h-2.5 w-2.5" />
+          </span>
         {/if}
       </button>
 
       <button
         type="button"
-        class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("id")}`}
+        class={`btn join-item btn-sm relative !h-12 !min-h-12 !w-12 overflow-visible p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("id")}`}
         onclick={() => toggleSortBy("id")}
         title={cardListSortById}
         aria-label={`${cardListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
       >
         <Icon icon="mdi:numeric" class="h-4 w-4" aria-hidden="true" />
         {#if sortBy === "id"}
-          <Icon icon={getSortOrderIcon("id")} class="h-4 w-4" aria-hidden="true" />
+          <span
+            class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary sm:bottom-0.5 sm:right-0.5 sm:h-3 sm:w-3"
+            aria-hidden="true"
+          >
+            <Icon icon={getSortOrderIcon("id")} class="h-2.5 w-2.5" />
+          </span>
         {/if}
       </button>
     </div>
