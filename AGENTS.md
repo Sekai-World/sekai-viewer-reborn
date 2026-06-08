@@ -136,9 +136,13 @@ When changing shared packages:
 - Locale cookie names and defaults are defined in `apps/content-site/src/lib/region.ts`.
 - Normalize and read locale preference through `apps/content-site/src/routes/+layout.server.ts`; do not duplicate locale cookie parsing in page-level loaders.
 - The home page loader (`apps/content-site/src/routes/+page.server.ts`) fetches current event cards for all supported regions.
+- The card list loader lives at `apps/content-site/src/routes/cards/[region]/+page.server.ts`.
+- The music list loader lives at `apps/content-site/src/routes/musics/[region]/+page.server.ts`.
 - The event detail loader lives at `apps/content-site/src/routes/event/[region]/[id]/+page.server.ts`.
 - The event list loader lives at `apps/content-site/src/routes/events/[region]/+page.server.ts`.
 - Inside `content-site`, prefer path-param routes:
+  - card list: `/cards/:region`
+  - music list: `/musics/:region`
   - event detail: `/event/:region/:id`
   - event list: `/events/:region`
 - Keep old query/list routes only as redirects when backward compatibility is needed.
@@ -150,11 +154,16 @@ When changing shared packages:
 - Current shared `content-site` UI primitives include:
   - `apps/content-site/src/lib/components/EventCardFrame.svelte`
   - `apps/content-site/src/lib/components/CurrentEventCard.svelte`
+  - `apps/content-site/src/lib/components/CardListCard.svelte`
   - `apps/content-site/src/lib/components/EventListCard.svelte`
+  - `apps/content-site/src/lib/components/MusicListCard.svelte`
+  - `apps/content-site/src/lib/components/EventAssetImage.svelte`
   - `apps/content-site/src/lib/components/PageHeader.svelte`
   - `apps/content-site/src/lib/components/RegionBadgeSwitch.svelte`
 - Shared non-component style constants should live outside `src/lib/components`, for example under `apps/content-site/src/lib/styles`.
 - Sidebar structure for `content-site` is assembled in `apps/content-site/src/routes/+layout.svelte` and rendered by `packages/ui-shell/src/viewer-shell.svelte`; keep sidebar labels localized through the CDN dictionaries loaded by `apps/content-site/src/lib/i18n.ts`.
+- Unit labels should come from `apps/content-site/src/lib/server/unit-profiles.ts`, which reads `/unitProfiles/{region}/list` and validates its local cache against `/versions/{region}`. Keep unit-code/tag mappings in `apps/content-site/src/lib/unit-profile.ts`.
+- List card images that should not fetch before entering the viewport should use `EventAssetImage` with `loadMode="visible"` or the existing visibility-gated pattern in `CardListCard.svelte`.
 
 ## `content-site` I18n Conventions
 
