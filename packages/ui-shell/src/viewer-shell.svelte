@@ -30,58 +30,37 @@
   }: Props = $props();
 
   let sidebarOpen = $state(false);
+  const sidebarPanelId = $derived(`${drawerId}-panel`);
 </script>
 
 <div class="drawer min-h-dvh">
-  <input id={drawerId} type="checkbox" class="drawer-toggle" bind:checked={sidebarOpen} />
+  <input
+    id={drawerId}
+    type="checkbox"
+    class="drawer-toggle"
+    bind:checked={sidebarOpen}
+    aria-hidden="true"
+    tabindex="-1"
+  />
 
   <div class="drawer-content bg-base-200">
-    <!-- Hidden SVG filter for liquid glass distortion effect (article Demo 2 technique) -->
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      class="pointer-events-none absolute h-0 w-0 overflow-hidden"
-    >
-      <defs>
-        <filter id="liquid-glass-distort" x="-10%" y="-10%" width="120%" height="120%">
-          <feTurbulence
-            type="turbulence"
-            baseFrequency="0.018 0.012"
-            numOctaves="3"
-            seed="5"
-            result="turb"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="turb"
-            scale="6"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </defs>
-    </svg>
     <header
       class="liquid-glass-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2"
     >
       <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-[96rem] px-2">
         <div class="navbar-start">
-          <label for={drawerId} class="btn btn-ghost btn-circle" aria-label="Open sidebar">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
-            </svg>
-          </label>
+          <button
+            type="button"
+            class="btn btn-ghost btn-circle !h-11 !min-h-11 !w-11"
+            aria-label="Open sidebar"
+            aria-controls={sidebarPanelId}
+            aria-expanded={sidebarOpen}
+            onclick={() => {
+              sidebarOpen = true;
+            }}
+          >
+            <Icon icon="mdi:menu" class="h-5 w-5" aria-hidden="true" />
+          </button>
         </div>
         <div class="navbar-center">
           <span
@@ -119,13 +98,28 @@
   </div>
 
   <div class="drawer-side z-50">
-    <label for={drawerId} aria-label="Close sidebar" class="drawer-overlay"></label>
-    <aside class="menu min-h-full w-72 bg-base-100 p-4">
+    <button
+      type="button"
+      aria-label="Close sidebar"
+      class="drawer-overlay"
+      onclick={() => {
+        sidebarOpen = false;
+      }}
+    ></button>
+    <aside id={sidebarPanelId} class="menu min-h-full w-72 bg-base-100 p-4">
       <div class="mb-2 flex items-center justify-between px-2 py-1">
         <span class="text-sm font-semibold">{sidebarLabel}</span>
-        <label for={drawerId} class="btn btn-ghost btn-sm btn-circle" aria-label="Close sidebar"
-          >✕</label
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm btn-circle !h-11 !min-h-11 !w-11"
+          aria-label="Close sidebar"
+          aria-controls={sidebarPanelId}
+          onclick={() => {
+            sidebarOpen = false;
+          }}
         >
+          ✕
+        </button>
       </div>
       <ul>
         {#each sidebarItems as item (`${item.type ?? "link"}:${item.label}`)}
@@ -154,13 +148,10 @@
             </li>
           {:else}
             <li>
-              <a
-                href={item.href ?? "#"}
-                aria-disabled="true"
-                class="grid grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 opacity-45"
-                onclick={(event) => {
-                  event.preventDefault();
-                }}
+              <button
+                type="button"
+                disabled
+                class="grid min-h-11 w-full grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 opacity-45"
               >
                 {#if item.icon}
                   <span class="grid h-5 w-5 shrink-0 place-items-center">
@@ -168,7 +159,7 @@
                   </span>
                 {/if}
                 <span>{item.label}</span>
-              </a>
+              </button>
             </li>
           {/if}
         {/each}
@@ -182,28 +173,23 @@
     background:
       radial-gradient(
         140% 120% at 0% 0%,
-        color-mix(in oklab, var(--color-primary) 10%, transparent) 0%,
+        color-mix(in oklab, var(--color-primary) 8%, transparent) 0%,
         transparent 60%
       ),
       radial-gradient(
         120% 130% at 100% 100%,
-        color-mix(in oklab, var(--color-accent) 7%, transparent) 0%,
+        color-mix(in oklab, var(--color-accent) 6%, transparent) 0%,
         transparent 64%
       ),
       linear-gradient(
         135deg,
-        color-mix(in oklab, var(--color-base-100) 58%, transparent) 0%,
-        color-mix(in oklab, var(--color-base-100) 46%, transparent) 45%,
-        color-mix(in oklab, var(--color-primary) 7%, var(--color-base-100) 38%) 100%
+        color-mix(in oklab, var(--color-base-100) 96%, transparent) 0%,
+        color-mix(in oklab, var(--color-base-100) 90%, var(--color-base-200)) 100%
       );
-    background-size:
-      180% 180%,
-      170% 170%,
-      130% 130%;
     border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
     box-shadow:
-      0 10px 22px -24px color-mix(in oklab, var(--color-base-content) 38%, transparent),
-      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 72%, transparent),
+      0 2px 8px color-mix(in oklab, var(--color-base-content) 9%, transparent),
+      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 84%, transparent),
       inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 6%, transparent);
   }
 
@@ -213,37 +199,20 @@
     inset: 1px;
     border-radius: inherit;
     pointer-events: none;
-    background:
-      radial-gradient(
-        120% 95% at 10% 0%,
-        color-mix(in oklab, white 34%, transparent),
-        transparent 60%
-      ),
-      radial-gradient(
-        95% 85% at 80% 100%,
-        color-mix(in oklab, var(--color-primary) 8%, transparent),
-        transparent 68%
-      ),
-      linear-gradient(
-        110deg,
-        color-mix(in oklab, var(--color-base-100) 46%, transparent) 0%,
-        transparent 28%,
-        transparent 62%,
-        color-mix(in oklab, var(--color-base-content) 8%, transparent) 100%
-      );
-    background-size:
-      170% 170%,
-      150% 150%,
-      130% 130%;
-    mix-blend-mode: screen;
-    opacity: 0.34;
+    background: linear-gradient(
+      110deg,
+      color-mix(in oklab, var(--color-base-100) 36%, transparent) 0%,
+      transparent 42%,
+      color-mix(in oklab, var(--color-base-content) 5%, transparent) 100%
+    );
+    opacity: 0.28;
   }
 
   :global(.dark[data-theme="default"]) .liquid-glass-nav {
     background:
       radial-gradient(
         130% 105% at 0% 0%,
-        color-mix(in oklab, var(--color-primary) 8%, transparent) 0%,
+        color-mix(in oklab, var(--color-primary) 7%, transparent) 0%,
         transparent 62%
       ),
       radial-gradient(
@@ -253,31 +222,22 @@
       ),
       linear-gradient(
         135deg,
-        color-mix(in oklab, var(--color-base-100) 46%, transparent) 0%,
-        color-mix(in oklab, var(--color-base-100) 36%, transparent) 48%,
-        color-mix(in oklab, var(--color-base-content) 5%, var(--color-base-100) 34%) 100%
+        color-mix(in oklab, var(--color-base-100) 92%, transparent) 0%,
+        color-mix(in oklab, var(--color-base-100) 86%, var(--color-base-200)) 100%
       );
     box-shadow:
-      0 10px 22px -24px color-mix(in oklab, black 58%, transparent),
-      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 24%, transparent),
+      0 2px 8px color-mix(in oklab, black 24%, transparent),
+      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 30%, transparent),
       inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 5%, transparent);
   }
 
   :global(.dark[data-theme="default"]) .liquid-glass-nav::before {
-    background:
-      radial-gradient(
-        120% 88% at 12% 0%,
-        color-mix(in oklab, white 16%, transparent),
-        transparent 64%
-      ),
-      linear-gradient(
-        110deg,
-        color-mix(in oklab, var(--color-base-100) 28%, transparent) 0%,
-        transparent 34%,
-        transparent 74%,
-        color-mix(in oklab, var(--color-base-content) 5%, transparent) 100%
-      );
-    mix-blend-mode: soft-light;
-    opacity: 0.16;
+    background: linear-gradient(
+      110deg,
+      color-mix(in oklab, var(--color-base-100) 20%, transparent) 0%,
+      transparent 45%,
+      color-mix(in oklab, var(--color-base-content) 4%, transparent) 100%
+    );
+    opacity: 0.14;
   }
 </style>
