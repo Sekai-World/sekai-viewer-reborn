@@ -141,16 +141,16 @@ export const fetchUnitProfiles = async (
   const cached = unitProfileCache.get(key);
   const versionKey = await getUnitProfileVersionKey(baseUrl, region).catch(() => null);
 
+  if (cached?.promise) {
+    return cached.promise;
+  }
+
   if (cached && versionKey !== null && cached.versionKey === versionKey) {
     return cached.items;
   }
 
   if (cached && versionKey === null) {
     return cached.items;
-  }
-
-  if (cached?.promise) {
-    return cached.promise;
   }
 
   const promise = fetchUnitProfilesForCache(baseUrl, region, key, versionKey, cached).finally(() => {

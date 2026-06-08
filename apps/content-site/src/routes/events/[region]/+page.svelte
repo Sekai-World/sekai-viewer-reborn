@@ -196,7 +196,7 @@
         unit?: unknown;
       };
 
-      const nextSortBy = parsed.sortBy === "startAt" ? "startAt" : "id";
+      const nextSortBy = parsed.sortBy === "id" ? "id" : "startAt";
       const nextSortOrder = parsed.sortOrder === "asc" ? "asc" : "desc";
       const nextName = typeof parsed.name === "string" ? parsed.name.trim() : "";
       const nextEventType = Array.isArray(parsed.eventType)

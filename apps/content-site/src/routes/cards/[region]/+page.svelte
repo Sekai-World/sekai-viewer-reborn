@@ -398,7 +398,7 @@
       typeFilter = nextType;
       attrFilter = nextAttr;
       rarityFilter = nextRarity;
-      supportUnitFilter = nextSupportUnit;
+      supportUnitFilter = getVisibleSupportUnitFilter(nextUnit, nextSupportUnit);
       has3dmvCutInFilter = nextHas3dmvCutIn;
       syncDraftFiltersFromCurrent();
       return true;
