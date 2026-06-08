@@ -48,12 +48,15 @@
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
   let resolvedTheme = $state<ResolvedTheme>("light");
+  let isDesktopSettingsMenuOpen = $state(false);
+  let isDesktopThemeMenuOpen = $state(false);
+  let isMobileSettingsMenuOpen = $state(false);
   let isLocaleMenuOpen = $state(false);
   let systemThemeMediaQuery: MediaQueryList | null = null;
-  let mobileSettingsMenu: HTMLDetailsElement | null = null;
-  let desktopSettingsMenu: HTMLDetailsElement | null = null;
-  let desktopThemeMenu: HTMLDetailsElement | null = null;
-  let localeMenu: HTMLDetailsElement | null = null;
+  let mobileSettingsMenu: HTMLDivElement | null = null;
+  let desktopSettingsMenu: HTMLDivElement | null = null;
+  let desktopThemeMenu: HTMLDivElement | null = null;
+  let localeMenu: HTMLDivElement | null = null;
   let localeLoadingProgress = $state(0);
   let localeLoadingInterval: ReturnType<typeof setInterval> | null = null;
   let localeProgressResetTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -357,24 +360,16 @@
     return themeNameLabels[themeNameValue];
   };
 
-  const handleLocaleMenuToggle = (event: Event): void => {
-    const detailsElement = event.currentTarget as HTMLDetailsElement;
-    isLocaleMenuOpen = detailsElement.open;
-  };
-
   const closeDropdownIfClickedOutside = (
-    detailsElement: HTMLDetailsElement | null,
-    target: EventTarget | null
+    element: HTMLElement | null,
+    target: EventTarget | null,
+    close: () => void
   ): void => {
-    if (!detailsElement?.open) {
+    if (target instanceof Node && element?.contains(target)) {
       return;
     }
 
-    if (target instanceof Node && detailsElement.contains(target)) {
-      return;
-    }
-
-    detailsElement.open = false;
+    close();
   };
 
   const setUiLocale = async (localeValue: string): Promise<void> => {
@@ -468,11 +463,26 @@
 
     const handleDocumentClick = (event: MouseEvent): void => {
       const target = event.target;
-      closeDropdownIfClickedOutside(mobileSettingsMenu, target);
-      closeDropdownIfClickedOutside(desktopSettingsMenu, target);
-      closeDropdownIfClickedOutside(desktopThemeMenu, target);
-      closeDropdownIfClickedOutside(localeMenu, target);
-      isLocaleMenuOpen = localeMenu?.open ?? false;
+      if (isMobileSettingsMenuOpen) {
+        closeDropdownIfClickedOutside(mobileSettingsMenu, target, () => {
+          isMobileSettingsMenuOpen = false;
+        });
+      }
+      if (isDesktopSettingsMenuOpen) {
+        closeDropdownIfClickedOutside(desktopSettingsMenu, target, () => {
+          isDesktopSettingsMenuOpen = false;
+        });
+      }
+      if (isDesktopThemeMenuOpen) {
+        closeDropdownIfClickedOutside(desktopThemeMenu, target, () => {
+          isDesktopThemeMenuOpen = false;
+        });
+      }
+      if (isLocaleMenuOpen) {
+        closeDropdownIfClickedOutside(localeMenu, target, () => {
+          isLocaleMenuOpen = false;
+        });
+      }
     };
 
     document.addEventListener("click", handleDocumentClick);
@@ -576,149 +586,191 @@
 >
   {#snippet navActions()}
     <div class="hidden items-center gap-2 sm:flex">
-      <details class="dropdown dropdown-end" bind:this={desktopSettingsMenu}>
-        <summary
+      <div
+        class="dropdown dropdown-end"
+        class:dropdown-open={isDesktopSettingsMenuOpen}
+        bind:this={desktopSettingsMenu}
+      >
+        <button
+          type="button"
           class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
           aria-label={settingsLabel}
+          aria-haspopup="dialog"
+          aria-expanded={isDesktopSettingsMenuOpen}
           title={settingsLabel}
-        >
-          <Icon icon="mdi:cog-outline" class="h-4 w-4" />
-        </summary>
-        <div
-          class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-3 shadow-xl backdrop-blur-sm"
-        >
-          {@render contentDisplaySection()}
-        </div>
-      </details>
-
-      <details class="dropdown dropdown-end" bind:this={desktopThemeMenu}>
-        <summary
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
-          aria-label={switchThemeAriaLabel}
-          title={getThemeButtonTitle()}
-        >
-          <Icon icon="mdi:palette-outline" class="h-4 w-4" />
-        </summary>
-        <ul
-          class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl backdrop-blur-sm"
-        >
-          <li class="menu-title px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
-            {themePaletteLabel}
-          </li>
-          {#each themeNameOptions as themeNameOption (themeNameOption)}
-            <li>
-              <button
-                type="button"
-                class={themeName === themeNameOption ? "menu-active font-semibold" : ""}
-                onclick={() => {
-                  applyTheme(themeNameOption, themeMode);
-                }}
-              >
-                {@render themePalettePreview(themeNameOption)}
-                <span>{getThemeNameLabel(themeNameOption)}</span>
-                {#if themeName === themeNameOption}
-                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
-                {/if}
-              </button>
-            </li>
-          {/each}
-
-          <li
-            class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60"
-          >
-            {themeControlLabel}
-          </li>
-          {#each ["auto", "light", "dark"] as themeOption (themeOption)}
-            <li>
-              <button
-                type="button"
-                class={themeMode === themeOption ? "menu-active font-semibold" : ""}
-                onclick={() => {
-                  applyTheme(themeName, themeOption as ThemeMode);
-                }}
-              >
-                <Icon
-                  icon={getThemeModeIcon(themeOption as ThemeMode)}
-                  class="h-4 w-4 opacity-80"
-                />
-                <span>{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
-                {#if themeMode === themeOption}
-                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
-                {/if}
-              </button>
-            </li>
-          {/each}
-        </ul>
-      </details>
-
-      <details
-        class="dropdown dropdown-end"
-        bind:this={localeMenu}
-        bind:open={isLocaleMenuOpen}
-        ontoggle={handleLocaleMenuToggle}
-      >
-        <summary
-          class={`btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 ${$isLocaleLoading ? "pointer-events-none opacity-75" : ""}`}
-          aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
-          title={`${interfaceLanguageLabel}: ${uiLocaleDisplayLabel}`}
-          aria-busy={$isLocaleLoading}
-          onclick={(event) => {
-            if ($isLocaleLoading) {
-              event.preventDefault();
-            }
+          onclick={() => {
+            isDesktopSettingsMenuOpen = !isDesktopSettingsMenuOpen;
           }}
         >
-          <Icon icon="mdi:translate" class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Icon icon="mdi:cog-outline" class="h-4 w-4" aria-hidden="true" />
+        </button>
+        {#if isDesktopSettingsMenuOpen}
+          <div
+            class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-3 shadow-xl"
+          >
+            {@render contentDisplaySection()}
+          </div>
+        {/if}
+      </div>
+
+      <div
+        class="dropdown dropdown-end"
+        class:dropdown-open={isDesktopThemeMenuOpen}
+        bind:this={desktopThemeMenu}
+      >
+        <button
+          type="button"
+          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
+          aria-label={switchThemeAriaLabel}
+          aria-haspopup="menu"
+          aria-expanded={isDesktopThemeMenuOpen}
+          title={getThemeButtonTitle()}
+          onclick={() => {
+            isDesktopThemeMenuOpen = !isDesktopThemeMenuOpen;
+          }}
+        >
+          <Icon icon="mdi:palette-outline" class="h-4 w-4" aria-hidden="true" />
+        </button>
+        {#if isDesktopThemeMenuOpen}
+          <ul
+            class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl"
+            role="menu"
+          >
+            <li class="menu-title px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60">
+              {themePaletteLabel}
+            </li>
+            {#each themeNameOptions as themeNameOption (themeNameOption)}
+              <li>
+                <button
+                  type="button"
+                  class={themeName === themeNameOption ? "menu-active font-semibold" : ""}
+                  onclick={() => {
+                    applyTheme(themeNameOption, themeMode);
+                    isDesktopThemeMenuOpen = false;
+                  }}
+                >
+                  {@render themePalettePreview(themeNameOption)}
+                  <span>{getThemeNameLabel(themeNameOption)}</span>
+                  {#if themeName === themeNameOption}
+                    <Icon icon="mdi:check" class="h-4 w-4 opacity-80" aria-hidden="true" />
+                  {/if}
+                </button>
+              </li>
+            {/each}
+
+            <li
+              class="menu-title mt-2 px-2 py-1 text-[0.68rem] uppercase tracking-[0.16em] opacity-60"
+            >
+              {themeControlLabel}
+            </li>
+            {#each ["auto", "light", "dark"] as themeOption (themeOption)}
+              <li>
+                <button
+                  type="button"
+                  class={themeMode === themeOption ? "menu-active font-semibold" : ""}
+                  onclick={() => {
+                    applyTheme(themeName, themeOption as ThemeMode);
+                    isDesktopThemeMenuOpen = false;
+                  }}
+                >
+                  <Icon
+                    icon={getThemeModeIcon(themeOption as ThemeMode)}
+                    class="h-4 w-4 opacity-80"
+                    aria-hidden="true"
+                  />
+                  <span>{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
+                  {#if themeMode === themeOption}
+                    <Icon icon="mdi:check" class="h-4 w-4 opacity-80" aria-hidden="true" />
+                  {/if}
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </div>
+
+      <div
+        class="dropdown dropdown-end"
+        class:dropdown-open={isLocaleMenuOpen}
+        bind:this={localeMenu}
+      >
+        <button
+          type="button"
+          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 disabled:opacity-75"
+          aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
+          aria-haspopup="menu"
+          aria-expanded={isLocaleMenuOpen}
+          title={`${interfaceLanguageLabel}: ${uiLocaleDisplayLabel}`}
+          aria-busy={$isLocaleLoading}
+          disabled={$isLocaleLoading}
+          onclick={() => {
+            isLocaleMenuOpen = !isLocaleMenuOpen;
+          }}
+        >
+          <Icon icon="mdi:translate" class="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
           {#if $isLocaleLoading}
             <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
           {/if}
-        </summary>
-        <div
-          class="dropdown-content z-120 mt-3 w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm"
-        >
-          <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
-            <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
-              {currentLanguageLabel}
-            </p>
-            <p class="px-1 pt-1 text-sm font-semibold leading-snug">{uiLocaleDisplayLabel}</p>
+        </button>
+        {#if isLocaleMenuOpen}
+          <div
+            class="dropdown-content z-120 mt-3 w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+          >
+            <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
+              <p class="px-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] opacity-60">
+                {currentLanguageLabel}
+              </p>
+              <p class="px-1 pt-1 text-sm font-semibold leading-snug">{uiLocaleDisplayLabel}</p>
+            </div>
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
+            <ul class="menu p-0" role="menu">
+              {#each uiLocaleOptions as localeOption (localeOption.code)}
+                {#if localeOption.code !== uiLocale}
+                  <li>
+                    <button
+                      type="button"
+                      disabled={$isLocaleLoading}
+                      onclick={async () => {
+                        await setUiLocale(localeOption.code);
+                        isLocaleMenuOpen = false;
+                      }}
+                    >
+                      <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                    </button>
+                  </li>
+                {/if}
+              {/each}
+            </ul>
           </div>
-
-          <div class="my-2 h-px bg-base-content/12"></div>
-
-          <ul class="menu p-0">
-            {#each uiLocaleOptions as localeOption (localeOption.code)}
-              {#if localeOption.code !== uiLocale}
-                <li>
-                  <button
-                    type="button"
-                    disabled={$isLocaleLoading}
-                    onclick={async () => {
-                      await setUiLocale(localeOption.code);
-                      isLocaleMenuOpen = false;
-                    }}
-                  >
-                    <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
-                  </button>
-                </li>
-              {/if}
-            {/each}
-          </ul>
-        </div>
-      </details>
+        {/if}
+      </div>
     </div>
 
     <div class="sm:hidden">
-      <details class="dropdown dropdown-end" bind:this={mobileSettingsMenu}>
-        <summary
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
+      <div
+        class="dropdown dropdown-end"
+        class:dropdown-open={isMobileSettingsMenuOpen}
+        bind:this={mobileSettingsMenu}
+      >
+        <button
+          type="button"
+          class="btn btn-circle btn-sm !h-11 !min-h-11 !w-11 btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={settingsLabel}
+          aria-haspopup="dialog"
+          aria-expanded={isMobileSettingsMenuOpen}
           title={settingsLabel}
+          onclick={() => {
+            isMobileSettingsMenuOpen = !isMobileSettingsMenuOpen;
+          }}
         >
-          <Icon icon="mdi:tune-variant" class="h-4 w-4" />
-        </summary>
-        <div
-          class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm"
-        >
+          <Icon icon="mdi:tune-variant" class="h-4 w-4" aria-hidden="true" />
+        </button>
+        {#if isMobileSettingsMenuOpen}
+          <div
+            class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+          >
           {@render contentDisplaySection()}
 
           <div class="my-2 h-px bg-base-content/12"></div>
@@ -731,7 +783,7 @@
               {#each themeNameOptions as themeNameOption (themeNameOption)}
                 <button
                   type="button"
-                  class={`btn btn-sm h-auto flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
+                  class={`btn btn-sm h-auto !min-h-12 flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
                   onclick={() => {
                     applyTheme(themeNameOption, themeMode);
                   }}
@@ -755,7 +807,7 @@
               {#each ["auto", "light", "dark"] as themeOption (themeOption)}
                 <button
                   type="button"
-                  class={`btn btn-sm h-auto flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
+                  class={`btn btn-sm h-auto !min-h-12 flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
                   onclick={() => {
                     applyTheme(themeName, themeOption as ThemeMode);
                   }}
@@ -783,7 +835,7 @@
                 {#if localeOption.code === uiLocale}
                   <button
                     type="button"
-                    class="btn btn-sm btn-primary justify-start rounded-lg border-base-content/15"
+                    class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 btn-primary"
                     disabled={true}
                   >
                     <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
@@ -794,11 +846,11 @@
                 {#if localeOption.code !== uiLocale}
                   <button
                     type="button"
-                    class="btn btn-sm justify-start rounded-lg border-base-content/15 bg-base-100"
+                    class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 bg-base-100"
                     disabled={$isLocaleLoading}
                     onclick={async () => {
                       await setUiLocale(localeOption.code);
-                      if (mobileSettingsMenu) mobileSettingsMenu.open = true;
+                      isMobileSettingsMenuOpen = true;
                     }}
                   >
                     <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
@@ -810,8 +862,9 @@
               <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
             {/if}
           </div>
-        </div>
-      </details>
+          </div>
+        {/if}
+      </div>
     </div>
   {/snippet}
 
