@@ -1,5 +1,22 @@
 # @platform/ui-shell
 
+## 0.1.3
+
+### Patch Changes
+
+- d44571f: Improve viewer shell drawer accessibility with semantic controls.
+  Optimize content-site app shell controls and mobile list touch targets.
+  Localize content-site navigation drawer screen reader labels and clarify scaffold copy in the secondary app shells.
+  Harden content-site settings menus with Escape dismissal, focus restoration, and stable controlled menu regions.
+  Align content-site region badge and list toolbar touch targets across xs and sm viewports.
+  Extract content-site list toolbar icon controls into a shared component.
+- d44571f: Add a low motion setting for content-site animations.
+
+  Improve content-site accessibility and motion polish by labeling music toolbar icon buttons, tokenizing music difficulty colors, optimizing card split hover animation, and quieting navbar/menu styling.
+  Narrow image preview transitions to opacity and transform.
+
+  Refresh the content-site favicon with a simplified high-contrast diagonal Sekai Viewer SV mark.
+
 ## 0.1.2
 
 ### Patch Changes
