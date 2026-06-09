@@ -20,9 +20,9 @@
   }));
 
   const sidebarItems: SidebarItem[] = [
-    { label: "首页", href: "/", active: true },
+    { label: "Home", href: "/", active: true },
     ...supportedRegions.map((region) => ({
-      label: `${regionLabels[region]} 工具`,
+      label: `${regionLabels[region]} tools`,
       href: `#region-${region}`
     }))
   ];
@@ -63,7 +63,7 @@
               </span>
             </div>
           </div>
-          <p class="text-sm opacity-70">Tools 模块预留：{regionLabels[region]} 区域工具入口</p>
+          <p class="text-sm opacity-70">{regionLabels[region]} tools will appear here.</p>
         </div>
       </article>
     {/each}

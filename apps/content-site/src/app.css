@@ -93,6 +93,28 @@
     border-radius: 1rem;
   }
 
+  .hover-3d {
+    transform-style: preserve-3d;
+    transition:
+      transform 180ms ease-out,
+      box-shadow 180ms ease-out;
+  }
+
+  :root:not([data-low-motion]) .hover-3d:hover {
+    transform: perspective(900px) rotateX(1.4deg) rotateY(-1.8deg) translateY(-0.25rem);
+    box-shadow: 0 16px 28px color-mix(in oklab, var(--color-base-content) 12%, transparent) !important;
+  }
+
+  :root[data-low-motion] .hover-3d {
+    transform-style: flat;
+    transition: box-shadow 1ms linear !important;
+  }
+
+  :root[data-low-motion] .hover-3d:hover {
+    transform: none !important;
+    box-shadow: 0 8px 16px color-mix(in oklab, var(--color-base-content) 10%, transparent) !important;
+  }
+
   .event-list-unit-idol::after,
   .event-list-unit-light-sound::after,
   .event-list-unit-piapro::after,
@@ -212,6 +234,41 @@
     background-color: color-mix(in oklab, white 42%, transparent);
   }
 
+  .music-difficulty-badge {
+    color: var(--music-difficulty-foreground);
+    background-color: var(--music-difficulty-background);
+  }
+
+  .music-difficulty-easy {
+    --music-difficulty-background: oklch(80% 0.19 134);
+    --music-difficulty-foreground: oklch(18% 0.04 134);
+  }
+
+  .music-difficulty-normal {
+    --music-difficulty-background: oklch(75% 0.13 226);
+    --music-difficulty-foreground: oklch(18% 0.04 226);
+  }
+
+  .music-difficulty-hard {
+    --music-difficulty-background: oklch(78% 0.16 76);
+    --music-difficulty-foreground: oklch(20% 0.04 76);
+  }
+
+  .music-difficulty-expert {
+    --music-difficulty-background: oklch(51% 0.17 18);
+    --music-difficulty-foreground: oklch(98% 0.01 18);
+  }
+
+  .music-difficulty-master {
+    --music-difficulty-background: oklch(54% 0.22 300);
+    --music-difficulty-foreground: oklch(98% 0.01 300);
+  }
+
+  .music-difficulty-append {
+    --music-difficulty-background: oklch(76% 0.16 340);
+    --music-difficulty-foreground: oklch(18% 0.04 340);
+  }
+
   :root.dark[data-theme="default"] .content-card-shell {
     border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
   }
@@ -276,142 +333,63 @@
   :root.dark[data-theme="default"] .event-list-spoiler-mosaic-overlay {
     background-color: color-mix(in oklab, var(--color-base-100) 42%, transparent);
   }
-
-  .liquid-glass-nav {
-    /* More transparent background — glass needs to show what's behind it */
-    background: linear-gradient(
-      135deg,
-      color-mix(in oklab, white 62%, transparent) 0%,
-      color-mix(in oklab, var(--color-base-100) 50%, transparent) 50%,
-      color-mix(in oklab, var(--color-base-100) 56%, transparent) 100%
-    );
-    border-color: color-mix(in oklab, white 62%, transparent);
-    /* brightness(1.05) simulates glass focusing light (lens effect) */
-    backdrop-filter: blur(10px) saturate(1.6) brightness(1.05);
-    /* 4-sided inset shadows to simulate glass edge refractions */
-    box-shadow:
-      inset 0 1.5px 0 color-mix(in oklab, white 90%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, white 32%, transparent),
-      inset 1px 0 0 color-mix(in oklab, white 38%, transparent),
-      inset -1px 0 0 color-mix(in oklab, white 20%, transparent),
-      0 12px 40px color-mix(in oklab, black 9%, transparent),
-      0 3px 8px color-mix(in oklab, black 5%, transparent);
-  }
-
-  /* Inner glass depth layer (article Demo 1 technique):
-     A second backdrop-filter at 1px creates the "glass has thickness" illusion.
-     The radial gradient adds a caustic light pool — how glass focuses light. */
-  .liquid-glass-nav::before {
-    content: "";
-    position: absolute;
-    inset: 2px;
-    border-radius: inherit;
-    backdrop-filter: blur(0.5px);
-    background: radial-gradient(
-      ellipse 58% 80% at 32% -15%,
-      color-mix(in oklab, white 32%, transparent),
-      transparent 58%
-    );
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  /* SVG-distorted specular overlay — the liquid ripple effect from article Demo 2 */
-  .liquid-glass-nav::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(
-      ellipse 90% 55% at 65% 120%,
-      color-mix(in oklab, white 18%, transparent),
-      transparent 55%
-    );
-    filter: url("#liquid-glass-distort");
-    opacity: 0.6;
-    mix-blend-mode: overlay;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  :root.dark .liquid-glass-nav {
-    background: linear-gradient(
-      135deg,
-      color-mix(in oklab, var(--color-base-100) 86%, transparent) 0%,
-      color-mix(in oklab, var(--color-base-100) 74%, transparent) 50%,
-      color-mix(in oklab, var(--color-base-100) 82%, transparent) 100%
-    );
-    border-color: color-mix(in oklab, white 14%, transparent);
-    backdrop-filter: blur(10px) saturate(1.4) brightness(0.98);
-    box-shadow:
-      inset 0 1px 0 color-mix(in oklab, white 14%, transparent),
-      inset 0 -0.5px 0 color-mix(in oklab, white 7%, transparent),
-      inset 1px 0 0 color-mix(in oklab, white 10%, transparent),
-      inset -1px 0 0 color-mix(in oklab, white 5%, transparent),
-      0 12px 40px color-mix(in oklab, black 40%, transparent),
-      0 3px 10px color-mix(in oklab, black 24%, transparent);
-  }
-
-  :root.dark .liquid-glass-nav::before {
-    background: radial-gradient(
-      ellipse 58% 80% at 32% -15%,
-      color-mix(in oklab, white 9%, transparent),
-      transparent 58%
-    );
-  }
-
-  :root.dark .liquid-glass-nav::after {
-    opacity: 0.3;
-  }
 }
 
 .page-switch-shell {
   isolation: isolate;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  @supports (view-transition-name: content-site-main) {
-    .page-switch-shell {
-      view-transition-name: content-site-main;
-      will-change: transform, opacity;
+@supports (view-transition-name: content-site-main) {
+  :root:not([data-low-motion]) .page-switch-shell {
+    view-transition-name: content-site-main;
+    will-change: transform, opacity;
+  }
+
+  :root:not([data-low-motion])::view-transition-old(content-site-main),
+  :root:not([data-low-motion])::view-transition-new(content-site-main) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  :root:not([data-low-motion])::view-transition-old(content-site-main) {
+    animation-name: content-site-page-old;
+  }
+
+  :root:not([data-low-motion])::view-transition-new(content-site-main) {
+    animation-name: content-site-page-new;
+  }
+
+  @keyframes content-site-page-old {
+    from {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    ::view-transition-old(content-site-main),
-    ::view-transition-new(content-site-main) {
-      animation-duration: 220ms;
-      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    ::view-transition-old(content-site-main) {
-      animation-name: content-site-page-old;
-    }
-
-    ::view-transition-new(content-site-main) {
-      animation-name: content-site-page-new;
-    }
-
-    @keyframes content-site-page-old {
-      from {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
-      to {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-    }
-
-    @keyframes content-site-page-new {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    to {
+      opacity: 0;
+      transform: translateY(-8px);
     }
   }
+
+  @keyframes content-site-page-new {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+:root[data-low-motion] *,
+:root[data-low-motion] *::before,
+:root[data-low-motion] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-delay: 0ms !important;
+  transition-duration: 1ms !important;
 }
