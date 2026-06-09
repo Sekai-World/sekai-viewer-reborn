@@ -174,7 +174,7 @@
       <img
         {src}
         {alt}
-        class={`${dialogImageClass} transition-all duration-300 ease-out ${dialogImageLoaded && !dialogImageFailed ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"} ${dialogImageFailed ? "pointer-events-none sr-only" : ""}`}
+        class={`${dialogImageClass} transition-[opacity,transform] duration-300 ease-out ${dialogImageLoaded && !dialogImageFailed ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"} ${dialogImageFailed ? "pointer-events-none sr-only" : ""}`}
         onload={() => {
           dialogImageLoaded = true;
           dialogImageFailed = false;
