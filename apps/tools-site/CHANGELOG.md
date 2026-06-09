@@ -1,5 +1,21 @@
 # @apps/tools-site
 
+## 0.1.4
+
+### Patch Changes
+
+- d44571f: Improve viewer shell drawer accessibility with semantic controls.
+  Optimize content-site app shell controls and mobile list touch targets.
+  Localize content-site navigation drawer screen reader labels and clarify scaffold copy in the secondary app shells.
+  Harden content-site settings menus with Escape dismissal, focus restoration, and stable controlled menu regions.
+  Align content-site region badge and list toolbar touch targets across xs and sm viewports.
+  Extract content-site list toolbar icon controls into a shared component.
+- Updated dependencies [d44571f]
+- Updated dependencies [70b917b]
+- Updated dependencies [d44571f]
+  - @platform/ui-shell@0.1.3
+  - @platform/sekai-master-api-sdk@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes

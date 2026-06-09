@@ -1,5 +1,67 @@
 # @apps/content-site
 
+## 0.1.4
+
+### Patch Changes
+
+- d44571f: Improve viewer shell drawer accessibility with semantic controls.
+  Optimize content-site app shell controls and mobile list touch targets.
+  Localize content-site navigation drawer screen reader labels and clarify scaffold copy in the secondary app shells.
+  Harden content-site settings menus with Escape dismissal, focus restoration, and stable controlled menu regions.
+  Align content-site region badge and list toolbar touch targets across xs and sm viewports.
+  Extract content-site list toolbar icon controls into a shared component.
+- 70b917b: Fix event list request query serialization for the updated `sekai-master-api-sdk` contract and add content display spoiler settings in the navbar.
+
+  Add a card list page with region switching, sorting, filtering, pagination, and multiple view modes. Extend the card filters with unit, character, skill, and 3DMV cut-in controls backed by the updated `/cards/:region/list` query params without preloading every card page.
+
+  Add color previews to the content-site theme selector.
+
+  Give card list unit icons rounded surfaces for dark theme readability.
+
+  Add a regional song list with jacket artwork, grid and agenda layouts, and searchable, clearable filters for title, MV type, and creator credits.
+
+  Use the checked-in content-site i18n source messages as the runtime fallback for missing remote dictionary keys.
+
+  Prepare the song list filters for vocal character, vocal unit, tag, difficulty, and level fields.
+
+  Add song filter hints, multi-select difficulty, game character and unit pickers, and level condition matching.
+
+  Respect spoiler content display settings on the song list and mosaic unrevealed future songs when enabled.
+
+  Use the same scroll-to-load-more sentinel behavior on the song list as card and event lists.
+
+  Refresh the sekai-master-api SDK after card and song list spoiler query support landed upstream.
+
+  Drive card and song list spoiler loading from the `spoiler` query parameter.
+
+  Make song list vocal filters use game character and unit selectors, add a song-has-append-difficulty switch, and support level filter conditions.
+
+  Regenerate the sekai-master-api SDK for the music difficulties endpoint and make the song tag filter use the fixed multi-select tag set.
+
+  Show song tags as localized badges above song titles in the music list cards.
+
+  Forward the song play level filter to the master API and parse list response difficulty levels correctly.
+
+  Merge the song vocal unit filter into the tag filter with unit-style icons and legacy vocal unit filter migration.
+
+  Resolve unit display names from the regional unit profile API instead of hardcoded translations.
+
+  Cache regional unit profiles until the `/versions/:region` data version changes.
+
+- d44571f: Add a low motion setting for content-site animations.
+
+  Improve content-site accessibility and motion polish by labeling music toolbar icon buttons, tokenizing music difficulty colors, optimizing card split hover animation, and quieting navbar/menu styling.
+  Narrow image preview transitions to opacity and transform.
+
+  Refresh the content-site favicon with a simplified high-contrast diagonal Sekai Viewer SV mark.
+
+- Updated dependencies [d44571f]
+- Updated dependencies [70b917b]
+- Updated dependencies [d44571f]
+  - @platform/ui-shell@0.1.3
+  - @platform/i18n-source@0.1.3
+  - @platform/sekai-master-api-sdk@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes
