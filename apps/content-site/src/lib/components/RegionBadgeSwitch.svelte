@@ -20,14 +20,14 @@
 {#each options as option (option.key)}
   {#if option.active}
     <span
-      class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm"
+      class="badge badge-primary border-primary/65 bg-primary/95 font-semibold text-primary-content shadow-sm max-md:h-11 max-md:min-h-11 max-md:w-11 max-md:px-0"
     >
       {option.label}
     </span>
   {:else if option.onclick}
     <button
       type="button"
-      class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold cursor-pointer"
+      class="badge badge-primary badge-outline cursor-pointer border-primary/55 bg-base-100/88 font-semibold max-md:h-11 max-md:min-h-11 max-md:w-11 max-md:px-0"
       onclick={option.onclick}
     >
       {option.label}
@@ -36,13 +36,13 @@
     <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
     <a
       href={option.href}
-      class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold"
+      class="badge badge-primary badge-outline border-primary/55 bg-base-100/88 font-semibold max-md:h-11 max-md:min-h-11 max-md:w-11 max-md:px-0"
     >
       {option.label}
     </a>
   {:else}
     <span
-      class="badge badge-outline border-base-content/20 bg-base-100/60 font-semibold opacity-60"
+      class="badge badge-outline border-base-content/20 bg-base-100/60 font-semibold opacity-60 max-md:h-11 max-md:min-h-11 max-md:w-11 max-md:px-0"
     >
       {option.label}
     </span>

@@ -10,6 +10,7 @@
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
   import EventListCard from "$lib/components/EventListCard.svelte";
+  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
@@ -617,52 +618,31 @@
 
   <div class="flex items-center justify-between gap-2">
     <div class="join">
-      <button
-        type="button"
-        class={`btn join-item btn-sm relative !h-12 !min-h-12 !w-12 overflow-visible p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("id")}`}
+      <ListToolbarButton
+        icon="mdi:numeric"
+        label={eventListSortById}
+        ariaLabel={`${eventListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+        sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
+        class={`join-item ${getSortButtonClass("id")}`}
         onclick={() => toggleSortBy("id")}
-        title={eventListSortById}
-        aria-label={`${eventListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
-      >
-        <Icon icon="mdi:numeric" class="h-4 w-4" aria-hidden="true" />
-        {#if sortBy === "id"}
-          <span
-            class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary sm:bottom-0.5 sm:right-0.5 sm:h-3 sm:w-3"
-            aria-hidden="true"
-          >
-            <Icon icon={getSortOrderIcon("id")} class="h-2.5 w-2.5" />
-          </span>
-        {/if}
-      </button>
+      />
 
-      <button
-        type="button"
-        class={`btn join-item btn-sm relative !h-12 !min-h-12 !w-12 overflow-visible p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("startAt")}`}
+      <ListToolbarButton
+        icon="mdi:clock-start"
+        label={eventListSortByStartAt}
+        ariaLabel={`${eventListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
+        sortIndicatorIcon={sortBy === "startAt" ? getSortOrderIcon("startAt") : undefined}
+        class={`join-item ${getSortButtonClass("startAt")}`}
         onclick={() => toggleSortBy("startAt")}
-        title={eventListSortByStartAt}
-        aria-label={`${eventListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
-      >
-        <Icon icon="mdi:clock-start" class="h-4 w-4" aria-hidden="true" />
-        {#if sortBy === "startAt"}
-          <span
-            class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary sm:bottom-0.5 sm:right-0.5 sm:h-3 sm:w-3"
-            aria-hidden="true"
-          >
-            <Icon icon={getSortOrderIcon("startAt")} class="h-2.5 w-2.5" />
-          </span>
-        {/if}
-      </button>
+      />
     </div>
 
-    <button
-      type="button"
-      class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+    <ListToolbarButton
+      icon="mdi:funnel"
+      label={eventListOpenFilters}
+      class={hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
       onclick={openFilterDialog}
-      title={eventListOpenFilters}
-      aria-label={eventListOpenFilters}
-    >
-      <Icon icon="mdi:funnel" class="h-4 w-4" aria-hidden="true" />
-    </button>
+    />
   </div>
 
   {#if isReloadingFirstPage}

@@ -1,4 +1,6 @@
 {
+  "aria.closeSidebar": "Close navigation",
+  "aria.openSidebar": "Open navigation",
   "aria.switchTheme": "Switch theme mode",
   "aria.switchUiLanguageCurrent": "Switch UI language. Current language",
   "audioDownloadCloseLabel": "Close download dialog",

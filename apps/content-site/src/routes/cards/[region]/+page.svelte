@@ -8,8 +8,8 @@
   import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
   import { UNIT_CODE_ORDER } from "$lib/unit-profile";
-  import Icon from "@iconify/svelte";
   import CardListCard from "$lib/components/CardListCard.svelte";
+  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
@@ -912,83 +912,53 @@
 
   <div class="flex flex-wrap items-center justify-between gap-2">
     <div class="join">
-      <button
-        type="button"
-        class={`btn join-item btn-sm relative !h-12 !min-h-12 !w-12 overflow-visible p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("releaseAt")}`}
+      <ListToolbarButton
+        icon="mdi:clock-outline"
+        label={cardListSortByReleaseAt}
+        ariaLabel={`${cardListSortByReleaseAt} (${sortBy === "releaseAt" ? sortOrder : "desc"})`}
+        sortIndicatorIcon={sortBy === "releaseAt" ? getSortOrderIcon("releaseAt") : undefined}
+        class={`join-item ${getSortButtonClass("releaseAt")}`}
         onclick={() => toggleSortBy("releaseAt")}
-        title={cardListSortByReleaseAt}
-        aria-label={`${cardListSortByReleaseAt} (${sortBy === "releaseAt" ? sortOrder : "desc"})`}
-      >
-        <Icon icon="mdi:clock-outline" class="h-4 w-4" aria-hidden="true" />
-        {#if sortBy === "releaseAt"}
-          <span
-            class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary sm:bottom-0.5 sm:right-0.5 sm:h-3 sm:w-3"
-            aria-hidden="true"
-          >
-            <Icon icon={getSortOrderIcon("releaseAt")} class="h-2.5 w-2.5" />
-          </span>
-        {/if}
-      </button>
+      />
 
-      <button
-        type="button"
-        class={`btn join-item btn-sm relative !h-12 !min-h-12 !w-12 overflow-visible p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getSortButtonClass("id")}`}
+      <ListToolbarButton
+        icon="mdi:numeric"
+        label={cardListSortById}
+        ariaLabel={`${cardListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+        sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
+        class={`join-item ${getSortButtonClass("id")}`}
         onclick={() => toggleSortBy("id")}
-        title={cardListSortById}
-        aria-label={`${cardListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
-      >
-        <Icon icon="mdi:numeric" class="h-4 w-4" aria-hidden="true" />
-        {#if sortBy === "id"}
-          <span
-            class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary sm:bottom-0.5 sm:right-0.5 sm:h-3 sm:w-3"
-            aria-hidden="true"
-          >
-            <Icon icon={getSortOrderIcon("id")} class="h-2.5 w-2.5" />
-          </span>
-        {/if}
-      </button>
+      />
     </div>
 
     <div class="flex items-center gap-2">
       <div class="join">
-        <button
-          type="button"
-          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getViewButtonClass("grid")}`}
+        <ListToolbarButton
+          icon="mdi:view-grid-outline"
+          label={cardListViewGrid}
+          class={`join-item ${getViewButtonClass("grid")}`}
           onclick={() => setViewMode("grid")}
-          title={cardListViewGrid}
-          aria-label={cardListViewGrid}
-        >
-          <Icon icon="mdi:view-grid-outline" class="h-4 w-4" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getViewButtonClass("agenda")}`}
+        />
+        <ListToolbarButton
+          icon="mdi:view-agenda-outline"
+          label={cardListViewAgenda}
+          class={`join-item ${getViewButtonClass("agenda")}`}
           onclick={() => setViewMode("agenda")}
-          title={cardListViewAgenda}
-          aria-label={cardListViewAgenda}
-        >
-          <Icon icon="mdi:view-agenda-outline" class="h-4 w-4" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${getViewButtonClass("comfy")}`}
+        />
+        <ListToolbarButton
+          icon="mdi:view-comfy-outline"
+          label={cardListViewComfy}
+          class={`join-item ${getViewButtonClass("comfy")}`}
           onclick={() => setViewMode("comfy")}
-          title={cardListViewComfy}
-          aria-label={cardListViewComfy}
-        >
-          <Icon icon="mdi:view-comfy-outline" class="h-4 w-4" aria-hidden="true" />
-        </button>
+        />
       </div>
 
-      <button
-        type="button"
-        class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+      <ListToolbarButton
+        icon="mdi:funnel"
+        label={cardListOpenFilters}
+        class={hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
         onclick={openFilterDialog}
-        title={cardListOpenFilters}
-        aria-label={cardListOpenFilters}
-      >
-        <Icon icon="mdi:funnel" class="h-4 w-4" aria-hidden="true" />
-      </button>
+      />
     </div>
   </div>
 

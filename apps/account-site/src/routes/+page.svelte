@@ -20,9 +20,9 @@
   }));
 
   const sidebarItems: SidebarItem[] = [
-    { label: "首页", href: "/", active: true },
+    { label: "Home", href: "/", active: true },
     ...supportedRegions.map((region) => ({
-      label: `${regionLabels[region]} 账号区`,
+      label: `${regionLabels[region]} accounts`,
       href: `#region-${region}`
     }))
   ];
@@ -68,9 +68,7 @@
               </span>
             </div>
           </div>
-          <p class="text-sm opacity-70">
-            Account 模块预留：{regionLabels[region]} 区域账号服务入口
-          </p>
+          <p class="text-sm opacity-70">{regionLabels[region]} account tools will appear here.</p>
         </div>
       </article>
     {/each}

@@ -5,6 +5,7 @@
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { toTimestampMs } from "$lib/date-time";
+  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
   import MusicListCard from "$lib/components/MusicListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, {
@@ -693,58 +694,41 @@
   <div class="flex flex-wrap items-center justify-between gap-2">
     <div class="join">
       {#each [{ value: "publishedAt", icon: "mdi:clock-outline", label: musicListSortByPublishedAt }, { value: "id", icon: "mdi:numeric", label: musicListSortById }] as option (option.value)}
-        <button
-          type="button"
-          class={`btn join-item btn-sm relative !h-12 !min-h-12 !w-12 overflow-visible p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          title={option.label}
-          aria-label={option.label}
+        <ListToolbarButton
+          icon={option.icon}
+          label={option.label}
+          ariaLabel={`${option.label} (${sortBy === option.value ? sortOrder : "desc"})`}
+          sortIndicatorIcon={sortBy === option.value
+            ? sortOrder === "asc"
+              ? "mdi:arrow-up"
+              : "mdi:arrow-down"
+            : undefined}
+          class={`join-item ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           onclick={() => toggleSort(option.value as MusicListSortBy)}
-        >
-          <Icon icon={option.icon} class="h-4 w-4" />
-          {#if sortBy === option.value}
-            <span
-              class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary sm:bottom-0.5 sm:right-0.5 sm:h-3 sm:w-3"
-              aria-hidden="true"
-            >
-              <Icon
-                icon={sortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
-                class="h-2.5 w-2.5"
-              />
-            </span>
-          {/if}
-        </button>
+        />
       {/each}
     </div>
     <div class="flex gap-2">
       <div class="join">
-        <button
-          type="button"
-          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          title={musicListViewGrid}
-          aria-label={musicListViewGrid}
+        <ListToolbarButton
+          icon="mdi:view-grid-outline"
+          label={musicListViewGrid}
+          class={`join-item ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           onclick={() => setViewMode("grid")}
-        >
-          <Icon icon="mdi:view-grid-outline" class="h-4 w-4" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          class={`btn join-item btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          title={musicListViewAgenda}
-          aria-label={musicListViewAgenda}
+        />
+        <ListToolbarButton
+          icon="mdi:view-agenda-outline"
+          label={musicListViewAgenda}
+          class={`join-item ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           onclick={() => setViewMode("agenda")}
-        >
-          <Icon icon="mdi:view-agenda-outline" class="h-4 w-4" aria-hidden="true" />
-        </button>
+        />
       </div>
-      <button
-        type="button"
-        class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 sm:!h-8 sm:!min-h-8 sm:!w-8 ${hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-        title={musicListOpenFilters}
-        aria-label={musicListOpenFilters}
+      <ListToolbarButton
+        icon="mdi:funnel"
+        label={musicListOpenFilters}
+        class={hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
         onclick={openFilters}
-      >
-        <Icon icon="mdi:funnel" class="h-4 w-4" aria-hidden="true" />
-      </button>
+      />
     </div>
   </div>
 

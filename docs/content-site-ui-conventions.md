@@ -103,12 +103,14 @@ Current shared navigation/header system:
 - `apps/content-site/src/lib/components/Breadcrumbs.svelte`
 - `apps/content-site/src/lib/components/PageHeader.svelte`
 - `apps/content-site/src/lib/components/RegionBadgeSwitch.svelte`
+- `apps/content-site/src/lib/components/ListToolbarButton.svelte`
 
 Rules:
 
 - Breadcrumb + top-right action layouts should reuse `PageHeader`.
 - Region badge groups should reuse `RegionBadgeSwitch`.
 - If a route needs only a single active region badge, still use the shared switch component with one active option.
+- List page icon-only sort, view, and filter controls should reuse `ListToolbarButton` so touch target sizing and sort indicators stay aligned across routes.
 
 ## Sidebar Rules
 

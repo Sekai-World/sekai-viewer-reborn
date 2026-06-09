@@ -38,6 +38,10 @@
   const THEME_STORAGE_KEY = "content_site_theme_mode";
   const THEME_NAME_STORAGE_KEY = "content_site_theme_name";
   const CONTENT_DISPLAY_STORAGE_KEY = "content_site_content_display_settings";
+  const DESKTOP_SETTINGS_MENU_ID = "content-site-desktop-settings-menu";
+  const DESKTOP_THEME_MENU_ID = "content-site-desktop-theme-menu";
+  const LOCALE_MENU_ID = "content-site-locale-menu";
+  const MOBILE_SETTINGS_MENU_ID = "content-site-mobile-settings-menu";
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
 
@@ -57,6 +61,10 @@
   let desktopSettingsMenu: HTMLDivElement | null = null;
   let desktopThemeMenu: HTMLDivElement | null = null;
   let localeMenu: HTMLDivElement | null = null;
+  let mobileSettingsButton: HTMLButtonElement | null = null;
+  let desktopSettingsButton: HTMLButtonElement | null = null;
+  let desktopThemeButton: HTMLButtonElement | null = null;
+  let localeButton: HTMLButtonElement | null = null;
   let localeLoadingProgress = $state(0);
   let localeLoadingInterval: ReturnType<typeof setInterval> | null = null;
   let localeProgressResetTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -64,6 +72,8 @@
   const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
 
   let homeLabel = $state(getInitialCommonText("home"));
+  let openSidebarLabel = $state(getInitialCommonText("aria.openSidebar"));
+  let closeSidebarLabel = $state(getInitialCommonText("aria.closeSidebar"));
   let sidebarLabel = $state(getInitialCommonText("navigation.sidebarTitle"));
   let databaseLabel = $state(getInitialCommonText("navigation.database"));
   let cardsLabel = $state(getInitialCommonText("navigation.cards"));
@@ -221,6 +231,8 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
+    openSidebarLabel = translate("aria.openSidebar");
+    closeSidebarLabel = translate("aria.closeSidebar");
     sidebarLabel = translate("navigation.sidebarTitle");
     databaseLabel = translate("navigation.database");
     cardsLabel = translate("navigation.cards");
@@ -398,6 +410,42 @@
     close();
   };
 
+  const closeOpenMenus = (focusTrigger = false): boolean => {
+    if (isMobileSettingsMenuOpen) {
+      isMobileSettingsMenuOpen = false;
+      if (focusTrigger) {
+        mobileSettingsButton?.focus();
+      }
+      return true;
+    }
+
+    if (isDesktopSettingsMenuOpen) {
+      isDesktopSettingsMenuOpen = false;
+      if (focusTrigger) {
+        desktopSettingsButton?.focus();
+      }
+      return true;
+    }
+
+    if (isDesktopThemeMenuOpen) {
+      isDesktopThemeMenuOpen = false;
+      if (focusTrigger) {
+        desktopThemeButton?.focus();
+      }
+      return true;
+    }
+
+    if (isLocaleMenuOpen) {
+      isLocaleMenuOpen = false;
+      if (focusTrigger) {
+        localeButton?.focus();
+      }
+      return true;
+    }
+
+    return false;
+  };
+
   const setUiLocale = async (localeValue: string): Promise<void> => {
     const nextLocale = normalizeUiLocale(localeValue, DEFAULT_UI_LOCALE);
     if (nextLocale === uiLocale) {
@@ -520,7 +568,19 @@
       }
     };
 
+    const handleDocumentKeydown = (event: KeyboardEvent): void => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      if (closeOpenMenus(true)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
     document.addEventListener("click", handleDocumentClick);
+    document.addEventListener("keydown", handleDocumentKeydown);
 
     return () => {
       stopLocaleProgressTimers();
@@ -530,6 +590,7 @@
       }
       disposeNavigationTransition();
       document.removeEventListener("click", handleDocumentClick);
+      document.removeEventListener("keydown", handleDocumentKeydown);
       window.removeEventListener("scroll", updateBackToTopVisibility);
       systemThemeMediaQuery?.removeEventListener("change", handleSystemThemeChange);
     };
@@ -629,6 +690,8 @@
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
+  {openSidebarLabel}
+  {closeSidebarLabel}
   {sidebarLabel}
   {sidebarItems}
   showTitle={showPageTitle}
@@ -641,11 +704,13 @@
         bind:this={desktopSettingsMenu}
       >
         <button
+          bind:this={desktopSettingsButton}
           type="button"
           class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
           aria-label={settingsLabel}
           aria-haspopup="dialog"
           aria-expanded={isDesktopSettingsMenuOpen}
+          aria-controls={DESKTOP_SETTINGS_MENU_ID}
           title={settingsLabel}
           onclick={() => {
             isDesktopSettingsMenuOpen = !isDesktopSettingsMenuOpen;
@@ -655,6 +720,9 @@
         </button>
         {#if isDesktopSettingsMenuOpen}
           <div
+            id={DESKTOP_SETTINGS_MENU_ID}
+            role="dialog"
+            aria-label={settingsLabel}
             class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-3 shadow-xl"
           >
             {@render contentDisplaySection()}
@@ -668,11 +736,13 @@
         bind:this={desktopThemeMenu}
       >
         <button
+          bind:this={desktopThemeButton}
           type="button"
           class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
           aria-label={switchThemeAriaLabel}
           aria-haspopup="menu"
           aria-expanded={isDesktopThemeMenuOpen}
+          aria-controls={DESKTOP_THEME_MENU_ID}
           title={getThemeButtonTitle()}
           onclick={() => {
             isDesktopThemeMenuOpen = !isDesktopThemeMenuOpen;
@@ -682,6 +752,7 @@
         </button>
         {#if isDesktopThemeMenuOpen}
           <ul
+            id={DESKTOP_THEME_MENU_ID}
             class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl"
             role="menu"
           >
@@ -742,11 +813,13 @@
         bind:this={localeMenu}
       >
         <button
+          bind:this={localeButton}
           type="button"
           class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 disabled:opacity-75"
           aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
           aria-haspopup="menu"
           aria-expanded={isLocaleMenuOpen}
+          aria-controls={LOCALE_MENU_ID}
           title={`${interfaceLanguageLabel}: ${uiLocaleDisplayLabel}`}
           aria-busy={$isLocaleLoading}
           disabled={$isLocaleLoading}
@@ -761,6 +834,7 @@
         </button>
         {#if isLocaleMenuOpen}
           <div
+            id={LOCALE_MENU_ID}
             class="dropdown-content z-120 mt-3 w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
           >
             <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
@@ -802,11 +876,13 @@
         bind:this={mobileSettingsMenu}
       >
         <button
+          bind:this={mobileSettingsButton}
           type="button"
           class="btn btn-circle btn-sm !h-11 !min-h-11 !w-11 btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={settingsLabel}
           aria-haspopup="dialog"
           aria-expanded={isMobileSettingsMenuOpen}
+          aria-controls={MOBILE_SETTINGS_MENU_ID}
           title={settingsLabel}
           onclick={() => {
             isMobileSettingsMenuOpen = !isMobileSettingsMenuOpen;
@@ -816,6 +892,9 @@
         </button>
         {#if isMobileSettingsMenuOpen}
           <div
+            id={MOBILE_SETTINGS_MENU_ID}
+            role="dialog"
+            aria-label={settingsLabel}
             class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
           >
             {@render contentDisplaySection()}

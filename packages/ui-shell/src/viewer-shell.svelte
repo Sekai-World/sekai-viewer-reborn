@@ -8,6 +8,8 @@
     navTitle: string;
     navBadge?: string;
     navActions?: Snippet;
+    openSidebarLabel?: string;
+    closeSidebarLabel?: string;
     sidebarLabel?: string;
     sidebarItems?: SidebarItem[];
     showTitle?: boolean;
@@ -21,6 +23,8 @@
     navTitle,
     navBadge,
     navActions,
+    openSidebarLabel = "Open navigation",
+    closeSidebarLabel = "Close navigation",
     sidebarLabel = "Navigation",
     sidebarItems = [],
     showTitle = true,
@@ -52,7 +56,7 @@
           <button
             type="button"
             class="btn btn-ghost btn-circle !h-11 !min-h-11 !w-11"
-            aria-label="Open sidebar"
+            aria-label={openSidebarLabel}
             aria-controls={sidebarPanelId}
             aria-expanded={sidebarOpen}
             onclick={() => {
@@ -100,7 +104,7 @@
   <div class="drawer-side z-50">
     <button
       type="button"
-      aria-label="Close sidebar"
+      aria-label={closeSidebarLabel}
       class="drawer-overlay"
       onclick={() => {
         sidebarOpen = false;
@@ -112,7 +116,7 @@
         <button
           type="button"
           class="btn btn-ghost btn-sm btn-circle !h-11 !min-h-11 !w-11"
-          aria-label="Close sidebar"
+          aria-label={closeSidebarLabel}
           aria-controls={sidebarPanelId}
           onclick={() => {
             sidebarOpen = false;
