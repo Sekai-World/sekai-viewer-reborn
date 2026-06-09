@@ -10,6 +10,7 @@
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
   import EventListCard from "$lib/components/EventListCard.svelte";
+  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
@@ -617,42 +618,31 @@
 
   <div class="flex items-center justify-between gap-2">
     <div class="join">
-      <button
-        type="button"
-        class={`btn join-item btn-sm ${getSortButtonClass("id")}`}
+      <ListToolbarButton
+        icon="mdi:numeric"
+        label={eventListSortById}
+        ariaLabel={`${eventListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+        sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
+        class={`join-item ${getSortButtonClass("id")}`}
         onclick={() => toggleSortBy("id")}
-        title={eventListSortById}
-        aria-label={`${eventListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
-      >
-        <Icon icon="mdi:numeric" class="h-4 w-4" aria-hidden="true" />
-        {#if sortBy === "id"}
-          <Icon icon={getSortOrderIcon("id")} class="h-4 w-4" aria-hidden="true" />
-        {/if}
-      </button>
+      />
 
-      <button
-        type="button"
-        class={`btn join-item btn-sm ${getSortButtonClass("startAt")}`}
+      <ListToolbarButton
+        icon="mdi:clock-start"
+        label={eventListSortByStartAt}
+        ariaLabel={`${eventListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
+        sortIndicatorIcon={sortBy === "startAt" ? getSortOrderIcon("startAt") : undefined}
+        class={`join-item ${getSortButtonClass("startAt")}`}
         onclick={() => toggleSortBy("startAt")}
-        title={eventListSortByStartAt}
-        aria-label={`${eventListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
-      >
-        <Icon icon="mdi:clock-start" class="h-4 w-4" aria-hidden="true" />
-        {#if sortBy === "startAt"}
-          <Icon icon={getSortOrderIcon("startAt")} class="h-4 w-4" aria-hidden="true" />
-        {/if}
-      </button>
+      />
     </div>
 
-    <button
-      type="button"
-      class={`btn btn-sm ${hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+    <ListToolbarButton
+      icon="mdi:funnel"
+      label={eventListOpenFilters}
+      class={hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
       onclick={openFilterDialog}
-      title={eventListOpenFilters}
-      aria-label={eventListOpenFilters}
-    >
-      <Icon icon="mdi:funnel" class="h-4 w-4" aria-hidden="true" />
-    </button>
+    />
   </div>
 
   {#if isReloadingFirstPage}
@@ -683,7 +673,11 @@
     {#if errorMessage}
       <div class="flex items-center justify-center gap-3">
         <div class="alert alert-error max-w-xl flex-1">{errorMessage}</div>
-        <button type="button" class="btn btn-outline btn-sm" onclick={() => void loadNextPage()}>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm !min-h-12 sm:!min-h-8"
+          onclick={() => void loadNextPage()}
+        >
           {eventListRetry}
         </button>
       </div>
@@ -730,7 +724,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getEventTypeOptions() as option (option.value)}
             <label
-              class={`btn btn-sm join-item ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+              class={`btn btn-sm join-item !min-h-12 ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={option.label}
             >
               <input
@@ -757,7 +751,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getUnitOptions() as option (`unit:${option.value}`)}
             <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${filterUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+              class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${filterUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={option.label}
             >
               <input
@@ -792,14 +786,14 @@
     </div>
 
     <div class="modal-action flex-wrap gap-2">
-      <button type="button" class="btn btn-outline" onclick={resetFilterDrafts}>
+      <button type="button" class="btn btn-outline !min-h-12" onclick={resetFilterDrafts}>
         {eventListFilterReset}
       </button>
-      <button type="button" class="btn btn-primary" onclick={applyFilters}>
+      <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}>
         {eventListFilterApply}
       </button>
       <form method="dialog">
-        <button type="submit" class="btn">{closeLabel}</button>
+        <button type="submit" class="btn !min-h-12">{closeLabel}</button>
       </form>
     </div>
   </div>

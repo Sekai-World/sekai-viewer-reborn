@@ -101,7 +101,7 @@
           {alt}
           loading="eager"
           decoding="async"
-          class={`${imageClass} transition-all duration-300 ease-out ${previewImageLoaded && !previewImageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${previewImageFailed ? "pointer-events-none sr-only" : ""}`}
+          class={`${imageClass} transition-[opacity,transform] duration-300 ease-out ${previewImageLoaded && !previewImageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${previewImageFailed ? "pointer-events-none sr-only" : ""}`}
           onload={() => {
             previewImageLoaded = true;
             previewImageFailed = false;

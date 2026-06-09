@@ -20,9 +20,9 @@
   }));
 
   const sidebarItems: SidebarItem[] = [
-    { label: "首页", href: "/", active: true },
+    { label: "Home", href: "/", active: true },
     ...supportedRegions.map((region) => ({
-      label: `${regionLabels[region]} 实验区`,
+      label: `${regionLabels[region]} media lab`,
       href: `#region-${region}`
     }))
   ];
@@ -68,7 +68,7 @@
               </span>
             </div>
           </div>
-          <p class="text-sm opacity-70">Media Lab 预留：{regionLabels[region]} 区域实验内容入口</p>
+          <p class="text-sm opacity-70">{regionLabels[region]} media tools will appear here.</p>
         </div>
       </article>
     {/each}

@@ -5,6 +5,7 @@
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { toTimestampMs } from "$lib/date-time";
+  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
   import MusicListCard from "$lib/components/MusicListCard.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import RegionBadgeSwitch, {
@@ -192,8 +193,7 @@
     return icon ? asset(`/icons/icon_${icon}.png`) : null;
   };
 
-  const mapLegacyVocalUnitToTag = (value: string): string =>
-    musicTagByUnitCode[value] ?? value;
+  const mapLegacyVocalUnitToTag = (value: string): string => musicTagByUnitCode[value] ?? value;
 
   const getCharacterThumbnailUrl = (value: string): string | null => {
     const id = Number.parseInt(value, 10);
@@ -694,47 +694,41 @@
   <div class="flex flex-wrap items-center justify-between gap-2">
     <div class="join">
       {#each [{ value: "publishedAt", icon: "mdi:clock-outline", label: musicListSortByPublishedAt }, { value: "id", icon: "mdi:numeric", label: musicListSortById }] as option (option.value)}
-        <button
-          type="button"
-          class={`btn join-item btn-sm ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          title={option.label}
-          aria-label={option.label}
+        <ListToolbarButton
+          icon={option.icon}
+          label={option.label}
+          ariaLabel={`${option.label} (${sortBy === option.value ? sortOrder : "desc"})`}
+          sortIndicatorIcon={sortBy === option.value
+            ? sortOrder === "asc"
+              ? "mdi:arrow-up"
+              : "mdi:arrow-down"
+            : undefined}
+          class={`join-item ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           onclick={() => toggleSort(option.value as MusicListSortBy)}
-        >
-          <Icon icon={option.icon} class="h-4 w-4" />
-          {#if sortBy === option.value}
-            <Icon icon={sortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"} class="h-4 w-4" />
-          {/if}
-        </button>
+        />
       {/each}
     </div>
     <div class="flex gap-2">
       <div class="join">
-        <button
-          type="button"
-          class={`btn join-item btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          title={musicListViewGrid}
+        <ListToolbarButton
+          icon="mdi:view-grid-outline"
+          label={musicListViewGrid}
+          class={`join-item ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           onclick={() => setViewMode("grid")}
-        >
-          <Icon icon="mdi:view-grid-outline" class="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          class={`btn join-item btn-sm ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          title={musicListViewAgenda}
+        />
+        <ListToolbarButton
+          icon="mdi:view-agenda-outline"
+          label={musicListViewAgenda}
+          class={`join-item ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           onclick={() => setViewMode("agenda")}
-        >
-          <Icon icon="mdi:view-agenda-outline" class="h-4 w-4" />
-        </button>
+        />
       </div>
-      <button
-        type="button"
-        class={`btn btn-sm ${hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-        title={musicListOpenFilters}
+      <ListToolbarButton
+        icon="mdi:funnel"
+        label={musicListOpenFilters}
+        class={hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
         onclick={openFilters}
-      >
-        <Icon icon="mdi:funnel" class="h-4 w-4" />
-      </button>
+      />
     </div>
   </div>
 
@@ -748,7 +742,7 @@
   {:else}
     <div
       class={viewMode === "agenda"
-        ? "grid grid-cols-1 gap-4 lg:grid-cols-2"
+        ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
         : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}
     >
       {#each visibleItems as item (item.id)}
@@ -803,7 +797,7 @@
           {#if nameDraft}
             <button
               type="button"
-              class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-2 -translate-y-1/2"
+              class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-1 !h-12 !min-h-12 !w-12 -translate-y-1/2"
               title={`${clearLabel}: ${musicListFilterNameLabel}`}
               aria-label={`${clearLabel}: ${musicListFilterNameLabel}`}
               onclick={() => (nameDraft = "")}
@@ -818,7 +812,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each data.filterMeta.categories as category (category)}
             <label
-              class={`btn btn-sm ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm !min-h-12 ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
             >
               <input
                 class="sr-only"
@@ -837,7 +831,7 @@
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
             {@const tagIconUrl = getMusicTagIconUrl(tag)}
             <label
-              class={`btn btn-sm join-item h-10 min-h-10 w-10 p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
+              class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
               title={getMusicTagLabel(tag)}
             >
               <input
@@ -872,7 +866,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each gameCharacterValues as character (character)}
             <label
-              class={`btn btn-sm h-10 min-h-10 w-10 p-0 ${getFilterButtonClass(vocalCharacterDraft, character)}`}
+              class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(vocalCharacterDraft, character)}`}
               title={character}
             >
               <input
@@ -935,7 +929,7 @@
             {#if filter.value}
               <button
                 type="button"
-                class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-2 -translate-y-1/2"
+                class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-1 !h-12 !min-h-12 !w-12 -translate-y-1/2"
                 title={`${clearLabel}: ${filter.label}`}
                 aria-label={`${clearLabel}: ${filter.label}`}
                 onclick={() => filter.set("")}
@@ -948,13 +942,13 @@
       {/each}
     </div>
     <div class="modal-action">
-      <button type="button" class="btn btn-outline" onclick={resetDrafts}
+      <button type="button" class="btn btn-outline !min-h-12" onclick={resetDrafts}
         >{musicListFilterReset}</button
       >
-      <button type="button" class="btn btn-primary" onclick={applyFilters}
+      <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}
         >{musicListFilterApply}</button
       >
-      <form method="dialog"><button type="submit" class="btn">{closeLabel}</button></form>
+      <form method="dialog"><button type="submit" class="btn !min-h-12">{closeLabel}</button></form>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop"><button type="submit">{closeLabel}</button></form>
