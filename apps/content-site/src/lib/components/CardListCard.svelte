@@ -515,14 +515,6 @@
       </div>
     {/if}
   </article>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
 </div>
 
 <style>

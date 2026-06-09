@@ -740,7 +740,7 @@
           type="button"
           class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
           aria-label={switchThemeAriaLabel}
-          aria-haspopup="menu"
+          aria-haspopup="true"
           aria-expanded={isDesktopThemeMenuOpen}
           aria-controls={DESKTOP_THEME_MENU_ID}
           title={getThemeButtonTitle()}
@@ -754,7 +754,6 @@
           <ul
             id={DESKTOP_THEME_MENU_ID}
             class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl"
-            role="menu"
           >
             <li class="menu-title px-2 py-1 text-xs font-semibold opacity-60">
               {themePaletteLabel}
@@ -817,7 +816,7 @@
           type="button"
           class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 disabled:opacity-75"
           aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
-          aria-haspopup="menu"
+          aria-haspopup="true"
           aria-expanded={isLocaleMenuOpen}
           aria-controls={LOCALE_MENU_ID}
           title={`${interfaceLanguageLabel}: ${uiLocaleDisplayLabel}`}
@@ -846,7 +845,7 @@
 
             <div class="my-2 h-px bg-base-content/12"></div>
 
-            <ul class="menu p-0" role="menu">
+            <ul class="menu p-0">
               {#each uiLocaleOptions as localeOption (localeOption.code)}
                 {#if localeOption.code !== uiLocale}
                   <li>
