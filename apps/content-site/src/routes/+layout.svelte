@@ -832,13 +832,15 @@
         {#if isLocaleMenuOpen}
           <div
             id={LOCALE_MENU_ID}
-            class="dropdown-content z-120 mt-3 w-[min(16rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+            class="dropdown-content z-120 mt-3 w-max min-w-44 max-w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
           >
             <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
               <p class="px-1 text-xs font-semibold opacity-60">
                 {currentLanguageLabel}
               </p>
-              <p class="px-1 pt-1 text-sm font-semibold leading-snug">{uiLocaleDisplayLabel}</p>
+              <p class="break-words px-1 pt-1 text-sm font-semibold leading-snug">
+                {uiLocaleDisplayLabel}
+              </p>
             </div>
 
             <div class="my-2 h-px bg-base-content/12"></div>
@@ -855,7 +857,9 @@
                         isLocaleMenuOpen = false;
                       }}
                     >
-                      <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                      <span class="min-w-0 break-words"
+                        >{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span
+                      >
                     </button>
                   </li>
                 {/if}
@@ -961,7 +965,9 @@
                       class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 btn-primary"
                       disabled={true}
                     >
-                      <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                      <span class="min-w-0 break-words"
+                        >{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span
+                      >
                     </button>
                   {/if}
                 {/each}
@@ -976,7 +982,9 @@
                         isMobileSettingsMenuOpen = true;
                       }}
                     >
-                      <span>{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span>
+                      <span class="min-w-0 break-words"
+                        >{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span
+                      >
                     </button>
                   {/if}
                 {/each}
