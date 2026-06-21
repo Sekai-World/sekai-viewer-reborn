@@ -50,7 +50,7 @@ jobs:
           path: i18n
 
       - name: Setup mise tools
-        uses: jdx/mise-action@v3
+        uses: jdx/mise-action@v4
         with:
           experimental: true
           working_directory: app
