@@ -158,7 +158,7 @@ Rules:
 - Keep server-side unit profile caching in `apps/content-site/src/lib/server/unit-profiles.ts`; cache validation should use the version key from `/versions/{region}`.
 - Keep music tag to unit-code mapping in `apps/content-site/src/lib/unit-profile.ts` because some API tag values differ from unit codes.
 - Add user-facing navigation labels to the external `sekai-i18n-reborn` dictionaries.
-- Add new source keys first to `packages/i18n-source/content-site/common.json` or `packages/i18n-source/content-site/server.json`; the sync workflow opens the translation-repo PR.
+- Add new source keys first to the matching `packages/i18n-source/content-site/*.json` namespace; use `common.json` only for labels shared across multiple scopes and `server.json` for server-only messages.
 
 ## Practical Modification Strategy
 

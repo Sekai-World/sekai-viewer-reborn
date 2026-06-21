@@ -4,7 +4,12 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./content-site/card.json": "./content-site/card.json",
     "./content-site/common.json": "./content-site/common.json",
+    "./content-site/error.json": "./content-site/error.json",
+    "./content-site/event.json": "./content-site/event.json",
+    "./content-site/home.json": "./content-site/home.json",
+    "./content-site/music.json": "./content-site/music.json",
     "./content-site/server.json": "./content-site/server.json"
   }
 }
