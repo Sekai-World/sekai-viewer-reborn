@@ -6,12 +6,62 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const contentSiteRoot = path.join(repoRoot, "apps/content-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/content-site");
 const scannedFiles = ["src/lib", "src/routes"];
+const contentSiteNamespaces = ["common", "home", "card", "event", "music", "error", "server"];
 
 const commonKeyPatterns = [
-  /(?:tCommon|getInitialCommonText|getInitialLabel|translate)\(\s*(?:[^,]+,\s*)?["']([^"'`]+)["']/g,
-  /createCommonTranslator\([^)]*\)\(\s*(?:[^,]+,\s*)?["']([^"'`]+)["']/g
+  /(?:tCommon|getInitialI18nText|getInitialLabel|translate)\(\s*(?:[^,]+,\s*)?["']([^"'`]+)["']/g,
+  /createI18nTranslator\([^)]*\)\(\s*(?:[^,]+,\s*)?["']([^"'`]+)["']/g
 ];
 const serverKeyPatterns = [/getServerI18nText\(\s*[^,]+,\s*["']([^"'`]+)["']/g];
+const sharedCommonKeys = new Set([
+  "bannerAltSuffix",
+  "clearLabel",
+  "closeLabel",
+  "countdownEndsIn",
+  "countdownStartsIn",
+  "eventEnded",
+  "eventListCurrentEvent",
+  "home",
+  "idLabel",
+  "imageUnavailable",
+  "labels.timeUnit.day",
+  "labels.timeUnit.hour",
+  "labels.timeUnit.minute",
+  "labels.timeUnit.second",
+  "listFilterApply",
+  "listFilterReset",
+  "listFiltersTitle",
+  "listLoadMoreHintDesktop",
+  "listLoadMoreHintMobile",
+  "listOpenFilters",
+  "listRetry",
+  "listSortById",
+  "listSortByReleaseAt",
+  "listViewAgenda",
+  "listViewGrid",
+  "mixed",
+  "mixedUnitLabel",
+  "nameLabel",
+  "noCurrentEventData",
+  "spoilerContent",
+  "unitLabel"
+]);
+
+const namespaceByRoutePattern = [
+  { pattern: /src\/routes\/\+layout\.svelte$/, namespace: "common" },
+  { pattern: /src\/routes\/\+layout\.server\.ts$/, namespace: "common" },
+  { pattern: /src\/routes\/\+error\.svelte$/, namespace: "error" },
+  { pattern: /src\/routes\/\+page\.svelte$/, namespace: "home" },
+  { pattern: /src\/routes\/cards\//, namespace: "card" },
+  { pattern: /src\/routes\/musics\//, namespace: "music" },
+  { pattern: /src\/routes\/event\//, namespace: "event" },
+  { pattern: /src\/routes\/events\//, namespace: "event" },
+  { pattern: /src\/lib\/event\.ts$/, namespace: "event" },
+  { pattern: /src\/lib\/components\/CurrentEventCard\.svelte$/, namespace: "home" },
+  { pattern: /src\/lib\/components\/Card/, namespace: "card" },
+  { pattern: /src\/lib\/components\/Music/, namespace: "music" },
+  { pattern: /src\/lib\/components\/Event/, namespace: "event" }
+];
 
 const readJson = async (filePath) => JSON.parse(await readFile(filePath, "utf8"));
 
@@ -45,15 +95,24 @@ const listSourceFiles = async () => {
 };
 
 const collectKeys = async () => {
-  const common = new Set(["themeMode.auto", "themeMode.dark", "themeMode.light"]);
+  const usedKeys = Object.fromEntries(
+    contentSiteNamespaces.map((namespace) => [namespace, new Set()])
+  );
+  usedKeys.common.add("themeMode.auto");
+  usedKeys.common.add("themeMode.dark");
+  usedKeys.common.add("themeMode.light");
   const server = new Set();
 
   for (const filePath of await listSourceFiles()) {
     const content = await readFile(filePath, "utf8");
+    const relativeFilePath = path.relative(contentSiteRoot, filePath).replaceAll(path.sep, "/");
+    const namespace =
+      namespaceByRoutePattern.find((entry) => entry.pattern.test(relativeFilePath))?.namespace ??
+      "common";
 
     for (const pattern of commonKeyPatterns) {
       for (const match of content.matchAll(pattern)) {
-        common.add(match[1]);
+        usedKeys[sharedCommonKeys.has(match[1]) ? "common" : namespace].add(match[1]);
       }
     }
 
@@ -64,31 +123,41 @@ const collectKeys = async () => {
     }
   }
 
-  return { common, server };
+  usedKeys.server = server;
+  return usedKeys;
 };
 
 const findMissingKeys = (usedKeys, sourceMessages) =>
   [...usedKeys].filter((key) => !(key in sourceMessages)).sort();
 
 const check = async () => {
-  const [commonMessages, serverMessages, usedKeys] = await Promise.all([
-    readJson(path.join(sourceDir, "common.json")),
-    readJson(path.join(sourceDir, "server.json")),
+  const [sourceMessagesByNamespace, usedKeys] = await Promise.all([
+    Promise.all(
+      contentSiteNamespaces.map(async (namespace) => [
+        namespace,
+        await readJson(path.join(sourceDir, `${namespace}.json`))
+      ])
+    ).then(Object.fromEntries),
     collectKeys()
   ]);
 
-  const missingCommon = findMissingKeys(usedKeys.common, commonMessages);
-  const missingServer = findMissingKeys(usedKeys.server, serverMessages);
+  const missingKeysByNamespace = Object.fromEntries(
+    contentSiteNamespaces
+      .map((namespace) => {
+        const sourceMessages =
+          namespace === "common" || namespace === "server"
+            ? sourceMessagesByNamespace[namespace]
+            : { ...sourceMessagesByNamespace.common, ...sourceMessagesByNamespace[namespace] };
 
-  if (missingCommon.length > 0 || missingServer.length > 0) {
-    if (missingCommon.length > 0) {
+        return [namespace, findMissingKeys(usedKeys[namespace] ?? new Set(), sourceMessages)];
+      })
+      .filter(([, keys]) => keys.length > 0)
+  );
+
+  if (Object.keys(missingKeysByNamespace).length > 0) {
+    for (const [namespace, missingKeys] of Object.entries(missingKeysByNamespace)) {
       console.error(
-        `Missing common i18n keys:\n${missingCommon.map((key) => `  - ${key}`).join("\n")}`
-      );
-    }
-    if (missingServer.length > 0) {
-      console.error(
-        `Missing server i18n keys:\n${missingServer.map((key) => `  - ${key}`).join("\n")}`
+        `Missing ${namespace} i18n keys:\n${missingKeys.map((key) => `  - ${key}`).join("\n")}`
       );
     }
     process.exitCode = 1;
@@ -104,7 +173,7 @@ const sync = async (targetRoot) => {
   }
 
   const targetEnDir = path.resolve(targetRoot, "en");
-  for (const namespace of ["common", "server"]) {
+  for (const namespace of contentSiteNamespaces) {
     const sourcePath = path.join(sourceDir, `${namespace}.json`);
     const targetPath = path.join(targetEnDir, `${namespace}.json`);
     const sourceMessages = await readJson(sourcePath);

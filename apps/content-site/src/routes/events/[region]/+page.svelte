@@ -5,7 +5,7 @@
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { toTimestampMs } from "$lib/date-time";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
@@ -24,8 +24,8 @@
 
   let { data }: { data: PageData } = $props();
   const eventListLoadingFallback = "Loading events...";
-  const getInitialCommonText = (key: string, fallback?: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key, fallback);
+  const getInitialI18nText = (key: string, fallback?: string): string =>
+    createI18nTranslator(data.uiLocale, data.i18nMessages)(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -48,34 +48,32 @@
   let hasTriedRestorePersistedFilters = $state(false);
   let initialStateAppliedKey = $state("");
   let spoilerContentAppliedState = $state<boolean | null>(null);
-  let homeLabel = $state(getInitialCommonText("home"));
-  let idLabel = $state(getInitialCommonText("idLabel"));
-  let closeLabel = $state(getInitialCommonText("closeLabel"));
-  let mixedUnitLabel = $state(getInitialCommonText("mixedUnitLabel"));
-  let eventListTitle = $state(getInitialCommonText("eventListTitle"));
-  let eventListEmpty = $state(getInitialCommonText("eventListEmpty"));
-  let eventListLoading = $state(getInitialCommonText("eventListLoading"));
-  let eventListLoadingMore = $state(getInitialCommonText("eventListLoadingMore"));
-  let eventListLoadMoreHintDesktop = $state(getInitialCommonText("eventListLoadMoreHintDesktop"));
-  let eventListLoadMoreHintMobile = $state(getInitialCommonText("eventListLoadMoreHintMobile"));
-  let eventListLoadFailed = $state(getInitialCommonText("eventListLoadFailed"));
-  let eventListRetry = $state(getInitialCommonText("eventListRetry"));
-  let eventListEnd = $state(getInitialCommonText("eventListEnd"));
-  let eventListCurrentEvent = $state(getInitialCommonText("eventListCurrentEvent"));
-  let eventListSortById = $state(getInitialCommonText("eventListSortById"));
-  let eventListSortByStartAt = $state(getInitialCommonText("eventListSortByStartAt"));
-  let eventListOpenFilters = $state(getInitialCommonText("eventListOpenFilters"));
-  let eventListFiltersTitle = $state(getInitialCommonText("eventListFiltersTitle"));
-  let eventListFilterNameLabel = $state(getInitialCommonText("eventListFilterNameLabel"));
-  let eventListFilterNamePlaceholder = $state(
-    getInitialCommonText("eventListFilterNamePlaceholder")
-  );
-  let eventListFilterEventTypeLabel = $state(getInitialCommonText("eventListFilterEventTypeLabel"));
-  let eventListFilterUnitLabel = $state(getInitialCommonText("eventListFilterUnitLabel"));
-  let eventListFilterReset = $state(getInitialCommonText("eventListFilterReset"));
-  let eventListFilterApply = $state(getInitialCommonText("eventListFilterApply"));
-  let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
-  let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
+  let homeLabel = $state(getInitialI18nText("home"));
+  let idLabel = $state(getInitialI18nText("idLabel"));
+  let closeLabel = $state(getInitialI18nText("closeLabel"));
+  let mixedUnitLabel = $state(getInitialI18nText("mixedUnitLabel"));
+  let eventListTitle = $state(getInitialI18nText("eventListTitle"));
+  let eventListEmpty = $state(getInitialI18nText("eventListEmpty"));
+  let eventListLoading = $state(getInitialI18nText("eventListLoading"));
+  let eventListLoadingMore = $state(getInitialI18nText("eventListLoadingMore"));
+  let listLoadMoreHintDesktop = $state(getInitialI18nText("listLoadMoreHintDesktop"));
+  let listLoadMoreHintMobile = $state(getInitialI18nText("listLoadMoreHintMobile"));
+  let eventListLoadFailed = $state(getInitialI18nText("eventListLoadFailed"));
+  let listRetry = $state(getInitialI18nText("listRetry"));
+  let eventListEnd = $state(getInitialI18nText("eventListEnd"));
+  let eventListCurrentEvent = $state(getInitialI18nText("eventListCurrentEvent"));
+  let listSortById = $state(getInitialI18nText("listSortById"));
+  let eventListSortByStartAt = $state(getInitialI18nText("eventListSortByStartAt"));
+  let listOpenFilters = $state(getInitialI18nText("listOpenFilters"));
+  let listFiltersTitle = $state(getInitialI18nText("listFiltersTitle"));
+  let eventListFilterNameLabel = $state(getInitialI18nText("eventListFilterNameLabel"));
+  let eventListFilterNamePlaceholder = $state(getInitialI18nText("eventListFilterNamePlaceholder"));
+  let eventListFilterEventTypeLabel = $state(getInitialI18nText("eventListFilterEventTypeLabel"));
+  let eventListFilterUnitLabel = $state(getInitialI18nText("eventListFilterUnitLabel"));
+  let listFilterReset = $state(getInitialI18nText("listFilterReset"));
+  let listFilterApply = $state(getInitialI18nText("listFilterApply"));
+  let spoilerContentLabel = $state(getInitialI18nText("spoilerContent"));
+  let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   const contentDisplaySettings = getContentDisplaySettings();
 
   const unitFilterValues = [...UNIT_CODE_ORDER, "mixed"] as const;
@@ -251,7 +249,7 @@
     eventTypeFilter = [...data.initialQuery.eventType];
     unitFilter = [...data.initialQuery.unit];
     syncDraftFiltersFromCurrent();
-    errorMessage = data.initialLoadFailed ? getInitialCommonText("eventListLoadFailed") : null;
+    errorMessage = data.initialLoadFailed ? getInitialI18nText("eventListLoadFailed") : null;
 
     // Do not overwrite persisted state on plain route entry without query params.
     if (browser && hasExplicitQueryStateInUrl()) {
@@ -277,7 +275,7 @@
   });
 
   $effect(() => {
-    const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
+    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -391,28 +389,28 @@
     eventListEmpty = translate("eventListEmpty");
     eventListLoading = translate("eventListLoading", eventListLoadingFallback);
     eventListLoadingMore = translate("eventListLoadingMore");
-    eventListLoadMoreHintDesktop = translate("eventListLoadMoreHintDesktop");
-    eventListLoadMoreHintMobile = translate("eventListLoadMoreHintMobile");
+    listLoadMoreHintDesktop = translate("listLoadMoreHintDesktop");
+    listLoadMoreHintMobile = translate("listLoadMoreHintMobile");
     eventListLoadFailed = translate("eventListLoadFailed");
-    eventListRetry = translate("eventListRetry");
+    listRetry = translate("listRetry");
     eventListEnd = translate("eventListEnd");
     eventListCurrentEvent = translate("eventListCurrentEvent");
-    eventListSortById = translate("eventListSortById");
+    listSortById = translate("listSortById");
     eventListSortByStartAt = translate("eventListSortByStartAt");
-    eventListOpenFilters = translate("eventListOpenFilters");
-    eventListFiltersTitle = translate("eventListFiltersTitle");
+    listOpenFilters = translate("listOpenFilters");
+    listFiltersTitle = translate("listFiltersTitle");
     eventListFilterNameLabel = translate("eventListFilterNameLabel");
     eventListFilterNamePlaceholder = translate("eventListFilterNamePlaceholder");
     eventListFilterEventTypeLabel = translate("eventListFilterEventTypeLabel");
     eventListFilterUnitLabel = translate("eventListFilterUnitLabel");
-    eventListFilterReset = translate("eventListFilterReset");
-    eventListFilterApply = translate("eventListFilterApply");
+    listFilterReset = translate("listFilterReset");
+    listFilterApply = translate("listFilterApply");
     spoilerContentLabel = translate("spoilerContent");
     bannerAltSuffix = translate("bannerAltSuffix");
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.commonMessages);
+    const locale = await setI18nLocale(localeValue, data.i18nMessages);
     applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
   };
 
@@ -620,8 +618,8 @@
     <div class="join">
       <ListToolbarButton
         icon="mdi:numeric"
-        label={eventListSortById}
-        ariaLabel={`${eventListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+        label={listSortById}
+        ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
         sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
         class={`join-item ${getSortButtonClass("id")}`}
         onclick={() => toggleSortBy("id")}
@@ -639,7 +637,7 @@
 
     <ListToolbarButton
       icon="mdi:funnel"
-      label={eventListOpenFilters}
+      label={listOpenFilters}
       class={hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
       onclick={openFilterDialog}
     />
@@ -678,7 +676,7 @@
           class="btn btn-outline btn-sm !min-h-12 sm:!min-h-8"
           onclick={() => void loadNextPage()}
         >
-          {eventListRetry}
+          {listRetry}
         </button>
       </div>
     {/if}
@@ -690,7 +688,7 @@
           <span class="ml-3 text-sm opacity-70">{eventListLoadingMore}</span>
         {:else}
           <span class="text-sm opacity-60">
-            {isTouchPointer ? eventListLoadMoreHintMobile : eventListLoadMoreHintDesktop}
+            {isTouchPointer ? listLoadMoreHintMobile : listLoadMoreHintDesktop}
           </span>
         {/if}
       </div>
@@ -706,7 +704,7 @@
 
 <dialog bind:this={filterDialog} class="modal">
   <div class="modal-box max-w-xl">
-    <h3 class="text-lg font-semibold">{eventListFiltersTitle}</h3>
+    <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
 
     <div class="mt-4 grid grid-cols-1 gap-3">
       <label class="form-control w-full">
@@ -787,10 +785,10 @@
 
     <div class="modal-action flex-wrap gap-2">
       <button type="button" class="btn btn-outline !min-h-12" onclick={resetFilterDrafts}>
-        {eventListFilterReset}
+        {listFilterReset}
       </button>
       <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}>
-        {eventListFilterApply}
+        {listFilterApply}
       </button>
       <form method="dialog">
         <button type="submit" class="btn !min-h-12">{closeLabel}</button>

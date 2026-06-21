@@ -1,24 +1,24 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { supportedRegions, type SupportedRegion } from "$lib/regions";
   import CurrentEventCard from "$lib/components/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/RegionBadgeSwitch.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
-  const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
-  let idLabel = $state(getInitialCommonText("idLabel"));
-  let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
-  let noEventLabel = $state(getInitialCommonText("noCurrentEventData"));
-  let disclaimerText = $state(getInitialCommonText("disclaimer"));
-  let currentEventLabel = $state(getInitialCommonText("eventListCurrentEvent"));
-  let mixedUnitLabel = $state(getInitialCommonText("mixedUnitLabel"));
-  let versionInfoTitle = $state(getInitialCommonText("versionInfo.title"));
-  let versionAppLabel = $state(getInitialCommonText("versionInfo.appLabel"));
-  let versionDataLabel = $state(getInitialCommonText("versionInfo.dataLabel"));
-  let versionAssetLabel = $state(getInitialCommonText("versionInfo.assetLabel"));
+  const getInitialI18nText = (key: string): string =>
+    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+  let idLabel = $state(getInitialI18nText("idLabel"));
+  let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
+  let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
+  let disclaimerText = $state(getInitialI18nText("disclaimer"));
+  let currentEventLabel = $state(getInitialI18nText("eventListCurrentEvent"));
+  let mixedUnitLabel = $state(getInitialI18nText("mixedUnitLabel"));
+  let versionInfoTitle = $state(getInitialI18nText("versionInfo.title"));
+  let versionAppLabel = $state(getInitialI18nText("versionInfo.appLabel"));
+  let versionDataLabel = $state(getInitialI18nText("versionInfo.dataLabel"));
+  let versionAssetLabel = $state(getInitialI18nText("versionInfo.assetLabel"));
   const homeCardItemClass =
     "w-full shrink-0 md:basis-[calc((100%-2rem)/3)] lg:basis-[calc((100%-4rem)/5)]";
 
@@ -38,7 +38,7 @@
   };
 
   $effect(() => {
-    const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
+    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -57,7 +57,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.commonMessages);
+    const locale = await setI18nLocale(localeValue, data.i18nMessages);
     applyTranslations((key) => tCommon(locale, key));
   };
 

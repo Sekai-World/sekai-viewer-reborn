@@ -11,73 +11,73 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/RegionBadgeSwitch.svelte";
-  import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { formatUnitFallbackLabel } from "$lib/unit-profile";
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
   let { data }: { data: PageData } = $props();
-  const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
+  const getInitialI18nText = (key: string): string =>
+    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state<string>("");
   let activeAssetTab = $state<EventAssetTab>("banner");
-  let homeLabel = $state(getInitialCommonText("home"));
-  let eventListTitle = $state(getInitialCommonText("eventListTitle"));
-  let startAtLabel = $state(getInitialCommonText("startAt"));
-  let endAtLabel = $state(getInitialCommonText("endAt"));
-  let idLabel = $state(getInitialCommonText("idLabel"));
-  let nameLabel = $state(getInitialCommonText("nameLabel"));
-  let unitLabel = $state(getInitialCommonText("unitLabel"));
-  let mixedUnitLabel = $state(getInitialCommonText("mixedUnitLabel"));
-  let eventTypeLabel = $state(getInitialCommonText("eventTypeLabel"));
-  let eventBgmTitle = $state(getInitialCommonText("eventBgmTitle"));
-  let audioPlayLabel = $state(getInitialCommonText("audioPlayLabel"));
-  let audioPauseLabel = $state(getInitialCommonText("audioPauseLabel"));
-  let audioDownloadLabel = $state(getInitialCommonText("audioDownloadLabel"));
-  let audioVolumeLabel = $state(getInitialCommonText("audioVolumeLabel"));
-  let audioSeekLabel = $state(getInitialCommonText("audioSeekLabel"));
-  let audioUnavailableLabel = $state(getInitialCommonText("audioUnavailableLabel"));
+  let homeLabel = $state(getInitialI18nText("home"));
+  let eventListTitle = $state(getInitialI18nText("eventListTitle"));
+  let startAtLabel = $state(getInitialI18nText("startAt"));
+  let endAtLabel = $state(getInitialI18nText("endAt"));
+  let idLabel = $state(getInitialI18nText("idLabel"));
+  let nameLabel = $state(getInitialI18nText("nameLabel"));
+  let unitLabel = $state(getInitialI18nText("unitLabel"));
+  let mixedUnitLabel = $state(getInitialI18nText("mixedUnitLabel"));
+  let eventTypeLabel = $state(getInitialI18nText("eventTypeLabel"));
+  let eventBgmTitle = $state(getInitialI18nText("eventBgmTitle"));
+  let audioPlayLabel = $state(getInitialI18nText("audioPlayLabel"));
+  let audioPauseLabel = $state(getInitialI18nText("audioPauseLabel"));
+  let audioDownloadLabel = $state(getInitialI18nText("audioDownloadLabel"));
+  let audioVolumeLabel = $state(getInitialI18nText("audioVolumeLabel"));
+  let audioSeekLabel = $state(getInitialI18nText("audioSeekLabel"));
+  let audioUnavailableLabel = $state(getInitialI18nText("audioUnavailableLabel"));
   let audioDownloadStagePreparingLabel = $state(
-    getInitialCommonText("audioDownloadStages.preparing")
+    getInitialI18nText("audioDownloadStages.preparing")
   );
   let audioDownloadStageFetchingAudioLabel = $state(
-    getInitialCommonText("audioDownloadStages.fetchingAudio")
+    getInitialI18nText("audioDownloadStages.fetchingAudio")
   );
   let audioDownloadStageFetchingCoverLabel = $state(
-    getInitialCommonText("audioDownloadStages.fetchingCover")
+    getInitialI18nText("audioDownloadStages.fetchingCover")
   );
   let audioDownloadStageWritingMetadataLabel = $state(
-    getInitialCommonText("audioDownloadStages.writingMetadata")
+    getInitialI18nText("audioDownloadStages.writingMetadata")
   );
   let audioDownloadStageFinalizingLabel = $state(
-    getInitialCommonText("audioDownloadStages.finalizing")
+    getInitialI18nText("audioDownloadStages.finalizing")
   );
-  let audioDownloadStageReadyLabel = $state(getInitialCommonText("audioDownloadStages.ready"));
-  let audioDownloadStageFailedLabel = $state(getInitialCommonText("audioDownloadStages.failed"));
+  let audioDownloadStageReadyLabel = $state(getInitialI18nText("audioDownloadStages.ready"));
+  let audioDownloadStageFailedLabel = $state(getInitialI18nText("audioDownloadStages.failed"));
   let audioDownloadStageCancelledLabel = $state(
-    getInitialCommonText("audioDownloadStages.cancelled")
+    getInitialI18nText("audioDownloadStages.cancelled")
   );
-  let audioDownloadCloseLabel = $state(getInitialCommonText("audioDownloadCloseLabel"));
-  let bannerAltSuffix = $state(getInitialCommonText("bannerAltSuffix"));
-  let imageUnavailableLabel = $state(getInitialCommonText("imageUnavailable"));
-  let noEventLabel = $state(getInitialCommonText("noCurrentEventData"));
-  let eventTitlePrefix = $state(getInitialCommonText("pageTitle.eventPrefix"));
-  let bannerTabLabel = $state(getInitialCommonText("eventAssetTabs.banner"));
-  let titleTabLabel = $state(getInitialCommonText("eventAssetTabs.title"));
-  let backgroundTabLabel = $state(getInitialCommonText("eventAssetTabs.background"));
-  let charactersTabLabel = $state(getInitialCommonText("eventAssetTabs.characters"));
-  let eventInfoTitle = $state(getInitialCommonText("eventInfoTitle"));
-  let eventCountdownTitle = $state(getInitialCommonText("eventCountdownTitle"));
-  let debugEventJsonButtonLabel = $state(getInitialCommonText("debugEventJsonButton"));
-  let debugEventJsonTitle = $state(getInitialCommonText("debugEventJsonTitle"));
-  let closeLabel = $state(getInitialCommonText("closeLabel"));
-  let bannerCharacterLabel = $state(getInitialCommonText("bannerCharacterLabel"));
+  let audioDownloadCloseLabel = $state(getInitialI18nText("audioDownloadCloseLabel"));
+  let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
+  let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
+  let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
+  let eventTitlePrefix = $state(getInitialI18nText("pageTitle.eventPrefix"));
+  let bannerTabLabel = $state(getInitialI18nText("eventAssetTabs.banner"));
+  let titleTabLabel = $state(getInitialI18nText("eventAssetTabs.title"));
+  let backgroundTabLabel = $state(getInitialI18nText("eventAssetTabs.background"));
+  let charactersTabLabel = $state(getInitialI18nText("eventAssetTabs.characters"));
+  let eventInfoTitle = $state(getInitialI18nText("eventInfoTitle"));
+  let eventCountdownTitle = $state(getInitialI18nText("eventCountdownTitle"));
+  let debugEventJsonButtonLabel = $state(getInitialI18nText("debugEventJsonButton"));
+  let debugEventJsonTitle = $state(getInitialI18nText("debugEventJsonTitle"));
+  let closeLabel = $state(getInitialI18nText("closeLabel"));
+  let bannerCharacterLabel = $state(getInitialI18nText("bannerCharacterLabel"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
+    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
     applyTranslations(translate);
   });
 
@@ -132,7 +132,7 @@
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.commonMessages);
+    const locale = await setI18nLocale(localeValue, data.i18nMessages);
     applyTranslations((key) => tCommon(locale, key));
   };
 
