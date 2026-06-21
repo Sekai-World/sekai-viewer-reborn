@@ -126,7 +126,7 @@ pnpm format:check
 - `packages/i18n-source/content-site/error.json`
 - `packages/i18n-source/content-site/server.json`
 
-`pnpm i18n:check` verifies referenced keys are present. On `main`, `.github/workflows/i18n-sync.yml` syncs these English source files to `Sekai-World/sekai-i18n-reborn` and opens a pull request for Weblate ingestion.
+`pnpm i18n:check` verifies referenced keys are present. On `main`, `.github/workflows/i18n-sync.yml` syncs these English source files to `Sekai-World/sekai-i18n-reborn` and opens a pull request for Weblate ingestion. Manual workflow runs can enable `prune` to remove stale English source keys from the translation repository.
 
 ## Release And Changelog
 

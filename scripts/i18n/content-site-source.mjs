@@ -167,7 +167,7 @@ const check = async () => {
   console.log("content-site i18n source keys are complete.");
 };
 
-const sync = async (targetRoot) => {
+const sync = async (targetRoot, { prune = false } = {}) => {
   if (!targetRoot) {
     throw new Error("Missing --target <translation-repo-path>.");
   }
@@ -178,20 +178,21 @@ const sync = async (targetRoot) => {
     const targetPath = path.join(targetEnDir, `${namespace}.json`);
     const sourceMessages = await readJson(sourcePath);
     const targetMessages = await readJson(targetPath).catch(() => ({}));
-    await writeJson(targetPath, { ...targetMessages, ...sourceMessages });
-    console.log(`Synced ${namespace}.json`);
+    await writeJson(targetPath, prune ? sourceMessages : { ...targetMessages, ...sourceMessages });
+    console.log(`Synced ${namespace}.json${prune ? " with pruning" : ""}`);
   }
 };
 
 const command = process.argv[2] ?? "check";
 const targetIndex = process.argv.indexOf("--target");
 const targetRoot = targetIndex >= 0 ? process.argv[targetIndex + 1] : undefined;
+const prune = process.argv.includes("--prune");
 
 if (command === "check") {
   await check();
 } else if (command === "sync") {
   await check();
-  await sync(targetRoot);
+  await sync(targetRoot, { prune });
 } else {
   throw new Error(`Unknown command: ${command}`);
 }

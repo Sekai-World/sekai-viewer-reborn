@@ -9,6 +9,12 @@ on:
       - "scripts/i18n/**"
       - ".github/workflows/i18n-sync.yml"
   workflow_dispatch:
+    inputs:
+      prune:
+        description: "Remove keys from English source dictionaries when they no longer exist in this repository"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -55,7 +61,7 @@ jobs:
 
       - name: Sync source dictionaries
         working-directory: app
-        run: pnpm i18n:sync --target ../i18n
+        run: pnpm i18n:sync --target ../i18n ${{ github.event_name == 'workflow_dispatch' && inputs.prune && '--prune' || '' }}
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v8
