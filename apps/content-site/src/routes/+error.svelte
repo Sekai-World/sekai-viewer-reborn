@@ -2,19 +2,17 @@
   import Icon from "@iconify/svelte";
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import { createCommonTranslator } from "$lib/i18n";
+  import { createI18nTranslator } from "$lib/i18n";
   import type { LayoutData } from "./$types";
 
   let { data }: { data: LayoutData } = $props();
-  const translate = $derived(createCommonTranslator(data.uiLocale, data.commonMessages));
+  const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
   const status = $derived(page.status);
   const title = $derived(
     status === 404 ? translate("errorPage.notFoundTitle") : translate("errorPage.title")
   );
   const description = $derived(
-    status === 404
-      ? translate("errorPage.notFoundDescription")
-      : translate("errorPage.description")
+    status === 404 ? translate("errorPage.notFoundDescription") : translate("errorPage.description")
   );
   const icon = $derived(status === 404 ? "mdi:map-search-outline" : "mdi:refresh-circle");
   const currentPath = $derived(`${page.url.pathname}${page.url.search}`);
@@ -34,7 +32,7 @@
         <div
           class="grid h-20 w-20 place-items-center rounded-full border border-primary/20 bg-primary/10 text-primary sm:h-24 sm:w-24"
         >
-          <Icon icon={icon} class="h-10 w-10 sm:h-12 sm:w-12" aria-hidden="true" />
+          <Icon {icon} class="h-10 w-10 sm:h-12 sm:w-12" aria-hidden="true" />
         </div>
 
         <div class="max-w-xl">

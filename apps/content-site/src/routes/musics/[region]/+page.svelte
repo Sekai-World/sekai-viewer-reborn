@@ -11,7 +11,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/RegionBadgeSwitch.svelte";
-  import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
   import {
     formatUnitFallbackLabel,
@@ -36,8 +36,8 @@
   };
 
   let { data }: { data: PageData } = $props();
-  const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
+  const getInitialI18nText = (key: string): string =>
+    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
 
   let items = $state<MusicListItem[]>([]);
   let currentPage = $state(1);
@@ -77,48 +77,46 @@
   let spoilerContentAppliedState = $state<boolean | null>(null);
   const contentDisplaySettings = getContentDisplaySettings();
 
-  let homeLabel = $state(getInitialCommonText("home"));
-  let idLabel = $state(getInitialCommonText("idLabel"));
-  let closeLabel = $state(getInitialCommonText("closeLabel"));
-  let clearLabel = $state(getInitialCommonText("clearLabel"));
-  let musicListTitle = $state(getInitialCommonText("musicListTitle"));
-  let musicListEmpty = $state(getInitialCommonText("musicListEmpty"));
-  let musicListEnd = $state(getInitialCommonText("musicListEnd"));
-  let musicListLoading = $state(getInitialCommonText("musicListListLoading"));
-  let musicListLoadingMore = $state(getInitialCommonText("musicListLoadingMore"));
-  let musicListLoadMoreHintDesktop = $state(getInitialCommonText("musicListLoadMoreHintDesktop"));
-  let musicListLoadMoreHintMobile = $state(getInitialCommonText("musicListLoadMoreHintMobile"));
-  let musicListLoadFailed = $state(getInitialCommonText("musicListLoadFailed"));
-  let musicListOpenFilters = $state(getInitialCommonText("musicListOpenFilters"));
-  let musicListFiltersTitle = $state(getInitialCommonText("musicListFiltersTitle"));
-  let musicListFilterNameLabel = $state(getInitialCommonText("musicListFilterNameLabel"));
-  let musicListFilterNamePlaceholder = $state(
-    getInitialCommonText("musicListFilterNamePlaceholder")
-  );
-  let musicListFilterCategoryLabel = $state(getInitialCommonText("musicListFilterCategoryLabel"));
-  let musicListComposerLabel = $state(getInitialCommonText("musicListComposerLabel"));
-  let musicListComposerPlaceholder = $state(getInitialCommonText("musicListComposerPlaceholder"));
-  let musicListArrangerLabel = $state(getInitialCommonText("musicListArrangerLabel"));
-  let musicListArrangerPlaceholder = $state(getInitialCommonText("musicListArrangerPlaceholder"));
-  let musicListLyricistLabel = $state(getInitialCommonText("musicListLyricistLabel"));
-  let musicListLyricistPlaceholder = $state(getInitialCommonText("musicListLyricistPlaceholder"));
-  let musicListVocalCharacterLabel = $state(getInitialCommonText("musicListVocalCharacterLabel"));
-  let musicListTagLabel = $state(getInitialCommonText("musicListVocalUnitTagLabel"));
-  let musicListDifficultyLabel = $state(getInitialCommonText("musicListDifficultyLabel"));
+  let homeLabel = $state(getInitialI18nText("home"));
+  let idLabel = $state(getInitialI18nText("idLabel"));
+  let closeLabel = $state(getInitialI18nText("closeLabel"));
+  let clearLabel = $state(getInitialI18nText("clearLabel"));
+  let musicListTitle = $state(getInitialI18nText("musicListTitle"));
+  let musicListEmpty = $state(getInitialI18nText("musicListEmpty"));
+  let musicListEnd = $state(getInitialI18nText("musicListEnd"));
+  let musicListLoading = $state(getInitialI18nText("musicListListLoading"));
+  let musicListLoadingMore = $state(getInitialI18nText("musicListLoadingMore"));
+  let listLoadMoreHintDesktop = $state(getInitialI18nText("listLoadMoreHintDesktop"));
+  let listLoadMoreHintMobile = $state(getInitialI18nText("listLoadMoreHintMobile"));
+  let musicListLoadFailed = $state(getInitialI18nText("musicListLoadFailed"));
+  let listOpenFilters = $state(getInitialI18nText("listOpenFilters"));
+  let listFiltersTitle = $state(getInitialI18nText("listFiltersTitle"));
+  let musicListFilterNameLabel = $state(getInitialI18nText("musicListFilterNameLabel"));
+  let musicListFilterNamePlaceholder = $state(getInitialI18nText("musicListFilterNamePlaceholder"));
+  let musicListFilterCategoryLabel = $state(getInitialI18nText("musicListFilterCategoryLabel"));
+  let musicListComposerLabel = $state(getInitialI18nText("musicListComposerLabel"));
+  let musicListComposerPlaceholder = $state(getInitialI18nText("musicListComposerPlaceholder"));
+  let musicListArrangerLabel = $state(getInitialI18nText("musicListArrangerLabel"));
+  let musicListArrangerPlaceholder = $state(getInitialI18nText("musicListArrangerPlaceholder"));
+  let musicListLyricistLabel = $state(getInitialI18nText("musicListLyricistLabel"));
+  let musicListLyricistPlaceholder = $state(getInitialI18nText("musicListLyricistPlaceholder"));
+  let musicListVocalCharacterLabel = $state(getInitialI18nText("musicListVocalCharacterLabel"));
+  let musicListTagLabel = $state(getInitialI18nText("musicListVocalUnitTagLabel"));
+  let musicListDifficultyLabel = $state(getInitialI18nText("musicListDifficultyLabel"));
   let musicListHasAppendDifficultyLabel = $state(
-    getInitialCommonText("musicListHasAppendDifficultyLabel")
+    getInitialI18nText("musicListHasAppendDifficultyLabel")
   );
-  let musicListLevelLabel = $state(getInitialCommonText("musicListLevelLabel"));
-  let musicListLevelPlaceholder = $state(getInitialCommonText("musicListLevelPlaceholder"));
-  let musicListFilterReset = $state(getInitialCommonText("musicListFilterReset"));
-  let musicListFilterApply = $state(getInitialCommonText("musicListFilterApply"));
-  let musicListSortById = $state(getInitialCommonText("musicListSortById"));
-  let musicListSortByPublishedAt = $state(getInitialCommonText("musicListSortByPublishedAt"));
-  let musicListViewGrid = $state(getInitialCommonText("musicListViewGrid"));
-  let musicListViewAgenda = $state(getInitialCommonText("musicListViewAgenda"));
-  let musicListCreatorLabel = $state(getInitialCommonText("musicListCreatorLabel"));
-  let musicJacketAltSuffix = $state(getInitialCommonText("musicJacketAltSuffix"));
-  let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
+  let musicListLevelLabel = $state(getInitialI18nText("musicListLevelLabel"));
+  let musicListLevelPlaceholder = $state(getInitialI18nText("musicListLevelPlaceholder"));
+  let listFilterReset = $state(getInitialI18nText("listFilterReset"));
+  let listFilterApply = $state(getInitialI18nText("listFilterApply"));
+  let listSortById = $state(getInitialI18nText("listSortById"));
+  let listSortByReleaseAt = $state(getInitialI18nText("listSortByReleaseAt"));
+  let listViewGrid = $state(getInitialI18nText("listViewGrid"));
+  let listViewAgenda = $state(getInitialI18nText("listViewAgenda"));
+  let musicListCreatorLabel = $state(getInitialI18nText("musicListCreatorLabel"));
+  let musicJacketAltSuffix = $state(getInitialI18nText("musicJacketAltSuffix"));
+  let spoilerContentLabel = $state(getInitialI18nText("spoilerContent"));
   const gameCharacterValues = Array.from({ length: 26 }, (_, index) => String(index + 1));
   const musicTagOptions = [
     "all",
@@ -272,7 +270,7 @@
   });
 
   $effect(() => {
-    const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
+    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
     applyTranslations(translate);
     void refreshTranslations(data.uiLocale);
   });
@@ -454,11 +452,11 @@
     musicListEnd = translate("musicListEnd");
     musicListLoading = translate("musicListListLoading");
     musicListLoadingMore = translate("musicListLoadingMore");
-    musicListLoadMoreHintDesktop = translate("musicListLoadMoreHintDesktop");
-    musicListLoadMoreHintMobile = translate("musicListLoadMoreHintMobile");
+    listLoadMoreHintDesktop = translate("listLoadMoreHintDesktop");
+    listLoadMoreHintMobile = translate("listLoadMoreHintMobile");
     musicListLoadFailed = translate("musicListLoadFailed");
-    musicListOpenFilters = translate("musicListOpenFilters");
-    musicListFiltersTitle = translate("musicListFiltersTitle");
+    listOpenFilters = translate("listOpenFilters");
+    listFiltersTitle = translate("listFiltersTitle");
     musicListFilterNameLabel = translate("musicListFilterNameLabel");
     musicListFilterNamePlaceholder = translate("musicListFilterNamePlaceholder");
     musicListFilterCategoryLabel = translate("musicListFilterCategoryLabel");
@@ -474,19 +472,19 @@
     musicListHasAppendDifficultyLabel = translate("musicListHasAppendDifficultyLabel");
     musicListLevelLabel = translate("musicListLevelLabel");
     musicListLevelPlaceholder = translate("musicListLevelPlaceholder");
-    musicListFilterReset = translate("musicListFilterReset");
-    musicListFilterApply = translate("musicListFilterApply");
-    musicListSortById = translate("musicListSortById");
-    musicListSortByPublishedAt = translate("musicListSortByPublishedAt");
-    musicListViewGrid = translate("musicListViewGrid");
-    musicListViewAgenda = translate("musicListViewAgenda");
+    listFilterReset = translate("listFilterReset");
+    listFilterApply = translate("listFilterApply");
+    listSortById = translate("listSortById");
+    listSortByReleaseAt = translate("listSortByReleaseAt");
+    listViewGrid = translate("listViewGrid");
+    listViewAgenda = translate("listViewAgenda");
     musicListCreatorLabel = translate("musicListCreatorLabel");
     musicJacketAltSuffix = translate("musicJacketAltSuffix");
     spoilerContentLabel = translate("spoilerContent");
   };
 
   const refreshTranslations = async (locale: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(locale, data.commonMessages);
+    const resolvedLocale = await setI18nLocale(locale, data.i18nMessages);
     applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 
@@ -693,7 +691,7 @@
 
   <div class="flex flex-wrap items-center justify-between gap-2">
     <div class="join">
-      {#each [{ value: "publishedAt", icon: "mdi:clock-outline", label: musicListSortByPublishedAt }, { value: "id", icon: "mdi:numeric", label: musicListSortById }] as option (option.value)}
+      {#each [{ value: "publishedAt", icon: "mdi:clock-outline", label: listSortByReleaseAt }, { value: "id", icon: "mdi:numeric", label: listSortById }] as option (option.value)}
         <ListToolbarButton
           icon={option.icon}
           label={option.label}
@@ -712,20 +710,20 @@
       <div class="join">
         <ListToolbarButton
           icon="mdi:view-grid-outline"
-          label={musicListViewGrid}
+          label={listViewGrid}
           class={`join-item ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           onclick={() => setViewMode("grid")}
         />
         <ListToolbarButton
           icon="mdi:view-agenda-outline"
-          label={musicListViewAgenda}
+          label={listViewAgenda}
           class={`join-item ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
           onclick={() => setViewMode("agenda")}
         />
       </div>
       <ListToolbarButton
         icon="mdi:funnel"
-        label={musicListOpenFilters}
+        label={listOpenFilters}
         class={hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
         onclick={openFilters}
       />
@@ -772,7 +770,7 @@
           <span class="ml-3 text-sm opacity-70">{musicListLoadingMore}</span>
         {:else}
           <span class="text-sm opacity-60">
-            {isTouchPointer ? musicListLoadMoreHintMobile : musicListLoadMoreHintDesktop}
+            {isTouchPointer ? listLoadMoreHintMobile : listLoadMoreHintDesktop}
           </span>
         {/if}
       </div>
@@ -784,7 +782,7 @@
 
 <dialog bind:this={filterDialog} class="modal">
   <div class="modal-box max-w-xl">
-    <h3 class="text-lg font-semibold">{musicListFiltersTitle}</h3>
+    <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
     <div class="mt-4 grid gap-3">
       <label class="form-control">
         <span class="label-text mb-1 text-sm font-medium">{musicListFilterNameLabel}</span>
@@ -943,10 +941,10 @@
     </div>
     <div class="modal-action">
       <button type="button" class="btn btn-outline !min-h-12" onclick={resetDrafts}
-        >{musicListFilterReset}</button
+        >{listFilterReset}</button
       >
       <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}
-        >{musicListFilterApply}</button
+        >{listFilterApply}</button
       >
       <form method="dialog"><button type="submit" class="btn !min-h-12">{closeLabel}</button></form>
     </div>

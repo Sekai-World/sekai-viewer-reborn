@@ -13,7 +13,7 @@
   import { onMount, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
   import {
-    createCommonTranslator,
+    createI18nTranslator,
     isLocaleLoading,
     getThemeModeLabel,
     setI18nLocale,
@@ -46,8 +46,8 @@
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
-  const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
+  const getInitialI18nText = (key: string): string =>
+    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
@@ -71,34 +71,32 @@
   let useFallbackRouteTransition = $state(true);
   const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
 
-  let homeLabel = $state(getInitialCommonText("home"));
-  let openSidebarLabel = $state(getInitialCommonText("aria.openSidebar"));
-  let closeSidebarLabel = $state(getInitialCommonText("aria.closeSidebar"));
-  let sidebarLabel = $state(getInitialCommonText("navigation.sidebarTitle"));
-  let databaseLabel = $state(getInitialCommonText("navigation.database"));
-  let cardsLabel = $state(getInitialCommonText("navigation.cards"));
-  let songsLabel = $state(getInitialCommonText("navigation.songs"));
-  let eventsLabel = $state(getInitialCommonText("navigation.events"));
-  let virtualLivesLabel = $state(getInitialCommonText("navigation.virtualLives"));
-  let settingsLabel = $state(getInitialCommonText("settings.title"));
-  let themeControlLabel = $state(getInitialCommonText("settings.appearance"));
-  let themePaletteLabel = $state(getInitialCommonText("settings.theme"));
-  let interfaceLanguageLabel = $state(getInitialCommonText("settings.interfaceLanguage"));
-  let currentLanguageLabel = $state(getInitialCommonText("settings.currentLanguage"));
-  let contentDisplayLabel = $state(getInitialCommonText("settings.contentDisplay"));
-  let showSpoilerContentLabel = $state(getInitialCommonText("settings.showSpoilerContent"));
-  let mosaickedSpoilerContentLabel = $state(
-    getInitialCommonText("settings.mosaickedSpoilerContent")
-  );
-  let lowMotionModeLabel = $state(getInitialCommonText("settings.lowMotionMode"));
-  let backToTopLabel = $state(getInitialCommonText("backToTopLabel"));
-  let loadingLanguagePackLabel = $state(getInitialCommonText("loadingLanguagePack"));
-  let switchThemeAriaLabel = $state(getInitialCommonText("aria.switchTheme"));
-  let switchUiLanguageCurrentLabel = $state(getInitialCommonText("aria.switchUiLanguageCurrent"));
+  let homeLabel = $state(getInitialI18nText("home"));
+  let openSidebarLabel = $state(getInitialI18nText("aria.openSidebar"));
+  let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
+  let sidebarLabel = $state(getInitialI18nText("navigation.sidebarTitle"));
+  let databaseLabel = $state(getInitialI18nText("navigation.database"));
+  let cardsLabel = $state(getInitialI18nText("navigation.cards"));
+  let songsLabel = $state(getInitialI18nText("navigation.songs"));
+  let eventsLabel = $state(getInitialI18nText("navigation.events"));
+  let virtualLivesLabel = $state(getInitialI18nText("navigation.virtualLives"));
+  let settingsLabel = $state(getInitialI18nText("settings.title"));
+  let themeControlLabel = $state(getInitialI18nText("settings.appearance"));
+  let themePaletteLabel = $state(getInitialI18nText("settings.theme"));
+  let interfaceLanguageLabel = $state(getInitialI18nText("settings.interfaceLanguage"));
+  let currentLanguageLabel = $state(getInitialI18nText("settings.currentLanguage"));
+  let contentDisplayLabel = $state(getInitialI18nText("settings.contentDisplay"));
+  let showSpoilerContentLabel = $state(getInitialI18nText("settings.showSpoilerContent"));
+  let mosaickedSpoilerContentLabel = $state(getInitialI18nText("settings.mosaickedSpoilerContent"));
+  let lowMotionModeLabel = $state(getInitialI18nText("settings.lowMotionMode"));
+  let backToTopLabel = $state(getInitialI18nText("backToTopLabel"));
+  let loadingLanguagePackLabel = $state(getInitialI18nText("loadingLanguagePack"));
+  let switchThemeAriaLabel = $state(getInitialI18nText("aria.switchTheme"));
+  let switchUiLanguageCurrentLabel = $state(getInitialI18nText("aria.switchUiLanguageCurrent"));
   let themeNameLabels = $state<Record<ThemeName, string>>({
-    default: getInitialCommonText("themeName.default"),
-    sakura: getInitialCommonText("themeName.sakura"),
-    mint: getInitialCommonText("themeName.mint")
+    default: getInitialI18nText("themeName.default"),
+    sakura: getInitialI18nText("themeName.sakura"),
+    mint: getInitialI18nText("themeName.mint")
   });
   let showBackToTop = $state(false);
   let backToTopAnimationFrame = 0;
@@ -165,7 +163,7 @@
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
   $effect(() => {
-    const translate = createCommonTranslator(uiLocale, data.commonMessages);
+    const translate = createI18nTranslator(uiLocale, data.i18nMessages);
     applyTranslations(translate);
     void refreshTranslations(uiLocale);
   });
@@ -260,7 +258,7 @@
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(localeValue, data.commonMessages);
+    const resolvedLocale = await setI18nLocale(localeValue, data.i18nMessages);
     applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 

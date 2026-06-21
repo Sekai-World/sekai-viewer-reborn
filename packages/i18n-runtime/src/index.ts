@@ -14,6 +14,20 @@ export interface RemoteI18nRuntimeOptions {
   isBrowser?: () => boolean;
 }
 
+export interface ScopedI18nLoaderOptions<Namespace extends string> {
+  fallbackLocale: string;
+  localSourceMessagesByNamespace: Record<Namespace, I18nMessages>;
+  legacyCommonCompatNamespaces?: ReadonlySet<Namespace>;
+  commonNamespace: Namespace;
+  loadRemoteMessages: (
+    localeValue: string,
+    namespace: Namespace,
+    fetcher?: I18nFetcher
+  ) => Promise<I18nMessages>;
+  normalizeLocale: I18nLocaleResolver;
+  toRemoteLocale: I18nLocaleResolver;
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 
@@ -30,6 +44,93 @@ const normalizeMessages = (payload: unknown): I18nMessages => {
 };
 
 const trimTrailingSlash = (value: string): string => value.trim().replace(/\/+$/, "");
+
+export const createScopedI18nLoader = <Namespace extends string>(
+  options: ScopedI18nLoaderOptions<Namespace>
+) => {
+  const loadNamespaceMessagesWithFallback = async (
+    localeValue: string,
+    namespace: Namespace,
+    fetcher?: I18nFetcher,
+    primaryMessages?: I18nMessages
+  ): Promise<I18nMessages> => {
+    const locale = options.normalizeLocale(localeValue);
+    const primaryRemoteLocale = options.toRemoteLocale(locale);
+    const fallbackRemoteLocale = options.toRemoteLocale(options.fallbackLocale);
+
+    const primaryMessagesPromise = primaryMessages
+      ? Promise.resolve(primaryMessages)
+      : options.loadRemoteMessages(locale, namespace, fetcher);
+
+    const localSourceMessages = options.localSourceMessagesByNamespace[namespace];
+
+    if (primaryRemoteLocale === fallbackRemoteLocale) {
+      const messages = await primaryMessagesPromise;
+      return {
+        ...localSourceMessages,
+        ...messages
+      };
+    }
+
+    const [messages, fallbackMessages] = await Promise.all([
+      primaryMessagesPromise,
+      options.loadRemoteMessages(options.fallbackLocale, namespace, fetcher)
+    ]);
+
+    if (options.legacyCommonCompatNamespaces?.has(namespace)) {
+      const [legacyMessages, fallbackLegacyMessages] = await Promise.all([
+        options.loadRemoteMessages(locale, options.commonNamespace, fetcher),
+        options.loadRemoteMessages(options.fallbackLocale, options.commonNamespace, fetcher)
+      ]);
+
+      return {
+        ...localSourceMessages,
+        ...fallbackLegacyMessages,
+        ...fallbackMessages,
+        ...legacyMessages,
+        ...messages
+      };
+    }
+
+    return {
+      ...localSourceMessages,
+      ...fallbackMessages,
+      ...messages
+    };
+  };
+
+  const loadMessages = (
+    localeValue: string,
+    namespace: Namespace,
+    fetcher?: I18nFetcher
+  ): Promise<I18nMessages> => loadNamespaceMessagesWithFallback(localeValue, namespace, fetcher);
+
+  const loadMessageBundle = async (
+    localeValue: string,
+    namespaces: readonly Namespace[],
+    fetcher?: I18nFetcher
+  ): Promise<I18nMessages> => {
+    const namespaceMessages = await Promise.all(
+      namespaces.map((namespace) => loadMessages(localeValue, namespace, fetcher))
+    );
+
+    return namespaceMessages.reduce<I18nMessages>(
+      (messages, nextMessages) => ({ ...messages, ...nextMessages }),
+      {}
+    );
+  };
+
+  const mergeCommonMessages = (messages: I18nMessages): I18nMessages => ({
+    ...options.localSourceMessagesByNamespace[options.commonNamespace],
+    ...messages
+  });
+
+  return {
+    loadMessageBundle,
+    loadMessages,
+    mergeCommonMessages
+  };
+};
 
 export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
   const messageCache = new Map<string, Promise<I18nMessages>>();

@@ -5,7 +5,7 @@
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { toTimestampMs } from "$lib/date-time";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import { createCommonTranslator, setI18nLocale, tCommon } from "$lib/i18n";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
   import { UNIT_CODE_ORDER } from "$lib/unit-profile";
   import CardListCard from "$lib/components/CardListCard.svelte";
@@ -49,8 +49,8 @@
   };
 
   let { data }: { data: CardListPageData } = $props();
-  const getInitialCommonText = (key: string): string =>
-    createCommonTranslator(data.uiLocale, data.commonMessages)(key);
+  const getInitialI18nText = (key: string): string =>
+    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
   let items = $state<CardListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -88,43 +88,41 @@
   let hasTriedRestoreViewMode = $state(false);
   let initialStateAppliedKey = $state("");
   let spoilerContentAppliedState = $state<boolean | null>(null);
-  let homeLabel = $state(getInitialCommonText("home"));
-  let idLabel = $state(getInitialCommonText("idLabel"));
-  let closeLabel = $state(getInitialCommonText("closeLabel"));
-  let cardListTitle = $state(getInitialCommonText("cardListTitle"));
-  let cardListEmpty = $state(getInitialCommonText("cardListEmpty"));
-  let cardListLoadingMore = $state(getInitialCommonText("cardListLoadingMore"));
-  let cardListLoadMoreHintDesktop = $state(getInitialCommonText("cardListLoadMoreHintDesktop"));
-  let cardListLoadMoreHintMobile = $state(getInitialCommonText("cardListLoadMoreHintMobile"));
-  let cardListLoadFailed = $state(getInitialCommonText("cardListLoadFailed"));
-  let cardListRetry = $state(getInitialCommonText("cardListRetry"));
-  let cardListEnd = $state(getInitialCommonText("cardListEnd"));
-  let cardListSortById = $state(getInitialCommonText("cardListSortById"));
-  let cardListSortByReleaseAt = $state(getInitialCommonText("cardListSortByReleaseAt"));
-  let cardListOpenFilters = $state(getInitialCommonText("cardListOpenFilters"));
-  let cardListFiltersTitle = $state(getInitialCommonText("cardListFiltersTitle"));
-  let cardListFilterNameLabel = $state(getInitialCommonText("cardListFilterNameLabel"));
-  let cardListFilterNamePlaceholder = $state(getInitialCommonText("cardListFilterNamePlaceholder"));
-  let cardListFilterAttrLabel = $state(getInitialCommonText("cardListFilterAttrLabel"));
-  let cardListFilterCharacterLabel = $state(getInitialCommonText("cardListFilterCharacterLabel"));
-  let cardListFilter3dmvCutInLabel = $state(getInitialCommonText("cardListFilter3dmvCutInLabel"));
-  let cardListFilterRarityLabel = $state(getInitialCommonText("cardListFilterRarityLabel"));
-  let cardListFilterSkillLabel = $state(getInitialCommonText("cardListFilterSkillLabel"));
-  let cardListFilterSupportUnitLabel = $state(
-    getInitialCommonText("cardListFilterSupportUnitLabel")
-  );
-  let cardListFilterTypeLabel = $state(getInitialCommonText("cardListFilterTypeLabel"));
-  let cardListFilterUnitLabel = $state(getInitialCommonText("cardListFilterUnitLabel"));
-  let cardListFilterReset = $state(getInitialCommonText("cardListFilterReset"));
-  let cardListFilterApply = $state(getInitialCommonText("cardListFilterApply"));
-  let cardListLoading = $state(getInitialCommonText("cardListLoading"));
-  let cardListViewGrid = $state(getInitialCommonText("cardListViewGrid"));
-  let cardListViewAgenda = $state(getInitialCommonText("cardListViewAgenda"));
-  let cardListViewComfy = $state(getInitialCommonText("cardListViewComfy"));
-  let cardListCharacterFallback = $state(getInitialCommonText("cardListCharacterFallback"));
-  let cardListReleaseLabel = $state(getInitialCommonText("cardListReleaseLabel"));
-  let cardImageAltSuffix = $state(getInitialCommonText("cardImageAltSuffix"));
-  let spoilerContentLabel = $state(getInitialCommonText("spoilerContent"));
+  let homeLabel = $state(getInitialI18nText("home"));
+  let idLabel = $state(getInitialI18nText("idLabel"));
+  let closeLabel = $state(getInitialI18nText("closeLabel"));
+  let cardListTitle = $state(getInitialI18nText("cardListTitle"));
+  let cardListEmpty = $state(getInitialI18nText("cardListEmpty"));
+  let cardListLoadingMore = $state(getInitialI18nText("cardListLoadingMore"));
+  let listLoadMoreHintDesktop = $state(getInitialI18nText("listLoadMoreHintDesktop"));
+  let listLoadMoreHintMobile = $state(getInitialI18nText("listLoadMoreHintMobile"));
+  let cardListLoadFailed = $state(getInitialI18nText("cardListLoadFailed"));
+  let listRetry = $state(getInitialI18nText("listRetry"));
+  let cardListEnd = $state(getInitialI18nText("cardListEnd"));
+  let listSortById = $state(getInitialI18nText("listSortById"));
+  let listSortByReleaseAt = $state(getInitialI18nText("listSortByReleaseAt"));
+  let listOpenFilters = $state(getInitialI18nText("listOpenFilters"));
+  let listFiltersTitle = $state(getInitialI18nText("listFiltersTitle"));
+  let cardListFilterNameLabel = $state(getInitialI18nText("cardListFilterNameLabel"));
+  let cardListFilterNamePlaceholder = $state(getInitialI18nText("cardListFilterNamePlaceholder"));
+  let cardListFilterAttrLabel = $state(getInitialI18nText("cardListFilterAttrLabel"));
+  let cardListFilterCharacterLabel = $state(getInitialI18nText("cardListFilterCharacterLabel"));
+  let cardListFilter3dmvCutInLabel = $state(getInitialI18nText("cardListFilter3dmvCutInLabel"));
+  let cardListFilterRarityLabel = $state(getInitialI18nText("cardListFilterRarityLabel"));
+  let cardListFilterSkillLabel = $state(getInitialI18nText("cardListFilterSkillLabel"));
+  let cardListFilterSupportUnitLabel = $state(getInitialI18nText("cardListFilterSupportUnitLabel"));
+  let cardListFilterTypeLabel = $state(getInitialI18nText("cardListFilterTypeLabel"));
+  let cardListFilterUnitLabel = $state(getInitialI18nText("cardListFilterUnitLabel"));
+  let listFilterReset = $state(getInitialI18nText("listFilterReset"));
+  let listFilterApply = $state(getInitialI18nText("listFilterApply"));
+  let cardListLoading = $state(getInitialI18nText("cardListLoading"));
+  let listViewGrid = $state(getInitialI18nText("listViewGrid"));
+  let listViewAgenda = $state(getInitialI18nText("listViewAgenda"));
+  let cardListViewComfy = $state(getInitialI18nText("cardListViewComfy"));
+  let cardListCharacterFallback = $state(getInitialI18nText("cardListCharacterFallback"));
+  let cardListReleaseLabel = $state(getInitialI18nText("cardListReleaseLabel"));
+  let cardImageAltSuffix = $state(getInitialI18nText("cardImageAltSuffix"));
+  let spoilerContentLabel = $state(getInitialI18nText("spoilerContent"));
   const contentDisplaySettings = getContentDisplaySettings();
   const emptyFilterMeta: CardListFilterMeta = {
     unit: [],
@@ -441,7 +439,7 @@
     has3dmvCutInFilter = data.initialQuery.has3dmvCutIn;
     spoilerFilter = data.initialQuery.spoiler;
     syncDraftFiltersFromCurrent();
-    errorMessage = data.initialLoadFailed ? getInitialCommonText("cardListLoadFailed") : null;
+    errorMessage = data.initialLoadFailed ? getInitialI18nText("cardListLoadFailed") : null;
 
     if (browser && hasExplicitQueryStateInUrl()) {
       persistAppliedFilters();
@@ -475,7 +473,7 @@
   });
 
   $effect(() => {
-    const translate = createCommonTranslator(data.uiLocale, data.commonMessages);
+    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -594,15 +592,15 @@
     cardListTitle = translate("cardListTitle");
     cardListEmpty = translate("cardListEmpty");
     cardListLoadingMore = translate("cardListLoadingMore");
-    cardListLoadMoreHintDesktop = translate("cardListLoadMoreHintDesktop");
-    cardListLoadMoreHintMobile = translate("cardListLoadMoreHintMobile");
+    listLoadMoreHintDesktop = translate("listLoadMoreHintDesktop");
+    listLoadMoreHintMobile = translate("listLoadMoreHintMobile");
     cardListLoadFailed = translate("cardListLoadFailed");
-    cardListRetry = translate("cardListRetry");
+    listRetry = translate("listRetry");
     cardListEnd = translate("cardListEnd");
-    cardListSortById = translate("cardListSortById");
-    cardListSortByReleaseAt = translate("cardListSortByReleaseAt");
-    cardListOpenFilters = translate("cardListOpenFilters");
-    cardListFiltersTitle = translate("cardListFiltersTitle");
+    listSortById = translate("listSortById");
+    listSortByReleaseAt = translate("listSortByReleaseAt");
+    listOpenFilters = translate("listOpenFilters");
+    listFiltersTitle = translate("listFiltersTitle");
     cardListFilterNameLabel = translate("cardListFilterNameLabel");
     cardListFilterNamePlaceholder = translate("cardListFilterNamePlaceholder");
     cardListFilterAttrLabel = translate("cardListFilterAttrLabel");
@@ -613,11 +611,11 @@
     cardListFilterSupportUnitLabel = translate("cardListFilterSupportUnitLabel");
     cardListFilterTypeLabel = translate("cardListFilterTypeLabel");
     cardListFilterUnitLabel = translate("cardListFilterUnitLabel");
-    cardListFilterReset = translate("cardListFilterReset");
-    cardListFilterApply = translate("cardListFilterApply");
+    listFilterReset = translate("listFilterReset");
+    listFilterApply = translate("listFilterApply");
     cardListLoading = translate("cardListLoading");
-    cardListViewGrid = translate("cardListViewGrid");
-    cardListViewAgenda = translate("cardListViewAgenda");
+    listViewGrid = translate("listViewGrid");
+    listViewAgenda = translate("listViewAgenda");
     cardListViewComfy = translate("cardListViewComfy");
     cardListCharacterFallback = translate("cardListCharacterFallback");
     cardListReleaseLabel = translate("cardListReleaseLabel");
@@ -626,7 +624,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.commonMessages);
+    const locale = await setI18nLocale(localeValue, data.i18nMessages);
     applyTranslations((key: string) => tCommon(locale, key));
   };
 
@@ -914,8 +912,8 @@
     <div class="join">
       <ListToolbarButton
         icon="mdi:clock-outline"
-        label={cardListSortByReleaseAt}
-        ariaLabel={`${cardListSortByReleaseAt} (${sortBy === "releaseAt" ? sortOrder : "desc"})`}
+        label={listSortByReleaseAt}
+        ariaLabel={`${listSortByReleaseAt} (${sortBy === "releaseAt" ? sortOrder : "desc"})`}
         sortIndicatorIcon={sortBy === "releaseAt" ? getSortOrderIcon("releaseAt") : undefined}
         class={`join-item ${getSortButtonClass("releaseAt")}`}
         onclick={() => toggleSortBy("releaseAt")}
@@ -923,8 +921,8 @@
 
       <ListToolbarButton
         icon="mdi:numeric"
-        label={cardListSortById}
-        ariaLabel={`${cardListSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+        label={listSortById}
+        ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
         sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
         class={`join-item ${getSortButtonClass("id")}`}
         onclick={() => toggleSortBy("id")}
@@ -935,13 +933,13 @@
       <div class="join">
         <ListToolbarButton
           icon="mdi:view-grid-outline"
-          label={cardListViewGrid}
+          label={listViewGrid}
           class={`join-item ${getViewButtonClass("grid")}`}
           onclick={() => setViewMode("grid")}
         />
         <ListToolbarButton
           icon="mdi:view-agenda-outline"
-          label={cardListViewAgenda}
+          label={listViewAgenda}
           class={`join-item ${getViewButtonClass("agenda")}`}
           onclick={() => setViewMode("agenda")}
         />
@@ -955,7 +953,7 @@
 
       <ListToolbarButton
         icon="mdi:funnel"
-        label={cardListOpenFilters}
+        label={listOpenFilters}
         class={hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
         onclick={openFilterDialog}
       />
@@ -995,7 +993,7 @@
           class="btn btn-outline btn-sm !min-h-12 sm:!min-h-8"
           onclick={() => void loadNextPage()}
         >
-          {cardListRetry}
+          {listRetry}
         </button>
       </div>
     {/if}
@@ -1007,7 +1005,7 @@
           <span class="ml-3 text-sm opacity-70">{cardListLoadingMore}</span>
         {:else}
           <span class="text-sm opacity-60">
-            {isTouchPointer ? cardListLoadMoreHintMobile : cardListLoadMoreHintDesktop}
+            {isTouchPointer ? listLoadMoreHintMobile : listLoadMoreHintDesktop}
           </span>
         {/if}
       </div>
@@ -1023,7 +1021,7 @@
 
 <dialog bind:this={filterDialog} class="modal">
   <div class="modal-box max-w-xl">
-    <h3 class="text-lg font-semibold">{cardListFiltersTitle}</h3>
+    <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
 
     <div class="mt-4 grid grid-cols-1 gap-3">
       <label class="form-control w-full">
@@ -1276,10 +1274,10 @@
 
     <div class="modal-action flex-wrap gap-2">
       <button type="button" class="btn btn-outline !min-h-12" onclick={resetFilterDrafts}>
-        {cardListFilterReset}
+        {listFilterReset}
       </button>
       <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}>
-        {cardListFilterApply}
+        {listFilterApply}
       </button>
       <form method="dialog">
         <button type="submit" class="btn !min-h-12">{closeLabel}</button>
