@@ -5,7 +5,7 @@ experimental = true
 _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tools]
-pnpm = "11.5.2"
+pnpm = "11.8.0"
 node = "24"
 
 [hooks]

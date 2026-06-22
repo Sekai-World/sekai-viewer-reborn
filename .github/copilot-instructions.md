@@ -20,6 +20,7 @@
 - App scripts follow the same pattern with distinct ports (dev: 4101-4104, preview: 5101-5104).
 - Preserve `src/app.d.ts` SvelteKit structure; ESLint already allows empty interfaces for `.d.ts` in `eslint.config.mjs`.
 - Use `@tailwindcss/vite` in `vite.config.ts`; do not add legacy Tailwind config unless required by a real feature.
+- Use Tailwind v4 canonical class forms. Put the important modifier at the end of the utility, e.g. `w-12!` instead of `!w-12`.
 - For dense list/toolbars (sorting/filtering/paging controls), prefer icon-first buttons over long text labels to reduce horizontal and vertical space usage; keep accessibility via `title` and `aria-label`.
 
 ## Shared Package Contracts
