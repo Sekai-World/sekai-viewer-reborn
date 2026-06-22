@@ -88,7 +88,7 @@
         buttonClass="block w-full overflow-hidden"
       />
     {:else}
-      <div class="flex h-full w-full items-center justify-center text-sm opacity-70">
+      <div class="flex size-full items-center justify-center text-sm opacity-70">
         {regionLabel}
       </div>
     {/if}
@@ -100,7 +100,7 @@
     </div>
   </div>
 
-  <h3 class="text-base font-semibold leading-tight">
+  <h3 class="text-base/tight font-semibold">
     {event.title}
   </h3>
   <div class="flex items-center gap-2 text-sm">
@@ -108,7 +108,7 @@
     {#if displayUnit}
       <span
         class="{unitIconUrl
-          ? 'unit-icon-frame h-8 w-8 border-base-content/15'
+          ? 'unit-icon-frame size-8 border-base-content/15'
           : 'h-7 min-w-7 border-base-content/15 px-1'} inline-flex items-center justify-center rounded-full border text-[0.65rem] font-semibold leading-none"
       >
         {#if unitIconUrl}
@@ -116,7 +116,7 @@
             src={unitIconUrl}
             alt=""
             aria-hidden="true"
-            class="h-9 w-9 max-w-none shrink-0 object-contain"
+            class="size-9 max-w-none shrink-0 object-contain"
             loading="lazy"
             decoding="async"
           />

@@ -29,13 +29,13 @@
 </script>
 
 <button type="button" class={buttonClass} {onclick} {title} aria-label={ariaLabel}>
-  <Icon {icon} class="h-4 w-4" aria-hidden="true" />
+  <Icon {icon} class="size-4" aria-hidden="true" />
   {#if sortIndicatorIcon}
     <span
-      class="absolute bottom-1 right-1 grid h-3.5 w-3.5 place-items-center rounded-full bg-primary-content/90 text-primary md:bottom-0.5 md:right-0.5 md:h-3 md:w-3"
+      class="absolute bottom-1 right-1 grid size-3.5 place-items-center rounded-full bg-primary-content/90 text-primary md:bottom-0.5 md:right-0.5 md:size-3"
       aria-hidden="true"
     >
-      <Icon icon={sortIndicatorIcon} class="h-2.5 w-2.5" />
+      <Icon icon={sortIndicatorIcon} class="size-2.5" />
     </span>
   {/if}
 </button>

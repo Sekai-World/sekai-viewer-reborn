@@ -21,7 +21,7 @@
       </form>
     </div>
     <pre
-      class="content-card-inset max-h-[70vh] overflow-auto rounded-xl p-4 text-xs leading-6"><code
+      class="content-card-inset max-h-[70vh] overflow-auto rounded-xl p-4 text-xs/6"><code
         >{json}</code
       ></pre>
   </div>

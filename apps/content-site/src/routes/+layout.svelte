@@ -632,7 +632,7 @@
     <label
       class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
     >
-      <span class="min-w-0 whitespace-normal break-words text-sm font-medium leading-snug"
+      <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
         >{showSpoilerContentLabel}</span
       >
       <input
@@ -647,7 +647,7 @@
       <label
         class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
       >
-        <span class="min-w-0 whitespace-normal break-words text-sm font-medium leading-snug"
+        <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
           >{mosaickedSpoilerContentLabel}</span
         >
         <input
@@ -662,7 +662,7 @@
     <label
       class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
     >
-      <span class="min-w-0 whitespace-normal break-words text-sm font-medium leading-snug"
+      <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
         >{lowMotionModeLabel}</span
       >
       <input
@@ -678,7 +678,7 @@
 
 {#snippet themePalettePreview(themeNameOption: ThemeName)}
   <span
-    class="theme-palette-preview h-4 w-4 shrink-0 rounded-full border border-base-content/15 bg-primary"
+    class="theme-palette-preview size-4 shrink-0 rounded-full border border-base-content/15 bg-primary"
     class:dark={resolvedTheme === "dark"}
     data-theme={themeNameOption}
     aria-hidden="true"
@@ -714,7 +714,7 @@
             isDesktopSettingsMenuOpen = !isDesktopSettingsMenuOpen;
           }}
         >
-          <Icon icon="mdi:cog-outline" class="h-4 w-4" aria-hidden="true" />
+          <Icon icon="mdi:cog-outline" class="size-4" aria-hidden="true" />
         </button>
         {#if isDesktopSettingsMenuOpen}
           <div
@@ -746,7 +746,7 @@
             isDesktopThemeMenuOpen = !isDesktopThemeMenuOpen;
           }}
         >
-          <Icon icon="mdi:palette-outline" class="h-4 w-4" aria-hidden="true" />
+          <Icon icon="mdi:palette-outline" class="size-4" aria-hidden="true" />
         </button>
         {#if isDesktopThemeMenuOpen}
           <ul
@@ -769,7 +769,7 @@
                   {@render themePalettePreview(themeNameOption)}
                   <span>{getThemeNameLabel(themeNameOption)}</span>
                   {#if themeName === themeNameOption}
-                    <Icon icon="mdi:check" class="h-4 w-4 opacity-80" aria-hidden="true" />
+                    <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
                   {/if}
                 </button>
               </li>
@@ -790,12 +790,12 @@
                 >
                   <Icon
                     icon={getThemeModeIcon(themeOption as ThemeMode)}
-                    class="h-4 w-4 opacity-80"
+                    class="size-4 opacity-80"
                     aria-hidden="true"
                   />
                   <span>{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
                   {#if themeMode === themeOption}
-                    <Icon icon="mdi:check" class="h-4 w-4 opacity-80" aria-hidden="true" />
+                    <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
                   {/if}
                 </button>
               </li>
@@ -824,7 +824,7 @@
             isLocaleMenuOpen = !isLocaleMenuOpen;
           }}
         >
-          <Icon icon="mdi:translate" class="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
+          <Icon icon="mdi:translate" class="size-3.5 sm:size-4" aria-hidden="true" />
           {#if $isLocaleLoading}
             <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
           {/if}
@@ -838,7 +838,7 @@
               <p class="px-1 text-xs font-semibold opacity-60">
                 {currentLanguageLabel}
               </p>
-              <p class="break-words px-1 pt-1 text-sm font-semibold leading-snug">
+              <p class="wrap-break-word px-1 pt-1 text-sm/snug font-semibold">
                 {uiLocaleDisplayLabel}
               </p>
             </div>
@@ -857,7 +857,7 @@
                         isLocaleMenuOpen = false;
                       }}
                     >
-                      <span class="min-w-0 break-words"
+                      <span class="min-w-0 wrap-break-word"
                         >{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span
                       >
                     </button>
@@ -879,7 +879,7 @@
         <button
           bind:this={mobileSettingsButton}
           type="button"
-          class="btn btn-circle btn-sm !h-11 !min-h-11 !w-11 btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
+          class="btn btn-circle btn-sm size-11! min-h-11! btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={settingsLabel}
           aria-haspopup="dialog"
           aria-expanded={isMobileSettingsMenuOpen}
@@ -889,7 +889,7 @@
             isMobileSettingsMenuOpen = !isMobileSettingsMenuOpen;
           }}
         >
-          <Icon icon="mdi:tune-variant" class="h-4 w-4" aria-hidden="true" />
+          <Icon icon="mdi:tune-variant" class="size-4" aria-hidden="true" />
         </button>
         {#if isMobileSettingsMenuOpen}
           <div
@@ -910,7 +910,7 @@
                 {#each themeNameOptions as themeNameOption (themeNameOption)}
                   <button
                     type="button"
-                    class={`btn btn-sm h-auto !min-h-12 flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
+                    class={`btn btn-sm h-auto min-h-12! flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
                     onclick={() => {
                       applyTheme(themeNameOption, themeMode);
                     }}
@@ -934,14 +934,14 @@
                 {#each ["auto", "light", "dark"] as themeOption (themeOption)}
                   <button
                     type="button"
-                    class={`btn btn-sm h-auto !min-h-12 flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
+                    class={`btn btn-sm h-auto min-h-12! flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
                     onclick={() => {
                       applyTheme(themeName, themeOption as ThemeMode);
                     }}
                   >
                     <Icon
                       icon={getThemeModeIcon(themeOption as ThemeMode)}
-                      class="h-5 w-5 shrink-0"
+                      class="size-5 shrink-0"
                     />
                     <span class="text-[0.6rem] font-semibold leading-none"
                       >{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span
@@ -962,10 +962,10 @@
                   {#if localeOption.code === uiLocale}
                     <button
                       type="button"
-                      class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 btn-primary"
+                      class="btn btn-sm min-h-12! justify-start rounded-lg border-base-content/15 btn-primary"
                       disabled={true}
                     >
-                      <span class="min-w-0 break-words"
+                      <span class="min-w-0 wrap-break-word"
                         >{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span
                       >
                     </button>
@@ -975,14 +975,14 @@
                   {#if localeOption.code !== uiLocale}
                     <button
                       type="button"
-                      class="btn btn-sm !min-h-12 justify-start rounded-lg border-base-content/15 bg-base-100"
+                      class="btn btn-sm min-h-12! justify-start rounded-lg border-base-content/15 bg-base-100"
                       disabled={$isLocaleLoading}
                       onclick={async () => {
                         await setUiLocale(localeOption.code);
                         isMobileSettingsMenuOpen = true;
                       }}
                     >
-                      <span class="min-w-0 break-words"
+                      <span class="min-w-0 wrap-break-word"
                         >{uiLocaleNameByCode[localeOption.code]}({localeOption.code})</span
                       >
                     </button>
@@ -1019,11 +1019,11 @@
 {#if showBackToTop}
   <button
     type="button"
-    class="fixed bottom-5 right-5 z-30 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer"
+    class="fixed bottom-5 right-5 z-30 inline-flex size-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer"
     aria-label={backToTopLabel}
     title={backToTopLabel}
     onclick={scrollToTop}
   >
-    <Icon icon="mdi:arrow-up" class="h-5 w-5" />
+    <Icon icon="mdi:arrow-up" class="size-5" />
   </button>
 {/if}

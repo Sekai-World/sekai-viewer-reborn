@@ -45,13 +45,13 @@
     aria-label={`Switch data regions. ${primaryTitle}: ${primaryRegionLabel}. ${secondaryTitle}: ${secondaryRegionLabel}`}
     title={`${primaryTitle} | ${secondaryTitle}: ${primaryRegionLabel} | ${secondaryRegionLabel}`}
   >
-    <Icon icon="mdi:earth" class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+    <Icon icon="mdi:earth" class="size-3.5 sm:size-4" />
     <span class="max-w-[4.8rem] truncate font-semibold sm:max-w-none">
       {primaryRegionLabel} | {secondaryRegionLabel}
     </span>
   </summary>
   <div
-    class="dropdown-content z-[120] mt-3 w-[16.5rem] rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm sm:w-[18rem]"
+    class="dropdown-content z-120 mt-3 w-66 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm sm:w-[18rem]"
   >
     <div class="grid grid-cols-[1fr_auto_1fr] gap-2">
       <section>
@@ -72,7 +72,7 @@
               >
                 <span>{option.label}</span>
                 {#if option.value === primaryValue}
-                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
+                  <Icon icon="mdi:check" class="size-4 opacity-80" />
                 {/if}
               </button>
             </li>
@@ -100,7 +100,7 @@
               >
                 <span>{option.label}</span>
                 {#if option.value === secondaryValue}
-                  <Icon icon="mdi:check" class="h-4 w-4 opacity-80" />
+                  <Icon icon="mdi:check" class="size-4 opacity-80" />
                 {/if}
               </button>
             </li>

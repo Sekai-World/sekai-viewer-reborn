@@ -147,7 +147,7 @@
 
     <div
       class={`content-card-inset w-full overflow-hidden rounded-[1.75rem] transition-[aspect-ratio] duration-300 ease-out ${
-        isCompactTab(resolvedTab) ? "aspect-[16/7]" : "aspect-[16/10]"
+        isCompactTab(resolvedTab) ? "aspect-16/7" : "aspect-16/10"
       }`}
     >
       {#if resolvedTab === "banner"}
@@ -191,7 +191,7 @@
         <div
           class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65"
         >
-          <Icon icon="mdi:file-remove-outline" class="h-10 w-10 opacity-75" aria-hidden="true" />
+          <Icon icon="mdi:file-remove-outline" class="size-10 opacity-75" aria-hidden="true" />
           <span class="font-medium">{imageUnavailableLabel}</span>
         </div>
       {/if}

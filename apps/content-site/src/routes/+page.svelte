@@ -90,8 +90,8 @@
   <div
     class="flex max-w-3xl gap-3 rounded-xl border border-info/25 bg-info/8 px-4 py-3 text-base-content/70"
   >
-    <Icon icon="mdi:information-outline" class="mt-0.5 h-4 w-4 shrink-0 text-info/80" />
-    <p class="text-xs leading-relaxed">{disclaimerText}</p>
+    <Icon icon="mdi:information-outline" class="mt-0.5 size-4 shrink-0 text-info/80" />
+    <p class="text-xs/relaxed">{disclaimerText}</p>
   </div>
 </div>
 

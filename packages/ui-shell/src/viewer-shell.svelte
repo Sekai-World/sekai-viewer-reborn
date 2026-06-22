@@ -51,11 +51,11 @@
     <header
       class="viewer-shell-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2"
     >
-      <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-[96rem] px-2">
+      <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-384 px-2">
         <div class="navbar-start">
           <button
             type="button"
-            class="btn btn-ghost btn-circle !h-11 !min-h-11 !w-11"
+            class="btn btn-ghost btn-circle size-11! min-h-11!"
             aria-label={openSidebarLabel}
             aria-controls={sidebarPanelId}
             aria-expanded={sidebarOpen}
@@ -63,12 +63,12 @@
               sidebarOpen = true;
             }}
           >
-            <Icon icon="mdi:menu" class="h-5 w-5" aria-hidden="true" />
+            <Icon icon="mdi:menu" class="size-5" aria-hidden="true" />
           </button>
         </div>
         <div class="navbar-center">
           <span
-            class="max-w-[7rem] truncate text-xs font-semibold tracking-wide sm:max-w-none sm:text-sm"
+            class="max-w-28 truncate text-xs font-semibold tracking-wide sm:max-w-none sm:text-sm"
           >
             {navTitle}
           </span>
@@ -83,7 +83,7 @@
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-[96rem] px-4 pb-8 pt-6 md:px-6 lg:px-8">
+    <main class="mx-auto w-full max-w-384 px-4 pb-8 pt-6 md:px-6 lg:px-8">
       {#if showTitle}
         <section class="py-12 text-center">
           <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">
@@ -115,7 +115,7 @@
         <span class="text-sm font-semibold">{sidebarLabel}</span>
         <button
           type="button"
-          class="btn btn-ghost btn-sm btn-circle !h-11 !min-h-11 !w-11"
+          class="btn btn-ghost btn-sm btn-circle size-11! min-h-11!"
           aria-label={closeSidebarLabel}
           aria-controls={sidebarPanelId}
           onclick={() => {
@@ -143,8 +143,8 @@
                 }}
               >
                 {#if item.icon}
-                  <span class="grid h-5 w-5 shrink-0 place-items-center">
-                    <Icon icon={item.icon} class="h-4 w-4 shrink-0" />
+                  <span class="grid size-5 shrink-0 place-items-center">
+                    <Icon icon={item.icon} class="size-4 shrink-0" />
                   </span>
                 {/if}
                 <span>{item.label}</span>
@@ -158,8 +158,8 @@
                 class="grid min-h-11 w-full grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 opacity-45"
               >
                 {#if item.icon}
-                  <span class="grid h-5 w-5 shrink-0 place-items-center">
-                    <Icon icon={item.icon} class="h-4 w-4 shrink-0" />
+                  <span class="grid size-5 shrink-0 place-items-center">
+                    <Icon icon={item.icon} class="size-4 shrink-0" />
                   </span>
                 {/if}
                 <span>{item.label}</span>

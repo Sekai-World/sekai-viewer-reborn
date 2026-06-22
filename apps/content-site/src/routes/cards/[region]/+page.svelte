@@ -990,7 +990,7 @@
         <div class="alert alert-error max-w-xl flex-1">{errorMessage}</div>
         <button
           type="button"
-          class="btn btn-outline btn-sm !min-h-12 sm:!min-h-8"
+          class="btn btn-outline btn-sm min-h-12! sm:min-h-8!"
           onclick={() => void loadNextPage()}
         >
           {listRetry}
@@ -1039,7 +1039,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.unit as option (option.value)}
             <label
-              class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(filterUnitDraft, option.value)}`}
+              class={`btn btn-sm size-12! min-h-12! p-0 ${getFilterButtonClass(filterUnitDraft, option.value)}`}
               title={option.label}
             >
               <input
@@ -1060,7 +1060,7 @@
                   src={getUnitIconUrl(option.value) ?? ""}
                   alt=""
                   aria-hidden="true"
-                  class="h-7 w-7 object-contain"
+                  class="size-7 object-contain"
                   loading="lazy"
                   decoding="async"
                 />
@@ -1076,7 +1076,7 @@
           <div class="join flex w-full flex-wrap">
             {#each supportUnitOptions as option (`support-unit:${option}`)}
               <label
-                class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
+                class={`btn btn-sm join-item size-12! min-h-12! p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
                 title={getSupportUnitOptionLabel(option)}
               >
                 <input
@@ -1097,7 +1097,7 @@
                     src={getUnitIconUrl(option) ?? ""}
                     alt=""
                     aria-hidden="true"
-                    class="h-7 w-7 object-contain"
+                    class="size-7 object-contain"
                     loading="lazy"
                     decoding="async"
                   />
@@ -1113,7 +1113,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.character as option (option.value)}
             <label
-              class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(filterCharacterDraft, option.value)}`}
+              class={`btn btn-sm size-12! min-h-12! p-0 ${getFilterButtonClass(filterCharacterDraft, option.value)}`}
               title={option.label}
             >
               <input
@@ -1134,7 +1134,7 @@
                   src={getCharacterThumbnailUrl(option.value) ?? ""}
                   alt=""
                   aria-hidden="true"
-                  class="h-7 w-7 rounded-full object-contain"
+                  class="size-7 rounded-full object-contain"
                   loading="lazy"
                   decoding="async"
                 />
@@ -1149,7 +1149,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.skill as option (option.value)}
             <label
-              class={`btn btn-sm !min-h-12 ${getFilterButtonClass(filterSkillDraft, option.value)}`}
+              class={`btn btn-sm min-h-12! ${getFilterButtonClass(filterSkillDraft, option.value)}`}
               title={formatOptionLabel(option.value)}
             >
               <input
@@ -1176,7 +1176,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.type as option (option.value)}
             <label
-              class={`btn btn-sm !min-h-12 ${getFilterButtonClass(filterTypeDraft, option.value)}`}
+              class={`btn btn-sm min-h-12! ${getFilterButtonClass(filterTypeDraft, option.value)}`}
               title={formatOptionLabel(option.value)}
             >
               <input
@@ -1203,7 +1203,7 @@
         <div class="join flex w-full flex-wrap">
           {#each attrOptions as option (option)}
             <label
-              class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${filterAttrDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+              class={`btn btn-sm join-item size-12! min-h-12! p-0 ${filterAttrDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={formatOptionLabel(option)}
             >
               <input
@@ -1223,7 +1223,7 @@
                 src={getAttrIconUrl(option)}
                 alt=""
                 aria-hidden="true"
-                class="h-7 w-7 object-contain"
+                class="size-7 object-contain"
                 loading="lazy"
                 decoding="async"
               />
@@ -1237,7 +1237,7 @@
         <div class="join flex w-full flex-wrap">
           {#each rarityOptions as option (option)}
             <label
-              class={`btn btn-sm join-item !min-h-12 !min-w-12 ${filterRarityDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+              class={`btn btn-sm join-item min-h-12! min-w-12! ${filterRarityDraft.includes(option) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={getRarityLabel(option)}
             >
               <input
@@ -1273,14 +1273,14 @@
     </div>
 
     <div class="modal-action flex-wrap gap-2">
-      <button type="button" class="btn btn-outline !min-h-12" onclick={resetFilterDrafts}>
+      <button type="button" class="btn btn-outline min-h-12!" onclick={resetFilterDrafts}>
         {listFilterReset}
       </button>
-      <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}>
+      <button type="button" class="btn btn-primary min-h-12!" onclick={applyFilters}>
         {listFilterApply}
       </button>
       <form method="dialog">
-        <button type="submit" class="btn !min-h-12">{closeLabel}</button>
+        <button type="submit" class="btn min-h-12!">{closeLabel}</button>
       </form>
     </div>
   </div>

@@ -743,7 +743,7 @@
   <div
     class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-dashed border-base-content/15 px-6 text-center"
   >
-    <Icon icon="mdi:music-off" class="h-10 w-10 opacity-55" aria-hidden="true" />
+    <Icon icon="mdi:music-off" class="size-10 opacity-55" aria-hidden="true" />
     <p class="text-sm font-medium opacity-75">{unavailableLabel}</p>
   </div>
 {:else}
@@ -760,7 +760,7 @@
         {#if isLoading}
           <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
         {:else}
-          <Icon icon={isPlaying ? "mdi:pause" : "mdi:play"} class="h-6 w-6" />
+          <Icon icon={isPlaying ? "mdi:pause" : "mdi:play"} class="size-6" />
         {/if}
       </button>
 
@@ -783,7 +783,7 @@
           {#if isDownloadLoading}
             <span class="loading loading-spinner loading-xs" aria-hidden="true"></span>
           {:else}
-            <Icon icon="mdi:download" class="h-4 w-4" />
+            <Icon icon="mdi:download" class="size-4" />
           {/if}
         </button>
         <ul
@@ -843,7 +843,7 @@
         <div
           class="flex w-full items-center gap-2 rounded-full border border-base-content/10 bg-base-100/70 px-3 py-2 shadow-sm lg:w-auto"
         >
-          <Icon icon="mdi:volume-high" class="h-4 w-4 shrink-0 opacity-75" aria-hidden="true" />
+          <Icon icon="mdi:volume-high" class="size-4 shrink-0 opacity-75" aria-hidden="true" />
           <input
             type="range"
             min="0"
@@ -866,10 +866,10 @@
 
 {#if isDownloadLoading}
   <div
-    class="pointer-events-none fixed inset-x-3 bottom-3 z-50 md:inset-x-auto md:right-4 md:bottom-4 md:w-[22rem]"
+    class="pointer-events-none fixed inset-x-3 bottom-3 z-50 md:inset-x-auto md:right-4 md:bottom-4 md:w-88"
   >
     <div
-      class="pointer-events-auto rounded-[1.5rem] border border-base-content/10 bg-base-100/94 px-4 py-4 shadow-2xl backdrop-blur"
+      class="pointer-events-auto rounded-3xl border border-base-content/10 bg-base-100/94 p-4 shadow-2xl backdrop-blur"
     >
       <div class="mb-3 flex items-start justify-between gap-3">
         <div class="min-w-0">
@@ -892,7 +892,7 @@
             title={downloadCloseLabel}
             onclick={closeDownloadDialog}
           >
-            <Icon icon="mdi:close" class="h-4 w-4" />
+            <Icon icon="mdi:close" class="size-4" />
           </button>
         </div>
       </div>

@@ -105,7 +105,7 @@
             fill="none"
             stroke="currentColor"
             stroke-width="1.8"
-            class="h-4 w-4"
+            class="size-4"
           >
             <path
               stroke-linecap="round"
@@ -128,7 +128,7 @@
             fill="none"
             stroke="currentColor"
             stroke-width="1.8"
-            class="h-4 w-4"
+            class="size-4"
           >
             <path
               stroke-linecap="round"
@@ -165,7 +165,7 @@
         <div
           class="flex min-h-[40vh] w-[min(70vw,32rem)] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-base-content/15 bg-base-200/40 px-8 py-10 text-center text-base text-base-content/70"
         >
-          <Icon icon="mdi:file-remove-outline" class="h-12 w-12 opacity-75" aria-hidden="true" />
+          <Icon icon="mdi:file-remove-outline" class="size-12 opacity-75" aria-hidden="true" />
           {#if fallbackLabel}
             <p class="font-medium">{fallbackLabel}</p>
           {/if}

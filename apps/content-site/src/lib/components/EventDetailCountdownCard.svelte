@@ -30,7 +30,7 @@
       >
         <Icon
           icon="mdi:timer-sand"
-          class="h-4 w-4 shrink-0 translate-y-[0.5px]"
+          class="size-4 shrink-0 translate-y-[0.5px]"
           aria-hidden="true"
         />
         <span>{title}</span>

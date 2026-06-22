@@ -57,7 +57,7 @@
     <p
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
-      <Icon icon="mdi:music-note-outline" class="h-4 w-4 shrink-0" aria-hidden="true" />
+      <Icon icon="mdi:music-note-outline" class="size-4 shrink-0" aria-hidden="true" />
       <span>{title}</span>
     </p>
     <div class="content-card-inset rounded-[1.75rem] p-4">

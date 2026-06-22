@@ -673,7 +673,7 @@
         <div class="alert alert-error max-w-xl flex-1">{errorMessage}</div>
         <button
           type="button"
-          class="btn btn-outline btn-sm !min-h-12 sm:!min-h-8"
+          class="btn btn-outline btn-sm min-h-12! sm:min-h-8!"
           onclick={() => void loadNextPage()}
         >
           {listRetry}
@@ -722,7 +722,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getEventTypeOptions() as option (option.value)}
             <label
-              class={`btn btn-sm join-item !min-h-12 ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+              class={`btn btn-sm join-item min-h-12! ${filterEventTypeDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={option.label}
             >
               <input
@@ -749,7 +749,7 @@
         <div class="join flex w-full flex-wrap">
           {#each getUnitOptions() as option (`unit:${option.value}`)}
             <label
-              class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${filterUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+              class={`btn btn-sm join-item size-12! min-h-12! p-0 ${filterUnitDraft.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
               title={option.label}
             >
               <input
@@ -766,13 +766,13 @@
                 aria-label={option.label}
               />
               {#if option.value === "mixed"}
-                <Icon icon="mdi:puzzle" class="h-4 w-4" aria-hidden="true" />
+                <Icon icon="mdi:puzzle" class="size-4" aria-hidden="true" />
               {:else if getUnitIconUrl(option.value)}
                 <img
                   src={getUnitIconUrl(option.value) ?? ""}
                   alt=""
                   aria-hidden="true"
-                  class="h-7 w-7 object-contain"
+                  class="size-7 object-contain"
                   loading="lazy"
                   decoding="async"
                 />
@@ -784,14 +784,14 @@
     </div>
 
     <div class="modal-action flex-wrap gap-2">
-      <button type="button" class="btn btn-outline !min-h-12" onclick={resetFilterDrafts}>
+      <button type="button" class="btn btn-outline min-h-12!" onclick={resetFilterDrafts}>
         {listFilterReset}
       </button>
-      <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}>
+      <button type="button" class="btn btn-primary min-h-12!" onclick={applyFilters}>
         {listFilterApply}
       </button>
       <form method="dialog">
-        <button type="submit" class="btn !min-h-12">{closeLabel}</button>
+        <button type="submit" class="btn min-h-12!">{closeLabel}</button>
       </form>
     </div>
   </div>

@@ -124,12 +124,12 @@
 {#snippet spoilerOverlay()}
   <button
     type="button"
-    class={`event-list-spoiler-mosaic-overlay absolute inset-0 z-10 flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
+    class={`event-list-spoiler-mosaic-overlay absolute inset-0 z-10 flex size-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
     aria-label={spoilerContentLabel}
     onclick={handleRevealClick}
   >
     <div
-      class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
+      class="flex size-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
     >
       !
     </div>
@@ -207,7 +207,7 @@
     {:else}
       <div class="relative aspect-square overflow-hidden">
         {#if isSpoilerPlaceholderVisible()}
-          <div class="h-full w-full bg-base-200/60"></div>
+          <div class="size-full bg-base-200/60"></div>
         {:else if item.assetBundleName}
           <EventAssetImage
             src={getMusicJacketAssetURL(item.assetBundleName, region)}
@@ -217,7 +217,7 @@
             loadMode="visible"
           />
         {:else}
-          <div class="h-full w-full bg-base-200"></div>
+          <div class="size-full bg-base-200"></div>
         {/if}
         {#if !isSpoilerPlaceholderVisible()}
           <div class="absolute left-3 top-3">
@@ -241,7 +241,7 @@
       {#if !isSpoilerPlaceholderVisible()}
         <div class="card-body gap-2 p-4">
           {@render musicTagBadges("badge-xs")}
-          <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{item.title}</h2>
+          <h2 class="line-clamp-2 text-sm/snug font-semibold">{item.title}</h2>
           {#if item.composer}
             <p class="truncate text-xs opacity-70">{item.composer}</p>
           {/if}

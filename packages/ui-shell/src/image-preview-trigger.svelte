@@ -47,7 +47,7 @@
   {#if children}
     {@render children()}
   {:else}
-    <div class="relative h-full w-full overflow-hidden">
+    <div class="relative size-full overflow-hidden">
       {#if !previewImageLoaded && !previewImageFailed}
         <div
           class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse"
@@ -58,9 +58,9 @@
       {/if}
       {#if previewImageFailed}
         <div
-          class="flex h-full min-h-0 w-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65"
+          class="flex size-full min-h-0 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65"
         >
-          <Icon icon="mdi:file-remove-outline" class="h-10 w-10 opacity-75" aria-hidden="true" />
+          <Icon icon="mdi:file-remove-outline" class="size-10 opacity-75" aria-hidden="true" />
           {#if fallbackLabel}
             <span class="font-medium">{fallbackLabel}</span>
           {/if}

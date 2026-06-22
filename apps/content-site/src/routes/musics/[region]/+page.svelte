@@ -795,12 +795,12 @@
           {#if nameDraft}
             <button
               type="button"
-              class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-1 !h-12 !min-h-12 !w-12 -translate-y-1/2"
+              class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-1 size-12! min-h-12! -translate-y-1/2"
               title={`${clearLabel}: ${musicListFilterNameLabel}`}
               aria-label={`${clearLabel}: ${musicListFilterNameLabel}`}
               onclick={() => (nameDraft = "")}
             >
-              <Icon icon="mdi:close-circle-outline" class="h-4 w-4" />
+              <Icon icon="mdi:close-circle-outline" class="size-4" />
             </button>
           {/if}
         </div>
@@ -810,7 +810,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each data.filterMeta.categories as category (category)}
             <label
-              class={`btn btn-sm !min-h-12 ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              class={`btn btn-sm min-h-12! ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
             >
               <input
                 class="sr-only"
@@ -829,7 +829,7 @@
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
             {@const tagIconUrl = getMusicTagIconUrl(tag)}
             <label
-              class={`btn btn-sm join-item !h-12 !min-h-12 !w-12 p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
+              class={`btn btn-sm join-item size-12! min-h-12! p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
               title={getMusicTagLabel(tag)}
             >
               <input
@@ -844,14 +844,14 @@
                   src={tagIconUrl}
                   alt=""
                   aria-hidden="true"
-                  class="h-7 w-7 object-contain"
+                  class="size-7 object-contain"
                   loading="lazy"
                   decoding="async"
                 />
               {:else}
                 <Icon
                   icon={tag === "all" ? "mdi:apps" : "mdi:dots-horizontal-circle-outline"}
-                  class="h-6 w-6"
+                  class="size-6"
                   aria-hidden="true"
                 />
               {/if}
@@ -864,7 +864,7 @@
         <div class="flex flex-wrap gap-1.5">
           {#each gameCharacterValues as character (character)}
             <label
-              class={`btn btn-sm !h-12 !min-h-12 !w-12 p-0 ${getFilterButtonClass(vocalCharacterDraft, character)}`}
+              class={`btn btn-sm size-12! min-h-12! p-0 ${getFilterButtonClass(vocalCharacterDraft, character)}`}
               title={character}
             >
               <input
@@ -884,7 +884,7 @@
                 src={getCharacterThumbnailUrl(character) ?? ""}
                 alt=""
                 aria-hidden="true"
-                class="h-7 w-7 rounded-full object-contain"
+                class="size-7 rounded-full object-contain"
                 loading="lazy"
                 decoding="async"
               />
@@ -927,12 +927,12 @@
             {#if filter.value}
               <button
                 type="button"
-                class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-1 !h-12 !min-h-12 !w-12 -translate-y-1/2"
+                class="btn btn-circle btn-ghost btn-xs absolute top-1/2 right-1 size-12! min-h-12! -translate-y-1/2"
                 title={`${clearLabel}: ${filter.label}`}
                 aria-label={`${clearLabel}: ${filter.label}`}
                 onclick={() => filter.set("")}
               >
-                <Icon icon="mdi:close-circle-outline" class="h-4 w-4" />
+                <Icon icon="mdi:close-circle-outline" class="size-4" />
               </button>
             {/if}
           </div>
@@ -940,13 +940,13 @@
       {/each}
     </div>
     <div class="modal-action">
-      <button type="button" class="btn btn-outline !min-h-12" onclick={resetDrafts}
+      <button type="button" class="btn btn-outline min-h-12!" onclick={resetDrafts}
         >{listFilterReset}</button
       >
-      <button type="button" class="btn btn-primary !min-h-12" onclick={applyFilters}
+      <button type="button" class="btn btn-primary min-h-12!" onclick={applyFilters}
         >{listFilterApply}</button
       >
-      <form method="dialog"><button type="submit" class="btn !min-h-12">{closeLabel}</button></form>
+      <form method="dialog"><button type="submit" class="btn min-h-12!">{closeLabel}</button></form>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop"><button type="submit">{closeLabel}</button></form>

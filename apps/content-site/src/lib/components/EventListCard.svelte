@@ -122,10 +122,10 @@
 
 {#snippet mosaicOverlay()}
   <div
-    class={`event-list-spoiler-mosaic-overlay flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
+    class={`event-list-spoiler-mosaic-overlay flex size-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
   >
     <div
-      class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
+      class="flex size-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
     >
       !
     </div>
@@ -142,7 +142,7 @@
 >
   {#if isSpoilerPlaceholderVisible()}
     <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
-      <div class="h-full w-full rounded-xl bg-base-200/60"></div>
+      <div class="size-full rounded-xl bg-base-200/60"></div>
     </div>
 
     <div class="px-4 pb-4 pt-3">
@@ -160,7 +160,7 @@
         />
       {:else}
         <div
-          class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
+          class="flex size-full items-center justify-center px-6 text-center text-sm opacity-70"
         >
           {item.title}
         </div>

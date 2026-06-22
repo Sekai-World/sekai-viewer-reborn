@@ -83,7 +83,7 @@
       >
         <Icon
           icon="mdi:information-outline"
-          class="h-4 w-4 shrink-0 translate-y-[0.5px]"
+          class="size-4 shrink-0 translate-y-[0.5px]"
           aria-hidden="true"
         />
         <span>{title}</span>
@@ -94,7 +94,7 @@
             src={getEventPointIconAssetURL(event.eventPointIcon, region)}
             alt=""
             aria-hidden="true"
-            class="h-6 w-6 shrink-0 object-contain"
+            class="size-6 shrink-0 object-contain"
             loading="lazy"
             decoding="async"
           />
@@ -122,13 +122,13 @@
           </div>
           {#if getUnitIconUrl(event.unit)}
             <span
-              class="unit-icon-frame flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
+              class="unit-icon-frame flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
             >
               <img
                 src={getUnitIconUrl(event.unit)}
                 alt=""
                 aria-hidden="true"
-                class="h-12 w-12 max-w-none object-contain"
+                class="size-12 max-w-none object-contain"
                 loading="lazy"
                 decoding="async"
               />
@@ -168,12 +168,12 @@
             <dd class="mt-1 text-sm font-medium">{getCharacterDisplayName(char)}</dd>
           </div>
           <span
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
+            class="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
           >
             <img
               src={getCharacterIconUrl(char.id)}
               alt={getCharacterDisplayName(char)}
-              class="h-11 w-11 rounded-full object-contain"
+              class="size-11 rounded-full object-contain"
               loading="lazy"
               decoding="async"
             />

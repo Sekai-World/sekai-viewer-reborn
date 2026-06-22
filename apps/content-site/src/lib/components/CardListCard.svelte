@@ -240,11 +240,11 @@
 {#snippet spoilerOverlay()}
   <button
     type="button"
-    class={`event-list-spoiler-mosaic-overlay flex h-full w-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
+    class={`event-list-spoiler-mosaic-overlay flex size-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
     onclick={revealSpoiler}
   >
     <span
-      class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
+      class="flex size-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
       aria-hidden="true"
     >
       !
@@ -260,7 +260,7 @@
       src={frameUrl}
       alt=""
       aria-hidden="true"
-      class="pointer-events-none absolute inset-0 z-10 h-full w-full object-fill"
+      class="pointer-events-none absolute inset-0 z-10 size-full object-fill"
       loading="lazy"
       decoding="async"
     />
@@ -272,7 +272,7 @@
   {@const rarityIconUrl = getRarityIconUrl(trained)}
   {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
   <svg
-    class="pointer-events-none absolute inset-0 z-20 h-full w-full"
+    class="pointer-events-none absolute inset-0 z-20 size-full"
     viewBox="0 0 100 100"
     aria-hidden="true"
   >
@@ -300,7 +300,7 @@
   {@const trainedRarityIconUrl = getRarityIconUrl(true)}
   {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
   <svg
-    class="pointer-events-none absolute inset-0 z-20 h-full w-full"
+    class="pointer-events-none absolute inset-0 z-20 size-full"
     viewBox="0 0 160 90"
     aria-hidden="true"
   >
@@ -340,13 +340,13 @@
 
 {#snippet unitIcon(iconUrl: string)}
   <span
-    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-base-content/15 bg-base-100/70 dark:bg-gray-300"
+    class="flex size-7 shrink-0 items-center justify-center rounded-full border border-base-content/15 bg-base-100/70 dark:bg-gray-300"
   >
     <img
       src={iconUrl}
       alt=""
       aria-hidden="true"
-      class="h-7 w-7 max-w-none object-contain"
+      class="size-7 max-w-none object-contain"
       loading="lazy"
       decoding="async"
     />
@@ -382,7 +382,7 @@
       <img
         src={thumbUrl}
         alt={`${getCardTitle()} ${cardImageAltSuffix}`}
-        class="h-full w-full object-cover"
+        class="size-full object-cover"
         loading="lazy"
         decoding="async"
         onerror={(event) => handleCardImageError(event, "thumbnail", trained)}
@@ -422,7 +422,7 @@
         </div>
         <div class="flex min-w-0 flex-col justify-center gap-2">
           {@render metaBadges()}
-          <h2 class="line-clamp-2 text-base font-semibold leading-snug">{getCardTitle()}</h2>
+          <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
           <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
           {#if getReleaseAt() !== null}
             <p class="text-xs opacity-55">{cardListReleaseLabel}</p>
@@ -440,7 +440,7 @@
           {/if}
         </div>
         {@render metaBadges()}
-        <h2 class="line-clamp-2 text-sm font-semibold leading-snug">{getCardTitle()}</h2>
+        <h2 class="line-clamp-2 text-sm/snug font-semibold">{getCardTitle()}</h2>
         <p class="line-clamp-1 text-xs opacity-70">{getCharacterLabel()}</p>
       </div>
     {:else}
@@ -496,7 +496,7 @@
               />
             {:else}
               <div
-                class="flex h-full w-full items-center justify-center px-6 text-center text-sm opacity-70"
+                class="flex size-full items-center justify-center px-6 text-center text-sm opacity-70"
               >
                 {getCardTitle()}
               </div>
@@ -509,7 +509,7 @@
         </div>
       </div>
       <div class="card-body gap-1.5 p-4">
-        <h2 class="line-clamp-2 text-base font-semibold leading-snug">{getCardTitle()}</h2>
+        <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
         {@render metaBadges()}
         <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
       </div>
