@@ -1,5 +1,11 @@
 # @platform/i18n-runtime
 
+## 0.1.2
+
+### Patch Changes
+
+- bf96e6c: Add a branded, user-friendly route-level error page for content-site, split content-site i18n sources into scoped namespaces, and move scoped i18n bundle loading into the shared runtime package.
+
 ## 0.1.1
 
 ### Patch Changes
