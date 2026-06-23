@@ -9,12 +9,12 @@
   import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
   import { UNIT_CODE_ORDER } from "$lib/unit-profile";
-  import CardListCard from "$lib/components/CardListCard.svelte";
-  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
-  import PageHeader from "$lib/components/PageHeader.svelte";
+  import CardListCard from "$lib/components/card/CardListCard.svelte";
+  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
+  import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/RegionBadgeSwitch.svelte";
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { PageData } from "./$types";
 
   type CardListPagePayload = PageData["initialPage"];

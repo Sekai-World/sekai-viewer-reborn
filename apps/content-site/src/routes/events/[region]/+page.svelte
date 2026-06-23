@@ -9,12 +9,12 @@
   import { regionLabels, supportedRegions } from "$lib/regions";
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/unit-profile";
   import Icon from "@iconify/svelte";
-  import EventListCard from "$lib/components/EventListCard.svelte";
-  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
-  import PageHeader from "$lib/components/PageHeader.svelte";
+  import EventListCard from "$lib/components/event/EventListCard.svelte";
+  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
+  import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/RegionBadgeSwitch.svelte";
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { PageData } from "./$types";
 
   type EventListPagePayload = PageData["initialPage"];

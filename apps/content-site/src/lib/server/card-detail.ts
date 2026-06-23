@@ -406,6 +406,12 @@ export const parseCardDetailEpisodes = (payload: unknown): CardDetailEpisode[] =
           "release_condition_type"
         ]),
         releaseConditionSentence: pickFirstString(releaseCondition ?? node, ["sentence"]),
+        performanceBonus:
+          pickFirstNumber(node, ["power1BonusFixed", "power_1_bonus_fixed", "performanceBonus"]) ?? 0,
+        techniqueBonus:
+          pickFirstNumber(node, ["power2BonusFixed", "power_2_bonus_fixed", "techniqueBonus"]) ?? 0,
+        staminaBonus:
+          pickFirstNumber(node, ["power3BonusFixed", "power_3_bonus_fixed", "staminaBonus"]) ?? 0,
         costs: parseLooseTextList(node, ["costs", "costItems", "cost_items"]),
         rewards: parseLooseTextList(node, ["rewards", "rewardItems", "reward_items"])
       };

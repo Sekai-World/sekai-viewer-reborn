@@ -3,16 +3,16 @@
   import { resolve } from "$app/paths";
   import CardDetailAssetCard, {
     type CardAssetTab
-  } from "$lib/components/CardDetailAssetCard.svelte";
-  import CardDetailEpisodesCard from "$lib/components/CardDetailEpisodesCard.svelte";
-  import CardDetailInfoCard from "$lib/components/CardDetailInfoCard.svelte";
-  import CardDetailSkillCard from "$lib/components/CardDetailSkillCard.svelte";
-  import CardDetailStatsCard from "$lib/components/CardDetailStatsCard.svelte";
-  import EventDebugDialog from "$lib/components/EventDebugDialog.svelte";
-  import PageHeader from "$lib/components/PageHeader.svelte";
+  } from "$lib/components/card/CardDetailAssetCard.svelte";
+  import CardDetailEpisodesCard from "$lib/components/card/CardDetailEpisodesCard.svelte";
+  import CardDetailInfoCard from "$lib/components/card/CardDetailInfoCard.svelte";
+  import CardDetailSkillCard from "$lib/components/card/CardDetailSkillCard.svelte";
+  import CardDetailStatsCard from "$lib/components/card/CardDetailStatsCard.svelte";
+  import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
+  import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/RegionBadgeSwitch.svelte";
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import type { SupportedRegion } from "$lib/regions";
   import type { PageData } from "./$types";
@@ -60,6 +60,7 @@
   let techniqueLabel = $state(getInitialI18nText("techniqueLabel"));
   let staminaLabel = $state(getInitialI18nText("staminaLabel"));
   let totalLabel = $state(getInitialI18nText("totalLabel"));
+  let bonusSumLabel = $state(getInitialI18nText("bonusSumLabel"));
   let specialTrainingBonusLabel = $state(getInitialI18nText("specialTrainingBonusLabel"));
   let episodeBonusLabel = $state(getInitialI18nText("episodeBonusLabel"));
   let masterRankBonusLabel = $state(getInitialI18nText("masterRankBonusLabel"));
@@ -107,6 +108,7 @@
     techniqueLabel = translate("techniqueLabel");
     staminaLabel = translate("staminaLabel");
     totalLabel = translate("totalLabel");
+    bonusSumLabel = translate("bonusSumLabel");
     specialTrainingBonusLabel = translate("specialTrainingBonusLabel");
     episodeBonusLabel = translate("episodeBonusLabel");
     masterRankBonusLabel = translate("masterRankBonusLabel");
@@ -304,24 +306,26 @@
             {noSkillLabel}
           />
 
-          {#await data.params then params}
-            <CardDetailStatsCard
-              card={payload.card}
-              {params}
-              title={cardStatsTitle}
-              {levelLabel}
-              {performanceLabel}
-              {techniqueLabel}
-              {staminaLabel}
-              {totalLabel}
-              {specialTrainingBonusLabel}
-              {episodeBonusLabel}
-              {masterRankBonusLabel}
-              {noStatsLabel}
-            />
-          {/await}
-
           {#await data.episodes then episodes}
+            {#await data.params then params}
+              <CardDetailStatsCard
+                card={payload.card}
+                {params}
+                {episodes}
+                title={cardStatsTitle}
+                {levelLabel}
+                {performanceLabel}
+                {techniqueLabel}
+                {staminaLabel}
+                {totalLabel}
+                {bonusSumLabel}
+                {specialTrainingBonusLabel}
+                {episodeBonusLabel}
+                {masterRankBonusLabel}
+                {noStatsLabel}
+              />
+            {/await}
+
             <CardDetailEpisodesCard
               {episodes}
               title={cardEpisodesTitle}

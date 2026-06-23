@@ -2,9 +2,9 @@
   import { asset, resolve } from "$app/paths";
   import type { SupportedRegion } from "$lib/regions";
   import { getEventBannerAssetURL } from "$lib/assets";
-  import EventAssetImage from "$lib/components/EventAssetImage.svelte";
-  import EventCardFrame from "$lib/components/EventCardFrame.svelte";
-  import EventCountdownCard from "$lib/components/EventCountdownCard.svelte";
+  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
+  import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
   import {
     CURRENT_EVENT_CARD_FRAME_CLASS,
     EVENT_CARD_IMAGE_CLASS,

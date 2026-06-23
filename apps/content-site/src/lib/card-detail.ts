@@ -75,6 +75,9 @@ type CardDetailEpisode = {
   episodeNo: number | null;
   releaseConditionType: string | null;
   releaseConditionSentence: string | null;
+  performanceBonus: number;
+  techniqueBonus: number;
+  staminaBonus: number;
   costs: string[];
   rewards: string[];
 };

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import Breadcrumbs, { type BreadcrumbItem } from "$lib/components/Breadcrumbs.svelte";
+  import Breadcrumbs, { type BreadcrumbItem } from "$lib/components/shared/Breadcrumbs.svelte";
 
   let {
     breadcrumbs,

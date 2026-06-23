@@ -4,9 +4,9 @@
   import { getEventBannerAssetURL } from "$lib/assets";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/date-time";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import EventAssetImage from "$lib/components/EventAssetImage.svelte";
+  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { getEventTypeDisplay } from "$lib/event";
-  import EventCardFrame from "$lib/components/EventCardFrame.svelte";
+  import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import {
     EVENT_LIST_CARD_FRAME_CLASS,
     EVENT_LIST_CARD_IMAGE_CLASS,

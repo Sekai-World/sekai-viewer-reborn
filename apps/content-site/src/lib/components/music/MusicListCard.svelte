@@ -2,7 +2,7 @@
   import { getMusicJacketAssetURL } from "$lib/assets";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { toTimestampMs } from "$lib/date-time";
-  import EventAssetImage from "$lib/components/EventAssetImage.svelte";
+  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import type { SupportedRegion } from "$lib/regions";
 
   type MusicListItem = {

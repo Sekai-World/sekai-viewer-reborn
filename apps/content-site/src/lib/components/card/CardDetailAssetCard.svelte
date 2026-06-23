@@ -4,7 +4,7 @@
     getCardFullAssetURL
   } from "$lib/assets";
   import type { CardDetail } from "$lib/card-detail";
-  import EventAssetImage from "$lib/components/EventAssetImage.svelte";
+  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import type { SupportedRegion } from "$lib/regions";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
@@ -79,7 +79,7 @@
         : "text-base-content/70 hover:bg-base-100/80"
     }`;
   const getPreviewAspectClass = (): string =>
-    isCutoutTab(resolvedTab) ? "aspect-3/4" : "aspect-[21/10]";
+    isCutoutTab(resolvedTab) ? "aspect-4/3" : "aspect-[21/10]";
   const getAssetUrl = (
     tab: CardAssetTab,
     assetRegion = getAssetRegion(),
@@ -127,7 +127,7 @@
     fallbackLabel={imageUnavailableLabel}
     buttonClass="block h-full w-full cursor-zoom-in overflow-hidden"
     interactive={true}
-    imageClass={`h-full w-full ${isCutoutTab(resolvedTab) ? "object-contain p-4" : "object-contain"}`}
+    imageClass={`h-full w-full ${isCutoutTab(resolvedTab) ? "object-contain p-2" : "object-contain"}`}
     onclick={() => {
       openPreview(src);
     }}

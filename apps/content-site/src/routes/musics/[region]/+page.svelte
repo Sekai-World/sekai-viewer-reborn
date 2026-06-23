@@ -6,12 +6,12 @@
   import { getLocalCharacterThumbnailAssetURL } from "$lib/character-assets";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { toTimestampMs } from "$lib/date-time";
-  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
-  import MusicListCard from "$lib/components/MusicListCard.svelte";
-  import PageHeader from "$lib/components/PageHeader.svelte";
+  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
+  import MusicListCard from "$lib/components/music/MusicListCard.svelte";
+  import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/RegionBadgeSwitch.svelte";
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
   import { regionLabels, supportedRegions } from "$lib/regions";
   import {

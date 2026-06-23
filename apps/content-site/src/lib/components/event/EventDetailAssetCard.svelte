@@ -7,7 +7,7 @@
   } from "$lib/assets";
   import type { EventDetail } from "$lib/event-detail";
   import type { SupportedRegion } from "$lib/regions";
-  import EventAssetImage from "$lib/components/EventAssetImage.svelte";
+  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
 
