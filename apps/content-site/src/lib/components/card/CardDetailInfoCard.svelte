@@ -83,7 +83,12 @@
     card.supportUnit !== "none" || card.character?.unit === "piapro";
 </script>
 
-{#snippet row(label: string, value: string | null, iconUrl: string | null = null)}
+{#snippet row(
+  label: string,
+  value: string | null,
+  iconUrl: string | null = null,
+  iconFrame = true
+)}
   {#if value}
     <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-4 py-3">
       <div class="min-w-0">
@@ -91,18 +96,29 @@
         <dd class="mt-1 truncate text-sm font-medium">{value}</dd>
       </div>
       {#if iconUrl}
-        <span
-          class="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
-        >
+        {#if iconFrame}
+          <span
+            class="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
+          >
+            <img
+              src={iconUrl}
+              alt=""
+              aria-hidden="true"
+              class="size-11 max-w-none object-contain"
+              loading="lazy"
+              decoding="async"
+            />
+          </span>
+        {:else}
           <img
             src={iconUrl}
             alt=""
             aria-hidden="true"
-            class="size-11 max-w-none object-contain"
+            class="size-11 shrink-0 object-contain"
             loading="lazy"
             decoding="async"
           />
-        </span>
+        {/if}
       {/if}
     </div>
   {/if}
@@ -150,7 +166,7 @@
       {#if shouldShowSupportUnit()}
         {@render row(supportUnitLabel, getDisplayUnitName(card.supportUnit), getUnitIconUrl(card.supportUnit))}
       {/if}
-      {@render row(attrLabel, formatLabel(card.attr), getAttrIconUrl())}
+      {@render row(attrLabel, formatLabel(card.attr), getAttrIconUrl(), false)}
       {@render rarityRow()}
       {@render row(typeLabel, formatLabel(card.cardSupplyType))}
       {@render row(releaseAtLabel, formatDisplayDateTime(card.releaseAt ?? card.archivePublishedAt, displayLocale))}
