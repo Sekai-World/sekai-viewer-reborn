@@ -2,7 +2,7 @@
   import { resolve } from "$app/paths";
   import type { SupportedRegion } from "$lib/regions";
   import { getEventBannerAssetURL } from "$lib/assets";
-  import { toTimestampMs } from "$lib/date-time";
+  import { formatDisplayDateTime, toTimestampMs } from "$lib/date-time";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import EventAssetImage from "$lib/components/EventAssetImage.svelte";
   import { getEventTypeDisplay } from "$lib/event";
@@ -21,6 +21,7 @@
     unit: string | null;
     assetBundleName: string | null;
     startAt: string | number | null;
+    endAt: string | number | null;
   };
 
   let {
@@ -80,6 +81,14 @@
     hasSpoiler() &&
     contentDisplaySettings.mosaickedSpoilerContent &&
     (!spoilerRevealed || spoilerRevealAnimating);
+
+  const formatEventDateTime = (value: string | number | null): string => {
+    const timestampMs = toTimestampMs(value);
+    return formatDisplayDateTime(timestampMs ?? value, uiLocale);
+  };
+
+  const getEventTimeRange = (): string =>
+    `${formatEventDateTime(item.startAt)} - ${formatEventDateTime(item.endAt)}`;
 
   const clearSpoilerRevealTimeout = (): void => {
     if (spoilerRevealTimeout === null) {
@@ -191,6 +200,7 @@
 
     <div class="px-4 pb-4 pt-3">
       <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
+      <p class="mt-1 text-xs/relaxed opacity-65">{getEventTimeRange()}</p>
     </div>
   {/if}
 </EventCardFrame>
