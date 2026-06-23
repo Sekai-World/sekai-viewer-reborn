@@ -1,6 +1,7 @@
 <script lang="ts">
   import { asset } from "$app/paths";
   import { getEventPointIconAssetURL } from "$lib/assets";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/character-assets";
   import { formatDisplayDateTime } from "$lib/date-time";
   import type { BannerGameCharacter, EventDetail } from "$lib/event-detail";
   import { getEventTypeDisplay } from "$lib/event";
@@ -71,8 +72,6 @@
     const slug = unit.trim().toLowerCase();
     return unitIconSlugs.has(slug) ? asset(`/icons/icon_${slug}.png`) : null;
   };
-  const getCharacterIconUrl = (characterId: number): string =>
-    asset(`/chr_ts/chr_ts_${characterId}_g1.png`);
 </script>
 
 <article class="card content-card-shell shadow-sm">
@@ -171,7 +170,7 @@
             class="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
           >
             <img
-              src={getCharacterIconUrl(char.id)}
+              src={getLocalCharacterThumbnailAssetURL(char.id) ?? ""}
               alt={getCharacterDisplayName(char)}
               class="size-11 rounded-full object-contain"
               loading="lazy"

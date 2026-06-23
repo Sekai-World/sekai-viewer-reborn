@@ -3,6 +3,7 @@
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/character-assets";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { toTimestampMs } from "$lib/date-time";
   import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
@@ -192,15 +193,6 @@
   };
 
   const mapLegacyVocalUnitToTag = (value: string): string => musicTagByUnitCode[value] ?? value;
-
-  const getCharacterThumbnailUrl = (value: string): string | null => {
-    const id = Number.parseInt(value, 10);
-    if (!Number.isFinite(id)) {
-      return null;
-    }
-
-    return asset(`/chr_ts/chr_ts_${id}_g1.png`);
-  };
 
   const isSpoilerMusic = (item: MusicListItem): boolean => {
     const publishedAtMs = toTimestampMs(item.publishedAt);
@@ -881,7 +873,7 @@
                 aria-label={character}
               />
               <img
-                src={getCharacterThumbnailUrl(character) ?? ""}
+                src={getLocalCharacterThumbnailAssetURL(character) ?? ""}
                 alt=""
                 aria-hidden="true"
                 class="size-7 rounded-full object-contain"
