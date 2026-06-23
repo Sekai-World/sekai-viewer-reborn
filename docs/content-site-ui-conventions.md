@@ -80,12 +80,12 @@ Direct image scaling can make banners feel soft or blurry due to browser resampl
 
 Current shared card system:
 
-- `apps/content-site/src/lib/components/EventCardFrame.svelte`
-- `apps/content-site/src/lib/components/CardListCard.svelte`
-- `apps/content-site/src/lib/components/CurrentEventCard.svelte`
-- `apps/content-site/src/lib/components/EventListCard.svelte`
-- `apps/content-site/src/lib/components/MusicListCard.svelte`
-- `apps/content-site/src/lib/components/EventAssetImage.svelte`
+- `apps/content-site/src/lib/components/shared/EventCardFrame.svelte`
+- `apps/content-site/src/lib/components/shared/EventAssetImage.svelte`
+- `apps/content-site/src/lib/components/card/CardListCard.svelte`
+- `apps/content-site/src/lib/components/event/CurrentEventCard.svelte`
+- `apps/content-site/src/lib/components/event/EventListCard.svelte`
+- `apps/content-site/src/lib/components/music/MusicListCard.svelte`
 - `apps/content-site/src/lib/styles/event-card.ts`
 
 Rules:
@@ -100,10 +100,10 @@ Rules:
 
 Current shared navigation/header system:
 
-- `apps/content-site/src/lib/components/Breadcrumbs.svelte`
-- `apps/content-site/src/lib/components/PageHeader.svelte`
-- `apps/content-site/src/lib/components/RegionBadgeSwitch.svelte`
-- `apps/content-site/src/lib/components/ListToolbarButton.svelte`
+- `apps/content-site/src/lib/components/shared/Breadcrumbs.svelte`
+- `apps/content-site/src/lib/components/shared/PageHeader.svelte`
+- `apps/content-site/src/lib/components/shared/RegionBadgeSwitch.svelte`
+- `apps/content-site/src/lib/components/shared/ListToolbarButton.svelte`
 
 Rules:
 
