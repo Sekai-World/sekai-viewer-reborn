@@ -233,6 +233,44 @@ export const getCardThumbnailAssetURL = (
   );
 };
 
+export const getCardFullAssetURL = (
+  assetBundleName: string,
+  trained = false,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `character/member/${normalizedAssetBundleName}/card_${trained ? "after_training" : "normal"}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getCardCutoutAssetURL = (
+  assetBundleName: string,
+  trained = false,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `character/member_cutout/${normalizedAssetBundleName}/${trained ? "after_training" : "normal"}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
 export const getMusicJacketAssetURL = (
   assetBundleName: string,
   server: AssetServer = "jp",

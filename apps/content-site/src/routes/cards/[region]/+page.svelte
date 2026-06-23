@@ -3,6 +3,7 @@
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/character-assets";
   import { toTimestampMs } from "$lib/date-time";
   import { getContentDisplaySettings } from "$lib/content-display-settings";
   import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
@@ -177,15 +178,6 @@
     isPiaproUnitSelected(units) ? supportUnits : [];
 
   const getAttrIconUrl = (value: string): string => asset(`/card_attr/icon_attribute_${value}.png`);
-
-  const getCharacterThumbnailUrl = (value: string): string | null => {
-    const id = Number.parseInt(value, 10);
-    if (!Number.isFinite(id)) {
-      return null;
-    }
-
-    return asset(`/chr_ts/chr_ts_${id}_g1.png`);
-  };
 
   const isSpoilerCard = (item: CardListItem): boolean => {
     const releaseAtMs = toTimestampMs(item.releaseAt ?? item.archivePublishedAt);
@@ -710,6 +702,9 @@
     return query.length > 0 ? `${pathname}?${query}` : pathname;
   };
 
+  const getCardDetailHref = (item: CardListItem): string =>
+    resolve("/card/[region]/[id]", { region: data.region, id: item.id });
+
   const getRegionBadgeOptions = (): RegionBadgeOption[] =>
     supportedRegions.map((regionOption) =>
       regionOption === data.region
@@ -972,16 +967,22 @@
   {:else}
     <div class={getListGridClass()}>
       {#each visibleItems as item (item.id)}
-        <CardListCard
-          region={data.region}
-          {item}
-          {viewMode}
-          {idLabel}
-          {spoilerContentLabel}
-          {cardListCharacterFallback}
-          {cardListReleaseLabel}
-          {cardImageAltSuffix}
-        />
+        <a
+          href={getCardDetailHref(item)}
+          class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+          aria-label={`${item.prefix} ${idLabel}${item.id}`}
+        >
+          <CardListCard
+            region={data.region}
+            {item}
+            {viewMode}
+            {idLabel}
+            {spoilerContentLabel}
+            {cardListCharacterFallback}
+            {cardListReleaseLabel}
+            {cardImageAltSuffix}
+          />
+        </a>
       {/each}
     </div>
 
@@ -1129,9 +1130,9 @@
                 }}
                 aria-label={option.label}
               />
-              {#if getCharacterThumbnailUrl(option.value)}
+              {#if getLocalCharacterThumbnailAssetURL(option.value)}
                 <img
-                  src={getCharacterThumbnailUrl(option.value) ?? ""}
+                  src={getLocalCharacterThumbnailAssetURL(option.value) ?? ""}
                   alt=""
                   aria-hidden="true"
                   class="size-7 rounded-full object-contain"

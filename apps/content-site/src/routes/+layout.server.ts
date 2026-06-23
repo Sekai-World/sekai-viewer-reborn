@@ -3,7 +3,7 @@ import { loadI18nMessageBundle, type I18nNamespace } from "$lib/i18n";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
 
 const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
-  if (pathname.startsWith("/cards/")) {
+  if (pathname.startsWith("/card/") || pathname.startsWith("/cards/")) {
     return ["common", "card"];
   }
 
