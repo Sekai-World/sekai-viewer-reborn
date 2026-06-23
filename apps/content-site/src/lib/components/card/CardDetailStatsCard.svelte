@@ -205,7 +205,7 @@
 
 {#snippet statPanel(label: string, value: number | null, type: "performance" | "technique" | "stamina" | "total")}
   <div class={`content-card-inset rounded-xl border px-4 py-2.5 ${getStatAccentClass(type)}`}>
-    <div class="flex items-baseline justify-between gap-4">
+    <div class="flex items-center justify-between gap-4">
       <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{label}</p>
       <p class="text-right text-lg font-semibold tabular-nums text-base-content">
         {formatNumber(value)}
@@ -216,7 +216,7 @@
 
 {#snippet totalPanel(value: number | null)}
   <div class={`content-card-inset rounded-xl border px-4 py-2.5 ${getStatAccentClass("total")}`}>
-    <div class="flex items-baseline justify-between gap-4">
+    <div class="flex items-center justify-between gap-4">
       <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{totalLabel}</p>
       <p class="text-right text-lg font-semibold tabular-nums text-base-content">
         {formatNumber(value)}
