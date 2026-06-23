@@ -1,5 +1,5 @@
 import { redirect, type RequestHandler } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/region";
+import { normalizeRegion } from "$lib/i18n/region";
 
 export const GET: RequestHandler = ({ params, url }) => {
   const region = normalizeRegion(params.region);

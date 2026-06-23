@@ -13,8 +13,8 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
-  import type { SupportedRegion } from "$lib/regions";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();

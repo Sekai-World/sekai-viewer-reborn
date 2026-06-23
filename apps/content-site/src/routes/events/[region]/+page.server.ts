@@ -1,5 +1,5 @@
 import { getEventsByRegionCurrent, getEventsByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/region";
+import { normalizeRegion } from "$lib/i18n/region";
 import { parseEventDetail } from "$lib/server/event-detail";
 import {
   createEventListRequestQuery,

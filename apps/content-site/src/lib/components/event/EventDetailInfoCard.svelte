@@ -1,12 +1,12 @@
 <script lang="ts">
   import { asset } from "$app/paths";
-  import { getEventPointIconAssetURL } from "$lib/assets";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/character-assets";
-  import { formatDisplayDateTime } from "$lib/date-time";
-  import type { BannerGameCharacter, EventDetail } from "$lib/event-detail";
-  import { getEventTypeDisplay } from "$lib/event";
-  import type { SupportedRegion } from "$lib/regions";
-  import { formatUnitFallbackLabel } from "$lib/unit-profile";
+  import { getEventPointIconAssetURL } from "$lib/assets/index";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import { formatDisplayDateTime } from "$lib/time/date-time";
+  import type { BannerGameCharacter, EventDetail } from "$lib/domain/event-detail";
+  import { getEventTypeDisplay } from "$lib/domain/event";
+  import type { SupportedRegion } from "$lib/domain/regions";
+  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
 
   const unitIconSlugs = new Set([

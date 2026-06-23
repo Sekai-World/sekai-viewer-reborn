@@ -1,11 +1,11 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import type { SupportedRegion } from "$lib/regions";
-  import { getEventBannerAssetURL } from "$lib/assets";
-  import { formatDisplayDateTime, toTimestampMs } from "$lib/date-time";
-  import { getContentDisplaySettings } from "$lib/content-display-settings";
+  import type { SupportedRegion } from "$lib/domain/regions";
+  import { getEventBannerAssetURL } from "$lib/assets/index";
+  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
+  import { getContentDisplaySettings } from "$lib/settings/content-display";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
-  import { getEventTypeDisplay } from "$lib/event";
+  import { getEventTypeDisplay } from "$lib/domain/event";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import {
     EVENT_LIST_CARD_FRAME_CLASS,

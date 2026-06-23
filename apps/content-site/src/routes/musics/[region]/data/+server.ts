@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/region";
+import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   createMusicListPage,

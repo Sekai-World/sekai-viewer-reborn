@@ -7,8 +7,8 @@
   import {
     setContentDisplaySettings,
     type ContentDisplaySettingsState
-  } from "$lib/content-display-settings";
-  import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n-config";
+  } from "$lib/settings/content-display";
+  import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n/config";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
@@ -18,14 +18,14 @@
     getThemeModeLabel,
     setI18nLocale,
     tCommon
-  } from "$lib/i18n";
+  } from "$lib/i18n/runtime";
   import {
     DEFAULT_REGION,
     DEFAULT_UI_LOCALE,
     normalizeRegion,
     normalizeUiLocale,
     UI_LOCALE_COOKIE_NAME
-  } from "$lib/region";
+  } from "$lib/i18n/region";
   import type { LayoutData } from "./$types";
 
   type ThemeMode = "light" | "dark" | "auto";

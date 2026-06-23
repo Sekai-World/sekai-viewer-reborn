@@ -3,11 +3,11 @@
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
-  import { toTimestampMs } from "$lib/date-time";
-  import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
-  import { regionLabels, supportedRegions } from "$lib/regions";
-  import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/unit-profile";
+  import { toTimestampMs } from "$lib/time/date-time";
+  import { getContentDisplaySettings } from "$lib/settings/content-display";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { regionLabels, supportedRegions } from "$lib/domain/regions";
+  import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
   import EventListCard from "$lib/components/event/EventListCard.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";

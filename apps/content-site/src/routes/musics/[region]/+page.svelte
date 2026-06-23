@@ -3,22 +3,22 @@
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/character-assets";
-  import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import { toTimestampMs } from "$lib/date-time";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import { getContentDisplaySettings } from "$lib/settings/content-display";
+  import { toTimestampMs } from "$lib/time/date-time";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import MusicListCard from "$lib/components/music/MusicListCard.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
-  import { regionLabels, supportedRegions } from "$lib/regions";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
     formatUnitFallbackLabel,
     musicTagByUnitCode,
     unitCodeByMusicTag
-  } from "$lib/unit-profile";
+  } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
   import type { PageData } from "./$types";
 

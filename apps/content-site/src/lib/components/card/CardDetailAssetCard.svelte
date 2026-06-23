@@ -2,10 +2,10 @@
   import {
     getCardCutoutAssetURL,
     getCardFullAssetURL
-  } from "$lib/assets";
-  import type { CardDetail } from "$lib/card-detail";
+  } from "$lib/assets/index";
+  import type { CardDetail } from "$lib/domain/card-detail";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
-  import type { SupportedRegion } from "$lib/regions";
+  import type { SupportedRegion } from "$lib/domain/regions";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
 

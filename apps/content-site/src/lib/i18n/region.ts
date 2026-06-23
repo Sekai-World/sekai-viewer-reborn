@@ -1,5 +1,5 @@
-import { supportedUiLocales, type SupportedUiLocale } from "$lib/i18n-config";
-import { supportedRegions, type SupportedRegion } from "$lib/regions";
+import { supportedUiLocales, type SupportedUiLocale } from "$lib/i18n/config";
+import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 
 export const UI_LOCALE_COOKIE_NAME = "content_site_ui_locale";
 

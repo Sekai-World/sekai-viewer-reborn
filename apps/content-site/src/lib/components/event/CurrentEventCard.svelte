@@ -1,7 +1,7 @@
 <script lang="ts">
   import { asset, resolve } from "$app/paths";
-  import type { SupportedRegion } from "$lib/regions";
-  import { getEventBannerAssetURL } from "$lib/assets";
+  import type { SupportedRegion } from "$lib/domain/regions";
+  import { getEventBannerAssetURL } from "$lib/assets/index";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
@@ -10,7 +10,7 @@
     EVENT_CARD_IMAGE_CLASS,
     EVENT_CARD_MEDIA_CLASS
   } from "$lib/styles/event-card";
-  import { formatUnitFallbackLabel } from "$lib/unit-profile";
+  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
 
   type CurrentEventSummary = {
     id: string;

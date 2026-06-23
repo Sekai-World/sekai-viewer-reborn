@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { CardDetailSkill } from "$lib/card-detail";
+  import type { CardDetailSkill } from "$lib/domain/card-detail";
   import Icon from "@iconify/svelte";
 
   let {

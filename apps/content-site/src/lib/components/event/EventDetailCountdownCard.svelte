@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { toTimestampMs } from "$lib/date-time";
-  import type { EventDetail } from "$lib/event-detail";
+  import { toTimestampMs } from "$lib/time/date-time";
+  import type { EventDetail } from "$lib/domain/event-detail";
   import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
   import Icon from "@iconify/svelte";
 

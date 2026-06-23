@@ -1,5 +1,5 @@
 import { PUBLIC_REMOTE_ASSET_BASE_URL } from "$env/static/public";
-import type { SupportedRegion } from "$lib/regions";
+import type { SupportedRegion } from "$lib/domain/regions";
 
 const trimTrailingSlash = (value: string): string => {
   const trimmed = value.trim();

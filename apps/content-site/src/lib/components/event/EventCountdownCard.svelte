@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
-  import { toTimestampMs } from "$lib/date-time";
-  import { setI18nLocale, tCommon } from "$lib/i18n";
+  import { toTimestampMs } from "$lib/time/date-time";
+  import { setI18nLocale, tCommon } from "$lib/i18n/runtime";
   import { onMount } from "svelte";
 
   type CountdownValues = {

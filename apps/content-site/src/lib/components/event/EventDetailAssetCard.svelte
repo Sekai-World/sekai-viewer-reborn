@@ -4,9 +4,9 @@
     getEventBannerAssetURL,
     getEventCharacterAssetURL,
     getEventLogoAssetURL
-  } from "$lib/assets";
-  import type { EventDetail } from "$lib/event-detail";
-  import type { SupportedRegion } from "$lib/regions";
+  } from "$lib/assets/index";
+  import type { EventDetail } from "$lib/domain/event-detail";
+  import type { SupportedRegion } from "$lib/domain/regions";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";

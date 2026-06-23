@@ -1,6 +1,6 @@
 import type { LayoutServerLoad } from "./$types";
-import { loadI18nMessageBundle, type I18nNamespace } from "$lib/i18n";
-import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
+import { loadI18nMessageBundle, type I18nNamespace } from "$lib/i18n/runtime";
+import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 
 const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
   if (pathname.startsWith("/card/") || pathname.startsWith("/cards/")) {

@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import { getEventsByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/region";
+import { normalizeRegion } from "$lib/i18n/region";
 import {
   createEventListRequestQuery,
   DEFAULT_EVENT_LIST_PAGE_SIZE,

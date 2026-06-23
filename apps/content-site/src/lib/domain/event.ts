@@ -1,4 +1,4 @@
-import { tCommon } from "$lib/i18n";
+import { tCommon } from "$lib/i18n/runtime";
 
 const eventTypeTextKeyMap = {
   marathon: "eventTypeValues.marathon",

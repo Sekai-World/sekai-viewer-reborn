@@ -1,9 +1,9 @@
 <script lang="ts">
   import { asset } from "$app/paths";
-  import type { CardDetail, CardDetailCharacter } from "$lib/card-detail";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/character-assets";
-  import { formatDisplayDateTime } from "$lib/date-time";
-  import { formatUnitFallbackLabel } from "$lib/unit-profile";
+  import type { CardDetail, CardDetailCharacter } from "$lib/domain/card-detail";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import { formatDisplayDateTime } from "$lib/time/date-time";
+  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
 
   let {

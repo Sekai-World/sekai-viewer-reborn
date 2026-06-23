@@ -1,9 +1,9 @@
 <script lang="ts">
   import { asset } from "$app/paths";
-  import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets";
-  import { toTimestampMs } from "$lib/date-time";
-  import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import type { SupportedRegion } from "$lib/regions";
+  import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets/index";
+  import { toTimestampMs } from "$lib/time/date-time";
+  import { getContentDisplaySettings } from "$lib/settings/content-display";
+  import type { SupportedRegion } from "$lib/domain/regions";
 
   type CardListCardItem = {
     id: string;

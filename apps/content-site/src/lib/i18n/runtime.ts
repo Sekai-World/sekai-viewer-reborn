@@ -14,8 +14,8 @@ import eventSourceMessages from "@platform/i18n-source/content-site/event.json";
 import homeSourceMessages from "@platform/i18n-source/content-site/home.json";
 import musicSourceMessages from "@platform/i18n-source/content-site/music.json";
 import serverSourceMessages from "@platform/i18n-source/content-site/server.json";
-import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n-config";
-import { normalizeUiLocale } from "$lib/region";
+import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n/config";
+import { normalizeUiLocale } from "$lib/i18n/region";
 
 const toRepoLocale = (uiLocale: SupportedUiLocale): string =>
   repoLocaleByUiLocale[uiLocale] ?? "en";

@@ -5,10 +5,10 @@ import {
   getCardsByRegionByIdParams,
   getCardsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { getServerI18nText } from "$lib/i18n";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
-import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/regions";
-import type { CardDetail, CardDetailEpisode, CardDetailParams } from "$lib/card-detail";
+import { getServerI18nText } from "$lib/i18n/runtime";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
+import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import type { CardDetail, CardDetailEpisode, CardDetailParams } from "$lib/domain/card-detail";
 import {
   parseCardDetail,
   parseCardDetailEpisodes,

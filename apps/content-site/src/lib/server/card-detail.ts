@@ -1,4 +1,4 @@
-import type { CardDetail, CardDetailEpisode, CardDetailParams } from "$lib/card-detail";
+import type { CardDetail, CardDetailEpisode, CardDetailParams } from "$lib/domain/card-detail";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;

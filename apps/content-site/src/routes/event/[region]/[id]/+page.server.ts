@@ -4,9 +4,9 @@ import {
   getEventsByRegionById,
   getEventsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { getServerI18nText } from "$lib/i18n";
-import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/regions";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/region";
+import { getServerI18nText } from "$lib/i18n/runtime";
+import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { parseEventDetail, type EventDetail } from "$lib/server/event-detail";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
