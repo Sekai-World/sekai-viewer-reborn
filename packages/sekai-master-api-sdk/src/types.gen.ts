@@ -28,6 +28,33 @@ export type MasterdataSyncStatus = {
     updated_at?: string;
 };
 
+export type SharedCardEpisodeResponse = {
+    cardId?: unknown;
+    episodeNo?: unknown;
+    id?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedCardEpisodesResponse = {
+    items?: Array<SharedCardEpisodeResponse>;
+};
+
+export type SharedCardEventResponse = {
+    bonusRate?: unknown;
+    cardId?: unknown;
+    event?: {
+        [key: string]: unknown;
+    };
+    eventId?: unknown;
+    finalBonusRateMax?: unknown;
+    finalBonusRateMin?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedCardEventsResponse = {
+    items?: Array<SharedCardEventResponse>;
+};
+
 export type SharedCardListResponse = {
     items?: Array<SharedCardObjectResponse>;
     pagination?: SharedCardPagination;
@@ -441,12 +468,6 @@ export type SharedProfileUser = {
     email?: string;
     id?: string;
     username?: string;
-};
-
-export type SharedRecordItemsResponse = {
-    items?: Array<{
-        [key: string]: unknown;
-    }>;
 };
 
 export type SharedRegionAvailabilityResponse = {
@@ -931,10 +952,56 @@ export type GetCardsByRegionByIdEpisodesResponses = {
     /**
      * OK
      */
-    200: SharedRecordItemsResponse;
+    200: SharedCardEpisodesResponse;
 };
 
 export type GetCardsByRegionByIdEpisodesResponse = GetCardsByRegionByIdEpisodesResponses[keyof GetCardsByRegionByIdEpisodesResponses];
+
+export type GetCardsByRegionByIdEventsData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Card ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/cards/{region}/{id}/events';
+};
+
+export type GetCardsByRegionByIdEventsErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCardsByRegionByIdEventsError = GetCardsByRegionByIdEventsErrors[keyof GetCardsByRegionByIdEventsErrors];
+
+export type GetCardsByRegionByIdEventsResponses = {
+    /**
+     * OK
+     */
+    200: SharedCardEventsResponse;
+};
+
+export type GetCardsByRegionByIdEventsResponse = GetCardsByRegionByIdEventsResponses[keyof GetCardsByRegionByIdEventsResponses];
 
 export type GetCardsByRegionByIdParamsData = {
     body?: never;
@@ -1847,7 +1914,7 @@ export type GetMusicsByRegionListData = {
          */
         tag?: string;
         /**
-         * Music difficulty playLevel. Supports 30, >30, >=30, <30, <=30, or 26-30
+         * Music difficulty playLevel. Supports 30, >30, >=30, <30, <=30, or 26-30. Aliases: play_level, level
          */
         playLevel?: string;
         /**
