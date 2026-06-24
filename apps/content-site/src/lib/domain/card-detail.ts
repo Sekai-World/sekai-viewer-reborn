@@ -82,11 +82,26 @@ type CardDetailEpisode = {
   rewards: string[];
 };
 
+type CardRelatedEvent = {
+  id: string;
+  title: string;
+  eventType: string | null;
+  assetBundleName: string | null;
+  startAt: string | number | null;
+  aggregateAt: string | number | null;
+  closedAt: string | number | null;
+  bonusRate: number | null;
+  finalBonusRateMin: number | null;
+  finalBonusRateMax: number | null;
+  isDisplayCardStory: boolean;
+};
+
 export type {
   CardDetail,
   CardDetailCharacter,
   CardDetailEpisode,
   CardDetailParams,
+  CardRelatedEvent,
   CardDetailSkill,
   CardDetailSkillEffect,
   CardDetailSkillEffectDetail,

@@ -1,4 +1,9 @@
-import type { CardDetail, CardDetailEpisode, CardDetailParams } from "$lib/domain/card-detail";
+import type {
+  CardDetail,
+  CardDetailEpisode,
+  CardDetailParams,
+  CardRelatedEvent
+} from "$lib/domain/card-detail";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -18,6 +23,9 @@ const getStringLike = (value: unknown): string | null => {
 
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const getBoolean = (value: unknown): boolean | null =>
+  typeof value === "boolean" ? value : null;
 
 const getDateValue = (value: unknown): string | number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -92,6 +100,20 @@ const pickFirstNumber = (
 ): number | null => {
   for (const key of keys) {
     const value = getNumber(source[key]);
+    if (value !== null) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
+const pickFirstBoolean = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): boolean | null => {
+  for (const key of keys) {
+    const value = getBoolean(source[key]);
     if (value !== null) {
       return value;
     }
@@ -417,3 +439,38 @@ export const parseCardDetailEpisodes = (payload: unknown): CardDetailEpisode[] =
       };
     })
     .filter((episode): episode is CardDetailEpisode => episode !== null);
+
+export const parseCardRelatedEvents = (payload: unknown): CardRelatedEvent[] =>
+  parseLooseItemList(payload)
+    .map((value) => {
+      const node = getObject(value);
+      if (!node) {
+        return null;
+      }
+
+      const eventNode = getNestedObject(node, ["event"]);
+      if (!eventNode) {
+        return null;
+      }
+
+      const id = pickFirstStringLike(eventNode, ["id", "eventId"]);
+      if (!id) {
+        return null;
+      }
+
+      return {
+        id,
+        title: pickFirstString(eventNode, ["name", "title"]) ?? `#${id}`,
+        eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
+        assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"]),
+        startAt: pickFirstDateValue(eventNode, ["startAt", "start_at"]),
+        aggregateAt: pickFirstDateValue(eventNode, ["aggregateAt", "aggregate_at"]),
+        closedAt: pickFirstDateValue(eventNode, ["closedAt", "closed_at"]),
+        bonusRate: pickFirstNumber(node, ["bonusRate", "bonus_rate"]),
+        finalBonusRateMin: pickFirstNumber(node, ["finalBonusRateMin", "final_bonus_rate_min"]),
+        finalBonusRateMax: pickFirstNumber(node, ["finalBonusRateMax", "final_bonus_rate_max"]),
+        isDisplayCardStory:
+          pickFirstBoolean(node, ["isDisplayCardStory", "is_display_card_story"]) ?? false
+      };
+    })
+    .filter((event): event is CardRelatedEvent => event !== null);

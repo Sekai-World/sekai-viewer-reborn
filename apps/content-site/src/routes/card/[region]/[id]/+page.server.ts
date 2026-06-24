@@ -2,17 +2,24 @@ import { dev } from "$app/environment";
 import {
   getCardsByRegionById,
   getCardsByRegionByIdEpisodes,
+  getCardsByRegionByIdEvents,
   getCardsByRegionByIdParams,
   getCardsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
 import { getServerI18nText } from "$lib/i18n/runtime";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
-import type { CardDetail, CardDetailEpisode, CardDetailParams } from "$lib/domain/card-detail";
+import type {
+  CardDetail,
+  CardDetailEpisode,
+  CardDetailParams,
+  CardRelatedEvent
+} from "$lib/domain/card-detail";
 import {
   parseCardDetail,
   parseCardDetailEpisodes,
-  parseCardDetailParams
+  parseCardDetailParams,
+  parseCardRelatedEvents
 } from "$lib/server/card-detail";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
@@ -230,6 +237,33 @@ const fetchCardEpisodes = async ({
   }
 };
 
+const fetchCardEvents = async ({
+  baseUrl,
+  region,
+  cardId,
+  invalidCardIdMessage
+}: {
+  baseUrl: string;
+  region: SupportedRegion;
+  cardId: string;
+  invalidCardIdMessage: string | null;
+}): Promise<CardRelatedEvent[]> => {
+  if (invalidCardIdMessage) {
+    return [];
+  }
+
+  try {
+    const response = await getCardsByRegionByIdEvents({
+      baseUrl,
+      path: { region, id: cardId }
+    });
+
+    return response.error ? [] : parseCardRelatedEvents(response.data);
+  } catch {
+    return [];
+  }
+};
+
 export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const cardId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
@@ -279,6 +313,12 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
       invalidCardIdMessage: invalidMessage
     }),
     episodes: fetchCardEpisodes({
+      baseUrl,
+      region,
+      cardId,
+      invalidCardIdMessage: invalidMessage
+    }),
+    relatedEvents: fetchCardEvents({
       baseUrl,
       region,
       cardId,
