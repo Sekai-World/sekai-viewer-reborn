@@ -85,25 +85,22 @@
                 </div>
               {/if}
 
-              <div class="absolute left-2 top-2">
-                <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
-                  #{event.id}
-                </span>
-              </div>
-
-              {#if getEventTypeDisplay(event.eventType, uiLocale)}
-                <div class="absolute right-2 top-2">
-                  <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
-                    {getEventTypeDisplay(event.eventType, uiLocale)}
-                  </span>
-                </div>
-              {/if}
             </div>
 
             <div class="min-w-0">
+              <div class="mb-2 flex flex-wrap items-center gap-2">
+                <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
+                  #{event.id}
+                </span>
+                {#if getEventTypeDisplay(event.eventType, uiLocale)}
+                  <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
+                    {getEventTypeDisplay(event.eventType, uiLocale)}
+                  </span>
+                {/if}
+              </div>
               <h3 class="line-clamp-2 text-sm/snug font-semibold">{event.title}</h3>
-              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs opacity-70">
-                <span>{getEventTimeRange(event)}</span>
+              <p class="mt-2 text-xs opacity-70">{getEventTimeRange(event)}</p>
+              <div class="mt-2 flex flex-wrap items-center gap-2">
                 {#if getBonusRateRangeLabel(event)}
                   <span class="badge badge-outline border-primary/25 bg-primary/10 text-xs font-semibold text-primary">
                     {bonusLabel} {getBonusRateRangeLabel(event)}
