@@ -271,6 +271,23 @@ export const getCardCutoutAssetURL = (
   );
 };
 
+export const getCardGachaVoiceAssetURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `sound/gacha/get_voice/${normalizedAssetBundleName}/${normalizedAssetBundleName}.mp3`,
+    server,
+    baseUrlOverride
+  );
+};
+
 export const getMusicJacketAssetURL = (
   assetBundleName: string,
   server: AssetServer = "jp",
