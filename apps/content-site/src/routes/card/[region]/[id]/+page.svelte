@@ -200,6 +200,85 @@
   ];
 </script>
 
+{#snippet statsCardSkeleton()}
+  <article class="card content-card-shell shadow-sm" aria-busy="true">
+    <div class="card-body gap-4 p-5">
+      <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+        <span class="size-4 animate-pulse rounded bg-base-300" aria-hidden="true"></span>
+        <span>{cardStatsTitle}</span>
+      </p>
+
+      <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
+        <div class="space-y-3">
+          <div class="content-card-inset rounded-xl px-4 py-3">
+            <div class="flex items-center justify-between gap-4">
+              <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
+              <div class="h-8 w-20 animate-pulse rounded bg-base-300"></div>
+            </div>
+            <div class="mt-3 h-3 animate-pulse rounded-full bg-base-300"></div>
+          </div>
+
+          <div class="content-card-inset space-y-3 rounded-xl px-4 py-3">
+            <div class="flex items-center justify-between gap-3">
+              <div class="h-4 w-32 animate-pulse rounded bg-base-300"></div>
+              <div class="h-5 w-10 animate-pulse rounded-full bg-base-300"></div>
+            </div>
+            <div class="space-y-2">
+              <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
+              <div class="flex gap-2">
+                <div class="h-10 w-12 animate-pulse rounded-lg bg-base-300"></div>
+                <div class="h-10 w-12 animate-pulse rounded-lg bg-base-300"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between gap-4">
+                <div class="h-4 w-28 animate-pulse rounded bg-base-300"></div>
+                <div class="h-8 w-16 animate-pulse rounded bg-base-300"></div>
+              </div>
+              <div class="mt-3 h-3 animate-pulse rounded-full bg-base-300"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-3">
+          <div class="space-y-2">
+            {#each [0, 1, 2] as panelKey (panelKey)}
+              <div class="content-card-inset rounded-xl px-4 py-2.5">
+                <div class="flex items-center justify-between gap-4">
+                  <div class="h-4 w-28 animate-pulse rounded bg-base-300"></div>
+                  <div class="h-6 w-20 animate-pulse rounded bg-base-300"></div>
+                </div>
+              </div>
+            {/each}
+          </div>
+
+          <div class="content-card-inset rounded-xl px-4 py-3">
+            <div class="flex items-center justify-between gap-4">
+              <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
+              <div class="h-5 w-20 animate-pulse rounded bg-base-300"></div>
+            </div>
+            <div class="mt-3 space-y-2">
+              <div class="h-3 w-full animate-pulse rounded bg-base-300"></div>
+              <div class="h-3 w-5/6 animate-pulse rounded bg-base-300"></div>
+              <div class="h-3 w-4/6 animate-pulse rounded bg-base-300"></div>
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <div class="content-card-inset rounded-xl px-4 py-2.5">
+              <div class="flex items-center justify-between gap-4">
+                <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
+                <div class="h-6 w-24 animate-pulse rounded bg-base-300"></div>
+              </div>
+              <div class="mt-2 h-2 animate-pulse rounded-full bg-base-300"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+{/snippet}
+
 <svelte:head>
   {#await data.cardPayload}
     <title>{pageTitlePrefix} {data.cardId} - Sekai Viewer</title>
@@ -315,8 +394,12 @@
             {noSkillLabel}
           />
 
-          {#await data.episodes then episodes}
-            {#await data.params then params}
+          {#await data.episodes}
+            {@render statsCardSkeleton()}
+          {:then episodes}
+            {#await data.params}
+              {@render statsCardSkeleton()}
+            {:then params}
               <CardDetailStatsCard
                 card={payload.card}
                 {params}
@@ -334,28 +417,32 @@
                 {noStatsLabel}
               />
             {/await}
-
-            <CardDetailEpisodesCard
-              {episodes}
-              title={cardEpisodesTitle}
-              {releaseConditionLabel}
-              {costsLabel}
-              {rewardsLabel}
-              {noEpisodesLabel}
-            />
           {/await}
 
-          {#await data.relatedEvents then relatedEvents}
-            <CardDetailEventsCard
-              events={relatedEvents}
-              region={data.region}
-              uiLocale={displayLocale}
-              title={cardRelatedEventsTitle}
-              emptyLabel={noRelatedEventsLabel}
-              bonusLabel={relatedEventBonusLabel}
-              storyLabel={relatedEventStoryLabel}
-            />
-          {/await}
+          <div class="grid gap-4 lg:grid-cols-2 lg:items-start">
+            {#await data.episodes then episodes}
+              <CardDetailEpisodesCard
+                {episodes}
+                title={cardEpisodesTitle}
+                {releaseConditionLabel}
+                {costsLabel}
+                {rewardsLabel}
+                {noEpisodesLabel}
+              />
+            {/await}
+
+            {#await data.relatedEvents then relatedEvents}
+              <CardDetailEventsCard
+                events={relatedEvents}
+                region={data.region}
+                uiLocale={displayLocale}
+                title={cardRelatedEventsTitle}
+                emptyLabel={noRelatedEventsLabel}
+                bonusLabel={relatedEventBonusLabel}
+                storyLabel={relatedEventStoryLabel}
+              />
+            {/await}
+          </div>
         </div>
       </div>
     {:else if !payload.error}

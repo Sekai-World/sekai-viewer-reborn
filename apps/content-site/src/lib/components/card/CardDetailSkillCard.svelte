@@ -143,7 +143,7 @@
           </label>
 
           {#if selectedEffectDetails.length > 0}
-            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <div class="grid gap-2 sm:grid-cols-2">
               {#each selectedEffectDetails as item, index (`effect-${index}`)}
                 <div class="content-card-inset rounded-xl px-4 py-3">
                   <p class="text-sm font-semibold">{formatEffectType(item.effect.type)}</p>
