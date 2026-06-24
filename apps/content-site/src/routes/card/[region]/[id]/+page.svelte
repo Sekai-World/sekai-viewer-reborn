@@ -5,6 +5,7 @@
     type CardAssetTab
   } from "$lib/components/card/CardDetailAssetCard.svelte";
   import CardDetailEpisodesCard from "$lib/components/card/CardDetailEpisodesCard.svelte";
+  import CardDetailEventsCard from "$lib/components/card/CardDetailEventsCard.svelte";
   import CardDetailInfoCard from "$lib/components/card/CardDetailInfoCard.svelte";
   import CardDetailSkillCard from "$lib/components/card/CardDetailSkillCard.svelte";
   import CardDetailStatsCard from "$lib/components/card/CardDetailStatsCard.svelte";
@@ -70,6 +71,10 @@
   let costsLabel = $state(getInitialI18nText("costsLabel"));
   let rewardsLabel = $state(getInitialI18nText("rewardsLabel"));
   let noEpisodesLabel = $state(getInitialI18nText("noEpisodesLabel"));
+  let cardRelatedEventsTitle = $state(getInitialI18nText("cardRelatedEventsTitle"));
+  let noRelatedEventsLabel = $state(getInitialI18nText("noRelatedEventsLabel"));
+  let relatedEventBonusLabel = $state(getInitialI18nText("relatedEventBonusLabel"));
+  let relatedEventStoryLabel = $state(getInitialI18nText("relatedEventStoryLabel"));
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
@@ -118,6 +123,10 @@
     costsLabel = translate("costsLabel");
     rewardsLabel = translate("rewardsLabel");
     noEpisodesLabel = translate("noEpisodesLabel");
+    cardRelatedEventsTitle = translate("cardRelatedEventsTitle");
+    noRelatedEventsLabel = translate("noRelatedEventsLabel");
+    relatedEventBonusLabel = translate("relatedEventBonusLabel");
+    relatedEventStoryLabel = translate("relatedEventStoryLabel");
   };
 
   $effect(() => {
@@ -220,7 +229,7 @@
       <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-4 p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
-          <div class="aspect-[21/10] w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
+          <div class="aspect-21/10 w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
         </div>
       </article>
       <article class="card content-card-shell overflow-hidden shadow-sm">
@@ -333,6 +342,18 @@
               {costsLabel}
               {rewardsLabel}
               {noEpisodesLabel}
+            />
+          {/await}
+
+          {#await data.relatedEvents then relatedEvents}
+            <CardDetailEventsCard
+              events={relatedEvents}
+              region={data.region}
+              uiLocale={displayLocale}
+              title={cardRelatedEventsTitle}
+              emptyLabel={noRelatedEventsLabel}
+              bonusLabel={relatedEventBonusLabel}
+              storyLabel={relatedEventStoryLabel}
             />
           {/await}
         </div>

@@ -79,6 +79,8 @@
     const count = Number(match[1]);
     return Number.isFinite(count) && count > 0 ? count : 0;
   };
+  const getRarityStarKeys = (): string[] =>
+    Array.from({ length: getRarityStarCount() }, (_, index) => `rarity-star-${index}`);
   const shouldShowSupportUnit = (): boolean =>
     card.supportUnit !== "none" || card.character?.unit === "piapro";
 </script>
@@ -125,16 +127,16 @@
 {/snippet}
 
 {#snippet rarityRow()}
-  {@const starCount = getRarityStarCount()}
+  {@const starKeys = getRarityStarKeys()}
   {#if card.rarityType}
     <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-4 py-3">
       <div class="min-w-0">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{rarityLabel}</dt>
         <dd class="mt-1 truncate text-sm font-medium">{formatLabel(card.rarityType)}</dd>
       </div>
-      {#if starCount > 0}
+      {#if starKeys.length > 0}
         <div class="flex shrink-0 items-center gap-0.5" aria-hidden="true">
-          {#each Array.from({ length: starCount }) as _, index (`rarity-star-${index}`)}
+          {#each starKeys as starKey (starKey)}
             <img src={rarityStarUrl} alt="" class="size-5 object-contain" loading="lazy" decoding="async" />
           {/each}
         </div>
