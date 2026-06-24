@@ -2,6 +2,8 @@
   "attrLabel": "Attribute",
   "audioUnavailableLabel": "No gacha phrase audio available",
   "bonusSumLabel": "Bonus Sum",
+  "audioPauseLabel": "Pause audio",
+  "audioPlayLabel": "Play audio",
   "cardAssetTabs.normal": "Normal",
   "cardAssetTabs.normalCutout": "Normal Cutout",
   "cardAssetTabs.trained": "Trained",

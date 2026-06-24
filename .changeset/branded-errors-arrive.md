@@ -15,3 +15,5 @@ Show related events on content-site card detail pages.
 Show computed related-event bonus ranges and story badges on card detail pages.
 
 Keep multiple skill effect summaries in a compact row on wider card detail layouts.
+
+Restore gacha phrase display and audio playback on content-site card detail pages.

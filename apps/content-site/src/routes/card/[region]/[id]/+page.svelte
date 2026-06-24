@@ -48,6 +48,9 @@
   let rarityLabel = $state(getInitialI18nText("rarityLabel"));
   let typeLabel = $state(getInitialI18nText("typeLabel"));
   let releaseAtLabel = $state(getInitialI18nText("releaseAtLabel"));
+  let gachaPhraseLabel = $state(getInitialI18nText("gachaPhraseLabel"));
+  let audioPlayLabel = $state(getInitialI18nText("audioPlayLabel"));
+  let audioPauseLabel = $state(getInitialI18nText("audioPauseLabel"));
   let cardSkillTitle = $state(getInitialI18nText("cardSkillTitle"));
   let skillNameLabel = $state(getInitialI18nText("skillNameLabel"));
   let skillDescriptionLabel = $state(getInitialI18nText("skillDescriptionLabel"));
@@ -100,6 +103,9 @@
     rarityLabel = translate("rarityLabel");
     typeLabel = translate("typeLabel");
     releaseAtLabel = translate("releaseAtLabel");
+    gachaPhraseLabel = translate("gachaPhraseLabel");
+    audioPlayLabel = translate("audioPlayLabel");
+    audioPauseLabel = translate("audioPauseLabel");
     cardSkillTitle = translate("cardSkillTitle");
     skillNameLabel = translate("skillNameLabel");
     skillDescriptionLabel = translate("skillDescriptionLabel");
@@ -377,6 +383,9 @@
               {rarityLabel}
               {typeLabel}
               {releaseAtLabel}
+              {gachaPhraseLabel}
+              {audioPlayLabel}
+              {audioPauseLabel}
               {unitProfiles}
             />
           {/await}

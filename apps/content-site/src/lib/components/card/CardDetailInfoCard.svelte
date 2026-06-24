@@ -2,6 +2,7 @@
   import { asset } from "$app/paths";
   import type { CardDetail, CardDetailCharacter } from "$lib/domain/card-detail";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import { getCardGachaVoiceAssetURL } from "$lib/assets/index";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
@@ -19,6 +20,9 @@
     rarityLabel,
     typeLabel,
     releaseAtLabel,
+    gachaPhraseLabel,
+    audioPlayLabel,
+    audioPauseLabel,
     unitProfiles
   }: {
     card: CardDetail;
@@ -33,10 +37,25 @@
     rarityLabel: string;
     typeLabel: string;
     releaseAtLabel: string;
+    gachaPhraseLabel: string;
+    audioPlayLabel: string;
+    audioPauseLabel: string;
     unitProfiles: Record<string, string>;
   } = $props();
 
   const rarityStarUrl = asset("/card_rarity/rarity_star_normal.png");
+  const normalizedGachaPhrase = $derived(card.gachaPhrase?.trim() ?? "");
+  const shouldShowGachaPhrase = $derived(
+    normalizedGachaPhrase.length > 0 && normalizedGachaPhrase !== "-"
+  );
+  const gachaPhraseAudioUrl = $derived(
+    shouldShowGachaPhrase && card.assetBundleName
+      ? getCardGachaVoiceAssetURL(card.assetBundleName)
+      : null
+  );
+
+  let gachaPhraseAudio: HTMLAudioElement | null = $state(null);
+  let isGachaPhrasePlaying = $state(false);
 
   const formatLabel = (value: string | null): string | null =>
     value
@@ -83,6 +102,29 @@
     Array.from({ length: getRarityStarCount() }, (_, index) => `rarity-star-${index}`);
   const shouldShowSupportUnit = (): boolean =>
     card.supportUnit !== "none" || card.character?.unit === "piapro";
+  const toggleGachaPhraseAudio = async (): Promise<void> => {
+    if (!gachaPhraseAudio || !gachaPhraseAudioUrl) {
+      return;
+    }
+
+    if (isGachaPhrasePlaying) {
+      gachaPhraseAudio.pause();
+      gachaPhraseAudio.currentTime = 0;
+      isGachaPhrasePlaying = false;
+      return;
+    }
+
+    if (gachaPhraseAudio.ended || gachaPhraseAudio.currentTime >= gachaPhraseAudio.duration) {
+      gachaPhraseAudio.currentTime = 0;
+    }
+
+    try {
+      await gachaPhraseAudio.play();
+      isGachaPhrasePlaying = true;
+    } catch {
+      isGachaPhrasePlaying = false;
+    }
+  };
 </script>
 
 {#snippet row(
@@ -122,6 +164,48 @@
           />
         {/if}
       {/if}
+    </div>
+  {/if}
+{/snippet}
+
+{#snippet gachaPhraseRow()}
+  {#if shouldShowGachaPhrase}
+    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-4 py-3">
+      <div class="min-w-0">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+          {gachaPhraseLabel}
+        </dt>
+        <dd class="mt-1 truncate text-sm font-medium">{normalizedGachaPhrase}</dd>
+      </div>
+
+      <div class="flex shrink-0 items-center gap-3">
+        {#if gachaPhraseAudioUrl}
+          <button
+            type="button"
+            class="btn btn-circle btn-primary btn-md shrink-0 shadow-sm"
+            aria-label={isGachaPhrasePlaying ? audioPauseLabel : audioPlayLabel}
+            title={isGachaPhrasePlaying ? audioPauseLabel : audioPlayLabel}
+            onclick={toggleGachaPhraseAudio}
+          >
+            <Icon
+              icon={isGachaPhrasePlaying ? "mdi:pause" : "mdi:play"}
+              class="size-5"
+              aria-hidden="true"
+            />
+          </button>
+          <audio
+            bind:this={gachaPhraseAudio}
+            src={gachaPhraseAudioUrl}
+            preload="none"
+            onended={() => {
+              isGachaPhrasePlaying = false;
+              if (gachaPhraseAudio) {
+                gachaPhraseAudio.currentTime = 0;
+              }
+            }}
+          ></audio>
+        {/if}
+      </div>
     </div>
   {/if}
 {/snippet}
@@ -168,6 +252,7 @@
       {#if shouldShowSupportUnit()}
         {@render row(supportUnitLabel, getDisplayUnitName(card.supportUnit), getUnitIconUrl(card.supportUnit))}
       {/if}
+      {@render gachaPhraseRow()}
       {@render row(attrLabel, formatLabel(card.attr), getAttrIconUrl(), false)}
       {@render rarityRow()}
       {@render row(typeLabel, formatLabel(card.cardSupplyType))}
