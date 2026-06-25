@@ -1,0 +1,17 @@
+{
+  "gachaListTitle": "Gacha List",
+  "gachaListEmpty": "No gachas found.",
+  "gachaListEnd": "No more gachas.",
+  "gachaListLoading": "Loading gachas...",
+  "gachaListLoadingMore": "Loading more gachas...",
+  "gachaListLoadFailed": "Failed to load gachas.",
+  "gachaListSortByStartAt": "Sort by Start Time",
+  "pageTitle.gachaPrefix": "Gacha",
+  "startAt": "Start",
+  "endAt": "End",
+  "gachaTypeLabel": "Gacha Type",
+  "gachaPickupCards": "Rate-Up Cards",
+  "gachaSummary": "Summary",
+  "costLabel": "Cost",
+  "noGachaData": "No gacha data."
+}

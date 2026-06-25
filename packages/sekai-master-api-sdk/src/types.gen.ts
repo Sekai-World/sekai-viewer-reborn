@@ -55,6 +55,10 @@ export type SharedCardEventsResponse = {
     items?: Array<SharedCardEventResponse>;
 };
 
+export type SharedCardGachaResponse = {
+    gachas?: Array<SharedGachaBannerResponse>;
+};
+
 export type SharedCardListResponse = {
     items?: Array<SharedCardObjectResponse>;
     pagination?: SharedCardPagination;
@@ -298,6 +302,45 @@ export type SharedEventVirtualLiveResponse = {
     name?: unknown;
     startAt?: unknown;
     virtualLiveType?: unknown;
+};
+
+export type SharedGachaBannerResponse = {
+    assetbundleName?: unknown;
+    id?: unknown;
+    name?: unknown;
+};
+
+export type SharedGachaListItemResponse = {
+    assetbundleName?: unknown;
+    endAt?: unknown;
+    gachaType?: unknown;
+    id?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+};
+
+export type SharedGachaListResponse = {
+    items?: Array<SharedGachaListItemResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedGachaObjectResponse = {
+    assetbundleName?: unknown;
+    costCount?: unknown;
+    costResourceId?: unknown;
+    costResourceType?: unknown;
+    endAt?: unknown;
+    gachaPickups?: Array<SharedGachaPickupResponse>;
+    gachaType?: unknown;
+    id?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+    summary?: unknown;
+};
+
+export type SharedGachaPickupResponse = {
+    cardId?: unknown;
+    weight?: unknown;
 };
 
 export type SharedGameCharacterListResponse = {
@@ -1003,6 +1046,52 @@ export type GetCardsByRegionByIdEventsResponses = {
 
 export type GetCardsByRegionByIdEventsResponse = GetCardsByRegionByIdEventsResponses[keyof GetCardsByRegionByIdEventsResponses];
 
+export type GetCardsByRegionByIdGachasData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Card ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/cards/{region}/{id}/gachas';
+};
+
+export type GetCardsByRegionByIdGachasErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCardsByRegionByIdGachasError = GetCardsByRegionByIdGachasErrors[keyof GetCardsByRegionByIdGachasErrors];
+
+export type GetCardsByRegionByIdGachasResponses = {
+    /**
+     * OK
+     */
+    200: SharedCardGachaResponse;
+};
+
+export type GetCardsByRegionByIdGachasResponse = GetCardsByRegionByIdGachasResponses[keyof GetCardsByRegionByIdGachasResponses];
+
 export type GetCardsByRegionByIdParamsData = {
     body?: never;
     path: {
@@ -1479,6 +1568,149 @@ export type GetEventsByRegionByIdRewardsResponses = {
 };
 
 export type GetEventsByRegionByIdRewardsResponse = GetEventsByRegionByIdRewardsResponses[keyof GetEventsByRegionByIdRewardsResponses];
+
+export type GetGachasRegionsByIdAvailabilityData = {
+    body?: never;
+    path: {
+        /**
+         * Gacha ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/gachas/regions/{id}/availability';
+};
+
+export type GetGachasRegionsByIdAvailabilityErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGachasRegionsByIdAvailabilityError = GetGachasRegionsByIdAvailabilityErrors[keyof GetGachasRegionsByIdAvailabilityErrors];
+
+export type GetGachasRegionsByIdAvailabilityResponses = {
+    /**
+     * OK
+     */
+    200: SharedRegionAvailabilityResponse;
+};
+
+export type GetGachasRegionsByIdAvailabilityResponse = GetGachasRegionsByIdAvailabilityResponses[keyof GetGachasRegionsByIdAvailabilityResponses];
+
+export type GetGachasByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field (id|startAt)
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/gachas/{region}/list';
+};
+
+export type GetGachasByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGachasByRegionListError = GetGachasByRegionListErrors[keyof GetGachasByRegionListErrors];
+
+export type GetGachasByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGachaListResponse;
+};
+
+export type GetGachasByRegionListResponse = GetGachasByRegionListResponses[keyof GetGachasByRegionListResponses];
+
+export type GetGachasByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Gacha ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/gachas/{region}/{id}';
+};
+
+export type GetGachasByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGachasByRegionByIdError = GetGachasByRegionByIdErrors[keyof GetGachasByRegionByIdErrors];
+
+export type GetGachasByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedGachaObjectResponse;
+};
+
+export type GetGachasByRegionByIdResponse = GetGachasByRegionByIdResponses[keyof GetGachasByRegionByIdResponses];
 
 export type GetGameCharacterUnitsRegionsByIdAvailabilityData = {
     body?: never;

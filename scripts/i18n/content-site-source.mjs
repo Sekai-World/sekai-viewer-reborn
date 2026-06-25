@@ -6,10 +6,10 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const contentSiteRoot = path.join(repoRoot, "apps/content-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/content-site");
 const scannedFiles = ["src/lib", "src/routes"];
-const contentSiteNamespaces = ["common", "home", "card", "event", "music", "error", "server"];
+const contentSiteNamespaces = ["common", "home", "card", "event", "gacha", "music", "error", "server"];
 
 const commonKeyPatterns = [
-  /(?:tCommon|getInitialI18nText|getInitialLabel|translate)\(\s*(?:[^,]+,\s*)?["']([^"'`]+)["']/g,
+  /(?:tCommon|getInitialI18nText|getInitialLabel|translate)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
   /createI18nTranslator\([^)]*\)\(\s*(?:[^,]+,\s*)?["']([^"'`]+)["']/g
 ];
 const serverKeyPatterns = [/getServerI18nText\(\s*[^,]+,\s*["']([^"'`]+)["']/g];
@@ -55,11 +55,14 @@ const namespaceByRoutePattern = [
   { pattern: /src\/routes\/card\//, namespace: "card" },
   { pattern: /src\/routes\/cards\//, namespace: "card" },
   { pattern: /src\/routes\/musics\//, namespace: "music" },
+  { pattern: /src\/routes\/gacha\//, namespace: "gacha" },
+  { pattern: /src\/routes\/gachas\//, namespace: "gacha" },
   { pattern: /src\/routes\/event\//, namespace: "event" },
   { pattern: /src\/routes\/events\//, namespace: "event" },
   { pattern: /src\/lib\/event\.ts$/, namespace: "event" },
   { pattern: /src\/lib\/components\/CurrentEventCard\.svelte$/, namespace: "home" },
   { pattern: /src\/lib\/components\/Card/, namespace: "card" },
+  { pattern: /src\/lib\/components\/gacha\//, namespace: "gacha" },
   { pattern: /src\/lib\/components\/Music/, namespace: "music" },
   { pattern: /src\/lib\/components\/Event/, namespace: "event" }
 ];

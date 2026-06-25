@@ -6,6 +6,7 @@
   } from "$lib/components/card/CardDetailAssetCard.svelte";
   import CardDetailEpisodesCard from "$lib/components/card/CardDetailEpisodesCard.svelte";
   import CardDetailEventsCard from "$lib/components/card/CardDetailEventsCard.svelte";
+  import CardDetailGachaCard from "$lib/components/card/CardDetailGachaCard.svelte";
   import CardDetailInfoCard from "$lib/components/card/CardDetailInfoCard.svelte";
   import CardDetailSkillCard from "$lib/components/card/CardDetailSkillCard.svelte";
   import CardDetailStatsCard from "$lib/components/card/CardDetailStatsCard.svelte";
@@ -76,6 +77,7 @@
   let noEpisodesLabel = $state(getInitialI18nText("noEpisodesLabel"));
   let cardRelatedEventsTitle = $state(getInitialI18nText("cardRelatedEventsTitle"));
   let noRelatedEventsLabel = $state(getInitialI18nText("noRelatedEventsLabel"));
+  let cardGachaBannersTitle = $state(getInitialI18nText("cardGachaBannersTitle"));
   let relatedEventBonusLabel = $state(getInitialI18nText("relatedEventBonusLabel"));
   let relatedEventStoryLabel = $state(getInitialI18nText("relatedEventStoryLabel"));
 
@@ -131,6 +133,7 @@
     noEpisodesLabel = translate("noEpisodesLabel");
     cardRelatedEventsTitle = translate("cardRelatedEventsTitle");
     noRelatedEventsLabel = translate("noRelatedEventsLabel");
+    cardGachaBannersTitle = translate("cardGachaBannersTitle");
     relatedEventBonusLabel = translate("relatedEventBonusLabel");
     relatedEventStoryLabel = translate("relatedEventStoryLabel");
   };
@@ -449,6 +452,15 @@
                 emptyLabel={noRelatedEventsLabel}
                 bonusLabel={relatedEventBonusLabel}
                 storyLabel={relatedEventStoryLabel}
+              />
+            {/await}
+
+            {#await data.gachas then gachas}
+              <CardDetailGachaCard
+                {gachas}
+                region={data.region}
+                title={cardGachaBannersTitle}
+                emptyLabel={noRelatedEventsLabel}
               />
             {/await}
           </div>

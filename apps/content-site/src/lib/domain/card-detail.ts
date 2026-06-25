@@ -96,10 +96,17 @@ type CardRelatedEvent = {
   isDisplayCardStory: boolean;
 };
 
+type CardGachaBanner = {
+  id: string;
+  name: string | null;
+  assetbundleName: string | null;
+};
+
 export type {
   CardDetail,
   CardDetailCharacter,
   CardDetailEpisode,
+  CardGachaBanner,
   CardDetailParams,
   CardRelatedEvent,
   CardDetailSkill,

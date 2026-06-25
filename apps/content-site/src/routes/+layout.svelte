@@ -79,6 +79,7 @@
   let cardsLabel = $state(getInitialI18nText("navigation.cards"));
   let songsLabel = $state(getInitialI18nText("navigation.songs"));
   let eventsLabel = $state(getInitialI18nText("navigation.events"));
+  let gachasLabel = $state(getInitialI18nText("navigation.gachas"));
   let virtualLivesLabel = $state(getInitialI18nText("navigation.virtualLives"));
   let settingsLabel = $state(getInitialI18nText("settings.title"));
   let themeControlLabel = $state(getInitialI18nText("settings.appearance"));
@@ -115,7 +116,7 @@
       return normalizeRegion(second, DEFAULT_REGION);
     }
 
-    if ((first === "event" || first === "events" || first === "musics") && second) {
+    if ((first === "event" || first === "events" || first === "gacha" || first === "gachas" || first === "musics") && second) {
       return normalizeRegion(second, DEFAULT_REGION);
     }
 
@@ -150,6 +151,12 @@
       href: `/events/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/events/") || page.url.pathname.startsWith("/event/"),
       icon: "mdi:calendar-star"
+    },
+    {
+      label: gachasLabel,
+      href: `/gachas/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/gachas/") || page.url.pathname.startsWith("/gacha/"),
+      icon: "mdi:gift-outline"
     },
     {
       label: virtualLivesLabel,
@@ -236,6 +243,7 @@
     cardsLabel = translate("navigation.cards");
     songsLabel = translate("navigation.songs");
     eventsLabel = translate("navigation.events");
+    gachasLabel = translate("navigation.gachas");
     virtualLivesLabel = translate("navigation.virtualLives");
     settingsLabel = translate("settings.title");
     themeControlLabel = translate("settings.appearance");

@@ -11,6 +11,7 @@ import cardSourceMessages from "@platform/i18n-source/content-site/card.json";
 import commonSourceMessages from "@platform/i18n-source/content-site/common.json";
 import errorSourceMessages from "@platform/i18n-source/content-site/error.json";
 import eventSourceMessages from "@platform/i18n-source/content-site/event.json";
+import gachaSourceMessages from "@platform/i18n-source/content-site/gacha.json";
 import homeSourceMessages from "@platform/i18n-source/content-site/home.json";
 import musicSourceMessages from "@platform/i18n-source/content-site/music.json";
 import serverSourceMessages from "@platform/i18n-source/content-site/server.json";
@@ -25,6 +26,7 @@ export const contentSiteI18nNamespaces = [
   "home",
   "card",
   "event",
+  "gacha",
   "music",
   "error",
   "server"
@@ -40,7 +42,10 @@ export type ContentSiteServerMessageKey =
   | "failedToLoadEventData"
   | "invalidCardId"
   | "cardUnavailableInCurrentRegion"
-  | "failedToLoadCardData";
+  | "failedToLoadCardData"
+  | "invalidGachaId"
+  | "gachaUnavailableInCurrentRegion"
+  | "failedToLoadGachaData";
 
 const DEFAULT_SEKAI_I18N_BASE_URL = "https://sekai-world.github.io/sekai-i18n-reborn";
 const FALLBACK_UI_LOCALE: SupportedUiLocale = "en";
@@ -48,6 +53,7 @@ const LEGACY_COMMON_COMPAT_NAMESPACES = new Set<I18nNamespace>([
   "home",
   "card",
   "event",
+  "gacha",
   "music",
   "error"
 ]);
@@ -56,6 +62,7 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
   common: commonSourceMessages,
   error: errorSourceMessages,
   event: eventSourceMessages,
+  gacha: gachaSourceMessages,
   home: homeSourceMessages,
   music: musicSourceMessages,
   server: serverSourceMessages

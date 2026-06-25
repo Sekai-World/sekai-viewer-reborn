@@ -1,6 +1,7 @@
 import type {
   CardDetail,
   CardDetailEpisode,
+  CardGachaBanner,
   CardDetailParams,
   CardRelatedEvent
 } from "$lib/domain/card-detail";
@@ -474,3 +475,35 @@ export const parseCardRelatedEvents = (payload: unknown): CardRelatedEvent[] =>
       };
     })
     .filter((event): event is CardRelatedEvent => event !== null);
+
+export const parseCardGachaBanners = (payload: unknown): CardGachaBanner[] => {
+  const root = getObject(payload);
+  if (!root) {
+    return [];
+  }
+
+  const items = getNestedArray(root, ["gachas"]);
+  if (!items) {
+    return [];
+  }
+
+  return items
+    .map((value) => {
+      const node = getObject(value);
+      if (!node) {
+        return null;
+      }
+
+      const id = pickFirstStringLike(node, ["id"]);
+      if (!id) {
+        return null;
+      }
+
+      return {
+        id,
+        name: pickFirstString(node, ["name"]),
+        assetbundleName: pickFirstString(node, ["assetbundleName", "assetBundleName"])
+      };
+    })
+    .filter((banner): banner is CardGachaBanner => banner !== null);
+};

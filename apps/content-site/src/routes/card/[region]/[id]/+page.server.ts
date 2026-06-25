@@ -3,6 +3,7 @@ import {
   getCardsByRegionById,
   getCardsByRegionByIdEpisodes,
   getCardsByRegionByIdEvents,
+  getCardsByRegionByIdGachas,
   getCardsByRegionByIdParams,
   getCardsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
@@ -13,12 +14,14 @@ import type {
   CardDetail,
   CardDetailEpisode,
   CardDetailParams,
+  CardGachaBanner,
   CardRelatedEvent
 } from "$lib/domain/card-detail";
 import {
   parseCardDetail,
   parseCardDetailEpisodes,
   parseCardDetailParams,
+  parseCardGachaBanners,
   parseCardRelatedEvents
 } from "$lib/server/card-detail";
 import { getMasterApiBaseUrl } from "$lib/server/config";
@@ -237,6 +240,33 @@ const fetchCardEpisodes = async ({
   }
 };
 
+const fetchCardGachas = async ({
+  baseUrl,
+  region,
+  cardId,
+  invalidCardIdMessage
+}: {
+  baseUrl: string;
+  region: SupportedRegion;
+  cardId: string;
+  invalidCardIdMessage: string | null;
+}): Promise<CardGachaBanner[]> => {
+  if (invalidCardIdMessage) {
+    return [];
+  }
+
+  try {
+    const response = await getCardsByRegionByIdGachas({
+      baseUrl,
+      path: { region, id: cardId }
+    });
+
+    return response.error ? [] : parseCardGachaBanners(response.data);
+  } catch {
+    return [];
+  }
+};
+
 const fetchCardEvents = async ({
   baseUrl,
   region,
@@ -319,6 +349,12 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
       invalidCardIdMessage: invalidMessage
     }),
     relatedEvents: fetchCardEvents({
+      baseUrl,
+      region,
+      cardId,
+      invalidCardIdMessage: invalidMessage
+    }),
+    gachas: fetchCardGachas({
       baseUrl,
       region,
       cardId,

@@ -6,5 +6,8 @@
   "homeEventDataRequestFailed": "Failed to request event data.",
   "homeEventDataUnavailable": "Event data is temporarily unavailable.",
   "invalidCardId": "Invalid card id.",
-  "invalidEventId": "Invalid event id."
+  "invalidEventId": "Invalid event id.",
+  "invalidGachaId": "Invalid gacha id.",
+  "gachaUnavailableInCurrentRegion": "This gacha is not available in the current region. Switch region using the badges.",
+  "failedToLoadGachaData": "Failed to load gacha data."
 }

@@ -192,7 +192,13 @@ Purpose:
 
 - Generated TypeScript SDK for `sekai-master-api` from OpenAPI.
 
-Generation command:
+### When to regenerate
+
+After any change to sekai-master-api that affects the API contract (routes, handlers,
+response types, request params), the SDK must be regenerated. The full cross-repo
+workflow is documented in `sekai-master-api/AGENTS.md` (Cross-Repository Integration).
+
+### Generation command
 
 ```bash
 pnpm --filter @platform/sekai-master-api-sdk generate:sdk -- --input <openapi-file-path-or-url> --output <output-dir>
@@ -210,13 +216,17 @@ Mise task for local refresh:
 mise run update-sekai-master-api-sdk-local
 ```
 
-Notes:
+### Workflow notes
 
-- `--input` is required.
-- Default output is `./src`.
-- Generating into `src` can overwrite generated SDK files.
+1. After changing sekai-master-api, run `mise run swagger` there to regenerate the spec.
+2. Restart the sekai-master-api dev server with `mise run dev` and wait for it to be ready.
+3. Then regenerate the SDK here with `mise run update-sekai-master-api-sdk-local`.
+4. Validate: `pnpm --filter @platform/sekai-master-api-sdk check`.
 
-Package validation:
+The SDK generator overwrites generated artifacts (`src/sdk.gen.ts`, `src/types.gen.ts`,
+`src/index.ts`). Always verify the generated output matches expectations before committing.
+
+### Package validation
 
 ```bash
 pnpm --filter @platform/sekai-master-api-sdk lint

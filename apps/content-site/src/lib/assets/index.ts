@@ -288,6 +288,24 @@ export const getCardGachaVoiceAssetURL = (
   );
 };
 
+export const getGachaLogoAssetURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `gacha/${normalizedAssetBundleName}/logo/logo.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
 export const getMusicJacketAssetURL = (
   assetBundleName: string,
   server: AssetServer = "jp",
