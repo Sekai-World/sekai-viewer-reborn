@@ -44,6 +44,7 @@
   } = $props();
 
   const rarityStarUrl = asset("/card_rarity/rarity_star_normal.png");
+  const rarityBirthdayUrl = asset("/card_rarity/rarity_birthday.png");
   const normalizedGachaPhrase = $derived(card.gachaPhrase?.trim() ?? "");
   const shouldShowGachaPhrase = $derived(
     normalizedGachaPhrase.length > 0 && normalizedGachaPhrase !== "-"
@@ -100,6 +101,10 @@
   };
   const getRarityStarKeys = (): string[] =>
     Array.from({ length: getRarityStarCount() }, (_, index) => `rarity-star-${index}`);
+  const getRarityIconUrls = (): string[] =>
+    card.rarityType === "rarity_birthday"
+      ? [rarityBirthdayUrl]
+      : getRarityStarKeys().map(() => rarityStarUrl);
   const shouldShowSupportUnit = (): boolean =>
     card.supportUnit !== "none" || card.character?.unit === "piapro";
   const toggleGachaPhraseAudio = async (): Promise<void> => {
@@ -211,17 +216,17 @@
 {/snippet}
 
 {#snippet rarityRow()}
-  {@const starKeys = getRarityStarKeys()}
+  {@const rarityIconUrls = getRarityIconUrls()}
   {#if card.rarityType}
     <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-4 py-3">
       <div class="min-w-0">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{rarityLabel}</dt>
         <dd class="mt-1 truncate text-sm font-medium">{formatLabel(card.rarityType)}</dd>
       </div>
-      {#if starKeys.length > 0}
+      {#if rarityIconUrls.length > 0}
         <div class="flex shrink-0 items-center gap-0.5" aria-hidden="true">
-          {#each starKeys as starKey (starKey)}
-            <img src={rarityStarUrl} alt="" class="size-5 object-contain" loading="lazy" decoding="async" />
+          {#each rarityIconUrls as rarityIconUrl, index (`rarity-icon-${index}`)}
+            <img src={rarityIconUrl} alt="" class="size-5 object-contain" loading="lazy" decoding="async" />
           {/each}
         </div>
       {/if}

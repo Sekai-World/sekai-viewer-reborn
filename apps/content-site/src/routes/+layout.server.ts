@@ -4,7 +4,7 @@ import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 
 const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
   if (pathname.startsWith("/card/") || pathname.startsWith("/cards/")) {
-    return ["common", "card"];
+    return ["common", "card", "event"];
   }
 
   if (pathname.startsWith("/musics/")) {

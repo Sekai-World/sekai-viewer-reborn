@@ -17,3 +17,7 @@ Show computed related-event bonus ranges and story badges on card detail pages.
 Keep multiple skill effect summaries in a compact row on wider card detail layouts.
 
 Restore gacha phrase display and audio playback on content-site card detail pages.
+
+Align related gacha card hover, focus, and image brightness states with related event cards.
+
+Show birthday rarity icons on content-site card detail pages.
