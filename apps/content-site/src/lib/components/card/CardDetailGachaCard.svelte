@@ -31,14 +31,14 @@
         {#each gachas as gacha (gacha.id)}
           <a
             href={resolve("/gacha/[region]/[id]", { region, id: gacha.id })}
-            class="block content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3"
+            class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             {#if gacha.assetbundleName}
               <div class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1">
                 <EventAssetImage
                   src={getGachaLogoAssetURL(gacha.assetbundleName, region)}
                   alt={gacha.name ?? `#${gacha.id}`}
-                  imageClass="h-full w-full object-contain"
+                  imageClass="h-full w-full object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
                   buttonClass="block h-full w-full overflow-hidden"
                   loadMode="visible"
                 />

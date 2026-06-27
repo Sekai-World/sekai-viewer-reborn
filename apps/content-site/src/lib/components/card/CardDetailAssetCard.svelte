@@ -36,7 +36,6 @@
   } = $props();
 
   let previewOpen = $state(false);
-  let previewFormat = $state("");
   const previewFormatOptions = ["webp", "png"];
   const normalizedPreviewFormatOptions = previewFormatOptions
     .map((format) => format.trim().toLowerCase())
@@ -73,7 +72,7 @@
     return normalLabel;
   };
   const getTabClass = (tab: CardAssetTab): string =>
-    `tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
+    `tab min-w-0 flex-1 whitespace-nowrap rounded-xl border border-transparent px-2 text-xs font-semibold transition-colors sm:text-sm ${
       resolvedTab === tab
         ? "border-primary/45 bg-primary text-primary-content shadow-sm"
         : "text-base-content/70 hover:bg-base-100/80"
@@ -94,62 +93,45 @@
       : getCardFullAssetURL(card.assetBundleName, isTrainedTab(tab), assetRegion, extension);
   };
   const imageUrl = $derived(getAssetUrl(resolvedTab));
-  const getSrcExtension = (value: string): string => {
-    const match = value.match(/\.([a-z0-9]+)(?:[?#].*)?$/i);
-    return match?.[1]?.toLowerCase() ?? "";
-  };
-  const replaceSrcExtension = (value: string, extension: string): string =>
-    value.replace(/(\.[a-z0-9]+)(?=([?#].*)?$)/i, `.${extension}`);
-  const getResolvedPreviewSrc = (src: string): string =>
-    previewFormat && normalizedPreviewFormatOptions.includes(previewFormat)
-      ? replaceSrcExtension(src, previewFormat)
-      : src;
-  const openPreview = (src: string): void => {
-    if (!previewFormat) {
-      previewFormat = getSrcExtension(src);
-    }
+  const openPreview = (): void => {
     previewOpen = true;
   };
 
   $effect(() => {
     if (card.id || region || activeTab) {
       previewOpen = false;
-      previewFormat = "";
     }
   });
 </script>
 
 {#snippet imagePreview(src: string, alt: string)}
-  {@const resolvedSrc = getResolvedPreviewSrc(src)}
   <EventAssetImage
-    src={resolvedSrc}
+    {src}
     {alt}
     fallbackLabel={imageUnavailableLabel}
     buttonClass="block h-full w-full cursor-zoom-in overflow-hidden"
     interactive={true}
     imageClass={`h-full w-full ${isCutoutTab(resolvedTab) ? "object-contain p-2" : "object-contain"}`}
     onclick={() => {
-      openPreview(src);
+      openPreview();
     }}
   />
   <ImagePreviewDialog
     bind:open={previewOpen}
-    src={resolvedSrc}
+    {src}
     {alt}
     fallbackLabel={imageUnavailableLabel}
     {closeLabel}
     formatOptions={normalizedPreviewFormatOptions}
-    currentFormat={previewFormat}
     dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
-    onFormatChange={(format: string) => {
-      previewFormat = format;
-    }}
   />
 {/snippet}
 
 <article class="card content-card-shell overflow-hidden shadow-sm">
   <div class="card-body items-center gap-3 p-5 text-center">
-    <div class="tabs tabs-box content-card-inset w-full p-1">
+    <div
+      class={`tabs tabs-box content-card-inset grid w-full ${availableTabs.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1 p-1 sm:flex`}
+    >
       {#each availableTabs as tab (tab)}
         <button type="button" class={getTabClass(tab)} onclick={() => (activeTab = tab)}>
           {getTabLabel(tab)}

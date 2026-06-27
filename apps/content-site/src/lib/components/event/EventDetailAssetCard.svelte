@@ -38,7 +38,6 @@
   } = $props();
 
   let previewOpen = $state(false);
-  let previewFormat = $state("");
   const previewFormatOptions = ["webp", "png"];
   const normalizedPreviewFormatOptions = previewFormatOptions
     .map((format) => format.trim().toLowerCase())
@@ -58,57 +57,37 @@
         ? "border-primary/45 bg-primary text-primary-content shadow-sm"
         : "text-base-content/70 hover:bg-base-100/80"
     }`;
-  const getSrcExtension = (value: string): string => {
-    const match = value.match(/\.([a-z0-9]+)(?:[?#].*)?$/i);
-    return match?.[1]?.toLowerCase() ?? "";
-  };
-  const replaceSrcExtension = (value: string, extension: string): string =>
-    value.replace(/(\.[a-z0-9]+)(?=([?#].*)?$)/i, `.${extension}`);
-  const getResolvedPreviewSrc = (src: string): string =>
-    previewFormat && normalizedPreviewFormatOptions.includes(previewFormat)
-      ? replaceSrcExtension(src, previewFormat)
-      : src;
-  const openPreview = (src: string): void => {
-    if (!previewFormat) {
-      previewFormat = getSrcExtension(src);
-    }
-
+  const openPreview = (): void => {
     previewOpen = true;
   };
 
   $effect(() => {
     if (event.id || region || activeTab) {
       previewOpen = false;
-      previewFormat = "";
     }
   });
 </script>
 
 {#snippet previewImage(src: string, alt: string, imageClass: string, fallbackLabel = "")}
-  {@const resolvedSrc = getResolvedPreviewSrc(src)}
   <EventAssetImage
-    src={resolvedSrc}
+    {src}
     {alt}
     {fallbackLabel}
     buttonClass="block h-full w-full cursor-zoom-in overflow-hidden"
     interactive={true}
     {imageClass}
     onclick={() => {
-      openPreview(src);
+      openPreview();
     }}
   />
   <ImagePreviewDialog
     bind:open={previewOpen}
-    src={resolvedSrc}
+    {src}
     {alt}
     {fallbackLabel}
     {closeLabel}
     formatOptions={normalizedPreviewFormatOptions}
-    currentFormat={previewFormat}
     dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
-    onFormatChange={(format: string) => {
-      previewFormat = format;
-    }}
   />
 {/snippet}
 
