@@ -1,10 +1,6 @@
 import { dev } from "$app/environment";
 import {
-  getCardsByRegionById,
-  getCardsByRegionByIdEpisodes,
-  getCardsByRegionByIdEvents,
-  getCardsByRegionByIdGachas,
-  getCardsByRegionByIdParams,
+  getCardsByRegionByIdDetail,
   getCardsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
 import { getServerI18nText } from "$lib/i18n/runtime";
@@ -28,17 +24,20 @@ import { getMasterApiBaseUrl } from "$lib/server/config";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
-type RegionCardLookup = {
-  region: SupportedRegion;
-  card: CardDetail | null;
-  exists: boolean;
-  rawPayloadJson: string | null;
-};
-
 type CardPayload = {
   card: CardDetail | null;
   debugCardJson: string | null;
   error: string | null;
+};
+
+type CardDetailFetchResult = {
+  card: CardDetail | null;
+  cardExists: boolean;
+  debugCardJson: string | null;
+  params: CardDetailParams;
+  episodes: CardDetailEpisode[];
+  relatedEvents: CardRelatedEvent[];
+  gachas: CardGachaBanner[];
 };
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
@@ -85,40 +84,50 @@ const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
   return [];
 };
 
-const fetchRegionCard = async (
-  baseUrl: string,
-  region: SupportedRegion,
-  cardId: string
-): Promise<RegionCardLookup> => {
+const fetchCardDetail = async ({
+  baseUrl,
+  region,
+  cardId
+}: {
+  baseUrl: string;
+  region: SupportedRegion;
+  cardId: string;
+}): Promise<CardDetailFetchResult> => {
+  const empty: CardDetailFetchResult = {
+    card: null,
+    cardExists: false,
+    debugCardJson: null,
+    params: parseCardDetailParams(null),
+    episodes: [],
+    relatedEvents: [],
+    gachas: []
+  };
+
   try {
-    const response = await getCardsByRegionById({
+    const response = await getCardsByRegionByIdDetail({
       baseUrl,
       path: { region, id: cardId }
     });
 
     if (response.error) {
-      return {
-        region,
-        card: null,
-        exists: false,
-        rawPayloadJson: null
-      };
+      return empty;
     }
 
-    const card = parseCardDetail(response.data);
+    const data = response.data;
+    const card = parseCardDetail(data?.card);
+    const cardExists = card !== null;
+
     return {
-      region,
       card,
-      exists: card !== null,
-      rawPayloadJson: JSON.stringify(response.data, null, 2)
+      cardExists,
+      debugCardJson: dev ? JSON.stringify(data, null, 2) : null,
+      params: parseCardDetailParams(data?.params),
+      episodes: parseCardDetailEpisodes(data?.episodes),
+      relatedEvents: parseCardRelatedEvents(data?.events),
+      gachas: parseCardGachaBanners(data?.gachas)
     };
   } catch {
-    return {
-      region,
-      card: null,
-      exists: false,
-      rawPayloadJson: null
-    };
+    return empty;
   }
 };
 
@@ -126,16 +135,16 @@ const fetchAvailableRegions = async ({
   baseUrl,
   cardId,
   region,
-  currentLookupPromise
+  detailPromise
 }: {
   baseUrl: string;
   cardId: string;
   region: SupportedRegion;
-  currentLookupPromise: Promise<RegionCardLookup>;
+  detailPromise: Promise<CardDetailFetchResult>;
 }): Promise<SupportedRegion[]> => {
   try {
-    const [currentLookup, availabilityResponse] = await Promise.all([
-      currentLookupPromise,
+    const [detailResult, availabilityResponse] = await Promise.all([
+      detailPromise,
       getCardsRegionsByIdAvailability({
         baseUrl,
         path: { id: cardId }
@@ -145,7 +154,7 @@ const fetchAvailableRegions = async ({
       ? []
       : normalizeAvailableRegions(availabilityResponse.data);
 
-    if (currentLookup.exists && !detectedRegions.includes(region)) {
+    if (detailResult.cardExists && !detectedRegions.includes(region)) {
       return [region, ...detectedRegions];
     }
 
@@ -156,10 +165,10 @@ const fetchAvailableRegions = async ({
 };
 
 const fetchCardPayload = async ({
-  currentLookupPromise,
+  detailPromise,
   invalidCardIdMessage
 }: {
-  currentLookupPromise: Promise<RegionCardLookup>;
+  detailPromise: Promise<CardDetailFetchResult>;
   invalidCardIdMessage: string | null;
 }): Promise<CardPayload> => {
   if (invalidCardIdMessage) {
@@ -171,10 +180,10 @@ const fetchCardPayload = async ({
   }
 
   try {
-    const currentLookup = await currentLookupPromise;
+    const detail = await detailPromise;
     return {
-      card: currentLookup.card,
-      debugCardJson: dev ? currentLookup.rawPayloadJson : null,
+      card: detail.card,
+      debugCardJson: detail.debugCardJson,
       error: null
     };
   } catch {
@@ -183,114 +192,6 @@ const fetchCardPayload = async ({
       debugCardJson: null,
       error: null
     };
-  }
-};
-
-const fetchCardParams = async ({
-  baseUrl,
-  region,
-  cardId,
-  invalidCardIdMessage
-}: {
-  baseUrl: string;
-  region: SupportedRegion;
-  cardId: string;
-  invalidCardIdMessage: string | null;
-}): Promise<CardDetailParams> => {
-  if (invalidCardIdMessage) {
-    return parseCardDetailParams(null);
-  }
-
-  try {
-    const response = await getCardsByRegionByIdParams({
-      baseUrl,
-      path: { region, id: cardId }
-    });
-
-    return response.error ? parseCardDetailParams(null) : parseCardDetailParams(response.data);
-  } catch {
-    return parseCardDetailParams(null);
-  }
-};
-
-const fetchCardEpisodes = async ({
-  baseUrl,
-  region,
-  cardId,
-  invalidCardIdMessage
-}: {
-  baseUrl: string;
-  region: SupportedRegion;
-  cardId: string;
-  invalidCardIdMessage: string | null;
-}): Promise<CardDetailEpisode[]> => {
-  if (invalidCardIdMessage) {
-    return [];
-  }
-
-  try {
-    const response = await getCardsByRegionByIdEpisodes({
-      baseUrl,
-      path: { region, id: cardId }
-    });
-
-    return response.error ? [] : parseCardDetailEpisodes(response.data);
-  } catch {
-    return [];
-  }
-};
-
-const fetchCardGachas = async ({
-  baseUrl,
-  region,
-  cardId,
-  invalidCardIdMessage
-}: {
-  baseUrl: string;
-  region: SupportedRegion;
-  cardId: string;
-  invalidCardIdMessage: string | null;
-}): Promise<CardGachaBanner[]> => {
-  if (invalidCardIdMessage) {
-    return [];
-  }
-
-  try {
-    const response = await getCardsByRegionByIdGachas({
-      baseUrl,
-      path: { region, id: cardId }
-    });
-
-    return response.error ? [] : parseCardGachaBanners(response.data);
-  } catch {
-    return [];
-  }
-};
-
-const fetchCardEvents = async ({
-  baseUrl,
-  region,
-  cardId,
-  invalidCardIdMessage
-}: {
-  baseUrl: string;
-  region: SupportedRegion;
-  cardId: string;
-  invalidCardIdMessage: string | null;
-}): Promise<CardRelatedEvent[]> => {
-  if (invalidCardIdMessage) {
-    return [];
-  }
-
-  try {
-    const response = await getCardsByRegionByIdEvents({
-      baseUrl,
-      path: { region, id: cardId }
-    });
-
-    return response.error ? [] : parseCardRelatedEvents(response.data);
-  } catch {
-    return [];
   }
 };
 
@@ -309,14 +210,17 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const invalidMessage = cardId ? null : invalidCardIdMessage;
-  const currentLookupPromise = cardId
-    ? fetchRegionCard(baseUrl, region, cardId)
+  const detailPromise = cardId
+    ? fetchCardDetail({ baseUrl, region, cardId })
     : Promise.resolve({
-        region,
         card: null,
-        exists: false,
-        rawPayloadJson: null
-      } satisfies RegionCardLookup);
+        cardExists: false,
+        debugCardJson: null,
+        params: parseCardDetailParams(null),
+        episodes: [],
+        relatedEvents: [],
+        gachas: []
+      } satisfies CardDetailFetchResult);
 
   return {
     cardId,
@@ -329,37 +233,25 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
           baseUrl,
           cardId,
           region,
-          currentLookupPromise
+          detailPromise
         })
       : Promise.resolve([region] satisfies SupportedRegion[]),
     cardPayload: fetchCardPayload({
-      currentLookupPromise,
+      detailPromise,
       invalidCardIdMessage: invalidMessage
     }),
-    params: fetchCardParams({
-      baseUrl,
-      region,
-      cardId,
-      invalidCardIdMessage: invalidMessage
-    }),
-    episodes: fetchCardEpisodes({
-      baseUrl,
-      region,
-      cardId,
-      invalidCardIdMessage: invalidMessage
-    }),
-    relatedEvents: fetchCardEvents({
-      baseUrl,
-      region,
-      cardId,
-      invalidCardIdMessage: invalidMessage
-    }),
-    gachas: fetchCardGachas({
-      baseUrl,
-      region,
-      cardId,
-      invalidCardIdMessage: invalidMessage
-    }),
+    params: invalidMessage
+      ? Promise.resolve(parseCardDetailParams(null))
+      : detailPromise.then((d) => d.params),
+    episodes: invalidMessage
+      ? Promise.resolve([])
+      : detailPromise.then((d) => d.episodes),
+    relatedEvents: invalidMessage
+      ? Promise.resolve([])
+      : detailPromise.then((d) => d.relatedEvents),
+    gachas: invalidMessage
+      ? Promise.resolve([])
+      : detailPromise.then((d) => d.gachas),
     unitProfiles: fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap)
   };
 };

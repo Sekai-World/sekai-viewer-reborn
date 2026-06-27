@@ -28,6 +28,14 @@ export type MasterdataSyncStatus = {
     updated_at?: string;
 };
 
+export type SharedCardDetailResponse = {
+    card?: SharedCardObjectResponse;
+    episodes?: SharedCardEpisodesResponse;
+    events?: SharedCardEventsResponse;
+    gachas?: SharedCardGachaResponse;
+    params?: SharedCardParamsResponse;
+};
+
 export type SharedCardEpisodeResponse = {
     cardId?: unknown;
     episodeNo?: unknown;
@@ -953,6 +961,52 @@ export type GetCardsByRegionByIdResponses = {
 };
 
 export type GetCardsByRegionByIdResponse = GetCardsByRegionByIdResponses[keyof GetCardsByRegionByIdResponses];
+
+export type GetCardsByRegionByIdDetailData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Card ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/cards/{region}/{id}/detail';
+};
+
+export type GetCardsByRegionByIdDetailErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCardsByRegionByIdDetailError = GetCardsByRegionByIdDetailErrors[keyof GetCardsByRegionByIdDetailErrors];
+
+export type GetCardsByRegionByIdDetailResponses = {
+    /**
+     * OK
+     */
+    200: SharedCardDetailResponse;
+};
+
+export type GetCardsByRegionByIdDetailResponse = GetCardsByRegionByIdDetailResponses[keyof GetCardsByRegionByIdDetailResponses];
 
 export type GetCardsByRegionByIdEpisodesData = {
     body?: never;

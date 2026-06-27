@@ -297,6 +297,8 @@
         ? `${payload.card.title} - Sekai Viewer`
         : `${pageTitlePrefix} ${data.cardId} - Sekai Viewer`}
     </title>
+  {:catch}
+    <title>{pageTitlePrefix} {data.cardId} - Sekai Viewer</title>
   {/await}
 </svelte:head>
 
@@ -346,6 +348,8 @@
         {/if}
         {#await data.availableRegions then availableRegions}
           <RegionBadgeSwitch options={getRegionBadgeOptions(getRegionOptions(availableRegions))} />
+        {:catch}
+          <RegionBadgeSwitch options={getCurrentRegionBadgeOption()} />
         {/await}
       {/snippet}
     </PageHeader>
@@ -391,6 +395,25 @@
               {audioPauseLabel}
               {unitProfiles}
             />
+          {:catch}
+            <CardDetailInfoCard
+              card={payload.card}
+              {displayLocale}
+              title={cardInfoTitle}
+              {idLabel}
+              {nameLabel}
+              {characterLabel}
+              {unitLabel}
+              {supportUnitLabel}
+              {attrLabel}
+              {rarityLabel}
+              {typeLabel}
+              {releaseAtLabel}
+              {gachaPhraseLabel}
+              {audioPlayLabel}
+              {audioPauseLabel}
+              unitProfiles={{}}
+            />
           {/await}
         </div>
 
@@ -406,30 +429,33 @@
             {noSkillLabel}
           />
 
-          {#await data.episodes}
-            {@render statsCardSkeleton()}
-          {:then episodes}
-            {#await data.params}
-              {@render statsCardSkeleton()}
-            {:then params}
-              <CardDetailStatsCard
-                card={payload.card}
-                {params}
-                {episodes}
-                title={cardStatsTitle}
-                {levelLabel}
-                {performanceLabel}
-                {techniqueLabel}
-                {staminaLabel}
-                {totalLabel}
-                {bonusSumLabel}
-                {specialTrainingBonusLabel}
-                {episodeBonusLabel}
-                {masterRankBonusLabel}
-                {noStatsLabel}
-              />
-            {/await}
-          {/await}
+          {#await Promise.all([data.episodes, data.params])}
+		            {@render statsCardSkeleton()}
+		          {:then [episodes, params]}
+		            <CardDetailStatsCard
+		              card={payload.card}
+		              {params}
+		              {episodes}
+		              title={cardStatsTitle}
+		              {levelLabel}
+		              {performanceLabel}
+		              {techniqueLabel}
+		              {staminaLabel}
+		              {totalLabel}
+		              {bonusSumLabel}
+		              {specialTrainingBonusLabel}
+		              {episodeBonusLabel}
+		              {masterRankBonusLabel}
+		              {noStatsLabel}
+		            />
+		          {:catch}
+		            <article class="card content-card-shell shadow-sm">
+		              <div class="card-body gap-4 p-5">
+		                <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardStatsTitle}</p>
+		                <p class="text-sm opacity-60">{noStatsLabel}</p>
+		              </div>
+		            </article>
+		          {/await}
 
           <div class="grid gap-4 lg:grid-cols-2 lg:items-start">
             {#await data.episodes then episodes}
@@ -441,6 +467,13 @@
                 {rewardsLabel}
                 {noEpisodesLabel}
               />
+            {:catch}
+              <article class="card content-card-shell shadow-sm">
+                <div class="card-body gap-4 p-5">
+                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardEpisodesTitle}</p>
+                  <p class="text-sm opacity-60">{noEpisodesLabel}</p>
+                </div>
+              </article>
             {/await}
 
             {#await data.relatedEvents then relatedEvents}
@@ -453,6 +486,13 @@
                 bonusLabel={relatedEventBonusLabel}
                 storyLabel={relatedEventStoryLabel}
               />
+            {:catch}
+              <article class="card content-card-shell shadow-sm">
+                <div class="card-body gap-4 p-5">
+                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardRelatedEventsTitle}</p>
+                  <p class="text-sm opacity-60">{noRelatedEventsLabel}</p>
+                </div>
+              </article>
             {/await}
 
             {#await data.gachas then gachas}
@@ -462,6 +502,13 @@
                 title={cardGachaBannersTitle}
                 emptyLabel={noRelatedEventsLabel}
               />
+            {:catch}
+              <article class="card content-card-shell shadow-sm">
+                <div class="card-body gap-4 p-5">
+                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardGachaBannersTitle}</p>
+                  <p class="text-sm opacity-60">{noRelatedEventsLabel}</p>
+                </div>
+              </article>
             {/await}
           </div>
         </div>
@@ -474,6 +521,8 @@
         </div>
       {:then availableRegions}
         <div class="alert alert-error">{getUnavailableError(availableRegions)}</div>
+      {:catch}
+        <div class="alert alert-error">{noCardLabel}</div>
       {/await}
     {/if}
 
@@ -485,5 +534,11 @@
         json={payload.debugCardJson}
       />
     {/if}
+  {:catch}
+    <PageHeader
+      breadcrumbs={getBreadcrumbItems(`${pageTitlePrefix} ${data.cardId}`)}
+      breadcrumbClass="md:max-w-[68%]"
+    />
+    <div class="alert alert-error">{data.failedToLoadCardDataMessage}</div>
   {/await}
 </section>
