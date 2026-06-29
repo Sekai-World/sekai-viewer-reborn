@@ -1,10 +1,14 @@
 import { json } from "@sveltejs/kit";
-import { getGachasByRegionById, getCardsByRegionById } from "@platform/sekai-master-api-sdk";
+import {
+  getGachasByRegionById,
+  getCardsByRegionById,
+} from "@platform/sekai-master-api-sdk";
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { parseGachaDetail } from "$lib/server/gacha-detail";
 import { parseCardDetail } from "$lib/server/card-detail";
 import type { RequestHandler } from "./$types";
+import type { GachaDetailSub } from "$lib/domain/gacha-detail";
 
 type PullRequest = {
   count: number;
@@ -16,21 +20,77 @@ type PulledGachaCard = {
   assetBundleName: string | null;
   attr: string | null;
   rarityType: string | null;
-  weight: number | null;
 };
 
-const weightedPull = (
-  pool: { cardId: string | null; weight: number | null }[],
+type PoolCard = {
+  cardId: string;
+  cardRarityType: string;
+  weight: number;
+};
+
+type RarityRateEntry = {
+  cardRarityType: string;
+  rate: number;
+  pool: PoolCard[];
+  totalWeight: number;
+};
+
+const RARITY_VALUE: Record<string, number> = {
+  rarity_1: 1,
+  rarity_2: 2,
+  rarity_3: 3,
+  rarity_4: 4,
+  rarity_birthday: 0,
+};
+
+const weightedPick = <T extends { weight: number }>(
+  pool: T[],
   totalWeight: number
-): { cardId: string | null; weight: number | null } | null => {
+): T | null => {
   if (totalWeight <= 0 || pool.length === 0) return null;
   const rand = Math.random() * totalWeight;
   let cumulative = 0;
-  for (const card of pool) {
-    cumulative += card.weight ?? 0;
-    if (rand < cumulative) return card;
+  for (const item of pool) {
+    cumulative += item.weight;
+    if (rand < cumulative) return item;
   }
   return pool[pool.length - 1] ?? null;
+};
+
+const buildRarityPools = (
+  gachaDetails: GachaDetailSub[],
+  poolCards: PoolCard[]
+): Map<string, PoolCard[]> => {
+  const pools = new Map<string, PoolCard[]>();
+  for (const detail of gachaDetails) {
+    if (!detail.cardId) continue;
+    const poolCard = poolCards.find((c) => c.cardId === detail.cardId);
+    if (!poolCard) continue;
+    const existing = pools.get(poolCard.cardRarityType);
+    if (existing) {
+      existing.push(poolCard);
+    } else {
+      pools.set(poolCard.cardRarityType, [poolCard]);
+    }
+  }
+  return pools;
+};
+
+const buildCumulativeRates = (
+  rates: RarityRateEntry[]
+): number[] => {
+  const cumulative: number[] = [];
+  let sum = 0;
+  for (const entry of rates) {
+    sum += entry.rate;
+    cumulative.push(sum);
+  }
+  return cumulative;
+};
+
+const rollRarity = (cumulativeRates: number[]): number => {
+  const roll = Math.random() * 100;
+  return cumulativeRates.findIndex((cuml) => roll < cuml);
 };
 
 export const POST: RequestHandler = async ({ params, request }) => {
@@ -48,16 +108,17 @@ export const POST: RequestHandler = async ({ params, request }) => {
     return json({ error: "invalid_json" }, { status: 400 });
   }
 
-  const count = typeof body.count === "number" && Number.isFinite(body.count)
-    ? Math.min(Math.max(Math.round(body.count), 1), 10)
-    : 1;
+  const count =
+    typeof body.count === "number" && Number.isFinite(body.count)
+      ? Math.min(Math.max(Math.round(body.count), 1), 10)
+      : 1;
 
   const baseUrl = getMasterApiBaseUrl();
 
   try {
     const gachaResponse = await getGachasByRegionById({
       baseUrl,
-      path: { region, id: gachaId }
+      path: { region, id: gachaId },
     });
 
     if (gachaResponse.error) {
@@ -70,29 +131,30 @@ export const POST: RequestHandler = async ({ params, request }) => {
     }
 
     const pool = gacha.gachaDetails;
-    const totalWeight = pool.reduce((sum, card) => sum + (card.weight ?? 0), 0);
-
-    const pulledEntries: { cardId: string | null; weight: number | null }[] = [];
-    for (let i = 0; i < count; i++) {
-      const picked = weightedPull(pool, totalWeight);
-      if (!picked) break;
-      pulledEntries.push(picked);
+    if (pool.length === 0) {
+      return json({ error: "empty_pool" }, { status: 422 });
     }
 
-    const uniqueCardIds = [...new Set(pulledEntries.map((e) => e.cardId).filter((id): id is string => !!id))];
+    // Fetch card details for ALL pool cards to get their cardRarityType
+    const uniqueCardIds = [
+      ...new Set(pool.map((d) => d.cardId).filter((id): id is string => !!id)),
+    ];
 
+    const poolCards: PoolCard[] = [];
     const cardMetaMap = new Map<string, PulledGachaCard>();
+
     if (uniqueCardIds.length > 0) {
       const settled = await Promise.allSettled(
         uniqueCardIds.map(async (cardId) => {
           const response = await getCardsByRegionById({
             baseUrl,
-            path: { region, id: cardId }
+            path: { region, id: cardId },
           });
-          if (response.error) return { cardId, meta: null };
+          if (response.error) return { cardId, cardRarityType: null, meta: null };
           const card = parseCardDetail(response.data);
           return {
             cardId,
+            cardRarityType: card?.rarityType ?? null,
             meta: card
               ? {
                   cardId: card.id,
@@ -100,34 +162,137 @@ export const POST: RequestHandler = async ({ params, request }) => {
                   assetBundleName: card.assetBundleName,
                   attr: card.attr,
                   rarityType: card.rarityType,
-                  weight: null
                 }
-              : null
+              : null,
           };
         })
       );
 
       for (const result of settled) {
-        if (result.status === "fulfilled" && result.value.meta) {
-          cardMetaMap.set(result.value.cardId, result.value.meta);
+        if (result.status === "fulfilled" && result.value) {
+          const { cardId, cardRarityType, meta } = result.value;
+          if (cardRarityType) {
+            const detail = pool.find((d) => d.cardId === cardId);
+            const weight = detail?.weight ?? 0;
+            poolCards.push({ cardId, cardRarityType, weight });
+          }
+          if (meta) {
+            cardMetaMap.set(cardId, meta);
+          }
         }
       }
     }
 
-    const results: PulledGachaCard[] = pulledEntries
-      .map((entry) => {
-        if (!entry.cardId) return null;
-        const base = cardMetaMap.get(entry.cardId);
+    // Build rarity pools
+    const rarityPools = buildRarityPools(pool, poolCards);
+
+    // Build sorted rarity rate entries (sorted by rate descending for display, but
+    // index order must match cumulative rate order)
+    const rarityRates = gacha.gachaCardRarityRates
+      .filter((r) => r.rate !== null && r.rate > 0 && r.cardRarityType)
+      .sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0));
+
+    const rarityEntries: RarityRateEntry[] = rarityRates
+      .map((rate) => {
+        const cardRarityType = rate.cardRarityType!;
+        const pool_ = rarityPools.get(cardRarityType) ?? [];
         return {
-          cardId: entry.cardId,
-          title: base?.title ?? null,
-          assetBundleName: base?.assetBundleName ?? null,
-          attr: base?.attr ?? null,
-          rarityType: base?.rarityType ?? null,
-          weight: entry.weight
-        } satisfies PulledGachaCard;
+          cardRarityType,
+          rate: rate.rate ?? 0,
+          pool: pool_,
+          totalWeight: pool_.reduce((sum, c) => sum + c.weight, 0),
+        };
       })
-      .filter((r): r is PulledGachaCard => r !== null);
+      .filter((entry) => entry.pool.length > 0);
+
+    if (rarityEntries.length === 0) {
+      return json({ error: "no_valid_rarity_pool" }, { status: 422 });
+    }
+
+    // Determine guarantee behavior
+    const guaranteeBehavior = gacha.gachaBehaviors?.find((b) =>
+      b.gachaBehaviorType?.startsWith("over_rarity")
+    );
+    const isGuarantee = !!guaranteeBehavior;
+    let guaranteeLevel = 0;
+    if (guaranteeBehavior?.gachaBehaviorType === "over_rarity_4_once") {
+      guaranteeLevel = 4;
+    } else if (guaranteeBehavior?.gachaBehaviorType === "over_rarity_3_once") {
+      guaranteeLevel = 3;
+    }
+
+    // Build guaranteed rates (zero out rarities below guarantee level)
+    const guaranteeEntries: RarityRateEntry[] = isGuarantee
+      ? rarityEntries.map((entry) => {
+          const rarityVal = RARITY_VALUE[entry.cardRarityType] ?? 0;
+          if (rarityVal < guaranteeLevel) {
+            return { ...entry, rate: 0, pool: entry.pool, totalWeight: entry.totalWeight };
+          }
+          return { ...entry };
+        })
+      : rarityEntries;
+
+    const normalCumulative = buildCumulativeRates(rarityEntries);
+    const guaranteeCumulative = buildCumulativeRates(guaranteeEntries);
+
+    // Two-stage pull
+    const pulledCardIds: string[] = [];
+    let noGuaranteeCount = 0;
+
+    for (let i = 0; i < count; i++) {
+      // Check guarantee: every 10th pull if all 9 previous were below level
+      if (i % 10 === 9 && isGuarantee && noGuaranteeCount >= 9) {
+        const idx = rollRarity(guaranteeCumulative);
+        if (idx >= 0 && idx < guaranteeEntries.length) {
+          const entry = guaranteeEntries[idx];
+          const picked = weightedPick(entry.pool, entry.totalWeight);
+          pulledCardIds.push(picked?.cardId ?? "");
+          noGuaranteeCount = 0;
+          continue;
+        }
+      }
+
+      if (i % 10 === 0) {
+        noGuaranteeCount = 0;
+      }
+
+      // Stage 1: roll rarity
+      const rarityIdx = rollRarity(normalCumulative);
+
+      // Stage 2: roll card within rarity pool
+      if (rarityIdx >= 0 && rarityIdx < rarityEntries.length) {
+        const entry = rarityEntries[rarityIdx];
+        const picked = weightedPick(entry.pool, entry.totalWeight);
+        pulledCardIds.push(picked?.cardId ?? "");
+
+        // Track guarantee counter
+        if (isGuarantee) {
+          const rarityVal =
+            RARITY_VALUE[rarityEntries[rarityIdx].cardRarityType] ?? 0;
+          if (rarityVal < guaranteeLevel) {
+            noGuaranteeCount++;
+          }
+        }
+      } else {
+        // Fallback: pick from first valid pool
+        const entry = rarityEntries[0];
+        const picked = weightedPick(entry.pool, entry.totalWeight);
+        pulledCardIds.push(picked?.cardId ?? "");
+      }
+    }
+
+    const results: PulledGachaCard[] = pulledCardIds
+      .filter((id): id is string => !!id)
+      .map((cardId) => {
+        const meta = cardMetaMap.get(cardId);
+        return {
+          cardId,
+          title: meta?.title ?? null,
+          assetBundleName: meta?.assetBundleName ?? null,
+          attr: meta?.attr ?? null,
+          rarityType: meta?.rarityType ?? null,
+        } satisfies PulledGachaCard;
+      });
 
     return json({ results });
   } catch {
