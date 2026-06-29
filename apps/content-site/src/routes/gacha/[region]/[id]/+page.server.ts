@@ -160,53 +160,39 @@ const fetchGachaPayload = async ({
   }
 
   try {
+    const enrichCard = async (
+      cardId: string | null,
+      region: SupportedRegion
+    ): Promise<{ title: string | null; assetBundleName: string | null; attr: string | null; rarityType: string | null }> => {
+      const empty = { title: null, assetBundleName: null, attr: null, rarityType: null } as const;
+      if (!cardId) return { ...empty };
+
+      try {
+        const response = await getCardsByRegionById({
+          baseUrl,
+          path: { region, id: cardId }
+        });
+        if (response.error) return { ...empty };
+
+        const card = parseCardDetail(response.data);
+        return {
+          title: card?.title ?? null,
+          assetBundleName: card?.assetBundleName ?? null,
+          attr: card?.attr ?? null,
+          rarityType: card?.rarityType ?? null
+        };
+      } catch {
+        return { ...empty };
+      }
+    };
+
     const currentLookup = await currentLookupPromise;
+
     const pickupCards = await Promise.all(
-      currentLookup.gacha?.gachaPickups.map(async (pickup) => {
-        if (!pickup.cardId) {
-          return {
-            ...pickup,
-            title: null,
-            assetBundleName: null,
-            attr: null,
-            rarityType: null
-          };
-        }
-
-        try {
-          const response = await getCardsByRegionById({
-            baseUrl,
-            path: { region: currentLookup.region, id: pickup.cardId }
-          });
-
-          if (response.error) {
-            return {
-              ...pickup,
-              title: null,
-              assetBundleName: null,
-              attr: null,
-              rarityType: null
-            };
-          }
-
-          const card = parseCardDetail(response.data);
-          return {
-            ...pickup,
-            title: card?.title ?? null,
-            assetBundleName: card?.assetBundleName ?? null,
-            attr: card?.attr ?? null,
-            rarityType: card?.rarityType ?? null
-          };
-        } catch {
-          return {
-            ...pickup,
-            title: null,
-            assetBundleName: null,
-            attr: null,
-            rarityType: null
-          };
-        }
-      }) ?? []
+      currentLookup.gacha?.gachaPickups.map(async (pickup) => ({
+        ...pickup,
+        ...(await enrichCard(pickup.cardId, currentLookup.region))
+      })) ?? []
     );
 
     return {

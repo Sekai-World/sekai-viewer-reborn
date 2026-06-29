@@ -9,6 +9,7 @@
   import GachaDetailInfoCard from "$lib/components/gacha/GachaDetailInfoCard.svelte";
   import GachaDetailPickupCard from "$lib/components/gacha/GachaDetailPickupCard.svelte";
   import GachaDetailRarityRateCard from "$lib/components/gacha/GachaDetailRarityRateCard.svelte";
+  import GachaSimulatorCard from "$lib/components/gacha/GachaSimulatorCard.svelte";
   import Icon from "@iconify/svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
@@ -58,6 +59,22 @@
   let gachaDescriptionLabel = $state(getInitialI18nText("gachaDescription"));
   let gachaDescriptionShowMore = $state(getInitialI18nText("gachaDescriptionShowMore"));
   let gachaDescriptionShowLess = $state(getInitialI18nText("gachaDescriptionShowLess"));
+
+  // Simulator i18n labels
+  let simulatorTitle = $state(getInitialI18nText("simulatorTitle"));
+  let simulatorPull1 = $state(getInitialI18nText("simulatorPull1"));
+  let simulatorPull10 = $state(getInitialI18nText("simulatorPull10"));
+  let simulatorReset = $state(getInitialI18nText("simulatorReset"));
+  let simulatorTotalPulls = $state(getInitialI18nText("simulatorTotalPulls"));
+  let simulatorResults = $state(getInitialI18nText("simulatorResults"));
+  let simulatorNoPool = $state(getInitialI18nText("simulatorNoPool"));
+  let simulatorEmpty = $state(getInitialI18nText("simulatorEmpty"));
+  let simulatorNew = $state(getInitialI18nText("simulatorNew"));
+  let simulatorStatsTitle = $state(getInitialI18nText("simulatorStatsTitle"));
+  let simulatorRarityStats = $state(getInitialI18nText("simulatorRarityStats"));
+  let simulatorCountStats = $state(getInitialI18nText("simulatorCountStats"));
+  let simulatorRateStats = $state(getInitialI18nText("simulatorRateStats"));
+  let simulatorDisclaimer = $state(getInitialI18nText("simulatorDisclaimer"));
 
   const DESCRIPTION_COLLAPSED_LENGTH = 150;
   let descriptionExpanded = $state(false);
@@ -140,6 +157,20 @@
     gachaDescriptionLabel = translate("gachaDescription");
     gachaDescriptionShowMore = translate("gachaDescriptionShowMore");
     gachaDescriptionShowLess = translate("gachaDescriptionShowLess");
+    simulatorTitle = translate("simulatorTitle");
+    simulatorPull1 = translate("simulatorPull1");
+    simulatorPull10 = translate("simulatorPull10");
+    simulatorReset = translate("simulatorReset");
+    simulatorTotalPulls = translate("simulatorTotalPulls");
+    simulatorResults = translate("simulatorResults");
+    simulatorNoPool = translate("simulatorNoPool");
+    simulatorEmpty = translate("simulatorEmpty");
+    simulatorNew = translate("simulatorNew");
+    simulatorStatsTitle = translate("simulatorStatsTitle");
+    simulatorRarityStats = translate("simulatorRarityStats");
+    simulatorCountStats = translate("simulatorCountStats");
+    simulatorRateStats = translate("simulatorRateStats");
+    simulatorDisclaimer = translate("simulatorDisclaimer");
     gachaTypeMap = buildGachaTypeMap(translate);
     lotteryTypeMap = buildLotteryTypeMap(translate);
     behaviorTypeMap = buildBehaviorTypeMap(translate);
@@ -351,6 +382,26 @@
               {costResourceTypeMap}
             />
           {/if}
+
+          <GachaSimulatorCard
+            gachaId={data.gachaId}
+            region={data.region}
+            title={simulatorTitle}
+            pull1Label={simulatorPull1}
+            pull10Label={simulatorPull10}
+            resetLabel={simulatorReset}
+            totalPullsLabel={simulatorTotalPulls}
+            resultsLabel={simulatorResults}
+            noPoolLabel={simulatorNoPool}
+            emptyLabel={simulatorEmpty}
+            newLabel={simulatorNew}
+            statsTitle={simulatorStatsTitle}
+            rarityStatsLabel={simulatorRarityStats}
+            countStatsLabel={simulatorCountStats}
+            rateStatsLabel={simulatorRateStats}
+            disclaimerLabel={simulatorDisclaimer}
+            cardAltSuffix={cardImageAltSuffix}
+          />
 
           {#if payload.gacha.gachaInformation?.description}
             {@const desc = payload.gacha.gachaInformation.description}

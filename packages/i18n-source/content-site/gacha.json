@@ -55,5 +55,19 @@
   "costResourceType.gacha_ticket": "Gacha Ticket",
   "gachaDescriptionShowMore": "Show more",
   "gachaDescriptionShowLess": "Show less",
-  "currentGachaLabel": "Current Gacha"
+  "currentGachaLabel": "Current Gacha",
+  "simulatorTitle": "Gacha Simulator",
+  "simulatorPull1": "Pull ×1",
+  "simulatorPull10": "Pull ×10",
+  "simulatorReset": "Reset",
+  "simulatorTotalPulls": "Total Pulls",
+  "simulatorResults": "Results",
+  "simulatorNoPool": "No card pool data available for simulation.",
+  "simulatorEmpty": "Pull to see results!",
+  "simulatorNew": "NEW",
+  "simulatorStatsTitle": "Pull Statistics",
+  "simulatorRarityStats": "Rarity",
+  "simulatorCountStats": "Count",
+  "simulatorRateStats": "Rate",
+  "simulatorDisclaimer": "This is a fan-made simulator. Results do not reflect actual in-game gacha outcomes."
 }
