@@ -82,6 +82,7 @@
   let seenCardIds: Set<string> = $state(new Set<string>());
   let pulling = $state(false);
   let pullError = $state(false);
+  let pendingCount = $state(0);
 
   const totalPulls = $derived(pullHistory.length);
 
@@ -102,6 +103,7 @@
   const doPull = async (count: number): Promise<void> => {
     pulling = true;
     pullError = false;
+    pendingCount = count;
 
     try {
       const url = `${base}/api/gacha/${region}/${gachaId}/pull`;
@@ -133,6 +135,7 @@
       pullError = true;
     } finally {
       pulling = false;
+      pendingCount = 0;
     }
   };
 
@@ -256,6 +259,17 @@
                   {/if}
                 </div>
               </a>
+            {/each}
+          </div>
+        </div>
+      {:else if pulling && pendingCount > 0}
+        <div class="space-y-2">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+            {resultsLabel}
+          </p>
+          <div class="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
+            {#each Array(pendingCount) as _, i (`skeleton-${i}`)}
+              <div class="aspect-square animate-pulse rounded-lg bg-base-200/60"></div>
             {/each}
           </div>
         </div>
