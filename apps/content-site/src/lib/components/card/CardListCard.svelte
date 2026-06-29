@@ -400,7 +400,7 @@
       <div
         class={viewMode === "grid" ? "aspect-video bg-base-200/60" : "min-h-32 bg-base-200/60"}
       ></div>
-      <div class="card-body gap-2 p-4">
+      <div class="card-body gap-2 p-3 sm:p-4">
         <div class="h-5 w-3/4 rounded bg-base-200/70"></div>
         <div class="h-4 w-1/3 rounded bg-base-200/70"></div>
       </div>
@@ -427,7 +427,7 @@
         </div>
       </div>
     {:else if viewMode === "comfy"}
-      <div class="card-body items-center gap-3 p-4 text-center">
+      <div class="card-body items-center gap-3 p-3 sm:p-4 text-center">
         <div class="grid w-full max-w-34 grid-cols-2 gap-2">
           {#if !isTrainedOnlyCard()}
             {@render thumbImage(false)}
@@ -505,7 +505,7 @@
           {/if}
         </div>
       </div>
-      <div class="card-body gap-1.5 p-4">
+      <div class="card-body gap-1.5 p-3 sm:p-4">
         <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
         {@render metaBadges()}
         <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>

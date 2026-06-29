@@ -162,7 +162,7 @@
 </script>
 
 <article class="card content-card-shell shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <p
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
@@ -175,7 +175,7 @@
     </p>
 
     {#if !gachaId}
-      <div class="content-card-inset rounded-xl px-4 py-6 text-center text-sm opacity-70">
+      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-6 text-center text-sm opacity-70">
         {noPoolLabel}
       </div>
     {:else}
@@ -210,13 +210,13 @@
       </div>
 
       {#if pullError}
-        <div class="content-card-inset rounded-xl px-4 py-3 text-center text-sm text-error/80">
+        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3 text-center text-sm text-error/80">
           ⚠
         </div>
       {/if}
 
       {#if totalPulls > 0}
-        <div class="content-card-inset rounded-xl px-4 py-3">
+        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
           <div class="flex items-center justify-between text-sm">
             <span class="opacity-70">{totalPullsLabel}</span>
             <span class="font-semibold tabular-nums">{totalPulls}</span>
@@ -274,7 +274,7 @@
           </div>
         </div>
       {:else if totalPulls === 0 && !pulling}
-        <div class="content-card-inset rounded-xl px-4 py-6 text-center text-sm opacity-70">
+        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-6 text-center text-sm opacity-70">
           {emptyLabel}
         </div>
       {/if}

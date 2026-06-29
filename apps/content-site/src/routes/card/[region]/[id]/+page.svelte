@@ -215,7 +215,7 @@
 
 {#snippet statsCardSkeleton()}
   <article class="card content-card-shell shadow-sm" aria-busy="true">
-    <div class="card-body gap-4 p-5">
+    <div class="card-body gap-4 p-3 sm:p-5">
       <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
         <span class="size-4 animate-pulse rounded bg-base-300" aria-hidden="true"></span>
         <span>{cardStatsTitle}</span>
@@ -223,7 +223,7 @@
 
       <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
         <div class="space-y-3">
-          <div class="content-card-inset rounded-xl px-4 py-3">
+          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
             <div class="flex items-center justify-between gap-4">
               <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
               <div class="h-8 w-20 animate-pulse rounded bg-base-300"></div>
@@ -231,7 +231,7 @@
             <div class="mt-3 h-3 animate-pulse rounded-full bg-base-300"></div>
           </div>
 
-          <div class="content-card-inset space-y-3 rounded-xl px-4 py-3">
+          <div class="content-card-inset space-y-3 rounded-xl px-3 sm:px-4 py-3">
             <div class="flex items-center justify-between gap-3">
               <div class="h-4 w-32 animate-pulse rounded bg-base-300"></div>
               <div class="h-5 w-10 animate-pulse rounded-full bg-base-300"></div>
@@ -256,7 +256,7 @@
         <div class="space-y-3">
           <div class="space-y-2">
             {#each [0, 1, 2] as panelKey (panelKey)}
-              <div class="content-card-inset rounded-xl px-4 py-2.5">
+              <div class="content-card-inset rounded-xl px-3 sm:px-4 py-2.5">
                 <div class="flex items-center justify-between gap-4">
                   <div class="h-4 w-28 animate-pulse rounded bg-base-300"></div>
                   <div class="h-6 w-20 animate-pulse rounded bg-base-300"></div>
@@ -265,7 +265,7 @@
             {/each}
           </div>
 
-          <div class="content-card-inset rounded-xl px-4 py-3">
+          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
             <div class="flex items-center justify-between gap-4">
               <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
               <div class="h-5 w-20 animate-pulse rounded bg-base-300"></div>
@@ -278,7 +278,7 @@
           </div>
 
           <div class="pt-2">
-            <div class="content-card-inset rounded-xl px-4 py-2.5">
+            <div class="content-card-inset rounded-xl px-3 sm:px-4 py-2.5">
               <div class="flex items-center justify-between gap-4">
                 <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
                 <div class="h-6 w-24 animate-pulse rounded bg-base-300"></div>
@@ -321,13 +321,13 @@
       class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
     >
       <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-4 p-5">
+        <div class="card-body gap-4 p-3 sm:p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
           <div class="aspect-21/10 w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
         </div>
       </article>
       <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-3 p-5">
+        <div class="card-body gap-3 p-3 sm:p-5">
           <div class="h-5 w-1/3 animate-pulse rounded bg-base-300"></div>
           <div class="h-10 w-2/3 animate-pulse rounded bg-base-300"></div>
           <div class="grid gap-3 sm:grid-cols-2">
@@ -454,7 +454,7 @@
 		            />
 		          {:catch}
 		            <article class="card content-card-shell shadow-sm">
-		              <div class="card-body gap-4 p-5">
+		              <div class="card-body gap-4 p-3 sm:p-5">
 		                <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardStatsTitle}</p>
 		                <p class="text-sm opacity-60">{noStatsLabel}</p>
 		              </div>
@@ -473,7 +473,7 @@
               />
             {:catch}
               <article class="card content-card-shell shadow-sm">
-                <div class="card-body gap-4 p-5">
+                <div class="card-body gap-4 p-3 sm:p-5">
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardEpisodesTitle}</p>
                   <p class="text-sm opacity-60">{noEpisodesLabel}</p>
                 </div>
@@ -492,7 +492,7 @@
               />
             {:catch}
               <article class="card content-card-shell shadow-sm">
-                <div class="card-body gap-4 p-5">
+                <div class="card-body gap-4 p-3 sm:p-5">
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardRelatedEventsTitle}</p>
                   <p class="text-sm opacity-60">{noRelatedEventsLabel}</p>
                 </div>
@@ -509,7 +509,7 @@
               />
             {:catch}
               <article class="card content-card-shell shadow-sm">
-                <div class="card-body gap-4 p-5">
+                <div class="card-body gap-4 p-3 sm:p-5">
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardGachaBannersTitle}</p>
                   <p class="text-sm opacity-60">{noRelatedGachaLabel}</p>
                 </div>

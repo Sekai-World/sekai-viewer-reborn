@@ -239,7 +239,7 @@
         {/if}
       </div>
       {#if !isSpoilerPlaceholderVisible()}
-        <div class="card-body gap-2 p-4">
+        <div class="card-body gap-2 p-3 sm:p-4">
           {@render musicTagBadges("badge-xs")}
           <h2 class="line-clamp-2 text-sm/snug font-semibold">{item.title}</h2>
           {#if item.composer}

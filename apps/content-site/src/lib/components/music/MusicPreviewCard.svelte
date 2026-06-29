@@ -151,7 +151,7 @@
 </script>
 
 <article class="card content-card-shell shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <p
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
@@ -172,7 +172,7 @@
           {@const hasAsset = !!vocal.assetBundleName?.trim()}
           {@const chars = getCharacters(vocal)}
           <button
-            class="content-card-inset flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors {isSelected && hasAsset ? 'ring-1 ring-primary bg-primary/5' : 'hover:bg-base-content/5'}"
+            class="content-card-inset flex w-full items-center gap-3 rounded-xl px-3 sm:px-4 py-3 text-left transition-colors {isSelected && hasAsset ? 'ring-1 ring-primary bg-primary/5' : 'hover:bg-base-content/5'}"
             onclick={() => selectVocal(vocal.id)}
             disabled={!hasAsset}
           >
@@ -234,7 +234,7 @@
               </div>
 
               <!-- Audio player with download options -->
-              <div class="content-card-inset rounded-xl p-4">
+              <div class="content-card-inset rounded-xl p-3 sm:p-4">
                 <AudioPlayer
                   src={currentSrc}
                   title={title}

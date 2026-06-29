@@ -218,7 +218,7 @@
       class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
     >
       <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-4 p-5">
+        <div class="card-body gap-4 p-3 sm:p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
           <div class="space-y-2">
             <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
@@ -227,7 +227,7 @@
         </div>
       </article>
       <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-3 p-5">
+        <div class="card-body gap-3 p-3 sm:p-5">
           <div class="h-5 w-1/3 animate-pulse rounded bg-base-300"></div>
           <div class="h-10 w-2/3 animate-pulse rounded bg-base-300"></div>
           <div class="grid gap-3 sm:grid-cols-2">

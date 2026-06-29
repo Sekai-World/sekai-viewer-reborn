@@ -128,7 +128,7 @@
 {/snippet}
 
 <article class="card content-card-shell overflow-hidden shadow-sm">
-  <div class="card-body items-center gap-3 p-5 text-center">
+  <div class="card-body items-center gap-3 p-3 sm:p-5 text-center">
     <div
       class={`tabs tabs-box content-card-inset grid w-full ${availableTabs.length === 1 ? "grid-cols-1" : "grid-cols-2"} gap-1 p-1 sm:flex`}
     >

@@ -108,7 +108,7 @@
 </script>
 
 <article class="card content-card-shell shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
       <Icon icon="mdi:creation-outline" class="size-4" aria-hidden="true" />
       <span>{title}</span>
@@ -117,7 +117,7 @@
     {#if skill}
       <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
         <div class="space-y-3">
-          <label class="content-card-inset block rounded-xl px-4 py-3">
+          <label class="content-card-inset block rounded-xl px-3 sm:px-4 py-3">
             <span class="flex items-center justify-between gap-4 text-sm font-semibold">
               <span>{skillLevelLabel}</span>
               <span class="flex items-center gap-1">
@@ -145,7 +145,7 @@
           {#if selectedEffectDetails.length > 0}
             <div class="grid gap-2 sm:grid-cols-2">
               {#each selectedEffectDetails as item, index (`effect-${index}`)}
-                <div class="content-card-inset rounded-xl px-4 py-3">
+                <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
                   <p class="text-sm font-semibold">{formatEffectType(item.effect.type)}</p>
                   <div class="mt-2 space-y-1 text-xs opacity-75">
                     {#if item.detail?.activateEffectDuration !== null}
@@ -168,7 +168,7 @@
 
         <dl class="space-y-2">
           {#if skill.name}
-            <div class="content-card-inset rounded-xl px-4 py-3">
+            <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
               <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                 {skillNameLabel}
               </dt>
@@ -176,7 +176,7 @@
             </div>
           {/if}
           {#if descriptionText}
-            <div class="content-card-inset rounded-xl px-4 py-3">
+            <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
               <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                 {skillDescriptionLabel}
               </dt>
