@@ -253,7 +253,7 @@
                     imageClass="size-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
                   {#if card.isNew}
-                    <span class="absolute top-0.5 left-0.5 rounded bg-primary px-1 py-0.5 text-[0.5rem] font-bold leading-none text-primary-content shadow-sm">
+                    <span class="absolute top-0.5 left-0.5 z-10 rounded bg-primary px-1 py-0.5 text-[0.5rem] font-bold leading-none text-primary-content shadow-sm">
                       {newLabel}
                     </span>
                   {/if}
