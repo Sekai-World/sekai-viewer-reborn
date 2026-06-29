@@ -47,6 +47,7 @@
   "noCardData": "No card data.",
   "noEpisodesLabel": "No side stories available.",
   "noRelatedEventsLabel": "No related events available.",
+  "noRelatedGachaLabel": "No related gacha available.",
   "noSkillLabel": "No skill data available.",
   "noStatsLabel": "No stat data available.",
   "pageTitle.cardPrefix": "Card",
@@ -65,5 +66,6 @@
   "supportUnitLabel": "Support Unit",
   "techniqueLabel": "Technique",
   "totalLabel": "Total",
+  "showAllGachaLabel": "Show all related gacha",
   "typeLabel": "Type"
 }
