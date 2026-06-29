@@ -135,7 +135,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
       return json({ error: "empty_pool" }, { status: 422 });
     }
 
-    // Fetch card details for ALL pool cards to get their cardRarityType
+    // Fetch all pool card details to get cardRarityType for rarity grouping
     const uniqueCardIds = [
       ...new Set(pool.map((d) => d.cardId).filter((id): id is string => !!id)),
     ];
@@ -183,11 +183,8 @@ export const POST: RequestHandler = async ({ params, request }) => {
       }
     }
 
-    // Build rarity pools
     const rarityPools = buildRarityPools(pool, poolCards);
 
-    // Build sorted rarity rate entries (sorted by rate descending for display, but
-    // index order must match cumulative rate order)
     const rarityRates = gacha.gachaCardRarityRates
       .filter((r) => r.rate !== null && r.rate > 0 && r.cardRarityType)
       .sort((a, b) => (b.rate ?? 0) - (a.rate ?? 0));
@@ -209,7 +206,6 @@ export const POST: RequestHandler = async ({ params, request }) => {
       return json({ error: "no_valid_rarity_pool" }, { status: 422 });
     }
 
-    // Determine guarantee behavior
     const guaranteeBehavior = gacha.gachaBehaviors?.find((b) =>
       b.gachaBehaviorType?.startsWith("over_rarity")
     );
@@ -221,30 +217,41 @@ export const POST: RequestHandler = async ({ params, request }) => {
       guaranteeLevel = 3;
     }
 
-    // Build guaranteed rates (zero out rarities below guarantee level)
-    const guaranteeEntries: RarityRateEntry[] = isGuarantee
-      ? rarityEntries.map((entry) => {
+    // Guarantee rates: redistribute probability from below-guarantee rarities
+    // into the guarantee rarity so cumulative rates sum to 100.
+    // E.g. for over_rarity_3_once with rates [★1:80, ★2:10, ★3:8, ★4:2],
+    // guarantee rates become [0, 0, 98, 2] — ★3 absorbs ★1+★2 probability.
+    const normalCumulative = buildCumulativeRates(rarityEntries);
+    let guaranteeCumulative: number[] = normalCumulative;
+
+    if (isGuarantee && guaranteeLevel > 0) {
+      const guaranteeIdx = rarityEntries.findIndex(
+        (e) => (RARITY_VALUE[e.cardRarityType] ?? 0) === guaranteeLevel
+      );
+      if (guaranteeIdx >= 0) {
+        const grs = rarityEntries.map((e) => e.rate);
+        grs[guaranteeIdx] = normalCumulative[guaranteeIdx];
+        rarityEntries.forEach((entry, idx) => {
           const rarityVal = RARITY_VALUE[entry.cardRarityType] ?? 0;
           if (rarityVal < guaranteeLevel) {
-            return { ...entry, rate: 0, pool: entry.pool, totalWeight: entry.totalWeight };
+            grs[idx] = 0;
           }
-          return { ...entry };
-        })
-      : rarityEntries;
+        });
+        guaranteeCumulative = grs.reduce(
+          (sum, curr) => [...sum, curr + (sum.slice(-1)[0] || 0)],
+          [] as number[]
+        );
+      }
+    }
 
-    const normalCumulative = buildCumulativeRates(rarityEntries);
-    const guaranteeCumulative = buildCumulativeRates(guaranteeEntries);
-
-    // Two-stage pull
     const pulledCardIds: string[] = [];
     let noGuaranteeCount = 0;
 
     for (let i = 0; i < count; i++) {
-      // Check guarantee: every 10th pull if all 9 previous were below level
       if (i % 10 === 9 && isGuarantee && noGuaranteeCount >= 9) {
         const idx = rollRarity(guaranteeCumulative);
-        if (idx >= 0 && idx < guaranteeEntries.length) {
-          const entry = guaranteeEntries[idx];
+        if (idx >= 0 && idx < rarityEntries.length) {
+          const entry = rarityEntries[idx];
           const picked = weightedPick(entry.pool, entry.totalWeight);
           pulledCardIds.push(picked?.cardId ?? "");
           noGuaranteeCount = 0;
@@ -256,16 +263,13 @@ export const POST: RequestHandler = async ({ params, request }) => {
         noGuaranteeCount = 0;
       }
 
-      // Stage 1: roll rarity
       const rarityIdx = rollRarity(normalCumulative);
 
-      // Stage 2: roll card within rarity pool
       if (rarityIdx >= 0 && rarityIdx < rarityEntries.length) {
         const entry = rarityEntries[rarityIdx];
         const picked = weightedPick(entry.pool, entry.totalWeight);
         pulledCardIds.push(picked?.cardId ?? "");
 
-        // Track guarantee counter
         if (isGuarantee) {
           const rarityVal =
             RARITY_VALUE[rarityEntries[rarityIdx].cardRarityType] ?? 0;
