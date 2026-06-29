@@ -100,6 +100,7 @@ type CardGachaBanner = {
   id: string;
   name: string | null;
   assetbundleName: string | null;
+  startAt: number | null;
 };
 
 export type {

@@ -85,7 +85,7 @@
     return asset(`/icons/icon_${unit === "none" ? "piapro" : unit}.png`);
   };
   const getAttrIconUrl = (): string | null =>
-    card.attr ? asset(`/card_attr/icon_attribute_${card.attr}_64.png`) : null;
+    card.attr ? asset(`/card_attr/icon_attribute_${card.attr}_88.png`) : null;
   const getCharacterThumbnailUrl = (): string | null =>
     card.character?.id !== null && card.character?.id !== undefined
       ? getLocalCharacterThumbnailAssetURL(card.character.id)

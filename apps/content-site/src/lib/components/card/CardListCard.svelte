@@ -4,6 +4,7 @@
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
+  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
 
   type CardListCardItem = {
     id: string;
@@ -370,30 +371,26 @@
   </div>
 {/snippet}
 
-{#snippet thumbImage(trained: boolean, sizeClass: string)}
-  {@const thumbUrl = getThumbnailImageUrl(trained)}
-  {@const imageKey = `thumb:${trained ? "trained" : "normal"}`}
-  {@const isVisible = visibleImageKeys[imageKey] === true}
-  <div
-    class={`relative overflow-hidden rounded-xl bg-base-200 ${sizeClass}`}
-    use:loadWhenVisible={imageKey}
-  >
-    {#if thumbUrl && isVisible}
-      <img
-        src={thumbUrl}
-        alt={`${getCardTitle()} ${cardImageAltSuffix}`}
-        class="size-full object-cover"
-        loading="lazy"
-        decoding="async"
-        onerror={(event) => handleCardImageError(event, "thumbnail", trained)}
-      />
-    {/if}
-    {@render cardFrame("S", isVisible)}
-    {#if isVisible}
-      {@render thumbIcons(trained)}
-    {/if}
-  </div>
-{/snippet}
+  {#snippet thumbImage(trained: boolean)}
+    {@const thumbUrl = getThumbnailImageUrl(trained)}
+    {@const fallbackUrl = getFallbackImageUrl("thumbnail", trained)}
+    <CardThumbnail
+      src={thumbUrl}
+      fallbackSrc={fallbackUrl}
+      alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+      fallbackLabel=""
+      trained={trained}
+      attr={item.attr}
+      rarityType={item.rarityType}
+      rarityCount={item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
+      showFrame={true}
+      showIcons={true}
+      loadMode="visible"
+      maxSize={160}
+      containerClass="relative overflow-hidden rounded-xl bg-base-200 aspect-square"
+      imageClass="size-full object-cover"
+    />
+  {/snippet}
 
 <div class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`}>
   <article
@@ -414,10 +411,10 @@
       <div class="grid grid-cols-[7.5rem_1fr] gap-4 p-3 sm:grid-cols-[10rem_1fr]">
         <div class="grid grid-cols-2 gap-2 self-center">
           {#if !isTrainedOnlyCard()}
-            {@render thumbImage(false, "aspect-square")}
+            {@render thumbImage(false)}
           {/if}
           {#if isTrainableCard()}
-            {@render thumbImage(true, "aspect-square")}
+            {@render thumbImage(true)}
           {/if}
         </div>
         <div class="flex min-w-0 flex-col justify-center gap-2">
@@ -433,10 +430,10 @@
       <div class="card-body items-center gap-3 p-4 text-center">
         <div class="grid w-full max-w-34 grid-cols-2 gap-2">
           {#if !isTrainedOnlyCard()}
-            {@render thumbImage(false, "aspect-square")}
+            {@render thumbImage(false)}
           {/if}
           {#if isTrainableCard()}
-            {@render thumbImage(true, "aspect-square")}
+            {@render thumbImage(true)}
           {/if}
         </div>
         {@render metaBadges()}

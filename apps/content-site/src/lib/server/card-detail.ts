@@ -477,13 +477,8 @@ export const parseCardRelatedEvents = (payload: unknown): CardRelatedEvent[] =>
     .filter((event): event is CardRelatedEvent => event !== null);
 
 export const parseCardGachaBanners = (payload: unknown): CardGachaBanner[] => {
-  const root = getObject(payload);
-  if (!root) {
-    return [];
-  }
-
-  const items = getNestedArray(root, ["gachas"]);
-  if (!items) {
+  const items = parseLooseItemList(payload);
+  if (items.length === 0) {
     return [];
   }
 
@@ -502,7 +497,8 @@ export const parseCardGachaBanners = (payload: unknown): CardGachaBanner[] => {
       return {
         id,
         name: pickFirstString(node, ["name"]),
-        assetbundleName: pickFirstString(node, ["assetbundleName", "assetBundleName"])
+        assetbundleName: pickFirstString(node, ["assetbundleName", "assetBundleName"]),
+        startAt: pickFirstNumber(node, ["startAt", "start_at"])
       };
     })
     .filter((banner): banner is CardGachaBanner => banner !== null);

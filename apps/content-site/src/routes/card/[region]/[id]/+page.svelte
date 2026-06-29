@@ -77,7 +77,9 @@
   let noEpisodesLabel = $state(getInitialI18nText("noEpisodesLabel"));
   let cardRelatedEventsTitle = $state(getInitialI18nText("cardRelatedEventsTitle"));
   let noRelatedEventsLabel = $state(getInitialI18nText("noRelatedEventsLabel"));
+  let noRelatedGachaLabel = $state(getInitialI18nText("noRelatedGachaLabel"));
   let cardGachaBannersTitle = $state(getInitialI18nText("cardGachaBannersTitle"));
+  let showAllGachaLabel = $state(getInitialI18nText("showAllGachaLabel"));
   let relatedEventBonusLabel = $state(getInitialI18nText("relatedEventBonusLabel"));
   let relatedEventStoryLabel = $state(getInitialI18nText("relatedEventStoryLabel"));
 
@@ -133,7 +135,9 @@
     noEpisodesLabel = translate("noEpisodesLabel");
     cardRelatedEventsTitle = translate("cardRelatedEventsTitle");
     noRelatedEventsLabel = translate("noRelatedEventsLabel");
+    noRelatedGachaLabel = translate("noRelatedGachaLabel");
     cardGachaBannersTitle = translate("cardGachaBannersTitle");
+    showAllGachaLabel = translate("showAllGachaLabel");
     relatedEventBonusLabel = translate("relatedEventBonusLabel");
     relatedEventStoryLabel = translate("relatedEventStoryLabel");
   };
@@ -500,13 +504,14 @@
                 {gachas}
                 region={data.region}
                 title={cardGachaBannersTitle}
-                emptyLabel={noRelatedEventsLabel}
+                emptyLabel={noRelatedGachaLabel}
+                showAllLabel={showAllGachaLabel}
               />
             {:catch}
               <article class="card content-card-shell shadow-sm">
                 <div class="card-body gap-4 p-5">
                   <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardGachaBannersTitle}</p>
-                  <p class="text-sm opacity-60">{noRelatedEventsLabel}</p>
+                  <p class="text-sm opacity-60">{noRelatedGachaLabel}</p>
                 </div>
               </article>
             {/await}

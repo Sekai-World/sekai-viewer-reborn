@@ -17,6 +17,8 @@
   let {
     region,
     item,
+    currentGachaIds,
+    currentGachaLabel,
     spoilerContentLabel,
     uiLocale,
     idLabel,
@@ -24,11 +26,15 @@
   }: {
     region: SupportedRegion;
     item: GachaListItem;
+    currentGachaIds: Set<string>;
+    currentGachaLabel: string;
     spoilerContentLabel: string;
     uiLocale: string;
     idLabel: string;
     bannerAltSuffix: string;
   } = $props();
+
+  const isCurrentGacha = (): boolean => currentGachaIds.has(item.id);
 
   const contentDisplaySettings = getContentDisplaySettings();
   const spoilerRevealAnimationMs = 180;
@@ -146,6 +152,14 @@
           {idLabel}{item.id}
         </span>
       </div>
+
+      {#if isCurrentGacha()}
+        <div class="absolute bottom-3 right-3">
+          <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
+            {currentGachaLabel}
+          </span>
+        </div>
+      {/if}
     </div>
 
     <div class="px-4 pb-4 pt-3">

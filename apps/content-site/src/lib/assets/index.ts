@@ -306,6 +306,43 @@ export const getGachaLogoAssetURL = (
   );
 };
 
+export const getGachaBannerAssetURL = (
+  gachaId: string,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedGachaId = gachaId.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedGachaId.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  const assetBundleName = `banner_gacha${normalizedGachaId}`;
+  return buildServerAssetURL(
+    `home/banner/${assetBundleName}/${assetBundleName}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getCommonMaterialThumbnailURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `thumbnail/common_material/${normalizedAssetBundleName}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
 export const getMusicJacketAssetURL = (
   assetBundleName: string,
   server: AssetServer = "jp",
