@@ -45,14 +45,26 @@
       programmaticScrolling = true;
       cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
 
-      const onScrollEnd = (): void => {
+      let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+      const clearScrollListeners = (): void => {
         programmaticScrolling = false;
         carouselEl!.removeEventListener("scrollend", onScrollEnd);
-        clearTimeout(fallback);
+        carouselEl!.removeEventListener("scroll", onScrollDebounce);
+        clearTimeout(debounceTimer);
       };
-      // Fallback: if scrollend never fires (e.g. already at target), unblock after 1s
-      const fallback = setTimeout(onScrollEnd, 1000);
+      const onScrollEnd = (): void => {
+        clearScrollListeners();
+      };
+      const onScrollDebounce = (): void => {
+        // While scrolling is still happening, keep postponing the unlock.
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(clearScrollListeners, 200);
+      };
+      // Primary: listen for scrollend (fires once when scroll completes)
       carouselEl.addEventListener("scrollend", onScrollEnd, { once: true });
+      // Safety: if scrollend never fires, debounce on scroll activity and
+      // unlock 200ms after the last scroll frame.
+      carouselEl.addEventListener("scroll", onScrollDebounce, { passive: true });
     }
   };
 
