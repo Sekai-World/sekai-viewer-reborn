@@ -217,25 +217,25 @@ export const POST: RequestHandler = async ({ params, request }) => {
       guaranteeLevel = 3;
     }
 
-    // Guarantee rates: redistribute probability from below-guarantee rarities
-    // into the guarantee rarity so cumulative rates sum to 100.
+    // Guarantee rates: remove below-guarantee rarities, then rescale
+    // remaining rates proportionally so they sum to 100.
     // E.g. for over_rarity_3_once with rates [★1:80, ★2:10, ★3:8, ★4:2],
-    // guarantee rates become [0, 0, 98, 2] — ★3 absorbs ★1+★2 probability.
+    // guarantee rates become [0, 0, 80, 20] — ★3 and ★4 keep their
+    // relative ratio 8:2, scaled to fill 100%.
     const normalCumulative = buildCumulativeRates(rarityEntries);
     let guaranteeCumulative: number[] = normalCumulative;
 
     if (isGuarantee && guaranteeLevel > 0) {
-      const guaranteeIdx = rarityEntries.findIndex(
-        (e) => (RARITY_VALUE[e.cardRarityType] ?? 0) === guaranteeLevel
+      const atOrAbove = rarityEntries.filter(
+        (e) => (RARITY_VALUE[e.cardRarityType] ?? 0) >= guaranteeLevel
       );
-      if (guaranteeIdx >= 0) {
-        const grs = rarityEntries.map((e) => e.rate);
-        grs[guaranteeIdx] = normalCumulative[guaranteeIdx];
-        rarityEntries.forEach((entry, idx) => {
+      const atOrAboveSum = atOrAbove.reduce((sum, e) => sum + e.rate, 0);
+
+      if (atOrAboveSum > 0) {
+        const grs = rarityEntries.map((entry) => {
           const rarityVal = RARITY_VALUE[entry.cardRarityType] ?? 0;
-          if (rarityVal < guaranteeLevel) {
-            grs[idx] = 0;
-          }
+          if (rarityVal < guaranteeLevel) return 0;
+          return (entry.rate / atOrAboveSum) * 100;
         });
         guaranteeCumulative = grs.reduce(
           (sum, curr) => [...sum, curr + (sum.slice(-1)[0] || 0)],
