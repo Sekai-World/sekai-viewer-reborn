@@ -65,7 +65,8 @@
   /** Group rates by cardRarityType, preserving first-seen order. */
   const groupByRarity = (flatRates: GachaCardRarityRate[]): GroupedRate[] => {
     const order: string[] = [];
-    const map = new Map<string, GroupedRate>();
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local temp map inside derived, not reactive state
+    const map = new globalThis.Map<string, GroupedRate>();
 
     for (const r of flatRates) {
       if (!r.cardRarityType || r.rate === null) continue;

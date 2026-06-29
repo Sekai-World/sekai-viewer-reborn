@@ -9,7 +9,7 @@
     title,
     noBehaviorsLabel,
     spinCountLabel,
-    costLabel,
+    costLabel: _costLabel,
     limitLabel,
     region = "jp",
     behaviorTypeMap,
@@ -125,8 +125,10 @@
     const sorted = [...behaviors].sort(
       (a, b) => (a.priority ?? 0) - (b.priority ?? 0)
     );
-    const map = new Map<string, GachaBehavior[]>();
-    const firstOfType = new Map<string, GachaBehavior>();
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local temp map inside derived, not reactive state
+    const map = new globalThis.Map<string, GachaBehavior[]>();
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- local temp map inside derived, not reactive state
+    const firstOfType = new globalThis.Map<string, GachaBehavior>();
     for (const b of sorted) {
       const key = getBehaviorGroupKey(b);
       if (!map.has(key)) {

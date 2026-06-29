@@ -220,7 +220,7 @@
 
 <section
   bind:this={carouselEl}
-  class="home-card-carousel flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-clip scroll-smooth px-4 md:snap-none md:flex-wrap md:justify-center md:overflow-x-visible md:overflow-y-visible md:scroll-smooth-none md:px-0"
+  class="home-card-carousel flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-clip scroll-smooth px-4 md:snap-none md:flex-wrap md:justify-center md:overflow-visible md:scroll-smooth-none md:px-0"
 >
   {#each supportedRegions as region, index (region)}
     <div
@@ -231,13 +231,13 @@
         <article id={`region-${region}`} class="hover-3d relative isolate w-full">
           <div class="card content-card-shell relative overflow-hidden shadow-[0_5px_14px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.26),0_2px_8px_rgba(0,0,0,0.18)]">
             <div class="card-body relative z-10">
-              <div class="mb-2 flex items-center justify-center px-[4%] py-[4%] md:mb-3">
-                <div class="aspect-[3/2] w-full max-w-full animate-pulse rounded-xl bg-base-300 md:w-3/4 md:min-w-[min(200px,100%)]"></div>
+              <div class="mb-2 flex items-center justify-center p-[4%] md:mb-3">
+                <div class="aspect-3/2 w-full max-w-full animate-pulse rounded-xl bg-base-300 md:w-3/4 md:min-w-[min(200px,100%)]"></div>
               </div>
               <div class="mb-1 h-4 w-3/4 animate-pulse rounded bg-base-300"></div>
               <div class="mb-1.5 flex items-center gap-2">
                 <div class="h-3.5 w-16 animate-pulse rounded bg-base-300"></div>
-                <div class="h-7 w-7 animate-pulse rounded-full bg-base-300"></div>
+                <div class="size-7 animate-pulse rounded-full bg-base-300"></div>
               </div>
               <div class="content-card-inset rounded-xl p-2.5">
                 <div class="mb-2 h-2.5 w-20 animate-pulse rounded bg-base-300"></div>

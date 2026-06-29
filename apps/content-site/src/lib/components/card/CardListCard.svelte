@@ -268,7 +268,7 @@
   {/if}
 {/snippet}
 
-{#snippet thumbIcons(trained: boolean)}
+{#snippet _thumbIcons(trained: boolean)}
   {@const attrIconUrl = getAttrIconUrl(88)}
   {@const rarityIconUrl = getRarityIconUrl(trained)}
   {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}

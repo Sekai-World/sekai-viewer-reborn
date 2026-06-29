@@ -88,8 +88,8 @@
                     imageClass="size-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
                 {#if pickup.weight !== null && pickup.weight !== undefined}
-                  <div class="flex items-center justify-center bg-gradient-to-r from-primary/10 to-transparent px-1 py-0.5 text-center text-[0.6rem] font-medium opacity-60">
-                    {pickup.weight}
+                  <div class="flex items-center justify-center bg-linear-to-r from-primary/10 to-transparent px-1 py-0.5 text-center text-[0.6rem] font-medium opacity-60">
+                    <span class="opacity-70">{weightLabel}</span> {pickup.weight}
                   </div>
                 {/if}
               </div>

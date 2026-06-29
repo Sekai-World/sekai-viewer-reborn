@@ -956,7 +956,7 @@
     </div>
   {:else if isInitialLoading}
     <div class={getListGridClass()}>
-      {#each Array(12) as _, i}
+      {#each Array(12) as _, _i (_i)}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
           <div class="skeleton h-48 w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>

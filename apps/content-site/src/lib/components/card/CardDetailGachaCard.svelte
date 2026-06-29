@@ -28,7 +28,7 @@
 
   const latest = $derived(sorted[0] ?? null);
   const first = $derived(sorted.length >= 2 ? sorted[sorted.length - 1] : null);
-  const remaining = $derived(sorted.length > 2 ? sorted.slice(1, -1) : []);
+  const _remaining = $derived(sorted.length > 2 ? sorted.slice(1, -1) : []);
   const hiddenCount = $derived(sorted.length - (sorted.length <= 2 ? sorted.length : 2));
 
   const formatDate = (ts: number | null): string => {
