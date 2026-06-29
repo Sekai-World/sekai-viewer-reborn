@@ -983,6 +983,7 @@
             {cardListCharacterFallback}
             {cardListReleaseLabel}
             {cardImageAltSuffix}
+            displayLocale={data.uiLocale}
           />
         </a>
       {/each}

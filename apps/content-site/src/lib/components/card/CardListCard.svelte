@@ -1,7 +1,7 @@
 <script lang="ts">
   import { asset } from "$app/paths";
   import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets/index";
-  import { toTimestampMs } from "$lib/time/date-time";
+  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
@@ -32,7 +32,8 @@
     spoilerContentLabel,
     cardListCharacterFallback,
     cardListReleaseLabel,
-    cardImageAltSuffix
+    cardImageAltSuffix,
+    displayLocale
   }: {
     region: SupportedRegion;
     item: CardListCardItem;
@@ -42,6 +43,7 @@
     cardListCharacterFallback: string;
     cardListReleaseLabel: string;
     cardImageAltSuffix: string;
+    displayLocale: string;
   } = $props();
 
   const contentDisplaySettings = getContentDisplaySettings();
@@ -422,7 +424,7 @@
           <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
           <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
           {#if getReleaseAt() !== null}
-            <p class="text-xs opacity-55">{cardListReleaseLabel}</p>
+            <p class="text-xs opacity-55">{cardListReleaseLabel}: {formatDisplayDateTime(getReleaseAt(), displayLocale)}</p>
           {/if}
         </div>
       </div>
