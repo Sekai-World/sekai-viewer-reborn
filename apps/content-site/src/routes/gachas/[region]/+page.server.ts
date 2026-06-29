@@ -10,19 +10,6 @@ import {
 } from "$lib/server/gacha-list";
 import type { PageServerLoad } from "./$types";
 
-const summarizeResponse = (
-  result: { response?: Response },
-  durationMs: number
-): Record<string, unknown> => ({
-  contentLength: result.response?.headers.get("content-length") ?? null,
-  contentType: result.response?.headers.get("content-type") ?? null,
-  durationMs,
-  ok: result.response?.ok ?? null,
-  requestId: result.response?.headers.get("x-request-id") ?? null,
-  status: result.response?.status ?? null,
-  url: result.response?.url ?? null
-});
-
 const createEmptyPage = () => ({
   items: [],
   pagination: {
@@ -50,59 +37,53 @@ export const load: PageServerLoad = async ({ params, url }) => {
     requestQuery
   });
 
-  try {
-    const startedAt = performance.now();
-    const response = await getGachasByRegionList({
-      baseUrl,
-      path: { region },
-      query: requestQuery
-    });
+  const initialPage: Promise<
+    | { page: ReturnType<typeof parseGachaListPage>; loadFailed: false }
+    | { page: ReturnType<typeof createEmptyPage>; loadFailed: true }
+  > = getGachasByRegionList({
+    baseUrl,
+    path: { region },
+    query: requestQuery
+  })
+    .then((response) => {
+      if (response.error) {
+        logGachaListFilterDebug("initial error", {
+          region,
+          queryState,
+          error: response.error
+        });
 
-    if (response.error) {
-      logGachaListFilterDebug("initial error", {
+        return { page: createEmptyPage(), loadFailed: true as const };
+      }
+
+      const page = parseGachaListPage(response.data, 1, DEFAULT_GACHA_LIST_PAGE_SIZE);
+
+      logGachaListFilterDebug("initial response", {
         region,
         queryState,
-        ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
-        error: response.error
+        rawItemCount: response.data?.items?.length ?? null,
+        itemCount: page.items.length,
+        pagination: page.pagination
       });
 
-      return {
+      return { page, loadFailed: false as const };
+    })
+    .catch((error) => {
+      logGachaListFilterDebug("initial exception", {
         region,
-        initialPage: createEmptyPage(),
-        initialLoadFailed: true,
-        initialQuery: queryState
-      };
-    }
+        queryState,
+        error
+      });
 
-    const initialPage = parseGachaListPage(response.data, 1, DEFAULT_GACHA_LIST_PAGE_SIZE);
-
-    logGachaListFilterDebug("initial response", {
-      region,
-      queryState,
-      ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
-      rawItemCount: response.data?.items?.length ?? null,
-      itemCount: initialPage.items.length,
-      pagination: initialPage.pagination
+      return { page: createEmptyPage(), loadFailed: true as const };
     });
 
-    return {
-      region,
-      initialPage,
-      initialLoadFailed: false,
-      initialQuery: queryState
-    };
-  } catch (error) {
-    logGachaListFilterDebug("initial exception", {
-      region,
-      queryState,
-      error
-    });
+  // Attach noop catch to prevent unhandled rejection before SvelteKit renders
+  initialPage.catch(() => {});
 
-    return {
-      region,
-      initialPage: createEmptyPage(),
-      initialLoadFailed: true,
-      initialQuery: queryState
-    };
-  }
+  return {
+    region,
+    initialPage,
+    initialQuery: queryState
+  };
 };

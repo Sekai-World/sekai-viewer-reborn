@@ -15,10 +15,11 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import type { CardListPage, CardListItem as CardListItemType } from "$lib/server/card-list";
   import type { PageData } from "./$types";
 
-  type CardListPagePayload = PageData["initialPage"];
-  type CardListItem = CardListPagePayload["items"][number];
+  type CardListPagePayload = CardListPage;
+  type CardListItem = CardListItemType;
   type CardListFilterOption = { value: string; label: string };
   type CardListQueryState = {
     sortBy: CardListSortBy;
@@ -56,6 +57,7 @@
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isLoading = $state(false);
+  let isInitialLoading = $state(true);
   let isReloadingFirstPage = $state(false);
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
@@ -87,7 +89,6 @@
   let viewMode = $state<CardListViewMode>("grid");
   let hasTriedRestorePersistedFilters = $state(false);
   let hasTriedRestoreViewMode = $state(false);
-  let initialStateAppliedKey = $state("");
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -242,25 +243,6 @@
   const getFilterStorageKey = (): string => `content-site:card-list-filters:${data.region}`;
   const getViewModeStorageKey = (): string => "content-site:card-list-view-mode";
 
-  const getInitialStateKey = (): string =>
-    [
-      data.region,
-      data.initialQuery.sortBy,
-      data.initialQuery.sortOrder,
-      data.initialQuery.name,
-      data.initialQuery.unit,
-      data.initialQuery.character,
-      data.initialQuery.skill,
-      data.initialQuery.type,
-      data.initialQuery.attr,
-      data.initialQuery.rarity,
-      data.initialQuery.supportUnit,
-      data.initialQuery.has3dmvCutIn ? "1" : "0",
-      data.initialQuery.spoiler ? "1" : "0",
-      data.initialPage.pagination.page,
-      data.initialPage.items.length
-    ].join("|");
-
   const persistAppliedFilters = (): void => {
     if (!browser) {
       return;
@@ -408,16 +390,20 @@
     }
   };
 
-  $effect(() => {
-    const nextInitialStateKey = getInitialStateKey();
-    if (nextInitialStateKey === initialStateAppliedKey) {
-      return;
-    }
+  type InitialPageResult = {
+    page: CardListPagePayload;
+    loadFailed: boolean;
+  };
 
-    initialStateAppliedKey = nextInitialStateKey;
-    items = data.initialPage.items;
-    currentPage = data.initialPage.pagination.page;
-    hasNext = data.initialPage.pagination.hasNext;
+  const applyInitialPage = (result: InitialPageResult): void => {
+    items = result.page.items;
+    currentPage = result.page.pagination.page;
+    hasNext = result.page.pagination.hasNext;
+    errorMessage = result.loadFailed ? getInitialI18nText("cardListLoadFailed") : null;
+
+    // Initialize filter/sort state from server query params once per navigation.
+    // Must be here (not in a $effect) to avoid effect_update_depth_exceeded:
+    // writing reactive state inside $effect triggers re-run → infinite loop.
     sortBy = data.initialQuery.sortBy;
     sortOrder = data.initialQuery.sortOrder;
     nameFilter = data.initialQuery.name;
@@ -431,11 +417,17 @@
     has3dmvCutInFilter = data.initialQuery.has3dmvCutIn;
     spoilerFilter = data.initialQuery.spoiler;
     syncDraftFiltersFromCurrent();
-    errorMessage = data.initialLoadFailed ? getInitialI18nText("cardListLoadFailed") : null;
 
     if (browser && hasExplicitQueryStateInUrl()) {
       persistAppliedFilters();
     }
+
+    isInitialLoading = false;
+  };
+
+  $effect(() => {
+    const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
+    initialPagePromise.then(applyInitialPage);
   });
 
   $effect(() => {
@@ -961,6 +953,16 @@
     >
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{cardListLoading}</span>
+    </div>
+  {:else if isInitialLoading}
+    <div class={getListGridClass()}>
+      {#each Array(12) as _, i}
+        <div class="content-card-shell rounded-2xl p-4 shadow-sm">
+          <div class="skeleton h-48 w-full rounded-xl"></div>
+          <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
+          <div class="mt-2 skeleton h-3 w-1/2 rounded"></div>
+        </div>
+      {/each}
     </div>
   {:else if items.length === 0 && errorMessage}
     <div class="alert alert-error">{errorMessage}</div>

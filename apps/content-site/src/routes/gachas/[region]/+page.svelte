@@ -15,8 +15,10 @@
   import { toTimestampMs } from "$lib/time/date-time";
   import type { PageData } from "./$types";
 
-  type GachaListPagePayload = PageData["initialPage"];
-  type GachaListItem = GachaListPagePayload["items"][number];
+  import type { GachaListPage, GachaListItem as GachaListItemType } from "$lib/server/gacha-list";
+
+  type GachaListPagePayload = GachaListPage;
+  type GachaListItem = GachaListItemType;
   type GachaListSortBy = "id" | "startAt";
   type GachaListSortOrder = "asc" | "desc";
 
@@ -28,6 +30,7 @@
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isLoading = $state(false);
+  let isInitialLoading = $state(true);
   let isReloadingFirstPage = $state(false);
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
@@ -37,7 +40,6 @@
   let sortBy = $state<GachaListSortBy>("startAt");
   let sortOrder = $state<GachaListSortOrder>("desc");
   let hasTriedRestorePersistedSort = $state(false);
-  let initialStateAppliedKey = $state("");
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -54,7 +56,21 @@
   let gachaListSortByStartAt = $state(getInitialI18nText("gachaListSortByStartAt"));
   let spoilerContentLabel = $state(getInitialI18nText("spoilerContent"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
+  let currentGachaLabel = $state(getInitialI18nText("currentGachaLabel"));
   const contentDisplaySettings = getContentDisplaySettings();
+
+  const currentGachaIds = $derived.by(() => {
+    const now = Date.now();
+    const ids = new Set<string>();
+    for (const item of items) {
+      const startMs = toTimestampMs(item.startAt);
+      const endMs = toTimestampMs(item.endAt);
+      if (startMs !== null && endMs !== null && startMs <= now && now <= endMs) {
+        ids.add(item.id);
+      }
+    }
+    return ids;
+  });
 
   const isSpoilerGacha = (item: GachaListItem): boolean => {
     const startAtMs = toTimestampMs(item.startAt);
@@ -81,16 +97,6 @@
   };
 
   const getSortStorageKey = (): string => `content-site:gacha-list-sort:${data.region}`;
-
-  const getInitialStateKey = (): string =>
-    [
-      data.region,
-      data.initialQuery.sortBy,
-      data.initialQuery.sortOrder,
-      data.initialQuery.spoiler ? "1" : "0",
-      data.initialPage.pagination.page,
-      data.initialPage.items.length
-    ].join("|");
 
   const persistAppliedSort = (): void => {
     if (!browser) {
@@ -131,23 +137,36 @@
     }
   };
 
-  $effect(() => {
-    const nextInitialStateKey = getInitialStateKey();
-    if (nextInitialStateKey === initialStateAppliedKey) {
-      return;
-    }
-
-    initialStateAppliedKey = nextInitialStateKey;
-    items = data.initialPage.items;
-    currentPage = data.initialPage.pagination.page;
-    hasNext = data.initialPage.pagination.hasNext;
+  const applyInitialPage = (
+    page: GachaListPagePayload,
+    loadFailed: boolean
+  ): void => {
+    items = page.items;
+    currentPage = page.pagination.page;
+    hasNext = page.pagination.hasNext;
     sortBy = data.initialQuery.sortBy;
     sortOrder = data.initialQuery.sortOrder;
-    errorMessage = data.initialLoadFailed ? getInitialI18nText("gachaListLoadFailed") : null;
+    errorMessage = loadFailed ? getInitialI18nText("gachaListLoadFailed") : null;
+    isInitialLoading = false;
 
     if (browser && hasExplicitQueryStateInUrl()) {
       persistAppliedSort();
     }
+  };
+
+  type InitialPageResult =
+    | { page: GachaListPagePayload; loadFailed: false }
+    | { page: GachaListPagePayload; loadFailed: true };
+
+  const hydrateFromInitialPage = (result: InitialPageResult): void => {
+    applyInitialPage(result.page, result.loadFailed);
+  };
+
+  $effect(() => {
+    // data.initialPage is a streaming Promise at runtime, but SvelteKit's
+    // generated types unwrap it. Cast to access .then() for streaming hydration.
+    const streaming = data.initialPage as unknown as Promise<InitialPageResult>;
+    streaming.then(hydrateFromInitialPage);
   });
 
   $effect(() => {
@@ -289,6 +308,7 @@
     gachaListSortByStartAt = translate("gachaListSortByStartAt");
     spoilerContentLabel = translate("spoilerContent");
     bannerAltSuffix = translate("bannerAltSuffix");
+    currentGachaLabel = translate("currentGachaLabel");
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
@@ -480,6 +500,16 @@
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{gachaListLoading}</span>
     </div>
+  {:else if isInitialLoading}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      {#each { length: 12 } as _}
+        <div class="content-card-shell flex flex-col gap-3 rounded-2xl p-4 shadow-sm">
+          <div class="skeleton h-32 rounded-xl"></div>
+          <div class="skeleton h-4 w-3/4 rounded"></div>
+          <div class="skeleton h-4 w-1/2 rounded"></div>
+        </div>
+      {/each}
+    </div>
   {:else if items.length === 0 && errorMessage}
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
@@ -488,6 +518,8 @@
         <GachaListCard
           region={data.region}
           {item}
+          currentGachaIds={currentGachaIds}
+          currentGachaLabel={currentGachaLabel}
           {spoilerContentLabel}
           uiLocale={data.uiLocale}
           {idLabel}

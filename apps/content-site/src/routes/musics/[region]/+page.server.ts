@@ -23,57 +23,67 @@ export const load: PageServerLoad = async ({ params, url }) => {
     includeSpoilerContent: queryState.spoiler
   });
 
-  try {
-    const startedAt = performance.now();
-    const baseUrl = getMasterApiBaseUrl();
-    const [catalog, unitProfiles] = await Promise.all([
-      fetchMusicCatalog(
-        baseUrl,
+  // filterMeta and unitProfiles are needed for filter rendering even before data loads,
+  // but we can stream them too for faster first-paint if desired.
+  // For now, keep them synchronous since they're needed for the filter dialog structure.
+  const baseUrl = getMasterApiBaseUrl();
+  const [unitProfiles, filterMeta] = await Promise.all([
+    fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap),
+    fetchMusicCatalog(
+      baseUrl,
+      region,
+      queryState.spoiler,
+      queryState.hasAppend,
+      queryState.tags,
+      queryState.level
+    ).then((catalog) => buildMusicListFilterMeta(catalog))
+  ]);
+
+  const initialPage: Promise<
+    | { page: ReturnType<typeof createMusicListPage>; loadFailed: false }
+    | { page: ReturnType<typeof createMusicListPage>; loadFailed: true }
+  > = fetchMusicCatalog(
+    baseUrl,
+    region,
+    queryState.spoiler,
+    queryState.hasAppend,
+    queryState.tags,
+    queryState.level
+  )
+    .then((catalog) => {
+      const page = createMusicListPage(catalog, queryState, 1);
+
+      logMusicListFilterDebug("initial response", {
         region,
-        queryState.spoiler,
-        queryState.hasAppend,
-        queryState.tags,
-        queryState.level
-      ),
-      fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap)
-    ]);
-    const initialPage = createMusicListPage(catalog, queryState, 1);
-    const filterMeta = buildMusicListFilterMeta(catalog);
+        queryState,
+        hasFilters,
+        catalogItemCount: catalog.length,
+        itemCount: page.items.length,
+        itemIds: page.items.map((item) => item.id),
+        pagination: page.pagination
+      });
 
-    logMusicListFilterDebug("initial response", {
-      region,
-      queryState,
-      hasFilters,
-      durationMs: Math.round(performance.now() - startedAt),
-      catalogItemCount: catalog.length,
-      itemCount: initialPage.items.length,
-      itemIds: initialPage.items.map((item) => item.id),
-      pagination: initialPage.pagination
+      return { page, loadFailed: false as const };
+    })
+    .catch((error) => {
+      logMusicListFilterDebug("initial exception", {
+        region,
+        queryState,
+        hasFilters,
+        error
+      });
+
+      return { page: createMusicListPage([], queryState, 1), loadFailed: true as const };
     });
 
-    return {
-      region,
-      initialPage,
-      initialQuery: queryState,
-      filterMeta,
-      unitProfiles,
-      initialLoadFailed: false
-    };
-  } catch (error) {
-    logMusicListFilterDebug("initial exception", {
-      region,
-      queryState,
-      hasFilters,
-      error
-    });
+  // Attach noop catch to prevent unhandled rejection before SvelteKit renders
+  initialPage.catch(() => {});
 
-    return {
-      region,
-      initialPage: createMusicListPage([], queryState, 1),
-      initialQuery: queryState,
-      filterMeta: buildMusicListFilterMeta([]),
-      unitProfiles: {},
-      initialLoadFailed: true
-    };
-  }
+  return {
+    region,
+    initialPage,
+    initialQuery: queryState,
+    filterMeta,
+    unitProfiles
+  };
 };
