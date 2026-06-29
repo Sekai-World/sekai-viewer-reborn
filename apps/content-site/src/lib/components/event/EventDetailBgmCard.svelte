@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getEventBgmAssetURL } from "$lib/assets/index";
+  import { getEventBgmAssetURL, getEventBannerAssetURL } from "$lib/assets/index";
   import type { EventDetail } from "$lib/domain/event-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { AudioPlayer } from "@platform/ui-shell";
@@ -67,6 +67,8 @@
           : null}
         title={event.title}
         subtitle={unitName}
+        artworkUrl={event.assetBundleName ? getEventBannerAssetURL(event.assetBundleName, region) : undefined}
+        artist={unitName}
         downloadName={getDownloadName("mp3")}
         downloadOptions={[
           {

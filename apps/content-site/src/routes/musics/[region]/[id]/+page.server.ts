@@ -1,0 +1,235 @@
+import { dev } from "$app/environment";
+import {
+  getMusicsByRegionByIdDetail,
+  getMusicsRegionsByIdAvailability
+} from "@platform/sekai-master-api-sdk";
+import { getServerI18nText } from "$lib/i18n/runtime";
+import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
+import { getMasterApiBaseUrl } from "$lib/server/config";
+import { parseMusicDetail, type MusicDetail } from "$lib/server/music-detail";
+import { fetchUnitProfiles, toUnitProfileMap, type UnitProfileMap } from "$lib/server/unit-profiles";
+import type { PageServerLoad } from "./$types";
+
+type RegionMusicLookup = {
+  region: SupportedRegion;
+  music: MusicDetail | null;
+  exists: boolean;
+  rawPayloadJson: string | null;
+};
+
+type MusicPayload = {
+  music: MusicDetail | null;
+  debugMusicJson: string | null;
+  error: string | null;
+};
+
+const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
+  if (Array.isArray(payload)) {
+    return payload.filter(
+      (region): region is SupportedRegion =>
+        typeof region === "string" && supportedRegions.includes(region as SupportedRegion)
+    );
+  }
+
+  const root =
+    payload !== null && typeof payload === "object"
+      ? (payload as Record<string, unknown>)
+      : null;
+
+  if (!root) {
+    return [];
+  }
+
+  const toSupportedRegionList = (value: unknown): SupportedRegion[] => {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value.filter(
+      (region): region is SupportedRegion =>
+        typeof region === "string" && supportedRegions.includes(region as SupportedRegion)
+    );
+  };
+
+  const toSupportedRegionMap = (value: unknown): SupportedRegion[] => {
+    const record =
+      value !== null && typeof value === "object"
+        ? (value as Record<string, unknown>)
+        : null;
+    if (!record) {
+      return [];
+    }
+
+    return supportedRegions.filter((region) => {
+      const regionValue = record[region];
+      if (regionValue === true) {
+        return true;
+      }
+
+      const nested =
+        regionValue !== null && typeof regionValue === "object"
+          ? (regionValue as Record<string, unknown>)
+          : null;
+      return nested?.available === true || nested?.exists === true;
+    });
+  };
+
+  for (const key of ["availableRegions", "regions"]) {
+    const regions = toSupportedRegionList(root[key]);
+    if (regions.length > 0) {
+      return regions;
+    }
+  }
+
+  for (const key of ["availability", "availableRegions", "regions"]) {
+    const regions = toSupportedRegionMap(root[key]);
+    if (regions.length > 0) {
+      return regions;
+    }
+  }
+
+  const dataNode =
+    root.data !== null && typeof root.data === "object"
+      ? (root.data as Record<string, unknown>)
+      : null;
+  if (dataNode) {
+    const nestedRegions = normalizeAvailableRegions(dataNode);
+    if (nestedRegions.length > 0) {
+      return nestedRegions;
+    }
+  }
+
+  return [];
+};
+
+const fetchMusicDetail = async (
+  baseUrl: string,
+  region: SupportedRegion,
+  musicId: string
+): Promise<RegionMusicLookup> => {
+  try {
+    const response = await getMusicsByRegionByIdDetail({
+      baseUrl,
+      path: { region, id: musicId }
+    });
+
+    if (response.error) {
+      return { region, music: null, exists: false, rawPayloadJson: null };
+    }
+
+    const data = response.data as Record<string, unknown> | null;
+    const music = parseMusicDetail(data ?? {});
+    return {
+      region,
+      music,
+      exists: music !== null,
+      rawPayloadJson: dev ? JSON.stringify(data, null, 2) : null
+    };
+  } catch {
+    return { region, music: null, exists: false, rawPayloadJson: null };
+  }
+};
+
+const fetchAvailableRegions = async ({
+  baseUrl,
+  musicId,
+  region,
+  currentLookupPromise
+}: {
+  baseUrl: string;
+  musicId: string;
+  region: SupportedRegion;
+  currentLookupPromise: Promise<RegionMusicLookup>;
+}): Promise<SupportedRegion[]> => {
+  try {
+    const [currentLookup, availabilityResponse] = await Promise.all([
+      currentLookupPromise,
+      getMusicsRegionsByIdAvailability({
+        baseUrl,
+        path: { id: musicId }
+      })
+    ]);
+
+    const detectedRegions = availabilityResponse.error
+      ? []
+      : normalizeAvailableRegions(availabilityResponse.data);
+
+    if (currentLookup.exists && !detectedRegions.includes(region)) {
+      return [region, ...detectedRegions];
+    }
+
+    return detectedRegions.includes(region) ? detectedRegions : [region, ...detectedRegions];
+  } catch {
+    return [region];
+  }
+};
+
+const fetchMusicPayload = async ({
+  currentLookupPromise,
+  invalidMusicIdMessage
+}: {
+  currentLookupPromise: Promise<RegionMusicLookup>;
+  invalidMusicIdMessage: string | null;
+}): Promise<MusicPayload> => {
+  if (invalidMusicIdMessage) {
+    return { music: null, debugMusicJson: null, error: invalidMusicIdMessage };
+  }
+
+  try {
+    const currentLookup = await currentLookupPromise;
+
+    return {
+      music: currentLookup.music,
+      debugMusicJson: dev ? currentLookup.rawPayloadJson : null,
+      error: null
+    };
+  } catch {
+    return { music: null, debugMusicJson: null, error: null };
+  }
+};
+
+export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
+  const musicId = params.id?.trim() ?? "";
+  const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
+  const [invalidMusicIdMessage, musicUnavailableInCurrentRegionMessage, failedToLoadMusicDataMessage] = await Promise.all([
+    getServerI18nText(uiLocale, "invalidMusicId", fetch),
+    getServerI18nText(uiLocale, "musicUnavailableInCurrentRegion", fetch),
+    getServerI18nText(uiLocale, "failedToLoadMusicData", fetch)
+  ]);
+
+  const region: SupportedRegion = normalizeRegion(params.region);
+  const baseUrl = getMasterApiBaseUrl();
+
+  const unitProfiles = await fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap);
+
+  const currentLookupPromise = musicId
+    ? fetchMusicDetail(baseUrl, region, musicId)
+    : Promise.resolve({
+        region,
+        music: null,
+        exists: false,
+        rawPayloadJson: null
+      } satisfies RegionMusicLookup);
+
+  return {
+    musicId,
+    region,
+    regionLabel: regionLabels[region],
+    musicUnavailableInCurrentRegionMessage,
+    failedToLoadMusicDataMessage,
+    availableRegions: musicId
+      ? fetchAvailableRegions({
+          baseUrl,
+          musicId,
+          region,
+          currentLookupPromise
+        })
+      : Promise.resolve([region] satisfies SupportedRegion[]),
+    musicPayload: fetchMusicPayload({
+      currentLookupPromise,
+      invalidMusicIdMessage: musicId ? null : invalidMusicIdMessage
+    }),
+    unitProfiles
+  };
+};

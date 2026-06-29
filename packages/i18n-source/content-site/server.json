@@ -9,5 +9,8 @@
   "invalidEventId": "Invalid event id.",
   "invalidGachaId": "Invalid gacha id.",
   "gachaUnavailableInCurrentRegion": "This gacha is not available in the current region. Switch region using the badges.",
-  "failedToLoadGachaData": "Failed to load gacha data."
+  "failedToLoadGachaData": "Failed to load gacha data.",
+  "invalidMusicId": "Invalid music id.",
+  "musicUnavailableInCurrentRegion": "This music is not available in the current region. Switch region using the badges.",
+  "failedToLoadMusicData": "Failed to load music data."
 }

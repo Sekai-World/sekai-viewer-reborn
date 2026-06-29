@@ -359,3 +359,39 @@ export const getMusicJacketAssetURL = (
     baseUrlOverride
   );
 };
+
+export const getMusicLongPreviewAssetURL = (
+  vocalAssetBundleName: string,
+  server: AssetServer = "jp",
+  extension = "mp3",
+  baseUrlOverride?: string | null
+): string => {
+  const normalized = vocalAssetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalized.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `music/long/${normalized}/${normalized}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getMusicShortPreviewAssetURL = (
+  vocalAssetBundleName: string,
+  server: AssetServer = "jp",
+  extension = "mp3",
+  baseUrlOverride?: string | null
+): string => {
+  const normalized = vocalAssetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalized.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `music/short/${normalized}/${normalized}_short.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};

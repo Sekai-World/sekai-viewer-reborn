@@ -46,9 +46,9 @@
 >
   {#if children}
     {@render children()}
-  {:else}
-    <div class="relative size-full overflow-hidden">
-      {#if !previewImageLoaded && !previewImageFailed}
+  {:else if !previewImageFailed}
+    <div class="group relative size-full overflow-hidden">
+      {#if !previewImageLoaded}
         <div
           class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse"
         >
@@ -56,29 +56,36 @@
           ></span>
         </div>
       {/if}
-      {#if previewImageFailed}
-        <div
-          class="flex size-full min-h-0 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65"
-        >
-          <Icon icon="mdi:file-remove-outline" class="size-10 opacity-75" aria-hidden="true" />
-          {#if fallbackLabel}
-            <span class="font-medium">{fallbackLabel}</span>
-          {/if}
-        </div>
-      {/if}
       <img
         {src}
         {alt}
-        class={`${imageClass} transition-[opacity,transform] duration-300 ease-out ${previewImageLoaded && !previewImageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${previewImageFailed ? "pointer-events-none sr-only" : ""}`}
+        class={`${imageClass} transition-[opacity,transform] duration-300 ease-out ${previewImageLoaded ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"}`}
         onload={() => {
           previewImageLoaded = true;
-          previewImageFailed = false;
         }}
         onerror={() => {
           previewImageLoaded = true;
           previewImageFailed = true;
         }}
       />
+      {#if previewImageLoaded}
+        <!-- magnifying glass overlay — bottom-right -->
+        <span
+          class="pointer-events-none absolute right-3 bottom-3 flex size-10 items-center justify-center rounded-full bg-base-100/60 text-base-content/70 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 sm:opacity-0"
+          aria-hidden="true"
+        >
+          <Icon icon="mdi:magnify-plus-outline" class="size-5" />
+        </span>
+      {/if}
+    </div>
+  {:else}
+    <div
+      class="flex size-full min-h-0 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65"
+    >
+      <Icon icon="mdi:file-remove-outline" class="size-10 opacity-75" aria-hidden="true" />
+      {#if fallbackLabel}
+        <span class="font-medium">{fallbackLabel}</span>
+      {/if}
     </div>
   {/if}
 </button>

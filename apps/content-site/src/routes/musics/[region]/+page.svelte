@@ -757,17 +757,23 @@
         : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}
     >
       {#each visibleItems as item (item.id)}
-        <MusicListCard
-          region={data.region}
-          {item}
-          {viewMode}
-          {idLabel}
-          jacketAltSuffix={musicJacketAltSuffix}
-          creatorLabel={musicListCreatorLabel}
-          {spoilerContentLabel}
-          {getCategoryLabel}
-          getTagLabel={getMusicTagLabel}
-        />
+        <a
+          href={resolve("/musics/[region]/[id]", { region: data.region, id: item.id })}
+          class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+          aria-label={`${item.title} ${idLabel}${item.id}`}
+        >
+          <MusicListCard
+            region={data.region}
+            {item}
+            {viewMode}
+            {idLabel}
+            jacketAltSuffix={musicJacketAltSuffix}
+            creatorLabel={musicListCreatorLabel}
+            {spoilerContentLabel}
+            {getCategoryLabel}
+            getTagLabel={getMusicTagLabel}
+          />
+        </a>
       {/each}
     </div>
     {#if visibleItems.length === 0 && !errorMessage}
