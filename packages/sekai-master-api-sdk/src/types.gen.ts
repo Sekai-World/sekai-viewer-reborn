@@ -28,6 +28,45 @@ export type MasterdataSyncStatus = {
     updated_at?: string;
 };
 
+export type SharedCardDetailResponse = {
+    card?: SharedCardObjectResponse;
+    episodes?: SharedCardEpisodesResponse;
+    events?: SharedCardEventsResponse;
+    gachas?: SharedCardGachaResponse;
+    params?: SharedCardParamsResponse;
+};
+
+export type SharedCardEpisodeResponse = {
+    cardId?: unknown;
+    episodeNo?: unknown;
+    id?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedCardEpisodesResponse = {
+    items?: Array<SharedCardEpisodeResponse>;
+};
+
+export type SharedCardEventResponse = {
+    bonusRate?: unknown;
+    cardId?: unknown;
+    event?: {
+        [key: string]: unknown;
+    };
+    eventId?: unknown;
+    finalBonusRateMax?: unknown;
+    finalBonusRateMin?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
+};
+
+export type SharedCardEventsResponse = {
+    items?: Array<SharedCardEventResponse>;
+};
+
+export type SharedCardGachaResponse = {
+    gachas?: Array<SharedGachaBannerResponse>;
+};
+
 export type SharedCardListResponse = {
     items?: Array<SharedCardObjectResponse>;
     pagination?: SharedCardPagination;
@@ -273,6 +312,89 @@ export type SharedEventVirtualLiveResponse = {
     virtualLiveType?: unknown;
 };
 
+export type SharedGachaBannerResponse = {
+    assetbundleName?: unknown;
+    id?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+};
+
+export type SharedGachaBehaviorResponse = {
+    costResourceId?: unknown;
+    costResourceQuantity?: unknown;
+    costResourceType?: unknown;
+    executeLimit?: number;
+    gachaBehaviorType?: string;
+    gachaSpinnableType?: string;
+    groupId?: number;
+    id?: unknown;
+    priority?: number;
+    resourceCategory?: string;
+    spinCount?: number;
+};
+
+export type SharedGachaCardRarityRateResponse = {
+    cardRarityType?: string;
+    id?: unknown;
+    lotteryType?: string;
+    rate?: number;
+};
+
+export type SharedGachaDetailSubResponse = {
+    cardId?: unknown;
+    gachaId?: unknown;
+    id?: unknown;
+    isWish?: unknown;
+    weight?: unknown;
+};
+
+export type SharedGachaInformationResponse = {
+    description?: unknown;
+    summary?: unknown;
+};
+
+export type SharedGachaListItemResponse = {
+    assetbundleName?: unknown;
+    endAt?: unknown;
+    gachaType?: unknown;
+    id?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+};
+
+export type SharedGachaListResponse = {
+    items?: Array<SharedGachaListItemResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedGachaObjectResponse = {
+    assetbundleName?: unknown;
+    costCount?: unknown;
+    costResourceId?: unknown;
+    costResourceType?: unknown;
+    endAt?: unknown;
+    gachaBehaviors?: Array<SharedGachaBehaviorResponse>;
+    gachaCardRarityRates?: Array<SharedGachaCardRarityRateResponse>;
+    gachaCeilItemId?: unknown;
+    gachaDetails?: Array<SharedGachaDetailSubResponse>;
+    gachaInformation?: SharedGachaInformationResponse;
+    gachaPickups?: Array<SharedGachaPickupResponse>;
+    gachaType?: unknown;
+    id?: unknown;
+    isShowPeriod?: unknown;
+    name?: unknown;
+    startAt?: unknown;
+    summary?: unknown;
+    wishFixedSelectCount?: unknown;
+    wishLimitedSelectCount?: unknown;
+    wishSelectCount?: unknown;
+};
+
+export type SharedGachaPickupResponse = {
+    cardId?: unknown;
+    weight?: unknown;
+};
+
 export type SharedGameCharacterListResponse = {
     items?: Array<SharedGameCharacterObjectResponse>;
     pagination?: SharedPaginationResponse;
@@ -441,12 +563,6 @@ export type SharedProfileUser = {
     email?: string;
     id?: string;
     username?: string;
-};
-
-export type SharedRecordItemsResponse = {
-    items?: Array<{
-        [key: string]: unknown;
-    }>;
 };
 
 export type SharedRegionAvailabilityResponse = {
@@ -890,6 +1006,52 @@ export type GetCardsByRegionByIdResponses = {
 
 export type GetCardsByRegionByIdResponse = GetCardsByRegionByIdResponses[keyof GetCardsByRegionByIdResponses];
 
+export type GetCardsByRegionByIdDetailData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Card ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/cards/{region}/{id}/detail';
+};
+
+export type GetCardsByRegionByIdDetailErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCardsByRegionByIdDetailError = GetCardsByRegionByIdDetailErrors[keyof GetCardsByRegionByIdDetailErrors];
+
+export type GetCardsByRegionByIdDetailResponses = {
+    /**
+     * OK
+     */
+    200: SharedCardDetailResponse;
+};
+
+export type GetCardsByRegionByIdDetailResponse = GetCardsByRegionByIdDetailResponses[keyof GetCardsByRegionByIdDetailResponses];
+
 export type GetCardsByRegionByIdEpisodesData = {
     body?: never;
     path: {
@@ -931,10 +1093,102 @@ export type GetCardsByRegionByIdEpisodesResponses = {
     /**
      * OK
      */
-    200: SharedRecordItemsResponse;
+    200: SharedCardEpisodesResponse;
 };
 
 export type GetCardsByRegionByIdEpisodesResponse = GetCardsByRegionByIdEpisodesResponses[keyof GetCardsByRegionByIdEpisodesResponses];
+
+export type GetCardsByRegionByIdEventsData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Card ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/cards/{region}/{id}/events';
+};
+
+export type GetCardsByRegionByIdEventsErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCardsByRegionByIdEventsError = GetCardsByRegionByIdEventsErrors[keyof GetCardsByRegionByIdEventsErrors];
+
+export type GetCardsByRegionByIdEventsResponses = {
+    /**
+     * OK
+     */
+    200: SharedCardEventsResponse;
+};
+
+export type GetCardsByRegionByIdEventsResponse = GetCardsByRegionByIdEventsResponses[keyof GetCardsByRegionByIdEventsResponses];
+
+export type GetCardsByRegionByIdGachasData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Card ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/cards/{region}/{id}/gachas';
+};
+
+export type GetCardsByRegionByIdGachasErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCardsByRegionByIdGachasError = GetCardsByRegionByIdGachasErrors[keyof GetCardsByRegionByIdGachasErrors];
+
+export type GetCardsByRegionByIdGachasResponses = {
+    /**
+     * OK
+     */
+    200: SharedCardGachaResponse;
+};
+
+export type GetCardsByRegionByIdGachasResponse = GetCardsByRegionByIdGachasResponses[keyof GetCardsByRegionByIdGachasResponses];
 
 export type GetCardsByRegionByIdParamsData = {
     body?: never;
@@ -1413,6 +1667,149 @@ export type GetEventsByRegionByIdRewardsResponses = {
 
 export type GetEventsByRegionByIdRewardsResponse = GetEventsByRegionByIdRewardsResponses[keyof GetEventsByRegionByIdRewardsResponses];
 
+export type GetGachasRegionsByIdAvailabilityData = {
+    body?: never;
+    path: {
+        /**
+         * Gacha ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/gachas/regions/{id}/availability';
+};
+
+export type GetGachasRegionsByIdAvailabilityErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGachasRegionsByIdAvailabilityError = GetGachasRegionsByIdAvailabilityErrors[keyof GetGachasRegionsByIdAvailabilityErrors];
+
+export type GetGachasRegionsByIdAvailabilityResponses = {
+    /**
+     * OK
+     */
+    200: SharedRegionAvailabilityResponse;
+};
+
+export type GetGachasRegionsByIdAvailabilityResponse = GetGachasRegionsByIdAvailabilityResponses[keyof GetGachasRegionsByIdAvailabilityResponses];
+
+export type GetGachasByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field (id|startAt)
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/gachas/{region}/list';
+};
+
+export type GetGachasByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGachasByRegionListError = GetGachasByRegionListErrors[keyof GetGachasByRegionListErrors];
+
+export type GetGachasByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGachaListResponse;
+};
+
+export type GetGachasByRegionListResponse = GetGachasByRegionListResponses[keyof GetGachasByRegionListResponses];
+
+export type GetGachasByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Gacha ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/gachas/{region}/{id}';
+};
+
+export type GetGachasByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGachasByRegionByIdError = GetGachasByRegionByIdErrors[keyof GetGachasByRegionByIdErrors];
+
+export type GetGachasByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedGachaObjectResponse;
+};
+
+export type GetGachasByRegionByIdResponse = GetGachasByRegionByIdResponses[keyof GetGachasByRegionByIdResponses];
+
 export type GetGameCharacterUnitsRegionsByIdAvailabilityData = {
     body?: never;
     path: {
@@ -1847,7 +2244,7 @@ export type GetMusicsByRegionListData = {
          */
         tag?: string;
         /**
-         * Music difficulty playLevel. Supports 30, >30, >=30, <30, <=30, or 26-30
+         * Music difficulty playLevel. Supports 30, >30, >=30, <30, <=30, or 26-30. Aliases: play_level, level
          */
         playLevel?: string;
         /**

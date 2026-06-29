@@ -1,5 +1,5 @@
 import { getCardsByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/region";
+import { normalizeRegion } from "$lib/i18n/region";
 import {
   createCardListRequestQuery,
   DEFAULT_CARD_LIST_PAGE_SIZE,
@@ -13,19 +13,6 @@ import {
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
-
-const summarizeResponse = (
-  result: { response?: Response },
-  durationMs: number
-): Record<string, unknown> => ({
-  contentLength: result.response?.headers.get("content-length") ?? null,
-  contentType: result.response?.headers.get("content-type") ?? null,
-  durationMs,
-  ok: result.response?.ok ?? null,
-  requestId: result.response?.headers.get("x-request-id") ?? null,
-  status: result.response?.status ?? null,
-  url: result.response?.url ?? null
-});
 
 const createEmptyPage = (): CardListPage => ({
   items: [],
@@ -52,63 +39,57 @@ export const load: PageServerLoad = async ({ params, url }) => {
     hasFilters
   });
 
-  try {
-    const startedAt = performance.now();
-    const response = await getCardsByRegionList({
-      baseUrl,
-      path: { region },
-      query: createCardListRequestQuery(queryState, 1, DEFAULT_CARD_LIST_PAGE_SIZE)
-    });
+  const requestQuery = createCardListRequestQuery(queryState, 1, DEFAULT_CARD_LIST_PAGE_SIZE);
 
-    if (response.error) {
-      logCardListFilterDebug("initial error", {
+  const initialPage: Promise<
+    | { page: ReturnType<typeof parseCardListPage>; loadFailed: false }
+    | { page: CardListPage; loadFailed: true }
+  > = getCardsByRegionList({
+    baseUrl,
+    path: { region },
+    query: requestQuery
+  })
+    .then((response) => {
+      if (response.error) {
+        logCardListFilterDebug("initial error", {
+          region,
+          queryState,
+          error: response.error
+        });
+
+        return { page: createEmptyPage(), loadFailed: true as const };
+      }
+
+      const page = parseCardListPage(response.data, 1, DEFAULT_CARD_LIST_PAGE_SIZE);
+
+      logCardListFilterDebug("initial response", {
         region,
         queryState,
-        ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
-        error: response.error
+        hasFilters,
+        rawItemCount: response.data?.items?.length ?? null,
+        parsedItemCount: page.items.length,
+        pagination: page.pagination
       });
 
-      return {
+      return { page, loadFailed: false as const };
+    })
+    .catch((error) => {
+      logCardListFilterDebug("initial exception", {
         region,
-        initialPage: createEmptyPage(),
-        initialLoadFailed: true,
-        initialQuery: queryState,
-        filterMeta
-      };
-    }
+        queryState,
+        error
+      });
 
-    const parsedPage = parseCardListPage(response.data, 1, DEFAULT_CARD_LIST_PAGE_SIZE);
-
-    logCardListFilterDebug("initial response", {
-      region,
-      queryState,
-      hasFilters,
-      ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
-      rawItemCount: response.data?.items?.length ?? null,
-      parsedItemCount: parsedPage.items.length,
-      pagination: parsedPage.pagination
+      return { page: createEmptyPage(), loadFailed: true as const };
     });
 
-    return {
-      region,
-      initialPage: parsedPage,
-      initialLoadFailed: false,
-      initialQuery: queryState,
-      filterMeta
-    };
-  } catch (error) {
-    logCardListFilterDebug("initial exception", {
-      region,
-      queryState,
-      error
-    });
+  // Attach noop catch to prevent unhandled rejection before SvelteKit renders
+  initialPage.catch(() => {});
 
-    return {
-      region,
-      initialPage: createEmptyPage(),
-      initialLoadFailed: true,
-      initialQuery: queryState,
-      filterMeta
-    };
-  }
+  return {
+    region,
+    initialPage,
+    initialQuery: queryState,
+    filterMeta
+  };
 };

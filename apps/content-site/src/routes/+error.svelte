@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import { createI18nTranslator } from "$lib/i18n";
+  import { createI18nTranslator } from "$lib/i18n/runtime";
   import type { LayoutData } from "./$types";
 
   let { data }: { data: LayoutData } = $props();

@@ -16,25 +16,29 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [sveltekit(), tailwindcss()],
-    server: enableProxy
-      ? {
-          proxy: {
-            [proxyPath as string]: {
-              target: proxyTarget,
-              changeOrigin: true,
-              secure: true,
-              rewrite: (path) => path.replace(new RegExp(`^${proxyPath as string}`), ""),
-              configure: (proxy) => {
-                proxy.on("proxyReq", (proxyReq) => {
-                  // Remove 'Origin' header to prevent CORS issues
-                  proxyReq.removeHeader("origin");
-                  // Remove 'Referer' header to prevent potential issues with some servers
-                  proxyReq.removeHeader("referer");
-                });
+    server: {
+      host: "0.0.0.0",
+      allowedHosts: ["peimacbook-air.tailb18840.ts.net", "100.82.87.88"],
+      ...(enableProxy
+        ? {
+            proxy: {
+              [proxyPath as string]: {
+                target: proxyTarget,
+                changeOrigin: true,
+                secure: true,
+                rewrite: (path) => path.replace(new RegExp(`^${proxyPath as string}`), ""),
+                configure: (proxy) => {
+                  proxy.on("proxyReq", (proxyReq) => {
+                    // Remove 'Origin' header to prevent CORS issues
+                    proxyReq.removeHeader("origin");
+                    // Remove 'Referer' header to prevent potential issues with some servers
+                    proxyReq.removeHeader("referer");
+                  });
+                }
               }
             }
           }
-        }
-      : undefined
+        : {})
+    }
   };
 });

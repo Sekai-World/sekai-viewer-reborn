@@ -3,21 +3,23 @@
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
-  import { toTimestampMs } from "$lib/date-time";
-  import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
-  import { regionLabels, supportedRegions } from "$lib/regions";
-  import { UNIT_CODE_ORDER } from "$lib/unit-profile";
-  import CardListCard from "$lib/components/CardListCard.svelte";
-  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
-  import PageHeader from "$lib/components/PageHeader.svelte";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import { toTimestampMs } from "$lib/time/date-time";
+  import { getContentDisplaySettings } from "$lib/settings/content-display";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { regionLabels, supportedRegions } from "$lib/domain/regions";
+  import { UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
+  import CardListCard from "$lib/components/card/CardListCard.svelte";
+  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
+  import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/RegionBadgeSwitch.svelte";
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import type { CardListPage, CardListItem as CardListItemType } from "$lib/server/card-list";
   import type { PageData } from "./$types";
 
-  type CardListPagePayload = PageData["initialPage"];
-  type CardListItem = CardListPagePayload["items"][number];
+  type CardListPagePayload = CardListPage;
+  type CardListItem = CardListItemType;
   type CardListFilterOption = { value: string; label: string };
   type CardListQueryState = {
     sortBy: CardListSortBy;
@@ -55,6 +57,7 @@
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isLoading = $state(false);
+  let isInitialLoading = $state(true);
   let isReloadingFirstPage = $state(false);
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
@@ -86,7 +89,6 @@
   let viewMode = $state<CardListViewMode>("grid");
   let hasTriedRestorePersistedFilters = $state(false);
   let hasTriedRestoreViewMode = $state(false);
-  let initialStateAppliedKey = $state("");
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -178,15 +180,6 @@
 
   const getAttrIconUrl = (value: string): string => asset(`/card_attr/icon_attribute_${value}.png`);
 
-  const getCharacterThumbnailUrl = (value: string): string | null => {
-    const id = Number.parseInt(value, 10);
-    if (!Number.isFinite(id)) {
-      return null;
-    }
-
-    return asset(`/chr_ts/chr_ts_${id}_g1.png`);
-  };
-
   const isSpoilerCard = (item: CardListItem): boolean => {
     const releaseAtMs = toTimestampMs(item.releaseAt ?? item.archivePublishedAt);
     return releaseAtMs !== null && releaseAtMs > Date.now();
@@ -249,25 +242,6 @@
 
   const getFilterStorageKey = (): string => `content-site:card-list-filters:${data.region}`;
   const getViewModeStorageKey = (): string => "content-site:card-list-view-mode";
-
-  const getInitialStateKey = (): string =>
-    [
-      data.region,
-      data.initialQuery.sortBy,
-      data.initialQuery.sortOrder,
-      data.initialQuery.name,
-      data.initialQuery.unit,
-      data.initialQuery.character,
-      data.initialQuery.skill,
-      data.initialQuery.type,
-      data.initialQuery.attr,
-      data.initialQuery.rarity,
-      data.initialQuery.supportUnit,
-      data.initialQuery.has3dmvCutIn ? "1" : "0",
-      data.initialQuery.spoiler ? "1" : "0",
-      data.initialPage.pagination.page,
-      data.initialPage.items.length
-    ].join("|");
 
   const persistAppliedFilters = (): void => {
     if (!browser) {
@@ -416,16 +390,20 @@
     }
   };
 
-  $effect(() => {
-    const nextInitialStateKey = getInitialStateKey();
-    if (nextInitialStateKey === initialStateAppliedKey) {
-      return;
-    }
+  type InitialPageResult = {
+    page: CardListPagePayload;
+    loadFailed: boolean;
+  };
 
-    initialStateAppliedKey = nextInitialStateKey;
-    items = data.initialPage.items;
-    currentPage = data.initialPage.pagination.page;
-    hasNext = data.initialPage.pagination.hasNext;
+  const applyInitialPage = (result: InitialPageResult): void => {
+    items = result.page.items;
+    currentPage = result.page.pagination.page;
+    hasNext = result.page.pagination.hasNext;
+    errorMessage = result.loadFailed ? getInitialI18nText("cardListLoadFailed") : null;
+
+    // Initialize filter/sort state from server query params once per navigation.
+    // Must be here (not in a $effect) to avoid effect_update_depth_exceeded:
+    // writing reactive state inside $effect triggers re-run → infinite loop.
     sortBy = data.initialQuery.sortBy;
     sortOrder = data.initialQuery.sortOrder;
     nameFilter = data.initialQuery.name;
@@ -439,11 +417,17 @@
     has3dmvCutInFilter = data.initialQuery.has3dmvCutIn;
     spoilerFilter = data.initialQuery.spoiler;
     syncDraftFiltersFromCurrent();
-    errorMessage = data.initialLoadFailed ? getInitialI18nText("cardListLoadFailed") : null;
 
     if (browser && hasExplicitQueryStateInUrl()) {
       persistAppliedFilters();
     }
+
+    isInitialLoading = false;
+  };
+
+  $effect(() => {
+    const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
+    initialPagePromise.then(applyInitialPage);
   });
 
   $effect(() => {
@@ -710,6 +694,9 @@
     return query.length > 0 ? `${pathname}?${query}` : pathname;
   };
 
+  const getCardDetailHref = (item: CardListItem): string =>
+    resolve("/card/[region]/[id]", { region: data.region, id: item.id });
+
   const getRegionBadgeOptions = (): RegionBadgeOption[] =>
     supportedRegions.map((regionOption) =>
       regionOption === data.region
@@ -967,21 +954,37 @@
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{cardListLoading}</span>
     </div>
+  {:else if isInitialLoading}
+    <div class={getListGridClass()}>
+      {#each Array(12) as _, i}
+        <div class="content-card-shell rounded-2xl p-4 shadow-sm">
+          <div class="skeleton h-48 w-full rounded-xl"></div>
+          <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
+          <div class="mt-2 skeleton h-3 w-1/2 rounded"></div>
+        </div>
+      {/each}
+    </div>
   {:else if items.length === 0 && errorMessage}
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
     <div class={getListGridClass()}>
       {#each visibleItems as item (item.id)}
-        <CardListCard
-          region={data.region}
-          {item}
-          {viewMode}
-          {idLabel}
-          {spoilerContentLabel}
-          {cardListCharacterFallback}
-          {cardListReleaseLabel}
-          {cardImageAltSuffix}
-        />
+        <a
+          href={getCardDetailHref(item)}
+          class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+          aria-label={`${item.prefix} ${idLabel}${item.id}`}
+        >
+          <CardListCard
+            region={data.region}
+            {item}
+            {viewMode}
+            {idLabel}
+            {spoilerContentLabel}
+            {cardListCharacterFallback}
+            {cardListReleaseLabel}
+            {cardImageAltSuffix}
+          />
+        </a>
       {/each}
     </div>
 
@@ -1129,9 +1132,9 @@
                 }}
                 aria-label={option.label}
               />
-              {#if getCharacterThumbnailUrl(option.value)}
+              {#if getLocalCharacterThumbnailAssetURL(option.value)}
                 <img
-                  src={getCharacterThumbnailUrl(option.value) ?? ""}
+                  src={getLocalCharacterThumbnailAssetURL(option.value) ?? ""}
                   alt=""
                   aria-hidden="true"
                   class="size-7 rounded-full object-contain"

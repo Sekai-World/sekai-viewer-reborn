@@ -1,4 +1,4 @@
-import type { BannerGameCharacter, EventDetail } from "$lib/event-detail";
+import type { BannerGameCharacter, EventDetail } from "$lib/domain/event-detail";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;

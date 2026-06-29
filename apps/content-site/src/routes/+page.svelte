@@ -1,9 +1,9 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
-  import { supportedRegions, type SupportedRegion } from "$lib/regions";
-  import CurrentEventCard from "$lib/components/CurrentEventCard.svelte";
-  import RegionBadgeSwitch from "$lib/components/RegionBadgeSwitch.svelte";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+  import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
+  import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();

@@ -8,6 +8,7 @@
     "./content-site/common.json": "./content-site/common.json",
     "./content-site/error.json": "./content-site/error.json",
     "./content-site/event.json": "./content-site/event.json",
+    "./content-site/gacha.json": "./content-site/gacha.json",
     "./content-site/home.json": "./content-site/home.json",
     "./content-site/music.json": "./content-site/music.json",
     "./content-site/server.json": "./content-site/server.json"

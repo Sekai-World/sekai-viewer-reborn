@@ -1,18 +1,18 @@
 <script lang="ts">
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
-  import type { SupportedRegion } from "$lib/regions";
-  import EventDebugDialog from "$lib/components/EventDebugDialog.svelte";
-  import EventDetailAssetCard from "$lib/components/EventDetailAssetCard.svelte";
-  import EventDetailBgmCard from "$lib/components/EventDetailBgmCard.svelte";
-  import EventDetailCountdownCard from "$lib/components/EventDetailCountdownCard.svelte";
-  import EventDetailInfoCard from "$lib/components/EventDetailInfoCard.svelte";
-  import PageHeader from "$lib/components/PageHeader.svelte";
+  import type { SupportedRegion } from "$lib/domain/regions";
+  import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
+  import EventDetailAssetCard from "$lib/components/event/EventDetailAssetCard.svelte";
+  import EventDetailBgmCard from "$lib/components/event/EventDetailBgmCard.svelte";
+  import EventDetailCountdownCard from "$lib/components/event/EventDetailCountdownCard.svelte";
+  import EventDetailInfoCard from "$lib/components/event/EventDetailInfoCard.svelte";
+  import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
-  import { formatUnitFallbackLabel } from "$lib/unit-profile";
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";

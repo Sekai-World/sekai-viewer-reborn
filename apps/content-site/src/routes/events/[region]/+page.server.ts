@@ -1,5 +1,5 @@
 import { getEventsByRegionCurrent, getEventsByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/region";
+import { normalizeRegion } from "$lib/i18n/region";
 import { parseEventDetail } from "$lib/server/event-detail";
 import {
   createEventListRequestQuery,
@@ -11,19 +11,6 @@ import {
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
-
-const summarizeResponse = (
-  result: { response?: Response },
-  durationMs: number
-): Record<string, unknown> => ({
-  contentLength: result.response?.headers.get("content-length") ?? null,
-  contentType: result.response?.headers.get("content-type") ?? null,
-  durationMs,
-  ok: result.response?.ok ?? null,
-  requestId: result.response?.headers.get("x-request-id") ?? null,
-  status: result.response?.status ?? null,
-  url: result.response?.url ?? null
-});
 
 const createEmptyPage = () => ({
   items: [],
@@ -55,74 +42,67 @@ export const load: PageServerLoad = async ({ params, url }) => {
     requestQuery
   });
 
-  try {
-    const startedAt = performance.now();
-    const [response, currentEventResponse] = await Promise.all([
-      getEventsByRegionList({
-        baseUrl,
-        path: { region },
-        query: requestQuery
-      }),
-      getEventsByRegionCurrent({
-        baseUrl,
-        path: { region }
-      }).catch(() => null)
-    ]);
+  const initialPage: Promise<
+    | { page: ReturnType<typeof parseEventListPage>; loadFailed: false }
+    | { page: ReturnType<typeof createEmptyPage>; loadFailed: true }
+  > = Promise.all([
+    getEventsByRegionList({
+      baseUrl,
+      path: { region },
+      query: requestQuery
+    }),
+    getEventsByRegionCurrent({
+      baseUrl,
+      path: { region }
+    }).catch(() => null)
+  ])
+    .then(([response, currentEventResponse]) => {
+      if (response.error) {
+        logEventListFilterDebug("initial error", {
+          region,
+          queryState,
+          error: response.error
+        });
 
-    if (response.error) {
-      logEventListFilterDebug("initial error", {
+        return { page: createEmptyPage(), loadFailed: true as const };
+      }
+
+      const page = parseEventListPage(response.data, 1, DEFAULT_EVENT_LIST_PAGE_SIZE);
+
+      logEventListFilterDebug("initial response", {
         region,
         queryState,
-        ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
-        error: response.error
+        rawItemCount: response.data?.items?.length ?? null,
+        itemCount: page.items.length,
+        pagination: page.pagination
       });
 
       return {
-        region,
-        initialPage: createEmptyPage(),
-        initialLoadFailed: true,
-        initialQuery: queryState,
-        currentEventId: null,
-        unitProfiles
+        page,
+        loadFailed: false as const,
+        currentEventId:
+          currentEventResponse && !currentEventResponse.error
+            ? (parseEventDetail(currentEventResponse.data)?.id ?? null)
+            : null
       };
-    }
+    })
+    .catch((error) => {
+      logEventListFilterDebug("initial exception", {
+        region,
+        queryState,
+        error
+      });
 
-    const initialPage = parseEventListPage(response.data, 1, DEFAULT_EVENT_LIST_PAGE_SIZE);
-
-    logEventListFilterDebug("initial response", {
-      region,
-      queryState,
-      ...summarizeResponse(response, Math.round(performance.now() - startedAt)),
-      rawItemCount: response.data?.items?.length ?? null,
-      itemCount: initialPage.items.length,
-      pagination: initialPage.pagination
+      return { page: createEmptyPage(), loadFailed: true as const, currentEventId: null };
     });
 
-    return {
-      region,
-      initialPage,
-      initialLoadFailed: false,
-      initialQuery: queryState,
-      unitProfiles,
-      currentEventId:
-        currentEventResponse && !currentEventResponse.error
-          ? (parseEventDetail(currentEventResponse.data)?.id ?? null)
-          : null
-    };
-  } catch (error) {
-    logEventListFilterDebug("initial exception", {
-      region,
-      queryState,
-      error
-    });
+  // Attach noop catch to prevent unhandled rejection before SvelteKit renders
+  initialPage.catch(() => {});
 
-    return {
-      region,
-      initialPage: createEmptyPage(),
-      initialLoadFailed: true,
-      initialQuery: queryState,
-      currentEventId: null,
-      unitProfiles
-    };
-  }
+  return {
+    region,
+    initialPage,
+    initialQuery: queryState,
+    unitProfiles
+  };
 };

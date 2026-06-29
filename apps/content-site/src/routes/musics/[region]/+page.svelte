@@ -3,26 +3,28 @@
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
-  import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import { toTimestampMs } from "$lib/date-time";
-  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
-  import MusicListCard from "$lib/components/MusicListCard.svelte";
-  import PageHeader from "$lib/components/PageHeader.svelte";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import { getContentDisplaySettings } from "$lib/settings/content-display";
+  import { toTimestampMs } from "$lib/time/date-time";
+  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
+  import MusicListCard from "$lib/components/music/MusicListCard.svelte";
+  import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
-  import { regionLabels, supportedRegions } from "$lib/regions";
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
     formatUnitFallbackLabel,
     musicTagByUnitCode,
     unitCodeByMusicTag
-  } from "$lib/unit-profile";
+  } from "$lib/domain/unit-profile";
+  import type { MusicListPage, MusicListItem as MusicListItemType } from "$lib/server/music-list";
   import Icon from "@iconify/svelte";
   import type { PageData } from "./$types";
 
-  type MusicListPagePayload = PageData["initialPage"];
-  type MusicListItem = MusicListPagePayload["items"][number];
+  type MusicListPagePayload = MusicListPage;
+  type MusicListItem = MusicListItemType;
   type MusicListSortBy = "publishedAt" | "id";
   type MusicListSortOrder = "asc" | "desc";
   type MusicListViewMode = "grid" | "agenda";
@@ -43,6 +45,7 @@
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isLoading = $state(false);
+  let isInitialLoading = $state(true);
   let isReloading = $state(false);
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
@@ -72,7 +75,6 @@
   let levelDraft = $state("");
   let viewMode = $state<MusicListViewMode>("grid");
   let filterDialog: HTMLDialogElement | null = $state(null);
-  let initialStateKey = $state("");
   let restoredPreferences = $state(false);
   let spoilerContentAppliedState = $state<boolean | null>(null);
   const contentDisplaySettings = getContentDisplaySettings();
@@ -193,15 +195,6 @@
 
   const mapLegacyVocalUnitToTag = (value: string): string => musicTagByUnitCode[value] ?? value;
 
-  const getCharacterThumbnailUrl = (value: string): string | null => {
-    const id = Number.parseInt(value, 10);
-    if (!Number.isFinite(id)) {
-      return null;
-    }
-
-    return asset(`/chr_ts/chr_ts_${id}_g1.png`);
-  };
-
   const isSpoilerMusic = (item: MusicListItem): boolean => {
     const publishedAtMs = toTimestampMs(item.publishedAt);
     return publishedAtMs !== null && publishedAtMs > Date.now();
@@ -243,16 +236,20 @@
   const getPreferenceKey = (): string => `content-site:music-list-filters:${data.region}`;
   const getViewKey = (): string => "content-site:music-list-view-mode";
 
-  $effect(() => {
-    const key = `${data.region}|${data.initialQuery.sortBy}|${data.initialQuery.sortOrder}|${data.initialQuery.name}|${data.initialQuery.categories}|${data.initialQuery.composer}|${data.initialQuery.arranger}|${data.initialQuery.lyricist}|${data.initialQuery.vocalCharacter}|${data.initialQuery.tags}|${data.initialQuery.hasAppend ? "1" : "0"}|${data.initialQuery.level}|${data.initialQuery.spoiler ? "1" : "0"}`;
-    if (key === initialStateKey) {
-      return;
-    }
+  type InitialPageResult = {
+    page: MusicListPagePayload;
+    loadFailed: boolean;
+  };
 
-    initialStateKey = key;
-    items = data.initialPage.items;
-    currentPage = data.initialPage.pagination.page;
-    hasNext = data.initialPage.pagination.hasNext;
+  const applyInitialPage = (result: InitialPageResult): void => {
+    items = result.page.items;
+    currentPage = result.page.pagination.page;
+    hasNext = result.page.pagination.hasNext;
+    errorMessage = result.loadFailed ? musicListLoadFailed : null;
+
+    // Initialize filter/sort state from server query params once per navigation.
+    // Must be here (not in a $effect) to avoid effect_update_depth_exceeded:
+    // writing reactive state inside $effect triggers re-run → infinite loop.
     sortBy = data.initialQuery.sortBy;
     sortOrder = data.initialQuery.sortOrder;
     nameFilter = data.initialQuery.name;
@@ -266,7 +263,13 @@
     levelFilter = data.initialQuery.level;
     spoilerFilter = data.initialQuery.spoiler;
     syncDrafts();
-    errorMessage = data.initialLoadFailed ? musicListLoadFailed : null;
+
+    isInitialLoading = false;
+  };
+
+  $effect(() => {
+    const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
+    initialPagePromise.then(applyInitialPage);
   });
 
   $effect(() => {
@@ -735,6 +738,16 @@
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{musicListLoading}</span>
     </div>
+  {:else if isInitialLoading}
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+      {#each Array(12) as _, i}
+        <div class="content-card-shell rounded-2xl p-4 shadow-sm">
+          <div class="skeleton aspect-square w-full rounded-xl"></div>
+          <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
+          <div class="mt-2 skeleton h-3 w-1/2 rounded"></div>
+        </div>
+      {/each}
+    </div>
   {:else if items.length === 0 && errorMessage}
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
@@ -881,7 +894,7 @@
                 aria-label={character}
               />
               <img
-                src={getCharacterThumbnailUrl(character) ?? ""}
+                src={getLocalCharacterThumbnailAssetURL(character) ?? ""}
                 alt=""
                 aria-hidden="true"
                 class="size-7 rounded-full object-contain"

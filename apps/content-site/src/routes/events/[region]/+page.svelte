@@ -3,22 +3,23 @@
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
-  import { toTimestampMs } from "$lib/date-time";
-  import { getContentDisplaySettings } from "$lib/content-display-settings";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n";
-  import { regionLabels, supportedRegions } from "$lib/regions";
-  import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/unit-profile";
+  import { toTimestampMs } from "$lib/time/date-time";
+  import { getContentDisplaySettings } from "$lib/settings/content-display";
+  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { regionLabels, supportedRegions } from "$lib/domain/regions";
+  import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
-  import EventListCard from "$lib/components/EventListCard.svelte";
-  import ListToolbarButton from "$lib/components/ListToolbarButton.svelte";
-  import PageHeader from "$lib/components/PageHeader.svelte";
+  import EventListCard from "$lib/components/event/EventListCard.svelte";
+  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
+  import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/RegionBadgeSwitch.svelte";
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import type { EventListPage, EventListItem as EventListItemType } from "$lib/server/event-list";
   import type { PageData } from "./$types";
 
-  type EventListPagePayload = PageData["initialPage"];
-  type EventListItem = EventListPagePayload["items"][number];
+  type EventListPagePayload = EventListPage;
+  type EventListItem = EventListItemType;
   type EventListSortBy = "id" | "startAt";
   type EventListSortOrder = "asc" | "desc";
 
@@ -30,6 +31,7 @@
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isLoading = $state(false);
+  let isInitialLoading = $state(true);
   let isReloadingFirstPage = $state(false);
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
@@ -46,7 +48,6 @@
   let filterUnitDraft = $state<string[]>([]);
   let filterDialog: HTMLDialogElement | null = $state(null);
   let hasTriedRestorePersistedFilters = $state(false);
-  let initialStateAppliedKey = $state("");
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -147,18 +148,7 @@
 
   const getFilterStorageKey = (): string => `content-site:event-list-filters:${data.region}`;
 
-  const getInitialStateKey = (): string =>
-    [
-      data.region,
-      data.initialQuery.sortBy,
-      data.initialQuery.sortOrder,
-      data.initialQuery.name,
-      data.initialQuery.eventType,
-      data.initialQuery.unit,
-      data.initialPage.pagination.page,
-      data.initialPage.items.length,
-      data.currentEventId ?? ""
-    ].join("|");
+  let currentEventId = $state<string | null>(null);
 
   const persistAppliedFilters = (): void => {
     if (!browser) {
@@ -233,28 +223,39 @@
     }
   };
 
-  $effect(() => {
-    const nextInitialStateKey = getInitialStateKey();
-    if (nextInitialStateKey === initialStateAppliedKey) {
-      return;
-    }
+  type InitialPageResult = {
+    page: EventListPagePayload;
+    loadFailed: boolean;
+    currentEventId: string | null;
+  };
 
-    initialStateAppliedKey = nextInitialStateKey;
-    items = data.initialPage.items;
-    currentPage = data.initialPage.pagination.page;
-    hasNext = data.initialPage.pagination.hasNext;
+  const applyInitialPage = (result: InitialPageResult): void => {
+    items = result.page.items;
+    currentPage = result.page.pagination.page;
+    hasNext = result.page.pagination.hasNext;
+    currentEventId = result.currentEventId;
+    errorMessage = result.loadFailed ? getInitialI18nText("eventListLoadFailed") : null;
+
+    // Initialize filter/sort state from server query params once per navigation.
+    // Must be here (not in a $effect) to avoid effect_update_depth_exceeded:
+    // writing reactive state inside $effect triggers re-run → infinite loop.
     sortBy = data.initialQuery.sortBy;
     sortOrder = data.initialQuery.sortOrder;
     nameFilter = data.initialQuery.name;
     eventTypeFilter = [...data.initialQuery.eventType];
     unitFilter = [...data.initialQuery.unit];
     syncDraftFiltersFromCurrent();
-    errorMessage = data.initialLoadFailed ? getInitialI18nText("eventListLoadFailed") : null;
 
-    // Do not overwrite persisted state on plain route entry without query params.
     if (browser && hasExplicitQueryStateInUrl()) {
       persistAppliedFilters();
     }
+
+    isInitialLoading = false;
+  };
+
+  $effect(() => {
+    const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
+    initialPagePromise.then(applyInitialPage);
   });
 
   $effect(() => {
@@ -650,6 +651,16 @@
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{eventListLoading}</span>
     </div>
+  {:else if isInitialLoading}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      {#each Array(12) as _, i}
+        <div class="content-card-shell rounded-2xl p-4 shadow-sm">
+          <div class="skeleton h-36 w-full rounded-xl"></div>
+          <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
+          <div class="mt-2 skeleton h-3 w-1/2 rounded"></div>
+        </div>
+      {/each}
+    </div>
   {:else if items.length === 0 && errorMessage}
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
@@ -658,7 +669,7 @@
         <EventListCard
           region={data.region}
           {item}
-          currentEventId={data.currentEventId}
+          {currentEventId}
           currentEventLabel={eventListCurrentEvent}
           {spoilerContentLabel}
           uiLocale={data.uiLocale}

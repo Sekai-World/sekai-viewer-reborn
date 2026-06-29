@@ -8,6 +8,7 @@ export type EventListItem = {
   unit: string | null;
   assetBundleName: string | null;
   startAt: string | number | null;
+  endAt: string | number | null;
 };
 
 export type EventListPagination = {
@@ -261,7 +262,8 @@ const parseEventListItem = (payload: unknown): EventListItem | null => {
     eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
     unit: normalizeUnitCode(pickFirstString(unitNode ?? eventNode, ["unit"])),
     assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"]),
-    startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"])
+    startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
+    endAt: pickFirstDateValue(eventNode, ["endAt", "end_at", "aggregateAt", "aggregate_at", "endDate"])
   };
 };
 

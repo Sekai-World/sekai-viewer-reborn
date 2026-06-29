@@ -2,13 +2,13 @@ import {
   getUnitProfilesByRegionList,
   getVersionsByRegion
 } from "@platform/sekai-master-api-sdk";
-import { formatUnitFallbackLabel } from "$lib/unit-profile";
+import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
 export {
   formatUnitFallbackLabel,
   musicTagByUnitCode,
   UNIT_CODE_ORDER,
   unitCodeByMusicTag
-} from "$lib/unit-profile";
+} from "$lib/domain/unit-profile";
 
 export type UnitProfile = {
   unit: string;

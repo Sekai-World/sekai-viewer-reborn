@@ -14,6 +14,11 @@ const betterTailwindcssPlugin = {
   "better-tailwindcss": betterTailwindcss
 };
 
+const betterTailwindcssSettings = (appPath) => ({
+  cwd: `./${appPath}`,
+  entryPoint: `./${appPath}/src/app.css`
+});
+
 export default [
   {
     ignores: [
@@ -41,9 +46,7 @@ export default [
       ...betterTailwindcssPlugin
     },
     settings: {
-      "better-tailwindcss": {
-        cwd: "./apps/content-site"
-      }
+      "better-tailwindcss": betterTailwindcssSettings("apps/content-site")
     },
     rules: betterTailwindcssRules
   },
@@ -53,9 +56,7 @@ export default [
       ...betterTailwindcssPlugin
     },
     settings: {
-      "better-tailwindcss": {
-        cwd: "./apps/tools-site"
-      }
+      "better-tailwindcss": betterTailwindcssSettings("apps/tools-site")
     },
     rules: betterTailwindcssRules
   },
@@ -65,9 +66,7 @@ export default [
       ...betterTailwindcssPlugin
     },
     settings: {
-      "better-tailwindcss": {
-        cwd: "./apps/media-lab-site"
-      }
+      "better-tailwindcss": betterTailwindcssSettings("apps/media-lab-site")
     },
     rules: betterTailwindcssRules
   },
@@ -77,9 +76,7 @@ export default [
       ...betterTailwindcssPlugin
     },
     settings: {
-      "better-tailwindcss": {
-        cwd: "./apps/account-site"
-      }
+      "better-tailwindcss": betterTailwindcssSettings("apps/account-site")
     },
     rules: betterTailwindcssRules
   },
@@ -89,9 +86,7 @@ export default [
       ...betterTailwindcssPlugin
     },
     settings: {
-      "better-tailwindcss": {
-        cwd: "./apps/content-site"
-      }
+      "better-tailwindcss": betterTailwindcssSettings("apps/content-site")
     },
     rules: {
       ...betterTailwindcssRules
@@ -107,7 +102,8 @@ export default [
       }
     },
     rules: {
-      "svelte/no-navigation-without-resolve": "off"
+      "svelte/no-navigation-without-resolve": "off",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }]
     }
   },
   {
