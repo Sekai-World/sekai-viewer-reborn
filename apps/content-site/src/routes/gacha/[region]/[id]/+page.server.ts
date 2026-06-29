@@ -21,6 +21,8 @@ type RegionGachaLookup = {
 type GachaPickupCard = GachaPickup & {
   title: string | null;
   assetBundleName: string | null;
+  attr: string | null;
+  rarityType: string | null;
 };
 
 type GachaPayload = {
@@ -165,7 +167,9 @@ const fetchGachaPayload = async ({
           return {
             ...pickup,
             title: null,
-            assetBundleName: null
+            assetBundleName: null,
+            attr: null,
+            rarityType: null
           };
         }
 
@@ -179,7 +183,9 @@ const fetchGachaPayload = async ({
             return {
               ...pickup,
               title: null,
-              assetBundleName: null
+              assetBundleName: null,
+              attr: null,
+              rarityType: null
             };
           }
 
@@ -187,13 +193,17 @@ const fetchGachaPayload = async ({
           return {
             ...pickup,
             title: card?.title ?? null,
-            assetBundleName: card?.assetBundleName ?? null
+            assetBundleName: card?.assetBundleName ?? null,
+            attr: card?.attr ?? null,
+            rarityType: card?.rarityType ?? null
           };
         } catch {
           return {
             ...pickup,
             title: null,
-            assetBundleName: null
+            assetBundleName: null,
+            attr: null,
+            rarityType: null
           };
         }
       }) ?? []

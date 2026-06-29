@@ -1,4 +1,11 @@
-import type { GachaDetail, GachaPickup } from "$lib/domain/gacha-detail";
+import type {
+  GachaDetail,
+  GachaPickup,
+  GachaCardRarityRate,
+  GachaBehavior,
+  GachaDetailSub,
+  GachaInformation
+} from "$lib/domain/gacha-detail";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -16,6 +23,9 @@ const getStringLike = (value: unknown): string | null => {
 
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const getBoolean = (value: unknown): boolean | null =>
+  typeof value === "boolean" ? value : null;
 
 const getDateValue = (value: unknown): string | number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -67,6 +77,104 @@ const pickFirstDateValue = (source: Record<string, unknown>, keys: readonly stri
   return null;
 };
 
+const pickFirstBoolean = (source: Record<string, unknown>, keys: readonly string[]): boolean | null => {
+  for (const key of keys) {
+    const value = getBoolean(source[key]);
+    if (value !== null) {
+      return value;
+    }
+  }
+  return null;
+};
+
+const parseFloat = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+};
+
+const parseGachaCardRarityRates = (raw: unknown): GachaCardRarityRate[] => {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw
+    .map((item: unknown): GachaCardRarityRate | null => {
+      const obj = getObject(item);
+      if (!obj) {
+        return null;
+      }
+      return {
+        cardRarityType: pickFirstString(obj, ["cardRarityType"]),
+        rate: parseFloat(obj["rate"]),
+        lotteryType: pickFirstString(obj, ["lotteryType"])
+      };
+    })
+    .filter((item): item is GachaCardRarityRate => item !== null);
+};
+
+const parseGachaBehaviors = (raw: unknown): GachaBehavior[] => {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw
+    .map((item: unknown): GachaBehavior | null => {
+      const obj = getObject(item);
+      if (!obj) {
+        return null;
+      }
+      return {
+        id: pickFirstStringLike(obj, ["id"]),
+        gachaBehaviorType: pickFirstString(obj, ["gachaBehaviorType"]),
+        gachaSpinnableType: pickFirstString(obj, ["gachaSpinnableType"]),
+        costResourceType: pickFirstString(obj, ["costResourceType"]),
+        costResourceQuantity: pickFirstNumber(obj, ["costResourceQuantity"]),
+        costResourceId: pickFirstStringLike(obj, ["costResourceId"]),
+        resourceCategory: pickFirstString(obj, ["resourceCategory"]),
+        spinCount: pickFirstNumber(obj, ["spinCount"]),
+        executeLimit: pickFirstNumber(obj, ["executeLimit"]),
+        priority: pickFirstNumber(obj, ["priority"])
+      };
+    })
+    .filter((item): item is GachaBehavior => item !== null);
+};
+
+const parseGachaDetails = (raw: unknown): GachaDetailSub[] => {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw
+    .map((item: unknown): GachaDetailSub | null => {
+      const obj = getObject(item);
+      if (!obj) {
+        return null;
+      }
+      return {
+        cardId: pickFirstStringLike(obj, ["cardId"]),
+        weight: pickFirstNumber(obj, ["weight"]),
+        isWish: pickFirstBoolean(obj, ["isWish"])
+      };
+    })
+    .filter((item): item is GachaDetailSub => item !== null);
+};
+
+const parseGachaInformation = (raw: unknown): GachaInformation | null => {
+  const obj = getObject(raw);
+  if (!obj) {
+    return null;
+  }
+  return {
+    summary: pickFirstString(obj, ["summary"]),
+    description: pickFirstString(obj, ["description"])
+  };
+};
+
 export const parseGachaDetail = (payload: unknown): GachaDetail | null => {
   const root = getObject(payload);
   if (!root) {
@@ -107,6 +215,15 @@ export const parseGachaDetail = (payload: unknown): GachaDetail | null => {
     costResourceType: pickFirstString(gachaNode, ["costResourceType", "costResourceType"]),
     costResourceId: pickFirstStringLike(gachaNode, ["costResourceId", "costResourceId"]),
     costCount: pickFirstNumber(gachaNode, ["costCount", "costCount"]),
-    gachaPickups
+    gachaPickups,
+    gachaCardRarityRates: parseGachaCardRarityRates(gachaNode["gachaCardRarityRates"]),
+    gachaBehaviors: parseGachaBehaviors(gachaNode["gachaBehaviors"]),
+    gachaDetails: parseGachaDetails(gachaNode["gachaDetails"]),
+    gachaInformation: parseGachaInformation(gachaNode["gachaInformation"]),
+    gachaCeilItemId: pickFirstStringLike(gachaNode, ["gachaCeilItemId"]),
+    wishFixedSelectCount: pickFirstNumber(gachaNode, ["wishFixedSelectCount"]),
+    wishLimitedSelectCount: pickFirstNumber(gachaNode, ["wishLimitedSelectCount"]),
+    wishSelectCount: pickFirstNumber(gachaNode, ["wishSelectCount"]),
+    isShowPeriod: pickFirstBoolean(gachaNode, ["isShowPeriod"])
   };
 };
