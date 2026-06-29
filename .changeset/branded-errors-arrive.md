@@ -21,3 +21,11 @@ Restore gacha phrase display and audio playback on content-site card detail page
 Align related gacha card hover, focus, and image brightness states with related event cards.
 
 Show birthday rarity icons on content-site card detail pages.
+
+Eliminate blank first-load by resolving streaming i18n Promise to local source messages synchronously.
+
+Fix home page carousel vertical scroll bleed with overflow-y-clip.
+
+Redesign home page card skeleton to match the final card layout.
+
+Fix region badge flickering during programmatic carousel scroll.
