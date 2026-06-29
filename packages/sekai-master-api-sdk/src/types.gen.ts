@@ -316,6 +316,41 @@ export type SharedGachaBannerResponse = {
     assetbundleName?: unknown;
     id?: unknown;
     name?: unknown;
+    startAt?: unknown;
+};
+
+export type SharedGachaBehaviorResponse = {
+    costResourceId?: unknown;
+    costResourceQuantity?: unknown;
+    costResourceType?: unknown;
+    executeLimit?: number;
+    gachaBehaviorType?: string;
+    gachaSpinnableType?: string;
+    groupId?: number;
+    id?: unknown;
+    priority?: number;
+    resourceCategory?: string;
+    spinCount?: number;
+};
+
+export type SharedGachaCardRarityRateResponse = {
+    cardRarityType?: string;
+    id?: unknown;
+    lotteryType?: string;
+    rate?: number;
+};
+
+export type SharedGachaDetailSubResponse = {
+    cardId?: unknown;
+    gachaId?: unknown;
+    id?: unknown;
+    isWish?: unknown;
+    weight?: unknown;
+};
+
+export type SharedGachaInformationResponse = {
+    description?: unknown;
+    summary?: unknown;
 };
 
 export type SharedGachaListItemResponse = {
@@ -338,12 +373,21 @@ export type SharedGachaObjectResponse = {
     costResourceId?: unknown;
     costResourceType?: unknown;
     endAt?: unknown;
+    gachaBehaviors?: Array<SharedGachaBehaviorResponse>;
+    gachaCardRarityRates?: Array<SharedGachaCardRarityRateResponse>;
+    gachaCeilItemId?: unknown;
+    gachaDetails?: Array<SharedGachaDetailSubResponse>;
+    gachaInformation?: SharedGachaInformationResponse;
     gachaPickups?: Array<SharedGachaPickupResponse>;
     gachaType?: unknown;
     id?: unknown;
+    isShowPeriod?: unknown;
     name?: unknown;
     startAt?: unknown;
     summary?: unknown;
+    wishFixedSelectCount?: unknown;
+    wishLimitedSelectCount?: unknown;
+    wishSelectCount?: unknown;
 };
 
 export type SharedGachaPickupResponse = {

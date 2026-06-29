@@ -110,6 +110,8 @@ export const getCardsByRegionByIdEvents = <ThrowOnError extends boolean = false>
 
 /**
  * Get card gacha banners by card id
+ *
+ * Returns gacha banners where the specified card appears as a pickup card
  */
 export const getCardsByRegionByIdGachas = <ThrowOnError extends boolean = false>(options: Options<GetCardsByRegionByIdGachasData, ThrowOnError>): RequestResult<GetCardsByRegionByIdGachasResponses, GetCardsByRegionByIdGachasErrors, ThrowOnError> => (options.client ?? client).get<GetCardsByRegionByIdGachasResponses, GetCardsByRegionByIdGachasErrors, ThrowOnError>({ url: '/cards/{region}/{id}/gachas', ...options });
 
