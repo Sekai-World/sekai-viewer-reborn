@@ -10,7 +10,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages, setI18nLocale, tCommon } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
   import type { PageData } from "./$types";
@@ -25,7 +25,7 @@
   let { data }: { data: PageData } = $props();
   const gachaListLoadingFallback = "Loading gachas...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key, fallback);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key, fallback);
   let items = $state<GachaListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -187,7 +187,7 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -312,7 +312,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
   };
 

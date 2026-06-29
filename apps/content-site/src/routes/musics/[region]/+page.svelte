@@ -12,7 +12,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages, setI18nLocale, tCommon } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
     formatUnitFallbackLabel,
@@ -39,7 +39,7 @@
 
   let { data }: { data: PageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
 
   let items = $state<MusicListItem[]>([]);
   let currentPage = $state(1);
@@ -273,7 +273,7 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshTranslations(data.uiLocale);
   });
@@ -487,7 +487,7 @@
   };
 
   const refreshTranslations = async (locale: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(locale, data.i18nMessages);
+    const resolvedLocale = await setI18nLocale(locale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 

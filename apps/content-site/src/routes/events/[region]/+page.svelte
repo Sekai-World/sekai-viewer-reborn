@@ -5,7 +5,7 @@
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages, setI18nLocale, tCommon } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
@@ -26,7 +26,7 @@
   let { data }: { data: PageData } = $props();
   const eventListLoadingFallback = "Loading events...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key, fallback);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -276,7 +276,7 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -411,7 +411,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
   };
 

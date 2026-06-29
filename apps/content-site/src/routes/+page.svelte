@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages, setI18nLocale, tCommon } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -8,7 +8,7 @@
 
   let { data }: { data: PageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
@@ -19,11 +19,12 @@
   let versionAppLabel = $state(getInitialI18nText("versionInfo.appLabel"));
   let versionDataLabel = $state(getInitialI18nText("versionInfo.dataLabel"));
   let versionAssetLabel = $state(getInitialI18nText("versionInfo.assetLabel"));
-  const homeCardItemClass =
-    "w-full shrink-0 md:basis-[calc((100%-2rem)/3)] lg:basis-[calc((100%-4rem)/5)]";
 
   const MOBILE_REGION_STORAGE_KEY = "home-mobile-region";
   let selectedRegion = $state<SupportedRegion>(supportedRegions[0]);
+  let carouselEl: HTMLElement | undefined = $state();
+  /** True while a programmatic (badge-click) scroll is in flight — suppresses IO updates. */
+  let programmaticScrolling = false;
 
   $effect(() => {
     const saved = localStorage.getItem(MOBILE_REGION_STORAGE_KEY);
@@ -35,10 +36,97 @@
   const selectRegion = (r: SupportedRegion): void => {
     selectedRegion = r;
     localStorage.setItem(MOBILE_REGION_STORAGE_KEY, r);
+    scrollToRegionCard(r);
   };
 
+  const scrollToRegionCard = (region: SupportedRegion): void => {
+    const cardEl = carouselEl?.querySelector(`[data-region="${region}"]`);
+    if (cardEl && carouselEl) {
+      programmaticScrolling = true;
+      cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+
+      const onScrollEnd = (): void => {
+        programmaticScrolling = false;
+        carouselEl!.removeEventListener("scrollend", onScrollEnd);
+        clearTimeout(fallback);
+      };
+      // Fallback: if scrollend never fires (e.g. already at target), unblock after 1s
+      const fallback = setTimeout(onScrollEnd, 1000);
+      carouselEl.addEventListener("scrollend", onScrollEnd, { once: true });
+    }
+  };
+
+  // Sync selectedRegion from scroll position via IntersectionObserver (mobile only)
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const container = carouselEl;
+    if (!container) {
+      return;
+    }
+
+    // Only observe on mobile where the carousel is scrollable
+    const isMobile = () => window.matchMedia("(max-width: 767px)").matches;
+    if (!isMobile()) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (programmaticScrolling) {
+          return;
+        }
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            const region = entry.target.getAttribute("data-region");
+            if (region && (supportedRegions as readonly string[]).includes(region)) {
+              selectedRegion = region as SupportedRegion;
+              localStorage.setItem(MOBILE_REGION_STORAGE_KEY, region);
+            }
+          }
+        }
+      },
+      { root: container, threshold: 0.6 }
+    );
+
+    for (const child of container.children) {
+      if (child.hasAttribute("data-region")) {
+        observer.observe(child);
+      }
+    }
+
+    return () => observer.disconnect();
+  });
+
+  // On initial load, scroll to the saved region (mobile only)
+  let initialScrollDone = false;
+  $effect(() => {
+    const container = carouselEl;
+    if (!container || initialScrollDone) {
+      return;
+    }
+
+    if (!window.matchMedia("(max-width: 767px)").matches) {
+      return;
+    }
+
+    const saved = localStorage.getItem(MOBILE_REGION_STORAGE_KEY);
+    if (!saved || !(supportedRegions as readonly string[]).includes(saved)) {
+      return;
+    }
+
+    // Wait for the card elements to be present in the DOM
+    const rafId = requestAnimationFrame(() => {
+      const cardEl = container.querySelector(`[data-region="${saved}"]`);
+      if (cardEl) {
+        initialScrollDone = true;
+        cardEl.scrollIntoView({ behavior: "instant", inline: "center", block: "nearest" });
+      }
+    });
+
+    return () => cancelAnimationFrame(rafId);
+  });
+
+  $effect(() => {
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -57,7 +145,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(locale, key));
   };
 
@@ -118,21 +206,44 @@
   />
 </div>
 
-<section class="flex flex-wrap justify-center gap-4">
+<section
+  bind:this={carouselEl}
+  class="home-card-carousel flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-clip scroll-smooth px-4 md:snap-none md:flex-wrap md:justify-center md:overflow-x-visible md:overflow-y-visible md:scroll-smooth-none md:px-0"
+>
   {#each supportedRegions as region, index (region)}
-    <div class="{homeCardItemClass} {region !== selectedRegion ? 'max-md:hidden' : ''}">
+    <div
+      data-region={region}
+      class="w-[85vw] max-w-sm shrink-0 snap-center md:w-full md:max-w-none md:basis-[calc((100%-2rem)/3)] lg:basis-[calc((100%-4rem)/5)]"
+    >
       {#await data.cards[index]}
-        <article id={`region-${region}`} class="card content-card-shell w-full shadow-sm">
-          <div class="card-body">
-            <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
-            <div class="mb-1 max-md:hidden">
-              <span class="badge homepage-region-badge font-semibold shadow-sm">
-                {region.toUpperCase()}
-              </span>
-            </div>
-            <div class="space-y-2">
-              <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
-              <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
+        <article id={`region-${region}`} class="hover-3d relative isolate w-full">
+          <div class="card content-card-shell relative overflow-hidden shadow-[0_5px_14px_rgba(0,0,0,0.06),0_1px_4px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_18px_rgba(0,0,0,0.26),0_2px_8px_rgba(0,0,0,0.18)]">
+            <div class="card-body relative z-10">
+              <div class="mb-2 flex items-center justify-center px-[4%] py-[4%] md:mb-3">
+                <div class="aspect-[3/2] w-full max-w-full animate-pulse rounded-xl bg-base-300 md:w-3/4 md:min-w-[min(200px,100%)]"></div>
+              </div>
+              <div class="mb-1 h-4 w-3/4 animate-pulse rounded bg-base-300"></div>
+              <div class="mb-1.5 flex items-center gap-2">
+                <div class="h-3.5 w-16 animate-pulse rounded bg-base-300"></div>
+                <div class="h-7 w-7 animate-pulse rounded-full bg-base-300"></div>
+              </div>
+              <div class="content-card-inset rounded-xl p-2.5">
+                <div class="mb-2 h-2.5 w-20 animate-pulse rounded bg-base-300"></div>
+                <div class="grid grid-cols-3 gap-1.5">
+                  <div class="content-card-elevated rounded-lg px-1 py-1.5 text-center">
+                    <div class="mx-auto h-5 w-6 animate-pulse rounded bg-base-300"></div>
+                    <div class="mx-auto mt-0.5 h-2 w-6 animate-pulse rounded bg-base-300"></div>
+                  </div>
+                  <div class="content-card-elevated rounded-lg px-1 py-1.5 text-center">
+                    <div class="mx-auto h-5 w-6 animate-pulse rounded bg-base-300"></div>
+                    <div class="mx-auto mt-0.5 h-2 w-6 animate-pulse rounded bg-base-300"></div>
+                  </div>
+                  <div class="content-card-elevated rounded-lg px-1 py-1.5 text-center">
+                    <div class="mx-auto h-5 w-6 animate-pulse rounded bg-base-300"></div>
+                    <div class="mx-auto mt-0.5 h-2 w-6 animate-pulse rounded bg-base-300"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </article>

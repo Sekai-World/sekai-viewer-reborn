@@ -106,6 +106,27 @@ export const loadI18nMessageBundle = (
   fetcher?: I18nFetcher
 ): Promise<I18nMessages> => scopedI18nLoader.loadMessageBundle(localeValue, namespaces, fetcher);
 
+const allLocalSourceMessages = Object.values(localSourceMessagesByNamespace).reduce<I18nMessages>(
+  (acc, messages) => ({ ...acc, ...messages }),
+  {}
+);
+
+/**
+ * SvelteKit unwraps streaming promises in generated types, but at runtime
+ * the value may still be a Promise during SSR streaming. This helper returns
+ * local source messages synchronously when the value is a streaming Promise,
+ * so component init code never blocks. The $effect that calls
+ * createI18nTranslator() re-runs automatically when the promise resolves.
+ */
+export const resolveStreamingMessages = (
+  messagesOrPromise: I18nMessages | Promise<I18nMessages>
+): I18nMessages => {
+  if (messagesOrPromise instanceof Promise) {
+    return allLocalSourceMessages;
+  }
+  return messagesOrPromise;
+};
+
 export const createI18nTranslator = (
   localeValue: string,
   messages: I18nMessages

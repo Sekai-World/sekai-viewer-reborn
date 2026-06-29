@@ -16,6 +16,7 @@
     createI18nTranslator,
     isLocaleLoading,
     getThemeModeLabel,
+    resolveStreamingMessages,
     setI18nLocale,
     tCommon
   } from "$lib/i18n/runtime";
@@ -47,7 +48,7 @@
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
@@ -170,7 +171,7 @@
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
   $effect(() => {
-    const translate = createI18nTranslator(uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshTranslations(uiLocale);
   });
@@ -266,7 +267,7 @@
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(localeValue, data.i18nMessages);
+    const resolvedLocale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 
