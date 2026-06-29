@@ -218,7 +218,7 @@
   {/await}
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-4">
+<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.eventPayload}
     <PageHeader
       breadcrumbs={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}

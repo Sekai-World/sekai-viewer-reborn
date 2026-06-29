@@ -49,7 +49,7 @@
 
   <div class="drawer-content bg-base-200">
     <header
-      class="viewer-shell-nav sticky top-4 z-40 mx-4 mt-4 isolate overflow-visible rounded-full border px-2"
+      class="viewer-shell-nav sticky top-4 z-40 mx-3 mt-4 isolate overflow-visible rounded-full border px-2"
     >
       <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-384 px-2">
         <div class="navbar-start">
@@ -83,7 +83,7 @@
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-384 px-4 pb-8 pt-6 md:px-6 lg:px-8">
+    <main class="mx-auto w-full max-w-384 px-3 pb-8 pt-6 md:px-6 lg:px-8">
       {#if showTitle}
         <section class="py-12 text-center">
           <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">

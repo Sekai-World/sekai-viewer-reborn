@@ -306,7 +306,7 @@
   {/await}
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-4">
+<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.cardPayload}
     <PageHeader
       breadcrumbs={getBreadcrumbItems(`${pageTitlePrefix} ${data.cardId}`)}

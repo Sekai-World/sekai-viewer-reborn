@@ -888,7 +888,7 @@
   <title>{cardListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-360 flex-col gap-5 px-4">
+<section class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
   <PageHeader breadcrumbs={getBreadcrumbItems()} breadcrumbClass="md:max-w-[60%]">
     {#snippet actions()}
       <RegionBadgeSwitch options={getRegionBadgeOptions()} />
