@@ -1,14 +1,20 @@
 import { json } from "@sveltejs/kit";
 import {
   getGachasByRegionById,
-  getCardsByRegionById,
+  getCardsByRegionList,
 } from "@platform/sekai-master-api-sdk";
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { parseGachaDetail } from "$lib/server/gacha-detail";
-import { parseCardDetail } from "$lib/server/card-detail";
 import type { RequestHandler } from "./$types";
 import type { GachaDetailSub } from "$lib/domain/gacha-detail";
+
+const str = (v: unknown): string | null =>
+  typeof v === "string" && v.trim().length > 0
+    ? v
+    : typeof v === "number" && Number.isFinite(v)
+      ? String(v)
+      : null;
 
 type PullRequest = {
   count: number;
@@ -135,49 +141,55 @@ export const POST: RequestHandler = async ({ params, request }) => {
       return json({ error: "empty_pool" }, { status: 422 });
     }
 
-    // Fetch all pool card details to get cardRarityType for rarity grouping
-    const uniqueCardIds = [
-      ...new Set(pool.map((d) => d.cardId).filter((id): id is string => !!id)),
-    ];
+    const poolCardIds = new Set(
+      pool.map((d) => d.cardId).filter((id): id is string => !!id)
+    );
+    if (poolCardIds.size === 0) {
+      return json({ error: "empty_pool" }, { status: 422 });
+    }
+
+    const rarityTypes = gacha.gachaCardRarityRates
+      .filter((r) => r.rate !== null && r.rate > 0 && r.cardRarityType)
+      .map((r) => r.cardRarityType!);
 
     const poolCards: PoolCard[] = [];
     const cardMetaMap = new Map<string, PulledGachaCard>();
 
-    if (uniqueCardIds.length > 0) {
-      const settled = await Promise.allSettled(
-        uniqueCardIds.map(async (cardId) => {
-          const response = await getCardsByRegionById({
+    if (rarityTypes.length > 0) {
+      const rarityListResponses = await Promise.allSettled(
+        rarityTypes.map((rarityType) =>
+          getCardsByRegionList({
             baseUrl,
-            path: { region, id: cardId },
-          });
-          if (response.error) return { cardId, cardRarityType: null, meta: null };
-          const card = parseCardDetail(response.data);
-          return {
-            cardId,
-            cardRarityType: card?.rarityType ?? null,
-            meta: card
-              ? {
-                  cardId: card.id,
-                  title: card.title,
-                  assetBundleName: card.assetBundleName,
-                  attr: card.attr,
-                  rarityType: card.rarityType,
-                }
-              : null,
-          };
-        })
+            path: { region },
+            query: { rarity: rarityType, page_size: 200 },
+          })
+        )
       );
 
-      for (const result of settled) {
-        if (result.status === "fulfilled" && result.value) {
-          const { cardId, cardRarityType, meta } = result.value;
-          if (cardRarityType) {
+      for (const result of rarityListResponses) {
+        if (result.status !== "fulfilled" || result.value.error) continue;
+        const items = (result.value.data as Record<string, unknown>)?.items;
+        if (!Array.isArray(items)) continue;
+
+        for (const raw of items) {
+          const obj = raw as Record<string, unknown>;
+          const cardId = str(obj.id);
+          if (!cardId || !poolCardIds.has(cardId)) continue;
+
+          const rarityNode = obj.cardRarity as Record<string, unknown> | undefined;
+          const cardRarityType = rarityNode?.cardRarityType as string | undefined ?? null;
+
+          if (cardRarityType && !cardMetaMap.has(cardId)) {
             const detail = pool.find((d) => d.cardId === cardId);
             const weight = detail?.weight ?? 0;
             poolCards.push({ cardId, cardRarityType, weight });
-          }
-          if (meta) {
-            cardMetaMap.set(cardId, meta);
+            cardMetaMap.set(cardId, {
+              cardId,
+              title: str(obj.prefix) ?? `#${cardId}`,
+              assetBundleName: str(obj.assetbundleName) ?? str(obj.assetBundleName) ?? null,
+              attr: str(obj.attr) ?? null,
+              rarityType: cardRarityType,
+            });
           }
         }
       }
