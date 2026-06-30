@@ -27,7 +27,7 @@ const getDateValue = (value: unknown): string | number | null => {
 };
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
-  value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
+  value !== null && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
 
 const pickString = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
   for (const key of keys) {
@@ -66,7 +66,7 @@ const parseMusicDifficulty = (payload: unknown): MusicDifficulty | null => {
   }
 
   return {
-    difficulty: difficulty.toLocaleLowerCase(),
+    difficulty: difficulty.toLowerCase(),
     level,
     playLevel: playLevel ?? level,
     noteCount: getNumber(root.noteCount) ?? getNumber(root.totalNoteCount) ?? 0
