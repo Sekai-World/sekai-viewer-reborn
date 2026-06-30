@@ -91,6 +91,22 @@ pnpm --filter @apps/content-site dev
 - `PUBLIC_REMOTE_ASSET_BASE_URL`
 - `PUBLIC_SEKAI_I18N_BASE_URL` (defaults to `https://sekai-world.github.io/sekai-i18n-reborn`)
 
+## Git Hooks
+
+A `post-checkout` hook is provided to auto-restart the SvelteKit dev server
+when switching branches. Without it, Vite's file watcher detects deleted route
+files and crashes the dev server with an ENOENT error.
+
+Enable once after cloning:
+
+```bash
+git config core.hooksPath scripts/git-hooks
+```
+
+This setting is local-only (not tracked by git). The hook only fires on branch
+switches (`git checkout` / `git switch` / fast-forward `git pull`), not on
+single-file checkouts.
+
 ## Build, Check, Lint, Format
 
 Build everything:

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Auto-restart SvelteKit dev servers in tmux after branch switch.
+#
+# SvelteKit's dev server (via Vite FSWatcher) crashes with ENOENT when
+# git checkout deletes route files that were being tracked.  This hook
+# detects branch switches and restarts the tmux dev server so you don't
+# have to do it manually every time.
+#
+# Install:  git config core.hooksPath scripts/git-hooks
+# Uninstall: git config --unset core.hooksPath
+
+# flag=1 → branch switch; flag=0 → file checkout (skip)
+flag="${3:-0}"
+if [ "$flag" = "0" ]; then
+  exit 0
+fi
+
+restart_tmux_session() {
+  local session="$1"
+  local cmd="$2"
+
+  if ! tmux has-session -t "$session" 2>/dev/null; then
+    return
+  fi
+
+  # Check if the pane is at a shell prompt (server already dead)
+  local pane_content
+  pane_content=$(tmux capture-pane -p -t "$session" -S -3 2>/dev/null || true)
+
+  # Send Ctrl-C to kill any running process, then start fresh
+  tmux send-keys -t "$session" C-c
+
+  # Brief pause to let the process exit
+  sleep 0.8
+
+  # Send an extra Enter in case Ctrl-C left us at a prompt with stale text
+  tmux send-keys -t "$session" C-c Enter
+
+  sleep 0.3
+
+  # Start the dev server
+  tmux send-keys -t "$session" "$cmd" Enter
+}
+
+restart_tmux_session "content-site" "pnpm --filter @apps/content-site dev"
