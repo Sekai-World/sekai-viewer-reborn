@@ -109,7 +109,7 @@
     {src}
     {alt}
     fallbackLabel={imageUnavailableLabel}
-    buttonClass="block h-full w-full cursor-zoom-in overflow-hidden"
+    buttonClass="block h-full w-full overflow-hidden"
     interactive={true}
     imageClass={`h-full w-full ${isCutoutTab(resolvedTab) ? "object-contain p-2" : "object-contain"}`}
     onclick={() => {

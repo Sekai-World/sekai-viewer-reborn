@@ -7,6 +7,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import MusicDetailInfoCard from "$lib/components/music/MusicDetailInfoCard.svelte";
+  import MusicDifficultyCard from "$lib/components/music/MusicDifficultyCard.svelte";
   import MusicPreviewCard from "$lib/components/music/MusicPreviewCard.svelte";
   import MusicJacketHero from "$lib/components/music/MusicJacketHero.svelte";
   import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
@@ -14,7 +15,7 @@
     formatUnitFallbackLabel,
     unitCodeByMusicTag
   } from "$lib/domain/unit-profile";
-  import { getMusicJacketAssetURL } from "$lib/assets/index";
+  import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -44,6 +45,7 @@
   let vocalCharacterLabel = $state(getInitialI18nText("musicDetailVocalCharacterLabel"));
   let noVocals = $state(getInitialI18nText("musicDetailNoVocals"));
   let noDifficulties = $state(getInitialI18nText("musicDetailNoDifficulties"));
+  let chartPreviewLabel = $state(getInitialI18nText("musicDetailChartPreviewLabel"));
   let jacketAltSuffix = $state(getInitialI18nText("musicJacketAltSuffix"));
   let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
@@ -104,6 +106,7 @@
     vocalCharacterLabel = translate("musicDetailVocalCharacterLabel");
     noVocals = translate("musicDetailNoVocals");
     noDifficulties = translate("musicDetailNoDifficulties");
+    chartPreviewLabel = translate("musicDetailChartPreviewLabel");
     jacketAltSuffix = translate("musicJacketAltSuffix");
     imageUnavailableLabel = translate("imageUnavailable");
     closeLabel = translate("closeLabel");
@@ -212,11 +215,11 @@
       {/snippet}
     </PageHeader>
 
-    <div class="aspect-square w-full animate-pulse rounded-2xl bg-base-300"></div>
-
     <div
-      class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
+      class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] lg:items-start"
     >
+      <div class="aspect-square w-full animate-pulse rounded-2xl bg-base-300"></div>
+      <div class="flex flex-col gap-4">
       <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-4 p-3 sm:p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
@@ -236,6 +239,7 @@
           </div>
         </div>
       </article>
+      </div>
     </div>
   {:then payload}
     <PageHeader
@@ -256,63 +260,73 @@
     {/if}
 
     {#if payload.music}
-      <MusicJacketHero
-        music={payload.music}
-        region={data.region}
-        {jacketAltSuffix}
-        {imageUnavailableLabel}
-        {closeLabel}
-      />
-      <div
-        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
-      >
-        <div class="flex flex-col gap-4">
-          <MusicDetailInfoCard
-            music={payload.music}
-            {displayLocale}
-            title={musicDetailInfoTitle}
-            {idLabel}
-            {nameLabel}
-            {composerLabel}
-            {arrangerLabel}
-            {lyricistLabel}
-            {difficultyLabel}
-            {levelLabel}
-            {noteCountLabel}
-            {categoryLabel}
-            {tagLabel}
-            {publishedAtLabel}
-            {noDifficulties}
-            {getCategoryLabel}
-            {getTagLabel}
-            {getDifficultyLabel}
-          />
-          <MusicPreviewCard
-            vocals={payload.music.vocals}
-            region={data.region}
-            musicId={data.musicId}
-            title={payload.music.title}
-            jacketUrl={payload.music.assetBundleName ? getMusicJacketAssetURL(payload.music.assetBundleName, data.region) : undefined}
-            artist={payload.music.composer ?? undefined}
-            fillerSec={payload.music.fillerSec}
-            vocalLabel={vocalLabel}
-            vocalTypeLabel={vocalTypeLabel}
-            vocalCharacterLabel={vocalCharacterLabel}
-            noVocalsLabel={noVocals}
-            shortPreviewLabel={musicPreviewShortLabel}
-            longPreviewLabel={musicPreviewLongLabel}
-            noPreviewAvailableLabel={musicPreviewNoPreviewAvailable}
-            downloadProgressMessages={audioDownloadProgressMessages}
-            playLabel={musicPreviewPlayLabel}
-            pauseLabel={musicPreviewPauseLabel}
-            downloadLabel={audioDownloadLabel}
-            downloadCloseLabel={audioDownloadCloseLabel}
-            volumeLabel={audioVolumeLabel}
-            seekLabel={audioSeekLabel}
-            unavailableLabel={audioUnavailableLabel}
-          />
+      {#await data.availableRegions then availableRegions}
+        <div
+          class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] lg:items-start"
+        >
+          <div class="flex flex-col gap-4">
+            <MusicJacketHero
+              music={payload.music}
+              region={data.region}
+              {availableRegions}
+              {jacketAltSuffix}
+              {imageUnavailableLabel}
+              {closeLabel}
+            />
+            <MusicDetailInfoCard
+              music={payload.music}
+              {displayLocale}
+              title={musicDetailInfoTitle}
+              {idLabel}
+              {nameLabel}
+              {composerLabel}
+              {arrangerLabel}
+              {lyricistLabel}
+              {categoryLabel}
+              {tagLabel}
+              {publishedAtLabel}
+              {getCategoryLabel}
+              {getTagLabel}
+            />
+          </div>
+          <div class="flex flex-col gap-4">
+            <MusicPreviewCard
+              vocals={payload.music.vocals}
+              region={data.region}
+              {availableRegions}
+              musicId={data.musicId}
+              title={payload.music.title}
+              jacketUrl={payload.music.assetBundleName ? getMusicJacketAssetURL(payload.music.assetBundleName, getMusicAssetServer(data.region, availableRegions)) : undefined}
+              artist={payload.music.composer ?? undefined}
+              fillerSec={payload.music.fillerSec}
+              vocalLabel={vocalLabel}
+              vocalTypeLabel={vocalTypeLabel}
+              vocalCharacterLabel={vocalCharacterLabel}
+              noVocalsLabel={noVocals}
+              shortPreviewLabel={musicPreviewShortLabel}
+              longPreviewLabel={musicPreviewLongLabel}
+              noPreviewAvailableLabel={musicPreviewNoPreviewAvailable}
+              downloadProgressMessages={audioDownloadProgressMessages}
+              playLabel={musicPreviewPlayLabel}
+              pauseLabel={musicPreviewPauseLabel}
+              downloadLabel={audioDownloadLabel}
+              downloadCloseLabel={audioDownloadCloseLabel}
+              volumeLabel={audioVolumeLabel}
+              seekLabel={audioSeekLabel}
+              unavailableLabel={audioUnavailableLabel}
+            />
+            <MusicDifficultyCard
+              music={payload.music}
+              {difficultyLabel}
+              {levelLabel}
+              {noteCountLabel}
+              {chartPreviewLabel}
+              {noDifficulties}
+              {getDifficultyLabel}
+            />
+          </div>
         </div>
-      </div>
+      {/await}
     {:else if !payload.error}
       {#await data.availableRegions}
         <div class="alert">

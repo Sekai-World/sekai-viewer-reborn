@@ -1,7 +1,9 @@
-import { getMusicsByRegionByIdDetail } from "@platform/sekai-master-api-sdk";
+import { getMusicsByRegionByIdDetail, getMusicsRegionsByIdAvailability } from "@platform/sekai-master-api-sdk";
 import type { SupportedRegion } from "$lib/domain/regions";
+import { supportedRegions } from "$lib/domain/regions";
 import { error, type RequestEvent, type RequestHandler } from "@sveltejs/kit";
 import {
+  getMusicAssetServer,
   getMusicLongPreviewAssetURL,
   getMusicShortPreviewAssetURL,
   getMusicJacketAssetURL
@@ -364,23 +366,40 @@ export const GET: RequestHandler = async ({ params, fetch, request, url }) => {
     }
 
     const internalRemoteAssetBaseUrl = getInternalRemoteAssetBaseUrl();
+
+    const availabilityResponse = await getMusicsRegionsByIdAvailability({
+      baseUrl,
+      path: { id: musicId }
+    });
+
+    const availableRegions: SupportedRegion[] = availabilityResponse.error
+      ? [region]
+      : (Array.isArray(availabilityResponse.data)
+          ? (availabilityResponse.data as unknown[]).filter(
+              (r): r is SupportedRegion =>
+                typeof r === "string" && supportedRegions.includes(r as SupportedRegion)
+            )
+          : [region]);
+
+    const assetServer = getMusicAssetServer(region, availableRegions);
+
     const audioUrl =
       previewMode === "short"
         ? getMusicShortPreviewAssetURL(
             targetVocal.assetBundleName,
-            region,
+            assetServer,
             format,
             internalRemoteAssetBaseUrl
           )
         : getMusicLongPreviewAssetURL(
             targetVocal.assetBundleName,
-            region,
+            assetServer,
             format,
             internalRemoteAssetBaseUrl
           );
 
     const coverUrl = music.assetBundleName
-      ? getMusicJacketAssetURL(music.assetBundleName, region, internalRemoteAssetBaseUrl)
+      ? getMusicJacketAssetURL(music.assetBundleName, assetServer, internalRemoteAssetBaseUrl)
       : null;
 
     progress.fetching(2, "fetching-audio");

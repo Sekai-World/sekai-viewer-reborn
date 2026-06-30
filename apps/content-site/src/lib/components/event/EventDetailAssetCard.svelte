@@ -73,7 +73,7 @@
     {src}
     {alt}
     {fallbackLabel}
-    buttonClass="block h-full w-full cursor-zoom-in overflow-hidden"
+    buttonClass="block h-full w-full overflow-hidden"
     interactive={true}
     {imageClass}
     onclick={() => {

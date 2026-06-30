@@ -3,6 +3,7 @@
   import type { SupportedRegion } from "$lib/domain/regions";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import {
+    getMusicAssetServer,
     getMusicLongPreviewAssetURL,
     getMusicShortPreviewAssetURL
   } from "$lib/assets/index";
@@ -28,6 +29,7 @@
   let {
     vocals,
     region,
+    availableRegions,
     musicId,
     title,
     vocalLabel,
@@ -51,6 +53,7 @@
   }: {
     vocals: MusicVocal[];
     region: SupportedRegion;
+    availableRegions: SupportedRegion[];
     musicId: string;
     title: string;
     vocalLabel: string;
@@ -93,9 +96,10 @@
 
   const buildPreviewURL = (vocal: MusicVocal, mode: PreviewMode): string => {
     const name = vocal.assetBundleName!;
+    const server = getMusicAssetServer(region, availableRegions);
     return mode === "short"
-      ? getMusicShortPreviewAssetURL(name, region)
-      : getMusicLongPreviewAssetURL(name, region);
+      ? getMusicShortPreviewAssetURL(name, server)
+      : getMusicLongPreviewAssetURL(name, server);
   };
 
   const currentSrc = $derived(

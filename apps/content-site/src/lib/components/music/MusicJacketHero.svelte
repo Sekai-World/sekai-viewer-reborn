@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getMusicJacketAssetURL } from "$lib/assets/index";
+  import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { MusicDetail } from "$lib/domain/music-detail";
@@ -8,12 +8,14 @@
   let {
     music,
     region,
+    availableRegions,
     jacketAltSuffix,
     imageUnavailableLabel,
     closeLabel
   }: {
     music: MusicDetail;
     region: SupportedRegion;
+    availableRegions: SupportedRegion[];
     jacketAltSuffix: string;
     imageUnavailableLabel: string;
     closeLabel: string;
@@ -21,7 +23,7 @@
 
   const jacketUrl = $derived(
     music.assetBundleName
-      ? getMusicJacketAssetURL(music.assetBundleName, region)
+      ? getMusicJacketAssetURL(music.assetBundleName, getMusicAssetServer(region, availableRegions))
       : null
   );
 
