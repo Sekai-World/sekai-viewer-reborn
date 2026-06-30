@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getEventBgmAssetURL } from "$lib/assets/index";
+  import { getEventBgmAssetURL, getEventBannerAssetURL } from "$lib/assets/index";
   import type { EventDetail } from "$lib/domain/event-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { AudioPlayer } from "@platform/ui-shell";
@@ -53,20 +53,22 @@
 </script>
 
 <article class="card content-card-shell overflow-hidden shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <p
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
       <Icon icon="mdi:music-note-outline" class="size-4 shrink-0" aria-hidden="true" />
       <span>{title}</span>
     </p>
-    <div class="content-card-inset rounded-[1.75rem] p-4">
+    <div class="content-card-inset rounded-[1.75rem] p-3 sm:p-4">
       <AudioPlayer
         src={event.bgmAssetbundleName
           ? getEventBgmAssetURL(event.bgmAssetbundleName, region)
           : null}
         title={event.title}
         subtitle={unitName}
+        artworkUrl={event.assetBundleName ? getEventBannerAssetURL(event.assetBundleName, region) : undefined}
+        artist={unitName}
         downloadName={getDownloadName("mp3")}
         downloadOptions={[
           {

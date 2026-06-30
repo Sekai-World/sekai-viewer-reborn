@@ -477,6 +477,13 @@ export type SharedMusicArtistResponse = {
     name?: unknown;
 };
 
+export type SharedMusicDetailResponse = {
+    difficulties?: Array<SharedMusicDifficultyDetailResponse>;
+    music?: SharedMusicObjectResponse;
+    tags?: Array<string>;
+    vocals?: Array<SharedMusicVocalResponse>;
+};
+
 export type SharedMusicDifficultiesResponse = {
     items?: Array<SharedMusicDifficultyDetailResponse>;
 };
@@ -537,6 +544,19 @@ export type SharedMusicObjectResponse = {
     selfDancerPosition?: unknown;
     seq?: unknown;
     title?: unknown;
+};
+
+export type SharedMusicVocalResponse = {
+    id?: unknown;
+    musicId?: unknown;
+    musicVocalId?: unknown;
+    publishedAt?: unknown;
+    seq?: unknown;
+    vocalType?: unknown;
+};
+
+export type SharedMusicVocalsResponse = {
+    items?: Array<SharedMusicVocalResponse>;
 };
 
 export type SharedPaginationResponse = {
@@ -2335,6 +2355,52 @@ export type GetMusicsByRegionByIdResponses = {
 
 export type GetMusicsByRegionByIdResponse = GetMusicsByRegionByIdResponses[keyof GetMusicsByRegionByIdResponses];
 
+export type GetMusicsByRegionByIdDetailData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Music ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/musics/{region}/{id}/detail';
+};
+
+export type GetMusicsByRegionByIdDetailErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMusicsByRegionByIdDetailError = GetMusicsByRegionByIdDetailErrors[keyof GetMusicsByRegionByIdDetailErrors];
+
+export type GetMusicsByRegionByIdDetailResponses = {
+    /**
+     * OK
+     */
+    200: SharedMusicDetailResponse;
+};
+
+export type GetMusicsByRegionByIdDetailResponse = GetMusicsByRegionByIdDetailResponses[keyof GetMusicsByRegionByIdDetailResponses];
+
 export type GetMusicsByRegionByIdDifficultiesData = {
     body?: never;
     path: {
@@ -2380,6 +2446,52 @@ export type GetMusicsByRegionByIdDifficultiesResponses = {
 };
 
 export type GetMusicsByRegionByIdDifficultiesResponse = GetMusicsByRegionByIdDifficultiesResponses[keyof GetMusicsByRegionByIdDifficultiesResponses];
+
+export type GetMusicsByRegionByIdVocalsData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Music ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/musics/{region}/{id}/vocals';
+};
+
+export type GetMusicsByRegionByIdVocalsErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMusicsByRegionByIdVocalsError = GetMusicsByRegionByIdVocalsErrors[keyof GetMusicsByRegionByIdVocalsErrors];
+
+export type GetMusicsByRegionByIdVocalsResponses = {
+    /**
+     * OK
+     */
+    200: SharedMusicVocalsResponse;
+};
+
+export type GetMusicsByRegionByIdVocalsResponse = GetMusicsByRegionByIdVocalsResponses[keyof GetMusicsByRegionByIdVocalsResponses];
 
 export type GetUnitProfilesRegionsByUnitAvailabilityData = {
     body?: never;

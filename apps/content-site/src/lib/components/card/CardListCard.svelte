@@ -1,7 +1,7 @@
 <script lang="ts">
   import { asset } from "$app/paths";
   import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets/index";
-  import { toTimestampMs } from "$lib/time/date-time";
+  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
@@ -32,7 +32,8 @@
     spoilerContentLabel,
     cardListCharacterFallback,
     cardListReleaseLabel,
-    cardImageAltSuffix
+    cardImageAltSuffix,
+    displayLocale
   }: {
     region: SupportedRegion;
     item: CardListCardItem;
@@ -42,6 +43,7 @@
     cardListCharacterFallback: string;
     cardListReleaseLabel: string;
     cardImageAltSuffix: string;
+    displayLocale: string;
   } = $props();
 
   const contentDisplaySettings = getContentDisplaySettings();
@@ -400,7 +402,7 @@
       <div
         class={viewMode === "grid" ? "aspect-video bg-base-200/60" : "min-h-32 bg-base-200/60"}
       ></div>
-      <div class="card-body gap-2 p-4">
+      <div class="card-body gap-2 p-3 sm:p-4">
         <div class="h-5 w-3/4 rounded bg-base-200/70"></div>
         <div class="h-4 w-1/3 rounded bg-base-200/70"></div>
       </div>
@@ -422,12 +424,12 @@
           <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
           <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
           {#if getReleaseAt() !== null}
-            <p class="text-xs opacity-55">{cardListReleaseLabel}</p>
+            <p class="text-xs opacity-55">{cardListReleaseLabel}: {formatDisplayDateTime(getReleaseAt(), displayLocale)}</p>
           {/if}
         </div>
       </div>
     {:else if viewMode === "comfy"}
-      <div class="card-body items-center gap-3 p-4 text-center">
+      <div class="card-body items-center gap-3 p-3 sm:p-4 text-center">
         <div class="grid w-full max-w-34 grid-cols-2 gap-2">
           {#if !isTrainedOnlyCard()}
             {@render thumbImage(false)}
@@ -505,7 +507,7 @@
           {/if}
         </div>
       </div>
-      <div class="card-body gap-1.5 p-4">
+      <div class="card-body gap-1.5 p-3 sm:p-4">
         <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
         {@render metaBadges()}
         <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>

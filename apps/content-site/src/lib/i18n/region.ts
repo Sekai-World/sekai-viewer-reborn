@@ -31,6 +31,12 @@ export const normalizeUiLocale = (
     return "en";
   }
 
+  // Legacy: old locale cookie or external caller may send bare "zh"
+  // instead of the correct "zh-CN". Normalize it.
+  if (value === "zh") {
+    return "zh-CN";
+  }
+
   return supportedUiLocales.includes(value as SupportedUiLocale)
     ? (value as SupportedUiLocale)
     : fallback;

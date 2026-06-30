@@ -75,7 +75,7 @@
 </script>
 
 <article class="card content-card-shell shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <div class="flex items-start justify-between gap-3">
       <p
         class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
@@ -105,13 +105,13 @@
     </div>
 
     <dl class="space-y-2">
-      <div class="content-card-inset rounded-xl px-4 py-3">
+      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{event.title}</dd>
       </div>
       {#if getDisplayUnitName(event.unit)}
         <div
-          class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-4 py-3"
+          class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3"
         >
           <div class="min-w-0">
             <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
@@ -136,7 +136,7 @@
         </div>
       {/if}
       {#if event.eventType}
-        <div class="content-card-inset rounded-xl px-4 py-3">
+        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
             {eventTypeLabel}
           </dt>
@@ -145,13 +145,13 @@
           </dd>
         </div>
       {/if}
-      <div class="content-card-inset rounded-xl px-4 py-3">
+      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</dt>
         <dd class="mt-1 text-sm font-medium">
           {formatDisplayDateTime(event.startAt, displayLocale)}
         </dd>
       </div>
-      <div class="content-card-inset rounded-xl px-4 py-3">
+      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{endAtLabel}</dt>
         <dd class="mt-1 text-sm font-medium">
           {formatDisplayDateTime(event.endAt, displayLocale)}
@@ -159,7 +159,7 @@
       </div>
       {#if event.bannerGameCharacter}
         {@const char = event.bannerGameCharacter}
-        <div class="content-card-inset flex items-center gap-3 rounded-xl px-4 py-3">
+        <div class="content-card-inset flex items-center gap-3 rounded-xl px-3 sm:px-4 py-3">
           <div class="min-w-0 flex-1">
             <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
               {bannerCharacterLabel}

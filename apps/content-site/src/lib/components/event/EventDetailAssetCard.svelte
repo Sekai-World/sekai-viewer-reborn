@@ -73,7 +73,7 @@
     {src}
     {alt}
     {fallbackLabel}
-    buttonClass="block h-full w-full cursor-zoom-in overflow-hidden"
+    buttonClass="block h-full w-full overflow-hidden"
     interactive={true}
     {imageClass}
     onclick={() => {
@@ -98,7 +98,7 @@
 {/snippet}
 
 <article class="card content-card-shell overflow-hidden shadow-sm">
-  <div class="card-body items-center gap-3 p-5 text-center">
+  <div class="card-body items-center gap-3 p-3 sm:p-5 text-center">
     <div class="tabs tabs-box content-card-inset w-full p-1">
       <button type="button" class={getTabClass("banner")} onclick={() => (activeTab = "banner")}>
         {bannerLabel}

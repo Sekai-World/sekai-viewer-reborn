@@ -28,6 +28,10 @@
   let observedNode: HTMLDivElement | null = $state(null);
   const shouldRenderImage = $derived(loadMode === "immediate" || imageVisible);
 
+  const interactiveButtonClass = $derived(
+    interactive ? `${buttonClass} cursor-zoom-in` : buttonClass
+  );
+
   $effect(() => {
     if (src !== undefined) {
       previewImageLoaded = false;
@@ -70,7 +74,7 @@
     {alt}
     {fallbackLabel}
     ariaLabel={alt || fallbackLabel}
-    {buttonClass}
+    buttonClass={interactiveButtonClass}
     {imageClass}
     {onclick}
   />

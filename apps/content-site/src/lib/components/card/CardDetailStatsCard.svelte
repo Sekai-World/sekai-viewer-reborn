@@ -204,7 +204,7 @@
 </script>
 
 {#snippet statPanel(label: string, value: number | null, type: "performance" | "technique" | "stamina" | "total")}
-  <div class={`content-card-inset rounded-xl border px-4 py-2.5 ${getStatAccentClass(type)}`}>
+  <div class={`content-card-inset rounded-xl border px-3 sm:px-4 py-2.5 ${getStatAccentClass(type)}`}>
     <div class="flex items-center justify-between gap-4">
       <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{label}</p>
       <p class="text-right text-lg font-semibold tabular-nums text-base-content">
@@ -215,7 +215,7 @@
 {/snippet}
 
 {#snippet totalPanel(value: number | null)}
-  <div class={`content-card-inset rounded-xl border px-4 py-2.5 ${getStatAccentClass("total")}`}>
+  <div class={`content-card-inset rounded-xl border px-3 sm:px-4 py-2.5 ${getStatAccentClass("total")}`}>
     <div class="flex items-center justify-between gap-4">
       <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{totalLabel}</p>
       <p class="text-right text-lg font-semibold tabular-nums text-base-content">
@@ -251,7 +251,7 @@
 {/snippet}
 
 <article class="card content-card-shell shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
       <Icon icon="mdi:chart-box-outline" class="size-4" aria-hidden="true" />
       <span>{title}</span>
@@ -260,7 +260,7 @@
     {#if displayedStats}
       <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
         <div class="space-y-3">
-          <label class="content-card-inset block rounded-xl px-4 py-3">
+          <label class="content-card-inset block rounded-xl px-3 sm:px-4 py-3">
             <span class="flex items-center justify-between gap-4 text-sm font-semibold">
               <span>{levelLabel}</span>
               <input
@@ -282,7 +282,7 @@
             />
           </label>
 
-          <div class="content-card-inset space-y-3 rounded-xl px-4 py-3 text-sm">
+          <div class="content-card-inset space-y-3 rounded-xl px-3 sm:px-4 py-3 text-sm">
             <label class="flex items-center justify-between gap-3">
               <span class="font-semibold">{specialTrainingBonusLabel}</span>
               <input
@@ -350,7 +350,7 @@
             {@render statPanel(staminaLabel, displayedStats.stamina, "stamina")}
           </div>
 
-          <div class="content-card-inset rounded-xl px-4 py-3 text-sm">
+          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3 text-sm">
             <p class="flex items-center justify-between gap-4 font-semibold">
               <span>{bonusSumLabel}</span>
               <span class="tabular-nums text-base-content">{formatNumber(bonusSumTotal)}</span>

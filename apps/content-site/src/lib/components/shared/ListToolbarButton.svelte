@@ -29,7 +29,7 @@
 </script>
 
 <button type="button" class={buttonClass} {onclick} {title} aria-label={ariaLabel}>
-  <Icon {icon} class="size-4" aria-hidden="true" />
+  <Icon {icon} class="size-5 md:size-4" aria-hidden="true" />
   {#if sortIndicatorIcon}
     <span
       class="absolute bottom-1 right-1 grid size-3.5 place-items-center rounded-full bg-primary-content/90 text-primary md:bottom-0.5 md:right-0.5 md:size-3"

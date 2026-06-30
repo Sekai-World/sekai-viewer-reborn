@@ -687,7 +687,7 @@
   <title>{musicListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-360 flex-col gap-5 px-4">
+<section class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
   <PageHeader breadcrumbs={[{ label: homeLabel, href: resolve("/") }, { label: musicListTitle }]}>
     {#snippet actions()}<RegionBadgeSwitch options={getRegionOptions()} />{/snippet}
   </PageHeader>
@@ -757,17 +757,23 @@
         : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}
     >
       {#each visibleItems as item (item.id)}
-        <MusicListCard
-          region={data.region}
-          {item}
-          {viewMode}
-          {idLabel}
-          jacketAltSuffix={musicJacketAltSuffix}
-          creatorLabel={musicListCreatorLabel}
-          {spoilerContentLabel}
-          {getCategoryLabel}
-          getTagLabel={getMusicTagLabel}
-        />
+        <a
+          href={resolve("/musics/[region]/[id]", { region: data.region, id: item.id })}
+          class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+          aria-label={`${item.title} ${idLabel}${item.id}`}
+        >
+          <MusicListCard
+            region={data.region}
+            {item}
+            {viewMode}
+            {idLabel}
+            jacketAltSuffix={musicJacketAltSuffix}
+            creatorLabel={musicListCreatorLabel}
+            {spoilerContentLabel}
+            {getCategoryLabel}
+            getTagLabel={getMusicTagLabel}
+          />
+        </a>
       {/each}
     </div>
     {#if visibleItems.length === 0 && !errorMessage}
@@ -813,7 +819,7 @@
               aria-label={`${clearLabel}: ${musicListFilterNameLabel}`}
               onclick={() => (nameDraft = "")}
             >
-              <Icon icon="mdi:close-circle-outline" class="size-4" />
+              <Icon icon="mdi:close-circle-outline" class="size-5" />
             </button>
           {/if}
         </div>
@@ -945,7 +951,7 @@
                 aria-label={`${clearLabel}: ${filter.label}`}
                 onclick={() => filter.set("")}
               >
-                <Icon icon="mdi:close-circle-outline" class="size-4" />
+                <Icon icon="mdi:close-circle-outline" class="size-5" />
               </button>
             {/if}
           </div>

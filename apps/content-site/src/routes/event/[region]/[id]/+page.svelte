@@ -218,7 +218,7 @@
   {/await}
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-4">
+<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.eventPayload}
     <PageHeader
       breadcrumbs={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}
@@ -233,7 +233,7 @@
       class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
     >
       <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-4 p-5">
+        <div class="card-body gap-4 p-3 sm:p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
           <div class="h-60 w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
           <div class="space-y-2">
@@ -243,7 +243,7 @@
         </div>
       </article>
       <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-3 p-5">
+        <div class="card-body gap-3 p-3 sm:p-5">
           <div class="h-5 w-1/3 animate-pulse rounded bg-base-300"></div>
           <div class="h-10 w-2/3 animate-pulse rounded bg-base-300"></div>
           <div class="grid gap-3 sm:grid-cols-2">

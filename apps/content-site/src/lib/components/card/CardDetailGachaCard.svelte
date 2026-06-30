@@ -42,7 +42,7 @@
 </script>
 
 <article class="card content-card-shell shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
       <Icon icon="mdi:gift-outline" class="size-4" aria-hidden="true" />
       <span>{title}</span>

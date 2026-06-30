@@ -46,7 +46,7 @@
 </script>
 
 <article class="card content-card-shell shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <p
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
@@ -59,7 +59,7 @@
     </p>
 
     {#if pickupCards.length === 0}
-      <div class="content-card-inset rounded-xl px-4 py-6 text-center text-sm opacity-70">
+      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-6 text-center text-sm opacity-70">
         {noPickupsLabel}
       </div>
     {:else}

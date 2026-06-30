@@ -45,7 +45,10 @@ export type ContentSiteServerMessageKey =
   | "failedToLoadCardData"
   | "invalidGachaId"
   | "gachaUnavailableInCurrentRegion"
-  | "failedToLoadGachaData";
+  | "failedToLoadGachaData"
+  | "invalidMusicId"
+  | "musicUnavailableInCurrentRegion"
+  | "failedToLoadMusicData";
 
 const DEFAULT_SEKAI_I18N_BASE_URL = "https://sekai-world.github.io/sekai-i18n-reborn";
 const FALLBACK_UI_LOCALE: SupportedUiLocale = "en";

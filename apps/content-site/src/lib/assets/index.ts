@@ -343,6 +343,25 @@ export const getCommonMaterialThumbnailURL = (
   );
 };
 
+/**
+ * Determine which asset server to use for music audio/jacket assets.
+ *
+ * Rule: if the music exists on the JP server (availableRegions includes "jp"),
+ * use JP assets — they are shared across all servers. If the music is
+ * server-exclusive (not available on JP), fall back to the current region's
+ * own asset bucket.
+ */
+export const getMusicAssetServer = (
+  region: SupportedRegion,
+  availableRegions: SupportedRegion[]
+): AssetServer => {
+  if (availableRegions.includes("jp")) {
+    return "jp";
+  }
+
+  return region;
+};
+
 export const getMusicJacketAssetURL = (
   assetBundleName: string,
   server: AssetServer = "jp",
@@ -358,4 +377,48 @@ export const getMusicJacketAssetURL = (
     server,
     baseUrlOverride
   );
+};
+
+export const getMusicLongPreviewAssetURL = (
+  vocalAssetBundleName: string,
+  server: AssetServer = "jp",
+  extension = "mp3",
+  baseUrlOverride?: string | null
+): string => {
+  const normalized = vocalAssetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalized.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `music/long/${normalized}/${normalized}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getMusicShortPreviewAssetURL = (
+  vocalAssetBundleName: string,
+  server: AssetServer = "jp",
+  extension = "mp3",
+  baseUrlOverride?: string | null
+): string => {
+  const normalized = vocalAssetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalized.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `music/short/${normalized}/${normalized}_short.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
+/** External chart SVG service — not hosted on the standard asset buckets. */
+export const getMusicChartSvgUrl = (
+  musicId: number | string,
+  difficulty: string
+): string => {
+  return `https://charts-new.unipjsk.com/moe/svg/${musicId}/${difficulty}.svg`;
 };

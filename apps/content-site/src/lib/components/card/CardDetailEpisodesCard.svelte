@@ -20,7 +20,7 @@
 </script>
 
 <article class="card content-card-shell shadow-sm">
-  <div class="card-body gap-4 p-5">
+  <div class="card-body gap-4 p-3 sm:p-5">
     <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
       <Icon icon="mdi:book-open-page-variant-outline" class="size-4" aria-hidden="true" />
       <span>{title}</span>
@@ -29,7 +29,7 @@
     {#if episodes.length > 0}
       <div class="grid gap-3">
         {#each episodes as episode (episode.id)}
-          <section class="content-card-inset rounded-xl px-4 py-3">
+          <section class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
             <div class="flex items-start justify-between gap-3">
               <h3 class="text-sm font-semibold">{episode.title}</h3>
               {#if episode.episodeNo !== null}

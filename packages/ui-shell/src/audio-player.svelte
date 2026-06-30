@@ -33,6 +33,9 @@
     downloadProgressMessages,
     subtitle = "",
     downloadName = "audio.mp3",
+    offset = 0,
+    artist = "",
+    artworkUrl = "",
     playLabel,
     pauseLabel,
     downloadLabel,
@@ -47,6 +50,9 @@
     downloadProgressMessages: DownloadProgressMessages;
     subtitle?: string;
     downloadName?: string;
+    offset?: number;
+    artist?: string;
+    artworkUrl?: string;
     playLabel: string;
     pauseLabel: string;
     downloadLabel: string;
@@ -85,11 +91,19 @@
   let downloadProgressSource: EventSource | null = null;
   const progressSyncIntervalMs = 200;
 
+  const clampedOffset = $derived(Number.isFinite(offset) && offset > 0 ? offset : 0);
   const normalizedSrc = $derived(src?.trim() ?? "");
   const hasSource = $derived(normalizedSrc.length > 0);
-  const displayedCurrentTime = $derived(
-    isSeeking && pendingSeekTime !== null ? pendingSeekTime : currentTime
+
+  // Howl works in raw time (including filler); displayed values subtract the offset
+  // so the user sees position 0 as the start of meaningful content.
+  const displayDuration = $derived(Math.max(0, duration - clampedOffset));
+  const displayCurrentTime = $derived(
+    isSeeking && pendingSeekTime !== null
+      ? pendingSeekTime
+      : Math.max(0, currentTime - clampedOffset)
   );
+  const rawSeekFromDisplay = (displayTime: number): number => displayTime + clampedOffset;
   const normalizedDownloadOptions = $derived(
     (() => {
       const seenKeys: string[] = [];
@@ -357,6 +371,9 @@
       isPlaying = nextIsPlaying;
     }
 
+    // Update Media Session position state so OS controls show correct seek position
+    updateMediaSessionPositionState();
+
     if (nextIsPlaying) {
       setPlaybackFrameAnchor(nextCurrentTime, timestamp);
       return;
@@ -444,6 +461,7 @@
     isLoading = false;
     hasError = false;
     requestedPlayback = false;
+    clearMediaSession();
     resetSeekPreview();
   };
 
@@ -470,6 +488,16 @@
           hasError = false;
           syncPlaybackState(getNow());
 
+          // Seek past filler silence when offset is set
+          const currentOffset = clampedOffset;
+          if (currentOffset > 0) {
+            const rawDuration = Number.isFinite(instance.duration()) ? instance.duration() : 0;
+            if (currentOffset < rawDuration) {
+              instance.seek(currentOffset);
+              currentTime = currentOffset;
+            }
+          }
+
           if (requestedPlayback) {
             requestedPlayback = false;
             instance.play();
@@ -487,18 +515,35 @@
         onplay: () => {
           syncPlaybackState(getNow());
           startProgressLoop();
+          updateMediaSessionMetadata();
+          updateMediaSessionPlaybackState();
         },
         onpause: () => {
           syncPlaybackState(getNow());
           stopProgressLoop();
+          updateMediaSessionPlaybackState();
         },
         onstop: () => {
           syncPlaybackState(getNow());
           stopProgressLoop();
+          updateMediaSessionPlaybackState();
+          // Reset to offset position so replay starts at content, not filler
+          const currentOff = clampedOffset;
+          if (currentOff > 0 && instance.duration() > currentOff) {
+            instance.seek(currentOff);
+            currentTime = currentOff;
+          }
         },
         onend: () => {
           syncPlaybackState(getNow());
           stopProgressLoop();
+          updateMediaSessionPlaybackState();
+          // Reset to offset position so replay starts at content, not filler
+          const currentOffset = clampedOffset;
+          if (currentOffset > 0 && instance.duration() > currentOffset) {
+            instance.seek(currentOffset);
+            currentTime = currentOffset;
+          }
         },
         onseek: () => {
           syncPlaybackState(getNow());
@@ -506,6 +551,7 @@
       });
 
       howl = instance;
+      setupMediaSessionActions();
     } catch {
       if (version !== setupVersion) {
         return;
@@ -594,6 +640,22 @@
     };
   });
 
+  // Update Media Session metadata when title/artist/artworkUrl change during playback
+  $effect(() => {
+    if (!mounted || !isPlaying) {
+      return;
+    }
+
+    // Reactive reads — triggers this effect when any of these change
+    title;
+    artist;
+    artworkUrl;
+
+    untrack(() => {
+      updateMediaSessionMetadata();
+    });
+  });
+
   const requestPlayerLoad = (): void => {
     const source = normalizedSrc;
     if (!source || howl || isLoading || hasError) {
@@ -657,20 +719,141 @@
     return null;
   };
 
-  const applySeek = (nextTime: number): void => {
+  const applySeek = (rawTime: number): void => {
     if (!howl || !isReady || hasError) {
       resetSeekPreview();
       return;
     }
 
-    howl.seek(nextTime);
-    currentTime = nextTime;
+    howl.seek(rawTime);
+    currentTime = rawTime;
     if (howl.playing()) {
-      setPlaybackFrameAnchor(nextTime, getNow());
+      setPlaybackFrameAnchor(rawTime, getNow());
     } else {
       clearPlaybackFrameAnchor();
     }
     resetSeekPreview();
+  };
+
+  /** Apply a seek expressed in display-time (0 = start of content after offset). */
+  const applyDisplaySeek = (displayTime: number): void => {
+    const rawTime = rawSeekFromDisplay(displayTime);
+    const maxRaw = duration > 0 ? duration : rawTime;
+    applySeek(Math.min(rawTime, maxRaw));
+  };
+
+  // ---- Media Session API (lock screen / notification center / control center) ----
+
+  const updateMediaSessionMetadata = (): void => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return;
+    }
+
+    try {
+      const artwork: MediaImage[] = artworkUrl
+        ? [{ src: artworkUrl, sizes: "512x512", type: "image/webp" }]
+        : [];
+
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title,
+        artist: artist || subtitle || "",
+        album: "",
+        artwork
+      });
+    } catch {
+      // MediaMetadata constructor may not be available in all environments
+    }
+  };
+
+  const updateMediaSessionPlaybackState = (): void => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return;
+    }
+
+    try {
+      navigator.mediaSession.playbackState = howl?.playing() ? "playing" : "paused";
+    } catch {
+      // Ignore errors in environments without full Media Session support
+    }
+  };
+
+  const setupMediaSessionActions = (): void => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return;
+    }
+
+    try {
+      navigator.mediaSession.setActionHandler("play", () => {
+        if (howl && isReady) {
+          howl.play();
+        }
+      });
+
+      navigator.mediaSession.setActionHandler("pause", () => {
+        if (howl && isReady) {
+          howl.pause();
+        }
+      });
+
+      navigator.mediaSession.setActionHandler("stop", () => {
+        if (howl && isReady) {
+          howl.stop();
+        }
+      });
+
+      navigator.mediaSession.setActionHandler("seekto", (details) => {
+        if (!howl || !isReady || !details.seekTime) {
+          return;
+        }
+        // seekTime from the OS is in display-time space (0 = content start)
+        applyDisplaySeek(details.seekTime);
+      });
+
+      // Clear handlers for actions we don't support
+      navigator.mediaSession.setActionHandler("seekbackward", null);
+      navigator.mediaSession.setActionHandler("seekforward", null);
+    } catch {
+      // Some action handlers may not be supported in all browsers
+    }
+  };
+
+  const updateMediaSessionPositionState = (): void => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return;
+    }
+
+    if (!howl || !isReady || !Number.isFinite(duration) || duration <= 0) {
+      return;
+    }
+
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: displayDuration,
+        playbackRate: 1,
+        position: Math.max(0, Math.min(displayCurrentTime, displayDuration))
+      });
+    } catch {
+      // setPositionState may fail if values are invalid
+    }
+  };
+
+  const clearMediaSession = (): void => {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return;
+    }
+
+    try {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+      navigator.mediaSession.setActionHandler("play", null);
+      navigator.mediaSession.setActionHandler("pause", null);
+      navigator.mediaSession.setActionHandler("stop", null);
+      navigator.mediaSession.setActionHandler("seekto", null);
+      navigator.mediaSession.setActionHandler("seekbackward", null);
+      navigator.mediaSession.setActionHandler("seekforward", null);
+    } catch {
+      // Ignore cleanup errors
+    }
   };
 
   const commitPendingSeek = (): void => {
@@ -680,7 +863,7 @@
       return;
     }
 
-    applySeek(nextTime);
+    applyDisplaySeek(nextTime);
   };
 
   const commitSeek = (event: Event): void => {
@@ -812,20 +995,20 @@
     >
       <div class="min-w-0 flex-1 md:col-span-2 lg:col-span-1">
         <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium opacity-70">
-          <span class="font-mono tabular-nums">{formatTime(displayedCurrentTime)}</span>
+          <span class="font-mono tabular-nums">{formatTime(displayCurrentTime)}</span>
           <span class="flex items-center gap-2 font-mono tabular-nums">
-            {#if isMetadataLoading && duration <= 0}
+            {#if isMetadataLoading && displayDuration <= 0}
               <span class="loading loading-spinner loading-xs opacity-60" aria-hidden="true"></span>
             {/if}
-            <span>{formatTime(duration)}</span>
+            <span>{formatTime(displayDuration)}</span>
           </span>
         </div>
         <input
           type="range"
           min="0"
-          max={duration > 0 ? duration : 0}
+          max={displayDuration > 0 ? displayDuration : 0}
           step="0.1"
-          value={displayedCurrentTime}
+          value={displayCurrentTime}
           class="audio-player-range range range-primary range-sm w-full"
           disabled={!isReady}
           aria-label={seekLabel}
