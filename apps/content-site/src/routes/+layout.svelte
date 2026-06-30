@@ -904,7 +904,7 @@
             isMobileSettingsMenuOpen = !isMobileSettingsMenuOpen;
           }}
         >
-          <Icon icon="mdi:tune-variant" class="size-4" aria-hidden="true" />
+          <Icon icon="mdi:tune-variant" class="size-5" aria-hidden="true" />
         </button>
         {#if isMobileSettingsMenuOpen}
           <div
