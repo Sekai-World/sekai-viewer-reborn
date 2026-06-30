@@ -819,7 +819,7 @@
               aria-label={`${clearLabel}: ${musicListFilterNameLabel}`}
               onclick={() => (nameDraft = "")}
             >
-              <Icon icon="mdi:close-circle-outline" class="size-4" />
+              <Icon icon="mdi:close-circle-outline" class="size-5" />
             </button>
           {/if}
         </div>
@@ -951,7 +951,7 @@
                 aria-label={`${clearLabel}: ${filter.label}`}
                 onclick={() => filter.set("")}
               >
-                <Icon icon="mdi:close-circle-outline" class="size-4" />
+                <Icon icon="mdi:close-circle-outline" class="size-5" />
               </button>
             {/if}
           </div>

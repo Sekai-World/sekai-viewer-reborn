@@ -45,7 +45,7 @@
     aria-label={`Switch data regions. ${primaryTitle}: ${primaryRegionLabel}. ${secondaryTitle}: ${secondaryRegionLabel}`}
     title={`${primaryTitle} | ${secondaryTitle}: ${primaryRegionLabel} | ${secondaryRegionLabel}`}
   >
-    <Icon icon="mdi:earth" class="size-3.5 sm:size-4" />
+    <Icon icon="mdi:earth" class="size-4.5 sm:size-4" />
     <span class="max-w-[4.8rem] truncate font-semibold sm:max-w-none">
       {primaryRegionLabel} | {secondaryRegionLabel}
     </span>

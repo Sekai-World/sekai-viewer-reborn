@@ -777,7 +777,7 @@
                 aria-label={option.label}
               />
               {#if option.value === "mixed"}
-                <Icon icon="mdi:puzzle" class="size-4" aria-hidden="true" />
+                <Icon icon="mdi:puzzle" class="size-5" aria-hidden="true" />
               {:else if getUnitIconUrl(option.value)}
                 <img
                   src={getUnitIconUrl(option.value) ?? ""}
