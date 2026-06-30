@@ -879,6 +879,13 @@
     </div>
 
     <div class="sm:hidden">
+      {#if isMobileSettingsMenuOpen}
+        <div
+          class="fixed inset-0 z-120"
+          aria-hidden="true"
+          onclick={() => { isMobileSettingsMenuOpen = false; }}
+        ></div>
+      {/if}
       <div
         class="dropdown dropdown-end"
         class:dropdown-open={isMobileSettingsMenuOpen}
