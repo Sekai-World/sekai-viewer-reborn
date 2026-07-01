@@ -20,7 +20,7 @@
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
   let disclaimerText = $state(getInitialI18nText("disclaimer"));
-  let currentEventLabel = $state(getInitialI18nText("eventListCurrentEvent"));
+  let latestDataEventsLabel = $state(getInitialI18nText("latestData.events"));
   let mixedUnitLabel = $state(getInitialI18nText("mixedUnitLabel"));
   let versionInfoTitle = $state(getInitialI18nText("versionInfo.title"));
   let versionAppLabel = $state(getInitialI18nText("versionInfo.appLabel"));
@@ -100,7 +100,6 @@
     bannerAltSuffix = translate("bannerAltSuffix");
     noEventLabel = translate("noCurrentEventData");
     disclaimerText = translate("disclaimer");
-    currentEventLabel = translate("eventListCurrentEvent");
     mixedUnitLabel = translate("mixedUnitLabel");
     versionInfoTitle = translate("versionInfo.title");
     versionAppLabel = translate("versionInfo.appLabel");
@@ -110,6 +109,7 @@
     latestDataCardsLabel = translate("latestData.cards");
     latestDataMusicsLabel = translate("latestData.musics");
     latestDataGachasLabel = translate("latestData.gachas");
+    latestDataEventsLabel = translate("latestData.events");
     latestDataNoData = translate("latestData.noData");
     latestDataViewAll = translate("latestData.viewAll");
     latestDataLoadFailed = translate("latestData.loadFailed");
@@ -333,11 +333,17 @@
       {/await}
     {/if}
 
-    <!-- Current Event sub-block (inside Latest Data section) -->
+    <!-- Events sub-block (inside Latest Data section) -->
     <div class="mx-auto mt-8 max-w-5xl">
-      <h3 class="mb-4 flex items-center gap-2 text-sm font-semibold text-base-content/70">
-        <Icon icon="mdi:calendar-clock" class="size-4" aria-hidden="true" />
-        {currentEventLabel}
+      <h3 class="mb-4 flex items-center justify-between text-sm font-semibold text-base-content/70">
+        <span class="flex items-center gap-2">
+          <Icon icon="mdi:calendar-clock" class="size-4" aria-hidden="true" />
+          {latestDataEventsLabel}
+        </span>
+        <a href="/events/{selectedRegion}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+          {latestDataViewAll}
+          <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+        </a>
       </h3>
       {#await currentEventPromise}
         <article class="card content-card-shell mx-auto max-w-sm w-full shadow-sm">
