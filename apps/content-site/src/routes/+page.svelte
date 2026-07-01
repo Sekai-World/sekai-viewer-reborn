@@ -220,7 +220,7 @@
                 <div class="grid grid-cols-3 gap-3">
                   {#each regionData.cards as card (card.id)}
                     <a
-                      href="/cards/{regionData.region}/{card.id}"
+                      href="/card/{regionData.region}/{card.id}"
                       class="group/card block"
                     >
                       <CardThumbnail
