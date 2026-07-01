@@ -27,6 +27,7 @@ import musicNoteQuarter from "@iconify-icons/mdi/music-note-quarter";
 import calendarStar from "@iconify-icons/mdi/calendar-star";
 import calendarStarOutline from "@iconify-icons/mdi/calendar-star-outline";
 import giftOutline from "@iconify-icons/mdi/gift-outline";
+import gestureSwipeHorizontal from "@iconify-icons/mdi/gesture-swipe-horizontal";
 import accountVoice from "@iconify-icons/mdi/account-voice";
 
 // ── Toolbar: Sort / View / Filter ────────────────────────────────────
@@ -169,3 +170,4 @@ addIcon("mdi:music-off", musicOff);
 addIcon("mdi:download", download);
 addIcon("mdi:volume-high", volumeHigh);
 addIcon("mdi:close", close);
+addIcon("mdi:gesture-swipe-horizontal", gestureSwipeHorizontal);

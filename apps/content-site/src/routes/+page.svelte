@@ -33,6 +33,7 @@
   let latestDataNoData = $state(getInitialI18nText("latestData.noData"));
   let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
+  let swipeHint = $state(getInitialI18nText("swipeHint"));
 
   // ── Region state ───────────────────────────────────────────────────
   const REGION_STORAGE_KEY = "home-region";
@@ -110,6 +111,7 @@
     latestDataNoData = translate("latestData.noData");
     latestDataViewAll = translate("latestData.viewAll");
     latestDataLoadFailed = translate("latestData.loadFailed");
+    swipeHint = translate("swipeHint");
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
@@ -172,6 +174,11 @@
       )}
     />
   </div>
+  <!-- Swipe hint (mobile only) -->
+  <p class="md:hidden mb-4 flex items-center justify-center gap-1.5 text-xs text-base-content/50">
+    <Icon icon="mdi:gesture-swipe-horizontal" class="size-4" />
+    {swipeHint}
+  </p>
 
   <!-- Latest Data section (unified: grid + current event as sub-block) -->
   <section class="mb-8">
