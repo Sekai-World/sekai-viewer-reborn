@@ -7,7 +7,7 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
     return ["common", "card", "event"];
   }
 
-  if (pathname.startsWith("/musics/")) {
+  if (pathname.startsWith("/music/") || pathname.startsWith("/musics/")) {
     return ["common", "music"];
   }
 

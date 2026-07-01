@@ -172,7 +172,7 @@
         : {
             key: regionOption,
             label: regionOption.toUpperCase(),
-            href: resolve("/musics/[region]/[id]", { region: regionOption, id: data.musicId }),
+            href: resolve("/music/[region]/[id]", { region: regionOption, id: data.musicId }),
             active: false
           }
     );

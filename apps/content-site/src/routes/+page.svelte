@@ -260,7 +260,7 @@
                 <div class="grid grid-cols-3 gap-3">
                   {#each regionData.musics as music (music.id)}
                     <a
-                      href="/musics/{regionData.region}/{music.id}"
+                      href="/music/{regionData.region}/{music.id}"
                       class="group/music block overflow-hidden rounded-xl border border-base-content/10 shadow-sm transition-shadow hover:shadow-md"
                     >
                       <div class="relative aspect-square overflow-hidden">

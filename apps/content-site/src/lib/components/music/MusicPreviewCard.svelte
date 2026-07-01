@@ -126,10 +126,10 @@
       vocalId: selectedVocal?.id ?? "",
       mode: previewMode === "short" ? "short" : "long"
     });
-    return `/musics/${region}/${musicId}/download?${params}`;
+    return `/music/${region}/${musicId}/download?${params}`;
   };
 
-  const progressHref = $derived(`/musics/${region}/${musicId}/download/progress`);
+  const progressHref = $derived(`/music/${region}/${musicId}/download/progress`);
 
   const downloadOptions = $derived(
     selectedVocal

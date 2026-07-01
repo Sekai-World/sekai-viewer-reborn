@@ -758,7 +758,7 @@
     >
       {#each visibleItems as item (item.id)}
         <a
-          href={resolve("/musics/[region]/[id]", { region: data.region, id: item.id })}
+          href={resolve("/music/[region]/[id]", { region: data.region, id: item.id })}
           class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
           aria-label={`${item.title} ${idLabel}${item.id}`}
         >

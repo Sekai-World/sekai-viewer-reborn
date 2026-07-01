@@ -147,7 +147,7 @@
       label: songsLabel,
       icon: "mdi:music-note-outline",
       href: `/musics/${sidebarRegion}`,
-      active: page.url.pathname.startsWith("/musics/")
+      active: page.url.pathname.startsWith("/music/") || page.url.pathname.startsWith("/musics/")
     },
     {
       label: eventsLabel,
