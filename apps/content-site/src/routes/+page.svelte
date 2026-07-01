@@ -188,23 +188,23 @@
     </h2>
     {#if latestDataPromise}
       {#await latestDataPromise}
-        <div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
-          {#each [1, 2, 3] as _}
-            <div class="space-y-3">
-              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-              <div class="grid grid-cols-3 gap-3">
-                {#each [1, 2, 3] as __}
-                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
-                {/each}
-              </div>
-            </div>
-          {/each}
-        </div>
+<div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3">
+	          {#each [1, 2, 3] as _}
+	            <div class="space-y-3">
+	              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+	              <div class="grid grid-cols-3 gap-3 lg:grid-cols-4">
+	                {#each [1, 2, 3, 4] as __}
+	                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
+	                {/each}
+	              </div>
+	            </div>
+	          {/each}
+	        </div>
       {:then regionData}
         {#if regionData.cards.length === 0 && regionData.musics.length === 0 && regionData.gachas.length === 0}
           <p class="text-center text-sm text-base-content/60">{latestDataNoData}</p>
         {:else}
-          <div class="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3">
+          <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3">
             <div>
               <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
                 <span class="flex items-center gap-2">
@@ -217,7 +217,7 @@
                 </a>
               </h3>
               {#if regionData.cards.length > 0}
-                <div class="grid grid-cols-3 gap-3">
+	                <div class="grid grid-cols-3 gap-3 lg:grid-cols-4">
                   {#each regionData.cards as card (card.id)}
                     <a
                       href="/card/{regionData.region}/{card.id}"
@@ -257,7 +257,7 @@
                 </a>
               </h3>
               {#if regionData.musics.length > 0}
-                <div class="grid grid-cols-3 gap-3">
+	                <div class="grid grid-cols-3 gap-3 lg:grid-cols-4">
                   {#each regionData.musics as music (music.id)}
                     <a
                       href="/music/{regionData.region}/{music.id}"
@@ -339,7 +339,7 @@
     {/if}
 
     <!-- Events sub-block (inside Latest Data section) -->
-    <div class="mx-auto mt-8 max-w-5xl">
+    <div class="mx-auto mt-8 max-w-7xl">
       <h3 class="mb-4 flex items-center justify-between text-sm font-semibold text-base-content/70">
         <span class="flex items-center gap-2">
           <Icon icon="mdi:calendar-clock" class="size-4" aria-hidden="true" />
@@ -400,7 +400,7 @@
   <h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">
     {versionInfoTitle}
   </h2>
-  <div class="mx-auto max-w-3xl overflow-x-auto rounded-xl border border-base-content/10">
+  <div class="mx-auto max-w-5xl overflow-x-auto rounded-xl border border-base-content/10">
     <table class="table table-sm w-full">
       <thead>
         <tr class="text-xs uppercase tracking-wider text-base-content/50">
