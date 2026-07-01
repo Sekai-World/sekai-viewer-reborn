@@ -109,7 +109,7 @@
       <span
         class="{unitIconUrl
           ? 'unit-icon-frame size-8 border-base-content/15'
-          : 'h-7 min-w-7 border-base-content/15 px-1'} inline-flex items-center justify-center rounded-full border text-[0.65rem] font-semibold leading-none"
+	          : 'h-7 min-w-7 border-base-content/15 px-1'} inline-flex items-center justify-center rounded-full border bg-white text-[0.65rem] font-semibold leading-none"
       >
         {#if unitIconUrl}
           <img
