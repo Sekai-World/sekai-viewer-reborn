@@ -57,55 +57,32 @@
   const SWIPE_THRESHOLD = 50;
   let touchStartX = 0;
   let touchStartY = 0;
-  let swipeHandled = false;
 
   const onTouchStart = (e: TouchEvent): void => {
     const touch = e.touches[0];
     touchStartX = touch.clientX;
     touchStartY = touch.clientY;
-    swipeHandled = false;
   };
 
-  const onTouchMove = (e: TouchEvent): void => {
-    if (swipeHandled) return;
-    const touch = e.touches[0];
+  const onTouchEnd = (e: TouchEvent): void => {
+    const touch = e.changedTouches[0];
     const dx = touch.clientX - touchStartX;
     const dy = Math.abs(touch.clientY - touchStartY);
 
-    if (Math.abs(dx) >= SWIPE_THRESHOLD && dy < Math.abs(dx)) {
-      swipeHandled = true;
-      e.preventDefault();
+    if (Math.abs(dx) < SWIPE_THRESHOLD || dy > Math.abs(dx)) {
+      return;
+    }
 
-      const currentIndex = supportedRegions.indexOf(selectedRegion);
-      if (dx < 0) {
-        if (currentIndex < supportedRegions.length - 1) {
-          selectRegion(supportedRegions[currentIndex + 1]);
-        }
-      } else {
-        if (currentIndex > 0) {
-          selectRegion(supportedRegions[currentIndex - 1]);
-        }
+    const currentIndex = supportedRegions.indexOf(selectedRegion);
+    if (dx < 0) {
+      if (currentIndex < supportedRegions.length - 1) {
+        selectRegion(supportedRegions[currentIndex + 1]);
+      }
+    } else {
+      if (currentIndex > 0) {
+        selectRegion(supportedRegions[currentIndex - 1]);
       }
     }
-  };
-
-  const onTouchEnd = (): void => {
-    swipeHandled = false;
-  };
-
-  // Svelte ontouchmove is passive by default — need a non-passive
-  // listener so e.preventDefault() actually blocks the page drag.
-  const swipeRegion = (node: HTMLElement): { destroy: () => void } => {
-    node.addEventListener("touchstart", onTouchStart, { passive: true });
-    node.addEventListener("touchmove", onTouchMove, { passive: false });
-    node.addEventListener("touchend", onTouchEnd, { passive: true });
-    return {
-      destroy() {
-        node.removeEventListener("touchstart", onTouchStart);
-        node.removeEventListener("touchmove", onTouchMove);
-        node.removeEventListener("touchend", onTouchEnd);
-      }
-    };
   };
 
   // ── i18n ───────────────────────────────────────────────────────────
@@ -181,7 +158,10 @@
 </div>
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
-<section use:swipeRegion>
+<section
+  ontouchstart={onTouchStart}
+  ontouchend={onTouchEnd}
+>
   <!-- Region selector (shared for both sections) -->
   <div class="mb-6 flex flex-wrap justify-center gap-2">
     <RegionBadgeSwitch

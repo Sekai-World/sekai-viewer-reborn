@@ -1,5 +1,10 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+
+html, body {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
 /* Tailwind v4 in this workspace mis-resolves package-name plugins during build.
    Keep daisyUI behind a local proxy module so CSS does not depend on node_modules layout. */
 @source not "../daisyui.mjs";
