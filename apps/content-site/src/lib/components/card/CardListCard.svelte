@@ -53,6 +53,7 @@
   let lastSpoilerIdentity = $state("");
   let spoilerRevealTimeout: ReturnType<typeof setTimeout> | null = null;
   let visibleImageKeys = $state<Record<string, boolean>>({});
+  let gridContentNode: HTMLDivElement | null = $state(null);
 
   const rarityValueByType: Record<string, number> = {
     rarity_1: 1,
@@ -221,32 +222,32 @@
     visibleImageKeys = { ...visibleImageKeys, [key]: true };
   };
 
-  const loadWhenVisible = (node: HTMLElement, key: string) => {
+  $effect(() => {
+    if (visibleImageKeys.grid || !gridContentNode) {
+      return;
+    }
+
     if (typeof IntersectionObserver === "undefined") {
-      markImageVisible(key);
-      return {};
+      markImageVisible("grid");
+      return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) {
-          return;
+        if (entries.some((entry) => entry.isIntersecting)) {
+          markImageVisible("grid");
+          observer.disconnect();
         }
-
-        markImageVisible(key);
-        observer.disconnect();
       },
       { threshold: 0.01 }
     );
 
-    observer.observe(node);
+    observer.observe(gridContentNode);
 
-    return {
-      destroy() {
-        observer.disconnect();
-      }
+    return () => {
+      observer.disconnect();
     };
-  };
+  });
 </script>
 
 {#snippet spoilerOverlay()}
@@ -468,7 +469,7 @@
           <div class="card-grid-hover-area card-grid-hover-area-left"></div>
           <div class="card-grid-hover-area card-grid-hover-area-right"></div>
         {/if}
-        <div class="card-grid-content" use:loadWhenVisible={"grid"}>
+        <div class="card-grid-content" bind:this={gridContentNode}>
           <div class="card-grid-image-container">
             {#if isTrainedOnlyCard() && trainedUrl && visibleImageKeys.grid === true}
               <img

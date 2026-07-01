@@ -44,9 +44,11 @@
   );
 
   $effect(() => {
-    imageLoaded = false;
-    imageFailed = false;
-    imageVisible = loadMode === "immediate";
+    if (src !== undefined) {
+      imageLoaded = false;
+      imageFailed = false;
+      imageVisible = loadMode === "immediate";
+    }
   });
 
   $effect(() => {

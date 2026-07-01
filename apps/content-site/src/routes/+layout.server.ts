@@ -3,23 +3,24 @@ import { loadI18nMessageBundle, type I18nNamespace } from "$lib/i18n/runtime";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 
 const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
+  // always include "error" so +error.svelte can resolve its keys on any path
   if (pathname.startsWith("/card/") || pathname.startsWith("/cards/")) {
-    return ["common", "card", "event"];
+    return ["common", "card", "event", "error"];
   }
 
   if (pathname.startsWith("/music/") || pathname.startsWith("/musics/")) {
-    return ["common", "music"];
+    return ["common", "music", "error"];
   }
 
   if (pathname.startsWith("/event/") || pathname.startsWith("/events/")) {
-    return ["common", "event"];
+    return ["common", "event", "error"];
   }
 
   if (pathname.startsWith("/gacha/") || pathname.startsWith("/gachas/")) {
-    return ["common", "gacha"];
+    return ["common", "gacha", "error"];
   }
 
-  return pathname === "/" ? ["common", "home"] : ["common", "error"];
+  return pathname === "/" ? ["common", "home", "error"] : ["common", "error"];
 };
 
 export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {

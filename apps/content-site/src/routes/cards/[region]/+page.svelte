@@ -59,6 +59,7 @@
   let isLoading = $state(false);
   let isInitialLoading = $state(true);
   let isReloadingFirstPage = $state(false);
+  let loadedRegion = $state("");
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
   let isLoadMoreHintVisible = $state(false);
@@ -423,6 +424,7 @@
     }
 
     isInitialLoading = false;
+    loadedRegion = data.region;
     hasTriedRestorePersistedFilters = true;
 
     // Post-initial reconciliation: persisted filters and spoiler preference.
@@ -964,7 +966,7 @@
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{cardListLoading}</span>
     </div>
-  {:else if isInitialLoading}
+  {:else if isInitialLoading || data.region !== loadedRegion}
     <div class={getListGridClass()}>
       {#each Array(12) as _, i}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
