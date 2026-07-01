@@ -161,6 +161,7 @@
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
 <section
+  role="group"
   ontouchstart={onTouchStart}
   ontouchend={onTouchEnd}
 >

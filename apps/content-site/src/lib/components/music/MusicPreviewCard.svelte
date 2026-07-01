@@ -129,7 +129,7 @@
     return `/musics/${region}/${musicId}/download?${params}`;
   };
 
-  const progressHref = `/musics/${region}/${musicId}/download/progress`;
+  const progressHref = $derived(`/musics/${region}/${musicId}/download/progress`);
 
   const downloadOptions = $derived(
     selectedVocal

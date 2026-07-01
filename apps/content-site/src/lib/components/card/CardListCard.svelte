@@ -401,7 +401,18 @@
     />
   {/snippet}
 
-<div class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`} onclick={handleCardClick}>
+<div
+  class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`}
+  role="button"
+  tabindex={0}
+  onclick={handleCardClick}
+  onkeydown={(e: KeyboardEvent): void => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      revealSpoiler();
+    }
+  }}
+>
   <article
     class={`card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
   >
