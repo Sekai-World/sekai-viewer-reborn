@@ -305,7 +305,7 @@ const fetchRegionLatestData = async (
     getGachasByRegionList({
       baseUrl,
       path: { region },
-      query: { page: 1, page_size: 3, spoiler: false, sort_by: "startAt", sort_order: "desc" }
+      query: { page: 1, page_size: 2, spoiler: false, sort_by: "startAt", sort_order: "desc" }
     })
   ]);
 
