@@ -181,117 +181,147 @@
     {swipeHint}
   </p>
 
-  <!-- Latest Data section (unified: grid + current event as sub-block) -->
+  <!-- Latest Data section
+       lg+: 3 columns — [cards+musics] | [gachas] | [events]
+       md:  2 columns — [cards+musics] | [gachas+events]
+       sm:  1 column, all stacked -->
   <section class="mb-8">
     <h2 class="mb-5 text-center text-base font-semibold tracking-wide text-base-content/70">
       {latestDataTitle}
     </h2>
     {#if latestDataPromise}
       {#await latestDataPromise}
-<div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3">
-	          {#each [1, 2, 3] as _}
-	            <div class="space-y-3">
-	              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-	              <div class="grid grid-cols-3 gap-3 lg:grid-cols-4">
-	                {#each [1, 2, 3, 4] as __}
-	                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
-	                {/each}
-	              </div>
-	            </div>
-	          {/each}
-	        </div>
+        <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <!-- skeleton: cards+musics col -->
+          <div class="space-y-6">
+            <div class="space-y-3">
+              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+              <div class="grid grid-cols-3 gap-3">
+                {#each [1, 2, 3] as __}
+                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
+                {/each}
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+              <div class="grid grid-cols-3 gap-3">
+                {#each [1, 2, 3] as __}
+                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
+                {/each}
+              </div>
+            </div>
+          </div>
+          <!-- skeleton: gachas col -->
+          <div class="space-y-3">
+            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="space-y-3">
+              {#each [1, 2] as __}
+                <div class="h-24 animate-pulse rounded-lg bg-base-300"></div>
+              {/each}
+            </div>
+          </div>
+          <!-- skeleton: events col -->
+          <div class="space-y-3">
+            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="h-40 animate-pulse rounded-xl bg-base-300"></div>
+          </div>
+        </div>
       {:then regionData}
         {#if regionData.cards.length === 0 && regionData.musics.length === 0 && regionData.gachas.length === 0}
           <p class="text-center text-sm text-base-content/60">{latestDataNoData}</p>
         {:else}
-          <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-3">
-            <div>
-              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
-                <span class="flex items-center gap-2">
-                  <Icon icon="mdi:cards-outline" class="size-4" aria-hidden="true" />
-                  {latestDataCardsLabel}
-                </span>
-                <a href="/cards/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
-                  {latestDataViewAll}
-                  <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
-                </a>
-              </h3>
-              {#if regionData.cards.length > 0}
-	                <div class="grid grid-cols-3 gap-3 lg:grid-cols-4">
-                  {#each regionData.cards as card (card.id)}
-                    <a
-                      href="/card/{regionData.region}/{card.id}"
-                      class="group/card block"
-                    >
-                      <CardThumbnail
-                        src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp") : null}
-                        alt={card.prefix ?? card.id}
-                        fallbackLabel={card.id}
-                        fallbackSrc={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, regionData.region) : null}
-                        attr={card.attr}
-                        rarityType={card.rarityType}
-                        rarityCount={card.rarityCount}
-                        showFrame={true}
-                        showIcons={true}
-                        maxSize={null}
-                        containerClass="relative overflow-hidden rounded-xl bg-base-200 aspect-square"
-                        imageClass="size-full object-cover transition-transform duration-200 group-hover/card:scale-105"
-                      />
-                    </a>
-                  {/each}
-                </div>
-              {:else}
-                <p class="text-xs text-base-content/50">{latestDataNoData}</p>
-              {/if}
+          <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <!-- Column 1: Cards + Musics (stacked) -->
+            <div class="space-y-6">
+              <div>
+                <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                  <span class="flex items-center gap-2">
+                    <Icon icon="mdi:cards-outline" class="size-4" aria-hidden="true" />
+                    {latestDataCardsLabel}
+                  </span>
+                  <a href="/cards/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                    {latestDataViewAll}
+                    <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+                  </a>
+                </h3>
+                {#if regionData.cards.length > 0}
+                  <div class="grid grid-cols-3 gap-3">
+                    {#each regionData.cards as card (card.id)}
+                      <a
+                        href="/card/{regionData.region}/{card.id}"
+                        class="group/card block"
+                      >
+                        <CardThumbnail
+                          src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp") : null}
+                          alt={card.prefix ?? card.id}
+                          fallbackLabel={card.id}
+                          fallbackSrc={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, regionData.region) : null}
+                          attr={card.attr}
+                          rarityType={card.rarityType}
+                          rarityCount={card.rarityCount}
+                          showFrame={true}
+                          showIcons={true}
+                          maxSize={null}
+                          containerClass="relative overflow-hidden rounded-xl bg-base-200 aspect-square"
+                          imageClass="size-full object-cover transition-transform duration-200 group-hover/card:scale-105"
+                        />
+                      </a>
+                    {/each}
+                  </div>
+                {:else}
+                  <p class="text-xs text-base-content/50">{latestDataNoData}</p>
+                {/if}
+              </div>
+
+              <div>
+                <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                  <span class="flex items-center gap-2">
+                    <Icon icon="mdi:music-note-eighth" class="size-4" aria-hidden="true" />
+                    {latestDataMusicsLabel}
+                  </span>
+                  <a href="/musics/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                    {latestDataViewAll}
+                    <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+                  </a>
+                </h3>
+                {#if regionData.musics.length > 0}
+                  <div class="grid grid-cols-3 gap-3">
+                    {#each regionData.musics as music (music.id)}
+                      <a
+                        href="/music/{regionData.region}/{music.id}"
+                        class="group/music block overflow-hidden rounded-xl border border-base-content/10 shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <div class="relative aspect-square overflow-hidden">
+                          {#if music.assetBundleName}
+                            <EventAssetImage
+                              src={getMusicJacketAssetURL(music.assetBundleName)}
+                              alt={music.title ?? music.id}
+                              loadMode="visible"
+                              imageClass="size-full object-cover transition-transform duration-200 group-hover/music:scale-105"
+                              buttonClass="block size-full"
+                            />
+                          {:else}
+                            <div class="flex size-full items-center justify-center bg-base-300/40 text-xs text-base-content/50">
+                              {music.id}
+                            </div>
+                          {/if}
+                        </div>
+                        <div class="px-2 py-2">
+                          <p class="line-clamp-2 text-xs font-medium leading-snug">{music.title ?? music.id}</p>
+                          {#if music.composer}
+                            <p class="mt-0.5 truncate text-[10px] text-base-content/50">{music.composer}</p>
+                          {/if}
+                        </div>
+                      </a>
+                    {/each}
+                  </div>
+                {:else}
+                  <p class="text-xs text-base-content/50">{latestDataNoData}</p>
+                {/if}
+              </div>
             </div>
 
-            <div>
-              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
-                <span class="flex items-center gap-2">
-                  <Icon icon="mdi:music-note-eighth" class="size-4" aria-hidden="true" />
-                  {latestDataMusicsLabel}
-                </span>
-                <a href="/musics/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
-                  {latestDataViewAll}
-                  <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
-                </a>
-              </h3>
-              {#if regionData.musics.length > 0}
-	                <div class="grid grid-cols-3 gap-3 lg:grid-cols-4">
-                  {#each regionData.musics as music (music.id)}
-                    <a
-                      href="/music/{regionData.region}/{music.id}"
-                      class="group/music block overflow-hidden rounded-xl border border-base-content/10 shadow-sm transition-shadow hover:shadow-md"
-                    >
-                      <div class="relative aspect-square overflow-hidden">
-                        {#if music.assetBundleName}
-                          <EventAssetImage
-                            src={getMusicJacketAssetURL(music.assetBundleName)}
-                            alt={music.title ?? music.id}
-                            loadMode="visible"
-                            imageClass="size-full object-cover transition-transform duration-200 group-hover/music:scale-105"
-                            buttonClass="block size-full"
-                          />
-                        {:else}
-                          <div class="flex size-full items-center justify-center bg-base-300/40 text-xs text-base-content/50">
-                            {music.id}
-                          </div>
-                        {/if}
-                      </div>
-                      <div class="px-2 py-2">
-                        <p class="line-clamp-2 text-xs font-medium leading-snug">{music.title ?? music.id}</p>
-                        {#if music.composer}
-                          <p class="mt-0.5 truncate text-[10px] text-base-content/50">{music.composer}</p>
-                        {/if}
-                      </div>
-                    </a>
-                  {/each}
-                </div>
-              {:else}
-                <p class="text-xs text-base-content/50">{latestDataNoData}</p>
-              {/if}
-            </div>
-
+            <!-- Column 2: Gachas -->
             <div>
               <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
                 <span class="flex items-center gap-2">
@@ -331,67 +361,67 @@
                 <p class="text-xs text-base-content/50">{latestDataNoData}</p>
               {/if}
             </div>
+
+            <!-- Column 3: Events -->
+            <div class="md:col-span-2 lg:col-span-1">
+              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                <span class="flex items-center gap-2">
+                  <Icon icon="mdi:calendar-clock" class="size-4" aria-hidden="true" />
+                  {latestDataEventsLabel}
+                </span>
+                <a href="/events/{selectedRegion}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                  {latestDataViewAll}
+                  <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+                </a>
+              </h3>
+              {#await currentEventPromise}
+                <article class="card content-card-shell w-full shadow-sm">
+                  <div class="card-body">
+                    <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
+                    <div class="space-y-2">
+                      <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
+                      <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
+                    </div>
+                  </div>
+                </article>
+              {:then card}
+                {#if card.event}
+                  <CurrentEventCard
+                    region={card.region}
+                    regionLabel={card.label}
+                    event={card.event}
+                    uiLocale={data.uiLocale}
+                    {idLabel}
+                    {mixedUnitLabel}
+                    unitProfiles={card.unitProfiles}
+                    {bannerAltSuffix}
+                  />
+                {:else}
+                  <article class="card content-card-shell w-full shadow-sm">
+                    <div class="card-body">
+                      <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
+                      {#if card.error}
+                        <p class="text-sm text-error">{card.error}</p>
+                      {:else}
+                        <p class="text-sm opacity-70">{noEventLabel}</p>
+                      {/if}
+                    </div>
+                  </article>
+                {/if}
+              {:catch _}
+                <article class="card content-card-shell w-full shadow-sm">
+                  <div class="card-body">
+                    <p class="text-sm text-error">{noEventLabel}</p>
+                  </div>
+                </article>
+              {/await}
+            </div>
           </div>
         {/if}
       {:catch _}
         <p class="text-center text-sm text-error">{latestDataLoadFailed}</p>
       {/await}
     {/if}
-
-    <!-- Events sub-block (inside Latest Data section) -->
-    <div class="mx-auto mt-8 max-w-7xl">
-      <h3 class="mb-4 flex items-center justify-between text-sm font-semibold text-base-content/70">
-        <span class="flex items-center gap-2">
-          <Icon icon="mdi:calendar-clock" class="size-4" aria-hidden="true" />
-          {latestDataEventsLabel}
-        </span>
-        <a href="/events/{selectedRegion}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
-          {latestDataViewAll}
-          <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
-        </a>
-      </h3>
-      {#await currentEventPromise}
-        <article class="card content-card-shell mx-auto max-w-sm w-full shadow-sm">
-          <div class="card-body">
-            <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
-            <div class="space-y-2">
-              <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
-              <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
-            </div>
-          </div>
-        </article>
-      {:then card}
-        {#if card.event}
-          <CurrentEventCard
-            region={card.region}
-            regionLabel={card.label}
-            event={card.event}
-            uiLocale={data.uiLocale}
-            {idLabel}
-            {mixedUnitLabel}
-            unitProfiles={card.unitProfiles}
-            {bannerAltSuffix}
-          />
-        {:else}
-          <article class="card content-card-shell mx-auto max-w-sm w-full shadow-sm">
-            <div class="card-body">
-              <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
-              {#if card.error}
-                <p class="text-sm text-error">{card.error}</p>
-              {:else}
-                <p class="text-sm opacity-70">{noEventLabel}</p>
-              {/if}
-            </div>
-          </article>
-        {/if}
-      {:catch _}
-        <article class="card content-card-shell mx-auto max-w-sm w-full shadow-sm">
-          <div class="card-body">
-            <p class="text-sm text-error">{noEventLabel}</p>
-          </div>
-        </article>
-      {/await}
-    </div>
   </section>
 </section>
 
