@@ -306,7 +306,7 @@
                         href="/gacha/{regionData.region}/{gacha.id}"
                         class="block overflow-hidden rounded-lg border border-base-content/8 shadow-sm transition-shadow hover:shadow-md"
                       >
-                        <div class="aspect-[3/1] w-full bg-base-200">
+                        <div class="aspect-[3/1] w-full bg-base-200 pt-2">
                           <EventAssetImage
                             src={getGachaBannerAssetURL(gacha.id, "jp")}
                             alt={gacha.name ?? gacha.id}
