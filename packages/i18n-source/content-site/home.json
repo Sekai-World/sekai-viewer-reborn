@@ -1,4 +1,11 @@
 {
+  "latestData.cards": "Cards",
+  "latestData.gachas": "Gachas",
+  "latestData.loadFailed": "Failed to load latest data.",
+  "latestData.musics": "Songs",
+  "latestData.noData": "No data available.",
+  "latestData.title": "Latest Data",
+  "latestData.viewAll": "View All",
   "versionInfo.appLabel": "APP",
   "versionInfo.assetLabel": "ASSET",
   "versionInfo.dataLabel": "DATA",

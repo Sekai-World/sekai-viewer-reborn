@@ -99,6 +99,7 @@ Preview ports:
 
 - Apps use SvelteKit 2, Svelte 5, Tailwind CSS 4, and `daisyui`.
 - Prefer Iconify icons via `@iconify/svelte` over inline SVG when a suitable icon exists.
+- All `mdi:*` icons used in `content-site` must be registered in `apps/content-site/src/lib/icons/mdi.ts` via `addIcon()` so they render synchronously without a CDN fetch. When adding a new `mdi:*` icon anywhere in `content-site` or `@platform/ui-shell`, also add its import and `addIcon()` call in `mdi.ts`. Unregistered icons fall back to an asynchronous CDN fetch, causing a visible flash of empty button frames on first load.
 - App-level CSS lives in `src/app.css` and uses:
 
 ```css

@@ -116,12 +116,38 @@
     return startAtMs !== null && startAtMs > Date.now();
   };
 
+  const ongoingEventIds = $derived.by(() => {
+    const now = Date.now();
+    const ids = new Set<string>();
+    for (const item of items) {
+      const startMs = toTimestampMs(item.startAt);
+      const endMs = toTimestampMs(item.endAt);
+      if (startMs !== null && endMs !== null && startMs <= now && now <= endMs) {
+        ids.add(item.id);
+      }
+    }
+    return ids;
+  });
+
   const visibleItems = $derived.by(() => {
-    if (contentDisplaySettings.showSpoilerContent) {
-      return items;
+    const base = contentDisplaySettings.showSpoilerContent
+      ? items
+      : items.filter((item) => !isSpoilerEvent(item));
+
+    if (!contentDisplaySettings.ongoingFirst) {
+      return base;
     }
 
-    return items.filter((item) => !isSpoilerEvent(item));
+    const ongoing: EventListItem[] = [];
+    const rest: EventListItem[] = [];
+    for (const item of base) {
+      if (ongoingEventIds.has(item.id)) {
+        ongoing.push(item);
+      } else {
+        rest.push(item);
+      }
+    }
+    return [...ongoing, ...rest];
   });
 
   const syncDraftFiltersFromCurrent = (): void => {
@@ -148,7 +174,7 @@
 
   const getFilterStorageKey = (): string => `content-site:event-list-filters:${data.region}`;
 
-  let currentEventId = $state<string | null>(null);
+    // currentEventId is no longer used; ongoing events are detected from item timestamps via ongoingEventIds
 
   const persistAppliedFilters = (): void => {
     if (!browser) {
@@ -226,14 +252,12 @@
   type InitialPageResult = {
     page: EventListPagePayload;
     loadFailed: boolean;
-    currentEventId: string | null;
   };
 
   const applyInitialPage = (result: InitialPageResult): void => {
     items = result.page.items;
     currentPage = result.page.pagination.page;
     hasNext = result.page.pagination.hasNext;
-    currentEventId = result.currentEventId;
     errorMessage = result.loadFailed ? getInitialI18nText("eventListLoadFailed") : null;
 
     // Initialize filter/sort state from server query params once per navigation.
@@ -669,7 +693,7 @@
         <EventListCard
           region={data.region}
           {item}
-          {currentEventId}
+          ongoingEventIds={ongoingEventIds}
           currentEventLabel={eventListCurrentEvent}
           {spoilerContentLabel}
           uiLocale={data.uiLocale}

@@ -78,11 +78,24 @@
   };
 
   const visibleItems = $derived.by(() => {
-    if (contentDisplaySettings.showSpoilerContent) {
-      return items;
+    const base = contentDisplaySettings.showSpoilerContent
+      ? items
+      : items.filter((item) => !isSpoilerGacha(item));
+
+    if (!contentDisplaySettings.ongoingFirst) {
+      return base;
     }
 
-    return items.filter((item) => !isSpoilerGacha(item));
+    const ongoing: GachaListItem[] = [];
+    const rest: GachaListItem[] = [];
+    for (const item of base) {
+      if (currentGachaIds.has(item.id)) {
+        ongoing.push(item);
+      } else {
+        rest.push(item);
+      }
+    }
+    return [...ongoing, ...rest];
   });
 
   const hasNonDefaultSort = (): boolean => sortBy !== "startAt" || sortOrder !== "desc";

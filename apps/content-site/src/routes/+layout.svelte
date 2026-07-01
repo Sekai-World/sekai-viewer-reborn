@@ -1,5 +1,6 @@
 <script lang="ts">
   import "../app.css";
+  import "$lib/icons/mdi";
   import { asset } from "$app/paths";
   import { invalidateAll, onNavigate } from "$app/navigation";
   import { page } from "$app/state";
@@ -90,6 +91,7 @@
   let showSpoilerContentLabel = $state(getInitialI18nText("settings.showSpoilerContent"));
   let mosaickedSpoilerContentLabel = $state(getInitialI18nText("settings.mosaickedSpoilerContent"));
   let lowMotionModeLabel = $state(getInitialI18nText("settings.lowMotionMode"));
+  let ongoingFirstLabel = $state(getInitialI18nText("settings.ongoingFirst"));
   let backToTopLabel = $state(getInitialI18nText("backToTopLabel"));
   let loadingLanguagePackLabel = $state(getInitialI18nText("loadingLanguagePack"));
   let switchThemeAriaLabel = $state(getInitialI18nText("aria.switchTheme"));
@@ -104,7 +106,8 @@
   let contentDisplaySettings = $state<ContentDisplaySettingsState>({
     showSpoilerContent: false,
     mosaickedSpoilerContent: true,
-    lowMotionMode: false
+    lowMotionMode: false,
+    ongoingFirst: true
   });
 
   setContentDisplaySettings(contentDisplaySettings);
@@ -323,7 +326,8 @@
       mosaickedSpoilerContent: true,
       lowMotionMode:
         typeof window !== "undefined" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      ongoingFirst: true
     };
     const storedSettings = localStorage.getItem(CONTENT_DISPLAY_STORAGE_KEY);
 
@@ -342,7 +346,11 @@
         lowMotionMode:
           typeof parsed.lowMotionMode === "boolean"
             ? parsed.lowMotionMode
-            : defaultSettings.lowMotionMode
+            : defaultSettings.lowMotionMode,
+        ongoingFirst:
+          typeof parsed.ongoingFirst === "boolean"
+            ? parsed.ongoingFirst
+            : defaultSettings.ongoingFirst
       };
     } catch {
       return defaultSettings;
@@ -355,7 +363,8 @@
       JSON.stringify({
         showSpoilerContent: contentDisplaySettings.showSpoilerContent,
         mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent,
-        lowMotionMode: contentDisplaySettings.lowMotionMode
+        lowMotionMode: contentDisplaySettings.lowMotionMode,
+        ongoingFirst: contentDisplaySettings.ongoingFirst
       })
     );
   };
@@ -397,6 +406,11 @@
   const handleLowMotionModeChange = (event: Event): void => {
     contentDisplaySettings.lowMotionMode = (event.currentTarget as HTMLInputElement).checked;
     applyMotionPreference();
+    persistContentDisplaySettings();
+  };
+
+  const handleOngoingFirstChange = (event: Event): void => {
+    contentDisplaySettings.ongoingFirst = (event.currentTarget as HTMLInputElement).checked;
     persistContentDisplaySettings();
   };
 
@@ -545,6 +559,7 @@
     contentDisplaySettings.mosaickedSpoilerContent =
       preferredContentDisplaySettings.mosaickedSpoilerContent;
     contentDisplaySettings.lowMotionMode = preferredContentDisplaySettings.lowMotionMode;
+    contentDisplaySettings.ongoingFirst = preferredContentDisplaySettings.ongoingFirst;
     applyMotionPreference();
     persistContentDisplaySettings();
     updateBackToTopVisibility();
@@ -679,6 +694,20 @@
         checked={contentDisplaySettings.lowMotionMode}
         onchange={handleLowMotionModeChange}
         aria-label={lowMotionModeLabel}
+      />
+    </label>
+    <label
+      class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
+    >
+      <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
+        >{ongoingFirstLabel}</span
+      >
+      <input
+        type="checkbox"
+        class="toggle toggle-primary shrink-0"
+        checked={contentDisplaySettings.ongoingFirst}
+        onchange={handleOngoingFirstChange}
+        aria-label={ongoingFirstLabel}
       />
     </label>
   </div>

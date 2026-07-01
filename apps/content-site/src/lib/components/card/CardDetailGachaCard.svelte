@@ -33,7 +33,7 @@
 
   const formatDate = (ts: number | null): string => {
     if (ts === null || ts <= 0) return "";
-    return new Date(ts * 1000).toLocaleDateString(undefined, {
+    return new Date(ts).toLocaleDateString(undefined, {
       year: "numeric",
       month: "short",
       day: "numeric"

@@ -299,36 +299,66 @@ const normalizeParameterType = (value: string | null): keyof typeof parameterTyp
 export const parseCardDetailParams = (payload: unknown): CardDetailParams => {
   const root = getObject(payload);
   const paramsNode = root ? (getNestedObject(root, ["card", "data"]) ?? root) : {};
-  const source = getNestedArray(paramsNode, ["cardParameters", "card_parameters"]) ?? [];
+  const cardParamsValue = paramsNode["cardParameters"] ?? paramsNode["card_parameters"];
   const byLevel = new Map<
     number,
     { level: number; performance: number | null; technique: number | null; stamina: number | null }
   >();
 
-  for (const value of source) {
-    const node = getObject(value);
-    if (!node) {
-      continue;
+  if (Array.isArray(cardParamsValue)) {
+    // JP format: array of {cardLevel, cardParameterType, power}
+    for (const value of cardParamsValue) {
+      const node = getObject(value);
+      if (!node) {
+        continue;
+      }
+
+      const level = pickFirstNumber(node, ["cardLevel", "card_level", "level"]);
+      const type = normalizeParameterType(
+        pickFirstString(node, ["cardParameterType", "card_parameter_type", "type"])
+      );
+      const power = pickFirstNumber(node, ["power", "value"]);
+
+      if (level === null || type === null || power === null) {
+        continue;
+      }
+
+      const current = byLevel.get(level) ?? {
+        level,
+        performance: null,
+        technique: null,
+        stamina: null
+      };
+      current[type] = power;
+      byLevel.set(level, current);
     }
-
-    const level = pickFirstNumber(node, ["cardLevel", "card_level", "level"]);
-    const type = normalizeParameterType(
-      pickFirstString(node, ["cardParameterType", "card_parameter_type", "type"])
-    );
-    const power = pickFirstNumber(node, ["power", "value"]);
-
-    if (level === null || type === null || power === null) {
-      continue;
-    }
-
-    const current = byLevel.get(level) ?? {
-      level,
-      performance: null,
-      technique: null,
-      stamina: null
+  } else if (cardParamsValue !== null && typeof cardParamsValue === "object") {
+    // TW/KR/CN format: {param1: [power_at_level_1, ...], param2: [...], param3: [...]}
+    const dictParams = cardParamsValue as Record<string, unknown>;
+    const getParamArray = (key: string): number[] => {
+      const value = dictParams[key];
+      if (!Array.isArray(value)) {
+        return [];
+      }
+      return value.filter(
+        (item): item is number => typeof item === "number" && Number.isFinite(item)
+      );
     };
-    current[type] = power;
-    byLevel.set(level, current);
+
+    const param1 = getParamArray("param1");
+    const param2 = getParamArray("param2");
+    const param3 = getParamArray("param3");
+    const maxLevel = Math.max(param1.length, param2.length, param3.length);
+
+    for (let level = 1; level <= maxLevel; level++) {
+      const idx = level - 1;
+      byLevel.set(level, {
+        level,
+        performance: idx < param1.length ? param1[idx] : null,
+        technique: idx < param2.length ? param2[idx] : null,
+        stamina: idx < param3.length ? param3[idx] : null
+      });
+    }
   }
 
   const parameters = [...byLevel.values()]

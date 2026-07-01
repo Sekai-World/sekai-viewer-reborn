@@ -27,7 +27,7 @@
   let {
     region,
     item,
-    currentEventId,
+    ongoingEventIds,
     currentEventLabel,
     spoilerContentLabel,
     uiLocale,
@@ -36,7 +36,7 @@
   }: {
     region: SupportedRegion;
     item: EventListCardItem;
-    currentEventId: string | null;
+    ongoingEventIds: Set<string>;
     currentEventLabel: string;
     spoilerContentLabel: string;
     uiLocale: string;
@@ -44,7 +44,7 @@
     bannerAltSuffix: string;
   } = $props();
 
-  const isCurrentEvent = (): boolean => currentEventId === item.id;
+  const isCurrentEvent = (): boolean => ongoingEventIds.has(item.id);
   const contentDisplaySettings = getContentDisplaySettings();
   const spoilerRevealAnimationMs = 180;
   let spoilerRevealed = $state(false);

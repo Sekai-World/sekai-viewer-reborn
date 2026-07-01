@@ -72,8 +72,8 @@
             >
               <div class="overflow-hidden rounded-lg bg-base-200/30 ring-1 ring-base-content/5 transition-all hover:shadow-md hover:ring-primary/40">
                   <CardThumbnail
-                    src={pickup.assetBundleName ? getCardThumbnailAssetURL(pickup.assetBundleName, false, region) : null}
-                    fallbackSrc={null}
+                    src={pickup.assetBundleName ? getCardThumbnailAssetURL(pickup.assetBundleName, false, "jp") : null}
+                    fallbackSrc={pickup.assetBundleName && region !== "jp" ? getCardThumbnailAssetURL(pickup.assetBundleName, false, region) : null}
                     alt={pickup.title ? `${pickup.title} ${cardAltSuffix}` : `Card ${pickup.cardId}`}
                     fallbackLabel={pickup.cardId ?? ""}
                     trained={false}

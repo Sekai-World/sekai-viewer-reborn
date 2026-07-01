@@ -237,8 +237,8 @@
               >
                 <div class="relative overflow-hidden rounded-lg bg-base-200/30 ring-1 ring-base-content/5 transition-all hover:shadow-md hover:ring-primary/40">
                   <CardThumbnail
-                    src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, region) : null}
-                    fallbackSrc={null}
+                    src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp") : null}
+                    fallbackSrc={card.assetBundleName && region !== "jp" ? getCardThumbnailAssetURL(card.assetBundleName, false, region) : null}
                     alt={card.title ? `${card.title} ${cardAltSuffix}` : `Card ${card.cardId}`}
                     fallbackLabel={card.cardId}
                     trained={false}

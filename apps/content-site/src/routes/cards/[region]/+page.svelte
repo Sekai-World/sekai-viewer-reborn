@@ -423,28 +423,41 @@
     }
 
     isInitialLoading = false;
+    hasTriedRestorePersistedFilters = true;
+
+    // Post-initial reconciliation: persisted filters and spoiler preference.
+    // These must run AFTER isInitialLoading=false and filter state is set from
+    // the server load, to avoid racing with applyInitialPage's own state writes.
+    let needsReload = false;
+
+    // Restore persisted filters only when the URL has no explicit filter/sort
+    // query params (same guard as the old $effect, but now sequential).
+    if (browser && !hasExplicitQueryStateInUrl()) {
+      if (restorePersistedFilters()) {
+        persistAppliedFilters();
+        needsReload = true;
+      }
+    }
+
+    // Reconcile spoiler preference: if the user's content display setting differs
+    // from the server-loaded state, reload with the correct spoiler filter.
+    if (browser) {
+      const userWantsSpoilers = contentDisplaySettings.showSpoilerContent;
+      if (userWantsSpoilers !== spoilerFilter) {
+        spoilerFilter = userWantsSpoilers;
+        needsReload = true;
+      }
+      spoilerContentAppliedState = userWantsSpoilers;
+    }
+
+    if (needsReload) {
+      void reloadFirstPage();
+    }
   };
 
   $effect(() => {
     const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
     initialPagePromise.then(applyInitialPage);
-  });
-
-  $effect(() => {
-    if (!browser || hasTriedRestorePersistedFilters) {
-      return;
-    }
-
-    hasTriedRestorePersistedFilters = true;
-
-    if (hasAnyAppliedFilters() || hasNonDefaultSort()) {
-      return;
-    }
-
-    if (restorePersistedFilters()) {
-      persistAppliedFilters();
-      void reloadFirstPage();
-    }
   });
 
   $effect(() => {
@@ -550,23 +563,20 @@
 
     const nextShowSpoilerContent = contentDisplaySettings.showSpoilerContent;
     const isInitialSpoilerState = spoilerContentAppliedState === null;
+    // On initial mount, applyInitialPage handles spoiler reconciliation after
+    // the server load settles. Skip here to avoid a race between the effect's
+    // reloadFirstPage() and applyInitialPage resetting filter state.
+    if (isInitialSpoilerState) {
+      return;
+    }
+
     if (spoilerContentAppliedState === nextShowSpoilerContent) {
       return;
     }
 
     spoilerContentAppliedState = nextShowSpoilerContent;
-
-    const searchParams = new URL(window.location.href).searchParams;
-    const hasSpoilerQueryParam = searchParams.has("spoiler");
-    const requestIncludesSpoilers = searchParams.get("spoiler") === "true";
-    if (isInitialSpoilerState && hasSpoilerQueryParam) {
-      return;
-    }
-
-    if (requestIncludesSpoilers !== nextShowSpoilerContent) {
-      spoilerFilter = nextShowSpoilerContent;
-      void reloadFirstPage();
-    }
+    spoilerFilter = nextShowSpoilerContent;
+    void reloadFirstPage();
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {

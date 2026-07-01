@@ -160,6 +160,15 @@
     }, spoilerRevealAnimationMs);
   };
 
+  const handleCardClick = (event: MouseEvent): void => {
+    if (!isSpoilerContentMosaicked()) {
+      return;
+    }
+
+    event.preventDefault();
+    revealSpoiler();
+  };
+
   const getPrimaryCardAssetRegion = (): SupportedRegion => "jp";
   const getFallbackCardAssetRegion = (): SupportedRegion | null =>
     region === "jp" ? null : region;
@@ -241,10 +250,8 @@
 </script>
 
 {#snippet spoilerOverlay()}
-  <button
-    type="button"
+  <div
     class={`event-list-spoiler-mosaic-overlay flex size-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
-    onclick={revealSpoiler}
   >
     <span
       class="flex size-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
@@ -253,7 +260,7 @@
       !
     </span>
     <span class="text-sm font-semibold tracking-[0.12em] text-error">{spoilerContentLabel}</span>
-  </button>
+  </div>
 {/snippet}
 
 {#snippet cardFrame(size: "L" | "S", visible: boolean)}
@@ -394,7 +401,7 @@
     />
   {/snippet}
 
-<div class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`}>
+<div class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`} onclick={handleCardClick}>
   <article
     class={`card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
   >
