@@ -120,50 +120,6 @@ html, body {
     box-shadow: 0 8px 16px color-mix(in oklab, var(--color-base-content) 10%, transparent) !important;
   }
 
-  .event-list-unit-idol::after,
-  .event-list-unit-light-sound::after,
-  .event-list-unit-piapro::after,
-  .event-list-unit-school-refusal::after,
-  .event-list-unit-street::after,
-  .event-list-unit-theme-park::after {
-    content: "";
-    position: absolute;
-    left: 0.75rem;
-    bottom: 0.375rem;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 9999px;
-    border: 1px solid color-mix(in oklab, var(--color-base-content) 15%, transparent);
-    background-color: white;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 2.5rem 2.5rem;
-  }
-
-  .event-list-unit-idol::after {
-    background-image: url("/icons/icon_idol.png");
-  }
-
-  .event-list-unit-light-sound::after {
-    background-image: url("/icons/icon_light_sound.png");
-  }
-
-  .event-list-unit-piapro::after {
-    background-image: url("/icons/icon_piapro.png");
-  }
-
-  .event-list-unit-school-refusal::after {
-    background-image: url("/icons/icon_school_refusal.png");
-  }
-
-  .event-list-unit-street::after {
-    background-image: url("/icons/icon_street.png");
-  }
-
-  .event-list-unit-theme-park::after {
-    background-image: url("/icons/icon_theme_park.png");
-  }
-
   .content-breadcrumbs {
     max-width: 100%;
   }

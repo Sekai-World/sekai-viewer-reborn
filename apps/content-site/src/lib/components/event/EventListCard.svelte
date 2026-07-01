@@ -7,6 +7,7 @@
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { getEventTypeDisplay } from "$lib/domain/event";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import {
     EVENT_LIST_CARD_FRAME_CLASS,
     EVENT_LIST_CARD_IMAGE_CLASS,
@@ -51,23 +52,6 @@
   let spoilerRevealAnimating = $state(false);
   let lastSpoilerIdentity = $state("");
   let spoilerRevealTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  const unitIconClassByUnit: Record<string, string> = {
-    idol: "event-list-unit-idol",
-    light_sound: "event-list-unit-light-sound",
-    piapro: "event-list-unit-piapro",
-    school_refusal: "event-list-unit-school-refusal",
-    street: "event-list-unit-street",
-    theme_park: "event-list-unit-theme-park"
-  };
-
-  const getUnitIconClass = (unit: string | null | undefined): string => {
-    if (!unit) {
-      return "";
-    }
-
-    return unitIconClassByUnit[unit] ?? "";
-  };
 
   const hasSpoiler = (): boolean => {
     const startAtMs = toTimestampMs(item.startAt);
@@ -158,7 +142,7 @@
       <div class="h-10 rounded-lg bg-base-200/60"></div>
     </div>
   {:else}
-    <div class={`${EVENT_LIST_CARD_MEDIA_CLASS} ${getUnitIconClass(item.unit)}`}>
+    <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
       {#if item.assetBundleName}
         <EventAssetImage
           src={getEventBannerAssetURL(item.assetBundleName, region)}
@@ -172,6 +156,12 @@
           class="flex size-full items-center justify-center px-6 text-center text-sm opacity-70"
         >
           {item.title}
+        </div>
+      {/if}
+
+      {#if item.unit}
+        <div class="absolute left-3 bottom-1.5">
+          <UnitIconBadge unit={item.unit} />
         </div>
       {/if}
 
