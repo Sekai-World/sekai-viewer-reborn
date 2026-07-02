@@ -98,7 +98,10 @@ export const createEventListRequestQuery = (
   }
 
   if (queryState.unit.length > 0) {
-    query.unit = queryState.unit.join(",");
+    // "mixed" is the UI label for unit-less events; the backend filters on the raw value "none".
+    query.unit = queryState.unit
+      .map((unit) => (unit === "mixed" ? "none" : unit))
+      .join(",");
   }
 
   return query;

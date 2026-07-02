@@ -15,6 +15,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import type { CardListPage, CardListItem as CardListItemType } from "$lib/server/card-list";
   import type { PageData } from "./$types";
 
@@ -158,14 +159,6 @@
     }
 
     return `${value.replace("rarity_", "")}*`;
-  };
-
-  const getUnitIconUrl = (value: string): string | null => {
-    if (value === "none") {
-      return asset("/icons/icon_piapro.png");
-    }
-
-    return asset(`/icons/icon_${value}.png`);
   };
 
   const getUnitOptionLabel = (value: string): string =>
@@ -1071,16 +1064,7 @@
                 }}
                 aria-label={option.label}
               />
-              {#if getUnitIconUrl(option.value)}
-                <img
-                  src={getUnitIconUrl(option.value) ?? ""}
-                  alt=""
-                  aria-hidden="true"
-                  class="size-7 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-              {/if}
+              <UnitIconBadge unit={option.value} variant="sm" fallbackLabel={option.label} />
             </label>
           {/each}
         </div>
@@ -1108,16 +1092,12 @@
                   }}
                   aria-label={getSupportUnitOptionLabel(option)}
                 />
-                {#if getUnitIconUrl(option)}
-                  <img
-                    src={getUnitIconUrl(option) ?? ""}
-                    alt=""
-                    aria-hidden="true"
-                    class="size-7 object-contain"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                {/if}
+                <UnitIconBadge
+                  unit={option}
+                  variant="sm"
+                  fallbackLabel={getSupportUnitOptionLabel(option)}
+                  mapNoneToPiapro
+                />
               </label>
             {/each}
           </div>

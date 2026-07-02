@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
-  import { asset, resolve } from "$app/paths";
+  import { resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
@@ -12,6 +12,7 @@
   import EventListCard from "$lib/components/event/EventListCard.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -102,14 +103,6 @@
   const getUnitOptions = (): Array<{ value: string; label: string }> => [
     ...unitFilterValues.map((value) => ({ value, label: formatUnitLabel(value) }))
   ];
-
-  const getUnitIconUrl = (value: string): string | null => {
-    if (value === "" || value === "mixed") {
-      return null;
-    }
-
-    return asset(`/icons/icon_${value}.png`);
-  };
 
   const isSpoilerEvent = (item: EventListItem): boolean => {
     const startAtMs = toTimestampMs(item.startAt);
@@ -802,15 +795,8 @@
               />
               {#if option.value === "mixed"}
                 <Icon icon="mdi:puzzle" class="size-5" aria-hidden="true" />
-              {:else if getUnitIconUrl(option.value)}
-                <img
-                  src={getUnitIconUrl(option.value) ?? ""}
-                  alt=""
-                  aria-hidden="true"
-                  class="size-7 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
+              {:else}
+                <UnitIconBadge unit={option.value} variant="sm" fallbackLabel={option.label} />
               {/if}
             </label>
           {/each}
