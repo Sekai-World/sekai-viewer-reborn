@@ -801,7 +801,19 @@
 
 <dialog bind:this={filterDialog} class="modal">
   <div class="modal-box max-w-xl">
-    <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+      <form method="dialog">
+        <button
+          type="submit"
+          class="btn btn-circle btn-ghost btn-sm min-h-12! w-12!"
+          aria-label={closeLabel}
+          title={closeLabel}
+        >
+          <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+        </button>
+      </form>
+    </div>
     <div class="mt-4 grid gap-3">
       <label class="form-control">
         <span class="label-text mb-1 text-sm font-medium">{musicListFilterNameLabel}</span>
@@ -965,8 +977,7 @@
       <button type="button" class="btn btn-primary min-h-12!" onclick={applyFilters}
         >{listFilterApply}</button
       >
-      <form method="dialog"><button type="submit" class="btn min-h-12!">{closeLabel}</button></form>
     </div>
   </div>
-  <form method="dialog" class="modal-backdrop"><button type="submit">{closeLabel}</button></form>
+  <form method="dialog" class="modal-backdrop"><button type="submit" aria-label={closeLabel}></button></form>
 </dialog>
