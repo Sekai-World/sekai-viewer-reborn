@@ -20,8 +20,9 @@
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
   let disclaimerText = $state(getInitialI18nText("disclaimer"));
-  let latestDataEventsLabel = $state(getInitialI18nText("latestData.events"));
   let mixedUnitLabel = $state(getInitialI18nText("mixedUnitLabel"));
+  let footerBrandLabel = $state(getInitialI18nText("footer.brand"));
+  let footerDescription = $state(getInitialI18nText("footer.description"));
   let versionInfoTitle = $state(getInitialI18nText("versionInfo.title"));
   let versionAppLabel = $state(getInitialI18nText("versionInfo.appLabel"));
   let versionDataLabel = $state(getInitialI18nText("versionInfo.dataLabel"));
@@ -30,6 +31,7 @@
   let latestDataCardsLabel = $state(getInitialI18nText("latestData.cards"));
   let latestDataMusicsLabel = $state(getInitialI18nText("latestData.musics"));
   let latestDataGachasLabel = $state(getInitialI18nText("latestData.gachas"));
+  let latestDataEventsLabel = $state(getInitialI18nText("latestData.events"));
   let latestDataNoData = $state(getInitialI18nText("latestData.noData"));
   let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
@@ -99,6 +101,8 @@
     noEventLabel = translate("noCurrentEventData");
     disclaimerText = translate("disclaimer");
     mixedUnitLabel = translate("mixedUnitLabel");
+    footerBrandLabel = translate("footer.brand");
+    footerDescription = translate("footer.description");
     versionInfoTitle = translate("versionInfo.title");
     versionAppLabel = translate("versionInfo.appLabel");
     versionDataLabel = translate("versionInfo.dataLabel");
@@ -150,15 +154,6 @@
   const currentEventPromise = $derived(data.cards[regionIndex]);
 </script>
 
-<div class="-mt-6 mb-10 flex justify-center px-2">
-  <div
-    class="flex max-w-3xl gap-3 rounded-xl border border-info/25 bg-info/8 px-4 py-3 text-base-content/70"
-  >
-    <Icon icon="mdi:information-outline" class="mt-0.5 size-4 shrink-0 text-info/80" />
-    <p class="text-xs/relaxed">{disclaimerText}</p>
-  </div>
-</div>
-
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
 <section
   role="group"
@@ -181,10 +176,6 @@
     {swipeHint}
   </p>
 
-  <!-- Latest Data section
-       lg+: 3 columns — [cards+musics] | [gachas] | [events]
-       md:  2 columns — [cards+musics] | [gachas+events]
-       sm:  1 column, all stacked -->
   <section class="mb-8">
     <h2 class="mb-5 text-center text-base font-semibold tracking-wide text-base-content/70">
       {latestDataTitle}
@@ -211,6 +202,11 @@
               </div>
             </div>
           </div>
+          <div class="space-y-3 md:col-span-2 lg:col-span-1">
+            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="h-40 animate-pulse rounded-xl bg-base-300"></div>
+          </div>
+
           <!-- skeleton: gachas col -->
           <div class="space-y-3">
             <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
@@ -219,11 +215,6 @@
                 <div class="h-24 animate-pulse rounded-lg bg-base-300"></div>
               {/each}
             </div>
-          </div>
-          <!-- skeleton: events col -->
-          <div class="space-y-3">
-            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-            <div class="h-40 animate-pulse rounded-xl bg-base-300"></div>
           </div>
         </div>
       {:then regionData}
@@ -321,55 +312,13 @@
               </div>
             </div>
 
-            <!-- Column 2: Gachas -->
-            <div>
-              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
-                <span class="flex items-center gap-2">
-                  <Icon icon="mdi:gift-outline" class="size-4" aria-hidden="true" />
-                  {latestDataGachasLabel}
-                </span>
-                <a href="/gachas/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
-                  {latestDataViewAll}
-                  <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
-                </a>
-              </h3>
-              {#if regionData.gachas.length > 0}
-                <ul class="space-y-3">
-                  {#each regionData.gachas as gacha (gacha.id)}
-                    <li>
-                      <a
-                        href="/gacha/{regionData.region}/{gacha.id}"
-                        class="block overflow-hidden rounded-lg border border-base-content/8 shadow-sm transition-shadow hover:shadow-md"
-                      >
-                        <div class="aspect-[3/1] w-full bg-base-200 pt-2">
-                          <EventAssetImage
-                            src={getGachaBannerAssetURL(gacha.id, "jp")}
-                            alt={gacha.name ?? gacha.id}
-                            loadMode="visible"
-                            imageClass="size-full object-contain"
-                            buttonClass="block size-full"
-                          />
-                        </div>
-                        <div class="px-3 py-2">
-                          <p class="truncate text-sm font-medium">{gacha.name ?? gacha.id}</p>
-                        </div>
-                      </a>
-                    </li>
-                  {/each}
-                </ul>
-              {:else}
-                <p class="text-xs text-base-content/50">{latestDataNoData}</p>
-              {/if}
-            </div>
-
-            <!-- Column 3: Events -->
             <div class="md:col-span-2 lg:col-span-1">
               <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
                 <span class="flex items-center gap-2">
-                  <Icon icon="mdi:calendar-clock" class="size-4" aria-hidden="true" />
+                  <Icon icon="mdi:calendar-star" class="size-4" aria-hidden="true" />
                   {latestDataEventsLabel}
                 </span>
-                <a href="/events/{selectedRegion}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                <a href="/events/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
                   {latestDataViewAll}
                   <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
                 </a>
@@ -415,6 +364,46 @@
                   </div>
                 </article>
               {/await}
+            </div>
+
+            <div>
+              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                <span class="flex items-center gap-2">
+                  <Icon icon="mdi:gift-outline" class="size-4" aria-hidden="true" />
+                  {latestDataGachasLabel}
+                </span>
+                <a href="/gachas/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                  {latestDataViewAll}
+                  <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+                </a>
+              </h3>
+              {#if regionData.gachas.length > 0}
+                <ul class="space-y-3">
+                  {#each regionData.gachas as gacha (gacha.id)}
+                    <li>
+                      <a
+                        href="/gacha/{regionData.region}/{gacha.id}"
+                        class="block overflow-hidden rounded-lg border border-base-content/8 shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <div class="aspect-[3/1] w-full bg-base-200 pt-2">
+                          <EventAssetImage
+                            src={getGachaBannerAssetURL(gacha.id, "jp")}
+                            alt={gacha.name ?? gacha.id}
+                            loadMode="visible"
+                            imageClass="size-full object-contain"
+                            buttonClass="block size-full"
+                          />
+                        </div>
+                        <div class="px-3 py-2">
+                          <p class="truncate text-sm font-medium">{gacha.name ?? gacha.id}</p>
+                        </div>
+                      </a>
+                    </li>
+                  {/each}
+                </ul>
+              {:else}
+                <p class="text-xs text-base-content/50">{latestDataNoData}</p>
+              {/if}
             </div>
           </div>
         {/if}
@@ -471,6 +460,14 @@
           {/await}
         {/each}
       </tbody>
-     </table>
-   </div>
+    </table>
+  </div>
 </section>
+
+<footer class="mx-auto mt-12 max-w-4xl border-t border-base-content/10 px-4 py-7 text-center">
+  <p class="text-xs font-semibold tracking-wide text-base-content/55">{footerBrandLabel}</p>
+  <p class="mt-1 text-xs text-base-content/45">{footerDescription}</p>
+  <p class="mx-auto mt-3 max-w-3xl text-[0.68rem] leading-relaxed text-base-content/35">
+    {disclaimerText}
+  </p>
+</footer>
