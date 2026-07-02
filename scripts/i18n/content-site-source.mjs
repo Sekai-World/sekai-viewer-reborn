@@ -54,6 +54,7 @@ const namespaceByRoutePattern = [
   { pattern: /src\/routes\/\+page\.svelte$/, namespace: "home" },
   { pattern: /src\/routes\/card\//, namespace: "card" },
   { pattern: /src\/routes\/cards\//, namespace: "card" },
+  { pattern: /src\/routes\/music\//, namespace: "music" },
   { pattern: /src\/routes\/musics\//, namespace: "music" },
   { pattern: /src\/routes\/gacha\//, namespace: "gacha" },
   { pattern: /src\/routes\/gachas\//, namespace: "gacha" },
@@ -62,9 +63,12 @@ const namespaceByRoutePattern = [
   { pattern: /src\/lib\/event\.ts$/, namespace: "event" },
   { pattern: /src\/lib\/components\/CurrentEventCard\.svelte$/, namespace: "home" },
   { pattern: /src\/lib\/components\/Card/, namespace: "card" },
+  { pattern: /src\/lib\/components\/card\//, namespace: "card" },
   { pattern: /src\/lib\/components\/gacha\//, namespace: "gacha" },
   { pattern: /src\/lib\/components\/Music/, namespace: "music" },
-  { pattern: /src\/lib\/components\/Event/, namespace: "event" }
+  { pattern: /src\/lib\/components\/music\//, namespace: "music" },
+  { pattern: /src\/lib\/components\/Event/, namespace: "event" },
+  { pattern: /src\/lib\/components\/event\//, namespace: "event" }
 ];
 
 const readJson = async (filePath) => JSON.parse(await readFile(filePath, "utf8"));
