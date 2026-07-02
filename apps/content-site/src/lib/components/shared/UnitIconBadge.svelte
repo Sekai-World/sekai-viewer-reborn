@@ -25,9 +25,9 @@
   const iconUrl = $derived(resolveUnitIconUrl(unit, mapNoneToPiapro));
 
   const frameClass: Record<Variant, string> = {
-    sm: "size-7 border border-base-content/15 bg-base-100/70 dark:bg-gray-300",
-    default: "size-9 border border-base-content/15 bg-base-100/70 dark:bg-gray-300",
-    lg: "size-11 border-2 border-base-content/15 bg-base-100/70 dark:bg-gray-300"
+    sm: "size-7 border border-base-content/15 bg-white",
+    default: "size-9 border border-base-content/15 bg-white",
+    lg: "size-11 border-2 border-base-content/15 bg-white"
   };
 
   const imgClass: Record<Variant, string> = {
