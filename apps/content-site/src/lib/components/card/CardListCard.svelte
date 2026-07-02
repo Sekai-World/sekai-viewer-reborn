@@ -5,6 +5,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
 
   type CardListCardItem = {
     id: string;
@@ -86,13 +87,6 @@
   };
   const getAttrIconUrl = (size: 64 | 88 = 64): string | null =>
     item.attr ? asset(`/card_attr/icon_attribute_${item.attr}_${size}.png`) : null;
-  const getUnitIconUrl = (unit: string | null): string | null => {
-    if (!unit) {
-      return null;
-    }
-
-    return asset(`/icons/icon_${unit === "none" ? "piapro" : unit}.png`);
-  };
   const getCardFrameUrl = (size: "L" | "S"): string | null => {
     const rarityFrameLevel = getRarityFrameLevel();
     return rarityFrameLevel ? asset(`/card_frame/cardFrame_${size}_${rarityFrameLevel}.png`) : null;
@@ -349,34 +343,16 @@
   </svg>
 {/snippet}
 
-{#snippet unitIcon(iconUrl: string)}
-  <span
-    class="flex size-7 shrink-0 items-center justify-center rounded-full border border-base-content/15 bg-base-100/70 dark:bg-gray-300"
-  >
-    <img
-      src={iconUrl}
-      alt=""
-      aria-hidden="true"
-      class="size-7 max-w-none object-contain"
-      loading="lazy"
-      decoding="async"
-    />
-  </span>
-{/snippet}
-
 {#snippet metaBadges()}
-  {@const unitIconUrl = getUnitIconUrl(item.unit)}
-  {@const supportUnitIconUrl =
-    item.unit === "piapro" && item.supportUnit !== "none" ? getUnitIconUrl(item.supportUnit) : null}
   <div class="flex flex-wrap items-center gap-1.5">
     <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
       {idLabel}{item.id}
     </span>
-    {#if unitIconUrl}
-      {@render unitIcon(unitIconUrl)}
+    {#if item.unit}
+      <UnitIconBadge unit={item.unit} variant="sm" />
     {/if}
-    {#if supportUnitIconUrl}
-      {@render unitIcon(supportUnitIconUrl)}
+    {#if item.unit === "piapro" && item.supportUnit && item.supportUnit !== "none"}
+      <UnitIconBadge unit={item.supportUnit} variant="sm" />
     {/if}
   </div>
 {/snippet}

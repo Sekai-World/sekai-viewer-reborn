@@ -159,12 +159,6 @@
         </div>
       {/if}
 
-      {#if item.unit}
-        <div class="absolute left-3 bottom-1.5">
-          <UnitIconBadge unit={item.unit} />
-        </div>
-      {/if}
-
       <div class="absolute left-3 top-3">
         <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
           {idLabel}{item.id}
@@ -188,9 +182,14 @@
       {/if}
     </div>
 
-    <div class="px-4 pb-4 pt-3">
-      <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
-      <p class="mt-1 text-xs/relaxed opacity-65">{getEventTimeRange()}</p>
+    <div class="flex items-start gap-2 px-4 pb-4 pt-3">
+      <div class="min-w-0 flex-1">
+        <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
+        <p class="mt-1 text-xs/relaxed opacity-65">{getEventTimeRange()}</p>
+      </div>
+      {#if item.unit}
+        <UnitIconBadge unit={item.unit} class="mt-0.5 shrink-0" />
+      {/if}
     </div>
   {/if}
 </EventCardFrame>

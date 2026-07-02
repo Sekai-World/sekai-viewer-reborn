@@ -5,6 +5,7 @@
   import { getCardGachaVoiceAssetURL } from "$lib/assets/index";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import Icon from "@iconify/svelte";
 
   let {
@@ -77,13 +78,6 @@
     const normalizedUnit = unit.trim().toLowerCase();
     return unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit);
   };
-  const getUnitIconUrl = (unit: string | null | undefined): string | null => {
-    if (!unit) {
-      return null;
-    }
-
-    return asset(`/icons/icon_${unit === "none" ? "piapro" : unit}.png`);
-  };
   const getAttrIconUrl = (): string | null =>
     card.attr ? asset(`/card_attr/icon_attribute_${card.attr}_88.png`) : null;
   const getCharacterThumbnailUrl = (): string | null =>
@@ -136,7 +130,8 @@
   label: string,
   value: string | null,
   iconUrl: string | null = null,
-  iconFrame = true
+  iconFrame = true,
+  unitSlug: string | null = null
 )}
   {#if value}
     <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3">
@@ -144,7 +139,9 @@
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{label}</dt>
         <dd class="mt-1 truncate text-sm font-medium">{value}</dd>
       </div>
-      {#if iconUrl}
+      {#if unitSlug}
+        <UnitIconBadge unit={unitSlug} variant="lg" />
+      {:else if iconUrl}
         {#if iconFrame}
           <span
             class="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
@@ -253,9 +250,9 @@
       {#if card.character}
         {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl())}
       {/if}
-      {@render row(unitLabel, getDisplayUnitName(card.character?.unit), getUnitIconUrl(card.character?.unit))}
+      {@render row(unitLabel, getDisplayUnitName(card.character?.unit), undefined, true, card.character?.unit ?? null)}
       {#if shouldShowSupportUnit()}
-        {@render row(supportUnitLabel, getDisplayUnitName(card.supportUnit), getUnitIconUrl(card.supportUnit))}
+        {@render row(supportUnitLabel, getDisplayUnitName(card.supportUnit), undefined, true, card.supportUnit ?? null)}
       {/if}
       {@render gachaPhraseRow()}
       {@render row(attrLabel, formatLabel(card.attr), getAttrIconUrl(), false)}
