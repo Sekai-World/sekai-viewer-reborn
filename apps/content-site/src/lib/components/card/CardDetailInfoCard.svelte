@@ -79,7 +79,7 @@
     return unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit);
   };
   const getAttrIconUrl = (): string | null =>
-    card.attr ? asset(`/card_attr/icon_attribute_${card.attr}_88.png`) : null;
+    card.attr ? asset(`/card_attr/icon_attribute_${card.attr}.png`) : null;
   const getCharacterThumbnailUrl = (): string | null =>
     card.character?.id !== null && card.character?.id !== undefined
       ? getLocalCharacterThumbnailAssetURL(card.character.id)

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { asset } from "$app/paths";
   import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets/index";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
@@ -349,6 +350,24 @@
       {idLabel}{item.id}
     </span>
     {#if item.unit}
+      {#if item.characterId !== null}
+        {@const charThumbUrl = getLocalCharacterThumbnailAssetURL(item.characterId)}
+        {#if charThumbUrl}
+          <span
+            class="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-base-content/15 bg-white"
+            aria-hidden="true"
+          >
+            <img
+              src={charThumbUrl}
+              alt=""
+              aria-hidden="true"
+              class="size-7 object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </span>
+        {/if}
+      {/if}
       <UnitIconBadge unit={item.unit} variant="sm" />
     {/if}
     {#if item.unit === "piapro" && item.supportUnit && item.supportUnit !== "none"}
@@ -405,7 +424,7 @@
         {@render spoilerOverlay()}
       </div>
     {:else if viewMode === "agenda"}
-      <div class="grid grid-cols-[7.5rem_1fr] gap-4 p-3 sm:grid-cols-[10rem_1fr]">
+      <div class="grid grid-cols-[9rem_1fr] gap-4 p-3 sm:grid-cols-[12rem_1fr]">
         <div class="grid grid-cols-2 gap-2 self-center">
           {#if !isTrainedOnlyCard()}
             {@render thumbImage(false)}
