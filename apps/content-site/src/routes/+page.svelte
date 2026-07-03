@@ -464,6 +464,10 @@
   </div>
 </section>
 
+<svelte:head>
+  <title>Sekai Viewer</title>
+</svelte:head>
+
 <footer class="mx-auto mt-12 max-w-4xl border-t border-base-content/10 px-4 py-7 text-center">
   <p class="text-xs font-semibold tracking-wide text-base-content/55">{footerBrandLabel}</p>
   <p class="mt-1 text-xs text-base-content/45">{footerDescription}</p>
