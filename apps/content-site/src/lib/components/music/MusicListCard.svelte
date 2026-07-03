@@ -219,25 +219,23 @@
         {:else}
           <div class="size-full bg-base-200"></div>
         {/if}
-        {#if !isSpoilerPlaceholderVisible()}
-          <div class="absolute left-3 top-3">
-            <span
-              class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
-            >
-              {idLabel}{item.id}
-            </span>
-          </div>
-          <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-            {#each item.categories as category (category)}
-              <span
-                class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
-              >
-                {getCategoryLabel(category)}
-              </span>
-            {/each}
-          </div>
-        {/if}
       </div>
+      {#if !isSpoilerPlaceholderVisible()}
+        <div class="flex flex-wrap items-center gap-1.5 px-3 pt-3 sm:px-4 sm:pt-4">
+          <span
+            class="badge border-none bg-base-200 font-semibold text-base-content"
+          >
+            {idLabel}{item.id}
+          </span>
+          {#each item.categories as category (category)}
+            <span
+              class="badge border-none bg-base-200 font-semibold text-base-content"
+            >
+              {getCategoryLabel(category)}
+            </span>
+          {/each}
+        </div>
+      {/if}
       {#if !isSpoilerPlaceholderVisible()}
         <div class="card-body gap-2 p-3 sm:p-4">
           {@render musicTagBadges("badge-xs")}

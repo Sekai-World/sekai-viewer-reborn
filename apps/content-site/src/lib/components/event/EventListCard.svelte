@@ -158,27 +158,21 @@
           {item.title}
         </div>
       {/if}
+    </div>
 
-      <div class="absolute left-3 top-3">
-        <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
-          {idLabel}{item.id}
+    <div class="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+      <span class="badge border-none bg-base-200 font-semibold text-base-content">
+        {idLabel}{item.id}
+      </span>
+      {#if getEventTypeDisplay(item.eventType, uiLocale)}
+        <span class="badge border-none bg-base-200 font-semibold text-base-content">
+          {getEventTypeDisplay(item.eventType, uiLocale)}
         </span>
-      </div>
-
-      <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-        {#if getEventTypeDisplay(item.eventType, uiLocale)}
-          <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
-            {getEventTypeDisplay(item.eventType, uiLocale)}
-          </span>
-        {/if}
-      </div>
-
+      {/if}
       {#if isCurrentEvent()}
-        <div class="absolute bottom-3 right-3">
-          <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
-            {currentEventLabel}
-          </span>
-        </div>
+        <span class="badge border-none bg-primary font-semibold text-primary-content">
+          {currentEventLabel}
+        </span>
       {/if}
     </div>
 

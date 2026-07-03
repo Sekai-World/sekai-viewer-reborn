@@ -146,19 +146,16 @@
           {item.title}
         </div>
       {/if}
+    </div>
 
-      <div class="absolute left-3 top-3">
-        <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
-          {idLabel}{item.id}
-        </span>
-      </div>
-
+    <div class="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+      <span class="badge border-none bg-base-200 font-semibold text-base-content">
+        {idLabel}{item.id}
+      </span>
       {#if isCurrentGacha()}
-        <div class="absolute bottom-3 right-3">
-          <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
-            {currentGachaLabel}
-          </span>
-        </div>
+        <span class="badge border-none bg-primary font-semibold text-primary-content">
+          {currentGachaLabel}
+        </span>
       {/if}
     </div>
 
