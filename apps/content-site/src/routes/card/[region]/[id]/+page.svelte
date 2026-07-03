@@ -223,7 +223,7 @@
 
       <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
         <div class="space-y-3">
-          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+          <div class="content-card-inset rounded-xl p-3 sm:px-4">
             <div class="flex items-center justify-between gap-4">
               <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
               <div class="h-8 w-20 animate-pulse rounded bg-base-300"></div>
@@ -231,7 +231,7 @@
             <div class="mt-3 h-3 animate-pulse rounded-full bg-base-300"></div>
           </div>
 
-          <div class="content-card-inset space-y-3 rounded-xl px-3 sm:px-4 py-3">
+          <div class="content-card-inset space-y-3 rounded-xl p-3 sm:px-4">
             <div class="flex items-center justify-between gap-3">
               <div class="h-4 w-32 animate-pulse rounded bg-base-300"></div>
               <div class="h-5 w-10 animate-pulse rounded-full bg-base-300"></div>
@@ -265,7 +265,7 @@
             {/each}
           </div>
 
-          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+          <div class="content-card-inset rounded-xl p-3 sm:px-4">
             <div class="flex items-center justify-between gap-4">
               <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
               <div class="h-5 w-20 animate-pulse rounded bg-base-300"></div>
