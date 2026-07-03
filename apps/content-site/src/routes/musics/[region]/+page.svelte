@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
-  import { asset, resolve } from "$app/paths";
+  import { resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
@@ -12,6 +12,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
@@ -187,11 +188,6 @@
 
   const toggleDraftValue = (values: string[], value: string, checked: boolean): string[] =>
     checked ? [...new Set([...values, value])] : values.filter((entry) => entry !== value);
-
-  const getMusicTagIconUrl = (value: (typeof musicTagOptions)[number]): string | null => {
-    const icon = unitCodeByMusicTag[value];
-    return icon ? asset(`/icons/icon_${icon}.png`) : null;
-  };
 
   const mapLegacyVocalUnitToTag = (value: string): string => musicTagByUnitCode[value] ?? value;
 
@@ -858,7 +854,7 @@
         <legend class="label-text text-sm font-medium">{musicListTagLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
-            {@const tagIconUrl = getMusicTagIconUrl(tag)}
+            {@const unitCode = unitCodeByMusicTag[tag]}
             <label
               class={`btn btn-sm join-item size-12! min-h-12! p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
               title={getMusicTagLabel(tag)}
@@ -870,21 +866,12 @@
                 onchange={(event) => toggleMusicTag(tag, event.currentTarget.checked)}
                 aria-label={getMusicTagLabel(tag)}
               />
-              {#if tagIconUrl}
-                <img
-                  src={tagIconUrl}
-                  alt=""
-                  aria-hidden="true"
-                  class="size-7 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
+              {#if tag === "all"}
+                <Icon icon="mdi:apps" class="size-6" aria-hidden="true" />
+              {:else if unitCode}
+                <UnitIconBadge unit={unitCode} variant="sm" fallbackLabel={getMusicTagLabel(tag)} />
               {:else}
-                <Icon
-                  icon={tag === "all" ? "mdi:apps" : "mdi:dots-horizontal-circle-outline"}
-                  class="size-6"
-                  aria-hidden="true"
-                />
+                <Icon icon="mdi:dots-horizontal-circle-outline" class="size-6" aria-hidden="true" />
               {/if}
             </label>
           {/each}
