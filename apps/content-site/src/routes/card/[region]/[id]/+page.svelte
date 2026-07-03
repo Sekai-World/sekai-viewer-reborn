@@ -54,8 +54,6 @@
   let audioPauseLabel = $state(getInitialI18nText("audioPauseLabel"));
   let audioUnavailableLabel = $state(getInitialI18nText("audioUnavailableLabel"));
   let cardSkillTitle = $state(getInitialI18nText("cardSkillTitle"));
-  let skillNameLabel = $state(getInitialI18nText("skillNameLabel"));
-  let skillDescriptionLabel = $state(getInitialI18nText("skillDescriptionLabel"));
   let skillLevelLabel = $state(getInitialI18nText("skillLevelLabel"));
   let durationLabel = $state(getInitialI18nText("durationLabel"));
   let effectValueLabel = $state(getInitialI18nText("effectValueLabel"));
@@ -113,8 +111,6 @@
     audioPauseLabel = translate("audioPauseLabel");
     audioUnavailableLabel = translate("audioUnavailableLabel");
     cardSkillTitle = translate("cardSkillTitle");
-    skillNameLabel = translate("skillNameLabel");
-    skillDescriptionLabel = translate("skillDescriptionLabel");
     skillLevelLabel = translate("skillLevelLabel");
     durationLabel = translate("durationLabel");
     effectValueLabel = translate("effectValueLabel");
@@ -428,9 +424,8 @@
         <div class="flex min-w-0 flex-col gap-4">
           <CardDetailSkillCard
             skill={payload.card.skill}
+            character={payload.card.character}
             title={cardSkillTitle}
-            {skillNameLabel}
-            {skillDescriptionLabel}
             {skillLevelLabel}
             {durationLabel}
             {effectValueLabel}
@@ -507,6 +502,7 @@
               <CardDetailGachaCard
                 {gachas}
                 region={data.region}
+                uiLocale={displayLocale}
                 title={cardGachaBannersTitle}
                 emptyLabel={noRelatedGachaLabel}
                 showAllLabel={showAllGachaLabel}

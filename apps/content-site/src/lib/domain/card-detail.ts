@@ -13,10 +13,26 @@ type CardDetailSkillEffectDetail = {
   activateEffectValueType: string | null;
 };
 
+type CardDetailSkillEnhanceCondition = {
+  id: number | null;
+  seq: number | null;
+  unit: string | null;
+};
+
+type CardDetailSkillEnhance = {
+  activateEffectValue: number | null;
+  skillEnhanceType: string | null;
+  skillEnhanceCondition: CardDetailSkillEnhanceCondition | null;
+};
+
 type CardDetailSkillEffect = {
   id: number | null;
   type: string | null;
   notesJudgmentType: string | null;
+  activateCharacterRank: number | null;
+  activateUnitCount: number | null;
+  activateLife: number | null;
+  skillEnhance: CardDetailSkillEnhance | null;
   details: CardDetailSkillEffectDetail[];
 };
 
@@ -100,7 +116,7 @@ type CardGachaBanner = {
   id: string;
   name: string | null;
   assetbundleName: string | null;
-  startAt: number | null;
+  startAt: string | number | null;
 };
 
 export type {
@@ -111,6 +127,8 @@ export type {
   CardDetailParams,
   CardRelatedEvent,
   CardDetailSkill,
+  CardDetailSkillEnhance,
+  CardDetailSkillEnhanceCondition,
   CardDetailSkillEffect,
   CardDetailSkillEffectDetail,
   CardParameterSet

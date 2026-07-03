@@ -151,6 +151,36 @@ const parseCharacterNamePart = (
   keys: readonly string[]
 ): string | null => pickFirstString(characterNode, keys);
 
+const parseSkillEnhance = (effectNode: Record<string, unknown>) => {
+  const skillEnhanceNode = getNestedObject(effectNode, ["skillEnhance", "skill_enhance"]);
+  if (!skillEnhanceNode) {
+    return null;
+  }
+
+  const conditionNode = getNestedObject(skillEnhanceNode, [
+    "skillEnhanceCondition",
+    "skill_enhance_condition"
+  ]);
+
+  return {
+    activateEffectValue: pickFirstNumber(skillEnhanceNode, [
+      "activateEffectValue",
+      "activate_effect_value"
+    ]),
+    skillEnhanceType: pickFirstString(skillEnhanceNode, [
+      "skillEnhanceType",
+      "skill_enhance_type"
+    ]),
+    skillEnhanceCondition: conditionNode
+      ? {
+          id: pickFirstNumber(conditionNode, ["id"]),
+          seq: pickFirstNumber(conditionNode, ["seq"]),
+          unit: pickFirstString(conditionNode, ["unit"])
+        }
+      : null
+  };
+};
+
 const parseSkillEffects = (skillNode: Record<string, unknown> | null) =>
   (getNestedArray(skillNode ?? {}, ["skillEffects", "skill_effects"]) ?? [])
     .map((value) => {
@@ -166,6 +196,13 @@ const parseSkillEffects = (skillNode: Record<string, unknown> | null) =>
           "activateNotesJudgmentType",
           "activate_notes_judgment_type"
         ]),
+        activateCharacterRank: pickFirstNumber(effectNode, [
+          "activateCharacterRank",
+          "activate_character_rank"
+        ]),
+        activateUnitCount: pickFirstNumber(effectNode, ["activateUnitCount", "activate_unit_count"]),
+        activateLife: pickFirstNumber(effectNode, ["activateLife", "activate_life"]),
+        skillEnhance: parseSkillEnhance(effectNode),
         details: (getNestedArray(effectNode, ["skillEffectDetails", "skill_effect_details"]) ?? [])
           .map((detailValue) => {
             const detailNode = getObject(detailValue);
@@ -528,7 +565,7 @@ export const parseCardGachaBanners = (payload: unknown): CardGachaBanner[] => {
         id,
         name: pickFirstString(node, ["name"]),
         assetbundleName: pickFirstString(node, ["assetbundleName", "assetBundleName"]),
-        startAt: pickFirstNumber(node, ["startAt", "start_at"])
+        startAt: pickFirstDateValue(node, ["startAt", "start_at"])
       };
     })
     .filter((banner): banner is CardGachaBanner => banner !== null);
