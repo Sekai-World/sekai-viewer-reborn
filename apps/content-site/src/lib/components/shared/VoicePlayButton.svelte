@@ -69,6 +69,17 @@
     stopPlayback();
   });
 
+  // Pause and clean up when the component is destroyed
+  $effect(() => {
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+      }
+    };
+  });
+
   const handleAudioError = (): void => {
     loadError = true;
     stopPlayback();

@@ -44,7 +44,7 @@
   );
 
   $effect(() => {
-    if (src !== undefined) {
+    if (src) {
       imageLoaded = false;
       imageFailed = false;
       imageVisible = loadMode === "immediate";
