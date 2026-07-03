@@ -6,6 +6,7 @@
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import VoicePlayButton from "$lib/components/shared/VoicePlayButton.svelte";
   import Icon from "@iconify/svelte";
 
   let {
@@ -24,6 +25,7 @@
     gachaPhraseLabel,
     audioPlayLabel,
     audioPauseLabel,
+    audioUnavailableLabel,
     unitProfiles
   }: {
     card: CardDetail;
@@ -41,6 +43,7 @@
     gachaPhraseLabel: string;
     audioPlayLabel: string;
     audioPauseLabel: string;
+    audioUnavailableLabel: string;
     unitProfiles: Record<string, string>;
   } = $props();
 
@@ -55,9 +58,6 @@
       ? getCardGachaVoiceAssetURL(card.assetBundleName)
       : null
   );
-
-  let gachaPhraseAudio: HTMLAudioElement | null = $state(null);
-  let isGachaPhrasePlaying = $state(false);
 
   const formatLabel = (value: string | null): string | null =>
     value
@@ -101,29 +101,6 @@
       : getRarityStarKeys().map(() => rarityStarUrl);
   const shouldShowSupportUnit = (): boolean =>
     card.supportUnit !== "none" || card.character?.unit === "piapro";
-  const toggleGachaPhraseAudio = async (): Promise<void> => {
-    if (!gachaPhraseAudio || !gachaPhraseAudioUrl) {
-      return;
-    }
-
-    if (isGachaPhrasePlaying) {
-      gachaPhraseAudio.pause();
-      gachaPhraseAudio.currentTime = 0;
-      isGachaPhrasePlaying = false;
-      return;
-    }
-
-    if (gachaPhraseAudio.ended || gachaPhraseAudio.currentTime >= gachaPhraseAudio.duration) {
-      gachaPhraseAudio.currentTime = 0;
-    }
-
-    try {
-      await gachaPhraseAudio.play();
-      isGachaPhrasePlaying = true;
-    } catch {
-      isGachaPhrasePlaying = false;
-    }
-  };
 </script>
 
 {#snippet row(
@@ -182,30 +159,12 @@
 
       <div class="flex shrink-0 items-center gap-3">
         {#if gachaPhraseAudioUrl}
-          <button
-            type="button"
-            class="btn btn-circle btn-primary btn-md shrink-0 shadow-sm"
-            aria-label={isGachaPhrasePlaying ? audioPauseLabel : audioPlayLabel}
-            title={isGachaPhrasePlaying ? audioPauseLabel : audioPlayLabel}
-            onclick={toggleGachaPhraseAudio}
-          >
-            <Icon
-              icon={isGachaPhrasePlaying ? "mdi:pause" : "mdi:play"}
-              class="size-5"
-              aria-hidden="true"
-            />
-          </button>
-          <audio
-            bind:this={gachaPhraseAudio}
+          <VoicePlayButton
             src={gachaPhraseAudioUrl}
-            preload="none"
-            onended={() => {
-              isGachaPhrasePlaying = false;
-              if (gachaPhraseAudio) {
-                gachaPhraseAudio.currentTime = 0;
-              }
-            }}
-          ></audio>
+            playLabel={audioPlayLabel}
+            pauseLabel={audioPauseLabel}
+            errorLabel={audioUnavailableLabel}
+          />
         {/if}
       </div>
     </div>
