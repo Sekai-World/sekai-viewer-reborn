@@ -169,3 +169,10 @@ When changing `content-site` UI, prefer this order:
 3. If the change is local, use markup utility classes.
 4. If behavior or structure repeats, extract a shared Svelte component.
 5. Put non-component shared constants under `src/lib/styles` or another non-component folder.
+
+## Shared Interactive Audio Controls
+
+- `AudioPlayer` from `@platform/ui-shell` is the full music player component for music previews and event BGM. It is used by `EventDetailBgmCard` and `MusicPreviewCard`.
+- `VoicePlayButton.svelte` is the compact circular voice play button for short voice clips such as card gacha phrases. It lives in `shared/` and is used by `CardDetailInfoCard`.
+- Both controls manage their own `HTMLAudioElement` state; consumers pass a `src` and localized labels.
+- `VoicePlayButton` should surface missing voice assets with a disabled error icon and localized tooltip instead of silently reverting to the idle play state.
