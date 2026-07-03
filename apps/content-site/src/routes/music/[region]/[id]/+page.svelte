@@ -320,6 +320,7 @@
             />
             <MusicDifficultyCard
               music={payload.music}
+              region={data.region}
               {difficultyLabel}
               {levelLabel}
               {noteCountLabel}

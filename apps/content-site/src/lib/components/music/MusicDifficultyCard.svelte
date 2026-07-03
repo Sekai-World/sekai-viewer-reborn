@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { MusicDetail } from "$lib/domain/music-detail";
-  import { getMusicChartSvgUrl } from "$lib/assets/index";
+  import { getMusicChartPreviewAssetURL } from "$lib/assets/index";
+  import type { SupportedRegion } from "$lib/domain/regions";
   import Icon from "@iconify/svelte";
 
   const difficultyOrder = ["easy", "normal", "hard", "expert", "master", "append"];
@@ -15,6 +16,7 @@
 
   let {
     music,
+    region,
     difficultyLabel,
     levelLabel,
     noteCountLabel,
@@ -23,6 +25,7 @@
     getDifficultyLabel
   }: {
     music: MusicDetail;
+    region: SupportedRegion;
     difficultyLabel: string;
     levelLabel: string;
     noteCountLabel: string;
@@ -75,7 +78,7 @@
                 <td>{diff.noteCount}</td>
                 <td>
                   <a
-                    href={getMusicChartSvgUrl(music.id, diff.difficulty)}
+                    href={getMusicChartPreviewAssetURL(region, music.id, diff.difficulty)}
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-ghost btn-xs"
