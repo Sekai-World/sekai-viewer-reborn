@@ -49,7 +49,7 @@
         />
         <span>{title}</span>
       </p>
-      <span class="badge badge-outline border-base-content/20 font-semibold">
+      <span class="badge border-base-content/25 bg-base-100/80 font-semibold text-base-content">
         {idLabel}{music.id}
       </span>
     </div>
@@ -86,7 +86,7 @@
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{categoryLabel}</dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.categories as category (category)}
-              <span class="badge badge-outline badge-sm">{getCategoryLabel(category)}</span>
+              <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">{getCategoryLabel(category)}</span>
             {/each}
           </dd>
         </div>
@@ -97,7 +97,7 @@
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{tagLabel}</dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.tags as tag (tag)}
-              <span class="badge badge-outline badge-sm">{getTagLabel(tag)}</span>
+              <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">{getTagLabel(tag)}</span>
             {/each}
           </dd>
         </div>
