@@ -8,6 +8,7 @@
     displayLocale,
     title,
     idLabel,
+    internalResourceCodeLabel,
     nameLabel,
     composerLabel,
     arrangerLabel,
@@ -22,6 +23,7 @@
     displayLocale: string;
     title: string;
     idLabel: string;
+    internalResourceCodeLabel: string;
     nameLabel: string;
     composerLabel: string;
     arrangerLabel: string;
@@ -107,7 +109,12 @@
           <dd class="mt-1 text-sm font-medium">{formatDisplayDateTime(music.publishedAt, displayLocale)}</dd>
         </div>
       {/if}
+      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+          {internalResourceCodeLabel}
+        </dt>
+        <dd class="mt-1 text-sm font-medium">{music.assetBundleName ?? "--"}</dd>
+      </div>
     </dl>
   </div>
 </article>
-

@@ -16,6 +16,7 @@
     displayLocale,
     title,
     idLabel,
+    internalResourceCodeLabel,
     nameLabel,
     unitLabel,
     mixedUnitLabel,
@@ -31,6 +32,7 @@
     displayLocale: string;
     title: string;
     idLabel: string;
+    internalResourceCodeLabel: string;
     nameLabel: string;
     unitLabel: string;
     mixedUnitLabel: string;
@@ -128,6 +130,12 @@
         <dd class="mt-1 text-sm font-medium">
           {formatDisplayDateTime(event.endAt, displayLocale)}
         </dd>
+      </div>
+      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+          {internalResourceCodeLabel}
+        </dt>
+        <dd class="mt-1 text-sm font-medium">{event.assetBundleName ?? "--"}</dd>
       </div>
       {#if event.bannerGameCharacter}
         {@const char = event.bannerGameCharacter}

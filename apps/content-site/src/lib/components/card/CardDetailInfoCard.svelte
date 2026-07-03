@@ -14,6 +14,7 @@
     displayLocale,
     title,
     idLabel,
+    internalResourceCodeLabel,
     nameLabel,
     characterLabel,
     unitLabel,
@@ -32,6 +33,7 @@
     displayLocale: string;
     title: string;
     idLabel: string;
+    internalResourceCodeLabel: string;
     nameLabel: string;
     characterLabel: string;
     unitLabel: string;
@@ -218,6 +220,7 @@
       {@render rarityRow()}
       {@render row(typeLabel, formatLabel(card.cardSupplyType))}
       {@render row(releaseAtLabel, formatDisplayDateTime(card.releaseAt ?? card.archivePublishedAt, displayLocale))}
+      {@render row(internalResourceCodeLabel, card.assetBundleName)}
     </dl>
   </div>
 </article>

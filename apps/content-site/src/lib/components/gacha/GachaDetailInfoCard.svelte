@@ -9,6 +9,7 @@
     uiLocale,
     title,
     idLabel,
+    internalResourceCodeLabel,
     nameLabel,
     gachaTypeLabel,
     gachaTypeMap,
@@ -21,6 +22,7 @@
     uiLocale: string;
     title: string;
     idLabel: string;
+    internalResourceCodeLabel: string;
     nameLabel: string;
     gachaTypeLabel: string;
     gachaTypeMap: Record<string, string>;
@@ -95,6 +97,12 @@
       <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{costLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{formatCost()}</dd>
+      </div>
+      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+          {internalResourceCodeLabel}
+        </dt>
+        <dd class="mt-1 text-sm font-medium">{gacha.assetBundleName ?? "--"}</dd>
       </div>
     </dl>
   </div>
