@@ -31,6 +31,7 @@
   let nameLabel = $state(getInitialI18nText("nameLabel"));
   let musicTitlePrefix = $state(getInitialI18nText("pageTitle.musicPrefix"));
   let musicDetailInfoTitle = $state(getInitialI18nText("musicDetailInfoTitle"));
+  let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let composerLabel = $state(getInitialI18nText("musicDetailComposerLabel"));
   let arrangerLabel = $state(getInitialI18nText("musicDetailArrangerLabel"));
   let lyricistLabel = $state(getInitialI18nText("musicDetailLyricistLabel"));
@@ -92,6 +93,7 @@
     nameLabel = translate("nameLabel");
     musicTitlePrefix = translate("pageTitle.musicPrefix");
     musicDetailInfoTitle = translate("musicDetailInfoTitle");
+    internalResourceCodeLabel = translate("internalResourceCodeLabel");
     composerLabel = translate("musicDetailComposerLabel");
     arrangerLabel = translate("musicDetailArrangerLabel");
     lyricistLabel = translate("musicDetailLyricistLabel");
@@ -278,6 +280,7 @@
               {displayLocale}
               title={musicDetailInfoTitle}
               {idLabel}
+              {internalResourceCodeLabel}
               {nameLabel}
               {composerLabel}
               {arrangerLabel}

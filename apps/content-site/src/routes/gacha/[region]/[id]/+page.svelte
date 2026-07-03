@@ -40,6 +40,7 @@
   let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let gachaInfoTitle = $state(getInitialI18nText("gachaInfoTitle"));
+  let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let gachaCountdownTitle = $state(getInitialI18nText("gachaCountdownTitle"));
   let logoLabel = $state(getInitialI18nText("gachaAssetTabs.logo"));
   let bannerLabel = $state(getInitialI18nText("gachaAssetTabs.banner"));
@@ -138,6 +139,7 @@
     imageUnavailableLabel = translate("imageUnavailable");
     closeLabel = translate("closeLabel");
     gachaInfoTitle = translate("gachaInfoTitle");
+    internalResourceCodeLabel = translate("internalResourceCodeLabel");
     gachaCountdownTitle = translate("gachaCountdownTitle");
     logoLabel = translate("gachaAssetTabs.logo");
     bannerLabel = translate("gachaAssetTabs.banner");
@@ -312,6 +314,7 @@
             uiLocale={displayLocale || data.uiLocale}
             title={gachaInfoTitle}
             {idLabel}
+            {internalResourceCodeLabel}
             {nameLabel}
             {gachaTypeLabel}
             {gachaTypeMap}

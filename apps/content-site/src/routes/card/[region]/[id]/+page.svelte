@@ -37,6 +37,7 @@
   let noCardLabel = $state(getInitialI18nText("noCardData"));
   let debugCardJsonButtonLabel = $state(getInitialI18nText("debugCardJsonButton"));
   let debugCardJsonTitle = $state(getInitialI18nText("debugCardJsonTitle"));
+  let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let normalLabel = $state(getInitialI18nText("cardAssetTabs.normal"));
   let trainedLabel = $state(getInitialI18nText("cardAssetTabs.trained"));
   let normalCutoutLabel = $state(getInitialI18nText("cardAssetTabs.normalCutout"));
@@ -94,6 +95,7 @@
     noCardLabel = translate("noCardData");
     debugCardJsonButtonLabel = translate("debugCardJsonButton");
     debugCardJsonTitle = translate("debugCardJsonTitle");
+    internalResourceCodeLabel = translate("internalResourceCodeLabel");
     normalLabel = translate("cardAssetTabs.normal");
     trainedLabel = translate("cardAssetTabs.trained");
     normalCutoutLabel = translate("cardAssetTabs.normalCutout");
@@ -382,9 +384,10 @@
             <CardDetailInfoCard
               card={payload.card}
               {displayLocale}
-              title={cardInfoTitle}
-              {idLabel}
-              {nameLabel}
+            title={cardInfoTitle}
+            {idLabel}
+            {internalResourceCodeLabel}
+            {nameLabel}
               {characterLabel}
               {unitLabel}
               {supportUnitLabel}
@@ -402,9 +405,10 @@
             <CardDetailInfoCard
               card={payload.card}
               {displayLocale}
-              title={cardInfoTitle}
-              {idLabel}
-              {nameLabel}
+            title={cardInfoTitle}
+            {idLabel}
+            {internalResourceCodeLabel}
+            {nameLabel}
               {characterLabel}
               {unitLabel}
               {supportUnitLabel}

@@ -74,6 +74,7 @@
   let debugEventJsonTitle = $state(getInitialI18nText("debugEventJsonTitle"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let bannerCharacterLabel = $state(getInitialI18nText("bannerCharacterLabel"));
+  let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
@@ -129,6 +130,7 @@
     debugEventJsonTitle = translate("debugEventJsonTitle");
     closeLabel = translate("closeLabel");
     bannerCharacterLabel = translate("bannerCharacterLabel");
+    internalResourceCodeLabel = translate("internalResourceCodeLabel");
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
@@ -304,6 +306,7 @@
               {displayLocale}
               title={eventInfoTitle}
               {idLabel}
+              {internalResourceCodeLabel}
               {nameLabel}
               {unitLabel}
               {mixedUnitLabel}
