@@ -15,13 +15,18 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
 
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state("");
@@ -37,6 +42,7 @@
   let noCardLabel = $state(getInitialI18nText("noCardData"));
   let debugCardJsonButtonLabel = $state(getInitialI18nText("debugCardJsonButton"));
   let debugCardJsonTitle = $state(getInitialI18nText("debugCardJsonTitle"));
+  let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let normalLabel = $state(getInitialI18nText("cardAssetTabs.normal"));
   let trainedLabel = $state(getInitialI18nText("cardAssetTabs.trained"));
   let normalCutoutLabel = $state(getInitialI18nText("cardAssetTabs.normalCutout"));
@@ -51,10 +57,8 @@
   let releaseAtLabel = $state(getInitialI18nText("releaseAtLabel"));
   let gachaPhraseLabel = $state(getInitialI18nText("gachaPhraseLabel"));
   let audioPlayLabel = $state(getInitialI18nText("audioPlayLabel"));
-  let audioPauseLabel = $state(getInitialI18nText("audioPauseLabel"));
+  let audioUnavailableLabel = $state(getInitialI18nText("audioUnavailableLabel"));
   let cardSkillTitle = $state(getInitialI18nText("cardSkillTitle"));
-  let skillNameLabel = $state(getInitialI18nText("skillNameLabel"));
-  let skillDescriptionLabel = $state(getInitialI18nText("skillDescriptionLabel"));
   let skillLevelLabel = $state(getInitialI18nText("skillLevelLabel"));
   let durationLabel = $state(getInitialI18nText("durationLabel"));
   let effectValueLabel = $state(getInitialI18nText("effectValueLabel"));
@@ -95,6 +99,7 @@
     noCardLabel = translate("noCardData");
     debugCardJsonButtonLabel = translate("debugCardJsonButton");
     debugCardJsonTitle = translate("debugCardJsonTitle");
+    internalResourceCodeLabel = translate("internalResourceCodeLabel");
     normalLabel = translate("cardAssetTabs.normal");
     trainedLabel = translate("cardAssetTabs.trained");
     normalCutoutLabel = translate("cardAssetTabs.normalCutout");
@@ -109,10 +114,8 @@
     releaseAtLabel = translate("releaseAtLabel");
     gachaPhraseLabel = translate("gachaPhraseLabel");
     audioPlayLabel = translate("audioPlayLabel");
-    audioPauseLabel = translate("audioPauseLabel");
+    audioUnavailableLabel = translate("audioUnavailableLabel");
     cardSkillTitle = translate("cardSkillTitle");
-    skillNameLabel = translate("skillNameLabel");
-    skillDescriptionLabel = translate("skillDescriptionLabel");
     skillLevelLabel = translate("skillLevelLabel");
     durationLabel = translate("durationLabel");
     effectValueLabel = translate("effectValueLabel");
@@ -144,7 +147,7 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
   });
 
@@ -157,7 +160,7 @@
   });
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(locale, key));
   };
 
@@ -223,7 +226,7 @@
 
       <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
         <div class="space-y-3">
-          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+          <div class="content-card-inset rounded-xl p-3 sm:px-4">
             <div class="flex items-center justify-between gap-4">
               <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
               <div class="h-8 w-20 animate-pulse rounded bg-base-300"></div>
@@ -231,7 +234,7 @@
             <div class="mt-3 h-3 animate-pulse rounded-full bg-base-300"></div>
           </div>
 
-          <div class="content-card-inset space-y-3 rounded-xl px-3 sm:px-4 py-3">
+          <div class="content-card-inset space-y-3 rounded-xl p-3 sm:px-4">
             <div class="flex items-center justify-between gap-3">
               <div class="h-4 w-32 animate-pulse rounded bg-base-300"></div>
               <div class="h-5 w-10 animate-pulse rounded-full bg-base-300"></div>
@@ -265,7 +268,7 @@
             {/each}
           </div>
 
-          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+          <div class="content-card-inset rounded-xl p-3 sm:px-4">
             <div class="flex items-center justify-between gap-4">
               <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
               <div class="h-5 w-20 animate-pulse rounded bg-base-300"></div>
@@ -384,9 +387,10 @@
             <CardDetailInfoCard
               card={payload.card}
               {displayLocale}
-              title={cardInfoTitle}
-              {idLabel}
-              {nameLabel}
+            title={cardInfoTitle}
+            {idLabel}
+            {internalResourceCodeLabel}
+            {nameLabel}
               {characterLabel}
               {unitLabel}
               {supportUnitLabel}
@@ -396,16 +400,17 @@
               {releaseAtLabel}
               {gachaPhraseLabel}
               {audioPlayLabel}
-              {audioPauseLabel}
+              {audioUnavailableLabel}
               {unitProfiles}
             />
           {:catch}
             <CardDetailInfoCard
               card={payload.card}
               {displayLocale}
-              title={cardInfoTitle}
-              {idLabel}
-              {nameLabel}
+            title={cardInfoTitle}
+            {idLabel}
+            {internalResourceCodeLabel}
+            {nameLabel}
               {characterLabel}
               {unitLabel}
               {supportUnitLabel}
@@ -415,7 +420,7 @@
               {releaseAtLabel}
               {gachaPhraseLabel}
               {audioPlayLabel}
-              {audioPauseLabel}
+              {audioUnavailableLabel}
               unitProfiles={{}}
             />
           {/await}
@@ -424,9 +429,8 @@
         <div class="flex min-w-0 flex-col gap-4">
           <CardDetailSkillCard
             skill={payload.card.skill}
+            character={payload.card.character}
             title={cardSkillTitle}
-            {skillNameLabel}
-            {skillDescriptionLabel}
             {skillLevelLabel}
             {durationLabel}
             {effectValueLabel}
@@ -503,6 +507,7 @@
               <CardDetailGachaCard
                 {gachas}
                 region={data.region}
+                uiLocale={displayLocale}
                 title={cardGachaBannersTitle}
                 emptyLabel={noRelatedGachaLabel}
                 showAllLabel={showAllGachaLabel}

@@ -2,11 +2,13 @@
   import Icon from "@iconify/svelte";
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import { createI18nTranslator } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import type { LayoutData } from "./$types";
 
   let { data }: { data: LayoutData } = $props();
-  const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
+  const translate = $derived(
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))
+  );
   const status = $derived(page.status);
   const title = $derived(
     status === 404 ? translate("errorPage.notFoundTitle") : translate("errorPage.title")

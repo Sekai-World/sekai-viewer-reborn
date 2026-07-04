@@ -8,6 +8,7 @@
     displayLocale,
     title,
     idLabel,
+    internalResourceCodeLabel,
     nameLabel,
     composerLabel,
     arrangerLabel,
@@ -22,6 +23,7 @@
     displayLocale: string;
     title: string;
     idLabel: string;
+    internalResourceCodeLabel: string;
     nameLabel: string;
     composerLabel: string;
     arrangerLabel: string;
@@ -47,67 +49,72 @@
         />
         <span>{title}</span>
       </p>
-      <span class="badge badge-outline border-base-content/20 font-semibold">
+      <span class="badge border-base-content/25 bg-base-100/80 font-semibold text-base-content">
         {idLabel}{music.id}
       </span>
     </div>
 
     <dl class="space-y-2">
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{music.title}</dd>
       </div>
 
       {#if music.composer}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{composerLabel}</dt>
           <dd class="mt-1 text-sm font-medium">{music.composer}</dd>
         </div>
       {/if}
 
       {#if music.arranger}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{arrangerLabel}</dt>
           <dd class="mt-1 text-sm font-medium">{music.arranger}</dd>
         </div>
       {/if}
 
       {#if music.lyricist}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{lyricistLabel}</dt>
           <dd class="mt-1 text-sm font-medium">{music.lyricist}</dd>
         </div>
       {/if}
 
       {#if music.categories.length > 0}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{categoryLabel}</dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.categories as category (category)}
-              <span class="badge badge-outline badge-sm">{getCategoryLabel(category)}</span>
+              <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">{getCategoryLabel(category)}</span>
             {/each}
           </dd>
         </div>
       {/if}
 
       {#if music.tags.length > 0}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{tagLabel}</dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.tags as tag (tag)}
-              <span class="badge badge-outline badge-sm">{getTagLabel(tag)}</span>
+              <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">{getTagLabel(tag)}</span>
             {/each}
           </dd>
         </div>
       {/if}
 
       {#if music.publishedAt}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{publishedAtLabel}</dt>
           <dd class="mt-1 text-sm font-medium">{formatDisplayDateTime(music.publishedAt, displayLocale)}</dd>
         </div>
       {/if}
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+          {internalResourceCodeLabel}
+        </dt>
+        <dd class="mt-1 text-sm font-medium">{music.assetBundleName ?? "--"}</dd>
+      </div>
     </dl>
   </div>
 </article>
-

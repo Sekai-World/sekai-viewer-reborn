@@ -2,11 +2,17 @@
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
+  import Icon from "@iconify/svelte";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import CardListCard from "$lib/components/card/CardListCard.svelte";
@@ -15,6 +21,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import type { CardListPage, CardListItem as CardListItemType } from "$lib/server/card-list";
   import type { PageData } from "./$types";
 
@@ -52,13 +59,14 @@
 
   let { data }: { data: CardListPageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let items = $state<CardListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isLoading = $state(false);
   let isInitialLoading = $state(true);
   let isReloadingFirstPage = $state(false);
+  let loadedRegion = $state("");
   let errorMessage = $state<string | null>(null);
   let sentinel: HTMLDivElement | null = $state(null);
   let isLoadMoreHintVisible = $state(false);
@@ -87,7 +95,6 @@
   let has3dmvCutInDraft = $state(false);
   let filterDialog: HTMLDialogElement | null = $state(null);
   let viewMode = $state<CardListViewMode>("grid");
-  let hasTriedRestorePersistedFilters = $state(false);
   let hasTriedRestoreViewMode = $state(false);
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
@@ -159,14 +166,6 @@
     return `${value.replace("rarity_", "")}*`;
   };
 
-  const getUnitIconUrl = (value: string): string | null => {
-    if (value === "none") {
-      return asset("/icons/icon_piapro.png");
-    }
-
-    return asset(`/icons/icon_${value}.png`);
-  };
-
   const getUnitOptionLabel = (value: string): string =>
     filterMeta.unit.find((option) => option.value === value)?.label ?? formatOptionLabel(value);
 
@@ -215,8 +214,6 @@
     rarityFilter.length > 0 ||
     supportUnitFilter.length > 0 ||
     has3dmvCutInFilter;
-
-  const hasNonDefaultSort = (): boolean => sortBy !== "releaseAt" || sortOrder !== "desc";
 
   const hasExplicitQueryStateInUrl = (): boolean => {
     if (!browser) {
@@ -423,28 +420,40 @@
     }
 
     isInitialLoading = false;
+    loadedRegion = data.region;
+    // Post-initial reconciliation: persisted filters and spoiler preference.
+    // These must run AFTER isInitialLoading=false and filter state is set from
+    // the server load, to avoid racing with applyInitialPage's own state writes.
+    let needsReload = false;
+
+    // Restore persisted filters only when the URL has no explicit filter/sort
+    // query params (same guard as the old $effect, but now sequential).
+    if (browser && !hasExplicitQueryStateInUrl()) {
+      if (restorePersistedFilters()) {
+        persistAppliedFilters();
+        needsReload = true;
+      }
+    }
+
+    // Reconcile spoiler preference: if the user's content display setting differs
+    // from the server-loaded state, reload with the correct spoiler filter.
+    if (browser) {
+      const userWantsSpoilers = contentDisplaySettings.showSpoilerContent;
+      if (userWantsSpoilers !== spoilerFilter) {
+        spoilerFilter = userWantsSpoilers;
+        needsReload = true;
+      }
+      spoilerContentAppliedState = userWantsSpoilers;
+    }
+
+    if (needsReload) {
+      void reloadFirstPage();
+    }
   };
 
   $effect(() => {
     const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
     initialPagePromise.then(applyInitialPage);
-  });
-
-  $effect(() => {
-    if (!browser || hasTriedRestorePersistedFilters) {
-      return;
-    }
-
-    hasTriedRestorePersistedFilters = true;
-
-    if (hasAnyAppliedFilters() || hasNonDefaultSort()) {
-      return;
-    }
-
-    if (restorePersistedFilters()) {
-      persistAppliedFilters();
-      void reloadFirstPage();
-    }
   });
 
   $effect(() => {
@@ -457,7 +466,7 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -550,23 +559,20 @@
 
     const nextShowSpoilerContent = contentDisplaySettings.showSpoilerContent;
     const isInitialSpoilerState = spoilerContentAppliedState === null;
+    // On initial mount, applyInitialPage handles spoiler reconciliation after
+    // the server load settles. Skip here to avoid a race between the effect's
+    // reloadFirstPage() and applyInitialPage resetting filter state.
+    if (isInitialSpoilerState) {
+      return;
+    }
+
     if (spoilerContentAppliedState === nextShowSpoilerContent) {
       return;
     }
 
     spoilerContentAppliedState = nextShowSpoilerContent;
-
-    const searchParams = new URL(window.location.href).searchParams;
-    const hasSpoilerQueryParam = searchParams.has("spoiler");
-    const requestIncludesSpoilers = searchParams.get("spoiler") === "true";
-    if (isInitialSpoilerState && hasSpoilerQueryParam) {
-      return;
-    }
-
-    if (requestIncludesSpoilers !== nextShowSpoilerContent) {
-      spoilerFilter = nextShowSpoilerContent;
-      void reloadFirstPage();
-    }
+    spoilerFilter = nextShowSpoilerContent;
+    void reloadFirstPage();
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
@@ -608,7 +614,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key: string) => tCommon(locale, key));
   };
 
@@ -954,9 +960,9 @@
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{cardListLoading}</span>
     </div>
-  {:else if isInitialLoading}
+  {:else if isInitialLoading || data.region !== loadedRegion}
     <div class={getListGridClass()}>
-      {#each Array(12) as _, i}
+      {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
           <div class="skeleton h-48 w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
@@ -1025,7 +1031,19 @@
 
 <dialog bind:this={filterDialog} class="modal">
   <div class="modal-box max-w-xl">
-    <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+      <form method="dialog">
+        <button
+          type="submit"
+          class="btn btn-circle btn-ghost btn-sm min-h-12! w-12!"
+          aria-label={closeLabel}
+          title={closeLabel}
+        >
+          <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+        </button>
+      </form>
+    </div>
 
     <div class="mt-4 grid grid-cols-1 gap-3">
       <label class="form-control w-full">
@@ -1059,16 +1077,7 @@
                 }}
                 aria-label={option.label}
               />
-              {#if getUnitIconUrl(option.value)}
-                <img
-                  src={getUnitIconUrl(option.value) ?? ""}
-                  alt=""
-                  aria-hidden="true"
-                  class="size-7 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-              {/if}
+              <UnitIconBadge unit={option.value} variant="sm" fallbackLabel={option.label} />
             </label>
           {/each}
         </div>
@@ -1096,16 +1105,12 @@
                   }}
                   aria-label={getSupportUnitOptionLabel(option)}
                 />
-                {#if getUnitIconUrl(option)}
-                  <img
-                    src={getUnitIconUrl(option) ?? ""}
-                    alt=""
-                    aria-hidden="true"
-                    class="size-7 object-contain"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                {/if}
+                <UnitIconBadge
+                  unit={option}
+                  variant="sm"
+                  fallbackLabel={getSupportUnitOptionLabel(option)}
+                  mapNoneToPiapro
+                />
               </label>
             {/each}
           </div>
@@ -1283,12 +1288,9 @@
       <button type="button" class="btn btn-primary min-h-12!" onclick={applyFilters}>
         {listFilterApply}
       </button>
-      <form method="dialog">
-        <button type="submit" class="btn min-h-12!">{closeLabel}</button>
-      </form>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop">
-    <button type="submit">{closeLabel}</button>
+    <button type="submit" aria-label={closeLabel}></button>
   </form>
 </dialog>

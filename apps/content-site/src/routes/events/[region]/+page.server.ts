@@ -1,6 +1,5 @@
-import { getEventsByRegionCurrent, getEventsByRegionList } from "@platform/sekai-master-api-sdk";
+import { getEventsByRegionList } from "@platform/sekai-master-api-sdk";
 import { normalizeRegion } from "$lib/i18n/region";
-import { parseEventDetail } from "$lib/server/event-detail";
 import {
   createEventListRequestQuery,
   DEFAULT_EVENT_LIST_PAGE_SIZE,
@@ -45,18 +44,12 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const initialPage: Promise<
     | { page: ReturnType<typeof parseEventListPage>; loadFailed: false }
     | { page: ReturnType<typeof createEmptyPage>; loadFailed: true }
-  > = Promise.all([
-    getEventsByRegionList({
+  > = getEventsByRegionList({
       baseUrl,
       path: { region },
       query: requestQuery
-    }),
-    getEventsByRegionCurrent({
-      baseUrl,
-      path: { region }
-    }).catch(() => null)
-  ])
-    .then(([response, currentEventResponse]) => {
+    })
+    .then((response) => {
       if (response.error) {
         logEventListFilterDebug("initial error", {
           region,
@@ -77,14 +70,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
         pagination: page.pagination
       });
 
-      return {
-        page,
-        loadFailed: false as const,
-        currentEventId:
-          currentEventResponse && !currentEventResponse.error
-            ? (parseEventDetail(currentEventResponse.data)?.id ?? null)
-            : null
-      };
+      return { page, loadFailed: false as const };
     })
     .catch((error) => {
       logEventListFilterDebug("initial exception", {
@@ -93,7 +79,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
         error
       });
 
-      return { page: createEmptyPage(), loadFailed: true as const, currentEventId: null };
+      return { page: createEmptyPage(), loadFailed: true as const };
     });
 
   // Attach noop catch to prevent unhandled rejection before SvelteKit renders

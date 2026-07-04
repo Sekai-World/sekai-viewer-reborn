@@ -1,44 +1,101 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+  import {
+    getCardThumbnailAssetURL,
+    getMusicJacketAssetURL,
+    getGachaBannerAssetURL
+  } from "$lib/assets";
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
   let disclaimerText = $state(getInitialI18nText("disclaimer"));
-  let currentEventLabel = $state(getInitialI18nText("eventListCurrentEvent"));
   let mixedUnitLabel = $state(getInitialI18nText("mixedUnitLabel"));
+  let footerBrandLabel = $state(getInitialI18nText("footer.brand"));
+  let footerDescription = $state(getInitialI18nText("footer.description"));
   let versionInfoTitle = $state(getInitialI18nText("versionInfo.title"));
   let versionAppLabel = $state(getInitialI18nText("versionInfo.appLabel"));
   let versionDataLabel = $state(getInitialI18nText("versionInfo.dataLabel"));
   let versionAssetLabel = $state(getInitialI18nText("versionInfo.assetLabel"));
-  const homeCardItemClass =
-    "w-full shrink-0 md:basis-[calc((100%-2rem)/3)] lg:basis-[calc((100%-4rem)/5)]";
+  let latestDataTitle = $state(getInitialI18nText("latestData.title"));
+  let latestDataCardsLabel = $state(getInitialI18nText("latestData.cards"));
+  let latestDataMusicsLabel = $state(getInitialI18nText("latestData.musics"));
+  let latestDataGachasLabel = $state(getInitialI18nText("latestData.gachas"));
+  let latestDataEventsLabel = $state(getInitialI18nText("latestData.events"));
+  let latestDataNoData = $state(getInitialI18nText("latestData.noData"));
+  let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
+  let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
+  let swipeHint = $state(getInitialI18nText("swipeHint"));
 
-  const MOBILE_REGION_STORAGE_KEY = "home-mobile-region";
-  let selectedRegion = $state<SupportedRegion>(supportedRegions[0]);
+  // ── Region state ───────────────────────────────────────────────────
+  const REGION_STORAGE_KEY = "home-region";
 
-  $effect(() => {
-    const saved = localStorage.getItem(MOBILE_REGION_STORAGE_KEY);
+  const getSavedRegion = (): SupportedRegion => {
+    if (typeof localStorage === "undefined") return supportedRegions[0];
+    const saved = localStorage.getItem(REGION_STORAGE_KEY);
     if (saved && (supportedRegions as readonly string[]).includes(saved)) {
-      selectedRegion = saved as SupportedRegion;
+      return saved as SupportedRegion;
     }
-  });
+    return supportedRegions[0];
+  };
+
+  let selectedRegion = $state<SupportedRegion>(getSavedRegion());
 
   const selectRegion = (r: SupportedRegion): void => {
     selectedRegion = r;
-    localStorage.setItem(MOBILE_REGION_STORAGE_KEY, r);
+    localStorage.setItem(REGION_STORAGE_KEY, r);
   };
 
+  // ── Swipe detection for region switching ───────────────────────────
+  const SWIPE_THRESHOLD = 50;
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  const onTouchStart = (e: TouchEvent): void => {
+    const touch = e.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+  };
+
+  const onTouchEnd = (e: TouchEvent): void => {
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartX;
+    const dy = Math.abs(touch.clientY - touchStartY);
+
+    if (Math.abs(dx) < SWIPE_THRESHOLD || dy > Math.abs(dx)) {
+      return;
+    }
+
+    const currentIndex = supportedRegions.indexOf(selectedRegion);
+    if (dx < 0) {
+      if (currentIndex < supportedRegions.length - 1) {
+        selectRegion(supportedRegions[currentIndex + 1]);
+      }
+    } else {
+      if (currentIndex > 0) {
+        selectRegion(supportedRegions[currentIndex - 1]);
+      }
+    }
+  };
+
+  // ── i18n ───────────────────────────────────────────────────────────
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -48,19 +105,30 @@
     bannerAltSuffix = translate("bannerAltSuffix");
     noEventLabel = translate("noCurrentEventData");
     disclaimerText = translate("disclaimer");
-    currentEventLabel = translate("eventListCurrentEvent");
     mixedUnitLabel = translate("mixedUnitLabel");
+    footerBrandLabel = translate("footer.brand");
+    footerDescription = translate("footer.description");
     versionInfoTitle = translate("versionInfo.title");
     versionAppLabel = translate("versionInfo.appLabel");
     versionDataLabel = translate("versionInfo.dataLabel");
     versionAssetLabel = translate("versionInfo.assetLabel");
+    latestDataTitle = translate("latestData.title");
+    latestDataCardsLabel = translate("latestData.cards");
+    latestDataMusicsLabel = translate("latestData.musics");
+    latestDataGachasLabel = translate("latestData.gachas");
+    latestDataEventsLabel = translate("latestData.events");
+    latestDataNoData = translate("latestData.noData");
+    latestDataViewAll = translate("latestData.viewAll");
+    latestDataLoadFailed = translate("latestData.loadFailed");
+    swipeHint = translate("swipeHint");
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(locale, key));
   };
 
+  // ── Helpers ────────────────────────────────────────────────────────
   const isNuverseRegion = (region: SupportedRegion): boolean =>
     region === "tw" || region === "kr" || region === "cn";
 
@@ -84,98 +152,279 @@
   ): string | null => {
     return versions?.dataVersion ?? null;
   };
+
+  // ── Derived data for selected region ───────────────────────────────
+  const regionIndex = $derived(supportedRegions.indexOf(selectedRegion));
+  const latestDataPromise = $derived(data.latestData[regionIndex]);
+  const currentEventPromise = $derived(data.cards[regionIndex]);
 </script>
 
-<div class="-mt-6 mb-10 flex justify-center px-2">
-  <div
-    class="flex max-w-3xl gap-3 rounded-xl border border-info/25 bg-info/8 px-4 py-3 text-base-content/70"
-  >
-    <Icon icon="mdi:information-outline" class="mt-0.5 size-4 shrink-0 text-info/80" />
-    <p class="text-xs/relaxed">{disclaimerText}</p>
+<!-- ──── Region-switchable data area ────────────────────────────────── -->
+<section
+  role="group"
+  ontouchstart={onTouchStart}
+  ontouchend={onTouchEnd}
+>
+  <!-- Region selector (shared for both sections) -->
+  <div class="mb-6 flex flex-wrap justify-center gap-2">
+    <RegionBadgeSwitch
+      options={supportedRegions.map((r) =>
+        r === selectedRegion
+          ? { key: r, label: r.toUpperCase(), active: true }
+          : { key: r, label: r.toUpperCase(), active: false, onclick: () => selectRegion(r) }
+      )}
+    />
   </div>
-</div>
+  <!-- Swipe hint (mobile only) -->
+  <p class="md:hidden mb-4 flex items-center justify-center gap-1.5 text-xs text-base-content/50">
+    <Icon icon="mdi:gesture-swipe-horizontal" class="size-4" />
+    {swipeHint}
+  </p>
 
-<h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">
-  {currentEventLabel}
-</h2>
-
-<div class="mb-6 flex flex-wrap justify-center gap-2 md:hidden">
-  <RegionBadgeSwitch
-    options={supportedRegions.map((r) =>
-      r === selectedRegion
-        ? {
-            key: r,
-            label: r.toUpperCase(),
-            active: true
-          }
-        : {
-            key: r,
-            label: r.toUpperCase(),
-            active: false,
-            onclick: () => selectRegion(r)
-          }
-    )}
-  />
-</div>
-
-<section class="flex flex-wrap justify-center gap-4">
-  {#each supportedRegions as region, index (region)}
-    <div class="{homeCardItemClass} {region !== selectedRegion ? 'max-md:hidden' : ''}">
-      {#await data.cards[index]}
-        <article id={`region-${region}`} class="card content-card-shell w-full shadow-sm">
-          <div class="card-body">
-            <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
-            <div class="mb-1 max-md:hidden">
-              <span class="badge homepage-region-badge font-semibold shadow-sm">
-                {region.toUpperCase()}
-              </span>
+  <section class="mb-8">
+    <h2 class="mb-5 text-center text-base font-semibold tracking-wide text-base-content/70">
+      {latestDataTitle}
+    </h2>
+    {#if latestDataPromise}
+      {#await latestDataPromise}
+        <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <!-- skeleton: cards+musics col -->
+          <div class="space-y-6">
+            <div class="space-y-3">
+              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+              <div class="grid grid-cols-3 gap-3">
+                {#each [1, 2, 3] as skeleton (skeleton)}
+                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
+                {/each}
+              </div>
             </div>
-            <div class="space-y-2">
-              <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
-              <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
+            <div class="space-y-3">
+              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+              <div class="grid grid-cols-3 gap-3">
+                {#each [1, 2, 3] as skeleton (skeleton)}
+                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
+                {/each}
+              </div>
             </div>
           </div>
-        </article>
-      {:then card}
-        {#if card.event}
-          <CurrentEventCard
-            region={card.region}
-            regionLabel={card.label}
-            event={card.event}
-            uiLocale={data.uiLocale}
-            {idLabel}
-            {mixedUnitLabel}
-            unitProfiles={card.unitProfiles}
-            {bannerAltSuffix}
-          />
+          <div class="space-y-3 md:col-span-2 lg:col-span-1">
+            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="h-40 animate-pulse rounded-xl bg-base-300"></div>
+          </div>
+
+          <!-- skeleton: gachas col -->
+          <div class="space-y-3">
+            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="space-y-3">
+              {#each [1, 2] as skeleton (skeleton)}
+                <div class="h-24 animate-pulse rounded-lg bg-base-300"></div>
+              {/each}
+            </div>
+          </div>
+        </div>
+      {:then regionData}
+        {#if regionData.cards.length === 0 && regionData.musics.length === 0 && regionData.gachas.length === 0}
+          <p class="text-center text-sm text-base-content/60">{latestDataNoData}</p>
         {:else}
-          <article id={`region-${card.region}`} class="card content-card-shell w-full shadow-sm">
-            <div class="card-body">
-              <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
-              <div class="mb-1 max-md:hidden">
-                <span class="badge homepage-region-badge font-semibold shadow-sm">
-                  {card.region.toUpperCase()}
-                </span>
+          <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <!-- Column 1: Cards + Musics (stacked) -->
+            <div class="space-y-6">
+              <div>
+                <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                  <span class="flex items-center gap-2">
+                    <Icon icon="mdi:cards-outline" class="size-4" aria-hidden="true" />
+                    {latestDataCardsLabel}
+                  </span>
+                  <a href="/cards/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                    {latestDataViewAll}
+                    <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+                  </a>
+                </h3>
+                {#if regionData.cards.length > 0}
+                  <div class="grid grid-cols-3 gap-3">
+                    {#each regionData.cards as card (card.id)}
+                      <a
+                        href="/card/{regionData.region}/{card.id}"
+                        class="group/card block"
+                      >
+                        <CardThumbnail
+                          src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp") : null}
+                          alt={card.prefix ?? card.id}
+                          fallbackLabel={card.id}
+                          fallbackSrc={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, regionData.region) : null}
+                          attr={card.attr}
+                          rarityType={card.rarityType}
+                          rarityCount={card.rarityCount}
+                          showFrame={true}
+                          showIcons={true}
+                          maxSize={null}
+                          containerClass="relative overflow-hidden rounded-xl bg-base-200 aspect-square"
+                          imageClass="size-full object-cover transition-transform duration-200 group-hover/card:scale-105"
+                        />
+                      </a>
+                    {/each}
+                  </div>
+                {:else}
+                  <p class="text-xs text-base-content/50">{latestDataNoData}</p>
+                {/if}
               </div>
 
-              {#if card.error}
-                <p class="text-sm text-error">{card.error}</p>
+              <div>
+                <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                  <span class="flex items-center gap-2">
+                    <Icon icon="mdi:music-note-eighth" class="size-4" aria-hidden="true" />
+                    {latestDataMusicsLabel}
+                  </span>
+                  <a href="/musics/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                    {latestDataViewAll}
+                    <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+                  </a>
+                </h3>
+                {#if regionData.musics.length > 0}
+                  <div class="grid grid-cols-3 gap-3">
+                    {#each regionData.musics as music (music.id)}
+                      <a
+                        href="/music/{regionData.region}/{music.id}"
+                        class="group/music block overflow-hidden rounded-xl border border-base-content/10 shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <div class="relative aspect-square overflow-hidden">
+                          {#if music.assetBundleName}
+                            <EventAssetImage
+                              src={getMusicJacketAssetURL(music.assetBundleName)}
+                              alt={music.title ?? music.id}
+                              loadMode="visible"
+                              imageClass="size-full object-cover transition-transform duration-200 group-hover/music:scale-105"
+                              buttonClass="block size-full"
+                            />
+                          {:else}
+                            <div class="flex size-full items-center justify-center bg-base-300/40 text-xs text-base-content/50">
+                              {music.id}
+                            </div>
+                          {/if}
+                        </div>
+                        <div class="p-2">
+                          <p class="line-clamp-2 text-xs/snug font-medium">{music.title ?? music.id}</p>
+                          {#if music.composer}
+                            <p class="mt-0.5 truncate text-[10px] text-base-content/50">{music.composer}</p>
+                          {/if}
+                        </div>
+                      </a>
+                    {/each}
+                  </div>
+                {:else}
+                  <p class="text-xs text-base-content/50">{latestDataNoData}</p>
+                {/if}
+              </div>
+            </div>
+
+            <div class="md:col-span-2 lg:col-span-1">
+              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                <span class="flex items-center gap-2">
+                  <Icon icon="mdi:calendar-star" class="size-4" aria-hidden="true" />
+                  {latestDataEventsLabel}
+                </span>
+                <a href="/events/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                  {latestDataViewAll}
+                  <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+                </a>
+              </h3>
+              {#await currentEventPromise}
+                <article class="card content-card-shell w-full shadow-sm">
+                  <div class="card-body">
+                    <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
+                    <div class="space-y-2">
+                      <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
+                      <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
+                    </div>
+                  </div>
+                </article>
+              {:then card}
+                {#if card.event}
+                  <CurrentEventCard
+                    region={card.region}
+                    regionLabel={card.label}
+                    event={card.event}
+                    uiLocale={data.uiLocale}
+                    {idLabel}
+                    {mixedUnitLabel}
+                    unitProfiles={card.unitProfiles}
+                    {bannerAltSuffix}
+                  />
+                {:else}
+                  <article class="card content-card-shell w-full shadow-sm">
+                    <div class="card-body">
+                      <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
+                      {#if card.error}
+                        <p class="text-sm text-error">{card.error}</p>
+                      {:else}
+                        <p class="text-sm opacity-70">{noEventLabel}</p>
+                      {/if}
+                    </div>
+                  </article>
+                {/if}
+              {:catch _}
+                <article class="card content-card-shell w-full shadow-sm">
+                  <div class="card-body">
+                    <p class="text-sm text-error">{noEventLabel}</p>
+                  </div>
+                </article>
+              {/await}
+            </div>
+
+            <div>
+              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                <span class="flex items-center gap-2">
+                  <Icon icon="mdi:gift-outline" class="size-4" aria-hidden="true" />
+                  {latestDataGachasLabel}
+                </span>
+                <a href="/gachas/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                  {latestDataViewAll}
+                  <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+                </a>
+              </h3>
+              {#if regionData.gachas.length > 0}
+                <ul class="space-y-3">
+                  {#each regionData.gachas as gacha (gacha.id)}
+                    <li>
+                      <a
+                        href="/gacha/{regionData.region}/{gacha.id}"
+                        class="block overflow-hidden rounded-lg border border-base-content/8 shadow-sm transition-shadow hover:shadow-md"
+                      >
+                        <div class="aspect-3/1 w-full bg-base-200 pt-2">
+                          <EventAssetImage
+                            src={getGachaBannerAssetURL(gacha.id, "jp")}
+                            alt={gacha.name ?? gacha.id}
+                            loadMode="visible"
+                            imageClass="size-full object-contain"
+                            buttonClass="block size-full"
+                          />
+                        </div>
+                        <div class="px-3 py-2">
+                          <p class="truncate text-sm font-medium">{gacha.name ?? gacha.id}</p>
+                        </div>
+                      </a>
+                    </li>
+                  {/each}
+                </ul>
               {:else}
-                <p class="text-sm opacity-70">{noEventLabel}</p>
+                <p class="text-xs text-base-content/50">{latestDataNoData}</p>
               {/if}
             </div>
-          </article>
+          </div>
         {/if}
+      {:catch _}
+        <p class="text-center text-sm text-error">{latestDataLoadFailed}</p>
       {/await}
-    </div>
-  {/each}
+    {/if}
+  </section>
 </section>
 
+<!-- ──── Version Info (standalone, below data area) ─────────────────── -->
 <section class="mt-10">
   <h2 class="mb-4 text-center text-base font-semibold tracking-wide text-base-content/70">
     {versionInfoTitle}
   </h2>
-  <div class="mx-auto max-w-3xl overflow-x-auto rounded-xl border border-base-content/10">
+  <div class="mx-auto max-w-5xl overflow-x-auto rounded-xl border border-base-content/10">
     <table class="table table-sm w-full">
       <thead>
         <tr class="text-xs uppercase tracking-wider text-base-content/50">
@@ -219,3 +468,15 @@
     </table>
   </div>
 </section>
+
+<svelte:head>
+  <title>Sekai Viewer</title>
+</svelte:head>
+
+<footer class="mx-auto mt-12 max-w-4xl border-t border-base-content/10 px-4 py-7 text-center">
+  <p class="text-xs font-semibold tracking-wide text-base-content/55">{footerBrandLabel}</p>
+  <p class="mt-1 text-xs text-base-content/45">{footerDescription}</p>
+  <p class="mx-auto mt-3 max-w-3xl text-[0.68rem] leading-relaxed text-base-content/35">
+    {disclaimerText}
+  </p>
+</footer>

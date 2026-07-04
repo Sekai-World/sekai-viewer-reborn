@@ -21,3 +21,5 @@ Restore gacha phrase display and audio playback on content-site card detail page
 Align related gacha card hover, focus, and image brightness states with related event cards.
 
 Show birthday rarity icons on content-site card detail pages.
+
+Eliminate first-load blank page by streaming layout i18n messages and using local source messages as the synchronous fallback while remote translations resolve.

@@ -415,10 +415,17 @@ export const getMusicShortPreviewAssetURL = (
   );
 };
 
-/** External chart SVG service — not hosted on the standard asset buckets. */
-export const getMusicChartSvgUrl = (
+export const getMusicChartPreviewAssetURL = (
+  region: SupportedRegion,
   musicId: number | string,
   difficulty: string
 ): string => {
-  return `https://charts-new.unipjsk.com/moe/svg/${musicId}/${difficulty}.svg`;
+  const normalizedRegion = region.trim().toLowerCase();
+  const normalizedMusicId = String(musicId).trim().padStart(4, "0");
+  const normalizedDifficulty = difficulty.trim().toLowerCase();
+
+  return buildServerAssetURL(
+    `${normalizedRegion}/${normalizedMusicId}/${normalizedDifficulty}.png`,
+    "musicChart"
+  );
 };

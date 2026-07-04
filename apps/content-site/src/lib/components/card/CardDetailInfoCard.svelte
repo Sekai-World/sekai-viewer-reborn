@@ -5,6 +5,8 @@
   import { getCardGachaVoiceAssetURL } from "$lib/assets/index";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import VoicePlayButton from "$lib/components/shared/VoicePlayButton.svelte";
   import Icon from "@iconify/svelte";
 
   let {
@@ -12,6 +14,7 @@
     displayLocale,
     title,
     idLabel,
+    internalResourceCodeLabel,
     nameLabel,
     characterLabel,
     unitLabel,
@@ -22,13 +25,14 @@
     releaseAtLabel,
     gachaPhraseLabel,
     audioPlayLabel,
-    audioPauseLabel,
+    audioUnavailableLabel,
     unitProfiles
   }: {
     card: CardDetail;
     displayLocale: string;
     title: string;
     idLabel: string;
+    internalResourceCodeLabel: string;
     nameLabel: string;
     characterLabel: string;
     unitLabel: string;
@@ -39,7 +43,7 @@
     releaseAtLabel: string;
     gachaPhraseLabel: string;
     audioPlayLabel: string;
-    audioPauseLabel: string;
+    audioUnavailableLabel: string;
     unitProfiles: Record<string, string>;
   } = $props();
 
@@ -54,9 +58,6 @@
       ? getCardGachaVoiceAssetURL(card.assetBundleName)
       : null
   );
-
-  let gachaPhraseAudio: HTMLAudioElement | null = $state(null);
-  let isGachaPhrasePlaying = $state(false);
 
   const formatLabel = (value: string | null): string | null =>
     value
@@ -77,15 +78,8 @@
     const normalizedUnit = unit.trim().toLowerCase();
     return unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit);
   };
-  const getUnitIconUrl = (unit: string | null | undefined): string | null => {
-    if (!unit) {
-      return null;
-    }
-
-    return asset(`/icons/icon_${unit === "none" ? "piapro" : unit}.png`);
-  };
   const getAttrIconUrl = (): string | null =>
-    card.attr ? asset(`/card_attr/icon_attribute_${card.attr}_88.png`) : null;
+    card.attr ? asset(`/card_attr/icon_attribute_${card.attr}.png`) : null;
   const getCharacterThumbnailUrl = (): string | null =>
     card.character?.id !== null && card.character?.id !== undefined
       ? getLocalCharacterThumbnailAssetURL(card.character.id)
@@ -107,44 +101,24 @@
       : getRarityStarKeys().map(() => rarityStarUrl);
   const shouldShowSupportUnit = (): boolean =>
     card.supportUnit !== "none" || card.character?.unit === "piapro";
-  const toggleGachaPhraseAudio = async (): Promise<void> => {
-    if (!gachaPhraseAudio || !gachaPhraseAudioUrl) {
-      return;
-    }
-
-    if (isGachaPhrasePlaying) {
-      gachaPhraseAudio.pause();
-      gachaPhraseAudio.currentTime = 0;
-      isGachaPhrasePlaying = false;
-      return;
-    }
-
-    if (gachaPhraseAudio.ended || gachaPhraseAudio.currentTime >= gachaPhraseAudio.duration) {
-      gachaPhraseAudio.currentTime = 0;
-    }
-
-    try {
-      await gachaPhraseAudio.play();
-      isGachaPhrasePlaying = true;
-    } catch {
-      isGachaPhrasePlaying = false;
-    }
-  };
 </script>
 
 {#snippet row(
   label: string,
   value: string | null,
   iconUrl: string | null = null,
-  iconFrame = true
+  iconFrame = true,
+  unitSlug: string | null = null
 )}
   {#if value}
-    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3">
+    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
       <div class="min-w-0">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{label}</dt>
         <dd class="mt-1 truncate text-sm font-medium">{value}</dd>
       </div>
-      {#if iconUrl}
+      {#if unitSlug}
+        <UnitIconBadge unit={unitSlug} variant="lg" />
+      {:else if iconUrl}
         {#if iconFrame}
           <span
             class="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
@@ -175,7 +149,7 @@
 
 {#snippet gachaPhraseRow()}
   {#if shouldShowGachaPhrase}
-    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3">
+    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
       <div class="min-w-0">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {gachaPhraseLabel}
@@ -185,30 +159,11 @@
 
       <div class="flex shrink-0 items-center gap-3">
         {#if gachaPhraseAudioUrl}
-          <button
-            type="button"
-            class="btn btn-circle btn-primary btn-md shrink-0 shadow-sm"
-            aria-label={isGachaPhrasePlaying ? audioPauseLabel : audioPlayLabel}
-            title={isGachaPhrasePlaying ? audioPauseLabel : audioPlayLabel}
-            onclick={toggleGachaPhraseAudio}
-          >
-            <Icon
-              icon={isGachaPhrasePlaying ? "mdi:pause" : "mdi:play"}
-              class="size-5"
-              aria-hidden="true"
-            />
-          </button>
-          <audio
-            bind:this={gachaPhraseAudio}
+          <VoicePlayButton
             src={gachaPhraseAudioUrl}
-            preload="none"
-            onended={() => {
-              isGachaPhrasePlaying = false;
-              if (gachaPhraseAudio) {
-                gachaPhraseAudio.currentTime = 0;
-              }
-            }}
-          ></audio>
+            playLabel={audioPlayLabel}
+            errorLabel={audioUnavailableLabel}
+          />
         {/if}
       </div>
     </div>
@@ -218,7 +173,7 @@
 {#snippet rarityRow()}
   {@const rarityIconUrls = getRarityIconUrls()}
   {#if card.rarityType}
-    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3">
+    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
       <div class="min-w-0">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{rarityLabel}</dt>
         <dd class="mt-1 truncate text-sm font-medium">{formatLabel(card.rarityType)}</dd>
@@ -253,15 +208,16 @@
       {#if card.character}
         {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl())}
       {/if}
-      {@render row(unitLabel, getDisplayUnitName(card.character?.unit), getUnitIconUrl(card.character?.unit))}
+      {@render row(unitLabel, getDisplayUnitName(card.character?.unit), undefined, true, card.character?.unit ?? null)}
       {#if shouldShowSupportUnit()}
-        {@render row(supportUnitLabel, getDisplayUnitName(card.supportUnit), getUnitIconUrl(card.supportUnit))}
+        {@render row(supportUnitLabel, getDisplayUnitName(card.supportUnit), undefined, true, card.supportUnit ?? null)}
       {/if}
       {@render gachaPhraseRow()}
       {@render row(attrLabel, formatLabel(card.attr), getAttrIconUrl(), false)}
       {@render rarityRow()}
       {@render row(typeLabel, formatLabel(card.cardSupplyType))}
       {@render row(releaseAtLabel, formatDisplayDateTime(card.releaseAt ?? card.archivePublishedAt, displayLocale))}
+      {@render row(internalResourceCodeLabel, card.assetBundleName)}
     </dl>
   </div>
 </article>

@@ -174,12 +174,15 @@
 
 <style>
   .viewer-shell-nav {
-    background: color-mix(in oklab, var(--color-base-100) 94%, var(--color-base-200));
+    background: color-mix(in oklab, var(--color-base-100) 48%, transparent);
+    backdrop-filter: blur(24px) saturate(200%);
+    -webkit-backdrop-filter: blur(24px) saturate(200%);
     border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
     box-shadow:
-      0 2px 8px color-mix(in oklab, var(--color-base-content) 9%, transparent),
-      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 84%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 6%, transparent);
+      0 1px 4px color-mix(in oklab, var(--color-base-content) 6%, transparent),
+      0 4px 16px color-mix(in oklab, var(--color-base-content) 4%, transparent),
+      inset 0 1px 0 color-mix(in oklab, white 32%, transparent),
+      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 5%, transparent);
   }
 
   .viewer-shell-nav::before {
@@ -190,28 +193,71 @@
     pointer-events: none;
     background: linear-gradient(
       110deg,
-      color-mix(in oklab, var(--color-base-100) 36%, transparent) 0%,
+      color-mix(in oklab, white 24%, transparent) 0%,
       transparent 42%,
-      color-mix(in oklab, var(--color-base-content) 5%, transparent) 100%
+      color-mix(in oklab, var(--color-base-content) 4%, transparent) 100%
     );
-    opacity: 0.28;
+    opacity: 0.4;
+  }
+
+  /* Specular highlight — liquid glass refraction line */
+  .viewer-shell-nav::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 8%;
+    right: 8%;
+    height: 1px;
+    border-radius: 0 0 50% 50%;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, white 42%, transparent) 35%,
+      color-mix(in oklab, white 58%, transparent) 50%,
+      color-mix(in oklab, white 42%, transparent) 65%,
+      transparent
+    );
   }
 
   :global(.dark[data-theme="default"]) .viewer-shell-nav {
-    background: color-mix(in oklab, var(--color-base-100) 90%, var(--color-base-200));
+    background: color-mix(in oklab, var(--color-base-100) 42%, transparent);
     box-shadow:
-      0 2px 8px color-mix(in oklab, black 24%, transparent),
-      inset 0 1px 0 color-mix(in oklab, var(--color-base-100) 30%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 5%, transparent);
+      0 1px 4px color-mix(in oklab, black 16%, transparent),
+      0 4px 16px color-mix(in oklab, black 8%, transparent),
+      inset 0 1px 0 color-mix(in oklab, white 8%, transparent),
+      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 4%, transparent);
   }
 
   :global(.dark[data-theme="default"]) .viewer-shell-nav::before {
     background: linear-gradient(
       110deg,
-      color-mix(in oklab, var(--color-base-100) 20%, transparent) 0%,
+      color-mix(in oklab, white 8%, transparent) 0%,
       transparent 45%,
-      color-mix(in oklab, var(--color-base-content) 4%, transparent) 100%
+      color-mix(in oklab, var(--color-base-content) 3%, transparent) 100%
     );
-    opacity: 0.14;
+    opacity: 0.2;
+  }
+
+  :global(.dark[data-theme="default"]) .viewer-shell-nav::after {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, white 14%, transparent) 35%,
+      color-mix(in oklab, white 20%, transparent) 50%,
+      color-mix(in oklab, white 14%, transparent) 65%,
+      transparent
+    );
+  }
+
+  /* Reduced-motion: skip blur (expensive) and use a solid background instead */
+  :global([data-low-motion]) .viewer-shell-nav {
+    background: color-mix(in oklab, var(--color-base-100) 96%, var(--color-base-200));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  :global([data-low-motion]) .viewer-shell-nav::after {
+    display: none;
   }
 </style>

@@ -1,17 +1,23 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
-  import { asset, resolve } from "$app/paths";
-  import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { resolve } from "$app/paths";
+  import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
   import EventListCard from "$lib/components/event/EventListCard.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -26,7 +32,7 @@
   let { data }: { data: PageData } = $props();
   const eventListLoadingFallback = "Loading events...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key, fallback);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -103,25 +109,43 @@
     ...unitFilterValues.map((value) => ({ value, label: formatUnitLabel(value) }))
   ];
 
-  const getUnitIconUrl = (value: string): string | null => {
-    if (value === "" || value === "mixed") {
-      return null;
-    }
-
-    return asset(`/icons/icon_${value}.png`);
-  };
-
   const isSpoilerEvent = (item: EventListItem): boolean => {
     const startAtMs = toTimestampMs(item.startAt);
     return startAtMs !== null && startAtMs > Date.now();
   };
 
+  const ongoingEventIds = $derived.by(() => {
+    const now = Date.now();
+    const ids = new SvelteSet<string>();
+    for (const item of items) {
+      const startMs = toTimestampMs(item.startAt);
+      const endMs = toTimestampMs(item.endAt);
+      if (startMs !== null && endMs !== null && startMs <= now && now <= endMs) {
+        ids.add(item.id);
+      }
+    }
+    return ids;
+  });
+
   const visibleItems = $derived.by(() => {
-    if (contentDisplaySettings.showSpoilerContent) {
-      return items;
+    const base = contentDisplaySettings.showSpoilerContent
+      ? items
+      : items.filter((item) => !isSpoilerEvent(item));
+
+    if (!contentDisplaySettings.ongoingFirst) {
+      return base;
     }
 
-    return items.filter((item) => !isSpoilerEvent(item));
+    const ongoing: EventListItem[] = [];
+    const rest: EventListItem[] = [];
+    for (const item of base) {
+      if (ongoingEventIds.has(item.id)) {
+        ongoing.push(item);
+      } else {
+        rest.push(item);
+      }
+    }
+    return [...ongoing, ...rest];
   });
 
   const syncDraftFiltersFromCurrent = (): void => {
@@ -148,7 +172,7 @@
 
   const getFilterStorageKey = (): string => `content-site:event-list-filters:${data.region}`;
 
-  let currentEventId = $state<string | null>(null);
+    // currentEventId is no longer used; ongoing events are detected from item timestamps via ongoingEventIds
 
   const persistAppliedFilters = (): void => {
     if (!browser) {
@@ -226,14 +250,12 @@
   type InitialPageResult = {
     page: EventListPagePayload;
     loadFailed: boolean;
-    currentEventId: string | null;
   };
 
   const applyInitialPage = (result: InitialPageResult): void => {
     items = result.page.items;
     currentPage = result.page.pagination.page;
     hasNext = result.page.pagination.hasNext;
-    currentEventId = result.currentEventId;
     errorMessage = result.loadFailed ? getInitialI18nText("eventListLoadFailed") : null;
 
     // Initialize filter/sort state from server query params once per navigation.
@@ -276,7 +298,7 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -411,7 +433,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
   };
 
@@ -653,7 +675,7 @@
     </div>
   {:else if isInitialLoading}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {#each Array(12) as _, i}
+      {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
           <div class="skeleton h-36 w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
@@ -669,7 +691,7 @@
         <EventListCard
           region={data.region}
           {item}
-          {currentEventId}
+          ongoingEventIds={ongoingEventIds}
           currentEventLabel={eventListCurrentEvent}
           {spoilerContentLabel}
           uiLocale={data.uiLocale}
@@ -715,7 +737,19 @@
 
 <dialog bind:this={filterDialog} class="modal">
   <div class="modal-box max-w-xl">
-    <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+      <form method="dialog">
+        <button
+          type="submit"
+          class="btn btn-circle btn-ghost btn-sm min-h-12! w-12!"
+          aria-label={closeLabel}
+          title={closeLabel}
+        >
+          <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+        </button>
+      </form>
+    </div>
 
     <div class="mt-4 grid grid-cols-1 gap-3">
       <label class="form-control w-full">
@@ -778,15 +812,8 @@
               />
               {#if option.value === "mixed"}
                 <Icon icon="mdi:puzzle" class="size-5" aria-hidden="true" />
-              {:else if getUnitIconUrl(option.value)}
-                <img
-                  src={getUnitIconUrl(option.value) ?? ""}
-                  alt=""
-                  aria-hidden="true"
-                  class="size-7 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
+              {:else}
+                <UnitIconBadge unit={option.value} variant="sm" fallbackLabel={option.label} />
               {/if}
             </label>
           {/each}
@@ -801,12 +828,9 @@
       <button type="button" class="btn btn-primary min-h-12!" onclick={applyFilters}>
         {listFilterApply}
       </button>
-      <form method="dialog">
-        <button type="submit" class="btn min-h-12!">{closeLabel}</button>
-      </form>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop">
-    <button type="submit">{closeLabel}</button>
+    <button type="submit" aria-label={closeLabel}></button>
   </form>
 </dialog>

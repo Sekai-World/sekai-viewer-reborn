@@ -640,19 +640,19 @@
     };
   });
 
-  // Update Media Session metadata when title/artist/artworkUrl change during playback
+  // Update Media Session metadata when title/artist/subtitle/artworkUrl change during playback
   $effect(() => {
     if (!mounted || !isPlaying) {
       return;
     }
 
-    // Reactive reads — triggers this effect when any of these change
-    title;
-    artist;
-    artworkUrl;
+    const nextTitle = title;
+    const nextArtist = artist;
+    const nextSubtitle = subtitle;
+    const nextArtworkUrl = artworkUrl;
 
     untrack(() => {
-      updateMediaSessionMetadata();
+      updateMediaSessionMetadata(nextTitle, nextArtist, nextSubtitle, nextArtworkUrl);
     });
   });
 
@@ -744,19 +744,24 @@
 
   // ---- Media Session API (lock screen / notification center / control center) ----
 
-  const updateMediaSessionMetadata = (): void => {
+  const updateMediaSessionMetadata = (
+    nextTitle = title,
+    nextArtist = artist,
+    nextSubtitle = subtitle,
+    nextArtworkUrl = artworkUrl
+  ): void => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
       return;
     }
 
     try {
-      const artwork: MediaImage[] = artworkUrl
-        ? [{ src: artworkUrl, sizes: "512x512", type: "image/webp" }]
+      const artwork: MediaImage[] = nextArtworkUrl
+        ? [{ src: nextArtworkUrl, sizes: "512x512", type: "image/webp" }]
         : [];
 
       navigator.mediaSession.metadata = new MediaMetadata({
-        title,
-        artist: artist || subtitle || "",
+        title: nextTitle,
+        artist: nextArtist || nextSubtitle || "",
         album: "",
         artwork
       });

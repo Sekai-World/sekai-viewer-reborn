@@ -1,10 +1,12 @@
 <script lang="ts">
   import { asset } from "$app/paths";
   import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets/index";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
 
   type CardListCardItem = {
     id: string;
@@ -53,6 +55,7 @@
   let lastSpoilerIdentity = $state("");
   let spoilerRevealTimeout: ReturnType<typeof setTimeout> | null = null;
   let visibleImageKeys = $state<Record<string, boolean>>({});
+  let gridContentNode: HTMLDivElement | null = $state(null);
 
   const rarityValueByType: Record<string, number> = {
     rarity_1: 1,
@@ -85,13 +88,6 @@
   };
   const getAttrIconUrl = (size: 64 | 88 = 64): string | null =>
     item.attr ? asset(`/card_attr/icon_attribute_${item.attr}_${size}.png`) : null;
-  const getUnitIconUrl = (unit: string | null): string | null => {
-    if (!unit) {
-      return null;
-    }
-
-    return asset(`/icons/icon_${unit === "none" ? "piapro" : unit}.png`);
-  };
   const getCardFrameUrl = (size: "L" | "S"): string | null => {
     const rarityFrameLevel = getRarityFrameLevel();
     return rarityFrameLevel ? asset(`/card_frame/cardFrame_${size}_${rarityFrameLevel}.png`) : null;
@@ -160,6 +156,15 @@
     }, spoilerRevealAnimationMs);
   };
 
+  const handleCardClick = (event: MouseEvent): void => {
+    if (!isSpoilerContentMosaicked()) {
+      return;
+    }
+
+    event.preventDefault();
+    revealSpoiler();
+  };
+
   const getPrimaryCardAssetRegion = (): SupportedRegion => "jp";
   const getFallbackCardAssetRegion = (): SupportedRegion | null =>
     region === "jp" ? null : region;
@@ -212,39 +217,37 @@
     visibleImageKeys = { ...visibleImageKeys, [key]: true };
   };
 
-  const loadWhenVisible = (node: HTMLElement, key: string) => {
+  $effect(() => {
+    if (visibleImageKeys.grid || !gridContentNode) {
+      return;
+    }
+
     if (typeof IntersectionObserver === "undefined") {
-      markImageVisible(key);
-      return {};
+      markImageVisible("grid");
+      return;
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) {
-          return;
+        if (entries.some((entry) => entry.isIntersecting)) {
+          markImageVisible("grid");
+          observer.disconnect();
         }
-
-        markImageVisible(key);
-        observer.disconnect();
       },
       { threshold: 0.01 }
     );
 
-    observer.observe(node);
+    observer.observe(gridContentNode);
 
-    return {
-      destroy() {
-        observer.disconnect();
-      }
+    return () => {
+      observer.disconnect();
     };
-  };
+  });
 </script>
 
 {#snippet spoilerOverlay()}
-  <button
-    type="button"
+  <div
     class={`event-list-spoiler-mosaic-overlay flex size-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
-    onclick={revealSpoiler}
   >
     <span
       class="flex size-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
@@ -253,7 +256,7 @@
       !
     </span>
     <span class="text-sm font-semibold tracking-[0.12em] text-error">{spoilerContentLabel}</span>
-  </button>
+  </div>
 {/snippet}
 
 {#snippet cardFrame(size: "L" | "S", visible: boolean)}
@@ -268,33 +271,6 @@
       decoding="async"
     />
   {/if}
-{/snippet}
-
-{#snippet thumbIcons(trained: boolean)}
-  {@const attrIconUrl = getAttrIconUrl(88)}
-  {@const rarityIconUrl = getRarityIconUrl(trained)}
-  {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
-  <svg
-    class="pointer-events-none absolute inset-0 z-20 size-full"
-    viewBox="0 0 100 100"
-    aria-hidden="true"
-  >
-    {#if attrIconUrl}
-      <image href={attrIconUrl} x="71" y="0" width="29" height="29" class="drop-shadow" />
-    {/if}
-    {#if rarityIconUrl && rarityCount > 0}
-      {#each Array.from(Array(rarityCount).keys()) as index (`rarity-thumb-${trained}-${index}`)}
-        <image
-          href={rarityIconUrl}
-          x={2 + index * 21}
-          y="73"
-          width="22"
-          height="22"
-          class="drop-shadow"
-        />
-      {/each}
-    {/if}
-  </svg>
 {/snippet}
 
 {#snippet largeIcons()}
@@ -341,34 +317,34 @@
   </svg>
 {/snippet}
 
-{#snippet unitIcon(iconUrl: string)}
-  <span
-    class="flex size-7 shrink-0 items-center justify-center rounded-full border border-base-content/15 bg-base-100/70 dark:bg-gray-300"
-  >
-    <img
-      src={iconUrl}
-      alt=""
-      aria-hidden="true"
-      class="size-7 max-w-none object-contain"
-      loading="lazy"
-      decoding="async"
-    />
-  </span>
-{/snippet}
-
 {#snippet metaBadges()}
-  {@const unitIconUrl = getUnitIconUrl(item.unit)}
-  {@const supportUnitIconUrl =
-    item.unit === "piapro" && item.supportUnit !== "none" ? getUnitIconUrl(item.supportUnit) : null}
   <div class="flex flex-wrap items-center gap-1.5">
     <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
       {idLabel}{item.id}
     </span>
-    {#if unitIconUrl}
-      {@render unitIcon(unitIconUrl)}
+    {#if item.unit}
+      {#if item.characterId !== null}
+        {@const charThumbUrl = getLocalCharacterThumbnailAssetURL(item.characterId)}
+        {#if charThumbUrl}
+          <span
+            class="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-base-content/15 bg-white"
+            aria-hidden="true"
+          >
+            <img
+              src={charThumbUrl}
+              alt=""
+              aria-hidden="true"
+              class="size-7 object-cover"
+              loading="lazy"
+              decoding="async"
+            />
+          </span>
+        {/if}
+      {/if}
+      <UnitIconBadge unit={item.unit} variant="sm" />
     {/if}
-    {#if supportUnitIconUrl}
-      {@render unitIcon(supportUnitIconUrl)}
+    {#if item.unit === "piapro" && item.supportUnit && item.supportUnit !== "none"}
+      <UnitIconBadge unit={item.supportUnit} variant="sm" />
     {/if}
   </div>
 {/snippet}
@@ -394,7 +370,11 @@
     />
   {/snippet}
 
-<div class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`}>
+<div
+  class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`}
+  role="presentation"
+  onclick={handleCardClick}
+>
   <article
     class={`card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
   >
@@ -410,7 +390,7 @@
         {@render spoilerOverlay()}
       </div>
     {:else if viewMode === "agenda"}
-      <div class="grid grid-cols-[7.5rem_1fr] gap-4 p-3 sm:grid-cols-[10rem_1fr]">
+      <div class="grid grid-cols-[9rem_1fr] gap-4 p-3 sm:grid-cols-[12rem_1fr]">
         <div class="grid grid-cols-2 gap-2 self-center">
           {#if !isTrainedOnlyCard()}
             {@render thumbImage(false)}
@@ -450,7 +430,7 @@
           <div class="card-grid-hover-area card-grid-hover-area-left"></div>
           <div class="card-grid-hover-area card-grid-hover-area-right"></div>
         {/if}
-        <div class="card-grid-content" use:loadWhenVisible={"grid"}>
+        <div class="card-grid-content" bind:this={gridContentNode}>
           <div class="card-grid-image-container">
             {#if isTrainedOnlyCard() && trainedUrl && visibleImageKeys.grid === true}
               <img

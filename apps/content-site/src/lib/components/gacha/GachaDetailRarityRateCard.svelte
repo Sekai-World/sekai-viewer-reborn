@@ -65,24 +65,24 @@
   /** Group rates by cardRarityType, preserving first-seen order. */
   const groupByRarity = (flatRates: GachaCardRarityRate[]): GroupedRate[] => {
     const order: string[] = [];
-    const map = new Map<string, GroupedRate>();
+    const map: Record<string, GroupedRate> = {};
 
     for (const r of flatRates) {
       if (!r.cardRarityType || r.rate === null) continue;
       const key = r.cardRarityType.trim().toLowerCase();
       const lt = (r.lotteryType ?? "normal").trim().toLowerCase();
 
-      if (!map.has(key)) {
+      if (!map[key]) {
         order.push(key);
-        map.set(key, { cardRarityType: key, segments: [], totalRate: 0 });
+        map[key] = { cardRarityType: key, segments: [], totalRate: 0 };
       }
 
-      const group = map.get(key)!;
+      const group = map[key];
       group.segments.push({ lotteryType: lt, rate: r.rate });
       group.totalRate += r.rate;
     }
 
-    return order.map((k) => map.get(k)!);
+    return order.map((key) => map[key]);
   };
 
   let grouped = $derived(groupByRarity(rates));
@@ -120,7 +120,7 @@
       </div>
     {:else}
       <!-- Single stacked bar — all rates sum to 100% -->
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <div class="flex h-2 overflow-hidden rounded-full bg-base-content/10">
           {#each grouped as group (group.cardRarityType)}
             <div

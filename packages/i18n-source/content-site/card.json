@@ -11,6 +11,7 @@
   "cardEpisodesTitle": "Side Stories",
   "cardImageAltSuffix": "card image",
   "cardInfoTitle": "Card Info",
+  "internalResourceCodeLabel": "Internal Resource Code",
   "cardListCharacterFallback": "Unknown Character",
   "cardListEmpty": "No cards found.",
   "cardListEnd": "No more cards.",

@@ -7,7 +7,7 @@ export const EVENT_LIST_CARD_FRAME_CLASS = "hover-3d relative isolate w-full";
 
 export const EVENT_CARD_SURFACE_CLASS = `card content-card-shell relative overflow-hidden ${EVENT_CARD_BASE_SHADOW_CLASS}`;
 
-export const EVENT_CARD_BODY_CLASS = "card-body relative z-10";
+export const EVENT_CARD_BODY_CLASS = "card-body relative z-10 p-3 md:p-4";
 
 export const EVENT_CARD_MEDIA_CLASS = `mb-2 flex items-center justify-center px-[4%] py-[4%] md:mb-3`;
 

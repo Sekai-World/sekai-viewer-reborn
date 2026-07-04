@@ -7,6 +7,7 @@
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { getEventTypeDisplay } from "$lib/domain/event";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import {
     EVENT_LIST_CARD_FRAME_CLASS,
     EVENT_LIST_CARD_IMAGE_CLASS,
@@ -27,7 +28,7 @@
   let {
     region,
     item,
-    currentEventId,
+    ongoingEventIds,
     currentEventLabel,
     spoilerContentLabel,
     uiLocale,
@@ -36,7 +37,7 @@
   }: {
     region: SupportedRegion;
     item: EventListCardItem;
-    currentEventId: string | null;
+    ongoingEventIds: Set<string>;
     currentEventLabel: string;
     spoilerContentLabel: string;
     uiLocale: string;
@@ -44,30 +45,13 @@
     bannerAltSuffix: string;
   } = $props();
 
-  const isCurrentEvent = (): boolean => currentEventId === item.id;
+  const isCurrentEvent = (): boolean => ongoingEventIds.has(item.id);
   const contentDisplaySettings = getContentDisplaySettings();
   const spoilerRevealAnimationMs = 180;
   let spoilerRevealed = $state(false);
   let spoilerRevealAnimating = $state(false);
   let lastSpoilerIdentity = $state("");
   let spoilerRevealTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  const unitIconClassByUnit: Record<string, string> = {
-    idol: "event-list-unit-idol",
-    light_sound: "event-list-unit-light-sound",
-    piapro: "event-list-unit-piapro",
-    school_refusal: "event-list-unit-school-refusal",
-    street: "event-list-unit-street",
-    theme_park: "event-list-unit-theme-park"
-  };
-
-  const getUnitIconClass = (unit: string | null | undefined): string => {
-    if (!unit) {
-      return "";
-    }
-
-    return unitIconClassByUnit[unit] ?? "";
-  };
 
   const hasSpoiler = (): boolean => {
     const startAtMs = toTimestampMs(item.startAt);
@@ -158,7 +142,7 @@
       <div class="h-10 rounded-lg bg-base-200/60"></div>
     </div>
   {:else}
-    <div class={`${EVENT_LIST_CARD_MEDIA_CLASS} ${getUnitIconClass(item.unit)}`}>
+    <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
       {#if item.assetBundleName}
         <EventAssetImage
           src={getEventBannerAssetURL(item.assetBundleName, region)}
@@ -174,33 +158,32 @@
           {item.title}
         </div>
       {/if}
+    </div>
 
-      <div class="absolute left-3 top-3">
-        <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
-          {idLabel}{item.id}
+    <div class="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+      <span class="badge border-none bg-base-200 font-semibold text-base-content">
+        {idLabel}{item.id}
+      </span>
+      {#if getEventTypeDisplay(item.eventType, uiLocale)}
+        <span class="badge border-none bg-base-200 font-semibold text-base-content">
+          {getEventTypeDisplay(item.eventType, uiLocale)}
         </span>
-      </div>
-
-      <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-        {#if getEventTypeDisplay(item.eventType, uiLocale)}
-          <span class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm">
-            {getEventTypeDisplay(item.eventType, uiLocale)}
-          </span>
-        {/if}
-      </div>
-
+      {/if}
       {#if isCurrentEvent()}
-        <div class="absolute bottom-3 right-3">
-          <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
-            {currentEventLabel}
-          </span>
-        </div>
+        <span class="badge border-none bg-primary font-semibold text-primary-content">
+          {currentEventLabel}
+        </span>
       {/if}
     </div>
 
-    <div class="px-4 pb-4 pt-3">
-      <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
-      <p class="mt-1 text-xs/relaxed opacity-65">{getEventTimeRange()}</p>
+    <div class="flex items-start gap-2 px-4 pb-4 pt-3">
+      <div class="min-w-0 flex-1">
+        <h2 class={EVENT_LIST_CARD_TITLE_CLASS}>{item.title}</h2>
+        <p class="mt-1 text-xs/relaxed opacity-65">{getEventTimeRange()}</p>
+      </div>
+      {#if item.unit}
+        <UnitIconBadge unit={item.unit} class="mt-0.5 shrink-0" />
+      {/if}
     </div>
   {/if}
 </EventCardFrame>

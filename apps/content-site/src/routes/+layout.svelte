@@ -1,5 +1,6 @@
 <script lang="ts">
   import "../app.css";
+  import "$lib/icons/mdi";
   import { asset } from "$app/paths";
   import { invalidateAll, onNavigate } from "$app/navigation";
   import { page } from "$app/state";
@@ -9,6 +10,7 @@
     type ContentDisplaySettingsState
   } from "$lib/settings/content-display";
   import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n/config";
+  import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
@@ -16,6 +18,7 @@
     createI18nTranslator,
     isLocaleLoading,
     getThemeModeLabel,
+    resolveStreamingMessages,
     setI18nLocale,
     tCommon
   } from "$lib/i18n/runtime";
@@ -24,6 +27,8 @@
     DEFAULT_UI_LOCALE,
     normalizeRegion,
     normalizeUiLocale,
+    persistPreferredRegion,
+    resolvePreferredRegion,
     UI_LOCALE_COOKIE_NAME
   } from "$lib/i18n/region";
   import type { LayoutData } from "./$types";
@@ -47,10 +52,11 @@
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
+  let preferredRegion = $state<SupportedRegion>(DEFAULT_REGION);
   let resolvedTheme = $state<ResolvedTheme>("light");
   let isDesktopSettingsMenuOpen = $state(false);
   let isDesktopThemeMenuOpen = $state(false);
@@ -84,12 +90,14 @@
   let settingsLabel = $state(getInitialI18nText("settings.title"));
   let themeControlLabel = $state(getInitialI18nText("settings.appearance"));
   let themePaletteLabel = $state(getInitialI18nText("settings.theme"));
+  let gameContentRegionLabel = $state(getInitialI18nText("settings.gameContentRegion"));
   let interfaceLanguageLabel = $state(getInitialI18nText("settings.interfaceLanguage"));
   let currentLanguageLabel = $state(getInitialI18nText("settings.currentLanguage"));
   let contentDisplayLabel = $state(getInitialI18nText("settings.contentDisplay"));
   let showSpoilerContentLabel = $state(getInitialI18nText("settings.showSpoilerContent"));
   let mosaickedSpoilerContentLabel = $state(getInitialI18nText("settings.mosaickedSpoilerContent"));
   let lowMotionModeLabel = $state(getInitialI18nText("settings.lowMotionMode"));
+  let ongoingFirstLabel = $state(getInitialI18nText("settings.ongoingFirst"));
   let backToTopLabel = $state(getInitialI18nText("backToTopLabel"));
   let loadingLanguagePackLabel = $state(getInitialI18nText("loadingLanguagePack"));
   let switchThemeAriaLabel = $state(getInitialI18nText("aria.switchTheme"));
@@ -104,23 +112,24 @@
   let contentDisplaySettings = $state<ContentDisplaySettingsState>({
     showSpoilerContent: false,
     mosaickedSpoilerContent: true,
-    lowMotionMode: false
+    lowMotionMode: false,
+    ongoingFirst: true
   });
 
   setContentDisplaySettings(contentDisplaySettings);
 
-  const sidebarRegion = $derived.by<ReturnType<typeof normalizeRegion>>(() => {
+  const sidebarRegion = $derived.by<SupportedRegion>(() => {
     const [first, second] = page.url.pathname.split("/").filter(Boolean);
 
-    if (first === "cards" && second) {
-      return normalizeRegion(second, DEFAULT_REGION);
+    if ((first === "card" || first === "cards") && second) {
+      return normalizeRegion(second, preferredRegion);
     }
 
-    if ((first === "event" || first === "events" || first === "gacha" || first === "gachas" || first === "musics") && second) {
-      return normalizeRegion(second, DEFAULT_REGION);
+    if ((first === "event" || first === "events" || first === "gacha" || first === "gachas" || first === "music" || first === "musics") && second) {
+      return normalizeRegion(second, preferredRegion);
     }
 
-    return DEFAULT_REGION;
+    return preferredRegion;
   });
 
   const sidebarItems = $derived<SidebarItem[]>([
@@ -144,7 +153,7 @@
       label: songsLabel,
       icon: "mdi:music-note-outline",
       href: `/musics/${sidebarRegion}`,
-      active: page.url.pathname.startsWith("/musics/")
+      active: page.url.pathname.startsWith("/music/") || page.url.pathname.startsWith("/musics/")
     },
     {
       label: eventsLabel,
@@ -170,7 +179,7 @@
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
   $effect(() => {
-    const translate = createI18nTranslator(uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshTranslations(uiLocale);
   });
@@ -248,6 +257,7 @@
     settingsLabel = translate("settings.title");
     themeControlLabel = translate("settings.appearance");
     themePaletteLabel = translate("settings.theme");
+    gameContentRegionLabel = translate("settings.gameContentRegion");
     interfaceLanguageLabel = translate("settings.interfaceLanguage");
     currentLanguageLabel = translate("settings.currentLanguage");
     contentDisplayLabel = translate("settings.contentDisplay");
@@ -266,7 +276,7 @@
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(localeValue, data.i18nMessages);
+    const resolvedLocale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 
@@ -323,7 +333,8 @@
       mosaickedSpoilerContent: true,
       lowMotionMode:
         typeof window !== "undefined" &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      ongoingFirst: true
     };
     const storedSettings = localStorage.getItem(CONTENT_DISPLAY_STORAGE_KEY);
 
@@ -342,7 +353,11 @@
         lowMotionMode:
           typeof parsed.lowMotionMode === "boolean"
             ? parsed.lowMotionMode
-            : defaultSettings.lowMotionMode
+            : defaultSettings.lowMotionMode,
+        ongoingFirst:
+          typeof parsed.ongoingFirst === "boolean"
+            ? parsed.ongoingFirst
+            : defaultSettings.ongoingFirst
       };
     } catch {
       return defaultSettings;
@@ -355,7 +370,8 @@
       JSON.stringify({
         showSpoilerContent: contentDisplaySettings.showSpoilerContent,
         mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent,
-        lowMotionMode: contentDisplaySettings.lowMotionMode
+        lowMotionMode: contentDisplaySettings.lowMotionMode,
+        ongoingFirst: contentDisplaySettings.ongoingFirst
       })
     );
   };
@@ -398,6 +414,16 @@
     contentDisplaySettings.lowMotionMode = (event.currentTarget as HTMLInputElement).checked;
     applyMotionPreference();
     persistContentDisplaySettings();
+  };
+
+  const handleOngoingFirstChange = (event: Event): void => {
+    contentDisplaySettings.ongoingFirst = (event.currentTarget as HTMLInputElement).checked;
+    persistContentDisplaySettings();
+  };
+
+  const setPreferredRegion = (region: SupportedRegion): void => {
+    preferredRegion = region;
+    persistPreferredRegion(region);
   };
 
   const getThemeNameLabel = (themeNameValue: ThemeName): string => {
@@ -540,11 +566,13 @@
 
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     applyTheme(resolvePreferredThemeName(), resolvePreferredTheme());
+    preferredRegion = resolvePreferredRegion();
     const preferredContentDisplaySettings = resolvePreferredContentDisplaySettings();
     contentDisplaySettings.showSpoilerContent = preferredContentDisplaySettings.showSpoilerContent;
     contentDisplaySettings.mosaickedSpoilerContent =
       preferredContentDisplaySettings.mosaickedSpoilerContent;
     contentDisplaySettings.lowMotionMode = preferredContentDisplaySettings.lowMotionMode;
+    contentDisplaySettings.ongoingFirst = preferredContentDisplaySettings.ongoingFirst;
     applyMotionPreference();
     persistContentDisplaySettings();
     updateBackToTopVisibility();
@@ -632,6 +660,31 @@
   </div>
 {/if}
 
+{#snippet regionSelectorSection()}
+  <div class="flex flex-col gap-2">
+    <span class="inline-flex items-center gap-1 px-1 text-xs font-semibold opacity-70">
+      <Icon icon="mdi:earth" class="size-3.5" aria-hidden="true" />
+      <span>{gameContentRegionLabel}</span>
+    </span>
+    <div class="grid grid-cols-2 gap-1 sm:grid-cols-3">
+      {#each supportedRegions as regionOption (regionOption)}
+        <button
+          type="button"
+          class={`btn btn-sm min-h-12! justify-between rounded-lg border-base-content/15 ${preferredRegion === regionOption ? "btn-primary" : "bg-base-100"}`}
+          disabled={preferredRegion === regionOption}
+          aria-pressed={preferredRegion === regionOption}
+          onclick={() => setPreferredRegion(regionOption)}
+        >
+          <span>{regionLabels[regionOption]}</span>
+          {#if preferredRegion === regionOption}
+            <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
+          {/if}
+        </button>
+      {/each}
+    </div>
+  </div>
+{/snippet}
+
 {#snippet contentDisplaySection()}
   <div class="flex flex-col gap-2">
     <span class="px-1 text-xs font-semibold opacity-70">
@@ -679,6 +732,20 @@
         checked={contentDisplaySettings.lowMotionMode}
         onchange={handleLowMotionModeChange}
         aria-label={lowMotionModeLabel}
+      />
+    </label>
+    <label
+      class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
+    >
+      <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
+        >{ongoingFirstLabel}</span
+      >
+      <input
+        type="checkbox"
+        class="toggle toggle-primary shrink-0"
+        checked={contentDisplaySettings.ongoingFirst}
+        onchange={handleOngoingFirstChange}
+        aria-label={ongoingFirstLabel}
       />
     </label>
   </div>
@@ -732,6 +799,10 @@
             aria-label={settingsLabel}
             class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-3 shadow-xl"
           >
+            {@render regionSelectorSection()}
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
             {@render contentDisplaySection()}
           </div>
         {/if}
@@ -915,6 +986,10 @@
             aria-label={settingsLabel}
             class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
           >
+            {@render regionSelectorSection()}
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
             {@render contentDisplaySection()}
 
             <div class="my-2 h-px bg-base-content/12"></div>

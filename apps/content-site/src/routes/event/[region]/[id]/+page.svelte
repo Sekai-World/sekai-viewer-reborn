@@ -11,7 +11,12 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import type { PageData } from "./$types";
 
@@ -19,7 +24,7 @@
 
   let { data }: { data: PageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state<string>("");
   let activeAssetTab = $state<EventAssetTab>("banner");
@@ -74,10 +79,11 @@
   let debugEventJsonTitle = $state(getInitialI18nText("debugEventJsonTitle"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let bannerCharacterLabel = $state(getInitialI18nText("bannerCharacterLabel"));
+  let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
   });
 
@@ -129,10 +135,11 @@
     debugEventJsonTitle = translate("debugEventJsonTitle");
     closeLabel = translate("closeLabel");
     bannerCharacterLabel = translate("bannerCharacterLabel");
+    internalResourceCodeLabel = translate("internalResourceCodeLabel");
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(locale, key));
   };
 
@@ -304,6 +311,7 @@
               {displayLocale}
               title={eventInfoTitle}
               {idLabel}
+              {internalResourceCodeLabel}
               {nameLabel}
               {unitLabel}
               {mixedUnitLabel}

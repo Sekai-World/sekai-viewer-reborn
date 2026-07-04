@@ -1,4 +1,10 @@
-import { getEventsByRegionCurrent, getVersions } from "@platform/sekai-master-api-sdk";
+import {
+  getCardsByRegionList,
+  getEventsByRegionCurrent,
+  getGachasByRegionList,
+  getMusicsByRegionList,
+  getVersions
+} from "@platform/sekai-master-api-sdk";
 import { getServerI18nText } from "$lib/i18n/runtime";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
@@ -32,6 +38,39 @@ type RegionEventCard = {
 };
 
 type VersionsByRegion = Partial<Record<SupportedRegion, RegionVersions | null>>;
+
+type LatestCardItem = {
+  id: string;
+  prefix: string | null;
+  assetBundleName: string | null;
+  attr: string | null;
+  rarityType: string | null;
+  rarityCount: number;
+  releaseAt: string | number | null;
+};
+
+type LatestMusicItem = {
+  id: string;
+  title: string | null;
+  assetBundleName: string | null;
+  composer: string | null;
+  publishedAt: string | number | null;
+};
+
+type LatestGachaItem = {
+  id: string;
+  name: string | null;
+  assetBundleName: string | null;
+  startAt: string | number | null;
+  endAt: string | number | null;
+};
+
+type RegionLatestData = {
+  region: SupportedRegion;
+  cards: LatestCardItem[];
+  musics: LatestMusicItem[];
+  gachas: LatestGachaItem[];
+};
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -174,6 +213,131 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
   };
 };
 
+const RARITY_COUNT_BY_TYPE: Record<string, number> = {
+  rarity_1: 1,
+  rarity_2: 2,
+  rarity_3: 3,
+  rarity_4: 4,
+  rarity_birthday: 1
+};
+
+const parseLatestCard = (raw: unknown): LatestCardItem | null => {
+  const root = getObject(raw);
+  if (!root) {
+    return null;
+  }
+
+  const id = pickFirstStringLike(root, ["id"]);
+  if (!id) {
+    return null;
+  }
+
+  const rarityNode = getNestedObject(root, ["cardRarity"]);
+  const rarityType = rarityNode ? pickFirstString(rarityNode, ["cardRarityType"]) : null;
+  const rarityCount = rarityType ? (RARITY_COUNT_BY_TYPE[rarityType] ?? 0) : 0;
+
+  return {
+    id,
+    prefix: pickFirstString(root, ["prefix"]),
+    assetBundleName: pickFirstString(root, ["assetbundleName", "assetBundleName"]),
+    attr: pickFirstString(root, ["attr"]),
+    rarityType,
+    rarityCount,
+    releaseAt: pickFirstDateValue(root, ["releaseAt", "archivePublishedAt"])
+  };
+};
+
+const parseLatestMusic = (raw: unknown): LatestMusicItem | null => {
+  const root = getObject(raw);
+  if (!root) {
+    return null;
+  }
+
+  const id = pickFirstStringLike(root, ["id"]);
+  if (!id) {
+    return null;
+  }
+
+  return {
+    id,
+    title: pickFirstString(root, ["title"]),
+    assetBundleName: pickFirstString(root, ["assetbundleName", "assetBundleName"]),
+    composer: pickFirstString(root, ["composer"]),
+    publishedAt: pickFirstDateValue(root, ["publishedAt"])
+  };
+};
+
+const parseLatestGacha = (raw: unknown): LatestGachaItem | null => {
+  const root = getObject(raw);
+  if (!root) {
+    return null;
+  }
+
+  const id = pickFirstStringLike(root, ["id"]);
+  if (!id) {
+    return null;
+  }
+
+  return {
+    id,
+    name: pickFirstString(root, ["name"]),
+    assetBundleName: pickFirstString(root, ["assetbundleName", "assetBundleName"]),
+    startAt: pickFirstDateValue(root, ["startAt"]),
+    endAt: pickFirstDateValue(root, ["endAt"])
+  };
+};
+
+const fetchRegionLatestData = async (
+  baseUrl: string,
+  region: SupportedRegion
+): Promise<RegionLatestData> => {
+  const [cardsRes, musicsRes, gachasRes] = await Promise.all([
+    getCardsByRegionList({
+      baseUrl,
+      path: { region },
+      query: { page: 1, page_size: 3, spoiler: false, sort_by: "releaseAt", sort_order: "desc" }
+    }),
+    getMusicsByRegionList({
+      baseUrl,
+      path: { region },
+      query: { page: 1, page_size: 3, spoiler: false, sort_by: "publishedAt", sort_order: "desc" }
+    }),
+    getGachasByRegionList({
+      baseUrl,
+      path: { region },
+      query: { page: 1, page_size: 2, spoiler: false, sort_by: "startAt", sort_order: "desc" }
+    })
+  ]);
+
+  const cardItems = Array.isArray((cardsRes.data as Record<string, unknown>)?.items)
+    ? ((cardsRes.data as Record<string, unknown>).items as unknown[])
+        .map(parseLatestCard)
+        .filter((c): c is LatestCardItem => c !== null)
+    : [];
+
+  const musicItems = Array.isArray((musicsRes.data as Record<string, unknown>)?.items)
+    ? ((musicsRes.data as Record<string, unknown>).items as unknown[])
+        .map(parseLatestMusic)
+        .filter((m): m is LatestMusicItem => m !== null)
+    : [];
+
+  const gachaItems = Array.isArray((gachasRes.data as Record<string, unknown>)?.items)
+    ? ((gachasRes.data as Record<string, unknown>).items as unknown[])
+        .map(parseLatestGacha)
+        .filter((g): g is LatestGachaItem => g !== null)
+        .filter((g) => {
+          const now = Date.now();
+          const start = typeof g.startAt === "number" ? g.startAt
+            : typeof g.startAt === "string" ? Date.parse(g.startAt) : null;
+          const end = typeof g.endAt === "number" ? g.endAt
+            : typeof g.endAt === "string" ? Date.parse(g.endAt) : null;
+          return start !== null && end !== null && start <= now && now <= end;
+        })
+    : [];
+
+  return { region, cards: cardItems, musics: musicItems, gachas: gachaItems };
+};
+
 const toRegionEventCard = async (
   baseUrl: string,
   region: SupportedRegion,
@@ -245,7 +409,16 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
     }
   });
 
+  const latestData = supportedRegions.map(async (region) => {
+    try {
+      return await fetchRegionLatestData(baseUrl, region);
+    } catch {
+      return { region, cards: [], musics: [], gachas: [] } satisfies RegionLatestData;
+    }
+  });
+
   return {
-    cards
+    cards,
+    latestData
   };
 };

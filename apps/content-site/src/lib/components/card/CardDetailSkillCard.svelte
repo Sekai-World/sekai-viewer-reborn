@@ -1,21 +1,24 @@
 <script lang="ts">
-  import type { CardDetailSkill } from "$lib/domain/card-detail";
+  import type { CardDetailCharacter, CardDetailSkill } from "$lib/domain/card-detail";
+  import {
+    formatEffectValue,
+    formatSkillDescription,
+    getSelectedSkillEffects
+  } from "$lib/skill-description";
   import Icon from "@iconify/svelte";
 
   let {
     skill,
+    character,
     title,
-    skillNameLabel,
-    skillDescriptionLabel,
     skillLevelLabel,
     durationLabel,
     effectValueLabel,
     noSkillLabel
   }: {
     skill: CardDetailSkill | null;
+    character: CardDetailCharacter | null;
     title: string;
-    skillNameLabel: string;
-    skillDescriptionLabel: string;
     skillLevelLabel: string;
     durationLabel: string;
     effectValueLabel: string;
@@ -25,18 +28,7 @@
   let selectedLevel = $state(1);
   let lastSkillIdentity = $state("");
   const maxSkillLevel = $derived(Math.max(1, skill?.maxSkillLevel ?? 1));
-  const selectedEffectDetails = $derived.by(() => {
-    const effects = skill?.effects ?? [];
-    return effects
-      .map((effect) => ({
-        effect,
-        detail:
-          effect.details.find((item) => item.level === selectedLevel) ??
-          effect.details[effect.details.length - 1] ??
-          null
-      }))
-      .filter((item) => item.detail !== null);
-  });
+  const selectedEffectDetails = $derived(getSelectedSkillEffects(skill, selectedLevel));
   const formatEffectType = (value: string | null): string =>
     value
       ?.replaceAll("_", " ")
@@ -44,43 +36,8 @@
       .filter(Boolean)
       .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
       .join(" ") ?? "--";
-  const formatEffectValue = (value: number | null, type: string | null): string => {
-    if (value === null) {
-      return "--";
-    }
-
-    return type === "rate" ? `${value}%` : String(value);
-  };
-  const formatSkillDescription = (value: string | null): string | null => {
-    if (!value) {
-      return null;
-    }
-
-    return value.replaceAll("\\n", "\n").replace(
-      /\{\{(?<effectId>\d+);(?<kind>[dv])\}\}/g,
-      (
-        match: string,
-        effectIdValue: string,
-        kind: string
-      ) => {
-        const effectId = Number(effectIdValue);
-        const detail =
-          Number.isFinite(effectId)
-            ? selectedEffectDetails.find((item) => item.effect.id === effectId)?.detail
-            : null;
-
-        if (!detail) {
-          return match;
-        }
-
-        return kind === "d"
-          ? String(detail.activateEffectDuration ?? match)
-          : String(detail.activateEffectValue ?? match);
-      }
-    );
-  };
   const descriptionText = $derived(
-    formatSkillDescription(skill?.description ?? skill?.shortDescription ?? null)
+    skill ? formatSkillDescription({ skill, skillLevel: selectedLevel, character }) : null
   );
   const setSelectedLevel = (value: string): void => {
     const nextValue = Number(value);
@@ -117,7 +74,7 @@
     {#if skill}
       <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
         <div class="space-y-3">
-          <label class="content-card-inset block rounded-xl px-3 sm:px-4 py-3">
+          <label class="content-card-inset block rounded-xl p-3 sm:px-4">
             <span class="flex items-center justify-between gap-4 text-sm font-semibold">
               <span>{skillLevelLabel}</span>
               <span class="flex items-center gap-1">
@@ -145,7 +102,7 @@
           {#if selectedEffectDetails.length > 0}
             <div class="grid gap-2 sm:grid-cols-2">
               {#each selectedEffectDetails as item, index (`effect-${index}`)}
-                <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+                <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <p class="text-sm font-semibold">{formatEffectType(item.effect.type)}</p>
                   <div class="mt-2 space-y-1 text-xs opacity-75">
                     {#if item.detail?.activateEffectDuration !== null}
@@ -167,22 +124,14 @@
         </div>
 
         <dl class="space-y-2">
-          {#if skill.name}
-            <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
-              <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                {skillNameLabel}
-              </dt>
-              <dd class="mt-1 text-sm font-medium">{skill.name}</dd>
-            </div>
-          {/if}
-          {#if descriptionText}
-            <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
-              <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                {skillDescriptionLabel}
-              </dt>
-              <dd class="mt-1 whitespace-pre-line text-sm font-medium">
-                {descriptionText}
-              </dd>
+          {#if skill.name || descriptionText}
+            <div class="content-card-inset rounded-xl p-3 sm:px-4">
+              {#if skill.name}
+                <p class="text-sm font-semibold">{skill.name}</p>
+              {/if}
+              {#if descriptionText}
+                <p class="mt-1 whitespace-pre-line text-sm opacity-75">{descriptionText}</p>
+              {/if}
             </div>
           {/if}
         </dl>

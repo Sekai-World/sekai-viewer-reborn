@@ -3,18 +3,21 @@
   import { getGachaLogoAssetURL } from "$lib/assets/index";
   import type { CardGachaBanner } from "$lib/domain/card-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
+  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import Icon from "@iconify/svelte";
 
   let {
     gachas,
     region,
+    uiLocale,
     title,
     emptyLabel,
     showAllLabel
   }: {
     gachas: CardGachaBanner[];
     region: SupportedRegion;
+    uiLocale: string;
     title: string;
     emptyLabel: string;
     showAllLabel: string;
@@ -22,22 +25,19 @@
 
   let showAll = $state(false);
 
+  const getStartAtMs = (gacha: CardGachaBanner): number => toTimestampMs(gacha.startAt) ?? 0;
+
   const sorted = $derived(
-    [...gachas].sort((a, b) => (b.startAt ?? 0) - (a.startAt ?? 0))
+    [...gachas].sort((a, b) => getStartAtMs(b) - getStartAtMs(a))
   );
 
   const latest = $derived(sorted[0] ?? null);
   const first = $derived(sorted.length >= 2 ? sorted[sorted.length - 1] : null);
-  const remaining = $derived(sorted.length > 2 ? sorted.slice(1, -1) : []);
   const hiddenCount = $derived(sorted.length - (sorted.length <= 2 ? sorted.length : 2));
 
-  const formatDate = (ts: number | null): string => {
-    if (ts === null || ts <= 0) return "";
-    return new Date(ts * 1000).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric"
-    });
+  const formatGachaDateTime = (value: string | number | null): string => {
+    const timestampMs = toTimestampMs(value);
+    return formatDisplayDateTime(timestampMs ?? value, uiLocale);
   };
 </script>
 
@@ -73,7 +73,7 @@
                     #{gacha.id}
                   </span>
                   {#if gacha.startAt}
-                    <span class="text-[0.65rem] opacity-50">{formatDate(gacha.startAt)}</span>
+                    <span class="text-[0.65rem] opacity-50">{formatGachaDateTime(gacha.startAt)}</span>
                   {/if}
                 </div>
                 {#if gacha.name}
@@ -105,7 +105,7 @@
                     #{latest.id}
                   </span>
                   {#if latest.startAt}
-                    <span class="text-[0.65rem] opacity-50">{formatDate(latest.startAt)}</span>
+                    <span class="text-[0.65rem] opacity-50">{formatGachaDateTime(latest.startAt)}</span>
                   {/if}
                 </div>
                 {#if latest.name}
@@ -137,7 +137,7 @@
                     #{first.id}
                   </span>
                   {#if first.startAt}
-                    <span class="text-[0.65rem] opacity-50">{formatDate(first.startAt)}</span>
+                    <span class="text-[0.65rem] opacity-50">{formatGachaDateTime(first.startAt)}</span>
                   {/if}
                 </div>
                 {#if first.name}

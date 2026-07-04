@@ -2,7 +2,7 @@
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import GachaListCard from "$lib/components/gacha/GachaListCard.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
@@ -10,7 +10,12 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
   import type { PageData } from "./$types";
@@ -25,7 +30,7 @@
   let { data }: { data: PageData } = $props();
   const gachaListLoadingFallback = "Loading gachas...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key, fallback);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key, fallback);
   let items = $state<GachaListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -61,7 +66,7 @@
 
   const currentGachaIds = $derived.by(() => {
     const now = Date.now();
-    const ids = new Set<string>();
+    const ids = new SvelteSet<string>();
     for (const item of items) {
       const startMs = toTimestampMs(item.startAt);
       const endMs = toTimestampMs(item.endAt);
@@ -78,11 +83,24 @@
   };
 
   const visibleItems = $derived.by(() => {
-    if (contentDisplaySettings.showSpoilerContent) {
-      return items;
+    const base = contentDisplaySettings.showSpoilerContent
+      ? items
+      : items.filter((item) => !isSpoilerGacha(item));
+
+    if (!contentDisplaySettings.ongoingFirst) {
+      return base;
     }
 
-    return items.filter((item) => !isSpoilerGacha(item));
+    const ongoing: GachaListItem[] = [];
+    const rest: GachaListItem[] = [];
+    for (const item of base) {
+      if (currentGachaIds.has(item.id)) {
+        ongoing.push(item);
+      } else {
+        rest.push(item);
+      }
+    }
+    return [...ongoing, ...rest];
   });
 
   const hasNonDefaultSort = (): boolean => sortBy !== "startAt" || sortOrder !== "desc";
@@ -187,7 +205,7 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -312,7 +330,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
   };
 
@@ -502,7 +520,7 @@
     </div>
   {:else if isInitialLoading}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {#each { length: 12 } as _}
+      {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell flex flex-col gap-3 rounded-2xl p-4 shadow-sm">
           <div class="skeleton h-32 rounded-xl"></div>
           <div class="skeleton h-4 w-3/4 rounded"></div>

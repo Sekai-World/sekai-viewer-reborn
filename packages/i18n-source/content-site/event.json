@@ -25,6 +25,7 @@
   "eventBgmTitle": "Event BGM",
   "eventCountdownTitle": "Event Countdown",
   "eventInfoTitle": "Event Info",
+  "internalResourceCodeLabel": "Internal Resource Code",
   "eventListEmpty": "No events found.",
   "eventListEnd": "No more events.",
   "eventListFilterAny": "Any",

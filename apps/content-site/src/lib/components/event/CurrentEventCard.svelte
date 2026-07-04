@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { asset, resolve } from "$app/paths";
+  import { resolve } from "$app/paths";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { getEventBannerAssetURL } from "$lib/assets/index";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
   import {
     CURRENT_EVENT_CARD_FRAME_CLASS,
@@ -20,15 +21,6 @@
     endAt: string | number | null;
     assetBundleName: string | null;
   };
-
-  const unitIconSlugs = new Set([
-    "idol",
-    "light_sound",
-    "piapro",
-    "school_refusal",
-    "street",
-    "theme_park"
-  ]);
 
   let {
     region,
@@ -50,15 +42,6 @@
     bannerAltSuffix: string;
   } = $props();
 
-  const getUnitIconUrl = (unit: string | null | undefined): string | null => {
-    if (!unit) {
-      return null;
-    }
-
-    const slug = unit.trim().toLowerCase();
-    return unitIconSlugs.has(slug) ? asset(`/icons/icon_${slug}.png`) : null;
-  };
-
   const getDisplayUnit = (unit: string | null | undefined): string | null => {
     if (!unit) {
       return null;
@@ -70,7 +53,6 @@
       : (unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit));
   };
 
-  const unitIconUrl = $derived(getUnitIconUrl(event.unit));
   const displayUnit = $derived(getDisplayUnit(event.unit));
 </script>
 
@@ -106,24 +88,7 @@
   <div class="flex items-center gap-2 text-sm">
     <p class="opacity-70">{idLabel}{event.id}</p>
     {#if displayUnit}
-      <span
-        class="{unitIconUrl
-          ? 'unit-icon-frame size-8 border-base-content/15'
-          : 'h-7 min-w-7 border-base-content/15 px-1'} inline-flex items-center justify-center rounded-full border text-[0.65rem] font-semibold leading-none"
-      >
-        {#if unitIconUrl}
-          <img
-            src={unitIconUrl}
-            alt=""
-            aria-hidden="true"
-            class="size-9 max-w-none shrink-0 object-contain"
-            loading="lazy"
-            decoding="async"
-          />
-        {:else}
-          <span class="opacity-70">{displayUnit}</span>
-        {/if}
-      </span>
+      <UnitIconBadge unit={event.unit!} fallbackLabel={displayUnit} />
     {/if}
   </div>
 

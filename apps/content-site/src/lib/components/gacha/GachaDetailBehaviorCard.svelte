@@ -9,7 +9,7 @@
     title,
     noBehaviorsLabel,
     spinCountLabel,
-    costLabel,
+    costLabel: _costLabel,
     limitLabel,
     region = "jp",
     behaviorTypeMap,
@@ -125,19 +125,19 @@
     const sorted = [...behaviors].sort(
       (a, b) => (a.priority ?? 0) - (b.priority ?? 0)
     );
-    const map = new Map<string, GachaBehavior[]>();
-    const firstOfType = new Map<string, GachaBehavior>();
+    const map: Record<string, GachaBehavior[]> = {};
+    const firstOfType: Record<string, GachaBehavior> = {};
     for (const b of sorted) {
       const key = getBehaviorGroupKey(b);
-      if (!map.has(key)) {
-        map.set(key, []);
-        firstOfType.set(key, b);
+      if (!map[key]) {
+        map[key] = [];
+        firstOfType[key] = b;
       }
-      map.get(key)!.push(b);
+      map[key].push(b);
     }
     const result: BehaviorGroup[] = [];
-    for (const [key, variants] of map) {
-      const first = firstOfType.get(key)!;
+    for (const [key, variants] of Object.entries(map)) {
+      const first = firstOfType[key];
       const spinnable =
         first.gachaSpinnableType && first.gachaSpinnableType !== "any"
           ? getSpinnableDisplay(first.gachaSpinnableType)
@@ -187,7 +187,7 @@
     {:else}
       <div class="space-y-2.5">
         {#each groupedBehaviors() as group (group.key)}
-          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+          <div class="content-card-inset rounded-xl p-3 sm:px-4">
             <div class="flex items-center justify-between gap-2">
               <span class="text-sm font-semibold">{group.display}</span>
               <span class="flex items-center gap-1.5">

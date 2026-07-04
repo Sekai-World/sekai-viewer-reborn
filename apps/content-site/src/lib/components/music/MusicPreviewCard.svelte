@@ -38,7 +38,7 @@
     noVocalsLabel,
     shortPreviewLabel,
     longPreviewLabel,
-    noPreviewAvailableLabel,
+    noPreviewAvailableLabel: _noPreviewAvailableLabel,
     downloadProgressMessages,
     playLabel,
     pauseLabel,
@@ -126,10 +126,10 @@
       vocalId: selectedVocal?.id ?? "",
       mode: previewMode === "short" ? "short" : "long"
     });
-    return `/musics/${region}/${musicId}/download?${params}`;
+    return `/music/${region}/${musicId}/download?${params}`;
   };
 
-  const progressHref = `/musics/${region}/${musicId}/download/progress`;
+  const progressHref = $derived(`/music/${region}/${musicId}/download/progress`);
 
   const downloadOptions = $derived(
     selectedVocal
@@ -176,7 +176,7 @@
           {@const hasAsset = !!vocal.assetBundleName?.trim()}
           {@const chars = getCharacters(vocal)}
           <button
-            class="content-card-inset flex w-full items-center gap-3 rounded-xl px-3 sm:px-4 py-3 text-left transition-colors {isSelected && hasAsset ? 'ring-1 ring-primary bg-primary/5' : 'hover:bg-base-content/5'}"
+            class="content-card-inset flex w-full items-center gap-3 rounded-xl p-3 sm:px-4 text-left transition-colors {isSelected && hasAsset ? 'ring-1 ring-primary bg-primary/5' : 'hover:bg-base-content/5'}"
             onclick={() => selectVocal(vocal.id)}
             disabled={!hasAsset}
           >

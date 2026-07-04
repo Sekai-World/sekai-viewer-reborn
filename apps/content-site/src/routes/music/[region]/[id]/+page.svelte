@@ -10,7 +10,12 @@
   import MusicDifficultyCard from "$lib/components/music/MusicDifficultyCard.svelte";
   import MusicPreviewCard from "$lib/components/music/MusicPreviewCard.svelte";
   import MusicJacketHero from "$lib/components/music/MusicJacketHero.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import {
     formatUnitFallbackLabel,
     unitCodeByMusicTag
@@ -21,7 +26,7 @@
   let { data }: { data: PageData } = $props();
 
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
 
   let displayLocale = $state<string>("");
 
@@ -31,6 +36,7 @@
   let nameLabel = $state(getInitialI18nText("nameLabel"));
   let musicTitlePrefix = $state(getInitialI18nText("pageTitle.musicPrefix"));
   let musicDetailInfoTitle = $state(getInitialI18nText("musicDetailInfoTitle"));
+  let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let composerLabel = $state(getInitialI18nText("musicDetailComposerLabel"));
   let arrangerLabel = $state(getInitialI18nText("musicDetailArrangerLabel"));
   let lyricistLabel = $state(getInitialI18nText("musicDetailLyricistLabel"));
@@ -73,7 +79,7 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
   });
 
@@ -92,6 +98,7 @@
     nameLabel = translate("nameLabel");
     musicTitlePrefix = translate("pageTitle.musicPrefix");
     musicDetailInfoTitle = translate("musicDetailInfoTitle");
+    internalResourceCodeLabel = translate("internalResourceCodeLabel");
     composerLabel = translate("musicDetailComposerLabel");
     arrangerLabel = translate("musicDetailArrangerLabel");
     lyricistLabel = translate("musicDetailLyricistLabel");
@@ -134,7 +141,7 @@
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(locale, key));
   };
 
@@ -172,7 +179,7 @@
         : {
             key: regionOption,
             label: regionOption.toUpperCase(),
-            href: resolve("/musics/[region]/[id]", { region: regionOption, id: data.musicId }),
+            href: resolve("/music/[region]/[id]", { region: regionOption, id: data.musicId }),
             active: false
           }
     );
@@ -278,6 +285,7 @@
               {displayLocale}
               title={musicDetailInfoTitle}
               {idLabel}
+              {internalResourceCodeLabel}
               {nameLabel}
               {composerLabel}
               {arrangerLabel}
@@ -317,6 +325,7 @@
             />
             <MusicDifficultyCard
               music={payload.music}
+              region={data.region}
               {difficultyLabel}
               {levelLabel}
               {noteCountLabel}

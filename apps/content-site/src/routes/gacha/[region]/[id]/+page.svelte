@@ -15,14 +15,19 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
 
   let displayLocale = $state("");
   let activeAssetTab = $state<GachaAssetTab>("logo");
@@ -40,6 +45,7 @@
   let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let gachaInfoTitle = $state(getInitialI18nText("gachaInfoTitle"));
+  let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let gachaCountdownTitle = $state(getInitialI18nText("gachaCountdownTitle"));
   let logoLabel = $state(getInitialI18nText("gachaAssetTabs.logo"));
   let bannerLabel = $state(getInitialI18nText("gachaAssetTabs.banner"));
@@ -138,6 +144,7 @@
     imageUnavailableLabel = translate("imageUnavailable");
     closeLabel = translate("closeLabel");
     gachaInfoTitle = translate("gachaInfoTitle");
+    internalResourceCodeLabel = translate("internalResourceCodeLabel");
     gachaCountdownTitle = translate("gachaCountdownTitle");
     logoLabel = translate("gachaAssetTabs.logo");
     bannerLabel = translate("gachaAssetTabs.banner");
@@ -181,7 +188,7 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
   });
 
@@ -194,7 +201,7 @@
   });
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(locale, key));
   };
 
@@ -312,6 +319,7 @@
             uiLocale={displayLocale || data.uiLocale}
             title={gachaInfoTitle}
             {idLabel}
+            {internalResourceCodeLabel}
             {nameLabel}
             {gachaTypeLabel}
             {gachaTypeMap}
@@ -340,7 +348,7 @@
                   />
                   <span>{gachaSummaryLabel}</span>
                 </p>
-                <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+                <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <p class="text-sm/7 opacity-90">{payload.gacha.summary}</p>
                 </div>
               </div>
@@ -419,7 +427,7 @@
                   />
                   <span>{gachaDescriptionLabel}</span>
                 </p>
-                <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+                <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <p class="text-sm/7 whitespace-pre-line opacity-90">{displayDesc}</p>
                   {#if needsTruncation}
                     <button

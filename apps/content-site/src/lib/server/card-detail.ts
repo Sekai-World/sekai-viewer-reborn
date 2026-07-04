@@ -151,6 +151,36 @@ const parseCharacterNamePart = (
   keys: readonly string[]
 ): string | null => pickFirstString(characterNode, keys);
 
+const parseSkillEnhance = (effectNode: Record<string, unknown>) => {
+  const skillEnhanceNode = getNestedObject(effectNode, ["skillEnhance", "skill_enhance"]);
+  if (!skillEnhanceNode) {
+    return null;
+  }
+
+  const conditionNode = getNestedObject(skillEnhanceNode, [
+    "skillEnhanceCondition",
+    "skill_enhance_condition"
+  ]);
+
+  return {
+    activateEffectValue: pickFirstNumber(skillEnhanceNode, [
+      "activateEffectValue",
+      "activate_effect_value"
+    ]),
+    skillEnhanceType: pickFirstString(skillEnhanceNode, [
+      "skillEnhanceType",
+      "skill_enhance_type"
+    ]),
+    skillEnhanceCondition: conditionNode
+      ? {
+          id: pickFirstNumber(conditionNode, ["id"]),
+          seq: pickFirstNumber(conditionNode, ["seq"]),
+          unit: pickFirstString(conditionNode, ["unit"])
+        }
+      : null
+  };
+};
+
 const parseSkillEffects = (skillNode: Record<string, unknown> | null) =>
   (getNestedArray(skillNode ?? {}, ["skillEffects", "skill_effects"]) ?? [])
     .map((value) => {
@@ -166,6 +196,13 @@ const parseSkillEffects = (skillNode: Record<string, unknown> | null) =>
           "activateNotesJudgmentType",
           "activate_notes_judgment_type"
         ]),
+        activateCharacterRank: pickFirstNumber(effectNode, [
+          "activateCharacterRank",
+          "activate_character_rank"
+        ]),
+        activateUnitCount: pickFirstNumber(effectNode, ["activateUnitCount", "activate_unit_count"]),
+        activateLife: pickFirstNumber(effectNode, ["activateLife", "activate_life"]),
+        skillEnhance: parseSkillEnhance(effectNode),
         details: (getNestedArray(effectNode, ["skillEffectDetails", "skill_effect_details"]) ?? [])
           .map((detailValue) => {
             const detailNode = getObject(detailValue);
@@ -299,36 +336,66 @@ const normalizeParameterType = (value: string | null): keyof typeof parameterTyp
 export const parseCardDetailParams = (payload: unknown): CardDetailParams => {
   const root = getObject(payload);
   const paramsNode = root ? (getNestedObject(root, ["card", "data"]) ?? root) : {};
-  const source = getNestedArray(paramsNode, ["cardParameters", "card_parameters"]) ?? [];
+  const cardParamsValue = paramsNode["cardParameters"] ?? paramsNode["card_parameters"];
   const byLevel = new Map<
     number,
     { level: number; performance: number | null; technique: number | null; stamina: number | null }
   >();
 
-  for (const value of source) {
-    const node = getObject(value);
-    if (!node) {
-      continue;
+  if (Array.isArray(cardParamsValue)) {
+    // JP format: array of {cardLevel, cardParameterType, power}
+    for (const value of cardParamsValue) {
+      const node = getObject(value);
+      if (!node) {
+        continue;
+      }
+
+      const level = pickFirstNumber(node, ["cardLevel", "card_level", "level"]);
+      const type = normalizeParameterType(
+        pickFirstString(node, ["cardParameterType", "card_parameter_type", "type"])
+      );
+      const power = pickFirstNumber(node, ["power", "value"]);
+
+      if (level === null || type === null || power === null) {
+        continue;
+      }
+
+      const current = byLevel.get(level) ?? {
+        level,
+        performance: null,
+        technique: null,
+        stamina: null
+      };
+      current[type] = power;
+      byLevel.set(level, current);
     }
-
-    const level = pickFirstNumber(node, ["cardLevel", "card_level", "level"]);
-    const type = normalizeParameterType(
-      pickFirstString(node, ["cardParameterType", "card_parameter_type", "type"])
-    );
-    const power = pickFirstNumber(node, ["power", "value"]);
-
-    if (level === null || type === null || power === null) {
-      continue;
-    }
-
-    const current = byLevel.get(level) ?? {
-      level,
-      performance: null,
-      technique: null,
-      stamina: null
+  } else if (cardParamsValue !== null && typeof cardParamsValue === "object") {
+    // TW/KR/CN format: {param1: [power_at_level_1, ...], param2: [...], param3: [...]}
+    const dictParams = cardParamsValue as Record<string, unknown>;
+    const getParamArray = (key: string): number[] => {
+      const value = dictParams[key];
+      if (!Array.isArray(value)) {
+        return [];
+      }
+      return value.filter(
+        (item): item is number => typeof item === "number" && Number.isFinite(item)
+      );
     };
-    current[type] = power;
-    byLevel.set(level, current);
+
+    const param1 = getParamArray("param1");
+    const param2 = getParamArray("param2");
+    const param3 = getParamArray("param3");
+    const maxLevel = Math.max(param1.length, param2.length, param3.length);
+
+    for (let level = 1; level <= maxLevel; level++) {
+      const idx = level - 1;
+      byLevel.set(level, {
+        level,
+        performance: idx < param1.length ? param1[idx] : null,
+        technique: idx < param2.length ? param2[idx] : null,
+        stamina: idx < param3.length ? param3[idx] : null
+      });
+    }
   }
 
   const parameters = [...byLevel.values()]
@@ -498,7 +565,7 @@ export const parseCardGachaBanners = (payload: unknown): CardGachaBanner[] => {
         id,
         name: pickFirstString(node, ["name"]),
         assetbundleName: pickFirstString(node, ["assetbundleName", "assetBundleName"]),
-        startAt: pickFirstNumber(node, ["startAt", "start_at"])
+        startAt: pickFirstDateValue(node, ["startAt", "start_at"])
       };
     })
     .filter((banner): banner is CardGachaBanner => banner !== null);

@@ -210,13 +210,13 @@
       </div>
 
       {#if pullError}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3 text-center text-sm text-error/80">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4 text-center text-sm text-error/80">
           ⚠
         </div>
       {/if}
 
       {#if totalPulls > 0}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <div class="flex items-center justify-between text-sm">
             <span class="opacity-70">{totalPullsLabel}</span>
             <span class="font-semibold tabular-nums">{totalPulls}</span>
@@ -237,8 +237,8 @@
               >
                 <div class="relative overflow-hidden rounded-lg bg-base-200/30 ring-1 ring-base-content/5 transition-all hover:shadow-md hover:ring-primary/40">
                   <CardThumbnail
-                    src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, region) : null}
-                    fallbackSrc={null}
+                    src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp") : null}
+                    fallbackSrc={card.assetBundleName && region !== "jp" ? getCardThumbnailAssetURL(card.assetBundleName, false, region) : null}
                     alt={card.title ? `${card.title} ${cardAltSuffix}` : `Card ${card.cardId}`}
                     fallbackLabel={card.cardId}
                     trained={false}

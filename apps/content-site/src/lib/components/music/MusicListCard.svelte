@@ -141,7 +141,7 @@
   {#if item.tags.length > 0}
     <div class="flex flex-wrap gap-1">
       {#each item.tags as tag (`music-tag:${tag}`)}
-        <span class={`badge badge-outline border-base-content/15 font-medium ${sizeClass}`}>
+        <span class={`badge border-base-content/25 bg-base-100/80 font-semibold text-base-content ${sizeClass}`}>
           {getTagLabel(tag)}
         </span>
       {/each}
@@ -175,7 +175,7 @@
             <div class="h-11 rounded-lg bg-base-200/60"></div>
             <div class="h-4 rounded bg-base-200/60"></div>
           {:else}
-            <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
+            <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">
               {idLabel}{item.id}
             </span>
             {@render musicTagBadges("badge-sm")}
@@ -196,7 +196,7 @@
             {/if}
             <div class="flex flex-wrap gap-1">
               {#each item.categories as category (category)}
-                <span class="badge badge-sm badge-outline border-base-content/15">
+                <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">
                   {getCategoryLabel(category)}
                 </span>
               {/each}
@@ -219,25 +219,23 @@
         {:else}
           <div class="size-full bg-base-200"></div>
         {/if}
-        {#if !isSpoilerPlaceholderVisible()}
-          <div class="absolute left-3 top-3">
-            <span
-              class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
-            >
-              {idLabel}{item.id}
-            </span>
-          </div>
-          <div class="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-            {#each item.categories as category (category)}
-              <span
-                class="badge border-none bg-base-100/94 font-semibold text-base-content shadow-sm"
-              >
-                {getCategoryLabel(category)}
-              </span>
-            {/each}
-          </div>
-        {/if}
       </div>
+      {#if !isSpoilerPlaceholderVisible()}
+        <div class="flex flex-wrap items-center gap-1.5 px-3 pt-3 sm:px-4 sm:pt-4">
+          <span
+            class="badge border-base-content/25 bg-base-100/80 font-semibold text-base-content"
+          >
+            {idLabel}{item.id}
+          </span>
+          {#each item.categories as category (category)}
+            <span
+              class="badge border-base-content/25 bg-base-100/80 font-semibold text-base-content"
+            >
+              {getCategoryLabel(category)}
+            </span>
+          {/each}
+        </div>
+      {/if}
       {#if !isSpoilerPlaceholderVisible()}
         <div class="card-body gap-2 p-3 sm:p-4">
           {@render musicTagBadges("badge-xs")}

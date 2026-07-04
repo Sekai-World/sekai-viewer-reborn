@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { asset } from "$app/paths";
   import { getEventPointIconAssetURL } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { formatDisplayDateTime } from "$lib/time/date-time";
@@ -7,16 +6,8 @@
   import { getEventTypeDisplay } from "$lib/domain/event";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import Icon from "@iconify/svelte";
-
-  const unitIconSlugs = new Set([
-    "idol",
-    "light_sound",
-    "piapro",
-    "school_refusal",
-    "street",
-    "theme_park"
-  ]);
 
   let {
     event,
@@ -25,6 +16,7 @@
     displayLocale,
     title,
     idLabel,
+    internalResourceCodeLabel,
     nameLabel,
     unitLabel,
     mixedUnitLabel,
@@ -40,6 +32,7 @@
     displayLocale: string;
     title: string;
     idLabel: string;
+    internalResourceCodeLabel: string;
     nameLabel: string;
     unitLabel: string;
     mixedUnitLabel: string;
@@ -63,14 +56,6 @@
     return normalizedUnit === "none" || normalizedUnit === "-"
       ? mixedUnitLabel
       : (unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit));
-  };
-  const getUnitIconUrl = (unit: string | null | undefined): string | null => {
-    if (!unit) {
-      return null;
-    }
-
-    const slug = unit.trim().toLowerCase();
-    return unitIconSlugs.has(slug) ? asset(`/icons/icon_${slug}.png`) : null;
   };
 </script>
 
@@ -105,13 +90,13 @@
     </div>
 
     <dl class="space-y-2">
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{event.title}</dd>
       </div>
       {#if getDisplayUnitName(event.unit)}
         <div
-          class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3"
+          class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4"
         >
           <div class="min-w-0">
             <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
@@ -119,24 +104,13 @@
             </dt>
             <dd class="mt-1 truncate text-sm font-medium">{getDisplayUnitName(event.unit)}</dd>
           </div>
-          {#if getUnitIconUrl(event.unit)}
-            <span
-              class="unit-icon-frame flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
-            >
-              <img
-                src={getUnitIconUrl(event.unit)}
-                alt=""
-                aria-hidden="true"
-                class="size-12 max-w-none object-contain"
-                loading="lazy"
-                decoding="async"
-              />
-            </span>
+          {#if event.unit}
+            <UnitIconBadge unit={event.unit} variant="lg" />
           {/if}
         </div>
       {/if}
       {#if event.eventType}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
             {eventTypeLabel}
           </dt>
@@ -145,21 +119,27 @@
           </dd>
         </div>
       {/if}
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</dt>
         <dd class="mt-1 text-sm font-medium">
           {formatDisplayDateTime(event.startAt, displayLocale)}
         </dd>
       </div>
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{endAtLabel}</dt>
         <dd class="mt-1 text-sm font-medium">
           {formatDisplayDateTime(event.endAt, displayLocale)}
         </dd>
       </div>
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+          {internalResourceCodeLabel}
+        </dt>
+        <dd class="mt-1 text-sm font-medium">{event.assetBundleName ?? "--"}</dd>
+      </div>
       {#if event.bannerGameCharacter}
         {@const char = event.bannerGameCharacter}
-        <div class="content-card-inset flex items-center gap-3 rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4">
           <div class="min-w-0 flex-1">
             <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
               {bannerCharacterLabel}

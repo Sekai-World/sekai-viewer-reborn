@@ -1,7 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
-  import { asset, resolve } from "$app/paths";
+  import { resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
@@ -12,7 +12,13 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
     formatUnitFallbackLabel,
@@ -39,7 +45,7 @@
 
   let { data }: { data: PageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
 
   let items = $state<MusicListItem[]>([]);
   let currentPage = $state(1);
@@ -188,11 +194,6 @@
   const toggleDraftValue = (values: string[], value: string, checked: boolean): string[] =>
     checked ? [...new Set([...values, value])] : values.filter((entry) => entry !== value);
 
-  const getMusicTagIconUrl = (value: (typeof musicTagOptions)[number]): string | null => {
-    const icon = unitCodeByMusicTag[value];
-    return icon ? asset(`/icons/icon_${icon}.png`) : null;
-  };
-
   const mapLegacyVocalUnitToTag = (value: string): string => musicTagByUnitCode[value] ?? value;
 
   const isSpoilerMusic = (item: MusicListItem): boolean => {
@@ -273,7 +274,7 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshTranslations(data.uiLocale);
   });
@@ -487,7 +488,7 @@
   };
 
   const refreshTranslations = async (locale: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(locale, data.i18nMessages);
+    const resolvedLocale = await setI18nLocale(locale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 
@@ -740,7 +741,7 @@
     </div>
   {:else if isInitialLoading}
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-      {#each Array(12) as _, i}
+      {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
           <div class="skeleton aspect-square w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
@@ -758,7 +759,7 @@
     >
       {#each visibleItems as item (item.id)}
         <a
-          href={resolve("/musics/[region]/[id]", { region: data.region, id: item.id })}
+          href={resolve("/music/[region]/[id]", { region: data.region, id: item.id })}
           class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
           aria-label={`${item.title} ${idLabel}${item.id}`}
         >
@@ -801,7 +802,19 @@
 
 <dialog bind:this={filterDialog} class="modal">
   <div class="modal-box max-w-xl">
-    <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+      <form method="dialog">
+        <button
+          type="submit"
+          class="btn btn-circle btn-ghost btn-sm min-h-12! w-12!"
+          aria-label={closeLabel}
+          title={closeLabel}
+        >
+          <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+        </button>
+      </form>
+    </div>
     <div class="mt-4 grid gap-3">
       <label class="form-control">
         <span class="label-text mb-1 text-sm font-medium">{musicListFilterNameLabel}</span>
@@ -846,7 +859,7 @@
         <legend class="label-text text-sm font-medium">{musicListTagLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
-            {@const tagIconUrl = getMusicTagIconUrl(tag)}
+            {@const unitCode = unitCodeByMusicTag[tag]}
             <label
               class={`btn btn-sm join-item size-12! min-h-12! p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
               title={getMusicTagLabel(tag)}
@@ -858,21 +871,12 @@
                 onchange={(event) => toggleMusicTag(tag, event.currentTarget.checked)}
                 aria-label={getMusicTagLabel(tag)}
               />
-              {#if tagIconUrl}
-                <img
-                  src={tagIconUrl}
-                  alt=""
-                  aria-hidden="true"
-                  class="size-7 object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
+              {#if tag === "all"}
+                <Icon icon="mdi:apps" class="size-6" aria-hidden="true" />
+              {:else if unitCode}
+                <UnitIconBadge unit={unitCode} variant="sm" fallbackLabel={getMusicTagLabel(tag)} />
               {:else}
-                <Icon
-                  icon={tag === "all" ? "mdi:apps" : "mdi:dots-horizontal-circle-outline"}
-                  class="size-6"
-                  aria-hidden="true"
-                />
+                <Icon icon="mdi:dots-horizontal-circle-outline" class="size-6" aria-hidden="true" />
               {/if}
             </label>
           {/each}
@@ -965,8 +969,7 @@
       <button type="button" class="btn btn-primary min-h-12!" onclick={applyFilters}
         >{listFilterApply}</button
       >
-      <form method="dialog"><button type="submit" class="btn min-h-12!">{closeLabel}</button></form>
     </div>
   </div>
-  <form method="dialog" class="modal-backdrop"><button type="submit">{closeLabel}</button></form>
+  <form method="dialog" class="modal-backdrop"><button type="submit" aria-label={closeLabel}></button></form>
 </dialog>
