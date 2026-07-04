@@ -111,7 +111,7 @@
   unitSlug: string | null = null
 )}
   {#if value}
-    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3">
+    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
       <div class="min-w-0">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{label}</dt>
         <dd class="mt-1 truncate text-sm font-medium">{value}</dd>
@@ -149,7 +149,7 @@
 
 {#snippet gachaPhraseRow()}
   {#if shouldShowGachaPhrase}
-    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3">
+    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
       <div class="min-w-0">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {gachaPhraseLabel}
@@ -173,7 +173,7 @@
 {#snippet rarityRow()}
   {@const rarityIconUrls = getRarityIconUrls()}
   {#if card.rarityType}
-    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl px-3 sm:px-4 py-3">
+    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
       <div class="min-w-0">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{rarityLabel}</dt>
         <dd class="mt-1 truncate text-sm font-medium">{formatLabel(card.rarityType)}</dd>

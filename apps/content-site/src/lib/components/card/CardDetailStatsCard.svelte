@@ -260,7 +260,7 @@
     {#if displayedStats}
       <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
         <div class="space-y-3">
-          <label class="content-card-inset block rounded-xl px-3 sm:px-4 py-3">
+          <label class="content-card-inset block rounded-xl p-3 sm:px-4">
             <span class="flex items-center justify-between gap-4 text-sm font-semibold">
               <span>{levelLabel}</span>
               <input
@@ -282,7 +282,7 @@
             />
           </label>
 
-          <div class="content-card-inset space-y-3 rounded-xl px-3 sm:px-4 py-3 text-sm">
+          <div class="content-card-inset space-y-3 rounded-xl p-3 sm:px-4 text-sm">
             <label class="flex items-center justify-between gap-3">
               <span class="font-semibold">{specialTrainingBonusLabel}</span>
               <input
@@ -350,7 +350,7 @@
             {@render statPanel(staminaLabel, displayedStats.stamina, "stamina")}
           </div>
 
-          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3 text-sm">
+          <div class="content-card-inset rounded-xl p-3 sm:px-4 text-sm">
             <p class="flex items-center justify-between gap-4 font-semibold">
               <span>{bonusSumLabel}</span>
               <span class="tabular-nums text-base-content">{formatNumber(bonusSumTotal)}</span>

@@ -29,7 +29,7 @@
     {#if episodes.length > 0}
       <div class="grid gap-3">
         {#each episodes as episode (episode.id)}
-          <section class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+          <section class="content-card-inset rounded-xl p-3 sm:px-4">
             <div class="flex items-start justify-between gap-3">
               <h3 class="text-sm font-semibold">{episode.title}</h3>
               {#if episode.episodeNo !== null}
