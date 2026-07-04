@@ -1,6 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { createI18nTranslator, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    resolveStreamingMessages,
+    setI18nLocale,
+    tCommon
+  } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
     getCardThumbnailAssetURL,
@@ -15,7 +20,7 @@
 
   let { data }: { data: PageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, data.i18nMessages)(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
@@ -90,7 +95,7 @@
 
   // ── i18n ───────────────────────────────────────────────────────────
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, data.i18nMessages);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -119,7 +124,7 @@
   };
 
   const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, data.i18nMessages);
+    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
     applyTranslations((key) => tCommon(locale, key));
   };
 
