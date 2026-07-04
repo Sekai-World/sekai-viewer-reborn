@@ -109,6 +109,20 @@ export const loadI18nMessageBundle = (
   fetcher?: I18nFetcher
 ): Promise<I18nMessages> => scopedI18nLoader.loadMessageBundle(localeValue, namespaces, fetcher);
 
+const allLocalSourceMessages = Object.values(localSourceMessagesByNamespace).reduce<I18nMessages>(
+  (acc, messages) => ({ ...acc, ...messages }),
+  {}
+);
+
+export const resolveStreamingMessages = (
+  messagesOrPromise: I18nMessages | Promise<I18nMessages>
+): I18nMessages => {
+  if (messagesOrPromise instanceof Promise) {
+    return allLocalSourceMessages;
+  }
+  return messagesOrPromise;
+};
+
 export const createI18nTranslator = (
   localeValue: string,
   messages: I18nMessages

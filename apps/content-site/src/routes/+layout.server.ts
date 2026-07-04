@@ -25,13 +25,15 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
 
 export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
+  const i18nMessages = loadI18nMessageBundle(
+    uiLocale,
+    getRouteI18nNamespaces(url.pathname),
+    fetch
+  );
+  i18nMessages.catch(() => {});
 
   return {
-    i18nMessages: await loadI18nMessageBundle(
-      uiLocale,
-      getRouteI18nNamespaces(url.pathname),
-      fetch
-    ),
+    i18nMessages,
     uiLocale
   };
 };
