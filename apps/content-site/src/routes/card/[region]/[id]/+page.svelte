@@ -52,7 +52,6 @@
   let releaseAtLabel = $state(getInitialI18nText("releaseAtLabel"));
   let gachaPhraseLabel = $state(getInitialI18nText("gachaPhraseLabel"));
   let audioPlayLabel = $state(getInitialI18nText("audioPlayLabel"));
-  let audioPauseLabel = $state(getInitialI18nText("audioPauseLabel"));
   let audioUnavailableLabel = $state(getInitialI18nText("audioUnavailableLabel"));
   let cardSkillTitle = $state(getInitialI18nText("cardSkillTitle"));
   let skillLevelLabel = $state(getInitialI18nText("skillLevelLabel"));
@@ -110,7 +109,6 @@
     releaseAtLabel = translate("releaseAtLabel");
     gachaPhraseLabel = translate("gachaPhraseLabel");
     audioPlayLabel = translate("audioPlayLabel");
-    audioPauseLabel = translate("audioPauseLabel");
     audioUnavailableLabel = translate("audioUnavailableLabel");
     cardSkillTitle = translate("cardSkillTitle");
     skillLevelLabel = translate("skillLevelLabel");
@@ -397,7 +395,6 @@
               {releaseAtLabel}
               {gachaPhraseLabel}
               {audioPlayLabel}
-              {audioPauseLabel}
               {audioUnavailableLabel}
               {unitProfiles}
             />
@@ -418,7 +415,6 @@
               {releaseAtLabel}
               {gachaPhraseLabel}
               {audioPlayLabel}
-              {audioPauseLabel}
               {audioUnavailableLabel}
               unitProfiles={{}}
             />

@@ -25,7 +25,6 @@
     releaseAtLabel,
     gachaPhraseLabel,
     audioPlayLabel,
-    audioPauseLabel,
     audioUnavailableLabel,
     unitProfiles
   }: {
@@ -44,7 +43,6 @@
     releaseAtLabel: string;
     gachaPhraseLabel: string;
     audioPlayLabel: string;
-    audioPauseLabel: string;
     audioUnavailableLabel: string;
     unitProfiles: Record<string, string>;
   } = $props();
@@ -164,7 +162,6 @@
           <VoicePlayButton
             src={gachaPhraseAudioUrl}
             playLabel={audioPlayLabel}
-            pauseLabel={audioPauseLabel}
             errorLabel={audioUnavailableLabel}
           />
         {/if}

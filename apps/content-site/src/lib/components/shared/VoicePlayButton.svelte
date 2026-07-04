@@ -4,13 +4,13 @@
   let {
     src,
     playLabel = "Play",
-    pauseLabel = "Pause",
+    stopLabel = "Stop",
     errorLabel = "Audio unavailable",
     class: className
   }: {
     src: string;
     playLabel?: string;
-    pauseLabel?: string;
+    stopLabel?: string;
     errorLabel?: string;
     class?: string;
   } = $props();
@@ -69,7 +69,6 @@
     stopPlayback();
   });
 
-  // Pause and clean up when the component is destroyed
   $effect(() => {
     return () => {
       if (audio) {
@@ -115,7 +114,7 @@
     loadError ? "mdi:volume-off" : isPlaying ? "mdi:stop" : "mdi:play"
   );
   let currentLabel = $derived(
-    loadError ? errorLabel : isPlaying ? pauseLabel : playLabel
+    loadError ? errorLabel : isPlaying ? stopLabel : playLabel
   );
 </script>
 

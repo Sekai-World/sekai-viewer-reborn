@@ -44,11 +44,10 @@
   );
 
   $effect(() => {
-    if (src) {
-      imageLoaded = false;
-      imageFailed = false;
-      imageVisible = loadMode === "immediate";
-    }
+    src;
+    imageLoaded = false;
+    imageFailed = false;
+    imageVisible = loadMode === "immediate";
   });
 
   $effect(() => {
