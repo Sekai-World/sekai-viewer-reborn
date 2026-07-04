@@ -193,7 +193,7 @@
             <div class="space-y-3">
               <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
               <div class="grid grid-cols-3 gap-3">
-                {#each [1, 2, 3] as __}
+                {#each [1, 2, 3] as skeleton (skeleton)}
                   <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
                 {/each}
               </div>
@@ -201,7 +201,7 @@
             <div class="space-y-3">
               <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
               <div class="grid grid-cols-3 gap-3">
-                {#each [1, 2, 3] as __}
+                {#each [1, 2, 3] as skeleton (skeleton)}
                   <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
                 {/each}
               </div>
@@ -216,7 +216,7 @@
           <div class="space-y-3">
             <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
             <div class="space-y-3">
-              {#each [1, 2] as __}
+              {#each [1, 2] as skeleton (skeleton)}
                 <div class="h-24 animate-pulse rounded-lg bg-base-300"></div>
               {/each}
             </div>
@@ -302,8 +302,8 @@
                             </div>
                           {/if}
                         </div>
-                        <div class="px-2 py-2">
-                          <p class="line-clamp-2 text-xs font-medium leading-snug">{music.title ?? music.id}</p>
+                        <div class="p-2">
+                          <p class="line-clamp-2 text-xs/snug font-medium">{music.title ?? music.id}</p>
                           {#if music.composer}
                             <p class="mt-0.5 truncate text-[10px] text-base-content/50">{music.composer}</p>
                           {/if}
@@ -390,7 +390,7 @@
                         href="/gacha/{regionData.region}/{gacha.id}"
                         class="block overflow-hidden rounded-lg border border-base-content/8 shadow-sm transition-shadow hover:shadow-md"
                       >
-                        <div class="aspect-[3/1] w-full bg-base-200 pt-2">
+                        <div class="aspect-3/1 w-full bg-base-200 pt-2">
                           <EventAssetImage
                             src={getGachaBannerAssetURL(gacha.id, "jp")}
                             alt={gacha.name ?? gacha.id}

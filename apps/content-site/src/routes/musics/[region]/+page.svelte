@@ -741,7 +741,7 @@
     </div>
   {:else if isInitialLoading}
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-      {#each Array(12) as _, i}
+      {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
           <div class="skeleton aspect-square w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
