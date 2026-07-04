@@ -70,35 +70,35 @@
     </div>
 
     <dl class="space-y-2">
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{gacha.name ?? noGachaDataLabel}</dd>
       </div>
       {#if gacha.gachaType}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
             {gachaTypeLabel}
           </dt>
           <dd class="mt-1 text-sm font-medium">{getGachaTypeDisplay(gacha.gachaType)}</dd>
         </div>
       {/if}
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</dt>
         <dd class="mt-1 text-sm font-medium">
           {gacha.startAt ? formatDisplayDateTime(gacha.startAt, uiLocale) : noGachaDataLabel}
         </dd>
       </div>
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{endAtLabel}</dt>
         <dd class="mt-1 text-sm font-medium">
           {gacha.endAt ? formatDisplayDateTime(gacha.endAt, uiLocale) : noGachaDataLabel}
         </dd>
       </div>
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{costLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{formatCost()}</dd>
       </div>
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {internalResourceCodeLabel}
         </dt>

@@ -348,7 +348,7 @@
                   />
                   <span>{gachaSummaryLabel}</span>
                 </p>
-                <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+                <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <p class="text-sm/7 opacity-90">{payload.gacha.summary}</p>
                 </div>
               </div>
@@ -427,7 +427,7 @@
                   />
                   <span>{gachaDescriptionLabel}</span>
                 </p>
-                <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+                <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <p class="text-sm/7 whitespace-pre-line opacity-90">{displayDesc}</p>
                   {#if needsTruncation}
                     <button
