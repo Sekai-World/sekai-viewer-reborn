@@ -37,6 +37,7 @@
   let imageLoaded = $state(false);
   let imageFailed = $state(false);
   let imageVisible = $state(false);
+  let previousImageStateKey = $state("");
   let observedNode: HTMLDivElement | null = $state(null);
   const shouldRenderImage = $derived(loadMode === "immediate" || imageVisible);
   const resolvedRarityCount = $derived(
@@ -44,7 +45,10 @@
   );
 
   $effect(() => {
-    src;
+    const imageStateKey = `${src ?? ""}:${loadMode}`;
+    if (imageStateKey === previousImageStateKey) return;
+
+    previousImageStateKey = imageStateKey;
     imageLoaded = false;
     imageFailed = false;
     imageVisible = loadMode === "immediate";
