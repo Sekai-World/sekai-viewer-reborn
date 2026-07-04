@@ -2,7 +2,7 @@
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import GachaListCard from "$lib/components/gacha/GachaListCard.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
@@ -66,7 +66,7 @@
 
   const currentGachaIds = $derived.by(() => {
     const now = Date.now();
-    const ids = new Set<string>();
+    const ids = new SvelteSet<string>();
     for (const item of items) {
       const startMs = toTimestampMs(item.startAt);
       const endMs = toTimestampMs(item.endAt);
@@ -520,7 +520,7 @@
     </div>
   {:else if isInitialLoading}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {#each { length: 12 } as _}
+      {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell flex flex-col gap-3 rounded-2xl p-4 shadow-sm">
           <div class="skeleton h-32 rounded-xl"></div>
           <div class="skeleton h-4 w-3/4 rounded"></div>

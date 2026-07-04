@@ -2,7 +2,7 @@
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import {
@@ -116,7 +116,7 @@
 
   const ongoingEventIds = $derived.by(() => {
     const now = Date.now();
-    const ids = new Set<string>();
+    const ids = new SvelteSet<string>();
     for (const item of items) {
       const startMs = toTimestampMs(item.startAt);
       const endMs = toTimestampMs(item.endAt);
@@ -675,7 +675,7 @@
     </div>
   {:else if isInitialLoading}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {#each Array(12) as _, i}
+      {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
           <div class="skeleton h-36 w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
