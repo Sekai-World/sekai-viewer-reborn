@@ -55,34 +55,34 @@
     </div>
 
     <dl class="space-y-2">
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{music.title}</dd>
       </div>
 
       {#if music.composer}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{composerLabel}</dt>
           <dd class="mt-1 text-sm font-medium">{music.composer}</dd>
         </div>
       {/if}
 
       {#if music.arranger}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{arrangerLabel}</dt>
           <dd class="mt-1 text-sm font-medium">{music.arranger}</dd>
         </div>
       {/if}
 
       {#if music.lyricist}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{lyricistLabel}</dt>
           <dd class="mt-1 text-sm font-medium">{music.lyricist}</dd>
         </div>
       {/if}
 
       {#if music.categories.length > 0}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{categoryLabel}</dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.categories as category (category)}
@@ -93,7 +93,7 @@
       {/if}
 
       {#if music.tags.length > 0}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{tagLabel}</dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.tags as tag (tag)}
@@ -104,12 +104,12 @@
       {/if}
 
       {#if music.publishedAt}
-        <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{publishedAtLabel}</dt>
           <dd class="mt-1 text-sm font-medium">{formatDisplayDateTime(music.publishedAt, displayLocale)}</dd>
         </div>
       {/if}
-      <div class="content-card-inset rounded-xl px-3 sm:px-4 py-3">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {internalResourceCodeLabel}
         </dt>

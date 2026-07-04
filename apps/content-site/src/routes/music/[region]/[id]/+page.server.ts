@@ -8,7 +8,7 @@ import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domai
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { parseMusicDetail, type MusicDetail } from "$lib/server/music-detail";
-import { fetchUnitProfiles, toUnitProfileMap, type UnitProfileMap } from "$lib/server/unit-profiles";
+import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 type RegionMusicLookup = {
