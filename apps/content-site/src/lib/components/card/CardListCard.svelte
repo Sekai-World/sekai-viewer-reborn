@@ -273,33 +273,6 @@
   {/if}
 {/snippet}
 
-{#snippet thumbIcons(trained: boolean)}
-  {@const attrIconUrl = getAttrIconUrl(88)}
-  {@const rarityIconUrl = getRarityIconUrl(trained)}
-  {@const rarityCount = item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
-  <svg
-    class="pointer-events-none absolute inset-0 z-20 size-full"
-    viewBox="0 0 100 100"
-    aria-hidden="true"
-  >
-    {#if attrIconUrl}
-      <image href={attrIconUrl} x="71" y="0" width="29" height="29" class="drop-shadow" />
-    {/if}
-    {#if rarityIconUrl && rarityCount > 0}
-      {#each Array.from(Array(rarityCount).keys()) as index (`rarity-thumb-${trained}-${index}`)}
-        <image
-          href={rarityIconUrl}
-          x={2 + index * 21}
-          y="73"
-          width="22"
-          height="22"
-          class="drop-shadow"
-        />
-      {/each}
-    {/if}
-  </svg>
-{/snippet}
-
 {#snippet largeIcons()}
   {@const attrIconUrl = getAttrIconUrl()}
   {@const normalRarityIconUrl = getRarityIconUrl(false)}

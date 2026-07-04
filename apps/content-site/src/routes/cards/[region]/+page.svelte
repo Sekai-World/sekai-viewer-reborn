@@ -95,7 +95,6 @@
   let has3dmvCutInDraft = $state(false);
   let filterDialog: HTMLDialogElement | null = $state(null);
   let viewMode = $state<CardListViewMode>("grid");
-  let hasTriedRestorePersistedFilters = $state(false);
   let hasTriedRestoreViewMode = $state(false);
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
@@ -215,8 +214,6 @@
     rarityFilter.length > 0 ||
     supportUnitFilter.length > 0 ||
     has3dmvCutInFilter;
-
-  const hasNonDefaultSort = (): boolean => sortBy !== "releaseAt" || sortOrder !== "desc";
 
   const hasExplicitQueryStateInUrl = (): boolean => {
     if (!browser) {
@@ -424,8 +421,6 @@
 
     isInitialLoading = false;
     loadedRegion = data.region;
-    hasTriedRestorePersistedFilters = true;
-
     // Post-initial reconciliation: persisted filters and spoiler preference.
     // These must run AFTER isInitialLoading=false and filter state is set from
     // the server load, to avoid racing with applyInitialPage's own state writes.
@@ -967,7 +962,7 @@
     </div>
   {:else if isInitialLoading || data.region !== loadedRegion}
     <div class={getListGridClass()}>
-      {#each Array(12) as _, i}
+      {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
           <div class="skeleton h-48 w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
