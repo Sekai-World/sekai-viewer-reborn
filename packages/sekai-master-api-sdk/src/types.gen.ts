@@ -273,6 +273,7 @@ export type SharedEventRankingRewardResponse = {
     conditionValue?: number;
     eventRankingRewardRangeId?: number;
     id?: number;
+    resourceBox?: SharedEventRewardResourceBoxResponse;
     resourceBoxId?: number;
     rewardConditionType?: string;
     seq?: number;
@@ -284,6 +285,35 @@ export type SharedEventRarityBonusRateResponse = {
     masterRank?: number;
 };
 
+export type SharedEventRewardHonorGroup = {
+    backgroundAssetbundleName?: string;
+    frameName?: string;
+    honorType?: string;
+    id?: number;
+    name?: string;
+};
+
+export type SharedEventRewardHonorLevel = {
+    assetbundleName?: string;
+    bonus?: number;
+    description?: string;
+    honorId?: number;
+    honorRarity?: string;
+    level?: number;
+};
+
+export type SharedEventRewardHonorResponse = {
+    assetbundleName?: string;
+    group?: SharedEventRewardHonorGroup;
+    groupId?: number;
+    honorMissionType?: string;
+    honorRarity?: string;
+    honorType?: string;
+    id?: number;
+    levels?: Array<SharedEventRewardHonorLevel>;
+    name?: string;
+};
+
 export type SharedEventRewardRangeResponse = {
     eventId?: number;
     eventRankingRewards?: Array<SharedEventRankingRewardResponse>;
@@ -291,6 +321,24 @@ export type SharedEventRewardRangeResponse = {
     id?: number;
     isToRankBorder?: boolean;
     toRank?: number;
+};
+
+export type SharedEventRewardResourceBoxDetail = {
+    honor?: SharedEventRewardHonorResponse;
+    resourceBoxId?: number;
+    resourceBoxPurpose?: string;
+    resourceId?: number;
+    resourceLevel?: number;
+    resourceQuantity?: number;
+    resourceType?: string;
+    seq?: number;
+};
+
+export type SharedEventRewardResourceBoxResponse = {
+    details?: Array<SharedEventRewardResourceBoxDetail>;
+    id?: number;
+    resourceBoxPurpose?: string;
+    resourceBoxType?: string;
 };
 
 export type SharedEventRewardsResponse = {
@@ -546,11 +594,19 @@ export type SharedMusicObjectResponse = {
     title?: unknown;
 };
 
+export type SharedMusicVocalCharacterResponse = {
+    characterId?: unknown;
+    sortOrder?: unknown;
+};
+
 export type SharedMusicVocalResponse = {
+    assetbundleName?: unknown;
+    characters?: Array<SharedMusicVocalCharacterResponse>;
     id?: unknown;
     musicId?: unknown;
     musicVocalId?: unknown;
     publishedAt?: unknown;
+    releaseCondition?: SharedReleaseConditionResponse;
     seq?: unknown;
     vocalType?: unknown;
 };
