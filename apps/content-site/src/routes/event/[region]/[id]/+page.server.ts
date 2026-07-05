@@ -2,13 +2,28 @@ import { dev } from "$app/environment";
 import {
   getEventsByRegionCurrent,
   getEventsByRegionById,
-  getEventsRegionsByIdAvailability
+  getEventsByRegionByIdBonuses,
+  getEventsByRegionByIdCards,
+  getEventsByRegionByIdMusics,
+  getEventsByRegionByIdRewards,
+  getEventsRegionsByIdAvailability,
+  getCardsByRegionByIdDetail,
+  getMusicsByRegionByIdDetail
 } from "@platform/sekai-master-api-sdk";
 import { getServerI18nText } from "$lib/i18n/runtime";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parseEventDetail, type EventDetail } from "$lib/server/event-detail";
+import {
+  mergeEventMusicDetail,
+  mergeFeaturedCardDetail,
+  parseEventDetail,
+  parseEventRelatedData,
+  type EventDetail
+} from "$lib/server/event-detail";
+import { parseCardDetail } from "$lib/server/card-detail";
+import { parseMusicDetail } from "$lib/server/music-detail";
+import type { EventRelatedData } from "$lib/domain/event-detail";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
@@ -21,6 +36,7 @@ type RegionEventLookup = {
 
 type EventPayload = {
   event: EventDetail | null;
+  relatedData: EventRelatedData | null;
   debugEventJson: string | null;
   error: string | null;
 };
@@ -167,15 +183,22 @@ const fetchAvailableRegions = async ({
 };
 
 const fetchEventPayload = async ({
+  baseUrl,
+  region,
+  eventId,
   currentLookupPromise,
   invalidEventIdMessage
 }: {
+  baseUrl: string;
+  region: SupportedRegion;
+  eventId: string;
   currentLookupPromise: Promise<RegionEventLookup>;
   invalidEventIdMessage: string | null;
 }): Promise<EventPayload> => {
   if (invalidEventIdMessage) {
     return {
       event: null,
+      relatedData: null,
       debugEventJson: null,
       error: invalidEventIdMessage
     };
@@ -183,19 +206,96 @@ const fetchEventPayload = async ({
 
   try {
     const currentLookup = await currentLookupPromise;
+    const relatedData = currentLookup.event
+      ? await fetchEventRelatedData(baseUrl, region, eventId)
+      : null;
 
     return {
       event: currentLookup.event,
+      relatedData,
       debugEventJson: dev ? currentLookup.rawPayloadJson : null,
       error: null
     };
   } catch {
     return {
       event: null,
+      relatedData: null,
       debugEventJson: null,
       error: null
     };
   }
+};
+
+const getResponseData = <T>(response: { data?: T; error?: unknown }): T | null =>
+  response.error ? null : (response.data ?? null);
+
+const fetchEventRelatedData = async (
+  baseUrl: string,
+  region: SupportedRegion,
+  eventId: string
+): Promise<EventRelatedData> => {
+  const [bonusesResponse, cardsResponse, musicsResponse, rewardsResponse] = await Promise.all([
+    getEventsByRegionByIdBonuses({ baseUrl, path: { region, id: eventId } }),
+    getEventsByRegionByIdCards({ baseUrl, path: { region, id: eventId } }),
+    getEventsByRegionByIdMusics({ baseUrl, path: { region, id: eventId } }),
+    getEventsByRegionByIdRewards({ baseUrl, path: { region, id: eventId } })
+  ]);
+
+  const relatedData = parseEventRelatedData({
+    bonusesPayload: getResponseData(bonusesResponse),
+    cardsPayload: getResponseData(cardsResponse),
+    musicsPayload: getResponseData(musicsResponse),
+    rewardsPayload: getResponseData(rewardsResponse)
+  });
+
+  const [cards, musics] = await Promise.all([
+    Promise.all(
+      relatedData.cards.map(async (eventCard) => {
+        if (!eventCard.cardId) {
+          return eventCard;
+        }
+
+        try {
+          const response = await getCardsByRegionByIdDetail({
+            baseUrl,
+            path: { region, id: eventCard.cardId }
+          });
+          return mergeFeaturedCardDetail(
+            eventCard,
+            response.error ? null : parseCardDetail(response.data)
+          );
+        } catch {
+          return eventCard;
+        }
+      })
+    ),
+    Promise.all(
+      relatedData.musics.map(async (eventMusic) => {
+        if (!eventMusic.musicId) {
+          return eventMusic;
+        }
+
+        try {
+          const response = await getMusicsByRegionByIdDetail({
+            baseUrl,
+            path: { region, id: eventMusic.musicId }
+          });
+          return mergeEventMusicDetail(
+            eventMusic,
+            response.error ? null : parseMusicDetail(response.data)
+          );
+        } catch {
+          return eventMusic;
+        }
+      })
+    )
+  ]);
+
+  return {
+    ...relatedData,
+    cards,
+    musics
+  };
 };
 
 const fetchIsCurrentEvent = async ({
@@ -267,6 +367,9 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
         })
       : Promise.resolve([region] satisfies SupportedRegion[]),
     eventPayload: fetchEventPayload({
+      baseUrl,
+      region,
+      eventId,
       currentLookupPromise,
       invalidEventIdMessage: eventId ? null : invalidEventIdMessage
     }),
