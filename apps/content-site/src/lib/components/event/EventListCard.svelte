@@ -143,6 +143,13 @@
     </div>
   {:else}
     <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
+      {#if isCurrentEvent()}
+        <span
+          class="badge absolute right-3 top-3 z-10 border-none bg-primary font-semibold text-primary-content shadow-sm"
+        >
+          {currentEventLabel}
+        </span>
+      {/if}
       {#if item.assetBundleName}
         <EventAssetImage
           src={getEventBannerAssetURL(item.assetBundleName, region)}
@@ -167,11 +174,6 @@
       {#if getEventTypeDisplay(item.eventType, uiLocale)}
         <span class="badge border-none bg-base-200 font-semibold text-base-content">
           {getEventTypeDisplay(item.eventType, uiLocale)}
-        </span>
-      {/if}
-      {#if isCurrentEvent()}
-        <span class="badge border-none bg-primary font-semibold text-primary-content">
-          {currentEventLabel}
         </span>
       {/if}
     </div>
