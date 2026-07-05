@@ -51,6 +51,22 @@ const buildServerAssetURL = (
   return `${baseURL}/${bucket}/${normalizedEndpoint}`;
 };
 
+export const getRemoteAssetEndpointURL = (
+  endpoint: string,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  if (!endpoint) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(endpoint.trim())) {
+    return endpoint.trim();
+  }
+
+  return buildServerAssetURL(endpoint, server, baseUrlOverride);
+};
+
 export const getRemoteAssetURL = async (
   endpoint: string,
   server: AssetServer = "jp",
@@ -60,11 +76,7 @@ export const getRemoteAssetURL = async (
     return "";
   }
 
-  if (/^https?:\/\//i.test(endpoint.trim())) {
-    return endpoint.trim();
-  }
-
-  const url = buildServerAssetURL(endpoint, server);
+  const url = getRemoteAssetEndpointURL(endpoint, server);
 
   if (!verifyStatus) {
     return url;
