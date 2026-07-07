@@ -5,6 +5,7 @@
     getCommonMaterialThumbnailURL,
     getMusicJacketAssetURL,
     getRemoteAssetEndpointURL,
+    getVirtualLiveBannerAssetURL,
     type AssetServer
   } from "$lib/assets/index";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
@@ -112,7 +113,6 @@
   const formatNumber = (value: number | null): string | null =>
     value === null ? null : new Intl.NumberFormat(displayLocale).format(value);
 
-  const formatId = (value: string | null): string => value ?? noDataLabel;
   const formatHashId = (value: string | null): string => (value ? `#${value}` : noDataLabel);
   const hideBrokenImage = (event: Event): void => {
     if (event.currentTarget instanceof HTMLImageElement) {
@@ -142,6 +142,8 @@
       : null;
   const getMusicJacketSrc = (music: EventMusic): string | null =>
     music.assetBundleName ? getMusicJacketAssetURL(music.assetBundleName, region as AssetServer) : null;
+  const getVirtualLiveBannerSrc = (assetBundleName: string | null): string | null =>
+    assetBundleName ? getVirtualLiveBannerAssetURL(assetBundleName, region as AssetServer) : null;
   const getCardHref = (card: EventFeaturedCard): string | null =>
     card.cardId ? resolve("/card/[region]/[id]", { region, id: card.cardId }) : null;
   const getMusicHref = (music: EventMusic): string | null =>
@@ -406,18 +408,7 @@
 
 </script>
 
-{#snippet summaryGrid(items: SummaryItem[])}
-  <dl class="grid gap-2 sm:grid-cols-2">
-    {#each items as item (item.key)}
-      <div class="content-card-inset rounded-xl p-3">
-        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{item.label}</dt>
-        <dd class="mt-1 wrap-break-word text-sm font-medium">{item.value}</dd>
-      </div>
-    {/each}
-  </dl>
-{/snippet}
-
-{#snippet rewardDetailChip(detail: EventRewardResourceBoxDetail, index: number)}
+{#snippet rewardDetailChip(detail: EventRewardResourceBoxDetail, _index: number)}
   {@const imageSrc = getRewardDetailImageSrc(detail)}
   <span
     class="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-base-content/20 bg-base-100/80 px-2.5 py-1.5 text-xs font-semibold text-base-content"
@@ -446,7 +437,7 @@
   {@const honorPreview = getHonorAssetPreview(detail)}
   {#if honorPreview}
     <span class="block w-full" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
-      <span class="relative block aspect-[19/4] w-full overflow-hidden rounded" aria-hidden="true">
+      <span class="relative block aspect-19/4 w-full overflow-hidden rounded" aria-hidden="true">
         {#if honorPreview.baseSrc}
           <img src={honorPreview.baseSrc} alt="" class="absolute inset-0 size-full object-fill" loading="lazy" decoding="async" onerror={hideBrokenImage} />
         {/if}
@@ -822,16 +813,42 @@
 </article>
 
 {#if event.virtualLive}
+  {@const virtualLive = event.virtualLive}
+  {@const virtualLiveBannerSrc = getVirtualLiveBannerSrc(virtualLive.assetBundleName)}
   <article class="card content-card-shell shadow-sm">
-    <section class="card-body gap-4 p-3 sm:p-5" aria-labelledby="event-virtual-live-title">
+    <section class="card-body gap-2 p-3 sm:p-4" aria-labelledby="event-virtual-live-title">
       <h2 id="event-virtual-live-title" class="flex items-center gap-2 text-sm font-semibold">
         <Icon icon="mdi:account-voice" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
         <span>{virtualLiveTitle}</span>
       </h2>
-      <div class="content-card-inset rounded-xl p-3">
-        <p class="text-sm font-semibold">{event.virtualLive.name ?? virtualLiveTitle}</p>
+      <div class="content-card-inset @container rounded-xl p-2.5 sm:p-3">
+        <div class={`grid gap-2 ${virtualLiveBannerSrc ? "@md:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)] @md:items-center" : ""}`}>
+          {#if virtualLiveBannerSrc}
+            <div class="aspect-33/10 overflow-hidden rounded-lg bg-base-200 @md:aspect-33/14">
+              <EventAssetImage
+                src={virtualLiveBannerSrc}
+                alt={virtualLive.name ?? virtualLiveTitle}
+                imageClass="h-full w-full object-contain"
+                fallbackLabel={imageUnavailableLabel}
+                buttonClass="block h-full w-full overflow-hidden"
+              />
+            </div>
+          {/if}
+          <div class="min-w-0">
+            <p class="line-clamp-2 text-sm/5 font-semibold">{virtualLive.name ?? virtualLiveTitle}</p>
+            <dl class={`mt-1.5 grid gap-1.5 ${virtualLiveBannerSrc ? "@xl:grid-cols-3" : "@md:grid-cols-3"}`}>
+              {#each getVirtualLiveItems(event) as item (item.key)}
+                <div class="min-w-0 rounded-lg bg-base-100/70 px-2 py-1.5">
+                  <dt class="text-[0.65rem]/tight font-semibold uppercase tracking-widest opacity-60">
+                    {item.label}
+                  </dt>
+                  <dd class="mt-0.5 wrap-break-word text-xs/4 font-medium">{item.value}</dd>
+                </div>
+              {/each}
+            </dl>
+          </div>
+        </div>
       </div>
-      {@render summaryGrid(getVirtualLiveItems(event))}
     </section>
   </article>
 {/if}

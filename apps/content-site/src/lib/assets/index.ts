@@ -116,6 +116,23 @@ export const getEventBannerAssetURL = (
   );
 };
 
+export const getVirtualLiveBannerAssetURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `virtual_live/select/banner/${normalizedAssetBundleName}/${normalizedAssetBundleName}.webp`,
+    server,
+    baseUrlOverride
+  );
+};
+
 export const getEventLogoAssetURL = (
   assetBundleName: string,
   server: AssetServer = "jp",
