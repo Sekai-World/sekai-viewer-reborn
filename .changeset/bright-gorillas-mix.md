@@ -32,3 +32,5 @@ Show localized event type badges on the homepage current-event cards.
 Show event-detail virtual live banners from the virtual live asset bundle when available.
 
 Compact the event-detail virtual live summary layout.
+
+Restore large-screen event-detail density by showing featured cards in responsive columns and keeping ranking honor reward previews compact within reward rows.

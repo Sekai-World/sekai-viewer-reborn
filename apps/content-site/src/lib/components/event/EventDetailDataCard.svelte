@@ -171,18 +171,21 @@
     return getRarityValue(rarityType) > 0 ? asset("/card_rarity/rarity_star_normal.png") : null;
   };
 
+  const getAttributeBonusKey = (attr: string | null): string => attr ?? "__any";
   const getAttributeBonusItems = (data: EventRelatedData | null): AttributeBonusItem[] => {
-    const byAttribute = new Map<string, AttributeBonusItem>();
-
-    for (const bonus of data?.bonuses?.deckBonuses ?? []) {
-      const key = bonus.cardAttr ?? "__any";
-      const current = byAttribute.get(key);
+    return (data?.bonuses?.deckBonuses ?? []).reduce<AttributeBonusItem[]>((items, bonus) => {
+      const key = getAttributeBonusKey(bonus.cardAttr);
+      const currentIndex = items.findIndex((item) => getAttributeBonusKey(item.attr) === key);
+      const current = currentIndex >= 0 ? items[currentIndex] : null;
       if (!current || (bonus.bonusRate ?? -Infinity) > (current.bonusRate ?? -Infinity)) {
-        byAttribute.set(key, { attr: bonus.cardAttr, bonusRate: bonus.bonusRate });
+        const nextItem = { attr: bonus.cardAttr, bonusRate: bonus.bonusRate };
+        return currentIndex >= 0
+          ? items.map((item, index) => (index === currentIndex ? nextItem : item))
+          : [...items, nextItem];
       }
-    }
 
-    return Array.from(byAttribute.values());
+      return items;
+    }, []);
   };
 
   const getRaritySortValue = (rarityType: string | null): number =>
@@ -248,6 +251,14 @@
 
   const getRewardDetailKey = (detail: EventRewardResourceBoxDetail, index: number): string =>
     `${detail.resourceType ?? "resource"}-${detail.resourceId ?? "none"}-${detail.seq ?? index}`;
+  const getRewardKey = (reward: EventRankingReward, index: number): string =>
+    reward.id ?? reward.resourceBoxId ?? `${reward.seq ?? "reward"}-${index}`;
+  const getRewardRangeKey = (range: EventRankingRewardRange, index: number): string =>
+    `${range.fromRank ?? "from"}-${range.toRank ?? "to"}-${range.isToRankBorder === true ? "border" : "range"}-${index}`;
+  const getFeaturedCardKey = (card: EventFeaturedCard, index: number): string =>
+    card.cardId ?? card.assetBundleName ?? card.title ?? `card-${index}`;
+  const getMusicKey = (music: EventMusic, index: number): string =>
+    music.musicId ?? music.seq?.toString() ?? music.assetBundleName ?? music.title ?? `music-${index}`;
   const isHonorRewardDetail = (detail: EventRewardResourceBoxDetail): boolean =>
     detail.resourceType === "honor" || detail.resourceType === "bonds_honor";
   const getRewardDetailQuantity = (detail: EventRewardResourceBoxDetail): string | null =>
@@ -436,7 +447,7 @@
 {#snippet honorRewardDetail(detail: EventRewardResourceBoxDetail)}
   {@const honorPreview = getHonorAssetPreview(detail)}
   {#if honorPreview}
-    <span class="block w-full" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
+    <span class="inline-flex w-36 shrink-0 sm:w-40" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
       <span class="relative block aspect-19/4 w-full overflow-hidden rounded" aria-hidden="true">
         {#if honorPreview.baseSrc}
           <img src={honorPreview.baseSrc} alt="" class="absolute inset-0 size-full object-fill" loading="lazy" decoding="async" onerror={hideBrokenImage} />
@@ -459,7 +470,7 @@
       </span>
     </span>
   {:else}
-    <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-base-content" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
+    <span class="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-base-content/20 bg-base-100/80 px-2.5 py-1.5 text-xs font-semibold text-base-content" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
       <Icon icon={getRewardDetailFallbackIcon(detail)} class="size-4 shrink-0 opacity-70" aria-hidden="true" />
     </span>
   {/if}
@@ -506,7 +517,7 @@
     {#if rarityIconUrl && rarityType === "rarity_birthday"}
       <img src={rarityIconUrl} alt={getRarityLabel(rarityType)} class="size-5 object-contain" loading="lazy" decoding="async" />
     {:else if rarityIconUrl}
-      {#each Array.from({ length: getRarityValue(rarityType) }, (_, index) => index) as index}
+      {#each Array.from({ length: getRarityValue(rarityType) }, (_, index) => index) as index (index)}
         <img src={rarityIconUrl} alt={index === 0 ? getRarityLabel(rarityType) : ""} class="size-4 object-contain" loading="lazy" decoding="async" />
       {/each}
     {:else}
@@ -667,20 +678,20 @@
     </div>
     {#if range.rewards.length > 0}
       <div class="mt-3 grid gap-2">
-        {#each range.rewards as reward}
+        {#each range.rewards as reward, rewardIndex (getRewardKey(reward, rewardIndex))}
           {#if reward.resourceBoxDetails.length > 0}
             {@const honorDetails = reward.resourceBoxDetails.filter(isHonorRewardDetail)}
             {@const regularDetails = reward.resourceBoxDetails.filter((detail) => !isHonorRewardDetail(detail))}
-            {#each honorDetails as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
-              {@render honorRewardDetail(detail)}
-            {/each}
-            {#if regularDetails.length > 0}
-              <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              {#each honorDetails as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
+                {@render honorRewardDetail(detail)}
+              {/each}
+              {#if regularDetails.length > 0}
                 {#each regularDetails as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
                   {@render rewardDetailChip(detail, detailIndex)}
                 {/each}
-              </div>
-            {/if}
+              {/if}
+            </div>
           {:else}
             {@render rewardFallbackChip(reward)}
           {/if}
@@ -701,7 +712,7 @@
       </h2>
       {#if getAttributeBonusItems(relatedData).length > 0}
         <div class="grid gap-2 sm:grid-cols-2">
-          {#each getAttributeBonusItems(relatedData) as item}
+          {#each getAttributeBonusItems(relatedData) as item (getAttributeBonusKey(item.attr))}
             {@render attributeBonusPanel(item)}
           {/each}
         </div>
@@ -721,16 +732,16 @@
             <thead>
               <tr>
                 <th class="w-20">{rarityLabel}</th>
-                {#each getMasterRankColumns(relatedData) as masterRank}
+                {#each getMasterRankColumns(relatedData) as masterRank (masterRank)}
                   <th class="text-right">{masterRankLabel} {formatNumber(masterRank)}</th>
                 {/each}
               </tr>
             </thead>
             <tbody>
-              {#each getRarityRows(relatedData) as rarityType}
+              {#each getRarityRows(relatedData) as rarityType (rarityType)}
                 <tr>
                   <th>{@render rarityIconLabel(rarityType)}</th>
-                  {#each getMasterRankColumns(relatedData) as masterRank}
+                  {#each getMasterRankColumns(relatedData) as masterRank (masterRank)}
                     <td class="text-right font-semibold text-primary">
                       {formatPercent(getRarityBonusRate(relatedData, rarityType, masterRank)) ?? "—"}
                     </td>
@@ -754,8 +765,8 @@
       <span>{featuredCardsTitle}</span>
     </h2>
     {#if (relatedData?.cards.length ?? 0) > 0}
-      <div class="grid gap-2">
-        {#each relatedData?.cards ?? [] as card}
+      <div class="grid gap-2 lg:grid-cols-2 2xl:grid-cols-3">
+        {#each relatedData?.cards ?? [] as card, cardIndex (getFeaturedCardKey(card, cardIndex))}
           {@render featuredCardPanel(card)}
         {/each}
       </div>
@@ -773,7 +784,7 @@
     </h2>
     {#if (relatedData?.musics.length ?? 0) > 0}
       <div class="grid gap-2">
-        {#each relatedData?.musics ?? [] as music}
+        {#each relatedData?.musics ?? [] as music, musicIndex (getMusicKey(music, musicIndex))}
           {@render musicPanel(music)}
         {/each}
       </div>
@@ -791,7 +802,7 @@
     </h2>
     {#if (relatedData?.rewardRanges.length ?? 0) > 0}
       <div class="grid gap-2">
-        {#each getVisibleRewardRanges(relatedData) as range}
+        {#each getVisibleRewardRanges(relatedData) as range, rangeIndex (getRewardRangeKey(range, rangeIndex))}
           {@render rankingRewardRangePanel(range)}
         {/each}
       </div>
