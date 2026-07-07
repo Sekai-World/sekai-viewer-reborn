@@ -97,14 +97,60 @@
     attr: string | null;
     bonusRate: number | null;
   };
+  type HonorAssetFrame = {
+    src: string;
+    fallbackSrc: string | null;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+  type HonorAssetVariant = "sub" | "main";
+  type HonorAssetVariantConfig = {
+    assetName: HonorAssetVariant;
+    frameSize: "s" | "m";
+    canvas: {
+      width: number;
+      height: number;
+    };
+    rarityOneFrame: {
+      x: number;
+      width: number;
+    };
+    overlay: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+  };
   type HonorAssetPreview = {
-    frameSrc: string | null;
+    config: HonorAssetVariantConfig;
+    frame: HonorAssetFrame;
     baseSrc: string | null;
     overlaySrc: string | null;
     isFullBleedOverlay: boolean;
   };
+  type HonorAssetPreviews = Record<HonorAssetVariant, HonorAssetPreview>;
   type RarityBonusRate = NonNullable<EventRelatedData["bonuses"]>["rarityBonusRates"][number];
   const rankingRewardPreviewLimit = 5;
+  const honorPreviewCanvasHeight = 80;
+  const honorAssetVariantConfigs = {
+    sub: {
+      assetName: "sub",
+      frameSize: "s",
+      canvas: { width: 180, height: honorPreviewCanvasHeight },
+      rarityOneFrame: { x: 8, width: 164 },
+      overlay: { x: 11, y: 40, width: 158, height: 40 }
+    },
+    main: {
+      assetName: "main",
+      frameSize: "m",
+      canvas: { width: 380, height: honorPreviewCanvasHeight },
+      rarityOneFrame: { x: 8, width: 364 },
+      overlay: { x: 200, y: 0, width: 180, height: 78 }
+    }
+  } satisfies Record<HonorAssetVariant, HonorAssetVariantConfig>;
   const honorRarityNumber: Record<string, number> = { low: 1, middle: 2, high: 3, highest: 4 };
 
   const formatPercent = (value: number | null): string | null =>
@@ -117,6 +163,15 @@
   const hideBrokenImage = (event: Event): void => {
     if (event.currentTarget instanceof HTMLImageElement) {
       event.currentTarget.hidden = true;
+    } else if (event.currentTarget instanceof SVGImageElement) {
+      const fallbackSrc = event.currentTarget.getAttribute("data-fallback-src");
+      if (fallbackSrc && event.currentTarget.getAttribute("href") !== fallbackSrc) {
+        event.currentTarget.setAttribute("href", fallbackSrc);
+        event.currentTarget.removeAttribute("data-fallback-src");
+        return;
+      }
+
+      event.currentTarget.style.display = "none";
     }
   };
 
@@ -286,7 +341,22 @@
 
     return honor.levels.find((level) => level.assetBundleName)?.assetBundleName ?? null;
   };
-  const getHonorAssetPreview = (detail: EventRewardResourceBoxDetail): HonorAssetPreview | null => {
+  const getHonorFrameGeometry = (
+    rarityNumber: number,
+    config: HonorAssetVariantConfig
+  ): Omit<HonorAssetFrame, "src" | "fallbackSrc"> =>
+    rarityNumber === 1
+      ? {
+          x: config.rarityOneFrame.x,
+          y: 0,
+          width: config.rarityOneFrame.width,
+          height: config.canvas.height
+        }
+      : { x: 0, y: 0, width: config.canvas.width, height: config.canvas.height };
+  const getHonorAssetPreview = (
+    detail: EventRewardResourceBoxDetail,
+    config: HonorAssetVariantConfig
+  ): HonorAssetPreview | null => {
     const honor = detail.honor;
     if (!isHonorRewardDetail(detail) || !honor) {
       return null;
@@ -300,42 +370,57 @@
     const rarityNumber = honorRarityNumber[rarity] ?? 1;
     const frameName = honor.group?.frameName;
 
-    let frameSrc: string | null = null;
+    const defaultFrameSrc = asset(`/degree/frame_degree_${config.frameSize}_${rarityNumber}.png`);
+    let frameSrc = defaultFrameSrc;
+    let frameFallbackSrc: string | null = null;
     if (
       frameName &&
       (rarity === "highest" || rarity === "high" || (honorType === "birthday" && rarity === "middle"))
     ) {
       frameSrc = getRemoteAssetEndpointURL(
-        `honor_frame/${frameName}/frame_degree_m_${rarityNumber}.webp`,
+        `honor_frame/${frameName}/frame_degree_${config.frameSize}_${rarityNumber}.webp`,
         assetRegion
       );
+      frameFallbackSrc = defaultFrameSrc;
     }
 
     let baseSrc: string | null = null;
     if (honorType === "rank_match" && backgroundAssetBundleName) {
       baseSrc = getRemoteAssetEndpointURL(
-        `rank_live/honor/${backgroundAssetBundleName}/degree_main.webp`,
+        `rank_live/honor/${backgroundAssetBundleName}/degree_${config.assetName}.webp`,
         assetRegion
       );
     } else if (backgroundAssetBundleName) {
       baseSrc = getRemoteAssetEndpointURL(
-        `honor/${backgroundAssetBundleName}/degree_main.webp`,
+        `honor/${backgroundAssetBundleName}/degree_${config.assetName}.webp`,
         assetRegion
       );
     }
 
     let overlaySrc: string | null = null;
     if ((honorType === "event" || honorType === "event_point") && assetBundleName) {
-      overlaySrc = getRemoteAssetEndpointURL(`honor/${assetBundleName}/rank_main.webp`, assetRegion);
+      overlaySrc = getRemoteAssetEndpointURL(`honor/${assetBundleName}/rank_${config.assetName}.webp`, assetRegion);
     } else if (honorType === "rank_match" && assetBundleName) {
-      overlaySrc = getRemoteAssetEndpointURL(`rank_live/honor/${assetBundleName}/main.webp`, assetRegion);
+      overlaySrc = getRemoteAssetEndpointURL(`rank_live/honor/${assetBundleName}/${config.assetName}.webp`, assetRegion);
     } else if (honor.honorMissionType && assetBundleName) {
       overlaySrc = getRemoteAssetEndpointURL(`honor/${assetBundleName}/scroll.webp`, assetRegion);
     }
 
     const isFullBleedOverlay = assetBundleName ? /_cp\d+$/.test(assetBundleName) : false;
 
-    return { baseSrc, frameSrc, overlaySrc, isFullBleedOverlay };
+    return {
+      config,
+      baseSrc,
+      frame: { src: frameSrc, ...getHonorFrameGeometry(rarityNumber, config), fallbackSrc: frameFallbackSrc },
+      overlaySrc,
+      isFullBleedOverlay
+    };
+  };
+  const getHonorAssetPreviews = (detail: EventRewardResourceBoxDetail): HonorAssetPreviews | null => {
+    const sub = getHonorAssetPreview(detail, honorAssetVariantConfigs.sub);
+    const main = getHonorAssetPreview(detail, honorAssetVariantConfigs.main);
+
+    return sub && main ? { sub, main } : null;
   };
   const getRewardDetailImageSrc = (detail: EventRewardResourceBoxDetail): string | null => {
     if (!detail.resourceType) {
@@ -445,28 +530,14 @@
 {/snippet}
 
 {#snippet honorRewardDetail(detail: EventRewardResourceBoxDetail)}
-  {@const honorPreview = getHonorAssetPreview(detail)}
-  {#if honorPreview}
-    <span class="inline-flex w-36 shrink-0 sm:w-40" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
-      <span class="relative block aspect-19/4 w-full overflow-hidden rounded" aria-hidden="true">
-        {#if honorPreview.baseSrc}
-          <img src={honorPreview.baseSrc} alt="" class="absolute inset-0 size-full object-fill" loading="lazy" decoding="async" onerror={hideBrokenImage} />
-        {/if}
-        {#if honorPreview.frameSrc}
-          <img src={honorPreview.frameSrc} alt="" class="absolute inset-0 size-full object-fill" loading="lazy" decoding="async" onerror={hideBrokenImage} />
-        {/if}
-        {#if honorPreview.overlaySrc}
-          <img
-            src={honorPreview.overlaySrc}
-            alt=""
-            class={honorPreview.isFullBleedOverlay
-              ? "absolute inset-0 size-full object-fill"
-              : "absolute left-[52.63%] top-0 h-[97.5%] w-[47.37%] object-fill"}
-            loading="lazy"
-            decoding="async"
-            onerror={hideBrokenImage}
-          />
-        {/if}
+  {@const honorPreviews = getHonorAssetPreviews(detail)}
+  {#if honorPreviews}
+    <span class="inline-flex shrink-0" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
+      <span class="block w-[180px] sm:hidden" aria-hidden="true">
+        {@render honorAssetPreview(honorPreviews.sub)}
+      </span>
+      <span class="hidden w-[380px] sm:block" aria-hidden="true">
+        {@render honorAssetPreview(honorPreviews.main)}
       </span>
     </span>
   {:else}
@@ -474,6 +545,58 @@
       <Icon icon={getRewardDetailFallbackIcon(detail)} class="size-4 shrink-0 opacity-70" aria-hidden="true" />
     </span>
   {/if}
+{/snippet}
+
+{#snippet honorAssetPreview(honorPreview: HonorAssetPreview)}
+  <svg
+    class="block h-auto w-full"
+    viewBox={`0 0 ${honorPreview.config.canvas.width} ${honorPreview.config.canvas.height}`}
+  >
+    {#if honorPreview.baseSrc}
+      <image
+        href={honorPreview.baseSrc}
+        x="0"
+        y="0"
+        width={honorPreview.config.canvas.width}
+        height={honorPreview.config.canvas.height}
+        preserveAspectRatio="none"
+        onerror={hideBrokenImage}
+      />
+    {/if}
+    <image
+      href={honorPreview.frame.src}
+      x={honorPreview.frame.x}
+      y={honorPreview.frame.y}
+      width={honorPreview.frame.width}
+      height={honorPreview.frame.height}
+      preserveAspectRatio="none"
+      data-fallback-src={honorPreview.frame.fallbackSrc}
+      onerror={hideBrokenImage}
+    />
+    {#if honorPreview.overlaySrc}
+      {#if honorPreview.isFullBleedOverlay}
+        <image
+          href={honorPreview.overlaySrc}
+          x="0"
+          y="0"
+          width={honorPreview.config.canvas.width}
+          height={honorPreview.config.canvas.height}
+          preserveAspectRatio="none"
+          onerror={hideBrokenImage}
+        />
+      {:else}
+        <image
+          href={honorPreview.overlaySrc}
+          x={honorPreview.config.overlay.x}
+          y={honorPreview.config.overlay.y}
+          width={honorPreview.config.overlay.width}
+          height={honorPreview.config.overlay.height}
+          preserveAspectRatio="none"
+          onerror={hideBrokenImage}
+        />
+      {/if}
+    {/if}
+  </svg>
 {/snippet}
 
 {#snippet rewardFallbackChip(reward: EventRankingReward)}
