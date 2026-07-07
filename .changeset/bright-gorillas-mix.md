@@ -25,7 +25,7 @@ Show a disabled, tooltip-backed error state when card gacha voice audio fails to
 
 Add richer event detail content with bonus summaries, detailed event bonus rules, thumbnail-backed featured card entries, jacket-backed event song entries, ranking reward bands, resolved reward-box contents, honor reward previews, and virtual live metadata.
 
-Fix event-detail ranking honor reward previews so they use compact degree sizing and rarity-specific frames.
+Fix event-detail ranking honor reward previews so rarity-specific local degree frames render around the honor body without being clipped.
 
 Show localized event type badges on the homepage current-event cards.
 
@@ -34,3 +34,5 @@ Show event-detail virtual live banners from the virtual live asset bundle when a
 Compact the event-detail virtual live summary layout.
 
 Restore large-screen event-detail density by showing featured cards in responsive columns and keeping ranking honor reward previews compact within reward rows.
+
+Render event-detail ranking honor reward previews with compact sub-degree assets on mobile and main-degree assets on larger screens.
