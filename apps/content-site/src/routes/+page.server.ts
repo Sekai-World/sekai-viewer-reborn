@@ -15,6 +15,7 @@ import type { PageServerLoad } from "./$types";
 type EventSummary = {
   id: string;
   title: string;
+  eventType: string | null;
   unit: string | null;
   startAt: string | number | null;
   endAt: string | number | null;
@@ -200,6 +201,7 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
   return {
     id,
     title,
+    eventType: pickFirstString(eventNode, ["eventType", "event_type"]),
     unit: pickFirstString(unitNode ?? eventNode, ["unit"]),
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
     endAt: pickFirstDateValue(eventNode, [

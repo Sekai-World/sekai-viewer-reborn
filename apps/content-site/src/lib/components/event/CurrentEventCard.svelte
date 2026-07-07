@@ -6,6 +6,7 @@
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
+  import { getEventTypeDisplay } from "$lib/domain/event";
   import {
     CURRENT_EVENT_CARD_FRAME_CLASS,
     EVENT_CARD_IMAGE_CLASS,
@@ -16,6 +17,7 @@
   type CurrentEventSummary = {
     id: string;
     title: string;
+    eventType: string | null;
     unit: string | null;
     startAt: string | number | null;
     endAt: string | number | null;
@@ -54,6 +56,7 @@
   };
 
   const displayUnit = $derived(getDisplayUnit(event.unit));
+  const displayEventType = $derived(getEventTypeDisplay(event.eventType, uiLocale));
 </script>
 
 <EventCardFrame
@@ -85,8 +88,13 @@
   <h3 class="text-base/tight font-semibold">
     {event.title}
   </h3>
-  <div class="flex items-center gap-2 text-sm">
+  <div class="flex flex-wrap items-center gap-2 text-sm">
     <p class="opacity-70">{idLabel}{event.id}</p>
+    {#if displayEventType}
+      <span class="badge border-none bg-base-200 font-semibold text-base-content">
+        {displayEventType}
+      </span>
+    {/if}
     {#if displayUnit}
       <UnitIconBadge unit={event.unit!} fallbackLabel={displayUnit} />
     {/if}
