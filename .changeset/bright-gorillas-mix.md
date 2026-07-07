@@ -24,3 +24,11 @@ Improve `VoicePlayButton` with stop-button playback semantics and a circular pro
 Show a disabled, tooltip-backed error state when card gacha voice audio fails to load.
 
 Add richer event detail content with bonus summaries, detailed event bonus rules, thumbnail-backed featured card entries, jacket-backed event song entries, ranking reward bands, resolved reward-box contents, honor reward previews, and virtual live metadata.
+
+Fix event-detail ranking honor reward previews so they use compact degree sizing and rarity-specific frames.
+
+Show localized event type badges on the homepage current-event cards.
+
+Show event-detail virtual live banners from the virtual live asset bundle when available.
+
+Compact the event-detail virtual live summary layout.
