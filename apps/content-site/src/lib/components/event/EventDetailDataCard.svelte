@@ -696,25 +696,7 @@
           onImageError={hideBrokenImage}
         />
       {:else}
-        {@const fallbackAttr = item.attrBonuses[0]?.attr ?? null}
-        {@const fallbackAttrIconUrl = getAttrIconUrl(fallbackAttr)}
-        <div
-          class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-base-content/15 bg-base-100/80 text-primary"
-          aria-label={anyCharacterLabel}
-        >
-          {#if fallbackAttrIconUrl}
-            <img
-              src={fallbackAttrIconUrl}
-              alt=""
-              class="size-10 object-contain"
-              loading="lazy"
-              decoding="async"
-              aria-hidden="true"
-            />
-          {:else}
-            <Icon icon="mdi:cards-outline" class="size-7 opacity-70" aria-hidden="true" />
-          {/if}
-        </div>
+        <CharacterAvatar src={null} label="?" variant="sm" />
       {/if}
     </div>
     <div class="min-w-0">
