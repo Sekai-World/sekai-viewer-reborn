@@ -773,11 +773,11 @@
 {/snippet}
 
 {#snippet cardBonusBadges(card: EventFeaturedCard)}
-  <span class="badge badge-sm border-base-content/20 bg-base-100/80 font-semibold text-base-content">
+  <span class="inline-flex max-w-full items-center gap-1 rounded-full border border-base-content/20 bg-base-100/80 px-2 py-1 text-xs/4 font-semibold text-base-content">
     {featuredCardBonusLabel}: {formatPercent(card.bonusRate) ?? noDataLabel}
   </span>
   {#if card.leaderBonusRate !== null}
-    <span class="badge badge-sm border-base-content/20 bg-base-100/80 font-semibold text-base-content">
+    <span class="inline-flex max-w-full items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-xs/4 font-semibold text-primary">
       {leaderBonusLabel}: {formatPercent(card.leaderBonusRate) ?? noDataLabel}
     </span>
   {/if}
@@ -789,7 +789,7 @@
   {#if href}
     <a
       href={href}
-      class="content-card-inset group grid grid-cols-[5rem_minmax(0,1fr)] gap-3 rounded-xl p-3 transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+      class="content-card-inset group grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3 transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
     >
       <CardThumbnail
         src={getCardThumbnailSrc(content)}
@@ -801,7 +801,7 @@
         rarityType={content.rarityType}
         rarityCount={getRarityValue(content.rarityType)}
         loadMode="visible"
-        maxSize={80}
+        maxSize={48}
         containerClass="relative overflow-hidden rounded-lg bg-base-200 aspect-square"
       />
       <div class="min-w-0 self-center">
@@ -811,13 +811,13 @@
         <p class="mt-1 line-clamp-2 text-sm font-semibold group-hover:text-primary">
           {getCardTitle(content)}
         </p>
-        <div class="mt-2 flex flex-wrap gap-1.5">
-          {@render cardBonusBadges(content)}
-        </div>
+      </div>
+      <div class="flex min-w-0 shrink-0 flex-col items-end gap-1.5">
+        {@render cardBonusBadges(content)}
       </div>
     </a>
   {:else}
-    <div class="content-card-inset grid grid-cols-[5rem_minmax(0,1fr)] gap-3 rounded-xl p-3">
+    <div class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3">
       <CardThumbnail
         src={getCardThumbnailSrc(content)}
         fallbackSrc={getCardFallbackThumbnailSrc(content)}
@@ -828,7 +828,7 @@
         rarityType={content.rarityType}
         rarityCount={getRarityValue(content.rarityType)}
         loadMode="visible"
-        maxSize={80}
+        maxSize={48}
         containerClass="relative overflow-hidden rounded-lg bg-base-200 aspect-square"
       />
       <div class="min-w-0 self-center">
@@ -836,9 +836,9 @@
           {formatHashId(content.cardId)}
         </p>
         <p class="mt-1 line-clamp-2 text-sm font-semibold">{getCardTitle(content)}</p>
-        <div class="mt-2 flex flex-wrap gap-1.5">
-          {@render cardBonusBadges(content)}
-        </div>
+      </div>
+      <div class="flex min-w-0 shrink-0 flex-col items-end gap-1.5">
+        {@render cardBonusBadges(content)}
       </div>
     </div>
   {/if}
