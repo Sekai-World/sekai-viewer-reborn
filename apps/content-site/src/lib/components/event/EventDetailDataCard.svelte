@@ -685,33 +685,21 @@
   {@const characterAccentColor = getBonusCharacterAccentColor(item)}
   {@const characterIconSrc = getBonusCharacterIconSrc(item)}
   {@const isCharacterBonus = hasBonusCharacterData(item)}
-  <div class="content-card-inset grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3">
-    <div class="min-w-0">
+  <div class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3">
+    <div class="flex justify-center">
       {#if isCharacterBonus}
-        <div class="relative w-full max-w-24">
-          <div class="flex aspect-square min-h-20 w-full items-center justify-center rounded-xl border border-base-content/15 bg-base-100/80">
-            <CharacterAvatar
-              src={characterIconSrc}
-              label={displayName}
-              accentColor={characterAccentColor}
-              variant="default"
-              onImageError={hideBrokenImage}
-            />
-          </div>
-          <span class="absolute right-1 top-1 max-w-[calc(100%-0.5rem)] truncate rounded-full bg-base-100/85 px-2 py-0.5 text-xs/4 font-semibold text-base-content shadow-sm backdrop-blur-sm">
-            {displayName}
-          </span>
-          {#if item.unit}
-            <div class="absolute bottom-1 right-1 flex items-center gap-1" aria-label={item.unit}>
-              <UnitIconBadge unit={item.unit} fallbackLabel={item.unit} mapNoneToPiapro={true} variant="sm" />
-            </div>
-          {/if}
-        </div>
+        <CharacterAvatar
+          src={characterIconSrc}
+          label={displayName}
+          accentColor={characterAccentColor}
+          variant="sm"
+          onImageError={hideBrokenImage}
+        />
       {:else}
         {@const fallbackAttr = item.attrBonuses[0]?.attr ?? null}
         {@const fallbackAttrIconUrl = getAttrIconUrl(fallbackAttr)}
         <div
-          class="relative flex aspect-square min-h-20 w-full max-w-24 items-center justify-center overflow-hidden rounded-xl border border-base-content/15 bg-base-100/80 text-primary"
+          class="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-base-content/15 bg-base-100/80 text-primary"
           aria-label={anyCharacterLabel}
         >
           {#if fallbackAttrIconUrl}
@@ -726,11 +714,16 @@
           {:else}
             <Icon icon="mdi:cards-outline" class="size-7 opacity-70" aria-hidden="true" />
           {/if}
-          <span class="absolute right-1 top-1 max-w-[calc(100%-0.5rem)] truncate rounded-full bg-base-100/85 px-2 py-0.5 text-xs/4 font-semibold text-base-content shadow-sm backdrop-blur-sm">
-            {displayName}
-          </span>
         </div>
       {/if}
+    </div>
+    <div class="min-w-0">
+      <p class="truncate text-sm font-semibold text-base-content">{displayName}</p>
+      <div class="mt-1 flex min-h-7 items-center gap-1.5">
+        {#if item.unit}
+          <UnitIconBadge unit={item.unit} fallbackLabel={item.unit} mapNoneToPiapro={true} variant="sm" />
+        {/if}
+      </div>
     </div>
     <div class="flex min-w-0 shrink-0 flex-col items-end gap-1.5">
       {#if item.baseBonusRate !== null}
