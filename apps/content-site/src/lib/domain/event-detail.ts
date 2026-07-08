@@ -16,7 +16,12 @@ export type EventVirtualLive = {
 };
 
 export type EventDeckBonus = {
+  gameCharacterId: number | null;
   gameCharacterUnitId: number | null;
+  unit: string | null;
+  firstName: string | null;
+  givenName: string | null;
+  colorCode: string | null;
   cardAttr: string | null;
   bonusRate: number | null;
 };

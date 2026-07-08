@@ -16,8 +16,6 @@ import type {
   EventRelatedData,
   EventVirtualLive
 } from "$lib/domain/event-detail";
-import type { CardDetail } from "$lib/domain/card-detail";
-import type { MusicDetail } from "$lib/domain/music-detail";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -152,7 +150,12 @@ const parseEventDeckBonus = (value: unknown): EventDeckBonus | null => {
   }
 
   return {
+    gameCharacterId: getNumber(node["gameCharacterId"]),
     gameCharacterUnitId: getNumber(node["gameCharacterUnitId"]),
+    unit: getString(node["unit"]),
+    firstName: getString(node["firstName"]),
+    givenName: getString(node["givenName"]),
+    colorCode: getString(node["colorCode"]),
     cardAttr: getString(node["cardAttr"]),
     bonusRate: getNumber(node["bonusRate"])
   };
@@ -229,19 +232,6 @@ const parseFeaturedCard = (value: unknown): EventFeaturedCard | null => {
   };
 };
 
-const mergeFeaturedCardDetail = (
-  eventCard: EventFeaturedCard,
-  cardDetail: CardDetail | null
-): EventFeaturedCard => ({
-  ...eventCard,
-  title: cardDetail?.title ?? eventCard.title,
-  assetBundleName: cardDetail?.assetBundleName ?? eventCard.assetBundleName,
-  attr: cardDetail?.attr ?? eventCard.attr,
-  rarityType: cardDetail?.rarityType ?? eventCard.rarityType,
-  initialSpecialTrainingStatus:
-    cardDetail?.initialSpecialTrainingStatus ?? eventCard.initialSpecialTrainingStatus
-});
-
 const parseEventMusic = (value: unknown): EventMusic | null => {
   const node = getObject(value);
   if (!node) {
@@ -255,12 +245,6 @@ const parseEventMusic = (value: unknown): EventMusic | null => {
     seq: getNumber(node["seq"])
   };
 };
-
-const mergeEventMusicDetail = (eventMusic: EventMusic, musicDetail: MusicDetail | null): EventMusic => ({
-  ...eventMusic,
-  title: musicDetail?.title ?? eventMusic.title,
-  assetBundleName: musicDetail?.assetBundleName ?? eventMusic.assetBundleName
-});
 
 const parseRewardHonorLevel = (value: unknown): EventRewardHonorLevel | null => {
   const node = getObject(value);
@@ -397,6 +381,30 @@ const parseEventRelatedData = ({
   rewardRanges: parseItems(rewardsPayload, parseRewardRange)
 });
 
+const parseEventAggregateRelatedData = (payload: unknown): EventRelatedData => {
+  const root = getObject(payload);
+  if (!root) {
+    return parseEventRelatedData({
+      bonusesPayload: null,
+      cardsPayload: null,
+      musicsPayload: null,
+      rewardsPayload: null
+    });
+  }
+
+  const rewardsNode = getObject(root["rewards"]);
+
+  return {
+    bonuses: parseEventBonuses(root["bonuses"]),
+    cards: parseItems(root["cards"], parseFeaturedCard),
+    musics: parseItems(root["musics"], parseEventMusic),
+    rewardRanges: getArray(rewardsNode?.["previewRanges"]).flatMap((item) => {
+      const range = parseRewardRange(item);
+      return range ? [range] : [];
+    })
+  };
+};
+
 const parseEventDetail = (payload: unknown): EventDetail | null => {
   const root = getObject(payload);
   if (!root) {
@@ -439,9 +447,4 @@ const parseEventDetail = (payload: unknown): EventDetail | null => {
 };
 
 export type { EventDetail };
-export {
-  mergeEventMusicDetail,
-  mergeFeaturedCardDetail,
-  parseEventDetail,
-  parseEventRelatedData
-};
+export { parseEventAggregateRelatedData, parseEventDetail, parseEventRelatedData };
