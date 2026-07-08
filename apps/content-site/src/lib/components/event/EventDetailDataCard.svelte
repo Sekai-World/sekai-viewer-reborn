@@ -160,6 +160,7 @@
     }
   } satisfies Record<HonorAssetVariant, HonorAssetVariantConfig>;
   const honorRarityNumber: Record<string, number> = { low: 1, middle: 2, high: 3, highest: 4 };
+  const standardCardAttrs = ["cool", "cute", "happy", "mysterious", "pure"] as const;
 
   const formatPercent = (value: number | null): string | null =>
     value === null ? null : `${Number.isInteger(value) ? value.toString() : value.toFixed(1)}%`;
@@ -217,6 +218,10 @@
     music.title ?? (music.musicId ? formatHashId(music.musicId) : noDataLabel);
   const getAttrIconUrl = (attr: string | null): string | null =>
     attr ? asset(`/card_attr/icon_attribute_${attr}.png`) : null;
+  const getAnyAttrIconUrls = (excludedAttr: string | null): string[] =>
+    standardCardAttrs
+      .filter((attr) => attr !== excludedAttr)
+      .map((attr) => asset(`/card_attr/icon_attribute_${attr}.png`));
   const getAttrLabel = (attr: string | null): string => attr ?? cardAttrAnyLabel;
   const getRarityLabel = (rarityType: string | null): string => {
     if (rarityType === "rarity_birthday") {
@@ -709,11 +714,23 @@
     </div>
     <div class="flex min-w-0 shrink-0 flex-col items-end gap-1.5">
       {#if item.baseBonusRate !== null}
+        {@const highlightedAttr = item.attrBonuses[0]?.attr ?? null}
         <span
           class="inline-flex max-w-full items-center gap-1 rounded-full border border-base-content/20 bg-base-100/80 px-2 py-1 text-xs/4 font-semibold text-base-content"
           title={`${cardAttrAnyLabel} ${bonusRateLabel} ${formatPercent(item.baseBonusRate) ?? noDataLabel}`}
         >
-          <span class="truncate">{cardAttrAnyLabel}</span>
+          <span class="flex items-center -space-x-1" aria-label={cardAttrAnyLabel}>
+            {#each getAnyAttrIconUrls(highlightedAttr) as iconUrl (iconUrl)}
+              <img
+                src={iconUrl}
+                alt=""
+                class="size-4 shrink-0 rounded-full bg-base-100 object-contain ring-1 ring-base-100"
+                loading="lazy"
+                decoding="async"
+                aria-hidden="true"
+              />
+            {/each}
+          </span>
           <span>{formatPercent(item.baseBonusRate) ?? noDataLabel}</span>
         </span>
       {/if}
@@ -733,7 +750,6 @@
               aria-hidden="true"
             />
           {/if}
-          <span class="truncate">{getAttrLabel(attrBonus.attr)}</span>
           <span>{formatPercent(attrBonus.bonusRate) ?? noDataLabel}</span>
         </span>
       {/each}
