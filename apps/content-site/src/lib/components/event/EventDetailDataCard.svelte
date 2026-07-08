@@ -8,8 +8,11 @@
     getVirtualLiveBannerAssetURL,
     type AssetServer
   } from "$lib/assets/index";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import type {
     EventDetail,
@@ -25,7 +28,6 @@
 
   type SummaryItem = {
     key: string;
-    label: string;
     value: string;
   };
 
@@ -34,7 +36,8 @@
     region,
     relatedData,
     displayLocale,
-    attrBonusLabel,
+    bonusCharacterLabel,
+    anyCharacterLabel,
     rarityBonusLabel,
     rarityLabel,
     featuredCardsTitle,
@@ -55,16 +58,14 @@
     rankingRewardsShowMoreLabel,
     rankingRewardsShowLessLabel,
     virtualLiveTitle,
-    virtualLiveTypeLabel,
-    virtualLiveStartLabel,
-    virtualLiveEndLabel,
     noDataLabel
   }: {
     event: EventDetail;
     region: SupportedRegion;
     relatedData: EventRelatedData | null;
     displayLocale: string;
-    attrBonusLabel: string;
+    bonusCharacterLabel: string;
+    anyCharacterLabel: string;
     rarityBonusLabel: string;
     rarityLabel: string;
     featuredCardsTitle: string;
@@ -85,17 +86,24 @@
     rankingRewardsShowMoreLabel: string;
     rankingRewardsShowLessLabel: string;
     virtualLiveTitle: string;
-    virtualLiveTypeLabel: string;
-    virtualLiveStartLabel: string;
-    virtualLiveEndLabel: string;
     noDataLabel: string;
   } = $props();
 
   let areAllRankingRewardsVisible = $state(false);
 
-  type AttributeBonusItem = {
+  type BonusDeckEntry = {
     attr: string | null;
     bonusRate: number | null;
+  };
+  type BonusCharacterItem = {
+    gameCharacterId: number | null;
+    gameCharacterUnitId: number | null;
+    unit: string | null;
+    firstName: string | null;
+    givenName: string | null;
+    colorCode: string | null;
+    baseBonusRate: number | null;
+    attrBonuses: BonusDeckEntry[];
   };
   type HonorAssetFrame = {
     src: string;
@@ -226,20 +234,97 @@
     return getRarityValue(rarityType) > 0 ? asset("/card_rarity/rarity_star_normal.png") : null;
   };
 
-  const getAttributeBonusKey = (attr: string | null): string => attr ?? "__any";
-  const getAttributeBonusItems = (data: EventRelatedData | null): AttributeBonusItem[] => {
-    return (data?.bonuses?.deckBonuses ?? []).reduce<AttributeBonusItem[]>((items, bonus) => {
-      const key = getAttributeBonusKey(bonus.cardAttr);
-      const currentIndex = items.findIndex((item) => getAttributeBonusKey(item.attr) === key);
+  const getBonusCharacterIdentityKey = (item: Omit<BonusCharacterItem, "baseBonusRate" | "attrBonuses">): string =>
+    [
+      item.gameCharacterId ?? "__any_character",
+      item.gameCharacterUnitId ?? "__any_character_unit",
+      item.givenName ?? "__any_given_name",
+      item.firstName ?? "__any_first_name",
+      item.unit ?? "__any_unit"
+    ].join(":");
+
+  const getBonusCharacterKey = (item: BonusCharacterItem): string =>
+    getBonusCharacterIdentityKey(item);
+
+  const getBonusCharacterName = (item: BonusCharacterItem): string | null => {
+    const nameParts = [item.firstName, item.givenName].filter(
+      (value, index, values): value is string => value !== null && values.indexOf(value) === index
+    );
+
+    return nameParts.length > 0 ? nameParts.join(" ") : null;
+  };
+
+  const getBonusDisplayName = (item: BonusCharacterItem): string =>
+    getBonusCharacterName(item) ?? (hasBonusCharacterData(item) ? bonusCharacterLabel : anyCharacterLabel);
+
+  const hasBonusCharacterData = (item: BonusCharacterItem): boolean =>
+    item.gameCharacterId !== null || getBonusCharacterName(item) !== null || item.unit !== null;
+
+  const getBonusCharacterAccentColor = (item: BonusCharacterItem): `#${string}` | null => {
+    const colorCode = item.colorCode?.trim();
+    if (!colorCode) {
+      return null;
+    }
+
+    if (/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/.test(colorCode)) {
+      return colorCode as `#${string}`;
+    }
+
+    if (/^[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?$/.test(colorCode)) {
+      return `#${colorCode}`;
+    }
+
+    return null;
+  };
+
+  const getBonusCharacterIconSrc = (item: BonusCharacterItem): string | null =>
+    item.gameCharacterId === null
+      ? null
+      : getLocalCharacterThumbnailAssetURL(item.gameCharacterId);
+
+  const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {
+    return (data?.bonuses?.deckBonuses ?? []).reduce<BonusCharacterItem[]>((items, bonus) => {
+      const nextItem = {
+        gameCharacterId: bonus.gameCharacterId,
+        gameCharacterUnitId: bonus.gameCharacterUnitId,
+        unit: bonus.unit,
+        firstName: bonus.firstName,
+        givenName: bonus.givenName,
+        colorCode: bonus.colorCode,
+        baseBonusRate: bonus.cardAttr === null ? bonus.bonusRate : null,
+        attrBonuses: bonus.cardAttr === null ? [] : [{ attr: bonus.cardAttr, bonusRate: bonus.bonusRate }]
+      };
+      const key = getBonusCharacterIdentityKey(nextItem);
+      const currentIndex = items.findIndex((item) => getBonusCharacterIdentityKey(item) === key);
       const current = currentIndex >= 0 ? items[currentIndex] : null;
-      if (!current || (bonus.bonusRate ?? -Infinity) > (current.bonusRate ?? -Infinity)) {
-        const nextItem = { attr: bonus.cardAttr, bonusRate: bonus.bonusRate };
-        return currentIndex >= 0
-          ? items.map((item, index) => (index === currentIndex ? nextItem : item))
-          : [...items, nextItem];
+      if (!current) {
+        return [...items, nextItem];
       }
 
-      return items;
+      const nextBaseBonusRate =
+        nextItem.baseBonusRate !== null &&
+        (current.baseBonusRate === null || nextItem.baseBonusRate > current.baseBonusRate)
+          ? nextItem.baseBonusRate
+          : current.baseBonusRate;
+      const nextAttrBonuses = nextItem.attrBonuses.reduce<BonusDeckEntry[]>((entries, entry) => {
+        const entryIndex = entries.findIndex((existing) => existing.attr === entry.attr);
+        const existing = entryIndex >= 0 ? entries[entryIndex] : null;
+        if (!existing) {
+          return [...entries, entry];
+        }
+        if ((entry.bonusRate ?? -Infinity) <= (existing.bonusRate ?? -Infinity)) {
+          return entries;
+        }
+        return entries.map((existingEntry, index) => (index === entryIndex ? entry : existingEntry));
+      }, current.attrBonuses);
+
+      const updatedItem = {
+        ...current,
+        baseBonusRate: nextBaseBonusRate,
+        attrBonuses: nextAttrBonuses.sort((left, right) => getAttrLabel(left.attr).localeCompare(getAttrLabel(right.attr)))
+      };
+
+      return items.map((item, index) => (index === currentIndex ? updatedItem : item));
     }, []);
   };
 
@@ -485,19 +570,8 @@
 
     return [
       {
-        key: "type",
-        label: virtualLiveTypeLabel,
-        value: currentEvent.virtualLive.virtualLiveType ?? noDataLabel
-      },
-      {
-        key: "start",
-        label: virtualLiveStartLabel,
-        value: formatDisplayDateTime(currentEvent.virtualLive.startAt, displayLocale)
-      },
-      {
-        key: "end",
-        label: virtualLiveEndLabel,
-        value: formatDisplayDateTime(currentEvent.virtualLive.endAt, displayLocale)
+        key: "period",
+        value: `${formatDisplayDateTime(currentEvent.virtualLive.startAt, displayLocale)} - ${formatDisplayDateTime(currentEvent.virtualLive.endAt, displayLocale)}`
       }
     ];
   };
@@ -533,10 +607,10 @@
   {@const honorPreviews = getHonorAssetPreviews(detail)}
   {#if honorPreviews}
     <span class="inline-flex shrink-0" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
-      <span class="block w-[180px] sm:hidden" aria-hidden="true">
+      <span class="block h-10 sm:hidden" aria-hidden="true">
         {@render honorAssetPreview(honorPreviews.sub)}
       </span>
-      <span class="hidden w-[380px] sm:block" aria-hidden="true">
+      <span class="hidden h-12 sm:block" aria-hidden="true">
         {@render honorAssetPreview(honorPreviews.main)}
       </span>
     </span>
@@ -549,7 +623,7 @@
 
 {#snippet honorAssetPreview(honorPreview: HonorAssetPreview)}
   <svg
-    class="block h-auto w-full"
+    class="block h-full max-w-full w-auto"
     viewBox={`0 0 ${honorPreview.config.canvas.width} ${honorPreview.config.canvas.height}`}
   >
     {#if honorPreview.baseSrc}
@@ -606,30 +680,88 @@
   </span>
 {/snippet}
 
-{#snippet attributeBonusPanel(item: AttributeBonusItem)}
-  {@const attrIconUrl = getAttrIconUrl(item.attr)}
-  <div class="content-card-inset flex items-center gap-3 rounded-xl p-3">
-    <div
-      class="btn btn-sm size-12! min-h-12! shrink-0 border-base-content/20 bg-base-100/80 p-0 text-primary"
-      title={getAttrLabel(item.attr)}
-    >
-      {#if attrIconUrl}
-        <img
-          src={attrIconUrl}
-          alt={getAttrLabel(item.attr)}
-          class="size-7 object-contain"
-          loading="lazy"
-          decoding="async"
-        />
+{#snippet bonusCharacterPanel(item: BonusCharacterItem)}
+  {@const displayName = getBonusDisplayName(item)}
+  {@const characterAccentColor = getBonusCharacterAccentColor(item)}
+  {@const characterIconSrc = getBonusCharacterIconSrc(item)}
+  {@const isCharacterBonus = hasBonusCharacterData(item)}
+  <div class="content-card-inset grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3">
+    <div class="min-w-0">
+      {#if isCharacterBonus}
+        <div class="relative w-full max-w-24">
+          <div class="flex aspect-square min-h-20 w-full items-center justify-center rounded-xl border border-base-content/15 bg-base-100/80">
+            <CharacterAvatar
+              src={characterIconSrc}
+              label={displayName}
+              accentColor={characterAccentColor}
+              variant="default"
+              onImageError={hideBrokenImage}
+            />
+          </div>
+          <span class="absolute right-1 top-1 max-w-[calc(100%-0.5rem)] truncate rounded-full bg-base-100/85 px-2 py-0.5 text-xs/4 font-semibold text-base-content shadow-sm backdrop-blur-sm">
+            {displayName}
+          </span>
+          {#if item.unit}
+            <div class="absolute bottom-1 right-1 flex items-center gap-1" aria-label={item.unit}>
+              <UnitIconBadge unit={item.unit} fallbackLabel={item.unit} mapNoneToPiapro={true} variant="sm" />
+            </div>
+          {/if}
+        </div>
       {:else}
-        <Icon icon="mdi:cards-outline" class="size-7 opacity-70" aria-hidden="true" />
+        {@const fallbackAttr = item.attrBonuses[0]?.attr ?? null}
+        {@const fallbackAttrIconUrl = getAttrIconUrl(fallbackAttr)}
+        <div
+          class="relative flex aspect-square min-h-20 w-full max-w-24 items-center justify-center overflow-hidden rounded-xl border border-base-content/15 bg-base-100/80 text-primary"
+          aria-label={anyCharacterLabel}
+        >
+          {#if fallbackAttrIconUrl}
+            <img
+              src={fallbackAttrIconUrl}
+              alt=""
+              class="size-10 object-contain"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+          {:else}
+            <Icon icon="mdi:cards-outline" class="size-7 opacity-70" aria-hidden="true" />
+          {/if}
+          <span class="absolute right-1 top-1 max-w-[calc(100%-0.5rem)] truncate rounded-full bg-base-100/85 px-2 py-0.5 text-xs/4 font-semibold text-base-content shadow-sm backdrop-blur-sm">
+            {displayName}
+          </span>
+        </div>
       {/if}
     </div>
-    <div class="min-w-0">
-      <p class="text-sm font-semibold">{getAttrLabel(item.attr)}</p>
-      <p class="text-xs font-medium uppercase tracking-[0.14em] opacity-60">
-        {bonusRateLabel} {formatPercent(item.bonusRate) ?? noDataLabel}
-      </p>
+    <div class="flex min-w-0 shrink-0 flex-col items-end gap-1.5">
+      {#if item.baseBonusRate !== null}
+        <span
+          class="inline-flex max-w-full items-center gap-1 rounded-full border border-base-content/20 bg-base-100/80 px-2 py-1 text-xs/4 font-semibold text-base-content"
+          title={`${cardAttrAnyLabel} ${bonusRateLabel} ${formatPercent(item.baseBonusRate) ?? noDataLabel}`}
+        >
+          <span class="truncate">{cardAttrAnyLabel}</span>
+          <span>{formatPercent(item.baseBonusRate) ?? noDataLabel}</span>
+        </span>
+      {/if}
+      {#each item.attrBonuses as attrBonus (`${attrBonus.attr ?? "any"}-${attrBonus.bonusRate ?? "none"}`)}
+        {@const attrIconUrl = getAttrIconUrl(attrBonus.attr)}
+        <span
+          class="inline-flex max-w-full items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-xs/4 font-semibold text-primary"
+          title={`${getAttrLabel(attrBonus.attr)} ${bonusRateLabel} ${formatPercent(attrBonus.bonusRate) ?? noDataLabel}`}
+        >
+          {#if attrIconUrl}
+            <img
+              src={attrIconUrl}
+              alt=""
+              class="size-4 shrink-0 object-contain"
+              loading="lazy"
+              decoding="async"
+              aria-hidden="true"
+            />
+          {/if}
+          <span class="truncate">{getAttrLabel(attrBonus.attr)}</span>
+          <span>{formatPercent(attrBonus.bonusRate) ?? noDataLabel}</span>
+        </span>
+      {/each}
     </div>
   </div>
 {/snippet}
@@ -828,15 +960,15 @@
 
 <article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
-    <section class="space-y-2" aria-labelledby="event-attr-bonus-title">
-      <h2 id="event-attr-bonus-title" class="flex items-center gap-2 text-sm font-semibold">
+    <section class="space-y-2" aria-labelledby="event-bonus-character-title">
+      <h2 id="event-bonus-character-title" class="flex items-center gap-2 text-sm font-semibold">
         <Icon icon="mdi:cards-outline" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
-        <span>{attrBonusLabel}</span>
+        <span>{bonusCharacterLabel}</span>
       </h2>
-      {#if getAttributeBonusItems(relatedData).length > 0}
+      {#if getBonusCharacterItems(relatedData).length > 0}
         <div class="grid gap-2 sm:grid-cols-2">
-          {#each getAttributeBonusItems(relatedData) as item (getAttributeBonusKey(item.attr))}
-            {@render attributeBonusPanel(item)}
+          {#each getBonusCharacterItems(relatedData) as item (getBonusCharacterKey(item))}
+            {@render bonusCharacterPanel(item)}
           {/each}
         </div>
       {:else}
@@ -970,16 +1102,13 @@
           {/if}
           <div class="min-w-0">
             <p class="line-clamp-2 text-sm/5 font-semibold">{virtualLive.name ?? virtualLiveTitle}</p>
-            <dl class={`mt-1.5 grid gap-1.5 ${virtualLiveBannerSrc ? "@xl:grid-cols-3" : "@md:grid-cols-3"}`}>
+            <div class="mt-1.5 grid gap-1.5">
               {#each getVirtualLiveItems(event) as item (item.key)}
-                <div class="min-w-0 rounded-lg bg-base-100/70 px-2 py-1.5">
-                  <dt class="text-[0.65rem]/tight font-semibold uppercase tracking-widest opacity-60">
-                    {item.label}
-                  </dt>
-                  <dd class="mt-0.5 wrap-break-word text-xs/4 font-medium">{item.value}</dd>
-                </div>
+                <p class="min-w-0 wrap-break-word rounded-lg bg-base-100/70 px-2 py-1.5 text-xs/4 font-medium">
+                  {item.value}
+                </p>
               {/each}
-            </dl>
+            </div>
           </div>
         </div>
       </div>

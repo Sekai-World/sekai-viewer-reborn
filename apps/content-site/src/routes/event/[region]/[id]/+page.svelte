@@ -81,7 +81,8 @@
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let bannerCharacterLabel = $state(getInitialI18nText("bannerCharacterLabel"));
   let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
-  let eventAttrBonusLabel = $state(getInitialI18nText("eventAttrBonusLabel"));
+  let eventBonusCharacterLabel = $state(getInitialI18nText("eventBonusCharacterLabel"));
+  let eventAnyCharacterLabel = $state(getInitialI18nText("eventAnyCharacterLabel"));
   let eventRarityBonusLabel = $state(getInitialI18nText("eventRarityBonusLabel"));
   let eventRarityLabel = $state(getInitialI18nText("eventRarityLabel"));
   let eventFeaturedCardsTitle = $state(getInitialI18nText("eventFeaturedCardsTitle"));
@@ -101,9 +102,6 @@
   let eventRankingRewardsShowMoreLabel = $state(getInitialI18nText("eventRankingRewardsShowMoreLabel"));
   let eventRankingRewardsShowLessLabel = $state(getInitialI18nText("eventRankingRewardsShowLessLabel"));
   let eventVirtualLiveTitle = $state(getInitialI18nText("eventVirtualLiveTitle"));
-  let eventVirtualLiveTypeLabel = $state(getInitialI18nText("eventVirtualLiveTypeLabel"));
-  let eventVirtualLiveStartLabel = $state(getInitialI18nText("eventVirtualLiveStartLabel"));
-  let eventVirtualLiveEndLabel = $state(getInitialI18nText("eventVirtualLiveEndLabel"));
   let eventNoDataLabel = $state(getInitialI18nText("eventNoDataLabel"));
 
   $effect(() => {
@@ -161,7 +159,8 @@
     closeLabel = translate("closeLabel");
     bannerCharacterLabel = translate("bannerCharacterLabel");
     internalResourceCodeLabel = translate("internalResourceCodeLabel");
-    eventAttrBonusLabel = translate("eventAttrBonusLabel");
+    eventBonusCharacterLabel = translate("eventBonusCharacterLabel");
+    eventAnyCharacterLabel = translate("eventAnyCharacterLabel");
     eventRarityBonusLabel = translate("eventRarityBonusLabel");
     eventRarityLabel = translate("eventRarityLabel");
     eventFeaturedCardsTitle = translate("eventFeaturedCardsTitle");
@@ -181,9 +180,6 @@
     eventRankingRewardsShowMoreLabel = translate("eventRankingRewardsShowMoreLabel");
     eventRankingRewardsShowLessLabel = translate("eventRankingRewardsShowLessLabel");
     eventVirtualLiveTitle = translate("eventVirtualLiveTitle");
-    eventVirtualLiveTypeLabel = translate("eventVirtualLiveTypeLabel");
-    eventVirtualLiveStartLabel = translate("eventVirtualLiveStartLabel");
-    eventVirtualLiveEndLabel = translate("eventVirtualLiveEndLabel");
     eventNoDataLabel = translate("eventNoDataLabel");
   };
 
@@ -416,7 +412,8 @@
 		    region={data.region}
 		    relatedData={payload.relatedData}
 		    {displayLocale}
-		    attrBonusLabel={eventAttrBonusLabel}
+			    bonusCharacterLabel={eventBonusCharacterLabel}
+			    anyCharacterLabel={eventAnyCharacterLabel}
 		    rarityBonusLabel={eventRarityBonusLabel}
 		    rarityLabel={eventRarityLabel}
 		    featuredCardsTitle={eventFeaturedCardsTitle}
@@ -437,9 +434,6 @@
 		    rankingRewardsShowMoreLabel={eventRankingRewardsShowMoreLabel}
 		    rankingRewardsShowLessLabel={eventRankingRewardsShowLessLabel}
 		    virtualLiveTitle={eventVirtualLiveTitle}
-		    virtualLiveTypeLabel={eventVirtualLiveTypeLabel}
-		    virtualLiveStartLabel={eventVirtualLiveStartLabel}
-		    virtualLiveEndLabel={eventVirtualLiveEndLabel}
 		    noDataLabel={eventNoDataLabel}
 		  />
 		</div>

@@ -213,19 +213,6 @@ export const getEventPointIconAssetURL = (
   return buildServerAssetURL(`${normalizedEventPointIcon}${suffix}`, server, baseUrlOverride);
 };
 
-export const getCharacterThumbnailAssetURL = (
-  characterId: number,
-  server: AssetServer = "jp",
-  baseUrlOverride?: string | null
-): string => {
-  const paddedId = String(characterId).padStart(5, "0");
-  return buildServerAssetURL(
-    `thumbnail/chara_rip/chr_ts_${paddedId}_01.webp`,
-    server,
-    baseUrlOverride
-  );
-};
-
 export const getCardSmallAssetURL = (
   assetBundleName: string,
   trained = false,
