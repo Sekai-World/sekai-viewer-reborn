@@ -701,6 +701,7 @@
           src={characterIconSrc}
           label={displayName}
           accentColor={characterAccentColor}
+          characterId={item.gameCharacterId}
           variant="sm"
           onImageError={hideBrokenImage}
         />

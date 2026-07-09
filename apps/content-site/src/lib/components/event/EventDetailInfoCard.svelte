@@ -132,6 +132,7 @@
           <CharacterAvatar
             src={getLocalCharacterThumbnailAssetURL(char.id)}
             label={getCharacterDisplayName(char)}
+            characterId={char.id}
             variant="lg"
           />
         </div>
