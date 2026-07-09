@@ -6,6 +6,7 @@
   import EventDetailAssetCard from "$lib/components/event/EventDetailAssetCard.svelte";
   import EventDetailBgmCard from "$lib/components/event/EventDetailBgmCard.svelte";
   import EventDetailCountdownCard from "$lib/components/event/EventDetailCountdownCard.svelte";
+  import EventDetailDataCard from "$lib/components/event/EventDetailDataCard.svelte";
   import EventDetailInfoCard from "$lib/components/event/EventDetailInfoCard.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
@@ -80,6 +81,30 @@
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let bannerCharacterLabel = $state(getInitialI18nText("bannerCharacterLabel"));
   let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
+  let eventBonusCharacterLabel = $state(getInitialI18nText("eventBonusCharacterLabel"));
+  let eventAnyCharacterLabel = $state(getInitialI18nText("eventAnyCharacterLabel"));
+  let eventRarityBonusLabel = $state(getInitialI18nText("eventRarityBonusLabel"));
+  let eventRarityLabel = $state(getInitialI18nText("eventRarityLabel"));
+  let eventFeaturedCardsTitle = $state(getInitialI18nText("eventFeaturedCardsTitle"));
+  let eventFeaturedCardBonusLabel = $state(getInitialI18nText("eventFeaturedCardBonusLabel"));
+  let eventFeaturedCardBonusShortLabel = $state(getInitialI18nText("eventFeaturedCardBonusShortLabel"));
+  let eventLeaderBonusLabel = $state(getInitialI18nText("eventLeaderBonusLabel"));
+  let eventLeaderBonusShortLabel = $state(getInitialI18nText("eventLeaderBonusShortLabel"));
+  let eventCardIdLabel = $state(getInitialI18nText("eventCardIdLabel"));
+  let eventCardImageAltSuffix = $state(getInitialI18nText("eventCardImageAltSuffix"));
+  let eventMusicJacketAltSuffix = $state(getInitialI18nText("eventMusicJacketAltSuffix"));
+  let eventMasterRankLabel = $state(getInitialI18nText("eventMasterRankLabel"));
+  let eventCardAttrAnyLabel = $state(getInitialI18nText("eventCardAttrAnyLabel"));
+  let eventBonusRateLabel = $state(getInitialI18nText("eventBonusRateLabel"));
+  let eventMusicsLabel = $state(getInitialI18nText("eventMusicsLabel"));
+  let eventRankingRewardsTitle = $state(getInitialI18nText("eventRankingRewardsTitle"));
+  let eventRankingRewardTopLabel = $state(getInitialI18nText("eventRankingRewardTopLabel"));
+  let eventRankingRewardBorderLabel = $state(getInitialI18nText("eventRankingRewardBorderLabel"));
+  let eventRankingRewardResourceBoxLabel = $state(getInitialI18nText("eventRankingRewardResourceBoxLabel"));
+  let eventRankingRewardsShowMoreLabel = $state(getInitialI18nText("eventRankingRewardsShowMoreLabel"));
+  let eventRankingRewardsShowLessLabel = $state(getInitialI18nText("eventRankingRewardsShowLessLabel"));
+  let eventVirtualLiveTitle = $state(getInitialI18nText("eventVirtualLiveTitle"));
+  let eventNoDataLabel = $state(getInitialI18nText("eventNoDataLabel"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
@@ -136,6 +161,30 @@
     closeLabel = translate("closeLabel");
     bannerCharacterLabel = translate("bannerCharacterLabel");
     internalResourceCodeLabel = translate("internalResourceCodeLabel");
+    eventBonusCharacterLabel = translate("eventBonusCharacterLabel");
+    eventAnyCharacterLabel = translate("eventAnyCharacterLabel");
+    eventRarityBonusLabel = translate("eventRarityBonusLabel");
+    eventRarityLabel = translate("eventRarityLabel");
+    eventFeaturedCardsTitle = translate("eventFeaturedCardsTitle");
+    eventFeaturedCardBonusLabel = translate("eventFeaturedCardBonusLabel");
+    eventFeaturedCardBonusShortLabel = translate("eventFeaturedCardBonusShortLabel");
+    eventLeaderBonusLabel = translate("eventLeaderBonusLabel");
+    eventLeaderBonusShortLabel = translate("eventLeaderBonusShortLabel");
+    eventCardIdLabel = translate("eventCardIdLabel");
+    eventCardImageAltSuffix = translate("eventCardImageAltSuffix");
+    eventMusicJacketAltSuffix = translate("eventMusicJacketAltSuffix");
+    eventMasterRankLabel = translate("eventMasterRankLabel");
+    eventCardAttrAnyLabel = translate("eventCardAttrAnyLabel");
+    eventBonusRateLabel = translate("eventBonusRateLabel");
+    eventMusicsLabel = translate("eventMusicsLabel");
+    eventRankingRewardsTitle = translate("eventRankingRewardsTitle");
+    eventRankingRewardTopLabel = translate("eventRankingRewardTopLabel");
+    eventRankingRewardBorderLabel = translate("eventRankingRewardBorderLabel");
+    eventRankingRewardResourceBoxLabel = translate("eventRankingRewardResourceBoxLabel");
+    eventRankingRewardsShowMoreLabel = translate("eventRankingRewardsShowMoreLabel");
+    eventRankingRewardsShowLessLabel = translate("eventRankingRewardsShowLessLabel");
+    eventVirtualLiveTitle = translate("eventVirtualLiveTitle");
+    eventNoDataLabel = translate("eventNoDataLabel");
   };
 
   const refreshTranslations = async (localeValue: string): Promise<void> => {
@@ -333,34 +382,68 @@
           {/await}
         </div>
 
-        {#await data.unitProfiles then unitProfiles}
-          <EventDetailBgmCard
-            event={payload.event}
-            region={data.region}
-            title={eventBgmTitle}
-            unitName={getDisplayUnitName(unitProfiles, payload.event.unit) ?? ""}
-            bgmDownloadHref={getEventBgmDownloadHref}
-            bgmProgressHref={getEventBgmProgressHref()}
-            downloadProgressMessages={{
-              preparing: audioDownloadStagePreparingLabel,
-              fetchingAudio: audioDownloadStageFetchingAudioLabel,
-              fetchingCover: audioDownloadStageFetchingCoverLabel,
-              writingMetadata: audioDownloadStageWritingMetadataLabel,
-              finalizing: audioDownloadStageFinalizingLabel,
-              ready: audioDownloadStageReadyLabel,
-              failed: audioDownloadStageFailedLabel,
-              cancelled: audioDownloadStageCancelledLabel
-            }}
-            playLabel={audioPlayLabel}
-            pauseLabel={audioPauseLabel}
-            downloadLabel={audioDownloadLabel}
-            downloadCloseLabel={audioDownloadCloseLabel}
-            volumeLabel={audioVolumeLabel}
-            seekLabel={audioSeekLabel}
-            unavailableLabel={audioUnavailableLabel}
-          />
-        {/await}
-      </div>
+		<div class="flex flex-col gap-4">
+		  {#await data.unitProfiles then unitProfiles}
+		    <EventDetailBgmCard
+		      event={payload.event}
+		      region={data.region}
+		      title={eventBgmTitle}
+		      unitName={getDisplayUnitName(unitProfiles, payload.event.unit) ?? ""}
+		      bgmDownloadHref={getEventBgmDownloadHref}
+		      bgmProgressHref={getEventBgmProgressHref()}
+		      downloadProgressMessages={{
+		        preparing: audioDownloadStagePreparingLabel,
+		        fetchingAudio: audioDownloadStageFetchingAudioLabel,
+		        fetchingCover: audioDownloadStageFetchingCoverLabel,
+		        writingMetadata: audioDownloadStageWritingMetadataLabel,
+		        finalizing: audioDownloadStageFinalizingLabel,
+		        ready: audioDownloadStageReadyLabel,
+		        failed: audioDownloadStageFailedLabel,
+		        cancelled: audioDownloadStageCancelledLabel
+		      }}
+		      playLabel={audioPlayLabel}
+		      pauseLabel={audioPauseLabel}
+		      downloadLabel={audioDownloadLabel}
+		      downloadCloseLabel={audioDownloadCloseLabel}
+		      volumeLabel={audioVolumeLabel}
+		      seekLabel={audioSeekLabel}
+		      unavailableLabel={audioUnavailableLabel}
+		    />
+		  {/await}
+
+		  <EventDetailDataCard
+		    event={payload.event}
+		    region={data.region}
+		    relatedData={payload.relatedData}
+		    {displayLocale}
+			    bonusCharacterLabel={eventBonusCharacterLabel}
+			    anyCharacterLabel={eventAnyCharacterLabel}
+		    rarityBonusLabel={eventRarityBonusLabel}
+		    rarityLabel={eventRarityLabel}
+		    featuredCardsTitle={eventFeaturedCardsTitle}
+		    featuredCardBonusLabel={eventFeaturedCardBonusLabel}
+		    featuredCardBonusShortLabel={eventFeaturedCardBonusShortLabel}
+		    leaderBonusLabel={eventLeaderBonusLabel}
+		    leaderBonusShortLabel={eventLeaderBonusShortLabel}
+		    cardIdLabel={eventCardIdLabel}
+		    {imageUnavailableLabel}
+		    cardImageAltSuffix={eventCardImageAltSuffix}
+		    musicJacketAltSuffix={eventMusicJacketAltSuffix}
+		    masterRankLabel={eventMasterRankLabel}
+		    cardAttrAnyLabel={eventCardAttrAnyLabel}
+		    bonusRateLabel={eventBonusRateLabel}
+		    {eventMusicsLabel}
+		    rankingRewardsTitle={eventRankingRewardsTitle}
+		    rankingRewardTopLabel={eventRankingRewardTopLabel}
+		    rankingRewardBorderLabel={eventRankingRewardBorderLabel}
+		    rankingRewardResourceBoxLabel={eventRankingRewardResourceBoxLabel}
+		    rankingRewardsShowMoreLabel={eventRankingRewardsShowMoreLabel}
+		    rankingRewardsShowLessLabel={eventRankingRewardsShowLessLabel}
+		    virtualLiveTitle={eventVirtualLiveTitle}
+		    noDataLabel={eventNoDataLabel}
+		  />
+		</div>
+	      </div>
     {:else if !payload.error}
       {#await data.availableRegions}
         <div class="alert">

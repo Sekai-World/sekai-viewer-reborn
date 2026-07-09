@@ -55,6 +55,8 @@
   let filterDialog: HTMLDialogElement | null = $state(null);
   let hasTriedRestorePersistedFilters = $state(false);
   let spoilerContentAppliedState = $state<boolean | null>(null);
+  let initialPageRequestId = 0;
+  let listRequestId = 0;
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
@@ -113,6 +115,39 @@
     const startAtMs = toTimestampMs(item.startAt);
     return startAtMs !== null && startAtMs > Date.now();
   };
+
+  const getCurrentListIdentity = (): string =>
+    JSON.stringify({
+      region: data.region,
+      sortBy,
+      sortOrder,
+      name: nameFilter,
+      eventType: eventTypeFilter,
+      unit: unitFilter,
+      spoiler: contentDisplaySettings.showSpoilerContent
+    });
+
+  const beginListRequest = (): number => {
+    listRequestId += 1;
+    return listRequestId;
+  };
+
+  const isCurrentListRequest = (requestId: number, listIdentity: string): boolean =>
+    requestId === listRequestId && listIdentity === getCurrentListIdentity();
+
+  const resetListStateForNavigation = (): void => {
+    items = [];
+    currentPage = 1;
+    hasNext = false;
+    isLoading = false;
+    isInitialLoading = true;
+    isReloadingFirstPage = false;
+    errorMessage = null;
+    isLoadMoreHintVisible = false;
+    lastTouchY = null;
+  };
+
+  const getEventItemKey = (item: EventListItem): string => `${data.region}:${item.id}`;
 
   const ongoingEventIds = $derived.by(() => {
     const now = Date.now();
@@ -277,7 +312,18 @@
 
   $effect(() => {
     const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
-    initialPagePromise.then(applyInitialPage);
+    const requestId = initialPageRequestId + 1;
+    initialPageRequestId = requestId;
+    const listRequestIdForInitialPage = beginListRequest();
+    resetListStateForNavigation();
+
+    initialPagePromise.then((result) => {
+      if (requestId !== initialPageRequestId || listRequestIdForInitialPage !== listRequestId) {
+        return;
+      }
+
+      applyInitialPage(result);
+    });
   });
 
   $effect(() => {
@@ -523,6 +569,8 @@
       return;
     }
 
+    const requestId = beginListRequest();
+    const listIdentity = getCurrentListIdentity();
     isLoading = true;
     isLoadMoreHintVisible = false;
     errorMessage = null;
@@ -534,13 +582,21 @@
       }
 
       const nextPage = (await response.json()) as EventListPagePayload;
+      if (!isCurrentListRequest(requestId, listIdentity)) {
+        return;
+      }
+
       items = mergeItems(items, nextPage.items);
       currentPage = nextPage.pagination.page;
       hasNext = nextPage.pagination.hasNext;
     } catch {
-      errorMessage = eventListLoadFailed;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        errorMessage = eventListLoadFailed;
+      }
     } finally {
-      isLoading = false;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        isLoading = false;
+      }
     }
   };
 
@@ -549,6 +605,8 @@
       return;
     }
 
+    const requestId = beginListRequest();
+    const listIdentity = getCurrentListIdentity();
     isLoading = true;
     isReloadingFirstPage = true;
     errorMessage = null;
@@ -561,15 +619,25 @@
       }
 
       const nextPage = (await response.json()) as EventListPagePayload;
+      if (!isCurrentListRequest(requestId, listIdentity)) {
+        return;
+      }
+
       items = nextPage.items;
       currentPage = nextPage.pagination.page;
       hasNext = nextPage.pagination.hasNext;
+      isInitialLoading = false;
       syncPageUrl();
     } catch {
-      errorMessage = eventListLoadFailed;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        errorMessage = eventListLoadFailed;
+      }
     } finally {
-      isReloadingFirstPage = false;
-      isLoading = false;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        isReloadingFirstPage = false;
+        isLoading = false;
+        isInitialLoading = false;
+      }
     }
   };
 
@@ -687,7 +755,7 @@
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {#each visibleItems as item (item.id)}
+      {#each visibleItems as item (getEventItemKey(item))}
         <EventListCard
           region={data.region}
           {item}

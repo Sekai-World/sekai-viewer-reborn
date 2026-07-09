@@ -133,6 +133,13 @@
     </div>
   {:else}
     <div class={EVENT_LIST_CARD_MEDIA_CLASS}>
+      {#if isCurrentGacha()}
+        <span
+          class="badge absolute right-3 top-3 z-10 border-none bg-primary font-semibold text-primary-content shadow-sm"
+        >
+          {currentGachaLabel}
+        </span>
+      {/if}
       {#if item.assetBundleName}
         <EventAssetImage
           src={getGachaLogoAssetURL(item.assetBundleName, region)}
@@ -152,11 +159,6 @@
       <span class="badge border-none bg-base-200 font-semibold text-base-content">
         {idLabel}{item.id}
       </span>
-      {#if isCurrentGacha()}
-        <span class="badge border-none bg-primary font-semibold text-primary-content">
-          {currentGachaLabel}
-        </span>
-      {/if}
     </div>
 
     <div class="px-4 pb-4 pt-3">

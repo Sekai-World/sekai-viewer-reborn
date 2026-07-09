@@ -1,26 +1,24 @@
 import { dev } from "$app/environment";
 import {
-  getEventsByRegionCurrent,
-  getEventsByRegionById,
+  getEventsByRegionByIdDetail,
   getEventsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
 import { getServerI18nText } from "$lib/i18n/runtime";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parseEventDetail, type EventDetail } from "$lib/server/event-detail";
+import {
+  parseEventAggregateRelatedData,
+  parseEventDetail,
+  type EventDetail
+} from "$lib/server/event-detail";
+import type { EventRelatedData } from "$lib/domain/event-detail";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
-type RegionEventLookup = {
-  region: SupportedRegion;
-  event: EventDetail | null;
-  exists: boolean;
-  rawPayloadJson: string | null;
-};
-
 type EventPayload = {
   event: EventDetail | null;
+  relatedData: EventRelatedData | null;
   debugEventJson: string | null;
   error: string | null;
 };
@@ -96,13 +94,23 @@ const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
   return [];
 };
 
-const fetchRegionEvent = async (
+type EventAggregateLookup = {
+  region: SupportedRegion;
+  event: EventDetail | null;
+  relatedData: EventRelatedData | null;
+  availableRegions: SupportedRegion[];
+  isCurrentEvent: boolean;
+  exists: boolean;
+  rawPayloadJson: string | null;
+};
+
+const fetchEventAggregate = async (
   baseUrl: string,
   region: SupportedRegion,
   eventId: string
-): Promise<RegionEventLookup> => {
+): Promise<EventAggregateLookup> => {
   try {
-    const response = await getEventsByRegionById({
+    const response = await getEventsByRegionByIdDetail({
       baseUrl,
       path: { region, id: eventId }
     });
@@ -111,6 +119,9 @@ const fetchRegionEvent = async (
       return {
         region,
         event: null,
+        relatedData: null,
+        availableRegions: [],
+        isCurrentEvent: false,
         exists: false,
         rawPayloadJson: null
       };
@@ -120,6 +131,9 @@ const fetchRegionEvent = async (
     return {
       region,
       event,
+      relatedData: event ? parseEventAggregateRelatedData(response.data) : null,
+      availableRegions: normalizeAvailableRegions(response.data),
+      isCurrentEvent: getObject(response.data)?.["isCurrentEvent"] === true,
       exists: event !== null,
       rawPayloadJson: JSON.stringify(response.data, null, 2)
     };
@@ -127,6 +141,9 @@ const fetchRegionEvent = async (
     return {
       region,
       event: null,
+      relatedData: null,
+      availableRegions: [],
+      isCurrentEvent: false,
       exists: false,
       rawPayloadJson: null
     };
@@ -137,61 +154,64 @@ const fetchAvailableRegions = async ({
   baseUrl,
   eventId,
   region,
-  currentLookupPromise
+  aggregatePromise
 }: {
   baseUrl: string;
   eventId: string;
   region: SupportedRegion;
-  currentLookupPromise: Promise<RegionEventLookup>;
+  aggregatePromise: Promise<EventAggregateLookup>;
 }): Promise<SupportedRegion[]> => {
-  try {
-    const [currentLookup, availabilityResponse] = await Promise.all([
-      currentLookupPromise,
-      getEventsRegionsByIdAvailability({
+  const aggregate = await aggregatePromise;
+  let detectedRegions = aggregate.availableRegions;
+
+  if (!aggregate.exists && detectedRegions.length === 0) {
+    try {
+      const response = await getEventsRegionsByIdAvailability({
         baseUrl,
         path: { id: eventId }
-      })
-    ]);
-    const detectedRegions = availabilityResponse.error
-      ? []
-      : normalizeAvailableRegions(availabilityResponse.data);
-
-    if (currentLookup.exists && !detectedRegions.includes(region)) {
-      return [region, ...detectedRegions];
+      });
+      detectedRegions = response.error ? [] : normalizeAvailableRegions(response.data);
+    } catch {
+      detectedRegions = [];
     }
-
-    return detectedRegions.includes(region) ? detectedRegions : [region, ...detectedRegions];
-  } catch {
-    return [region];
   }
+
+  if (aggregate.exists && !detectedRegions.includes(region)) {
+    return [region, ...detectedRegions];
+  }
+
+  return detectedRegions.includes(region) ? detectedRegions : [region, ...detectedRegions];
 };
 
 const fetchEventPayload = async ({
-  currentLookupPromise,
+  aggregatePromise,
   invalidEventIdMessage
 }: {
-  currentLookupPromise: Promise<RegionEventLookup>;
+  aggregatePromise: Promise<EventAggregateLookup>;
   invalidEventIdMessage: string | null;
 }): Promise<EventPayload> => {
   if (invalidEventIdMessage) {
     return {
       event: null,
+      relatedData: null,
       debugEventJson: null,
       error: invalidEventIdMessage
     };
   }
 
   try {
-    const currentLookup = await currentLookupPromise;
+    const aggregate = await aggregatePromise;
 
     return {
-      event: currentLookup.event,
-      debugEventJson: dev ? currentLookup.rawPayloadJson : null,
+      event: aggregate.event,
+      relatedData: aggregate.relatedData,
+      debugEventJson: dev ? aggregate.rawPayloadJson : null,
       error: null
     };
   } catch {
     return {
       event: null,
+      relatedData: null,
       debugEventJson: null,
       error: null
     };
@@ -199,34 +219,17 @@ const fetchEventPayload = async ({
 };
 
 const fetchIsCurrentEvent = async ({
-  baseUrl,
-  region,
-  eventId,
+  aggregatePromise,
   invalidEventIdMessage
 }: {
-  baseUrl: string;
-  region: SupportedRegion;
-  eventId: string;
+  aggregatePromise: Promise<EventAggregateLookup>;
   invalidEventIdMessage: string | null;
 }): Promise<boolean> => {
   if (invalidEventIdMessage) {
     return false;
   }
 
-  try {
-    const response = await getEventsByRegionCurrent({
-      baseUrl,
-      path: { region }
-    });
-
-    if (response.error) {
-      return false;
-    }
-
-    return parseEventDetail(response.data)?.id === eventId;
-  } catch {
-    return false;
-  }
+  return (await aggregatePromise).isCurrentEvent;
 };
 
 export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
@@ -243,14 +246,17 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   ]);
   const region: SupportedRegion = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
-  const currentLookupPromise = eventId
-    ? fetchRegionEvent(baseUrl, region, eventId)
+  const aggregatePromise = eventId
+    ? fetchEventAggregate(baseUrl, region, eventId)
     : Promise.resolve({
         region,
         event: null,
+        relatedData: null,
+        availableRegions: [region],
+        isCurrentEvent: false,
         exists: false,
         rawPayloadJson: null
-      } satisfies RegionEventLookup);
+      } satisfies EventAggregateLookup);
 
   return {
     eventId,
@@ -263,18 +269,16 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
           baseUrl,
           eventId,
           region,
-          currentLookupPromise
+          aggregatePromise
         })
       : Promise.resolve([region] satisfies SupportedRegion[]),
     eventPayload: fetchEventPayload({
-      currentLookupPromise,
+      aggregatePromise,
       invalidEventIdMessage: eventId ? null : invalidEventIdMessage
     }),
     unitProfiles: fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap),
     isCurrentEvent: fetchIsCurrentEvent({
-      baseUrl,
-      region,
-      eventId,
+      aggregatePromise,
       invalidEventIdMessage: eventId ? null : invalidEventIdMessage
     })
   };

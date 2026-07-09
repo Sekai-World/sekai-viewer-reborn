@@ -51,6 +51,22 @@ const buildServerAssetURL = (
   return `${baseURL}/${bucket}/${normalizedEndpoint}`;
 };
 
+export const getRemoteAssetEndpointURL = (
+  endpoint: string,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  if (!endpoint) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(endpoint.trim())) {
+    return endpoint.trim();
+  }
+
+  return buildServerAssetURL(endpoint, server, baseUrlOverride);
+};
+
 export const getRemoteAssetURL = async (
   endpoint: string,
   server: AssetServer = "jp",
@@ -60,11 +76,7 @@ export const getRemoteAssetURL = async (
     return "";
   }
 
-  if (/^https?:\/\//i.test(endpoint.trim())) {
-    return endpoint.trim();
-  }
-
-  const url = buildServerAssetURL(endpoint, server);
+  const url = getRemoteAssetEndpointURL(endpoint, server);
 
   if (!verifyStatus) {
     return url;
@@ -99,6 +111,23 @@ export const getEventBannerAssetURL = (
 
   return buildServerAssetURL(
     `home/banner/${normalizedAssetBundleName}/${normalizedAssetBundleName}.webp`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getVirtualLiveBannerAssetURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `virtual_live/select/banner/${normalizedAssetBundleName}/${normalizedAssetBundleName}.webp`,
     server,
     baseUrlOverride
   );
@@ -182,19 +211,6 @@ export const getEventPointIconAssetURL = (
   }
 
   return buildServerAssetURL(`${normalizedEventPointIcon}${suffix}`, server, baseUrlOverride);
-};
-
-export const getCharacterThumbnailAssetURL = (
-  characterId: number,
-  server: AssetServer = "jp",
-  baseUrlOverride?: string | null
-): string => {
-  const paddedId = String(characterId).padStart(5, "0");
-  return buildServerAssetURL(
-    `thumbnail/chara_rip/chr_ts_${paddedId}_01.webp`,
-    server,
-    baseUrlOverride
-  );
 };
 
 export const getCardSmallAssetURL = (

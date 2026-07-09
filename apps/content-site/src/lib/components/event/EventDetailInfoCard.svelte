@@ -94,6 +94,16 @@
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{event.title}</dd>
       </div>
+      {#if event.eventType}
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            {eventTypeLabel}
+          </dt>
+          <dd class="mt-1 text-sm font-medium">
+            {getEventTypeDisplay(event.eventType, uiLocale)}
+          </dd>
+        </div>
+      {/if}
       {#if getDisplayUnitName(event.unit)}
         <div
           class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4"
@@ -109,34 +119,6 @@
           {/if}
         </div>
       {/if}
-      {#if event.eventType}
-        <div class="content-card-inset rounded-xl p-3 sm:px-4">
-          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-            {eventTypeLabel}
-          </dt>
-          <dd class="mt-1 text-sm font-medium">
-            {getEventTypeDisplay(event.eventType, uiLocale)}
-          </dd>
-        </div>
-      {/if}
-      <div class="content-card-inset rounded-xl p-3 sm:px-4">
-        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</dt>
-        <dd class="mt-1 text-sm font-medium">
-          {formatDisplayDateTime(event.startAt, displayLocale)}
-        </dd>
-      </div>
-      <div class="content-card-inset rounded-xl p-3 sm:px-4">
-        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{endAtLabel}</dt>
-        <dd class="mt-1 text-sm font-medium">
-          {formatDisplayDateTime(event.endAt, displayLocale)}
-        </dd>
-      </div>
-      <div class="content-card-inset rounded-xl p-3 sm:px-4">
-        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-          {internalResourceCodeLabel}
-        </dt>
-        <dd class="mt-1 text-sm font-medium">{event.assetBundleName ?? "--"}</dd>
-      </div>
       {#if event.bannerGameCharacter}
         {@const char = event.bannerGameCharacter}
         <div class="content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4">
@@ -159,6 +141,24 @@
           </span>
         </div>
       {/if}
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</dt>
+        <dd class="mt-1 text-sm font-medium">
+          {formatDisplayDateTime(event.startAt, displayLocale)}
+        </dd>
+      </div>
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{endAtLabel}</dt>
+        <dd class="mt-1 text-sm font-medium">
+          {formatDisplayDateTime(event.endAt, displayLocale)}
+        </dd>
+      </div>
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+          {internalResourceCodeLabel}
+        </dt>
+        <dd class="mt-1 text-sm font-medium">{event.assetBundleName ?? "--"}</dd>
+      </div>
     </dl>
   </div>
 </article>
