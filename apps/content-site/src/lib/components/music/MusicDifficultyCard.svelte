@@ -84,7 +84,7 @@
                     class="btn btn-ghost btn-xs"
                     aria-label={chartPreviewLabel}
                   >
-                    <Icon icon="mdi:play-circle-outline" class="size-4" aria-hidden="true" />
+                    <Icon icon="mdi:eye-outline" class="size-4" aria-hidden="true" />
                   </a>
                 </td>
               </tr>
