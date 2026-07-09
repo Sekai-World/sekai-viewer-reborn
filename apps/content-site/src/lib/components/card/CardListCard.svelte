@@ -6,6 +6,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
 
   type CardListCardItem = {
@@ -324,22 +325,13 @@
     </span>
     {#if item.unit}
       {#if item.characterId !== null}
-        {@const charThumbUrl = getLocalCharacterThumbnailAssetURL(item.characterId)}
-        {#if charThumbUrl}
-          <span
-            class="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-base-content/15 bg-white"
-            aria-hidden="true"
-          >
-            <img
-              src={charThumbUrl}
-              alt=""
-              aria-hidden="true"
-              class="size-7 object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          </span>
-        {/if}
+        <CharacterAvatar
+          src={getLocalCharacterThumbnailAssetURL(item.characterId)}
+          label={getCharacterLabel()}
+          variant="xs"
+          class="bg-white"
+          decorative
+        />
       {/if}
       <UnitIconBadge unit={item.unit} variant="sm" />
     {/if}

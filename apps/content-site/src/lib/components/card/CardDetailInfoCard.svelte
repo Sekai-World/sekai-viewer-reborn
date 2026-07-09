@@ -5,6 +5,7 @@
   import { getCardGachaVoiceAssetURL } from "$lib/assets/index";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import VoicePlayButton from "$lib/components/shared/VoicePlayButton.svelte";
   import Icon from "@iconify/svelte";
@@ -108,7 +109,8 @@
   value: string | null,
   iconUrl: string | null = null,
   iconFrame = true,
-  unitSlug: string | null = null
+  unitSlug: string | null = null,
+  characterAvatar = false
 )}
   {#if value}
     <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
@@ -118,6 +120,8 @@
       </div>
       {#if unitSlug}
         <UnitIconBadge unit={unitSlug} variant="lg" />
+      {:else if characterAvatar}
+        <CharacterAvatar src={iconUrl} label={value} variant="lg" decorative />
       {:else if iconUrl}
         {#if iconFrame}
           <span
@@ -206,7 +210,7 @@
     <dl class="space-y-2">
       {@render row(nameLabel, card.title)}
       {#if card.character}
-        {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl())}
+        {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl(), true, null, true)}
       {/if}
       {@render row(unitLabel, getDisplayUnitName(card.character?.unit), undefined, true, card.character?.unit ?? null)}
       {#if shouldShowSupportUnit()}

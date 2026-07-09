@@ -7,6 +7,7 @@
     getMusicLongPreviewAssetURL,
     getMusicShortPreviewAssetURL
   } from "$lib/assets/index";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import { AudioPlayer } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
 
@@ -193,17 +194,11 @@
                 </p>
                 <div class="mt-0.5 flex flex-wrap gap-1.5">
                   {#each chars as char (char.characterId)}
-                    <span
-                      class="flex size-7 shrink-0 items-center justify-center rounded-full border border-base-content/15 bg-base-100/70"
-                    >
-                      <img
-                        src={getLocalCharacterThumbnailAssetURL(char.characterId) ?? ""}
-                        alt={String(char.characterId)}
-                        class="size-7 rounded-full object-contain"
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </span>
+                    <CharacterAvatar
+                      src={getLocalCharacterThumbnailAssetURL(char.characterId)}
+                      label={String(char.characterId)}
+                      variant="xs"
+                    />
                   {/each}
                 </div>
               {/if}
