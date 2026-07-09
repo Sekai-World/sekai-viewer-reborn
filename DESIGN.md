@@ -104,6 +104,12 @@ All spacing derives from a 4px rhythm.
 - **Accessibility**: labeled by default; use `decorative` when the surrounding control or row already provides the accessible name
 - **Motion**: no component-owned motion
 
+### UnitIconBadge
+- **Structure**: round unit icon shell with text pill fallback when no icon exists
+- **Variants**: sm, default, lg
+- **Color**: border color derives from confirmed JP `unitProfiles.colorCode` values for core unit slugs; support-unit `none` maps to piapro when `mapNoneToPiapro` is enabled
+- **Motion**: no component-owned motion
+
 ## 6. Motion & Interaction
 
 ### Timing

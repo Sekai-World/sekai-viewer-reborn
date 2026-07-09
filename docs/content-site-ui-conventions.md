@@ -126,6 +126,19 @@ Rules:
 - Pass `characterId` when a caller knows the game character ID so `CharacterAvatar` can derive the static `gameCharacterUnits.colorCode` border color for IDs 1-26. Pass `accentColor` when enriched character color data is available; that explicit color overrides the static character color, and the app primary accent token remains the final fallback.
 - Use `decorative` when the avatar is inside an already labeled control, row, or metadata badge so the surrounding label remains the accessible name.
 
+## Unit Icon Component
+
+Current shared unit icon component:
+
+- `apps/content-site/src/lib/components/shared/UnitIconBadge.svelte`
+
+Rules:
+
+- Unit/group icons in cards, event UI, music UI, and list filter controls should reuse `UnitIconBadge` instead of hand-rolled `/icons/icon_*.png` image tags.
+- Use `variant="sm"` for compact list/filter controls, `variant="default"` for normal cards, and `variant="lg"` for detail cards.
+- `UnitIconBadge` derives its border color from the static confirmed JP `unitProfiles.colorCode` mapping in `apps/content-site/src/lib/domain/unit-colors.ts`; when `mapNoneToPiapro` is true, support-unit `none` uses the piapro color and icon.
+- Keep unit display names from `/unitProfiles/{region}/list`; the static color helper is for visual border accents only and must not replace unit profile loading.
+
 ## Sidebar Rules
 
 Sidebar rendering is owned by `packages/ui-shell/src/viewer-shell.svelte`.
