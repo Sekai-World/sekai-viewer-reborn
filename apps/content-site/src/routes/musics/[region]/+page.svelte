@@ -945,6 +945,7 @@
               <CharacterAvatar
                 src={getLocalCharacterThumbnailAssetURL(character)}
                 label={character}
+                characterId={character}
                 variant="xs"
                 decorative
               />

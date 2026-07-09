@@ -1142,6 +1142,7 @@
               <CharacterAvatar
                 src={getLocalCharacterThumbnailAssetURL(option.value)}
                 label={option.label}
+                characterId={option.value}
                 variant="xs"
                 decorative
               />
