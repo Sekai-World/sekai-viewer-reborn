@@ -123,7 +123,7 @@ Rules:
 
 - Character thumbnails, avatars, and compact character chips in cards, music UI, event UI, and list filter controls should reuse `CharacterAvatar` instead of hand-rolled rounded `<img>` wrappers.
 - Use `variant="xs"` for compact badges and filter controls, `variant="sm"` for event bonus rows, `variant="default"` for large/default avatar placements, and `variant="lg"` for detail-card rows.
-- Pass `accentColor` when enriched character color data is available. The component keeps that explicit color as border-color precedence and otherwise falls back to the app primary accent token.
+- Pass `characterId` when a caller knows the game character ID so `CharacterAvatar` can derive the static `gameCharacterUnits.colorCode` border color for IDs 1-26. Pass `accentColor` when enriched character color data is available; that explicit color overrides the static character color, and the app primary accent token remains the final fallback.
 - Use `decorative` when the avatar is inside an already labeled control, row, or metadata badge so the surrounding label remains the accessible name.
 
 ## Sidebar Rules

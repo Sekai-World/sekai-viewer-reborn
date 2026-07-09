@@ -2,4 +2,4 @@
 "@apps/content-site": patch
 ---
 
-Standardize content-site character thumbnails, avatars, and filter chips on the shared CharacterAvatar component.
+Standardize content-site character thumbnails, avatars, and filter chips on the shared CharacterAvatar component with static per-character border colors.
