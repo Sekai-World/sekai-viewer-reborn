@@ -340,7 +340,7 @@
           <UnitIconBadge
             unit={item.supportUnit}
             variant="sm"
-            class="absolute -bottom-1 -right-2 scale-75 shadow-sm ring-1 ring-base-100"
+            class="absolute -bottom-1 -right-3 scale-75 shadow-sm ring-1 ring-base-100"
           />
         </span>
       {:else}
