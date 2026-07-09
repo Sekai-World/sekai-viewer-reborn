@@ -113,6 +113,19 @@ Rules:
 - If a route needs only a single active region badge, still use the shared switch component with one active option.
 - List page icon-only sort, view, and filter controls should reuse `ListToolbarButton` so touch target sizing and sort indicators stay aligned across routes.
 
+## Character Avatar Component
+
+Current shared character avatar component:
+
+- `apps/content-site/src/lib/components/shared/CharacterAvatar.svelte`
+
+Rules:
+
+- Character thumbnails, avatars, and compact character chips in cards, music UI, event UI, and list filter controls should reuse `CharacterAvatar` instead of hand-rolled rounded `<img>` wrappers.
+- Use `variant="xs"` for compact badges and filter controls, `variant="sm"` for event bonus rows, `variant="default"` for large/default avatar placements, and `variant="lg"` for detail-card rows.
+- Pass `accentColor` when enriched character color data is available. The component keeps that explicit color as border-color precedence and otherwise falls back to the app primary accent token.
+- Use `decorative` when the avatar is inside an already labeled control, row, or metadata badge so the surrounding label remains the accessible name.
+
 ## Sidebar Rules
 
 Sidebar rendering is owned by `packages/ui-shell/src/viewer-shell.svelte`.
