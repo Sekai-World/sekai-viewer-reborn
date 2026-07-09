@@ -773,12 +773,18 @@
 {/snippet}
 
 {#snippet cardBonusBadges(card: EventFeaturedCard)}
-  <span class="inline-flex max-w-full items-center gap-1 rounded-full border border-base-content/20 bg-base-100/80 px-2 py-1 text-xs/4 font-semibold text-base-content">
-    {featuredCardBonusLabel}: {formatPercent(card.bonusRate) ?? noDataLabel}
+  <span
+    class="inline-flex max-w-full items-center rounded-full border border-base-content/20 bg-base-100/80 px-1.5 py-0.5 text-[11px]/4 font-semibold text-base-content sm:px-2"
+    title={`${featuredCardBonusLabel}: +${formatPercent(card.bonusRate) ?? noDataLabel}`}
+  >
+    Card: +{formatPercent(card.bonusRate) ?? noDataLabel}
   </span>
   {#if card.leaderBonusRate !== null}
-    <span class="inline-flex max-w-full items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-1 text-xs/4 font-semibold text-primary">
-      {leaderBonusLabel}: {formatPercent(card.leaderBonusRate) ?? noDataLabel}
+    <span
+      class="inline-flex max-w-full items-center rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[11px]/4 font-semibold text-primary sm:px-2"
+      title={`${leaderBonusLabel}: +${formatPercent(card.leaderBonusRate) ?? noDataLabel}`}
+    >
+      Leader: +{formatPercent(card.leaderBonusRate) ?? noDataLabel}
     </span>
   {/if}
 {/snippet}
@@ -789,7 +795,7 @@
   {#if href}
     <a
       href={href}
-      class="content-card-inset group grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3 transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+      class="content-card-inset group grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3 transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
     >
       <CardThumbnail
         src={getCardThumbnailSrc(content)}
@@ -801,7 +807,7 @@
         rarityType={content.rarityType}
         rarityCount={getRarityValue(content.rarityType)}
         loadMode="visible"
-        maxSize={48}
+        maxSize={72}
         containerClass="relative overflow-hidden rounded-lg bg-base-200 aspect-square"
       />
       <div class="min-w-0 self-center">
@@ -812,7 +818,7 @@
           {getCardTitle(content)}
         </p>
       </div>
-      <div class="flex min-w-0 shrink-0 flex-col items-end gap-1.5">
+      <div class="flex min-w-0 shrink-0 flex-col items-end gap-1">
         {@render cardBonusBadges(content)}
       </div>
     </a>
