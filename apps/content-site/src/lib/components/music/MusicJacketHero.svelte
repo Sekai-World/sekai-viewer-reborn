@@ -31,7 +31,7 @@
 </script>
 
 {#if jacketUrl}
-  <figure class="relative mx-auto w-full overflow-hidden rounded-2xl shadow-sm">
+  <figure class="relative mx-auto w-full">
     <EventAssetImage
       src={jacketUrl}
       alt="{music.title} {jacketAltSuffix}"

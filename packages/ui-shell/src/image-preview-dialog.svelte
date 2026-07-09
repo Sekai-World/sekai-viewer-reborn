@@ -23,7 +23,7 @@
     downloadLabel = "Download",
     openInNewWindowLabel = "Open in new window",
     formatOptions = [],
-    dialogBoxClass = "relative flex max-w-[min(96vw,1800px)] items-center justify-center overflow-hidden bg-base-100/96 p-2 md:p-4",
+    dialogBoxClass = "relative flex max-w-[min(96vw,1800px)] items-center justify-center overflow-hidden rounded-2xl bg-base-100/96 p-2 md:p-4",
     dialogImageClass = "h-auto max-h-[88vh] w-auto max-w-full object-contain"
   }: Props = $props();
 
