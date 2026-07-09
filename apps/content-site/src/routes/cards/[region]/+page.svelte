@@ -16,6 +16,7 @@
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import CardListCard from "$lib/components/card/CardListCard.svelte";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
@@ -1138,16 +1139,12 @@
                 }}
                 aria-label={option.label}
               />
-              {#if getLocalCharacterThumbnailAssetURL(option.value)}
-                <img
-                  src={getLocalCharacterThumbnailAssetURL(option.value) ?? ""}
-                  alt=""
-                  aria-hidden="true"
-                  class="size-7 rounded-full object-contain"
-                  loading="lazy"
-                  decoding="async"
-                />
-              {/if}
+              <CharacterAvatar
+                src={getLocalCharacterThumbnailAssetURL(option.value)}
+                label={option.label}
+                variant="xs"
+                decorative
+              />
             </label>
           {/each}
         </div>
