@@ -17,6 +17,7 @@
   };
 
   let {
+    href,
     region,
     item,
     viewMode,
@@ -27,6 +28,7 @@
     getCategoryLabel,
     getTagLabel
   }: {
+    href: string;
     region: SupportedRegion;
     item: MusicListItem;
     viewMode: "grid" | "agenda";
@@ -55,6 +57,9 @@
     contentDisplaySettings.mosaickedSpoilerContent &&
     (!spoilerRevealed || spoilerRevealAnimating);
 
+  const isSpoilerContentMosaicked = (): boolean =>
+    hasSpoiler() && contentDisplaySettings.mosaickedSpoilerContent && !spoilerRevealed;
+
   const clearSpoilerRevealTimeout = (): void => {
     if (spoilerRevealTimeout === null) {
       return;
@@ -79,7 +84,7 @@
   });
 
   const revealSpoiler = (): void => {
-    if (!isSpoilerPlaceholderVisible()) {
+    if (!isSpoilerContentMosaicked()) {
       return;
     }
 
@@ -92,7 +97,12 @@
     }, spoilerRevealAnimationMs);
   };
 
-  const handleRevealClick = (): void => {
+  const handleCardClick = (event: MouseEvent): void => {
+    if (!isSpoilerContentMosaicked()) {
+      return;
+    }
+
+    event.preventDefault();
     revealSpoiler();
   };
 
@@ -122,11 +132,9 @@
 </script>
 
 {#snippet spoilerOverlay()}
-  <button
-    type="button"
+  <div
     class={`event-list-spoiler-mosaic-overlay absolute inset-0 z-10 flex size-full flex-col items-center justify-center gap-3 px-6 text-center backdrop-blur-2xl transition-opacity duration-180 ease-out ${spoilerRevealAnimating ? "opacity-0" : "opacity-100"}`}
-    aria-label={spoilerContentLabel}
-    onclick={handleRevealClick}
+    aria-hidden="true"
   >
     <div
       class="flex size-9 items-center justify-center rounded-full border-2 border-error/70 text-2xl font-black leading-none text-error"
@@ -134,7 +142,7 @@
       !
     </div>
     <span class="text-sm font-semibold tracking-[0.12em] text-error">{spoilerContentLabel}</span>
-  </button>
+  </div>
 {/snippet}
 
 {#snippet musicTagBadges(sizeClass: string)}
@@ -149,7 +157,12 @@
   {/if}
 {/snippet}
 
-<div class="hover-3d relative isolate w-full">
+<a
+  {href}
+  class="hover-3d relative isolate block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+  aria-label={`${item.title} ${idLabel}${item.id}`}
+  onclick={handleCardClick}
+>
   <article class="card content-card-shell relative overflow-hidden shadow-sm">
     {#if isSpoilerPlaceholderVisible()}
       {@render spoilerOverlay()}
@@ -266,4 +279,4 @@
   <div></div>
   <div></div>
   <div></div>
-</div>
+</a>

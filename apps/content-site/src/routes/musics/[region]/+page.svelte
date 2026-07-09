@@ -81,7 +81,7 @@
   let levelDraft = $state("");
   let viewMode = $state<MusicListViewMode>("grid");
   let filterDialog: HTMLDialogElement | null = $state(null);
-  let restoredPreferences = $state(false);
+  let hasTriedRestoreViewMode = $state(false);
   let spoilerContentAppliedState = $state<boolean | null>(null);
   const contentDisplaySettings = getContentDisplaySettings();
 
@@ -237,6 +237,84 @@
   const getPreferenceKey = (): string => `content-site:music-list-filters:${data.region}`;
   const getViewKey = (): string => "content-site:music-list-view-mode";
 
+  const hasExplicitQueryStateInUrl = (): boolean => {
+    if (!browser) {
+      return false;
+    }
+
+    const searchParams = new URLSearchParams(window.location.search);
+    return [
+      "sort_by",
+      "sort_order",
+      "name",
+      "category",
+      "composer",
+      "arranger",
+      "lyricist",
+      "vocal_character",
+      "music_tag",
+      "vocal_unit",
+      "hasAppend",
+      "has_append",
+      "difficulty",
+      "playLevel",
+      "level",
+      "spoiler"
+    ].some((key) => searchParams.has(key));
+  };
+
+  const restorePersistedFilters = (): boolean => {
+    if (!browser) {
+      return false;
+    }
+
+    const raw = localStorage.getItem(getPreferenceKey());
+    if (!raw) {
+      return false;
+    }
+
+    try {
+      const stored = JSON.parse(raw) as Record<string, unknown>;
+      sortBy = stored.sortBy === "id" ? "id" : "publishedAt";
+      sortOrder = stored.sortOrder === "asc" ? "asc" : "desc";
+      nameFilter = typeof stored.name === "string" ? stored.name : "";
+      categoryFilter = Array.isArray(stored.categories)
+        ? stored.categories.filter((value): value is string => typeof value === "string")
+        : [];
+      composerFilter = typeof stored.composer === "string" ? stored.composer : "";
+      arrangerFilter = typeof stored.arranger === "string" ? stored.arranger : "";
+      lyricistFilter = typeof stored.lyricist === "string" ? stored.lyricist : "";
+      vocalCharacterFilter = Array.isArray(stored.vocalCharacter)
+        ? stored.vocalCharacter.filter((value): value is string => typeof value === "string")
+        : typeof stored.vocalCharacter === "string" && stored.vocalCharacter
+          ? [stored.vocalCharacter]
+          : [];
+      const storedTags = Array.isArray(stored.tags)
+        ? stored.tags.filter((value): value is string => typeof value === "string")
+        : typeof stored.tag === "string" && stored.tag
+          ? [stored.tag]
+          : [];
+      const storedVocalUnitTags = Array.isArray(stored.vocalUnit)
+        ? stored.vocalUnit
+            .filter((value): value is string => typeof value === "string")
+            .map(mapLegacyVocalUnitToTag)
+        : typeof stored.vocalUnit === "string" && stored.vocalUnit
+          ? [mapLegacyVocalUnitToTag(stored.vocalUnit)]
+          : [];
+      tagFilter = [...new Set([...storedTags, ...storedVocalUnitTags])];
+      hasAppendFilter =
+        stored.hasAppend === true ||
+        (Array.isArray(stored.difficulty) && stored.difficulty.includes("append")) ||
+        stored.difficulty === "append";
+      levelFilter = typeof stored.level === "string" ? stored.level : "";
+      syncDrafts();
+      return true;
+    } catch {
+      localStorage.removeItem(getPreferenceKey());
+      return false;
+    }
+  };
+
   type InitialPageResult = {
     page: MusicListPagePayload;
     loadFailed: boolean;
@@ -266,6 +344,25 @@
     syncDrafts();
 
     isInitialLoading = false;
+
+    let needsReload = false;
+
+    if (browser && !hasExplicitQueryStateInUrl() && restorePersistedFilters()) {
+      needsReload = true;
+    }
+
+    if (browser) {
+      const userWantsSpoilers = contentDisplaySettings.showSpoilerContent;
+      if (userWantsSpoilers !== spoilerFilter) {
+        spoilerFilter = userWantsSpoilers;
+        needsReload = true;
+      }
+      spoilerContentAppliedState = userWantsSpoilers;
+    }
+
+    if (needsReload) {
+      void reloadFirstPage();
+    }
   };
 
   $effect(() => {
@@ -361,63 +458,14 @@
   });
 
   $effect(() => {
-    if (!browser || restoredPreferences) {
+    if (!browser || hasTriedRestoreViewMode) {
       return;
     }
 
-    restoredPreferences = true;
+    hasTriedRestoreViewMode = true;
     const storedView = localStorage.getItem(getViewKey());
     if (storedView === "grid" || storedView === "agenda") {
       viewMode = storedView;
-    }
-
-    if (new URL(window.location.href).search.length > 0) {
-      return;
-    }
-
-    const raw = localStorage.getItem(getPreferenceKey());
-    if (!raw) {
-      return;
-    }
-
-    try {
-      const stored = JSON.parse(raw) as Record<string, unknown>;
-      sortBy = stored.sortBy === "id" ? "id" : "publishedAt";
-      sortOrder = stored.sortOrder === "asc" ? "asc" : "desc";
-      nameFilter = typeof stored.name === "string" ? stored.name : "";
-      categoryFilter = Array.isArray(stored.categories)
-        ? stored.categories.filter((value): value is string => typeof value === "string")
-        : [];
-      composerFilter = typeof stored.composer === "string" ? stored.composer : "";
-      arrangerFilter = typeof stored.arranger === "string" ? stored.arranger : "";
-      lyricistFilter = typeof stored.lyricist === "string" ? stored.lyricist : "";
-      vocalCharacterFilter = Array.isArray(stored.vocalCharacter)
-        ? stored.vocalCharacter.filter((value): value is string => typeof value === "string")
-        : typeof stored.vocalCharacter === "string" && stored.vocalCharacter
-          ? [stored.vocalCharacter]
-          : [];
-      const storedTags = Array.isArray(stored.tags)
-        ? stored.tags.filter((value): value is string => typeof value === "string")
-        : typeof stored.tag === "string" && stored.tag
-          ? [stored.tag]
-          : [];
-      const storedVocalUnitTags = Array.isArray(stored.vocalUnit)
-        ? stored.vocalUnit
-            .filter((value): value is string => typeof value === "string")
-            .map(mapLegacyVocalUnitToTag)
-        : typeof stored.vocalUnit === "string" && stored.vocalUnit
-          ? [mapLegacyVocalUnitToTag(stored.vocalUnit)]
-          : [];
-      tagFilter = [...new Set([...storedTags, ...storedVocalUnitTags])];
-      hasAppendFilter =
-        stored.hasAppend === true ||
-        (Array.isArray(stored.difficulty) && stored.difficulty.includes("append")) ||
-        stored.difficulty === "append";
-      levelFilter = typeof stored.level === "string" ? stored.level : "";
-      syncDrafts();
-      void reloadFirstPage();
-    } catch {
-      localStorage.removeItem(getPreferenceKey());
     }
   });
 
@@ -428,22 +476,17 @@
 
     const showSpoilerContent = contentDisplaySettings.showSpoilerContent;
     const isInitialSpoilerState = spoilerContentAppliedState === null;
+    if (isInitialSpoilerState) {
+      return;
+    }
+
     if (spoilerContentAppliedState === showSpoilerContent) {
       return;
     }
 
     spoilerContentAppliedState = showSpoilerContent;
-    const searchParams = new URL(window.location.href).searchParams;
-    const hasSpoilerQueryParam = searchParams.has("spoiler");
-    const requestIncludesSpoilers = searchParams.get("spoiler") === "true";
-    if (isInitialSpoilerState && hasSpoilerQueryParam) {
-      return;
-    }
-
-    if (requestIncludesSpoilers !== showSpoilerContent) {
-      spoilerFilter = showSpoilerContent;
-      void reloadFirstPage();
-    }
+    spoilerFilter = showSpoilerContent;
+    void reloadFirstPage();
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
@@ -758,23 +801,18 @@
         : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}
     >
       {#each visibleItems as item (item.id)}
-        <a
+        <MusicListCard
           href={resolve("/music/[region]/[id]", { region: data.region, id: item.id })}
-          class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
-          aria-label={`${item.title} ${idLabel}${item.id}`}
-        >
-          <MusicListCard
-            region={data.region}
-            {item}
-            {viewMode}
-            {idLabel}
-            jacketAltSuffix={musicJacketAltSuffix}
-            creatorLabel={musicListCreatorLabel}
-            {spoilerContentLabel}
-            {getCategoryLabel}
-            getTagLabel={getMusicTagLabel}
-          />
-        </a>
+          region={data.region}
+          {item}
+          {viewMode}
+          {idLabel}
+          jacketAltSuffix={musicJacketAltSuffix}
+          creatorLabel={musicListCreatorLabel}
+          {spoilerContentLabel}
+          {getCategoryLabel}
+          getTagLabel={getMusicTagLabel}
+        />
       {/each}
     </div>
     {#if visibleItems.length === 0 && !errorMessage}
