@@ -6,6 +6,7 @@
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import MusicListCard from "$lib/components/music/MusicListCard.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
@@ -941,13 +942,12 @@
                 }}
                 aria-label={character}
               />
-              <img
-                src={getLocalCharacterThumbnailAssetURL(character) ?? ""}
-                alt=""
-                aria-hidden="true"
-                class="size-7 rounded-full object-contain"
-                loading="lazy"
-                decoding="async"
+              <CharacterAvatar
+                src={getLocalCharacterThumbnailAssetURL(character)}
+                label={character}
+                characterId={character}
+                variant="xs"
+                decorative
               />
             </label>
           {/each}

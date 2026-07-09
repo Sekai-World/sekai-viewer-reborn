@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { getStaticUnitColor } from "$lib/domain/unit-colors";
   import { resolveUnitIconUrl } from "$lib/domain/unit-icon";
 
   type Variant = "sm" | "default" | "lg";
@@ -23,6 +24,7 @@
   } = $props();
 
   const iconUrl = $derived(resolveUnitIconUrl(unit, mapNoneToPiapro));
+  const borderColor = $derived(getStaticUnitColor(unit, mapNoneToPiapro) ?? undefined);
 
   const frameClass: Record<Variant, string> = {
     sm: "size-7 border border-base-content/15 bg-white",
@@ -46,6 +48,7 @@
 {#if iconUrl}
   <span
     class="unit-icon-frame inline-flex shrink-0 items-center justify-center rounded-full {frameClass[variant]} {className ?? ''}"
+    style:border-color={borderColor}
   >
     <img
       src={iconUrl}
@@ -59,6 +62,7 @@
 {:else if fallbackLabel}
   <span
     class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-white font-semibold leading-none {textPillClass[variant]} {className ?? ''}"
+    style:border-color={borderColor}
   >
     <span class="opacity-70">{fallbackLabel}</span>
   </span>

@@ -6,6 +6,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
 
   type CardListCardItem = {
@@ -317,33 +318,36 @@
   </svg>
 {/snippet}
 
-{#snippet metaBadges()}
+{#snippet metaBadges(stackSupportUnit = false)}
   <div class="flex flex-wrap items-center gap-1.5">
     <span class="badge badge-sm border-none bg-base-200 font-semibold text-base-content">
       {idLabel}{item.id}
     </span>
     {#if item.unit}
       {#if item.characterId !== null}
-        {@const charThumbUrl = getLocalCharacterThumbnailAssetURL(item.characterId)}
-        {#if charThumbUrl}
-          <span
-            class="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full border border-base-content/15 bg-white"
-            aria-hidden="true"
-          >
-            <img
-              src={charThumbUrl}
-              alt=""
-              aria-hidden="true"
-              class="size-7 object-cover"
-              loading="lazy"
-              decoding="async"
-            />
-          </span>
-        {/if}
+        <CharacterAvatar
+          src={getLocalCharacterThumbnailAssetURL(item.characterId)}
+          label={getCharacterLabel()}
+          characterId={item.characterId}
+          variant="xs"
+          class="bg-white"
+          decorative
+        />
       {/if}
-      <UnitIconBadge unit={item.unit} variant="sm" />
+      {#if stackSupportUnit && item.unit === "piapro" && item.supportUnit && item.supportUnit !== "none"}
+        <span class="relative inline-flex shrink-0" aria-hidden="true">
+          <UnitIconBadge unit={item.unit} variant="sm" />
+          <UnitIconBadge
+            unit={item.supportUnit}
+            variant="sm"
+            class="absolute -bottom-1 -right-3 scale-75 shadow-sm ring-1 ring-base-100"
+          />
+        </span>
+      {:else}
+        <UnitIconBadge unit={item.unit} variant="sm" />
+      {/if}
     {/if}
-    {#if item.unit === "piapro" && item.supportUnit && item.supportUnit !== "none"}
+    {#if !stackSupportUnit && item.unit === "piapro" && item.supportUnit && item.supportUnit !== "none"}
       <UnitIconBadge unit={item.supportUnit} variant="sm" />
     {/if}
   </div>
@@ -418,7 +422,7 @@
             {@render thumbImage(true)}
           {/if}
         </div>
-        {@render metaBadges()}
+        {@render metaBadges(true)}
         <h2 class="line-clamp-2 text-sm/snug font-semibold">{getCardTitle()}</h2>
         <p class="line-clamp-1 text-xs opacity-70">{getCharacterLabel()}</p>
       </div>

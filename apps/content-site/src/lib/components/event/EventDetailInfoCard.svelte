@@ -6,6 +6,7 @@
   import { getEventTypeDisplay } from "$lib/domain/event";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import Icon from "@iconify/svelte";
 
@@ -128,17 +129,12 @@
             </dt>
             <dd class="mt-1 text-sm font-medium">{getCharacterDisplayName(char)}</dd>
           </div>
-          <span
-            class="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-base-content/15 bg-base-100/70"
-          >
-            <img
-              src={getLocalCharacterThumbnailAssetURL(char.id) ?? ""}
-              alt={getCharacterDisplayName(char)}
-              class="size-11 rounded-full object-contain"
-              loading="lazy"
-              decoding="async"
-            />
-          </span>
+          <CharacterAvatar
+            src={getLocalCharacterThumbnailAssetURL(char.id)}
+            label={getCharacterDisplayName(char)}
+            characterId={char.id}
+            variant="lg"
+          />
         </div>
       {/if}
       <div class="content-card-inset rounded-xl p-3 sm:px-4">
