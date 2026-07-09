@@ -1,40 +1,52 @@
 <script lang="ts">
-  type Variant = "sm" | "default";
+  type Variant = "xs" | "sm" | "default" | "lg";
 
   let {
     src,
     label,
     accentColor = null,
     variant = "default",
+    decorative = false,
     class: className,
-    imageClass = "size-full object-cover",
+    imageClass,
     onImageError
   }: {
     src: string | null;
     label: string;
     accentColor?: string | null;
     variant?: Variant;
+    decorative?: boolean;
     class?: string;
     imageClass?: string;
     onImageError?: (event: Event) => void;
   } = $props();
 
   const sizeClass: Record<Variant, string> = {
-    sm: "size-12 text-sm",
-    default: "size-20 text-lg"
+    xs: "size-7 border text-xs",
+    sm: "size-12 border-2 text-sm",
+    default: "size-20 border-2 text-lg",
+    lg: "size-11 border-2 text-sm"
+  };
+
+  const defaultImageClass: Record<Variant, string> = {
+    xs: "size-full object-contain",
+    sm: "size-full object-cover",
+    default: "size-full object-cover",
+    lg: "size-full max-w-none object-contain"
   };
 </script>
 
 <span
-  class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-base-content/15 bg-base-100/80 font-bold text-primary {sizeClass[variant]} {className ?? ''}"
+  class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-primary/45 bg-base-100/80 font-bold text-primary {sizeClass[variant]} {className ?? ''}"
   style:border-color={accentColor ?? undefined}
-  aria-label={label}
+  aria-label={decorative ? undefined : label}
+  aria-hidden={decorative ? "true" : undefined}
 >
   {#if src}
     <img
       src={src}
       alt=""
-      class={imageClass}
+      class={imageClass ?? defaultImageClass[variant]}
       loading="lazy"
       decoding="async"
       aria-hidden="true"
