@@ -42,7 +42,9 @@
     rarityLabel,
     featuredCardsTitle,
     featuredCardBonusLabel,
+    featuredCardBonusShortLabel,
     leaderBonusLabel,
+    leaderBonusShortLabel,
     cardIdLabel,
     imageUnavailableLabel,
     cardImageAltSuffix,
@@ -70,7 +72,9 @@
     rarityLabel: string;
     featuredCardsTitle: string;
     featuredCardBonusLabel: string;
+    featuredCardBonusShortLabel: string;
     leaderBonusLabel: string;
+    leaderBonusShortLabel: string;
     cardIdLabel: string;
     imageUnavailableLabel: string;
     cardImageAltSuffix: string;
@@ -777,14 +781,14 @@
     class="inline-flex max-w-full items-center rounded-full border border-base-content/20 bg-base-100/80 px-1.5 py-0.5 text-[11px]/4 font-semibold text-base-content sm:px-2"
     title={`${featuredCardBonusLabel}: +${formatPercent(card.bonusRate) ?? noDataLabel}`}
   >
-    Card: +{formatPercent(card.bonusRate) ?? noDataLabel}
+    {featuredCardBonusShortLabel}: +{formatPercent(card.bonusRate) ?? noDataLabel}
   </span>
   {#if card.leaderBonusRate !== null}
     <span
       class="inline-flex max-w-full items-center rounded-full border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[11px]/4 font-semibold text-primary sm:px-2"
       title={`${leaderBonusLabel}: +${formatPercent(card.leaderBonusRate) ?? noDataLabel}`}
     >
-      Leader: +{formatPercent(card.leaderBonusRate) ?? noDataLabel}
+      {leaderBonusShortLabel}: +{formatPercent(card.leaderBonusRate) ?? noDataLabel}
     </span>
   {/if}
 {/snippet}

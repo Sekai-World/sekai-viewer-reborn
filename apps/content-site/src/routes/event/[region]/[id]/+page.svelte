@@ -87,7 +87,9 @@
   let eventRarityLabel = $state(getInitialI18nText("eventRarityLabel"));
   let eventFeaturedCardsTitle = $state(getInitialI18nText("eventFeaturedCardsTitle"));
   let eventFeaturedCardBonusLabel = $state(getInitialI18nText("eventFeaturedCardBonusLabel"));
+  let eventFeaturedCardBonusShortLabel = $state(getInitialI18nText("eventFeaturedCardBonusShortLabel"));
   let eventLeaderBonusLabel = $state(getInitialI18nText("eventLeaderBonusLabel"));
+  let eventLeaderBonusShortLabel = $state(getInitialI18nText("eventLeaderBonusShortLabel"));
   let eventCardIdLabel = $state(getInitialI18nText("eventCardIdLabel"));
   let eventCardImageAltSuffix = $state(getInitialI18nText("eventCardImageAltSuffix"));
   let eventMusicJacketAltSuffix = $state(getInitialI18nText("eventMusicJacketAltSuffix"));
@@ -165,7 +167,9 @@
     eventRarityLabel = translate("eventRarityLabel");
     eventFeaturedCardsTitle = translate("eventFeaturedCardsTitle");
     eventFeaturedCardBonusLabel = translate("eventFeaturedCardBonusLabel");
+    eventFeaturedCardBonusShortLabel = translate("eventFeaturedCardBonusShortLabel");
     eventLeaderBonusLabel = translate("eventLeaderBonusLabel");
+    eventLeaderBonusShortLabel = translate("eventLeaderBonusShortLabel");
     eventCardIdLabel = translate("eventCardIdLabel");
     eventCardImageAltSuffix = translate("eventCardImageAltSuffix");
     eventMusicJacketAltSuffix = translate("eventMusicJacketAltSuffix");
@@ -418,7 +422,9 @@
 		    rarityLabel={eventRarityLabel}
 		    featuredCardsTitle={eventFeaturedCardsTitle}
 		    featuredCardBonusLabel={eventFeaturedCardBonusLabel}
+		    featuredCardBonusShortLabel={eventFeaturedCardBonusShortLabel}
 		    leaderBonusLabel={eventLeaderBonusLabel}
+		    leaderBonusShortLabel={eventLeaderBonusShortLabel}
 		    cardIdLabel={eventCardIdLabel}
 		    {imageUnavailableLabel}
 		    cardImageAltSuffix={eventCardImageAltSuffix}
