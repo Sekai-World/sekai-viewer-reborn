@@ -1,10 +1,13 @@
 <script lang="ts">
+  import { getStaticCharacterColor } from "$lib/domain/character-colors";
+
   type Variant = "xs" | "sm" | "default" | "lg";
 
   let {
     src,
     label,
     accentColor = null,
+    characterId = null,
     variant = "default",
     decorative = false,
     class: className,
@@ -14,6 +17,7 @@
     src: string | null;
     label: string;
     accentColor?: string | null;
+    characterId?: string | number | null;
     variant?: Variant;
     decorative?: boolean;
     class?: string;
@@ -34,11 +38,13 @@
     default: "size-full object-cover",
     lg: "size-full max-w-none object-contain"
   };
+
+  const borderColor = $derived(accentColor ?? getStaticCharacterColor(characterId) ?? undefined);
 </script>
 
 <span
   class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-primary/45 bg-base-100/80 font-bold text-primary {sizeClass[variant]} {className ?? ''}"
-  style:border-color={accentColor ?? undefined}
+  style:border-color={borderColor}
   aria-label={decorative ? undefined : label}
   aria-hidden={decorative ? "true" : undefined}
 >
