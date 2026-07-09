@@ -328,6 +328,7 @@
         <CharacterAvatar
           src={getLocalCharacterThumbnailAssetURL(item.characterId)}
           label={getCharacterLabel()}
+          characterId={item.characterId}
           variant="xs"
           class="bg-white"
           decorative

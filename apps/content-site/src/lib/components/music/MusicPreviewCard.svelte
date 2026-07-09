@@ -197,6 +197,7 @@
                     <CharacterAvatar
                       src={getLocalCharacterThumbnailAssetURL(char.characterId)}
                       label={String(char.characterId)}
+                      characterId={char.characterId}
                       variant="xs"
                     />
                   {/each}
