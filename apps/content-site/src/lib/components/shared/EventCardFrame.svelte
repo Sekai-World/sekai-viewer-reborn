@@ -22,6 +22,7 @@
   } = $props();
 
   let canHover3d = $state(false);
+  const requestsHover3d = $derived(frameClass.split(" ").includes("hover-3d"));
   const frameClassWithoutHover3d = $derived(
     frameClass
       .split(" ")
@@ -29,7 +30,9 @@
       .join(" ")
   );
   const resolvedFrameClass = $derived(
-    canHover3d ? `${frameClassWithoutHover3d} hover-3d` : frameClassWithoutHover3d
+    canHover3d && requestsHover3d
+      ? `${frameClassWithoutHover3d} hover-3d`
+      : frameClassWithoutHover3d
   );
 
   onMount(() => {
