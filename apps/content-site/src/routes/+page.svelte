@@ -423,9 +423,9 @@
                       >
                         <div class="aspect-3/1 w-full bg-base-100 pt-2">
                           <EventAssetImage
-                            src={getGachaBannerAssetURL(gacha.id, "jp")}
+                            src={getGachaBannerAssetURL(gacha.id, regionData.region)}
                             fallbackSrc={gacha.assetBundleName
-                              ? getGachaLogoAssetURL(gacha.assetBundleName, "jp")
+                              ? getGachaLogoAssetURL(gacha.assetBundleName, regionData.region)
                               : undefined}
                             alt={gacha.name ?? gacha.id}
                             loadMode="visible"
