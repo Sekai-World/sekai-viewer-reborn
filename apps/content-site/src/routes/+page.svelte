@@ -305,7 +305,7 @@
                         <div class="relative aspect-square overflow-hidden">
                           {#if music.assetBundleName}
                             <EventAssetImage
-                              src={getMusicJacketAssetURL(music.assetBundleName)}
+                              src={getMusicJacketAssetURL(music.assetBundleName, regionData.region)}
                               alt={music.title ?? music.id}
                               loadMode="visible"
                               imageClass="size-full object-cover transition-transform duration-200 group-hover/music:scale-105"
