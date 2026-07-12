@@ -109,24 +109,35 @@ export const loadI18nMessageBundle = (
   fetcher?: I18nFetcher
 ): Promise<I18nMessages> => scopedI18nLoader.loadMessageBundle(localeValue, namespaces, fetcher);
 
-const allLocalSourceMessages = Object.values(localSourceMessagesByNamespace).reduce<I18nMessages>(
-  (acc, messages) => ({ ...acc, ...messages }),
-  {}
-);
-
 export const resolveStreamingMessages = (
-  messagesOrPromise: I18nMessages | Promise<I18nMessages>
+  messagesOrPromise: I18nMessages | Promise<I18nMessages>,
+  namespaces: readonly I18nNamespace[]
 ): I18nMessages => {
-  if (messagesOrPromise instanceof Promise) {
-    return allLocalSourceMessages;
+  if (
+    messagesOrPromise &&
+    typeof (messagesOrPromise as PromiseLike<I18nMessages>).then === "function"
+  ) {
+    return namespaces.reduce<I18nMessages>(
+      (messages, namespace) => ({ ...messages, ...localSourceMessagesByNamespace[namespace] }),
+      {}
+    );
   }
-  return messagesOrPromise;
+  return messagesOrPromise as I18nMessages;
 };
+
+export const getLocalI18nMessages = (namespaces: readonly I18nNamespace[]): I18nMessages =>
+  namespaces.reduce<I18nMessages>(
+    (messages, namespace) => ({ ...messages, ...localSourceMessagesByNamespace[namespace] }),
+    {}
+  );
 
 export const createI18nTranslator = (
   localeValue: string,
   messages: I18nMessages
-): ContentSiteTranslator => i18nRuntime.createTranslator(localeValue, messages);
+): ContentSiteTranslator => i18nRuntime.createPureTranslator(localeValue, messages);
+
+export const requestI18nLocale = (): ReturnType<typeof i18nRuntime.requestLocale> =>
+  i18nRuntime.requestLocale();
 
 export const getServerI18nText = async (
   localeValue: string,
@@ -139,20 +150,18 @@ export const getServerI18nText = async (
 
 export const setI18nLocale = (
   localeValue: string,
-  messages?: I18nMessages
+  messages?: I18nMessages,
+  requestToken?: ReturnType<typeof i18nRuntime.requestLocale>
 ): Promise<SupportedUiLocale> =>
   Promise.resolve(messages ?? scopedI18nLoader.loadMessages(localeValue, "common"))
     .then((resolvedMessages) =>
-      i18nRuntime.setLocale(localeValue, scopedI18nLoader.mergeCommonMessages(resolvedMessages))
+      i18nRuntime.setLocale(
+        localeValue,
+        scopedI18nLoader.mergeCommonMessages(resolvedMessages),
+        requestToken?.isCurrent
+      )
     )
     .then((locale) => normalizeUiLocale(locale));
 
 export const tCommon = (localeValue: string, key: string, fallback?: string): string =>
-  i18nRuntime.translate(localeValue, key, fallback);
-
-export const getThemeModeLabel = (
-  localeValue: string,
-  themeMode: "light" | "dark" | "auto"
-): string => {
-  return tCommon(localeValue, `themeMode.${themeMode}`, themeMode);
-};
+  createI18nTranslator(localeValue, localSourceMessagesByNamespace.common)(key, fallback);

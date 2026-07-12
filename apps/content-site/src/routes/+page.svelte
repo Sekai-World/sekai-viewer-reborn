@@ -2,9 +2,7 @@
   import Icon from "@iconify/svelte";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
@@ -20,8 +18,12 @@
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "home", "event", "error"]);
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(
+      data.uiLocale,
+      fallbackMessages
+    )(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
@@ -42,6 +44,11 @@
   let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
   let swipeHint = $state(getInitialI18nText("swipeHint"));
+  let translationRequestId = 0;
+  let currentMessages = $state<Record<string, string>>(
+    fallbackMessages
+  );
+  let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
 
   // ── Region state ───────────────────────────────────────────────────
   const REGION_STORAGE_KEY = "home-region";
@@ -96,12 +103,15 @@
 
   // ── i18n ───────────────────────────────────────────────────────────
   $effect(() => {
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    currentMessages = fallbackMessages;
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages)
+      fallbackMessages
     );
     applyTranslations(translate);
-    void refreshPageTranslations(data.uiLocale);
+    void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
@@ -127,9 +137,21 @@
     swipeHint = translate("swipeHint");
   };
 
-  const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
-    applyTranslations((key) => tCommon(locale, key));
+  const refreshPageTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
+    if (requestId !== translationRequestId) return;
+
+    applyTranslations(createI18nTranslator(localeValue, messages));
+    currentMessages = messages;
   };
 
   // ── Helpers ────────────────────────────────────────────────────────
@@ -367,6 +389,8 @@
               {:then card}
                 {#if card.event}
                   <CurrentEventCard
+                    messages={currentMessages}
+                    translate={currentTranslate}
                     region={card.region}
                     regionLabel={card.label}
                     event={card.event}

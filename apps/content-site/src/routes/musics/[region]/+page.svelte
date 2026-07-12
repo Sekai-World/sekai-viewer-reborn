@@ -16,9 +16,7 @@
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
+    getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
@@ -29,6 +27,7 @@
   import type { MusicListPage, MusicListItem as MusicListItemType } from "$lib/server/music-list";
   import Icon from "@iconify/svelte";
   import type { PageData } from "./$types";
+
 
   type MusicListPagePayload = MusicListPage;
   type MusicListItem = MusicListItemType;
@@ -45,8 +44,11 @@
   };
 
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "music", "error"]);
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
+  let translationRequestId = 0;
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
 
   let items = $state<MusicListItem[]>([]);
   let currentPage = $state(1);
@@ -174,7 +176,7 @@
   ]);
 
   const getCategoryLabel = (category: string): string =>
-    tCommon(data.uiLocale, `musicListCategory.${category}`, category);
+    createI18nTranslator(data.uiLocale, currentMessages)(`musicListCategory.${category}`, category);
 
   const formatOptionLabel = (value: string): string =>
     value
@@ -187,7 +189,7 @@
     unitCodeByMusicTag[value]
       ? (data.unitProfiles[unitCodeByMusicTag[value]] ??
         formatUnitFallbackLabel(unitCodeByMusicTag[value]))
-      : tCommon(data.uiLocale, `musicListTag.${value}`, formatOptionLabel(value));
+      : createI18nTranslator(data.uiLocale, currentMessages)(`musicListTag.${value}`, formatOptionLabel(value));
 
   const getFilterButtonClass = (values: string[], value: string): string =>
     values.includes(value) ? "btn-primary" : "btn-outline border-primary text-primary";
@@ -372,9 +374,12 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    currentMessages = fallbackMessages;
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
-    void refreshTranslations(data.uiLocale);
+    void refreshTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
   $effect(() => {
@@ -531,9 +536,17 @@
     spoilerContentLabel = translate("spoilerContent");
   };
 
-  const refreshTranslations = async (locale: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(locale, resolveStreamingMessages(data.i18nMessages));
-    applyTranslations((key) => tCommon(resolvedLocale, key));
+  const refreshTranslations = async (locale: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
+    if (requestId !== translationRequestId) return;
+    const resolvedLocale = locale;
+    currentMessages = messages;
+    applyTranslations(createI18nTranslator(resolvedLocale, messages));
   };
 
   const createSearchParams = (page: number): SvelteURLSearchParams => {

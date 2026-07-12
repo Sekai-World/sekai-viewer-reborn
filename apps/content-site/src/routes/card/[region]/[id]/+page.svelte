@@ -15,18 +15,26 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import {
-    createI18nTranslator,
-    resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
-  } from "$lib/i18n/runtime";
+  import { createI18nTranslator,
+     getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
+  let translationRequestId = 0;
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
+  let currentTranslate = $derived(
+    createI18nTranslator(
+      data.uiLocale,
+      currentMessages
+    )
+  );
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(
+      data.uiLocale,
+      fallbackMessages
+    )(key);
 
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state("");
@@ -147,21 +155,39 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const translate = createI18nTranslator(
+      data.uiLocale,
+      fallbackMessages
+    );
     applyTranslations(translate);
   });
 
   $effect(() => {
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    currentMessages = fallbackMessages;
     if (!browser) {
       return;
     }
 
-    void refreshTranslations(data.uiLocale);
+    void refreshTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
-  const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
-    applyTranslations((key) => tCommon(locale, key));
+  const refreshTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
+    if (requestId !== translationRequestId) return;
+    const locale = localeValue;
+    currentMessages = messages;
+    applyTranslations(createI18nTranslator(locale, messages));
   };
 
   const openDebugDialog = (): void => {
@@ -219,7 +245,9 @@
 {#snippet statsCardSkeleton()}
   <article class="card content-card-shell shadow-sm" aria-busy="true">
     <div class="card-body gap-4 p-3 sm:p-5">
-      <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+      <p
+        class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+      >
         <span class="size-4 animate-pulse rounded bg-base-300" aria-hidden="true"></span>
         <span>{cardStatsTitle}</span>
       </p>
@@ -387,10 +415,10 @@
             <CardDetailInfoCard
               card={payload.card}
               {displayLocale}
-            title={cardInfoTitle}
-            {idLabel}
-            {internalResourceCodeLabel}
-            {nameLabel}
+              title={cardInfoTitle}
+              {idLabel}
+              {internalResourceCodeLabel}
+              {nameLabel}
               {characterLabel}
               {unitLabel}
               {supportUnitLabel}
@@ -407,10 +435,10 @@
             <CardDetailInfoCard
               card={payload.card}
               {displayLocale}
-            title={cardInfoTitle}
-            {idLabel}
-            {internalResourceCodeLabel}
-            {nameLabel}
+              title={cardInfoTitle}
+              {idLabel}
+              {internalResourceCodeLabel}
+              {nameLabel}
               {characterLabel}
               {unitLabel}
               {supportUnitLabel}
@@ -438,32 +466,34 @@
           />
 
           {#await Promise.all([data.episodes, data.params])}
-		            {@render statsCardSkeleton()}
-		          {:then [episodes, params]}
-		            <CardDetailStatsCard
-		              card={payload.card}
-		              {params}
-		              {episodes}
-		              title={cardStatsTitle}
-		              {levelLabel}
-		              {performanceLabel}
-		              {techniqueLabel}
-		              {staminaLabel}
-		              {totalLabel}
-		              {bonusSumLabel}
-		              {specialTrainingBonusLabel}
-		              {episodeBonusLabel}
-		              {masterRankBonusLabel}
-		              {noStatsLabel}
-		            />
-		          {:catch}
-		            <article class="card content-card-shell shadow-sm">
-		              <div class="card-body gap-4 p-3 sm:p-5">
-		                <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardStatsTitle}</p>
-		                <p class="text-sm opacity-60">{noStatsLabel}</p>
-		              </div>
-		            </article>
-		          {/await}
+            {@render statsCardSkeleton()}
+          {:then [episodes, params]}
+            <CardDetailStatsCard
+              card={payload.card}
+              {params}
+              {episodes}
+              title={cardStatsTitle}
+              {levelLabel}
+              {performanceLabel}
+              {techniqueLabel}
+              {staminaLabel}
+              {totalLabel}
+              {bonusSumLabel}
+              {specialTrainingBonusLabel}
+              {episodeBonusLabel}
+              {masterRankBonusLabel}
+              {noStatsLabel}
+            />
+          {:catch}
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                  {cardStatsTitle}
+                </p>
+                <p class="text-sm opacity-60">{noStatsLabel}</p>
+              </div>
+            </article>
+          {/await}
 
           <div class="grid gap-4 lg:grid-cols-2 lg:items-start">
             {#await data.episodes then episodes}
@@ -478,7 +508,9 @@
             {:catch}
               <article class="card content-card-shell shadow-sm">
                 <div class="card-body gap-4 p-3 sm:p-5">
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardEpisodesTitle}</p>
+                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                    {cardEpisodesTitle}
+                  </p>
                   <p class="text-sm opacity-60">{noEpisodesLabel}</p>
                 </div>
               </article>
@@ -486,6 +518,7 @@
 
             {#await data.relatedEvents then relatedEvents}
               <CardDetailEventsCard
+                translate={currentTranslate}
                 events={relatedEvents}
                 region={data.region}
                 uiLocale={displayLocale}
@@ -497,7 +530,9 @@
             {:catch}
               <article class="card content-card-shell shadow-sm">
                 <div class="card-body gap-4 p-3 sm:p-5">
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardRelatedEventsTitle}</p>
+                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                    {cardRelatedEventsTitle}
+                  </p>
                   <p class="text-sm opacity-60">{noRelatedEventsLabel}</p>
                 </div>
               </article>
@@ -515,7 +550,9 @@
             {:catch}
               <article class="card content-card-shell shadow-sm">
                 <div class="card-body gap-4 p-3 sm:p-5">
-                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{cardGachaBannersTitle}</p>
+                  <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                    {cardGachaBannersTitle}
+                  </p>
                   <p class="text-sm opacity-60">{noRelatedGachaLabel}</p>
                 </div>
               </article>

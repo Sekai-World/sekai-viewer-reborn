@@ -5,6 +5,7 @@ export type I18nMessages = Record<string, string>;
 export type I18nFetcher = (input: string) => Promise<Response>;
 export type I18nLocaleResolver = (localeValue: string) => string;
 export type I18nTranslator = (key: string, fallback?: string) => string;
+export type I18nRequestToken = { readonly version: number; readonly isCurrent: () => boolean };
 
 export interface RemoteI18nRuntimeOptions {
   baseUrl: string;
@@ -136,6 +137,7 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
   const messageCache = new Map<string, Promise<I18nMessages>>();
   const localeLoadingCount = writable(0);
   let initialized = false;
+  let requestVersion = 0;
 
   const isLocaleLoading = derived(
     [localeLoadingCount, isLoading],
@@ -204,22 +206,32 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
     };
   };
 
-  const setLocale = async (localeValue: string, messages?: I18nMessages): Promise<string> => {
+  // Rendering translators must be side-effect free: SSR and page-local fallback
+  // rendering must never register a partial catalog in the global svelte-i18n store.
+  const createPureTranslator = (_localeValue: string, messages: I18nMessages): I18nTranslator =>
+    (key: string, fallback = key): string => messages[key] ?? fallback;
+
+  const setLocale = async (
+    localeValue: string,
+    messages?: I18nMessages,
+    isCurrent?: () => boolean
+  ): Promise<string> => {
     const locale = options.normalizeLocale(localeValue);
     setupI18n(locale);
     const isBrowser = options.isBrowser?.() ?? typeof window !== "undefined";
     if (!isBrowser) {
-      if (messages) {
-        addLocaleMessages(locale, messages);
-      }
       return locale;
     }
 
     localeLoadingCount.update((n) => n + 1);
     try {
-      addLocaleMessages(locale, messages ?? (await loadMessages(locale, "common")));
+      const resolvedMessages = messages ?? (await loadMessages(locale, "common"));
       const remoteLocale = options.toRemoteLocale(locale);
+      if (isCurrent && !isCurrent()) return locale;
+      addLocaleMessages(locale, resolvedMessages);
+      if (isCurrent && !isCurrent()) return locale;
       if (get(svelteLocale) !== remoteLocale) {
+        if (isCurrent && !isCurrent()) return locale;
         svelteLocale.set(remoteLocale);
       }
     } finally {
@@ -227,6 +239,11 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
     }
 
     return locale;
+  };
+
+  const requestLocale = (): I18nRequestToken => {
+    const version = ++requestVersion;
+    return { version, isCurrent: () => version === requestVersion };
   };
 
   const translate = (localeValue: string, key: string, fallback?: string): string => {
@@ -253,10 +270,12 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
 
   return {
     createTranslator,
+    createPureTranslator,
     getServerText,
     isLocaleLoading,
     loadMessages,
     setLocale,
+    requestLocale,
     translate
   };
 };

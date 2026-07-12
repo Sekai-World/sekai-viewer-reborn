@@ -13,6 +13,7 @@
     EVENT_CARD_MEDIA_CLASS
   } from "$lib/styles/event-card";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
+  import type { I18nMessages, I18nTranslator } from "@platform/i18n-runtime";
 
   type CurrentEventSummary = {
     id: string;
@@ -29,6 +30,8 @@
     regionLabel,
     event,
     uiLocale,
+    messages,
+    translate,
     idLabel,
     mixedUnitLabel,
     unitProfiles,
@@ -38,6 +41,8 @@
     regionLabel: string;
     event: CurrentEventSummary;
     uiLocale: string;
+    messages: I18nMessages;
+    translate: I18nTranslator;
     idLabel: string;
     mixedUnitLabel: string;
     unitProfiles: Record<string, string>;
@@ -56,7 +61,7 @@
   };
 
   const displayUnit = $derived(getDisplayUnit(event.unit));
-  const displayEventType = $derived(getEventTypeDisplay(event.eventType, uiLocale));
+  const displayEventType = $derived(getEventTypeDisplay(event.eventType, translate));
 </script>
 
 <EventCardFrame
@@ -105,5 +110,11 @@
     {/if}
   </div>
 
-  <EventCountdownCard startAt={event.startAt} endAt={event.endAt} {uiLocale} class="mt-0" />
+  <EventCountdownCard
+    startAt={event.startAt}
+    endAt={event.endAt}
+    {uiLocale}
+    {messages}
+    class="mt-0"
+  />
 </EventCardFrame>

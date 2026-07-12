@@ -15,11 +15,10 @@
   import { onMount, type Snippet } from "svelte";
   import {
     createI18nTranslator,
+     getLocalI18nMessages,
+    requestI18nLocale,
     isLocaleLoading,
-    getThemeModeLabel,
-    resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
+    setI18nLocale
   } from "$lib/i18n/runtime";
   import {
     DEFAULT_REGION,
@@ -48,10 +47,16 @@
   const MOBILE_SETTINGS_MENU_ID = "content-site-mobile-settings-menu";
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
-
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common"]);
+  let currentLayoutMessages = $state<Record<string, string>>(
+    fallbackMessages
+  );
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(
+      data.uiLocale,
+      fallbackMessages
+    )(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
@@ -73,6 +78,7 @@
   let localeLoadingProgress = $state(0);
   let localeLoadingInterval: ReturnType<typeof setInterval> | null = null;
   let localeProgressResetTimeout: ReturnType<typeof setTimeout> | null = null;
+  let translationRequestId = 0;
   let homeLabel = $state(getInitialI18nText("home"));
   let openSidebarLabel = $state(getInitialI18nText("aria.openSidebar"));
   let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
@@ -121,7 +127,15 @@
       return normalizeRegion(second, preferredRegion);
     }
 
-    if ((first === "event" || first === "events" || first === "gacha" || first === "gachas" || first === "music" || first === "musics") && second) {
+    if (
+      (first === "event" ||
+        first === "events" ||
+        first === "gacha" ||
+        first === "gachas" ||
+        first === "music" ||
+        first === "musics") &&
+      second
+    ) {
       return normalizeRegion(second, preferredRegion);
     }
 
@@ -170,14 +184,19 @@
     }
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");
-  const themeModeLabel = $derived(getThemeModeLabel(uiLocale, themeMode));
-  const resolvedThemeLabel = $derived(getThemeModeLabel(uiLocale, resolvedTheme));
+  const layoutTranslate = $derived(createI18nTranslator(uiLocale, currentLayoutMessages));
+  const themeModeLabel = $derived(layoutTranslate(`themeMode.${themeMode}`, themeMode));
+  const resolvedThemeLabel = $derived(layoutTranslate(`themeMode.${resolvedTheme}`, resolvedTheme));
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
   $effect(() => {
-    const translate = createI18nTranslator(uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    currentLayoutMessages = fallbackMessages;
+    const localeRequestToken = requestI18nLocale();
+    const translate = createI18nTranslator(uiLocale, fallbackMessages);
     applyTranslations(translate);
-    void refreshTranslations(uiLocale);
+    void refreshTranslations(uiLocale, messagesOrPromise, requestId, localeRequestToken);
   });
 
   const stopLocaleProgressTimers = (): void => {
@@ -271,9 +290,23 @@
     };
   };
 
-  const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
-    applyTranslations((key) => tCommon(resolvedLocale, key));
+  const refreshTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number,
+    localeRequestToken: ReturnType<typeof requestI18nLocale>
+  ): Promise<void> => {
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
+    if (requestId !== translationRequestId) return;
+    const resolvedLocale = await setI18nLocale(localeValue, messages, localeRequestToken);
+    if (requestId !== translationRequestId) return;
+    currentLayoutMessages = messages;
+    applyTranslations(createI18nTranslator(resolvedLocale, messages));
   };
 
   const getSystemTheme = (): ResolvedTheme =>
@@ -838,7 +871,7 @@
                     class="size-4 opacity-80"
                     aria-hidden="true"
                   />
-                  <span>{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span>
+                  <span>{layoutTranslate(`themeMode.${themeOption}`, themeOption)}</span>
                   {#if themeMode === themeOption}
                     <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
                   {/if}
@@ -920,7 +953,9 @@
         <div
           class="fixed inset-0 z-120"
           aria-hidden="true"
-          onclick={() => { isMobileSettingsMenuOpen = false; }}
+          onclick={() => {
+            isMobileSettingsMenuOpen = false;
+          }}
         ></div>
       {/if}
       <div
@@ -1001,7 +1036,7 @@
                       class="size-5 shrink-0"
                     />
                     <span class="text-[0.6rem] font-semibold leading-none"
-                      >{getThemeModeLabel(uiLocale, themeOption as ThemeMode)}</span
+                      >{layoutTranslate(`themeMode.${themeOption}`, themeOption)}</span
                     >
                   </button>
                 {/each}

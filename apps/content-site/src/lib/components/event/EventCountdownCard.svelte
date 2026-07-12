@@ -1,7 +1,8 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { toTimestampMs } from "$lib/time/date-time";
-  import { setI18nLocale, tCommon } from "$lib/i18n/runtime";
+  import { createI18nTranslator } from "$lib/i18n/runtime";
+  import type { I18nMessages } from "@platform/i18n-runtime";
   import { onMount } from "svelte";
 
   type CountdownValues = {
@@ -25,6 +26,7 @@
     startAt,
     endAt,
     uiLocale,
+    messages,
     forceShowSeconds = false,
     showProgress = true,
     class: className = ""
@@ -32,12 +34,14 @@
     startAt: string | number | null;
     endAt: string | number | null;
     uiLocale: string;
+    messages: I18nMessages;
     forceShowSeconds?: boolean;
     showProgress?: boolean;
     class?: string;
   } = $props();
 
-  const getInitialLabel = (key: string): string => tCommon(uiLocale, key);
+  const getInitialLabel = (key: string): string =>
+    createI18nTranslator(uiLocale, messages)(key);
   let startsInLabel = $state(getInitialLabel("countdownStartsIn"));
   let endsInLabel = $state(getInitialLabel("countdownEndsIn"));
   let eventEndedLabel = $state(getInitialLabel("eventEnded"));
@@ -54,7 +58,7 @@
   let lastRenderedSecond = -1;
 
   $effect(() => {
-    applyTranslations(uiLocale);
+    applyTranslations(uiLocale, messages);
   });
 
   $effect(() => {
@@ -62,22 +66,22 @@
       return;
     }
 
-    void refreshTranslations(uiLocale);
+    void refreshTranslations(uiLocale, messages);
   });
 
-  const applyTranslations = (localeValue: string): void => {
-    startsInLabel = tCommon(localeValue, "countdownStartsIn");
-    endsInLabel = tCommon(localeValue, "countdownEndsIn");
-    eventEndedLabel = tCommon(localeValue, "eventEnded");
-    dayLabel = tCommon(localeValue, "labels.timeUnit.day");
-    hourLabel = tCommon(localeValue, "labels.timeUnit.hour");
-    minuteLabel = tCommon(localeValue, "labels.timeUnit.minute");
-    secondLabel = tCommon(localeValue, "labels.timeUnit.second");
+  const applyTranslations = (localeValue: string, messageValues: I18nMessages): void => {
+    const translate = createI18nTranslator(localeValue, messageValues);
+    startsInLabel = translate("countdownStartsIn");
+    endsInLabel = translate("countdownEndsIn");
+    eventEndedLabel = translate("eventEnded");
+    dayLabel = translate("labels.timeUnit.day");
+    hourLabel = translate("labels.timeUnit.hour");
+    minuteLabel = translate("labels.timeUnit.minute");
+    secondLabel = translate("labels.timeUnit.second");
   };
 
-  const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue);
-    applyTranslations(locale);
+  const refreshTranslations = async (localeValue: string, messageValues: I18nMessages): Promise<void> => {
+    applyTranslations(localeValue, messageValues);
   };
 
   const toCountdownValues = (diffMs: number): CountdownValues => {

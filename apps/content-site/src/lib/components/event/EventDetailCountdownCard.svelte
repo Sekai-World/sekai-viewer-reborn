@@ -3,16 +3,19 @@
   import type { EventDetail } from "$lib/domain/event-detail";
   import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
   import Icon from "@iconify/svelte";
+  import type { I18nMessages } from "@platform/i18n-runtime";
 
   let {
     event,
     isCurrentEvent,
     uiLocale,
+    messages,
     title
   }: {
     event: EventDetail;
     isCurrentEvent: boolean;
     uiLocale: string;
+    messages: I18nMessages;
     title: string;
   } = $props();
 
@@ -39,6 +42,7 @@
         startAt={event.startAt}
         endAt={event.endAt}
         {uiLocale}
+        {messages}
         forceShowSeconds={true}
         showProgress={false}
       />

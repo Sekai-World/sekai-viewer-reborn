@@ -12,9 +12,7 @@
   import MusicJacketHero from "$lib/components/music/MusicJacketHero.svelte";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import {
     formatUnitFallbackLabel,
@@ -23,10 +21,14 @@
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import type { PageData } from "./$types";
 
+
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "music", "error"]);
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
+  let translationRequestId = 0;
 
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
 
   let displayLocale = $state<string>("");
 
@@ -79,16 +81,19 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
   });
 
   $effect(() => {
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    currentMessages = fallbackMessages;
     if (!browser) {
       return;
     }
 
-    void refreshTranslations(data.uiLocale);
+    void refreshTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
@@ -140,22 +145,30 @@
     };
   };
 
-  const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
-    applyTranslations((key) => tCommon(locale, key));
+  const refreshTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
+    if (requestId !== translationRequestId) return;
+    const locale = localeValue;
+    currentMessages = messages;
+    applyTranslations(createI18nTranslator(locale, messages));
   };
 
   const getCategoryLabel = (category: string): string =>
-    tCommon(data.uiLocale, `musicListCategory.${category}`, category);
+    createI18nTranslator(data.uiLocale, currentMessages)(`musicListCategory.${category}`, category);
 
   const getTagLabel = (value: string): string =>
     unitCodeByMusicTag[value]
       ? (data.unitProfiles[unitCodeByMusicTag[value]] ??
         formatUnitFallbackLabel(unitCodeByMusicTag[value]))
-      : tCommon(data.uiLocale, `musicListTag.${value}`, value);
+      : createI18nTranslator(data.uiLocale, currentMessages)(`musicListTag.${value}`, value);
 
   const getDifficultyLabel = (difficulty: string): string =>
-    tCommon(data.uiLocale, `musicDifficulty.${difficulty}`, difficulty);
+    createI18nTranslator(data.uiLocale, currentMessages)(`musicDifficulty.${difficulty}`, difficulty);
 
   const regionDisplayOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
 

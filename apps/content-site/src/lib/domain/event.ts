@@ -1,4 +1,4 @@
-import { tCommon } from "$lib/i18n/runtime";
+import type { ContentSiteTranslator } from "$lib/i18n/runtime";
 
 const eventTypeTextKeyMap = {
   marathon: "eventTypeValues.marathon",
@@ -8,7 +8,7 @@ const eventTypeTextKeyMap = {
 
 export const getEventTypeDisplay = (
   eventType: string | null,
-  localeValue: string
+  translate: ContentSiteTranslator
 ): string | null => {
   if (!eventType) {
     return null;
@@ -19,5 +19,5 @@ export const getEventTypeDisplay = (
     return eventType;
   }
 
-  return tCommon(localeValue, key, eventType);
+  return translate(key, eventType);
 };

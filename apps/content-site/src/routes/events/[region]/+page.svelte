@@ -7,9 +7,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
@@ -30,9 +28,16 @@
   type EventListSortOrder = "asc" | "desc";
 
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "event", "error"]);
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
+  let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
+  let translationRequestId = 0;
   const eventListLoadingFallback = "Loading events...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key, fallback);
+    createI18nTranslator(
+      data.uiLocale,
+      fallbackMessages
+    )(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -95,17 +100,27 @@
     return data.unitProfiles[value] ?? formatUnitFallbackLabel(value);
   };
 
-  const getEventTypeOptions = (): Array<{ value: string; label: string }> => [
-    { value: "marathon", label: tCommon(data.uiLocale, "eventTypeValues.marathon", "marathon") },
-    {
-      value: "cheerful_carnival",
-      label: tCommon(data.uiLocale, "eventTypeValues.cheerfulCarnival", "cheerful_carnival")
-    },
-    {
-      value: "world_bloom",
-      label: tCommon(data.uiLocale, "eventTypeValues.worldLink", "world_bloom")
-    }
-  ];
+  const marathonFallback = "marathon";
+  const cheerfulCarnivalFallback = "cheerful_carnival";
+  const worldBloomFallback = "world_bloom";
+
+  const getEventTypeOptions = (): Array<{ value: string; label: string }> => {
+    return [
+      { value: "marathon", label: eventTypeLabel("eventTypeValues.marathon", marathonFallback) },
+      {
+        value: "cheerful_carnival",
+        label: eventTypeLabel("eventTypeValues.cheerfulCarnival", cheerfulCarnivalFallback)
+      },
+      {
+        value: "world_bloom",
+        label: eventTypeLabel("eventTypeValues.worldLink", worldBloomFallback)
+      }
+    ];
+  };
+
+  function eventTypeLabel(key: string, fallback: string): string {
+    return currentMessages[key] ?? fallback;
+  }
 
   const getUnitOptions = (): Array<{ value: string; label: string }> => [
     ...unitFilterValues.map((value) => ({ value, label: formatUnitLabel(value) }))
@@ -207,7 +222,7 @@
 
   const getFilterStorageKey = (): string => `content-site:event-list-filters:${data.region}`;
 
-    // currentEventId is no longer used; ongoing events are detected from item timestamps via ongoingEventIds
+  // currentEventId is no longer used; ongoing events are detected from item timestamps via ongoingEventIds
 
   const persistAppliedFilters = (): void => {
     if (!browser) {
@@ -344,9 +359,15 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    currentMessages = fallbackMessages;
+    const translate = createI18nTranslator(
+      data.uiLocale,
+      fallbackMessages
+    );
     applyTranslations(translate);
-    void refreshPageTranslations(data.uiLocale);
+    void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
   $effect(() => {
@@ -478,9 +499,21 @@
     bannerAltSuffix = translate("bannerAltSuffix");
   };
 
-  const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
-    applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
+  const refreshPageTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
+    if (requestId !== translationRequestId) return;
+    const locale = localeValue;
+    currentMessages = messages;
+    applyTranslations(createI18nTranslator(locale, messages));
   };
 
   const createListSearchParams = (page: number): SvelteURLSearchParams => {
@@ -757,9 +790,10 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {#each visibleItems as item (getEventItemKey(item))}
         <EventListCard
+          translate={currentTranslate}
           region={data.region}
           {item}
-          ongoingEventIds={ongoingEventIds}
+          {ongoingEventIds}
           currentEventLabel={eventListCurrentEvent}
           {spoilerContentLabel}
           uiLocale={data.uiLocale}
