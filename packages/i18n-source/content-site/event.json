@@ -47,6 +47,8 @@
   "eventRankingRewardsTitle": "Ranking Rewards",
   "eventRankingRewardsShowLessLabel": "Show fewer rewards",
   "eventRankingRewardsShowMoreLabel": "Show all rewards",
+  "rankingRewardsLoadingLabel": "Loading rewards...",
+  "rankingRewardsLoadErrorLabel": "Failed to load all rewards. Try again.",
   "eventRarityBonusLabel": "Rarity Bonus",
   "eventRarityLabel": "Rarity",
   "eventVirtualLiveEndLabel": "Virtual Live End",

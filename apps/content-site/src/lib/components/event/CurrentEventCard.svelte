@@ -78,27 +78,32 @@
       </div>
     {/if}
 
-    <div class="absolute right-3 top-3 max-md:hidden">
-      <span class="badge border-none bg-primary font-semibold text-primary-content shadow-sm">
-        {region.toUpperCase()}
+    <div class="absolute left-2 top-2">
+      <span
+        class="badge badge-sm border-none bg-base-100/95 font-semibold text-base-content shadow-sm"
+      >
+        {idLabel}{event.id}
       </span>
+    </div>
+    <div class="absolute right-2 top-2 flex items-center gap-1">
+      {#if displayEventType}
+        <span
+          class="badge badge-sm border-none bg-base-100/95 font-semibold text-base-content shadow-sm"
+        >
+          {displayEventType}
+        </span>
+      {/if}
     </div>
   </div>
 
-  <h3 class="text-base/tight font-semibold">
-    {event.title}
-  </h3>
-  <div class="flex flex-wrap items-center gap-2 text-sm">
-    <p class="opacity-70">{idLabel}{event.id}</p>
-    {#if displayEventType}
-      <span class="badge border-none bg-base-200 font-semibold text-base-content">
-        {displayEventType}
-      </span>
-    {/if}
+  <div class="flex min-w-0 items-start gap-2">
+    <h3 class="min-w-0 flex-1 text-base/tight font-semibold">
+      {event.title}
+    </h3>
     {#if displayUnit}
-      <UnitIconBadge unit={event.unit!} fallbackLabel={displayUnit} />
+      <UnitIconBadge unit={event.unit!} fallbackLabel={displayUnit} variant="sm" />
     {/if}
   </div>
 
-  <EventCountdownCard startAt={event.startAt} endAt={event.endAt} {uiLocale} class="mt-1" />
+  <EventCountdownCard startAt={event.startAt} endAt={event.endAt} {uiLocale} class="mt-0" />
 </EventCardFrame>

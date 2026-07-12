@@ -1,5 +1,6 @@
 <script lang="ts">
   import { asset, resolve } from "$app/paths";
+  import { parseEventRewardRanges } from "$lib/domain/event-rewards";
   import {
     getCardThumbnailAssetURL,
     getCommonMaterialThumbnailURL,
@@ -56,11 +57,12 @@
     rankingRewardsTitle,
     rankingRewardTopLabel,
     rankingRewardBorderLabel,
-    rankingRewardResourceBoxLabel,
     rankingRewardsShowMoreLabel,
     rankingRewardsShowLessLabel,
     virtualLiveTitle,
-    noDataLabel
+    noDataLabel,
+    rankingRewardsLoadingLabel,
+    rankingRewardsLoadErrorLabel
   }: {
     event: EventDetail;
     region: SupportedRegion;
@@ -86,14 +88,52 @@
     rankingRewardsTitle: string;
     rankingRewardTopLabel: string;
     rankingRewardBorderLabel: string;
-    rankingRewardResourceBoxLabel: string;
     rankingRewardsShowMoreLabel: string;
     rankingRewardsShowLessLabel: string;
     virtualLiveTitle: string;
     noDataLabel: string;
+    rankingRewardsLoadingLabel: string;
+    rankingRewardsLoadErrorLabel: string;
   } = $props();
 
   let areAllRankingRewardsVisible = $state(false);
+  let fullRewardRanges = $state<EventRankingRewardRange[] | null>(null);
+  let rewardsLoading = $state(false);
+  let rewardsLoadError = $state(false);
+  let rewardStateKey = $state("");
+  const displayRelatedData = $derived(
+    relatedData && fullRewardRanges
+      ? ({ ...relatedData, rewardRanges: fullRewardRanges } as EventRelatedData)
+      : relatedData
+  );
+  $effect(() => {
+    const key = `${region}:${event.id}`;
+    if (rewardStateKey !== key) {
+      rewardStateKey = key;
+      fullRewardRanges = null;
+      rewardsLoading = false;
+      rewardsLoadError = false;
+      areAllRankingRewardsVisible = false;
+    }
+  });
+  const loadAllRewards = async (): Promise<void> => {
+    if (fullRewardRanges) {
+      areAllRankingRewardsVisible = true;
+      return;
+    }
+    rewardsLoading = true;
+    rewardsLoadError = false;
+    try {
+      const response = await fetch(`/event/${region}/${event.id}/rewards`);
+      if (!response.ok) throw new Error("request failed");
+      fullRewardRanges = parseEventRewardRanges(await response.json());
+      areAllRankingRewardsVisible = true;
+    } catch {
+      rewardsLoadError = true;
+    } finally {
+      rewardsLoading = false;
+    }
+  };
 
   type BonusDeckEntry = {
     attr: string | null;
@@ -145,7 +185,6 @@
   };
   type HonorAssetPreviews = Record<HonorAssetVariant, HonorAssetPreview>;
   type RarityBonusRate = NonNullable<EventRelatedData["bonuses"]>["rarityBonusRates"][number];
-  const rankingRewardPreviewLimit = 5;
   const honorPreviewCanvasHeight = 80;
   const honorAssetVariantConfigs = {
     sub: {
@@ -209,7 +248,9 @@
       ? getCardThumbnailAssetURL(card.assetBundleName, isCardTrained(card), region)
       : null;
   const getMusicJacketSrc = (music: EventMusic): string | null =>
-    music.assetBundleName ? getMusicJacketAssetURL(music.assetBundleName, region as AssetServer) : null;
+    music.assetBundleName
+      ? getMusicJacketAssetURL(music.assetBundleName, region as AssetServer)
+      : null;
   const getVirtualLiveBannerSrc = (assetBundleName: string | null): string | null =>
     assetBundleName ? getVirtualLiveBannerAssetURL(assetBundleName, region as AssetServer) : null;
   const getCardHref = (card: EventFeaturedCard): string | null =>
@@ -243,7 +284,9 @@
     return getRarityValue(rarityType) > 0 ? asset("/card_rarity/rarity_star_normal.png") : null;
   };
 
-  const getBonusCharacterIdentityKey = (item: Omit<BonusCharacterItem, "baseBonusRate" | "attrBonuses">): string =>
+  const getBonusCharacterIdentityKey = (
+    item: Omit<BonusCharacterItem, "baseBonusRate" | "attrBonuses">
+  ): string =>
     [
       item.gameCharacterId ?? "__any_character",
       item.gameCharacterUnitId ?? "__any_character_unit",
@@ -264,7 +307,8 @@
   };
 
   const getBonusDisplayName = (item: BonusCharacterItem): string =>
-    getBonusCharacterName(item) ?? (hasBonusCharacterData(item) ? bonusCharacterLabel : anyCharacterLabel);
+    getBonusCharacterName(item) ??
+    (hasBonusCharacterData(item) ? bonusCharacterLabel : anyCharacterLabel);
 
   const hasBonusCharacterData = (item: BonusCharacterItem): boolean =>
     item.gameCharacterId !== null || getBonusCharacterName(item) !== null || item.unit !== null;
@@ -287,9 +331,7 @@
   };
 
   const getBonusCharacterIconSrc = (item: BonusCharacterItem): string | null =>
-    item.gameCharacterId === null
-      ? null
-      : getLocalCharacterThumbnailAssetURL(item.gameCharacterId);
+    item.gameCharacterId === null ? null : getLocalCharacterThumbnailAssetURL(item.gameCharacterId);
 
   const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {
     return (data?.bonuses?.deckBonuses ?? []).reduce<BonusCharacterItem[]>((items, bonus) => {
@@ -301,7 +343,8 @@
         givenName: bonus.givenName,
         colorCode: bonus.colorCode,
         baseBonusRate: bonus.cardAttr === null ? bonus.bonusRate : null,
-        attrBonuses: bonus.cardAttr === null ? [] : [{ attr: bonus.cardAttr, bonusRate: bonus.bonusRate }]
+        attrBonuses:
+          bonus.cardAttr === null ? [] : [{ attr: bonus.cardAttr, bonusRate: bonus.bonusRate }]
       };
       const key = getBonusCharacterIdentityKey(nextItem);
       const currentIndex = items.findIndex((item) => getBonusCharacterIdentityKey(item) === key);
@@ -324,13 +367,17 @@
         if ((entry.bonusRate ?? -Infinity) <= (existing.bonusRate ?? -Infinity)) {
           return entries;
         }
-        return entries.map((existingEntry, index) => (index === entryIndex ? entry : existingEntry));
+        return entries.map((existingEntry, index) =>
+          index === entryIndex ? entry : existingEntry
+        );
       }, current.attrBonuses);
 
       const updatedItem = {
         ...current,
         baseBonusRate: nextBaseBonusRate,
-        attrBonuses: nextAttrBonuses.sort((left, right) => getAttrLabel(left.attr).localeCompare(getAttrLabel(right.attr)))
+        attrBonuses: nextAttrBonuses.sort((left, right) =>
+          getAttrLabel(left.attr).localeCompare(getAttrLabel(right.attr))
+        )
       };
 
       return items.map((item, index) => (index === currentIndex ? updatedItem : item));
@@ -364,7 +411,8 @@
     masterRank: number
   ): number | null =>
     (data?.bonuses?.rarityBonusRates ?? []).find(
-      (bonus: RarityBonusRate) => bonus.cardRarityType === rarityType && bonus.masterRank === masterRank
+      (bonus: RarityBonusRate) =>
+        bonus.cardRarityType === rarityType && bonus.masterRank === masterRank
     )?.bonusRate ?? null;
 
   const formatRankRange = (range: EventRankingRewardRange): string => {
@@ -381,22 +429,21 @@
     return `#${fromRank ?? toRank}`;
   };
 
-  const isPreviewRewardRange = (range: EventRankingRewardRange): boolean =>
-    range.isToRankBorder === true || (range.fromRank !== null && range.fromRank <= 1000);
-
-  const getPreviewRewardRanges = (ranges: EventRankingRewardRange[]): EventRankingRewardRange[] => {
-    const importantRanges = ranges.filter(isPreviewRewardRange);
-    const previewSource = importantRanges.length > 0 ? importantRanges : ranges;
-    return previewSource.slice(0, rankingRewardPreviewLimit);
-  };
-
+  const hasResolvedRewardDetails = (reward: EventRankingReward): boolean =>
+    reward.resourceBoxDetails.length > 0;
+  const hasResolvedRewards = (range: EventRankingRewardRange): boolean =>
+    range.rewards.some(hasResolvedRewardDetails);
   const getVisibleRewardRanges = (data: EventRelatedData | null): EventRankingRewardRange[] => {
-    const ranges = data?.rewardRanges ?? [];
-    return areAllRankingRewardsVisible ? ranges : getPreviewRewardRanges(ranges);
+    const sourceRanges =
+      areAllRankingRewardsVisible && fullRewardRanges
+        ? fullRewardRanges
+        : (relatedData?.rewardRanges ?? data?.rewardRanges ?? []);
+
+    return sourceRanges.filter(hasResolvedRewards);
   };
 
   const shouldShowRankingRewardToggle = (data: EventRelatedData | null): boolean =>
-    (data?.rewardRanges.length ?? 0) > getPreviewRewardRanges(data?.rewardRanges ?? []).length;
+    data?.rewardRangesHasMore ?? false;
 
   const getRewardDetailKey = (detail: EventRewardResourceBoxDetail, index: number): string =>
     `${detail.resourceType ?? "resource"}-${detail.resourceId ?? "none"}-${detail.seq ?? index}`;
@@ -407,7 +454,11 @@
   const getFeaturedCardKey = (card: EventFeaturedCard, index: number): string =>
     card.cardId ?? card.assetBundleName ?? card.title ?? `card-${index}`;
   const getMusicKey = (music: EventMusic, index: number): string =>
-    music.musicId ?? music.seq?.toString() ?? music.assetBundleName ?? music.title ?? `music-${index}`;
+    music.musicId ??
+    music.seq?.toString() ??
+    music.assetBundleName ??
+    music.title ??
+    `music-${index}`;
   const isHonorRewardDetail = (detail: EventRewardResourceBoxDetail): boolean =>
     detail.resourceType === "honor" || detail.resourceType === "bonds_honor";
   const getRewardDetailQuantity = (detail: EventRewardResourceBoxDetail): string | null =>
@@ -415,7 +466,8 @@
   const getRewardDetailLabel = (detail: EventRewardResourceBoxDetail): string => {
     const typeLabel = detail.resourceType?.replaceAll("_", " ") ?? noDataLabel;
     const idLabel = detail.resourceId ? ` #${detail.resourceId}` : "";
-    const levelLabel = detail.resourceLevel !== null ? ` Lv.${formatNumber(detail.resourceLevel)}` : "";
+    const levelLabel =
+      detail.resourceLevel !== null ? ` Lv.${formatNumber(detail.resourceLevel)}` : "";
     return `${typeLabel}${idLabel}${levelLabel}`;
   };
   const getHonorLevelAssetBundleName = (detail: EventRewardResourceBoxDetail): string | null => {
@@ -460,7 +512,11 @@
     const honorType = honor.group?.honorType ?? honor.honorType;
     const assetBundleName = getHonorLevelAssetBundleName(detail);
     const backgroundAssetBundleName = honor.group?.backgroundAssetBundleName ?? assetBundleName;
-    const rarity = honor.honorRarity ?? honor.levels.find((level) => level.level === detail.resourceLevel)?.honorRarity ?? honor.levels.find((level) => level.honorRarity)?.honorRarity ?? "low";
+    const rarity =
+      honor.honorRarity ??
+      honor.levels.find((level) => level.level === detail.resourceLevel)?.honorRarity ??
+      honor.levels.find((level) => level.honorRarity)?.honorRarity ??
+      "low";
     const rarityNumber = honorRarityNumber[rarity] ?? 1;
     const frameName = honor.group?.frameName;
 
@@ -469,7 +525,9 @@
     let frameFallbackSrc: string | null = null;
     if (
       frameName &&
-      (rarity === "highest" || rarity === "high" || (honorType === "birthday" && rarity === "middle"))
+      (rarity === "highest" ||
+        rarity === "high" ||
+        (honorType === "birthday" && rarity === "middle"))
     ) {
       frameSrc = getRemoteAssetEndpointURL(
         `honor_frame/${frameName}/frame_degree_${config.frameSize}_${rarityNumber}.webp`,
@@ -493,9 +551,15 @@
 
     let overlaySrc: string | null = null;
     if ((honorType === "event" || honorType === "event_point") && assetBundleName) {
-      overlaySrc = getRemoteAssetEndpointURL(`honor/${assetBundleName}/rank_${config.assetName}.webp`, assetRegion);
+      overlaySrc = getRemoteAssetEndpointURL(
+        `honor/${assetBundleName}/rank_${config.assetName}.webp`,
+        assetRegion
+      );
     } else if (honorType === "rank_match" && assetBundleName) {
-      overlaySrc = getRemoteAssetEndpointURL(`rank_live/honor/${assetBundleName}/${config.assetName}.webp`, assetRegion);
+      overlaySrc = getRemoteAssetEndpointURL(
+        `rank_live/honor/${assetBundleName}/${config.assetName}.webp`,
+        assetRegion
+      );
     } else if (honor.honorMissionType && assetBundleName) {
       overlaySrc = getRemoteAssetEndpointURL(`honor/${assetBundleName}/scroll.webp`, assetRegion);
     }
@@ -505,12 +569,18 @@
     return {
       config,
       baseSrc,
-      frame: { src: frameSrc, ...getHonorFrameGeometry(rarityNumber, config), fallbackSrc: frameFallbackSrc },
+      frame: {
+        src: frameSrc,
+        ...getHonorFrameGeometry(rarityNumber, config),
+        fallbackSrc: frameFallbackSrc
+      },
       overlaySrc,
       isFullBleedOverlay
     };
   };
-  const getHonorAssetPreviews = (detail: EventRewardResourceBoxDetail): HonorAssetPreviews | null => {
+  const getHonorAssetPreviews = (
+    detail: EventRewardResourceBoxDetail
+  ): HonorAssetPreviews | null => {
     const sub = getHonorAssetPreview(detail, honorAssetVariantConfigs.sub);
     const main = getHonorAssetPreview(detail, honorAssetVariantConfigs.main);
 
@@ -522,7 +592,10 @@
     }
 
     if (detail.resourceType === "material" && detail.resourceId) {
-      return getRemoteAssetEndpointURL(`thumbnail/material/material${detail.resourceId}.webp`, region as AssetServer);
+      return getRemoteAssetEndpointURL(
+        `thumbnail/material/material${detail.resourceId}.webp`,
+        region as AssetServer
+      );
     }
 
     if (
@@ -545,11 +618,17 @@
     }
 
     if (detail.resourceType === "gacha_ticket" && detail.resourceId) {
-      return getRemoteAssetEndpointURL(`thumbnail/gacha_ticket/${detail.resourceId}.webp`, region as AssetServer);
+      return getRemoteAssetEndpointURL(
+        `thumbnail/gacha_ticket/${detail.resourceId}.webp`,
+        region as AssetServer
+      );
     }
 
     if (detail.resourceType === "boost_item" && detail.resourceId) {
-      return getRemoteAssetEndpointURL(`thumbnail/boost_item/boost_item${detail.resourceId}.webp`, region as AssetServer);
+      return getRemoteAssetEndpointURL(
+        `thumbnail/boost_item/boost_item${detail.resourceId}.webp`,
+        region as AssetServer
+      );
     }
 
     return null;
@@ -569,9 +648,6 @@
 
     return "mdi:gift-outline";
   };
-  const formatRewardResource = (reward: EventRankingReward): string =>
-    reward.resourceBoxId ? `${rankingRewardResourceBoxLabel} #${reward.resourceBoxId}` : noDataLabel;
-
   const getVirtualLiveItems = (currentEvent: EventDetail): SummaryItem[] => {
     if (!currentEvent.virtualLive) {
       return [];
@@ -584,7 +660,6 @@
       }
     ];
   };
-
 </script>
 
 {#snippet rewardDetailChip(detail: EventRewardResourceBoxDetail, _index: number)}
@@ -604,7 +679,11 @@
         onerror={hideBrokenImage}
       />
     {:else}
-      <Icon icon={getRewardDetailFallbackIcon(detail)} class="size-4 shrink-0 opacity-70" aria-hidden="true" />
+      <Icon
+        icon={getRewardDetailFallbackIcon(detail)}
+        class="size-4 shrink-0 opacity-70"
+        aria-hidden="true"
+      />
     {/if}
     {#if getRewardDetailQuantity(detail)}
       <span class="shrink-0 text-primary">×{getRewardDetailQuantity(detail)}</span>
@@ -615,7 +694,11 @@
 {#snippet honorRewardDetail(detail: EventRewardResourceBoxDetail)}
   {@const honorPreviews = getHonorAssetPreviews(detail)}
   {#if honorPreviews}
-    <span class="inline-flex shrink-0" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
+    <span
+      class="inline-flex shrink-0"
+      title={getRewardDetailLabel(detail)}
+      aria-label={getRewardDetailLabel(detail)}
+    >
       <span class="block h-10 sm:hidden" aria-hidden="true">
         {@render honorAssetPreview(honorPreviews.sub)}
       </span>
@@ -624,8 +707,16 @@
       </span>
     </span>
   {:else}
-    <span class="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-base-content/20 bg-base-100/80 px-2.5 py-1.5 text-xs font-semibold text-base-content" title={getRewardDetailLabel(detail)} aria-label={getRewardDetailLabel(detail)}>
-      <Icon icon={getRewardDetailFallbackIcon(detail)} class="size-4 shrink-0 opacity-70" aria-hidden="true" />
+    <span
+      class="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-base-content/20 bg-base-100/80 px-2.5 py-1.5 text-xs font-semibold text-base-content"
+      title={getRewardDetailLabel(detail)}
+      aria-label={getRewardDetailLabel(detail)}
+    >
+      <Icon
+        icon={getRewardDetailFallbackIcon(detail)}
+        class="size-4 shrink-0 opacity-70"
+        aria-hidden="true"
+      />
     </span>
   {/if}
 {/snippet}
@@ -682,19 +773,14 @@
   </svg>
 {/snippet}
 
-{#snippet rewardFallbackChip(reward: EventRankingReward)}
-  <span class="badge min-h-8 border-base-content/20 bg-base-100/80 font-semibold text-base-content">
-    <Icon icon="mdi:gift-outline" class="size-4 opacity-70" aria-hidden="true" />
-    <span class="sr-only">{formatRewardResource(reward)}</span>
-  </span>
-{/snippet}
-
 {#snippet bonusCharacterPanel(item: BonusCharacterItem)}
   {@const displayName = getBonusDisplayName(item)}
   {@const characterAccentColor = getBonusCharacterAccentColor(item)}
   {@const characterIconSrc = getBonusCharacterIconSrc(item)}
   {@const isCharacterBonus = hasBonusCharacterData(item)}
-  <div class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3">
+  <div
+    class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3"
+  >
     <div class="flex justify-center">
       {#if isCharacterBonus}
         <CharacterAvatar
@@ -713,7 +799,12 @@
       <p class="truncate text-sm font-semibold text-base-content">{displayName}</p>
       <div class="mt-1 flex min-h-7 items-center gap-1.5">
         {#if item.unit}
-          <UnitIconBadge unit={item.unit} fallbackLabel={item.unit} mapNoneToPiapro={true} variant="sm" />
+          <UnitIconBadge
+            unit={item.unit}
+            fallbackLabel={item.unit}
+            mapNoneToPiapro={true}
+            variant="sm"
+          />
         {/if}
       </div>
     </div>
@@ -766,10 +857,22 @@
   {@const rarityIconUrl = getRarityIconUrl(rarityType)}
   <span class="flex min-w-16 items-center gap-0.5" aria-label={getRarityLabel(rarityType)}>
     {#if rarityIconUrl && rarityType === "rarity_birthday"}
-      <img src={rarityIconUrl} alt={getRarityLabel(rarityType)} class="size-5 object-contain" loading="lazy" decoding="async" />
+      <img
+        src={rarityIconUrl}
+        alt={getRarityLabel(rarityType)}
+        class="size-5 object-contain"
+        loading="lazy"
+        decoding="async"
+      />
     {:else if rarityIconUrl}
       {#each Array.from({ length: getRarityValue(rarityType) }, (_, index) => index) as index (index)}
-        <img src={rarityIconUrl} alt={index === 0 ? getRarityLabel(rarityType) : ""} class="size-4 object-contain" loading="lazy" decoding="async" />
+        <img
+          src={rarityIconUrl}
+          alt={index === 0 ? getRarityLabel(rarityType) : ""}
+          class="size-4 object-contain"
+          loading="lazy"
+          decoding="async"
+        />
       {/each}
     {:else}
       <span class="text-sm font-semibold">{getRarityLabel(rarityType)}</span>
@@ -799,7 +902,7 @@
   {@const content = card}
   {#if href}
     <a
-      href={href}
+      {href}
       class="content-card-inset group grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3 transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
     >
       <CardThumbnail
@@ -828,7 +931,9 @@
       </div>
     </a>
   {:else}
-    <div class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3">
+    <div
+      class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3"
+    >
       <CardThumbnail
         src={getCardThumbnailSrc(content)}
         fallbackSrc={getCardFallbackThumbnailSrc(content)}
@@ -861,7 +966,7 @@
   {#if href}
     {@const jacketSrc = getMusicJacketSrc(content)}
     <a
-      href={href}
+      {href}
       class="content-card-inset group grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded-xl p-3 transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
     >
       <div class="aspect-square overflow-hidden rounded-lg bg-base-200">
@@ -922,12 +1027,16 @@
       <p class="text-sm font-semibold">{formatRankRange(range)}</p>
       <div class="flex flex-wrap gap-1.5">
         {#if range.fromRank !== null && range.fromRank <= 1000}
-          <span class="badge badge-sm border-base-content/20 bg-base-100/80 font-semibold text-base-content">
+          <span
+            class="badge badge-sm border-base-content/20 bg-base-100/80 font-semibold text-base-content"
+          >
             {rankingRewardTopLabel}
           </span>
         {/if}
-        {#if range.isToRankBorder === true}
-          <span class="badge badge-sm border-base-content/20 bg-base-100/80 font-semibold text-base-content">
+        {#if range.isToRankBorder === true || (range.fromRank !== null && range.fromRank > 1000)}
+          <span
+            class="badge badge-sm border-base-content/20 bg-base-100/80 font-semibold text-base-content"
+          >
             {rankingRewardBorderLabel}
           </span>
         {/if}
@@ -935,23 +1044,21 @@
     </div>
     {#if range.rewards.length > 0}
       <div class="mt-3 grid gap-2">
-        {#each range.rewards as reward, rewardIndex (getRewardKey(reward, rewardIndex))}
-          {#if reward.resourceBoxDetails.length > 0}
-            {@const honorDetails = reward.resourceBoxDetails.filter(isHonorRewardDetail)}
-            {@const regularDetails = reward.resourceBoxDetails.filter((detail) => !isHonorRewardDetail(detail))}
-            <div class="flex flex-wrap items-center gap-2">
-              {#each honorDetails as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
-                {@render honorRewardDetail(detail)}
+        {#each range.rewards.filter(hasResolvedRewardDetails) as reward, rewardIndex (getRewardKey(reward, rewardIndex))}
+          {@const honorDetails = reward.resourceBoxDetails.filter(isHonorRewardDetail)}
+          {@const regularDetails = reward.resourceBoxDetails.filter(
+            (detail) => !isHonorRewardDetail(detail)
+          )}
+          <div class="flex flex-wrap items-center gap-2">
+            {#each honorDetails as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
+              {@render honorRewardDetail(detail)}
+            {/each}
+            {#if regularDetails.length > 0}
+              {#each regularDetails as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
+                {@render rewardDetailChip(detail, detailIndex)}
               {/each}
-              {#if regularDetails.length > 0}
-                {#each regularDetails as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
-                  {@render rewardDetailChip(detail, detailIndex)}
-                {/each}
-              {/if}
-            </div>
-          {:else}
-            {@render rewardFallbackChip(reward)}
-          {/if}
+            {/if}
+          </div>
         {/each}
       </div>
     {:else}
@@ -1000,7 +1107,8 @@
                   <th>{@render rarityIconLabel(rarityType)}</th>
                   {#each getMasterRankColumns(relatedData) as masterRank (masterRank)}
                     <td class="text-right font-semibold text-primary">
-                      {formatPercent(getRarityBonusRate(relatedData, rarityType, masterRank)) ?? "—"}
+                      {formatPercent(getRarityBonusRate(relatedData, rarityType, masterRank)) ??
+                        "—"}
                     </td>
                   {/each}
                 </tr>
@@ -1057,22 +1165,32 @@
       <Icon icon="mdi:gift-outline" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
       <span>{rankingRewardsTitle}</span>
     </h2>
-    {#if (relatedData?.rewardRanges.length ?? 0) > 0}
+    {#if (displayRelatedData?.rewardRanges.length ?? 0) > 0}
       <div class="grid gap-2">
-        {#each getVisibleRewardRanges(relatedData) as range, rangeIndex (getRewardRangeKey(range, rangeIndex))}
+        {#each getVisibleRewardRanges(displayRelatedData) as range, rangeIndex (getRewardRangeKey(range, rangeIndex))}
           {@render rankingRewardRangePanel(range)}
         {/each}
       </div>
-      {#if shouldShowRankingRewardToggle(relatedData)}
+      {#if shouldShowRankingRewardToggle(displayRelatedData)}
         <button
           type="button"
           class="btn btn-outline btn-sm border-base-content/20 text-primary"
-          onclick={() => {
-            areAllRankingRewardsVisible = !areAllRankingRewardsVisible;
-          }}
+          disabled={rewardsLoading}
+          onclick={() =>
+            areAllRankingRewardsVisible
+              ? (areAllRankingRewardsVisible = false)
+              : void loadAllRewards()}
         >
-          {areAllRankingRewardsVisible ? rankingRewardsShowLessLabel : rankingRewardsShowMoreLabel}
+          {#if rewardsLoading}
+            <span class="loading loading-spinner loading-xs"></span>
+            {rankingRewardsLoadingLabel}
+          {:else}
+            {areAllRankingRewardsVisible ? rankingRewardsShowLessLabel : rankingRewardsShowMoreLabel}
+          {/if}
         </button>
+      {/if}
+      {#if rewardsLoadError}
+        <p class="text-sm text-error">{rankingRewardsLoadErrorLabel}</p>
       {/if}
     {:else}
       <p class="content-card-inset rounded-xl p-3 text-sm opacity-70">{noDataLabel}</p>
@@ -1090,7 +1208,9 @@
         <span>{virtualLiveTitle}</span>
       </h2>
       <div class="content-card-inset @container rounded-xl p-2.5 sm:p-3">
-        <div class={`grid gap-2 ${virtualLiveBannerSrc ? "@md:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)] @md:items-center" : ""}`}>
+        <div
+          class={`grid gap-2 ${virtualLiveBannerSrc ? "@md:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)] @md:items-center" : ""}`}
+        >
           {#if virtualLiveBannerSrc}
             <div class="aspect-33/10 overflow-hidden rounded-lg bg-base-200 @md:aspect-33/14">
               <EventAssetImage
@@ -1103,10 +1223,14 @@
             </div>
           {/if}
           <div class="min-w-0">
-            <p class="line-clamp-2 text-sm/5 font-semibold">{virtualLive.name ?? virtualLiveTitle}</p>
+            <p class="line-clamp-2 text-sm/5 font-semibold">
+              {virtualLive.name ?? virtualLiveTitle}
+            </p>
             <div class="mt-1.5 grid gap-1.5">
               {#each getVirtualLiveItems(event) as item (item.key)}
-                <p class="min-w-0 wrap-break-word rounded-lg bg-base-100/70 px-2 py-1.5 text-xs/4 font-medium">
+                <p
+                  class="min-w-0 wrap-break-word rounded-lg bg-base-100/70 px-2 py-1.5 text-xs/4 font-medium"
+                >
                   {item.value}
                 </p>
               {/each}

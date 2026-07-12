@@ -77,8 +77,7 @@
         ? "border-primary/45 bg-primary text-primary-content shadow-sm"
         : "text-base-content/70 hover:bg-base-100/80"
     }`;
-  const getPreviewAspectClass = (): string =>
-    isCutoutTab(resolvedTab) ? "aspect-4/3" : "aspect-[21/10]";
+  const getPreviewAspectClass = (): string => "aspect-16/10";
   const getAssetUrl = (
     tab: CardAssetTab,
     assetRegion = getAssetRegion(),
@@ -111,7 +110,7 @@
     fallbackLabel={imageUnavailableLabel}
     buttonClass="block h-full w-full overflow-hidden"
     interactive={true}
-    imageClass={`h-full w-full ${isCutoutTab(resolvedTab) ? "object-contain p-2" : "object-contain"}`}
+    imageClass={`h-full w-full ${isCutoutTab(resolvedTab) ? "object-contain" : "object-cover"}`}
     onclick={() => {
       openPreview();
     }}

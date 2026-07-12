@@ -4,6 +4,7 @@
 
   let {
     src,
+    fallbackSrc,
     alt = "",
     fallbackLabel = "",
     imageClass = "h-full w-full object-contain",
@@ -13,6 +14,7 @@
     onclick
   }: {
     src: string;
+    fallbackSrc?: string;
     alt?: string;
     fallbackLabel?: string;
     imageClass?: string;
@@ -24,8 +26,10 @@
 
   let previewImageLoaded = $state(false);
   let previewImageFailed = $state(false);
+  let fallbackApplied = $state(false);
   let imageVisible = $state(false);
   let observedNode: HTMLDivElement | null = $state(null);
+  const currentSrc = $derived(fallbackApplied && fallbackSrc ? fallbackSrc : src);
   const shouldRenderImage = $derived(loadMode === "immediate" || imageVisible);
 
   const interactiveButtonClass = $derived(
@@ -33,12 +37,25 @@
   );
 
   $effect(() => {
-    if (src !== undefined) {
+    const sourceSet = { primary: src, fallback: fallbackSrc };
+    void sourceSet;
+    fallbackApplied = false;
+    previewImageLoaded = false;
+    previewImageFailed = false;
+    imageVisible = loadMode === "immediate";
+  });
+
+  const handleImageError = (): void => {
+    if (!fallbackApplied && fallbackSrc && fallbackSrc !== currentSrc) {
+      fallbackApplied = true;
       previewImageLoaded = false;
       previewImageFailed = false;
-      imageVisible = loadMode === "immediate";
+      return;
     }
-  });
+
+    previewImageLoaded = true;
+    previewImageFailed = true;
+  };
 
   $effect(() => {
     if (loadMode !== "visible" || imageVisible || !observedNode) {
@@ -101,7 +118,7 @@
       {/if}
       {#if shouldRenderImage}
         <img
-          {src}
+          src={currentSrc}
           {alt}
           loading="eager"
           decoding="async"
@@ -110,10 +127,7 @@
             previewImageLoaded = true;
             previewImageFailed = false;
           }}
-          onerror={() => {
-            previewImageLoaded = true;
-            previewImageFailed = true;
-          }}
+          onerror={handleImageError}
         />
       {/if}
     </div>

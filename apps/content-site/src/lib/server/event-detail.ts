@@ -378,7 +378,8 @@ const parseEventRelatedData = ({
   bonuses: parseEventBonuses(bonusesPayload),
   cards: parseItems(cardsPayload, parseFeaturedCard),
   musics: parseItems(musicsPayload, parseEventMusic),
-  rewardRanges: parseItems(rewardsPayload, parseRewardRange)
+  rewardRanges: parseItems(rewardsPayload, parseRewardRange),
+  rewardRangesHasMore: null
 });
 
 const parseEventAggregateRelatedData = (payload: unknown): EventRelatedData => {
@@ -393,6 +394,7 @@ const parseEventAggregateRelatedData = (payload: unknown): EventRelatedData => {
   }
 
   const rewardsNode = getObject(root["rewards"]);
+  const rewardsSummary = getObject(rewardsNode?.["summary"]);
 
   return {
     bonuses: parseEventBonuses(root["bonuses"]),
@@ -401,7 +403,8 @@ const parseEventAggregateRelatedData = (payload: unknown): EventRelatedData => {
     rewardRanges: getArray(rewardsNode?.["previewRanges"]).flatMap((item) => {
       const range = parseRewardRange(item);
       return range ? [range] : [];
-    })
+    }),
+    rewardRangesHasMore: getBoolean(rewardsSummary?.["hasMore"])
   };
 };
 

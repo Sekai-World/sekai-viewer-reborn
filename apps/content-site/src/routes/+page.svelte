@@ -10,7 +10,8 @@
   import {
     getCardThumbnailAssetURL,
     getMusicJacketAssetURL,
-    getGachaBannerAssetURL
+    getGachaBannerAssetURL,
+    getGachaLogoAssetURL
   } from "$lib/assets";
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -95,7 +96,10 @@
 
   // ── i18n ───────────────────────────────────────────────────────────
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const translate = createI18nTranslator(
+      data.uiLocale,
+      resolveStreamingMessages(data.i18nMessages)
+    );
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale);
   });
@@ -160,11 +164,7 @@
 </script>
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
-<section
-  role="group"
-  ontouchstart={onTouchStart}
-  ontouchend={onTouchEnd}
->
+<section role="group" ontouchstart={onTouchStart} ontouchend={onTouchEnd}>
   <!-- Region selector (shared for both sections) -->
   <div class="mb-6 flex flex-wrap justify-center gap-2">
     <RegionBadgeSwitch
@@ -230,12 +230,17 @@
             <!-- Column 1: Cards + Musics (stacked) -->
             <div class="space-y-6">
               <div>
-                <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                <h3
+                  class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70"
+                >
                   <span class="flex items-center gap-2">
                     <Icon icon="mdi:cards-outline" class="size-4" aria-hidden="true" />
                     {latestDataCardsLabel}
                   </span>
-                  <a href="/cards/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                  <a
+                    href="/cards/{regionData.region}"
+                    class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
+                  >
                     {latestDataViewAll}
                     <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
                   </a>
@@ -243,15 +248,20 @@
                 {#if regionData.cards.length > 0}
                   <div class="grid grid-cols-3 gap-3">
                     {#each regionData.cards as card (card.id)}
-                      <a
-                        href="/card/{regionData.region}/{card.id}"
-                        class="group/card block"
-                      >
+                      <a href="/card/{regionData.region}/{card.id}" class="group/card block">
                         <CardThumbnail
-                          src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp") : null}
+                          src={card.assetBundleName
+                            ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
+                            : null}
                           alt={card.prefix ?? card.id}
                           fallbackLabel={card.id}
-                          fallbackSrc={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, regionData.region) : null}
+                          fallbackSrc={card.assetBundleName
+                            ? getCardThumbnailAssetURL(
+                                card.assetBundleName,
+                                false,
+                                regionData.region
+                              )
+                            : null}
                           attr={card.attr}
                           rarityType={card.rarityType}
                           rarityCount={card.rarityCount}
@@ -270,12 +280,17 @@
               </div>
 
               <div>
-                <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+                <h3
+                  class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70"
+                >
                   <span class="flex items-center gap-2">
                     <Icon icon="mdi:music-note-eighth" class="size-4" aria-hidden="true" />
                     {latestDataMusicsLabel}
                   </span>
-                  <a href="/musics/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                  <a
+                    href="/musics/{regionData.region}"
+                    class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
+                  >
                     {latestDataViewAll}
                     <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
                   </a>
@@ -285,27 +300,33 @@
                     {#each regionData.musics as music (music.id)}
                       <a
                         href="/music/{regionData.region}/{music.id}"
-                        class="group/music block overflow-hidden rounded-xl border border-base-content/10 shadow-sm transition-shadow hover:shadow-md"
+                        class="group/music block overflow-hidden rounded-xl border border-base-content/10 bg-base-100 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div class="relative aspect-square overflow-hidden">
                           {#if music.assetBundleName}
                             <EventAssetImage
-                              src={getMusicJacketAssetURL(music.assetBundleName)}
+                              src={getMusicJacketAssetURL(music.assetBundleName, regionData.region)}
                               alt={music.title ?? music.id}
                               loadMode="visible"
                               imageClass="size-full object-cover transition-transform duration-200 group-hover/music:scale-105"
                               buttonClass="block size-full"
                             />
                           {:else}
-                            <div class="flex size-full items-center justify-center bg-base-300/40 text-xs text-base-content/50">
+                            <div
+                              class="flex size-full items-center justify-center bg-base-300/40 text-xs text-base-content/50"
+                            >
                               {music.id}
                             </div>
                           {/if}
                         </div>
                         <div class="p-2">
-                          <p class="line-clamp-2 text-xs/snug font-medium">{music.title ?? music.id}</p>
+                          <p class="line-clamp-2 text-xs/snug font-medium">
+                            {music.title ?? music.id}
+                          </p>
                           {#if music.composer}
-                            <p class="mt-0.5 truncate text-[10px] text-base-content/50">{music.composer}</p>
+                            <p class="mt-0.5 truncate text-[10px] text-base-content/50">
+                              {music.composer}
+                            </p>
                           {/if}
                         </div>
                       </a>
@@ -318,12 +339,17 @@
             </div>
 
             <div class="md:col-span-2 lg:col-span-1">
-              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+              <h3
+                class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70"
+              >
                 <span class="flex items-center gap-2">
                   <Icon icon="mdi:calendar-star" class="size-4" aria-hidden="true" />
                   {latestDataEventsLabel}
                 </span>
-                <a href="/events/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                <a
+                  href="/events/{regionData.region}"
+                  class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
+                >
                   {latestDataViewAll}
                   <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
                 </a>
@@ -372,12 +398,17 @@
             </div>
 
             <div>
-              <h3 class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70">
+              <h3
+                class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70"
+              >
                 <span class="flex items-center gap-2">
                   <Icon icon="mdi:gift-outline" class="size-4" aria-hidden="true" />
                   {latestDataGachasLabel}
                 </span>
-                <a href="/gachas/{regionData.region}" class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary">
+                <a
+                  href="/gachas/{regionData.region}"
+                  class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
+                >
                   {latestDataViewAll}
                   <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
                 </a>
@@ -388,11 +419,14 @@
                     <li>
                       <a
                         href="/gacha/{regionData.region}/{gacha.id}"
-                        class="block overflow-hidden rounded-lg border border-base-content/8 shadow-sm transition-shadow hover:shadow-md"
+                        class="block overflow-hidden rounded-lg border border-base-content/8 bg-base-100 shadow-sm transition-shadow hover:shadow-md"
                       >
-                        <div class="aspect-3/1 w-full bg-base-200 pt-2">
+                        <div class="aspect-3/1 w-full bg-base-100 pt-2">
                           <EventAssetImage
-                            src={getGachaBannerAssetURL(gacha.id, "jp")}
+                            src={getGachaBannerAssetURL(gacha.id, regionData.region)}
+                            fallbackSrc={gacha.assetBundleName
+                              ? getGachaLogoAssetURL(gacha.assetBundleName, regionData.region)
+                              : undefined}
                             alt={gacha.name ?? gacha.id}
                             loadMode="visible"
                             imageClass="size-full object-contain"

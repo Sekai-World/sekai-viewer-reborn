@@ -19,3 +19,7 @@ Constrain event ranking reward honor badge previews by height while preserving t
 Simplify event detail virtual live metadata by omitting type and showing start/end as one unlabeled formatted time range.
 
 Show enriched Bonus Character rows on event details, with attributes presented as secondary bonus metadata.
+
+Load and cache complete ranking rewards only when the event detail Show all rewards control is used.
+
+Hide ranking reward entries and ranges whose resource box details cannot be resolved.
