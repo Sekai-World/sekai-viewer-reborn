@@ -1087,10 +1087,10 @@
       {#if isPiaproUnitSelected(filterUnitDraft)}
         <fieldset class="form-control w-full gap-2">
           <legend class="label-text text-sm font-medium">{cardListFilterSupportUnitLabel}</legend>
-          <div class="join flex w-full flex-wrap">
+          <div class="flex flex-wrap gap-1.5">
             {#each supportUnitOptions as option (`support-unit:${option}`)}
               <label
-                class={`btn btn-sm join-item size-12! min-h-12! p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
+                class={`btn btn-sm size-12! min-h-12! p-0 ${getFilterButtonClass(filterSupportUnitDraft, option)}`}
                 title={getSupportUnitOptionLabel(option)}
               >
                 <input
