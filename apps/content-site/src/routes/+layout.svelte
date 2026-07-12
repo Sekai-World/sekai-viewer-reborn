@@ -193,7 +193,7 @@
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
     const localeRequestToken = requestI18nLocale();
-    const translate = createI18nTranslator(uiLocale, currentLayoutMessages);
+    const translate = createI18nTranslator(uiLocale, fallbackMessages);
     applyTranslations(translate);
     void refreshTranslations(uiLocale, messagesOrPromise, requestId, localeRequestToken);
   });

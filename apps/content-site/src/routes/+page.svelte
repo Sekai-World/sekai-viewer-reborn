@@ -107,7 +107,7 @@
     const messagesOrPromise = data.i18nMessages;
     const translate = createI18nTranslator(
       data.uiLocale,
-      currentMessages
+      fallbackMessages
     );
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
