@@ -14,7 +14,6 @@
   let {
     event,
     region,
-    uiLocale,
     translate,
     displayLocale,
     title,
@@ -31,7 +30,6 @@
   }: {
     event: EventDetail;
     region: SupportedRegion;
-    uiLocale: string;
     translate: I18nTranslator;
     displayLocale: string;
     title: string;

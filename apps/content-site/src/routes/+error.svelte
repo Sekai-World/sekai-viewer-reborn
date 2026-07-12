@@ -2,17 +2,15 @@
   import Icon from "@iconify/svelte";
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { LayoutData } from "./$types";
 
   let { data }: { data: LayoutData } = $props();
-  let resolvedMessages = $state<Record<string, string> | null>(null);
-  const messages = $derived(
-    resolvedMessages ?? resolveStreamingMessages(data.i18nMessages, ["common", "error"])
-  );
+  const fallbackMessages = getLocalI18nMessages(["common", "error"]);
+  let resolvedMessages = $state<Record<string, string>>(fallbackMessages);
+  const messages = $derived(resolvedMessages);
   $effect(() => {
     const messagesOrPromise = data.i18nMessages;
-    resolvedMessages = resolveStreamingMessages(messagesOrPromise, ["common", "error"]);
     if (messagesOrPromise && typeof (messagesOrPromise as PromiseLike<Record<string, string>>).then === "function") {
       void Promise.resolve(messagesOrPromise).then((messages) => {
         if (messagesOrPromise === data.i18nMessages) resolvedMessages = messages;

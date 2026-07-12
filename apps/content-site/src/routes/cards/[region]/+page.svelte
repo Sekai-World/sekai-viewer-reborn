@@ -9,7 +9,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
@@ -57,9 +57,10 @@
   };
 
   let { data }: { data: CardListPageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
   let translationRequestId = 0;
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages, ["common", "card", "event", "error"]))(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
   let items = $state<CardListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -468,7 +469,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise, ["common", "card", "event", "error"]));
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
@@ -616,7 +617,12 @@
   };
 
   const refreshPageTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
     applyTranslations(createI18nTranslator(locale, messages));

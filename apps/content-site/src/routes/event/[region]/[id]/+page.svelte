@@ -14,24 +14,22 @@
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
-    getLocalI18nMessages
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
-  const routeFallbackMessages = getLocalI18nMessages(["common", "event", "error"]);
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "event", "error"]);
   let translationRequestId = 0;
-  const initialMessages = getLocalI18nMessages(["common", "event", "error"]);
-  let currentMessages = $state<Record<string, string>>(initialMessages);
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages, ["common", "event", "error"])
+      fallbackMessages
     )(key);
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state<string>("");
@@ -121,13 +119,10 @@
   let eventNoDataLabel = $state(getInitialI18nText("eventNoDataLabel"));
 
   $effect(() => {
-    const requestId = ++translationRequestId;
-    const messagesOrPromise = data.i18nMessages;
-    currentMessages = resolveStreamingMessages(messagesOrPromise, ["common", "event", "error"]);
     displayLocale = data.uiLocale;
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(messagesOrPromise, ["common", "event", "error"])
+      fallbackMessages
     );
     applyTranslations(translate);
   });
@@ -215,7 +210,12 @@
     messagesOrPromise: typeof data.i18nMessages,
     requestId: number
   ): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
     applyTranslations(createI18nTranslator(locale, messages));
@@ -387,7 +387,6 @@
               translate={currentTranslate}
               event={payload.event}
               region={data.region}
-              uiLocale={data.uiLocale}
               {displayLocale}
               title={eventInfoTitle}
               {idLabel}

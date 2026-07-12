@@ -12,8 +12,7 @@
   import MusicJacketHero from "$lib/components/music/MusicJacketHero.svelte";
   import {
     createI18nTranslator,
-    getLocalI18nMessages,
-    resolveStreamingMessages,
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import {
     formatUnitFallbackLabel,
@@ -22,14 +21,14 @@
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import type { PageData } from "./$types";
 
-  const routeFallbackMessages = getLocalI18nMessages(["common", "music", "error"]);
 
   let { data }: { data: PageData } = $props();
-  let currentMessages = $state<Record<string, string>>(routeFallbackMessages);
+  const fallbackMessages = getLocalI18nMessages(["common", "music", "error"]);
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
   let translationRequestId = 0;
 
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages, ["common", "music", "error"]))(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
 
   let displayLocale = $state<string>("");
 
@@ -81,11 +80,8 @@
   });
 
   $effect(() => {
-    const requestId = ++translationRequestId;
-    const messagesOrPromise = data.i18nMessages;
-    currentMessages = resolveStreamingMessages(messagesOrPromise, ["common", "music", "error"]);
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise, ["common", "music", "error"]));
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
   });
 
@@ -149,7 +145,12 @@
   };
 
   const refreshTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
     currentMessages = messages;

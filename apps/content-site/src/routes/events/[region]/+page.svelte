@@ -7,8 +7,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
-    getLocalI18nMessages
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
@@ -28,17 +27,16 @@
   type EventListSortBy = "id" | "startAt";
   type EventListSortOrder = "asc" | "desc";
 
-  const routeFallbackMessages = getLocalI18nMessages(["common", "event", "error"]);
   let { data }: { data: PageData } = $props();
-  const initialMessages = getLocalI18nMessages(["common", "event", "error"]);
-  let currentMessages = $state<Record<string, string>>(initialMessages);
+  const fallbackMessages = getLocalI18nMessages(["common", "event", "error"]);
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
   let translationRequestId = 0;
   const eventListLoadingFallback = "Loading events...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
     createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages, ["common", "event", "error"])
+      fallbackMessages
     )(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
@@ -363,10 +361,9 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    currentMessages = resolveStreamingMessages(messagesOrPromise, ["common", "event", "error"]);
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(messagesOrPromise, ["common", "event", "error"])
+      fallbackMessages
     );
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
@@ -506,7 +503,12 @@
     messagesOrPromise: typeof data.i18nMessages,
     requestId: number
   ): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
     currentMessages = messages;

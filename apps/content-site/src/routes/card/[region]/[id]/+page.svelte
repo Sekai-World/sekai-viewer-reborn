@@ -15,22 +15,24 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator,
+     getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
   let translationRequestId = 0;
   let currentTranslate = $derived(
     createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages, ["common", "card", "event", "error"])
+      fallbackMessages
     )
   );
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages, ["common", "card", "event", "error"])
+      fallbackMessages
     )(key);
 
   let debugDialog: HTMLDialogElement | null = $state(null);
@@ -151,12 +153,10 @@
   };
 
   $effect(() => {
-    const requestId = ++translationRequestId;
-    const messagesOrPromise = data.i18nMessages;
     displayLocale = data.uiLocale;
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(messagesOrPromise, ["common", "card", "event", "error"])
+      fallbackMessages
     );
     applyTranslations(translate);
   });
@@ -176,7 +176,12 @@
     messagesOrPromise: typeof data.i18nMessages,
     requestId: number
   ): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
     applyTranslations(createI18nTranslator(locale, messages));

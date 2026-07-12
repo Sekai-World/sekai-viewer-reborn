@@ -12,7 +12,7 @@
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
@@ -26,10 +26,11 @@
   type GachaListSortOrder = "asc" | "desc";
 
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "gacha", "error"]);
   let translationRequestId = 0;
   const gachaListLoadingFallback = "Loading gachas...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages, ["common", "gacha", "error"]))(key, fallback);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
   let items = $state<GachaListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -206,7 +207,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise, ["common", "gacha", "error"]));
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
@@ -331,7 +332,12 @@
   };
 
   const refreshPageTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
     applyTranslations(createI18nTranslator(locale, messages));

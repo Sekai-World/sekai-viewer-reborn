@@ -15,10 +15,9 @@
   import { onMount, type Snippet } from "svelte";
   import {
     createI18nTranslator,
-    getLocalI18nMessages,
+     getLocalI18nMessages,
     requestI18nLocale,
     isLocaleLoading,
-    resolveStreamingMessages,
     setI18nLocale
   } from "$lib/i18n/runtime";
   import {
@@ -48,13 +47,15 @@
   const MOBILE_SETTINGS_MENU_ID = "content-site-mobile-settings-menu";
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
-  const layoutFallbackMessages = getLocalI18nMessages(["common"]);
-
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common"]);
+  let currentLayoutMessages = $state<Record<string, string>>(
+    fallbackMessages
+  );
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages, ["common"])
+      fallbackMessages
     )(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
@@ -183,7 +184,6 @@
     }
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");
-  let currentLayoutMessages = $state<Record<string, string>>(layoutFallbackMessages);
   const layoutTranslate = $derived(createI18nTranslator(uiLocale, currentLayoutMessages));
   const themeModeLabel = $derived(layoutTranslate(`themeMode.${themeMode}`, themeMode));
   const resolvedThemeLabel = $derived(layoutTranslate(`themeMode.${resolvedTheme}`, resolvedTheme));
@@ -191,9 +191,8 @@
 
   $effect(() => {
     const requestId = ++translationRequestId;
-    const localeRequestToken = requestI18nLocale();
     const messagesOrPromise = data.i18nMessages;
-    currentLayoutMessages = layoutFallbackMessages;
+    const localeRequestToken = requestI18nLocale();
     const translate = createI18nTranslator(uiLocale, currentLayoutMessages);
     applyTranslations(translate);
     void refreshTranslations(uiLocale, messagesOrPromise, requestId, localeRequestToken);
@@ -296,7 +295,12 @@
     requestId: number,
     localeRequestToken: ReturnType<typeof requestI18nLocale>
   ): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
     const resolvedLocale = await setI18nLocale(localeValue, messages, localeRequestToken);
     if (requestId !== translationRequestId) return;

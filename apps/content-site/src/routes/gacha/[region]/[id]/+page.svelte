@@ -17,23 +17,20 @@
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
-    getLocalI18nMessages
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
-  const routeFallbackMessages = getLocalI18nMessages(["common", "gacha", "error"]);
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "gacha", "error"]);
   let translationRequestId = 0;
-  const initialMessages = getLocalI18nMessages(["common", "gacha", "error"]);
-  let currentMessages = $state<Record<string, string>>(initialMessages);
-  let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
 
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages, ["common", "gacha", "error"])
+      fallbackMessages
     )(key);
 
   let displayLocale = $state("");
@@ -198,13 +195,10 @@
   };
 
   $effect(() => {
-    const requestId = ++translationRequestId;
-    const messagesOrPromise = data.i18nMessages;
-    currentMessages = resolveStreamingMessages(messagesOrPromise, ["common", "gacha", "error"]);
     displayLocale = data.uiLocale;
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(messagesOrPromise, ["common", "gacha", "error"])
+      fallbackMessages
     );
     applyTranslations(translate);
   });
@@ -224,7 +218,12 @@
     messagesOrPromise: typeof data.i18nMessages,
     requestId: number
   ): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
     applyTranslations(createI18nTranslator(locale, messages));

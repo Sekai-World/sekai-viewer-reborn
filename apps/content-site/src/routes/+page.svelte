@@ -2,8 +2,7 @@
   import Icon from "@iconify/svelte";
   import {
     createI18nTranslator,
-    resolveStreamingMessages,
-    getLocalI18nMessages
+     getLocalI18nMessages,
   } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
@@ -19,10 +18,11 @@
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "home", "event", "error"]);
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages, ["common", "home", "event", "error"])
+      fallbackMessages
     )(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
@@ -45,8 +45,9 @@
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
   let swipeHint = $state(getInitialI18nText("swipeHint"));
   let translationRequestId = 0;
-  const initialMessages = getLocalI18nMessages(["common", "home", "event", "error"]);
-  let currentMessages = $state<Record<string, string>>(initialMessages);
+  let currentMessages = $state<Record<string, string>>(
+    fallbackMessages
+  );
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
 
   // ── Region state ───────────────────────────────────────────────────
@@ -104,15 +105,9 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    currentMessages = resolveStreamingMessages(messagesOrPromise, [
-      "common",
-      "home",
-      "event",
-      "error"
-    ]);
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(messagesOrPromise, ["common", "home", "event", "error"])
+      currentMessages
     );
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
@@ -146,7 +141,12 @@
     messagesOrPromise: typeof data.i18nMessages,
     requestId: number
   ): Promise<void> => {
-    const messages = await messagesOrPromise;
+    let messages: Record<string, string>;
+    try {
+      messages = await messagesOrPromise;
+    } catch {
+      return;
+    }
     if (requestId !== translationRequestId) return;
 
     applyTranslations(createI18nTranslator(localeValue, messages));
