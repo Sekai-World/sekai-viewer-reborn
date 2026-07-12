@@ -3,8 +3,7 @@
   import {
     createI18nTranslator,
     resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
+    setI18nLocale
   } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
@@ -42,6 +41,7 @@
   let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
   let swipeHint = $state(getInitialI18nText("swipeHint"));
+  let translationRequestId = 0;
 
   // ── Region state ───────────────────────────────────────────────────
   const REGION_STORAGE_KEY = "home-region";
@@ -96,12 +96,14 @@
 
   // ── i18n ───────────────────────────────────────────────────────────
   $effect(() => {
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages)
+      resolveStreamingMessages(messagesOrPromise)
     );
     applyTranslations(translate);
-    void refreshPageTranslations(data.uiLocale);
+    void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
@@ -127,9 +129,18 @@
     swipeHint = translate("swipeHint");
   };
 
-  const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
-    applyTranslations((key) => tCommon(locale, key));
+  const refreshPageTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
+    const messages = await messagesOrPromise;
+    if (requestId !== translationRequestId) return;
+
+    const locale = await setI18nLocale(localeValue, messages);
+    if (requestId !== translationRequestId) return;
+
+    applyTranslations(createI18nTranslator(locale, messages));
   };
 
   // ── Helpers ────────────────────────────────────────────────────────

@@ -24,6 +24,7 @@
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
   let { data }: { data: PageData } = $props();
+  let translationRequestId = 0;
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let debugDialog: HTMLDialogElement | null = $state(null);
@@ -114,20 +115,24 @@
   let eventNoDataLabel = $state(getInitialI18nText("eventNoDataLabel"));
 
   $effect(() => {
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
     displayLocale = data.uiLocale;
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(data.i18nMessages)
+      resolveStreamingMessages(messagesOrPromise)
     );
     applyTranslations(translate);
   });
 
   $effect(() => {
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
     if (!browser) {
       return;
     }
 
-    void refreshTranslations(data.uiLocale);
+    void refreshTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
   const applyTranslations = (translate: (key: string) => string): void => {
@@ -198,8 +203,11 @@
     eventNoDataLabel = translate("eventNoDataLabel");
   };
 
-  const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
+  const refreshTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+    const messages = await messagesOrPromise;
+    if (requestId !== translationRequestId) return;
+    const locale = await setI18nLocale(localeValue, messages);
+    if (requestId !== translationRequestId) return;
     applyTranslations((key) => tCommon(locale, key));
   };
 

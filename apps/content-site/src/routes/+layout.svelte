@@ -73,6 +73,7 @@
   let localeLoadingProgress = $state(0);
   let localeLoadingInterval: ReturnType<typeof setInterval> | null = null;
   let localeProgressResetTimeout: ReturnType<typeof setTimeout> | null = null;
+  let translationRequestId = 0;
   let homeLabel = $state(getInitialI18nText("home"));
   let openSidebarLabel = $state(getInitialI18nText("aria.openSidebar"));
   let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
@@ -175,9 +176,11 @@
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
 
   $effect(() => {
-    const translate = createI18nTranslator(uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    const translate = createI18nTranslator(uiLocale, resolveStreamingMessages(messagesOrPromise));
     applyTranslations(translate);
-    void refreshTranslations(uiLocale);
+    void refreshTranslations(uiLocale, messagesOrPromise, requestId);
   });
 
   const stopLocaleProgressTimers = (): void => {
@@ -271,8 +274,15 @@
     };
   };
 
-  const refreshTranslations = async (localeValue: string): Promise<void> => {
-    const resolvedLocale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
+  const refreshTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
+    const messages = await messagesOrPromise;
+    if (requestId !== translationRequestId) return;
+    const resolvedLocale = await setI18nLocale(localeValue, messages);
+    if (requestId !== translationRequestId) return;
     applyTranslations((key) => tCommon(resolvedLocale, key));
   };
 

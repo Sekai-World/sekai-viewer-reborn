@@ -59,6 +59,7 @@
   };
 
   let { data }: { data: CardListPageData } = $props();
+  let translationRequestId = 0;
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
   let items = $state<CardListItem[]>([]);
@@ -467,9 +468,11 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise));
     applyTranslations(translate);
-    void refreshPageTranslations(data.uiLocale);
+    void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
   $effect(() => {
@@ -614,8 +617,11 @@
     spoilerContentLabel = translate("spoilerContent");
   };
 
-  const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
+  const refreshPageTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+    const messages = await messagesOrPromise;
+    if (requestId !== translationRequestId) return;
+    const locale = await setI18nLocale(localeValue, messages);
+    if (requestId !== translationRequestId) return;
     applyTranslations((key: string) => tCommon(locale, key));
   };
 

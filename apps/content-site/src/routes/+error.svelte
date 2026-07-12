@@ -6,8 +6,19 @@
   import type { LayoutData } from "./$types";
 
   let { data }: { data: LayoutData } = $props();
+  let resolvedMessages = $state<Record<string, string> | null>(null);
+  const messages = $derived(
+    resolvedMessages ?? resolveStreamingMessages(data.i18nMessages)
+  );
+  $effect(() => {
+    const messagesOrPromise = data.i18nMessages;
+    resolvedMessages = resolveStreamingMessages(messagesOrPromise);
+    void messagesOrPromise.then((messages) => {
+      if (messagesOrPromise === data.i18nMessages) resolvedMessages = messages;
+    });
+  });
   const translate = $derived(
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))
+    createI18nTranslator(data.uiLocale, messages)
   );
   const status = $derived(page.status);
   const title = $derived(

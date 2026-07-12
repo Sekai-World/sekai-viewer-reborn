@@ -30,6 +30,7 @@
   type EventListSortOrder = "asc" | "desc";
 
   let { data }: { data: PageData } = $props();
+  let translationRequestId = 0;
   const eventListLoadingFallback = "Loading events...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
     createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key, fallback);
@@ -344,9 +345,11 @@
   });
 
   $effect(() => {
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const requestId = ++translationRequestId;
+    const messagesOrPromise = data.i18nMessages;
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise));
     applyTranslations(translate);
-    void refreshPageTranslations(data.uiLocale);
+    void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
   $effect(() => {
@@ -478,8 +481,11 @@
     bannerAltSuffix = translate("bannerAltSuffix");
   };
 
-  const refreshPageTranslations = async (localeValue: string): Promise<void> => {
-    const locale = await setI18nLocale(localeValue, resolveStreamingMessages(data.i18nMessages));
+  const refreshPageTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+    const messages = await messagesOrPromise;
+    if (requestId !== translationRequestId) return;
+    const locale = await setI18nLocale(localeValue, messages);
+    if (requestId !== translationRequestId) return;
     applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
   };
 
