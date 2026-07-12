@@ -57,7 +57,6 @@
     rankingRewardsTitle,
     rankingRewardTopLabel,
     rankingRewardBorderLabel,
-    rankingRewardResourceBoxLabel,
     rankingRewardsShowMoreLabel,
     rankingRewardsShowLessLabel,
     virtualLiveTitle,
@@ -89,7 +88,6 @@
     rankingRewardsTitle: string;
     rankingRewardTopLabel: string;
     rankingRewardBorderLabel: string;
-    rankingRewardResourceBoxLabel: string;
     rankingRewardsShowMoreLabel: string;
     rankingRewardsShowLessLabel: string;
     virtualLiveTitle: string;

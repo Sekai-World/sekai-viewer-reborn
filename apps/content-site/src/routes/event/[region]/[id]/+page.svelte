@@ -102,9 +102,6 @@
   let eventRankingRewardsTitle = $state(getInitialI18nText("eventRankingRewardsTitle"));
   let eventRankingRewardTopLabel = $state(getInitialI18nText("eventRankingRewardTopLabel"));
   let eventRankingRewardBorderLabel = $state(getInitialI18nText("eventRankingRewardBorderLabel"));
-  let eventRankingRewardResourceBoxLabel = $state(
-    getInitialI18nText("eventRankingRewardResourceBoxLabel")
-  );
   let eventRankingRewardsShowMoreLabel = $state(
     getInitialI18nText("eventRankingRewardsShowMoreLabel")
   );
@@ -193,7 +190,6 @@
     eventRankingRewardsTitle = translate("eventRankingRewardsTitle");
     eventRankingRewardTopLabel = translate("eventRankingRewardTopLabel");
     eventRankingRewardBorderLabel = translate("eventRankingRewardBorderLabel");
-    eventRankingRewardResourceBoxLabel = translate("eventRankingRewardResourceBoxLabel");
     eventRankingRewardsShowMoreLabel = translate("eventRankingRewardsShowMoreLabel");
     eventRankingRewardsShowLessLabel = translate("eventRankingRewardsShowLessLabel");
     rankingRewardsLoadingLabel = translate("rankingRewardsLoadingLabel");
@@ -451,7 +447,6 @@
             rankingRewardsTitle={eventRankingRewardsTitle}
             rankingRewardTopLabel={eventRankingRewardTopLabel}
             rankingRewardBorderLabel={eventRankingRewardBorderLabel}
-            rankingRewardResourceBoxLabel={eventRankingRewardResourceBoxLabel}
             rankingRewardsShowMoreLabel={eventRankingRewardsShowMoreLabel}
             rankingRewardsShowLessLabel={eventRankingRewardsShowLessLabel}
             virtualLiveTitle={eventVirtualLiveTitle}
