@@ -87,7 +87,9 @@
   let eventRarityLabel = $state(getInitialI18nText("eventRarityLabel"));
   let eventFeaturedCardsTitle = $state(getInitialI18nText("eventFeaturedCardsTitle"));
   let eventFeaturedCardBonusLabel = $state(getInitialI18nText("eventFeaturedCardBonusLabel"));
-  let eventFeaturedCardBonusShortLabel = $state(getInitialI18nText("eventFeaturedCardBonusShortLabel"));
+  let eventFeaturedCardBonusShortLabel = $state(
+    getInitialI18nText("eventFeaturedCardBonusShortLabel")
+  );
   let eventLeaderBonusLabel = $state(getInitialI18nText("eventLeaderBonusLabel"));
   let eventLeaderBonusShortLabel = $state(getInitialI18nText("eventLeaderBonusShortLabel"));
   let eventCardIdLabel = $state(getInitialI18nText("eventCardIdLabel"));
@@ -100,15 +102,26 @@
   let eventRankingRewardsTitle = $state(getInitialI18nText("eventRankingRewardsTitle"));
   let eventRankingRewardTopLabel = $state(getInitialI18nText("eventRankingRewardTopLabel"));
   let eventRankingRewardBorderLabel = $state(getInitialI18nText("eventRankingRewardBorderLabel"));
-  let eventRankingRewardResourceBoxLabel = $state(getInitialI18nText("eventRankingRewardResourceBoxLabel"));
-  let eventRankingRewardsShowMoreLabel = $state(getInitialI18nText("eventRankingRewardsShowMoreLabel"));
-  let eventRankingRewardsShowLessLabel = $state(getInitialI18nText("eventRankingRewardsShowLessLabel"));
+  let eventRankingRewardResourceBoxLabel = $state(
+    getInitialI18nText("eventRankingRewardResourceBoxLabel")
+  );
+  let eventRankingRewardsShowMoreLabel = $state(
+    getInitialI18nText("eventRankingRewardsShowMoreLabel")
+  );
+  let eventRankingRewardsShowLessLabel = $state(
+    getInitialI18nText("eventRankingRewardsShowLessLabel")
+  );
+  let rankingRewardsLoadingLabel = $state(getInitialI18nText("rankingRewardsLoadingLabel"));
+  let rankingRewardsLoadErrorLabel = $state(getInitialI18nText("rankingRewardsLoadErrorLabel"));
   let eventVirtualLiveTitle = $state(getInitialI18nText("eventVirtualLiveTitle"));
   let eventNoDataLabel = $state(getInitialI18nText("eventNoDataLabel"));
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    const translate = createI18nTranslator(
+      data.uiLocale,
+      resolveStreamingMessages(data.i18nMessages)
+    );
     applyTranslations(translate);
   });
 
@@ -183,6 +196,8 @@
     eventRankingRewardResourceBoxLabel = translate("eventRankingRewardResourceBoxLabel");
     eventRankingRewardsShowMoreLabel = translate("eventRankingRewardsShowMoreLabel");
     eventRankingRewardsShowLessLabel = translate("eventRankingRewardsShowLessLabel");
+    rankingRewardsLoadingLabel = translate("rankingRewardsLoadingLabel");
+    rankingRewardsLoadErrorLabel = translate("rankingRewardsLoadErrorLabel");
     eventVirtualLiveTitle = translate("eventVirtualLiveTitle");
     eventNoDataLabel = translate("eventNoDataLabel");
   };
@@ -382,68 +397,70 @@
           {/await}
         </div>
 
-		<div class="flex flex-col gap-4">
-		  {#await data.unitProfiles then unitProfiles}
-		    <EventDetailBgmCard
-		      event={payload.event}
-		      region={data.region}
-		      title={eventBgmTitle}
-		      unitName={getDisplayUnitName(unitProfiles, payload.event.unit) ?? ""}
-		      bgmDownloadHref={getEventBgmDownloadHref}
-		      bgmProgressHref={getEventBgmProgressHref()}
-		      downloadProgressMessages={{
-		        preparing: audioDownloadStagePreparingLabel,
-		        fetchingAudio: audioDownloadStageFetchingAudioLabel,
-		        fetchingCover: audioDownloadStageFetchingCoverLabel,
-		        writingMetadata: audioDownloadStageWritingMetadataLabel,
-		        finalizing: audioDownloadStageFinalizingLabel,
-		        ready: audioDownloadStageReadyLabel,
-		        failed: audioDownloadStageFailedLabel,
-		        cancelled: audioDownloadStageCancelledLabel
-		      }}
-		      playLabel={audioPlayLabel}
-		      pauseLabel={audioPauseLabel}
-		      downloadLabel={audioDownloadLabel}
-		      downloadCloseLabel={audioDownloadCloseLabel}
-		      volumeLabel={audioVolumeLabel}
-		      seekLabel={audioSeekLabel}
-		      unavailableLabel={audioUnavailableLabel}
-		    />
-		  {/await}
+        <div class="flex flex-col gap-4">
+          {#await data.unitProfiles then unitProfiles}
+            <EventDetailBgmCard
+              event={payload.event}
+              region={data.region}
+              title={eventBgmTitle}
+              unitName={getDisplayUnitName(unitProfiles, payload.event.unit) ?? ""}
+              bgmDownloadHref={getEventBgmDownloadHref}
+              bgmProgressHref={getEventBgmProgressHref()}
+              downloadProgressMessages={{
+                preparing: audioDownloadStagePreparingLabel,
+                fetchingAudio: audioDownloadStageFetchingAudioLabel,
+                fetchingCover: audioDownloadStageFetchingCoverLabel,
+                writingMetadata: audioDownloadStageWritingMetadataLabel,
+                finalizing: audioDownloadStageFinalizingLabel,
+                ready: audioDownloadStageReadyLabel,
+                failed: audioDownloadStageFailedLabel,
+                cancelled: audioDownloadStageCancelledLabel
+              }}
+              playLabel={audioPlayLabel}
+              pauseLabel={audioPauseLabel}
+              downloadLabel={audioDownloadLabel}
+              downloadCloseLabel={audioDownloadCloseLabel}
+              volumeLabel={audioVolumeLabel}
+              seekLabel={audioSeekLabel}
+              unavailableLabel={audioUnavailableLabel}
+            />
+          {/await}
 
-		  <EventDetailDataCard
-		    event={payload.event}
-		    region={data.region}
-		    relatedData={payload.relatedData}
-		    {displayLocale}
-			    bonusCharacterLabel={eventBonusCharacterLabel}
-			    anyCharacterLabel={eventAnyCharacterLabel}
-		    rarityBonusLabel={eventRarityBonusLabel}
-		    rarityLabel={eventRarityLabel}
-		    featuredCardsTitle={eventFeaturedCardsTitle}
-		    featuredCardBonusLabel={eventFeaturedCardBonusLabel}
-		    featuredCardBonusShortLabel={eventFeaturedCardBonusShortLabel}
-		    leaderBonusLabel={eventLeaderBonusLabel}
-		    leaderBonusShortLabel={eventLeaderBonusShortLabel}
-		    cardIdLabel={eventCardIdLabel}
-		    {imageUnavailableLabel}
-		    cardImageAltSuffix={eventCardImageAltSuffix}
-		    musicJacketAltSuffix={eventMusicJacketAltSuffix}
-		    masterRankLabel={eventMasterRankLabel}
-		    cardAttrAnyLabel={eventCardAttrAnyLabel}
-		    bonusRateLabel={eventBonusRateLabel}
-		    {eventMusicsLabel}
-		    rankingRewardsTitle={eventRankingRewardsTitle}
-		    rankingRewardTopLabel={eventRankingRewardTopLabel}
-		    rankingRewardBorderLabel={eventRankingRewardBorderLabel}
-		    rankingRewardResourceBoxLabel={eventRankingRewardResourceBoxLabel}
-		    rankingRewardsShowMoreLabel={eventRankingRewardsShowMoreLabel}
-		    rankingRewardsShowLessLabel={eventRankingRewardsShowLessLabel}
-		    virtualLiveTitle={eventVirtualLiveTitle}
-		    noDataLabel={eventNoDataLabel}
-		  />
-		</div>
-	      </div>
+          <EventDetailDataCard
+            event={payload.event}
+            region={data.region}
+            relatedData={payload.relatedData}
+            {displayLocale}
+            bonusCharacterLabel={eventBonusCharacterLabel}
+            anyCharacterLabel={eventAnyCharacterLabel}
+            rarityBonusLabel={eventRarityBonusLabel}
+            rarityLabel={eventRarityLabel}
+            featuredCardsTitle={eventFeaturedCardsTitle}
+            featuredCardBonusLabel={eventFeaturedCardBonusLabel}
+            featuredCardBonusShortLabel={eventFeaturedCardBonusShortLabel}
+            leaderBonusLabel={eventLeaderBonusLabel}
+            leaderBonusShortLabel={eventLeaderBonusShortLabel}
+            cardIdLabel={eventCardIdLabel}
+            {imageUnavailableLabel}
+            cardImageAltSuffix={eventCardImageAltSuffix}
+            musicJacketAltSuffix={eventMusicJacketAltSuffix}
+            masterRankLabel={eventMasterRankLabel}
+            cardAttrAnyLabel={eventCardAttrAnyLabel}
+            bonusRateLabel={eventBonusRateLabel}
+            {eventMusicsLabel}
+            rankingRewardsTitle={eventRankingRewardsTitle}
+            rankingRewardTopLabel={eventRankingRewardTopLabel}
+            rankingRewardBorderLabel={eventRankingRewardBorderLabel}
+            rankingRewardResourceBoxLabel={eventRankingRewardResourceBoxLabel}
+            rankingRewardsShowMoreLabel={eventRankingRewardsShowMoreLabel}
+            rankingRewardsShowLessLabel={eventRankingRewardsShowLessLabel}
+            virtualLiveTitle={eventVirtualLiveTitle}
+            noDataLabel={eventNoDataLabel}
+            {rankingRewardsLoadingLabel}
+            {rankingRewardsLoadErrorLabel}
+          />
+        </div>
+      </div>
     {:else if !payload.error}
       {#await data.availableRegions}
         <div class="alert">
