@@ -119,6 +119,7 @@ export type EventRelatedData = {
   cards: EventFeaturedCard[];
   musics: EventMusic[];
   rewardRanges: EventRankingRewardRange[];
+  rewardRangesHasMore: boolean | null;
 };
 
 export type EventDetail = {
