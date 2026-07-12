@@ -20,7 +20,7 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
     return ["common", "gacha", "error"];
   }
 
-  return pathname === "/" ? ["common", "home", "error"] : ["common", "error"];
+  return pathname === "/" ? ["common", "home", "event", "error"] : ["common", "error"];
 };
 
 export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {
