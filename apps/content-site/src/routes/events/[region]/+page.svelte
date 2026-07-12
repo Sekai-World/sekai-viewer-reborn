@@ -361,6 +361,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
+    currentMessages = fallbackMessages;
     const translate = createI18nTranslator(
       data.uiLocale,
       fallbackMessages

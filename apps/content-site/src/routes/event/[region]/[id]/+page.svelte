@@ -130,6 +130,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
+    currentMessages = fallbackMessages;
     if (!browser) {
       return;
     }

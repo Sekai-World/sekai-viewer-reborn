@@ -23,10 +23,11 @@
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
   let translationRequestId = 0;
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
   let currentTranslate = $derived(
     createI18nTranslator(
       data.uiLocale,
-      fallbackMessages
+      currentMessages
     )
   );
   const getInitialI18nText = (key: string): string =>
@@ -164,6 +165,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
+    currentMessages = fallbackMessages;
     if (!browser) {
       return;
     }
@@ -184,6 +186,7 @@
     }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
+    currentMessages = messages;
     applyTranslations(createI18nTranslator(locale, messages));
   };
 

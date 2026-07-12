@@ -192,6 +192,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
+    currentLayoutMessages = fallbackMessages;
     const localeRequestToken = requestI18nLocale();
     const translate = createI18nTranslator(uiLocale, fallbackMessages);
     applyTranslations(translate);
