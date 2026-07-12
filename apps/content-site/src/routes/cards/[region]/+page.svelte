@@ -10,8 +10,6 @@
   import {
     createI18nTranslator,
     resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
   } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
@@ -61,7 +59,7 @@
   let { data }: { data: CardListPageData } = $props();
   let translationRequestId = 0;
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages, ["common", "card", "event", "error"]))(key);
   let items = $state<CardListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -470,7 +468,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise));
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise, ["common", "card", "event", "error"]));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
@@ -620,9 +618,8 @@
   const refreshPageTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
     const messages = await messagesOrPromise;
     if (requestId !== translationRequestId) return;
-    const locale = await setI18nLocale(localeValue, messages);
-    if (requestId !== translationRequestId) return;
-    applyTranslations((key: string) => tCommon(locale, key));
+    const locale = localeValue;
+    applyTranslations(createI18nTranslator(locale, messages));
   };
 
   const createListSearchParams = (page: number): SvelteURLSearchParams => {

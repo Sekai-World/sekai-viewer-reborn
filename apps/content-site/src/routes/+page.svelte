@@ -3,7 +3,7 @@
   import {
     createI18nTranslator,
     resolveStreamingMessages,
-    setI18nLocale
+    getLocalI18nMessages
   } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
@@ -20,7 +20,10 @@
 
   let { data }: { data: PageData } = $props();
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(
+      data.uiLocale,
+      resolveStreamingMessages(data.i18nMessages, ["common", "home", "event", "error"])
+    )(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
@@ -42,6 +45,9 @@
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
   let swipeHint = $state(getInitialI18nText("swipeHint"));
   let translationRequestId = 0;
+  const initialMessages = getLocalI18nMessages(["common", "home", "event", "error"]);
+  let currentMessages = $state<Record<string, string>>(initialMessages);
+  let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
 
   // ── Region state ───────────────────────────────────────────────────
   const REGION_STORAGE_KEY = "home-region";
@@ -98,9 +104,15 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
+    currentMessages = resolveStreamingMessages(messagesOrPromise, [
+      "common",
+      "home",
+      "event",
+      "error"
+    ]);
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(messagesOrPromise)
+      resolveStreamingMessages(messagesOrPromise, ["common", "home", "event", "error"])
     );
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
@@ -137,10 +149,8 @@
     const messages = await messagesOrPromise;
     if (requestId !== translationRequestId) return;
 
-    const locale = await setI18nLocale(localeValue, messages);
-    if (requestId !== translationRequestId) return;
-
-    applyTranslations(createI18nTranslator(locale, messages));
+    applyTranslations(createI18nTranslator(localeValue, messages));
+    currentMessages = messages;
   };
 
   // ── Helpers ────────────────────────────────────────────────────────
@@ -378,6 +388,8 @@
               {:then card}
                 {#if card.event}
                   <CurrentEventCard
+                    messages={currentMessages}
+                    translate={currentTranslate}
                     region={card.region}
                     regionLabel={card.label}
                     event={card.event}

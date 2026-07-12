@@ -18,17 +18,23 @@
   import {
     createI18nTranslator,
     resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
+    getLocalI18nMessages
   } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
+  const routeFallbackMessages = getLocalI18nMessages(["common", "gacha", "error"]);
   let { data }: { data: PageData } = $props();
   let translationRequestId = 0;
+  const initialMessages = getLocalI18nMessages(["common", "gacha", "error"]);
+  let currentMessages = $state<Record<string, string>>(initialMessages);
+  let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
 
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(
+      data.uiLocale,
+      resolveStreamingMessages(data.i18nMessages, ["common", "gacha", "error"])
+    )(key);
 
   let displayLocale = $state("");
   let activeAssetTab = $state<GachaAssetTab>("logo");
@@ -118,13 +124,17 @@
   });
   let spinnableTypeMap = $state(buildSpinnableTypeMap(getInitialI18nText));
 
-  const buildResourceCategoryMap = (translate: (key: string) => string): Record<string, string> => ({
+  const buildResourceCategoryMap = (
+    translate: (key: string) => string
+  ): Record<string, string> => ({
     consume_resource: translate("resourceCategory.consume_resource"),
     free_resource: translate("resourceCategory.free_resource")
   });
   let resourceCategoryMap = $state(buildResourceCategoryMap(getInitialI18nText));
 
-  const buildCostResourceTypeMap = (translate: (key: string) => string): Record<string, string> => ({
+  const buildCostResourceTypeMap = (
+    translate: (key: string) => string
+  ): Record<string, string> => ({
     jewel: translate("costResourceType.jewel"),
     paid_jewel: translate("costResourceType.paid_jewel"),
     gacha_ticket: translate("costResourceType.gacha_ticket")
@@ -190,8 +200,12 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
+    currentMessages = resolveStreamingMessages(messagesOrPromise, ["common", "gacha", "error"]);
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise));
+    const translate = createI18nTranslator(
+      data.uiLocale,
+      resolveStreamingMessages(messagesOrPromise, ["common", "gacha", "error"])
+    );
     applyTranslations(translate);
   });
 
@@ -205,12 +219,16 @@
     void refreshTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
-  const refreshTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+  const refreshTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
     const messages = await messagesOrPromise;
     if (requestId !== translationRequestId) return;
-    const locale = await setI18nLocale(localeValue, messages);
-    if (requestId !== translationRequestId) return;
-    applyTranslations((key) => tCommon(locale, key));
+    const locale = localeValue;
+    applyTranslations(createI18nTranslator(locale, messages));
+    currentMessages = messages;
   };
 
   const regionDisplayOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
@@ -271,9 +289,7 @@
       <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-4 p-3 sm:p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
-          <div
-            class="aspect-16/7 w-full animate-pulse rounded-[1.75rem] bg-base-300"
-          ></div>
+          <div class="aspect-16/7 w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
         </div>
       </article>
       <article class="card content-card-shell shadow-sm">
@@ -290,9 +306,7 @@
     </div>
   {:then payload}
     <PageHeader
-      breadcrumbs={getBreadcrumbItems(
-        payload.gacha?.name ?? `${pageTitlePrefix} ${data.gachaId}`
-      )}
+      breadcrumbs={getBreadcrumbItems(payload.gacha?.name ?? `${pageTitlePrefix} ${data.gachaId}`)}
       breadcrumbClass="md:max-w-[68%]"
     >
       {#snippet actions()}
@@ -315,11 +329,11 @@
             gacha={payload.gacha}
             region={data.region}
             bind:activeTab={activeAssetTab}
-            logoLabel={logoLabel}
-            bannerLabel={bannerLabel}
-            bannerAltSuffix={bannerAltSuffix}
-            imageUnavailableLabel={imageUnavailableLabel}
-            closeLabel={closeLabel}
+            {logoLabel}
+            {bannerLabel}
+            {bannerAltSuffix}
+            {imageUnavailableLabel}
+            {closeLabel}
           />
 
           <GachaDetailInfoCard
@@ -338,6 +352,7 @@
           />
 
           <GachaDetailCountdownCard
+            messages={currentMessages}
             gacha={payload.gacha}
             uiLocale={displayLocale || data.uiLocale}
             title={gachaCountdownTitle}
@@ -422,7 +437,10 @@
           {#if payload.gacha.gachaInformation?.description}
             {@const desc = payload.gacha.gachaInformation.description}
             {@const needsTruncation = desc.length > DESCRIPTION_COLLAPSED_LENGTH}
-            {@const displayDesc = (!needsTruncation || descriptionExpanded) ? desc : desc.slice(0, DESCRIPTION_COLLAPSED_LENGTH) + "…"}
+            {@const displayDesc =
+              !needsTruncation || descriptionExpanded
+                ? desc
+                : desc.slice(0, DESCRIPTION_COLLAPSED_LENGTH) + "…"}
             <article class="card content-card-shell shadow-sm">
               <div class="card-body gap-3 p-3 sm:p-5">
                 <p
@@ -439,7 +457,7 @@
                   <p class="text-sm/7 whitespace-pre-line opacity-90">{displayDesc}</p>
                   {#if needsTruncation}
                     <button
-                      onclick={() => descriptionExpanded = !descriptionExpanded}
+                      onclick={() => (descriptionExpanded = !descriptionExpanded)}
                       class="btn btn-ghost btn-sm mt-1.5 gap-1 px-2 text-xs"
                     >
                       <Icon

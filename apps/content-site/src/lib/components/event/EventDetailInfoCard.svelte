@@ -9,11 +9,13 @@
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import Icon from "@iconify/svelte";
+  import type { I18nTranslator } from "@platform/i18n-runtime";
 
   let {
     event,
     region,
     uiLocale,
+    translate,
     displayLocale,
     title,
     idLabel,
@@ -30,6 +32,7 @@
     event: EventDetail;
     region: SupportedRegion;
     uiLocale: string;
+    translate: I18nTranslator;
     displayLocale: string;
     title: string;
     idLabel: string;
@@ -101,7 +104,7 @@
             {eventTypeLabel}
           </dt>
           <dd class="mt-1 text-sm font-medium">
-            {getEventTypeDisplay(event.eventType, uiLocale)}
+            {getEventTypeDisplay(event.eventType, translate)}
           </dd>
         </div>
       {/if}

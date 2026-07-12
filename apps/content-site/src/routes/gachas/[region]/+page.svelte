@@ -13,8 +13,6 @@
   import {
     createI18nTranslator,
     resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
   } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
@@ -31,7 +29,7 @@
   let translationRequestId = 0;
   const gachaListLoadingFallback = "Loading gachas...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key, fallback);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages, ["common", "gacha", "error"]))(key, fallback);
   let items = $state<GachaListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -208,7 +206,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise));
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(messagesOrPromise, ["common", "gacha", "error"]));
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
@@ -335,9 +333,8 @@
   const refreshPageTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
     const messages = await messagesOrPromise;
     if (requestId !== translationRequestId) return;
-    const locale = await setI18nLocale(localeValue, messages);
-    if (requestId !== translationRequestId) return;
-    applyTranslations((key: string, fallback?: string) => tCommon(locale, key, fallback));
+    const locale = localeValue;
+    applyTranslations(createI18nTranslator(locale, messages));
   };
 
   const createListSearchParams = (page: number): SvelteURLSearchParams => {

@@ -8,14 +8,18 @@
   let { data }: { data: LayoutData } = $props();
   let resolvedMessages = $state<Record<string, string> | null>(null);
   const messages = $derived(
-    resolvedMessages ?? resolveStreamingMessages(data.i18nMessages)
+    resolvedMessages ?? resolveStreamingMessages(data.i18nMessages, ["common", "error"])
   );
   $effect(() => {
     const messagesOrPromise = data.i18nMessages;
-    resolvedMessages = resolveStreamingMessages(messagesOrPromise);
-    void messagesOrPromise.then((messages) => {
-      if (messagesOrPromise === data.i18nMessages) resolvedMessages = messages;
-    });
+    resolvedMessages = resolveStreamingMessages(messagesOrPromise, ["common", "error"]);
+    if (messagesOrPromise && typeof (messagesOrPromise as PromiseLike<Record<string, string>>).then === "function") {
+      void Promise.resolve(messagesOrPromise).then((messages) => {
+        if (messagesOrPromise === data.i18nMessages) resolvedMessages = messages;
+      }).catch(() => {
+        // Preserve the synchronous local fallback when streaming fails.
+      });
+    }
   });
   const translate = $derived(
     createI18nTranslator(data.uiLocale, messages)

@@ -16,9 +16,8 @@
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import {
     createI18nTranslator,
+    getLocalI18nMessages,
     resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
   } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
@@ -29,6 +28,8 @@
   import type { MusicListPage, MusicListItem as MusicListItemType } from "$lib/server/music-list";
   import Icon from "@iconify/svelte";
   import type { PageData } from "./$types";
+
+  const routeFallbackMessages = getLocalI18nMessages(["common", "music", "error"]);
 
   type MusicListPagePayload = MusicListPage;
   type MusicListItem = MusicListItemType;
@@ -45,9 +46,10 @@
   };
 
   let { data }: { data: PageData } = $props();
+  let currentMessages = $state<Record<string, string>>(routeFallbackMessages);
   let translationRequestId = 0;
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages, ["common", "music", "error"]))(key);
 
   let items = $state<MusicListItem[]>([]);
   let currentPage = $state(1);
@@ -175,7 +177,7 @@
   ]);
 
   const getCategoryLabel = (category: string): string =>
-    tCommon(data.uiLocale, `musicListCategory.${category}`, category);
+    createI18nTranslator(data.uiLocale, currentMessages)(`musicListCategory.${category}`, category);
 
   const formatOptionLabel = (value: string): string =>
     value
@@ -188,7 +190,7 @@
     unitCodeByMusicTag[value]
       ? (data.unitProfiles[unitCodeByMusicTag[value]] ??
         formatUnitFallbackLabel(unitCodeByMusicTag[value]))
-      : tCommon(data.uiLocale, `musicListTag.${value}`, formatOptionLabel(value));
+      : createI18nTranslator(data.uiLocale, currentMessages)(`musicListTag.${value}`, formatOptionLabel(value));
 
   const getFilterButtonClass = (values: string[], value: string): string =>
     values.includes(value) ? "btn-primary" : "btn-outline border-primary text-primary";
@@ -375,7 +377,8 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+    currentMessages = resolveStreamingMessages(messagesOrPromise, ["common", "music", "error"]);
+    const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages, ["common", "music", "error"]));
     applyTranslations(translate);
     void refreshTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
@@ -537,9 +540,9 @@
   const refreshTranslations = async (locale: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
     const messages = await messagesOrPromise;
     if (requestId !== translationRequestId) return;
-    const resolvedLocale = await setI18nLocale(locale, messages);
-    if (requestId !== translationRequestId) return;
-    applyTranslations((key) => tCommon(resolvedLocale, key));
+    const resolvedLocale = locale;
+    currentMessages = messages;
+    applyTranslations(createI18nTranslator(resolvedLocale, messages));
   };
 
   const createSearchParams = (page: number): SvelteURLSearchParams => {

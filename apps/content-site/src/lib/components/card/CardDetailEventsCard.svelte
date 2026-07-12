@@ -7,11 +7,13 @@
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import Icon from "@iconify/svelte";
+  import type { I18nTranslator } from "@platform/i18n-runtime";
 
   let {
     events,
     region,
     uiLocale,
+    translate,
     title,
     emptyLabel,
     bonusLabel,
@@ -20,6 +22,7 @@
     events: CardRelatedEvent[];
     region: SupportedRegion;
     uiLocale: string;
+    translate: I18nTranslator;
     title: string;
     emptyLabel: string;
     bonusLabel: string;
@@ -42,7 +45,8 @@
 
     return `${formatEventDateTime(event.startAt)} - ${formatEventDateTime(endAt)}`;
   };
-  const formatBonusRate = (value: number): string => `${value.toLocaleString(uiLocale || undefined)}%`;
+  const formatBonusRate = (value: number): string =>
+    `${value.toLocaleString(uiLocale || undefined)}%`;
   const getBonusRateRangeLabel = (event: CardRelatedEvent): string | null => {
     if (event.finalBonusRateMin !== null && event.finalBonusRateMax !== null) {
       const minLabel = formatBonusRate(event.finalBonusRateMin);
@@ -52,13 +56,17 @@
         : `${minLabel}-${maxLabel}`;
     }
 
-    return event.bonusRate !== null && event.bonusRate > 0 ? formatBonusRate(event.bonusRate) : null;
+    return event.bonusRate !== null && event.bonusRate > 0
+      ? formatBonusRate(event.bonusRate)
+      : null;
   };
 </script>
 
 <article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
-    <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+    <p
+      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+    >
       <Icon icon="mdi:calendar-star-outline" class="size-4" aria-hidden="true" />
       <span>{title}</span>
     </p>
@@ -70,7 +78,9 @@
             href={resolve("/event/[region]/[id]", { region, id: event.id })}
             class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <div class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1">
+            <div
+              class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
+            >
               {#if event.assetBundleName}
                 <EventAssetImage
                   src={getEventBannerAssetURL(event.assetBundleName, region)}
@@ -80,21 +90,26 @@
                   loadMode="visible"
                 />
               {:else}
-                <div class="flex size-full items-center justify-center px-4 text-center text-sm font-medium opacity-70">
+                <div
+                  class="flex size-full items-center justify-center px-4 text-center text-sm font-medium opacity-70"
+                >
                   {event.title}
                 </div>
               {/if}
-
             </div>
 
             <div class="min-w-0">
               <div class="mb-2 flex flex-wrap items-center gap-2">
-                <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
+                <span
+                  class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm"
+                >
                   #{event.id}
                 </span>
-                {#if getEventTypeDisplay(event.eventType, uiLocale)}
-                  <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
-                    {getEventTypeDisplay(event.eventType, uiLocale)}
+                {#if getEventTypeDisplay(event.eventType, translate)}
+                  <span
+                    class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm"
+                  >
+                    {getEventTypeDisplay(event.eventType, translate)}
                   </span>
                 {/if}
               </div>
@@ -102,12 +117,17 @@
               <p class="mt-2 text-xs opacity-70">{getEventTimeRange(event)}</p>
               <div class="mt-2 flex flex-wrap items-center gap-2">
                 {#if getBonusRateRangeLabel(event)}
-                  <span class="badge badge-outline border-primary/25 bg-primary/10 text-xs font-semibold text-primary">
-                    {bonusLabel} {getBonusRateRangeLabel(event)}
+                  <span
+                    class="badge badge-outline border-primary/25 bg-primary/10 text-xs font-semibold text-primary"
+                  >
+                    {bonusLabel}
+                    {getBonusRateRangeLabel(event)}
                   </span>
                 {/if}
                 {#if event.isDisplayCardStory}
-                  <span class="badge badge-outline border-secondary/25 bg-secondary/10 text-xs font-semibold text-secondary">
+                  <span
+                    class="badge badge-outline border-secondary/25 bg-secondary/10 text-xs font-semibold text-secondary"
+                  >
                     {storyLabel}
                   </span>
                 {/if}

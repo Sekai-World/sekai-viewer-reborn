@@ -15,18 +15,24 @@
   import {
     createI18nTranslator,
     resolveStreamingMessages,
-    setI18nLocale,
-    tCommon
+    getLocalI18nMessages
   } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
+  const routeFallbackMessages = getLocalI18nMessages(["common", "event", "error"]);
   let { data }: { data: PageData } = $props();
   let translationRequestId = 0;
+  const initialMessages = getLocalI18nMessages(["common", "event", "error"]);
+  let currentMessages = $state<Record<string, string>>(initialMessages);
+  let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages))(key);
+    createI18nTranslator(
+      data.uiLocale,
+      resolveStreamingMessages(data.i18nMessages, ["common", "event", "error"])
+    )(key);
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state<string>("");
   let activeAssetTab = $state<EventAssetTab>("banner");
@@ -117,10 +123,11 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
+    currentMessages = resolveStreamingMessages(messagesOrPromise, ["common", "event", "error"]);
     displayLocale = data.uiLocale;
     const translate = createI18nTranslator(
       data.uiLocale,
-      resolveStreamingMessages(messagesOrPromise)
+      resolveStreamingMessages(messagesOrPromise, ["common", "event", "error"])
     );
     applyTranslations(translate);
   });
@@ -203,12 +210,16 @@
     eventNoDataLabel = translate("eventNoDataLabel");
   };
 
-  const refreshTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+  const refreshTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
     const messages = await messagesOrPromise;
     if (requestId !== translationRequestId) return;
-    const locale = await setI18nLocale(localeValue, messages);
-    if (requestId !== translationRequestId) return;
-    applyTranslations((key) => tCommon(locale, key));
+    const locale = localeValue;
+    applyTranslations(createI18nTranslator(locale, messages));
+    currentMessages = messages;
   };
 
   const openDebugDialog = (): void => {
@@ -373,6 +384,7 @@
 
           {#await data.unitProfiles then unitProfiles}
             <EventDetailInfoCard
+              translate={currentTranslate}
               event={payload.event}
               region={data.region}
               uiLocale={data.uiLocale}
@@ -393,6 +405,7 @@
 
           {#await data.isCurrentEvent then isCurrentEvent}
             <EventDetailCountdownCard
+              messages={currentMessages}
               event={payload.event}
               {isCurrentEvent}
               uiLocale={data.uiLocale}

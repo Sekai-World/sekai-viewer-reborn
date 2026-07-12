@@ -3,14 +3,17 @@
   import type { GachaDetail } from "$lib/domain/gacha-detail";
   import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
   import Icon from "@iconify/svelte";
+  import type { I18nMessages } from "@platform/i18n-runtime";
 
   let {
     gacha,
     uiLocale,
+    messages,
     title
   }: {
     gacha: GachaDetail;
     uiLocale: string;
+    messages: I18nMessages;
     title: string;
   } = $props();
 
@@ -37,6 +40,7 @@
         startAt={gacha.startAt}
         endAt={gacha.endAt}
         {uiLocale}
+        {messages}
         forceShowSeconds={true}
         showProgress={false}
       />

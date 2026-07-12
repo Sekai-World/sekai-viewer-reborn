@@ -8,6 +8,7 @@
   import { getEventTypeDisplay } from "$lib/domain/event";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import type { I18nTranslator } from "@platform/i18n-runtime";
   import {
     EVENT_LIST_CARD_FRAME_CLASS,
     EVENT_LIST_CARD_IMAGE_CLASS,
@@ -32,6 +33,7 @@
     currentEventLabel,
     spoilerContentLabel,
     uiLocale,
+    translate,
     idLabel,
     bannerAltSuffix
   }: {
@@ -41,6 +43,7 @@
     currentEventLabel: string;
     spoilerContentLabel: string;
     uiLocale: string;
+    translate: I18nTranslator;
     idLabel: string;
     bannerAltSuffix: string;
   } = $props();
@@ -159,9 +162,7 @@
           loadMode="visible"
         />
       {:else}
-        <div
-          class="flex size-full items-center justify-center px-6 text-center text-sm opacity-70"
-        >
+        <div class="flex size-full items-center justify-center px-6 text-center text-sm opacity-70">
           {item.title}
         </div>
       {/if}
@@ -171,9 +172,9 @@
       <span class="badge border-none bg-base-200 font-semibold text-base-content">
         {idLabel}{item.id}
       </span>
-      {#if getEventTypeDisplay(item.eventType, uiLocale)}
+      {#if getEventTypeDisplay(item.eventType, translate)}
         <span class="badge border-none bg-base-200 font-semibold text-base-content">
-          {getEventTypeDisplay(item.eventType, uiLocale)}
+          {getEventTypeDisplay(item.eventType, translate)}
         </span>
       {/if}
     </div>
