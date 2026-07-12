@@ -300,51 +300,6 @@ html, body {
   isolation: isolate;
 }
 
-@supports (view-transition-name: content-site-main) {
-  :root:not([data-low-motion]) .page-switch-shell {
-    view-transition-name: content-site-main;
-    will-change: transform, opacity;
-  }
-
-  :root:not([data-low-motion])::view-transition-old(content-site-main),
-  :root:not([data-low-motion])::view-transition-new(content-site-main) {
-    animation-duration: 220ms;
-    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  :root:not([data-low-motion])::view-transition-old(content-site-main) {
-    animation-name: content-site-page-old;
-  }
-
-  :root:not([data-low-motion])::view-transition-new(content-site-main) {
-    animation-name: content-site-page-new;
-  }
-
-  @keyframes content-site-page-old {
-    from {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    to {
-      opacity: 0;
-      transform: translateY(-8px);
-    }
-  }
-
-  @keyframes content-site-page-new {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-}
-
 :root[data-low-motion] *,
 :root[data-low-motion] *::before,
 :root[data-low-motion] *::after {

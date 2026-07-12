@@ -2,7 +2,7 @@
   import "../app.css";
   import "$lib/icons/mdi";
   import { asset } from "$app/paths";
-  import { invalidateAll, onNavigate } from "$app/navigation";
+  import { invalidateAll } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import {
@@ -13,7 +13,6 @@
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
-  import { fade } from "svelte/transition";
   import {
     createI18nTranslator,
     isLocaleLoading,
@@ -74,9 +73,6 @@
   let localeLoadingProgress = $state(0);
   let localeLoadingInterval: ReturnType<typeof setInterval> | null = null;
   let localeProgressResetTimeout: ReturnType<typeof setTimeout> | null = null;
-  let useFallbackRouteTransition = $state(true);
-  const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
-
   let homeLabel = $state(getInitialI18nText("home"));
   let openSidebarLabel = $state(getInitialI18nText("aria.openSidebar"));
   let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
@@ -534,36 +530,6 @@
 
   onMount(() => {
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const documentWithViewTransition = document as Document & {
-      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-    };
-    const supportsViewTransition =
-      typeof documentWithViewTransition.startViewTransition === "function";
-    useFallbackRouteTransition = !supportsViewTransition;
-
-    const maybeDisposeNavigationTransition = supportsViewTransition
-      ? onNavigate((navigation) => {
-          if (
-            contentDisplaySettings.lowMotionMode ||
-            !documentWithViewTransition.startViewTransition
-          ) {
-            return;
-          }
-
-          return new Promise<void>((resolve) => {
-            documentWithViewTransition.startViewTransition(async () => {
-              resolve();
-              await navigation.complete;
-            });
-          });
-        })
-      : undefined;
-
-    const disposeNavigationTransition =
-      typeof maybeDisposeNavigationTransition === "function"
-        ? maybeDisposeNavigationTransition
-        : () => {};
-
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     applyTheme(resolvePreferredThemeName(), resolvePreferredTheme());
     preferredRegion = resolvePreferredRegion();
@@ -622,7 +588,6 @@
         window.cancelAnimationFrame(backToTopAnimationFrame);
         backToTopAnimationFrame = 0;
       }
-      disposeNavigationTransition();
       document.removeEventListener("click", handleDocumentClick);
       document.removeEventListener("keydown", handleDocumentKeydown);
       window.removeEventListener("scroll", updateBackToTopVisibility);
@@ -1091,21 +1056,9 @@
     </div>
   {/snippet}
 
-  {#if useFallbackRouteTransition && !contentDisplaySettings.lowMotionMode}
-    {#key navigationTransitionKey}
-      <div
-        class="page-switch-shell"
-        in:fade|local={{ duration: 150 }}
-        out:fade|local={{ duration: 110 }}
-      >
-        {@render children()}
-      </div>
-    {/key}
-  {:else}
-    <div class="page-switch-shell">
-      {@render children()}
-    </div>
-  {/if}
+  <div class="page-switch-shell">
+    {@render children()}
+  </div>
 </ViewerShell>
 
 {#if showBackToTop}
