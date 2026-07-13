@@ -341,6 +341,19 @@ export const getGachaBannerAssetURL = (
   );
 };
 
+export const getGachaBackgroundAssetURL = (
+  assetBundleName: string | null | undefined,
+  gachaId: string | null | undefined,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string => {
+  const bundle = assetBundleName?.trim().replace(/^\/+|\/+$/g, "") ?? "";
+  const id = gachaId?.trim().replace(/^\/+|\/+$/g, "") ?? "";
+  if (!bundle || !id) return "";
+  return buildServerAssetURL(`gacha/${bundle}/screen/texture/bg_gacha${id}_1.${extension}`, server, baseUrlOverride);
+};
+
 export const getCommonMaterialThumbnailURL = (
   assetBundleName: string,
   server: AssetServer = "jp",

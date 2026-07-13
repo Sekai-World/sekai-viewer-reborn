@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { getGachaBannerAssetURL, getGachaLogoAssetURL } from "$lib/assets/index";
+  import { getGachaBackgroundAssetURL, getGachaBannerAssetURL, getGachaLogoAssetURL } from "$lib/assets/index";
   import type { GachaDetail } from "$lib/domain/gacha-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
 
-  export type GachaAssetTab = "logo" | "banner";
+  export type GachaAssetTab = "logo" | "banner" | "background";
 
   let {
     gacha,
@@ -13,6 +13,7 @@
     activeTab = $bindable<GachaAssetTab>("logo"),
     logoLabel,
     bannerLabel,
+    backgroundLabel,
     bannerAltSuffix,
     imageUnavailableLabel,
     closeLabel
@@ -22,6 +23,7 @@
     activeTab?: GachaAssetTab;
     logoLabel: string;
     bannerLabel: string;
+    backgroundLabel: string;
     bannerAltSuffix: string;
     imageUnavailableLabel: string;
     closeLabel: string;
@@ -88,6 +90,9 @@
       <button type="button" class={getTabClass("banner")} onclick={() => (activeTab = "banner")}>
         {bannerLabel}
       </button>
+      <button type="button" class={getTabClass("background")} onclick={() => (activeTab = "background")}>
+        {backgroundLabel}
+      </button>
     </div>
 
     <div
@@ -103,13 +108,20 @@
         {:else}
           {@render missingImage()}
         {/if}
-      {:else}
+      {:else if activeTab === "banner"}
         {#if gacha.id}
           {@render previewImage(
             getGachaBannerAssetURL(gacha.id, region),
             `${gacha.name ?? gacha.id} ${bannerAltSuffix}`,
             "h-full w-full object-contain p-4 md:p-6"
           )}
+        {:else}
+          {@render missingImage()}
+        {/if}
+      {:else}
+        {@const backgroundSrc = getGachaBackgroundAssetURL(gacha.assetBundleName, gacha.id, region)}
+        {#if backgroundSrc}
+          {@render previewImage(backgroundSrc, `${gacha.name ?? gacha.id} ${backgroundLabel}`, "h-full w-full object-cover")}
         {:else}
           {@render missingImage()}
         {/if}

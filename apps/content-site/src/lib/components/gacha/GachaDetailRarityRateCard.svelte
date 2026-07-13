@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { GachaCardRarityRate } from "$lib/domain/gacha-detail";
   import Icon from "@iconify/svelte";
+  import GachaProbabilityDetailsDialog from "./GachaProbabilityDetailsDialog.svelte";
+  import type { SupportedRegion } from "$lib/domain/regions";
 
   const rarityLabelMap: Record<string, string> = {
     rarity_1: "1★",
@@ -33,12 +35,46 @@
     rates,
     title,
     noRatesLabel,
-    lotteryTypeMap
+    lotteryTypeMap,
+    region,
+    gachaId,
+    probabilityOpenLabel,
+    probabilityTitle,
+    probabilityCloseLabel,
+    probabilityDisclaimer,
+    probabilityNormalLabel,
+    probabilityWishLabel,
+    probabilityUnavailableLabel,
+    probabilityLoadingLabel,
+    probabilityLoadFailedLabel,
+    probabilityRetryLabel,
+    probabilityConditionalLabel,
+    diagnosticLabels,
+    cardIdLabel,
+    cardAltSuffix,
+    rarityLabels
   }: {
     rates: GachaCardRarityRate[];
     title: string;
     noRatesLabel: string;
     lotteryTypeMap: Record<string, string>;
+    region: SupportedRegion;
+    gachaId: string;
+    probabilityOpenLabel: string;
+    probabilityTitle: string;
+    probabilityCloseLabel: string;
+    probabilityDisclaimer: string;
+    probabilityNormalLabel: string;
+    probabilityWishLabel: string;
+    probabilityUnavailableLabel: string;
+    probabilityLoadingLabel: string;
+    probabilityLoadFailedLabel: string;
+    probabilityRetryLabel: string;
+    probabilityConditionalLabel: string;
+    diagnosticLabels: Record<string, string>;
+    cardIdLabel: string;
+    cardAltSuffix: string;
+    rarityLabels: Record<string, string>;
   } = $props();
 
   type GroupedRate = {
@@ -154,5 +190,24 @@
         </div>
       </div>
     {/if}
+    <GachaProbabilityDetailsDialog
+      {region}
+      {gachaId}
+      openLabel={probabilityOpenLabel}
+      title={probabilityTitle}
+      closeLabel={probabilityCloseLabel}
+      disclaimer={probabilityDisclaimer}
+      normalLabel={probabilityNormalLabel}
+      wishLabel={probabilityWishLabel}
+      unavailableLabel={probabilityUnavailableLabel}
+      loadingLabel={probabilityLoadingLabel}
+      loadFailedLabel={probabilityLoadFailedLabel}
+      retryLabel={probabilityRetryLabel}
+      conditionalLabel={probabilityConditionalLabel}
+      {cardIdLabel}
+      {cardAltSuffix}
+      diagnosticLabels={diagnosticLabels}
+      {rarityLabels}
+    />
   </div>
 </article>
