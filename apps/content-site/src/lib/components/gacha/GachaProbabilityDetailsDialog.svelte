@@ -28,6 +28,7 @@
     cardIdLabel,
     cardAltSuffix,
     rarityLabels,
+    rarityUnknownLabel,
     diagnosticLabels
   }: {
     region: SupportedRegion;
@@ -46,6 +47,7 @@
     cardIdLabel: string;
     cardAltSuffix: string;
     rarityLabels: Record<string, string>;
+    rarityUnknownLabel: string;
     diagnosticLabels: Record<string, string>;
   } = $props();
 
@@ -108,6 +110,7 @@
     `gacha-probability-tab-${getIdPart(region)}-${getIdPart(gachaId)}-${getIdPart(rarity)}`;
   const getRarityPanelId = (rarity: string): string =>
     `gacha-probability-panel-${getIdPart(region)}-${getIdPart(gachaId)}-${getIdPart(rarity)}`;
+  const getRarityDisplay = (rarity: string): string => rarityLabels[rarity] ?? rarityUnknownLabel;
 
   const isCurrentRequest = (identity: string, generation: number): boolean =>
     identity === probabilityIdentity &&
@@ -186,24 +189,39 @@
         <h2 id="gacha-probability-title" class="text-xl font-bold">{title}</h2>
         <p class="mt-1 text-xs/5 opacity-65">{disclaimer}</p>
       </div>
-      <button type="button" class="btn btn-circle btn-ghost btn-sm" aria-label={closeLabel} onclick={close}>
+      <button
+        type="button"
+        class="btn btn-circle btn-ghost btn-sm"
+        aria-label={closeLabel}
+        onclick={close}
+      >
         <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
       </button>
     </div>
 
     {#if loadState === "loading"}
-      <div class="content-card-inset flex items-center justify-center gap-2 rounded-xl p-6 text-sm opacity-70">
+      <div
+        class="content-card-inset flex items-center justify-center gap-2 rounded-xl p-6 text-sm opacity-70"
+      >
         <span class="loading loading-spinner loading-sm"></span>{loadingLabel}
       </div>
     {:else if loadState === "failure"}
       <div class="content-card-inset rounded-xl p-6 text-center text-sm text-error/80">
         <p>{loadFailedLabel}</p>
-        <button type="button" class="btn btn-outline btn-sm mt-3" onclick={retry}>{retryLabel}</button>
+        <button type="button" class="btn btn-outline btn-sm mt-3" onclick={retry}
+          >{retryLabel}</button
+        >
       </div>
     {:else if groups.length === 0}
-      <div class="content-card-inset rounded-xl p-6 text-center text-sm opacity-70">{unavailableLabel}</div>
+      <div class="content-card-inset rounded-xl p-6 text-center text-sm opacity-70">
+        {unavailableLabel}
+      </div>
     {:else}
-      <div role="tablist" aria-label={title} class="tabs tabs-box content-card-inset flex w-full flex-wrap gap-1 p-1">
+      <div
+        role="tablist"
+        aria-label={title}
+        class="tabs tabs-box content-card-inset flex w-full flex-wrap gap-1 p-1"
+      >
         {#each groups as [rarity] (rarity)}
           {@const tabId = getRarityTabId(rarity)}
           {@const panelId = getRarityPanelId(rarity)}
@@ -215,7 +233,7 @@
             aria-controls={panelId}
             tabindex={activeRarity === rarity ? 0 : -1}
             class={`tab min-w-16 shrink-0 whitespace-nowrap rounded-lg px-3 ${activeRarity === rarity ? "bg-primary text-primary-content" : ""}`}
-            onclick={() => activeRarity = rarity}
+            onclick={() => (activeRarity = rarity)}
             onkeydown={(event) => {
               if (event.key === "ArrowRight" || event.key === "ArrowDown") {
                 event.preventDefault();
@@ -228,8 +246,8 @@
                 const previous = groups[(index - 1 + groups.length) % groups.length]?.[0];
                 if (previous) void focusRarityTab(previous);
               }
-            }}
-          >{rarityLabels[rarity] ?? rarity}</button>
+            }}>{getRarityDisplay(rarity)}</button
+          >
         {/each}
       </div>
       {#each groups as [rarity] (rarity)}
@@ -244,13 +262,28 @@
           <div class="grid gap-2 sm:grid-cols-2">
             {#if activeRarity === rarity}
               {#each visibleCards as card, index (`${card.cardId ?? "unknown"}-${card.isWish}-${index}`)}
-                {@const segment = card.isWish === true ? wishLabel : card.isWish === false ? normalLabel : unavailableLabel}
-                {@const conditionalSegments = card.probabilitySegments.filter((item) => item.conditional)}
-                <div class="content-card-inset grid grid-cols-[3.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-2.5">
+                {@const segment =
+                  card.isWish === true
+                    ? wishLabel
+                    : card.isWish === false
+                      ? normalLabel
+                      : unavailableLabel}
+                {@const conditionalSegments = card.probabilitySegments.filter(
+                  (item) => item.conditional
+                )}
+                <div
+                  class="content-card-inset grid grid-cols-[3.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-2.5"
+                >
                   <CardThumbnail
-                    src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp") : null}
-                    fallbackSrc={card.assetBundleName && region !== "jp" ? getCardThumbnailAssetURL(card.assetBundleName, false, region) : null}
-                    alt={card.title ? `${card.title} ${cardAltSuffix}` : card.cardId ?? unavailableLabel}
+                    src={card.assetBundleName
+                      ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
+                      : null}
+                    fallbackSrc={card.assetBundleName && region !== "jp"
+                      ? getCardThumbnailAssetURL(card.assetBundleName, false, region)
+                      : null}
+                    alt={card.title
+                      ? `${card.title} ${cardAltSuffix}`
+                      : (card.cardId ?? unavailableLabel)}
                     fallbackLabel={card.cardId ?? unavailableLabel}
                     rarityType={card.rarityType}
                     rarityCount={card.rarityType === "rarity_birthday" ? 1 : 0}
@@ -261,12 +294,20 @@
                   />
                   <div class="min-w-0">
                     {#if card.cardId}
-                      <a class="link link-hover block truncate text-sm font-semibold" href={resolve("/card/[region]/[id]", { region, id: card.cardId })}>{card.title ?? card.cardId}</a>
+                      <a
+                        class="link link-hover block truncate text-sm font-semibold"
+                        href={resolve("/card/[region]/[id]", { region, id: card.cardId })}
+                        >{card.title ?? card.cardId}</a
+                      >
                     {:else}
-                      <span class="block truncate text-sm font-semibold">{card.title ?? unavailableLabel}</span>
+                      <span class="block truncate text-sm font-semibold"
+                        >{card.title ?? unavailableLabel}</span
+                      >
                     {/if}
                     <div class="mt-0.5 flex flex-wrap gap-x-2 text-[0.68rem] opacity-60">
-                      <span>{cardIdLabel}: {card.cardId ?? unavailableLabel}</span><span>{segment}</span>
+                      <span>{cardIdLabel}: {card.cardId ?? unavailableLabel}</span><span
+                        >{segment}</span
+                      >
                       {#if conditionalSegments.length > 0}<span>{conditionalLabel}</span>{/if}
                     </div>
                   </div>
@@ -276,7 +317,14 @@
                         <div class="font-semibold">{probability(item.probability)}</div>
                       {/each}
                     {:else}
-                      <span class={card.probability === null ? "max-w-20 whitespace-normal text-error/80" : "font-semibold"}>{card.probability === null ? diagnosticLabels[card.diagnostic] ?? unavailableLabel : probability(card.probability)}</span>
+                      <span
+                        class={card.probability === null
+                          ? "max-w-20 whitespace-normal text-error/80"
+                          : "font-semibold"}
+                        >{card.probability === null
+                          ? (diagnosticLabels[card.diagnostic] ?? unavailableLabel)
+                          : probability(card.probability)}</span
+                      >
                     {/if}
                   </div>
                 </div>
@@ -287,5 +335,7 @@
       {/each}
     {/if}
   </div>
-  <form method="dialog" class="modal-backdrop"><button aria-label={closeLabel}>{closeLabel}</button></form>
+  <form method="dialog" class="modal-backdrop">
+    <button aria-label={closeLabel}>{closeLabel}</button>
+  </form>
 </dialog>

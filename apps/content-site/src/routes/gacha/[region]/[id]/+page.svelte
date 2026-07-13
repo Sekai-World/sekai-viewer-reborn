@@ -15,10 +15,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import {
-    createI18nTranslator,
-     getLocalI18nMessages,
-  } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
@@ -28,10 +25,16 @@
   let currentMessages = $state<Record<string, string>>(fallbackMessages);
 
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    )(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
+
+  const buildRarityLabelMap = (translate: (key: string) => string): Record<string, string> => ({
+    rarity_1: translate("gachaRarity1"),
+    rarity_2: translate("gachaRarity2"),
+    rarity_3: translate("gachaRarity3"),
+    rarity_4: translate("gachaRarity4"),
+    rarity_birthday: translate("gachaRarityBirthday"),
+    rarity_4_birthday: translate("gachaRarityBirthday")
+  });
 
   let displayLocale = $state("");
   let activeAssetTab = $state<GachaAssetTab>("logo");
@@ -75,7 +78,9 @@
   let probabilityConditionalLabel = $state(getInitialI18nText("gachaProbabilityConditional"));
   let probabilityCardIdLabel = $state(getInitialI18nText("gachaProbabilityCardId"));
   let probabilityDiagnosticLabels = $state<Record<string, string>>({});
-  let rarityLabels = $state<Record<string, string>>({});
+  let rarityLabels = $state(buildRarityLabelMap(getInitialI18nText));
+  let rarityUnknownLabel = $state(getInitialI18nText("gachaRarityUnknown"));
+  let rarityRateChoiceNote = $state(getInitialI18nText("gachaRarityRateChoiceNote"));
   let gachaBehaviorTitle = $state(getInitialI18nText("gachaBehaviorTitle"));
   let gachaNoBehaviors = $state(getInitialI18nText("gachaNoBehaviors"));
   let gachaBehaviorSpinCount = $state(getInitialI18nText("gachaBehaviorSpinCount"));
@@ -117,7 +122,11 @@
 
   const buildLotteryTypeMap = (translate: (key: string) => string): Record<string, string> => ({
     normal: translate("lotteryType.normal"),
-    categorized_wish: translate("lotteryType.categorized_wish")
+    categorized_wish: translate("lotteryType.categorized_wish"),
+    rate_choice_first: translate("lotteryType.rate_choice_first"),
+    rate_choice_second: translate("lotteryType.rate_choice_second"),
+    rate_choice: translate("lotteryType.rate_choice"),
+    unknown: translate("lotteryType.unknown")
   });
   let lotteryTypeMap = $state(buildLotteryTypeMap(getInitialI18nText));
 
@@ -192,8 +201,23 @@
     probabilityRetryLabel = translate("gachaProbabilityRetry");
     probabilityConditionalLabel = translate("gachaProbabilityConditional");
     probabilityCardIdLabel = translate("gachaProbabilityCardId");
-    probabilityDiagnosticLabels = Object.fromEntries(["missing-card-id", "missing-card-rarity", "unsupported-lottery-type", "unmatched-card-semantics", "invalid-weight", "invalid-rate", "rate-conflict", "empty-pool", "incomplete-metadata", "invalid-rate-choice"].map((key) => [key, translate(`gachaProbabilityDiagnostic.${key}`)]));
-    rarityLabels = { rarity_1: "1★", rarity_2: "2★", rarity_3: "3★", rarity_4: "4★", rarity_birthday: translate("gachaRarityBirthday"), rarity_4_birthday: translate("gachaRarityBirthday") };
+    probabilityDiagnosticLabels = Object.fromEntries(
+      [
+        "missing-card-id",
+        "missing-card-rarity",
+        "unsupported-lottery-type",
+        "unmatched-card-semantics",
+        "invalid-weight",
+        "invalid-rate",
+        "rate-conflict",
+        "empty-pool",
+        "incomplete-metadata",
+        "invalid-rate-choice"
+      ].map((key) => [key, translate(`gachaProbabilityDiagnostic.${key}`)])
+    );
+    rarityLabels = buildRarityLabelMap(translate);
+    rarityUnknownLabel = translate("gachaRarityUnknown");
+    rarityRateChoiceNote = translate("gachaRarityRateChoiceNote");
     gachaBehaviorTitle = translate("gachaBehaviorTitle");
     gachaNoBehaviors = translate("gachaNoBehaviors");
     gachaBehaviorSpinCount = translate("gachaBehaviorSpinCount");
@@ -226,10 +250,7 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    );
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
   });
 
@@ -426,6 +447,8 @@
               title={gachaRarityRateTitle}
               noRatesLabel={gachaNoRarityRates}
               {lotteryTypeMap}
+              {rarityUnknownLabel}
+              rateChoiceExplanation={rarityRateChoiceNote}
               region={data.region}
               gachaId={data.gachaId}
               {probabilityOpenLabel}
