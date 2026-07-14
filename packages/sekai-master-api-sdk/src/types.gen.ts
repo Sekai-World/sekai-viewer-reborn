@@ -417,6 +417,7 @@ export type SharedGachaBannerResponse = {
 };
 
 export type SharedGachaBehaviorResponse = {
+    costResourceAssetbundleName?: string;
     costResourceId?: unknown;
     costResourceQuantity?: unknown;
     costResourceType?: unknown;

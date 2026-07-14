@@ -24,8 +24,7 @@ const getStringLike = (value: unknown): string | null => {
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
-const getBoolean = (value: unknown): boolean | null =>
-  typeof value === "boolean" ? value : null;
+const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const getDateValue = (value: unknown): string | number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -37,7 +36,10 @@ const getDateValue = (value: unknown): string | number | null => {
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
 
-const pickFirstString = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
+const pickFirstString = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | null => {
   for (const key of keys) {
     const value = getString(source[key]);
     if (value) {
@@ -47,7 +49,10 @@ const pickFirstString = (source: Record<string, unknown>, keys: readonly string[
   return null;
 };
 
-const pickFirstStringLike = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
+const pickFirstStringLike = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | null => {
   for (const key of keys) {
     const value = getStringLike(source[key]);
     if (value) {
@@ -57,7 +62,10 @@ const pickFirstStringLike = (source: Record<string, unknown>, keys: readonly str
   return null;
 };
 
-const pickFirstNumber = (source: Record<string, unknown>, keys: readonly string[]): number | null => {
+const pickFirstNumber = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): number | null => {
   for (const key of keys) {
     const value = getNumber(source[key]);
     if (value !== null) {
@@ -67,7 +75,10 @@ const pickFirstNumber = (source: Record<string, unknown>, keys: readonly string[
   return null;
 };
 
-const pickFirstDateValue = (source: Record<string, unknown>, keys: readonly string[]): string | number | null => {
+const pickFirstDateValue = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | number | null => {
   for (const key of keys) {
     const value = getDateValue(source[key]);
     if (value !== null) {
@@ -77,7 +88,10 @@ const pickFirstDateValue = (source: Record<string, unknown>, keys: readonly stri
   return null;
 };
 
-const pickFirstBoolean = (source: Record<string, unknown>, keys: readonly string[]): boolean | null => {
+const pickFirstBoolean = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): boolean | null => {
   for (const key of keys) {
     const value = getBoolean(source[key]);
     if (value !== null) {
@@ -136,6 +150,7 @@ const parseGachaBehaviors = (raw: unknown): GachaBehavior[] => {
         costResourceType: pickFirstString(obj, ["costResourceType"]),
         costResourceQuantity: pickFirstNumber(obj, ["costResourceQuantity"]),
         costResourceId: pickFirstStringLike(obj, ["costResourceId"]),
+        costResourceAssetBundleName: pickFirstString(obj, ["costResourceAssetbundleName"]),
         resourceCategory: pickFirstString(obj, ["resourceCategory"]),
         spinCount: pickFirstNumber(obj, ["spinCount"]),
         executeLimit: pickFirstNumber(obj, ["executeLimit"]),

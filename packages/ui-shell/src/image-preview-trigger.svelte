@@ -4,6 +4,7 @@
 
   type Props = {
     src: string;
+    fallbackSrc?: string;
     alt?: string;
     fallbackLabel?: string;
     ariaLabel?: string;
@@ -16,6 +17,7 @@
 
   let {
     src,
+    fallbackSrc,
     alt = "",
     fallbackLabel = "",
     ariaLabel = "",
@@ -28,12 +30,15 @@
 
   let previewImageLoaded = $state(false);
   let previewImageFailed = $state(false);
+  let fallbackApplied = $state(false);
+  const currentSrc = $derived(fallbackApplied && fallbackSrc ? fallbackSrc : src);
 
   $effect(() => {
-    if (src !== undefined) {
-      previewImageLoaded = false;
-      previewImageFailed = false;
-    }
+    const sourceSet = { primary: src, fallback: fallbackSrc };
+    void sourceSet;
+    fallbackApplied = false;
+    previewImageLoaded = false;
+    previewImageFailed = false;
   });
 </script>
 
@@ -57,13 +62,19 @@
         </div>
       {/if}
       <img
-        {src}
+        src={currentSrc}
         {alt}
         class={`${imageClass} transition-[opacity,transform] duration-300 ease-out ${previewImageLoaded ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"}`}
         onload={() => {
           previewImageLoaded = true;
         }}
         onerror={() => {
+          if (!fallbackApplied && fallbackSrc && fallbackSrc !== currentSrc) {
+            fallbackApplied = true;
+            previewImageLoaded = false;
+            previewImageFailed = false;
+            return;
+          }
           previewImageLoaded = true;
           previewImageFailed = true;
         }}

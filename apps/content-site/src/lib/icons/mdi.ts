@@ -78,6 +78,7 @@ import diceMultiple from "@iconify-icons/mdi/dice-multiple";
 import refresh from "@iconify-icons/mdi/refresh";
 import slotMachineOutline from "@iconify-icons/mdi/slot-machine-outline";
 import ticketOutline from "@iconify-icons/mdi/ticket-outline";
+import diamondOutline from "@iconify-icons/mdi/diamond-outline";
 
 // ── UI Shell (shared package) ───────────────────────────────────────
 import menu from "@iconify-icons/mdi/menu";
@@ -156,6 +157,7 @@ addIcon("mdi:dice-multiple", diceMultiple);
 addIcon("mdi:refresh", refresh);
 addIcon("mdi:slot-machine-outline", slotMachineOutline);
 addIcon("mdi:ticket-outline", ticketOutline);
+addIcon("mdi:diamond-outline", diamondOutline);
 
 addIcon("mdi:chevron-up", chevronUp);
 addIcon("mdi:chevron-down", chevronDown);

@@ -341,18 +341,68 @@ export const getGachaBannerAssetURL = (
   );
 };
 
+type GachaBackgroundAssetVariant = "numbered" | "unnumbered";
+
+type GachaBackgroundAssetOptions = {
+  assetBundleName: string | null | undefined;
+  gachaId: string | null | undefined;
+  server: AssetServer;
+  extension: string;
+  baseUrlOverride?: string | null;
+  variant: GachaBackgroundAssetVariant;
+};
+
+const buildGachaBackgroundAssetURL = ({
+  assetBundleName,
+  gachaId,
+  server,
+  extension,
+  baseUrlOverride,
+  variant
+}: GachaBackgroundAssetOptions): string => {
+  const bundle = assetBundleName?.trim().replace(/^\/+|\/+$/g, "") ?? "";
+  const id = gachaId?.trim().replace(/^\/+|\/+$/g, "") ?? "";
+  if (!bundle || !id) return "";
+
+  const suffix = variant === "numbered" ? "_1" : "";
+  return buildServerAssetURL(
+    `gacha/${bundle}/screen/texture/bg_gacha${id}${suffix}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
 export const getGachaBackgroundAssetURL = (
   assetBundleName: string | null | undefined,
   gachaId: string | null | undefined,
   server: AssetServer = "jp",
   extension = "webp",
   baseUrlOverride?: string | null
-): string => {
-  const bundle = assetBundleName?.trim().replace(/^\/+|\/+$/g, "") ?? "";
-  const id = gachaId?.trim().replace(/^\/+|\/+$/g, "") ?? "";
-  if (!bundle || !id) return "";
-  return buildServerAssetURL(`gacha/${bundle}/screen/texture/bg_gacha${id}_1.${extension}`, server, baseUrlOverride);
-};
+): string =>
+  buildGachaBackgroundAssetURL({
+    assetBundleName,
+    gachaId,
+    server,
+    extension,
+    baseUrlOverride,
+    variant: "numbered"
+  });
+
+export const getGachaBackgroundFallbackAssetURL = (
+  assetBundleName: string | null | undefined,
+  gachaId: string | null | undefined,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string =>
+  buildGachaBackgroundAssetURL({
+    assetBundleName,
+    gachaId,
+    server,
+    extension,
+    baseUrlOverride,
+    variant: "unnumbered"
+  });
 
 export const getCommonMaterialThumbnailURL = (
   assetBundleName: string,
@@ -367,6 +417,23 @@ export const getCommonMaterialThumbnailURL = (
 
   return buildServerAssetURL(
     `thumbnail/common_material/${normalizedAssetBundleName}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getGachaTicketThumbnailURL = (
+  assetBundleName: string,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `thumbnail/gacha_ticket/${normalizedAssetBundleName}.webp`,
     server,
     baseUrlOverride
   );

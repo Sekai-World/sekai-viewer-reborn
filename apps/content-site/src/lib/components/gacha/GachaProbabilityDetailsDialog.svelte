@@ -17,7 +17,10 @@
     openLabel,
     title,
     closeLabel,
+    infoLabel,
     disclaimer,
+    rateChoiceExplanation,
+    showRateChoiceExplanation,
     normalLabel,
     wishLabel,
     unavailableLabel,
@@ -36,7 +39,10 @@
     openLabel: string;
     title: string;
     closeLabel: string;
+    infoLabel: string;
     disclaimer: string;
+    rateChoiceExplanation: string;
+    showRateChoiceExplanation: boolean;
     normalLabel: string;
     wishLabel: string;
     unavailableLabel: string;
@@ -55,6 +61,9 @@
   let cards = $state<GachaProbabilityCard[]>([]);
   let loadState = $state<LoadState>("idle");
   let activeRarity = $state("");
+  let infoHovered = $state(false);
+  let infoFocused = $state(false);
+  let infoPinned = $state(false);
   let probabilityIdentity = "";
   let requestGeneration = 0;
   let activeRequestController: AbortController | null = null;
@@ -73,6 +82,9 @@
     cards = [];
     loadState = "idle";
     activeRarity = "";
+    infoHovered = false;
+    infoFocused = false;
+    infoPinned = false;
     if (dialog?.open) {
       dialog.close();
     }
@@ -106,11 +118,42 @@
         : `${value.toFixed(value < 0.01 ? 4 : 2)}%`;
 
   const getIdPart = (value: string): string => value.replace(/[^a-zA-Z0-9_-]/g, "-");
+  const getProbabilityInfoId = (): string =>
+    `gacha-probability-info-${getIdPart(region)}-${getIdPart(gachaId)}`;
   const getRarityTabId = (rarity: string): string =>
     `gacha-probability-tab-${getIdPart(region)}-${getIdPart(gachaId)}-${getIdPart(rarity)}`;
   const getRarityPanelId = (rarity: string): string =>
     `gacha-probability-panel-${getIdPart(region)}-${getIdPart(gachaId)}-${getIdPart(rarity)}`;
   const getRarityDisplay = (rarity: string): string => rarityLabels[rarity] ?? rarityUnknownLabel;
+  let infoVisible = $derived(infoHovered || infoFocused || infoPinned);
+  let hasRateChoiceNote = $derived(
+    showRateChoiceExplanation && rateChoiceExplanation.trim().length > 0
+  );
+  let probabilityNoteText = $derived.by(() =>
+    [hasRateChoiceNote ? rateChoiceExplanation.trim() : "", disclaimer.trim()]
+      .filter(Boolean)
+      .join(" ")
+  );
+  let hasProbabilityNotes = $derived(probabilityNoteText.length > 0);
+
+  const toggleInfo = (event: MouseEvent): void => {
+    if (infoPinned) {
+      infoPinned = false;
+      infoFocused = false;
+      (event.currentTarget as HTMLButtonElement).blur();
+      return;
+    }
+
+    infoPinned = true;
+  };
+
+  const handleInfoKeydown = (event: KeyboardEvent): void => {
+    if (event.key !== "Escape") return;
+    infoPinned = false;
+    infoHovered = false;
+    infoFocused = false;
+    (event.currentTarget as HTMLButtonElement).blur();
+  };
 
   const isCurrentRequest = (identity: string, generation: number): boolean =>
     identity === probabilityIdentity &&
@@ -174,20 +217,62 @@
   const close = (): void => dialog?.close();
 </script>
 
-<button
-  type="button"
-  class="btn btn-outline btn-primary btn-sm mt-1 gap-1.5 self-start shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md"
-  onclick={open}
->
-  <Icon icon="mdi:chart-box-outline" class="size-4" aria-hidden="true" />{openLabel}
-</button>
+<div class="mt-1 flex w-full items-center justify-between gap-2">
+  <button
+    type="button"
+    class="btn btn-outline btn-primary btn-sm gap-1.5 shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md"
+    onclick={open}
+  >
+    <Icon icon="mdi:chart-box-outline" class="size-4" aria-hidden="true" />{openLabel}
+  </button>
+
+  {#if hasProbabilityNotes}
+    <span
+      role="group"
+      class="relative inline-flex shrink-0"
+      onpointerleave={(event) => {
+        if (event.pointerType === "mouse") infoHovered = false;
+      }}
+    >
+      <button
+        type="button"
+        class="btn btn-circle btn-ghost btn-sm size-8 min-h-8 p-0 text-base-content/65 transition-colors hover:text-primary focus-visible:text-primary"
+        aria-label={infoLabel}
+        aria-controls={getProbabilityInfoId()}
+        aria-expanded={infoVisible}
+        aria-describedby={infoVisible ? getProbabilityInfoId() : undefined}
+        onclick={toggleInfo}
+        onpointerenter={(event) => {
+          if (event.pointerType === "mouse") infoHovered = true;
+        }}
+        onfocus={() => (infoFocused = true)}
+        onblur={() => {
+          infoFocused = false;
+          infoPinned = false;
+        }}
+        onkeydown={handleInfoKeydown}
+      >
+        <Icon icon="mdi:information-outline" class="size-5" aria-hidden="true" />
+      </button>
+
+      {#if infoVisible}
+        <div
+          id={getProbabilityInfoId()}
+          role="tooltip"
+          class="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-neutral-content/15 bg-neutral p-3 text-left text-xs/5 text-neutral-content shadow-xl"
+        >
+          <p>{probabilityNoteText}</p>
+        </div>
+      {/if}
+    </span>
+  {/if}
+</div>
 
 <dialog bind:this={dialog} class="modal" aria-labelledby="gacha-probability-title">
   <div class="modal-box flex max-h-[min(90vh,52rem)] w-11/12 max-w-5xl flex-col gap-4 p-4 sm:p-6">
     <div class="flex items-start justify-between gap-4">
       <div>
         <h2 id="gacha-probability-title" class="text-xl font-bold">{title}</h2>
-        <p class="mt-1 text-xs/5 opacity-65">{disclaimer}</p>
       </div>
       <button
         type="button"

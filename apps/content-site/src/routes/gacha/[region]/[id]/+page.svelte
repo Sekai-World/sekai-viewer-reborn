@@ -47,7 +47,6 @@
   let startAtLabel = $state(getInitialI18nText("startAt"));
   let endAtLabel = $state(getInitialI18nText("endAt"));
   let gachaTypeLabel = $state(getInitialI18nText("gachaTypeLabel"));
-  let costLabel = $state(getInitialI18nText("costLabel"));
   let noGachaDataLabel = $state(getInitialI18nText("noGachaData"));
   let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
@@ -57,6 +56,7 @@
   let logoLabel = $state(getInitialI18nText("gachaAssetTabs.logo"));
   let bannerLabel = $state(getInitialI18nText("gachaAssetTabs.banner"));
   let backgroundLabel = $state(getInitialI18nText("gachaAssetTabs.background"));
+  let backgroundUnavailableLabel = $state(getInitialI18nText("gachaBackgroundUnavailable"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let pickupTitle = $state(getInitialI18nText("gachaPickupTitle"));
   let gachaPickupWeight = $state(getInitialI18nText("gachaPickupWeight"));
@@ -68,6 +68,7 @@
   let probabilityOpenLabel = $state(getInitialI18nText("gachaProbabilityOpen"));
   let probabilityTitle = $state(getInitialI18nText("gachaProbabilityTitle"));
   let probabilityCloseLabel = $state(getInitialI18nText("gachaProbabilityClose"));
+  let probabilityInfoLabel = $state(getInitialI18nText("gachaProbabilityInfoLabel"));
   let probabilityDisclaimer = $state(getInitialI18nText("gachaProbabilityDisclaimer"));
   let probabilityNormalLabel = $state(getInitialI18nText("gachaProbabilityNormal"));
   let probabilityWishLabel = $state(getInitialI18nText("gachaProbabilityWish"));
@@ -84,7 +85,6 @@
   let gachaBehaviorTitle = $state(getInitialI18nText("gachaBehaviorTitle"));
   let gachaNoBehaviors = $state(getInitialI18nText("gachaNoBehaviors"));
   let gachaBehaviorSpinCount = $state(getInitialI18nText("gachaBehaviorSpinCount"));
-  let gachaBehaviorCost = $state(getInitialI18nText("gachaBehaviorCost"));
   let gachaBehaviorLimit = $state(getInitialI18nText("gachaBehaviorLimit"));
   let gachaDescriptionLabel = $state(getInitialI18nText("gachaDescription"));
   let gachaDescriptionShowMore = $state(getInitialI18nText("gachaDescriptionShowMore"));
@@ -171,7 +171,6 @@
     startAtLabel = translate("startAt");
     endAtLabel = translate("endAt");
     gachaTypeLabel = translate("gachaTypeLabel");
-    costLabel = translate("costLabel");
     noGachaDataLabel = translate("noGachaData");
     imageUnavailableLabel = translate("imageUnavailable");
     closeLabel = translate("closeLabel");
@@ -181,6 +180,7 @@
     logoLabel = translate("gachaAssetTabs.logo");
     bannerLabel = translate("gachaAssetTabs.banner");
     backgroundLabel = translate("gachaAssetTabs.background");
+    backgroundUnavailableLabel = translate("gachaBackgroundUnavailable");
     bannerAltSuffix = translate("bannerAltSuffix");
     pickupTitle = translate("gachaPickupTitle");
     gachaPickupWeight = translate("gachaPickupWeight");
@@ -192,6 +192,7 @@
     probabilityOpenLabel = translate("gachaProbabilityOpen");
     probabilityTitle = translate("gachaProbabilityTitle");
     probabilityCloseLabel = translate("gachaProbabilityClose");
+    probabilityInfoLabel = translate("gachaProbabilityInfoLabel");
     probabilityDisclaimer = translate("gachaProbabilityDisclaimer");
     probabilityNormalLabel = translate("gachaProbabilityNormal");
     probabilityWishLabel = translate("gachaProbabilityWish");
@@ -221,7 +222,6 @@
     gachaBehaviorTitle = translate("gachaBehaviorTitle");
     gachaNoBehaviors = translate("gachaNoBehaviors");
     gachaBehaviorSpinCount = translate("gachaBehaviorSpinCount");
-    gachaBehaviorCost = translate("gachaBehaviorCost");
     gachaBehaviorLimit = translate("gachaBehaviorLimit");
     gachaDescriptionLabel = translate("gachaDescription");
     gachaDescriptionShowMore = translate("gachaDescriptionShowMore");
@@ -383,6 +383,7 @@
             {logoLabel}
             {bannerLabel}
             {backgroundLabel}
+            {backgroundUnavailableLabel}
             {bannerAltSuffix}
             {imageUnavailableLabel}
             {closeLabel}
@@ -399,7 +400,6 @@
             {gachaTypeMap}
             {startAtLabel}
             {endAtLabel}
-            {costLabel}
             {noGachaDataLabel}
           />
 
@@ -454,6 +454,7 @@
               {probabilityOpenLabel}
               {probabilityTitle}
               {probabilityCloseLabel}
+              {probabilityInfoLabel}
               {probabilityDisclaimer}
               {probabilityNormalLabel}
               {probabilityWishLabel}
@@ -475,7 +476,6 @@
               title={gachaBehaviorTitle}
               noBehaviorsLabel={gachaNoBehaviors}
               spinCountLabel={gachaBehaviorSpinCount}
-              costLabel={gachaBehaviorCost}
               limitLabel={gachaBehaviorLimit}
               region={data.region}
               {behaviorTypeMap}

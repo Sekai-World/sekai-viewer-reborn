@@ -4,6 +4,7 @@
   type Props = {
     open?: boolean;
     src: string;
+    fallbackSrc?: string;
     alt?: string;
     fallbackLabel?: string;
     closeLabel?: string;
@@ -17,6 +18,7 @@
   let {
     open = $bindable(false),
     src,
+    fallbackSrc,
     alt = "",
     fallbackLabel = "",
     closeLabel = "Close",
@@ -30,6 +32,8 @@
   let dialog: HTMLDialogElement | null = $state(null);
   let dialogImageLoaded = $state(false);
   let dialogImageFailed = $state(false);
+  let fallbackApplied = $state(false);
+  const currentSrc = $derived(fallbackApplied && fallbackSrc ? fallbackSrc : src);
 
   const normalizedFormatOptions = $derived(
     Array.from(new Set(formatOptions.map((format) => format.trim().toLowerCase()).filter(Boolean)))
@@ -37,13 +41,14 @@
   const hasDownloadFormatOptions = $derived(normalizedFormatOptions.length > 0);
   const replaceSrcExtension = (value: string, extension: string): string =>
     value.replace(/(\.[a-z0-9]+)(?=([?#].*)?$)/i, `.${extension}`);
-  const getDownloadSrc = (format: string): string => replaceSrcExtension(src, format);
+  const getDownloadSrc = (format: string): string => replaceSrcExtension(currentSrc, format);
 
   $effect(() => {
-    if (src !== undefined) {
-      dialogImageLoaded = false;
-      dialogImageFailed = false;
-    }
+    const sourceSet = { primary: src, fallback: fallbackSrc };
+    void sourceSet;
+    fallbackApplied = false;
+    dialogImageLoaded = false;
+    dialogImageFailed = false;
   });
 
   $effect(() => {
@@ -114,7 +119,7 @@
           </details>
         {:else}
           <a
-            href={src}
+            href={currentSrc}
             download
             class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
             aria-label={downloadLabel}
@@ -137,7 +142,7 @@
           </a>
         {/if}
         <a
-          href={src}
+          href={currentSrc}
           target="_blank"
           rel="noreferrer"
           class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
@@ -194,7 +199,7 @@
         </div>
       {/if}
       <img
-        {src}
+        src={currentSrc}
         {alt}
         class={`${dialogImageClass} transition-[opacity,transform] duration-300 ease-out ${dialogImageLoaded && !dialogImageFailed ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"} ${dialogImageFailed ? "pointer-events-none sr-only" : ""}`}
         onload={() => {
@@ -202,6 +207,12 @@
           dialogImageFailed = false;
         }}
         onerror={() => {
+          if (!fallbackApplied && fallbackSrc && fallbackSrc !== currentSrc) {
+            fallbackApplied = true;
+            dialogImageLoaded = false;
+            dialogImageFailed = false;
+            return;
+          }
           dialogImageLoaded = true;
           dialogImageFailed = true;
         }}

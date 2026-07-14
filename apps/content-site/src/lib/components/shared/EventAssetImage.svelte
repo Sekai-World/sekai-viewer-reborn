@@ -88,6 +88,7 @@
 {#if interactive}
   <ImagePreviewTrigger
     {src}
+    {fallbackSrc}
     {alt}
     {fallbackLabel}
     ariaLabel={alt || fallbackLabel}

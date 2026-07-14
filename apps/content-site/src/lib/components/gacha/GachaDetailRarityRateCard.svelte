@@ -33,6 +33,7 @@
     probabilityOpenLabel,
     probabilityTitle,
     probabilityCloseLabel,
+    probabilityInfoLabel,
     probabilityDisclaimer,
     probabilityNormalLabel,
     probabilityWishLabel,
@@ -57,6 +58,7 @@
     probabilityOpenLabel: string;
     probabilityTitle: string;
     probabilityCloseLabel: string;
+    probabilityInfoLabel: string;
     probabilityDisclaimer: string;
     probabilityNormalLabel: string;
     probabilityWishLabel: string;
@@ -203,17 +205,6 @@
             {/if}
           {/each}
         </div>
-
-        {#if hasRateChoiceRarity4}
-          <p class="mt-3 flex items-start gap-2 text-xs/5 opacity-70">
-            <Icon
-              icon="mdi:information-outline"
-              class="mt-0.5 size-4 shrink-0"
-              aria-hidden="true"
-            />
-            <span>{rateChoiceExplanation}</span>
-          </p>
-        {/if}
       </div>
     {/if}
     <GachaProbabilityDetailsDialog
@@ -222,7 +213,10 @@
       openLabel={probabilityOpenLabel}
       title={probabilityTitle}
       closeLabel={probabilityCloseLabel}
+      infoLabel={probabilityInfoLabel}
       disclaimer={probabilityDisclaimer}
+      {rateChoiceExplanation}
+      showRateChoiceExplanation={hasRateChoiceRarity4}
       normalLabel={probabilityNormalLabel}
       wishLabel={probabilityWishLabel}
       unavailableLabel={probabilityUnavailableLabel}

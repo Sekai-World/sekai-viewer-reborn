@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { GachaBehavior } from "$lib/domain/gacha-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import { getCommonMaterialThumbnailURL } from "$lib/assets/index";
+  import { getCommonMaterialThumbnailURL, getGachaTicketThumbnailURL } from "$lib/assets/index";
   import Icon from "@iconify/svelte";
 
   let {
@@ -9,7 +9,6 @@
     title,
     noBehaviorsLabel,
     spinCountLabel,
-    costLabel: _costLabel,
     limitLabel,
     region = "jp",
     behaviorTypeMap,
@@ -21,7 +20,6 @@
     title: string;
     noBehaviorsLabel: string;
     spinCountLabel: string;
-    costLabel: string;
     limitLabel: string;
     region?: SupportedRegion;
     behaviorTypeMap: Record<string, string>;
@@ -34,26 +32,41 @@
    * Maps costResourceType to the common_material asset bundle name.
    * Both "jewel" and "paid_jewel" use the same jewel icon;
    * paid_jewel gets a "(Paid)" indicator appended via formatCostLine.
-   * "gacha_ticket" icons require per-ticket assetbundleName lookup
-   * (not yet available from API), so we fall back to a FontAwesome icon.
+   * "gacha_ticket" icons use the per-ticket asset bundle name when available,
+   * with a ticket icon fallback for missing or unavailable assets.
    */
   const COST_RESOURCE_ICON_MAP: Record<string, string> = {
     jewel: "jewel",
-    paid_jewel: "jewel",
+    paid_jewel: "jewel"
   };
 
-  const getCostResourceIconURL = (
-    costResourceType: string | null
-  ): string | null => {
+  const getCostResourceIconURL = (costResourceType: string | null): string | null => {
     if (!costResourceType) return null;
     const bundleName = COST_RESOURCE_ICON_MAP[costResourceType];
     if (!bundleName) return null;
     return getCommonMaterialThumbnailURL(bundleName, region);
   };
 
-  /** Whether to show a ticket icon (Iconify) instead of a game asset image. */
+  /** Whether the cost resource is a gacha ticket. */
   const isTicketResource = (costResourceType: string | null): boolean =>
     costResourceType === "gacha_ticket";
+
+  const getTicketResourceIconURL = (behavior: GachaBehavior): string | null => {
+    if (!isTicketResource(behavior.costResourceType) || !behavior.costResourceAssetBundleName) {
+      return null;
+    }
+    return getGachaTicketThumbnailURL(behavior.costResourceAssetBundleName, region);
+  };
+
+  const getCostResourceFallbackIcon = (costResourceType: string | null): string | null => {
+    if (isTicketResource(costResourceType)) {
+      return "mdi:ticket-outline";
+    }
+    if (costResourceType === "jewel" || costResourceType === "paid_jewel") {
+      return "mdi:diamond-outline";
+    }
+    return null;
+  };
 
   const getBehaviorDisplay = (type: string | null): string => {
     if (!type) return "—";
@@ -103,9 +116,7 @@
    * within the group rather than splitting into separate cards.
    */
   const getBehaviorGroupKey = (behavior: GachaBehavior): string =>
-    [behavior.gachaBehaviorType ?? "", behavior.gachaSpinnableType ?? ""].join(
-      ":"
-    );
+    [behavior.gachaBehaviorType ?? "", behavior.gachaSpinnableType ?? ""].join(":");
 
   const getBehaviorVariantKey = (behavior: GachaBehavior, index: number): string =>
     [
@@ -114,6 +125,8 @@
       behavior.gachaSpinnableType ?? "",
       behavior.resourceCategory ?? "",
       behavior.costResourceType ?? "",
+      behavior.costResourceId ?? "",
+      behavior.costResourceAssetBundleName ?? "",
       behavior.costResourceQuantity ?? "",
       behavior.spinCount ?? "",
       behavior.executeLimit ?? "",
@@ -121,10 +134,19 @@
       index
     ].join(":");
 
+  const failedAssetURLs = $state<Record<string, true>>({});
+
+  const isAssetFailed = (assetURL: string | null): boolean =>
+    assetURL !== null && Boolean(failedAssetURLs[assetURL]);
+
+  const markAssetFailed = (assetURL: string | null): void => {
+    if (assetURL) {
+      failedAssetURLs[assetURL] = true;
+    }
+  };
+
   const groupedBehaviors = $derived((): BehaviorGroup[] => {
-    const sorted = [...behaviors].sort(
-      (a, b) => (a.priority ?? 0) - (b.priority ?? 0)
-    );
+    const sorted = [...behaviors].sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
     const map: Record<string, GachaBehavior[]> = {};
     const firstOfType: Record<string, GachaBehavior> = {};
     for (const b of sorted) {
@@ -147,14 +169,13 @@
         type: first.gachaBehaviorType ?? "",
         display: getBehaviorDisplay(first.gachaBehaviorType),
         spinnableBadge: spinnable,
-        variants,
+        variants
       });
     }
     return result;
   });
 
-  const hasMultipleVariants = (group: BehaviorGroup): boolean =>
-    group.variants.length > 1;
+  const hasMultipleVariants = (group: BehaviorGroup): boolean => group.variants.length > 1;
 
   const variantSummaryLabel = (behavior: GachaBehavior): string | null => {
     if (behavior.costResourceType !== null) {
@@ -185,7 +206,7 @@
         {noBehaviorsLabel}
       </div>
     {:else}
-      <div class="space-y-2.5">
+      <div class="grid gap-2.5 lg:grid-cols-2">
         {#each groupedBehaviors() as group (group.key)}
           <div class="content-card-inset rounded-xl p-3 sm:px-4">
             <div class="flex items-center justify-between gap-2">
@@ -207,21 +228,37 @@
             {#if hasMultipleVariants(group)}
               <div class="mt-2 divide-base-content/10 divide-y">
                 {#each group.variants as behavior, index (getBehaviorVariantKey(behavior, index))}
-                  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 py-1.5 text-xs first:pt-2 last:pb-0">
+                  <div
+                    class="flex flex-wrap items-center gap-x-4 gap-y-1 py-1.5 text-xs first:pt-2 last:pb-0"
+                  >
                     {#if variantSummaryLabel(behavior)}
+                      {@const ticketAssetURL = getTicketResourceIconURL(behavior)}
+                      {@const materialAssetURL = getCostResourceIconURL(behavior.costResourceType)}
+                      {@const fallbackIcon = getCostResourceFallbackIcon(behavior.costResourceType)}
                       <span class="inline-flex items-center gap-1 font-medium opacity-80">
-                        {#if isTicketResource(behavior.costResourceType)}
-                          <Icon
-                            icon="mdi:ticket-outline"
-                            class="inline size-3.5 shrink-0"
-                            aria-hidden="true"
-                          />
-                        {:else if getCostResourceIconURL(behavior.costResourceType)}
+                        {#if ticketAssetURL && !isAssetFailed(ticketAssetURL)}
                           <img
-                            src={getCostResourceIconURL(behavior.costResourceType)!}
-                            alt={getCostResourceTypeDisplay(behavior.costResourceType)}
-                            class="inline size-3.5 shrink-0"
+                            src={ticketAssetURL}
+                            alt=""
+                            aria-hidden="true"
+                            class="inline size-4 shrink-0"
                             loading="lazy"
+                            onerror={() => markAssetFailed(ticketAssetURL)}
+                          />
+                        {:else if materialAssetURL && !isAssetFailed(materialAssetURL)}
+                          <img
+                            src={materialAssetURL}
+                            alt=""
+                            aria-hidden="true"
+                            class="inline size-4 shrink-0"
+                            loading="lazy"
+                            onerror={() => markAssetFailed(materialAssetURL)}
+                          />
+                        {:else if fallbackIcon}
+                          <Icon
+                            icon={fallbackIcon}
+                            class="inline size-4 shrink-0"
+                            aria-hidden="true"
                           />
                         {/if}
                         {variantSummaryLabel(behavior)}
@@ -246,20 +283,30 @@
               {@const behavior = group.variants[0]}
               <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                 {#if variantSummaryLabel(behavior)}
+                  {@const ticketAssetURL = getTicketResourceIconURL(behavior)}
+                  {@const materialAssetURL = getCostResourceIconURL(behavior.costResourceType)}
+                  {@const fallbackIcon = getCostResourceFallbackIcon(behavior.costResourceType)}
                   <span class="inline-flex items-center gap-1 font-medium opacity-80">
-                    {#if isTicketResource(behavior.costResourceType)}
-                      <Icon
-                        icon="mdi:ticket-outline"
-                        class="inline size-3.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                    {:else if getCostResourceIconURL(behavior.costResourceType)}
+                    {#if ticketAssetURL && !isAssetFailed(ticketAssetURL)}
                       <img
-                        src={getCostResourceIconURL(behavior.costResourceType)!}
-                        alt={getCostResourceTypeDisplay(behavior.costResourceType)}
-                        class="inline size-3.5 shrink-0"
+                        src={ticketAssetURL}
+                        alt=""
+                        aria-hidden="true"
+                        class="inline size-4 shrink-0"
                         loading="lazy"
+                        onerror={() => markAssetFailed(ticketAssetURL)}
                       />
+                    {:else if materialAssetURL && !isAssetFailed(materialAssetURL)}
+                      <img
+                        src={materialAssetURL}
+                        alt=""
+                        aria-hidden="true"
+                        class="inline size-4 shrink-0"
+                        loading="lazy"
+                        onerror={() => markAssetFailed(materialAssetURL)}
+                      />
+                    {:else if fallbackIcon}
+                      <Icon icon={fallbackIcon} class="inline size-4 shrink-0" aria-hidden="true" />
                     {/if}
                     {variantSummaryLabel(behavior)}
                   </span>
