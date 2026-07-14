@@ -6,6 +6,7 @@
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import Icon from "@iconify/svelte";
   import { tick } from "svelte";
+  import { SvelteMap } from "svelte/reactivity";
 
   type ProbabilityPayload = { cards: GachaProbabilityCard[] };
   type LoadState = "idle" | "loading" | "success" | "failure";
@@ -20,14 +21,14 @@
     disclaimer,
     rateChoiceExplanation,
     showRateChoiceExplanation,
-    normalLabel,
-    wishLabel,
+    normalLabel: _normalLabel,
+    wishLabel: _wishLabel,
     unavailableLabel,
     loadingLabel,
     loadFailedLabel,
     retryLabel,
-    conditionalLabel,
-    cardIdLabel,
+    conditionalLabel: _conditionalLabel,
+    cardIdLabel: _cardIdLabel,
     cardAltSuffix,
     rarityLabels,
     rarityUnknownLabel,
@@ -187,7 +188,7 @@
 
   const groupedVisibleCards = $derived.by<ProbabilityGroup[]>(() => {
     const result: ProbabilityGroup[] = [];
-    const groupMap = new Map<string, ProbabilityGroup>();
+    const groupMap = new SvelteMap<string, ProbabilityGroup>();
 
     for (const card of visibleCards) {
       const key = getProbabilityGroupKey(card);
