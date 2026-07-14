@@ -28,6 +28,18 @@ export type MasterdataSyncStatus = {
     updated_at?: string;
 };
 
+export type SharedCardBatchItemResponse = {
+    assetbundleName?: unknown;
+    attr?: unknown;
+    id?: unknown;
+    prefix?: unknown;
+    rarityType?: unknown;
+};
+
+export type SharedCardBatchItemsResponse = {
+    items?: Array<SharedCardBatchItemResponse>;
+};
+
 export type SharedCardDetailResponse = {
     card?: SharedCardObjectResponse;
     episodes?: SharedCardEpisodesResponse;
@@ -1008,6 +1020,49 @@ export type GetCardsRegionsByIdAvailabilityResponses = {
 };
 
 export type GetCardsRegionsByIdAvailabilityResponse = GetCardsRegionsByIdAvailabilityResponses[keyof GetCardsRegionsByIdAvailabilityResponses];
+
+export type GetCardsByRegionBatchData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query: {
+        /**
+         * Comma-separated card IDs (up to 100)
+         */
+        ids: string;
+    };
+    url: '/cards/{region}/batch';
+};
+
+export type GetCardsByRegionBatchErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCardsByRegionBatchError = GetCardsByRegionBatchErrors[keyof GetCardsByRegionBatchErrors];
+
+export type GetCardsByRegionBatchResponses = {
+    /**
+     * OK
+     */
+    200: SharedCardBatchItemsResponse;
+};
+
+export type GetCardsByRegionBatchResponse = GetCardsByRegionBatchResponses[keyof GetCardsByRegionBatchResponses];
 
 export type GetCardsByRegionListData = {
     body?: never;

@@ -432,43 +432,49 @@
         </div>
 
         <div class="flex flex-col gap-4">
-          <GachaDetailPickupCard
-            pickupCards={payload.pickupCards}
-            region={data.region}
-            title={pickupTitle}
-            weightLabel={gachaPickupWeight}
-            noPickupsLabel={gachaNoPickups}
-            cardAltSuffix={cardImageAltSuffix}
-          />
+          <div class="grid min-w-0 gap-4 xl:grid-cols-2">
+            <div class="min-w-0">
+              <GachaDetailPickupCard
+                pickupCards={payload.pickupCards}
+                region={data.region}
+                title={pickupTitle}
+                weightLabel={gachaPickupWeight}
+                noPickupsLabel={gachaNoPickups}
+                cardAltSuffix={cardImageAltSuffix}
+              />
+            </div>
 
-          {#if payload.gacha.gachaCardRarityRates}
-            <GachaDetailRarityRateCard
-              rates={payload.gacha.gachaCardRarityRates}
-              title={gachaRarityRateTitle}
-              noRatesLabel={gachaNoRarityRates}
-              {lotteryTypeMap}
-              {rarityUnknownLabel}
-              rateChoiceExplanation={rarityRateChoiceNote}
-              region={data.region}
-              gachaId={data.gachaId}
-              {probabilityOpenLabel}
-              {probabilityTitle}
-              {probabilityCloseLabel}
-              {probabilityInfoLabel}
-              {probabilityDisclaimer}
-              {probabilityNormalLabel}
-              {probabilityWishLabel}
-              {probabilityUnavailableLabel}
-              {probabilityLoadingLabel}
-              {probabilityLoadFailedLabel}
-              {probabilityRetryLabel}
-              {probabilityConditionalLabel}
-              cardIdLabel={probabilityCardIdLabel}
-              diagnosticLabels={probabilityDiagnosticLabels}
-              {rarityLabels}
-              cardAltSuffix={cardImageAltSuffix}
-            />
-          {/if}
+            {#if payload.gacha.gachaCardRarityRates}
+              <div class="min-w-0">
+                <GachaDetailRarityRateCard
+                  rates={payload.gacha.gachaCardRarityRates}
+                  title={gachaRarityRateTitle}
+                  noRatesLabel={gachaNoRarityRates}
+                  {lotteryTypeMap}
+                  {rarityUnknownLabel}
+                  rateChoiceExplanation={rarityRateChoiceNote}
+                  region={data.region}
+                  gachaId={data.gachaId}
+                  {probabilityOpenLabel}
+                  {probabilityTitle}
+                  {probabilityCloseLabel}
+                  {probabilityInfoLabel}
+                  {probabilityDisclaimer}
+                  {probabilityNormalLabel}
+                  {probabilityWishLabel}
+                  {probabilityUnavailableLabel}
+                  {probabilityLoadingLabel}
+                  {probabilityLoadFailedLabel}
+                  {probabilityRetryLabel}
+                  {probabilityConditionalLabel}
+                  cardIdLabel={probabilityCardIdLabel}
+                  diagnosticLabels={probabilityDiagnosticLabels}
+                  {rarityLabels}
+                  cardAltSuffix={cardImageAltSuffix}
+                />
+              </div>
+            {/if}
+          </div>
 
           {#if payload.gacha.gachaBehaviors}
             <GachaDetailBehaviorCard

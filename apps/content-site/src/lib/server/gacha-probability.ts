@@ -1,15 +1,17 @@
 import {
-  getCardsByRegionList,
+  getCardsByRegionBatch,
   getGachasByRegionById,
   getGachasByRegionByIdRateChoiceWishes
 } from "@platform/sekai-master-api-sdk";
-import type { GachaRateChoiceWishGroup, GachaProbabilityCardMetadata } from "$lib/domain/gacha-probability";
+import type {
+  GachaRateChoiceWishGroup,
+  GachaProbabilityCardMetadata
+} from "$lib/domain/gacha-probability";
 import type { GachaDetail } from "$lib/domain/gacha-detail";
 import { buildGachaProbabilityCards } from "$lib/domain/gacha-probability";
-import { parseCardListPage, type CardListItem } from "$lib/server/card-list";
 import { parseGachaDetail } from "$lib/server/gacha-detail";
 
-const GACHA_CARD_METADATA_MAX_PAGES = 100;
+const GACHA_CARD_METADATA_BATCH_SIZE = 100;
 const GACHA_PROBABILITY_CACHE_TTL_MS = 5 * 60 * 1000;
 const GACHA_PROBABILITY_CACHE_MAX_ENTRIES = 32;
 
@@ -50,7 +52,10 @@ const getStringLike = (value: unknown): string | null => {
   return typeof value === "number" && Number.isFinite(value) ? String(value) : null;
 };
 
-const pickFirstString = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
+const pickFirstString = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | null => {
   for (const key of keys) {
     const value = getString(source[key]);
     if (value) {
@@ -61,7 +66,10 @@ const pickFirstString = (source: Record<string, unknown>, keys: readonly string[
   return null;
 };
 
-const pickFirstNumber = (source: Record<string, unknown>, keys: readonly string[]): number | null => {
+const pickFirstNumber = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): number | null => {
   for (const key of keys) {
     const value = getNumber(source[key]);
     if (value !== null) {
@@ -120,20 +128,43 @@ const getRateChoiceWishGroups = (
       return [];
     }
 
-    return [{
-      lotteryType: pickFirstString(object, ["lotteryType"]),
-      selectCount: pickFirstNumber(object, ["selectCount"]),
-      cardIds: normalizedWishCardIds
-    }];
+    return [
+      {
+        lotteryType: pickFirstString(object, ["lotteryType"]),
+        selectCount: pickFirstNumber(object, ["selectCount"]),
+        cardIds: normalizedWishCardIds
+      }
+    ];
   });
 };
 
-const getCardMetadata = (item: CardListItem): GachaProbabilityCardMetadata => ({
-  title: item.prefix || null,
-  assetBundleName: item.assetBundleName,
-  attr: item.attr,
-  rarityType: item.rarityType
+const getCardMetadata = (item: Record<string, unknown>): GachaProbabilityCardMetadata => ({
+  title: pickFirstString(item, ["prefix"]),
+  assetBundleName: pickFirstString(item, ["assetbundleName", "assetBundleName"]),
+  attr: pickFirstString(item, ["attr", "attribute"]),
+  rarityType: pickFirstString(item, ["rarityType", "cardRarityType", "card_rarity_type"])
 });
+
+const chunkCardIds = (cardIds: readonly string[]): string[][] => {
+  const chunks: string[][] = [];
+
+  for (let index = 0; index < cardIds.length; index += GACHA_CARD_METADATA_BATCH_SIZE) {
+    chunks.push(cardIds.slice(index, index + GACHA_CARD_METADATA_BATCH_SIZE));
+  }
+
+  return chunks;
+};
+
+const parseBatchCardMetadata = (item: unknown): [string, GachaProbabilityCardMetadata] | null => {
+  const card = getObject(item);
+  if (!card) {
+    return null;
+  }
+
+  const id = getStringLike(card.id);
+
+  return id ? [id, getCardMetadata(card)] : null;
+};
 
 const fetchCardMetadata = async ({
   baseUrl,
@@ -144,77 +175,57 @@ const fetchCardMetadata = async ({
   region: string;
   gacha: GachaDetail;
 }): Promise<ProbabilityCardMetadataResult> => {
-  const rarityTypes = [...new Set(gacha.gachaCardRarityRates
-    .map((rate) => normalize(rate.cardRarityType))
-    .filter((rarity): rarity is string => rarity !== null))];
-  const metadataEntries = await Promise.all(
-    rarityTypes.map(async (rarity) => {
-      let complete = true;
+  const cardIds = [
+    ...new Set(
+      gacha.gachaDetails
+        .map((detail) => detail.cardId?.trim())
+        .filter((cardId): cardId is string => Boolean(cardId))
+    )
+  ];
+  const requestedCardIds = new Set(cardIds);
+  const metadata = new Map<string, GachaProbabilityCardMetadata>();
+  await Promise.all(
+    chunkCardIds(cardIds).map(async (ids) => {
       try {
-        const items: CardListItem[] = [];
-        let page = 1;
-        let hasNext = true;
-        const observedCards = new Set<string>();
-
-        while (hasNext && page <= GACHA_CARD_METADATA_MAX_PAGES) {
-          const response = await getCardsByRegionList({
-            baseUrl,
-            path: { region },
-            query: { page, page_size: 100, rarity, spoiler: true, sort_by: "id", sort_order: "asc" }
-          });
-          if (response.error) {
-            complete = false;
-            break;
-          }
-
-          const parsed = parseCardListPage(response.data, page, 100);
-          const newItems = parsed.items.filter((item) => !observedCards.has(item.id));
-          if (newItems.length === 0) {
-            complete = false;
-            break;
-          }
-
-          newItems.forEach((item) => observedCards.add(item.id));
-          items.push(...newItems);
-          hasNext = parsed.pagination.hasNext;
-          page += 1;
+        const response = await getCardsByRegionBatch({
+          baseUrl,
+          path: { region },
+          query: { ids: ids.join(",") }
+        });
+        if (response.error) {
+          return;
         }
 
-        if (hasNext) {
-          complete = false;
+        const responseRoot = getObject(response.data);
+        const items = responseRoot && Array.isArray(responseRoot.items) ? responseRoot.items : [];
+        for (const item of items) {
+          const parsed = parseBatchCardMetadata(item);
+          if (parsed && requestedCardIds.has(parsed[0])) {
+            metadata.set(...parsed);
+          }
         }
-
-        return { rarity, items, complete };
       } catch {
-        return { rarity, items: [], complete: false };
+        // Missing metadata is retained below so each affected segment remains incomplete.
       }
     })
   );
 
-  const metadata = new Map<string, GachaProbabilityCardMetadata>();
-  for (const item of metadataEntries.flatMap((entry) => entry.items)) {
-    metadata.set(item.id, getCardMetadata(item));
-  }
-
   const incompleteSegments = new Set<string>();
-  for (const entry of metadataEntries) {
-    const lotteryTypes = [...new Set(
-      gacha.gachaCardRarityRates
-        .filter((rate) => normalize(rate.cardRarityType) === entry.rarity)
-        .map((rate) => normalize(rate.lotteryType))
-        .filter((lotteryType): lotteryType is string => lotteryType !== null)
-    )];
+  for (const rate of gacha.gachaCardRarityRates) {
+    const rarity = normalize(rate.cardRarityType);
+    const lotteryType = normalize(rate.lotteryType);
+    if (!rarity || !lotteryType) {
+      continue;
+    }
 
-    for (const lotteryType of lotteryTypes) {
-      const isWishSegment = lotteryType === "categorized_wish" || lotteryType.startsWith("rate_choice_");
-      const key = `${entry.rarity}\u0000${lotteryType}`;
-      const missingCardMetadata = gacha.gachaDetails.some(
-        (detail) => detail.isWish === isWishSegment &&
-          (!detail.cardId || !metadata.has(detail.cardId))
-      );
-      if (!entry.complete || missingCardMetadata) {
-        incompleteSegments.add(key);
-      }
+    const isWishSegment =
+      lotteryType === "categorized_wish" || lotteryType.startsWith("rate_choice_");
+    const missingCardMetadata = gacha.gachaDetails.some(
+      (detail) =>
+        detail.isWish === isWishSegment && (!detail.cardId || !metadata.has(detail.cardId))
+    );
+    if (missingCardMetadata) {
+      incompleteSegments.add(`${rarity}\u0000${lotteryType}`);
     }
   }
 
@@ -304,7 +315,11 @@ const loadGachaProbabilityPayloadUncached = async ({
   return buildGachaProbabilityPayload({ baseUrl, region, gacha, rateChoiceWishes });
 };
 
-const getProbabilityCacheKey = ({ baseUrl, region, gachaId }: {
+const getProbabilityCacheKey = ({
+  baseUrl,
+  region,
+  gachaId
+}: {
   baseUrl: string;
   region: string;
   gachaId: string;
