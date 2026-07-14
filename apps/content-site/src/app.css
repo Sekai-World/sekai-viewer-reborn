@@ -2,7 +2,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 html, body {
-  overflow-x: hidden;
+  overflow-x: clip;
   overscroll-behavior-x: none;
 }
 /* Tailwind v4 in this workspace mis-resolves package-name plugins during build.
