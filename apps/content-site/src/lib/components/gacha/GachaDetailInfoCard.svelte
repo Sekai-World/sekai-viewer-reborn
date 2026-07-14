@@ -15,7 +15,6 @@
     gachaTypeMap,
     startAtLabel,
     endAtLabel,
-    costLabel,
     noGachaDataLabel
   }: {
     gacha: GachaDetail;
@@ -28,7 +27,6 @@
     gachaTypeMap: Record<string, string>;
     startAtLabel: string;
     endAtLabel: string;
-    costLabel: string;
     noGachaDataLabel: string;
   } = $props();
 
@@ -36,18 +34,6 @@
     if (!gachaType) return noGachaDataLabel;
     const normalized = gachaType.trim().toLowerCase();
     return gachaTypeMap[normalized] ?? gachaType;
-  };
-
-  const formatCost = (): string => {
-    if (gacha.costCount === null) return noGachaDataLabel;
-    const parts: string[] = [String(gacha.costCount)];
-    if (gacha.costResourceType) {
-      parts.push(gacha.costResourceType);
-    }
-    if (gacha.costResourceId) {
-      parts.push(`:${gacha.costResourceId}`);
-    }
-    return parts.join(" ");
   };
 </script>
 
@@ -93,10 +79,6 @@
         <dd class="mt-1 text-sm font-medium">
           {gacha.endAt ? formatDisplayDateTime(gacha.endAt, uiLocale) : noGachaDataLabel}
         </dd>
-      </div>
-      <div class="content-card-inset rounded-xl p-3 sm:px-4">
-        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{costLabel}</dt>
-        <dd class="mt-1 text-sm font-medium">{formatCost()}</dd>
       </div>
       <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">

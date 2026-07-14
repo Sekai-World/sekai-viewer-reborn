@@ -1,11 +1,23 @@
 <script lang="ts">
-  import { getGachaBannerAssetURL, getGachaLogoAssetURL } from "$lib/assets/index";
+  import {
+    getGachaBackgroundAssetURL,
+    getGachaBackgroundFallbackAssetURL,
+    getGachaBannerAssetURL,
+    getGachaLogoAssetURL
+  } from "$lib/assets/index";
   import type { GachaDetail } from "$lib/domain/gacha-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
 
-  export type GachaAssetTab = "logo" | "banner";
+  export type GachaAssetTab = "logo" | "banner" | "background";
+  type PreviewImageOptions = {
+    src: string;
+    alt: string;
+    imageClass: string;
+    fallbackSrc?: string;
+    fallbackLabel?: string;
+  };
 
   let {
     gacha,
@@ -13,6 +25,8 @@
     activeTab = $bindable<GachaAssetTab>("logo"),
     logoLabel,
     bannerLabel,
+    backgroundLabel,
+    backgroundUnavailableLabel,
     bannerAltSuffix,
     imageUnavailableLabel,
     closeLabel
@@ -22,6 +36,8 @@
     activeTab?: GachaAssetTab;
     logoLabel: string;
     bannerLabel: string;
+    backgroundLabel: string;
+    backgroundUnavailableLabel: string;
     bannerAltSuffix: string;
     imageUnavailableLabel: string;
     closeLabel: string;
@@ -50,23 +66,25 @@
   });
 </script>
 
-{#snippet previewImage(src: string, alt: string, imageClass: string, fallbackLabel = "")}
+{#snippet previewImage(options: PreviewImageOptions)}
   <EventAssetImage
-    {src}
-    {alt}
-    {fallbackLabel}
+    src={options.src}
+    fallbackSrc={options.fallbackSrc}
+    alt={options.alt}
+    fallbackLabel={options.fallbackLabel}
     buttonClass="block h-full w-full overflow-hidden"
     interactive={true}
-    {imageClass}
+    imageClass={options.imageClass}
     onclick={() => {
       openPreview();
     }}
   />
   <ImagePreviewDialog
     bind:open={previewOpen}
-    {src}
-    {alt}
-    {fallbackLabel}
+    src={options.src}
+    fallbackSrc={options.fallbackSrc}
+    alt={options.alt}
+    fallbackLabel={options.fallbackLabel}
     {closeLabel}
     formatOptions={normalizedPreviewFormatOptions}
     dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
@@ -79,6 +97,14 @@
   </div>
 {/snippet}
 
+{#snippet missingBackgroundImage()}
+  <div
+    class="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65"
+  >
+    <span class="font-medium">{backgroundUnavailableLabel}</span>
+  </div>
+{/snippet}
+
 <article class="card content-card-shell overflow-hidden shadow-sm">
   <div class="card-body items-center gap-3 p-3 sm:p-5 text-center">
     <div class="tabs tabs-box content-card-inset w-full p-1">
@@ -88,30 +114,55 @@
       <button type="button" class={getTabClass("banner")} onclick={() => (activeTab = "banner")}>
         {bannerLabel}
       </button>
+      <button
+        type="button"
+        class={getTabClass("background")}
+        onclick={() => (activeTab = "background")}
+      >
+        {backgroundLabel}
+      </button>
     </div>
 
     <div
-      class="content-card-inset w-full overflow-hidden rounded-[1.75rem] aspect-16/7 transition-[aspect-ratio] duration-300 ease-out"
+      class={`content-card-inset w-full overflow-hidden rounded-[1.75rem] transition-[aspect-ratio] duration-300 ease-out ${activeTab === "background" ? "aspect-video" : "aspect-16/7"}`}
     >
       {#if activeTab === "logo"}
         {#if gacha.assetBundleName}
-          {@render previewImage(
-            getGachaLogoAssetURL(gacha.assetBundleName, region),
-            `${gacha.name ?? gacha.id} ${bannerAltSuffix}`,
-            "h-full w-full object-contain p-4 md:p-6"
-          )}
+          {@render previewImage({
+            src: getGachaLogoAssetURL(gacha.assetBundleName, region),
+            alt: `${gacha.name ?? gacha.id} ${bannerAltSuffix}`,
+            imageClass: "h-full w-full object-contain p-4 md:p-6"
+          })}
+        {:else}
+          {@render missingImage()}
+        {/if}
+      {:else if activeTab === "banner"}
+        {#if gacha.id}
+          {@render previewImage({
+            src: getGachaBannerAssetURL(gacha.id, region),
+            alt: `${gacha.name ?? gacha.id} ${bannerAltSuffix}`,
+            imageClass: "h-full w-full object-contain p-4 md:p-6"
+          })}
         {:else}
           {@render missingImage()}
         {/if}
       {:else}
-        {#if gacha.id}
-          {@render previewImage(
-            getGachaBannerAssetURL(gacha.id, region),
-            `${gacha.name ?? gacha.id} ${bannerAltSuffix}`,
-            "h-full w-full object-contain p-4 md:p-6"
-          )}
+        {@const backgroundSrc = getGachaBackgroundAssetURL(gacha.assetBundleName, gacha.id, region)}
+        {@const backgroundFallbackSrc = getGachaBackgroundFallbackAssetURL(
+          gacha.assetBundleName,
+          gacha.id,
+          region
+        )}
+        {#if backgroundSrc}
+          {@render previewImage({
+            src: backgroundSrc,
+            fallbackSrc: backgroundFallbackSrc,
+            alt: `${gacha.name ?? gacha.id} ${backgroundLabel}`,
+            imageClass: "h-full w-full object-contain",
+            fallbackLabel: backgroundUnavailableLabel
+          })}
         {:else}
-          {@render missingImage()}
+          {@render missingBackgroundImage()}
         {/if}
       {/if}
     </div>

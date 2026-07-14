@@ -16,6 +16,7 @@ export type GachaBehavior = {
   costResourceType: string | null;
   costResourceQuantity: number | null;
   costResourceId: string | null;
+  costResourceAssetBundleName: string | null;
   resourceCategory: string | null;
   spinCount: number | null;
   executeLimit: number | null;

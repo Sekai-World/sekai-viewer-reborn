@@ -1,15 +1,8 @@
 <script lang="ts">
   import type { GachaCardRarityRate } from "$lib/domain/gacha-detail";
   import Icon from "@iconify/svelte";
-
-  const rarityLabelMap: Record<string, string> = {
-    rarity_1: "1★",
-    rarity_2: "2★",
-    rarity_3: "3★",
-    rarity_4: "4★",
-    rarity_birthday: "4★ (Birthday)",
-    rarity_4_birthday: "4★ (Birthday)"
-  };
+  import GachaProbabilityDetailsDialog from "./GachaProbabilityDetailsDialog.svelte";
+  import type { SupportedRegion } from "$lib/domain/regions";
 
   const rarityBarColorMap: Record<string, string> = {
     rarity_1: "bg-base-content/20",
@@ -28,17 +21,58 @@
     rarity_birthday: "bg-warning",
     rarity_4_birthday: "bg-warning"
   };
+  const RATE_CHOICE_LOTTERY_PREFIX = "rate_choice_";
 
   let {
     rates,
     title,
     noRatesLabel,
-    lotteryTypeMap
+    lotteryTypeMap,
+    region,
+    gachaId,
+    probabilityOpenLabel,
+    probabilityTitle,
+    probabilityCloseLabel,
+    probabilityInfoLabel,
+    probabilityDisclaimer,
+    probabilityNormalLabel,
+    probabilityWishLabel,
+    probabilityUnavailableLabel,
+    probabilityLoadingLabel,
+    probabilityLoadFailedLabel,
+    probabilityRetryLabel,
+    probabilityConditionalLabel,
+    diagnosticLabels,
+    cardIdLabel,
+    cardAltSuffix,
+    rarityLabels,
+    rarityUnknownLabel,
+    rateChoiceExplanation
   }: {
     rates: GachaCardRarityRate[];
     title: string;
     noRatesLabel: string;
     lotteryTypeMap: Record<string, string>;
+    region: SupportedRegion;
+    gachaId: string;
+    probabilityOpenLabel: string;
+    probabilityTitle: string;
+    probabilityCloseLabel: string;
+    probabilityInfoLabel: string;
+    probabilityDisclaimer: string;
+    probabilityNormalLabel: string;
+    probabilityWishLabel: string;
+    probabilityUnavailableLabel: string;
+    probabilityLoadingLabel: string;
+    probabilityLoadFailedLabel: string;
+    probabilityRetryLabel: string;
+    probabilityConditionalLabel: string;
+    diagnosticLabels: Record<string, string>;
+    cardIdLabel: string;
+    cardAltSuffix: string;
+    rarityLabels: Record<string, string>;
+    rarityUnknownLabel: string;
+    rateChoiceExplanation: string;
   } = $props();
 
   type GroupedRate = {
@@ -49,7 +83,17 @@
 
   const getRarityDisplay = (type: string): string => {
     const key = type.trim().toLowerCase();
-    return rarityLabelMap[key] ?? type;
+    return rarityLabels[key] ?? rarityUnknownLabel;
+  };
+
+  const getLotteryTypeDisplay = (type: string): string => {
+    const key = type.trim().toLowerCase();
+    return (
+      lotteryTypeMap[key] ??
+      (key.startsWith(RATE_CHOICE_LOTTERY_PREFIX)
+        ? lotteryTypeMap.rate_choice
+        : lotteryTypeMap.unknown)
+    );
   };
 
   const getBarColor = (type: string): string => {
@@ -86,6 +130,13 @@
   };
 
   let grouped = $derived(groupByRarity(rates));
+  let hasRateChoiceRarity4 = $derived(
+    rates.some(
+      (rate) =>
+        rate.cardRarityType?.trim().toLowerCase() === "rarity_4" &&
+        rate.lotteryType?.trim().toLowerCase().startsWith(RATE_CHOICE_LOTTERY_PREFIX)
+    )
+  );
 
   const formatRate = (rate: number): string => `${rate.toFixed(2)}%`;
 
@@ -95,7 +146,7 @@
       return `${getRarityDisplay(group.cardRarityType)}: ${formatRate(group.totalRate)}`;
     }
     const lines = group.segments.map(
-      (seg) => `  ${lotteryTypeMap[seg.lotteryType] ?? seg.lotteryType}: ${formatRate(seg.rate)}`
+      (seg) => `  ${getLotteryTypeDisplay(seg.lotteryType)}: ${formatRate(seg.rate)}`
     );
     return `${getRarityDisplay(group.cardRarityType)}: ${formatRate(group.totalRate)}\n${lines.join("\n")}`;
   };
@@ -135,7 +186,9 @@
         <div class="mt-3 space-y-1.5">
           {#each grouped as group (group.cardRarityType)}
             <div class="flex items-center gap-2 text-sm">
-              <span class={`inline-block size-2 shrink-0 rounded-full ${getDotColor(group.cardRarityType)}`}></span>
+              <span
+                class={`inline-block size-2 shrink-0 rounded-full ${getDotColor(group.cardRarityType)}`}
+              ></span>
               <span class="font-medium">{getRarityDisplay(group.cardRarityType)}</span>
               <span class="ml-auto font-mono tabular-nums">{formatRate(group.totalRate)}</span>
             </div>
@@ -145,7 +198,7 @@
                 {#each group.segments as seg (seg.lotteryType)}
                   <span class="flex items-center gap-1 text-xs opacity-50">
                     <span class="inline-block size-1.5 rounded-full bg-base-content/30"></span>
-                    {lotteryTypeMap[seg.lotteryType] ?? seg.lotteryType}: {formatRate(seg.rate)}
+                    {getLotteryTypeDisplay(seg.lotteryType)}: {formatRate(seg.rate)}
                   </span>
                 {/each}
               </div>
@@ -154,5 +207,28 @@
         </div>
       </div>
     {/if}
+    <GachaProbabilityDetailsDialog
+      {region}
+      {gachaId}
+      openLabel={probabilityOpenLabel}
+      title={probabilityTitle}
+      closeLabel={probabilityCloseLabel}
+      infoLabel={probabilityInfoLabel}
+      disclaimer={probabilityDisclaimer}
+      {rateChoiceExplanation}
+      showRateChoiceExplanation={hasRateChoiceRarity4}
+      normalLabel={probabilityNormalLabel}
+      wishLabel={probabilityWishLabel}
+      unavailableLabel={probabilityUnavailableLabel}
+      loadingLabel={probabilityLoadingLabel}
+      loadFailedLabel={probabilityLoadFailedLabel}
+      retryLabel={probabilityRetryLabel}
+      conditionalLabel={probabilityConditionalLabel}
+      {cardIdLabel}
+      {cardAltSuffix}
+      {diagnosticLabels}
+      {rarityLabels}
+      {rarityUnknownLabel}
+    />
   </div>
 </article>
