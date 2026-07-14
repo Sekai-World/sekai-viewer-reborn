@@ -758,6 +758,20 @@
   ></span>
 {/snippet}
 
+{#if isDesktopSettingsMenuOpen || isDesktopThemeMenuOpen || isLocaleMenuOpen || isMobileSettingsMenuOpen}
+  <div
+    class="fixed inset-0 z-30"
+    aria-hidden="true"
+    onclick={(event) => {
+      event.stopPropagation();
+      isDesktopSettingsMenuOpen = false;
+      isDesktopThemeMenuOpen = false;
+      isLocaleMenuOpen = false;
+      isMobileSettingsMenuOpen = false;
+    }}
+  ></div>
+{/if}
+
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
@@ -768,7 +782,7 @@
   showTitle={showPageTitle}
 >
   {#snippet navActions()}
-    <div class="hidden items-center gap-2 sm:flex">
+    <div class="relative z-120 hidden items-center gap-2 sm:flex">
       <div
         class="dropdown dropdown-end"
         class:dropdown-open={isDesktopSettingsMenuOpen}
@@ -949,15 +963,6 @@
     </div>
 
     <div class="sm:hidden">
-      {#if isMobileSettingsMenuOpen}
-        <div
-          class="fixed inset-0 z-120"
-          aria-hidden="true"
-          onclick={() => {
-            isMobileSettingsMenuOpen = false;
-          }}
-        ></div>
-      {/if}
       <div
         class="dropdown dropdown-end"
         class:dropdown-open={isMobileSettingsMenuOpen}
