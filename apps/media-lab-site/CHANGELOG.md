@@ -1,5 +1,17 @@
 # @apps/media-lab-site
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [b673737]
+- Updated dependencies [b673737]
+- Updated dependencies [b673737]
+- Updated dependencies [b673737]
+- Updated dependencies [6817b6c]
+  - @platform/sekai-master-api-sdk@0.2.0
+  - @platform/ui-shell@0.1.4
+
 ## 0.1.4
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @platform/ui-shell
 
+## 0.1.4
+
+### Patch Changes
+
+- b673737: Move image preview format choices into the download menu instead of switching the preview image format.
+
+  Align the image preview modal frame radius with rounded preview images.
+
+- b673737: Add the regional gacha list page with SSR loading, infinite-scroll JSON data, localized controls, and gacha logo cards.
+
+  Add gacha background previews and a localized, accessible card-probability detail dialog that batches metadata lookups for the displayed gacha cards.
+
+  Keep card probability notes available from an accessible info tooltip beside the dialog trigger.
+
 ## 0.1.3
 
 ### Patch Changes
