@@ -1,5 +1,13 @@
 # @apps/content-site
 
+## 0.2.1
+
+### Patch Changes
+
+- c072bb7: Add an on-demand card asset gallery that probes optional thumbnail, small, cutout, trimmed cutout, and gacha artwork before loading available images.
+- Updated dependencies [c072bb7]
+  - @platform/i18n-source@0.1.5
+
 ## 0.2.0
 
 ### Minor Changes
