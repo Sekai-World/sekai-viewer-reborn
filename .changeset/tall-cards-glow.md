@@ -2,7 +2,7 @@
 "@apps/content-site": patch
 ---
 
-Improve the card detail asset tab layout on mobile so normal and trained image choices wrap into two-column rows.
+Keep the card detail preview focused on full normal and trained artwork, with an on-demand gallery that probes thumbnail, small, cutout, trimmed cutout, and gacha variants before loading them.
 
 Polish homepage event, music, and gacha cards with compact metadata, stable surfaces, and a gacha-logo asset fallback.
 

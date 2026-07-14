@@ -15,8 +15,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator,
-     getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
 
@@ -24,17 +23,9 @@
   const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
   let translationRequestId = 0;
   let currentMessages = $state<Record<string, string>>(fallbackMessages);
-  let currentTranslate = $derived(
-    createI18nTranslator(
-      data.uiLocale,
-      currentMessages
-    )
-  );
+  let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    )(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
 
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state("");
@@ -53,8 +44,17 @@
   let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let normalLabel = $state(getInitialI18nText("cardAssetTabs.normal"));
   let trainedLabel = $state(getInitialI18nText("cardAssetTabs.trained"));
-  let normalCutoutLabel = $state(getInitialI18nText("cardAssetTabs.normalCutout"));
-  let trainedCutoutLabel = $state(getInitialI18nText("cardAssetTabs.trainedCutout"));
+  let galleryButtonLabel = $state(getInitialI18nText("cardGallery.button"));
+  let galleryTitle = $state(getInitialI18nText("cardGallery.title"));
+  let galleryDescription = $state(getInitialI18nText("cardGallery.description"));
+  let galleryLoadingLabel = $state(getInitialI18nText("cardGallery.loading"));
+  let galleryUnavailableLabel = $state(getInitialI18nText("cardGallery.unavailable"));
+  let galleryThumbnailLabel = $state(getInitialI18nText("cardGallery.asset.thumbnail"));
+  let gallerySmallLabel = $state(getInitialI18nText("cardGallery.asset.small"));
+  let galleryFullLabel = $state(getInitialI18nText("cardGallery.asset.full"));
+  let galleryCutoutLabel = $state(getInitialI18nText("cardGallery.asset.cutout"));
+  let galleryCutoutTrimmedLabel = $state(getInitialI18nText("cardGallery.asset.cutoutTrimmed"));
+  let galleryGachaLabel = $state(getInitialI18nText("cardGallery.asset.gacha"));
   let cardInfoTitle = $state(getInitialI18nText("cardInfoTitle"));
   let characterLabel = $state(getInitialI18nText("characterLabel"));
   let unitLabel = $state(getInitialI18nText("unitLabel"));
@@ -110,8 +110,17 @@
     internalResourceCodeLabel = translate("internalResourceCodeLabel");
     normalLabel = translate("cardAssetTabs.normal");
     trainedLabel = translate("cardAssetTabs.trained");
-    normalCutoutLabel = translate("cardAssetTabs.normalCutout");
-    trainedCutoutLabel = translate("cardAssetTabs.trainedCutout");
+    galleryButtonLabel = translate("cardGallery.button");
+    galleryTitle = translate("cardGallery.title");
+    galleryDescription = translate("cardGallery.description");
+    galleryLoadingLabel = translate("cardGallery.loading");
+    galleryUnavailableLabel = translate("cardGallery.unavailable");
+    galleryThumbnailLabel = translate("cardGallery.asset.thumbnail");
+    gallerySmallLabel = translate("cardGallery.asset.small");
+    galleryFullLabel = translate("cardGallery.asset.full");
+    galleryCutoutLabel = translate("cardGallery.asset.cutout");
+    galleryCutoutTrimmedLabel = translate("cardGallery.asset.cutoutTrimmed");
+    galleryGachaLabel = translate("cardGallery.asset.gacha");
     cardInfoTitle = translate("cardInfoTitle");
     characterLabel = translate("characterLabel");
     unitLabel = translate("unitLabel");
@@ -155,10 +164,7 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    );
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
   });
 
@@ -404,11 +410,20 @@
             bind:activeTab={activeAssetTab}
             {normalLabel}
             {trainedLabel}
-            {normalCutoutLabel}
-            {trainedCutoutLabel}
             {imageUnavailableLabel}
             {cardImageAltSuffix}
             {closeLabel}
+            {galleryButtonLabel}
+            {galleryTitle}
+            {galleryDescription}
+            {galleryLoadingLabel}
+            {galleryUnavailableLabel}
+            {galleryThumbnailLabel}
+            {gallerySmallLabel}
+            {galleryFullLabel}
+            {galleryCutoutLabel}
+            {galleryCutoutTrimmedLabel}
+            {galleryGachaLabel}
           />
 
           {#await data.unitProfiles then unitProfiles}

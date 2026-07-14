@@ -231,6 +231,25 @@ export const getCardSmallAssetURL = (
   );
 };
 
+export const getCardGachaAssetURL = (
+  assetBundleName: string,
+  trained = false,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `character/member_gacha/${normalizedAssetBundleName}/${trained ? "after_training" : "normal"}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
 export const getCardThumbnailAssetURL = (
   assetBundleName: string,
   trained = false,
@@ -282,6 +301,25 @@ export const getCardCutoutAssetURL = (
 
   return buildServerAssetURL(
     `character/member_cutout/${normalizedAssetBundleName}/${trained ? "after_training" : "normal"}.${extension}`,
+    server,
+    baseUrlOverride
+  );
+};
+
+export const getCardCutoutTrimmedAssetURL = (
+  assetBundleName: string,
+  trained = false,
+  server: AssetServer = "jp",
+  extension = "webp",
+  baseUrlOverride?: string | null
+): string => {
+  const normalizedAssetBundleName = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
+  if (normalizedAssetBundleName.length === 0) {
+    return getRemoteAssetBaseURL(baseUrlOverride);
+  }
+
+  return buildServerAssetURL(
+    `character/member_cutout_trm/${normalizedAssetBundleName}/${trained ? "after_training" : "normal"}.${extension}`,
     server,
     baseUrlOverride
   );
