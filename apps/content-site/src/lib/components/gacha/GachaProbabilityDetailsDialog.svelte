@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
-  import { base } from "$app/paths";
+  import { resolve, base } from "$app/paths";
   import { getCardThumbnailAssetURL } from "$lib/assets/index";
   import type { GachaProbabilityCard } from "$lib/domain/gacha-probability";
   import type { SupportedRegion } from "$lib/domain/regions";
@@ -125,6 +124,95 @@
   const getRarityPanelId = (rarity: string): string =>
     `gacha-probability-panel-${getIdPart(region)}-${getIdPart(gachaId)}-${getIdPart(rarity)}`;
   const getRarityDisplay = (rarity: string): string => rarityLabels[rarity] ?? rarityUnknownLabel;
+
+  const rarityValueByType: Record<string, number> = {
+    rarity_1: 1,
+    rarity_2: 2,
+    rarity_3: 3,
+    rarity_4: 4,
+    rarity_birthday: 1
+  };
+
+  const getRarityValue = (rarityType: string | null): number =>
+    rarityType ? (rarityValueByType[rarityType.trim().toLowerCase()] ?? 0) : 0;
+
+  type ProbabilityGroup = {
+    key: string;
+    label: string;
+    cards: GachaProbabilityCard[];
+  };
+
+  const PROBABILITY_GROUP_INITIAL_LIMIT = 18;
+
+  const getProbabilityGroupSortValue = (card: GachaProbabilityCard): number => {
+    if (card.probabilitySegments.some((s) => s.conditional)) {
+      const first = card.probabilitySegments.find((s) => s.conditional);
+      return first?.probability ?? -1;
+    }
+    return card.probability ?? -1;
+  };
+
+  const getProbabilityGroupKey = (card: GachaProbabilityCard): string => {
+    if (card.probabilitySegments.some((s) => s.conditional)) {
+      return card.probabilitySegments
+        .filter((s) => s.conditional)
+        .map((s) => `${s.lotteryType}:${s.probability}`)
+        .join("|");
+    }
+    return card.probability === null
+      ? `null:${card.diagnostic}`
+      : String(card.probability);
+  };
+
+  const getProbabilityGroupLabel = (card: GachaProbabilityCard): string => {
+    if (card.probabilitySegments.some((s) => s.conditional)) {
+      return card.probabilitySegments
+        .filter((s) => s.conditional)
+        .map((s) => `${s.lotteryType}: ${probability(s.probability)}`)
+        .join(", ");
+    }
+    return card.probability === null
+      ? (diagnosticLabels[card.diagnostic] ?? unavailableLabel)
+      : probability(card.probability);
+  };
+
+  const parseCardId = (card: GachaProbabilityCard): number => {
+    const id = card.cardId;
+    if (!id) return -1;
+    const n = Number(id);
+    return Number.isFinite(n) ? n : -1;
+  };
+
+  let expandedGroups = $state<Record<string, boolean>>({});
+
+  const groupedVisibleCards = $derived.by<ProbabilityGroup[]>(() => {
+    const result: ProbabilityGroup[] = [];
+    const groupMap = new Map<string, ProbabilityGroup>();
+
+    for (const card of visibleCards) {
+      const key = getProbabilityGroupKey(card);
+      let group = groupMap.get(key);
+      if (!group) {
+        group = { key, label: getProbabilityGroupLabel(card), cards: [] };
+        groupMap.set(key, group);
+        result.push(group);
+      }
+      group.cards.push(card);
+    }
+
+    result.sort((a, b) => {
+      const va = getProbabilityGroupSortValue(a.cards[0]);
+      const vb = getProbabilityGroupSortValue(b.cards[0]);
+      return vb - va;
+    });
+
+    for (const group of result) {
+      group.cards.sort((a, b) => parseCardId(b) - parseCardId(a));
+    }
+
+    return result;
+  });
+
   let infoVisible = $derived(infoHovered || infoFocused || infoPinned);
   let hasRateChoiceNote = $derived(
     showRateChoiceExplanation && rateChoiceExplanation.trim().length > 0
@@ -305,7 +393,8 @@
       <div
         role="tablist"
         aria-label={title}
-        class="tabs tabs-box content-card-inset flex w-full flex-wrap gap-1 p-1"
+        class="tabs tabs-box content-card-inset grid w-full gap-1 p-1"
+        style={`grid-template-columns: repeat(${groups.length}, 1fr)`}
       >
         {#each groups as [rarity] (rarity)}
           {@const tabId = getRarityTabId(rarity)}
@@ -317,7 +406,7 @@
             aria-selected={activeRarity === rarity}
             aria-controls={panelId}
             tabindex={activeRarity === rarity ? 0 : -1}
-            class={`tab min-w-16 shrink-0 whitespace-nowrap rounded-lg px-3 ${activeRarity === rarity ? "bg-primary text-primary-content" : ""}`}
+            class={`tab min-w-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-xs sm:text-sm ${activeRarity === rarity ? "bg-primary text-primary-content" : ""}`}
             onclick={() => (activeRarity = rarity)}
             onkeydown={(event) => {
               if (event.key === "ArrowRight" || event.key === "ArrowDown") {
@@ -344,74 +433,68 @@
           hidden={activeRarity !== rarity}
           class="min-h-0 overflow-y-auto pr-1"
         >
-          <div class="grid gap-2 sm:grid-cols-2">
+          <div class="grid gap-3">
             {#if activeRarity === rarity}
-              {#each visibleCards as card, index (`${card.cardId ?? "unknown"}-${card.isWish}-${index}`)}
-                {@const segment =
-                  card.isWish === true
-                    ? wishLabel
-                    : card.isWish === false
-                      ? normalLabel
-                      : unavailableLabel}
-                {@const conditionalSegments = card.probabilitySegments.filter(
-                  (item) => item.conditional
-                )}
-                <div
-                  class="content-card-inset grid grid-cols-[3.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-2.5"
-                >
-                  <CardThumbnail
-                    src={card.assetBundleName
-                      ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
-                      : null}
-                    fallbackSrc={card.assetBundleName && region !== "jp"
-                      ? getCardThumbnailAssetURL(card.assetBundleName, false, region)
-                      : null}
-                    alt={card.title
-                      ? `${card.title} ${cardAltSuffix}`
-                      : (card.cardId ?? unavailableLabel)}
-                    fallbackLabel={card.cardId ?? unavailableLabel}
-                    rarityType={card.rarityType}
-                    rarityCount={card.rarityType === "rarity_birthday" ? 1 : 0}
-                    maxSize={60}
-                    loadMode="visible"
-                    containerClass="relative aspect-square overflow-hidden rounded-lg"
-                    imageClass="size-full object-cover"
-                  />
-                  <div class="min-w-0">
-                    {#if card.cardId}
-                      <a
-                        class="link link-hover block truncate text-sm font-semibold"
-                        href={resolve("/card/[region]/[id]", { region, id: card.cardId })}
-                        >{card.title ?? card.cardId}</a
-                      >
-                    {:else}
-                      <span class="block truncate text-sm font-semibold"
-                        >{card.title ?? unavailableLabel}</span
-                      >
-                    {/if}
-                    <div class="mt-0.5 flex flex-wrap gap-x-2 text-[0.68rem] opacity-60">
-                      <span>{cardIdLabel}: {card.cardId ?? unavailableLabel}</span><span
-                        >{segment}</span
-                      >
-                      {#if conditionalSegments.length > 0}<span>{conditionalLabel}</span>{/if}
-                    </div>
+              {#each groupedVisibleCards as group (group.key)}
+                {@const isExpanded = expandedGroups[group.key] ?? false}
+                {@const visibleItems = isExpanded ? group.cards : group.cards.slice(0, PROBABILITY_GROUP_INITIAL_LIMIT)}
+                {@const hiddenCount = group.cards.length - PROBABILITY_GROUP_INITIAL_LIMIT}
+                <div>
+                  <div class="mb-1.5 flex items-center gap-2 px-1">
+                    <span class="text-xs font-semibold opacity-70">{group.label}</span>
+                    <span class="text-[0.65rem] opacity-40">({group.cards.length})</span>
                   </div>
-                  <div class="text-right text-xs font-mono tabular-nums">
-                    {#if conditionalSegments.length > 0}
-                      {#each conditionalSegments as item (item.lotteryType)}
-                        <div class="font-semibold">{probability(item.probability)}</div>
-                      {/each}
-                    {:else}
-                      <span
-                        class={card.probability === null
-                          ? "max-w-20 whitespace-normal text-error/80"
-                          : "font-semibold"}
-                        >{card.probability === null
-                          ? (diagnosticLabels[card.diagnostic] ?? unavailableLabel)
-                          : probability(card.probability)}</span
-                      >
-                    {/if}
+                  <div class="grid grid-cols-6 gap-1.5 sm:grid-cols-8 md:grid-cols-10">
+                    {#each visibleItems as card, index (`${card.cardId ?? "unknown"}-${card.isWish}-${index}`)}
+                      {#if card.cardId}
+                        <a
+                          href={resolve("/card/[region]/[id]", { region, id: card.cardId })}
+                          target="_blank"
+                          rel="noopener"
+                          class="group block"
+                        >
+                          <CardThumbnail
+                            src={card.assetBundleName
+                              ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
+                              : null}
+                            fallbackSrc={card.assetBundleName && region !== "jp"
+                              ? getCardThumbnailAssetURL(card.assetBundleName, false, region)
+                              : null}
+                            alt={card.title
+                              ? `${card.title} ${cardAltSuffix}`
+                              : (card.cardId ?? unavailableLabel)}
+                            fallbackLabel={card.cardId ?? unavailableLabel}
+                            attr={card.attr}
+                            rarityType={card.rarityType}
+                            rarityCount={card.rarityType === "rarity_birthday" ? 1 : getRarityValue(card.rarityType)}
+                            showFrame={true}
+                            showIcons={true}
+                            loadMode="visible"
+                            containerClass="relative aspect-square overflow-hidden rounded-lg"
+                            imageClass="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                          />
+                        </a>
+                      {:else}
+                        <CardThumbnail
+                          src={null}
+                          alt={unavailableLabel}
+                          fallbackLabel={unavailableLabel}
+                          containerClass="relative aspect-square overflow-hidden rounded-lg"
+                          imageClass="size-full object-cover"
+                        />
+                      {/if}
+                    {/each}
                   </div>
+                  {#if !isExpanded && hiddenCount > 0}
+                    <button
+                      type="button"
+                      class="link link-hover mt-1.5 inline-flex items-center gap-0.5 px-1 text-xs opacity-60"
+                      onclick={() => (expandedGroups = { ...expandedGroups, [group.key]: true })}
+                    >
+                      <Icon icon="mdi:chevron-down" class="size-3.5" aria-hidden="true" />
+                      {hiddenCount} more
+                    </button>
+                  {/if}
                 </div>
               {/each}
             {/if}
