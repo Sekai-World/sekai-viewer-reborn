@@ -2,5 +2,17 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["npm", "mise"],
+      "matchDepNames": ["pnpm"],
+      "allowedVersions": "11.8.0"
+    },
+    {
+      "matchManagers": ["npm", "mise"],
+      "matchDepNames": ["node"],
+      "allowedVersions": ">=24 <25"
+    }
   ]
 }
