@@ -17,7 +17,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [sveltekit(), tailwindcss()],
     server: {
-      host: "0.0.0.0",
+      host: "127.0.0.1",
+      strictPort: true,
       allowedHosts: ["peimacbook-air.tailb18840.ts.net", "100.82.87.88"],
       ...(enableProxy
         ? {
