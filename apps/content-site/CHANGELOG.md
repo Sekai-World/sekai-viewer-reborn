@@ -1,5 +1,12 @@
 # @apps/content-site
 
+## 0.2.2
+
+### Patch Changes
+
+- fc2bb4f: Bind the Vite dev server to the loopback address (`127.0.0.1`) instead of all interfaces, and set `strictPort: true` so Tailscale serve can forward the port over the tailnet. This is a dev-only change with no production impact.
+- e11ce97: Fix navbar interactions: prevent menu dismissal clicks from activating page content underneath, and restore the navbar staying fixed at the top (the root `overflow-x: hidden` was breaking `position: sticky`; switched to `overflow-x: clip`).
+
 ## 0.2.1
 
 ### Patch Changes
