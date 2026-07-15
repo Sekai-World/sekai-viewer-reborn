@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout app repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           path: app
 
@@ -43,7 +43,7 @@ jobs:
           repositories: sekai-i18n-reborn
 
       - name: Checkout translation repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           repository: Sekai-World/sekai-i18n-reborn
           token: ${{ steps.i18n-app-token.outputs.token }}
