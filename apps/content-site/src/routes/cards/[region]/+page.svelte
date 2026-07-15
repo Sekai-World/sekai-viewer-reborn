@@ -5,6 +5,7 @@
   import Icon from "@iconify/svelte";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import {
@@ -904,7 +905,7 @@
   <title>{cardListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
   <PageHeader breadcrumbs={getBreadcrumbItems()} breadcrumbClass="md:max-w-[60%]">
     {#snippet actions()}
       <RegionBadgeSwitch options={getRegionBadgeOptions()} />

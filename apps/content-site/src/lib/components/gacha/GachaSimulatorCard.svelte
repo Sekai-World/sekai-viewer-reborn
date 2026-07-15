@@ -284,7 +284,7 @@
           <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
             {statsTitle}
           </p>
-          <div class="content-card-inset overflow-x-auto rounded-xl">
+          <div data-swipe-region-skip class="content-card-inset overflow-x-auto rounded-xl">
             <table class="table table-xs">
               <thead>
                 <tr>

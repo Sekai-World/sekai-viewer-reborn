@@ -1,6 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { resolve } from "$app/paths";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import GachaDetailAssetCard, {
     type GachaAssetTab
   } from "$lib/components/gacha/GachaDetailAssetCard.svelte";
@@ -323,7 +324,7 @@
   {/await}
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.gachaPayload}
     <PageHeader
       breadcrumbs={getBreadcrumbItems(`${pageTitlePrefix} ${data.gachaId}`)}

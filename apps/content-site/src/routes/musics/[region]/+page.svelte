@@ -3,6 +3,7 @@
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
@@ -745,7 +746,7 @@
   <title>{musicListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
   <PageHeader breadcrumbs={[{ label: homeLabel, href: resolve("/") }, { label: musicListTitle }]}>
     {#snippet actions()}<RegionBadgeSwitch options={getRegionOptions()} />{/snippet}
   </PageHeader>

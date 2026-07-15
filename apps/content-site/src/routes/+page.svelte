@@ -43,7 +43,6 @@
   let latestDataNoData = $state(getInitialI18nText("latestData.noData"));
   let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
-  let swipeHint = $state(getInitialI18nText("swipeHint"));
   let translationRequestId = 0;
   let currentMessages = $state<Record<string, string>>(
     fallbackMessages
@@ -134,7 +133,6 @@
     latestDataNoData = translate("latestData.noData");
     latestDataViewAll = translate("latestData.viewAll");
     latestDataLoadFailed = translate("latestData.loadFailed");
-    swipeHint = translate("swipeHint");
   };
 
   const refreshPageTranslations = async (
@@ -197,12 +195,6 @@
       )}
     />
   </div>
-  <!-- Swipe hint (mobile only) -->
-  <p class="md:hidden mb-4 flex items-center justify-center gap-1.5 text-xs text-base-content/50">
-    <Icon icon="mdi:gesture-swipe-horizontal" class="size-4" />
-    {swipeHint}
-  </p>
-
   <section class="mb-8">
     <h2 class="mb-5 text-center text-base font-semibold tracking-wide text-base-content/70">
       {latestDataTitle}

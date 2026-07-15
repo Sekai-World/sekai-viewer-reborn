@@ -56,7 +56,7 @@
     </p>
 
     {#if sortedDifficulties.length > 0}
-      <div class="overflow-x-auto">
+      <div data-swipe-region-skip class="overflow-x-auto">
         <table class="table table-zebra table-sm">
           <thead>
             <tr>

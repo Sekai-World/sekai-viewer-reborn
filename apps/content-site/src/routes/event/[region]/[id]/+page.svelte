@@ -1,6 +1,7 @@
 <script lang="ts">
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import type { SupportedRegion } from "$lib/domain/regions";
   import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
   import EventDetailAssetCard from "$lib/components/event/EventDetailAssetCard.svelte";
@@ -305,7 +306,7 @@
   {/await}
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.eventPayload}
     <PageHeader
       breadcrumbs={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}

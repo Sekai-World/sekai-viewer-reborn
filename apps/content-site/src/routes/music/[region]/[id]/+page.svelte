@@ -1,6 +1,7 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { resolve } from "$app/paths";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import type { SupportedRegion } from "$lib/domain/regions";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
@@ -224,7 +225,7 @@
   {/await}
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.musicPayload}
     <PageHeader
       breadcrumbs={getMusicBreadcrumbItems(`${musicTitlePrefix} ${data.musicId}`)}

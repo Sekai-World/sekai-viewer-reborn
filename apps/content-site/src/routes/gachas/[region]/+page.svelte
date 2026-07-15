@@ -3,6 +3,7 @@
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import GachaListCard from "$lib/components/gacha/GachaListCard.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
@@ -491,7 +492,7 @@
   <title>{gachaListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
   <PageHeader breadcrumbs={getBreadcrumbItems()} breadcrumbClass="md:max-w-[60%]">
     {#snippet actions()}
       <RegionBadgeSwitch options={getRegionBadgeOptions()} />

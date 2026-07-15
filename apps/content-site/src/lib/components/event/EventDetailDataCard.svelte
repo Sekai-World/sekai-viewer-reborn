@@ -1091,7 +1091,7 @@
         <span>{rarityBonusLabel}</span>
       </h2>
       {#if (relatedData?.bonuses?.rarityBonusRates.length ?? 0) > 0}
-        <div class="content-card-inset overflow-x-auto rounded-xl">
+        <div data-swipe-region-skip class="content-card-inset overflow-x-auto rounded-xl">
           <table class="table table-sm">
             <thead>
               <tr>
