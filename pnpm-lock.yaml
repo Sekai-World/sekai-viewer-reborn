@@ -269,7 +269,7 @@ importers:
         version: 8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3)
       vite-plugin-dts:
         specifier: ^5.0.2
-        version: 5.0.2(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3))
+        version: 5.0.3(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3))
 
   packages/sekai-master-api-sdk:
     dependencies:
@@ -282,7 +282,7 @@ importers:
         version: 8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3)
       vite-plugin-dts:
         specifier: ^5.0.2
-        version: 5.0.2(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3))
+        version: 5.0.3(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3))
 
   packages/ui-shell:
     dependencies:
@@ -2531,12 +2531,12 @@ packages:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
 
-  unplugin-dts@1.0.2:
-    resolution: {integrity: sha512-VbNiMD0LMl/t6nJueGtrCp79N7ZO1nquxj/FUybJDnKwZGsnW2wjdwBSzA3QEHujoxmxZIptsG43hL7LzXE96w==}
+  unplugin-dts@1.0.3:
+    resolution: {integrity: sha512-/GR887wfG4r1cWyt1UZsLRuMIjsmEbGkS9yJrz+0dsToHAYUD5CTyP3JMGVLv25j9K0mJcwAVvZno/aTuSUvNg==}
     peerDependencies:
       '@microsoft/api-extractor': '>=7'
       '@rspack/core': ^1
-      '@vue/language-core': ~3.1.5
+      '@vue/language-core': ^3.1.5
       esbuild: '*'
       rolldown: '*'
       rollup: '>=3'
@@ -2579,8 +2579,8 @@ packages:
       typescript:
         optional: true
 
-  vite-plugin-dts@5.0.2:
-    resolution: {integrity: sha512-lNeHS+dwGju6eRmNvZQt8Shwv9j3m98hbHse/lIbLq9q3yE2DcIOBBYQEVUF6tS0kOmv+VA9Z5FqmzFnGe4U8g==}
+  vite-plugin-dts@5.0.3:
+    resolution: {integrity: sha512-gIth6NdCEHWPiiRMCK3N6C8WjvdsrtEQrmsiG8h6Ov+lFP+b07Y+wcs9H0H7n146l0PDTYK4cQN1vgeG1pMdRQ==}
     peerDependencies:
       '@microsoft/api-extractor': '>=7'
       rollup: '>=3'
@@ -4883,7 +4883,7 @@ snapshots:
   universalify@2.0.1:
     optional: true
 
-  unplugin-dts@1.0.2(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3)):
+  unplugin-dts@1.0.3(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3)):
     dependencies:
       '@rollup/pluginutils': 5.4.0(rollup@4.62.2)
       '@volar/typescript': 2.4.28
@@ -4919,9 +4919,9 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  vite-plugin-dts@5.0.2(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3)):
+  vite-plugin-dts@5.0.3(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3)):
     dependencies:
-      unplugin-dts: 1.0.2(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3))
+      unplugin-dts: 1.0.3(@microsoft/api-extractor@7.57.6(@types/node@25.9.5))(rolldown@1.0.3)(rollup@4.62.2)(typescript@6.0.3)(vite@8.0.16(@types/node@25.9.5)(jiti@2.7.0)(yaml@2.8.3))
     optionalDependencies:
       '@microsoft/api-extractor': 7.57.6(@types/node@25.9.5)
       rollup: 4.62.2
