@@ -9,7 +9,7 @@
     {
       "matchManagers": ["npm", "mise"],
       "matchDepNames": ["pnpm"],
-      "allowedVersions": "11.8.0"
+      "allowedVersions": "11.13.0"
     },
     {
       "matchManagers": ["npm", "mise"],
