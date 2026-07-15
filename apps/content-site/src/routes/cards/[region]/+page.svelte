@@ -60,6 +60,8 @@
   let { data }: { data: CardListPageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
   let translationRequestId = 0;
+  let initialPageRequestId = 0;
+  let listRequestId = 0;
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(data.uiLocale, fallbackMessages)(key);
   let items = $state<CardListItem[]>([]);
@@ -241,6 +243,44 @@
 
   const getFilterStorageKey = (): string => `content-site:card-list-filters:${data.region}`;
   const getViewModeStorageKey = (): string => "content-site:card-list-view-mode";
+
+  const getCurrentListIdentity = (): string =>
+    JSON.stringify({
+      region: data.region,
+      sortBy,
+      sortOrder,
+      name: nameFilter,
+      unit: unitFilter,
+      character: characterFilter,
+      skill: skillFilter,
+      type: typeFilter,
+      attr: attrFilter,
+      rarity: rarityFilter,
+      supportUnit: supportUnitFilter,
+      has3dmvCutIn: has3dmvCutInFilter,
+      spoiler: spoilerFilter
+    });
+
+  const beginListRequest = (): number => {
+    listRequestId += 1;
+    return listRequestId;
+  };
+
+  const isCurrentListRequest = (requestId: number, listIdentity: string): boolean =>
+    requestId === listRequestId && listIdentity === getCurrentListIdentity();
+
+  const resetListStateForNavigation = (): void => {
+    items = [];
+    currentPage = 1;
+    hasNext = false;
+    isLoading = false;
+    isInitialLoading = true;
+    isReloadingFirstPage = false;
+    errorMessage = null;
+    isLoadMoreHintVisible = false;
+    lastTouchY = null;
+    loadedRegion = data.region;
+  };
 
   const persistAppliedFilters = (): void => {
     if (!browser) {
@@ -455,7 +495,18 @@
 
   $effect(() => {
     const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
-    initialPagePromise.then(applyInitialPage);
+    const requestId = initialPageRequestId + 1;
+    initialPageRequestId = requestId;
+    const listRequestIdForInitialPage = beginListRequest();
+    resetListStateForNavigation();
+
+    initialPagePromise.then((result) => {
+      if (requestId !== initialPageRequestId || listRequestIdForInitialPage !== listRequestId) {
+        return;
+      }
+
+      applyInitialPage(result);
+    });
   });
 
   $effect(() => {
@@ -740,6 +791,8 @@
       return;
     }
 
+    const requestId = beginListRequest();
+    const listIdentity = getCurrentListIdentity();
     isLoading = true;
     isLoadMoreHintVisible = false;
     errorMessage = null;
@@ -751,13 +804,21 @@
       }
 
       const nextPage = (await response.json()) as CardListPagePayload;
+      if (!isCurrentListRequest(requestId, listIdentity)) {
+        return;
+      }
+
       items = mergeItems(items, nextPage.items);
       currentPage = nextPage.pagination.page;
       hasNext = nextPage.pagination.hasNext;
     } catch {
-      errorMessage = cardListLoadFailed;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        errorMessage = cardListLoadFailed;
+      }
     } finally {
-      isLoading = false;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        isLoading = false;
+      }
     }
   };
 
@@ -766,6 +827,8 @@
       return;
     }
 
+    const requestId = beginListRequest();
+    const listIdentity = getCurrentListIdentity();
     isLoading = true;
     isReloadingFirstPage = true;
     errorMessage = null;
@@ -778,15 +841,23 @@
       }
 
       const nextPage = (await response.json()) as CardListPagePayload;
+      if (!isCurrentListRequest(requestId, listIdentity)) {
+        return;
+      }
+
       items = nextPage.items;
       currentPage = nextPage.pagination.page;
       hasNext = nextPage.pagination.hasNext;
       syncPageUrl();
     } catch {
-      errorMessage = cardListLoadFailed;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        errorMessage = cardListLoadFailed;
+      }
     } finally {
-      isReloadingFirstPage = false;
-      isLoading = false;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        isReloadingFirstPage = false;
+        isLoading = false;
+      }
     }
   };
 

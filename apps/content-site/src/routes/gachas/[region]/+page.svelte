@@ -29,6 +29,8 @@
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "gacha", "error"]);
   let translationRequestId = 0;
+  let initialPageRequestId = 0;
+  let listRequestId = 0;
   const gachaListLoadingFallback = "Loading gachas...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
     createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
@@ -117,6 +119,34 @@
 
   const getSortStorageKey = (): string => `content-site:gacha-list-sort:${data.region}`;
 
+  const getCurrentListIdentity = (): string =>
+    JSON.stringify({
+      region: data.region,
+      sortBy,
+      sortOrder,
+      spoiler: contentDisplaySettings.showSpoilerContent
+    });
+
+  const beginListRequest = (): number => {
+    listRequestId += 1;
+    return listRequestId;
+  };
+
+  const isCurrentListRequest = (requestId: number, listIdentity: string): boolean =>
+    requestId === listRequestId && listIdentity === getCurrentListIdentity();
+
+  const resetListStateForNavigation = (): void => {
+    items = [];
+    currentPage = 1;
+    hasNext = false;
+    isLoading = false;
+    isInitialLoading = true;
+    isReloadingFirstPage = false;
+    errorMessage = null;
+    isLoadMoreHintVisible = false;
+    lastTouchY = null;
+  };
+
   const persistAppliedSort = (): void => {
     if (!browser) {
       return;
@@ -185,7 +215,18 @@
     // data.initialPage is a streaming Promise at runtime, but SvelteKit's
     // generated types unwrap it. Cast to access .then() for streaming hydration.
     const streaming = data.initialPage as unknown as Promise<InitialPageResult>;
-    streaming.then(hydrateFromInitialPage);
+    const requestId = initialPageRequestId + 1;
+    initialPageRequestId = requestId;
+    const listRequestIdForInitialPage = beginListRequest();
+    resetListStateForNavigation();
+
+    streaming.then((result) => {
+      if (requestId !== initialPageRequestId || listRequestIdForInitialPage !== listRequestId) {
+        return;
+      }
+
+      hydrateFromInitialPage(result);
+    });
   });
 
   $effect(() => {
@@ -419,6 +460,8 @@
       return;
     }
 
+    const requestId = beginListRequest();
+    const listIdentity = getCurrentListIdentity();
     isLoading = true;
     isLoadMoreHintVisible = false;
     errorMessage = null;
@@ -430,13 +473,21 @@
       }
 
       const nextPage = (await response.json()) as GachaListPagePayload;
+      if (!isCurrentListRequest(requestId, listIdentity)) {
+        return;
+      }
+
       items = mergeItems(items, nextPage.items);
       currentPage = nextPage.pagination.page;
       hasNext = nextPage.pagination.hasNext;
     } catch {
-      errorMessage = gachaListLoadFailed;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        errorMessage = gachaListLoadFailed;
+      }
     } finally {
-      isLoading = false;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        isLoading = false;
+      }
     }
   };
 
@@ -445,6 +496,8 @@
       return;
     }
 
+    const requestId = beginListRequest();
+    const listIdentity = getCurrentListIdentity();
     isLoading = true;
     isReloadingFirstPage = true;
     errorMessage = null;
@@ -457,15 +510,24 @@
       }
 
       const nextPage = (await response.json()) as GachaListPagePayload;
+      if (!isCurrentListRequest(requestId, listIdentity)) {
+        return;
+      }
+
       items = nextPage.items;
       currentPage = nextPage.pagination.page;
       hasNext = nextPage.pagination.hasNext;
       syncPageUrl();
     } catch {
-      errorMessage = gachaListLoadFailed;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        errorMessage = gachaListLoadFailed;
+      }
     } finally {
-      isReloadingFirstPage = false;
-      isLoading = false;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        isInitialLoading = false;
+        isReloadingFirstPage = false;
+        isLoading = false;
+      }
     }
   };
 
