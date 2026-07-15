@@ -3,6 +3,7 @@
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
@@ -47,6 +48,8 @@
   const fallbackMessages = getLocalI18nMessages(["common", "music", "error"]);
   let currentMessages = $state<Record<string, string>>(fallbackMessages);
   let translationRequestId = 0;
+  let initialPageRequestId = 0;
+  let listRequestId = 0;
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(data.uiLocale, fallbackMessages)(key);
 
@@ -266,6 +269,43 @@
     ].some((key) => searchParams.has(key));
   };
 
+  const getCurrentListIdentity = (): string =>
+    JSON.stringify({
+      region: data.region,
+      sortBy,
+      sortOrder,
+      name: nameFilter,
+      category: categoryFilter,
+      composer: composerFilter,
+      arranger: arrangerFilter,
+      lyricist: lyricistFilter,
+      vocalCharacter: vocalCharacterFilter,
+      tag: tagFilter,
+      hasAppend: hasAppendFilter,
+      level: levelFilter,
+      spoiler: spoilerFilter
+    });
+
+  const beginListRequest = (): number => {
+    listRequestId += 1;
+    return listRequestId;
+  };
+
+  const isCurrentListRequest = (requestId: number, listIdentity: string): boolean =>
+    requestId === listRequestId && listIdentity === getCurrentListIdentity();
+
+  const resetListStateForNavigation = (): void => {
+    items = [];
+    currentPage = 1;
+    hasNext = false;
+    isLoading = false;
+    isInitialLoading = true;
+    isReloading = false;
+    errorMessage = null;
+    isLoadMoreHintVisible = false;
+    lastTouchY = null;
+  };
+
   const restorePersistedFilters = (): boolean => {
     if (!browser) {
       return false;
@@ -370,7 +410,18 @@
 
   $effect(() => {
     const initialPagePromise = data.initialPage as unknown as Promise<InitialPageResult>;
-    initialPagePromise.then(applyInitialPage);
+    const requestId = initialPageRequestId + 1;
+    initialPageRequestId = requestId;
+    const listRequestIdForInitialPage = beginListRequest();
+    resetListStateForNavigation();
+
+    initialPagePromise.then((result) => {
+      if (requestId !== initialPageRequestId || listRequestIdForInitialPage !== listRequestId) {
+        return;
+      }
+
+      applyInitialPage(result);
+    });
   });
 
   $effect(() => {
@@ -607,22 +658,32 @@
 
   const reloadFirstPage = async (): Promise<void> => {
     if (isLoading) return;
+    const requestId = beginListRequest();
+    const listIdentity = getCurrentListIdentity();
     isLoading = true;
     isReloading = true;
     errorMessage = null;
     isLoadMoreHintVisible = false;
     try {
       const nextPage = await fetchPage(1);
+      if (!isCurrentListRequest(requestId, listIdentity)) {
+        return;
+      }
+
       items = nextPage.items;
       currentPage = 1;
       hasNext = nextPage.pagination.hasNext;
       persistFilters();
       syncUrl();
     } catch {
-      errorMessage = musicListLoadFailed;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        errorMessage = musicListLoadFailed;
+      }
     } finally {
-      isLoading = false;
-      isReloading = false;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        isLoading = false;
+        isReloading = false;
+      }
     }
   };
 
@@ -636,18 +697,28 @@
 
   const loadMore = async (): Promise<void> => {
     if (isLoading || !hasNext) return;
+    const requestId = beginListRequest();
+    const listIdentity = getCurrentListIdentity();
     isLoading = true;
     isLoadMoreHintVisible = false;
     errorMessage = null;
     try {
       const nextPage = await fetchPage(currentPage + 1);
+      if (!isCurrentListRequest(requestId, listIdentity)) {
+        return;
+      }
+
       items = mergeItems(items, nextPage.items);
       currentPage = nextPage.pagination.page;
       hasNext = nextPage.pagination.hasNext;
     } catch {
-      errorMessage = musicListLoadFailed;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        errorMessage = musicListLoadFailed;
+      }
     } finally {
-      isLoading = false;
+      if (isCurrentListRequest(requestId, listIdentity)) {
+        isLoading = false;
+      }
     }
   };
 
@@ -745,7 +816,7 @@
   <title>{musicListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
   <PageHeader breadcrumbs={[{ label: homeLabel, href: resolve("/") }, { label: musicListTitle }]}>
     {#snippet actions()}<RegionBadgeSwitch options={getRegionOptions()} />{/snippet}
   </PageHeader>

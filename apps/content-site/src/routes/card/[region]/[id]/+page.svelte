@@ -1,6 +1,7 @@
 <script lang="ts">
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import CardDetailAssetCard, {
     type CardAssetTab
   } from "$lib/components/card/CardDetailAssetCard.svelte";
@@ -343,7 +344,7 @@
   {/await}
 </svelte:head>
 
-<section class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.cardPayload}
     <PageHeader
       breadcrumbs={getBreadcrumbItems(`${pageTitlePrefix} ${data.cardId}`)}

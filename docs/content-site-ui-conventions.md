@@ -111,6 +111,7 @@ Rules:
 - Breadcrumb + top-right action layouts should reuse `PageHeader`.
 - Region badge groups should reuse `RegionBadgeSwitch`.
 - If a route needs only a single active region badge, still use the shared switch component with one active option.
+- Region-based list and detail routes use `apps/content-site/src/lib/actions/swipe-region.ts` on the page root. The action delegates navigation to the currently visible `RegionBadgeSwitch`, does not wrap at the first or last rendered region, and must stay touch-only. Keep its edge-start guard, `touchmove` vertical-intent and multitouch cancellation, horizontal-dominance threshold, and horizontal-scroll/dialog/form exclusions when extending it to another route. Mark known horizontal scrollers with `data-swipe-region-skip`.
 - List page icon-only sort, view, and filter controls should reuse `ListToolbarButton` so touch target sizing and sort indicators stay aligned across routes.
 
 ## Character Avatar Component
