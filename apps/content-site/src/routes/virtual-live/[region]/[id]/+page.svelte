@@ -104,68 +104,256 @@
 
     {#if payload.virtualLive}
       {@const live = payload.virtualLive}
-      <article class="content-card-shell relative overflow-hidden rounded-[1.75rem] shadow-sm">
-        <div class="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-secondary via-primary to-accent"></div>
-        <div class="grid gap-0 lg:grid-cols-[minmax(340px,0.8fr)_minmax(0,1.2fr)]">
-          <div class="min-h-56 bg-base-200/55 p-3 sm:p-5">
-            {#if live.assetBundleName}
-              <AssetImage src={getVirtualLiveBannerAssetURL(live.assetBundleName, data.region)} alt={`${live.name ?? live.id} ${t("virtualLiveBannerAltSuffix")}`} imageClass="size-full object-contain" buttonClass="block size-full min-h-52 overflow-hidden rounded-2xl" />
-            {:else}<div class="flex min-h-52 items-center justify-center rounded-2xl bg-base-200 text-sm opacity-65">{t("imageUnavailable")}</div>{/if}
-          </div>
-          <div class="flex flex-col justify-between gap-6 p-5 sm:p-7 lg:p-9">
-            <div>
-              <div class="mb-3 flex flex-wrap gap-2"><span class={`badge ${statusClass(live.status)} font-semibold`}>{statusLabel(live.status)}</span><span class="badge badge-outline">{typeLabel(live.virtualLiveType)}</span></div>
-              <h1 class="text-2xl/tight font-bold sm:text-4xl">{live.name ?? live.id}</h1>
-              <p class="mt-3 text-sm opacity-65">{formatDate(live.startAt)} — {formatDate(live.endAt)}</p>
-            </div>
-            <dl class="grid grid-cols-2 gap-x-5 gap-y-4 border-t border-base-300 pt-5 sm:grid-cols-3">
-              <div><dt class="text-xs font-semibold uppercase tracking-wider opacity-55">{t("virtualLiveIdLabel")}</dt><dd class="mt-1 font-semibold">#{live.id}</dd></div>
-              <div><dt class="text-xs font-semibold uppercase tracking-wider opacity-55">{t("virtualLivePlatformLabel")}</dt><dd class="mt-1 font-semibold">{displayValue(live.virtualLivePlatform)}</dd></div>
-              <div><dt class="text-xs font-semibold uppercase tracking-wider opacity-55">{t("virtualLiveSeqLabel")}</dt><dd class="mt-1 font-semibold">{displayValue(live.seq)}</dd></div>
-            </dl>
-          </div>
-        </div>
-      </article>
-
-      <div class="grid items-start gap-4 lg:grid-cols-[minmax(280px,0.72fr)_minmax(0,1.28fr)]">
+      <div
+        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
+      >
         <div class="flex flex-col gap-4">
-          <article class="content-card-shell rounded-2xl p-5 shadow-sm">
-            <h2 class="text-lg font-bold">{t("virtualLiveDetailTitle")}</h2>
-            <dl class="mt-4 divide-y divide-base-300">
-              {#each [[t("virtualLiveStartAtLabel"), formatDate(live.startAt)], [t("virtualLiveEndAtLabel"), formatDate(live.endAt)], [t("virtualLiveRankingAnnounceAtLabel"), formatDate(live.rankingAnnounceAt)], [t("internalResourceCodeLabel"), displayValue(live.assetBundleName)]] as row (row[0])}
-                <div class="grid grid-cols-[minmax(7rem,0.7fr)_minmax(0,1.3fr)] gap-3 py-3"><dt class="text-sm opacity-60">{row[0]}</dt><dd class="wrap-break-word text-right text-sm font-semibold">{row[1]}</dd></div>
-              {/each}
-            </dl>
+          <article class="card content-card-shell overflow-hidden shadow-sm">
+            <div class="card-body items-center gap-3 p-3 text-center sm:p-5">
+              <div class="content-card-inset w-full overflow-hidden rounded-[1.75rem] aspect-16/7">
+                {#if live.assetBundleName}
+                  <AssetImage
+                    src={getVirtualLiveBannerAssetURL(live.assetBundleName, data.region)}
+                    alt={`${live.name ?? live.id} ${t("virtualLiveBannerAltSuffix")}`}
+                    imageClass="h-full w-full object-contain p-4 md:p-6"
+                    buttonClass="block h-full w-full overflow-hidden"
+                  />
+                {:else}
+                  <div class="flex h-full items-center justify-center px-6 text-center text-sm opacity-70">
+                    {t("imageUnavailable")}
+                  </div>
+                {/if}
+              </div>
+            </div>
+          </article>
+
+          <article class="card content-card-shell shadow-sm">
+            <div class="card-body gap-4 p-5">
+              <h2 class="text-lg font-bold">{t("virtualLiveDetailTitle")}</h2>
+              <dl class="divide-y divide-base-300">
+                {#each [[t("virtualLiveStartAtLabel"), formatDate(live.startAt)], [t("virtualLiveEndAtLabel"), formatDate(live.endAt)], [t("virtualLiveRankingAnnounceAtLabel"), formatDate(live.rankingAnnounceAt)], [t("internalResourceCodeLabel"), displayValue(live.assetBundleName)]] as row (row[0])}
+                  <div class="grid grid-cols-[minmax(7rem,0.8fr)_minmax(0,1.2fr)] gap-3 py-3">
+                    <dt class="text-sm opacity-60">{row[0]}</dt>
+                    <dd class="wrap-break-word text-right text-sm font-semibold">{row[1]}</dd>
+                  </div>
+                {/each}
+              </dl>
+            </div>
           </article>
 
           {#if live.waitingRoom}
-            <article class="content-card-shell rounded-2xl p-5 shadow-sm"><h2 class="text-lg font-bold">{t("virtualLiveWaitingRoomTitle")}</h2><dl class="mt-3 space-y-3 text-sm"><div><dt class="opacity-55">{t("virtualLiveWaitingRoomStartAtLabel")}</dt><dd class="font-semibold">{formatDate(live.waitingRoom.startAt)}</dd></div><div><dt class="opacity-55">{t("virtualLiveWaitingRoomEndAtLabel")}</dt><dd class="font-semibold">{formatDate(live.waitingRoom.endAt)}</dd></div>{#if live.waitingRoom.assetBundleName}<div><dt class="opacity-55">{t("internalResourceCodeLabel")}</dt><dd class="break-all font-semibold">{live.waitingRoom.assetBundleName}</dd></div>{/if}</dl></article>
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-5">
+                <h2 class="text-lg font-bold">{t("virtualLiveWaitingRoomTitle")}</h2>
+                <dl class="grid gap-3 text-sm">
+                  <div class="content-card-inset rounded-2xl p-4">
+                    <dt class="opacity-55">{t("virtualLiveWaitingRoomStartAtLabel")}</dt>
+                    <dd class="mt-1 font-semibold">{formatDate(live.waitingRoom.startAt)}</dd>
+                  </div>
+                  <div class="content-card-inset rounded-2xl p-4">
+                    <dt class="opacity-55">{t("virtualLiveWaitingRoomEndAtLabel")}</dt>
+                    <dd class="mt-1 font-semibold">{formatDate(live.waitingRoom.endAt)}</dd>
+                  </div>
+                  {#if live.waitingRoom.assetBundleName}
+                    <div class="content-card-inset rounded-2xl p-4">
+                      <dt class="opacity-55">{t("internalResourceCodeLabel")}</dt>
+                      <dd class="mt-1 break-all font-semibold">{live.waitingRoom.assetBundleName}</dd>
+                    </div>
+                  {/if}
+                </dl>
+              </div>
+            </article>
           {/if}
 
           {#if expansionCards(live).length > 0}
-            <article class="content-card-shell rounded-2xl p-5 shadow-sm"><h2 class="text-lg font-bold">{t("virtualLiveAdditionalDataTitle")}</h2><div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-1">{#each expansionCards(live) as item (item.label)}<div class="content-card-inset rounded-xl p-3"><h3 class="text-sm font-semibold">{item.label}</h3><p class="mt-1 text-xs opacity-60">{summarizeExpansion(item.value)}</p></div>{/each}</div></article>
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-5">
+                <h2 class="text-lg font-bold">{t("virtualLiveAdditionalDataTitle")}</h2>
+                <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                  {#each expansionCards(live) as item (item.label)}
+                    <div class="content-card-inset rounded-xl p-3">
+                      <h3 class="text-sm font-semibold">{item.label}</h3>
+                      <p class="mt-1 text-xs opacity-60">{summarizeExpansion(item.value)}</p>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            </article>
           {/if}
         </div>
 
         <div class="flex flex-col gap-4">
+          <article class="card content-card-shell shadow-sm">
+            <div class="card-body gap-5 p-5 sm:p-6">
+              <div class="flex flex-wrap gap-2">
+                <span class={`badge ${statusClass(live.status)} font-semibold`}>
+                  {statusLabel(live.status)}
+                </span>
+                <span class="badge badge-outline font-semibold">{typeLabel(live.virtualLiveType)}</span>
+              </div>
+
+              <div>
+                <h1 class="text-2xl/tight font-bold sm:text-4xl">{live.name ?? live.id}</h1>
+                <p class="mt-3 text-sm opacity-65">
+                  {formatDate(live.startAt)} — {formatDate(live.endAt)}
+                </p>
+              </div>
+
+              <dl class="grid gap-3 sm:grid-cols-3">
+                <div class="content-card-inset min-w-0 rounded-2xl p-4">
+                  <dt class="text-xs font-semibold uppercase tracking-wider opacity-55">
+                    {t("virtualLiveIdLabel")}
+                  </dt>
+                  <dd class="mt-1 font-semibold">#{live.id}</dd>
+                </div>
+                <div class="content-card-inset min-w-0 rounded-2xl p-4">
+                  <dt class="text-xs font-semibold uppercase tracking-wider opacity-55">
+                    {t("virtualLivePlatformLabel")}
+                  </dt>
+                  <dd class="mt-1 wrap-break-word font-semibold">
+                    {displayValue(live.virtualLivePlatform)}
+                  </dd>
+                </div>
+                <div class="content-card-inset min-w-0 rounded-2xl p-4">
+                  <dt class="text-xs font-semibold uppercase tracking-wider opacity-55">
+                    {t("virtualLiveSeqLabel")}
+                  </dt>
+                  <dd class="mt-1 font-semibold">{displayValue(live.seq)}</dd>
+                </div>
+              </dl>
+            </div>
+          </article>
+
           {#if live.information && (live.information.summary || live.information.description)}
-            <article class="content-card-shell rounded-2xl p-5 shadow-sm"><h2 class="text-lg font-bold">{t("virtualLiveInformationTitle")}</h2>{#if live.information.summary}<p class="mt-3 font-semibold leading-relaxed">{live.information.summary}</p>{/if}{#if live.information.description}<p class="mt-3 whitespace-pre-line text-sm/7 opacity-75">{live.information.description}</p>{/if}</article>
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-3 p-5">
+                <h2 class="text-lg font-bold">{t("virtualLiveInformationTitle")}</h2>
+                {#if live.information.summary}
+                  <p class="font-semibold leading-relaxed">{live.information.summary}</p>
+                {/if}
+                {#if live.information.description}
+                  <p class="whitespace-pre-line text-sm/7 opacity-75">{live.information.description}</p>
+                {/if}
+              </div>
+            </article>
           {/if}
 
           {#if live.schedules.length > 0}
-            <article class="content-card-shell rounded-2xl p-5 shadow-sm"><h2 class="text-lg font-bold">{t("virtualLiveSchedulesTitle")}</h2><div class="mt-4 grid gap-3 sm:grid-cols-2">{#each live.schedules as schedule, index (schedule.id ?? index)}<div class="content-card-inset rounded-xl p-4"><div class="mb-2 flex items-center justify-between gap-2"><span class="badge badge-primary badge-sm">{t("virtualLiveScheduleSeqLabel")} {displayValue(schedule.seq)}</span>{#if schedule.isAfterEvent}<span class="badge badge-outline badge-sm">{t("virtualLiveScheduleIsAfterEventLabel")}</span>{/if}</div><p class="text-sm font-semibold">{formatDate(schedule.startAt)}</p><p class="mt-1 text-xs opacity-60">{formatDate(schedule.endAt)}</p></div>{/each}</div></article>
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-5">
+                <h2 class="text-lg font-bold">{t("virtualLiveSchedulesTitle")}</h2>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  {#each live.schedules as schedule, index (schedule.id ?? index)}
+                    <div class="content-card-inset rounded-xl p-4">
+                      <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <span class="badge badge-primary badge-sm">
+                          {t("virtualLiveScheduleSeqLabel")} {displayValue(schedule.seq)}
+                        </span>
+                        {#if schedule.isAfterEvent}
+                          <span class="badge badge-outline badge-sm">
+                            {t("virtualLiveScheduleIsAfterEventLabel")}
+                          </span>
+                        {/if}
+                      </div>
+                      <p class="text-sm font-semibold">{formatDate(schedule.startAt)}</p>
+                      <p class="mt-1 text-xs opacity-60">{formatDate(schedule.endAt)}</p>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            </article>
           {/if}
 
           {#if live.setlists.length > 0}
-            <article class="content-card-shell rounded-2xl p-5 shadow-sm"><h2 class="text-lg font-bold">{t("virtualLiveSetlistsTitle")}</h2><div class="mt-4 space-y-2">{#each live.setlists as setlist, index (setlist.id ?? index)}<div class="content-card-inset flex flex-wrap items-center justify-between gap-3 rounded-xl p-4"><div><p class="text-xs font-semibold uppercase tracking-wider opacity-55">{t("virtualLiveSetlistSeqLabel")} {displayValue(setlist.seq)}</p><p class="mt-1 font-semibold">{typeLabel(setlist.virtualLiveSetlistType)}</p></div><div class="flex flex-wrap gap-2">{#if setlist.musicId !== null}<a class="btn btn-primary btn-sm" href={resolve("/music/[region]/[id]", { region: data.region, id: String(setlist.musicId) })}>{t("virtualLiveSetlistMusicLabel")} #{setlist.musicId}</a>{/if}{#if setlist.musicVocalId !== null}<span class="badge badge-outline">{t("virtualLiveSetlistMusicVocalLabel")} #{setlist.musicVocalId}</span>{/if}{#if setlist.virtualLiveStageId !== null}<span class="badge badge-outline">{t("virtualLiveSetlistStageLabel")} #{setlist.virtualLiveStageId}</span>{/if}</div></div>{/each}</div></article>
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-5">
+                <h2 class="text-lg font-bold">{t("virtualLiveSetlistsTitle")}</h2>
+                <div class="space-y-2">
+                  {#each live.setlists as setlist, index (setlist.id ?? index)}
+                    <div
+                      class="content-card-inset flex flex-wrap items-center justify-between gap-3 rounded-xl p-4"
+                    >
+                      <div class="min-w-0">
+                        <p class="text-xs font-semibold uppercase tracking-wider opacity-55">
+                          {t("virtualLiveSetlistSeqLabel")} {displayValue(setlist.seq)}
+                        </p>
+                        <p class="mt-1 wrap-break-word font-semibold">
+                          {typeLabel(setlist.virtualLiveSetlistType)}
+                        </p>
+                      </div>
+                      <div class="flex min-w-0 flex-wrap gap-2">
+                        {#if setlist.musicId !== null}
+                          <a
+                            class="btn btn-primary btn-sm"
+                            href={resolve("/music/[region]/[id]", {
+                              region: data.region,
+                              id: String(setlist.musicId)
+                            })}
+                          >
+                            {t("virtualLiveSetlistMusicLabel")} #{setlist.musicId}
+                          </a>
+                        {/if}
+                        {#if setlist.musicVocalId !== null}
+                          <span class="badge badge-outline">
+                            {t("virtualLiveSetlistMusicVocalLabel")} #{setlist.musicVocalId}
+                          </span>
+                        {/if}
+                        {#if setlist.virtualLiveStageId !== null}
+                          <span class="badge badge-outline">
+                            {t("virtualLiveSetlistStageLabel")} #{setlist.virtualLiveStageId}
+                          </span>
+                        {/if}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            </article>
           {/if}
 
           {#if live.characters.length > 0}
-            <article class="content-card-shell rounded-2xl p-5 shadow-sm"><h2 class="text-lg font-bold">{t("virtualLiveCharactersTitle")}</h2><div class="mt-4 grid gap-2 sm:grid-cols-2">{#each live.characters as character, index (character.id ?? index)}<div class="content-card-inset rounded-xl p-4"><div class="flex items-center justify-between"><span class="badge badge-outline">{t("virtualLiveCharacterSeqLabel")} {displayValue(character.seq)}</span><span class="text-xs opacity-55">#{displayValue(character.gameCharacterUnitId)}</span></div>{#if character.virtualLivePerformanceType}<p class="mt-3 text-sm"><span class="opacity-55">{t("virtualLiveCharacterPerformanceTypeLabel")}:</span> <strong>{character.virtualLivePerformanceType}</strong></p>{/if}</div>{/each}</div></article>
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-5">
+                <h2 class="text-lg font-bold">{t("virtualLiveCharactersTitle")}</h2>
+                <div class="grid gap-2 sm:grid-cols-2">
+                  {#each live.characters as character, index (character.id ?? index)}
+                    <div class="content-card-inset rounded-xl p-4">
+                      <div class="flex items-center justify-between gap-3">
+                        <span class="badge badge-outline">
+                          {t("virtualLiveCharacterSeqLabel")} {displayValue(character.seq)}
+                        </span>
+                        <span class="text-xs opacity-55">#{displayValue(character.gameCharacterUnitId)}</span>
+                      </div>
+                      {#if character.virtualLivePerformanceType}
+                        <p class="mt-3 text-sm">
+                          <span class="opacity-55">{t("virtualLiveCharacterPerformanceTypeLabel")}:</span>
+                          <strong>{character.virtualLivePerformanceType}</strong>
+                        </p>
+                      {/if}
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            </article>
           {/if}
 
           {#if live.rewards.length > 0}
-            <article class="content-card-shell rounded-2xl p-5 shadow-sm"><h2 class="text-lg font-bold">{t("virtualLiveRewardsTitle")}</h2><div class="mt-4 flex flex-wrap gap-2">{#each live.rewards as reward, index (reward.id ?? index)}<div class="content-card-inset rounded-xl px-4 py-3"><p class="text-xs opacity-55">{t("virtualLiveRewardResourceBoxIdLabel")}</p><p class="font-bold">#{displayValue(reward.resourceBoxId)}</p>{#if reward.virtualLiveType}<p class="mt-1 text-xs opacity-60">{typeLabel(reward.virtualLiveType)}</p>{/if}</div>{/each}</div></article>
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-5">
+                <h2 class="text-lg font-bold">{t("virtualLiveRewardsTitle")}</h2>
+                <div class="flex flex-wrap gap-2">
+                  {#each live.rewards as reward, index (reward.id ?? index)}
+                    <div class="content-card-inset min-w-36 rounded-xl px-4 py-3">
+                      <p class="text-xs opacity-55">{t("virtualLiveRewardResourceBoxIdLabel")}</p>
+                      <p class="font-bold">#{displayValue(reward.resourceBoxId)}</p>
+                      {#if reward.virtualLiveType}
+                        <p class="mt-1 text-xs opacity-60">{typeLabel(reward.virtualLiveType)}</p>
+                      {/if}
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            </article>
           {/if}
         </div>
       </div>
