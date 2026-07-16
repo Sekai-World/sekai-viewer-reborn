@@ -11,6 +11,7 @@
   import type { VirtualLiveDetail, VirtualLiveStatus } from "$lib/domain/virtual-live";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
+  import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -21,6 +22,8 @@
   let translate = $derived(createI18nTranslator(data.uiLocale, messages));
   let translationRequestId = 0;
   let debugDialog = $state<HTMLDialogElement | null>(null);
+  let previewOpen = $state(false);
+  const previewFormatOptions = ["webp", "png"];
 
   $effect(() => {
     const requestId = ++translationRequestId;
@@ -73,6 +76,12 @@
     { label: t("virtualLivePamphletTitle"), value: live.pamphlet },
     { label: t("virtualLiveTicketTitle"), value: live.ticket }
   ].filter((item): item is { label: string; value: Record<string, unknown> } => hasObjectData(item.value));
+
+  $effect(() => {
+    if (data.region || data.virtualLiveId) {
+      previewOpen = false;
+    }
+  });
 </script>
 
 <svelte:head>
@@ -112,11 +121,25 @@
             <div class="card-body items-center gap-3 p-3 text-center sm:p-5">
               <div class="content-card-inset w-full overflow-hidden rounded-[1.75rem] aspect-16/7">
                 {#if live.assetBundleName}
+                  {@const bannerSrc = getVirtualLiveBannerAssetURL(live.assetBundleName, data.region)}
+                  {@const bannerAlt = `${live.name ?? live.id} ${t("virtualLiveBannerAltSuffix")}`}
                   <AssetImage
-                    src={getVirtualLiveBannerAssetURL(live.assetBundleName, data.region)}
-                    alt={`${live.name ?? live.id} ${t("virtualLiveBannerAltSuffix")}`}
+                    src={bannerSrc}
+                    alt={bannerAlt}
                     imageClass="h-full w-full object-contain p-4 md:p-6"
                     buttonClass="block h-full w-full overflow-hidden"
+                    interactive={true}
+                    onclick={() => {
+                      previewOpen = true;
+                    }}
+                  />
+                  <ImagePreviewDialog
+                    bind:open={previewOpen}
+                    src={bannerSrc}
+                    alt={bannerAlt}
+                    closeLabel={t("closeLabel")}
+                    formatOptions={previewFormatOptions}
+                    dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
                   />
                 {:else}
                   <div class="flex h-full items-center justify-center px-6 text-center text-sm opacity-70">
