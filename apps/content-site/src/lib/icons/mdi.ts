@@ -69,6 +69,10 @@ import creationOutline from "@iconify-icons/mdi/creation-outline";
 import bookOpenPageVariantOutline from "@iconify-icons/mdi/book-open-page-variant-outline";
 import microphoneVariant from "@iconify-icons/mdi/microphone-variant";
 import percentOutline from "@iconify-icons/mdi/percent-outline";
+import doorOpen from "@iconify-icons/mdi/door-open";
+import accountGroup from "@iconify-icons/mdi/account-group";
+import calendarClock from "@iconify-icons/mdi/calendar-clock";
+import playlistCheck from "@iconify-icons/mdi/playlist-check";
 
 // ── Gacha ─────────────────────────────────────────────────────────────
 import diceMultipleOutline from "@iconify-icons/mdi/dice-multiple-outline";
@@ -149,6 +153,10 @@ addIcon("mdi:creation-outline", creationOutline);
 addIcon("mdi:book-open-page-variant-outline", bookOpenPageVariantOutline);
 addIcon("mdi:microphone-variant", microphoneVariant);
 addIcon("mdi:percent-outline", percentOutline);
+addIcon("mdi:door-open", doorOpen);
+addIcon("mdi:account-group", accountGroup);
+addIcon("mdi:calendar-clock", calendarClock);
+addIcon("mdi:playlist-check", playlistCheck);
 
 addIcon("mdi:dice-multiple-outline", diceMultipleOutline);
 addIcon("mdi:dice-1", dice1);
