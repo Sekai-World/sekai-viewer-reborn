@@ -14,6 +14,10 @@
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { PageData } from "./$types";
+  import {
+    DETAIL_MEDIA_BUTTON_CLASS,
+    DETAIL_MEDIA_RADIUS_CLASS
+  } from "$lib/styles/detail-media";
 
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "virtual-live", "error"]);
@@ -102,7 +106,7 @@
       <div class="flex flex-col gap-4">
         <article class="card content-card-shell overflow-hidden shadow-sm">
           <div class="card-body gap-4 p-3 sm:p-5">
-            <div class="skeleton aspect-16/7 w-full rounded-[1.75rem]"></div>
+            <div class={`skeleton aspect-16/7 w-full ${DETAIL_MEDIA_RADIUS_CLASS}`}></div>
           </div>
         </article>
         <article class="card content-card-shell shadow-sm">
@@ -142,15 +146,17 @@
         <div class="flex flex-col gap-4">
           <article class="card content-card-shell overflow-hidden shadow-sm">
             <div class="card-body items-center gap-3 p-3 text-center sm:p-5">
-              <div class="content-card-inset aspect-16/7 w-full overflow-hidden rounded-[1.75rem]">
+              <div
+                class={`content-card-inset aspect-16/7 w-full overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS}`}
+              >
                 {#if live.assetBundleName}
                   {@const bannerSrc = getVirtualLiveBannerAssetURL(live.assetBundleName, data.region)}
                   {@const bannerAlt = `${live.name ?? live.id} ${t("virtualLiveBannerAltSuffix")}`}
                   <AssetImage
                     src={bannerSrc}
                     alt={bannerAlt}
-                    imageClass="h-full w-full rounded-[1.75rem] object-contain p-4 md:p-6"
-                    buttonClass="block h-full w-full overflow-hidden rounded-[1.75rem]"
+                    imageClass={`h-full w-full object-contain p-4 md:p-6 ${DETAIL_MEDIA_RADIUS_CLASS}`}
+                    buttonClass={DETAIL_MEDIA_BUTTON_CLASS}
                     interactive={true}
                     onclick={() => {
                       previewOpen = true;

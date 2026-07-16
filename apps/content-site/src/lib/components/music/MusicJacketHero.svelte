@@ -4,6 +4,10 @@
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { MusicDetail } from "$lib/domain/music-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
+  import {
+    DETAIL_MEDIA_BUTTON_CLASS,
+    DETAIL_MEDIA_RADIUS_CLASS
+  } from "$lib/styles/detail-media";
 
   let {
     music,
@@ -31,13 +35,15 @@
 </script>
 
 {#if jacketUrl}
-  <figure class="relative mx-auto w-full">
+  <figure
+    class={`content-card-inset relative mx-auto aspect-square w-full overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS}`}
+  >
     <AssetImage
       src={jacketUrl}
       alt="{music.title} {jacketAltSuffix}"
       fallbackLabel={imageUnavailableLabel}
-      buttonClass="block w-full overflow-hidden"
-      imageClass="w-full object-cover aspect-square"
+      buttonClass={DETAIL_MEDIA_BUTTON_CLASS}
+      imageClass={`h-full w-full object-cover ${DETAIL_MEDIA_RADIUS_CLASS}`}
       interactive={true}
       onclick={() => { previewOpen = true; }}
     />

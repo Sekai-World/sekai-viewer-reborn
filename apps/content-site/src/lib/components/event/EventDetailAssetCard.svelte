@@ -10,6 +10,10 @@
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
+  import {
+    DETAIL_MEDIA_BUTTON_CLASS,
+    DETAIL_MEDIA_RADIUS_CLASS
+  } from "$lib/styles/detail-media";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
@@ -73,9 +77,9 @@
     {src}
     {alt}
     {fallbackLabel}
-    buttonClass="block h-full w-full overflow-hidden"
+    buttonClass={DETAIL_MEDIA_BUTTON_CLASS}
     interactive={true}
-    {imageClass}
+    imageClass={`${imageClass} ${DETAIL_MEDIA_RADIUS_CLASS}`}
     onclick={() => {
       openPreview();
     }}
@@ -99,7 +103,11 @@
 
 <article class="card content-card-shell overflow-hidden shadow-sm">
   <div class="card-body items-center gap-3 p-3 sm:p-5 text-center">
-    <div class="tabs tabs-box content-card-inset w-full p-1">
+    <div
+      class={`tabs tabs-box content-card-inset grid w-full grid-cols-2 p-1 ${
+        shouldShowCharacterTab(event.eventType) ? "sm:grid-cols-4" : "sm:grid-cols-3"
+      }`}
+    >
       <button type="button" class={getTabClass("banner")} onclick={() => (activeTab = "banner")}>
         {bannerLabel}
       </button>
@@ -108,7 +116,9 @@
       </button>
       <button
         type="button"
-        class={getTabClass("background")}
+        class={`${getTabClass("background")} ${
+          shouldShowCharacterTab(event.eventType) ? "" : "col-span-2 sm:col-span-1"
+        }`}
         onclick={() => (activeTab = "background")}
       >
         {backgroundLabel}
@@ -125,7 +135,7 @@
     </div>
 
     <div
-      class={`content-card-inset w-full overflow-hidden rounded-[1.75rem] transition-[aspect-ratio] duration-300 ease-out ${
+      class={`content-card-inset w-full overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS} transition-[aspect-ratio] duration-300 ease-out ${
         isCompactTab(resolvedTab) ? "aspect-16/7" : "aspect-16/10"
       }`}
     >

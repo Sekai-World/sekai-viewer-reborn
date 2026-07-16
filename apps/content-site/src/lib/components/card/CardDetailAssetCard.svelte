@@ -6,6 +6,10 @@
   import type { SupportedRegion } from "$lib/domain/regions";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
+  import {
+    DETAIL_MEDIA_BUTTON_CLASS,
+    DETAIL_MEDIA_RADIUS_CLASS
+  } from "$lib/styles/detail-media";
 
   export type CardAssetTab = "normal" | "trained";
 
@@ -110,9 +114,9 @@
     {src}
     {alt}
     fallbackLabel={imageUnavailableLabel}
-    buttonClass="block h-full w-full overflow-hidden"
+    buttonClass={DETAIL_MEDIA_BUTTON_CLASS}
     interactive={true}
-    imageClass="h-full w-full object-cover"
+    imageClass={`h-full w-full object-cover ${DETAIL_MEDIA_RADIUS_CLASS}`}
     onclick={() => {
       openPreview();
     }}
@@ -141,7 +145,7 @@
     {/if}
 
     <div
-      class="content-card-inset flex w-full items-center justify-center overflow-hidden rounded-[1.75rem] aspect-16/10"
+      class={`content-card-inset flex w-full items-center justify-center overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS} aspect-16/10`}
     >
       {#if imageUrl}
         {@render imagePreview(imageUrl, `${card.title} ${cardImageAltSuffix}`)}
