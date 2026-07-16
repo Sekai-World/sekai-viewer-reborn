@@ -7,8 +7,12 @@
   } from "$lib/assets/index";
   import type { GachaDetail } from "$lib/domain/gacha-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
+  import {
+    DETAIL_MEDIA_BUTTON_CLASS,
+    DETAIL_MEDIA_RADIUS_CLASS
+  } from "$lib/styles/detail-media";
 
   export type GachaAssetTab = "logo" | "banner" | "background";
   type PreviewImageOptions = {
@@ -67,14 +71,14 @@
 </script>
 
 {#snippet previewImage(options: PreviewImageOptions)}
-  <EventAssetImage
+  <AssetImage
     src={options.src}
     fallbackSrc={options.fallbackSrc}
     alt={options.alt}
     fallbackLabel={options.fallbackLabel}
-    buttonClass="block h-full w-full overflow-hidden"
+    buttonClass={DETAIL_MEDIA_BUTTON_CLASS}
     interactive={true}
-    imageClass={options.imageClass}
+    imageClass={`${options.imageClass} ${DETAIL_MEDIA_RADIUS_CLASS}`}
     onclick={() => {
       openPreview();
     }}
@@ -124,7 +128,7 @@
     </div>
 
     <div
-      class={`content-card-inset w-full overflow-hidden rounded-[1.75rem] transition-[aspect-ratio] duration-300 ease-out ${activeTab === "background" ? "aspect-video" : "aspect-16/7"}`}
+      class={`content-card-inset w-full overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS} transition-[aspect-ratio] duration-300 ease-out ${activeTab === "background" ? "aspect-video" : "aspect-16/7"}`}
     >
       {#if activeTab === "logo"}
         {#if gacha.assetBundleName}

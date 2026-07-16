@@ -2,7 +2,7 @@
   import { getMusicJacketAssetURL } from "$lib/assets/index";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
 
   type MusicListItem = {
@@ -172,7 +172,7 @@
         {#if isSpoilerPlaceholderVisible()}
           <div class="aspect-square rounded-xl bg-base-200/60"></div>
         {:else if item.assetBundleName}
-          <EventAssetImage
+          <AssetImage
             src={getMusicJacketAssetURL(item.assetBundleName, region)}
             alt={`${item.title} ${jacketAltSuffix}`}
             imageClass="h-full w-full object-cover"
@@ -222,7 +222,7 @@
         {#if isSpoilerPlaceholderVisible()}
           <div class="size-full bg-base-200/60"></div>
         {:else if item.assetBundleName}
-          <EventAssetImage
+          <AssetImage
             src={getMusicJacketAssetURL(item.assetBundleName, region)}
             alt={`${item.title} ${jacketAltSuffix}`}
             imageClass="h-full w-full object-cover"

@@ -19,6 +19,7 @@
   } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import type { PageData } from "./$types";
+  import { DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
@@ -323,7 +324,7 @@
       <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-4 p-3 sm:p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
-          <div class="h-60 w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
+          <div class={`h-60 w-full animate-pulse bg-base-300 ${DETAIL_MEDIA_RADIUS_CLASS}`}></div>
           <div class="space-y-2">
             <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
             <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>

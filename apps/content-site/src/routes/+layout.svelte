@@ -133,7 +133,9 @@
         first === "gacha" ||
         first === "gachas" ||
         first === "music" ||
-        first === "musics") &&
+        first === "musics" ||
+        first === "virtual-live" ||
+        first === "virtual-lives") &&
       second
     ) {
       return normalizeRegion(second, preferredRegion);
@@ -180,7 +182,10 @@
     {
       label: virtualLivesLabel,
       icon: "mdi:account-voice",
-      disabled: true
+      href: `/virtual-lives/${sidebarRegion}`,
+      active:
+        page.url.pathname.startsWith("/virtual-lives/") ||
+        page.url.pathname.startsWith("/virtual-live/")
     }
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");

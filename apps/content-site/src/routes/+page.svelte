@@ -13,7 +13,7 @@
   } from "$lib/assets";
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import type { PageData } from "./$types";
 
@@ -318,7 +318,7 @@
                       >
                         <div class="relative aspect-square overflow-hidden">
                           {#if music.assetBundleName}
-                            <EventAssetImage
+                            <AssetImage
                               src={getMusicJacketAssetURL(music.assetBundleName, regionData.region)}
                               alt={music.title ?? music.id}
                               loadMode="visible"
@@ -438,7 +438,7 @@
                         class="block overflow-hidden rounded-lg border border-base-content/8 bg-base-100 shadow-sm transition-shadow hover:shadow-md"
                       >
                         <div class="aspect-3/1 w-full bg-base-100 pt-2">
-                          <EventAssetImage
+                          <AssetImage
                             src={getGachaBannerAssetURL(gacha.id, regionData.region)}
                             fallbackSrc={gacha.assetBundleName
                               ? getGachaLogoAssetURL(gacha.assetBundleName, regionData.region)

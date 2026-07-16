@@ -158,13 +158,13 @@ When changing shared packages:
   - `apps/content-site/src/lib/components/CardListCard.svelte`
   - `apps/content-site/src/lib/components/EventListCard.svelte`
   - `apps/content-site/src/lib/components/MusicListCard.svelte`
-  - `apps/content-site/src/lib/components/EventAssetImage.svelte`
+  - `apps/content-site/src/lib/components/shared/AssetImage.svelte`
   - `apps/content-site/src/lib/components/PageHeader.svelte`
   - `apps/content-site/src/lib/components/RegionBadgeSwitch.svelte`
 - Shared non-component style constants should live outside `src/lib/components`, for example under `apps/content-site/src/lib/styles`.
 - Sidebar structure for `content-site` is assembled in `apps/content-site/src/routes/+layout.svelte` and rendered by `packages/ui-shell/src/viewer-shell.svelte`; keep sidebar labels localized through the CDN dictionaries loaded by `apps/content-site/src/lib/i18n.ts`.
 - Unit labels should come from `apps/content-site/src/lib/server/unit-profiles.ts`, which reads `/unitProfiles/{region}/list` and validates its local cache against `/versions/{region}`. Keep unit-code/tag mappings in `apps/content-site/src/lib/unit-profile.ts`.
-- List card images that should not fetch before entering the viewport should use `EventAssetImage` with `loadMode="visible"` or the existing visibility-gated pattern in `CardListCard.svelte`.
+- List card images that should not fetch before entering the viewport should use `AssetImage` with `loadMode="visible"` or the existing visibility-gated pattern in `CardListCard.svelte`.
 
 ## `content-site` I18n Conventions
 

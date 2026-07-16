@@ -2,7 +2,7 @@
   import { resolve } from "$app/paths";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { getEventBannerAssetURL } from "$lib/assets/index";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
@@ -71,7 +71,7 @@
 >
   <div class={EVENT_CARD_MEDIA_CLASS}>
     {#if event.assetBundleName}
-      <EventAssetImage
+      <AssetImage
         src={getEventBannerAssetURL(event.assetBundleName, region)}
         alt={`${event.title} ${bannerAltSuffix}`}
         imageClass={EVENT_CARD_IMAGE_CLASS}

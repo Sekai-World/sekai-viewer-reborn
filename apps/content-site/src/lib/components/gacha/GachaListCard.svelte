@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { getGachaLogoAssetURL } from "$lib/assets/index";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
@@ -141,7 +141,7 @@
         </span>
       {/if}
       {#if item.assetBundleName}
-        <EventAssetImage
+        <AssetImage
           src={getGachaLogoAssetURL(item.assetBundleName, region)}
           alt={`${item.title} ${bannerAltSuffix}`}
           imageClass={EVENT_LIST_CARD_IMAGE_CLASS}

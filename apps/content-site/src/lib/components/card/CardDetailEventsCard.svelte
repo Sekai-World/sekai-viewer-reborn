@@ -4,7 +4,7 @@
   import type { CardRelatedEvent } from "$lib/domain/card-detail";
   import { getEventTypeDisplay } from "$lib/domain/event";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import Icon from "@iconify/svelte";
   import type { I18nTranslator } from "@platform/i18n-runtime";
@@ -82,7 +82,7 @@
               class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
             >
               {#if event.assetBundleName}
-                <EventAssetImage
+                <AssetImage
                   src={getEventBannerAssetURL(event.assetBundleName, region)}
                   alt={event.title}
                   imageClass="h-full w-full object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"

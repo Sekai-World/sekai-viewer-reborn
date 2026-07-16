@@ -4,7 +4,7 @@
   import type { CardGachaBanner } from "$lib/domain/card-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import Icon from "@iconify/svelte";
 
   let {
@@ -58,7 +58,7 @@
             >
               {#if gacha.assetbundleName}
                 <div class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1">
-                  <EventAssetImage
+                  <AssetImage
                     src={getGachaLogoAssetURL(gacha.assetbundleName, region)}
                     alt={gacha.name ?? `#${gacha.id}`}
                     imageClass="h-full w-full object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
@@ -90,7 +90,7 @@
             >
               {#if latest.assetbundleName}
                 <div class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1">
-                  <EventAssetImage
+                  <AssetImage
                     src={getGachaLogoAssetURL(latest.assetbundleName, region)}
                     alt={latest.name ?? `#${latest.id}`}
                     imageClass="h-full w-full object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
@@ -122,7 +122,7 @@
             >
               {#if first.assetbundleName}
                 <div class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1">
-                  <EventAssetImage
+                  <AssetImage
                     src={getGachaLogoAssetURL(first.assetbundleName, region)}
                     alt={first.name ?? `#${first.id}`}
                     imageClass="h-full w-full object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"

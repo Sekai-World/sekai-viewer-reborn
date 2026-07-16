@@ -15,6 +15,7 @@ import gachaSourceMessages from "@platform/i18n-source/content-site/gacha.json";
 import homeSourceMessages from "@platform/i18n-source/content-site/home.json";
 import musicSourceMessages from "@platform/i18n-source/content-site/music.json";
 import serverSourceMessages from "@platform/i18n-source/content-site/server.json";
+import virtualLiveSourceMessages from "@platform/i18n-source/content-site/virtual-live.json";
 import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n/config";
 import { normalizeUiLocale } from "$lib/i18n/region";
 
@@ -29,7 +30,8 @@ export const contentSiteI18nNamespaces = [
   "gacha",
   "music",
   "error",
-  "server"
+  "server",
+  "virtual-live"
 ] as const;
 
 export type I18nNamespace = (typeof contentSiteI18nNamespaces)[number];
@@ -48,7 +50,10 @@ export type ContentSiteServerMessageKey =
   | "failedToLoadGachaData"
   | "invalidMusicId"
   | "musicUnavailableInCurrentRegion"
-  | "failedToLoadMusicData";
+  | "failedToLoadMusicData"
+  | "invalidVirtualLiveId"
+  | "virtualLiveUnavailableInCurrentRegion"
+  | "failedToLoadVirtualLiveData";
 
 const DEFAULT_SEKAI_I18N_BASE_URL = "https://sekai-world.github.io/sekai-i18n-reborn";
 const FALLBACK_UI_LOCALE: SupportedUiLocale = "en";
@@ -58,6 +63,7 @@ const LEGACY_COMMON_COMPAT_NAMESPACES = new Set<I18nNamespace>([
   "event",
   "gacha",
   "music",
+  "virtual-live",
   "error"
 ]);
 const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
@@ -68,7 +74,8 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
   gacha: gachaSourceMessages,
   home: homeSourceMessages,
   music: musicSourceMessages,
-  server: serverSourceMessages
+  server: serverSourceMessages,
+  "virtual-live": virtualLiveSourceMessages
 };
 
 const getI18nBaseUrl = (): string => {

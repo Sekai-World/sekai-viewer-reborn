@@ -21,6 +21,7 @@
   } from "$lib/domain/unit-profile";
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import type { PageData } from "./$types";
+  import { DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
 
   let { data }: { data: PageData } = $props();
@@ -239,7 +240,7 @@
     <div
       class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] lg:items-start"
     >
-      <div class="aspect-square w-full animate-pulse rounded-2xl bg-base-300"></div>
+      <div class={`aspect-square w-full animate-pulse bg-base-300 ${DETAIL_MEDIA_RADIUS_CLASS}`}></div>
       <div class="flex flex-col gap-4">
       <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-4 p-3 sm:p-5">

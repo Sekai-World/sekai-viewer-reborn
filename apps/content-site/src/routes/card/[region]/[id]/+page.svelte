@@ -19,6 +19,7 @@
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
+  import { DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
@@ -361,7 +362,7 @@
       <article class="card content-card-shell overflow-hidden shadow-sm">
         <div class="card-body gap-4 p-3 sm:p-5">
           <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
-          <div class="aspect-21/10 w-full animate-pulse rounded-[1.75rem] bg-base-300"></div>
+          <div class={`aspect-21/10 w-full animate-pulse bg-base-300 ${DETAIL_MEDIA_RADIUS_CLASS}`}></div>
         </div>
       </article>
       <article class="card content-card-shell overflow-hidden shadow-sm">

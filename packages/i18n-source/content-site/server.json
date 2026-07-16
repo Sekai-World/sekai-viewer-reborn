@@ -12,5 +12,8 @@
   "failedToLoadGachaData": "Failed to load gacha data.",
   "invalidMusicId": "Invalid music id.",
   "musicUnavailableInCurrentRegion": "This music is not available in the current region. Switch region using the badges.",
-  "failedToLoadMusicData": "Failed to load music data."
+  "failedToLoadMusicData": "Failed to load music data.",
+  "invalidVirtualLiveId": "Invalid virtual live id.",
+  "virtualLiveUnavailableInCurrentRegion": "This virtual live is not available in the current region. Switch region using the badges.",
+  "failedToLoadVirtualLiveData": "Failed to load virtual live data."
 }
