@@ -20,7 +20,6 @@ const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
     region,
     item,
     uiLocale,
-    idLabel,
     bannerAltSuffix,
     spoilerContentLabel,
     ongoingLabel,
@@ -29,7 +28,6 @@ const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
     region: SupportedRegion;
     item: VirtualLiveListItem;
     uiLocale: string;
-    idLabel: string;
     bannerAltSuffix: string;
     spoilerContentLabel: string;
     ongoingLabel: string;
@@ -135,7 +133,7 @@ const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
 
     <div class="flex flex-wrap items-center gap-1.5 px-4 pt-3">
       <span class="badge border-none bg-base-200 font-semibold text-base-content"
-        >{idLabel}{item.id}</span
+        >#{item.id}</span
       >
       {#if item.virtualLiveType}
         <span class="badge border-none bg-base-200 font-semibold text-base-content"

@@ -119,7 +119,7 @@
               <p class="mt-3 text-sm opacity-65">{formatDate(live.startAt)} — {formatDate(live.endAt)}</p>
             </div>
             <dl class="grid grid-cols-2 gap-x-5 gap-y-4 border-t border-base-300 pt-5 sm:grid-cols-3">
-              <div><dt class="text-xs font-semibold uppercase tracking-wider opacity-55">{t("virtualLiveIdLabel")}</dt><dd class="mt-1 font-semibold">{live.id}</dd></div>
+              <div><dt class="text-xs font-semibold uppercase tracking-wider opacity-55">{t("virtualLiveIdLabel")}</dt><dd class="mt-1 font-semibold">#{live.id}</dd></div>
               <div><dt class="text-xs font-semibold uppercase tracking-wider opacity-55">{t("virtualLivePlatformLabel")}</dt><dd class="mt-1 font-semibold">{displayValue(live.virtualLivePlatform)}</dd></div>
               <div><dt class="text-xs font-semibold uppercase tracking-wider opacity-55">{t("virtualLiveSeqLabel")}</dt><dd class="mt-1 font-semibold">{displayValue(live.seq)}</dd></div>
             </dl>

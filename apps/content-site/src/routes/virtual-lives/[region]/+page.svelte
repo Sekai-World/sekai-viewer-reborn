@@ -47,8 +47,6 @@
   let appliedId = $state("");
   let filterTypes = $state<string[]>([]);
   let appliedTypes = $state<string[]>([]);
-  let filterSpoiler = $state(false);
-  let appliedSpoiler = $state(false);
   let filterDialog: HTMLDialogElement | null = $state(null);
 
   let homeLabel = $state(getInitialText("home"));
@@ -61,7 +59,6 @@
   let retryLabel = $state(getInitialText("listRetry"));
   let sortIdLabel = $state(getInitialText("listSortById"));
   let sortStartLabel = $state(getInitialText("virtualLiveListSortByStartAt"));
-  let idLabel = $state(getInitialText("virtualLiveIdLabel"));
   let bannerAltSuffix = $state(getInitialText("virtualLiveBannerAltSuffix"));
   let spoilerLabel = $state(getInitialText("spoilerContent"));
   let nameLabel = $state(getInitialText("virtualLiveListFilterNameLabel"));
@@ -74,7 +71,6 @@
   let openFiltersLabel = $state(getInitialText("listOpenFilters"));
   let filtersTitle = $state(getInitialText("listFiltersTitle"));
   let closeLabel = $state(getInitialText("closeLabel"));
-  let showSpoilerLabel = $state(getInitialText("settings.showSpoilerContent"));
   let filterName = $state("");
   let appliedName = $state("");
   let ongoingLabel = $state(getInitialText("virtualLiveStatus.ongoing"));
@@ -89,15 +85,16 @@
       sortOrder,
       name: appliedName,
       id: appliedId,
-      types: appliedTypes,
-      spoiler: appliedSpoiler
+      types: appliedTypes
     });
   const isSpoiler = (item: VirtualLiveListItem): boolean => {
     const start = toTimestampMs(item.startAt);
     return start !== null && start > Date.now();
   };
   const visibleItems = $derived.by(() => {
-    const base = appliedSpoiler ? items : items.filter((item) => !isSpoiler(item));
+    const base = contentDisplaySettings.showSpoilerContent
+      ? items
+      : items.filter((item) => !isSpoiler(item));
     if (!contentDisplaySettings.ongoingFirst) return base;
     return [
       ...base.filter((item) => item.status === "ongoing"),
@@ -117,7 +114,6 @@
     retryLabel = translate("listRetry");
     sortIdLabel = translate("listSortById");
     sortStartLabel = translate("virtualLiveListSortByStartAt");
-    idLabel = translate("virtualLiveIdLabel");
     bannerAltSuffix = translate("virtualLiveBannerAltSuffix");
     spoilerLabel = translate("spoilerContent");
     nameLabel = translate("virtualLiveListFilterNameLabel");
@@ -130,7 +126,6 @@
     openFiltersLabel = translate("listOpenFilters");
     filtersTitle = translate("listFiltersTitle");
     closeLabel = translate("closeLabel");
-    showSpoilerLabel = translate("settings.showSpoilerContent");
     ongoingLabel = translate("virtualLiveStatus.ongoing");
   };
 
@@ -168,9 +163,6 @@
       appliedId = data.initialQuery.id;
       filterTypes = [...data.initialQuery.virtualLiveType];
       appliedTypes = [...data.initialQuery.virtualLiveType];
-      filterSpoiler = data.initialQuery.spoiler;
-      appliedSpoiler = data.initialQuery.spoiler;
-      contentDisplaySettings.showSpoilerContent = data.initialQuery.spoiler;
       errorMessage = result.loadFailed ? failedLabel : null;
       isInitialLoading = false;
     });
@@ -193,7 +185,7 @@
     params.set("page", String(page));
     params.set("sort_by", sortBy);
     params.set("sort_order", sortOrder);
-    params.set("spoiler", String(appliedSpoiler));
+    params.set("spoiler", String(contentDisplaySettings.showSpoilerContent));
     if (appliedName) params.set("name", appliedName);
     if (appliedId) params.set("id", appliedId);
     for (const value of appliedTypes) params.append("virtual_live_type", value);
@@ -263,8 +255,6 @@
     appliedName = filterName.trim();
     appliedId = filterId.trim();
     appliedTypes = [...filterTypes];
-    appliedSpoiler = filterSpoiler;
-    contentDisplaySettings.showSpoilerContent = appliedSpoiler;
     filterDialog?.close();
     void reload();
   };
@@ -272,7 +262,6 @@
     filterName = appliedName;
     filterId = appliedId;
     filterTypes = [...appliedTypes];
-    filterSpoiler = appliedSpoiler;
   };
   const openFilterDialog = (): void => {
     syncDraftFiltersFromApplied();
@@ -282,10 +271,9 @@
     filterName = "";
     filterId = "";
     filterTypes = [];
-    filterSpoiler = false;
   };
   const hasAppliedFilters = (): boolean =>
-    appliedName.length > 0 || appliedId.length > 0 || appliedTypes.length > 0 || appliedSpoiler;
+    appliedName.length > 0 || appliedId.length > 0 || appliedTypes.length > 0;
   const toggleType = (value: string): void => {
     filterTypes = filterTypes.includes(value)
       ? filterTypes.filter((current) => current !== value)
@@ -353,7 +341,6 @@
           region={data.region}
           {item}
           uiLocale={data.uiLocale}
-          {idLabel}
           {bannerAltSuffix}
           spoilerContentLabel={spoilerLabel}
           {ongoingLabel}
@@ -444,13 +431,6 @@
           {/each}
         </div>
       </fieldset>
-      <label
-        class="label min-h-12 cursor-pointer gap-3 rounded-xl border border-base-300 px-3 py-2"
-      >
-        <span class="text-sm font-medium">{showSpoilerLabel}</span>
-        <input class="toggle toggle-primary" type="checkbox" bind:checked={filterSpoiler} />
-      </label>
-
       <div class="modal-action flex-wrap gap-2">
         <button type="button" class="btn btn-outline min-h-12!" onclick={resetFilterDrafts}
           >{filterResetLabel}</button
