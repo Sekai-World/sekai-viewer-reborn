@@ -1070,8 +1070,11 @@
 <article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
     <section class="space-y-2" aria-labelledby="event-bonus-character-title">
-      <h2 id="event-bonus-character-title" class="flex items-center gap-2 text-sm font-semibold">
-        <Icon icon="mdi:cards-outline" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
+      <h2
+        id="event-bonus-character-title"
+        class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+      >
+        <Icon icon="mdi:cards-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
         <span>{bonusCharacterLabel}</span>
       </h2>
       {#if getBonusCharacterItems(relatedData).length > 0}
@@ -1086,8 +1089,11 @@
     </section>
 
     <section class="space-y-2" aria-labelledby="event-rarity-bonus-title">
-      <h2 id="event-rarity-bonus-title" class="flex items-center gap-2 text-sm font-semibold">
-        <Icon icon="mdi:chart-box-outline" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
+      <h2
+        id="event-rarity-bonus-title"
+        class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+      >
+        <Icon icon="mdi:chart-box-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
         <span>{rarityBonusLabel}</span>
       </h2>
       {#if (relatedData?.bonuses?.rarityBonusRates.length ?? 0) > 0}
@@ -1125,8 +1131,11 @@
 
 <article class="card content-card-shell shadow-sm">
   <section class="card-body gap-4 p-3 sm:p-5" aria-labelledby="event-featured-cards-title">
-    <h2 id="event-featured-cards-title" class="flex items-center gap-2 text-sm font-semibold">
-      <Icon icon="mdi:cards-outline" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
+    <h2
+      id="event-featured-cards-title"
+      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+    >
+      <Icon icon="mdi:cards-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
       <span>{featuredCardsTitle}</span>
     </h2>
     {#if (relatedData?.cards.length ?? 0) > 0}
@@ -1143,8 +1152,11 @@
 
 <article class="card content-card-shell shadow-sm">
   <section class="card-body gap-4 p-3 sm:p-5" aria-labelledby="event-musics-title">
-    <h2 id="event-musics-title" class="flex items-center gap-2 text-sm font-semibold">
-      <Icon icon="mdi:music-note-outline" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
+    <h2
+      id="event-musics-title"
+      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+    >
+      <Icon icon="mdi:music-note-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
       <span>{eventMusicsLabel}</span>
     </h2>
     {#if (relatedData?.musics.length ?? 0) > 0}
@@ -1161,8 +1173,11 @@
 
 <article class="card content-card-shell shadow-sm">
   <section class="card-body gap-4 p-3 sm:p-5" aria-labelledby="event-ranking-rewards-title">
-    <h2 id="event-ranking-rewards-title" class="flex items-center gap-2 text-sm font-semibold">
-      <Icon icon="mdi:gift-outline" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
+    <h2
+      id="event-ranking-rewards-title"
+      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+    >
+      <Icon icon="mdi:gift-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
       <span>{rankingRewardsTitle}</span>
     </h2>
     {#if (displayRelatedData?.rewardRanges.length ?? 0) > 0}
@@ -1203,8 +1218,11 @@
   {@const virtualLiveBannerSrc = getVirtualLiveBannerSrc(virtualLive.assetBundleName)}
   <article class="card content-card-shell shadow-sm">
     <section class="card-body gap-2 p-3 sm:p-4" aria-labelledby="event-virtual-live-title">
-      <h2 id="event-virtual-live-title" class="flex items-center gap-2 text-sm font-semibold">
-        <Icon icon="mdi:account-voice" class="size-4 shrink-0 opacity-70" aria-hidden="true" />
+      <h2
+        id="event-virtual-live-title"
+        class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+      >
+        <Icon icon="mdi:account-voice" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
         <span>{virtualLiveTitle}</span>
       </h2>
       <div class="content-card-inset @container rounded-xl p-2.5 sm:p-3">
