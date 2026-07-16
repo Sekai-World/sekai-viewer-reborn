@@ -14,6 +14,7 @@
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  import { swipeRegion } from "$lib/actions/swipe-region";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import type { PageData } from "./$types";
 
@@ -66,38 +67,6 @@
   const selectRegion = (r: SupportedRegion): void => {
     selectedRegion = r;
     localStorage.setItem(REGION_STORAGE_KEY, r);
-  };
-
-  // ── Swipe detection for region switching ───────────────────────────
-  const SWIPE_THRESHOLD = 50;
-  let touchStartX = 0;
-  let touchStartY = 0;
-
-  const onTouchStart = (e: TouchEvent): void => {
-    const touch = e.touches[0];
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-  };
-
-  const onTouchEnd = (e: TouchEvent): void => {
-    const touch = e.changedTouches[0];
-    const dx = touch.clientX - touchStartX;
-    const dy = Math.abs(touch.clientY - touchStartY);
-
-    if (Math.abs(dx) < SWIPE_THRESHOLD || dy > Math.abs(dx)) {
-      return;
-    }
-
-    const currentIndex = supportedRegions.indexOf(selectedRegion);
-    if (dx < 0) {
-      if (currentIndex < supportedRegions.length - 1) {
-        selectRegion(supportedRegions[currentIndex + 1]);
-      }
-    } else {
-      if (currentIndex > 0) {
-        selectRegion(supportedRegions[currentIndex - 1]);
-      }
-    }
   };
 
   // ── i18n ───────────────────────────────────────────────────────────
@@ -184,7 +153,7 @@
 </script>
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
-<section role="group" ontouchstart={onTouchStart} ontouchend={onTouchEnd}>
+<section role="group" use:swipeRegion>
   <!-- Region selector (shared for both sections) -->
   <div class="mb-6 flex flex-wrap justify-center gap-2">
     <RegionBadgeSwitch
