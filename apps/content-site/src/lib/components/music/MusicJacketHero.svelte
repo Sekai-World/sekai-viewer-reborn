@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { MusicDetail } from "$lib/domain/music-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
@@ -32,7 +32,7 @@
 
 {#if jacketUrl}
   <figure class="relative mx-auto w-full">
-    <EventAssetImage
+    <AssetImage
       src={jacketUrl}
       alt="{music.title} {jacketAltSuffix}"
       fallbackLabel={imageUnavailableLabel}

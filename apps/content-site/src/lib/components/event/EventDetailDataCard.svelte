@@ -12,7 +12,7 @@
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import type {
@@ -971,7 +971,7 @@
     >
       <div class="aspect-square overflow-hidden rounded-lg bg-base-200">
         {#if jacketSrc}
-          <EventAssetImage
+          <AssetImage
             src={jacketSrc}
             alt={`${getMusicTitle(content)} ${musicJacketAltSuffix}`}
             imageClass="h-full w-full object-cover"
@@ -998,7 +998,7 @@
     <div class="content-card-inset grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded-xl p-3">
       <div class="aspect-square overflow-hidden rounded-lg bg-base-200">
         {#if jacketSrc}
-          <EventAssetImage
+          <AssetImage
             src={jacketSrc}
             alt={`${getMusicTitle(content)} ${musicJacketAltSuffix}`}
             imageClass="h-full w-full object-cover"
@@ -1213,7 +1213,7 @@
         >
           {#if virtualLiveBannerSrc}
             <div class="aspect-33/10 overflow-hidden rounded-lg bg-base-200 @md:aspect-33/14">
-              <EventAssetImage
+              <AssetImage
                 src={virtualLiveBannerSrc}
                 alt={virtualLive.name ?? virtualLiveTitle}
                 imageClass="h-full w-full object-contain"

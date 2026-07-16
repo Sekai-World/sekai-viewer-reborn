@@ -89,7 +89,7 @@ All spacing derives from a 4px rhythm.
 - **Accessibility**: meaningful `alt` text on the image; overlays are decorative only
 - **Motion**: image fade-in and optional transform easing only
 
-### EventAssetImage
+### AssetImage
 - **Structure**: non-interactive media loader with loading and error handling
 - **Variants**: immediate vs visible loading, interactive preview trigger
 - **Spacing**: driven by the parent container

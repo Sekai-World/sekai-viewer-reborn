@@ -7,7 +7,7 @@
   } from "$lib/assets/index";
   import type { GachaDetail } from "$lib/domain/gacha-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
 
   export type GachaAssetTab = "logo" | "banner" | "background";
@@ -67,7 +67,7 @@
 </script>
 
 {#snippet previewImage(options: PreviewImageOptions)}
-  <EventAssetImage
+  <AssetImage
     src={options.src}
     fallbackSrc={options.fallbackSrc}
     alt={options.alt}

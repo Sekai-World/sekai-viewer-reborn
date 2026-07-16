@@ -1,17 +1,19 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { getVirtualLiveBannerAssetURL } from "$lib/assets/index";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { VirtualLiveListItem } from "$lib/domain/virtual-live";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import {
-  EVENT_LIST_CARD_FRAME_CLASS,
-  EVENT_LIST_CARD_TITLE_CLASS
-} from "$lib/styles/event-card";
+    EVENT_LIST_CARD_FRAME_CLASS,
+    EVENT_LIST_CARD_IMAGE_CLASS,
+    EVENT_LIST_CARD_TITLE_CLASS
+  } from "$lib/styles/event-card";
 
 const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
-  "relative w-full overflow-hidden bg-transparent px-4 pb-1.5 pt-4 sm:pb-2";
+  "relative flex h-32 items-center justify-center overflow-hidden bg-transparent px-4 pb-1.5 pt-4 sm:h-36 sm:pb-2";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
 
   let {
@@ -117,12 +119,12 @@ const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
         </span>
       {/if}
       {#if item.assetBundleName}
-        <img
+        <AssetImage
           src={getVirtualLiveBannerAssetURL(item.assetBundleName, region)}
           alt={`${item.name ?? item.id} ${bannerAltSuffix}`}
-          loading="lazy"
-          decoding="async"
-          class="w-full h-auto object-contain"
+          imageClass={EVENT_LIST_CARD_IMAGE_CLASS}
+          buttonClass="block h-full w-full overflow-hidden"
+          loadMode="visible"
         />
       {:else}
         <div class="flex size-full items-center justify-center px-6 text-center text-sm opacity-70">

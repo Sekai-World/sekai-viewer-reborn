@@ -2,7 +2,7 @@
   import { getCardFullAssetURL } from "$lib/assets/index";
   import type { CardDetail } from "$lib/domain/card-detail";
   import CardDetailGalleryDialog from "$lib/components/card/CardDetailGalleryDialog.svelte";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
@@ -106,7 +106,7 @@
 </script>
 
 {#snippet imagePreview(src: string, alt: string)}
-  <EventAssetImage
+  <AssetImage
     {src}
     {alt}
     fallbackLabel={imageUnavailableLabel}

@@ -4,7 +4,7 @@
   import { getEventBannerAssetURL } from "$lib/assets/index";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { getEventTypeDisplay } from "$lib/domain/event";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
@@ -154,7 +154,7 @@
         </span>
       {/if}
       {#if item.assetBundleName}
-        <EventAssetImage
+        <AssetImage
           src={getEventBannerAssetURL(item.assetBundleName, region)}
           alt={`${item.title} ${bannerAltSuffix}`}
           imageClass={EVENT_LIST_CARD_IMAGE_CLASS}

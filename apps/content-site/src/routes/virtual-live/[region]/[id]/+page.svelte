@@ -3,7 +3,7 @@
   import { resolve } from "$app/paths";
   import { swipeRegion } from "$lib/actions/swipe-region";
   import { getVirtualLiveBannerAssetURL } from "$lib/assets/index";
-  import EventAssetImage from "$lib/components/shared/EventAssetImage.svelte";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -109,7 +109,7 @@
         <div class="grid gap-0 lg:grid-cols-[minmax(340px,0.8fr)_minmax(0,1.2fr)]">
           <div class="min-h-56 bg-base-200/55 p-3 sm:p-5">
             {#if live.assetBundleName}
-              <EventAssetImage src={getVirtualLiveBannerAssetURL(live.assetBundleName, data.region)} alt={`${live.name ?? live.id} ${t("virtualLiveBannerAltSuffix")}`} imageClass="size-full object-contain" buttonClass="block size-full min-h-52 overflow-hidden rounded-2xl" />
+              <AssetImage src={getVirtualLiveBannerAssetURL(live.assetBundleName, data.region)} alt={`${live.name ?? live.id} ${t("virtualLiveBannerAltSuffix")}`} imageClass="size-full object-contain" buttonClass="block size-full min-h-52 overflow-hidden rounded-2xl" />
             {:else}<div class="flex min-h-52 items-center justify-center rounded-2xl bg-base-200 text-sm opacity-65">{t("imageUnavailable")}</div>{/if}
           </div>
           <div class="flex flex-col justify-between gap-6 p-5 sm:p-7 lg:p-9">

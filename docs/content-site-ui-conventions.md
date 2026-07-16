@@ -81,7 +81,7 @@ Direct image scaling can make banners feel soft or blurry due to browser resampl
 Current shared card system:
 
 - `apps/content-site/src/lib/components/shared/EventCardFrame.svelte`
-- `apps/content-site/src/lib/components/shared/EventAssetImage.svelte`
+- `apps/content-site/src/lib/components/shared/AssetImage.svelte`
 - `apps/content-site/src/lib/components/card/CardListCard.svelte`
 - `apps/content-site/src/lib/components/event/CurrentEventCard.svelte`
 - `apps/content-site/src/lib/components/event/EventListCard.svelte`
@@ -91,8 +91,8 @@ Current shared card system:
 Rules:
 
 - Shared card frame logic belongs in `EventCardFrame.svelte`.
-- Shared non-interactive event/music media should use `EventAssetImage.svelte`.
-- For long lists, card artwork should not attach image `src` before the card is visible. Use `EventAssetImage` with `loadMode="visible"` for event/music list artwork, or the existing visibility-gated pattern in `CardListCard.svelte`.
+- Shared non-interactive event/music media should use `AssetImage.svelte`.
+- For long lists, card artwork should not attach image `src` before the card is visible. Use `AssetImage` with `loadMode="visible"` for event/music list artwork, or the existing visibility-gated pattern in `CardListCard.svelte`.
 - Shared animation class constants belong under `src/lib/styles`, not next to `.svelte` component files.
 - Page files should pass data into shared card components instead of inlining card structure repeatedly.
 - Detail info cards for cards, events, music, and gachas should expose `assetBundleName` as a final "internal resource code" row when that field is available.
