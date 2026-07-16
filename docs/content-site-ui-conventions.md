@@ -167,7 +167,8 @@ Current `content-site` sidebar groups:
   - Events
   - Virtual Lives
 
-Cards, Songs, and Events have real destinations. Virtual Lives is currently disabled.
+Cards, Songs, Events, Gachas, and Virtual Lives have real destinations. Virtual Live list
+routes use `/virtual-lives/:region`, while detail routes use `/virtual-live/:region/:id`.
 
 ## I18n Rules
 

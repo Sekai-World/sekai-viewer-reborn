@@ -20,6 +20,10 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
     return ["common", "gacha", "error"];
   }
 
+  if (pathname.startsWith("/virtual-live/") || pathname.startsWith("/virtual-lives/")) {
+    return ["common", "virtual-live", "error"];
+  }
+
   return pathname === "/" ? ["common", "home", "event", "error"] : ["common", "error"];
 };
 

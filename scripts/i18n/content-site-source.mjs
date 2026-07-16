@@ -6,7 +6,17 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const contentSiteRoot = path.join(repoRoot, "apps/content-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/content-site");
 const scannedFiles = ["src/lib", "src/routes"];
-const contentSiteNamespaces = ["common", "home", "card", "event", "gacha", "music", "error", "server"];
+const contentSiteNamespaces = [
+  "common",
+  "home",
+  "card",
+  "event",
+  "gacha",
+  "music",
+  "virtual-live",
+  "error",
+  "server"
+];
 
 const commonKeyPatterns = [
   /(?:tCommon|getInitialI18nText|getInitialLabel|translate)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
@@ -60,6 +70,8 @@ const namespaceByRoutePattern = [
   { pattern: /src\/routes\/gachas\//, namespace: "gacha" },
   { pattern: /src\/routes\/event\//, namespace: "event" },
   { pattern: /src\/routes\/events\//, namespace: "event" },
+  { pattern: /src\/routes\/virtual-live\//, namespace: "virtual-live" },
+  { pattern: /src\/routes\/virtual-lives\//, namespace: "virtual-live" },
   { pattern: /src\/lib\/event\.ts$/, namespace: "event" },
   { pattern: /src\/lib\/components\/CurrentEventCard\.svelte$/, namespace: "home" },
   { pattern: /src\/lib\/components\/Card/, namespace: "card" },
@@ -68,7 +80,8 @@ const namespaceByRoutePattern = [
   { pattern: /src\/lib\/components\/Music/, namespace: "music" },
   { pattern: /src\/lib\/components\/music\//, namespace: "music" },
   { pattern: /src\/lib\/components\/Event/, namespace: "event" },
-  { pattern: /src\/lib\/components\/event\//, namespace: "event" }
+  { pattern: /src\/lib\/components\/event\//, namespace: "event" },
+  { pattern: /src\/lib\/components\/virtual-live\//, namespace: "virtual-live" }
 ];
 
 const readJson = async (filePath) => JSON.parse(await readFile(filePath, "utf8"));

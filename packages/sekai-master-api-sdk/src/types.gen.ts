@@ -545,10 +545,6 @@ export type SharedGameCharacterUnitObjectResponse = {
     unit?: unknown;
 };
 
-export type SharedGenericItemsResponse = {
-    items?: Array<unknown>;
-};
-
 export type SharedGenericObjectResponse = {
     [key: string]: unknown;
 };
@@ -783,13 +779,155 @@ export type SharedUnitProfileObjectResponse = {
     unitName?: unknown;
 };
 
+export type SharedVirtualLiveAppeal = {
+    appealText: string;
+    id: number;
+    virtualLiveId: number;
+    virtualLiveStageStatus: string;
+};
+
+export type SharedVirtualLiveBackgroundMusic = {
+    backgroundMusicId: number;
+    id: number;
+    virtualLiveId: number;
+};
+
+export type SharedVirtualLiveBeginnerSchedule = {
+    dayOfWeek: string;
+    endTime: string;
+    id: number;
+    startTime: string;
+    virtualLiveId: number;
+};
+
+export type SharedVirtualLiveCharacter = {
+    gameCharacterUnitId?: number;
+    id: number;
+    seq: number;
+    subGameCharacter2dId?: number;
+    virtualLiveId: number;
+    virtualLivePerformanceType?: string;
+};
+
+export type SharedVirtualLiveInformation = {
+    description?: string;
+    summary?: string;
+    virtualLiveId?: number;
+};
+
+export type SharedVirtualLiveItem = {
+    assetbundleName: string;
+    cheerPoint?: number;
+    costJewel: number;
+    costVirtualCoin: number;
+    effectAssetbundleName: string;
+    effectExpressionType: string;
+    gameCharacterUnitId?: number;
+    id: number;
+    name: string;
+    priority: number;
+    seq: number;
+    subGameCharacterId?: number;
+    unit?: string;
+    virtualItemCategory: string;
+    virtualItemLabelType?: string;
+};
+
+export type SharedVirtualLiveItemsResponse = {
+    items: Array<SharedVirtualLiveItem>;
+};
+
 export type SharedVirtualLiveListResponse = {
-    items?: Array<SharedVirtualLiveObjectResponse>;
-    pagination?: SharedPaginationResponse;
+    items: Array<SharedVirtualLiveObjectResponse>;
+    pagination: SharedPaginationResponse;
 };
 
 export type SharedVirtualLiveObjectResponse = {
-    [key: string]: unknown;
+    archiveReleaseConditionId?: number;
+    assetbundleName: string;
+    endAt: number;
+    id: number;
+    name: string;
+    pamphlet: {
+        [key: string]: unknown;
+    } | null;
+    rankingAnnounceAt: number;
+    screenMvMusicVocal?: {
+        [key: string]: unknown;
+    } | null;
+    seq: number;
+    startAt: number;
+    subGameCharacterPenlightColorGroupId?: number;
+    ticket: {
+        [key: string]: unknown;
+    } | null;
+    virtualLiveAppeals?: Array<SharedVirtualLiveAppeal>;
+    virtualLiveBackgroundMusics?: Array<SharedVirtualLiveBackgroundMusic>;
+    virtualLiveBeginnerSchedules?: Array<SharedVirtualLiveBeginnerSchedule>;
+    virtualLiveCharacters?: Array<SharedVirtualLiveCharacter>;
+    virtualLiveCheerPointRewards?: Array<{
+        [key: string]: unknown;
+    }>;
+    virtualLiveGroup?: {
+        [key: string]: unknown;
+    } | null;
+    virtualLiveInformation?: SharedVirtualLiveInformation;
+    virtualLivePlatform: string;
+    virtualLiveReward?: SharedVirtualLiveReward;
+    virtualLiveRewards?: Array<SharedVirtualLiveReward>;
+    virtualLiveType: string;
+    virtualLiveWaitingRoom?: SharedVirtualLiveWaitingRoom;
+};
+
+export type SharedVirtualLiveReward = {
+    id: number;
+    resourceBoxId: number;
+    virtualLiveId: number;
+    virtualLiveType: string;
+};
+
+export type SharedVirtualLiveSchedule = {
+    endAt: number;
+    id: number;
+    isAfterEvent?: boolean;
+    noticeGroupId?: number;
+    seq: number;
+    startAt: number;
+    virtualLiveId: number;
+};
+
+export type SharedVirtualLiveSchedulesResponse = {
+    items: Array<SharedVirtualLiveSchedule>;
+};
+
+export type SharedVirtualLiveSetlist = {
+    assetbundleName?: string;
+    character3dId1?: number;
+    character3dId2?: number;
+    character3dId3?: number;
+    character3dId4?: number;
+    character3dId5?: number;
+    character3dId6?: number;
+    id: number;
+    musicId?: number;
+    musicVocalId?: number;
+    seq: number;
+    virtualLiveId: number;
+    virtualLiveSetlistType: string;
+    virtualLiveStageId?: number;
+};
+
+export type SharedVirtualLiveSetlistsResponse = {
+    items: Array<SharedVirtualLiveSetlist>;
+};
+
+export type SharedVirtualLiveWaitingRoom = {
+    assetbundleName: string;
+    endAt: number;
+    id: number;
+    lobbyAssetbundleName?: string;
+    startAt: number;
+    virtualLiveId: number;
 };
 
 export type GetAdminLoginData = {
@@ -3041,6 +3179,18 @@ export type GetVirtualLivesByRegionListData = {
          * Sort order (asc|desc)
          */
         sort_order?: string;
+        /**
+         * Case-insensitive (trimmed) substring match against the virtual live name
+         */
+        name?: string;
+        /**
+         * Exact virtual live id
+         */
+        id?: number;
+        /**
+         * Comma-separated virtual live types (OR within parameter, AND combined with other filters)
+         */
+        virtual_live_type?: string;
     };
     url: '/virtualLives/{region}/list';
 };
@@ -3158,7 +3308,7 @@ export type GetVirtualLivesByRegionByIdItemsResponses = {
     /**
      * OK
      */
-    200: SharedGenericItemsResponse;
+    200: SharedVirtualLiveItemsResponse;
 };
 
 export type GetVirtualLivesByRegionByIdItemsResponse = GetVirtualLivesByRegionByIdItemsResponses[keyof GetVirtualLivesByRegionByIdItemsResponses];
@@ -3204,7 +3354,7 @@ export type GetVirtualLivesByRegionByIdSchedulesResponses = {
     /**
      * OK
      */
-    200: SharedGenericItemsResponse;
+    200: SharedVirtualLiveSchedulesResponse;
 };
 
 export type GetVirtualLivesByRegionByIdSchedulesResponse = GetVirtualLivesByRegionByIdSchedulesResponses[keyof GetVirtualLivesByRegionByIdSchedulesResponses];
@@ -3250,7 +3400,7 @@ export type GetVirtualLivesByRegionByIdSetlistsResponses = {
     /**
      * OK
      */
-    200: SharedGenericItemsResponse;
+    200: SharedVirtualLiveSetlistsResponse;
 };
 
 export type GetVirtualLivesByRegionByIdSetlistsResponse = GetVirtualLivesByRegionByIdSetlistsResponses[keyof GetVirtualLivesByRegionByIdSetlistsResponses];
