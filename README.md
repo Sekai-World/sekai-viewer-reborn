@@ -43,6 +43,11 @@ Apps in this workspace:
 - `apps/media-lab-site`
 - `apps/account-site`
 
+## Roadmap
+
+High-level platform direction, content coverage, and current development
+priorities are tracked in [`docs/roadmap.md`](docs/roadmap.md).
+
 ## Shared Packages
 
 - `@platform/sekai-api-sdk`: sekai-api OpenAPI SDK generator scaffold
@@ -137,6 +142,7 @@ pnpm format:check
 - `packages/i18n-source/content-site/common.json`
 - `packages/i18n-source/content-site/home.json`
 - `packages/i18n-source/content-site/card.json`
+- `packages/i18n-source/content-site/character.json`
 - `packages/i18n-source/content-site/event.json`
 - `packages/i18n-source/content-site/music.json`
 - `packages/i18n-source/content-site/error.json`

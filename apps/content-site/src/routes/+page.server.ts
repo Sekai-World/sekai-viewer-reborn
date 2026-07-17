@@ -9,7 +9,11 @@ import { getServerI18nText } from "$lib/i18n/runtime";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { fetchUnitProfiles, toUnitProfileMap, type UnitProfileMap } from "$lib/server/unit-profiles";
+import {
+  fetchUnitProfiles,
+  toUnitProfileMap,
+  type UnitProfileMap
+} from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 type EventSummary = {
@@ -329,15 +333,28 @@ const fetchRegionLatestData = async (
         .filter((g): g is LatestGachaItem => g !== null)
         .filter((g) => {
           const now = Date.now();
-          const start = typeof g.startAt === "number" ? g.startAt
-            : typeof g.startAt === "string" ? Date.parse(g.startAt) : null;
-          const end = typeof g.endAt === "number" ? g.endAt
-            : typeof g.endAt === "string" ? Date.parse(g.endAt) : null;
+          const start =
+            typeof g.startAt === "number"
+              ? g.startAt
+              : typeof g.startAt === "string"
+                ? Date.parse(g.startAt)
+                : null;
+          const end =
+            typeof g.endAt === "number"
+              ? g.endAt
+              : typeof g.endAt === "string"
+                ? Date.parse(g.endAt)
+                : null;
           return start !== null && end !== null && start <= now && now <= end;
         })
     : [];
 
-  return { region, cards: cardItems, musics: musicItems, gachas: gachaItems };
+  return {
+    region,
+    cards: cardItems,
+    musics: musicItems,
+    gachas: gachaItems
+  };
 };
 
 const toRegionEventCard = async (
@@ -415,7 +432,12 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
     try {
       return await fetchRegionLatestData(baseUrl, region);
     } catch {
-      return { region, cards: [], musics: [], gachas: [] } satisfies RegionLatestData;
+      return {
+        region,
+        cards: [],
+        musics: [],
+        gachas: []
+      } satisfies RegionLatestData;
     }
   });
 

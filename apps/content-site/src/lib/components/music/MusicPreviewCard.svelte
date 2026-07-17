@@ -8,6 +8,7 @@
     getMusicShortPreviewAssetURL
   } from "$lib/assets/index";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
+  import { resolve } from "$app/paths";
   import { AudioPlayer } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
 
@@ -194,12 +195,27 @@
                 </p>
                 <div class="mt-0.5 flex flex-wrap gap-1.5">
                   {#each chars as char (char.characterId)}
-                    <CharacterAvatar
-                      src={getLocalCharacterThumbnailAssetURL(char.characterId)}
-                      label={String(char.characterId)}
-                      characterId={char.characterId}
-                      variant="xs"
-                    />
+                    {#if char.characterId > 0}
+                      <a
+                        href={resolve("/character/[region]/[id]", { region, id: String(char.characterId) })}
+                        class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        aria-label={String(char.characterId)}
+                      >
+                        <CharacterAvatar
+                          src={getLocalCharacterThumbnailAssetURL(char.characterId)}
+                          label={String(char.characterId)}
+                          characterId={char.characterId}
+                          variant="xs"
+                        />
+                      </a>
+                    {:else}
+                      <CharacterAvatar
+                        src={getLocalCharacterThumbnailAssetURL(char.characterId)}
+                        label={String(char.characterId)}
+                        characterId={char.characterId}
+                        variant="xs"
+                      />
+                    {/if}
                   {/each}
                 </div>
               {/if}

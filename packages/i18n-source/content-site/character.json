@@ -1,0 +1,23 @@
+{
+  "characterListTitle": "Characters",
+  "characterSearchLabel": "Search characters",
+  "characterSearchPlaceholder": "Search by name or ID",
+  "characterUnitFilterLabel": "Filter by unit",
+  "characterUnitAll": "All",
+  "characterResultCount": "{count} characters",
+  "characterListLoadFailed": "Character data could not be loaded.",
+  "characterListEmpty": "No characters match these filters.",
+  "characterClearFilters": "Clear filters",
+  "characterUnitLabel": "Unit",
+  "characterHeightLabel": "Height",
+  "characterPageTitlePrefix": "Character",
+  "characterDetailLoadFailed": "Character data could not be loaded.",
+  "characterUnavailable": "This character is not available in the selected region.",
+  "characterDetailTitle": "Character details",
+  "characterNameLabel": "Name",
+  "characterValueUnavailable": "Not available",
+  "characterSeqLabel": "Sequence",
+  "characterLatestCardsTitle": "Latest cards",
+  "characterViewAllCards": "View all",
+  "characterCardsEmpty": "No related cards were found."
+}

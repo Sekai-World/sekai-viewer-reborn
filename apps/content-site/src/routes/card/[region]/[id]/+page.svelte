@@ -410,6 +410,7 @@
           {#await data.unitProfiles then unitProfiles}
             <CardDetailInfoCard
               card={payload.card}
+              region={data.region}
               {displayLocale}
               title={cardInfoTitle}
               {idLabel}
@@ -430,6 +431,7 @@
           {:catch}
             <CardDetailInfoCard
               card={payload.card}
+              region={data.region}
               {displayLocale}
               title={cardInfoTitle}
               {idLabel}

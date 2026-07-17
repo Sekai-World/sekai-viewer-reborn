@@ -73,6 +73,9 @@ import doorOpen from "@iconify-icons/mdi/door-open";
 import accountGroup from "@iconify-icons/mdi/account-group";
 import calendarClock from "@iconify-icons/mdi/calendar-clock";
 import playlistCheck from "@iconify-icons/mdi/playlist-check";
+import alertCircleOutline from "@iconify-icons/mdi/alert-circle-outline";
+import accountSearchOutline from "@iconify-icons/mdi/account-search-outline";
+import magnify from "@iconify-icons/mdi/magnify";
 
 // ── Gacha ─────────────────────────────────────────────────────────────
 import diceMultipleOutline from "@iconify-icons/mdi/dice-multiple-outline";
@@ -157,6 +160,9 @@ addIcon("mdi:door-open", doorOpen);
 addIcon("mdi:account-group", accountGroup);
 addIcon("mdi:calendar-clock", calendarClock);
 addIcon("mdi:playlist-check", playlistCheck);
+addIcon("mdi:alert-circle-outline", alertCircleOutline);
+addIcon("mdi:account-search-outline", accountSearchOutline);
+addIcon("mdi:magnify", magnify);
 
 addIcon("mdi:dice-multiple-outline", diceMultipleOutline);
 addIcon("mdi:dice-1", dice1);
