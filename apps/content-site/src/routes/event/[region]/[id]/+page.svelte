@@ -10,6 +10,7 @@
   import EventDetailDataCard from "$lib/components/event/EventDetailDataCard.svelte";
   import EventDetailInfoCard from "$lib/components/event/EventDetailInfoCard.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -19,7 +20,6 @@
   } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import type { PageData } from "./$types";
-  import { DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
@@ -318,32 +318,7 @@
       {/snippet}
     </PageHeader>
 
-    <div
-      class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
-    >
-      <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-4 p-3 sm:p-5">
-          <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
-          <div class={`h-60 w-full animate-pulse bg-base-300 ${DETAIL_MEDIA_RADIUS_CLASS}`}></div>
-          <div class="space-y-2">
-            <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
-            <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
-          </div>
-        </div>
-      </article>
-      <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-3 p-3 sm:p-5">
-          <div class="h-5 w-1/3 animate-pulse rounded bg-base-300"></div>
-          <div class="h-10 w-2/3 animate-pulse rounded bg-base-300"></div>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div class="h-20 animate-pulse rounded-2xl bg-base-300"></div>
-            <div class="h-20 animate-pulse rounded-2xl bg-base-300"></div>
-            <div class="h-20 animate-pulse rounded-2xl bg-base-300"></div>
-            <div class="h-20 animate-pulse rounded-2xl bg-base-300"></div>
-          </div>
-        </div>
-      </article>
-    </div>
+    <DetailPageSkeleton kind="event" />
   {:then payload}
     <PageHeader
       breadcrumbs={getEventBreadcrumbItems(

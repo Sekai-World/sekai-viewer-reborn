@@ -7,6 +7,7 @@
   import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
   import Icon from "@iconify/svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { VirtualLiveDetail, VirtualLiveStatus } from "$lib/domain/virtual-live";
@@ -100,34 +101,7 @@
     <PageHeader breadcrumbs={breadcrumbs(`${t("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)} breadcrumbClass="md:max-w-[68%]">
       {#snippet actions()}<RegionBadgeSwitch options={currentRegionOption()} />{/snippet}
     </PageHeader>
-    <div
-      class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
-    >
-      <div class="flex flex-col gap-4">
-        <article class="card content-card-shell overflow-hidden shadow-sm">
-          <div class="card-body gap-4 p-3 sm:p-5">
-            <div class={`skeleton aspect-16/7 w-full ${DETAIL_MEDIA_RADIUS_CLASS}`}></div>
-          </div>
-        </article>
-        <article class="card content-card-shell shadow-sm">
-          <div class="card-body gap-4 p-3 sm:p-5">
-            <div class="skeleton h-5 w-1/3 rounded"></div>
-            <div class="skeleton h-10 w-2/3 rounded"></div>
-            <div class="space-y-2">
-              {#each Array(4) as _, index (index)}<div class="skeleton h-16 rounded-xl"></div>{/each}
-            </div>
-          </div>
-        </article>
-      </div>
-      <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-3 p-3 sm:p-5">
-          <div class="skeleton h-5 w-1/3 rounded"></div>
-          <div class="grid gap-3 sm:grid-cols-2">
-            {#each Array(4) as _, index (index)}<div class="skeleton h-20 rounded-2xl"></div>{/each}
-          </div>
-        </div>
-      </article>
-    </div>
+    <DetailPageSkeleton kind="virtual-live" />
   {:then payload}
     <PageHeader breadcrumbs={breadcrumbs(payload.virtualLive?.name ?? `${t("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)} breadcrumbClass="md:max-w-[68%]">
       {#snippet actions()}

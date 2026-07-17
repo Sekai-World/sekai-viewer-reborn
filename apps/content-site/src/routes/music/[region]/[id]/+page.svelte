@@ -4,6 +4,7 @@
   import { swipeRegion } from "$lib/actions/swipe-region";
   import type { SupportedRegion } from "$lib/domain/regions";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -21,7 +22,6 @@
   } from "$lib/domain/unit-profile";
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import type { PageData } from "./$types";
-  import { DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
 
   let { data }: { data: PageData } = $props();
@@ -237,32 +237,7 @@
       {/snippet}
     </PageHeader>
 
-    <div
-      class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)] lg:items-start"
-    >
-      <div class={`aspect-square w-full animate-pulse bg-base-300 ${DETAIL_MEDIA_RADIUS_CLASS}`}></div>
-      <div class="flex flex-col gap-4">
-      <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-4 p-3 sm:p-5">
-          <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
-          <div class="space-y-2">
-            <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
-            <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
-          </div>
-        </div>
-      </article>
-      <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-3 p-3 sm:p-5">
-          <div class="h-5 w-1/3 animate-pulse rounded bg-base-300"></div>
-          <div class="h-10 w-2/3 animate-pulse rounded bg-base-300"></div>
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div class="h-20 animate-pulse rounded-2xl bg-base-300"></div>
-            <div class="h-20 animate-pulse rounded-2xl bg-base-300"></div>
-          </div>
-        </div>
-      </article>
-      </div>
-    </div>
+    <DetailPageSkeleton kind="music" />
   {:then payload}
     <PageHeader
       breadcrumbs={getMusicBreadcrumbItems(
