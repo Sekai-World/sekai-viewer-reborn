@@ -13,13 +13,13 @@
   import GachaSimulatorCard from "$lib/components/gacha/GachaSimulatorCard.svelte";
   import Icon from "@iconify/svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { PageData } from "./$types";
-  import { DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "gacha", "error"]);
@@ -336,27 +336,7 @@
       {/snippet}
     </PageHeader>
 
-    <div
-      class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
-    >
-      <article class="card content-card-shell overflow-hidden shadow-sm">
-        <div class="card-body gap-4 p-3 sm:p-5">
-          <div class="h-9 w-full animate-pulse rounded-xl bg-base-300"></div>
-          <div class={`aspect-16/7 w-full animate-pulse bg-base-300 ${DETAIL_MEDIA_RADIUS_CLASS}`}></div>
-        </div>
-      </article>
-      <article class="card content-card-shell shadow-sm">
-        <div class="card-body gap-3 p-3 sm:p-5">
-          <div class="h-5 w-1/3 animate-pulse rounded bg-base-300"></div>
-          <div class="grid gap-3">
-            <div class="h-16 animate-pulse rounded-xl bg-base-300"></div>
-            <div class="h-16 animate-pulse rounded-xl bg-base-300"></div>
-            <div class="h-16 animate-pulse rounded-xl bg-base-300"></div>
-            <div class="h-16 animate-pulse rounded-xl bg-base-300"></div>
-          </div>
-        </div>
-      </article>
-    </div>
+    <DetailPageSkeleton kind="gacha" />
   {:then payload}
     <PageHeader
       breadcrumbs={getBreadcrumbItems(payload.gacha?.name ?? `${pageTitlePrefix} ${data.gachaId}`)}
