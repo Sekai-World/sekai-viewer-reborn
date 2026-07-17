@@ -4,6 +4,7 @@
   import { swipeRegion } from "$lib/actions/swipe-region";
   import { getVirtualLiveBannerAssetURL } from "$lib/assets/index";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  import VirtualLiveScheduleSwitcher from "$lib/components/virtual-live/VirtualLiveScheduleSwitcher.svelte";
   import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
   import Icon from "@iconify/svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
@@ -287,24 +288,14 @@
                     <Icon icon="mdi:calendar-clock" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
                     <span>{t("virtualLiveSchedulesTitle")}</span>
                   </h2>
-                  <div class="grid gap-2 sm:grid-cols-2">
-                    {#each live.schedules as schedule, index (schedule.id ?? index)}
-                      <div class="content-card-inset rounded-xl p-3">
-                        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-                          <span class="badge badge-primary badge-sm font-semibold">
-                            {t("virtualLiveScheduleSeqLabel")} {displayValue(schedule.seq)}
-                          </span>
-                          {#if schedule.isAfterEvent}
-                            <span class="badge badge-outline badge-sm font-semibold">
-                              {t("virtualLiveScheduleIsAfterEventLabel")}
-                            </span>
-                          {/if}
-                        </div>
-                        <p class="text-sm font-semibold">{formatDate(schedule.startAt)}</p>
-                        <p class="mt-1 text-xs opacity-60">{formatDate(schedule.endAt)}</p>
-                      </div>
-                    {/each}
-                  </div>
+                  <VirtualLiveScheduleSwitcher
+                    schedules={live.schedules}
+                    uiLocale={data.uiLocale}
+                    virtualLiveId={live.id}
+                    labelledBy="virtual-live-schedules-title"
+                    unavailableLabel={t("virtualLiveValueUnavailable")}
+                    afterEventLabel={t("virtualLiveScheduleIsAfterEventLabel")}
+                  />
                 </section>
               </div>
             </article>
