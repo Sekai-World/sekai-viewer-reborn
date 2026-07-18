@@ -14,3 +14,7 @@ Upgrade every detail-page loading state with a shared, responsive skeleton that 
 Regenerate `@platform/sekai-master-api-sdk`: the Virtual Live contract gained new dedicated fields, nested arrays, and region-availability responses, so the generated SDK types changed as part of the same feature.
 
 Add an accessible Virtual Live schedule switcher. Schedules are grouped by local calendar date behind horizontal date tabs (full keyboard navigation, swipe excluded). The selected day shows compact chronological `start time – end time` ranges. No internal Order/seq labels are shown. A schedule whose end crosses midnight appends the date to the end time for clarity. `After Event` schedules remain a secondary badge.
+
+Reorder the Virtual Live right column so Characters precedes Setlists. Virtual Live characters now rely on reliable `gameCharacterUnitId` → `gameCharacterId`/unit/colorCode enrichment for avatars and profile links, with graceful placeholders when the mapping is unavailable. The main detail page shows only a setlist summary; the full ordered setlist lives in an accessible scrollable dialog. The `character3dId1..6` 3D ID space has no confirmed mapping to `gameCharacterId`, so no guessed avatar or profile link is derived from it.
+
+Replace generic Virtual Live additional-data field counts with human-readable live-group dates, linked Screen MV song and character details, pamphlet copy, and ticket descriptions.

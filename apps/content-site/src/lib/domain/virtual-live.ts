@@ -94,6 +94,14 @@ export type VirtualLiveCharacter = {
   subGameCharacter2dId: number | null;
   seq: number | null;
   virtualLivePerformanceType: string | null;
+  /**
+   * Enriched from the region game-character-unit aggregate. `null` when no
+   * matching `gameCharacterUnitId` was found or the enrichment source failed to
+   * load. Never inferred from `subGameCharacter2dId`/`character3dId*`.
+   */
+  gameCharacterId: number | null;
+  unit: string | null;
+  colorCode: string | null;
 };
 
 export type VirtualLiveReward = {
@@ -143,6 +151,68 @@ export type VirtualLiveBasic = {
   status: VirtualLiveStatus;
 };
 
+/**
+ * Human-readable display model for a Virtual Live's `virtualLiveGroup`.
+ *
+ * Derived strictly from confirmed display fields; internal identifiers
+ * (`id`, `assetbundleName`, `seq`, `releaseConditionId`) are intentionally
+ * excluded. The model is a `type` alias (not an `interface`) so it stays
+ * assignable to `Record<string, unknown>` for consumers that render it
+ * generically.
+ */
+export type VirtualLiveGroupDisplay = {
+  name: string | null;
+  startAt: string | number | null;
+  endAt: string | number | null;
+};
+
+/**
+ * Human-readable display model for a Virtual Live's `screenMvMusicVocal`.
+ *
+ * `musicId` is preserved (as a number) so the UI can build a `/music/:region/:id`
+ * link with a useful fallback. `musicVocalType`/`caption` are shown directly,
+ * and `characterIds` aggregates `characters[].characterId`. Internal identifiers
+ * (`id`, `assetbundleName`, `archivePublishedAt`, `releaseConditionId`, `seq`)
+ * are excluded.
+ */
+export type VirtualLiveScreenMvMusicVocalDisplay = {
+  musicId: number | null;
+  musicVocalType: string | null;
+  caption: string | null;
+  characterIds: number[];
+  /**
+   * Human-readable music title fetched from the region music endpoint.
+   * `null` when there is no valid `musicId`, the lookup failed, or the
+   * response carried no usable title. Optional on the base parse output and
+   * always defined once the server enrichment runs; never makes the Virtual
+   * Live detail unavailable.
+   */
+  musicTitle?: string | null;
+};
+
+/**
+ * Human-readable display model for a Virtual Live's `pamphlet`.
+ *
+ * Internal identifiers (`id`, `assetbundleName`, `seq`, `releaseConditionId`)
+ * are excluded.
+ */
+export type VirtualLivePamphletDisplay = {
+  name: string | null;
+  flavorText: string | null;
+};
+
+/**
+ * Human-readable display model for a Virtual Live's `ticket`.
+ *
+ * Internal identifiers (`id`, `assetbundleName`, `seq`, `releaseConditionId`)
+ * are excluded.
+ */
+export type VirtualLiveTicketDisplay = {
+  name: string | null;
+  flavorText: string | null;
+  virtualLiveTicketType: string | null;
+};
+
 export type VirtualLiveDetail = VirtualLiveBasic & {
   information: VirtualLiveInformation | null;
   waitingRoom: VirtualLiveWaitingRoom | null;
@@ -150,8 +220,8 @@ export type VirtualLiveDetail = VirtualLiveBasic & {
   rewards: VirtualLiveReward[];
   schedules: VirtualLiveSchedule[];
   setlists: VirtualLiveSetlist[];
-  virtualLiveGroup: Record<string, unknown> | null;
-  screenMvMusicVocal: Record<string, unknown> | null;
-  pamphlet: Record<string, unknown> | null;
-  ticket: Record<string, unknown> | null;
+  virtualLiveGroup: VirtualLiveGroupDisplay | null;
+  screenMvMusicVocal: VirtualLiveScreenMvMusicVocalDisplay | null;
+  pamphlet: VirtualLivePamphletDisplay | null;
+  ticket: VirtualLiveTicketDisplay | null;
 };

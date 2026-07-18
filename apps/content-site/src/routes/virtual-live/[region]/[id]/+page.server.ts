@@ -1,5 +1,6 @@
 import { dev } from "$app/environment";
 import {
+  getMusicsByRegionById,
   getVirtualLivesByRegionById,
   getVirtualLivesByRegionByIdSchedules,
   getVirtualLivesByRegionByIdSetlists,
@@ -12,8 +13,11 @@ import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   parseVirtualLiveDetail,
   parseVirtualLiveSetlistItems,
+  buildCharacterUnitEnrichmentMap,
+  enrichVirtualLiveCharacters,
   type VirtualLiveDetail
 } from "$lib/server/virtual-live-detail";
+import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
 import type { PageServerLoad } from "./$types";
 
 type VirtualLivePayload = {
@@ -32,6 +36,18 @@ type VirtualLiveAggregateLookup = {
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
+
+const getString = (value: unknown): string | null => {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return null;
+};
 
 const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
   const root = getObject(payload);
@@ -136,16 +152,86 @@ const parseVirtualLiveSchedules = (items: unknown): VirtualLiveDetail["schedules
     .filter((schedule): schedule is VirtualLiveDetail["schedules"][number] => schedule !== null);
 };
 
+/**
+ * Resolve a human-readable music title for a positive integer `musicId`.
+ *
+ * Returns `null` on any failure (missing id, non-positive id, SDK error,
+ * empty response, or a response carrying no usable title). Failures are
+ * always optional and never make the caller's result unavailable.
+ */
+const fetchMusicTitle = async (
+  baseUrl: string,
+  region: SupportedRegion,
+  musicId: number | null
+): Promise<string | null> => {
+  if (typeof musicId !== "number" || !Number.isInteger(musicId) || musicId <= 0) {
+    return null;
+  }
+
+  try {
+    const response = await getMusicsByRegionById({
+      baseUrl,
+      path: { region, id: String(musicId) }
+    });
+    if (response.error || !response.data) {
+      return null;
+    }
+
+    const title = getString(getObject(response.data)?.["title"]);
+    return title;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Enrich a parsed Virtual Live detail's `screenMvMusicVocal` with a fetched
+ * music title, when a valid `musicId` is present.
+ *
+ * Immutable: returns a new detail object and never mutates the input. When
+ * there is no `screenMvMusicVocal`, no valid `musicId`, or the lookup fails,
+ * the detail is returned unchanged (with `musicTitle` left undefined → null
+ * on serialization). The `musicId` is already captured by the parser so the
+ * UI retains a `/music/:region/:id` link with a useful fallback.
+ */
+const enrichScreenMvMusicTitle = async (
+  detail: VirtualLiveDetail,
+  baseUrl: string,
+  region: SupportedRegion
+): Promise<VirtualLiveDetail> => {
+  const screenMv = detail.screenMvMusicVocal;
+  if (!screenMv || typeof screenMv.musicId !== "number" || screenMv.musicId <= 0) {
+    return detail;
+  }
+
+  const musicTitle = await fetchMusicTitle(baseUrl, region, screenMv.musicId);
+  if (musicTitle === null) {
+    return detail;
+  }
+
+  return {
+    ...detail,
+    screenMvMusicVocal: {
+      ...screenMv,
+      musicTitle
+    }
+  };
+};
+
 const fetchVirtualLiveAggregate = async (
   baseUrl: string,
   region: SupportedRegion,
   virtualLiveId: string
 ): Promise<VirtualLiveAggregateLookup> => {
   try {
-    const [detailResponse, schedulesResponse, setlistsResponse] = await Promise.all([
+    const [detailResponse, schedulesResponse, setlistsResponse, unitsAggregate] = await Promise.all([
       getVirtualLivesByRegionById({ baseUrl, path: { region, id: virtualLiveId } }),
       getVirtualLivesByRegionByIdSchedules({ baseUrl, path: { region, id: virtualLiveId } }),
-      getVirtualLivesByRegionByIdSetlists({ baseUrl, path: { region, id: virtualLiveId } })
+      getVirtualLivesByRegionByIdSetlists({ baseUrl, path: { region, id: virtualLiveId } }),
+      aggregateGameCharacterUnitsByRegion(baseUrl, region).catch(() => ({
+        data: { items: [] },
+        loadFailed: true
+      }))
     ]);
 
     if (detailResponse.error) {
@@ -184,9 +270,21 @@ const fetchVirtualLiveAggregate = async (
           : parseVirtualLiveSetlistItems(setlists?.["items"])
     };
 
+    const enrichmentMap = buildCharacterUnitEnrichmentMap(
+      unitsAggregate.data,
+      unitsAggregate.loadFailed
+    );
+    const enrichedDetail = enrichVirtualLiveCharacters(mergedDetail, enrichmentMap);
+
+    const detailWithMusicTitle = await enrichScreenMvMusicTitle(
+      enrichedDetail,
+      baseUrl,
+      region
+    );
+
     return {
       region,
-      virtualLive: mergedDetail,
+      virtualLive: detailWithMusicTitle,
       availableRegions: normalizeAvailableRegions(detailResponse.data),
       exists: true,
       rawPayloadJson: JSON.stringify(detailResponse.data, null, 2)

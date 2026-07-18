@@ -3,10 +3,14 @@ import {
   type VirtualLiveBasic,
   type VirtualLiveCharacter,
   type VirtualLiveDetail,
+  type VirtualLiveGroupDisplay,
   type VirtualLiveInformation,
+  type VirtualLivePamphletDisplay,
   type VirtualLiveReward,
   type VirtualLiveSchedule,
+  type VirtualLiveScreenMvMusicVocalDisplay,
   type VirtualLiveSetlist,
+  type VirtualLiveTicketDisplay,
   type VirtualLiveWaitingRoom
 } from "$lib/domain/virtual-live";
 
@@ -166,7 +170,10 @@ const parseCharacter = (value: unknown): VirtualLiveCharacter | null => {
     gameCharacterUnitId: getNumber(node["gameCharacterUnitId"]),
     subGameCharacter2dId: getNumber(node["subGameCharacter2dId"]),
     seq: getNumber(node["seq"]),
-    virtualLivePerformanceType: getString(node["virtualLivePerformanceType"])
+    virtualLivePerformanceType: getString(node["virtualLivePerformanceType"]),
+    gameCharacterId: null,
+    unit: null,
+    colorCode: null
   };
 };
 
@@ -235,12 +242,67 @@ export const parseVirtualLiveSetlistItems = (items: unknown): VirtualLiveSetlist
     .filter((setlist): setlist is VirtualLiveSetlist => setlist !== null);
 };
 
-const parseNullableObject = (value: unknown): Record<string, unknown> | null => {
-  if (value === null || value === undefined) {
+const parseVirtualLiveGroup = (value: unknown): VirtualLiveGroupDisplay | null => {
+  const node = getObject(value);
+  if (!node) {
     return null;
   }
 
-  return getObject(value);
+  return {
+    name: pickFirstString(node, ["name", "virtualLiveGroupName"]),
+    startAt: pickFirstDateValue(node, ["startAt", "start_at", "startDate"]),
+    endAt: pickFirstDateValue(node, ["endAt", "end_at", "endDate"])
+  };
+};
+
+const parseScreenMvMusicVocal = (
+  value: unknown
+): VirtualLiveScreenMvMusicVocalDisplay | null => {
+  const node = getObject(value);
+  if (!node) {
+    return null;
+  }
+
+  const characterIds = getArray(node["characters"])
+    .map((entry) => getNumber(getObject(entry)?.["characterId"] ?? getObject(entry)?.["character_id"]))
+    .filter((id): id is number => id !== null);
+
+  return {
+    musicId: getNumber(node["musicId"]),
+    musicVocalType: pickFirstString(node, ["musicVocalType", "music_vocal_type"]),
+    caption: getString(node["caption"]),
+    characterIds
+  };
+};
+
+const parsePamphlet = (value: unknown): VirtualLivePamphletDisplay | null => {
+  const node = getObject(value);
+  if (!node) {
+    return null;
+  }
+
+  return {
+    name: getString(node["name"]),
+    flavorText: getString(node["flavorText"] ?? node["flavor_text"])
+  };
+};
+
+const parseTicket = (value: unknown): VirtualLiveTicketDisplay | null => {
+  const node = getObject(value);
+  if (!node) {
+    return null;
+  }
+
+  return {
+    name: getString(node["name"]),
+    flavorText: getString(node["flavorText"] ?? node["flavor_text"]),
+    virtualLiveTicketType: pickFirstString(node, [
+      "virtualLiveTicketType",
+      "virtual_live_ticket_type",
+      "ticketType",
+      "ticket_type"
+    ])
+  };
 };
 
 export const parseVirtualLiveDetail = (payload: unknown): VirtualLiveDetail | null => {
@@ -271,10 +333,120 @@ export const parseVirtualLiveDetail = (payload: unknown): VirtualLiveDetail | nu
       return schedule ? [schedule] : [];
     }),
     setlists: parseVirtualLiveSetlistItems(root["virtualLiveSetlists"]),
-    virtualLiveGroup: parseNullableObject(root["virtualLiveGroup"]),
-    screenMvMusicVocal: parseNullableObject(root["screenMvMusicVocal"]),
-    pamphlet: parseNullableObject(root["pamphlet"]),
-    ticket: parseNullableObject(root["ticket"])
+    virtualLiveGroup: parseVirtualLiveGroup(root["virtualLiveGroup"]),
+    screenMvMusicVocal: parseScreenMvMusicVocal(root["screenMvMusicVocal"]),
+    pamphlet: parsePamphlet(root["pamphlet"]),
+    ticket: parseTicket(root["ticket"])
+  };
+};
+
+/**
+ * Coerce an unknown value to a finite number. Unlike the module `getNumber`
+ * (which only accepts numeric `number` inputs), this also accepts numeric
+ * strings (e.g. `"13"`) so both supported aggregate representations resolve.
+ */
+const toNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+};
+
+const parseCharacterUnitItems = (payload: unknown): unknown[] => {
+  const root = getObject(payload);
+  if (Array.isArray(root?.["items"])) {
+    return root["items"] as unknown[];
+  }
+
+  const data = getObject(root?.["data"]);
+  if (Array.isArray(data?.["items"])) {
+    return data["items"] as unknown[];
+  }
+
+  return [];
+};
+
+export const buildCharacterUnitEnrichmentMap = (
+  aggregate: unknown,
+  loadFailed: boolean
+): Map<number, { gameCharacterId: number; unit: string | null; colorCode: string | null }> | null => {
+  if (loadFailed || aggregate === null || aggregate === undefined) {
+    return null;
+  }
+
+  const items = parseCharacterUnitItems(aggregate);
+  if (items.length === 0) {
+    return null;
+  }
+
+  const map = new Map<number, { gameCharacterId: number; unit: string | null; colorCode: string | null }>();
+  for (const raw of items) {
+    const node = getObject(raw);
+    if (!node) {
+      continue;
+    }
+
+    const recordId = toNumber(node["id"]);
+    const gameCharacterId = toNumber(node["gameCharacterId"]);
+    if (recordId === null || gameCharacterId === null) {
+      continue;
+    }
+
+    map.set(recordId, {
+      gameCharacterId,
+      unit: getString(node["unit"]),
+      colorCode: getString(node["colorCode"])
+    });
+  }
+
+  return map.size > 0 ? map : null;
+};
+
+/**
+ * Enrich a parsed `VirtualLiveDetail`'s characters using a prebuilt unit-map.
+ *
+ * Character entries keep their existing base fields unchanged; the nullable
+ * `gameCharacterId`/`unit`/`colorCode` fields are filled only when the
+ * character's `gameCharacterUnitId` has a matching record in the map.
+ * Characters without a match retain `null` enriched fields.
+ *
+ * Safe to call with `enrichmentMap = null` (no enrichment applied).
+ */
+export const enrichVirtualLiveCharacters = (
+  detail: VirtualLiveDetail,
+  enrichmentMap: Map<number, { gameCharacterId: number; unit: string | null; colorCode: string | null }> | null
+): VirtualLiveDetail => {
+  if (!enrichmentMap || enrichmentMap.size === 0) {
+    return detail;
+  }
+
+  const characters: VirtualLiveCharacter[] = detail.characters.map((character) => {
+    if (character.gameCharacterUnitId === null) {
+      return character;
+    }
+
+    const match = enrichmentMap.get(character.gameCharacterUnitId);
+    if (!match) {
+      return character;
+    }
+
+    return {
+      ...character,
+      gameCharacterId: match.gameCharacterId,
+      unit: match.unit,
+      colorCode: match.colorCode
+    };
+  });
+
+  return {
+    ...detail,
+    characters
   };
 };
 
