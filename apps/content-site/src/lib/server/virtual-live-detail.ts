@@ -228,7 +228,8 @@ const parseSetlist = (value: unknown): VirtualLiveSetlist | null => {
     character3dId3: getNumber(node["character3dId3"]),
     character3dId4: getNumber(node["character3dId4"]),
     character3dId5: getNumber(node["character3dId5"]),
-    character3dId6: getNumber(node["character3dId6"])
+    character3dId6: getNumber(node["character3dId6"]),
+    music: null
   };
 };
 
@@ -376,37 +377,25 @@ export const buildCharacterUnitEnrichmentMap = (
   aggregate: unknown,
   loadFailed: boolean
 ): Map<number, { gameCharacterId: number; unit: string | null; colorCode: string | null }> | null => {
-  if (loadFailed || aggregate === null || aggregate === undefined) {
-    return null;
-  }
-
+  if (loadFailed || aggregate === null || aggregate === undefined) return null;
   const items = parseCharacterUnitItems(aggregate);
-  if (items.length === 0) {
-    return null;
-  }
-
+  if (items.length === 0) return null;
   const map = new Map<number, { gameCharacterId: number; unit: string | null; colorCode: string | null }>();
   for (const raw of items) {
     const node = getObject(raw);
-    if (!node) {
-      continue;
-    }
-
+    if (!node) continue;
     const recordId = toNumber(node["id"]);
     const gameCharacterId = toNumber(node["gameCharacterId"]);
-    if (recordId === null || gameCharacterId === null) {
-      continue;
-    }
-
+    if (recordId === null || gameCharacterId === null) continue;
     map.set(recordId, {
       gameCharacterId,
       unit: getString(node["unit"]),
       colorCode: getString(node["colorCode"])
     });
   }
-
   return map.size > 0 ? map : null;
 };
+
 
 /**
  * Enrich a parsed `VirtualLiveDetail`'s characters using a prebuilt unit-map.

@@ -1,4 +1,5 @@
 import { toTimestampMs } from "$lib/time/date-time";
+import type { SupportedRegion } from "$lib/domain/regions";
 
 export type VirtualLiveStatus = "upcoming" | "ongoing" | "ended";
 
@@ -136,6 +137,22 @@ export type VirtualLiveSetlist = {
   character3dId4: number | null;
   character3dId5: number | null;
   character3dId6: number | null;
+  music: VirtualLiveSetlistMusicDisplay | null;
+};
+
+export type VirtualLiveSetlistMusicDisplay = {
+  id: string;
+  title: string;
+  jacketAssetBundleName: string | null;
+  fillerSec: number | null;
+  artist: string | null;
+  assetRegion: SupportedRegion;
+  vocal: {
+    id: string;
+    vocalType: string | null;
+    assetBundleName: string | null;
+    characters: { characterId: number; unit: string }[];
+  } | null;
 };
 
 export type VirtualLiveBasic = {
@@ -171,9 +188,10 @@ export type VirtualLiveGroupDisplay = {
  *
  * `musicId` is preserved (as a number) so the UI can build a `/music/:region/:id`
  * link with a useful fallback. `musicVocalType`/`caption` are shown directly,
- * and `characterIds` aggregates `characters[].characterId`. Internal identifiers
- * (`id`, `assetbundleName`, `archivePublishedAt`, `releaseConditionId`, `seq`)
- * are excluded.
+ * and `characterIds` aggregates `characters[].characterId`. The music asset
+ * bundle is retained only to resolve jacket artwork; other internal
+ * identifiers (`id`, `archivePublishedAt`, `releaseConditionId`, `seq`) are
+ * excluded.
  */
 export type VirtualLiveScreenMvMusicVocalDisplay = {
   musicId: number | null;
@@ -188,6 +206,8 @@ export type VirtualLiveScreenMvMusicVocalDisplay = {
    * Live detail unavailable.
    */
   musicTitle?: string | null;
+  /** Asset bundle from the resolved music record, used only for jacket artwork. */
+  musicAssetBundleName?: string | null;
 };
 
 /**

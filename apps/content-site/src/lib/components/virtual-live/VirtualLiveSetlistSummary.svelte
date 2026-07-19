@@ -1,101 +1,142 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
+  import { onDestroy, tick } from "svelte";
   import Icon from "@iconify/svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
   import type { VirtualLiveSetlist } from "$lib/domain/virtual-live";
+  import type { VirtualLiveTimelineDocument } from "$lib/domain/virtual-live-timeline";
+  import VirtualLiveSetlistMusicPlayer from "$lib/components/virtual-live/VirtualLiveSetlistMusicPlayer.svelte";
+  import VirtualLiveTimelinePanel from "$lib/components/virtual-live/VirtualLiveTimelinePanel.svelte";
+
+  type TimelineState = {
+    status: "loading" | "error" | "ready";
+    document: VirtualLiveTimelineDocument | null;
+  };
 
   let {
     setlists,
     region,
+    virtualLiveId,
     title,
-    countLabel,
-    previewLabel,
-    viewFullLabel,
     closeLabel,
-    musicLabel,
-    vocalLabel,
-    stageLabel,
-    assetLabel,
-    character3dLabel,
-    unavailableLabel,
+    t,
     formatType
   }: {
     setlists: VirtualLiveSetlist[];
     region: SupportedRegion;
+    virtualLiveId: string;
     title: string;
-    countLabel: string;
-    previewLabel: string;
-    viewFullLabel: string;
     closeLabel: string;
-    musicLabel: string;
-    vocalLabel: string;
-    stageLabel: string;
-    assetLabel: string;
-    character3dLabel: string;
-    unavailableLabel: string;
+    t: (key: string, fallback?: string) => string;
     formatType: (value: string | null) => string;
   } = $props();
 
   let dialog: HTMLDialogElement | null = $state(null);
+  let expandedId = $state<number | null>(null);
+  let timelineStates = $state<Record<number, TimelineState>>({});
+  let timelineController: AbortController | null = null;
+  let lastTrigger: HTMLElement | null = null;
   const dialogId = "virtual-live-setlist-dialog";
   const titleId = `${dialogId}-title`;
   const orderedSetlists = $derived(
     [...setlists].sort(
-      (left, right) =>
-        (left.seq ?? Number.MAX_SAFE_INTEGER) - (right.seq ?? Number.MAX_SAFE_INTEGER)
+      (a, b) => (a.seq ?? Number.MAX_SAFE_INTEGER) - (b.seq ?? Number.MAX_SAFE_INTEGER)
     )
   );
-  const previewItems = $derived(orderedSetlists.slice(0, 3));
-  const formatCount = (): string => countLabel.replace("{count}", String(setlists.length));
-  const getCharacter3dIds = (setlist: VirtualLiveSetlist): number[] =>
-    [
-      setlist.character3dId1,
-      setlist.character3dId2,
-      setlist.character3dId3,
-      setlist.character3dId4,
-      setlist.character3dId5,
-      setlist.character3dId6
-    ].filter((id): id is number => id !== null);
-  const close = (): void => dialog?.close();
-  const closeFromBackdrop = (event: MouseEvent): void => {
-    if (event.target === event.currentTarget) close();
+  const countText = $derived(
+    t("virtualLiveSetlistItemCount").replace("{count}", String(setlists.length))
+  );
+  const getRowId = (setlist: VirtualLiveSetlist, index: number): number =>
+    setlist.id ?? -(index + 1);
+  const hasTimeline = (setlist: VirtualLiveSetlist): boolean =>
+    setlist.virtualLiveSetlistType === "mc" || setlist.virtualLiveSetlistType === "mc_timeline";
+  const getTitle = (setlist: VirtualLiveSetlist): string => {
+    if (setlist.music?.title) return setlist.music.title;
+    if (setlist.virtualLiveSetlistType === "mc_timeline")
+      return t("virtualLiveSetlistTimelineTitle");
+    return formatType(setlist.virtualLiveSetlistType);
   };
+  const open = (event: MouseEvent): void => {
+    lastTrigger = event.currentTarget as HTMLElement;
+    dialog?.showModal();
+  };
+  const close = (): void => dialog?.close();
+  const handleClose = (): void => {
+    timelineController?.abort();
+    timelineController = null;
+    expandedId = null;
+    void tick().then(() => lastTrigger?.focus());
+  };
+  const loadTimeline = async (setlistId: number, force = false): Promise<void> => {
+    if (!force && timelineStates[setlistId]?.status === "ready") return;
+    timelineController?.abort();
+    const controller = new AbortController();
+    timelineController = controller;
+    timelineStates = { ...timelineStates, [setlistId]: { status: "loading", document: null } };
+    try {
+      const response = await fetch(
+        `/virtual-live/${region}/${virtualLiveId}/timeline/${setlistId}`,
+        {
+          signal: controller.signal
+        }
+      );
+      if (!response.ok) throw new Error("timeline");
+      const document = (await response.json()) as VirtualLiveTimelineDocument;
+      if (!controller.signal.aborted) {
+        timelineStates = { ...timelineStates, [setlistId]: { status: "ready", document } };
+      }
+    } catch {
+      if (!controller.signal.aborted) {
+        timelineStates = { ...timelineStates, [setlistId]: { status: "error", document: null } };
+      }
+    } finally {
+      if (timelineController === controller) timelineController = null;
+    }
+  };
+  const toggle = (setlist: VirtualLiveSetlist, index: number): void => {
+    const rowId = getRowId(setlist, index);
+    if (expandedId === rowId) {
+      timelineController?.abort();
+      timelineController = null;
+      expandedId = null;
+      return;
+    }
+    timelineController?.abort();
+    timelineController = null;
+    expandedId = rowId;
+    if (hasTimeline(setlist) && setlist.id !== null) {
+      void loadTimeline(setlist.id);
+    }
+  };
+
+  onDestroy(() => timelineController?.abort());
 </script>
 
 <div class="content-card-inset overflow-hidden rounded-xl">
   <div class="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4">
-    <div class="min-w-0">
-      <p class="text-sm font-semibold">{formatCount()}</p>
-      <p class="mt-0.5 text-xs opacity-55">{previewLabel}</p>
+    <div>
+      <p class="text-sm font-semibold">{countText}</p>
+      <p class="mt-0.5 text-xs opacity-55">{t("virtualLiveSetlistPreviewLabel")}</p>
     </div>
     <button
       type="button"
-      class="btn btn-primary btn-sm shrink-0 gap-1.5"
+      class="btn btn-primary btn-sm"
       aria-haspopup="dialog"
       aria-controls={dialogId}
-      onclick={() => dialog?.showModal()}
+      onclick={open}
     >
-      {viewFullLabel}
-      <Icon icon="mdi:playlist-check" class="size-4" aria-hidden="true" />
+      {t("virtualLiveSetlistViewFullButton")}<Icon
+        icon="mdi:playlist-check"
+        class="size-4"
+        aria-hidden="true"
+      />
     </button>
   </div>
-
   <ol class="border-t border-base-content/8 px-3 py-2 sm:px-4">
-    {#each previewItems as setlist, index (setlist.id ?? index)}
-      <li class="flex min-w-0 items-center gap-2 py-1.5 text-xs">
-        <span
-          class="flex size-6 shrink-0 items-center justify-center rounded-full bg-base-100 font-mono text-[0.65rem] font-bold opacity-65"
+    {#each orderedSetlists.slice(0, 3) as setlist, index (getRowId(setlist, index))}
+      <li class="flex items-center gap-2 py-1.5 text-xs">
+        <span class="font-mono font-bold opacity-55">{setlist.seq ?? index + 1}</span><span
+          class="truncate font-medium">{getTitle(setlist)}</span
         >
-          {setlist.seq ?? index + 1}
-        </span>
-        <span class="badge badge-sm shrink-0 font-semibold"
-          >{formatType(setlist.virtualLiveSetlistType)}</span
-        >
-        <span class="min-w-0 truncate opacity-60">
-          {setlist.musicId !== null
-            ? `${musicLabel} #${setlist.musicId}`
-            : (setlist.assetBundleName ?? unavailableLabel)}
-        </span>
       </li>
     {/each}
   </ol>
@@ -106,73 +147,76 @@
   id={dialogId}
   class="modal"
   aria-labelledby={titleId}
-  onclick={closeFromBackdrop}
+  onclose={handleClose}
+  onclick={(event) => {
+    if (event.target === event.currentTarget) close();
+  }}
 >
   <div
-    class="modal-box flex max-h-[min(92dvh,52rem)] w-[calc(100%-1rem)] max-w-4xl flex-col overflow-hidden p-0 sm:w-[calc(100%-2rem)]"
+    class="modal-box flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-5xl flex-col overflow-hidden p-0 sm:w-[calc(100%-2rem)]"
   >
     <header
-      class="flex shrink-0 items-start justify-between gap-4 border-b border-base-content/10 p-4 sm:px-5"
+      class="flex items-start justify-between gap-4 border-b border-base-content/10 p-4 sm:px-5"
     >
       <div>
-        <h2 id={titleId} class="text-lg font-bold sm:text-xl">{title}</h2>
-        <p class="mt-0.5 text-xs opacity-55">{formatCount()}</p>
+        <h2 id={titleId} class="text-xl font-bold">{title}</h2>
+        <p class="text-xs opacity-55">{countText}</p>
       </div>
       <button
         type="button"
         class="btn btn-circle btn-ghost btn-sm"
         aria-label={closeLabel}
-        onclick={close}
+        onclick={close}><Icon icon="mdi:close" class="size-5" aria-hidden="true" /></button
       >
-        <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
-      </button>
     </header>
-
     <ol class="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain p-3 sm:p-5">
-      {#each orderedSetlists as setlist, index (setlist.id ?? index)}
-        {@const characterIds = getCharacter3dIds(setlist)}
-        <li class="content-card-inset rounded-xl p-3">
-          <div class="flex min-w-0 items-center gap-2">
+      {#each orderedSetlists as setlist, index (getRowId(setlist, index))}
+        {@const rowId = getRowId(setlist, index)}
+        {@const expanded = expandedId === rowId}
+        <li
+          class={`rounded-xl border transition-colors ${expanded ? "border-primary/30 bg-primary/[0.035]" : "border-base-content/10 bg-base-100/40"}`}
+        >
+          <button
+            type="button"
+            class="flex w-full cursor-pointer items-center gap-3 rounded-xl p-3 text-left"
+            aria-label={expanded
+              ? t("virtualLiveSetlistCollapseStep")
+              : t("virtualLiveSetlistExpandStep")}
+            aria-expanded={expanded}
+            aria-controls={`${dialogId}-row-${rowId}`}
+            onclick={() => toggle(setlist, index)}
+          >
             <span
-              class="flex size-7 shrink-0 items-center justify-center rounded-full bg-base-100 font-mono text-xs font-bold"
+              class="flex size-7 shrink-0 items-center justify-center rounded-full bg-base-200 font-mono text-xs font-bold"
+              >{setlist.seq ?? index + 1}</span
             >
-              {setlist.seq ?? index + 1}
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold">{getTitle(setlist)}</p>
+              <p class="text-xs opacity-55">{formatType(setlist.virtualLiveSetlistType)}</p>
+            </div>
+            <span class="btn btn-circle btn-ghost btn-sm pointer-events-none" aria-hidden="true">
+              <Icon icon={expanded ? "mdi:chevron-up" : "mdi:chevron-down"} class="size-5" />
             </span>
-            <span
-              class={`badge badge-sm font-semibold ${setlist.virtualLiveSetlistType === "music" ? "badge-primary" : "badge-outline"}`}
-            >
-              {formatType(setlist.virtualLiveSetlistType)}
-            </span>
-            {#if setlist.musicId !== null}
-              <a
-                href={resolve("/music/[region]/[id]", { region, id: String(setlist.musicId) })}
-                class="min-w-0 truncate text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
-                >{musicLabel} #{setlist.musicId}</a
-              >
-            {/if}
-          </div>
-
-          {#if setlist.musicVocalId !== null || setlist.virtualLiveStageId !== null || setlist.assetBundleName || characterIds.length > 0}
-            <dl
-              class="mt-2 flex flex-wrap gap-x-3 gap-y-1 border-t border-base-content/8 pt-2 text-[0.68rem] opacity-60"
-            >
-              {#if setlist.musicVocalId !== null}<div class="flex gap-1">
-                  <dt>{vocalLabel}</dt>
-                  <dd class="font-mono">#{setlist.musicVocalId}</dd>
-                </div>{/if}
-              {#if setlist.virtualLiveStageId !== null}<div class="flex gap-1">
-                  <dt>{stageLabel}</dt>
-                  <dd class="font-mono">#{setlist.virtualLiveStageId}</dd>
-                </div>{/if}
-              {#if setlist.assetBundleName}<div class="flex min-w-0 gap-1">
-                  <dt>{assetLabel}</dt>
-                  <dd class="wrap-break-word font-mono">{setlist.assetBundleName}</dd>
-                </div>{/if}
-              {#if characterIds.length > 0}<div class="flex gap-1">
-                  <dt>{character3dLabel}</dt>
-                  <dd class="font-mono">{characterIds.map((id) => `#${id}`).join(", ")}</dd>
-                </div>{/if}
-            </dl>
+          </button>
+          {#if expanded}
+            <div id={`${dialogId}-row-${rowId}`} class="border-t border-base-content/8 p-3 sm:p-4">
+              {#if setlist.music}
+                <VirtualLiveSetlistMusicPlayer music={setlist.music} {region} {t} />
+              {:else if hasTimeline(setlist) && setlist.id !== null}
+                {@const state = timelineStates[setlist.id] ?? {
+                  status: "loading" as const,
+                  document: null
+                }}
+                <VirtualLiveTimelinePanel
+                  document={state.document}
+                  status={state.status}
+                  retry={() => void loadTimeline(setlist.id!, true)}
+                  {t}
+                />
+              {:else}
+                <p class="text-sm opacity-60">{t("virtualLiveSetlistNoDetails")}</p>
+              {/if}
+            </div>
           {/if}
         </li>
       {/each}

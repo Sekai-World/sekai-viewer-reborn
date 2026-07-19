@@ -1,5 +1,7 @@
 <script lang="ts">
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import { getMusicJacketAssetURL } from "$lib/assets/index";
+  import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import Icon from "@iconify/svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
@@ -23,6 +25,8 @@
     ticketTitle,
     periodLabel,
     musicFallbackLabel,
+    musicJacketAltSuffix,
+    imageUnavailableLabel,
     characterLabel,
     formatDate,
     formatVocalType,
@@ -40,6 +44,8 @@
     ticketTitle: string;
     periodLabel: string;
     musicFallbackLabel: string;
+    musicJacketAltSuffix: string;
+    imageUnavailableLabel: string;
     characterLabel: string;
     formatDate: (value: string | number | null) => string;
     formatVocalType: (value: string) => string;
@@ -112,6 +118,10 @@
         {/if}
 
         {#if hasScreenMv && screenMv}
+          {@const musicLabel = getMusicLabel()}
+          {@const jacketSrc = screenMv.musicAssetBundleName
+            ? getMusicJacketAssetURL(screenMv.musicAssetBundleName, region)
+            : null}
           <section
             class="content-card-inset rounded-xl p-3"
             aria-labelledby="virtual-live-screen-mv-title"
@@ -122,20 +132,36 @@
             >
               {screenMvTitle}
             </h3>
-            {#if getMusicLabel()}
-              {#if screenMv.musicId !== null}
-                <a
-                  href={`/music/${region}/${screenMv.musicId}`}
-                  class="mt-1.5 inline-block text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
-                  >{getMusicLabel()}</a
-                >
-              {:else}
-                <p class="mt-1.5 text-sm font-semibold">{getMusicLabel()}</p>
+            <div class="mt-1.5 flex min-w-0 items-start gap-3">
+              {#if jacketSrc}
+                <div class="size-14 shrink-0 overflow-hidden rounded-lg bg-base-200">
+                  <AssetImage
+                    src={jacketSrc}
+                    alt={`${musicLabel ?? screenMvTitle} ${musicJacketAltSuffix}`}
+                    fallbackLabel={imageUnavailableLabel}
+                    imageClass="size-full object-cover"
+                    buttonClass="block size-full overflow-hidden"
+                    loadMode="visible"
+                  />
+                </div>
               {/if}
-            {/if}
-            {#if hasText(screenMv.caption)}<p class="mt-1 whitespace-pre-line text-xs/5 opacity-70">
-                {screenMv.caption}
-              </p>{/if}
+              <div class="min-w-0 flex-1">
+                {#if musicLabel}
+                  {#if screenMv.musicId !== null}
+                    <a
+                      href={`/music/${region}/${screenMv.musicId}`}
+                      class="text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-primary"
+                      >{musicLabel}</a
+                    >
+                  {:else}
+                    <p class="text-sm font-semibold">{musicLabel}</p>
+                  {/if}
+                {/if}
+                {#if hasText(screenMv.caption)}<p class="mt-1 whitespace-pre-line text-xs/5 opacity-70">
+                    {screenMv.caption}
+                  </p>{/if}
+              </div>
+            </div>
             <div class="mt-2 flex flex-wrap items-center gap-2">
               {#if hasText(screenMv.musicVocalType)}
                 <span class="badge badge-outline badge-sm font-medium"

@@ -18,3 +18,7 @@ Add an accessible Virtual Live schedule switcher. Schedules are grouped by local
 Reorder the Virtual Live right column so Characters precedes Setlists. Virtual Live characters now rely on reliable `gameCharacterUnitId` → `gameCharacterId`/unit/colorCode enrichment for avatars and profile links, with graceful placeholders when the mapping is unavailable. The main detail page shows only a setlist summary; the full ordered setlist lives in an accessible scrollable dialog. The `character3dId1..6` 3D ID space has no confirmed mapping to `gameCharacterId`, so no guessed avatar or profile link is derived from it.
 
 Replace generic Virtual Live additional-data field counts with human-readable live-group dates, linked Screen MV song and character details, pamphlet copy, and ticket descriptions.
+
+Upgrade the full Virtual Live setlist into an expandable performance sequence with enriched music artwork, performers, and on-demand audio playback. MC timeline steps now load only when expanded and provide cached, filterable, progressively rendered event details.
+
+Polish MC timeline events with character avatars and profile links, concise dialogue and cast presentation, comment-only annotations, and click-to-play voice controls when voice assets are available.

@@ -96,7 +96,7 @@ const parseMusicVocal = (payload: unknown): MusicVocal | null => {
     return null;
   }
 
-  const id = pickStringLike(root, ["id"]);
+  const id = pickStringLike(root, ["id", "musicVocalId"]);
   const musicId = pickStringLike(root, ["musicId"]);
   if (!id || !musicId) {
     return null;

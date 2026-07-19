@@ -23,7 +23,7 @@
   import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "virtual-live", "error"]);
+  const fallbackMessages = getLocalI18nMessages(["common", "virtual-live", "music", "error"]);
   const initialText = (key: string, fallback?: string): string =>
     createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
   let messages = $state<Record<string, string>>(fallbackMessages);
@@ -185,7 +185,9 @@
                   />
                   <span>{t("virtualLiveDetailTitle")}</span>
                 </p>
-                <span class="badge badge-outline border-base-content/20 font-semibold">
+                <span
+                  class="badge badge-sm badge-outline shrink-0 self-start border-base-content/20 font-semibold"
+                >
                   #{live.id}
                 </span>
               </div>
@@ -217,12 +219,6 @@
                 </div>
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                    {t("virtualLiveRankingAnnounceAtLabel")}
-                  </dt>
-                  <dd class="mt-1 text-sm font-medium">{formatDate(live.rankingAnnounceAt)}</dd>
-                </div>
-                <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                     {t("internalResourceCodeLabel")}
                   </dt>
                   <dd class="mt-1 wrap-break-word text-sm font-medium">
@@ -246,14 +242,18 @@
                   />
                   <span>{t("virtualLiveWaitingRoomTitle")}</span>
                 </h2>
-                <dl class="grid gap-3 text-sm">
-                  <div class="content-card-inset rounded-2xl p-4">
-                    <dt class="opacity-55">{t("virtualLiveWaitingRoomStartAtLabel")}</dt>
-                    <dd class="mt-1 font-semibold">{formatDate(live.waitingRoom.startAt)}</dd>
+                <dl class="space-y-2">
+                  <div class="content-card-inset rounded-xl p-3 sm:px-4">
+                    <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                      {t("virtualLiveWaitingRoomStartAtLabel")}
+                    </dt>
+                    <dd class="mt-1 text-sm font-medium">{formatDate(live.waitingRoom.startAt)}</dd>
                   </div>
-                  <div class="content-card-inset rounded-2xl p-4">
-                    <dt class="opacity-55">{t("virtualLiveWaitingRoomEndAtLabel")}</dt>
-                    <dd class="mt-1 font-semibold">{formatDate(live.waitingRoom.endAt)}</dd>
+                  <div class="content-card-inset rounded-xl p-3 sm:px-4">
+                    <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                      {t("virtualLiveWaitingRoomEndAtLabel")}
+                    </dt>
+                    <dd class="mt-1 text-sm font-medium">{formatDate(live.waitingRoom.endAt)}</dd>
                   </div>
                 </dl>
               </div>
@@ -273,6 +273,8 @@
             ticketTitle={t("virtualLiveTicketTitle")}
             periodLabel={t("virtualLiveGroupPeriod")}
             musicFallbackLabel={t("virtualLiveScreenMvMusicFallback")}
+            musicJacketAltSuffix={t("musicJacketAltSuffix")}
+            imageUnavailableLabel={t("imageUnavailable")}
             characterLabel={t("virtualLiveCharacterIdentifierLabel")}
             {formatDate}
             formatVocalType={(value) =>
@@ -385,17 +387,10 @@
                   <VirtualLiveSetlistSummary
                     setlists={live.setlists}
                     region={data.region}
+                    virtualLiveId={live.id}
                     title={t("virtualLiveSetlistDialogTitle")}
-                    countLabel={t("virtualLiveSetlistItemCount")}
-                    previewLabel={t("virtualLiveSetlistPreviewLabel")}
-                    viewFullLabel={t("virtualLiveSetlistViewFullButton")}
                     closeLabel={t("closeLabel")}
-                    musicLabel={t("virtualLiveSetlistMusicLabel")}
-                    vocalLabel={t("virtualLiveSetlistMusicVocalLabel")}
-                    stageLabel={t("virtualLiveSetlistStageLabel")}
-                    assetLabel={t("internalResourceCodeLabel")}
-                    character3dLabel={t("virtualLiveSetlistCharacter3dLabel")}
-                    unavailableLabel={t("virtualLiveValueUnavailable")}
+                    {t}
                     formatType={typeLabel}
                   />
                 </section>
