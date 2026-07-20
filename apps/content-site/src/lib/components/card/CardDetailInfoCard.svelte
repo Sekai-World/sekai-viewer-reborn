@@ -225,7 +225,7 @@
     <dl class="space-y-2">
       {@render row(nameLabel, card.title)}
       {#if card.character}
-        {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl(), true, null, true, card.character.id, card.character.id !== null)}
+        {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl(), true, null, true, card.character.id, typeof card.character.id === "number" && Number.isInteger(card.character.id) && card.character.id > 0)}
       {/if}
       {@render row(unitLabel, getDisplayUnitName(card.character?.unit), undefined, true, card.character?.unit ?? null)}
       {#if shouldShowSupportUnit()}

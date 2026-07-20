@@ -39,8 +39,16 @@ const enrichTimeline = async (document: VirtualLiveTimelineDocument, baseUrl: st
   };
   const ids = [...new Set(document.events.flatMap((event) => [event.character3dId, event.targetCharacter3dId]).filter((id): id is number => typeof id === "number" && id > 0))];
   if (ids.length === 0) return documentWithVoices;
+  const characterController = new AbortController();
+  const characterTimeout = setTimeout(() => characterController.abort(), FETCH_TIMEOUT_MS);
   try {
-    const response = await getCharacter3DsByRegionBatch({ baseUrl, path: { region }, query: { ids: ids.slice(0, 100).join(",") } });
+    let response;
+    try {
+      response = await getCharacter3DsByRegionBatch({ baseUrl, path: { region }, query: { ids: ids.slice(0, 100).join(",") }, signal: characterController.signal });
+    } catch (cause) {
+      if (cause instanceof DOMException && cause.name === "AbortError") return documentWithVoices;
+      throw cause;
+    }
     if (response.error) return documentWithVoices;
     const records = getObject(response.data)?.items;
     const byID = new Map<number, Character3DRecord>((Array.isArray(records) ? records : []).flatMap((value) => {
@@ -56,8 +64,7 @@ const enrichTimeline = async (document: VirtualLiveTimelineDocument, baseUrl: st
     // exists. This keeps asset/region behavior intact while fixing the
     // EN/JP name mismatch reported for Virtual Live timelines.
     const gameCharacterIds = [...new Set([...byID.values()].map((record) => record.gameCharacterId))];
-    const localizedNames = await resolveLocalizedGameCharacterNames(baseUrl, region, gameCharacterIds);
-
+    const localizedNames = await resolveLocalizedGameCharacterNames(baseUrl, region, gameCharacterIds, characterController);
     const displayNameFor = (record: Character3DRecord | null | undefined): string | null => {
       if (!record) return null;
       const localized = localizedNames.get(record.gameCharacterId);
@@ -85,6 +92,8 @@ const enrichTimeline = async (document: VirtualLiveTimelineDocument, baseUrl: st
     };
   } catch {
     return documentWithVoices;
+  } finally {
+    clearTimeout(characterTimeout);
   }
 };
 
@@ -98,13 +107,14 @@ const enrichTimeline = async (document: VirtualLiveTimelineDocument, baseUrl: st
 const resolveLocalizedGameCharacterNames = async (
   baseUrl: string,
   region: SupportedRegion,
-  gameCharacterIds: number[]
+  gameCharacterIds: number[],
+  controller: AbortController
 ): Promise<Map<number, string>> => {
   const map = new Map<number, string>();
   if (gameCharacterIds.length === 0) return map;
   const results = await Promise.all(
     gameCharacterIds.map((id) =>
-      getGameCharactersByRegionById({ baseUrl, path: { region, id: String(id) } }).then(
+      getGameCharactersByRegionById({ baseUrl, path: { region, id: String(id) }, signal: controller.signal }).then(
         (response) => (response.error ? null : getObject(response.data)),
         () => null
       )
@@ -179,10 +189,24 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
     throw error(400, "Invalid timeline request");
   }
 
-  const setlistResponse = await getVirtualLivesByRegionByIdSetlists({
-    baseUrl: getMasterApiBaseUrl(),
-    path: { region, id: String(virtualLiveId) }
-  });
+  // Scoped abort controller for the Master API setlist lookup only. It is
+  // cleared before the asset fetch so a slow setlist call cannot poison the
+  // asset fetch's own timeout/abort signal.
+  const setlistController = new AbortController();
+  const setlistTimeout = setTimeout(() => setlistController.abort(), FETCH_TIMEOUT_MS);
+  let setlistResponse;
+  try {
+    setlistResponse = await getVirtualLivesByRegionByIdSetlists({
+      baseUrl: getMasterApiBaseUrl(),
+      path: { region, id: String(virtualLiveId) },
+      signal: setlistController.signal
+    });
+  } catch (cause) {
+    if (cause instanceof DOMException && cause.name === "AbortError") throw error(504, "Timeline request timed out");
+    throw cause;
+  } finally {
+    clearTimeout(setlistTimeout);
+  }
   if (setlistResponse.error) throw error(502, "Unable to load the Virtual Live setlist");
 
   const items = getObject(setlistResponse.data)?.items;

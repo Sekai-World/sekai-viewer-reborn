@@ -245,31 +245,40 @@ const enrichSetlistMusic = async (
   ];
   if (musicIds.length === 0) return detail;
 
-  const entries = await Promise.all(
-    musicIds.map(async (musicId) => {
-      try {
-        const [detailResponse, availabilityResponse] = await Promise.all([
-          getMusicsByRegionByIdDetail({ baseUrl, path: { region, id: String(musicId) } }),
-          getMusicsRegionsByIdAvailability({ baseUrl, path: { id: String(musicId) } })
-        ]);
-        if (detailResponse.error) return [musicId, null] as const;
-        const music = parseMusicDetail(detailResponse.data);
-        if (!music) return [musicId, null] as const;
-        const availableRegions = availabilityResponse.error
-          ? [region]
-          : normalizeAvailableRegions(availabilityResponse.data);
-        return [
-          musicId,
-          {
-            music,
-            assetRegion: getMusicAssetServer(region, availableRegions.length > 0 ? availableRegions : [region]) as SupportedRegion
-          }
-        ] as const;
-      } catch {
-        return [musicId, null] as const;
-      }
-    })
-  );
+  const BATCH_SIZE = 5;
+  const entries: Array<readonly [number, {
+    music: NonNullable<ReturnType<typeof parseMusicDetail>>;
+    assetRegion: SupportedRegion;
+  } | null]> = [];
+  for (let offset = 0; offset < musicIds.length; offset += BATCH_SIZE) {
+    const batch = musicIds.slice(offset, offset + BATCH_SIZE);
+    const batchEntries = await Promise.all(
+      batch.map(async (musicId) => {
+        try {
+          const [detailResponse, availabilityResponse] = await Promise.all([
+            getMusicsByRegionByIdDetail({ baseUrl, path: { region, id: String(musicId) } }),
+            getMusicsRegionsByIdAvailability({ baseUrl, path: { id: String(musicId) } })
+          ]);
+          if (detailResponse.error) return [musicId, null] as const;
+          const music = parseMusicDetail(detailResponse.data);
+          if (!music) return [musicId, null] as const;
+          const availableRegions = availabilityResponse.error
+            ? [region]
+            : normalizeAvailableRegions(availabilityResponse.data);
+          return [
+            musicId,
+            {
+              music,
+              assetRegion: getMusicAssetServer(region, availableRegions.length > 0 ? availableRegions : [region]) as SupportedRegion
+            }
+          ] as const;
+        } catch {
+          return [musicId, null] as const;
+        }
+      })
+    );
+    entries.push(...batchEntries);
+  }
   const musicById = new Map(entries);
 
   return {

@@ -108,7 +108,7 @@ export const normalizeVirtualLiveMCScenario = (
     };
     for (const item of collection) {
       const event = getObject(item);
-      if (!event) throw new VirtualLiveTimelineNormalizationError("MALFORMED_TIMELINE");
+      if (!event) continue;
       const startSec = getNumber(event.Time);
       const durationSec = getNumber(event.Duration);
       const attributes = Object.fromEntries(
@@ -161,7 +161,7 @@ export const normalizeVirtualLiveMCScenario = (
     schemaVersion: 1,
     timelineName: getString(root.Id) ?? getString(root.m_Name),
     declaredTotalEvents: totalEvents,
-    totalEvents,
+    totalEvents: events.length,
     durationSec,
     characters: [],
     categoryCounts,
@@ -200,9 +200,11 @@ export const normalizeVirtualLiveTimeline = (
   const categoryCounts = emptyCategoryCounts();
   const typeCounts: Record<string, number> = {};
 
-  const events: VirtualLiveTimelineEvent[] = rawEvents.map((item, sourceIndex) => {
+  const events: VirtualLiveTimelineEvent[] = [];
+  let sourceIndex = 0;
+  for (const item of rawEvents) {
     const event = getObject(item);
-    if (!event) throw new VirtualLiveTimelineNormalizationError("MALFORMED_TIMELINE");
+    if (!event) continue;
     const type = getString(event.type) ?? "unknown";
     const category = categoryByType[type] ?? "other";
     const startSec = getNumber(event.start);
@@ -221,8 +223,8 @@ export const normalizeVirtualLiveTimeline = (
     categoryCounts[category] += 1;
     typeCounts[type] = (typeCounts[type] ?? 0) + 1;
     const targetCharacter3dId = type === "lookAt" ? getNumber(attributes.targetCharacterId) : null;
-    return { sourceIndex, type, category, startSec, durationSec, endSec, characterName, character3dId, gameCharacterId: null, unit: null, displayName: characterName, voiceUrl: null, targetCharacter3dId, targetGameCharacterId: null, targetDisplayName: null, attributes };
-  });
+    events.push({ sourceIndex: sourceIndex++, type, category, startSec, durationSec, endSec, characterName, character3dId, gameCharacterId: null, unit: null, displayName: characterName, voiceUrl: null, targetCharacter3dId, targetGameCharacterId: null, targetDisplayName: null, attributes });
+  }
 
   events.sort((left, right) => {
     if (left.startSec === null) return right.startSec === null ? left.sourceIndex - right.sourceIndex : 1;

@@ -66,7 +66,7 @@
   "virtualLiveTimelineFiltersLabel": "Timeline event filters",
   "virtualLiveTimelineAllEvents": "All events",
   "virtualLiveTimelineShowingCount": "Showing {shown} of {total}",
-  "virtualLiveTimelineShowMore": "Show 100 more",
+  "virtualLiveTimelineShowMore": "Show {count} more",
   "virtualLiveTimelineDetails": "All event details",
   "virtualLiveTimelineDuration": "Duration",
   "virtualLiveTimelineDurationValue": "{duration}s",

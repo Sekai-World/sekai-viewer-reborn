@@ -307,7 +307,7 @@
         class="btn btn-outline btn-sm w-full"
         onclick={() => (visibleLimit += batchSize)}
       >
-        {t("virtualLiveTimelineShowMore")}
+        {t("virtualLiveTimelineShowMore").replace("{count}", String(batchSize))}
       </button>
     {/if}
   </div>

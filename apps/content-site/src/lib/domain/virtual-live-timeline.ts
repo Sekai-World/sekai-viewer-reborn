@@ -1,4 +1,4 @@
-import type { SupportedRegion } from "$lib/domain/regions";
+import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
@@ -52,7 +52,7 @@ export type VirtualLiveTimelineDocument = {
 };
 
 export const isSupportedVirtualLiveRegion = (region: string): region is SupportedRegion =>
-  ["jp", "en", "tw", "kr", "cn"].includes(region);
+  (supportedRegions as readonly string[]).includes(region);
 
 export const isPositiveSafeInteger = (value: unknown): value is number =>
   typeof value === "number" && Number.isSafeInteger(value) && value > 0;

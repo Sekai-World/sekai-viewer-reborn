@@ -113,7 +113,7 @@
     return groups;
   };
   const getRewardDetailKey = (detail: VirtualLiveRewardResourceBoxDetail, index: number): string =>
-    `${detail.resourceType ?? "resource"}-${detail.resourceId ?? "none"}-${detail.seq ?? index}`;
+    `${index}-${detail.resourceType ?? "resource"}-${detail.resourceId ?? "none"}-${detail.seq ?? "none"}`;
   const getRewardDetailLabel = (detail: VirtualLiveRewardResourceBoxDetail): string => {
     const type = detail.resourceType?.replaceAll("_", " ") ?? t("virtualLiveValueUnavailable");
     const id = detail.resourceId !== null ? ` #${detail.resourceId}` : "";
@@ -471,7 +471,7 @@
                   <VirtualLiveScheduleSwitcher
                     schedules={live.schedules}
                     uiLocale={data.uiLocale}
-                    virtualLiveId={live.id}
+                    virtualLiveId={data.virtualLiveId}
                     labelledBy="virtual-live-schedules-title"
                     unavailableLabel={t("virtualLiveValueUnavailable")}
                     afterEventLabel={t("virtualLiveScheduleIsAfterEventLabel")}
@@ -525,7 +525,7 @@
                   <VirtualLiveSetlistSummary
                     setlists={live.setlists}
                     region={data.region}
-                    virtualLiveId={live.id}
+                    virtualLiveId={data.virtualLiveId}
                     title={t("virtualLiveSetlistDialogTitle")}
                     closeLabel={t("closeLabel")}
                     {t}
