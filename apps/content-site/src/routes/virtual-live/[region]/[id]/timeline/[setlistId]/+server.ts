@@ -1,5 +1,9 @@
 import { error, json } from "@sveltejs/kit";
-import { getCharacter3DsByRegionBatch, getVirtualLivesByRegionByIdSetlists } from "@platform/sekai-master-api-sdk";
+import {
+  getCharacter3DsByRegionBatch,
+  getGameCharactersByRegionById,
+  getVirtualLivesByRegionByIdSetlists
+} from "@platform/sekai-master-api-sdk";
 import { getRemoteAssetEndpointURL } from "$lib/assets/index";
 import {
   isPositiveSafeInteger,
@@ -7,6 +11,7 @@ import {
 } from "$lib/domain/virtual-live-timeline";
 import type { VirtualLiveTimelineCharacter, VirtualLiveTimelineDocument, VirtualLiveTimelineEvent } from "$lib/domain/virtual-live-timeline";
 import type { SupportedRegion } from "$lib/domain/regions";
+import { formatCharacterName } from "$lib/domain/character";
 import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "$lib/server/config";
 import {
   normalizeVirtualLiveMCScenario,
@@ -42,11 +47,32 @@ const enrichTimeline = async (document: VirtualLiveTimelineDocument, baseUrl: st
       const record = getObject(value); const id = getNumber(record?.id); const gameCharacterId = getNumber(record?.gameCharacterId);
       return id !== null && gameCharacterId !== null ? [[id, { id, gameCharacterId, unit: getString(record?.unit) ?? undefined, name: getString(record?.name) ?? undefined }]] : [];
     }));
+
+    // The master API returns the same Japanese `name` for every region from the
+    // character3ds batch endpoint, so it cannot be used as a localized display
+    // name. Resolve region-localized first/given names from the gameCharacters
+    // endpoint (which honors the route region) and build the display name from
+    // those, falling back to the Japanese `name` only when no localized name
+    // exists. This keeps asset/region behavior intact while fixing the
+    // EN/JP name mismatch reported for Virtual Live timelines.
+    const gameCharacterIds = [...new Set([...byID.values()].map((record) => record.gameCharacterId))];
+    const localizedNames = await resolveLocalizedGameCharacterNames(baseUrl, region, gameCharacterIds);
+
+    const displayNameFor = (record: Character3DRecord | null | undefined): string | null => {
+      if (!record) return null;
+      const localized = localizedNames.get(record.gameCharacterId);
+      if (localized) return localized;
+      return record.name ?? null;
+    };
+
     const enrich = <T extends VirtualLiveTimelineCharacter | VirtualLiveTimelineEvent>(value: T): T => {
       if (value.character3dId === null) return value;
       const record = byID.get(value.character3dId);
       const localName = "characterName" in value ? value.characterName : value.name;
-      return record ? { ...value, gameCharacterId: record.gameCharacterId, unit: record.unit ?? null, displayName: localName ?? record.name ?? null } : value;
+      const displayName = displayNameFor(record) ?? localName;
+      return record
+        ? { ...value, gameCharacterId: record.gameCharacterId, unit: record.unit ?? null, displayName }
+        : value;
     };
     return {
       ...documentWithVoices,
@@ -54,12 +80,46 @@ const enrichTimeline = async (document: VirtualLiveTimelineDocument, baseUrl: st
       events: documentWithVoices.events.map((event) => {
         const enriched = enrich(event);
         const target = event.targetCharacter3dId === null ? null : byID.get(event.targetCharacter3dId);
-        return { ...enriched, targetGameCharacterId: target?.gameCharacterId ?? null, targetDisplayName: target?.name ?? null };
+        return { ...enriched, targetGameCharacterId: target?.gameCharacterId ?? null, targetDisplayName: displayNameFor(target) };
       })
     };
   } catch {
     return documentWithVoices;
   }
+};
+
+/**
+ * Resolve region-localized character display names from the gameCharacters
+ * endpoint. The route `region` drives localization; the master API returns
+ * localized `firstName`/`givenName` per region. Returns a map keyed by
+ * `gameCharacterId`. Failures degrade to an empty map so callers fall back to
+ * the (Japanese) character3d `name`.
+ */
+const resolveLocalizedGameCharacterNames = async (
+  baseUrl: string,
+  region: SupportedRegion,
+  gameCharacterIds: number[]
+): Promise<Map<number, string>> => {
+  const map = new Map<number, string>();
+  if (gameCharacterIds.length === 0) return map;
+  const results = await Promise.all(
+    gameCharacterIds.map((id) =>
+      getGameCharactersByRegionById({ baseUrl, path: { region, id: String(id) } }).then(
+        (response) => (response.error ? null : getObject(response.data)),
+        () => null
+      )
+    )
+  );
+  for (const node of results) {
+    if (!node) continue;
+    const id = getNumber(node.id);
+    if (id === null) continue;
+    const firstName = getString(node.firstName);
+    const givenName = getString(node.givenName);
+    const name = formatCharacterName(firstName, givenName, String(id));
+    if (name) map.set(id, name);
+  }
+  return map;
 };
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
