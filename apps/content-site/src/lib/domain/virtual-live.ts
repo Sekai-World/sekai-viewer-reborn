@@ -110,6 +110,60 @@ export type VirtualLiveReward = {
   virtualLiveId: number | null;
   resourceBoxId: number | null;
   virtualLiveType: string | null;
+  /**
+   * Optional expanded resource box. `null` when the source reward carried no
+   * `resourceBox` (e.g. legacy rewards). When present, `details` is sorted
+   * deterministically by `seq`.
+   */
+  resourceBox: VirtualLiveRewardResourceBox | null;
+};
+
+/**
+ * Neutral resource-box shape for an expanded Virtual Live reward. Mirrors the
+ * compatible event reward-box model (`EventRewardResourceBoxDetail` +
+ * `EventRewardHonor`) but is scoped to Virtual Live data so the two domains
+ * stay decoupled. Only confirmed display fields are retained; no item
+ * names/links are invented.
+ */
+export type VirtualLiveRewardResourceBox = {
+  id: number | null;
+  resourceBoxPurpose: string | null;
+  resourceBoxType: string | null;
+  details: VirtualLiveRewardResourceBoxDetail[];
+};
+
+export type VirtualLiveRewardResourceBoxDetail = {
+  resourceType: string | null;
+  resourceId: number | null;
+  resourceLevel: number | null;
+  resourceQuantity: number | null;
+  seq: number | null;
+  honor: VirtualLiveRewardHonor | null;
+};
+
+export type VirtualLiveRewardHonor = {
+  id: number | null;
+  groupId: number | null;
+  honorRarity: string | null;
+  honorMissionType: string | null;
+  honorType: string | null;
+  assetBundleName: string | null;
+  levels: VirtualLiveRewardHonorLevel[];
+  group: VirtualLiveRewardHonorGroup | null;
+};
+
+export type VirtualLiveRewardHonorLevel = {
+  honorId: number | null;
+  level: number | null;
+  honorRarity: string | null;
+  assetBundleName: string | null;
+};
+
+export type VirtualLiveRewardHonorGroup = {
+  id: number | null;
+  honorType: string | null;
+  backgroundAssetBundleName: string | null;
+  frameName: string | null;
 };
 
 export type VirtualLiveSchedule = {

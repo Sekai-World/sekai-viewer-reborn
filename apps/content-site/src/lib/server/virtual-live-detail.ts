@@ -7,6 +7,11 @@ import {
   type VirtualLiveInformation,
   type VirtualLivePamphletDisplay,
   type VirtualLiveReward,
+  type VirtualLiveRewardHonor,
+  type VirtualLiveRewardHonorGroup,
+  type VirtualLiveRewardHonorLevel,
+  type VirtualLiveRewardResourceBox,
+  type VirtualLiveRewardResourceBoxDetail,
   type VirtualLiveSchedule,
   type VirtualLiveScreenMvMusicVocalDisplay,
   type VirtualLiveSetlist,
@@ -177,6 +182,100 @@ const parseCharacter = (value: unknown): VirtualLiveCharacter | null => {
   };
 };
 
+const parseRewardHonorLevel = (value: unknown): VirtualLiveRewardHonorLevel | null => {
+  const node = getObject(value);
+  if (!node) {
+    return null;
+  }
+
+  return {
+    honorId: getNumber(node["honorId"]),
+    level: getNumber(node["level"]),
+    honorRarity: getString(node["honorRarity"]),
+    assetBundleName: getString(node["assetbundleName"] ?? node["assetBundleName"])
+  };
+};
+
+const parseRewardHonorGroup = (value: unknown): VirtualLiveRewardHonorGroup | null => {
+  const node = getObject(value);
+  if (!node) {
+    return null;
+  }
+
+  return {
+    id: getNumber(node["id"]),
+    honorType: getString(node["honorType"]),
+    backgroundAssetBundleName: getString(
+      node["backgroundAssetbundleName"] ?? node["backgroundAssetBundleName"]
+    ),
+    frameName: getString(node["frameName"])
+  };
+};
+
+const parseRewardHonor = (value: unknown): VirtualLiveRewardHonor | null => {
+  const node = getObject(value);
+  if (!node) {
+    return null;
+  }
+
+  return {
+    id: getNumber(node["id"]),
+    groupId: getNumber(node["groupId"]),
+    honorRarity: getString(node["honorRarity"]),
+    honorMissionType: getString(node["honorMissionType"]),
+    honorType: getString(node["honorType"]),
+    assetBundleName: getString(node["assetbundleName"] ?? node["assetBundleName"]),
+    levels: getArray(node["levels"]).flatMap((item) => {
+      const level = parseRewardHonorLevel(item);
+      return level ? [level] : [];
+    }),
+    group: parseRewardHonorGroup(node["group"])
+  };
+};
+
+const parseRewardResourceBoxDetail = (
+  value: unknown
+): VirtualLiveRewardResourceBoxDetail | null => {
+  const node = getObject(value);
+  if (!node) {
+    return null;
+  }
+
+  return {
+    resourceType: getString(node["resourceType"]),
+    resourceId: getNumber(node["resourceId"]),
+    resourceLevel: getNumber(node["resourceLevel"]),
+    resourceQuantity: getNumber(node["resourceQuantity"]),
+    seq: getNumber(node["seq"]),
+    honor: parseRewardHonor(node["honor"])
+  };
+};
+
+const parseRewardResourceBox = (value: unknown): VirtualLiveRewardResourceBox | null => {
+  const node = getObject(value);
+  if (!node) {
+    return null;
+  }
+
+  const details = getArray(node["details"])
+    .flatMap((item) => {
+      const detail = parseRewardResourceBoxDetail(item);
+      return detail ? [detail] : [];
+    })
+    .sort((a, b) => {
+      const aSeq = a.seq ?? Number.POSITIVE_INFINITY;
+      const bSeq = b.seq ?? Number.POSITIVE_INFINITY;
+      return aSeq - bSeq;
+    });
+
+  return {
+    id: getNumber(node["id"]),
+    resourceBoxPurpose: getString(node["resourceBoxPurpose"]),
+    resourceBoxType: getString(node["resourceBoxType"]),
+    details
+  };
+};
+
 const parseReward = (value: unknown): VirtualLiveReward | null => {
   const node = getObject(value);
   if (!node) {
@@ -187,7 +286,8 @@ const parseReward = (value: unknown): VirtualLiveReward | null => {
     id: getNumber(node["id"]),
     virtualLiveId: getNumber(node["virtualLiveId"]),
     resourceBoxId: getNumber(node["resourceBoxId"]),
-    virtualLiveType: getString(node["virtualLiveType"])
+    virtualLiveType: getString(node["virtualLiveType"]),
+    resourceBox: parseRewardResourceBox(node["resourceBox"])
   };
 };
 

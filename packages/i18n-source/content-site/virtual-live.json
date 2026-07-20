@@ -24,6 +24,7 @@
   "virtualLiveStatus.ongoing": "Ongoing",
   "virtualLiveStatus.ended": "Ended",
   "virtualLiveType.normal": "Normal",
+  "virtualLiveType.archive": "Archive",
   "virtualLiveType.beginner": "Beginner",
   "virtualLiveType.cheerful_carnival": "Cheerful Carnival",
   "virtualLiveType.streaming": "Streaming",

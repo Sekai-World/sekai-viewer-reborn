@@ -893,9 +893,26 @@ export type SharedVirtualLiveObjectResponse = {
 
 export type SharedVirtualLiveReward = {
     id: number;
+    resourceBox?: SharedVirtualLiveRewardResourceBox;
     resourceBoxId: number;
     virtualLiveId: number;
     virtualLiveType: string;
+};
+
+export type SharedVirtualLiveRewardResourceBox = {
+    details?: Array<SharedVirtualLiveRewardResourceBoxDetail>;
+    id?: number;
+    resourceBoxPurpose?: string;
+    resourceBoxType?: string;
+};
+
+export type SharedVirtualLiveRewardResourceBoxDetail = {
+    honor?: SharedEventRewardHonorResponse;
+    resourceId?: number;
+    resourceLevel?: number;
+    resourceQuantity?: number;
+    resourceType?: string;
+    seq?: number;
 };
 
 export type SharedVirtualLiveSchedule = {

@@ -2,7 +2,12 @@
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
   import { swipeRegion } from "$lib/actions/swipe-region";
-  import { getVirtualLiveBannerAssetURL } from "$lib/assets/index";
+  import {
+    getCommonMaterialThumbnailURL,
+    getRemoteAssetEndpointURL,
+    getVirtualLiveBannerAssetURL,
+    type AssetServer
+  } from "$lib/assets/index";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import VirtualLiveScheduleSwitcher from "$lib/components/virtual-live/VirtualLiveScheduleSwitcher.svelte";
   import VirtualLiveCharacterGrid from "$lib/components/virtual-live/VirtualLiveCharacterGrid.svelte";
@@ -16,6 +21,10 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
+  import type {
+    VirtualLiveReward,
+    VirtualLiveRewardResourceBoxDetail
+  } from "$lib/domain/virtual-live";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { ImagePreviewDialog } from "@platform/ui-shell";
@@ -78,12 +87,143 @@
     type
       ? t(`virtualLiveType.${type}`, type.replaceAll("_", " "))
       : t("virtualLiveValueUnavailable");
+  type RewardGroup = {
+    virtualLiveType: string | null;
+    details: VirtualLiveRewardResourceBoxDetail[];
+  };
+  const formatNumber = (value: number | null): string | null =>
+    value === null ? null : new Intl.NumberFormat(data.uiLocale).format(value);
+  const getRewardGroups = (rewards: VirtualLiveReward[]): RewardGroup[] => {
+    const groups: RewardGroup[] = [];
+
+    for (const reward of rewards) {
+      const details = reward.resourceBox?.details ?? [];
+      if (details.length === 0) {
+        continue;
+      }
+
+      const existingGroup = groups.find((item) => item.virtualLiveType === reward.virtualLiveType);
+      if (existingGroup) {
+        existingGroup.details.push(...details);
+      } else {
+        groups.push({ virtualLiveType: reward.virtualLiveType, details: [...details] });
+      }
+    }
+
+    return groups;
+  };
+  const getRewardDetailKey = (detail: VirtualLiveRewardResourceBoxDetail, index: number): string =>
+    `${detail.resourceType ?? "resource"}-${detail.resourceId ?? "none"}-${detail.seq ?? index}`;
+  const getRewardDetailLabel = (detail: VirtualLiveRewardResourceBoxDetail): string => {
+    const type = detail.resourceType?.replaceAll("_", " ") ?? t("virtualLiveValueUnavailable");
+    const id = detail.resourceId !== null ? ` #${detail.resourceId}` : "";
+    const level = detail.resourceLevel !== null ? ` Lv.${formatNumber(detail.resourceLevel)}` : "";
+    return `${type}${id}${level}`;
+  };
+  const getRewardDetailImageSrc = (detail: VirtualLiveRewardResourceBoxDetail): string | null => {
+    if (!detail.resourceType) {
+      return null;
+    }
+
+    const assetRegion = data.region as AssetServer;
+    if (detail.resourceType === "material" && detail.resourceId !== null) {
+      return getRemoteAssetEndpointURL(
+        `thumbnail/material/material${detail.resourceId}.webp`,
+        assetRegion
+      );
+    }
+
+    if (
+      ["coin", "ingamevoice", "jewel", "live_point", "slot", "virtual_coin"].includes(
+        detail.resourceType
+      )
+    ) {
+      return getCommonMaterialThumbnailURL(detail.resourceType, assetRegion);
+    }
+
+    if (detail.resourceType === "paid_jewel") {
+      return getCommonMaterialThumbnailURL("jewel", assetRegion);
+    }
+
+    if (detail.resourceType === "skill_practice_ticket" && detail.resourceId !== null) {
+      return getRemoteAssetEndpointURL(
+        `thumbnail/skill_practice_ticket/ticket${detail.resourceId}.webp`,
+        assetRegion
+      );
+    }
+
+    if (detail.resourceType === "gacha_ticket" && detail.resourceId !== null) {
+      return getRemoteAssetEndpointURL(
+        `thumbnail/gacha_ticket/${detail.resourceId}.webp`,
+        assetRegion
+      );
+    }
+
+    if (detail.resourceType === "boost_item" && detail.resourceId !== null) {
+      return getRemoteAssetEndpointURL(
+        `thumbnail/boost_item/boost_item${detail.resourceId}.webp`,
+        assetRegion
+      );
+    }
+
+    return null;
+  };
+  const getRewardDetailFallbackIcon = (detail: VirtualLiveRewardResourceBoxDetail): string => {
+    if (detail.resourceType === "stamp") {
+      return "mdi:text-box-outline";
+    }
+
+    if (detail.resourceType === "honor" || detail.resourceType === "bonds_honor") {
+      return "mdi:card-account-details-outline";
+    }
+
+    if (detail.resourceType === "gacha_ticket") {
+      return "mdi:ticket-outline";
+    }
+
+    return "mdi:gift-outline";
+  };
+  const hideBrokenImage = (event: Event): void => {
+    if (event.currentTarget instanceof HTMLImageElement) {
+      event.currentTarget.hidden = true;
+    }
+  };
   $effect(() => {
     if (data.region || data.virtualLiveId) {
       previewOpen = false;
     }
   });
 </script>
+
+{#snippet rewardDetailChip(detail: VirtualLiveRewardResourceBoxDetail)}
+  {@const imageSrc = getRewardDetailImageSrc(detail)}
+  {@const quantity = formatNumber(detail.resourceQuantity)}
+  <span
+    class="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-base-content/20 bg-base-100/80 px-2.5 py-1.5 text-xs font-semibold text-base-content"
+    title={getRewardDetailLabel(detail)}
+    aria-label={getRewardDetailLabel(detail)}
+  >
+    {#if imageSrc}
+      <img
+        src={imageSrc}
+        alt=""
+        class="size-6 shrink-0 object-contain"
+        loading="lazy"
+        decoding="async"
+        onerror={hideBrokenImage}
+      />
+    {:else}
+      <Icon
+        icon={getRewardDetailFallbackIcon(detail)}
+        class="size-4 shrink-0 opacity-70"
+        aria-hidden="true"
+      />
+    {/if}
+    {#if quantity}
+      <span class="shrink-0 text-primary">×{quantity}</span>
+    {/if}
+  </span>
+{/snippet}
 
 <svelte:head>
   {#await data.virtualLivePayload}
@@ -397,38 +537,46 @@
           {/if}
 
           {#if live.rewards.length > 0}
-            <article class="card content-card-shell shadow-sm">
-              <div class="card-body gap-4 p-3 sm:p-5">
-                <section class="space-y-2" aria-labelledby="virtual-live-rewards-title">
-                  <h2
-                    id="virtual-live-rewards-title"
-                    class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
-                  >
-                    <Icon
-                      icon="mdi:gift-outline"
-                      class="size-4 shrink-0 translate-y-[0.5px]"
-                      aria-hidden="true"
-                    />
-                    <span>{t("virtualLiveRewardsTitle")}</span>
-                  </h2>
-                  <div class="grid gap-2 sm:grid-cols-2">
-                    {#each live.rewards as reward, index (reward.id ?? index)}
-                      <div class="content-card-inset rounded-xl p-3">
-                        <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                          {t("virtualLiveRewardResourceBoxIdLabel")}
-                        </p>
-                        <p class="mt-1 wrap-break-word text-sm font-semibold">
-                          #{displayValue(reward.resourceBoxId)}
-                        </p>
-                        {#if reward.virtualLiveType}
-                          <p class="mt-1 text-xs opacity-60">{typeLabel(reward.virtualLiveType)}</p>
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
-                </section>
-              </div>
-            </article>
+            {@const rewardGroups = getRewardGroups(live.rewards)}
+            {#if rewardGroups.length > 0}
+              <article class="card content-card-shell shadow-sm">
+                <div class="card-body gap-4 p-3 sm:p-5">
+                  <section class="space-y-2" aria-labelledby="virtual-live-rewards-title">
+                    <h2
+                      id="virtual-live-rewards-title"
+                      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+                    >
+                      <Icon
+                        icon="mdi:gift-outline"
+                        class="size-4 shrink-0 translate-y-[0.5px]"
+                        aria-hidden="true"
+                      />
+                      <span>{t("virtualLiveRewardsTitle")}</span>
+                    </h2>
+                    <div class="grid gap-2 sm:grid-cols-2">
+                      {#each rewardGroups as group, groupIndex (group.virtualLiveType ?? groupIndex)}
+                        <section
+                          class="content-card-inset rounded-xl p-3"
+                          aria-labelledby={`virtual-live-reward-group-${groupIndex}`}
+                        >
+                          <h3
+                            id={`virtual-live-reward-group-${groupIndex}`}
+                            class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60"
+                          >
+                            {typeLabel(group.virtualLiveType)}
+                          </h3>
+                          <div class="mt-2 flex flex-wrap gap-2">
+                            {#each group.details as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
+                              {@render rewardDetailChip(detail)}
+                            {/each}
+                          </div>
+                        </section>
+                      {/each}
+                    </div>
+                  </section>
+                </div>
+              </article>
+            {/if}
           {/if}
         </div>
       </div>
