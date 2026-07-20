@@ -21,7 +21,11 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
   }
 
   if (pathname.startsWith("/virtual-live/") || pathname.startsWith("/virtual-lives/")) {
-    return ["common", "virtual-live", "error"];
+    return ["common", "virtual-live", "music", "error"];
+  }
+
+  if (pathname.startsWith("/character/") || pathname.startsWith("/characters/")) {
+    return ["common", "character", "card", "error"];
   }
 
   return pathname === "/" ? ["common", "home", "event", "error"] : ["common", "error"];
@@ -29,11 +33,7 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
 
 export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const i18nMessages = loadI18nMessageBundle(
-    uiLocale,
-    getRouteI18nNamespaces(url.pathname),
-    fetch
-  );
+  const i18nMessages = loadI18nMessageBundle(uiLocale, getRouteI18nNamespaces(url.pathname), fetch);
   i18nMessages.catch(() => {});
 
   return {

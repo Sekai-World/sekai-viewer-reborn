@@ -15,7 +15,7 @@
   import { onMount, type Snippet } from "svelte";
   import {
     createI18nTranslator,
-     getLocalI18nMessages,
+    getLocalI18nMessages,
     requestI18nLocale,
     isLocaleLoading,
     setI18nLocale
@@ -49,14 +49,9 @@
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const fallbackMessages = getLocalI18nMessages(["common"]);
-  let currentLayoutMessages = $state<Record<string, string>>(
-    fallbackMessages
-  );
+  let currentLayoutMessages = $state<Record<string, string>>(fallbackMessages);
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    )(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
@@ -84,6 +79,7 @@
   let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
   let sidebarLabel = $state(getInitialI18nText("navigation.sidebarTitle"));
   let databaseLabel = $state(getInitialI18nText("navigation.database"));
+  let charactersLabel = $state(getInitialI18nText("navigation.characters"));
   let cardsLabel = $state(getInitialI18nText("navigation.cards"));
   let songsLabel = $state(getInitialI18nText("navigation.songs"));
   let eventsLabel = $state(getInitialI18nText("navigation.events"));
@@ -123,7 +119,10 @@
   const sidebarRegion = $derived.by<SupportedRegion>(() => {
     const [first, second] = page.url.pathname.split("/").filter(Boolean);
 
-    if ((first === "card" || first === "cards") && second) {
+    if (
+      (first === "character" || first === "characters" || first === "card" || first === "cards") &&
+      second
+    ) {
       return normalizeRegion(second, preferredRegion);
     }
 
@@ -154,6 +153,13 @@
     {
       type: "section",
       label: databaseLabel
+    },
+    {
+      label: charactersLabel,
+      icon: "mdi:account-group",
+      href: `/characters/${sidebarRegion}`,
+      active:
+        page.url.pathname.startsWith("/characters/") || page.url.pathname.startsWith("/character/")
     },
     {
       label: cardsLabel,
@@ -269,6 +275,7 @@
     closeSidebarLabel = translate("aria.closeSidebar");
     sidebarLabel = translate("navigation.sidebarTitle");
     databaseLabel = translate("navigation.database");
+    charactersLabel = translate("navigation.characters");
     cardsLabel = translate("navigation.cards");
     songsLabel = translate("navigation.songs");
     eventsLabel = translate("navigation.events");

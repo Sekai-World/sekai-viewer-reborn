@@ -1,10 +1,14 @@
 import { dev } from "$app/environment";
 import {
+  getMusicsByRegionById,
+  getMusicsByRegionByIdDetail,
+  getMusicsRegionsByIdAvailability,
   getVirtualLivesByRegionById,
   getVirtualLivesByRegionByIdSchedules,
   getVirtualLivesByRegionByIdSetlists,
   getVirtualLivesRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
+import { getMusicAssetServer } from "$lib/assets/index";
 import { getServerI18nText } from "$lib/i18n/runtime";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
@@ -12,8 +16,12 @@ import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   parseVirtualLiveDetail,
   parseVirtualLiveSetlistItems,
+  buildCharacterUnitEnrichmentMap,
+  enrichVirtualLiveCharacters,
   type VirtualLiveDetail
 } from "$lib/server/virtual-live-detail";
+import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
+import { parseMusicDetail } from "$lib/server/music-detail";
 import type { PageServerLoad } from "./$types";
 
 type VirtualLivePayload = {
@@ -32,6 +40,18 @@ type VirtualLiveAggregateLookup = {
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
+
+const getString = (value: unknown): string | null => {
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return null;
+};
 
 const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
   const root = getObject(payload);
@@ -136,16 +156,178 @@ const parseVirtualLiveSchedules = (items: unknown): VirtualLiveDetail["schedules
     .filter((schedule): schedule is VirtualLiveDetail["schedules"][number] => schedule !== null);
 };
 
+/**
+ * Resolve the human-readable title and jacket asset bundle for a positive
+ * integer `musicId`.
+ *
+ * Returns `null` on any failure (missing id, non-positive id, SDK error,
+ * empty response, or a response carrying no usable title). Failures are
+ * always optional and never make the caller's result unavailable.
+ */
+const fetchScreenMvMusicDisplay = async (
+  baseUrl: string,
+  region: SupportedRegion,
+  musicId: number | null
+): Promise<{ title: string; assetBundleName: string | null } | null> => {
+  if (typeof musicId !== "number" || !Number.isInteger(musicId) || musicId <= 0) {
+    return null;
+  }
+
+  try {
+    const response = await getMusicsByRegionById({
+      baseUrl,
+      path: { region, id: String(musicId) }
+    });
+    if (response.error || !response.data) {
+      return null;
+    }
+
+    const music = getObject(response.data);
+    const title = getString(music?.["title"]);
+    return title
+      ? {
+          title,
+          assetBundleName: getString(music?.["assetbundleName"] ?? music?.["assetBundleName"])
+        }
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Enrich a parsed Virtual Live detail's `screenMvMusicVocal` with a fetched
+ * music display data, when a valid `musicId` is present.
+ *
+ * Immutable: returns a new detail object and never mutates the input. When
+ * there is no `screenMvMusicVocal`, no valid `musicId`, or the lookup fails,
+ * the detail is returned unchanged (with display fields left undefined → null
+ * on serialization). The `musicId` is already captured by the parser so the
+ * UI retains a `/music/:region/:id` link with a useful fallback.
+ */
+const enrichScreenMvMusicDisplay = async (
+  detail: VirtualLiveDetail,
+  baseUrl: string,
+  region: SupportedRegion
+): Promise<VirtualLiveDetail> => {
+  const screenMv = detail.screenMvMusicVocal;
+  if (!screenMv || typeof screenMv.musicId !== "number" || screenMv.musicId <= 0) {
+    return detail;
+  }
+
+  const music = await fetchScreenMvMusicDisplay(baseUrl, region, screenMv.musicId);
+  if (music === null) {
+    return detail;
+  }
+
+  return {
+    ...detail,
+    screenMvMusicVocal: {
+      ...screenMv,
+      musicTitle: music.title,
+      musicAssetBundleName: music.assetBundleName
+    }
+  };
+};
+
+const enrichSetlistMusic = async (
+  detail: VirtualLiveDetail,
+  baseUrl: string,
+  region: SupportedRegion
+): Promise<VirtualLiveDetail> => {
+  const musicIds = [
+    ...new Set(
+      detail.setlists
+        .filter((setlist) => setlist.virtualLiveSetlistType === "music")
+        .map((setlist) => setlist.musicId)
+        .filter((id): id is number => typeof id === "number" && Number.isSafeInteger(id) && id > 0)
+    )
+  ];
+  if (musicIds.length === 0) return detail;
+
+  const BATCH_SIZE = 5;
+  const entries: Array<readonly [number, {
+    music: NonNullable<ReturnType<typeof parseMusicDetail>>;
+    assetRegion: SupportedRegion;
+  } | null]> = [];
+  for (let offset = 0; offset < musicIds.length; offset += BATCH_SIZE) {
+    const batch = musicIds.slice(offset, offset + BATCH_SIZE);
+    const batchEntries = await Promise.all(
+      batch.map(async (musicId) => {
+        try {
+          const [detailResponse, availabilityResponse] = await Promise.all([
+            getMusicsByRegionByIdDetail({ baseUrl, path: { region, id: String(musicId) } }),
+            getMusicsRegionsByIdAvailability({ baseUrl, path: { id: String(musicId) } })
+          ]);
+          if (detailResponse.error) return [musicId, null] as const;
+          const music = parseMusicDetail(detailResponse.data);
+          if (!music) return [musicId, null] as const;
+          const availableRegions = availabilityResponse.error
+            ? [region]
+            : normalizeAvailableRegions(availabilityResponse.data);
+          return [
+            musicId,
+            {
+              music,
+              assetRegion: getMusicAssetServer(region, availableRegions.length > 0 ? availableRegions : [region]) as SupportedRegion
+            }
+          ] as const;
+        } catch {
+          return [musicId, null] as const;
+        }
+      })
+    );
+    entries.push(...batchEntries);
+  }
+  const musicById = new Map(entries);
+
+  return {
+    ...detail,
+    setlists: detail.setlists.map((setlist) => {
+      if (setlist.virtualLiveSetlistType !== "music" || setlist.musicId === null) return setlist;
+      const entry = musicById.get(setlist.musicId);
+      if (!entry) return setlist;
+      const selectedVocal =
+        setlist.musicVocalId === null
+          ? null
+          : entry.music.vocals.find((vocal) => Number(vocal.id) === setlist.musicVocalId) ?? null;
+      return {
+        ...setlist,
+        music: {
+          id: entry.music.id,
+          title: entry.music.title,
+          jacketAssetBundleName: entry.music.assetBundleName,
+          fillerSec: entry.music.fillerSec,
+          artist: entry.music.creatorArtist?.name ?? null,
+          assetRegion: entry.assetRegion,
+          vocal: selectedVocal
+            ? {
+                id: selectedVocal.id,
+                vocalType: selectedVocal.vocalType,
+                assetBundleName: selectedVocal.assetBundleName,
+                characters: selectedVocal.characters ?? []
+              }
+            : null
+        }
+      };
+    })
+  };
+};
+
 const fetchVirtualLiveAggregate = async (
   baseUrl: string,
   region: SupportedRegion,
   virtualLiveId: string
 ): Promise<VirtualLiveAggregateLookup> => {
   try {
-    const [detailResponse, schedulesResponse, setlistsResponse] = await Promise.all([
+    const [detailResponse, schedulesResponse, setlistsResponse, unitsAggregate] = await Promise.all([
       getVirtualLivesByRegionById({ baseUrl, path: { region, id: virtualLiveId } }),
       getVirtualLivesByRegionByIdSchedules({ baseUrl, path: { region, id: virtualLiveId } }),
-      getVirtualLivesByRegionByIdSetlists({ baseUrl, path: { region, id: virtualLiveId } })
+      getVirtualLivesByRegionByIdSetlists({ baseUrl, path: { region, id: virtualLiveId } }),
+      aggregateGameCharacterUnitsByRegion(baseUrl, region).catch(() => ({
+        data: { items: [] },
+        loadFailed: true
+      }))
     ]);
 
     if (detailResponse.error) {
@@ -184,9 +366,22 @@ const fetchVirtualLiveAggregate = async (
           : parseVirtualLiveSetlistItems(setlists?.["items"])
     };
 
+    const enrichmentMap = buildCharacterUnitEnrichmentMap(
+      unitsAggregate.data,
+      unitsAggregate.loadFailed
+    );
+    const enrichedDetail = enrichVirtualLiveCharacters(mergedDetail, enrichmentMap);
+
+    const detailWithSetlistMusic = await enrichSetlistMusic(enrichedDetail, baseUrl, region);
+    const detailWithMusicTitle = await enrichScreenMvMusicDisplay(
+      detailWithSetlistMusic,
+      baseUrl,
+      region
+    );
+
     return {
       region,
-      virtualLive: mergedDetail,
+      virtualLive: detailWithMusicTitle,
       availableRegions: normalizeAvailableRegions(detailResponse.data),
       exists: true,
       rawPayloadJson: JSON.stringify(detailResponse.data, null, 2)

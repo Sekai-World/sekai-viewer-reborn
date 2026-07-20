@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { asset } from "$app/paths";
+  import { asset, resolve } from "$app/paths";
+  import type { SupportedRegion } from "$lib/domain/regions";
   import type { CardDetail, CardDetailCharacter } from "$lib/domain/card-detail";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { getCardGachaVoiceAssetURL } from "$lib/assets/index";
@@ -12,6 +13,7 @@
 
   let {
     card,
+    region,
     displayLocale,
     title,
     idLabel,
@@ -30,6 +32,7 @@
     unitProfiles
   }: {
     card: CardDetail;
+    region: SupportedRegion;
     displayLocale: string;
     title: string;
     idLabel: string;
@@ -111,7 +114,8 @@
   iconFrame = true,
   unitSlug: string | null = null,
   characterAvatar = false,
-  characterId: string | number | null = null
+  characterId: string | number | null = null,
+  link = false
 )}
   {#if value}
     <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
@@ -122,7 +126,17 @@
       {#if unitSlug}
         <UnitIconBadge unit={unitSlug} variant="lg" />
       {:else if characterAvatar}
-        <CharacterAvatar src={iconUrl} label={value} characterId={characterId} variant="lg" decorative />
+        {#if link}
+          <a
+            href={resolve("/character/[region]/[id]", { region, id: String(characterId) })}
+            class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            aria-label={value}
+          >
+            <CharacterAvatar src={iconUrl} label={value} characterId={characterId} variant="lg" decorative />
+          </a>
+        {:else}
+          <CharacterAvatar src={iconUrl} label={value} characterId={characterId} variant="lg" decorative />
+        {/if}
       {:else if iconUrl}
         {#if iconFrame}
           <span
@@ -211,7 +225,7 @@
     <dl class="space-y-2">
       {@render row(nameLabel, card.title)}
       {#if card.character}
-        {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl(), true, null, true, card.character.id)}
+        {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl(), true, null, true, card.character.id, typeof card.character.id === "number" && Number.isInteger(card.character.id) && card.character.id > 0)}
       {/if}
       {@render row(unitLabel, getDisplayUnitName(card.character?.unit), undefined, true, card.character?.unit ?? null)}
       {#if shouldShowSupportUnit()}

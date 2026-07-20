@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from "$app/paths";
   import { getEventPointIconAssetURL } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { formatDisplayDateTime } from "$lib/time/date-time";
@@ -123,20 +124,41 @@
       {/if}
       {#if event.bannerGameCharacter}
         {@const char = event.bannerGameCharacter}
-        <div class="content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4">
-          <div class="min-w-0 flex-1">
-            <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-              {bannerCharacterLabel}
-            </dt>
-            <dd class="mt-1 text-sm font-medium">{getCharacterDisplayName(char)}</dd>
+        {#if char.id > 0}
+          <a
+            href={resolve("/character/[region]/[id]", { region, id: String(char.id) })}
+            class="content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4 outline-none transition-colors hover:bg-base-content/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            aria-label={getCharacterDisplayName(char)}
+          >
+            <div class="min-w-0 flex-1">
+              <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                {bannerCharacterLabel}
+              </dt>
+              <dd class="mt-1 text-sm font-medium">{getCharacterDisplayName(char)}</dd>
+            </div>
+            <CharacterAvatar
+              src={getLocalCharacterThumbnailAssetURL(char.id)}
+              label={getCharacterDisplayName(char)}
+              characterId={char.id}
+              variant="lg"
+            />
+          </a>
+        {:else}
+          <div class="content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4">
+            <div class="min-w-0 flex-1">
+              <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                {bannerCharacterLabel}
+              </dt>
+              <dd class="mt-1 text-sm font-medium">{getCharacterDisplayName(char)}</dd>
+            </div>
+            <CharacterAvatar
+              src={getLocalCharacterThumbnailAssetURL(char.id)}
+              label={getCharacterDisplayName(char)}
+              characterId={char.id}
+              variant="lg"
+            />
           </div>
-          <CharacterAvatar
-            src={getLocalCharacterThumbnailAssetURL(char.id)}
-            label={getCharacterDisplayName(char)}
-            characterId={char.id}
-            variant="lg"
-          />
-        </div>
+        {/if}
       {/if}
       <div class="content-card-inset rounded-xl p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</dt>

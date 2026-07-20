@@ -1,9 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import {
-    createI18nTranslator,
-     getLocalI18nMessages,
-  } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
     getCardThumbnailAssetURL,
@@ -21,10 +18,7 @@
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "home", "event", "error"]);
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    )(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
@@ -44,10 +38,10 @@
   let latestDataNoData = $state(getInitialI18nText("latestData.noData"));
   let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
+  let directoryTitle = $state(getInitialI18nText("directory.title"));
+  let directoryDescription = $state(getInitialI18nText("directory.description"));
   let translationRequestId = 0;
-  let currentMessages = $state<Record<string, string>>(
-    fallbackMessages
-  );
+  let currentMessages = $state<Record<string, string>>(fallbackMessages);
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
 
   // ── Region state ───────────────────────────────────────────────────
@@ -74,10 +68,7 @@
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
     currentMessages = fallbackMessages;
-    const translate = createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    );
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
@@ -102,6 +93,8 @@
     latestDataNoData = translate("latestData.noData");
     latestDataViewAll = translate("latestData.viewAll");
     latestDataLoadFailed = translate("latestData.loadFailed");
+    directoryTitle = translate("directory.title");
+    directoryDescription = translate("directory.description");
   };
 
   const refreshPageTranslations = async (
@@ -150,6 +143,14 @@
   const regionIndex = $derived(supportedRegions.indexOf(selectedRegion));
   const latestDataPromise = $derived(data.latestData[regionIndex]);
   const currentEventPromise = $derived(data.cards[regionIndex]);
+  const directoryItems = $derived([
+    { key: "characters", href: `/characters/${selectedRegion}`, icon: "mdi:account-group" },
+    { key: "cards", href: `/cards/${selectedRegion}`, icon: "mdi:cards-outline" },
+    { key: "musics", href: `/musics/${selectedRegion}`, icon: "mdi:music-note-outline" },
+    { key: "events", href: `/events/${selectedRegion}`, icon: "mdi:calendar-star" },
+    { key: "gachas", href: `/gachas/${selectedRegion}`, icon: "mdi:gift-outline" },
+    { key: "virtualLives", href: `/virtual-lives/${selectedRegion}`, icon: "mdi:account-voice" }
+  ]);
 </script>
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
@@ -435,6 +436,42 @@
         <p class="text-center text-sm text-error">{latestDataLoadFailed}</p>
       {/await}
     {/if}
+  </section>
+
+  <section class="mx-auto mt-12 max-w-7xl" aria-labelledby="content-directory-title">
+    <div class="mb-5 max-w-2xl">
+      <h2
+        id="content-directory-title"
+        class="text-xl/tight font-bold text-base-content sm:text-2xl"
+      >
+        {directoryTitle}
+      </h2>
+      <p class="mt-2 text-sm/6 text-base-content/60">{directoryDescription}</p>
+    </div>
+    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {#each directoryItems as item (item.key)}
+        <a
+          href={item.href}
+          class="group content-card-shell flex min-h-32 items-start gap-4 rounded-2xl border border-base-content/10 p-5 shadow-sm transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-primary/35 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <span
+            class="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-content"
+            ><Icon icon={item.icon} class="size-6" aria-hidden="true" /></span
+          >
+          <span class="min-w-0 flex-1"
+            ><span class="flex items-center justify-between gap-3 text-base font-semibold"
+              ><span>{currentTranslate(`directory.${item.key}.title`)}</span><Icon
+                icon="mdi:arrow-right"
+                class="size-4 shrink-0 text-base-content/35 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary"
+                aria-hidden="true"
+              /></span
+            ><span class="mt-1.5 block text-sm/5 text-base-content/60"
+              >{currentTranslate(`directory.${item.key}.description`)}</span
+            ></span
+          >
+        </a>
+      {/each}
+    </div>
   </section>
 </section>
 

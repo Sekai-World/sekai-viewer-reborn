@@ -145,6 +145,18 @@ export type SharedCardSupplyResponse = {
     id?: number;
 };
 
+export type SharedCharacter3dBatchItem = {
+    gameCharacterId: number;
+    id: number;
+    name?: string;
+    unit?: string;
+};
+
+export type SharedCharacter3dBatchResponse = {
+    items: Array<SharedCharacter3dBatchItem>;
+    missingIds: Array<number>;
+};
+
 export type SharedCharacterResponse = {
     firstName?: string;
     firstNameEnglish?: string;
@@ -881,9 +893,26 @@ export type SharedVirtualLiveObjectResponse = {
 
 export type SharedVirtualLiveReward = {
     id: number;
+    resourceBox?: SharedVirtualLiveRewardResourceBox;
     resourceBoxId: number;
     virtualLiveId: number;
     virtualLiveType: string;
+};
+
+export type SharedVirtualLiveRewardResourceBox = {
+    details?: Array<SharedVirtualLiveRewardResourceBoxDetail>;
+    id?: number;
+    resourceBoxPurpose?: string;
+    resourceBoxType?: string;
+};
+
+export type SharedVirtualLiveRewardResourceBoxDetail = {
+    honor?: SharedEventRewardHonorResponse;
+    resourceId?: number;
+    resourceLevel?: number;
+    resourceQuantity?: number;
+    resourceType?: string;
+    seq?: number;
 };
 
 export type SharedVirtualLiveSchedule = {
@@ -1568,6 +1597,49 @@ export type GetCardsByRegionByIdParamsResponses = {
 };
 
 export type GetCardsByRegionByIdParamsResponse = GetCardsByRegionByIdParamsResponses[keyof GetCardsByRegionByIdParamsResponses];
+
+export type GetCharacter3DsByRegionBatchData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query: {
+        /**
+         * Comma-separated Character3D IDs (up to 100)
+         */
+        ids: string;
+    };
+    url: '/character3ds/{region}/batch';
+};
+
+export type GetCharacter3DsByRegionBatchErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCharacter3DsByRegionBatchError = GetCharacter3DsByRegionBatchErrors[keyof GetCharacter3DsByRegionBatchErrors];
+
+export type GetCharacter3DsByRegionBatchResponses = {
+    /**
+     * OK
+     */
+    200: SharedCharacter3dBatchResponse;
+};
+
+export type GetCharacter3DsByRegionBatchResponse = GetCharacter3DsByRegionBatchResponses[keyof GetCharacter3DsByRegionBatchResponses];
 
 export type GetEventsRegionsByIdAvailabilityData = {
     body?: never;

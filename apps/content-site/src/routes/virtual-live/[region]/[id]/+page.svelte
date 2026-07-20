@@ -2,26 +2,37 @@
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
   import { swipeRegion } from "$lib/actions/swipe-region";
-  import { getVirtualLiveBannerAssetURL } from "$lib/assets/index";
+  import {
+    getCommonMaterialThumbnailURL,
+    getRemoteAssetEndpointURL,
+    getVirtualLiveBannerAssetURL,
+    type AssetServer
+  } from "$lib/assets/index";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  import VirtualLiveScheduleSwitcher from "$lib/components/virtual-live/VirtualLiveScheduleSwitcher.svelte";
+  import VirtualLiveCharacterGrid from "$lib/components/virtual-live/VirtualLiveCharacterGrid.svelte";
+  import VirtualLiveSetlistSummary from "$lib/components/virtual-live/VirtualLiveSetlistSummary.svelte";
+  import VirtualLiveAdditionalData from "$lib/components/virtual-live/VirtualLiveAdditionalData.svelte";
   import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
   import Icon from "@iconify/svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
-  import RegionBadgeSwitch, { type RegionBadgeOption } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  import RegionBadgeSwitch, {
+    type RegionBadgeOption
+  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import type { VirtualLiveDetail, VirtualLiveStatus } from "$lib/domain/virtual-live";
+  import type {
+    VirtualLiveReward,
+    VirtualLiveRewardResourceBoxDetail
+  } from "$lib/domain/virtual-live";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { PageData } from "./$types";
-  import {
-    DETAIL_MEDIA_BUTTON_CLASS,
-    DETAIL_MEDIA_RADIUS_CLASS
-  } from "$lib/styles/detail-media";
+  import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "virtual-live", "error"]);
+  const fallbackMessages = getLocalI18nMessages(["common", "virtual-live", "music", "error"]);
   const initialText = (key: string, fallback?: string): string =>
     createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
   let messages = $state<Record<string, string>>(fallbackMessages);
@@ -49,11 +60,18 @@
   ];
   const regionOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
   const regionOptions = (available: SupportedRegion[]): RegionBadgeOption[] =>
-    regionOrder.filter((region) => available.includes(region) || region === data.region).map((region) =>
-      region === data.region
-        ? { key: region, label: region.toUpperCase(), active: true }
-        : { key: region, label: region.toUpperCase(), href: resolve("/virtual-live/[region]/[id]", { region, id: data.virtualLiveId }), active: false }
-    );
+    regionOrder
+      .filter((region) => available.includes(region) || region === data.region)
+      .map((region) =>
+        region === data.region
+          ? { key: region, label: region.toUpperCase(), active: true }
+          : {
+              key: region,
+              label: region.toUpperCase(),
+              href: resolve("/virtual-live/[region]/[id]", { region, id: data.virtualLiveId }),
+              active: false
+            }
+      );
   const currentRegionOption = (): RegionBadgeOption[] => [
     { key: data.region, label: data.region.toUpperCase(), active: true }
   ];
@@ -65,22 +83,111 @@
     formatDisplayDateTime(toTimestampMs(value) ?? value, data.uiLocale);
   const displayValue = (value: string | number | null): string =>
     value === null || value === "" ? t("virtualLiveValueUnavailable") : String(value);
-  const statusLabel = (status: VirtualLiveStatus): string => t(`virtualLiveStatus.${status}`, status);
   const typeLabel = (type: string | null): string =>
-    type ? t(`virtualLiveType.${type}`, type.replaceAll("_", " ")) : t("virtualLiveValueUnavailable");
-  const hasObjectData = (value: Record<string, unknown> | null): boolean =>
-    value !== null && Object.keys(value).length > 0;
-  const summarizeExpansion = (value: Record<string, unknown>): string => {
-    const populated = Object.values(value).filter((item) => item !== null && item !== undefined).length;
-    return t("virtualLiveExpansionFieldsSummary").replace("{count}", String(populated));
+    type
+      ? t(`virtualLiveType.${type}`, type.replaceAll("_", " "))
+      : t("virtualLiveValueUnavailable");
+  type RewardGroup = {
+    virtualLiveType: string | null;
+    details: VirtualLiveRewardResourceBoxDetail[];
   };
-  const expansionCards = (live: VirtualLiveDetail) => [
-    { label: t("virtualLiveGroupTitle"), value: live.virtualLiveGroup },
-    { label: t("virtualLiveScreenMvTitle"), value: live.screenMvMusicVocal },
-    { label: t("virtualLivePamphletTitle"), value: live.pamphlet },
-    { label: t("virtualLiveTicketTitle"), value: live.ticket }
-  ].filter((item): item is { label: string; value: Record<string, unknown> } => hasObjectData(item.value));
+  const formatNumber = (value: number | null): string | null =>
+    value === null ? null : new Intl.NumberFormat(data.uiLocale).format(value);
+  const getRewardGroups = (rewards: VirtualLiveReward[]): RewardGroup[] => {
+    const groups: RewardGroup[] = [];
 
+    for (const reward of rewards) {
+      const details = reward.resourceBox?.details ?? [];
+      if (details.length === 0) {
+        continue;
+      }
+
+      const existingGroup = groups.find((item) => item.virtualLiveType === reward.virtualLiveType);
+      if (existingGroup) {
+        existingGroup.details.push(...details);
+      } else {
+        groups.push({ virtualLiveType: reward.virtualLiveType, details: [...details] });
+      }
+    }
+
+    return groups;
+  };
+  const getRewardDetailKey = (detail: VirtualLiveRewardResourceBoxDetail, index: number): string =>
+    `${index}-${detail.resourceType ?? "resource"}-${detail.resourceId ?? "none"}-${detail.seq ?? "none"}`;
+  const getRewardDetailLabel = (detail: VirtualLiveRewardResourceBoxDetail): string => {
+    const type = detail.resourceType?.replaceAll("_", " ") ?? t("virtualLiveValueUnavailable");
+    const id = detail.resourceId !== null ? ` #${detail.resourceId}` : "";
+    const level = detail.resourceLevel !== null ? ` Lv.${formatNumber(detail.resourceLevel)}` : "";
+    return `${type}${id}${level}`;
+  };
+  const getRewardDetailImageSrc = (detail: VirtualLiveRewardResourceBoxDetail): string | null => {
+    if (!detail.resourceType) {
+      return null;
+    }
+
+    const assetRegion = data.region as AssetServer;
+    if (detail.resourceType === "material" && detail.resourceId !== null) {
+      return getRemoteAssetEndpointURL(
+        `thumbnail/material/material${detail.resourceId}.webp`,
+        assetRegion
+      );
+    }
+
+    if (
+      ["coin", "ingamevoice", "jewel", "live_point", "slot", "virtual_coin"].includes(
+        detail.resourceType
+      )
+    ) {
+      return getCommonMaterialThumbnailURL(detail.resourceType, assetRegion);
+    }
+
+    if (detail.resourceType === "paid_jewel") {
+      return getCommonMaterialThumbnailURL("jewel", assetRegion);
+    }
+
+    if (detail.resourceType === "skill_practice_ticket" && detail.resourceId !== null) {
+      return getRemoteAssetEndpointURL(
+        `thumbnail/skill_practice_ticket/ticket${detail.resourceId}.webp`,
+        assetRegion
+      );
+    }
+
+    if (detail.resourceType === "gacha_ticket" && detail.resourceId !== null) {
+      return getRemoteAssetEndpointURL(
+        `thumbnail/gacha_ticket/${detail.resourceId}.webp`,
+        assetRegion
+      );
+    }
+
+    if (detail.resourceType === "boost_item" && detail.resourceId !== null) {
+      return getRemoteAssetEndpointURL(
+        `thumbnail/boost_item/boost_item${detail.resourceId}.webp`,
+        assetRegion
+      );
+    }
+
+    return null;
+  };
+  const getRewardDetailFallbackIcon = (detail: VirtualLiveRewardResourceBoxDetail): string => {
+    if (detail.resourceType === "stamp") {
+      return "mdi:text-box-outline";
+    }
+
+    if (detail.resourceType === "honor" || detail.resourceType === "bonds_honor") {
+      return "mdi:card-account-details-outline";
+    }
+
+    if (detail.resourceType === "gacha_ticket") {
+      return "mdi:ticket-outline";
+    }
+
+    return "mdi:gift-outline";
+  };
+  const hideBrokenImage = (event: Event): void => {
+    if (event.currentTarget instanceof HTMLImageElement) {
+      event.currentTarget.hidden = true;
+    }
+  };
   $effect(() => {
     if (data.region || data.virtualLiveId) {
       previewOpen = false;
@@ -88,25 +195,72 @@
   });
 </script>
 
+{#snippet rewardDetailChip(detail: VirtualLiveRewardResourceBoxDetail)}
+  {@const imageSrc = getRewardDetailImageSrc(detail)}
+  {@const quantity = formatNumber(detail.resourceQuantity)}
+  <span
+    class="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-base-content/20 bg-base-100/80 px-2.5 py-1.5 text-xs font-semibold text-base-content"
+    title={getRewardDetailLabel(detail)}
+    aria-label={getRewardDetailLabel(detail)}
+  >
+    {#if imageSrc}
+      <img
+        src={imageSrc}
+        alt=""
+        class="size-6 shrink-0 object-contain"
+        loading="lazy"
+        decoding="async"
+        onerror={hideBrokenImage}
+      />
+    {:else}
+      <Icon
+        icon={getRewardDetailFallbackIcon(detail)}
+        class="size-4 shrink-0 opacity-70"
+        aria-hidden="true"
+      />
+    {/if}
+    {#if quantity}
+      <span class="shrink-0 text-primary">×{quantity}</span>
+    {/if}
+  </span>
+{/snippet}
+
 <svelte:head>
   {#await data.virtualLivePayload}
     <title>{initialText("pageTitle.virtualLivePrefix")} {data.virtualLiveId} - Sekai Viewer</title>
   {:then payload}
-    <title>{payload.virtualLive?.name ?? `${initialText("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`} - Sekai Viewer</title>
+    <title
+      >{payload.virtualLive?.name ??
+        `${initialText("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`} - Sekai Viewer</title
+    >
   {/await}
 </svelte:head>
 
 <section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.virtualLivePayload}
-    <PageHeader breadcrumbs={breadcrumbs(`${t("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)} breadcrumbClass="md:max-w-[68%]">
+    <PageHeader
+      breadcrumbs={breadcrumbs(`${t("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)}
+      breadcrumbClass="md:max-w-[68%]"
+    >
       {#snippet actions()}<RegionBadgeSwitch options={currentRegionOption()} />{/snippet}
     </PageHeader>
     <DetailPageSkeleton kind="virtual-live" />
   {:then payload}
-    <PageHeader breadcrumbs={breadcrumbs(payload.virtualLive?.name ?? `${t("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)} breadcrumbClass="md:max-w-[68%]">
+    <PageHeader
+      breadcrumbs={breadcrumbs(
+        payload.virtualLive?.name ?? `${t("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`
+      )}
+      breadcrumbClass="md:max-w-[68%]"
+    >
       {#snippet actions()}
-        {#if dev && payload.debugVirtualLiveJson}<button type="button" class="btn btn-outline btn-sm" onclick={() => debugDialog?.showModal()}>{t("virtualLiveDebugJsonButton")}</button>{/if}
-        {#await data.availableRegions then available}<RegionBadgeSwitch options={regionOptions(available)} />{/await}
+        {#if dev && payload.debugVirtualLiveJson}<button
+            type="button"
+            class="btn btn-outline btn-sm"
+            onclick={() => debugDialog?.showModal()}>{t("virtualLiveDebugJsonButton")}</button
+          >{/if}
+        {#await data.availableRegions then available}<RegionBadgeSwitch
+            options={regionOptions(available)}
+          />{/await}
       {/snippet}
     </PageHeader>
 
@@ -124,7 +278,10 @@
                 class={`content-card-inset aspect-16/7 w-full overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS}`}
               >
                 {#if live.assetBundleName}
-                  {@const bannerSrc = getVirtualLiveBannerAssetURL(live.assetBundleName, data.region)}
+                  {@const bannerSrc = getVirtualLiveBannerAssetURL(
+                    live.assetBundleName,
+                    data.region
+                  )}
                   {@const bannerAlt = `${live.name ?? live.id} ${t("virtualLiveBannerAltSuffix")}`}
                   <AssetImage
                     src={bannerSrc}
@@ -145,7 +302,9 @@
                     dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
                   />
                 {:else}
-                  <div class="flex h-full items-center justify-center px-6 text-center text-sm opacity-70">
+                  <div
+                    class="flex h-full items-center justify-center px-6 text-center text-sm opacity-70"
+                  >
                     {t("imageUnavailable")}
                   </div>
                 {/if}
@@ -159,42 +318,52 @@
                 <p
                   class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
                 >
-                  <Icon icon="mdi:information-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                  <Icon
+                    icon="mdi:information-outline"
+                    class="size-4 shrink-0 translate-y-[0.5px]"
+                    aria-hidden="true"
+                  />
                   <span>{t("virtualLiveDetailTitle")}</span>
                 </p>
-                <span class="badge badge-outline border-base-content/20 font-semibold">
+                <span
+                  class="badge badge-sm badge-outline shrink-0 self-start border-base-content/20 font-semibold"
+                >
                   #{live.id}
                 </span>
               </div>
 
               <dl class="space-y-2">
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{t("virtualLiveNameLabel")}</dt>
+                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                    {t("virtualLiveNameLabel")}
+                  </dt>
                   <dd class="mt-1 text-sm font-medium">{live.name ?? live.id}</dd>
                 </div>
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{t("virtualLiveStatusLabel")}</dt>
-                  <dd class="mt-1 text-sm font-medium">{statusLabel(live.status)}</dd>
-                </div>
-                <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{t("virtualLiveTypeLabel")}</dt>
+                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                    {t("virtualLiveTypeLabel")}
+                  </dt>
                   <dd class="mt-1 text-sm font-medium">{typeLabel(live.virtualLiveType)}</dd>
                 </div>
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{t("virtualLiveStartAtLabel")}</dt>
+                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                    {t("virtualLiveStartAtLabel")}
+                  </dt>
                   <dd class="mt-1 text-sm font-medium">{formatDate(live.startAt)}</dd>
                 </div>
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{t("virtualLiveEndAtLabel")}</dt>
+                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                    {t("virtualLiveEndAtLabel")}
+                  </dt>
                   <dd class="mt-1 text-sm font-medium">{formatDate(live.endAt)}</dd>
                 </div>
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{t("virtualLiveRankingAnnounceAtLabel")}</dt>
-                  <dd class="mt-1 text-sm font-medium">{formatDate(live.rankingAnnounceAt)}</dd>
-                </div>
-                <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{t("internalResourceCodeLabel")}</dt>
-                  <dd class="mt-1 wrap-break-word text-sm font-medium">{displayValue(live.assetBundleName)}</dd>
+                  <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                    {t("internalResourceCodeLabel")}
+                  </dt>
+                  <dd class="mt-1 wrap-break-word text-sm font-medium">
+                    {displayValue(live.assetBundleName)}
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -206,49 +375,51 @@
                 <h2
                   class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
                 >
-                  <Icon icon="mdi:door-open" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                  <Icon
+                    icon="mdi:door-open"
+                    class="size-4 shrink-0 translate-y-[0.5px]"
+                    aria-hidden="true"
+                  />
                   <span>{t("virtualLiveWaitingRoomTitle")}</span>
                 </h2>
-                <dl class="grid gap-3 text-sm">
-                  <div class="content-card-inset rounded-2xl p-4">
-                    <dt class="opacity-55">{t("virtualLiveWaitingRoomStartAtLabel")}</dt>
-                    <dd class="mt-1 font-semibold">{formatDate(live.waitingRoom.startAt)}</dd>
+                <dl class="space-y-2">
+                  <div class="content-card-inset rounded-xl p-3 sm:px-4">
+                    <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                      {t("virtualLiveWaitingRoomStartAtLabel")}
+                    </dt>
+                    <dd class="mt-1 text-sm font-medium">{formatDate(live.waitingRoom.startAt)}</dd>
                   </div>
-                  <div class="content-card-inset rounded-2xl p-4">
-                    <dt class="opacity-55">{t("virtualLiveWaitingRoomEndAtLabel")}</dt>
-                    <dd class="mt-1 font-semibold">{formatDate(live.waitingRoom.endAt)}</dd>
+                  <div class="content-card-inset rounded-xl p-3 sm:px-4">
+                    <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                      {t("virtualLiveWaitingRoomEndAtLabel")}
+                    </dt>
+                    <dd class="mt-1 text-sm font-medium">{formatDate(live.waitingRoom.endAt)}</dd>
                   </div>
-                  {#if live.waitingRoom.assetBundleName}
-                    <div class="content-card-inset rounded-2xl p-4">
-                      <dt class="opacity-55">{t("internalResourceCodeLabel")}</dt>
-                      <dd class="mt-1 break-all font-semibold">{live.waitingRoom.assetBundleName}</dd>
-                    </div>
-                  {/if}
                 </dl>
               </div>
             </article>
           {/if}
 
-          {#if expansionCards(live).length > 0}
-            <article class="card content-card-shell shadow-sm">
-              <div class="card-body gap-4 p-3 sm:p-5">
-                <h2
-                  class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
-                >
-                  <Icon icon="mdi:puzzle" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
-                  <span>{t("virtualLiveAdditionalDataTitle")}</span>
-                </h2>
-                <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                  {#each expansionCards(live) as item (item.label)}
-                    <div class="content-card-inset rounded-xl p-3">
-                      <h3 class="text-sm font-semibold">{item.label}</h3>
-                      <p class="mt-1 text-xs opacity-60">{summarizeExpansion(item.value)}</p>
-                    </div>
-                  {/each}
-                </div>
-              </div>
-            </article>
-          {/if}
+          <VirtualLiveAdditionalData
+            group={live.virtualLiveGroup}
+            screenMv={live.screenMvMusicVocal}
+            pamphlet={live.pamphlet}
+            ticket={live.ticket}
+            region={data.region}
+            title={t("virtualLiveAdditionalDataTitle")}
+            groupTitle={t("virtualLiveGroupTitle")}
+            screenMvTitle={t("virtualLiveScreenMvTitle")}
+            pamphletTitle={t("virtualLivePamphletTitle")}
+            ticketTitle={t("virtualLiveTicketTitle")}
+            periodLabel={t("virtualLiveGroupPeriod")}
+            musicFallbackLabel={t("virtualLiveScreenMvMusicFallback")}
+            musicJacketAltSuffix={t("musicJacketAltSuffix")}
+            imageUnavailableLabel={t("imageUnavailable")}
+            characterLabel={t("virtualLiveCharacterIdentifierLabel")}
+            {formatDate}
+            formatTicketType={(value) =>
+              t(`virtualLiveTicketType.${value}`, value.replaceAll("_", " "))}
+          />
         </div>
 
         <div class="flex flex-col gap-4">
@@ -260,7 +431,11 @@
                     id="virtual-live-information-title"
                     class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
                   >
-                    <Icon icon="mdi:text-box-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                    <Icon
+                      icon="mdi:text-box-outline"
+                      class="size-4 shrink-0 translate-y-[0.5px]"
+                      aria-hidden="true"
+                    />
                     <span>{t("virtualLiveInformationTitle")}</span>
                   </h2>
                   <div class="content-card-inset space-y-2 rounded-xl p-3">
@@ -268,7 +443,9 @@
                       <p class="text-sm font-semibold">{live.information.summary}</p>
                     {/if}
                     {#if live.information.description}
-                      <p class="whitespace-pre-line text-xs/5 opacity-70">{live.information.description}</p>
+                      <p class="whitespace-pre-line text-xs/5 opacity-70">
+                        {live.information.description}
+                      </p>
                     {/if}
                   </div>
                 </section>
@@ -284,82 +461,21 @@
                     id="virtual-live-schedules-title"
                     class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
                   >
-                    <Icon icon="mdi:calendar-clock" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                    <Icon
+                      icon="mdi:calendar-clock"
+                      class="size-4 shrink-0 translate-y-[0.5px]"
+                      aria-hidden="true"
+                    />
                     <span>{t("virtualLiveSchedulesTitle")}</span>
                   </h2>
-                  <div class="grid gap-2 sm:grid-cols-2">
-                    {#each live.schedules as schedule, index (schedule.id ?? index)}
-                      <div class="content-card-inset rounded-xl p-3">
-                        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
-                          <span class="badge badge-primary badge-sm font-semibold">
-                            {t("virtualLiveScheduleSeqLabel")} {displayValue(schedule.seq)}
-                          </span>
-                          {#if schedule.isAfterEvent}
-                            <span class="badge badge-outline badge-sm font-semibold">
-                              {t("virtualLiveScheduleIsAfterEventLabel")}
-                            </span>
-                          {/if}
-                        </div>
-                        <p class="text-sm font-semibold">{formatDate(schedule.startAt)}</p>
-                        <p class="mt-1 text-xs opacity-60">{formatDate(schedule.endAt)}</p>
-                      </div>
-                    {/each}
-                  </div>
-                </section>
-              </div>
-            </article>
-          {/if}
-
-          {#if live.setlists.length > 0}
-            <article class="card content-card-shell shadow-sm">
-              <div class="card-body gap-4 p-3 sm:p-5">
-                <section class="space-y-2" aria-labelledby="virtual-live-setlists-title">
-                  <h2
-                    id="virtual-live-setlists-title"
-                    class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
-                  >
-                    <Icon icon="mdi:playlist-check" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
-                    <span>{t("virtualLiveSetlistsTitle")}</span>
-                  </h2>
-                  <div class="space-y-2">
-                    {#each live.setlists as setlist, index (setlist.id ?? index)}
-                      <div
-                        class="content-card-inset flex min-w-0 flex-col gap-2 rounded-xl p-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div class="min-w-0">
-                          <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                            {t("virtualLiveSetlistSeqLabel")} {displayValue(setlist.seq)}
-                          </p>
-                          <p class="mt-1 wrap-break-word text-sm font-semibold">
-                            {typeLabel(setlist.virtualLiveSetlistType)}
-                          </p>
-                        </div>
-                        <div class="flex min-w-0 flex-wrap items-center gap-1.5">
-                          {#if setlist.musicId !== null}
-                            <a
-                              class="btn btn-primary btn-sm max-w-full"
-                              href={resolve("/music/[region]/[id]", {
-                                region: data.region,
-                                id: String(setlist.musicId)
-                              })}
-                            >
-                              <span class="truncate">{t("virtualLiveSetlistMusicLabel")} #{setlist.musicId}</span>
-                            </a>
-                          {/if}
-                          {#if setlist.musicVocalId !== null}
-                            <span class="badge badge-outline badge-sm font-semibold">
-                              {t("virtualLiveSetlistMusicVocalLabel")} #{setlist.musicVocalId}
-                            </span>
-                          {/if}
-                          {#if setlist.virtualLiveStageId !== null}
-                            <span class="badge badge-outline badge-sm font-semibold">
-                              {t("virtualLiveSetlistStageLabel")} #{setlist.virtualLiveStageId}
-                            </span>
-                          {/if}
-                        </div>
-                      </div>
-                    {/each}
-                  </div>
+                  <VirtualLiveScheduleSwitcher
+                    schedules={live.schedules}
+                    uiLocale={data.uiLocale}
+                    virtualLiveId={data.virtualLiveId}
+                    labelledBy="virtual-live-schedules-title"
+                    unavailableLabel={t("virtualLiveValueUnavailable")}
+                    afterEventLabel={t("virtualLiveScheduleIsAfterEventLabel")}
+                  />
                 </section>
               </div>
             </article>
@@ -373,72 +489,110 @@
                     id="virtual-live-characters-title"
                     class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
                   >
-                    <Icon icon="mdi:account-group" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+                    <Icon
+                      icon="mdi:account-group"
+                      class="size-4 shrink-0 translate-y-[0.5px]"
+                      aria-hidden="true"
+                    />
                     <span>{t("virtualLiveCharactersTitle")}</span>
                   </h2>
-                  <div class="grid gap-2 sm:grid-cols-2">
-                    {#each live.characters as character, index (character.id ?? index)}
-                      <div class="content-card-inset rounded-xl p-3">
-                        <div class="flex items-center justify-between gap-2">
-                          <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                            {t("virtualLiveCharacterSeqLabel")} {displayValue(character.seq)}
-                          </p>
-                          <span class="badge badge-outline badge-sm font-semibold">
-                            #{displayValue(character.gameCharacterUnitId)}
-                          </span>
-                        </div>
-                        {#if character.virtualLivePerformanceType}
-                          <p class="mt-2 text-xs opacity-60">
-                            {t("virtualLiveCharacterPerformanceTypeLabel")}
-                          </p>
-                          <p class="mt-1 wrap-break-word text-sm font-semibold">
-                            {character.virtualLivePerformanceType}
-                          </p>
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
+                  <VirtualLiveCharacterGrid
+                    characters={live.characters}
+                    region={data.region}
+                    characterLabel={t("virtualLiveCharacterIdentifierLabel")}
+                    unavailableLabel={t("virtualLiveValueUnavailable")}
+                  />
+                </section>
+              </div>
+            </article>
+          {/if}
+
+          {#if live.setlists.length > 0}
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <section class="space-y-2" aria-labelledby="virtual-live-setlists-title">
+                  <h2
+                    id="virtual-live-setlists-title"
+                    class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+                  >
+                    <Icon
+                      icon="mdi:playlist-check"
+                      class="size-4 shrink-0 translate-y-[0.5px]"
+                      aria-hidden="true"
+                    />
+                    <span>{t("virtualLiveSetlistsTitle")}</span>
+                  </h2>
+                  <VirtualLiveSetlistSummary
+                    setlists={live.setlists}
+                    region={data.region}
+                    virtualLiveId={data.virtualLiveId}
+                    title={t("virtualLiveSetlistDialogTitle")}
+                    closeLabel={t("closeLabel")}
+                    {t}
+                    formatType={typeLabel}
+                  />
                 </section>
               </div>
             </article>
           {/if}
 
           {#if live.rewards.length > 0}
-            <article class="card content-card-shell shadow-sm">
-              <div class="card-body gap-4 p-3 sm:p-5">
-                <section class="space-y-2" aria-labelledby="virtual-live-rewards-title">
-                  <h2
-                    id="virtual-live-rewards-title"
-                    class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
-                  >
-                    <Icon icon="mdi:gift-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
-                    <span>{t("virtualLiveRewardsTitle")}</span>
-                  </h2>
-                  <div class="grid gap-2 sm:grid-cols-2">
-                    {#each live.rewards as reward, index (reward.id ?? index)}
-                      <div class="content-card-inset rounded-xl p-3">
-                        <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                          {t("virtualLiveRewardResourceBoxIdLabel")}
-                        </p>
-                        <p class="mt-1 wrap-break-word text-sm font-semibold">
-                          #{displayValue(reward.resourceBoxId)}
-                        </p>
-                        {#if reward.virtualLiveType}
-                          <p class="mt-1 text-xs opacity-60">{typeLabel(reward.virtualLiveType)}</p>
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
-                </section>
-              </div>
-            </article>
+            {@const rewardGroups = getRewardGroups(live.rewards)}
+            {#if rewardGroups.length > 0}
+              <article class="card content-card-shell shadow-sm">
+                <div class="card-body gap-4 p-3 sm:p-5">
+                  <section class="space-y-2" aria-labelledby="virtual-live-rewards-title">
+                    <h2
+                      id="virtual-live-rewards-title"
+                      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+                    >
+                      <Icon
+                        icon="mdi:gift-outline"
+                        class="size-4 shrink-0 translate-y-[0.5px]"
+                        aria-hidden="true"
+                      />
+                      <span>{t("virtualLiveRewardsTitle")}</span>
+                    </h2>
+                    <div class="grid gap-2 sm:grid-cols-2">
+                      {#each rewardGroups as group, groupIndex (group.virtualLiveType ?? groupIndex)}
+                        <section
+                          class="content-card-inset rounded-xl p-3"
+                          aria-labelledby={`virtual-live-reward-group-${groupIndex}`}
+                        >
+                          <h3
+                            id={`virtual-live-reward-group-${groupIndex}`}
+                            class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60"
+                          >
+                            {typeLabel(group.virtualLiveType)}
+                          </h3>
+                          <div class="mt-2 flex flex-wrap gap-2">
+                            {#each group.details as detail, detailIndex (getRewardDetailKey(detail, detailIndex))}
+                              {@render rewardDetailChip(detail)}
+                            {/each}
+                          </div>
+                        </section>
+                      {/each}
+                    </div>
+                  </section>
+                </div>
+              </article>
+            {/if}
           {/if}
         </div>
       </div>
     {:else if !payload.error}
-      {#await data.availableRegions}<div class="alert"><span class="loading loading-spinner loading-sm"></span>{t("virtualLiveDetailLoading")}</div>{:then available}<div class="alert alert-error">{unavailableMessage(available)}</div>{/await}
+      {#await data.availableRegions}<div class="alert">
+          <span class="loading loading-spinner loading-sm"></span>{t("virtualLiveDetailLoading")}
+        </div>{:then available}<div class="alert alert-error">
+          {unavailableMessage(available)}
+        </div>{/await}
     {/if}
 
-    {#if dev && payload.debugVirtualLiveJson}<EventDebugDialog bind:dialog={debugDialog} title={t("virtualLiveDebugJsonTitle")} closeLabel={t("closeLabel")} json={payload.debugVirtualLiveJson} />{/if}
+    {#if dev && payload.debugVirtualLiveJson}<EventDebugDialog
+        bind:dialog={debugDialog}
+        title={t("virtualLiveDebugJsonTitle")}
+        closeLabel={t("closeLabel")}
+        json={payload.debugVirtualLiveJson}
+      />{/if}
   {/await}
 </section>

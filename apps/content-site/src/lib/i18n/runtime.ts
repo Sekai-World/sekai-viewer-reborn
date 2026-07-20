@@ -8,6 +8,7 @@ import {
   type I18nTranslator
 } from "@platform/i18n-runtime";
 import cardSourceMessages from "@platform/i18n-source/content-site/card.json";
+import characterSourceMessages from "@platform/i18n-source/content-site/character.json";
 import commonSourceMessages from "@platform/i18n-source/content-site/common.json";
 import errorSourceMessages from "@platform/i18n-source/content-site/error.json";
 import eventSourceMessages from "@platform/i18n-source/content-site/event.json";
@@ -26,6 +27,7 @@ export const contentSiteI18nNamespaces = [
   "common",
   "home",
   "card",
+  "character",
   "event",
   "gacha",
   "music",
@@ -60,6 +62,7 @@ const FALLBACK_UI_LOCALE: SupportedUiLocale = "en";
 const LEGACY_COMMON_COMPAT_NAMESPACES = new Set<I18nNamespace>([
   "home",
   "card",
+  "character",
   "event",
   "gacha",
   "music",
@@ -68,6 +71,7 @@ const LEGACY_COMMON_COMPAT_NAMESPACES = new Set<I18nNamespace>([
 ]);
 const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
   card: cardSourceMessages,
+  character: characterSourceMessages,
   common: commonSourceMessages,
   error: errorSourceMessages,
   event: eventSourceMessages,

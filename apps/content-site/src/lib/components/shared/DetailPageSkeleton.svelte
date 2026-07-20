@@ -1,11 +1,13 @@
 <script lang="ts">
-  type DetailSkeletonKind = "card" | "event" | "music" | "gacha" | "virtual-live";
+  type DetailSkeletonKind = "card" | "event" | "music" | "gacha" | "virtual-live" | "character";
 
   let { kind }: { kind: DetailSkeletonKind } = $props();
 
   const isMusic = $derived(kind === "music");
   const usesTabs = $derived(kind === "card" || kind === "event" || kind === "gacha");
-  const infoRowCount = $derived(kind === "virtual-live" ? 7 : kind === "music" ? 6 : 5);
+  const infoRowCount = $derived(
+    kind === "virtual-live" ? 7 : kind === "music" ? 6 : kind === "character" ? 4 : 5
+  );
   const rightCardCount = $derived(kind === "event" || kind === "gacha" ? 3 : 2);
   const mediaAspectClass = $derived(
     kind === "card" ? "aspect-21/10" : kind === "event" ? "aspect-5/2" : "aspect-16/7"
@@ -29,11 +31,15 @@
               <div class="skeleton h-7 min-w-20 flex-1 rounded-lg"></div>
               <div class="skeleton h-7 min-w-16 flex-1 rounded-lg opacity-70"></div>
               {#if kind === "event" || kind === "gacha"}
-                <div class="skeleton hidden h-7 min-w-16 flex-1 rounded-lg opacity-50 sm:block"></div>
+                <div
+                  class="skeleton hidden h-7 min-w-16 flex-1 rounded-lg opacity-50 sm:block"
+                ></div>
               {/if}
             </div>
           {/if}
-          <div class={`skeleton w-full rounded-2xl ${mediaAspectClass}`}></div>
+          <div
+            class={`skeleton w-full rounded-2xl ${kind === "character" ? "aspect-square" : mediaAspectClass}`}
+          ></div>
         </div>
       </article>
     {/if}
