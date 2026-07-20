@@ -29,7 +29,6 @@
     imageUnavailableLabel,
     characterLabel,
     formatDate,
-    formatVocalType,
     formatTicketType
   }: {
     group: VirtualLiveGroupDisplay | null;
@@ -48,7 +47,6 @@
     imageUnavailableLabel: string;
     characterLabel: string;
     formatDate: (value: string | number | null) => string;
-    formatVocalType: (value: string) => string;
     formatTicketType: (value: string) => string;
   } = $props();
 
@@ -163,11 +161,6 @@
               </div>
             </div>
             <div class="mt-2 flex flex-wrap items-center gap-2">
-              {#if hasText(screenMv.musicVocalType)}
-                <span class="badge badge-outline badge-sm font-medium"
-                  >{formatVocalType(screenMv.musicVocalType)}</span
-                >
-              {/if}
               {#each visibleCharacterIds as characterId (characterId)}
                 {@const label = `${characterLabel} #${characterId}`}
                 <a

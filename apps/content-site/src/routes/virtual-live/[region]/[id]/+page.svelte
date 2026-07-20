@@ -277,8 +277,6 @@
             imageUnavailableLabel={t("imageUnavailable")}
             characterLabel={t("virtualLiveCharacterIdentifierLabel")}
             {formatDate}
-            formatVocalType={(value) =>
-              t(`virtualLiveMusicVocalType.${value}`, value.replaceAll("_", " "))}
             formatTicketType={(value) =>
               t(`virtualLiveTicketType.${value}`, value.replaceAll("_", " "))}
           />
