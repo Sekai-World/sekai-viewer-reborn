@@ -2,7 +2,6 @@
   "characterListTitle": "Characters",
   "characterListIntro": "Browse the cast by group, then open a character to explore their details and cards.",
   "characterUnassignedGroup": "Other characters",
-  "characterGroupDescription": "Characters in this group",
   "characterSearchLabel": "Search characters",
   "characterSearchPlaceholder": "Search by name or ID",
   "characterUnitFilterLabel": "Filter by unit",

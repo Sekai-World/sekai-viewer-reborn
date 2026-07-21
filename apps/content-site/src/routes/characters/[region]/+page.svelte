@@ -5,7 +5,6 @@
   import { swipeRegion } from "$lib/actions/swipe-region";
   import CharacterCatalogueCard from "$lib/components/character/CharacterCatalogueCard.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -57,7 +56,7 @@
     catalogue = [];
     void Promise.resolve(data.catalogue).then((result) => {
       catalogue = result.items;
-      unitProfiles = "unitProfiles" in result ? (result.unitProfiles as Record<string, string>) : {};
+      unitProfiles = result.unitProfiles;
       loadFailed = result.loadFailed;
       loading = false;
     });
@@ -113,16 +112,10 @@
     <div class="flex flex-col gap-7">
       {#each groups as [group, characters] (group)}
         <section aria-labelledby={`character-group-${group}`}>
-          <div class="mb-4 flex items-center gap-3 rounded-xl border-b border-base-content/10 bg-base-100/60 px-4 py-3">
-            {#if group !== "__unassigned"}<UnitIconBadge unit={characters[0]?.unit ?? ""} variant="lg" />{/if}
-            <div class="min-w-0">
-              <h2 id={`character-group-${group}`} class="text-lg font-bold">
-                {group === "__unassigned" ? t("characterUnassignedGroup", "Other characters") : group}
-              </h2>
-              <p class="truncate text-xs opacity-60">{t("characterGroupDescription", "Characters in this group")}</p>
-            </div>
-          </div>
-          <div class={`grid justify-center gap-3 sm:gap-4 ${group === "piapro" ? "grid-cols-3 sm:grid-cols-4 lg:grid-cols-6" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"}`}>
+          <h2 id={`character-group-${group}`} class="mb-3 border-b border-base-content/10 pb-2 text-sm font-bold uppercase tracking-[0.16em]">
+            {group === "__unassigned" ? t("characterUnassignedGroup", "Other characters") : group}
+          </h2>
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {#each characters as character (character.id)}<CharacterCatalogueCard
           {character}
           region={data.region}
