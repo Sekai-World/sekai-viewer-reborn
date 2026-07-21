@@ -151,14 +151,11 @@
                 accentColor={character.unitRecord?.colorCode}
                 decorative
                 variant="default"
-                class="size-36! border-4! bg-white shadow-lg sm:size-44!"
+                class="size-28! border-4! bg-white shadow-lg sm:size-32!"
                 imageClass="size-full object-contain"
               />
               <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] opacity-45">
-                  #{character.id}
-                </p>
-                <h1 class="mt-2 wrap-break-word text-3xl/tight font-bold sm:text-4xl">
+                <h1 class="wrap-break-word text-3xl/tight font-bold sm:text-4xl">
                   {character.name}
                 </h1>
               </div>
