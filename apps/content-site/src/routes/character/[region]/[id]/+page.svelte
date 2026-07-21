@@ -51,7 +51,7 @@
   const rarityValue = (type: string | null): number =>
     type === "rarity_birthday" ? 1 : Number(type?.match(/\d+/)?.[0] ?? 0);
   const trained = (card: CharacterRelatedCard): boolean =>
-    card.initialSpecialTrainingStatus === "done" || card.rarityType === "rarity_birthday";
+    card.initialSpecialTrainingStatus === "done";
   const cardSrc = (card: CharacterRelatedCard): string | null =>
     card.assetBundleName
       ? getCardThumbnailAssetURL(card.assetBundleName, trained(card), "jp")
