@@ -60,6 +60,8 @@
     card.assetBundleName && data.region !== "jp"
       ? getCardThumbnailAssetURL(card.assetBundleName, trained(card), data.region)
       : null;
+  const latestRelatedCards = (cards: CharacterRelatedCard[]): CharacterRelatedCard[] =>
+    cards.slice(0, 12);
 
   $effect(() => {
     const id = ++requestId;
@@ -217,9 +219,9 @@
                     >{t("characterViewAllCards", "View all")}</a
                   >
                 </div>
-                {#if character.relatedCards.length > 0}
-                  <div class="grid grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
-                    {#each character.relatedCards as card (card.id)}
+                {#if latestRelatedCards(character.relatedCards).length > 0}
+                  <div class="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
+                    {#each latestRelatedCards(character.relatedCards) as card (card.id)}
                       <a
                         href={resolve("/card/[region]/[id]", { region: data.region, id: card.id })}
                         class="content-card-inset group flex h-full flex-col gap-2 rounded-xl p-2 outline-none transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus-visible:ring-2 focus-visible:ring-primary/60"
