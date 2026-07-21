@@ -83,9 +83,15 @@
 <section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.payload}
     <PageHeader breadcrumbs={breadcrumbs(`#${data.characterId}`)} breadcrumbClass="md:max-w-[68%]"
-      >{#snippet actions()}<RegionBadgeSwitch
-          options={currentRegionOption()}
-        />{/snippet}</PageHeader
+      >{#snippet actions()}
+        {#await data.availableRegions}
+          <RegionBadgeSwitch options={currentRegionOption()} />
+        {:then available}
+          <RegionBadgeSwitch options={regionOptions(available)} />
+        {:catch}
+          <RegionBadgeSwitch options={currentRegionOption()} />
+        {/await}
+      {/snippet}</PageHeader
     >
     <DetailPageSkeleton kind="character" />
   {:then result}
@@ -93,9 +99,15 @@
       breadcrumbs={breadcrumbs(result.character?.name ?? `#${data.characterId}`)}
       breadcrumbClass="md:max-w-[68%]"
     >
-      {#snippet actions()}{#await data.availableRegions then available}<RegionBadgeSwitch
-            options={regionOptions(available)}
-          />{/await}{/snippet}
+      {#snippet actions()}
+        {#await data.availableRegions}
+          <RegionBadgeSwitch options={currentRegionOption()} />
+        {:then available}
+          <RegionBadgeSwitch options={regionOptions(available)} />
+        {:catch}
+          <RegionBadgeSwitch options={currentRegionOption()} />
+        {/await}
+      {/snippet}
     </PageHeader>
 
     {#if result.loadFailed}
