@@ -778,11 +778,32 @@
   {@const characterAccentColor = getBonusCharacterAccentColor(item)}
   {@const characterIconSrc = getBonusCharacterIconSrc(item)}
   {@const isCharacterBonus = hasBonusCharacterData(item)}
+  {@const hasCharacterLink = item.gameCharacterId !== null && item.gameCharacterId > 0}
   <div
     class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3"
   >
     <div class="flex justify-center">
-      {#if isCharacterBonus}
+      {#if isCharacterBonus && hasCharacterLink}
+        <a
+          href={resolve("/character/[region]/[id]", {
+            region,
+            id: String(item.gameCharacterId)
+          })}
+          class="rounded-full transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          aria-label={displayName}
+          title={displayName}
+        >
+          <CharacterAvatar
+            src={characterIconSrc}
+            label={displayName}
+            accentColor={characterAccentColor}
+            characterId={item.gameCharacterId}
+            variant="sm"
+            decorative
+            onImageError={hideBrokenImage}
+          />
+        </a>
+      {:else if isCharacterBonus}
         <CharacterAvatar
           src={characterIconSrc}
           label={displayName}
