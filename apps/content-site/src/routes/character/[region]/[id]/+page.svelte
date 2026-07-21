@@ -206,7 +206,7 @@
                   >
                 </div>
                 {#if character.relatedCards.length > 0}
-                  <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+                  <div class="grid grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-5">
                     {#each character.relatedCards as card (card.id)}
                       <a
                         href={resolve("/card/[region]/[id]", { region: data.region, id: card.id })}
@@ -223,8 +223,8 @@
                           rarityType={card.rarityType}
                           rarityCount={rarityValue(card.rarityType)}
                           loadMode="visible"
-                          maxSize={null}
-                          containerClass="relative aspect-square overflow-hidden rounded-xl bg-base-200"
+                          maxSize={112}
+                          containerClass="relative mx-auto aspect-square w-full overflow-hidden rounded-xl bg-base-200"
                         />
                         <p class="mt-2 line-clamp-2 text-xs font-medium">
                           {card.prefix ?? `#${card.id}`}
