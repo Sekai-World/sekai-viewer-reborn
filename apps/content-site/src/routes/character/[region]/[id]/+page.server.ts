@@ -113,7 +113,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
           path: { region },
           query: {
             page: 1,
-            page_size: 8,
+            page_size: 12,
             character: characterId,
             spoiler: true,
             sort_by: "releaseAt",
