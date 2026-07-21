@@ -537,12 +537,19 @@ export type SharedGameCharacterListResponse = {
 };
 
 export type SharedGameCharacterObjectResponse = {
-    firstName?: unknown;
-    givenName?: unknown;
-    height?: unknown;
-    id?: unknown;
-    seq?: unknown;
-    unit?: unknown;
+    firstName?: string | null;
+    firstNameEnglish?: string | null;
+    firstNameRuby?: string | null;
+    gender?: string | null;
+    givenName?: string | null;
+    givenNameEnglish?: string | null;
+    givenNameRuby?: string | null;
+    height?: number;
+    id?: number;
+    resourceId?: number;
+    seq?: number;
+    supportUnitType?: string | null;
+    unit?: string | null;
 };
 
 export type SharedGameCharacterUnitListResponse = {
