@@ -9,6 +9,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { CharacterCatalogueItem } from "$lib/domain/character";
+  import { resolveUnitLogoUrl } from "$lib/domain/unit-icon";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { PageData } from "./$types";
@@ -56,7 +57,7 @@
     catalogue = [];
     void Promise.resolve(data.catalogue).then((result) => {
       catalogue = result.items;
-      unitProfiles = result.unitProfiles;
+      unitProfiles = "unitProfiles" in result ? (result.unitProfiles as Record<string, string>) : {};
       loadFailed = result.loadFailed;
       loading = false;
     });
@@ -77,10 +78,6 @@
   >
     {#snippet actions()}<RegionBadgeSwitch options={regionOptions()} />{/snippet}
   </PageHeader>
-
-  <div class="content-card-shell rounded-2xl border border-base-content/8 p-4 shadow-sm sm:p-5">
-    <p class="max-w-2xl text-sm/relaxed opacity-70">{t("characterListIntro", "Browse the cast by group, then open a character to explore their details and cards.")}</p>
-  </div>
 
   {#if loading}
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -112,16 +109,11 @@
     <div class="flex flex-col gap-7">
       {#each groups as [group, characters] (group)}
         <section aria-labelledby={`character-group-${group}`}>
-          <h2 id={`character-group-${group}`} class="mb-3 border-b border-base-content/10 pb-2 text-sm font-bold uppercase tracking-[0.16em]">
-            {group === "__unassigned" ? t("characterUnassignedGroup", "Other characters") : group}
-          </h2>
-          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {#each characters as character (character.id)}<CharacterCatalogueCard
-          {character}
-          region={data.region}
-          unitLabel={t("characterUnitLabel", "Unit")}
-          heightLabel={t("characterHeightLabel", "Height")}
-        />{/each}
+          {#if group !== "__unassigned" && resolveUnitLogoUrl(characters[0]?.unit ?? "")}
+            <img src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined} alt="" class="size-20 object-contain sm:size-24" />
+          {/if}
+          <div class="flex w-full max-w-5xl flex-nowrap items-center justify-center gap-1.5 sm:gap-3">
+            {#each characters as character (character.id)}<CharacterCatalogueCard {character} region={data.region} />{/each}
           </div>
         </section>
       {/each}
