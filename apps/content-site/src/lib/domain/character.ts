@@ -32,6 +32,7 @@ export type CharacterRelatedCard = {
 };
 
 export type CharacterDetail = CharacterCatalogueItem & {
+  unitName: string | null;
   relatedCards: CharacterRelatedCard[];
 };
 

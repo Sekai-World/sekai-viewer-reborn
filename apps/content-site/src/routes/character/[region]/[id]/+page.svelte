@@ -71,26 +71,16 @@
     if (gender === "male") return t("characterGenderMale", "Male");
     return null;
   };
-  const formatSupportUnitType = (supportUnitType: string | null): string | null => {
-    if (supportUnitType === "none") return t("characterSupportUnitNone", "None");
-    if (supportUnitType === "full") return t("characterSupportUnitFull", "Full");
-    if (supportUnitType === "unit") return t("characterSupportUnitUnit", "Unit");
-    if (supportUnitType === "virtual_singer")
-      return t("characterSupportUnitVirtualSinger", "Virtual Singer");
-    return null;
-  };
   const detailRows = (character: CharacterDetail): [string, string][] => {
     const rubyName = formatOptionalName(character.firstNameRuby, character.givenNameRuby);
     const englishName = formatOptionalName(character.firstNameEnglish, character.givenNameEnglish);
     const gender = formatGender(character.gender);
-    const supportUnitType = formatSupportUnitType(character.supportUnitType);
     return [
       [t("characterNameLabel", "Name"), character.name],
-      [t("characterUnitLabel", "Unit"), character.unit ?? t("characterValueUnavailable", "Not available")],
+      [t("characterUnitLabel", "Unit"), character.unitName],
       [t("characterReadingLabel", "Reading"), rubyName],
       [t("characterEnglishNameLabel", "English name"), englishName],
       [t("characterGenderLabel", "Gender"), gender],
-      [t("characterSupportUnitLabel", "Support unit"), supportUnitType],
       [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]
     ].filter((row): row is [string, string] => row[1] !== null);
   };
