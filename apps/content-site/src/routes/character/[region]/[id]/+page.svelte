@@ -179,7 +179,7 @@
                 >
               </div>
               <dl class="space-y-2">
-                {#each [[t("characterNameLabel", "Name"), character.name], [t("characterUnitLabel", "Unit"), character.unit ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]] as row (row[0])}
+                {#each [[t("characterNameLabel", "Name"), character.name], [t("characterUnitLabel", "Unit"), character.unitName ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]] as row (row[0])}
                   <div class="content-card-inset rounded-xl p-3 sm:px-4">
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                       {row[0]}

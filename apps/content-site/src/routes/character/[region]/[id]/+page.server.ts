@@ -14,6 +14,7 @@ import {
 } from "$lib/server/character-detail";
 import { parseCharacter, parseCharacterUnits } from "$lib/server/character-list";
 import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
+import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 type CharacterPayload = { character: unknown; loadFailed: boolean };
@@ -108,6 +109,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
     ? Promise.all([
         getGameCharactersByRegionById({ baseUrl, path: { region, id: characterId } }),
         aggregateGameCharacterUnitsByRegion(baseUrl, region, "id", "asc"),
+        fetchUnitProfiles(baseUrl, region),
         getCardsByRegionList({
           baseUrl,
           path: { region },
@@ -121,14 +123,18 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
           }
         })
       ])
-        .then(([characterResponse, unitsResult, cardsResponse]) => {
+        .then(([characterResponse, unitsResult, unitProfiles, cardsResponse]) => {
           if (characterResponse.error) return { character: null, loadFailed: false as const };
           const units = unitsResult.loadFailed ? [] : parseCharacterUnits(unitsResult.data);
           const character = parseCharacter(characterResponse.data, units);
+          const unitName = character
+            ? getUnitName(toUnitProfileMap(unitProfiles), character.unit)
+            : null;
           return {
             character: character
               ? {
                   ...character,
+                  unitName,
                   relatedCards: cardsResponse.error
                     ? []
                     : parseRelatedCharacterCards(cardsResponse.data)
