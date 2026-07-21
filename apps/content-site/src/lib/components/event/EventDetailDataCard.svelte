@@ -1067,6 +1067,36 @@
   </div>
 {/snippet}
 
+{#snippet virtualLiveContent(virtualLive: NonNullable<EventDetail["virtualLive"]>, virtualLiveBannerSrc: string | null)}
+  <div
+    class={`grid gap-2 ${virtualLiveBannerSrc ? "@md:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)] @md:items-center" : ""}`}
+  >
+    {#if virtualLiveBannerSrc}
+      <div class="aspect-33/10 overflow-hidden rounded-lg bg-base-200 @md:aspect-33/14">
+        <AssetImage
+          src={virtualLiveBannerSrc}
+          alt={virtualLive.name ?? virtualLiveTitle}
+          imageClass="h-full w-full object-contain"
+          fallbackLabel={imageUnavailableLabel}
+          buttonClass="block h-full w-full overflow-hidden"
+        />
+      </div>
+    {/if}
+    <div class="min-w-0">
+      <p class="line-clamp-2 text-sm/5 font-semibold group-hover:text-primary">
+        {virtualLive.name ?? virtualLiveTitle}
+      </p>
+      <div class="mt-1.5 grid gap-1.5">
+        {#each getVirtualLiveItems(event) as item (item.key)}
+          <p class="min-w-0 wrap-break-word px-2 py-1.5 text-xs/4 font-medium">
+            {item.value}
+          </p>
+        {/each}
+      </div>
+    </div>
+  </div>
+{/snippet}
+
 <article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
     <section class="space-y-2" aria-labelledby="event-bonus-character-title">
@@ -1225,37 +1255,18 @@
         <Icon icon="mdi:account-voice" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
         <span>{virtualLiveTitle}</span>
       </h2>
-      <div class="content-card-inset @container rounded-xl p-2.5 sm:p-3">
-        <div
-          class={`grid gap-2 ${virtualLiveBannerSrc ? "@md:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)] @md:items-center" : ""}`}
+      {#if virtualLive.id}
+        <a
+          href={resolve("/virtual-live/[region]/[id]", { region, id: virtualLive.id })}
+          class="content-card-inset group @container block rounded-xl p-2.5 transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:p-3"
         >
-          {#if virtualLiveBannerSrc}
-            <div class="aspect-33/10 overflow-hidden rounded-lg bg-base-200 @md:aspect-33/14">
-              <AssetImage
-                src={virtualLiveBannerSrc}
-                alt={virtualLive.name ?? virtualLiveTitle}
-                imageClass="h-full w-full object-contain"
-                fallbackLabel={imageUnavailableLabel}
-                buttonClass="block h-full w-full overflow-hidden"
-              />
-            </div>
-          {/if}
-          <div class="min-w-0">
-            <p class="line-clamp-2 text-sm/5 font-semibold">
-              {virtualLive.name ?? virtualLiveTitle}
-            </p>
-            <div class="mt-1.5 grid gap-1.5">
-              {#each getVirtualLiveItems(event) as item (item.key)}
-                <p
-                  class="min-w-0 wrap-break-word rounded-lg bg-base-100/70 px-2 py-1.5 text-xs/4 font-medium"
-                >
-                  {item.value}
-                </p>
-              {/each}
-            </div>
-          </div>
+          {@render virtualLiveContent(virtualLive, virtualLiveBannerSrc)}
+        </a>
+      {:else}
+        <div class="content-card-inset @container rounded-xl p-2.5 sm:p-3">
+          {@render virtualLiveContent(virtualLive, virtualLiveBannerSrc)}
         </div>
-      </div>
+      {/if}
     </section>
   </article>
 {/if}
