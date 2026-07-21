@@ -137,7 +137,7 @@
                 accentColor={character.unitRecord?.colorCode}
                 decorative
                 variant="default"
-                class="size-52! border-4! bg-white shadow-lg sm:size-60!"
+                class="size-36! border-4! bg-white shadow-lg sm:size-44!"
                 imageClass="size-full object-contain"
               />
               <div>
