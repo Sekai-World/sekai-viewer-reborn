@@ -210,7 +210,7 @@
                     {#each character.relatedCards as card (card.id)}
                       <a
                         href={resolve("/card/[region]/[id]", { region: data.region, id: card.id })}
-                        class="group block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        class="content-card-inset group flex h-full flex-col gap-2 rounded-xl p-2 outline-none transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus-visible:ring-2 focus-visible:ring-primary/60"
                         aria-label={card.prefix ?? `#${card.id}`}
                       >
                         <CardThumbnail
@@ -224,9 +224,9 @@
                           rarityCount={rarityValue(card.rarityType)}
                           loadMode="visible"
                           maxSize={112}
-                          containerClass="relative mx-auto aspect-square w-full overflow-hidden rounded-xl bg-base-200"
+                          containerClass="relative mx-auto aspect-square w-full overflow-hidden rounded-lg bg-base-200"
                         />
-                        <p class="mt-2 line-clamp-2 text-xs font-medium">
+                        <p class="line-clamp-2 text-center text-xs/4 font-medium group-hover:text-primary">
                           {card.prefix ?? `#${card.id}`}
                         </p>
                       </a>
