@@ -765,7 +765,7 @@
           y={honorPreview.config.overlay.y}
           width={honorPreview.config.overlay.width}
           height={honorPreview.config.overlay.height}
-          preserveAspectRatio="none"
+          preserveAspectRatio="xMidYMid meet"
           onerror={hideBrokenImage}
         />
       {/if}
