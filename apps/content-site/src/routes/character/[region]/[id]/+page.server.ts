@@ -6,6 +6,7 @@ import {
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { loadI18nMessageBundle } from "$lib/i18n/runtime";
 import type { SupportedRegion } from "$lib/domain/regions";
+import { supportedRegions } from "$lib/domain/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   normalizeCharacterAvailability,
@@ -15,7 +16,85 @@ import { parseCharacter, parseCharacterUnits } from "$lib/server/character-list"
 import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
 import type { PageServerLoad } from "./$types";
 
-const supportedRegionSet = new Set<SupportedRegion>(["jp", "en", "tw", "kr", "cn"]);
+type CharacterPayload = { character: unknown; loadFailed: boolean };
+
+const supportedRegionSet = new Set<SupportedRegion>(supportedRegions);
+
+const characterExistsInRegion = async (
+  baseUrl: string,
+  region: SupportedRegion,
+  characterId: string
+): Promise<boolean> => {
+  try {
+    const response = await getGameCharactersByRegionById({
+      baseUrl,
+      path: { region, id: characterId }
+    });
+    if (response.error || response.data == null) {
+      return false;
+    }
+
+    const root =
+      response.data !== null &&
+      typeof response.data === "object" &&
+      !Array.isArray(response.data)
+        ? (response.data as Record<string, unknown>)
+        : null;
+    const id = root?.id;
+    return (
+      (typeof id === "number" && Number.isFinite(id)) ||
+      (typeof id === "string" && id.trim().length > 0)
+    );
+  } catch {
+    return false;
+  }
+};
+
+const resolveAvailableRegions = async ({
+  baseUrl,
+  characterId,
+  region,
+  payloadPromise
+}: {
+  baseUrl: string;
+  characterId: string;
+  region: SupportedRegion;
+  payloadPromise: Promise<CharacterPayload>;
+}): Promise<SupportedRegion[]> => {
+  try {
+    const [payloadResult, availabilityResponse] = await Promise.all([
+      payloadPromise,
+      getGameCharactersRegionsByIdAvailability({
+        baseUrl,
+        path: { id: characterId }
+      })
+    ]);
+
+    let detectedRegions = availabilityResponse.error
+      ? []
+      : normalizeCharacterAvailability(availabilityResponse.data).filter(
+          (item): item is SupportedRegion => supportedRegionSet.has(item as SupportedRegion)
+        );
+
+    if (detectedRegions.length === 0) {
+      const probes = await Promise.all(
+        supportedRegions.map(async (candidate) =>
+          (await characterExistsInRegion(baseUrl, candidate, characterId)) ? candidate : null
+        )
+      );
+      detectedRegions = probes.filter((item): item is SupportedRegion => item !== null);
+    }
+
+    const currentExists = payloadResult.character !== null && !payloadResult.loadFailed;
+    if (currentExists && !detectedRegions.includes(region)) {
+      return [region, ...detectedRegions];
+    }
+
+    return detectedRegions.includes(region) ? detectedRegions : [region, ...detectedRegions];
+  } catch {
+    return [region];
+  }
+};
 
 export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const region = normalizeRegion(params.region);
@@ -62,15 +141,12 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
     : Promise.resolve({ character: null, loadFailed: false as const });
 
   const availableRegions = characterId
-    ? getGameCharactersRegionsByIdAvailability({ baseUrl, path: { id: characterId } })
-        .then((response) => {
-          const regions = response.error ? [] : normalizeCharacterAvailability(response.data);
-          const normalized = regions.filter((item): item is SupportedRegion =>
-            supportedRegionSet.has(item as SupportedRegion)
-          );
-          return normalized.includes(region) ? normalized : [region, ...normalized];
-        })
-        .catch(() => [region])
+    ? resolveAvailableRegions({
+        baseUrl,
+        characterId,
+        region,
+        payloadPromise: payload
+      })
     : Promise.resolve([region]);
 
   payload.catch(() => {});
