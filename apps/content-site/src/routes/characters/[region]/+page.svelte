@@ -8,7 +8,6 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
   import type { CharacterCatalogueItem } from "$lib/domain/character";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
@@ -17,26 +16,20 @@
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "character", "card", "error"]);
   let messages = $state<Record<string, string>>(fallbackMessages);
-  let query = $state("");
-  let selectedUnit = $state("");
   let catalogue = $state<CharacterCatalogueItem[]>([]);
+  let unitProfiles = $state<Record<string, string>>({});
   let loadFailed = $state(false);
   let loading = $state(true);
   let requestId = 0;
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const t = (key: string, fallback: string): string => translate(key, fallback);
-  const units = $derived([
-    ...new Set(catalogue.map((item) => item.unit).filter((unit): unit is string => Boolean(unit)))
-  ]);
-  const visibleItems = $derived.by(() => {
-    const needle = query.trim().toLocaleLowerCase(data.uiLocale);
-    return catalogue.filter(
-      (item) =>
-        (!needle ||
-          item.name.toLocaleLowerCase(data.uiLocale).includes(needle) ||
-          item.id.includes(needle)) &&
-        (!selectedUnit || item.unit === selectedUnit)
-    );
+  const groups = $derived.by(() => {
+    const grouped = new Map<string, CharacterCatalogueItem[]>();
+    for (const item of catalogue) {
+      const key = item.unit && unitProfiles[item.unit] ? unitProfiles[item.unit] : "__unassigned";
+      grouped.set(key, [...(grouped.get(key) ?? []), item]);
+    }
+    return [...grouped.entries()];
   });
   const regionOptions = (): RegionBadgeOption[] =>
     supportedRegions.map((region) =>
@@ -63,6 +56,7 @@
     catalogue = [];
     void Promise.resolve(data.catalogue).then((result) => {
       catalogue = result.items;
+      unitProfiles = result.unitProfiles;
       loadFailed = result.loadFailed;
       loading = false;
     });
@@ -84,47 +78,8 @@
     {#snippet actions()}<RegionBadgeSwitch options={regionOptions()} />{/snippet}
   </PageHeader>
 
-  <div class="content-card-shell rounded-2xl border border-base-content/8 p-3 shadow-sm sm:p-4">
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <label class="input input-bordered flex min-h-12 flex-1 items-center gap-2">
-        <Icon icon="mdi:magnify" class="size-5 opacity-50" aria-hidden="true" />
-        <span class="sr-only">{t("characterSearchLabel", "Search characters")}</span>
-        <input
-          type="search"
-          class="grow"
-          bind:value={query}
-          placeholder={t("characterSearchPlaceholder", "Search by name or ID")}
-        />
-      </label>
-      <div
-        data-swipe-region-skip
-        class="flex max-w-full gap-2 overflow-x-auto pb-1"
-        aria-label={t("characterUnitFilterLabel", "Filter by unit")}
-      >
-        <button
-          type="button"
-          class={`btn btn-sm min-h-11 shrink-0 ${selectedUnit === "" ? "btn-primary" : "btn-outline"}`}
-          onclick={() => (selectedUnit = "")}>{t("characterUnitAll", "All")}</button
-        >
-        {#each units as unit (unit)}
-          <button
-            type="button"
-            class={`btn btn-circle btn-sm size-11! shrink-0 p-0 ${selectedUnit === unit ? "btn-primary" : "btn-outline"}`}
-            aria-label={unit}
-            aria-pressed={selectedUnit === unit}
-            onclick={() => (selectedUnit = unit)}
-          >
-            <UnitIconBadge {unit} variant="sm" />
-          </button>
-        {/each}
-      </div>
-    </div>
-    {#if !loading}<p class="mt-3 text-xs font-medium opacity-55">
-        {t("characterResultCount", "{count} characters").replace(
-          "{count}",
-          String(visibleItems.length)
-        )}
-      </p>{/if}
+  <div class="content-card-shell rounded-2xl border border-base-content/8 p-4 shadow-sm sm:p-5">
+    <p class="max-w-2xl text-sm/relaxed opacity-70">{t("characterListIntro", "Browse the cast by group, then open a character to explore their details and cards.")}</p>
   </div>
 
   {#if loading}
@@ -146,29 +101,30 @@
         "Character data could not be loaded."
       )}
     </div>
-  {:else if visibleItems.length === 0}
+  {:else if catalogue.length === 0}
     <div
       class="content-card-inset flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl px-6 text-center"
     >
       <Icon icon="mdi:account-search-outline" class="size-9 opacity-45" aria-hidden="true" />
-      <p class="font-semibold">{t("characterListEmpty", "No characters match these filters.")}</p>
-      <button
-        type="button"
-        class="btn btn-ghost btn-sm"
-        onclick={() => {
-          query = "";
-          selectedUnit = "";
-        }}>{t("characterClearFilters", "Clear filters")}</button
-      >
+      <p class="font-semibold">{t("characterListEmpty", "No characters are available for this region.")}</p>
     </div>
   {:else}
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {#each visibleItems as character (character.id)}<CharacterCatalogueCard
+    <div class="flex flex-col gap-7">
+      {#each groups as [group, characters] (group)}
+        <section aria-labelledby={`character-group-${group}`}>
+          <h2 id={`character-group-${group}`} class="mb-3 border-b border-base-content/10 pb-2 text-sm font-bold uppercase tracking-[0.16em]">
+            {group === "__unassigned" ? t("characterUnassignedGroup", "Other characters") : group}
+          </h2>
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {#each characters as character (character.id)}<CharacterCatalogueCard
           {character}
           region={data.region}
           unitLabel={t("characterUnitLabel", "Unit")}
           heightLabel={t("characterHeightLabel", "Height")}
         />{/each}
+          </div>
+        </section>
+      {/each}
     </div>
   {/if}
 </section>
