@@ -13,7 +13,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
-  import type { CharacterRelatedCard } from "$lib/domain/character";
+  import type { CharacterDetail, CharacterRelatedCard } from "$lib/domain/character";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { PageData } from "./$types";
@@ -62,6 +62,38 @@
       : null;
   const latestRelatedCards = (cards: CharacterRelatedCard[]): CharacterRelatedCard[] =>
     cards.slice(0, 12);
+  const formatOptionalName = (firstName: string | null, givenName: string | null): string | null => {
+    const name = [firstName, givenName].filter((part): part is string => part !== null).join(" ");
+    return name || null;
+  };
+  const formatGender = (gender: string | null): string | null => {
+    if (gender === "female") return t("characterGenderFemale", "Female");
+    if (gender === "male") return t("characterGenderMale", "Male");
+    return null;
+  };
+  const formatSupportUnitType = (supportUnitType: string | null): string | null => {
+    if (supportUnitType === "none") return t("characterSupportUnitNone", "None");
+    if (supportUnitType === "full") return t("characterSupportUnitFull", "Full");
+    if (supportUnitType === "unit") return t("characterSupportUnitUnit", "Unit");
+    if (supportUnitType === "virtual_singer")
+      return t("characterSupportUnitVirtualSinger", "Virtual Singer");
+    return null;
+  };
+  const detailRows = (character: CharacterDetail): [string, string][] => {
+    const rubyName = formatOptionalName(character.firstNameRuby, character.givenNameRuby);
+    const englishName = formatOptionalName(character.firstNameEnglish, character.givenNameEnglish);
+    const gender = formatGender(character.gender);
+    const supportUnitType = formatSupportUnitType(character.supportUnitType);
+    return [
+      [t("characterNameLabel", "Name"), character.name],
+      [t("characterUnitLabel", "Unit"), character.unit ?? t("characterValueUnavailable", "Not available")],
+      [t("characterReadingLabel", "Reading"), rubyName],
+      [t("characterEnglishNameLabel", "English name"), englishName],
+      [t("characterGenderLabel", "Gender"), gender],
+      [t("characterSupportUnitLabel", "Support unit"), supportUnitType],
+      [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]
+    ].filter((row): row is [string, string] => row[1] !== null);
+  };
 
   $effect(() => {
     const id = ++requestId;
@@ -179,7 +211,7 @@
                 >
               </div>
               <dl class="space-y-2">
-                {#each [[t("characterNameLabel", "Name"), character.name], [t("characterUnitLabel", "Unit"), character.unit ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]] as row (row[0])}
+                {#each detailRows(character) as row (row[0])}
                   <div class="content-card-inset rounded-xl p-3 sm:px-4">
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                       {row[0]}

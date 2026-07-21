@@ -778,7 +778,8 @@
   {@const characterAccentColor = getBonusCharacterAccentColor(item)}
   {@const characterIconSrc = getBonusCharacterIconSrc(item)}
   {@const isCharacterBonus = hasBonusCharacterData(item)}
-  {@const hasCharacterLink = item.gameCharacterId !== null && item.gameCharacterId > 0}
+  {@const hasCharacterLink =
+    item.gameCharacterId !== null && Number.isSafeInteger(item.gameCharacterId) && item.gameCharacterId > 0}
   <div
     class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3"
   >

@@ -9,6 +9,12 @@ export type CharacterCatalogueItem = {
   id: string;
   firstName: string | null;
   givenName: string | null;
+  firstNameRuby: string | null;
+  givenNameRuby: string | null;
+  firstNameEnglish: string | null;
+  givenNameEnglish: string | null;
+  gender: string | null;
+  supportUnitType: string | null;
   name: string;
   height: number | null;
   seq: number | null;
