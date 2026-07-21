@@ -220,7 +220,7 @@
                   >
                 </div>
                 {#if latestRelatedCards(character.relatedCards).length > 0}
-                  <div class="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-6">
+                  <div class="grid grid-cols-3 gap-2 md:grid-cols-4 xl:grid-cols-6">
                     {#each latestRelatedCards(character.relatedCards) as card (card.id)}
                       <a
                         href={resolve("/card/[region]/[id]", { region: data.region, id: card.id })}
