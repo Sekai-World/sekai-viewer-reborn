@@ -145,6 +145,7 @@ pnpm format:check
 - `packages/i18n-source/content-site/character.json`
 - `packages/i18n-source/content-site/event.json`
 - `packages/i18n-source/content-site/music.json`
+- `packages/i18n-source/content-site/virtual-live.json`
 - `packages/i18n-source/content-site/error.json`
 - `packages/i18n-source/content-site/server.json`
 
