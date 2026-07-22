@@ -112,7 +112,7 @@
           {#if group !== "__unassigned" && resolveUnitLogoUrl(characters[0]?.unit ?? "")}
             <img src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined} alt="" class="size-28 object-contain sm:size-32" />
           {/if}
-          <div class="flex w-full max-w-4xl flex-nowrap items-center justify-center gap-1 sm:gap-1.5">
+          <div class="flex w-full max-w-4xl flex-nowrap items-center justify-center gap-px sm:gap-0.5">
             {#each characters as character (character.id)}<CharacterCatalogueCard {character} region={data.region} />{/each}
           </div>
         </section>
