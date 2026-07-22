@@ -62,6 +62,13 @@
       : null;
   const latestRelatedCards = (cards: CharacterRelatedCard[]): CharacterRelatedCard[] =>
     cards.slice(0, 12);
+  const viewAllCardsLabel = (total: number | null): string =>
+    total === null
+      ? t("characterViewAllCards", "View all")
+      : t("characterViewAllCardsWithCount", "View all {count} cards").replace(
+          "{count}",
+          String(total)
+        );
   const profileFactRows = (character: CharacterDetail): [string, string][] => {
     const profile = character.profile;
     if (!profile) return [];
@@ -256,7 +263,7 @@
                     /><span>{t("characterLatestCardsTitle", "Latest cards")}</span>
                   </h2>
                   <a class="btn btn-ghost btn-sm text-primary" href={cardsHref()}
-                    >{t("characterViewAllCards", "View all")}</a
+                    >{viewAllCardsLabel(character.relatedCardTotal)}</a
                   >
                 </div>
                 {#if latestRelatedCards(character.relatedCards).length > 0}

@@ -42,6 +42,7 @@ export type CharacterDetail = CharacterCatalogueItem & {
   unitName: string | null;
   profile: CharacterProfile | null;
   relatedCards: CharacterRelatedCard[];
+  relatedCardTotal: number | null;
 };
 
 export const formatCharacterName = (

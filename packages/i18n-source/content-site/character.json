@@ -36,5 +36,6 @@
   "characterValueUnavailable": "Not available",
   "characterLatestCardsTitle": "Latest cards",
   "characterViewAllCards": "View all",
+  "characterViewAllCardsWithCount": "View all {count} cards",
   "characterCardsEmpty": "No related cards were found."
 }

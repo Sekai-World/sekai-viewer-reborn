@@ -11,7 +11,8 @@ import { supportedRegions } from "$lib/domain/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   normalizeCharacterAvailability,
-  parseRelatedCharacterCards
+  parseRelatedCharacterCards,
+  parseRelatedCharacterCardTotal
 } from "$lib/server/character-detail";
 import { parseCharacter, parseCharacterUnits } from "$lib/server/character-list";
 import { parseCharacterProfile } from "$lib/server/character-profile";
@@ -141,7 +142,10 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
                   profile: profileResponse.error ? null : parseCharacterProfile(profileResponse.data),
                   relatedCards: cardsResponse.error
                     ? []
-                    : parseRelatedCharacterCards(cardsResponse.data)
+                    : parseRelatedCharacterCards(cardsResponse.data),
+                  relatedCardTotal: cardsResponse.error
+                    ? null
+                    : parseRelatedCharacterCardTotal(cardsResponse.data)
                 }
               : null,
             loadFailed: false as const
