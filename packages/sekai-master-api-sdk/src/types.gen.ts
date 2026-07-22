@@ -552,6 +552,20 @@ export type SharedGameCharacterObjectResponse = {
     unit?: string | null;
 };
 
+export type SharedGameCharacterProfileResponse = {
+    birthday?: string;
+    characterVoice?: string;
+    favoriteFood?: string;
+    hatedFood?: string;
+    height?: string;
+    hobby?: string;
+    introduction?: string;
+    school?: string;
+    schoolYear?: string;
+    specialSkill?: string;
+    weak?: string;
+};
+
 export type SharedGameCharacterUnitListResponse = {
     items?: Array<SharedGameCharacterUnitObjectResponse>;
     pagination?: SharedPaginationResponse;
@@ -2599,6 +2613,52 @@ export type GetGameCharactersByRegionByIdResponses = {
 };
 
 export type GetGameCharactersByRegionByIdResponse = GetGameCharactersByRegionByIdResponses[keyof GetGameCharactersByRegionByIdResponses];
+
+export type GetGameCharactersByRegionByIdProfileData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Game Character ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/gameCharacters/{region}/{id}/profile';
+};
+
+export type GetGameCharactersByRegionByIdProfileErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGameCharactersByRegionByIdProfileError = GetGameCharactersByRegionByIdProfileErrors[keyof GetGameCharactersByRegionByIdProfileErrors];
+
+export type GetGameCharactersByRegionByIdProfileResponses = {
+    /**
+     * OK
+     */
+    200: SharedGameCharacterProfileResponse;
+};
+
+export type GetGameCharactersByRegionByIdProfileResponse = GetGameCharactersByRegionByIdProfileResponses[keyof GetGameCharactersByRegionByIdProfileResponses];
 
 export type GetHealthData = {
     body?: never;
