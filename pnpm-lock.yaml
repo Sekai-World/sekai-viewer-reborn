@@ -77,7 +77,7 @@ importers:
         version: 25.9.5
       daisyui:
         specifier: ^5.5.20
-        version: 5.6.22
+        version: 5.7.0
       svelte:
         specifier: ^5.56.2
         version: 5.56.7(@typescript-eslint/types@8.64.0)
@@ -138,7 +138,7 @@ importers:
         version: 25.9.5
       daisyui:
         specifier: ^5.5.20
-        version: 5.6.22
+        version: 5.7.0
       svelte:
         specifier: ^5.56.2
         version: 5.56.7(@typescript-eslint/types@8.64.0)
@@ -184,7 +184,7 @@ importers:
         version: 25.9.5
       daisyui:
         specifier: ^5.5.20
-        version: 5.6.22
+        version: 5.7.0
       svelte:
         specifier: ^5.56.2
         version: 5.56.7(@typescript-eslint/types@8.64.0)
@@ -230,7 +230,7 @@ importers:
         version: 25.9.5
       daisyui:
         specifier: ^5.5.20
-        version: 5.6.22
+        version: 5.7.0
       svelte:
         specifier: ^5.56.2
         version: 5.56.7(@typescript-eslint/types@8.64.0)
@@ -1448,8 +1448,8 @@ packages:
     resolution: {integrity: sha512-MOqHvMWF9/9MX6nza0KgvFH4HpMU0EF5uUDXqX/BtxtU8NfB0QzRtJ8Oe/6SuS4kbhyzVJwjd97EA4PKrzJ8bw==}
     engines: {node: '>=0.12'}
 
-  daisyui@5.6.22:
-    resolution: {integrity: sha512-V5OWQSty2aNGiHxvLIDq3hGkV9MQLZfZdcFUm4t7raz3va2a85dMBbW17s6X7VNoDyFAm5c6y+NQHWC7u8ZP+A==}
+  daisyui@5.7.0:
+    resolution: {integrity: sha512-2/kYbxaKtv349lPrTyxMKC9SHsyA7fBULMSabJljDE82D079cjqz+UyAzsogWgy4sTs5NDvD000acfcFqbO1XA==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -3788,7 +3788,7 @@ snapshots:
       es5-ext: 0.10.64
       type: 2.7.3
 
-  daisyui@5.6.22: {}
+  daisyui@5.7.0: {}
 
   debug@4.4.3:
     dependencies:
