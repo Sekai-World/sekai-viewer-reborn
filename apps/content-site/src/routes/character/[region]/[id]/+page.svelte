@@ -13,7 +13,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
-  import type { CharacterRelatedCard } from "$lib/domain/character";
+  import type { CharacterDetail, CharacterRelatedCard } from "$lib/domain/character";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { PageData } from "./$types";
@@ -62,6 +62,21 @@
       : null;
   const latestRelatedCards = (cards: CharacterRelatedCard[]): CharacterRelatedCard[] =>
     cards.slice(0, 12);
+  const profileFactRows = (character: CharacterDetail): [string, string][] => {
+    const profile = character.profile;
+    if (!profile) return [];
+    return [
+      [t("characterBirthdayLabel", "Birthday"), profile.birthday],
+      [t("characterVoiceLabel", "Voice"), profile.characterVoice],
+      [t("characterSchoolLabel", "School"), profile.school],
+      [t("characterSchoolYearLabel", "School year"), profile.schoolYear],
+      [t("characterHobbyLabel", "Hobby"), profile.hobby],
+      [t("characterSpecialSkillLabel", "Special skill"), profile.specialSkill],
+      [t("characterFavoriteFoodLabel", "Favorite food"), profile.favoriteFood],
+      [t("characterHatedFoodLabel", "Disliked food"), profile.hatedFood],
+      [t("characterWeaknessLabel", "Weakness"), profile.weak]
+    ].filter((row): row is [string, string] => row[1] !== null);
+  };
 
   $effect(() => {
     const id = ++requestId;
@@ -198,6 +213,34 @@
         </div>
 
         <div class="flex flex-col gap-4">
+          {#if character.profile?.introduction || profileFactRows(character).length > 0}
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <h2 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                  <Icon icon="mdi:account-details-outline" class="size-4 shrink-0" aria-hidden="true" />
+                  <span>{t("characterProfileTitle", "Profile")}</span>
+                </h2>
+                {#if character.profile?.introduction}
+                  <section class="content-card-inset rounded-xl p-3 sm:p-4" aria-labelledby="character-introduction-title">
+                    <h3 id="character-introduction-title" class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                      {t("characterIntroductionLabel", "Introduction")}
+                    </h3>
+                    <p class="mt-2 whitespace-pre-line wrap-break-word text-sm/6">{character.profile.introduction}</p>
+                  </section>
+                {/if}
+                {#if profileFactRows(character).length > 0}
+                  <dl class="grid gap-2 sm:grid-cols-2">
+                    {#each profileFactRows(character) as row (row[0])}
+                      <div class="content-card-inset rounded-xl p-3">
+                        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{row[0]}</dt>
+                        <dd class="mt-1 wrap-break-word text-sm font-medium">{row[1]}</dd>
+                      </div>
+                    {/each}
+                  </dl>
+                {/if}
+              </div>
+            </article>
+          {/if}
           <article class="card content-card-shell shadow-sm">
             <div class="card-body gap-4 p-3 sm:p-5">
               <section class="space-y-3" aria-labelledby="character-related-cards-title">
