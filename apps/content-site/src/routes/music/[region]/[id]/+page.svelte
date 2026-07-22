@@ -259,7 +259,7 @@
     {#if payload.music}
       {#await data.availableRegions then availableRegions}
         <div
-          class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,min(33%,350px))_minmax(0,1fr)] lg:items-start"
+          class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)] lg:items-start"
         >
           <div class="flex flex-col gap-4">
             <MusicJacketHero
