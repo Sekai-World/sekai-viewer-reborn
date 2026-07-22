@@ -1,6 +1,7 @@
 import {
   getCardsByRegionList,
   getGameCharactersByRegionById,
+  getGameCharactersByRegionByIdProfile,
   getGameCharactersRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
@@ -13,6 +14,7 @@ import {
   parseRelatedCharacterCards
 } from "$lib/server/character-detail";
 import { parseCharacter, parseCharacterUnits } from "$lib/server/character-list";
+import { parseCharacterProfile } from "$lib/server/character-profile";
 import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
 import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
@@ -108,6 +110,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const payload = characterId
     ? Promise.all([
         getGameCharactersByRegionById({ baseUrl, path: { region, id: characterId } }),
+        getGameCharactersByRegionByIdProfile({ baseUrl, path: { region, id: characterId } }),
         aggregateGameCharacterUnitsByRegion(baseUrl, region, "id", "asc"),
         fetchUnitProfiles(baseUrl, region),
         getCardsByRegionList({
@@ -123,7 +126,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
           }
         })
       ])
-        .then(([characterResponse, unitsResult, unitProfiles, cardsResponse]) => {
+        .then(([characterResponse, profileResponse, unitsResult, unitProfiles, cardsResponse]) => {
           if (characterResponse.error) return { character: null, loadFailed: false as const };
           const units = unitsResult.loadFailed ? [] : parseCharacterUnits(unitsResult.data);
           const character = parseCharacter(characterResponse.data, units);
@@ -135,6 +138,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
               ? {
                   ...character,
                   unitName,
+                  profile: profileResponse.error ? null : parseCharacterProfile(profileResponse.data),
                   relatedCards: cardsResponse.error
                     ? []
                     : parseRelatedCharacterCards(cardsResponse.data)
