@@ -62,6 +62,13 @@
       : null;
   const latestRelatedCards = (cards: CharacterRelatedCard[]): CharacterRelatedCard[] =>
     cards.slice(0, 12);
+  const viewAllCardsLabel = (total: number | null): string =>
+    total === null
+      ? t("characterViewAllCards", "View all")
+      : t("characterViewAllCardsWithCount", "View all {count} cards").replace(
+          "{count}",
+          String(total)
+        );
   const formatOptionalName = (firstName: string | null, givenName: string | null): string | null => {
     const name = [firstName, givenName].filter((part): part is string => part !== null).join(" ");
     return name || null;
@@ -278,7 +285,7 @@
                     /><span>{t("characterLatestCardsTitle", "Latest cards")}</span>
                   </h2>
                   <a class="btn btn-ghost btn-sm text-primary" href={cardsHref()}
-                    >{t("characterViewAllCards", "View all")}</a
+                    >{viewAllCardsLabel(character.relatedCardTotal)}</a
                   >
                 </div>
                 {#if latestRelatedCards(character.relatedCards).length > 0}

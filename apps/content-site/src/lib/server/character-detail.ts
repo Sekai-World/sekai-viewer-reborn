@@ -12,6 +12,15 @@ const getString = (value: unknown): string | null => {
   return null;
 };
 
+const getNumber = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
 export const parseRelatedCharacterCards = (payload: unknown): CharacterRelatedCard[] => {
   const root = getObject(payload);
   const data = getObject(root?.data);
@@ -36,6 +45,13 @@ export const parseRelatedCharacterCards = (payload: unknown): CharacterRelatedCa
       };
     })
     .filter((item): item is CharacterRelatedCard => item !== null);
+};
+
+export const parseRelatedCharacterCardTotal = (payload: unknown): number | null => {
+  const root = getObject(payload);
+  const data = getObject(root?.data);
+  const pagination = getObject(root?.pagination) ?? getObject(data?.pagination);
+  return getNumber(pagination?.total);
 };
 
 export const normalizeCharacterAvailability = (payload: unknown): string[] => {
