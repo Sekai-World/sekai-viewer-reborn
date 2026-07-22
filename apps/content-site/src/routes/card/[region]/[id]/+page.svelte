@@ -382,7 +382,7 @@
 
     {#if payload.card}
       <div
-        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,33%)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(0,33%)_minmax(0,1fr)]"
+        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,min(33%,350px))_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(0,min(33%,350px))_minmax(0,1fr)]"
       >
         <div class="flex flex-col gap-4">
           <CardDetailAssetCard
