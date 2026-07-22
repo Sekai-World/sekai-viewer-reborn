@@ -32,5 +32,5 @@ export const resolveUnitIconUrl = (
 
 export const resolveUnitLogoUrl = (slug: string): string | null => {
   const normalized = slug.trim().toLowerCase();
-  return unitIconSlugs.has(normalized) ? asset(`/icons/icon_${normalized}.png`) : null;
+  return unitIconSlugs.has(normalized) ? asset(`/logos/logo_${normalized}.png`) : null;
 };
