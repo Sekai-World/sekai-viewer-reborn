@@ -16,8 +16,8 @@
 
 <div
   aria-hidden="true"
-  class:md:grid-cols-[minmax(0,33%)_minmax(0,1fr)]={!isMusic}
-  class:lg:grid-cols-[minmax(0,33%)_minmax(0,1fr)]={true}
+  class:md:grid-cols-[minmax(0,min(33%,350px))_minmax(0,1fr)]={!isMusic}
+  class:lg:grid-cols-[minmax(0,min(33%,350px))_minmax(0,1fr)]={true}
   class="grid grid-cols-1 gap-4 md:items-start lg:items-start"
 >
   <div class="flex min-w-0 flex-col gap-4">
