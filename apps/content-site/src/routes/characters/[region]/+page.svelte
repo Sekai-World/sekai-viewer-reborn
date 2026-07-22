@@ -106,13 +106,13 @@
       <p class="font-semibold">{t("characterListEmpty", "No characters are available for this region.")}</p>
     </div>
   {:else}
-    <div class="flex flex-col gap-7">
+    <div class="flex flex-col gap-4 sm:gap-5">
       {#each groups as [group, characters] (group)}
-        <section aria-labelledby={`character-group-${group}`}>
+        <section class="flex flex-col items-center gap-2 sm:gap-2.5" aria-labelledby={`character-group-${group}`}>
           {#if group !== "__unassigned" && resolveUnitLogoUrl(characters[0]?.unit ?? "")}
-            <img src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined} alt="" class="size-20 object-contain sm:size-24" />
+            <img src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined} alt="" class="size-28 object-contain sm:size-32" />
           {/if}
-          <div class="flex w-full max-w-5xl flex-nowrap items-center justify-center gap-1.5 sm:gap-3">
+          <div class="flex w-full max-w-4xl flex-nowrap items-center justify-center gap-1 sm:gap-1.5">
             {#each characters as character (character.id)}<CharacterCatalogueCard {character} region={data.region} />{/each}
           </div>
         </section>

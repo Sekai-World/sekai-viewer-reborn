@@ -16,7 +16,7 @@
     accentColor={character.unitRecord?.colorCode}
     variant="default"
     decorative
-    class="size-full! max-w-28 bg-white shadow-sm transition-transform duration-200 group-hover:scale-105"
+    class="size-full! max-w-18 bg-white shadow-sm transition-transform duration-200 group-hover:scale-105 sm:max-w-20"
     imageClass="size-full object-contain"
   />
 </a>
