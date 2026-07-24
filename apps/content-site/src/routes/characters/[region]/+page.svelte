@@ -25,12 +25,26 @@
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const t = (key: string, fallback: string): string => translate(key, fallback);
   const groups = $derived.by(() => {
-    const grouped = new Map<string, CharacterCatalogueItem[]>();
-    for (const item of catalogue) {
-      const key = item.unit && unitProfiles[item.unit] ? unitProfiles[item.unit] : "__unassigned";
-      grouped.set(key, [...(grouped.get(key) ?? []), item]);
-    }
-    return [...grouped.entries()];
+    const grouped = catalogue.reduce<{
+      order: string[];
+      byGroup: Record<string, CharacterCatalogueItem[]>;
+    }>(
+      (result, item) => {
+        const key = item.unit && unitProfiles[item.unit] ? unitProfiles[item.unit] : "__unassigned";
+        return {
+          order: result.order.includes(key) ? result.order : [...result.order, key],
+          byGroup: {
+            ...result.byGroup,
+            [key]: [...(result.byGroup[key] ?? []), item]
+          }
+        };
+      },
+      { order: [], byGroup: {} }
+    );
+
+    return grouped.order.map(
+      (group): [string, CharacterCatalogueItem[]] => [group, grouped.byGroup[group] ?? []]
+    );
   });
   const regionOptions = (): RegionBadgeOption[] =>
     supportedRegions.map((region) =>
