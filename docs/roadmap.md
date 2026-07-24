@@ -16,12 +16,12 @@ The workspace is a monorepo of four deployable SvelteKit apps. Only
 `content-site` carries real feature coverage today; the other three are
 scaffolded placeholders and are **not** feature-complete.
 
-| App              | Status        | Notes                                              |
-| ---------------- | ------------- | -------------------------------------------------- |
-| `content-site`  | Available     | Primary game-data browser (see below).             |
-| `tools-site`    | Exploratory   | Scaffold only; no feature work started.            |
-| `media-lab-site`| Exploratory   | Scaffold only; no feature work started.            |
-| `account-site`  | Exploratory   | Scaffold only; no feature work started.            |
+| App              | Status      | Notes                                   |
+| ---------------- | ----------- | --------------------------------------- |
+| `content-site`   | Available   | Primary game-data browser (see below).  |
+| `tools-site`     | Exploratory | Scaffold only; no feature work started. |
+| `media-lab-site` | Exploratory | Scaffold only; no feature work started. |
+| `account-site`   | Exploratory | Scaffold only; no feature work started. |
 
 ## content-site — Content Catalogue
 
@@ -38,12 +38,10 @@ Catalogue (list + detail) coverage already shipped for:
 These read from the public `sekai-master-api` contracts and serve all supported
 regions with localized labels.
 
-### Available — Content Center Phase One (development branch)
+### Available — Content Center Phase One
 
-Implemented on the active development branch (not yet merged to `main` / not
-released). The supporting `sekai-master-api` contracts (`gameCharacters`,
-`gameCharacterUnits`, `unitProfiles`) were already public, so the frontend
-routes could be built directly against the SDK:
+Content Center Phase One merged to `main` in PR #81. The catalogue and detail
+routes use the public `sekai-master-api` contracts and generated SDK:
 
 - **Character catalogue** — region-aware character list (`/characters/[region]`)
   with unit filtering, search, and a result count, plus a character detail page
@@ -51,7 +49,7 @@ routes could be built directly against the SDK:
   metadata. Both list/unit list requests use paginated aggregation
   (`aggregateGameCharactersByRegion` / `aggregateGameCharacterUnitsByRegion` in
   `apps/content-site/src/lib/server/character-pages.ts`) requesting `page_size:
-  100`, following `pagination.has_next` / `total_pages`, capped at 20 pages, and
+100`, following `pagination.has_next` / `total_pages`, capped at 20 pages, and
   deduplicating overlapping results — so the full current catalogue loads without
   the earlier truncation.
 - **Character-to-card discovery** — the character detail page links to a cards
@@ -61,17 +59,19 @@ routes could be built directly against the SDK:
   card detail character identity, event detail banner character, and music detail
   vocal characters. These are linked only when the source payload carries a
   confirmed positive `gameCharacterId`.
-- **Virtual Live character linking excluded** — Virtual Live character entries
-  currently expose `gameCharacterUnitId` but no reliable `gameCharacterId`, so
-  they are intentionally **not** linked to character profiles. Linking remains
-  pending a reliable ID contract on the master API side.
+- **Virtual Live detail expansion** — detail pages now provide date-grouped,
+  keyboard-accessible schedules; enriched character profile links; typed
+  additional data; setlist music previews; and on-demand MC Timeline details.
+  Modern `mc_timeline` playable assets and legacy `mc` scenario assets are both
+  parsed server-side. Timeline 3D IDs are resolved through the public
+  Character3D batch contract before avatars/profile links are shown.
+- **Virtual Live rewards** — expanded `virtual_live_reward` boxes render their
+  concrete item quantities. Resource boxes are resolved in the current content
+  region only; unavailable boxes remain absent rather than falling back across
+  regions.
 - **Homepage database directory** — the homepage now exposes a database
   directory entry that links to the character catalogue; the sidebar adds a
   Characters entry for discovery.
-
-These are usable in the current working tree of the development branch. They are
-**not** yet on `main` and have not been shipped/released; treat the branch
-status as the source of truth until merged.
 
 ### Planned — Next Content Priorities
 

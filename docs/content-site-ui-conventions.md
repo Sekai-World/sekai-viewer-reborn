@@ -163,12 +163,15 @@ Current `content-site` sidebar groups:
 - Home
 - Database
   - Cards
+  - Characters
   - Songs
   - Events
   - Virtual Lives
 
-Cards, Songs, Events, Gachas, and Virtual Lives have real destinations. Virtual Live list
-routes use `/virtual-lives/:region`, while detail routes use `/virtual-live/:region/:id`.
+Cards, Characters, Songs, Events, Gachas, and Virtual Lives have real destinations.
+Character list/detail routes use `/characters/:region` and `/character/:region/:id`.
+Virtual Live list/detail routes use `/virtual-lives/:region` and
+`/virtual-live/:region/:id`.
 
 ## I18n Rules
 
@@ -205,3 +208,18 @@ When changing `content-site` UI, prefer this order:
 - `VoicePlayButton.svelte` is the compact circular voice play button for short voice clips such as card gacha phrases. It lives in `shared/` and is used by `CardDetailInfoCard`.
 - Both controls manage their own `HTMLAudioElement` state; consumers pass a `src` and localized labels.
 - `VoicePlayButton` should surface missing voice assets with a disabled error icon and localized tooltip instead of silently reverting to the idle play state.
+
+## Virtual Live Timeline Conventions
+
+- Keep Timeline parsing server-side behind
+  `/virtual-live/:region/:id/timeline/:setlistId`; clients consume normalized
+  JSON rather than raw `.playable` or `.asset` resources.
+- Support only the exact MC formats: `mc_timeline` reads
+  `virtual_live/mc/timeline/{bundle}/{bundle}.playable`; legacy `mc` reads
+  `virtual_live/mc/scenario/{bundle}/{bundle}.asset`. Other setlist types stay
+  unsupported until their asset format is confirmed.
+- Use the route's content region for assets, character names, and Character3D
+  resolution. Do not fall back to another region when an asset is unavailable.
+- Timeline loading is on demand from the Setlist dialog. Preserve category
+  filters, progressive rendering, and per-row errors so an unavailable timeline
+  does not make the full Virtual Live detail page unavailable.
