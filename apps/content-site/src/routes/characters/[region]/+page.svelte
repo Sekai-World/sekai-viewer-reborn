@@ -122,7 +122,13 @@
   {:else}
     <div class="flex flex-col gap-4 sm:gap-5">
       {#each groups as [group, characters] (group)}
-        <section class="flex flex-col items-center gap-2 sm:gap-2.5" aria-labelledby={`character-group-${group}`}>
+        <section
+          class="flex flex-col items-center gap-2 sm:gap-2.5"
+          aria-labelledby={`character-group-${group}`}
+        >
+          <h2 id={`character-group-${group}`} class="sr-only">
+            {group === "__unassigned" ? t("characterUnassignedGroup", "Other characters") : group}
+          </h2>
           {#if group !== "__unassigned" && resolveUnitLogoUrl(characters[0]?.unit ?? "")}
             <img src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined} alt="" class="size-28 object-contain sm:size-32" />
           {/if}

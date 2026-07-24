@@ -224,7 +224,7 @@
             <article class="card content-card-shell shadow-sm">
               <div class="card-body gap-4 p-3 sm:p-5">
                 <h2 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                  <Icon icon="mdi:account-details-outline" class="size-4 shrink-0" aria-hidden="true" />
+                  <Icon icon="mdi:card-account-details-outline" class="size-4 shrink-0" aria-hidden="true" />
                   <span>{t("characterProfileTitle", "Profile")}</span>
                 </h2>
                 {#if character.profile?.introduction}

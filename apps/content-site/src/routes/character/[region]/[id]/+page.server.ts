@@ -66,7 +66,7 @@ const resolveAvailableRegions = async ({
   payloadPromise: Promise<CharacterPayload>;
 }): Promise<SupportedRegion[]> => {
   try {
-    const [payloadResult, availabilityResponse] = await Promise.all([
+    const [, availabilityResponse] = await Promise.all([
       payloadPromise,
       getGameCharactersRegionsByIdAvailability({
         baseUrl,
@@ -87,11 +87,6 @@ const resolveAvailableRegions = async ({
         )
       );
       detectedRegions = probes.filter((item): item is SupportedRegion => item !== null);
-    }
-
-    const currentExists = payloadResult.character !== null && !payloadResult.loadFailed;
-    if (currentExists && !detectedRegions.includes(region)) {
-      return [region, ...detectedRegions];
     }
 
     return detectedRegions.includes(region) ? detectedRegions : [region, ...detectedRegions];

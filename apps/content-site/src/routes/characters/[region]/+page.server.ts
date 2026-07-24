@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const catalogue = Promise.all([
     aggregateGameCharactersByRegion(baseUrl, region, "seq", "asc"),
     aggregateGameCharacterUnitsByRegion(baseUrl, region, "id", "asc"),
-    fetchUnitProfiles(baseUrl, region)
+    fetchUnitProfiles(baseUrl, region).catch(() => [])
   ])
     .then(([charactersResult, unitsResult, profiles]) => {
       if (charactersResult.loadFailed || unitsResult.loadFailed) {
