@@ -333,6 +333,48 @@
   const getBonusCharacterIconSrc = (item: BonusCharacterItem): string | null =>
     item.gameCharacterId === null ? null : getLocalCharacterThumbnailAssetURL(item.gameCharacterId);
 
+  const isPiaproCharacterId = (characterId: number): boolean =>
+    Number.isSafeInteger(characterId) && characterId >= 21 && characterId <= 26;
+
+  const getHighestAttrBonus = (item: BonusCharacterItem): BonusDeckEntry | null =>
+    item.attrBonuses.reduce<BonusDeckEntry | null>((highest, bonus) => {
+      if (bonus.attr === null) {
+        return highest;
+      }
+
+      if (highest === null || (bonus.bonusRate ?? -Infinity) > (highest.bonusRate ?? -Infinity)) {
+        return bonus;
+      }
+
+      return highest;
+    }, null);
+
+  const getBonusCardsHref = (
+    item: BonusCharacterItem,
+    highestAttrBonus: BonusDeckEntry | null
+  ): string | null => {
+    if (
+      item.gameCharacterId === null ||
+      !Number.isSafeInteger(item.gameCharacterId) ||
+      item.gameCharacterId <= 0
+    ) {
+      return null;
+    }
+
+    const searchParams = new URLSearchParams({ character: String(item.gameCharacterId) });
+    if (highestAttrBonus?.attr) {
+      searchParams.set("attr", highestAttrBonus.attr);
+    }
+    if (isPiaproCharacterId(item.gameCharacterId)) {
+      searchParams.set("unit", "piapro");
+      if (item.unit) {
+        searchParams.set("support_unit", item.unit === "piapro" ? "none" : item.unit);
+      }
+    }
+
+    return `${resolve("/cards/[region]", { region })}?${searchParams.toString()}`;
+  };
+
   const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {
     return (data?.bonuses?.deckBonuses ?? []).reduce<BonusCharacterItem[]>((items, bonus) => {
       const nextItem = {
@@ -778,39 +820,32 @@
   {@const characterAccentColor = getBonusCharacterAccentColor(item)}
   {@const characterIconSrc = getBonusCharacterIconSrc(item)}
   {@const isCharacterBonus = hasBonusCharacterData(item)}
-  {@const hasCharacterLink =
-    item.gameCharacterId !== null && Number.isSafeInteger(item.gameCharacterId) && item.gameCharacterId > 0}
-  <div
-    class="content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3"
+  {@const highestAttrBonus = getHighestAttrBonus(item)}
+  {@const bonusCardsHref = getBonusCardsHref(item, highestAttrBonus)}
+  <svelte:element
+    this={bonusCardsHref ? "a" : "div"}
+    href={bonusCardsHref ?? undefined}
+    class={`content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3 ${
+      bonusCardsHref
+        ? "group/bonus-row transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-primary/8 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        : ""
+    }`}
+    aria-label={bonusCardsHref
+      ? `${displayName} ${getAttrLabel(highestAttrBonus?.attr ?? null)}`
+      : undefined}
+    title={bonusCardsHref
+      ? `${displayName} · ${getAttrLabel(highestAttrBonus?.attr ?? null)}`
+      : undefined}
   >
     <div class="flex justify-center">
-      {#if isCharacterBonus && hasCharacterLink}
-        <a
-          href={resolve("/character/[region]/[id]", {
-            region,
-            id: String(item.gameCharacterId)
-          })}
-          class="rounded-full transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          aria-label={displayName}
-          title={displayName}
-        >
-          <CharacterAvatar
-            src={characterIconSrc}
-            label={displayName}
-            accentColor={characterAccentColor}
-            characterId={item.gameCharacterId}
-            variant="sm"
-            decorative
-            onImageError={hideBrokenImage}
-          />
-        </a>
-      {:else if isCharacterBonus}
+      {#if isCharacterBonus}
         <CharacterAvatar
           src={characterIconSrc}
           label={displayName}
           accentColor={characterAccentColor}
           characterId={item.gameCharacterId}
           variant="sm"
+          decorative={Boolean(bonusCardsHref)}
           onImageError={hideBrokenImage}
         />
       {:else}
@@ -818,7 +853,9 @@
       {/if}
     </div>
     <div class="min-w-0">
-      <p class="truncate text-sm font-semibold text-base-content">{displayName}</p>
+      <p class="truncate text-sm font-semibold text-base-content group-hover/bonus-row:text-primary">
+        {displayName}
+      </p>
       <div class="mt-1 flex min-h-7 items-center gap-1.5">
         {#if item.unit}
           <UnitIconBadge
@@ -872,7 +909,7 @@
         </span>
       {/each}
     </div>
-  </div>
+  </svelte:element>
 {/snippet}
 
 {#snippet rarityIconLabel(rarityType: string)}
