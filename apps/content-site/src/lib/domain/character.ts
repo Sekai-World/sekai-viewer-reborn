@@ -25,8 +25,24 @@ export type CharacterRelatedCard = {
   initialSpecialTrainingStatus: string | null;
 };
 
+export type CharacterProfile = {
+  birthday: string | null;
+  characterVoice: string | null;
+  favoriteFood: string | null;
+  hatedFood: string | null;
+  hobby: string | null;
+  introduction: string | null;
+  school: string | null;
+  schoolYear: string | null;
+  specialSkill: string | null;
+  weak: string | null;
+};
+
 export type CharacterDetail = CharacterCatalogueItem & {
+  unitName: string | null;
+  profile: CharacterProfile | null;
   relatedCards: CharacterRelatedCard[];
+  relatedCardTotal: number | null;
 };
 
 export const formatCharacterName = (

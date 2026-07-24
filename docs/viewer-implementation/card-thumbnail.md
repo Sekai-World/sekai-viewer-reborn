@@ -6,6 +6,11 @@
 - Gacha pickup cards must forward `attr` and `rarityType` from `parseCardDetail` through `routes/gacha/[region]/[id]/+page.server.ts`; without those fields, `CardThumbnail` cannot render the same frame/icon overlays used by the card list agenda/comfy views.
 - Card detail attribute displays should use the same right-facing attribute icon asset family as thumbnails: `/card_attr/icon_attribute_{attr}_88.png`.
 
+## Sequence numbers are internal-only
+
+- Do not render user-visible Sequence / `seq` fields in content-site UI by default.
+- Keep `seq` for internal ordering, sorting, and stable keys only, unless a product request explicitly requires showing it.
+
 ## Gacha detail asset helpers and behavior keys
 
 - Gacha detail components import asset helpers from `apps/content-site/src/lib/assets/index.ts`; keep gacha-specific helpers exported there so Vite dev imports do not fail at route load time.

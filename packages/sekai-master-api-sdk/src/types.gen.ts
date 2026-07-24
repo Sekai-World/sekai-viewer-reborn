@@ -537,12 +537,33 @@ export type SharedGameCharacterListResponse = {
 };
 
 export type SharedGameCharacterObjectResponse = {
-    firstName?: unknown;
-    givenName?: unknown;
-    height?: unknown;
-    id?: unknown;
-    seq?: unknown;
-    unit?: unknown;
+    firstName?: string | null;
+    firstNameEnglish?: string | null;
+    firstNameRuby?: string | null;
+    gender?: string | null;
+    givenName?: string | null;
+    givenNameEnglish?: string | null;
+    givenNameRuby?: string | null;
+    height?: number;
+    id?: number;
+    resourceId?: number;
+    seq?: number;
+    supportUnitType?: string | null;
+    unit?: string | null;
+};
+
+export type SharedGameCharacterProfileResponse = {
+    birthday?: string;
+    characterVoice?: string;
+    favoriteFood?: string;
+    hatedFood?: string;
+    height?: string;
+    hobby?: string;
+    introduction?: string;
+    school?: string;
+    schoolYear?: string;
+    specialSkill?: string;
+    weak?: string;
 };
 
 export type SharedGameCharacterUnitListResponse = {
@@ -2592,6 +2613,52 @@ export type GetGameCharactersByRegionByIdResponses = {
 };
 
 export type GetGameCharactersByRegionByIdResponse = GetGameCharactersByRegionByIdResponses[keyof GetGameCharactersByRegionByIdResponses];
+
+export type GetGameCharactersByRegionByIdProfileData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Game Character ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/gameCharacters/{region}/{id}/profile';
+};
+
+export type GetGameCharactersByRegionByIdProfileErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGameCharactersByRegionByIdProfileError = GetGameCharactersByRegionByIdProfileErrors[keyof GetGameCharactersByRegionByIdProfileErrors];
+
+export type GetGameCharactersByRegionByIdProfileResponses = {
+    /**
+     * OK
+     */
+    200: SharedGameCharacterProfileResponse;
+};
+
+export type GetGameCharactersByRegionByIdProfileResponse = GetGameCharactersByRegionByIdProfileResponses[keyof GetGameCharactersByRegionByIdProfileResponses];
 
 export type GetHealthData = {
     body?: never;

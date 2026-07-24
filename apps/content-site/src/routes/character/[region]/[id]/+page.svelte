@@ -13,7 +13,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
-  import type { CharacterRelatedCard } from "$lib/domain/character";
+  import type { CharacterDetail, CharacterRelatedCard } from "$lib/domain/character";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { PageData } from "./$types";
@@ -51,7 +51,7 @@
   const rarityValue = (type: string | null): number =>
     type === "rarity_birthday" ? 1 : Number(type?.match(/\d+/)?.[0] ?? 0);
   const trained = (card: CharacterRelatedCard): boolean =>
-    card.initialSpecialTrainingStatus === "done" || card.rarityType === "rarity_birthday";
+    card.initialSpecialTrainingStatus === "done";
   const cardSrc = (card: CharacterRelatedCard): string | null =>
     card.assetBundleName
       ? getCardThumbnailAssetURL(card.assetBundleName, trained(card), "jp")
@@ -60,6 +60,30 @@
     card.assetBundleName && data.region !== "jp"
       ? getCardThumbnailAssetURL(card.assetBundleName, trained(card), data.region)
       : null;
+  const latestRelatedCards = (cards: CharacterRelatedCard[]): CharacterRelatedCard[] =>
+    cards.slice(0, 12);
+  const viewAllCardsLabel = (total: number | null): string =>
+    total === null
+      ? t("characterViewAllCards", "View all")
+      : t("characterViewAllCardsWithCount", "View all {count} cards").replace(
+          "{count}",
+          String(total)
+        );
+  const profileFactRows = (character: CharacterDetail): [string, string][] => {
+    const profile = character.profile;
+    if (!profile) return [];
+    return [
+      [t("characterBirthdayLabel", "Birthday"), profile.birthday],
+      [t("characterVoiceLabel", "Voice"), profile.characterVoice],
+      [t("characterSchoolLabel", "School"), profile.school],
+      [t("characterSchoolYearLabel", "School year"), profile.schoolYear],
+      [t("characterHobbyLabel", "Hobby"), profile.hobby],
+      [t("characterSpecialSkillLabel", "Special skill"), profile.specialSkill],
+      [t("characterFavoriteFoodLabel", "Favorite food"), profile.favoriteFood],
+      [t("characterHatedFoodLabel", "Disliked food"), profile.hatedFood],
+      [t("characterWeaknessLabel", "Weakness"), profile.weak]
+    ].filter((row): row is [string, string] => row[1] !== null);
+  };
 
   $effect(() => {
     const id = ++requestId;
@@ -83,9 +107,15 @@
 <section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
   {#await data.payload}
     <PageHeader breadcrumbs={breadcrumbs(`#${data.characterId}`)} breadcrumbClass="md:max-w-[68%]"
-      >{#snippet actions()}<RegionBadgeSwitch
-          options={currentRegionOption()}
-        />{/snippet}</PageHeader
+      >{#snippet actions()}
+        {#await data.availableRegions}
+          <RegionBadgeSwitch options={currentRegionOption()} />
+        {:then available}
+          <RegionBadgeSwitch options={regionOptions(available)} />
+        {:catch}
+          <RegionBadgeSwitch options={currentRegionOption()} />
+        {/await}
+      {/snippet}</PageHeader
     >
     <DetailPageSkeleton kind="character" />
   {:then result}
@@ -93,9 +123,15 @@
       breadcrumbs={breadcrumbs(result.character?.name ?? `#${data.characterId}`)}
       breadcrumbClass="md:max-w-[68%]"
     >
-      {#snippet actions()}{#await data.availableRegions then available}<RegionBadgeSwitch
-            options={regionOptions(available)}
-          />{/await}{/snippet}
+      {#snippet actions()}
+        {#await data.availableRegions}
+          <RegionBadgeSwitch options={currentRegionOption()} />
+        {:then available}
+          <RegionBadgeSwitch options={regionOptions(available)} />
+        {:catch}
+          <RegionBadgeSwitch options={currentRegionOption()} />
+        {/await}
+      {/snippet}
     </PageHeader>
 
     {#if result.loadFailed}
@@ -137,14 +173,11 @@
                 accentColor={character.unitRecord?.colorCode}
                 decorative
                 variant="default"
-                class="size-52! border-4! bg-white shadow-lg sm:size-60!"
+                class="size-28! border-4! bg-white shadow-lg sm:size-32!"
                 imageClass="size-full object-contain"
               />
               <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.2em] opacity-45">
-                  #{character.id}
-                </p>
-                <h1 class="mt-2 wrap-break-word text-3xl/tight font-bold sm:text-4xl">
+                <h1 class="wrap-break-word text-3xl/tight font-bold sm:text-4xl">
                   {character.name}
                 </h1>
               </div>
@@ -168,7 +201,7 @@
                 >
               </div>
               <dl class="space-y-2">
-                {#each [[t("characterNameLabel", "Name"), character.name], [t("characterUnitLabel", "Unit"), character.unit ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`], [t("characterSeqLabel", "Sequence"), character.seq ?? t("characterValueUnavailable", "Not available")]] as row (row[0])}
+                {#each [[t("characterNameLabel", "Name"), character.name], [t("characterUnitLabel", "Unit"), character.unitName ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]] as row (row[0])}
                   <div class="content-card-inset rounded-xl p-3 sm:px-4">
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                       {row[0]}
@@ -187,6 +220,34 @@
         </div>
 
         <div class="flex flex-col gap-4">
+          {#if character.profile?.introduction || profileFactRows(character).length > 0}
+            <article class="card content-card-shell shadow-sm">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <h2 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                  <Icon icon="mdi:card-account-details-outline" class="size-4 shrink-0" aria-hidden="true" />
+                  <span>{t("characterProfileTitle", "Profile")}</span>
+                </h2>
+                {#if character.profile?.introduction}
+                  <section class="content-card-inset rounded-xl p-3 sm:p-4" aria-labelledby="character-introduction-title">
+                    <h3 id="character-introduction-title" class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                      {t("characterIntroductionLabel", "Introduction")}
+                    </h3>
+                    <p class="mt-2 whitespace-pre-line wrap-break-word text-sm/6">{character.profile.introduction}</p>
+                  </section>
+                {/if}
+                {#if profileFactRows(character).length > 0}
+                  <dl class="grid gap-2 sm:grid-cols-2">
+                    {#each profileFactRows(character) as row (row[0])}
+                      <div class="content-card-inset rounded-xl p-3">
+                        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{row[0]}</dt>
+                        <dd class="mt-1 wrap-break-word text-sm font-medium">{row[1]}</dd>
+                      </div>
+                    {/each}
+                  </dl>
+                {/if}
+              </div>
+            </article>
+          {/if}
           <article class="card content-card-shell shadow-sm">
             <div class="card-body gap-4 p-3 sm:p-5">
               <section class="space-y-3" aria-labelledby="character-related-cards-title">
@@ -202,15 +263,15 @@
                     /><span>{t("characterLatestCardsTitle", "Latest cards")}</span>
                   </h2>
                   <a class="btn btn-ghost btn-sm text-primary" href={cardsHref()}
-                    >{t("characterViewAllCards", "View all")}</a
+                    >{viewAllCardsLabel(character.relatedCardTotal)}</a
                   >
                 </div>
-                {#if character.relatedCards.length > 0}
-                  <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
-                    {#each character.relatedCards as card (card.id)}
+                {#if latestRelatedCards(character.relatedCards).length > 0}
+                  <div class="grid grid-cols-3 gap-2 md:grid-cols-4 xl:grid-cols-6">
+                    {#each latestRelatedCards(character.relatedCards) as card (card.id)}
                       <a
                         href={resolve("/card/[region]/[id]", { region: data.region, id: card.id })}
-                        class="group block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        class="content-card-inset group flex h-full flex-col gap-2 rounded-xl p-2 outline-none transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus-visible:ring-2 focus-visible:ring-primary/60"
                         aria-label={card.prefix ?? `#${card.id}`}
                       >
                         <CardThumbnail
@@ -223,10 +284,10 @@
                           rarityType={card.rarityType}
                           rarityCount={rarityValue(card.rarityType)}
                           loadMode="visible"
-                          maxSize={null}
-                          containerClass="relative aspect-square overflow-hidden rounded-xl bg-base-200"
+                          maxSize={112}
+                          containerClass="relative mx-auto aspect-square w-full overflow-hidden rounded-lg bg-base-200"
                         />
-                        <p class="mt-2 line-clamp-2 text-xs font-medium">
+                        <p class="line-clamp-2 text-center text-xs/4 font-medium group-hover:text-primary">
                           {card.prefix ?? `#${card.id}`}
                         </p>
                       </a>
