@@ -269,7 +269,7 @@
     {#if payload.virtualLive}
       {@const live = payload.virtualLive}
       <div
-        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]"
+        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)]"
       >
         <div class="flex flex-col gap-4">
           <article class="card content-card-shell overflow-hidden shadow-sm">

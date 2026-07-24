@@ -15,3 +15,9 @@
 
 - Gacha detail components import asset helpers from `apps/content-site/src/lib/assets/index.ts`; keep gacha-specific helpers exported there so Vite dev imports do not fail at route load time.
 - `GachaDetailBehaviorCard.svelte` can receive multiple behavior rows with the same `gachaBehaviorType`; keyed each blocks must use a composite key that includes spinnable/resource/limit fields, not only the behavior type.
+
+## Detail page two-column left track
+
+- For content-site detail pages that switch into a true two-column content layout, the left track must not exceed one-third of the content container width.
+- Prefer `md:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)]` / `lg:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)]` (or equivalent): the left track must remain at or below one-third and is capped at 400px.
+- Keep stacked single-column mobile layouts. Do not apply this rule to list grids, metadata rows, or compact media+text rows inside a card.
