@@ -14,8 +14,37 @@ permissions:
   contents: read
 
 jobs:
-  validate:
+  validate-pr:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup mise tools
+        uses: jdx/mise-action@v4
+        with:
+          experimental: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check types
+        run: pnpm check
+
+      - name: Check i18n source keys
+        run: pnpm i18n:check
+
+      - name: Build
+        run: pnpm build
+
+  validate-push:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, linux, x64, rarecloud, sekai-ci]
 
     steps:
       - name: Checkout repository

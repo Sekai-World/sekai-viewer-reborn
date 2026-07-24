@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, rarecloud, sekai-ci]
 
     steps:
       - name: Checkout repository
