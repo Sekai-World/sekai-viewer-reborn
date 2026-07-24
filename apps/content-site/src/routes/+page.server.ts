@@ -443,6 +443,7 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
 
   return {
     cards,
+    currentEventLoadFailedMessage: homeEventDataRequestFailed,
     latestData
   };
 };

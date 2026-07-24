@@ -375,7 +375,7 @@
 {/snippet}
 
 <div
-  class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`}
+  class="hover-3d relative isolate w-full"
   role="presentation"
   onclick={handleCardClick}
 >
@@ -503,22 +503,6 @@
 </div>
 
 <style>
-  .card-grid-hover-lift {
-    transition: box-shadow 160ms ease-out;
-  }
-
-  :global(:root:not([data-low-motion])) .card-grid-hover-lift:hover > article {
-    box-shadow: 0 12px 20px color-mix(in oklab, var(--color-base-content) 12%, transparent);
-  }
-
-  :global(:root[data-low-motion]) .card-grid-hover-lift {
-    transition: box-shadow 1ms linear !important;
-  }
-
-  :global(:root[data-low-motion]) .card-grid-hover-lift:hover > article {
-    box-shadow: 0 7px 12px color-mix(in oklab, var(--color-base-content) 10%, transparent);
-  }
-
   .card-grid-stage {
     position: relative;
     aspect-ratio: 16 / 9;
