@@ -6,7 +6,8 @@ import type {
   VirtualLiveTimelineEvent
 } from "$lib/domain/virtual-live-timeline";
 
-export type VirtualLiveTimelineNormalizationErrorCode = "MALFORMED_TIMELINE" | "EVENT_LIMIT_EXCEEDED";
+export type VirtualLiveTimelineNormalizationErrorCode =
+  "MALFORMED_TIMELINE" | "EVENT_LIMIT_EXCEEDED";
 
 export class VirtualLiveTimelineNormalizationError extends Error {
   constructor(readonly code: VirtualLiveTimelineNormalizationErrorCode) {
@@ -113,7 +114,18 @@ export const normalizeVirtualLiveMCScenario = (
       const durationSec = getNumber(event.Duration);
       const attributes = Object.fromEntries(
         Object.entries(event)
-          .filter(([key]) => !["Time", "Duration", "Character3dId", "Serif", "VoiceKey", "MotionKey", "FaicialKey"].includes(key))
+          .filter(
+            ([key]) =>
+              ![
+                "Time",
+                "Duration",
+                "Character3dId",
+                "Serif",
+                "VoiceKey",
+                "MotionKey",
+                "FaicialKey"
+              ].includes(key)
+          )
           .map(([key, value]) => [key, toJsonValue(value)])
       );
       const serif = getString(event.Serif);
@@ -148,7 +160,8 @@ export const normalizeVirtualLiveMCScenario = (
   }
 
   events.sort((left, right) => {
-    if (left.startSec === null) return right.startSec === null ? left.sourceIndex - right.sourceIndex : 1;
+    if (left.startSec === null)
+      return right.startSec === null ? left.sourceIndex - right.sourceIndex : 1;
     if (right.startSec === null) return -1;
     return left.startSec - right.startSec || left.sourceIndex - right.sourceIndex;
   });
@@ -176,7 +189,13 @@ const parseCharacters = (value: unknown): VirtualLiveTimelineCharacter[] =>
       const node = getObject(item);
       const name = getString(node?.name);
       if (!node || !name) return null;
-      return { name, character3dId: getNumber(node.character3dId), gameCharacterId: null, unit: null, displayName: name };
+      return {
+        name,
+        character3dId: getNumber(node.character3dId),
+        gameCharacterId: null,
+        unit: null,
+        displayName: name
+      };
     })
     .filter((item): item is VirtualLiveTimelineCharacter => item !== null);
 
@@ -196,7 +215,9 @@ export const normalizeVirtualLiveTimeline = (
   }
 
   const characters = parseCharacters(meta?.characters);
-  const characterIdByName = new Map(characters.map((character) => [character.name, character.character3dId]));
+  const characterIdByName = new Map(
+    characters.map((character) => [character.name, character.character3dId])
+  );
   const categoryCounts = emptyCategoryCounts();
   const typeCounts: Record<string, number> = {};
 
@@ -210,10 +231,12 @@ export const normalizeVirtualLiveTimeline = (
     const startSec = getNumber(event.start);
     const durationSec = getNumber(event.duration);
     const explicitEnd = getNumber(event.end);
-    const endSec = explicitEnd ?? (startSec !== null && durationSec !== null ? startSec + durationSec : null);
+    const endSec =
+      explicitEnd ?? (startSec !== null && durationSec !== null ? startSec + durationSec : null);
     const characterName = getString(event.character);
     const character3dId =
-      getNumber(event.character3dId) ?? (characterName ? characterIdByName.get(characterName) ?? null : null);
+      getNumber(event.character3dId) ??
+      (characterName ? (characterIdByName.get(characterName) ?? null) : null);
     const consumed = new Set(["type", "start", "duration", "end", "character", "character3dId"]);
     const attributes = Object.fromEntries(
       Object.entries(event)
@@ -223,18 +246,37 @@ export const normalizeVirtualLiveTimeline = (
     categoryCounts[category] += 1;
     typeCounts[type] = (typeCounts[type] ?? 0) + 1;
     const targetCharacter3dId = type === "lookAt" ? getNumber(attributes.targetCharacterId) : null;
-    events.push({ sourceIndex: sourceIndex++, type, category, startSec, durationSec, endSec, characterName, character3dId, gameCharacterId: null, unit: null, displayName: characterName, voiceUrl: null, targetCharacter3dId, targetGameCharacterId: null, targetDisplayName: null, attributes });
+    events.push({
+      sourceIndex: sourceIndex++,
+      type,
+      category,
+      startSec,
+      durationSec,
+      endSec,
+      characterName,
+      character3dId,
+      gameCharacterId: null,
+      unit: null,
+      displayName: characterName,
+      voiceUrl: null,
+      targetCharacter3dId,
+      targetGameCharacterId: null,
+      targetDisplayName: null,
+      attributes
+    });
   }
 
   events.sort((left, right) => {
-    if (left.startSec === null) return right.startSec === null ? left.sourceIndex - right.sourceIndex : 1;
+    if (left.startSec === null)
+      return right.startSec === null ? left.sourceIndex - right.sourceIndex : 1;
     if (right.startSec === null) return -1;
     return left.startSec - right.startSec || left.sourceIndex - right.sourceIndex;
   });
 
   const durationCandidates = events.flatMap((event) => {
     if (event.endSec !== null) return [event.endSec];
-    if (event.startSec !== null && event.durationSec !== null) return [event.startSec + event.durationSec];
+    if (event.startSec !== null && event.durationSec !== null)
+      return [event.startSec + event.durationSec];
     return event.startSec === null ? [] : [event.startSec];
   });
 

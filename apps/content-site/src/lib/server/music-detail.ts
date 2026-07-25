@@ -1,8 +1,4 @@
-import type {
-  MusicDetail,
-  MusicDifficulty,
-  MusicVocal
-} from "$lib/domain/music-detail";
+import type { MusicDetail, MusicDifficulty, MusicVocal } from "$lib/domain/music-detail";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -27,7 +23,9 @@ const getDateValue = (value: unknown): string | number | null => {
 };
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
-  value !== null && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+  value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 
 const pickString = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
   for (const key of keys) {
@@ -40,7 +38,10 @@ const pickString = (source: Record<string, unknown>, keys: readonly string[]): s
   return null;
 };
 
-const pickStringLike = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
+const pickStringLike = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | null => {
   for (const key of keys) {
     const value = getStringLike(source[key]);
     if (value) {
@@ -73,9 +74,7 @@ const parseMusicDifficulty = (payload: unknown): MusicDifficulty | null => {
   };
 };
 
-const parseCharacterEntry = (
-  payload: unknown
-): { characterId: number; unit: string } | null => {
+const parseCharacterEntry = (payload: unknown): { characterId: number; unit: string } | null => {
   const root = getObject(payload);
   if (!root) {
     return null;
@@ -110,7 +109,9 @@ const parseMusicVocal = (payload: unknown): MusicVocal | null => {
       return null;
     }
 
-    const entries = value.map(parseCharacterEntry).filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+    const entries = value
+      .map(parseCharacterEntry)
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
     return entries.length > 0 ? entries : null;
   };
 
@@ -147,22 +148,16 @@ const parseMusicDetail = (payload: unknown): MusicDetail | null => {
         .filter((v): v is string => v !== null)
     : [];
 
-  const difficultiesRaw = Array.isArray(root.difficulties)
-    ? root.difficulties
-    : [];
+  const difficultiesRaw = Array.isArray(root.difficulties) ? root.difficulties : [];
   const difficulties = difficultiesRaw
     .map(parseMusicDifficulty)
     .filter((d): d is MusicDifficulty => d !== null);
 
   const vocalsRaw = Array.isArray(root.vocals) ? root.vocals : [];
-  const vocals = vocalsRaw
-    .map(parseMusicVocal)
-    .filter((v): v is MusicVocal => v !== null);
+  const vocals = vocalsRaw.map(parseMusicVocal).filter((v): v is MusicVocal => v !== null);
 
   const tagsRaw = Array.isArray(root.tags) ? root.tags : [];
-  const tags = tagsRaw
-    .map((v) => (typeof v === "string" ? v.trim() : ""))
-    .filter(Boolean);
+  const tags = tagsRaw.map((v) => (typeof v === "string" ? v.trim() : "")).filter(Boolean);
 
   const creatorArtistNode = getObject(musicNode.creatorArtist);
   const liveStageNode = getObject(musicNode.liveStage);
@@ -176,12 +171,8 @@ const parseMusicDetail = (payload: unknown): MusicDetail | null => {
     arranger: pickString(musicNode, ["arranger"]),
     lyricist: pickString(musicNode, ["lyricist"]),
     publishedAt: getDateValue(musicNode.publishedAt ?? musicNode.published_at),
-    creatorArtist: creatorArtistNode
-      ? { name: pickString(creatorArtistNode, ["name"]) }
-      : null,
-    liveStage: liveStageNode
-      ? { name: pickString(liveStageNode, ["name"]) }
-      : null,
+    creatorArtist: creatorArtistNode ? { name: pickString(creatorArtistNode, ["name"]) } : null,
+    liveStage: liveStageNode ? { name: pickString(liveStageNode, ["name"]) } : null,
     releaseCondition: pickString(musicNode, ["releaseCondition"]),
     fillerSec: getNumber(musicNode.fillerSec ?? musicNode.filler_sec),
     difficulties,

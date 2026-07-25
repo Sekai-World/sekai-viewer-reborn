@@ -58,7 +58,10 @@ const getDateValue = (value: unknown): string | number | null => {
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
 
-const pickFirstString = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
+const pickFirstString = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | null => {
   for (const key of keys) {
     const value = getString(source[key]);
     if (value) {
@@ -68,7 +71,10 @@ const pickFirstString = (source: Record<string, unknown>, keys: readonly string[
   return null;
 };
 
-const pickFirstStringLike = (source: Record<string, unknown>, keys: readonly string[]): string | null => {
+const pickFirstStringLike = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | null => {
   for (const key of keys) {
     const value = getStringLike(source[key]);
     if (value) {
@@ -78,7 +84,10 @@ const pickFirstStringLike = (source: Record<string, unknown>, keys: readonly str
   return null;
 };
 
-const pickFirstNumber = (source: Record<string, unknown>, keys: readonly string[]): number | null => {
+const pickFirstNumber = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): number | null => {
   for (const key of keys) {
     const value = getNumber(source[key]);
     if (value !== null) {
@@ -88,7 +97,10 @@ const pickFirstNumber = (source: Record<string, unknown>, keys: readonly string[
   return null;
 };
 
-const pickFirstDateValue = (source: Record<string, unknown>, keys: readonly string[]): string | number | null => {
+const pickFirstDateValue = (
+  source: Record<string, unknown>,
+  keys: readonly string[]
+): string | number | null => {
   for (const key of keys) {
     const value = getDateValue(source[key]);
     if (value !== null) {
@@ -100,8 +112,7 @@ const pickFirstDateValue = (source: Record<string, unknown>, keys: readonly stri
 
 const parseSortBy = (value: string | null): "id" | "startAt" => (value === "id" ? "id" : "startAt");
 
-const parseSortOrder = (value: string | null): "asc" | "desc" =>
-  value === "asc" ? "asc" : "desc";
+const parseSortOrder = (value: string | null): "asc" | "desc" => (value === "asc" ? "asc" : "desc");
 
 export const parseGachaListQueryState = (searchParams: URLSearchParams): GachaListQueryState => ({
   sortBy: parseSortBy(searchParams.get("sort_by")),
@@ -164,7 +175,8 @@ const parsePagination = (
   const root = getObject(payload);
   const paginationNode = (root && getObject(root["pagination"])) ?? null;
   const page = pickFirstNumber(paginationNode ?? {}, ["page"]) ?? fallbackPage;
-  const pageSize = pickFirstNumber(paginationNode ?? {}, ["page_size", "pageSize"]) ?? fallbackPageSize;
+  const pageSize =
+    pickFirstNumber(paginationNode ?? {}, ["page_size", "pageSize"]) ?? fallbackPageSize;
   const total = pickFirstNumber(paginationNode ?? {}, ["total"]);
   const totalPages = pickFirstNumber(paginationNode ?? {}, ["total_pages", "totalPages"]);
   const hasNextFlag = paginationNode?.["has_next"];

@@ -1,8 +1,5 @@
 import { json } from "@sveltejs/kit";
-import {
-  getGachasByRegionById,
-  getCardsByRegionList,
-} from "@platform/sekai-master-api-sdk";
+import { getGachasByRegionById, getCardsByRegionList } from "@platform/sekai-master-api-sdk";
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { parseGachaDetail } from "$lib/server/gacha-detail";
@@ -46,13 +43,10 @@ const RARITY_VALUE: Record<string, number> = {
   rarity_2: 2,
   rarity_3: 3,
   rarity_4: 4,
-  rarity_birthday: 0,
+  rarity_birthday: 0
 };
 
-const weightedPick = <T extends { weight: number }>(
-  pool: T[],
-  totalWeight: number
-): T | null => {
+const weightedPick = <T extends { weight: number }>(pool: T[], totalWeight: number): T | null => {
   if (totalWeight <= 0 || pool.length === 0) return null;
   const rand = Math.random() * totalWeight;
   let cumulative = 0;
@@ -82,9 +76,7 @@ const buildRarityPools = (
   return pools;
 };
 
-const buildCumulativeRates = (
-  rates: RarityRateEntry[]
-): number[] => {
+const buildCumulativeRates = (rates: RarityRateEntry[]): number[] => {
   const cumulative: number[] = [];
   let sum = 0;
   for (const entry of rates) {
@@ -124,7 +116,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
   try {
     const gachaResponse = await getGachasByRegionById({
       baseUrl,
-      path: { region, id: gachaId },
+      path: { region, id: gachaId }
     });
 
     if (gachaResponse.error) {
@@ -141,9 +133,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
       return json({ error: "empty_pool" }, { status: 422 });
     }
 
-    const poolCardIds = new Set(
-      pool.map((d) => d.cardId).filter((id): id is string => !!id)
-    );
+    const poolCardIds = new Set(pool.map((d) => d.cardId).filter((id): id is string => !!id));
     if (poolCardIds.size === 0) {
       return json({ error: "empty_pool" }, { status: 422 });
     }
@@ -161,7 +151,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
           getCardsByRegionList({
             baseUrl,
             path: { region },
-            query: { rarity: rarityType, page_size: 200 },
+            query: { rarity: rarityType, page_size: 200 }
           })
         )
       );
@@ -177,7 +167,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
           if (!cardId || !poolCardIds.has(cardId)) continue;
 
           const rarityNode = obj.cardRarity as Record<string, unknown> | undefined;
-          const cardRarityType = rarityNode?.cardRarityType as string | undefined ?? null;
+          const cardRarityType = (rarityNode?.cardRarityType as string | undefined) ?? null;
 
           if (cardRarityType && !cardMetaMap.has(cardId)) {
             const detail = pool.find((d) => d.cardId === cardId);
@@ -188,7 +178,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
               title: str(obj.prefix) ?? `#${cardId}`,
               assetBundleName: str(obj.assetbundleName) ?? str(obj.assetBundleName) ?? null,
               attr: str(obj.attr) ?? null,
-              rarityType: cardRarityType,
+              rarityType: cardRarityType
             });
           }
         }
@@ -209,7 +199,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
           cardRarityType,
           rate: rate.rate ?? 0,
           pool: pool_,
-          totalWeight: pool_.reduce((sum, c) => sum + c.weight, 0),
+          totalWeight: pool_.reduce((sum, c) => sum + c.weight, 0)
         };
       })
       .filter((entry) => entry.pool.length > 0);
@@ -283,8 +273,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
         pulledCardIds.push(picked?.cardId ?? "");
 
         if (isGuarantee) {
-          const rarityVal =
-            RARITY_VALUE[rarityEntries[rarityIdx].cardRarityType] ?? 0;
+          const rarityVal = RARITY_VALUE[rarityEntries[rarityIdx].cardRarityType] ?? 0;
           if (rarityVal < guaranteeLevel) {
             noGuaranteeCount++;
           }
@@ -306,7 +295,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
           title: meta?.title ?? null,
           assetBundleName: meta?.assetBundleName ?? null,
           attr: meta?.attr ?? null,
-          rarityType: meta?.rarityType ?? null,
+          rarityType: meta?.rarityType ?? null
         } satisfies PulledGachaCard;
       });
 

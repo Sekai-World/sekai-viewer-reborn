@@ -27,7 +27,9 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
       const units = parseCharacterUnits(unitsResult.data);
       return {
         items: parseCharacterList(charactersResult.data, units),
-        unitProfiles: Object.fromEntries(profiles.map((profile) => [profile.unit, profile.unitName])),
+        unitProfiles: Object.fromEntries(
+          profiles.map((profile) => [profile.unit, profile.unitName])
+        ),
         loadFailed: false as const
       };
     })

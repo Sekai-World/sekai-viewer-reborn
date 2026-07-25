@@ -1,7 +1,4 @@
-import {
-  getUnitProfilesByRegionList,
-  getVersionsByRegion
-} from "@platform/sekai-master-api-sdk";
+import { getUnitProfilesByRegionList, getVersionsByRegion } from "@platform/sekai-master-api-sdk";
 import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
 export {
   formatUnitFallbackLabel,
@@ -153,12 +150,14 @@ export const fetchUnitProfiles = async (
     return cached.items;
   }
 
-  const promise = fetchUnitProfilesForCache(baseUrl, region, key, versionKey, cached).finally(() => {
-    const latest = unitProfileCache.get(key);
-    if (latest?.promise === promise) {
-      delete latest.promise;
+  const promise = fetchUnitProfilesForCache(baseUrl, region, key, versionKey, cached).finally(
+    () => {
+      const latest = unitProfileCache.get(key);
+      if (latest?.promise === promise) {
+        delete latest.promise;
+      }
     }
-  });
+  );
   unitProfileCache.set(key, {
     items: cached?.items ?? [],
     promise,

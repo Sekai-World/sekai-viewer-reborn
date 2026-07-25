@@ -20,8 +20,7 @@
         <button type="submit" class="btn btn-sm btn-ghost">{closeLabel}</button>
       </form>
     </div>
-    <pre
-      class="content-card-inset max-h-[70vh] overflow-auto rounded-xl p-3 sm:p-4 text-xs/6"><code
+    <pre class="content-card-inset max-h-[70vh] overflow-auto rounded-xl p-3 sm:p-4 text-xs/6"><code
         >{json}</code
       ></pre>
   </div>

@@ -208,8 +208,10 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
 
   // Rendering translators must be side-effect free: SSR and page-local fallback
   // rendering must never register a partial catalog in the global svelte-i18n store.
-  const createPureTranslator = (_localeValue: string, messages: I18nMessages): I18nTranslator =>
-    (key: string, fallback = key): string => messages[key] ?? fallback;
+  const createPureTranslator =
+    (_localeValue: string, messages: I18nMessages): I18nTranslator =>
+    (key: string, fallback = key): string =>
+      messages[key] ?? fallback;
 
   const setLocale = async (
     localeValue: string,

@@ -15,10 +15,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
-  import {
-    createI18nTranslator,
-    getLocalI18nMessages,
-  } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
     formatUnitFallbackLabel,
@@ -28,7 +25,6 @@
   import type { MusicListPage, MusicListItem as MusicListItemType } from "$lib/server/music-list";
   import Icon from "@iconify/svelte";
   import type { PageData } from "./$types";
-
 
   type MusicListPagePayload = MusicListPage;
   type MusicListItem = MusicListItemType;
@@ -192,7 +188,10 @@
     unitCodeByMusicTag[value]
       ? (data.unitProfiles[unitCodeByMusicTag[value]] ??
         formatUnitFallbackLabel(unitCodeByMusicTag[value]))
-      : createI18nTranslator(data.uiLocale, currentMessages)(`musicListTag.${value}`, formatOptionLabel(value));
+      : createI18nTranslator(data.uiLocale, currentMessages)(
+          `musicListTag.${value}`,
+          formatOptionLabel(value)
+        );
 
   const getFilterButtonClass = (values: string[], value: string): string =>
     values.includes(value) ? "btn-primary" : "btn-outline border-primary text-primary";
@@ -587,7 +586,11 @@
     spoilerContentLabel = translate("spoilerContent");
   };
 
-  const refreshTranslations = async (locale: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+  const refreshTranslations = async (
+    locale: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
     let messages: Record<string, string>;
     try {
       messages = await messagesOrPromise;
@@ -868,7 +871,9 @@
       <span class="ml-3 text-sm opacity-70">{musicListLoading}</span>
     </div>
   {:else if isInitialLoading}
-    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+    <div
+      class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+    >
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="content-card-shell rounded-2xl p-4 shadow-sm">
           <div class="skeleton aspect-square w-full rounded-xl"></div>
@@ -1093,5 +1098,7 @@
       >
     </div>
   </div>
-  <form method="dialog" class="modal-backdrop"><button type="submit" aria-label={closeLabel}></button></form>
+  <form method="dialog" class="modal-backdrop">
+    <button type="submit" aria-label={closeLabel}></button>
+  </form>
 </dialog>

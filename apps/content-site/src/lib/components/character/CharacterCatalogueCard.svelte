@@ -8,7 +8,12 @@
   const href = $derived(resolve("/character/[region]/[id]", { region, id: character.id }));
 </script>
 
-<a {href} class="character-card group flex min-w-0 flex-1 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2" title={character.name} aria-label={character.name}>
+<a
+  {href}
+  class="character-card group flex min-w-0 flex-1 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+  title={character.name}
+  aria-label={character.name}
+>
   <CharacterAvatar
     src={getLocalCharacterThumbnailAssetURL(character.id)}
     label={character.name}
@@ -23,6 +28,8 @@
 
 <style>
   @media (prefers-reduced-motion: reduce) {
-    .character-card :global(*) { transition: none; }
+    .character-card :global(*) {
+      transition: none;
+    }
   }
 </style>

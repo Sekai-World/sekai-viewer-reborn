@@ -110,12 +110,8 @@
     }
   };
 
-  let currentIcon = $derived(
-    loadError ? "mdi:volume-off" : isPlaying ? "mdi:stop" : "mdi:play"
-  );
-  let currentLabel = $derived(
-    loadError ? errorLabel : isPlaying ? stopLabel : playLabel
-  );
+  let currentIcon = $derived(loadError ? "mdi:volume-off" : isPlaying ? "mdi:stop" : "mdi:play");
+  let currentLabel = $derived(loadError ? errorLabel : isPlaying ? stopLabel : playLabel);
 </script>
 
 <div

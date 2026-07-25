@@ -1,4 +1,7 @@
-import { getMusicsByRegionByIdDetail, getMusicsRegionsByIdAvailability } from "@platform/sekai-master-api-sdk";
+import {
+  getMusicsByRegionByIdDetail,
+  getMusicsRegionsByIdAvailability
+} from "@platform/sekai-master-api-sdk";
 import type { SupportedRegion } from "$lib/domain/regions";
 import { supportedRegions } from "$lib/domain/regions";
 import { error, type RequestEvent, type RequestHandler } from "@sveltejs/kit";
@@ -374,12 +377,12 @@ export const GET: RequestHandler = async ({ params, fetch, request, url }) => {
 
     const availableRegions: SupportedRegion[] = availabilityResponse.error
       ? [region]
-      : (Array.isArray(availabilityResponse.data)
-          ? (availabilityResponse.data as unknown[]).filter(
-              (r): r is SupportedRegion =>
-                typeof r === "string" && supportedRegions.includes(r as SupportedRegion)
-            )
-          : [region]);
+      : Array.isArray(availabilityResponse.data)
+        ? (availabilityResponse.data as unknown[]).filter(
+            (r): r is SupportedRegion =>
+              typeof r === "string" && supportedRegions.includes(r as SupportedRegion)
+          )
+        : [region];
 
     const assetServer = getMusicAssetServer(region, availableRegions);
 
@@ -483,9 +486,7 @@ export const GET: RequestHandler = async ({ params, fetch, request, url }) => {
       ? `-${targetVocal.vocalType.replace(/\s+/g, "-")}`
       : "";
     const modeSuffix = previewMode === "short" ? "-short" : "";
-    const fileName = sanitizeFilename(
-      `${music.id}${vocalSuffix}${modeSuffix}-${region}.${format}`
-    );
+    const fileName = sanitizeFilename(`${music.id}${vocalSuffix}${modeSuffix}-${region}.${format}`);
     const body = Uint8Array.from(taggedAudio);
 
     progress.done("ready");

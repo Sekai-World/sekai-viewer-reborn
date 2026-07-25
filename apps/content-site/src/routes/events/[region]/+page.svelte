@@ -6,10 +6,7 @@
   import { toTimestampMs } from "$lib/time/date-time";
   import { swipeRegion } from "$lib/actions/swipe-region";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import {
-    createI18nTranslator,
-     getLocalI18nMessages,
-  } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
@@ -35,10 +32,7 @@
   let translationRequestId = 0;
   const eventListLoadingFallback = "Loading events...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    )(key, fallback);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -363,10 +357,7 @@
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
     currentMessages = fallbackMessages;
-    const translate = createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    );
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });

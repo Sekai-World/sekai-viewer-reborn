@@ -154,9 +154,7 @@
 
   const sortedLatestResult = $derived(
     [...latestResult].sort(
-      (a, b) =>
-        (rarityOrder[b.rarityType ?? ""] ?? 99) -
-        (rarityOrder[a.rarityType ?? ""] ?? 99)
+      (a, b) => (rarityOrder[b.rarityType ?? ""] ?? 99) - (rarityOrder[a.rarityType ?? ""] ?? 99)
     )
   );
 </script>
@@ -231,20 +229,25 @@
           </p>
           <div class="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
             {#each sortedLatestResult as card, index (`sim-result-${index}-${card.cardId}`)}
-              <a
-                href={getCardDetailHref(card.cardId)}
-                class="group block"
-              >
-                <div class="relative overflow-hidden rounded-lg bg-base-200/30 ring-1 ring-base-content/5 transition-all hover:shadow-md hover:ring-primary/40">
+              <a href={getCardDetailHref(card.cardId)} class="group block">
+                <div
+                  class="relative overflow-hidden rounded-lg bg-base-200/30 ring-1 ring-base-content/5 transition-all hover:shadow-md hover:ring-primary/40"
+                >
                   <CardThumbnail
-                    src={card.assetBundleName ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp") : null}
-                    fallbackSrc={card.assetBundleName && region !== "jp" ? getCardThumbnailAssetURL(card.assetBundleName, false, region) : null}
+                    src={card.assetBundleName
+                      ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
+                      : null}
+                    fallbackSrc={card.assetBundleName && region !== "jp"
+                      ? getCardThumbnailAssetURL(card.assetBundleName, false, region)
+                      : null}
                     alt={card.title ? `${card.title} ${cardAltSuffix}` : `Card ${card.cardId}`}
                     fallbackLabel={card.cardId}
                     trained={false}
                     attr={card.attr}
                     rarityType={card.rarityType}
-                    rarityCount={card.rarityType === "rarity_birthday" ? 1 : getRarityValue(card.rarityType)}
+                    rarityCount={card.rarityType === "rarity_birthday"
+                      ? 1
+                      : getRarityValue(card.rarityType)}
                     showFrame={true}
                     showIcons={true}
                     loadMode="immediate"
@@ -253,7 +256,9 @@
                     imageClass="size-full object-cover transition-transform duration-200 group-hover:scale-105"
                   />
                   {#if card.isNew}
-                    <span class="absolute top-0.5 left-0.5 z-10 rounded bg-primary px-1 py-0.5 text-[0.5rem] font-bold leading-none text-primary-content shadow-sm">
+                    <span
+                      class="absolute top-0.5 left-0.5 z-10 rounded bg-primary px-1 py-0.5 text-[0.5rem] font-bold leading-none text-primary-content shadow-sm"
+                    >
                       {newLabel}
                     </span>
                   {/if}
@@ -289,8 +294,12 @@
               <thead>
                 <tr>
                   <th class="text-xs font-semibold uppercase opacity-60">{rarityStatsLabel}</th>
-                  <th class="text-xs font-semibold uppercase opacity-60 text-right">{countStatsLabel}</th>
-                  <th class="text-xs font-semibold uppercase opacity-60 text-right">{rateStatsLabel}</th>
+                  <th class="text-xs font-semibold uppercase opacity-60 text-right"
+                    >{countStatsLabel}</th
+                  >
+                  <th class="text-xs font-semibold uppercase opacity-60 text-right"
+                    >{rateStatsLabel}</th
+                  >
                 </tr>
               </thead>
               <tbody>

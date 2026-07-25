@@ -45,10 +45,10 @@ export const load: PageServerLoad = async ({ params, url }) => {
     | { page: ReturnType<typeof parseEventListPage>; loadFailed: false }
     | { page: ReturnType<typeof createEmptyPage>; loadFailed: true }
   > = getEventsByRegionList({
-      baseUrl,
-      path: { region },
-      query: requestQuery
-    })
+    baseUrl,
+    path: { region },
+    query: requestQuery
+  })
     .then((response) => {
       if (response.error) {
         logEventListFilterDebug("initial error", {

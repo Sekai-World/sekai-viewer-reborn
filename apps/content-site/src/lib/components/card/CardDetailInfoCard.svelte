@@ -132,10 +132,10 @@
             class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label={value}
           >
-            <CharacterAvatar src={iconUrl} label={value} characterId={characterId} variant="lg" decorative />
+            <CharacterAvatar src={iconUrl} label={value} {characterId} variant="lg" decorative />
           </a>
         {:else}
-          <CharacterAvatar src={iconUrl} label={value} characterId={characterId} variant="lg" decorative />
+          <CharacterAvatar src={iconUrl} label={value} {characterId} variant="lg" decorative />
         {/if}
       {:else if iconUrl}
         {#if iconFrame}
@@ -200,7 +200,13 @@
       {#if rarityIconUrls.length > 0}
         <div class="flex shrink-0 items-center gap-0.5" aria-hidden="true">
           {#each rarityIconUrls as rarityIconUrl, index (`rarity-icon-${index}`)}
-            <img src={rarityIconUrl} alt="" class="size-5 object-contain" loading="lazy" decoding="async" />
+            <img
+              src={rarityIconUrl}
+              alt=""
+              class="size-5 object-contain"
+              loading="lazy"
+              decoding="async"
+            />
           {/each}
         </div>
       {/if}
@@ -225,17 +231,43 @@
     <dl class="space-y-2">
       {@render row(nameLabel, card.title)}
       {#if card.character}
-        {@render row(characterLabel, getCharacterDisplayName(card.character), getCharacterThumbnailUrl(), true, null, true, card.character.id, typeof card.character.id === "number" && Number.isInteger(card.character.id) && card.character.id > 0)}
+        {@render row(
+          characterLabel,
+          getCharacterDisplayName(card.character),
+          getCharacterThumbnailUrl(),
+          true,
+          null,
+          true,
+          card.character.id,
+          typeof card.character.id === "number" &&
+            Number.isInteger(card.character.id) &&
+            card.character.id > 0
+        )}
       {/if}
-      {@render row(unitLabel, getDisplayUnitName(card.character?.unit), undefined, true, card.character?.unit ?? null)}
+      {@render row(
+        unitLabel,
+        getDisplayUnitName(card.character?.unit),
+        undefined,
+        true,
+        card.character?.unit ?? null
+      )}
       {#if shouldShowSupportUnit()}
-        {@render row(supportUnitLabel, getDisplayUnitName(card.supportUnit), undefined, true, card.supportUnit ?? null)}
+        {@render row(
+          supportUnitLabel,
+          getDisplayUnitName(card.supportUnit),
+          undefined,
+          true,
+          card.supportUnit ?? null
+        )}
       {/if}
       {@render gachaPhraseRow()}
       {@render row(attrLabel, formatLabel(card.attr), getAttrIconUrl(), false)}
       {@render rarityRow()}
       {@render row(typeLabel, formatLabel(card.cardSupplyType))}
-      {@render row(releaseAtLabel, formatDisplayDateTime(card.releaseAt ?? card.archivePublishedAt, displayLocale))}
+      {@render row(
+        releaseAtLabel,
+        formatDisplayDateTime(card.releaseAt ?? card.archivePublishedAt, displayLocale)
+      )}
       {@render row(internalResourceCodeLabel, card.assetBundleName)}
     </dl>
   </div>

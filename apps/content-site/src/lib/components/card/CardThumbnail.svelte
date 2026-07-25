@@ -94,9 +94,7 @@
     }
 
     return asset(
-      trained
-        ? "/card_rarity/rarity_star_afterTraining.png"
-        : "/card_rarity/rarity_star_normal.png"
+      trained ? "/card_rarity/rarity_star_afterTraining.png" : "/card_rarity/rarity_star_normal.png"
     );
   };
 
@@ -139,7 +137,8 @@
     <div
       class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse"
     >
-      <span class="loading loading-spinner loading-md text-base-content/60" aria-hidden="true"></span>
+      <span class="loading loading-spinner loading-md text-base-content/60" aria-hidden="true"
+      ></span>
     </div>
   {/if}
 
@@ -186,7 +185,11 @@
   {#if showIcons && shouldRenderImage}
     {@const attrIconUrl = getAttrIconUrl()}
     {@const rarityIconUrl = getRarityIconUrl()}
-    <svg class="pointer-events-none absolute inset-0 z-20 size-full" viewBox="0 0 100 100" aria-hidden="true">
+    <svg
+      class="pointer-events-none absolute inset-0 z-20 size-full"
+      viewBox="0 0 100 100"
+      aria-hidden="true"
+    >
       {#if attrIconUrl}
         <image href={attrIconUrl} x="71" y="0" width="29" height="29" class="drop-shadow" />
       {/if}

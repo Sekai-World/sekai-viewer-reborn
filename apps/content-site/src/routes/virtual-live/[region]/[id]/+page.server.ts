@@ -246,10 +246,15 @@ const enrichSetlistMusic = async (
   if (musicIds.length === 0) return detail;
 
   const BATCH_SIZE = 5;
-  const entries: Array<readonly [number, {
-    music: NonNullable<ReturnType<typeof parseMusicDetail>>;
-    assetRegion: SupportedRegion;
-  } | null]> = [];
+  const entries: Array<
+    readonly [
+      number,
+      {
+        music: NonNullable<ReturnType<typeof parseMusicDetail>>;
+        assetRegion: SupportedRegion;
+      } | null
+    ]
+  > = [];
   for (let offset = 0; offset < musicIds.length; offset += BATCH_SIZE) {
     const batch = musicIds.slice(offset, offset + BATCH_SIZE);
     const batchEntries = await Promise.all(
@@ -269,7 +274,10 @@ const enrichSetlistMusic = async (
             musicId,
             {
               music,
-              assetRegion: getMusicAssetServer(region, availableRegions.length > 0 ? availableRegions : [region]) as SupportedRegion
+              assetRegion: getMusicAssetServer(
+                region,
+                availableRegions.length > 0 ? availableRegions : [region]
+              ) as SupportedRegion
             }
           ] as const;
         } catch {
@@ -290,7 +298,7 @@ const enrichSetlistMusic = async (
       const selectedVocal =
         setlist.musicVocalId === null
           ? null
-          : entry.music.vocals.find((vocal) => Number(vocal.id) === setlist.musicVocalId) ?? null;
+          : (entry.music.vocals.find((vocal) => Number(vocal.id) === setlist.musicVocalId) ?? null);
       return {
         ...setlist,
         music: {
@@ -320,15 +328,17 @@ const fetchVirtualLiveAggregate = async (
   virtualLiveId: string
 ): Promise<VirtualLiveAggregateLookup> => {
   try {
-    const [detailResponse, schedulesResponse, setlistsResponse, unitsAggregate] = await Promise.all([
-      getVirtualLivesByRegionById({ baseUrl, path: { region, id: virtualLiveId } }),
-      getVirtualLivesByRegionByIdSchedules({ baseUrl, path: { region, id: virtualLiveId } }),
-      getVirtualLivesByRegionByIdSetlists({ baseUrl, path: { region, id: virtualLiveId } }),
-      aggregateGameCharacterUnitsByRegion(baseUrl, region).catch(() => ({
-        data: { items: [] },
-        loadFailed: true
-      }))
-    ]);
+    const [detailResponse, schedulesResponse, setlistsResponse, unitsAggregate] = await Promise.all(
+      [
+        getVirtualLivesByRegionById({ baseUrl, path: { region, id: virtualLiveId } }),
+        getVirtualLivesByRegionByIdSchedules({ baseUrl, path: { region, id: virtualLiveId } }),
+        getVirtualLivesByRegionByIdSetlists({ baseUrl, path: { region, id: virtualLiveId } }),
+        aggregateGameCharacterUnitsByRegion(baseUrl, region).catch(() => ({
+          data: { items: [] },
+          loadFailed: true
+        }))
+      ]
+    );
 
     if (detailResponse.error) {
       return {

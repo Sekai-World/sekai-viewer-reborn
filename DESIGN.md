@@ -8,14 +8,14 @@ Sekai Viewer Reborn feels like a clean, content-first catalog shell: calm, pract
 
 ### Palette
 
-| Role | Token | Light | Dark | Usage |
-|------|-------|-------|------|-------|
-| Primary accent | --color-primary | oklch(58% 0.233 277.117) | oklch(58% 0.233 277.117) | Interactive emphasis, active badges |
-| Primary text | --color-primary-content | oklch(96% 0.018 272.314) | oklch(96% 0.018 272.314) | Text on primary surfaces |
-| Base surface | --color-base-100 | oklch(100% 0 0) | oklch(24.5% 0.018 252.42) | Main page background and cards |
-| Secondary surface | --color-base-200 | oklch(98% 0 0) | oklch(18.4% 0.015 253.1) | Inset panels, thumbnail shells |
-| Tertiary surface | --color-base-300 | oklch(95% 0 0) | oklch(14.8% 0.012 254.09) | Borders, deeper surface steps |
-| Base text | --color-base-content | oklch(21% 0.006 285.885) | oklch(97.807% 0.029 256.847) | Primary copy and labels |
+| Role              | Token                   | Light                    | Dark                         | Usage                               |
+| ----------------- | ----------------------- | ------------------------ | ---------------------------- | ----------------------------------- |
+| Primary accent    | --color-primary         | oklch(58% 0.233 277.117) | oklch(58% 0.233 277.117)     | Interactive emphasis, active badges |
+| Primary text      | --color-primary-content | oklch(96% 0.018 272.314) | oklch(96% 0.018 272.314)     | Text on primary surfaces            |
+| Base surface      | --color-base-100        | oklch(100% 0 0)          | oklch(24.5% 0.018 252.42)    | Main page background and cards      |
+| Secondary surface | --color-base-200        | oklch(98% 0 0)           | oklch(18.4% 0.015 253.1)     | Inset panels, thumbnail shells      |
+| Tertiary surface  | --color-base-300        | oklch(95% 0 0)           | oklch(14.8% 0.012 254.09)    | Borders, deeper surface steps       |
+| Base text         | --color-base-content    | oklch(21% 0.006 285.885) | oklch(97.807% 0.029 256.847) | Primary copy and labels             |
 
 ### Rules
 
@@ -27,13 +27,13 @@ Sekai Viewer Reborn feels like a clean, content-first catalog shell: calm, pract
 
 ### Scale
 
-| Level | Size | Weight | Line Height | Tracking | Usage |
-|-------|------|--------|-------------|----------|-------|
-| H2 | 18px / 1.125rem | 600 | 1.35 | 0 | Card titles |
-| Body | 16px / 1rem | 400 | 1.5 | 0 | Default body copy |
-| Body/sm | 14px / 0.875rem | 400 | 1.5 | 0 | Secondary info |
-| Caption | 12px / 0.75rem | 500 | 1.4 | 0.02em | Labels, badges, metadata |
-| Overline | 11px / 0.6875rem | 600 | 1.3 | 0.08em | Uppercase section labels |
+| Level    | Size             | Weight | Line Height | Tracking | Usage                    |
+| -------- | ---------------- | ------ | ----------- | -------- | ------------------------ |
+| H2       | 18px / 1.125rem  | 600    | 1.35        | 0        | Card titles              |
+| Body     | 16px / 1rem      | 400    | 1.5         | 0        | Default body copy        |
+| Body/sm  | 14px / 0.875rem  | 400    | 1.5         | 0        | Secondary info           |
+| Caption  | 12px / 0.75rem   | 500    | 1.4         | 0.02em   | Labels, badges, metadata |
+| Overline | 11px / 0.6875rem | 600    | 1.3         | 0.08em   | Uppercase section labels |
 
 ### Font Stack
 
@@ -51,15 +51,15 @@ Sekai Viewer Reborn feels like a clean, content-first catalog shell: calm, pract
 
 All spacing derives from a 4px rhythm.
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| --space-1 | 4px | Tight icon/label spacing |
-| --space-2 | 8px | Compact inline groups |
-| --space-3 | 12px | Small field padding |
-| --space-4 | 16px | Default card padding |
-| --space-5 | 20px | Comfortable inner spacing |
-| --space-6 | 24px | Standard section spacing |
-| --space-8 | 32px | Larger breaks between card groups |
+| Token     | Value | Usage                             |
+| --------- | ----- | --------------------------------- |
+| --space-1 | 4px   | Tight icon/label spacing          |
+| --space-2 | 8px   | Compact inline groups             |
+| --space-3 | 12px  | Small field padding               |
+| --space-4 | 16px  | Default card padding              |
+| --space-5 | 20px  | Comfortable inner spacing         |
+| --space-6 | 24px  | Standard section spacing          |
+| --space-8 | 32px  | Larger breaks between card groups |
 
 ### Grid
 
@@ -74,6 +74,7 @@ All spacing derives from a 4px rhythm.
 ## 5. Components
 
 ### Content Card Shell
+
 - **Structure**: `card` + `content-card-shell` + optional `content-card-inset`
 - **Variants**: shell, inset, elevated
 - **Spacing**: 16–24px internal padding depending on density
@@ -82,6 +83,7 @@ All spacing derives from a 4px rhythm.
 - **Motion**: subtle hover lift via transform/opacity only
 
 ### CardThumbnail
+
 - **Structure**: square thumbnail shell with optional frame and rarity/attribute overlays
 - **Variants**: framed/unframed, icon overlays on/off, immediate/visible loading
 - **Spacing**: square aspect ratio with rounded corners and internal overlays aligned to the edges
@@ -90,6 +92,7 @@ All spacing derives from a 4px rhythm.
 - **Motion**: image fade-in and optional transform easing only
 
 ### AssetImage
+
 - **Structure**: non-interactive media loader with loading and error handling
 - **Variants**: immediate vs visible loading, interactive preview trigger
 - **Spacing**: driven by the parent container
@@ -98,6 +101,7 @@ All spacing derives from a 4px rhythm.
 - **Motion**: opacity/scale transition on load
 
 ### CharacterAvatar
+
 - **Structure**: round character thumbnail shell with a border and optional fallback initial
 - **Variants**: xs, sm, default, lg
 - **Color**: border color uses explicit `accentColor` first, static `gameCharacterUnits.colorCode` derived from `characterId` for IDs 1-26 second, then the primary accent token fallback
@@ -105,6 +109,7 @@ All spacing derives from a 4px rhythm.
 - **Motion**: no component-owned motion
 
 ### UnitIconBadge
+
 - **Structure**: round unit icon shell with text pill fallback when no icon exists
 - **Variants**: sm, default, lg
 - **Color**: border color derives from confirmed JP `unitProfiles.colorCode` values for core unit slugs; support-unit `none` maps to piapro when `mapNoneToPiapro` is enabled
@@ -114,9 +119,9 @@ All spacing derives from a 4px rhythm.
 
 ### Timing
 
-| Type | Duration | Easing | Usage |
-|------|----------|--------|-------|
-| Micro | 100-150ms | ease-out | Small hover or press feedback |
+| Type     | Duration  | Easing      | Usage                         |
+| -------- | --------- | ----------- | ----------------------------- |
+| Micro    | 100-150ms | ease-out    | Small hover or press feedback |
 | Standard | 180-300ms | ease-in-out | Card reveal, image load state |
 
 ### Rules

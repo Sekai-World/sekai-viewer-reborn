@@ -43,10 +43,10 @@ export const load: PageServerLoad = async ({ params, url }) => {
     | { page: ReturnType<typeof parseVirtualLiveListPage>; loadFailed: false }
     | { page: ReturnType<typeof createEmptyPage>; loadFailed: true }
   > = getVirtualLivesByRegionList({
-      baseUrl,
-      path: { region },
-      query: requestQuery
-    })
+    baseUrl,
+    path: { region },
+    query: requestQuery
+  })
     .then((response) => {
       if (response.error) {
         logVirtualLiveListFilterDebug("initial error", {

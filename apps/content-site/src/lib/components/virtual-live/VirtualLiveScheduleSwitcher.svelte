@@ -101,7 +101,8 @@
       schedules: group.schedules.toSorted((left, right) => {
         const leftStart = toTimestampMs(left.schedule.startAt);
         const rightStart = toTimestampMs(right.schedule.startAt);
-        if (leftStart === null && rightStart === null) return left.originalIndex - right.originalIndex;
+        if (leftStart === null && rightStart === null)
+          return left.originalIndex - right.originalIndex;
         if (leftStart === null) return 1;
         if (rightStart === null) return -1;
         return leftStart - rightStart || left.originalIndex - right.originalIndex;
@@ -218,8 +219,12 @@
   >
     {#each activeGroup.schedules as entry (entry.schedule.id ?? entry.originalIndex)}
       {@const schedule = entry.schedule}
-      <div class="content-card-inset flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-xl p-3">
-        <p class="min-w-0 wrap-break-word text-sm font-semibold tabular-nums">{formatRange(schedule)}</p>
+      <div
+        class="content-card-inset flex min-w-0 flex-wrap items-center justify-between gap-2 rounded-xl p-3"
+      >
+        <p class="min-w-0 wrap-break-word text-sm font-semibold tabular-nums">
+          {formatRange(schedule)}
+        </p>
         {#if schedule.isAfterEvent}
           <span class="badge badge-outline badge-sm shrink-0 font-semibold">{afterEventLabel}</span>
         {/if}

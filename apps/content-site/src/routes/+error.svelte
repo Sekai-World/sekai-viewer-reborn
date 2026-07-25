@@ -12,19 +12,22 @@
   $effect(() => {
     const messagesOrPromise = data.i18nMessages;
     resolvedMessages = fallbackMessages;
-    if (messagesOrPromise && typeof (messagesOrPromise as PromiseLike<Record<string, string>>).then === "function") {
-      void Promise.resolve(messagesOrPromise).then((messages) => {
-        if (messagesOrPromise === data.i18nMessages) resolvedMessages = messages;
-      }).catch(() => {
-        // Preserve the synchronous local fallback when streaming fails.
-      });
+    if (
+      messagesOrPromise &&
+      typeof (messagesOrPromise as PromiseLike<Record<string, string>>).then === "function"
+    ) {
+      void Promise.resolve(messagesOrPromise)
+        .then((messages) => {
+          if (messagesOrPromise === data.i18nMessages) resolvedMessages = messages;
+        })
+        .catch(() => {
+          // Preserve the synchronous local fallback when streaming fails.
+        });
     } else if (messagesOrPromise && typeof messagesOrPromise === "object") {
       resolvedMessages = messagesOrPromise as unknown as Record<string, string>;
     }
   });
-  const translate = $derived(
-    createI18nTranslator(data.uiLocale, messages)
-  );
+  const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const status = $derived(page.status);
   const title = $derived(
     status === 404 ? translate("errorPage.notFoundTitle") : translate("errorPage.title")

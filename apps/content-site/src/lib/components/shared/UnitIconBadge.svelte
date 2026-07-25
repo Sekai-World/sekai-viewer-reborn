@@ -47,7 +47,9 @@
 
 {#if iconUrl}
   <span
-    class="unit-icon-frame inline-flex shrink-0 items-center justify-center rounded-full {frameClass[variant]} {className ?? ''}"
+    class="unit-icon-frame inline-flex shrink-0 items-center justify-center rounded-full {frameClass[
+      variant
+    ]} {className ?? ''}"
     style:border-color={borderColor}
   >
     <img
@@ -61,7 +63,9 @@
   </span>
 {:else if fallbackLabel}
   <span
-    class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-white font-semibold leading-none {textPillClass[variant]} {className ?? ''}"
+    class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-white font-semibold leading-none {textPillClass[
+      variant
+    ]} {className ?? ''}"
     style:border-color={borderColor}
   >
     <span class="opacity-70">{fallbackLabel}</span>

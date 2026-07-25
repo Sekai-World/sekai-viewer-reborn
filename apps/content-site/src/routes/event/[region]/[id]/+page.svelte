@@ -14,10 +14,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import {
-    createI18nTranslator,
-     getLocalI18nMessages,
-  } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import type { PageData } from "./$types";
 
@@ -29,10 +26,7 @@
   let currentMessages = $state<Record<string, string>>(fallbackMessages);
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    )(key);
+    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state<string>("");
   let activeAssetTab = $state<EventAssetTab>("banner");
@@ -122,10 +116,7 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(
-      data.uiLocale,
-      fallbackMessages
-    );
+    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
     applyTranslations(translate);
   });
 

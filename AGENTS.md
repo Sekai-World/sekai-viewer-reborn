@@ -277,4 +277,3 @@ Ingress examples:
 
 - `deploy/k8s/ingress-examples/shared-gateway-ingress.yaml`
 - `deploy/k8s/ingress-examples/independent-ingress-pattern.md`
-

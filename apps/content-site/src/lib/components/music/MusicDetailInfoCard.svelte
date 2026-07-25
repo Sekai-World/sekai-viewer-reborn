@@ -62,31 +62,42 @@
 
       {#if music.composer}
         <div class="content-card-inset rounded-xl p-3 sm:px-4">
-          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{composerLabel}</dt>
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            {composerLabel}
+          </dt>
           <dd class="mt-1 text-sm font-medium">{music.composer}</dd>
         </div>
       {/if}
 
       {#if music.arranger}
         <div class="content-card-inset rounded-xl p-3 sm:px-4">
-          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{arrangerLabel}</dt>
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            {arrangerLabel}
+          </dt>
           <dd class="mt-1 text-sm font-medium">{music.arranger}</dd>
         </div>
       {/if}
 
       {#if music.lyricist}
         <div class="content-card-inset rounded-xl p-3 sm:px-4">
-          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{lyricistLabel}</dt>
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            {lyricistLabel}
+          </dt>
           <dd class="mt-1 text-sm font-medium">{music.lyricist}</dd>
         </div>
       {/if}
 
       {#if music.categories.length > 0}
         <div class="content-card-inset rounded-xl p-3 sm:px-4">
-          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{categoryLabel}</dt>
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            {categoryLabel}
+          </dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.categories as category (category)}
-              <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">{getCategoryLabel(category)}</span>
+              <span
+                class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content"
+                >{getCategoryLabel(category)}</span
+              >
             {/each}
           </dd>
         </div>
@@ -97,7 +108,10 @@
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{tagLabel}</dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.tags as tag (tag)}
-              <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">{getTagLabel(tag)}</span>
+              <span
+                class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content"
+                >{getTagLabel(tag)}</span
+              >
             {/each}
           </dd>
         </div>
@@ -105,8 +119,12 @@
 
       {#if music.publishedAt}
         <div class="content-card-inset rounded-xl p-3 sm:px-4">
-          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{publishedAtLabel}</dt>
-          <dd class="mt-1 text-sm font-medium">{formatDisplayDateTime(music.publishedAt, displayLocale)}</dd>
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            {publishedAtLabel}
+          </dt>
+          <dd class="mt-1 text-sm font-medium">
+            {formatDisplayDateTime(music.publishedAt, displayLocale)}
+          </dd>
         </div>
       {/if}
       <div class="content-card-inset rounded-xl p-3 sm:px-4">

@@ -8,10 +8,7 @@
   import { swipeRegion } from "$lib/actions/swipe-region";
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import {
-    createI18nTranslator,
-     getLocalI18nMessages,
-  } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import CardListCard from "$lib/components/card/CardListCard.svelte";
@@ -668,7 +665,11 @@
     spoilerContentLabel = translate("spoilerContent");
   };
 
-  const refreshPageTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+  const refreshPageTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
     let messages: Record<string, string>;
     try {
       messages = await messagesOrPromise;

@@ -160,9 +160,7 @@
         .map((s) => `${s.lotteryType}:${s.probability}`)
         .join("|");
     }
-    return card.probability === null
-      ? `null:${card.diagnostic}`
-      : String(card.probability);
+    return card.probability === null ? `null:${card.diagnostic}` : String(card.probability);
   };
 
   const getProbabilityGroupLabel = (card: GachaProbabilityCard): string => {
@@ -438,7 +436,9 @@
             {#if activeRarity === rarity}
               {#each groupedVisibleCards as group (group.key)}
                 {@const isExpanded = expandedGroups[group.key] ?? false}
-                {@const visibleItems = isExpanded ? group.cards : group.cards.slice(0, PROBABILITY_GROUP_INITIAL_LIMIT)}
+                {@const visibleItems = isExpanded
+                  ? group.cards
+                  : group.cards.slice(0, PROBABILITY_GROUP_INITIAL_LIMIT)}
                 {@const hiddenCount = group.cards.length - PROBABILITY_GROUP_INITIAL_LIMIT}
                 <div>
                   <div class="mb-1.5 flex items-center gap-2 px-1">
@@ -467,7 +467,9 @@
                             fallbackLabel={card.cardId ?? unavailableLabel}
                             attr={card.attr}
                             rarityType={card.rarityType}
-                            rarityCount={card.rarityType === "rarity_birthday" ? 1 : getRarityValue(card.rarityType)}
+                            rarityCount={card.rarityType === "rarity_birthday"
+                              ? 1
+                              : getRarityValue(card.rarityType)}
                             showFrame={true}
                             showIcons={true}
                             loadMode="visible"

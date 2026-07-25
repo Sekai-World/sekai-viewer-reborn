@@ -104,9 +104,7 @@
       : getMusicLongPreviewAssetURL(name, server);
   };
 
-  const currentSrc = $derived(
-    selectedVocal ? buildPreviewURL(selectedVocal, previewMode) : null
-  );
+  const currentSrc = $derived(selectedVocal ? buildPreviewURL(selectedVocal, previewMode) : null);
 
   const subtitle = $derived(selectedVocal?.vocalType ?? "");
 
@@ -114,9 +112,7 @@
   // fillerSec is a music-level field from the API, not per-vocal.
   // Short previews don't have filler, so offset is always 0 for them.
   const currentOffset = $derived(
-    previewMode === "long" && fillerSec != null && fillerSec > 0
-      ? fillerSec
-      : 0
+    previewMode === "long" && fillerSec != null && fillerSec > 0 ? fillerSec : 0
   );
 
   const getDownloadName = (format: AudioFormat): string =>
@@ -178,7 +174,10 @@
           {@const hasAsset = !!vocal.assetBundleName?.trim()}
           {@const chars = getCharacters(vocal)}
           <button
-            class="content-card-inset flex w-full items-center gap-3 rounded-xl p-3 sm:px-4 text-left transition-colors {isSelected && hasAsset ? 'ring-1 ring-primary bg-primary/5' : 'hover:bg-base-content/5'}"
+            class="content-card-inset flex w-full items-center gap-3 rounded-xl p-3 sm:px-4 text-left transition-colors {isSelected &&
+            hasAsset
+              ? 'ring-1 ring-primary bg-primary/5'
+              : 'hover:bg-base-content/5'}"
             onclick={() => selectVocal(vocal.id)}
             disabled={!hasAsset}
           >
@@ -197,7 +196,10 @@
                   {#each chars as char (char.characterId)}
                     {#if char.characterId > 0}
                       <a
-                        href={resolve("/character/[region]/[id]", { region, id: String(char.characterId) })}
+                        href={resolve("/character/[region]/[id]", {
+                          region,
+                          id: String(char.characterId)
+                        })}
                         class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         aria-label={String(char.characterId)}
                       >
@@ -234,14 +236,18 @@
               <!-- Preview mode toggle -->
               <div class="flex gap-2">
                 <button
-                  class="btn btn-sm flex-1 {previewMode === 'short' ? 'btn-primary' : 'btn-ghost border border-base-content/15'}"
+                  class="btn btn-sm flex-1 {previewMode === 'short'
+                    ? 'btn-primary'
+                    : 'btn-ghost border border-base-content/15'}"
                   onclick={() => onPreviewModeChange("short")}
                 >
                   <Icon icon="mdi:music-note-eighth" class="size-4" aria-hidden="true" />
                   {shortPreviewLabel}
                 </button>
                 <button
-                  class="btn btn-sm flex-1 {previewMode === 'long' ? 'btn-primary' : 'btn-ghost border border-base-content/15'}"
+                  class="btn btn-sm flex-1 {previewMode === 'long'
+                    ? 'btn-primary'
+                    : 'btn-ghost border border-base-content/15'}"
                   onclick={() => onPreviewModeChange("long")}
                 >
                   <Icon icon="mdi:music-note-quarter" class="size-4" aria-hidden="true" />
@@ -253,7 +259,7 @@
               <div class="content-card-inset rounded-xl p-3 sm:p-4">
                 <AudioPlayer
                   src={currentSrc}
-                  title={title}
+                  {title}
                   {subtitle}
                   {downloadOptions}
                   downloadName={getDownloadName("mp3")}
@@ -267,7 +273,7 @@
                   {seekLabel}
                   {unavailableLabel}
                   artworkUrl={jacketUrl}
-                  artist={artist}
+                  {artist}
                 />
               </div>
             </div>
