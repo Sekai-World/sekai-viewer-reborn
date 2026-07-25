@@ -39,9 +39,7 @@ const characterExistsInRegion = async (
     }
 
     const root =
-      response.data !== null &&
-      typeof response.data === "object" &&
-      !Array.isArray(response.data)
+      response.data !== null && typeof response.data === "object" && !Array.isArray(response.data)
         ? (response.data as Record<string, unknown>)
         : null;
     const id = root?.id;
@@ -134,7 +132,9 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
               ? {
                   ...character,
                   unitName,
-                  profile: profileResponse.error ? null : parseCharacterProfile(profileResponse.data),
+                  profile: profileResponse.error
+                    ? null
+                    : parseCharacterProfile(profileResponse.data),
                   relatedCards: cardsResponse.error
                     ? []
                     : parseRelatedCharacterCards(cardsResponse.data),

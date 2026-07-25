@@ -36,8 +36,7 @@
 
   const sortedDifficulties = $derived(
     [...music.difficulties].sort(
-      (a, b) =>
-        difficultyOrder.indexOf(a.difficulty) - difficultyOrder.indexOf(b.difficulty)
+      (a, b) => difficultyOrder.indexOf(a.difficulty) - difficultyOrder.indexOf(b.difficulty)
     )
   );
 </script>
@@ -47,11 +46,7 @@
     <p
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
-      <Icon
-        icon="mdi:chart-bar"
-        class="size-4 shrink-0 translate-y-[0.5px]"
-        aria-hidden="true"
-      />
+      <Icon icon="mdi:chart-bar" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
       <span>{difficultyLabel}</span>
     </p>
 
@@ -70,7 +65,11 @@
             {#each sortedDifficulties as diff (diff.difficulty)}
               <tr>
                 <td>
-                  <span class="badge badge-sm min-w-20 justify-center {difficultyColor[diff.difficulty] ?? 'badge-ghost'}">
+                  <span
+                    class="badge badge-sm min-w-20 justify-center {difficultyColor[
+                      diff.difficulty
+                    ] ?? 'badge-ghost'}"
+                  >
                     {getDifficultyLabel(diff.difficulty)}
                   </span>
                 </td>

@@ -48,7 +48,9 @@
   const masterRankRewardsByRarity = [0, 50, 100, 150, 200];
   const levels = $derived(params.parameters.map((item) => item.level));
   const minLevel = $derived(levels[0] ?? 1);
-  const maxLevel = $derived(levels[levels.length - 1] ?? card.trainingMaxLevel ?? card.maxLevel ?? 1);
+  const maxLevel = $derived(
+    levels[levels.length - 1] ?? card.trainingMaxLevel ?? card.maxLevel ?? 1
+  );
   const normalMaxLevel = $derived(card.maxLevel ?? maxLevel);
   const maxMasterRank = 5;
   const selectedStats = $derived.by<CardParameterSet | null>(() => {
@@ -59,7 +61,9 @@
     return (
       params.parameters.find((item) => item.level === selectedLevel) ??
       params.parameters.reduce((nearest, item) =>
-        Math.abs(item.level - selectedLevel) < Math.abs(nearest.level - selectedLevel) ? item : nearest
+        Math.abs(item.level - selectedLevel) < Math.abs(nearest.level - selectedLevel)
+          ? item
+          : nearest
       )
     );
   });
@@ -72,7 +76,9 @@
     return Number.isFinite(rarity) ? (masterRankRewardsByRarity[rarity] ?? 0) : 0;
   };
   const getSpecialTrainingBonus = (type: "performance" | "technique" | "stamina"): number =>
-    specialTrainingEnabled && selectedLevel > normalMaxLevel ? params.specialTrainingBonus[type] : 0;
+    specialTrainingEnabled && selectedLevel > normalMaxLevel
+      ? params.specialTrainingBonus[type]
+      : 0;
   const getEpisodeTypeBonus = (
     episode: CardDetailEpisode,
     type: "performance" | "technique" | "stamina"
@@ -203,8 +209,14 @@
   });
 </script>
 
-{#snippet statPanel(label: string, value: number | null, type: "performance" | "technique" | "stamina" | "total")}
-  <div class={`content-card-inset rounded-xl border px-3 sm:px-4 py-2.5 ${getStatAccentClass(type)}`}>
+{#snippet statPanel(
+  label: string,
+  value: number | null,
+  type: "performance" | "technique" | "stamina" | "total"
+)}
+  <div
+    class={`content-card-inset rounded-xl border px-3 sm:px-4 py-2.5 ${getStatAccentClass(type)}`}
+  >
     <div class="flex items-center justify-between gap-4">
       <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{label}</p>
       <p class="text-right text-lg font-semibold tabular-nums text-base-content">
@@ -215,7 +227,9 @@
 {/snippet}
 
 {#snippet totalPanel(value: number | null)}
-  <div class={`content-card-inset rounded-xl border px-3 sm:px-4 py-2.5 ${getStatAccentClass("total")}`}>
+  <div
+    class={`content-card-inset rounded-xl border px-3 sm:px-4 py-2.5 ${getStatAccentClass("total")}`}
+  >
     <div class="flex items-center justify-between gap-4">
       <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{totalLabel}</p>
       <p class="text-right text-lg font-semibold tabular-nums text-base-content">
@@ -252,7 +266,9 @@
 
 <article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
-    <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+    <p
+      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+    >
       <Icon icon="mdi:chart-box-outline" class="size-4" aria-hidden="true" />
       <span>{title}</span>
     </p>

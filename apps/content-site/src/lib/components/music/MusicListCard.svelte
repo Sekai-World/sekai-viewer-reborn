@@ -149,7 +149,9 @@
   {#if item.tags.length > 0}
     <div class="flex flex-wrap gap-1">
       {#each item.tags as tag (`music-tag:${tag}`)}
-        <span class={`badge border-base-content/25 bg-base-100/80 font-semibold text-base-content ${sizeClass}`}>
+        <span
+          class={`badge border-base-content/25 bg-base-100/80 font-semibold text-base-content ${sizeClass}`}
+        >
           {getTagLabel(tag)}
         </span>
       {/each}
@@ -188,7 +190,9 @@
             <div class="h-11 rounded-lg bg-base-200/60"></div>
             <div class="h-4 rounded bg-base-200/60"></div>
           {:else}
-            <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">
+            <span
+              class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content"
+            >
               {idLabel}{item.id}
             </span>
             {@render musicTagBadges("badge-sm")}
@@ -209,7 +213,9 @@
             {/if}
             <div class="flex flex-wrap gap-1">
               {#each item.categories as category (category)}
-                <span class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content">
+                <span
+                  class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content"
+                >
                   {getCategoryLabel(category)}
                 </span>
               {/each}
@@ -235,9 +241,7 @@
       </div>
       {#if !isSpoilerPlaceholderVisible()}
         <div class="flex flex-wrap items-center gap-1.5 px-3 pt-3 sm:px-4 sm:pt-4">
-          <span
-            class="badge border-base-content/25 bg-base-100/80 font-semibold text-base-content"
-          >
+          <span class="badge border-base-content/25 bg-base-100/80 font-semibold text-base-content">
             {idLabel}{item.id}
           </span>
           {#each item.categories as category (category)}

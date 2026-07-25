@@ -25,11 +25,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseGachaListQueryState(url.searchParams);
-  const requestQuery = createGachaListRequestQuery(
-    queryState,
-    1,
-    DEFAULT_GACHA_LIST_PAGE_SIZE
-  );
+  const requestQuery = createGachaListRequestQuery(queryState, 1, DEFAULT_GACHA_LIST_PAGE_SIZE);
 
   logGachaListFilterDebug("initial request", {
     region,

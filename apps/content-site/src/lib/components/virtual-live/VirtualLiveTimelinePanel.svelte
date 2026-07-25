@@ -189,7 +189,11 @@
                 {#if characterDisplayName}
                   <div class="mt-1 flex items-center gap-2">
                     {#if characterHref}
-                      <a href={characterHref} class="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={characterDisplayName}>
+                      <a
+                        href={characterHref}
+                        class="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        aria-label={characterDisplayName}
+                      >
                         <CharacterAvatar
                           src={getLocalCharacterThumbnailAssetURL(enrichedEvent.gameCharacterId)}
                           label={characterDisplayName}
@@ -200,24 +204,43 @@
                         />
                       </a>
                     {:else}
-                      <CharacterAvatar src={null} label={characterDisplayName} variant="xs" decorative />
+                      <CharacterAvatar
+                        src={null}
+                        label={characterDisplayName}
+                        variant="xs"
+                        decorative
+                      />
                     {/if}
                     <span class="text-xs font-semibold">{characterDisplayName}</span>
                   </div>
                 {/if}
                 <div class="mt-0.5 flex items-start gap-2">
-                  <p class="min-w-0 flex-1 whitespace-pre-line text-sm/6">{formatValue(getAttribute(event, ["serif"]) ?? "")}</p>
-                  {#if enrichedEvent.voiceUrl}<VoicePlayButton src={enrichedEvent.voiceUrl} playLabel={t("virtualLiveTimelineVoicePlay")} stopLabel={t("virtualLiveTimelineVoiceStop")} errorLabel={t("virtualLiveTimelineVoiceUnavailable")} class="shrink-0 scale-75 origin-right" />{/if}
+                  <p class="min-w-0 flex-1 whitespace-pre-line text-sm/6">
+                    {formatValue(getAttribute(event, ["serif"]) ?? "")}
+                  </p>
+                  {#if enrichedEvent.voiceUrl}<VoicePlayButton
+                      src={enrichedEvent.voiceUrl}
+                      playLabel={t("virtualLiveTimelineVoicePlay")}
+                      stopLabel={t("virtualLiveTimelineVoiceStop")}
+                      errorLabel={t("virtualLiveTimelineVoiceUnavailable")}
+                      class="shrink-0 scale-75 origin-right"
+                    />{/if}
                 </div>
               {:else if event.category === "annotation"}
                 {#if getPrimaryValue(event) !== undefined}
-                  <p class="mt-1 whitespace-pre-line text-sm/6">{formatValue(getPrimaryValue(event)!)}</p>
+                  <p class="mt-1 whitespace-pre-line text-sm/6">
+                    {formatValue(getPrimaryValue(event)!)}
+                  </p>
                 {/if}
               {:else if event.category === "cast"}
                 {#if characterDisplayName}
                   <div class="mt-1 flex items-center gap-2">
                     {#if characterHref}
-                      <a href={characterHref} class="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-label={characterDisplayName}>
+                      <a
+                        href={characterHref}
+                        class="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        aria-label={characterDisplayName}
+                      >
                         <CharacterAvatar
                           src={getLocalCharacterThumbnailAssetURL(enrichedEvent.gameCharacterId)}
                           label={characterDisplayName}
@@ -228,7 +251,12 @@
                         />
                       </a>
                     {:else}
-                      <CharacterAvatar src={null} label={characterDisplayName} variant="xs" decorative />
+                      <CharacterAvatar
+                        src={null}
+                        label={characterDisplayName}
+                        variant="xs"
+                        decorative
+                      />
                     {/if}
                     <span class="text-xs font-semibold">{characterDisplayName}</span>
                   </div>
@@ -236,26 +264,63 @@
               {:else if event.type === "lookAt"}
                 <div class="mt-2 flex items-center gap-2">
                   <div class="flex min-w-0 items-center gap-2">
-                    <CharacterAvatar src={getLocalCharacterThumbnailAssetURL(enrichedEvent.gameCharacterId)} label={characterDisplayName ?? ""} characterId={enrichedEvent.gameCharacterId} variant="xs" decorative />
-                    {#if characterDisplayName}<span class="truncate text-xs font-semibold">{characterDisplayName}</span>{/if}
+                    <CharacterAvatar
+                      src={getLocalCharacterThumbnailAssetURL(enrichedEvent.gameCharacterId)}
+                      label={characterDisplayName ?? ""}
+                      characterId={enrichedEvent.gameCharacterId}
+                      variant="xs"
+                      decorative
+                    />
+                    {#if characterDisplayName}<span class="truncate text-xs font-semibold"
+                        >{characterDisplayName}</span
+                      >{/if}
                   </div>
                   <span aria-hidden="true" class="text-lg opacity-55">→</span>
                   <div class="flex min-w-0 items-center gap-2">
-                    <CharacterAvatar src={getLocalCharacterThumbnailAssetURL(enrichedEvent.targetGameCharacterId)} label={enrichedEvent.targetDisplayName ?? ""} characterId={enrichedEvent.targetGameCharacterId} variant="xs" decorative />
-                    {#if enrichedEvent.targetDisplayName}<span class="truncate text-xs font-semibold">{enrichedEvent.targetDisplayName}</span>{/if}
+                    <CharacterAvatar
+                      src={getLocalCharacterThumbnailAssetURL(enrichedEvent.targetGameCharacterId)}
+                      label={enrichedEvent.targetDisplayName ?? ""}
+                      characterId={enrichedEvent.targetGameCharacterId}
+                      variant="xs"
+                      decorative
+                    />
+                    {#if enrichedEvent.targetDisplayName}<span
+                        class="truncate text-xs font-semibold"
+                        >{enrichedEvent.targetDisplayName}</span
+                      >{/if}
                   </div>
                 </div>
               {:else if event.type === "motion"}
                 <div class="mt-2 flex items-start gap-2">
-                  <CharacterAvatar src={getLocalCharacterThumbnailAssetURL(enrichedEvent.gameCharacterId)} label={characterDisplayName ?? ""} characterId={enrichedEvent.gameCharacterId} variant="xs" decorative />
+                  <CharacterAvatar
+                    src={getLocalCharacterThumbnailAssetURL(enrichedEvent.gameCharacterId)}
+                    label={characterDisplayName ?? ""}
+                    characterId={enrichedEvent.gameCharacterId}
+                    variant="xs"
+                    decorative
+                  />
                   <div class="min-w-0 space-y-0.5">
-                    {#if characterDisplayName}<p class="truncate text-xs font-semibold">{characterDisplayName}</p>{/if}
-                    {#if getAttribute(event, ["motionKey"]) !== undefined}<p class="wrap-break-word font-mono text-[0.68rem] opacity-65">{formatValue(getAttribute(event, ["motionKey"])!)}</p>{/if}
-                    {#if getAttribute(event, ["facialKey"]) !== undefined}<p class="wrap-break-word font-mono text-[0.68rem] opacity-65">{formatValue(getAttribute(event, ["facialKey"])!)}</p>{/if}
+                    {#if characterDisplayName}<p class="truncate text-xs font-semibold">
+                        {characterDisplayName}
+                      </p>{/if}
+                    {#if getAttribute(event, ["motionKey"]) !== undefined}<p
+                        class="wrap-break-word font-mono text-[0.68rem] opacity-65"
+                      >
+                        {formatValue(getAttribute(event, ["motionKey"])!)}
+                      </p>{/if}
+                    {#if getAttribute(event, ["facialKey"]) !== undefined}<p
+                        class="wrap-break-word font-mono text-[0.68rem] opacity-65"
+                      >
+                        {formatValue(getAttribute(event, ["facialKey"])!)}
+                      </p>{/if}
                   </div>
                 </div>
               {:else if event.category === "stage"}
-                {#if getPrimaryValue(event) !== undefined}<p class="mt-1 whitespace-pre-line text-sm/5">{formatValue(getPrimaryValue(event)!)}</p>{/if}
+                {#if getPrimaryValue(event) !== undefined}<p
+                    class="mt-1 whitespace-pre-line text-sm/5"
+                  >
+                    {formatValue(getPrimaryValue(event)!)}
+                  </p>{/if}
               {:else}
                 {#if event.type !== "audience"}
                   <p class="mt-1 whitespace-pre-line text-sm/5">{summary(event)}</p>

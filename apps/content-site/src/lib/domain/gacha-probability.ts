@@ -33,12 +33,13 @@ export type GachaRateChoiceWishGroup = {
   cardIds: readonly string[];
 };
 
-export type GachaProbabilityCard = GachaDetailSub & GachaProbabilityCardMetadata & {
-  probability: number | null;
-  probabilityByLotteryType: Record<string, number | null>;
-  probabilitySegments: GachaProbabilitySegment[];
-  diagnostic: GachaProbabilityDiagnostic;
-};
+export type GachaProbabilityCard = GachaDetailSub &
+  GachaProbabilityCardMetadata & {
+    probability: number | null;
+    probabilityByLotteryType: Record<string, number | null>;
+    probabilitySegments: GachaProbabilitySegment[];
+    diagnostic: GachaProbabilityDiagnostic;
+  };
 
 const normalize = (value: string | null): string | null => value?.trim().toLowerCase() || null;
 const NORMAL_LOTTERY_TYPES = new Set(["normal", "categorized_wish"]);
@@ -58,13 +59,15 @@ type NormalizedRateChoiceWishGroup = {
   cardIds: Set<string>;
 };
 
-const getSegmentKey = (rarity: string, lotteryType: string): string => `${rarity}\u0000${lotteryType}`;
+const getSegmentKey = (rarity: string, lotteryType: string): string =>
+  `${rarity}\u0000${lotteryType}`;
 
 const isRateChoiceLotteryType = (lotteryType: string | null): lotteryType is string =>
   lotteryType?.startsWith(RATE_CHOICE_LOTTERY_PREFIX) ?? false;
 
 const isSupportedLotteryType = (lotteryType: string | null): lotteryType is string =>
-  lotteryType !== null && (NORMAL_LOTTERY_TYPES.has(lotteryType) || isRateChoiceLotteryType(lotteryType));
+  lotteryType !== null &&
+  (NORMAL_LOTTERY_TYPES.has(lotteryType) || isRateChoiceLotteryType(lotteryType));
 
 const getPositiveInteger = (value: number | null): number | null =>
   typeof value === "number" && Number.isInteger(value) && value > 0 ? value : null;
@@ -83,7 +86,8 @@ const buildRateSegments = (rates: GachaCardRarityRate[]): Map<string, RateSegmen
     }
 
     const key = getSegmentKey(rarity, lotteryType);
-    const rate = typeof row.rate === "number" && Number.isFinite(row.rate) && row.rate > 0 ? row.rate : null;
+    const rate =
+      typeof row.rate === "number" && Number.isFinite(row.rate) && row.rate > 0 ? row.rate : null;
     const previous = segments.get(key);
     if (!previous) {
       segments.set(key, {
@@ -110,7 +114,8 @@ const aggregateDetails = (details: GachaDetailSub[]): AggregatedGachaDetail[] =>
     const key = detail.cardId
       ? `${detail.cardId}\u0000${String(detail.isWish)}`
       : `missing-${missingIdIndex++}\u0000${String(detail.isWish)}`;
-    const validWeight = typeof detail.weight === "number" && Number.isFinite(detail.weight) && detail.weight > 0;
+    const validWeight =
+      typeof detail.weight === "number" && Number.isFinite(detail.weight) && detail.weight > 0;
     const current = aggregated.get(key);
 
     if (!current) {
@@ -141,9 +146,7 @@ const validateRateChoiceWishGroups = ({
   wishSelectCount?: number | null;
 }): { groups: NormalizedRateChoiceWishGroup[]; diagnostic: "invalid-rate-choice" | null } => {
   const activeLotteryTypes = new Set(
-    [...rates.values()]
-      .filter((rate) => rate.conditional)
-      .map((rate) => rate.lotteryType)
+    [...rates.values()].filter((rate) => rate.conditional).map((rate) => rate.lotteryType)
   );
 
   if (activeLotteryTypes.size === 0) {
@@ -240,18 +243,22 @@ export const buildGachaProbabilityCards = ({
 }): GachaProbabilityCard[] => {
   const segments = buildRateSegments(rates);
   const aggregated = aggregateDetails(details);
-  const { groups: rateChoiceGroups, diagnostic: rateChoiceConfigDiagnostic } = validateRateChoiceWishGroups({
-    groups: rateChoiceWishGroups ?? [],
-    rates: segments,
-    wishSelectCount
-  });
+  const { groups: rateChoiceGroups, diagnostic: rateChoiceConfigDiagnostic } =
+    validateRateChoiceWishGroups({
+      groups: rateChoiceWishGroups ?? [],
+      rates: segments,
+      wishSelectCount
+    });
   const rateChoiceGroupsByCardId = buildRateChoiceGroupsByCardId(rateChoiceGroups);
 
   const pools = new Map<string, number>();
   for (const detail of aggregated) {
-    const rarity = normalize(detail.cardId ? metadata.get(detail.cardId)?.rarityType ?? null : null);
+    const rarity = normalize(
+      detail.cardId ? (metadata.get(detail.cardId)?.rarityType ?? null) : null
+    );
     const lotteryType = getBaseLotteryType(detail);
-    const segment = rarity && lotteryType ? segments.get(getSegmentKey(rarity, lotteryType)) : undefined;
+    const segment =
+      rarity && lotteryType ? segments.get(getSegmentKey(rarity, lotteryType)) : undefined;
     if (rarity && lotteryType && segment && segment.rate !== null && detail.weight !== null) {
       const key = getSegmentKey(rarity, lotteryType);
       pools.set(key, (pools.get(key) ?? 0) + detail.weight);
@@ -267,21 +274,34 @@ export const buildGachaProbabilityCards = ({
     let probability: number | null = null;
     let unresolvedBaseSegment = false;
     let diagnostic: GachaProbabilityDiagnostic = !detail.cardId
-      ? "missing-card-id" : !rarity ? "missing-card-rarity"
-      : detail.hasInvalidWeight || detail.weight === null ? "invalid-weight" : "none";
+      ? "missing-card-id"
+      : !rarity
+        ? "missing-card-rarity"
+        : detail.hasInvalidWeight || detail.weight === null
+          ? "invalid-weight"
+          : "none";
 
     if (lotteryType && rarity) {
       probabilityByLotteryType[lotteryType] = null;
       const segmentKey = getSegmentKey(rarity, lotteryType);
       const segment = segments.get(segmentKey);
-      if (incompleteSegments?.has(segmentKey) && diagnostic === "none") diagnostic = "incomplete-metadata";
-      else if (segment?.diagnostic) diagnostic = diagnostic === "none" ? segment.diagnostic : diagnostic;
+      if (incompleteSegments?.has(segmentKey) && diagnostic === "none")
+        diagnostic = "incomplete-metadata";
+      else if (segment?.diagnostic)
+        diagnostic = diagnostic === "none" ? segment.diagnostic : diagnostic;
       else if (segment?.rate !== null && segment) {
         const denominator = pools.get(segmentKey) ?? 0;
-        probability = denominator > 0 && detail.weight !== null
-          ? (segment.rate * detail.weight) / denominator : null;
+        probability =
+          denominator > 0 && detail.weight !== null
+            ? (segment.rate * detail.weight) / denominator
+            : null;
         probabilityByLotteryType[lotteryType] = probability;
-        probabilitySegments.push({ lotteryType, probability, selectCount: null, conditional: false });
+        probabilitySegments.push({
+          lotteryType,
+          probability,
+          selectCount: null,
+          conditional: false
+        });
         if (probability === null && diagnostic === "none") diagnostic = "empty-pool";
       } else {
         unresolvedBaseSegment = true;
@@ -290,8 +310,10 @@ export const buildGachaProbabilityCards = ({
 
     if (detail.cardId && detail.isWish === true && rarity) {
       if (rateChoiceConfigDiagnostic) {
-        const hasRateChoiceForRarity = rates.some((rate) =>
-          normalize(rate.cardRarityType) === rarity && isRateChoiceLotteryType(normalize(rate.lotteryType))
+        const hasRateChoiceForRarity = rates.some(
+          (rate) =>
+            normalize(rate.cardRarityType) === rarity &&
+            isRateChoiceLotteryType(normalize(rate.lotteryType))
         );
         if (hasRateChoiceForRarity && diagnostic === "none" && probabilitySegments.length === 0) {
           diagnostic = rateChoiceConfigDiagnostic;
@@ -302,11 +324,13 @@ export const buildGachaProbabilityCards = ({
           const segment = segments.get(segmentKey);
           probabilityByLotteryType[group.lotteryType] = null;
           if (incompleteSegments?.has(segmentKey)) {
-            if (diagnostic === "none" && probabilitySegments.length === 0) diagnostic = "incomplete-metadata";
+            if (diagnostic === "none" && probabilitySegments.length === 0)
+              diagnostic = "incomplete-metadata";
             continue;
           }
           if (segment?.diagnostic) {
-            if (diagnostic === "none" && probabilitySegments.length === 0) diagnostic = segment.diagnostic;
+            if (diagnostic === "none" && probabilitySegments.length === 0)
+              diagnostic = segment.diagnostic;
             continue;
           }
           if (!segment || segment.rate === null) {
@@ -326,25 +350,48 @@ export const buildGachaProbabilityCards = ({
     }
 
     if (diagnostic === "none" && probabilitySegments.length === 0) {
-      if (rateChoiceConfigDiagnostic && detail.isWish === true && rarity && rates.some((rate) =>
-        normalize(rate.cardRarityType) === rarity && isRateChoiceLotteryType(normalize(rate.lotteryType)))) {
+      if (
+        rateChoiceConfigDiagnostic &&
+        detail.isWish === true &&
+        rarity &&
+        rates.some(
+          (rate) =>
+            normalize(rate.cardRarityType) === rarity &&
+            isRateChoiceLotteryType(normalize(rate.lotteryType))
+        )
+      ) {
         diagnostic = rateChoiceConfigDiagnostic;
       } else if (unresolvedBaseSegment) {
         const hasRelevantUnsupportedRate = rates.some((rate) => {
           const rateLotteryType = normalize(rate.lotteryType);
-          return normalize(rate.cardRarityType) === rarity && rateLotteryType !== null && !isSupportedLotteryType(rateLotteryType);
+          return (
+            normalize(rate.cardRarityType) === rarity &&
+            rateLotteryType !== null &&
+            !isSupportedLotteryType(rateLotteryType)
+          );
         });
-        diagnostic = hasRelevantUnsupportedRate ? "unsupported-lottery-type" : "unmatched-card-semantics";
+        diagnostic = hasRelevantUnsupportedRate
+          ? "unsupported-lottery-type"
+          : "unmatched-card-semantics";
       } else if (Object.keys(probabilityByLotteryType).length === 0) {
-        diagnostic = segments.size === 0 && rates.some((rate) => rate.lotteryType)
-          ? "unsupported-lottery-type" : "unmatched-card-semantics";
+        diagnostic =
+          segments.size === 0 && rates.some((rate) => rate.lotteryType)
+            ? "unsupported-lottery-type"
+            : "unmatched-card-semantics";
       }
     }
 
     return {
-      ...detail, ...card, title: card?.title ?? null, assetBundleName: card?.assetBundleName ?? null,
-      attr: card?.attr ?? null, rarityType: card?.rarityType ?? null,
-      probability, probabilityByLotteryType, probabilitySegments, diagnostic
+      ...detail,
+      ...card,
+      title: card?.title ?? null,
+      assetBundleName: card?.assetBundleName ?? null,
+      attr: card?.attr ?? null,
+      rarityType: card?.rarityType ?? null,
+      probability,
+      probabilityByLotteryType,
+      probabilitySegments,
+      diagnostic
     };
   });
 };

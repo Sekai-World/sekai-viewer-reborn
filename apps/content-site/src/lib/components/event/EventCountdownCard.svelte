@@ -40,8 +40,7 @@
     class?: string;
   } = $props();
 
-  const getInitialLabel = (key: string): string =>
-    createI18nTranslator(uiLocale, messages)(key);
+  const getInitialLabel = (key: string): string => createI18nTranslator(uiLocale, messages)(key);
   let startsInLabel = $state(getInitialLabel("countdownStartsIn"));
   let endsInLabel = $state(getInitialLabel("countdownEndsIn"));
   let eventEndedLabel = $state(getInitialLabel("eventEnded"));
@@ -80,7 +79,10 @@
     secondLabel = translate("labels.timeUnit.second");
   };
 
-  const refreshTranslations = async (localeValue: string, messageValues: I18nMessages): Promise<void> => {
+  const refreshTranslations = async (
+    localeValue: string,
+    messageValues: I18nMessages
+  ): Promise<void> => {
     applyTranslations(localeValue, messageValues);
   };
 

@@ -155,7 +155,9 @@
                     <p class="text-sm font-semibold">{musicLabel}</p>
                   {/if}
                 {/if}
-                {#if hasText(screenMv.caption)}<p class="mt-1 whitespace-pre-line text-xs/5 opacity-70">
+                {#if hasText(screenMv.caption)}<p
+                    class="mt-1 whitespace-pre-line text-xs/5 opacity-70"
+                  >
                     {screenMv.caption}
                   </p>{/if}
               </div>

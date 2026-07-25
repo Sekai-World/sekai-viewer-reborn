@@ -223,23 +223,39 @@
           {#if character.profile?.introduction || profileFactRows(character).length > 0}
             <article class="card content-card-shell shadow-sm">
               <div class="card-body gap-4 p-3 sm:p-5">
-                <h2 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                  <Icon icon="mdi:card-account-details-outline" class="size-4 shrink-0" aria-hidden="true" />
+                <h2
+                  class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+                >
+                  <Icon
+                    icon="mdi:card-account-details-outline"
+                    class="size-4 shrink-0"
+                    aria-hidden="true"
+                  />
                   <span>{t("characterProfileTitle", "Profile")}</span>
                 </h2>
                 {#if character.profile?.introduction}
-                  <section class="content-card-inset rounded-xl p-3 sm:p-4" aria-labelledby="character-introduction-title">
-                    <h3 id="character-introduction-title" class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                  <section
+                    class="content-card-inset rounded-xl p-3 sm:p-4"
+                    aria-labelledby="character-introduction-title"
+                  >
+                    <h3
+                      id="character-introduction-title"
+                      class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60"
+                    >
                       {t("characterIntroductionLabel", "Introduction")}
                     </h3>
-                    <p class="mt-2 whitespace-pre-line wrap-break-word text-sm/6">{character.profile.introduction}</p>
+                    <p class="mt-2 whitespace-pre-line wrap-break-word text-sm/6">
+                      {character.profile.introduction}
+                    </p>
                   </section>
                 {/if}
                 {#if profileFactRows(character).length > 0}
                   <dl class="grid gap-2 sm:grid-cols-2">
                     {#each profileFactRows(character) as row (row[0])}
                       <div class="content-card-inset rounded-xl p-3">
-                        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{row[0]}</dt>
+                        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                          {row[0]}
+                        </dt>
                         <dd class="mt-1 wrap-break-word text-sm font-medium">{row[1]}</dd>
                       </div>
                     {/each}
@@ -287,7 +303,9 @@
                           maxSize={112}
                           containerClass="relative mx-auto aspect-square w-full overflow-hidden rounded-lg bg-base-200"
                         />
-                        <p class="line-clamp-2 text-center text-xs/4 font-medium group-hover:text-primary">
+                        <p
+                          class="line-clamp-2 text-center text-xs/4 font-medium group-hover:text-primary"
+                        >
                           {card.prefix ?? `#${card.id}`}
                         </p>
                       </a>

@@ -9,10 +9,7 @@
   import type { SupportedRegion } from "$lib/domain/regions";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
-  import {
-    DETAIL_MEDIA_BUTTON_CLASS,
-    DETAIL_MEDIA_RADIUS_CLASS
-  } from "$lib/styles/detail-media";
+  import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   export type GachaAssetTab = "logo" | "banner" | "background";
   type PreviewImageOptions = {

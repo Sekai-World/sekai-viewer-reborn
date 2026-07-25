@@ -11,10 +11,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import {
-    createI18nTranslator,
-     getLocalI18nMessages,
-  } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
   import type { PageData } from "./$types";
@@ -186,10 +183,7 @@
     }
   };
 
-  const applyInitialPage = (
-    page: GachaListPagePayload,
-    loadFailed: boolean
-  ): void => {
+  const applyInitialPage = (page: GachaListPagePayload, loadFailed: boolean): void => {
     items = page.items;
     currentPage = page.pagination.page;
     hasNext = page.pagination.hasNext;
@@ -373,7 +367,11 @@
     currentGachaLabel = translate("currentGachaLabel");
   };
 
-  const refreshPageTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+  const refreshPageTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
     let messages: Record<string, string>;
     try {
       messages = await messagesOrPromise;
@@ -608,8 +606,8 @@
         <GachaListCard
           region={data.region}
           {item}
-          currentGachaIds={currentGachaIds}
-          currentGachaLabel={currentGachaLabel}
+          {currentGachaIds}
+          {currentGachaLabel}
           {spoilerContentLabel}
           uiLocale={data.uiLocale}
           {idLabel}

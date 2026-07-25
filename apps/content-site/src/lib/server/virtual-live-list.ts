@@ -207,8 +207,7 @@ const parsePagination = (
   itemCount: number
 ): VirtualLiveListPagination => {
   const root = getObject(payload);
-  const paginationNode =
-    (root && (root["pagination"] ?? root["meta"] ?? root["data"])) ?? null;
+  const paginationNode = (root && (root["pagination"] ?? root["meta"] ?? root["data"])) ?? null;
   const paginationSource = getObject(paginationNode) ?? {};
   const page = getNumber(paginationSource["page"]) ?? fallbackPage;
   const pageSize =

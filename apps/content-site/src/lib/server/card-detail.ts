@@ -25,8 +25,7 @@ const getStringLike = (value: unknown): string | null => {
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
-const getBoolean = (value: unknown): boolean | null =>
-  typeof value === "boolean" ? value : null;
+const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const getDateValue = (value: unknown): string | number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -167,10 +166,7 @@ const parseSkillEnhance = (effectNode: Record<string, unknown>) => {
       "activateEffectValue",
       "activate_effect_value"
     ]),
-    skillEnhanceType: pickFirstString(skillEnhanceNode, [
-      "skillEnhanceType",
-      "skill_enhance_type"
-    ]),
+    skillEnhanceType: pickFirstString(skillEnhanceNode, ["skillEnhanceType", "skill_enhance_type"]),
     skillEnhanceCondition: conditionNode
       ? {
           id: pickFirstNumber(conditionNode, ["id"]),
@@ -200,7 +196,10 @@ const parseSkillEffects = (skillNode: Record<string, unknown> | null) =>
           "activateCharacterRank",
           "activate_character_rank"
         ]),
-        activateUnitCount: pickFirstNumber(effectNode, ["activateUnitCount", "activate_unit_count"]),
+        activateUnitCount: pickFirstNumber(effectNode, [
+          "activateUnitCount",
+          "activate_unit_count"
+        ]),
         activateLife: pickFirstNumber(effectNode, ["activateLife", "activate_life"]),
         skillEnhance: parseSkillEnhance(effectNode),
         details: (getNestedArray(effectNode, ["skillEffectDetails", "skill_effect_details"]) ?? [])
@@ -497,7 +496,8 @@ export const parseCardDetailEpisodes = (payload: unknown): CardDetailEpisode[] =
         ]),
         releaseConditionSentence: pickFirstString(releaseCondition ?? node, ["sentence"]),
         performanceBonus:
-          pickFirstNumber(node, ["power1BonusFixed", "power_1_bonus_fixed", "performanceBonus"]) ?? 0,
+          pickFirstNumber(node, ["power1BonusFixed", "power_1_bonus_fixed", "performanceBonus"]) ??
+          0,
         techniqueBonus:
           pickFirstNumber(node, ["power2BonusFixed", "power_2_bonus_fixed", "techniqueBonus"]) ?? 0,
         staminaBonus:

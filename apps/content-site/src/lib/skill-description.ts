@@ -17,7 +17,8 @@ type FormatSkillDescriptionOptions = {
 };
 
 const singlePlaceholderPattern = /\{\{(?<effectId>\d+);(?<kind>[dvemc])\}\}/g;
-const doublePlaceholderPattern = /\{\{(?<baseEffectId>\d+),(?<bonusEffectId>\d+);(?<kind>[rsvuo])\}\}/g;
+const doublePlaceholderPattern =
+  /\{\{(?<baseEffectId>\d+),(?<bonusEffectId>\d+);(?<kind>[rsvuo])\}\}/g;
 
 export const formatEffectValue = (value: number | null, type: string | null): string => {
   if (value === null) {
@@ -49,10 +50,7 @@ export const getSelectedSkillEffects = (
     .filter((item): item is SelectedSkillEffect => item !== null);
 };
 
-const getDetailValue = (
-  effects: readonly SelectedSkillEffect[],
-  effectId: number
-): number | null =>
+const getDetailValue = (effects: readonly SelectedSkillEffect[], effectId: number): number | null =>
   effects.find((item) => item.effect.id === effectId)?.detail.activateEffectValue ?? null;
 
 const getBestMatchingEffectValue = ({

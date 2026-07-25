@@ -67,7 +67,9 @@
           : null}
         title={event.title}
         subtitle={unitName}
-        artworkUrl={event.assetBundleName ? getEventBannerAssetURL(event.assetBundleName, region) : undefined}
+        artworkUrl={event.assetBundleName
+          ? getEventBannerAssetURL(event.assetBundleName, region)
+          : undefined}
         artist={unitName}
         downloadName={getDownloadName("mp3")}
         downloadOptions={[

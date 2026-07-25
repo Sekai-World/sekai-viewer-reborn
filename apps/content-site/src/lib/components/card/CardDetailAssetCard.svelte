@@ -6,10 +6,7 @@
   import type { SupportedRegion } from "$lib/domain/regions";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
-  import {
-    DETAIL_MEDIA_BUTTON_CLASS,
-    DETAIL_MEDIA_RADIUS_CLASS
-  } from "$lib/styles/detail-media";
+  import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   export type CardAssetTab = "normal" | "trained";
 

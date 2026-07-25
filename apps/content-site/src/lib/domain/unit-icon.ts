@@ -17,17 +17,12 @@ export const unitIconSlugs = new Set([
  * Returns null for unknown slugs.
  * When `mapNoneToPiapro` is true, slug "none" resolves to the piapro icon.
  */
-export const resolveUnitIconUrl = (
-  slug: string,
-  mapNoneToPiapro = false
-): string | null => {
+export const resolveUnitIconUrl = (slug: string, mapNoneToPiapro = false): string | null => {
   const normalized = slug.trim().toLowerCase();
   if (normalized === "none" && mapNoneToPiapro) {
     return asset("/icons/icon_piapro.png");
   }
-  return unitIconSlugs.has(normalized)
-    ? asset(`/icons/icon_${normalized}.png`)
-    : null;
+  return unitIconSlugs.has(normalized) ? asset(`/icons/icon_${normalized}.png`) : null;
 };
 
 export const resolveUnitLogoUrl = (slug: string): string | null => {

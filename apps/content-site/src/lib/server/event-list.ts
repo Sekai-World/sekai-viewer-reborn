@@ -99,9 +99,7 @@ export const createEventListRequestQuery = (
 
   if (queryState.unit.length > 0) {
     // "mixed" is the UI label for unit-less events; the backend filters on the raw value "none".
-    query.unit = queryState.unit
-      .map((unit) => (unit === "mixed" ? "none" : unit))
-      .join(",");
+    query.unit = queryState.unit.map((unit) => (unit === "mixed" ? "none" : unit)).join(",");
   }
 
   return query;
@@ -266,7 +264,13 @@ const parseEventListItem = (payload: unknown): EventListItem | null => {
     unit: normalizeUnitCode(pickFirstString(unitNode ?? eventNode, ["unit"])),
     assetBundleName: pickFirstString(eventNode, ["assetbundleName", "assetBundleName"]),
     startAt: pickFirstDateValue(eventNode, ["startAt", "start_at", "startDate"]),
-    endAt: pickFirstDateValue(eventNode, ["endAt", "end_at", "aggregateAt", "aggregate_at", "endDate"])
+    endAt: pickFirstDateValue(eventNode, [
+      "endAt",
+      "end_at",
+      "aggregateAt",
+      "aggregate_at",
+      "endDate"
+    ])
   };
 };
 

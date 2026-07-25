@@ -12,17 +12,10 @@
   import MusicDifficultyCard from "$lib/components/music/MusicDifficultyCard.svelte";
   import MusicPreviewCard from "$lib/components/music/MusicPreviewCard.svelte";
   import MusicJacketHero from "$lib/components/music/MusicJacketHero.svelte";
-  import {
-    createI18nTranslator,
-     getLocalI18nMessages,
-  } from "$lib/i18n/runtime";
-  import {
-    formatUnitFallbackLabel,
-    unitCodeByMusicTag
-  } from "$lib/domain/unit-profile";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { formatUnitFallbackLabel, unitCodeByMusicTag } from "$lib/domain/unit-profile";
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import type { PageData } from "./$types";
-
 
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "music", "error"]);
@@ -147,7 +140,11 @@
     };
   };
 
-  const refreshTranslations = async (localeValue: string, messagesOrPromise: typeof data.i18nMessages, requestId: number): Promise<void> => {
+  const refreshTranslations = async (
+    localeValue: string,
+    messagesOrPromise: typeof data.i18nMessages,
+    requestId: number
+  ): Promise<void> => {
     let messages: Record<string, string>;
     try {
       messages = await messagesOrPromise;
@@ -170,7 +167,10 @@
       : createI18nTranslator(data.uiLocale, currentMessages)(`musicListTag.${value}`, value);
 
   const getDifficultyLabel = (difficulty: string): string =>
-    createI18nTranslator(data.uiLocale, currentMessages)(`musicDifficulty.${difficulty}`, difficulty);
+    createI18nTranslator(data.uiLocale, currentMessages)(
+      `musicDifficulty.${difficulty}`,
+      difficulty
+    );
 
   const regionDisplayOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
 
@@ -208,8 +208,8 @@
 
   const getUnavailableError = (availableRegions: SupportedRegion[]): string =>
     hasAlternativeRegion(availableRegions)
-      ? data.musicUnavailableInCurrentRegionMessage ?? noMusicLabel
-      : data.failedToLoadMusicDataMessage ?? noMusicLabel;
+      ? (data.musicUnavailableInCurrentRegionMessage ?? noMusicLabel)
+      : (data.failedToLoadMusicDataMessage ?? noMusicLabel);
 </script>
 
 <svelte:head>
@@ -294,12 +294,17 @@
               {availableRegions}
               musicId={data.musicId}
               title={payload.music.title}
-              jacketUrl={payload.music.assetBundleName ? getMusicJacketAssetURL(payload.music.assetBundleName, getMusicAssetServer(data.region, availableRegions)) : undefined}
+              jacketUrl={payload.music.assetBundleName
+                ? getMusicJacketAssetURL(
+                    payload.music.assetBundleName,
+                    getMusicAssetServer(data.region, availableRegions)
+                  )
+                : undefined}
               artist={payload.music.composer ?? undefined}
               fillerSec={payload.music.fillerSec}
-              vocalLabel={vocalLabel}
-              vocalTypeLabel={vocalTypeLabel}
-              vocalCharacterLabel={vocalCharacterLabel}
+              {vocalLabel}
+              {vocalTypeLabel}
+              {vocalCharacterLabel}
               noVocalsLabel={noVocals}
               shortPreviewLabel={musicPreviewShortLabel}
               longPreviewLabel={musicPreviewLongLabel}

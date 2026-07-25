@@ -42,9 +42,10 @@
       { order: [], byGroup: {} }
     );
 
-    return grouped.order.map(
-      (group): [string, CharacterCatalogueItem[]] => [group, grouped.byGroup[group] ?? []]
-    );
+    return grouped.order.map((group): [string, CharacterCatalogueItem[]] => [
+      group,
+      grouped.byGroup[group] ?? []
+    ]);
   });
   const regionOptions = (): RegionBadgeOption[] =>
     supportedRegions.map((region) =>
@@ -71,7 +72,8 @@
     catalogue = [];
     void Promise.resolve(data.catalogue).then((result) => {
       catalogue = result.items;
-      unitProfiles = "unitProfiles" in result ? (result.unitProfiles as Record<string, string>) : {};
+      unitProfiles =
+        "unitProfiles" in result ? (result.unitProfiles as Record<string, string>) : {};
       loadFailed = result.loadFailed;
       loading = false;
     });
@@ -117,7 +119,9 @@
       class="content-card-inset flex min-h-48 flex-col items-center justify-center gap-3 rounded-2xl px-6 text-center"
     >
       <Icon icon="mdi:account-search-outline" class="size-9 opacity-45" aria-hidden="true" />
-      <p class="font-semibold">{t("characterListEmpty", "No characters are available for this region.")}</p>
+      <p class="font-semibold">
+        {t("characterListEmpty", "No characters are available for this region.")}
+      </p>
     </div>
   {:else}
     <div class="flex flex-col gap-4 sm:gap-5">
@@ -130,10 +134,19 @@
             {group === "__unassigned" ? t("characterUnassignedGroup", "Other characters") : group}
           </h2>
           {#if group !== "__unassigned" && resolveUnitLogoUrl(characters[0]?.unit ?? "")}
-            <img src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined} alt="" class="size-28 object-contain sm:size-32" />
+            <img
+              src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined}
+              alt=""
+              class="size-28 object-contain sm:size-32"
+            />
           {/if}
-          <div class="flex w-full max-w-4xl flex-nowrap items-center justify-center gap-px sm:gap-0.5">
-            {#each characters as character (character.id)}<CharacterCatalogueCard {character} region={data.region} />{/each}
+          <div
+            class="flex w-full max-w-4xl flex-nowrap items-center justify-center gap-px sm:gap-0.5"
+          >
+            {#each characters as character (character.id)}<CharacterCatalogueCard
+                {character}
+                region={data.region}
+              />{/each}
           </div>
         </section>
       {/each}

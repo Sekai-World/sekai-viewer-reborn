@@ -38,11 +38,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const page = parsePageNumber(url.searchParams.get("page"));
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseGachaListQueryState(url.searchParams);
-  const requestQuery = createGachaListRequestQuery(
-    queryState,
-    page,
-    DEFAULT_GACHA_LIST_PAGE_SIZE
-  );
+  const requestQuery = createGachaListRequestQuery(queryState, page, DEFAULT_GACHA_LIST_PAGE_SIZE);
 
   logGachaListFilterDebug("data request", {
     region,

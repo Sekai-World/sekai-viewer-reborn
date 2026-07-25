@@ -1,16 +1,10 @@
 import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 
-export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+export type JsonValue =
+  null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
 export type VirtualLiveTimelineCategory =
-  | "dialogue"
-  | "annotation"
-  | "cast"
-  | "performance"
-  | "stage"
-  | "audience"
-  | "audio"
-  | "other";
+  "dialogue" | "annotation" | "cast" | "performance" | "stage" | "audience" | "audio" | "other";
 
 export type VirtualLiveTimelineCharacter = {
   name: string;

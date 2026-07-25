@@ -33,9 +33,7 @@ const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
   }
 
   const root =
-    payload !== null && typeof payload === "object"
-      ? (payload as Record<string, unknown>)
-      : null;
+    payload !== null && typeof payload === "object" ? (payload as Record<string, unknown>) : null;
 
   if (!root) {
     return [];
@@ -54,9 +52,7 @@ const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
 
   const toSupportedRegionMap = (value: unknown): SupportedRegion[] => {
     const record =
-      value !== null && typeof value === "object"
-        ? (value as Record<string, unknown>)
-        : null;
+      value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
     if (!record) {
       return [];
     }
@@ -192,7 +188,11 @@ const fetchMusicPayload = async ({
 export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const musicId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const [invalidMusicIdMessage, musicUnavailableInCurrentRegionMessage, failedToLoadMusicDataMessage] = await Promise.all([
+  const [
+    invalidMusicIdMessage,
+    musicUnavailableInCurrentRegionMessage,
+    failedToLoadMusicDataMessage
+  ] = await Promise.all([
     getServerI18nText(uiLocale, "invalidMusicId", fetch),
     getServerI18nText(uiLocale, "musicUnavailableInCurrentRegion", fetch),
     getServerI18nText(uiLocale, "failedToLoadMusicData", fetch)

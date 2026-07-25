@@ -43,14 +43,16 @@
 </script>
 
 <span
-  class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-primary/45 bg-base-100/80 font-bold text-primary {sizeClass[variant]} {className ?? ''}"
+  class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border-primary/45 bg-base-100/80 font-bold text-primary {sizeClass[
+    variant
+  ]} {className ?? ''}"
   style:border-color={borderColor}
   aria-label={decorative ? undefined : label}
   aria-hidden={decorative ? "true" : undefined}
 >
   {#if src}
     <img
-      src={src}
+      {src}
       alt=""
       class={imageClass ?? defaultImageClass[variant]}
       loading="lazy"

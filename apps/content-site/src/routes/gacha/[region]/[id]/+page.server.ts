@@ -163,7 +163,12 @@ const fetchGachaPayload = async ({
     const enrichCard = async (
       cardId: string | null,
       region: SupportedRegion
-    ): Promise<{ title: string | null; assetBundleName: string | null; attr: string | null; rarityType: string | null }> => {
+    ): Promise<{
+      title: string | null;
+      assetBundleName: string | null;
+      attr: string | null;
+      rarityType: string | null;
+    }> => {
       const empty = { title: null, assetBundleName: null, attr: null, rarityType: null } as const;
       if (!cardId) return { ...empty };
 
@@ -212,12 +217,15 @@ const fetchGachaPayload = async ({
 export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const gachaId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const [invalidGachaIdMessage, gachaUnavailableInCurrentRegionMessage, failedToLoadGachaDataMessage] =
-    await Promise.all([
-      getServerI18nText(uiLocale, "invalidGachaId", fetch),
-      getServerI18nText(uiLocale, "gachaUnavailableInCurrentRegion", fetch),
-      getServerI18nText(uiLocale, "failedToLoadGachaData", fetch)
-    ]);
+  const [
+    invalidGachaIdMessage,
+    gachaUnavailableInCurrentRegionMessage,
+    failedToLoadGachaDataMessage
+  ] = await Promise.all([
+    getServerI18nText(uiLocale, "invalidGachaId", fetch),
+    getServerI18nText(uiLocale, "gachaUnavailableInCurrentRegion", fetch),
+    getServerI18nText(uiLocale, "failedToLoadGachaData", fetch)
+  ]);
   const region: SupportedRegion = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const currentLookupPromise = gachaId

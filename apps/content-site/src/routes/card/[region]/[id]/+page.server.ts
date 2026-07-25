@@ -198,15 +198,12 @@ const fetchCardPayload = async ({
 export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
   const cardId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const [
-    invalidCardIdMessage,
-    cardUnavailableInCurrentRegionMessage,
-    failedToLoadCardDataMessage
-  ] = await Promise.all([
-    getServerI18nText(uiLocale, "invalidCardId", fetch),
-    getServerI18nText(uiLocale, "cardUnavailableInCurrentRegion", fetch),
-    getServerI18nText(uiLocale, "failedToLoadCardData", fetch)
-  ]);
+  const [invalidCardIdMessage, cardUnavailableInCurrentRegionMessage, failedToLoadCardDataMessage] =
+    await Promise.all([
+      getServerI18nText(uiLocale, "invalidCardId", fetch),
+      getServerI18nText(uiLocale, "cardUnavailableInCurrentRegion", fetch),
+      getServerI18nText(uiLocale, "failedToLoadCardData", fetch)
+    ]);
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
   const invalidMessage = cardId ? null : invalidCardIdMessage;
@@ -243,15 +240,11 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
     params: invalidMessage
       ? Promise.resolve(parseCardDetailParams(null))
       : detailPromise.then((d) => d.params),
-    episodes: invalidMessage
-      ? Promise.resolve([])
-      : detailPromise.then((d) => d.episodes),
+    episodes: invalidMessage ? Promise.resolve([]) : detailPromise.then((d) => d.episodes),
     relatedEvents: invalidMessage
       ? Promise.resolve([])
       : detailPromise.then((d) => d.relatedEvents),
-    gachas: invalidMessage
-      ? Promise.resolve([])
-      : detailPromise.then((d) => d.gachas),
+    gachas: invalidMessage ? Promise.resolve([]) : detailPromise.then((d) => d.gachas),
     unitProfiles: fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap)
   };
 };

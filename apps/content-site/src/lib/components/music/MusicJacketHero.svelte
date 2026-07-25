@@ -4,10 +4,7 @@
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { MusicDetail } from "$lib/domain/music-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import {
-    DETAIL_MEDIA_BUTTON_CLASS,
-    DETAIL_MEDIA_RADIUS_CLASS
-  } from "$lib/styles/detail-media";
+  import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   let {
     music,
@@ -45,7 +42,9 @@
       buttonClass={DETAIL_MEDIA_BUTTON_CLASS}
       imageClass={`h-full w-full object-cover ${DETAIL_MEDIA_RADIUS_CLASS}`}
       interactive={true}
-      onclick={() => { previewOpen = true; }}
+      onclick={() => {
+        previewOpen = true;
+      }}
     />
   </figure>
 

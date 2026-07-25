@@ -103,7 +103,10 @@ export default [
     },
     rules: {
       "svelte/no-navigation-without-resolve": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }]
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }
+      ]
     }
   },
   {

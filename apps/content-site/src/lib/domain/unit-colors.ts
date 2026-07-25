@@ -11,7 +11,10 @@ const unitColorBySlug = {
 
 export type UnitColorSlug = keyof typeof unitColorBySlug;
 
-const normalizeUnitSlug = (slug: string | null | undefined, mapNoneToPiapro: boolean): string | null => {
+const normalizeUnitSlug = (
+  slug: string | null | undefined,
+  mapNoneToPiapro: boolean
+): string | null => {
   const normalized = slug?.trim().toLowerCase() ?? "";
   if (normalized.length === 0) {
     return null;

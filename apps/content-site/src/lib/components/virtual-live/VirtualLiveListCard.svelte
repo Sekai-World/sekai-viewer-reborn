@@ -12,8 +12,8 @@
     EVENT_LIST_CARD_TITLE_CLASS
   } from "$lib/styles/event-card";
 
-const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
-  "relative flex h-32 items-center justify-center overflow-hidden bg-transparent px-4 pb-1.5 pt-4 sm:h-36 sm:pb-2";
+  const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
+    "relative flex h-32 items-center justify-center overflow-hidden bg-transparent px-4 pb-1.5 pt-4 sm:h-36 sm:pb-2";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
 
   let {
@@ -132,9 +132,7 @@ const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
     </div>
 
     <div class="flex flex-wrap items-center gap-1.5 px-4 pt-3">
-      <span class="badge border-none bg-base-200 font-semibold text-base-content"
-        >#{item.id}</span
-      >
+      <span class="badge border-none bg-base-200 font-semibold text-base-content">#{item.id}</span>
       {#if item.virtualLiveType}
         <span class="badge border-none bg-base-200 font-semibold text-base-content"
           >{typeLabel}</span

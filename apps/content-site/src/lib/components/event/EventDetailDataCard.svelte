@@ -1088,7 +1088,10 @@
   </div>
 {/snippet}
 
-{#snippet virtualLiveContent(virtualLive: NonNullable<EventDetail["virtualLive"]>, virtualLiveBannerSrc: string | null)}
+{#snippet virtualLiveContent(
+  virtualLive: NonNullable<EventDetail["virtualLive"]>,
+  virtualLiveBannerSrc: string | null
+)}
   <div
     class={`grid gap-2 ${virtualLiveBannerSrc ? "@md:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)] @md:items-center" : ""}`}
   >
@@ -1125,7 +1128,11 @@
         id="event-bonus-character-title"
         class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
       >
-        <Icon icon="mdi:cards-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+        <Icon
+          icon="mdi:cards-outline"
+          class="size-4 shrink-0 translate-y-[0.5px]"
+          aria-hidden="true"
+        />
         <span>{bonusCharacterLabel}</span>
       </h2>
       {#if getBonusCharacterItems(relatedData).length > 0}
@@ -1144,7 +1151,11 @@
         id="event-rarity-bonus-title"
         class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
       >
-        <Icon icon="mdi:chart-box-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+        <Icon
+          icon="mdi:chart-box-outline"
+          class="size-4 shrink-0 translate-y-[0.5px]"
+          aria-hidden="true"
+        />
         <span>{rarityBonusLabel}</span>
       </h2>
       {#if (relatedData?.bonuses?.rarityBonusRates.length ?? 0) > 0}
@@ -1186,7 +1197,11 @@
       id="event-featured-cards-title"
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
-      <Icon icon="mdi:cards-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+      <Icon
+        icon="mdi:cards-outline"
+        class="size-4 shrink-0 translate-y-[0.5px]"
+        aria-hidden="true"
+      />
       <span>{featuredCardsTitle}</span>
     </h2>
     {#if (relatedData?.cards.length ?? 0) > 0}
@@ -1207,7 +1222,11 @@
       id="event-musics-title"
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
-      <Icon icon="mdi:music-note-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+      <Icon
+        icon="mdi:music-note-outline"
+        class="size-4 shrink-0 translate-y-[0.5px]"
+        aria-hidden="true"
+      />
       <span>{eventMusicsLabel}</span>
     </h2>
     {#if (relatedData?.musics.length ?? 0) > 0}
@@ -1228,7 +1247,11 @@
       id="event-ranking-rewards-title"
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
     >
-      <Icon icon="mdi:gift-outline" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+      <Icon
+        icon="mdi:gift-outline"
+        class="size-4 shrink-0 translate-y-[0.5px]"
+        aria-hidden="true"
+      />
       <span>{rankingRewardsTitle}</span>
     </h2>
     {#if (displayRelatedData?.rewardRanges.length ?? 0) > 0}
@@ -1251,7 +1274,9 @@
             <span class="loading loading-spinner loading-xs"></span>
             {rankingRewardsLoadingLabel}
           {:else}
-            {areAllRankingRewardsVisible ? rankingRewardsShowLessLabel : rankingRewardsShowMoreLabel}
+            {areAllRankingRewardsVisible
+              ? rankingRewardsShowLessLabel
+              : rankingRewardsShowMoreLabel}
           {/if}
         </button>
       {/if}
@@ -1273,7 +1298,11 @@
         id="event-virtual-live-title"
         class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
       >
-        <Icon icon="mdi:account-voice" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+        <Icon
+          icon="mdi:account-voice"
+          class="size-4 shrink-0 translate-y-[0.5px]"
+          aria-hidden="true"
+        />
         <span>{virtualLiveTitle}</span>
       </h2>
       {#if virtualLive.id}

@@ -49,8 +49,7 @@ const getObject = (value: unknown): Record<string, unknown> | null =>
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
-const getBoolean = (value: unknown): boolean | null =>
-  typeof value === "boolean" ? value : null;
+const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const getArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
@@ -115,10 +114,7 @@ const parseBasic = (source: Record<string, unknown>): VirtualLiveBasic | null =>
     assetBundleName: pickFirstString(source, ["assetbundleName", "assetBundleName"]),
     startAt,
     endAt,
-    rankingAnnounceAt: pickFirstDateValue(source, [
-      "rankingAnnounceAt",
-      "ranking_announce_at"
-    ]),
+    rankingAnnounceAt: pickFirstDateValue(source, ["rankingAnnounceAt", "ranking_announce_at"]),
     seq: getNumber(source["seq"]),
     status: deriveVirtualLiveStatus(startAt, endAt)
   };
@@ -143,8 +139,7 @@ const parseWaitingRoom = (source: Record<string, unknown>): VirtualLiveWaitingRo
   const node = getObject(source["virtualLiveWaitingRoom"]);
   const effective = node ?? source;
 
-  const id =
-    getNumber(effective["virtualLiveWaitingRoomId"]) ?? getNumber(effective["id"]);
+  const id = getNumber(effective["virtualLiveWaitingRoomId"]) ?? getNumber(effective["id"]);
   const virtualLiveId = getNumber(effective["virtualLiveId"]);
 
   if (id === null && virtualLiveId === null) {
@@ -356,16 +351,16 @@ const parseVirtualLiveGroup = (value: unknown): VirtualLiveGroupDisplay | null =
   };
 };
 
-const parseScreenMvMusicVocal = (
-  value: unknown
-): VirtualLiveScreenMvMusicVocalDisplay | null => {
+const parseScreenMvMusicVocal = (value: unknown): VirtualLiveScreenMvMusicVocalDisplay | null => {
   const node = getObject(value);
   if (!node) {
     return null;
   }
 
   const characterIds = getArray(node["characters"])
-    .map((entry) => getNumber(getObject(entry)?.["characterId"] ?? getObject(entry)?.["character_id"]))
+    .map((entry) =>
+      getNumber(getObject(entry)?.["characterId"] ?? getObject(entry)?.["character_id"])
+    )
     .filter((id): id is number => id !== null);
 
   return {
@@ -476,11 +471,17 @@ const parseCharacterUnitItems = (payload: unknown): unknown[] => {
 export const buildCharacterUnitEnrichmentMap = (
   aggregate: unknown,
   loadFailed: boolean
-): Map<number, { gameCharacterId: number; unit: string | null; colorCode: string | null }> | null => {
+): Map<
+  number,
+  { gameCharacterId: number; unit: string | null; colorCode: string | null }
+> | null => {
   if (loadFailed || aggregate === null || aggregate === undefined) return null;
   const items = parseCharacterUnitItems(aggregate);
   if (items.length === 0) return null;
-  const map = new Map<number, { gameCharacterId: number; unit: string | null; colorCode: string | null }>();
+  const map = new Map<
+    number,
+    { gameCharacterId: number; unit: string | null; colorCode: string | null }
+  >();
   for (const raw of items) {
     const node = getObject(raw);
     if (!node) continue;
@@ -496,7 +497,6 @@ export const buildCharacterUnitEnrichmentMap = (
   return map.size > 0 ? map : null;
 };
 
-
 /**
  * Enrich a parsed `VirtualLiveDetail`'s characters using a prebuilt unit-map.
  *
@@ -509,7 +509,10 @@ export const buildCharacterUnitEnrichmentMap = (
  */
 export const enrichVirtualLiveCharacters = (
   detail: VirtualLiveDetail,
-  enrichmentMap: Map<number, { gameCharacterId: number; unit: string | null; colorCode: string | null }> | null
+  enrichmentMap: Map<
+    number,
+    { gameCharacterId: number; unit: string | null; colorCode: string | null }
+  > | null
 ): VirtualLiveDetail => {
   if (!enrichmentMap || enrichmentMap.size === 0) {
     return detail;

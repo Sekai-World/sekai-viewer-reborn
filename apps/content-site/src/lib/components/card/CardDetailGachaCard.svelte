@@ -27,9 +27,7 @@
 
   const getStartAtMs = (gacha: CardGachaBanner): number => toTimestampMs(gacha.startAt) ?? 0;
 
-  const sorted = $derived(
-    [...gachas].sort((a, b) => getStartAtMs(b) - getStartAtMs(a))
-  );
+  const sorted = $derived([...gachas].sort((a, b) => getStartAtMs(b) - getStartAtMs(a)));
 
   const latest = $derived(sorted[0] ?? null);
   const first = $derived(sorted.length >= 2 ? sorted[sorted.length - 1] : null);
@@ -43,7 +41,9 @@
 
 <article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
-    <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+    <p
+      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+    >
       <Icon icon="mdi:gift-outline" class="size-4" aria-hidden="true" />
       <span>{title}</span>
     </p>
@@ -57,7 +57,9 @@
               class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {#if gacha.assetbundleName}
-                <div class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1">
+                <div
+                  class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
+                >
                   <AssetImage
                     src={getGachaLogoAssetURL(gacha.assetbundleName, region)}
                     alt={gacha.name ?? `#${gacha.id}`}
@@ -69,11 +71,15 @@
               {/if}
               <div class="min-w-0">
                 <div class="mb-2 flex flex-wrap items-center gap-2">
-                  <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
+                  <span
+                    class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm"
+                  >
                     #{gacha.id}
                   </span>
                   {#if gacha.startAt}
-                    <span class="text-[0.65rem] opacity-50">{formatGachaDateTime(gacha.startAt)}</span>
+                    <span class="text-[0.65rem] opacity-50"
+                      >{formatGachaDateTime(gacha.startAt)}</span
+                    >
                   {/if}
                 </div>
                 {#if gacha.name}
@@ -89,7 +95,9 @@
               class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {#if latest.assetbundleName}
-                <div class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1">
+                <div
+                  class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
+                >
                   <AssetImage
                     src={getGachaLogoAssetURL(latest.assetbundleName, region)}
                     alt={latest.name ?? `#${latest.id}`}
@@ -101,11 +109,15 @@
               {/if}
               <div class="min-w-0">
                 <div class="mb-2 flex flex-wrap items-center gap-2">
-                  <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
+                  <span
+                    class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm"
+                  >
                     #{latest.id}
                   </span>
                   {#if latest.startAt}
-                    <span class="text-[0.65rem] opacity-50">{formatGachaDateTime(latest.startAt)}</span>
+                    <span class="text-[0.65rem] opacity-50"
+                      >{formatGachaDateTime(latest.startAt)}</span
+                    >
                   {/if}
                 </div>
                 {#if latest.name}
@@ -121,7 +133,9 @@
               class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {#if first.assetbundleName}
-                <div class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1">
+                <div
+                  class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
+                >
                   <AssetImage
                     src={getGachaLogoAssetURL(first.assetbundleName, region)}
                     alt={first.name ?? `#${first.id}`}
@@ -133,11 +147,15 @@
               {/if}
               <div class="min-w-0">
                 <div class="mb-2 flex flex-wrap items-center gap-2">
-                  <span class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm">
+                  <span
+                    class="badge border-none bg-base-100/94 text-xs font-semibold text-base-content shadow-sm"
+                  >
                     #{first.id}
                   </span>
                   {#if first.startAt}
-                    <span class="text-[0.65rem] opacity-50">{formatGachaDateTime(first.startAt)}</span>
+                    <span class="text-[0.65rem] opacity-50"
+                      >{formatGachaDateTime(first.startAt)}</span
+                    >
                   {/if}
                 </div>
                 {#if first.name}
@@ -148,10 +166,7 @@
           {/if}
 
           {#if hiddenCount > 0}
-            <button
-              onclick={() => showAll = true}
-              class="btn btn-ghost btn-sm mt-1"
-            >
+            <button onclick={() => (showAll = true)} class="btn btn-ghost btn-sm mt-1">
               <Icon icon="mdi:chevron-down" class="size-4" aria-hidden="true" />
               {showAllLabel}
             </button>

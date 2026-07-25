@@ -353,26 +353,26 @@
   </div>
 {/snippet}
 
-  {#snippet thumbImage(trained: boolean)}
-    {@const thumbUrl = getThumbnailImageUrl(trained)}
-    {@const fallbackUrl = getFallbackImageUrl("thumbnail", trained)}
-    <CardThumbnail
-      src={thumbUrl}
-      fallbackSrc={fallbackUrl}
-      alt={`${getCardTitle()} ${cardImageAltSuffix}`}
-      fallbackLabel=""
-      trained={trained}
-      attr={item.attr}
-      rarityType={item.rarityType}
-      rarityCount={item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
-      showFrame={true}
-      showIcons={true}
-      loadMode="visible"
-      maxSize={160}
-      containerClass="relative overflow-hidden rounded-xl bg-base-200 aspect-square"
-      imageClass="size-full object-cover"
-    />
-  {/snippet}
+{#snippet thumbImage(trained: boolean)}
+  {@const thumbUrl = getThumbnailImageUrl(trained)}
+  {@const fallbackUrl = getFallbackImageUrl("thumbnail", trained)}
+  <CardThumbnail
+    src={thumbUrl}
+    fallbackSrc={fallbackUrl}
+    alt={`${getCardTitle()} ${cardImageAltSuffix}`}
+    fallbackLabel=""
+    {trained}
+    attr={item.attr}
+    rarityType={item.rarityType}
+    rarityCount={item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}
+    showFrame={true}
+    showIcons={true}
+    loadMode="visible"
+    maxSize={160}
+    containerClass="relative overflow-hidden rounded-xl bg-base-200 aspect-square"
+    imageClass="size-full object-cover"
+  />
+{/snippet}
 
 <div
   class={`${viewMode === "grid" ? "card-grid-hover-lift" : "hover-3d"} relative isolate w-full`}
@@ -408,7 +408,9 @@
           <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
           <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
           {#if getReleaseAt() !== null}
-            <p class="text-xs opacity-55">{cardListReleaseLabel}: {formatDisplayDateTime(getReleaseAt(), displayLocale)}</p>
+            <p class="text-xs opacity-55">
+              {cardListReleaseLabel}: {formatDisplayDateTime(getReleaseAt(), displayLocale)}
+            </p>
           {/if}
         </div>
       </div>
