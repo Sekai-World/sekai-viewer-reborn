@@ -1,5 +1,13 @@
 # @apps/account-site
 
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [0657278]
+- Updated dependencies [5739f07]
+  - @platform/sekai-master-api-sdk@0.3.0
+
 ## 0.1.5
 
 ### Patch Changes
