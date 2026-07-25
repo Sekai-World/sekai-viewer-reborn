@@ -1,6 +1,7 @@
 {
   "name": "multisite-platform",
   "private": true,
+  "license": "MIT",
   "version": "0.1.0",
   "packageManager": "pnpm@11.13.0",
   "scripts": {
