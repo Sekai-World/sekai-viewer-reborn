@@ -377,7 +377,7 @@
               {:catch _}
                 <article class="card content-card-shell w-full shadow-sm">
                   <div class="card-body">
-                    <p class="text-sm text-error">{data.currentEventLoadFailedMessage}</p>
+                    <p class="text-sm opacity-70">{noEventLabel}</p>
                   </div>
                 </article>
               {/await}
