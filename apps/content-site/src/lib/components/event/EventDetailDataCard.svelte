@@ -26,6 +26,7 @@
   } from "$lib/domain/event-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import Icon from "@iconify/svelte";
+  import { SvelteURLSearchParams } from "svelte/reactivity";
 
   type SummaryItem = {
     key: string;
@@ -361,7 +362,7 @@
       return null;
     }
 
-    const searchParams = new URLSearchParams({ character: String(item.gameCharacterId) });
+    const searchParams = new SvelteURLSearchParams({ character: String(item.gameCharacterId) });
     if (highestAttrBonus?.attr) {
       searchParams.set("attr", highestAttrBonus.attr);
     }
@@ -849,7 +850,7 @@
           onImageError={hideBrokenImage}
         />
       {:else}
-        <CharacterAvatar src={null} label="?" variant="sm" />
+        <CharacterAvatar src={null} label={anyCharacterLabel} variant="sm" />
       {/if}
     </div>
     <div class="min-w-0">
