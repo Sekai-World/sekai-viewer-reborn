@@ -870,8 +870,17 @@ export type SharedVirtualLiveItemsResponse = {
     items: Array<SharedVirtualLiveItem>;
 };
 
+export type SharedVirtualLiveListItemResponse = {
+    assetbundleName: string;
+    endAt: number;
+    id: number;
+    name: string;
+    startAt: number;
+    virtualLiveType: string;
+};
+
 export type SharedVirtualLiveListResponse = {
-    items: Array<SharedVirtualLiveObjectResponse>;
+    items: Array<SharedVirtualLiveListItemResponse>;
     pagination: SharedPaginationResponse;
 };
 

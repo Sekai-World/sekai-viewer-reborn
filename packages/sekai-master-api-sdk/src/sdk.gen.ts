@@ -320,6 +320,8 @@ export const getVirtualLivesRegionsByIdAvailability = <ThrowOnError extends bool
 
 /**
  * List virtual lives by page
+ *
+ * Returns only id, name, virtualLiveType, assetbundleName, startAt, and endAt for each virtual live.
  */
 export const getVirtualLivesByRegionList = <ThrowOnError extends boolean = false>(options: Options<GetVirtualLivesByRegionListData, ThrowOnError>): RequestResult<GetVirtualLivesByRegionListResponses, GetVirtualLivesByRegionListErrors, ThrowOnError> => (options.client ?? client).get<GetVirtualLivesByRegionListResponses, GetVirtualLivesByRegionListErrors, ThrowOnError>({ url: '/virtualLives/{region}/list', ...options });
 
