@@ -10,7 +10,7 @@ overrides:
   brace-expansion: 5.0.8
   "@microsoft/api-extractor": 7.58.12
   fast-uri: 3.1.4
-  postcss: 8.5.23
+  postcss: 8.5.24
   "read-yaml-file>js-yaml": 3.15.0
   "@changesets/parse>js-yaml": 4.3.0
   "@hey-api/json-schema-ref-parser>js-yaml": 4.3.0
