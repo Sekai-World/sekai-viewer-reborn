@@ -161,11 +161,11 @@
 
 <a
   {href}
-  class="hover-3d relative isolate block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+  class="relative isolate block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
   aria-label={`${item.title} ${idLabel}${item.id}`}
   onclick={handleCardClick}
 >
-  <article class="card content-card-shell relative overflow-hidden shadow-sm">
+  <article class="card-hover-lift card content-card-shell relative overflow-hidden shadow-sm">
     {#if isSpoilerPlaceholderVisible()}
       {@render spoilerOverlay()}
     {/if}

@@ -99,26 +99,31 @@ body {
     border-radius: 1rem;
   }
 
-  .hover-3d {
-    transform-style: preserve-3d;
-    transition:
-      transform 180ms ease-out,
-      box-shadow 180ms ease-out;
+  @media (hover: hover) and (pointer: fine) {
+    .card-hover-lift {
+      transition:
+        transform 180ms ease-out,
+        box-shadow 180ms ease-out !important;
+    }
+
+    :root:not([data-low-motion]) .card-hover-lift:hover {
+      transform: translateY(-0.25rem) scale(1.01);
+      box-shadow: 0 12px 20px color-mix(in oklab, var(--color-base-content) 12%, transparent) !important;
+    }
+
+    :root[data-low-motion] .card-hover-lift:hover {
+      transform: none !important;
+      box-shadow: 0 8px 16px color-mix(in oklab, var(--color-base-content) 10%, transparent) !important;
+    }
+
+    :root:not([data-low-motion]) [data-home-card-thumbnail]:hover img:not([aria-hidden="true"]),
+    :root:not([data-low-motion]) [data-home-music-tile]:hover img {
+      transform: scale(1.05);
+    }
   }
 
-  :root:not([data-low-motion]) .hover-3d:hover {
-    transform: perspective(900px) rotateX(1.4deg) rotateY(-1.8deg) translateY(-0.25rem);
-    box-shadow: 0 16px 28px color-mix(in oklab, var(--color-base-content) 12%, transparent) !important;
-  }
-
-  :root[data-low-motion] .hover-3d {
-    transform-style: flat;
+  :root[data-low-motion] .card-hover-lift {
     transition: box-shadow 1ms linear !important;
-  }
-
-  :root[data-low-motion] .hover-3d:hover {
-    transform: none !important;
-    box-shadow: 0 8px 16px color-mix(in oklab, var(--color-base-content) 10%, transparent) !important;
   }
 
   .content-breadcrumbs {
