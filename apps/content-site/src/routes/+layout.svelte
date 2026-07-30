@@ -331,8 +331,7 @@
     const nextResolvedTheme = resolveThemeMode(nextThemeMode);
     document.documentElement.setAttribute("data-theme", nextThemeName);
     document.documentElement.classList.toggle("dark", nextResolvedTheme === "dark");
-    localStorage.setItem(THEME_NAME_STORAGE_KEY, nextThemeName);
-    localStorage.setItem(THEME_STORAGE_KEY, nextThemeMode);
+    persistThemePreferences(nextThemeName, nextThemeMode);
     themeName = nextThemeName;
     resolvedTheme = nextResolvedTheme;
     themeMode = nextThemeMode;
@@ -347,7 +346,7 @@
   };
 
   const resolvePreferredTheme = (): ThemeMode => {
-    const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    const storedTheme = readThemePreference(THEME_STORAGE_KEY);
     if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "auto") {
       return storedTheme;
     }
@@ -356,7 +355,7 @@
   };
 
   const resolvePreferredThemeName = (): ThemeName => {
-    const storedThemeName = localStorage.getItem(THEME_NAME_STORAGE_KEY);
+    const storedThemeName = readThemePreference(THEME_NAME_STORAGE_KEY);
     if (
       storedThemeName === "default" ||
       storedThemeName === "sakura" ||
@@ -366,6 +365,23 @@
     }
 
     return "default";
+  };
+
+  const readThemePreference = (storageKey: string): string | null => {
+    try {
+      return localStorage.getItem(storageKey);
+    } catch {
+      return null;
+    }
+  };
+
+  const persistThemePreferences = (nextThemeName: ThemeName, nextThemeMode: ThemeMode): void => {
+    try {
+      localStorage.setItem(THEME_NAME_STORAGE_KEY, nextThemeName);
+      localStorage.setItem(THEME_STORAGE_KEY, nextThemeMode);
+    } catch {
+      // Storage can be unavailable in privacy-restricted browsing contexts.
+    }
   };
 
   const resolvePreferredContentDisplaySettings = (): ContentDisplaySettingsState => {
@@ -576,7 +592,14 @@
   onMount(() => {
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
-    applyTheme(resolvePreferredThemeName(), resolvePreferredTheme());
+    const preferredThemeName = resolvePreferredThemeName();
+    const preferredThemeMode = resolvePreferredTheme();
+    const preferredResolvedTheme = resolveThemeMode(preferredThemeMode);
+    document.documentElement.setAttribute("data-theme", preferredThemeName);
+    document.documentElement.classList.toggle("dark", preferredResolvedTheme === "dark");
+    themeName = preferredThemeName;
+    themeMode = preferredThemeMode;
+    resolvedTheme = preferredResolvedTheme;
     preferredRegion = resolvePreferredRegion();
     const preferredContentDisplaySettings = resolvePreferredContentDisplaySettings();
     contentDisplaySettings.showSpoilerContent = preferredContentDisplaySettings.showSpoilerContent;
