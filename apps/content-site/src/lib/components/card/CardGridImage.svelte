@@ -17,6 +17,15 @@
 
   type ImagePhase = "primary" | "fallback";
 
+  const createRequestCycleNonce = (): string => {
+    const crypto = globalThis.crypto;
+    if (typeof crypto?.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  };
+
   let requestToken = $state<symbol>(Symbol());
   let phase = $state<ImagePhase>("primary");
   let attempt = $state(0);
@@ -31,7 +40,7 @@
   };
   let retryProbe: RetryProbe | null = null;
   let previousSource: { primary: string; fallback: string | null | undefined } | null = null;
-  let requestCycleNonce = $state(crypto.randomUUID());
+  let requestCycleNonce = $state(createRequestCycleNonce());
 
   const retryDelays = [300, 900] as const;
   const retryProbeTimeoutMs = 1000;
@@ -163,7 +172,8 @@
     void fetch(resource, {
       method: "HEAD",
       signal: controller.signal,
-      credentials: "same-origin"
+      credentials: "same-origin",
+      cache: "no-store"
     })
       .then((response) => {
         if (retryProbe !== probe || !isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
@@ -246,7 +256,7 @@
       previousSource = nextSource;
       clearRetryProbe();
       requestToken = Symbol();
-      requestCycleNonce = crypto.randomUUID();
+      requestCycleNonce = createRequestCycleNonce();
       phase = "primary";
       attempt = 0;
     }

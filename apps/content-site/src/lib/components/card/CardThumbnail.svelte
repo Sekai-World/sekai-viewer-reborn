@@ -39,6 +39,16 @@
   let imageVisible = $state(false);
   let observedNode: HTMLDivElement | null = $state(null);
   type ImagePhase = "primary" | "fallback";
+
+  const createRequestCycleNonce = (): string => {
+    const crypto = globalThis.crypto;
+    if (typeof crypto?.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  };
+
   let requestToken = $state<symbol>(Symbol());
   let phase = $state<ImagePhase>("primary");
   let attempt = $state(0);
@@ -53,6 +63,7 @@
   };
   let retryProbe: RetryProbe | null = null;
   let previousSourceKey: string | null = null;
+  let requestCycleNonce = $state(createRequestCycleNonce());
 
   const retryDelays = [300, 900] as const;
   const retryProbeTimeoutMs = 1000;
@@ -66,7 +77,7 @@
     const sourceWithoutHash = hashIndex >= 0 ? source.slice(0, hashIndex) : source;
     const hash = hashIndex >= 0 ? source.slice(hashIndex) : "";
     const separator = sourceWithoutHash.includes("?") ? "&" : "?";
-    return `${sourceWithoutHash}${separator}__thumbnail_retry=${imagePhase}-${retryAttempt}${hash}`;
+    return `${sourceWithoutHash}${separator}__thumbnail_retry=${encodeURIComponent(`${requestCycleNonce}-${imagePhase}-${retryAttempt}`)}${hash}`;
   };
 
   const currentSrc = $derived(phase === "fallback" && fallbackSrc ? fallbackSrc : src);
@@ -198,7 +209,8 @@
     void fetch(resource, {
       method: "HEAD",
       signal: controller.signal,
-      credentials: "same-origin"
+      credentials: "same-origin",
+      cache: "no-store"
     })
       .then((response) => {
         if (retryProbe !== probe || !isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
@@ -288,6 +300,7 @@
       previousSourceKey = sourceKey;
       clearRetryProbe();
       requestToken = Symbol();
+      requestCycleNonce = createRequestCycleNonce();
       phase = "primary";
       attempt = 0;
       imageLoaded = false;

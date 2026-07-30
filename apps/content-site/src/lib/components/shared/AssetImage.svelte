@@ -185,7 +185,8 @@
     void fetch(resource, {
       method: "HEAD",
       signal: controller.signal,
-      credentials: "same-origin"
+      credentials: "same-origin",
+      cache: "no-store"
     })
       .then((response) => {
         if (retryProbe !== probe || !isCurrentRequest(token, resource, imagePhase, retryAttempt)) {

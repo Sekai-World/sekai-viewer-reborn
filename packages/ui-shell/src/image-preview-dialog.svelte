@@ -197,7 +197,8 @@
       const response = await fetch(resource, {
         method: "HEAD",
         credentials: "same-origin",
-        signal: controller.signal
+        signal: controller.signal,
+        cache: "no-store"
       });
 
       if (
