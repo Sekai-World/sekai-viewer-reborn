@@ -70,6 +70,8 @@
     item.rarityType === "rarity_3" || item.rarityType === "rarity_4";
   const isTrainedOnlyCard = (): boolean =>
     item.initialSpecialTrainingStatus === "done" && isTrainableCard();
+  const hasSingleCardArtwork = (): boolean =>
+    Boolean(item.assetBundleName) && (!isTrainableCard() || isTrainedOnlyCard());
   const getReleaseAt = (): string | number | null => item.releaseAt ?? item.archivePublishedAt;
   const getCardTitle = (): string => item.prefix;
   const getCharacterLabel = (): string =>
@@ -374,6 +376,18 @@
   />
 {/snippet}
 
+{#snippet placedThumbImage(trained: boolean)}
+  {#if hasSingleCardArtwork()}
+    <div class="col-span-2 grid grid-cols-2 gap-2">
+      <div class="col-start-1 translate-x-[calc(50%+var(--spacing))]">
+        {@render thumbImage(trained)}
+      </div>
+    </div>
+  {:else}
+    {@render thumbImage(trained)}
+  {/if}
+{/snippet}
+
 <div
   class="hover-3d relative isolate w-full"
   role="presentation"
@@ -397,10 +411,10 @@
       <div class="grid grid-cols-[9rem_1fr] gap-4 p-3 sm:grid-cols-[12rem_1fr]">
         <div class="grid grid-cols-2 gap-2 self-center">
           {#if !isTrainedOnlyCard()}
-            {@render thumbImage(false)}
+            {@render placedThumbImage(false)}
           {/if}
           {#if isTrainableCard()}
-            {@render thumbImage(true)}
+            {@render placedThumbImage(true)}
           {/if}
         </div>
         <div class="flex min-w-0 flex-col justify-center gap-2">
@@ -418,10 +432,10 @@
       <div class="card-body items-center gap-3 p-3 sm:p-4 text-center">
         <div class="grid w-full max-w-34 grid-cols-2 gap-2">
           {#if !isTrainedOnlyCard()}
-            {@render thumbImage(false)}
+            {@render placedThumbImage(false)}
           {/if}
           {#if isTrainableCard()}
-            {@render thumbImage(true)}
+            {@render placedThumbImage(true)}
           {/if}
         </div>
         {@render metaBadges(true)}
