@@ -733,21 +733,21 @@
   <div class="flex items-center justify-between gap-2">
     <div class="join">
       <ListToolbarButton
-        icon="mdi:numeric"
-        label={listSortById}
-        ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
-        sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
-        class={`join-item ${getSortButtonClass("id")}`}
-        onclick={() => toggleSortBy("id")}
-      />
-
-      <ListToolbarButton
         icon="mdi:clock-start"
         label={eventListSortByStartAt}
         ariaLabel={`${eventListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
         sortIndicatorIcon={sortBy === "startAt" ? getSortOrderIcon("startAt") : undefined}
         class={`join-item ${getSortButtonClass("startAt")}`}
         onclick={() => toggleSortBy("startAt")}
+      />
+
+      <ListToolbarButton
+        icon="mdi:numeric"
+        label={listSortById}
+        ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+        sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
+        class={`join-item ${getSortButtonClass("id")}`}
+        onclick={() => toggleSortBy("id")}
       />
     </div>
 
