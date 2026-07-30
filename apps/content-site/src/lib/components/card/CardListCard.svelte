@@ -5,6 +5,7 @@
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
+  import CardGridImage from "$lib/components/card/CardGridImage.svelte";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
@@ -70,6 +71,8 @@
     item.rarityType === "rarity_3" || item.rarityType === "rarity_4";
   const isTrainedOnlyCard = (): boolean =>
     item.initialSpecialTrainingStatus === "done" && isTrainableCard();
+  const hasSingleCardArtwork = (): boolean =>
+    Boolean(item.assetBundleName) && (!isTrainableCard() || isTrainedOnlyCard());
   const getReleaseAt = (): string | number | null => item.releaseAt ?? item.archivePublishedAt;
   const getCardTitle = (): string => item.prefix;
   const getCharacterLabel = (): string =>
@@ -193,21 +196,6 @@
     return kind === "small"
       ? getSmallImageUrl(trained, fallbackRegion)
       : getThumbnailImageUrl(trained, fallbackRegion);
-  };
-
-  const handleCardImageError = (event: Event, kind: CardImageKind, trained: boolean): void => {
-    const image = event.currentTarget;
-    if (!(image instanceof HTMLImageElement) || image.dataset.fallbackApplied === "true") {
-      return;
-    }
-
-    const fallbackUrl = getFallbackImageUrl(kind, trained);
-    if (!fallbackUrl) {
-      return;
-    }
-
-    image.dataset.fallbackApplied = "true";
-    image.src = fallbackUrl;
   };
 
   const markImageVisible = (key: string): void => {
@@ -374,6 +362,18 @@
   />
 {/snippet}
 
+{#snippet placedThumbImage(trained: boolean)}
+  {#if hasSingleCardArtwork()}
+    <div class="col-span-2 grid grid-cols-2 gap-2">
+      <div class="col-start-1 translate-x-[calc(50%+var(--spacing))]">
+        {@render thumbImage(trained)}
+      </div>
+    </div>
+  {:else}
+    {@render thumbImage(trained)}
+  {/if}
+{/snippet}
+
 <div
   class="relative isolate w-full"
   role="presentation"
@@ -397,10 +397,10 @@
       <div class="grid grid-cols-[9rem_1fr] gap-4 p-3 sm:grid-cols-[12rem_1fr]">
         <div class="grid grid-cols-2 gap-2 self-center">
           {#if !isTrainedOnlyCard()}
-            {@render thumbImage(false)}
+            {@render placedThumbImage(false)}
           {/if}
           {#if isTrainableCard()}
-            {@render thumbImage(true)}
+            {@render placedThumbImage(true)}
           {/if}
         </div>
         <div class="flex min-w-0 flex-col justify-center gap-2">
@@ -418,10 +418,10 @@
       <div class="card-body items-center gap-3 p-3 sm:p-4 text-center">
         <div class="grid w-full max-w-34 grid-cols-2 gap-2">
           {#if !isTrainedOnlyCard()}
-            {@render thumbImage(false)}
+            {@render placedThumbImage(false)}
           {/if}
           {#if isTrainableCard()}
-            {@render thumbImage(true)}
+            {@render placedThumbImage(true)}
           {/if}
         </div>
         {@render metaBadges(true)}
@@ -439,45 +439,45 @@
         <div class="card-grid-content" bind:this={gridContentNode}>
           <div class="card-grid-image-container">
             {#if isTrainedOnlyCard() && trainedUrl && visibleImageKeys.grid === true}
-              <img
+              <CardGridImage
                 src={trainedUrl}
+                fallbackSrc={getFallbackImageUrl("small", true)}
                 alt={`${getCardTitle()} ${cardImageAltSuffix}`}
                 class="card-grid-single-image"
                 loading="lazy"
                 decoding="async"
-                onerror={(event) => handleCardImageError(event, "small", true)}
               />
             {:else if isTrainableCard() && trainedUrl && normalUrl && visibleImageKeys.grid === true}
               <div class="card-grid-split-stage">
                 <div class="card-grid-split-wrapper card-grid-split-wrapper-left">
-                  <img
+                  <CardGridImage
                     src={normalUrl}
+                    fallbackSrc={getFallbackImageUrl("small", false)}
                     alt={`${getCardTitle()} ${cardImageAltSuffix}`}
                     class="card-grid-split-image card-grid-split-image-left"
                     loading="lazy"
                     decoding="async"
-                    onerror={(event) => handleCardImageError(event, "small", false)}
                   />
                 </div>
                 <div class="card-grid-split-wrapper card-grid-split-wrapper-right">
-                  <img
+                  <CardGridImage
                     src={trainedUrl}
+                    fallbackSrc={getFallbackImageUrl("small", true)}
                     alt={`${getCardTitle()} ${cardImageAltSuffix}`}
                     class="card-grid-split-image card-grid-split-image-right"
                     loading="lazy"
                     decoding="async"
-                    onerror={(event) => handleCardImageError(event, "small", true)}
                   />
                 </div>
               </div>
             {:else if normalUrl && visibleImageKeys.grid === true}
-              <img
+              <CardGridImage
                 src={normalUrl}
+                fallbackSrc={getFallbackImageUrl("small", false)}
                 alt={`${getCardTitle()} ${cardImageAltSuffix}`}
                 class="card-grid-single-image"
                 loading="lazy"
                 decoding="async"
-                onerror={(event) => handleCardImageError(event, "small", false)}
               />
             {:else}
               <div
@@ -521,7 +521,7 @@
     height: 100%;
   }
 
-  .card-grid-single-image {
+  .card-grid-image-container :global(.card-grid-single-image) {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -551,14 +551,14 @@
     width: 50%;
   }
 
-  .card-grid-split-image {
+  .card-grid-image-container :global(.card-grid-split-image) {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
-  .card-grid-split-image-left,
-  .card-grid-split-image-right {
+  .card-grid-image-container :global(.card-grid-split-image-left),
+  .card-grid-image-container :global(.card-grid-split-image-right) {
     object-position: center;
   }
 

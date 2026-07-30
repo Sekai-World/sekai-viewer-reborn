@@ -37,21 +37,284 @@
   let imageLoaded = $state(false);
   let imageFailed = $state(false);
   let imageVisible = $state(false);
-  let previousImageStateKey = $state("");
   let observedNode: HTMLDivElement | null = $state(null);
+  type ImagePhase = "primary" | "fallback";
+
+  const createRequestCycleNonce = (): string => {
+    const crypto = globalThis.crypto;
+    if (typeof crypto?.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  };
+
+  let requestToken = $state<symbol>(Symbol());
+  let phase = $state<ImagePhase>("primary");
+  let attempt = $state(0);
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+  type RetryProbe = {
+    token: symbol;
+    resource: string;
+    imagePhase: ImagePhase;
+    retryAttempt: number;
+    controller: AbortController;
+    timeout: ReturnType<typeof setTimeout>;
+  };
+  let retryProbe: RetryProbe | null = null;
+  let previousSourceKey: string | null = null;
+  let requestCycleNonce = $state(createRequestCycleNonce());
+
+  const retryDelays = [300, 900] as const;
+  const retryProbeTimeoutMs = 1000;
+
+  const appendRetryCacheBust = (
+    source: string,
+    imagePhase: ImagePhase,
+    retryAttempt: number
+  ): string => {
+    const hashIndex = source.indexOf("#");
+    const sourceWithoutHash = hashIndex >= 0 ? source.slice(0, hashIndex) : source;
+    const hash = hashIndex >= 0 ? source.slice(hashIndex) : "";
+    const separator = sourceWithoutHash.includes("?") ? "&" : "?";
+    return `${sourceWithoutHash}${separator}__thumbnail_retry=${encodeURIComponent(`${requestCycleNonce}-${imagePhase}-${retryAttempt}`)}${hash}`;
+  };
+
+  const currentSrc = $derived(phase === "fallback" && fallbackSrc ? fallbackSrc : src);
+  const requestSrc = $derived(
+    currentSrc === null
+      ? null
+      : attempt === 0
+        ? currentSrc
+        : appendRetryCacheBust(currentSrc, phase, attempt)
+  );
+  const imageRequestKey = $derived([requestToken, phase, attempt]);
   const shouldRenderImage = $derived(loadMode === "immediate" || imageVisible);
   const resolvedRarityCount = $derived(
     rarityCount > 0 ? rarityCount : rarityType === "rarity_birthday" ? 1 : 0
   );
 
-  $effect(() => {
-    const imageStateKey = `${src ?? ""}:${loadMode}`;
-    if (imageStateKey === previousImageStateKey) return;
+  const clearRetryTimer = (): void => {
+    if (retryTimer !== null) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
+  };
 
-    previousImageStateKey = imageStateKey;
-    imageLoaded = false;
+  const clearRetryProbe = (probe?: RetryProbe): void => {
+    const activeProbe = retryProbe;
+    if (activeProbe === null || (probe !== undefined && activeProbe !== probe)) {
+      return;
+    }
+
+    retryProbe = null;
+    clearTimeout(activeProbe.timeout);
+    activeProbe.controller.abort();
+  };
+
+  const isCurrentRequest = (
+    token: symbol,
+    resource: string | null,
+    imagePhase: ImagePhase,
+    retryAttempt: number
+  ): boolean =>
+    requestToken === token &&
+    currentSrc === resource &&
+    phase === imagePhase &&
+    attempt === retryAttempt;
+
+  const scheduleRetry = (
+    token: symbol,
+    resource: string | null,
+    imagePhase: ImagePhase,
+    retryAttempt: number
+  ): void => {
+    if (retryTimer !== null) {
+      return;
+    }
+
+    const nextAttempt = retryAttempt + 1;
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      if (isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
+        attempt = nextAttempt;
+      }
+    }, retryDelays[retryAttempt]);
+  };
+
+  const applyPostExhaustion = (resource: string, imagePhase: ImagePhase): void => {
+    if (imagePhase === "primary" && fallbackSrc && fallbackSrc !== resource) {
+      phase = "fallback";
+      attempt = 0;
+      imageLoaded = false;
+      imageFailed = false;
+      return;
+    }
+
+    imageLoaded = true;
+    imageFailed = true;
+  };
+
+  const canProbeResource = (resource: string): boolean => {
+    if (
+      typeof window === "undefined" ||
+      typeof fetch !== "function" ||
+      typeof AbortController === "undefined"
+    ) {
+      return false;
+    }
+
+    try {
+      const url = new URL(resource, window.location.href);
+      return (
+        (url.protocol === "http:" || url.protocol === "https:") &&
+        url.origin === window.location.origin
+      );
+    } catch {
+      return false;
+    }
+  };
+
+  const probeResourceBeforeRetry = (
+    token: symbol,
+    resource: string,
+    imagePhase: ImagePhase,
+    retryAttempt: number
+  ): void => {
+    if (!canProbeResource(resource)) {
+      scheduleRetry(token, resource, imagePhase, retryAttempt);
+      return;
+    }
+
+    const controller = new AbortController();
+    const probe: RetryProbe = {
+      token,
+      resource,
+      imagePhase,
+      retryAttempt,
+      controller,
+      timeout: setTimeout(() => {
+        if (retryProbe !== probe) {
+          return;
+        }
+
+        clearRetryProbe(probe);
+        if (isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
+          scheduleRetry(token, resource, imagePhase, retryAttempt);
+        }
+      }, retryProbeTimeoutMs)
+    };
+    retryProbe = probe;
+
+    void fetch(resource, {
+      method: "HEAD",
+      signal: controller.signal,
+      credentials: "same-origin",
+      cache: "no-store"
+    })
+      .then((response) => {
+        if (retryProbe !== probe || !isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
+          return;
+        }
+
+        const isNotFound = response.status === 404;
+        clearRetryProbe(probe);
+        if (!isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
+          return;
+        }
+
+        if (isNotFound) {
+          applyPostExhaustion(resource, imagePhase);
+        } else {
+          scheduleRetry(token, resource, imagePhase, retryAttempt);
+        }
+      })
+      .catch(() => {
+        if (retryProbe !== probe) {
+          return;
+        }
+
+        clearRetryProbe(probe);
+        if (isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
+          scheduleRetry(token, resource, imagePhase, retryAttempt);
+        }
+      });
+  };
+
+  const handleImageLoad = (
+    token: symbol,
+    resource: string | null,
+    imagePhase: ImagePhase,
+    retryAttempt: number
+  ): void => {
+    if (!isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
+      return;
+    }
+
+    clearRetryTimer();
+    clearRetryProbe();
+    imageLoaded = true;
     imageFailed = false;
-    imageVisible = loadMode === "immediate";
+  };
+
+  const handleImageError = (
+    token: symbol,
+    resource: string | null,
+    imagePhase: ImagePhase,
+    retryAttempt: number
+  ): void => {
+    if (!isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
+      return;
+    }
+
+    if (retryAttempt < retryDelays.length) {
+      if (retryTimer !== null || retryProbe !== null) {
+        return;
+      }
+
+      if (resource === null) {
+        return;
+      }
+
+      if (retryAttempt === 0) {
+        probeResourceBeforeRetry(token, resource, imagePhase, retryAttempt);
+      } else {
+        scheduleRetry(token, resource, imagePhase, retryAttempt);
+      }
+      return;
+    }
+
+    if (resource === null) {
+      return;
+    }
+
+    applyPostExhaustion(resource, imagePhase);
+  };
+
+  $effect.pre(() => {
+    const sourceKey = `${src ?? ""}\0${fallbackSrc ?? ""}\0${loadMode}`;
+
+    if (previousSourceKey === null) {
+      previousSourceKey = sourceKey;
+    } else if (previousSourceKey !== sourceKey) {
+      previousSourceKey = sourceKey;
+      clearRetryProbe();
+      requestToken = Symbol();
+      requestCycleNonce = createRequestCycleNonce();
+      phase = "primary";
+      attempt = 0;
+      imageLoaded = false;
+      imageFailed = false;
+      imageVisible = loadMode === "immediate";
+    }
+
+    return () => {
+      if (retryTimer !== null) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+      clearRetryProbe();
+    };
   });
 
   $effect(() => {
@@ -110,22 +373,6 @@
 
     return asset(`/card_frame/cardFrame_S_${frameLevel}.png`);
   };
-
-  const handleImageError = (event: Event): void => {
-    const image = event.currentTarget;
-    if (!(image instanceof HTMLImageElement)) {
-      return;
-    }
-
-    if (fallbackSrc && image.dataset.fallbackApplied !== "true") {
-      image.dataset.fallbackApplied = "true";
-      image.src = fallbackSrc;
-      return;
-    }
-
-    imageLoaded = true;
-    imageFailed = true;
-  };
 </script>
 
 <div
@@ -142,7 +389,7 @@
     </div>
   {/if}
 
-  {#if !src || imageFailed}
+  {#if !currentSrc || imageFailed}
     <div
       class="flex size-full min-h-0 flex-col items-center justify-center gap-3 px-6 text-center text-sm text-base-content/65"
     >
@@ -153,19 +400,24 @@
     </div>
   {/if}
 
-  {#if shouldRenderImage && src}
-    <img
-      {src}
-      {alt}
-      loading={loadMode === "visible" ? "lazy" : "eager"}
-      decoding="async"
-      class={`${imageClass} transition-[opacity,transform] duration-300 ease-out ${imageLoaded && !imageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${imageFailed ? "pointer-events-none sr-only" : ""}`}
-      onload={() => {
-        imageLoaded = true;
-        imageFailed = false;
-      }}
-      onerror={handleImageError}
-    />
+  {#if shouldRenderImage && currentSrc}
+    {#key imageRequestKey}
+      {@const requestTokenSnapshot = requestToken}
+      {@const requestResource = currentSrc}
+      {@const requestPhase = phase}
+      {@const requestAttempt = attempt}
+      <img
+        src={requestSrc}
+        {alt}
+        loading={loadMode === "visible" ? "lazy" : "eager"}
+        decoding="async"
+        class={`${imageClass} transition-[opacity,transform] duration-300 ease-out ${imageLoaded && !imageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${imageFailed ? "pointer-events-none sr-only" : ""}`}
+        onload={() =>
+          handleImageLoad(requestTokenSnapshot, requestResource, requestPhase, requestAttempt)}
+        onerror={() =>
+          handleImageError(requestTokenSnapshot, requestResource, requestPhase, requestAttempt)}
+      />
+    {/key}
   {/if}
 
   {#if showFrame}
