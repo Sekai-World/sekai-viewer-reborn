@@ -379,7 +379,7 @@
 {#snippet placedThumbImage(trained: boolean)}
   {#if hasSingleCardArtwork()}
     <div class="col-span-2 grid grid-cols-2 gap-2">
-      <div class="col-start-1 translate-x-[calc(50%_+_var(--spacing))]">
+      <div class="col-start-1 translate-x-[calc(50%+var(--spacing))]">
         {@render thumbImage(trained)}
       </div>
     </div>
