@@ -26,7 +26,6 @@
   } from "$lib/domain/event-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import Icon from "@iconify/svelte";
-  import { SvelteURLSearchParams } from "svelte/reactivity";
 
   type SummaryItem = {
     key: string;
@@ -334,9 +333,6 @@
   const getBonusCharacterIconSrc = (item: BonusCharacterItem): string | null =>
     item.gameCharacterId === null ? null : getLocalCharacterThumbnailAssetURL(item.gameCharacterId);
 
-  const isPiaproCharacterId = (characterId: number): boolean =>
-    Number.isSafeInteger(characterId) && characterId >= 21 && characterId <= 26;
-
   const getHighestAttrBonus = (item: BonusCharacterItem): BonusDeckEntry | null =>
     item.attrBonuses.reduce<BonusDeckEntry | null>((highest, bonus) => {
       if (bonus.attr === null) {
@@ -350,30 +346,17 @@
       return highest;
     }, null);
 
-  const getBonusCardsHref = (
-    item: BonusCharacterItem,
-    highestAttrBonus: BonusDeckEntry | null
-  ): string | null => {
+  const getBonusCharacterHref = (item: BonusCharacterItem): string | null => {
+    const gameCharacterId = item.gameCharacterId;
     if (
-      item.gameCharacterId === null ||
-      !Number.isSafeInteger(item.gameCharacterId) ||
-      item.gameCharacterId <= 0
+      gameCharacterId === null ||
+      !Number.isSafeInteger(gameCharacterId) ||
+      gameCharacterId <= 0
     ) {
       return null;
     }
 
-    const searchParams = new SvelteURLSearchParams({ character: String(item.gameCharacterId) });
-    if (highestAttrBonus?.attr) {
-      searchParams.set("attr", highestAttrBonus.attr);
-    }
-    if (isPiaproCharacterId(item.gameCharacterId)) {
-      searchParams.set("unit", "piapro");
-      if (item.unit) {
-        searchParams.set("support_unit", item.unit === "piapro" ? "none" : item.unit);
-      }
-    }
-
-    return `${resolve("/cards/[region]", { region })}?${searchParams.toString()}`;
+    return resolve("/character/[region]/[id]", { region, id: String(gameCharacterId) });
   };
 
   const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {
@@ -822,19 +805,19 @@
   {@const characterIconSrc = getBonusCharacterIconSrc(item)}
   {@const isCharacterBonus = hasBonusCharacterData(item)}
   {@const highestAttrBonus = getHighestAttrBonus(item)}
-  {@const bonusCardsHref = getBonusCardsHref(item, highestAttrBonus)}
+  {@const bonusCharacterHref = getBonusCharacterHref(item)}
   <svelte:element
-    this={bonusCardsHref ? "a" : "div"}
-    href={bonusCardsHref ?? undefined}
+    this={bonusCharacterHref ? "a" : "div"}
+    href={bonusCharacterHref ?? undefined}
     class={`content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-3 ${
-      bonusCardsHref
-        ? "group/bonus-row transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-px hover:bg-primary/8 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      bonusCharacterHref
+        ? "group/bonus-row outline-none transition-colors hover:bg-base-content/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         : ""
     }`}
-    aria-label={bonusCardsHref
+    aria-label={bonusCharacterHref
       ? `${displayName} ${getAttrLabel(highestAttrBonus?.attr ?? null)}`
       : undefined}
-    title={bonusCardsHref
+    title={bonusCharacterHref
       ? `${displayName} · ${getAttrLabel(highestAttrBonus?.attr ?? null)}`
       : undefined}
   >
@@ -846,7 +829,7 @@
           accentColor={characterAccentColor}
           characterId={item.gameCharacterId}
           variant="sm"
-          decorative={Boolean(bonusCardsHref)}
+          decorative={Boolean(bonusCharacterHref)}
           onImageError={hideBrokenImage}
         />
       {:else}
@@ -854,7 +837,7 @@
       {/if}
     </div>
     <div class="min-w-0">
-      <p class="truncate text-sm font-semibold text-base-content group-hover/bonus-row:text-primary">
+      <p class="truncate text-sm font-semibold text-base-content group-hover/bonus-row:text-primary group-focus-visible/bonus-row:text-primary">
         {displayName}
       </p>
       <div class="mt-1 flex min-h-7 items-center gap-1.5">
