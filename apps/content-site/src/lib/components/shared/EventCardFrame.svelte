@@ -21,24 +21,25 @@
     children?: Snippet;
   } = $props();
 
-  let canHover3d = $state(false);
-  const requestsHover3d = $derived(frameClass.split(" ").includes("hover-3d"));
-  const frameClassWithoutHover3d = $derived(
+  let canHoverCardLift = $state(false);
+  const requestsCardHoverLift = $derived(frameClass.split(" ").includes("card-hover-lift"));
+  const frameClassWithoutCardHoverLift = $derived(
     frameClass
       .split(" ")
-      .filter((className) => className !== "hover-3d")
+      .filter((className) => className !== "card-hover-lift")
       .join(" ")
   );
-  const resolvedFrameClass = $derived(
-    canHover3d && requestsHover3d
-      ? `${frameClassWithoutHover3d} hover-3d`
-      : frameClassWithoutHover3d
+  const resolvedAnchorClass = $derived(frameClassWithoutCardHoverLift);
+  const resolvedSurfaceClass = $derived(
+    canHoverCardLift && requestsCardHoverLift
+      ? `${EVENT_CARD_SURFACE_CLASS} card-hover-lift`
+      : EVENT_CARD_SURFACE_CLASS
   );
 
   onMount(() => {
     const hoverMediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
     const syncHoverCapability = (): void => {
-      canHover3d = hoverMediaQuery.matches;
+      canHoverCardLift = hoverMediaQuery.matches;
     };
 
     syncHoverCapability();
@@ -49,8 +50,8 @@
 </script>
 
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-<a {id} {href} class={resolvedFrameClass} {onclick}>
-  <div class={EVENT_CARD_SURFACE_CLASS}>
+<a {id} {href} class={resolvedAnchorClass} {onclick}>
+  <div class={resolvedSurfaceClass}>
     {#if useBody}
       <div class={EVENT_CARD_BODY_CLASS}>
         {@render children?.()}

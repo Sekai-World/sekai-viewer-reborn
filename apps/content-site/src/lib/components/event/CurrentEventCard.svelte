@@ -85,7 +85,7 @@
 
     <div class="absolute left-2 top-2">
       <span
-        class="badge badge-sm border-none bg-base-100/95 font-semibold text-base-content shadow-sm"
+        class="badge badge-sm border-none bg-primary font-semibold text-primary-content shadow-sm"
       >
         {idLabel}{event.id}
       </span>
@@ -93,7 +93,7 @@
     <div class="absolute right-2 top-2 flex items-center gap-1">
       {#if displayEventType}
         <span
-          class="badge badge-sm border-none bg-base-100/95 font-semibold text-base-content shadow-sm"
+          class="badge badge-sm border-none bg-primary font-semibold text-primary-content shadow-sm"
         >
           {displayEventType}
         </span>

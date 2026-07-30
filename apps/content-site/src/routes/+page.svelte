@@ -232,7 +232,11 @@
                 {#if regionData.cards.length > 0}
                   <div class="grid grid-cols-3 gap-3">
                     {#each regionData.cards as card (card.id)}
-                      <a href="/card/{regionData.region}/{card.id}" class="group/card block">
+                      <a
+                        href="/card/{regionData.region}/{card.id}"
+                        class="group block"
+                        data-home-card-thumbnail
+                      >
                         <CardThumbnail
                           src={card.assetBundleName
                             ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
@@ -252,8 +256,8 @@
                           showFrame={true}
                           showIcons={true}
                           maxSize={null}
-                          containerClass="relative overflow-hidden rounded-xl bg-base-200 aspect-square"
-                          imageClass="size-full object-cover transition-transform duration-200 group-hover/card:scale-105"
+                          containerClass="card-hover-lift relative overflow-hidden rounded-xl bg-base-200 aspect-square"
+                          imageClass="size-full object-cover transition-transform duration-200"
                         />
                       </a>
                     {/each}
@@ -284,7 +288,8 @@
                     {#each regionData.musics as music (music.id)}
                       <a
                         href="/music/{regionData.region}/{music.id}"
-                        class="group/music block overflow-hidden rounded-xl border border-base-content/10 bg-base-100 shadow-sm transition-shadow hover:shadow-md"
+                        class="group card-hover-lift block overflow-hidden rounded-xl border border-base-content/10 bg-base-100 shadow-sm"
+                        data-home-music-tile
                       >
                         <div class="relative aspect-square overflow-hidden">
                           {#if music.assetBundleName}
@@ -292,7 +297,7 @@
                               src={getMusicJacketAssetURL(music.assetBundleName, regionData.region)}
                               alt={music.title ?? music.id}
                               loadMode="visible"
-                              imageClass="size-full object-cover transition-transform duration-200 group-hover/music:scale-105"
+                              imageClass="size-full object-cover transition-transform duration-200"
                               buttonClass="block size-full"
                             />
                           {:else}
@@ -405,7 +410,7 @@
                     <li>
                       <a
                         href="/gacha/{regionData.region}/{gacha.id}"
-                        class="block overflow-hidden rounded-lg border border-base-content/8 bg-base-100 shadow-sm transition-shadow hover:shadow-md"
+                        class="card-hover-lift block overflow-hidden rounded-lg border border-base-content/8 bg-base-100 shadow-sm"
                       >
                         <div class="aspect-3/1 w-full bg-base-100 pt-2">
                           <AssetImage
@@ -452,7 +457,7 @@
       {#each directoryItems as item (item.key)}
         <a
           href={item.href}
-          class="group content-card-shell flex min-h-32 items-start gap-4 rounded-2xl border border-base-content/10 p-5 shadow-sm transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1 hover:border-primary/35 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          class="group card-hover-lift content-card-shell flex min-h-32 items-start gap-4 rounded-2xl border border-base-content/10 p-5 shadow-sm hover:border-primary/35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           <span
             class="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-content"

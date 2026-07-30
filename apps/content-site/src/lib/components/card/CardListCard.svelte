@@ -374,9 +374,13 @@
   {/if}
 {/snippet}
 
-<div class="hover-3d relative isolate w-full" role="presentation" onclick={handleCardClick}>
+<div
+  class="relative isolate w-full"
+  role="presentation"
+  onclick={handleCardClick}
+>
   <article
-    class={`card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
+    class={`card-hover-lift card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
   >
     {#if isSpoilerPlaceholderVisible()}
       <div
