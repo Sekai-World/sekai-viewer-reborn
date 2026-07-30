@@ -112,10 +112,7 @@
   value: string | null,
   iconUrl: string | null = null,
   iconFrame = true,
-  unitSlug: string | null = null,
-  characterAvatar = false,
-  characterId: string | number | null = null,
-  link = false
+  unitSlug: string | null = null
 )}
   {#if value}
     <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
@@ -125,18 +122,6 @@
       </div>
       {#if unitSlug}
         <UnitIconBadge unit={unitSlug} variant="lg" />
-      {:else if characterAvatar}
-        {#if link}
-          <a
-            href={resolve("/character/[region]/[id]", { region, id: String(characterId) })}
-            class="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label={value}
-          >
-            <CharacterAvatar src={iconUrl} label={value} {characterId} variant="lg" decorative />
-          </a>
-        {:else}
-          <CharacterAvatar src={iconUrl} label={value} {characterId} variant="lg" decorative />
-        {/if}
       {:else if iconUrl}
         {#if iconFrame}
           <span
@@ -164,6 +149,46 @@
       {/if}
     </div>
   {/if}
+{/snippet}
+
+{#snippet characterRow(character: CardDetailCharacter)}
+  {@const value = getCharacterDisplayName(character)}
+  {@const characterId = character.id}
+  {@const characterHref =
+    typeof characterId === "number" && Number.isInteger(characterId) && characterId > 0
+      ? resolve("/character/[region]/[id]", { region, id: String(characterId) })
+      : null}
+  <svelte:element
+    this={characterHref ? "a" : "div"}
+    href={characterHref ?? undefined}
+    class={`content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4 ${
+      characterHref
+        ? "group/card-character-row outline-none transition-colors hover:bg-base-content/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        : ""
+    }`}
+    aria-label={characterHref ? value : undefined}
+    title={characterHref ? value : undefined}
+  >
+    <div class="min-w-0">
+      <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{characterLabel}</dt>
+      <dd
+        class={`mt-1 truncate text-sm font-medium ${
+          characterHref
+            ? "group-hover/card-character-row:text-primary group-focus-visible/card-character-row:text-primary"
+            : ""
+        }`}
+      >
+        {value}
+      </dd>
+    </div>
+    <CharacterAvatar
+      src={getCharacterThumbnailUrl()}
+      label={value}
+      characterId={characterId}
+      variant="lg"
+      decorative
+    />
+  </svelte:element>
 {/snippet}
 
 {#snippet gachaPhraseRow()}
@@ -231,18 +256,7 @@
     <dl class="space-y-2">
       {@render row(nameLabel, card.title)}
       {#if card.character}
-        {@render row(
-          characterLabel,
-          getCharacterDisplayName(card.character),
-          getCharacterThumbnailUrl(),
-          true,
-          null,
-          true,
-          card.character.id,
-          typeof card.character.id === "number" &&
-            Number.isInteger(card.character.id) &&
-            card.character.id > 0
-        )}
+        {@render characterRow(card.character)}
       {/if}
       {@render row(
         unitLabel,
