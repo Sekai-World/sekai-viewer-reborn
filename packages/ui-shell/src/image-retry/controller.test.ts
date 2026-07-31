@@ -15,12 +15,70 @@ describe("ImageRetryController", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.useRealTimers();
+  });
+
+  it.each([
+    { random: 0, firstDelay: 300, secondDelay: 900 },
+    { random: 0.5, firstDelay: 330, secondDelay: 990 },
+    { random: 1, firstDelay: 360, secondDelay: 1080 }
+  ])(
+    "schedules positive-only bounded jitter for random=$random",
+    async ({ random, firstDelay, secondDelay }) => {
+      const setTimeoutMock = vi.spyOn(globalThis, "setTimeout");
+      const controller = new ImageRetryController(
+        "/asset.png",
+        undefined,
+        SIGNED_GET_RETRY_POLICY,
+        { random: () => random }
+      );
+
+      controller.handleImageError(controller.requestSnapshot!);
+      expect(setTimeoutMock).toHaveBeenLastCalledWith(expect.any(Function), firstDelay);
+      await vi.advanceTimersByTimeAsync(firstDelay);
+
+      const retrySnapshot = controller.requestSnapshot;
+      expect(retrySnapshot?.attempt).toBe(1);
+      controller.handleImageError(retrySnapshot!);
+      const scheduledDelay = setTimeoutMock.mock.lastCall?.[1];
+      expect(scheduledDelay).toBeCloseTo(secondDelay);
+      expect(scheduledDelay).toBeGreaterThanOrEqual(900);
+      expect(scheduledDelay).toBeLessThanOrEqual(1080);
+      await vi.advanceTimersByTimeAsync(secondDelay);
+
+      expect(controller.attempt).toBe(2);
+      controller.dispose();
+    }
+  );
+
+  it("cancels a jittered retry timer when the source cycle resets", async () => {
+    const controller = new ImageRetryController(
+      "/old.png",
+      undefined,
+      SIGNED_GET_RETRY_POLICY,
+      { random: () => 1 }
+    );
+    const oldSnapshot = controller.requestSnapshot;
+
+    controller.handleImageError(oldSnapshot!);
+    controller.setSources("/new.png", undefined, SIGNED_GET_RETRY_POLICY);
+    await vi.advanceTimersByTimeAsync(1080);
+
+    expect(controller.currentSrc).toBe("/new.png");
+    expect(controller.attempt).toBe(0);
+    expect(controller.requestSnapshot).not.toBe(oldSnapshot);
+    controller.dispose();
   });
 
   it("uses the static policy for cache busting and renews its nonce per cycle", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({ status: 200 } as Response);
-    const controller = new ImageRetryController("/asset.png?size=large#preview", undefined);
+    const controller = new ImageRetryController(
+      "/asset.png?size=large#preview",
+      undefined,
+      undefined,
+      { random: () => 0 }
+    );
     const initialSnapshot = controller.requestSnapshot;
 
     expect(initialSnapshot?.url).toBe("/asset.png?size=large#preview");
@@ -48,7 +106,9 @@ describe("ImageRetryController", () => {
   it("preserves signed GET URLs exactly and does not issue a HEAD probe", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
     const signedUrl = "/signed/image.png?X-Amz-Signature=a%2Fb&x=1#fragment";
-    const controller = new ImageRetryController(signedUrl, undefined, SIGNED_GET_RETRY_POLICY);
+    const controller = new ImageRetryController(signedUrl, undefined, SIGNED_GET_RETRY_POLICY, {
+      random: () => 0
+    });
     const initialSnapshot = controller.requestSnapshot;
 
     controller.handleImageError(initialSnapshot!);
@@ -85,7 +145,9 @@ describe("ImageRetryController", () => {
 
   it("allows exactly two retries in both the primary and fallback phases", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({ status: 503 } as Response);
-    const controller = new ImageRetryController("/primary.png", "/fallback.png");
+    const controller = new ImageRetryController("/primary.png", "/fallback.png", undefined, {
+      random: () => 0
+    });
 
     const failCurrentRequest = async (): Promise<void> => {
       const snapshot = controller.requestSnapshot;

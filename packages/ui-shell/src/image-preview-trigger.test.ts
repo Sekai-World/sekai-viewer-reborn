@@ -44,7 +44,7 @@ describe("ImagePreviewTrigger retry characterization", () => {
     await flushEffects();
     expect(getImageSource(container)).toBe("https://cdn.example.test/preview.png");
 
-    await vi.advanceTimersByTimeAsync(1);
+    await vi.advanceTimersByTimeAsync(61);
     await flushEffects();
     expect(getImageSource(container)).toContain("__image_retry=");
     expect(getImageSource(container)).toContain("-primary-1");
@@ -54,7 +54,7 @@ describe("ImagePreviewTrigger retry characterization", () => {
     await flushEffects();
     expect(getImageSource(container)).toContain("-primary-1");
 
-    await vi.advanceTimersByTimeAsync(1);
+    await vi.advanceTimersByTimeAsync(181);
     await flushEffects();
     expect(getImageSource(container)).toContain("-primary-2");
   });
@@ -69,7 +69,7 @@ describe("ImagePreviewTrigger retry characterization", () => {
     await fireEvent.error(getImage(container));
     expect(fetchMock).not.toHaveBeenCalled();
 
-    await vi.advanceTimersByTimeAsync(300);
+    await vi.advanceTimersByTimeAsync(360);
     await flushEffects();
     expect(getImageSource(container)).toContain("__image_retry=");
     expect(getImageSource(container)).toContain("-primary-1");

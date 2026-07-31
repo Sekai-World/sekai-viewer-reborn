@@ -59,10 +59,10 @@ describe("CardThumbnail retry and visibility behavior", () => {
 
     await fireEvent.error(getContentImage(container));
     await flushEffects();
-    await vi.advanceTimersByTimeAsync(300);
+    await vi.advanceTimersByTimeAsync(360);
     await flushEffects();
     await fireEvent.error(getContentImage(container));
-    await vi.advanceTimersByTimeAsync(900);
+    await vi.advanceTimersByTimeAsync(1080);
     await flushEffects();
     await fireEvent.error(getContentImage(container));
     await flushEffects();
@@ -83,7 +83,7 @@ describe("CardThumbnail retry and visibility behavior", () => {
     await fireEvent.error(getContentImage(container));
     expect(fetchMock).not.toHaveBeenCalled();
 
-    await vi.advanceTimersByTimeAsync(300);
+    await vi.advanceTimersByTimeAsync(360);
     await flushEffects();
     expect(getContentImage(container).getAttribute("src")).toContain("__image_retry=");
   });

@@ -54,7 +54,7 @@ describe("CardGridImage retry characterization", () => {
     await fireEvent.error(getImage(container));
     expect(fetchMock).not.toHaveBeenCalled();
 
-    await vi.advanceTimersByTimeAsync(300);
+    await vi.advanceTimersByTimeAsync(360);
     await flushEffects();
     expect(getImage(container).getAttribute("src")).toContain("__image_retry=");
   });

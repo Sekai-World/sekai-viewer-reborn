@@ -6,6 +6,12 @@ import {
 } from "./policy";
 
 const RETRY_DELAYS_MS = [300, 900] as const;
+const RETRY_JITTER_RATIO = 0.2;
+
+export type ImageRetryControllerOptions = Readonly<{
+  /** Supplies the random value used for positive retry jitter. */
+  random?: () => number;
+}>;
 
 export type ImageRetryRequestSnapshot = Readonly<{
   key: symbol;
@@ -66,16 +72,19 @@ export class ImageRetryController {
   private cycleToken = Symbol("image-retry-cycle");
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private retryProbe: RetryProbe | null = null;
+  private random: () => number;
   private disposed = false;
 
   public constructor(
     primarySource: string,
     fallbackSource: string | undefined,
-    policy: ImageRetryPolicy = STATIC_ASSET_RETRY_POLICY
+    policy: ImageRetryPolicy = STATIC_ASSET_RETRY_POLICY,
+    options: ImageRetryControllerOptions = {}
   ) {
     this.primarySource = primarySource;
     this.fallbackSource = fallbackSource;
     this.policy = policy;
+    this.random = options.random ?? Math.random;
     this.beginCycle();
   }
 
@@ -228,6 +237,10 @@ export class ImageRetryController {
       return;
     }
 
+    const random = this.random();
+    const normalizedRandom = Number.isFinite(random) ? Math.min(1, Math.max(0, random)) : 0;
+    const effectiveDelay = delay * (1 + normalizedRandom * RETRY_JITTER_RATIO);
+
     this.retryTimer = setTimeout(() => {
       this.retryTimer = null;
       if (!this.isCurrentRequest(snapshot)) {
@@ -237,7 +250,7 @@ export class ImageRetryController {
       this.clearRetryProbe();
       this.attempt = nextAttempt;
       this.updateRequest();
-    }, delay);
+    }, effectiveDelay);
   }
 
   private async probeCanonicalResource(snapshot: ImageRetryRequestSnapshot): Promise<void> {

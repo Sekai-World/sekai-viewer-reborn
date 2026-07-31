@@ -49,7 +49,7 @@ describe("AssetImage retry behavior", () => {
       })
     );
 
-    await vi.advanceTimersByTimeAsync(300);
+    await vi.advanceTimersByTimeAsync(360);
     await flushEffects();
     expect(getImage(container).getAttribute("src")).toMatch(
       /^\/missing-asset\.png\?__image_retry=[^&]+-primary-1$/
@@ -85,7 +85,7 @@ describe("AssetImage retry behavior", () => {
     await fireEvent.error(getImage(container));
     expect(fetchMock).not.toHaveBeenCalled();
 
-    await vi.advanceTimersByTimeAsync(300);
+    await vi.advanceTimersByTimeAsync(360);
     await flushEffects();
     expect(getImage(container).getAttribute("src")).toBe(signedUrl);
   });
