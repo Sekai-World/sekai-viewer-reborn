@@ -97,6 +97,12 @@ Rules:
 - Page files should pass data into shared card components instead of inlining card structure repeatedly.
 - Detail info cards for cards, events, music, and gachas should expose `assetBundleName` as a final "internal resource code" row when that field is available.
 
+## Component Test Conventions
+
+- Component characterization tests live beside the implementation as `*.test.ts` files and run in Vitest's `jsdom` environment through the workspace-local `vitest.config.ts`.
+- Use Svelte Testing Library queries and DOM events for Svelte 5 components. Use fake timers for retry delays and mock `fetch` for same-origin probes; do not wait on wall-clock time or reach a remote asset host.
+- Keep the test include globs under `src/**/*.test.ts` so generated output and `node_modules` are never collected by workspace test commands.
+
 ## Layout / Navigation Component Architecture
 
 Current shared navigation/header system:
