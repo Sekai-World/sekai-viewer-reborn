@@ -8,7 +8,7 @@ Follow these rules before introducing new page-level patterns, daisyUI overrides
 - `content-site` uses Tailwind CSS 4 with `daisyui`.
 - Shared app-level CSS lives in `apps/content-site/src/app.css`.
 - Shared Svelte UI is consumed from `packages/ui-shell/src`.
-- Image preview components use the public `@platform/ui-shell/image-retry` subpath for their shared retry controller. The default `STATIC_ASSET_RETRY_POLICY` appends one `__image_retry` query parameter before any fragment and uses cancellable same-origin `HEAD` classification with `cache: "no-store"`; `SIGNED_GET_RETRY_POLICY` preserves signed URLs byte-for-byte and skips `HEAD` probes. Both policies retain the fixed two retries at 300ms and 900ms, with stale request snapshots and disposal preventing old callbacks from changing current image state.
+- Image preview components use the public `@platform/ui-shell/image-retry` subpath for their shared retry controller. `AssetImage` defaults to `STATIC_ASSET_RETRY_POLICY`, which appends one `__image_retry` query parameter before any fragment and uses cancellable same-origin `HEAD` classification with `cache: "no-store"`. Callers handling signed GET URLs may pass `SIGNED_GET_RETRY_POLICY`; it preserves the canonical URL byte-for-byte, skips `HEAD` probes, and is forwarded to interactive preview loading. Both policies retain the fixed two retries at 300ms and 900ms, with stale request snapshots and disposal preventing old callbacks from changing current image state.
 
 ## daisyUI Override Rules
 
