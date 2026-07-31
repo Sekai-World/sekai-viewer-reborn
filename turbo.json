@@ -6,6 +6,10 @@
       "dependsOn": ["^build"],
       "outputs": [".svelte-kit/**", "dist/**", "build/**"]
     },
+    "test": {
+      "dependsOn": ["^test"],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
