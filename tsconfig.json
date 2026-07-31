@@ -1,9 +1,10 @@
 {
+  "extends": "./tsconfig.base.json",
   "files": [],
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "noEmit": true,
-    "types": ["node", "vitest/globals"]
+    "types": ["node"]
   },
   "references": [
     { "path": "./apps/account-site" },

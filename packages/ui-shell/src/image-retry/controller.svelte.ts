@@ -69,7 +69,6 @@ export class ImageRetryController {
   private policy: ImageRetryPolicy;
   private cycle = 0;
   private cycleNonce = createCycleNonce(0);
-  private cycleToken = Symbol("image-retry-cycle");
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private retryProbe: RetryProbe | null = null;
   private random: () => number;
@@ -88,7 +87,12 @@ export class ImageRetryController {
     this.beginCycle();
   }
 
-  /** Update canonical sources or policy, resetting the old request cycle when needed. */
+  /**
+   * Update canonical sources or policy, resetting the old request cycle when needed.
+   *
+   * `policy` is compared by reference. Pass a stable policy object, such as an
+   * exported policy constant. A new object on every call restarts the request cycle.
+   */
   public setSources(
     primarySource: string,
     fallbackSource: string | undefined,
@@ -127,7 +131,6 @@ export class ImageRetryController {
 
     this.disposed = true;
     this.clearRetryWork();
-    this.cycleToken = Symbol("disposed-image-retry-cycle");
   }
 
   /** Mark the request represented by a keyed image snapshot as loaded. */
@@ -168,7 +171,6 @@ export class ImageRetryController {
     this.clearRetryWork();
     this.cycle += 1;
     this.cycleNonce = createCycleNonce(this.cycle);
-    this.cycleToken = Symbol("image-retry-cycle");
     this.phase = "primary";
     this.attempt = 0;
     this.imageLoaded = false;

@@ -36,12 +36,7 @@
     children
   }: Props = $props();
 
-  const getInitialRetrySources = (): [string, string | undefined, ImageRetryPolicy] => [
-    src,
-    fallbackSrc,
-    retryPolicy
-  ];
-  const imageRetry = new ImageRetryController(...getInitialRetrySources());
+  const imageRetry = new ImageRetryController(src, fallbackSrc, retryPolicy);
 
   $effect.pre(() => {
     imageRetry.setSources(src, fallbackSrc, retryPolicy);
