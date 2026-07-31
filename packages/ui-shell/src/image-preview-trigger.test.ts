@@ -46,16 +46,17 @@ describe("ImagePreviewTrigger retry characterization", () => {
 
     await vi.advanceTimersByTimeAsync(1);
     await flushEffects();
-    expect(getImageSource(container)).toContain("__preview_retry=primary-1");
+    expect(getImageSource(container)).toContain("__image_retry=");
+    expect(getImageSource(container)).toContain("-primary-1");
 
     await fireEvent.error(getImage(container));
     await vi.advanceTimersByTimeAsync(899);
     await flushEffects();
-    expect(getImageSource(container)).toContain("__preview_retry=primary-1");
+    expect(getImageSource(container)).toContain("-primary-1");
 
     await vi.advanceTimersByTimeAsync(1);
     await flushEffects();
-    expect(getImageSource(container)).toContain("__preview_retry=primary-2");
+    expect(getImageSource(container)).toContain("-primary-2");
   });
 
   it("skips the HEAD probe for cross-origin resources", async () => {
@@ -70,7 +71,8 @@ describe("ImagePreviewTrigger retry characterization", () => {
 
     await vi.advanceTimersByTimeAsync(300);
     await flushEffects();
-    expect(getImageSource(container)).toContain("__preview_retry=primary-1");
+    expect(getImageSource(container)).toContain("__image_retry=");
+    expect(getImageSource(container)).toContain("-primary-1");
   });
 
   it("uses a same-origin HEAD 404 as immediate exhaustion and falls back", async () => {

@@ -1,5 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import { onDestroy } from "svelte";
+  import {
+    ImageRetryController,
+    STATIC_ASSET_RETRY_POLICY,
+    type ImageRetryPolicy
+  } from "./image-retry/index";
 
   type Props = {
     open?: boolean;
@@ -13,6 +19,7 @@
     formatOptions?: string[];
     dialogBoxClass?: string;
     dialogImageClass?: string;
+    retryPolicy?: ImageRetryPolicy;
   };
 
   let {
@@ -26,256 +33,23 @@
     openInNewWindowLabel = "Open in new window",
     formatOptions = [],
     dialogBoxClass = "relative flex max-w-[min(96vw,1800px)] items-center justify-center overflow-hidden rounded-2xl bg-base-100/96 p-2 md:p-4",
-    dialogImageClass = "h-auto max-h-[88vh] w-auto max-w-full object-contain"
+    dialogImageClass = "h-auto max-h-[88vh] w-auto max-w-full object-contain",
+    retryPolicy = STATIC_ASSET_RETRY_POLICY
   }: Props = $props();
 
   let dialog: HTMLDialogElement | null = $state(null);
-  let dialogImageLoaded = $state(false);
-  let dialogImageFailed = $state(false);
-  type ImagePhase = "primary" | "fallback";
-  let requestToken = $state<symbol>(Symbol());
-  let phase = $state<ImagePhase>("primary");
-  let attempt = $state(0);
-  let retryTimer: ReturnType<typeof setTimeout> | null = null;
-  type RetryProbe = {
-    token: symbol;
-    resource: string;
-    imagePhase: ImagePhase;
-    retryAttempt: number;
-    controller: AbortController;
-    timeout: ReturnType<typeof setTimeout>;
-  };
-  let retryProbe: RetryProbe | null = null;
-  let lastSource: { primary: string; fallback: string | undefined } | null = null;
+  const getInitialRetrySources = (): [string, string | undefined, ImageRetryPolicy] => [
+    src,
+    fallbackSrc,
+    retryPolicy
+  ];
+  const imageRetry = new ImageRetryController(...getInitialRetrySources());
 
-  const retryDelays = [300, 900] as const;
-  const retryProbeTimeout = 1000;
+  $effect.pre(() => {
+    imageRetry.setSources(src, fallbackSrc, retryPolicy);
+  });
 
-  const appendRetryCacheBust = (
-    source: string,
-    imagePhase: ImagePhase,
-    retryAttempt: number
-  ): string => {
-    const hashIndex = source.indexOf("#");
-    const sourceWithoutHash = hashIndex >= 0 ? source.slice(0, hashIndex) : source;
-    const hash = hashIndex >= 0 ? source.slice(hashIndex) : "";
-    const separator = sourceWithoutHash.includes("?") ? "&" : "?";
-    return `${sourceWithoutHash}${separator}__preview_retry=${imagePhase}-${retryAttempt}${hash}`;
-  };
-
-  const currentSrc = $derived(phase === "fallback" && fallbackSrc ? fallbackSrc : src);
-  const requestSrc = $derived(
-    attempt === 0 ? currentSrc : appendRetryCacheBust(currentSrc, phase, attempt)
-  );
-  const imageRequestKey = $derived([requestToken, phase, attempt]);
-
-  const clearRetryTimer = (): void => {
-    if (retryTimer !== null) {
-      clearTimeout(retryTimer);
-      retryTimer = null;
-    }
-  };
-
-  const clearRetryProbe = (): void => {
-    if (retryProbe !== null) {
-      clearTimeout(retryProbe.timeout);
-      retryProbe.controller.abort();
-      retryProbe = null;
-    }
-  };
-
-  const clearRetryWork = (): void => {
-    clearRetryTimer();
-    clearRetryProbe();
-  };
-
-  const isCurrentRequest = (
-    token: symbol,
-    resource: string,
-    imagePhase: ImagePhase,
-    retryAttempt: number
-  ): boolean =>
-    requestToken === token &&
-    currentSrc === resource &&
-    phase === imagePhase &&
-    attempt === retryAttempt;
-
-  const handleImageLoad = (
-    token: symbol,
-    resource: string,
-    imagePhase: ImagePhase,
-    retryAttempt: number
-  ): void => {
-    if (!isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
-      return;
-    }
-
-    clearRetryWork();
-    dialogImageLoaded = true;
-    dialogImageFailed = false;
-  };
-
-  const exhaustImagePhase = (
-    token: symbol,
-    resource: string,
-    imagePhase: ImagePhase,
-    retryAttempt: number
-  ): void => {
-    if (!isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
-      return;
-    }
-
-    clearRetryWork();
-
-    if (imagePhase === "primary" && fallbackSrc && fallbackSrc !== resource) {
-      phase = "fallback";
-      attempt = 0;
-      dialogImageLoaded = false;
-      dialogImageFailed = false;
-      return;
-    }
-
-    dialogImageLoaded = true;
-    dialogImageFailed = true;
-  };
-
-  const isSameOriginResource = (resource: string): boolean => {
-    if (typeof window === "undefined") {
-      return false;
-    }
-
-    try {
-      const url = new URL(resource, window.location.href);
-      return (
-        (url.protocol === "http:" || url.protocol === "https:") &&
-        url.origin === window.location.origin
-      );
-    } catch {
-      return false;
-    }
-  };
-
-  const probeCanonicalResource = async (
-    token: symbol,
-    resource: string,
-    imagePhase: ImagePhase,
-    retryAttempt: number
-  ): Promise<void> => {
-    if (!isSameOriginResource(resource)) {
-      return;
-    }
-
-    if (retryProbe !== null) {
-      if (
-        retryProbe.token === token &&
-        retryProbe.resource === resource &&
-        retryProbe.imagePhase === imagePhase &&
-        retryProbe.retryAttempt === retryAttempt
-      ) {
-        return;
-      }
-      clearRetryProbe();
-    }
-
-    const controller = new AbortController();
-    let timedOut = false;
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      controller.abort();
-    }, retryProbeTimeout);
-    const activeProbe: RetryProbe = {
-      token,
-      resource,
-      imagePhase,
-      retryAttempt,
-      controller,
-      timeout
-    };
-    retryProbe = activeProbe;
-
-    try {
-      const response = await fetch(resource, {
-        method: "HEAD",
-        credentials: "same-origin",
-        signal: controller.signal,
-        cache: "no-store"
-      });
-
-      if (
-        response.status === 404 &&
-        retryProbe === activeProbe &&
-        isCurrentRequest(token, resource, imagePhase, retryAttempt)
-      ) {
-        exhaustImagePhase(token, resource, imagePhase, retryAttempt);
-      }
-    } catch {
-      // Probe failures fall through to the regular retry below.
-    } finally {
-      const isActiveProbe = retryProbe === activeProbe;
-      clearTimeout(activeProbe.timeout);
-      if (isActiveProbe) {
-        retryProbe = null;
-      }
-
-      if (
-        isActiveProbe &&
-        (timedOut || !controller.signal.aborted) &&
-        isCurrentRequest(token, resource, imagePhase, retryAttempt)
-      ) {
-        scheduleRetry(token, resource, imagePhase, retryAttempt);
-      }
-    }
-  };
-
-  const scheduleRetry = (
-    token: symbol,
-    resource: string,
-    imagePhase: ImagePhase,
-    retryAttempt: number
-  ): void => {
-    if (!isCurrentRequest(token, resource, imagePhase, retryAttempt) || retryTimer !== null) {
-      return;
-    }
-
-    const nextAttempt = retryAttempt + 1;
-    retryTimer = setTimeout(() => {
-      retryTimer = null;
-      if (isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
-        clearRetryProbe();
-        attempt = nextAttempt;
-      }
-    }, retryDelays[retryAttempt]);
-  };
-
-  const handleImageError = (
-    token: symbol,
-    resource: string,
-    imagePhase: ImagePhase,
-    retryAttempt: number
-  ): void => {
-    if (!isCurrentRequest(token, resource, imagePhase, retryAttempt)) {
-      return;
-    }
-
-    if (retryAttempt === 0) {
-      if (!isSameOriginResource(resource)) {
-        scheduleRetry(token, resource, imagePhase, retryAttempt);
-        return;
-      }
-
-      if (retryProbe === null) {
-        void probeCanonicalResource(token, resource, imagePhase, retryAttempt);
-      }
-      return;
-    }
-
-    if (retryAttempt === 1) {
-      scheduleRetry(token, resource, imagePhase, retryAttempt);
-      return;
-    }
-
-    exhaustImagePhase(token, resource, imagePhase, retryAttempt);
-  };
+  onDestroy(() => imageRetry.dispose());
 
   const normalizedFormatOptions = $derived(
     Array.from(new Set(formatOptions.map((format) => format.trim().toLowerCase()).filter(Boolean)))
@@ -283,29 +57,8 @@
   const hasDownloadFormatOptions = $derived(normalizedFormatOptions.length > 0);
   const replaceSrcExtension = (value: string, extension: string): string =>
     value.replace(/(\.[a-z0-9]+)(?=([?#].*)?$)/i, `.${extension}`);
+  const currentSrc = $derived(imageRetry.currentSrc);
   const getDownloadSrc = (format: string): string => replaceSrcExtension(currentSrc, format);
-
-  $effect.pre(() => {
-    const nextSource = { primary: src, fallback: fallbackSrc };
-
-    if (lastSource === null) {
-      lastSource = nextSource;
-    } else if (
-      lastSource.primary !== nextSource.primary ||
-      lastSource.fallback !== nextSource.fallback
-    ) {
-      lastSource = nextSource;
-      requestToken = Symbol();
-      phase = "primary";
-      attempt = 0;
-      dialogImageLoaded = false;
-      dialogImageFailed = false;
-    }
-
-    return () => {
-      clearRetryWork();
-    };
-  });
 
   $effect(() => {
     if (!dialog) {
@@ -334,7 +87,7 @@
 >
   <div class={`modal-box ${dialogBoxClass}`}>
     <div class="absolute right-3 top-3 z-10 flex items-center justify-end gap-2">
-      {#if !dialogImageFailed}
+      {#if !imageRetry.imageFailed}
         {#if hasDownloadFormatOptions}
           <details class="dropdown dropdown-end">
             <summary
@@ -434,7 +187,7 @@
     </div>
 
     <div class="relative flex items-center justify-center">
-      {#if !dialogImageLoaded && !dialogImageFailed}
+      {#if !imageRetry.imageLoaded && !imageRetry.imageFailed}
         <div
           class="absolute inset-0 flex items-center justify-center rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(0,0,0,0.18))]"
         >
@@ -444,7 +197,7 @@
           ></span>
         </div>
       {/if}
-      {#if dialogImageFailed}
+      {#if imageRetry.imageFailed}
         <div
           class="flex min-h-[40vh] w-[min(70vw,32rem)] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-base-content/15 bg-base-200/40 px-8 py-10 text-center text-base text-base-content/70"
         >
@@ -454,19 +207,14 @@
           {/if}
         </div>
       {/if}
-      {#key imageRequestKey}
-        {@const requestTokenSnapshot = requestToken}
-        {@const requestResource = currentSrc}
-        {@const requestPhase = phase}
-        {@const requestAttempt = attempt}
+      {#key imageRetry.requestKey}
+        {@const requestSnapshot = imageRetry.requestSnapshot}
         <img
-          src={requestSrc}
+          src={imageRetry.requestUrl}
           {alt}
-          class={`${dialogImageClass} transition-[opacity,transform] duration-300 ease-out ${dialogImageLoaded && !dialogImageFailed ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"} ${dialogImageFailed ? "pointer-events-none sr-only" : ""}`}
-          onload={() =>
-            handleImageLoad(requestTokenSnapshot, requestResource, requestPhase, requestAttempt)}
-          onerror={() =>
-            handleImageError(requestTokenSnapshot, requestResource, requestPhase, requestAttempt)}
+          class={`${dialogImageClass} transition-[opacity,transform] duration-300 ease-out ${imageRetry.imageLoaded && !imageRetry.imageFailed ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"} ${imageRetry.imageFailed ? "pointer-events-none sr-only" : ""}`}
+          onload={() => requestSnapshot && imageRetry.handleImageLoad(requestSnapshot)}
+          onerror={() => requestSnapshot && imageRetry.handleImageError(requestSnapshot)}
         />
       {/key}
     </div>
