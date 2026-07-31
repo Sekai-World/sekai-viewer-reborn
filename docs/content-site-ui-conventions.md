@@ -98,6 +98,7 @@ Rules:
 - For long lists, card artwork should not attach image `src` before the card is visible. Use `AssetImage` with `loadMode="visible"` for event/music list artwork, or the existing visibility-gated pattern in `CardListCard.svelte`.
 - Shared animation class constants belong under `src/lib/styles`, not next to `.svelte` component files.
 - Page files should pass data into shared card components instead of inlining card structure repeatedly.
+- A list card that gates mosaicked spoiler content must own its only detail link. Its unmodified primary pointer click, Enter, and Space activation reveal first; after reveal, native link activation continues normally and bare Space navigates without scrolling. Do not wrap it in another link or add a separate spoiler control.
 - Detail info cards for cards, events, music, and gachas should expose `assetBundleName` as a final "internal resource code" row when that field is available.
 
 ## Component Test Conventions

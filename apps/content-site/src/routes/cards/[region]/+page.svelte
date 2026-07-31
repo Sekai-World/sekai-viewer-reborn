@@ -1058,23 +1058,18 @@
   {:else}
     <div class={getListGridClass()}>
       {#each visibleItems as item (item.id)}
-        <a
+        <CardListCard
           href={getCardDetailHref(item)}
-          class="block rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
-          aria-label={`${item.prefix} ${idLabel}${item.id}`}
-        >
-          <CardListCard
-            region={data.region}
-            {item}
-            {viewMode}
-            {idLabel}
-            {spoilerContentLabel}
-            {cardListCharacterFallback}
-            {cardListReleaseLabel}
-            {cardImageAltSuffix}
-            displayLocale={data.uiLocale}
-          />
-        </a>
+          region={data.region}
+          {item}
+          {viewMode}
+          {idLabel}
+          {spoilerContentLabel}
+          {cardListCharacterFallback}
+          {cardListReleaseLabel}
+          {cardImageAltSuffix}
+          displayLocale={data.uiLocale}
+        />
       {/each}
     </div>
 

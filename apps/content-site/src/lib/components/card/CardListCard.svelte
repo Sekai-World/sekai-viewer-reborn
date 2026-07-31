@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import { asset } from "$app/paths";
   import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
@@ -29,6 +30,7 @@
   type CardImageKind = "small" | "thumbnail";
 
   let {
+    href,
     region,
     item,
     viewMode,
@@ -39,6 +41,7 @@
     cardImageAltSuffix,
     displayLocale
   }: {
+    href: string;
     region: SupportedRegion;
     item: CardListCardItem;
     viewMode: CardListViewMode;
@@ -160,13 +163,54 @@
     }, spoilerRevealAnimationMs);
   };
 
+  const hasModifier = (event: MouseEvent | KeyboardEvent): boolean =>
+    event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
+
   const handleCardClick = (event: MouseEvent): void => {
-    if (!isSpoilerContentMosaicked()) {
+    if (
+      !isSpoilerContentMosaicked() ||
+      hasModifier(event) ||
+      event.button !== 0
+    ) {
       return;
     }
 
     event.preventDefault();
     revealSpoiler();
+  };
+
+  const handleCardKeydown = (event: KeyboardEvent): void => {
+    if (hasModifier(event)) {
+      return;
+    }
+
+    if (event.key === "Enter") {
+      if (!isSpoilerContentMosaicked()) {
+        return;
+      }
+
+      event.preventDefault();
+      if (!event.repeat) {
+        revealSpoiler();
+      }
+      return;
+    }
+
+    if (event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    if (isSpoilerContentMosaicked()) {
+      if (!event.repeat) {
+        revealSpoiler();
+      }
+      return;
+    }
+
+    if (!event.repeat) {
+      void goto(href);
+    }
   };
 
   const getPrimaryCardAssetRegion = (): SupportedRegion => "jp";
@@ -374,10 +418,13 @@
   {/if}
 {/snippet}
 
-<div
-  class="relative isolate w-full"
-  role="presentation"
+<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+<a
+  {href}
+  class="relative isolate block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+  aria-label={`${item.prefix} ${idLabel}${item.id}`}
   onclick={handleCardClick}
+  onkeydown={handleCardKeydown}
 >
   <article
     class={`card-hover-lift card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
@@ -500,7 +547,7 @@
       </div>
     {/if}
   </article>
-</div>
+</a>
 
 <style>
   .card-grid-stage {
