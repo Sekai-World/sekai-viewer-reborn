@@ -8,6 +8,7 @@ Follow these rules before introducing new page-level patterns, daisyUI overrides
 - `content-site` uses Tailwind CSS 4 with `daisyui`.
 - Shared app-level CSS lives in `apps/content-site/src/app.css`.
 - Shared Svelte UI is consumed from `packages/ui-shell/src`.
+- Image preview components use the public `@platform/ui-shell/image-retry` subpath for their shared retry controller. `AssetImage` defaults to `STATIC_ASSET_RETRY_POLICY`, which appends one `__image_retry` query parameter before any fragment and uses cancellable same-origin `HEAD` classification with `cache: "no-store"`. Callers handling signed GET URLs may pass `SIGNED_GET_RETRY_POLICY`; it preserves the canonical URL byte-for-byte, skips `HEAD` probes, and is forwarded to interactive preview loading. Both policies use base retry delays of 300ms and 900ms with positive-only bounded jitter up to 20% (300–360ms and 900–1080ms); deterministic controller tests may inject the random source through constructor options, while normal callers use `Math.random`. Stale request snapshots and disposal prevent old callbacks from changing current image state. There is no global concurrency limiter; each controller owns its own retry timers and probes.
 
 ## daisyUI Override Rules
 
@@ -92,10 +93,18 @@ Rules:
 
 - Shared card frame logic belongs in `EventCardFrame.svelte`.
 - Shared non-interactive event/music media should use `AssetImage.svelte`.
+- `CardGridImage.svelte` remains the wrapper-free grid-only image primitive: it renders a raw root `<img>`, keeps visibility ownership in `CardListCard.svelte`, and uses the shared `ImageRetryController` with `STATIC_ASSET_RETRY_POLICY` for source-safe retries and fallback transitions. Callers can provide an explicit `ImageRetryPolicy` when their request contract requires it.
+- `CardThumbnail.svelte` keeps its nullable-source fallback UI, `IntersectionObserver` visibility gate, and frame/attribute/rarity overlays while using the shared `ImageRetryController`; callers may pass an explicit `ImageRetryPolicy`, but static assets use `STATIC_ASSET_RETRY_POLICY` by default.
 - For long lists, card artwork should not attach image `src` before the card is visible. Use `AssetImage` with `loadMode="visible"` for event/music list artwork, or the existing visibility-gated pattern in `CardListCard.svelte`.
 - Shared animation class constants belong under `src/lib/styles`, not next to `.svelte` component files.
 - Page files should pass data into shared card components instead of inlining card structure repeatedly.
 - Detail info cards for cards, events, music, and gachas should expose `assetBundleName` as a final "internal resource code" row when that field is available.
+
+## Component Test Conventions
+
+- Component characterization tests live beside the implementation as `*.test.ts` files and run in Vitest's `jsdom` environment through the workspace-local `vitest.config.ts`.
+- Use Svelte Testing Library queries and DOM events for Svelte 5 components. Use fake timers for retry delays and mock `fetch` for same-origin probes; do not wait on wall-clock time or reach a remote asset host.
+- Keep the test include globs under `src/**/*.test.ts` so generated output and `node_modules` are never collected by workspace test commands.
 
 ## Layout / Navigation Component Architecture
 
