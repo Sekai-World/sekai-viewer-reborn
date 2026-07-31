@@ -2,4 +2,4 @@
 "@apps/content-site": patch
 ---
 
-Allow `AssetImage` callers to provide an explicit image retry policy, including signed GET URLs that must remain byte-for-byte unchanged and skip same-origin HEAD probes. Interactive previews use the same policy as their direct image loading.
+Allow shared content-site image callers to provide explicit image retry policies, including signed GET URLs that must remain byte-for-byte unchanged and skip same-origin HEAD probes. Interactive previews and card thumbnails use the same shared retry controller contract as direct asset loading.

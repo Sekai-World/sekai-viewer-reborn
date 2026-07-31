@@ -5,7 +5,13 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [svelte({ prebundleSvelteLibraries: false }), svelteTesting()],
   resolve: {
-    alias: [{ find: /^node:module$/, replacement: "module" }],
+    alias: [
+      { find: /^node:module$/, replacement: "module" },
+      {
+        find: "$app/paths",
+        replacement: new URL("./src/lib/test/app-paths.ts", import.meta.url).pathname
+      }
+    ],
     conditions: ["browser", "node", "module-sync"]
   },
   ssr: {

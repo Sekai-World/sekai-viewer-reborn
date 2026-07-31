@@ -56,6 +56,56 @@ describe("CardGridImage retry characterization", () => {
 
     await vi.advanceTimersByTimeAsync(300);
     await flushEffects();
-    expect(getImage(container).getAttribute("src")).toContain("__card_grid_retry=");
+    expect(getImage(container).getAttribute("src")).toContain("__image_retry=");
+  });
+
+  it("keeps the component root as a raw image", () => {
+    const { container } = render(CardGridImage, {
+      src: "/card.png",
+      alt: "Card"
+    });
+
+    expect(container.firstElementChild?.tagName).toBe("IMG");
+    expect(container.querySelector("div")).toBeNull();
+  });
+
+  it("cancels a stale probe when its source changes", async () => {
+    let probeSignal: AbortSignal | undefined;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
+      probeSignal = init?.signal ?? undefined;
+      return new Promise<Response>(() => undefined);
+    });
+    const { container, rerender } = render(CardGridImage, {
+      src: "/old-card.png",
+      alt: "Card"
+    });
+
+    await fireEvent.error(getImage(container));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await rerender({ src: "/new-card.png" });
+    await flushEffects();
+
+    expect(probeSignal?.aborted).toBe(true);
+    expect(getImage(container).getAttribute("src")).toBe("/new-card.png");
+  });
+
+  it("cancels a same-origin probe when unmounted", async () => {
+    let probeSignal: AbortSignal | undefined;
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation((_input, init) => {
+      probeSignal = init?.signal ?? undefined;
+      return new Promise<Response>(() => undefined);
+    });
+    const { container, unmount } = render(CardGridImage, {
+      src: "/unmounted-card.png",
+      alt: "Card"
+    });
+
+    await fireEvent.error(getImage(container));
+    unmount();
+    await flushEffects();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(probeSignal?.aborted).toBe(true);
   });
 });

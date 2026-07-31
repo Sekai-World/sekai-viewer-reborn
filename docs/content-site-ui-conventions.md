@@ -93,6 +93,8 @@ Rules:
 
 - Shared card frame logic belongs in `EventCardFrame.svelte`.
 - Shared non-interactive event/music media should use `AssetImage.svelte`.
+- `CardGridImage.svelte` remains the wrapper-free grid-only image primitive: it renders a raw root `<img>`, keeps visibility ownership in `CardListCard.svelte`, and uses the shared `ImageRetryController` with `STATIC_ASSET_RETRY_POLICY` for source-safe retries and fallback transitions. Callers can provide an explicit `ImageRetryPolicy` when their request contract requires it.
+- `CardThumbnail.svelte` keeps its nullable-source fallback UI, `IntersectionObserver` visibility gate, and frame/attribute/rarity overlays while using the shared `ImageRetryController`; callers may pass an explicit `ImageRetryPolicy`, but static assets use `STATIC_ASSET_RETRY_POLICY` by default.
 - For long lists, card artwork should not attach image `src` before the card is visible. Use `AssetImage` with `loadMode="visible"` for event/music list artwork, or the existing visibility-gated pattern in `CardListCard.svelte`.
 - Shared animation class constants belong under `src/lib/styles`, not next to `.svelte` component files.
 - Page files should pass data into shared card components instead of inlining card structure repeatedly.
