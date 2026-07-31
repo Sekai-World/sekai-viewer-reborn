@@ -1,6 +1,7 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SIGNED_GET_RETRY_POLICY } from "@platform/ui-shell/image-retry";
 import CardThumbnail from "./CardThumbnail.svelte";
 
 const flushEffects = async (): Promise<void> => {
@@ -86,6 +87,26 @@ describe("CardThumbnail retry and visibility behavior", () => {
     await vi.advanceTimersByTimeAsync(360);
     await flushEffects();
     expect(getContentImage(container).getAttribute("src")).toContain("__image_retry=");
+  });
+
+  it("preserves a same-origin signed URL and skips HEAD probes", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch");
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const signedUrl =
+      "/signed/thumbnail.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=def456#thumbnail";
+    const { container } = render(CardThumbnail, {
+      src: signedUrl,
+      alt: "Signed thumbnail",
+      loadMode: "immediate",
+      retryPolicy: SIGNED_GET_RETRY_POLICY
+    });
+
+    await fireEvent.error(getContentImage(container));
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(300);
+    await flushEffects();
+    expect(getContentImage(container).getAttribute("src")).toBe(signedUrl);
   });
 
   it("does not render a nullable thumbnail source", () => {

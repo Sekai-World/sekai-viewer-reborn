@@ -1,6 +1,7 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SIGNED_GET_RETRY_POLICY } from "@platform/ui-shell/image-retry";
 import CardGridImage from "./CardGridImage.svelte";
 
 const flushEffects = async (): Promise<void> => {
@@ -57,6 +58,25 @@ describe("CardGridImage retry characterization", () => {
     await vi.advanceTimersByTimeAsync(360);
     await flushEffects();
     expect(getImage(container).getAttribute("src")).toContain("__image_retry=");
+  });
+
+  it("preserves a same-origin signed URL and skips HEAD probes", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch");
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const signedUrl =
+      "/signed/card.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=abc123#card";
+    const { container } = render(CardGridImage, {
+      src: signedUrl,
+      alt: "Signed card",
+      retryPolicy: SIGNED_GET_RETRY_POLICY
+    });
+
+    await fireEvent.error(getImage(container));
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(300);
+    await flushEffects();
+    expect(getImage(container).getAttribute("src")).toBe(signedUrl);
   });
 
   it("keeps the component root as a raw image", () => {
