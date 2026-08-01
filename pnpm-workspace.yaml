@@ -13,4 +13,4 @@ overrides:
   postcss: 8.5.25
   "read-yaml-file>js-yaml": 3.15.0
   "@changesets/parse>js-yaml": 4.3.0
-  "@hey-api/json-schema-ref-parser>js-yaml": 4.3.0
+  "@hey-api/json-schema-ref-parser>js-yaml": 4.3.1
