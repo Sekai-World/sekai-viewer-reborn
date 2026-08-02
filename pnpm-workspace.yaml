@@ -11,6 +11,6 @@ overrides:
   "@microsoft/api-extractor": 7.58.12
   fast-uri: 3.1.5
   postcss: 8.5.25
-  "read-yaml-file>js-yaml": 3.15.0
+  "read-yaml-file>js-yaml": 3.15.1
   "@changesets/parse>js-yaml": 4.3.1
   "@hey-api/json-schema-ref-parser>js-yaml": 4.3.1
