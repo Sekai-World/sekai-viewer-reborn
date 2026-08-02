@@ -41,12 +41,15 @@ jobs:
           private-key: ${{ secrets.I18N_SYNC_APP_PRIVATE_KEY }}
           owner: Sekai-World
           repositories: sekai-i18n-reborn
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Checkout translation repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Sekai-World/sekai-i18n-reborn
           token: ${{ steps.i18n-app-token.outputs.token }}
+          persist-credentials: false
           path: i18n
 
       - name: Setup mise tools

@@ -15,12 +15,10 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 FROM deps AS build
 
 COPY . .
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN rm tsconfig.json \
+  && pnpm install --frozen-lockfile --ignore-scripts
 RUN pnpm rebuild esbuild
-RUN pnpm --filter @apps/account-site exec svelte-kit sync \
-  && pnpm --filter @apps/content-site exec svelte-kit sync \
-  && pnpm --filter @apps/media-lab-site exec svelte-kit sync \
-  && pnpm --filter @apps/tools-site exec svelte-kit sync
+RUN pnpm --filter @apps/media-lab-site exec svelte-kit sync
 RUN pnpm --filter @apps/media-lab-site build
 
 FROM node:24-alpine AS runner
