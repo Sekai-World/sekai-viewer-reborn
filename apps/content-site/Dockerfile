@@ -11,12 +11,15 @@ COPY packages/i18n-runtime/package.json packages/i18n-runtime/package.json
 COPY packages/ui-shell/package.json packages/ui-shell/package.json
 COPY packages/ui-tokens/package.json packages/ui-tokens/package.json
 
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM deps AS build
 
 COPY . .
-RUN pnpm install --frozen-lockfile
+RUN rm tsconfig.json \
+  && pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm rebuild esbuild
+RUN pnpm --filter @apps/content-site exec svelte-kit sync
 RUN pnpm --filter @apps/content-site build
 
 FROM node:24-alpine AS runner

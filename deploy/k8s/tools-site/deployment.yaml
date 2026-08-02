@@ -15,6 +15,7 @@ spec:
       labels:
         app: tools-site
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: web
           image: ghcr.io/your-org/tools-site:latest

@@ -15,6 +15,7 @@ spec:
       labels:
         app: content-site
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: web
           image: ghcr.io/your-org/content-site:latest

@@ -15,6 +15,7 @@ spec:
       labels:
         app: media-lab-site
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: web
           image: ghcr.io/your-org/media-lab-site:latest
