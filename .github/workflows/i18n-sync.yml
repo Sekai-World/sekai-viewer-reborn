@@ -29,13 +29,13 @@ jobs:
 
     steps:
       - name: Checkout app repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: app
 
       - name: Create i18n app token
         id: i18n-app-token
-        uses: actions/create-github-app-token@v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ vars.I18N_SYNC_CLIENT_ID }}
           private-key: ${{ secrets.I18N_SYNC_APP_PRIVATE_KEY }}
@@ -43,28 +43,28 @@ jobs:
           repositories: sekai-i18n-reborn
 
       - name: Checkout translation repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: Sekai-World/sekai-i18n-reborn
           token: ${{ steps.i18n-app-token.outputs.token }}
           path: i18n
 
       - name: Setup mise tools
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
         with:
           experimental: true
           working_directory: app
 
       - name: Install dependencies
         working-directory: app
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
       - name: Sync source dictionaries
         working-directory: app
         run: pnpm i18n:sync --target ../i18n ${{ github.event_name == 'workflow_dispatch' && inputs.prune && '--prune' || '' }}
 
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ steps.i18n-app-token.outputs.token }}
           path: i18n

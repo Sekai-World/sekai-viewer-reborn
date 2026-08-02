@@ -1,6 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":automergeMinor", ":automergePatch"],
+  "extends": [
+    "config:recommended",
+    ":automergeMinor",
+    ":automergePatch",
+    "helpers:pinGitHubActionDigests"
+  ],
   "packageRules": [
     {
       "matchManagers": ["npm", "mise"],
@@ -24,6 +29,10 @@
     {
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "matchManagers": ["github-actions"],
       "automerge": false
     }
   ]
