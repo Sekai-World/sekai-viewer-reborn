@@ -33,20 +33,8 @@ jobs:
       - name: Rebuild esbuild
         run: pnpm rebuild esbuild
 
-      - name: Test
-        run: pnpm test
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Check types
-        run: pnpm check
-
-      - name: Check i18n source keys
-        run: pnpm i18n:check
-
-      - name: Build
-        run: pnpm build
+      - name: Verify
+        run: pnpm verify:ci
 
   validate-push:
     if: github.event_name == 'push'
@@ -67,17 +55,5 @@ jobs:
       - name: Rebuild esbuild
         run: pnpm rebuild esbuild
 
-      - name: Test
-        run: pnpm test
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Check types
-        run: pnpm check
-
-      - name: Check i18n source keys
-        run: pnpm i18n:check
-
-      - name: Build
-        run: pnpm build
+      - name: Verify
+        run: pnpm verify:ci

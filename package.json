@@ -10,6 +10,8 @@
     "test": "turbo test",
     "lint": "turbo lint",
     "check": "turbo check",
+    "verify:ci": "pnpm test && pnpm lint && pnpm check && pnpm i18n:check && pnpm build",
+    "hooks:install": "git config --local core.hooksPath scripts/git-hooks",
     "changeset": "changeset",
     "changeset:status": "changeset status --verbose",
     "release:version": "changeset version",

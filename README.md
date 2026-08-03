@@ -102,15 +102,30 @@ A `post-checkout` hook is provided to auto-restart the SvelteKit dev server
 when switching branches. Without it, Vite's file watcher detects deleted route
 files and crashes the dev server with an ENOENT error.
 
-Enable once after cloning:
+The hooks are opt-in and are not enabled automatically. The tracked hooks live
+at the relative path `scripts/git-hooks`. Enable them once after cloning:
 
 ```bash
-git config core.hooksPath scripts/git-hooks
+pnpm hooks:install
 ```
 
-This setting is local-only (not tracked by git). The hook only fires on branch
-switches (`git checkout` / `git switch` / fast-forward `git pull`), not on
-single-file checkouts.
+This setting is local-only (not tracked by git). The `post-checkout` hook only
+fires on branch switches (`git checkout` / `git switch` / fast-forward `git
+pull`), not on single-file checkouts.
+
+When installed:
+
+- `pre-commit` runs fast ESLint validation on staged JavaScript, TypeScript, and
+  Svelte source files under `apps/*/src`, `packages/*/src`, and `scripts`.
+- `pre-push` requires a clean worktree, including ordinary untracked files, and
+  runs the full `pnpm verify:ci` validation sequence.
+
+Use `--no-verify` as an explicit escape hatch when a hook must be bypassed:
+
+```bash
+git commit --no-verify
+git push --no-verify
+```
 
 ## Build, Check, Lint, Format
 
@@ -188,7 +203,7 @@ pnpm release
 Notes:
 
 - Pull requests that change `apps/*` or `packages/*` are checked by `.github/workflows/changeset.yml` and must include a changeset file, unless they are the auto-generated release PR.
-- `.github/workflows/ci.yml` runs `pnpm lint`, `pnpm check`, and `pnpm build` on pushes to `main` and on pull requests.
+- `.github/workflows/ci.yml` uses `pnpm verify:ci` as the validation source of truth on pushes to `main` and on pull requests.
 - The GitHub Actions workflow at `.github/workflows/release.yml` opens or updates a release PR whenever changesets land on `main`.
 - After the release PR is merged, `.github/workflows/release.yml` creates any missing workspace tags for the changed package versions and then creates matching GitHub releases.
 - If you need to rerun just the GitHub Release publish step locally or in CI, use `pnpm release:github`.
