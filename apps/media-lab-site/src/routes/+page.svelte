@@ -40,10 +40,10 @@
     secondaryValue={secondaryRegion}
     primaryTitle="Primary"
     secondaryTitle="Secondary"
-    onSelectPrimary={(region) => {
+    onSelectPrimary={(region: string) => {
       primaryRegion = region as SupportedRegion;
     }}
-    onSelectSecondary={(region) => {
+    onSelectSecondary={(region: string) => {
       secondaryRegion = region as SupportedRegion;
     }}
   />
