@@ -252,3 +252,8 @@ $RECYCLE.BIN/
 .playwright-cli/
 .playwright-mcp/
 .slim/deepwork/
+
+# BEGIN oh-my-opencode-slim worktrees
+.slim/worktrees/
+.slim/worktrees.json
+# END oh-my-opencode-slim worktrees
