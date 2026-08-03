@@ -1,0 +1,49 @@
+name: SonarCloud
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up mise
+        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
+        with:
+          experimental: true
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Rebuild esbuild
+        run: pnpm rebuild esbuild
+      - name: Generate SvelteKit TypeScript configs
+        run: |
+          pnpm --filter @apps/account-site exec svelte-kit sync
+          pnpm --filter @apps/content-site exec svelte-kit sync
+          pnpm --filter @apps/media-lab-site exec svelte-kit sync
+          pnpm --filter @apps/tools-site exec svelte-kit sync
+      - name: Check
+        run: pnpm check
+      - name: Lint
+        run: pnpm lint
+      - name: SonarCloud Scan
+        if: >-
+          github.event_name == 'push' ||
+          (
+            github.event.pull_request.head.repo.full_name == github.repository &&
+            github.event.pull_request.user.login != 'dependabot[bot]'
+          )
+        uses: SonarSource/sonarqube-scan-action@c7ee0f9df90b7aa20e8dcf9695dcfe2e7da5b4f2 # v7.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
