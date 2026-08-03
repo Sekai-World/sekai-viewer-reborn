@@ -7,7 +7,7 @@
     "pretest": "pnpm --filter '@apps/*' exec svelte-kit sync",
     "test": "vitest run --config ./vitest.config.ts",
     "lint": "eslint src --ext .ts,.svelte",
-    "check": "pnpm exec svelte-check --tsconfig ./tsconfig.json"
+    "check": "pnpm exec svelte-check --tsconfig ./tsconfig.json --tsgo"
   },
   "exports": {
     ".": {

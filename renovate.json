@@ -23,6 +23,16 @@
     },
     {
       "matchManagers": ["npm"],
+      "matchDepNames": ["typescript"],
+      "allowedVersions": "<7.0.0"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchDepNames": ["@typescript/native"],
+      "allowedVersions": ">=7.0.0"
+    },
+    {
+      "matchManagers": ["npm"],
       "matchUpdateTypes": ["minor", "patch"],
       "platformAutomerge": true
     },
