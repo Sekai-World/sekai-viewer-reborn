@@ -9,9 +9,12 @@ export const EVENT_CARD_SURFACE_CLASS = `card content-card-shell relative overfl
 
 export const EVENT_CARD_BODY_CLASS = "card-body relative z-10 p-3 md:p-4";
 
-export const EVENT_CARD_MEDIA_CLASS = `relative mb-2 flex items-center justify-center px-[4%] py-[4%] md:mb-3`;
+export const EVENT_CARD_MEDIA_CLASS = `relative mb-2 flex aspect-5/2 items-center justify-center overflow-hidden px-[4%] py-[4%] md:mb-3`;
 
-export const EVENT_CARD_IMAGE_CLASS = `mx-auto h-auto w-full max-w-full object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.08)] md:w-3/4 md:min-w-[min(200px,100%)]`;
+export const EVENT_CARD_IMAGE_CLASS = `mx-auto h-full max-h-full w-full max-w-full object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.08)] md:w-3/4 md:min-w-[min(200px,100%)]`;
+
+export const EVENT_CARD_META_BADGE_CLASS =
+  "badge badge-sm border-base-content/25 bg-transparent font-semibold text-base-content";
 
 export const EVENT_LIST_CARD_MEDIA_CLASS = `relative flex h-40 items-center justify-center overflow-hidden bg-transparent p-1.5 sm:p-2`;
 

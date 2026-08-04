@@ -97,6 +97,7 @@ Rules:
 - `CardThumbnail.svelte` keeps its nullable-source fallback UI, `IntersectionObserver` visibility gate, and frame/attribute/rarity overlays while using the shared `ImageRetryController`; callers may pass an explicit `ImageRetryPolicy`, but static assets use `STATIC_ASSET_RETRY_POLICY` by default.
 - For long lists, card artwork should not attach image `src` before the card is visible. Use `AssetImage` with `loadMode="visible"` for event/music list artwork, or the existing visibility-gated pattern in `CardListCard.svelte`.
 - Shared animation class constants belong under `src/lib/styles`, not next to `.svelte` component files.
+- Current-event media uses `EVENT_CARD_MEDIA_CLASS` with an `aspect-5/2` frame so its banner space is stable before the image loads. Its localized ID and event-type metadata sits above the title and reuses the transparent, bordered `EVENT_CARD_META_BADGE_CLASS`.
 - Page files should pass data into shared card components instead of inlining card structure repeatedly.
 - A list card that gates mosaicked spoiler content must own its only detail link. Its unmodified primary pointer click, Enter, and Space activation reveal first; after reveal, native link activation continues normally and bare Space navigates without scrolling. Do not wrap it in another link or add a separate spoiler control.
 - Detail info cards for cards, events, music, and gachas should expose `assetBundleName` as a final "internal resource code" row when that field is available.

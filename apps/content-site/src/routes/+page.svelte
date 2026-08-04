@@ -257,7 +257,7 @@
                           showIcons={true}
                           maxSize={null}
                           containerClass="card-hover-lift relative overflow-hidden rounded-xl bg-base-200 aspect-square"
-                          imageClass="size-full object-cover transition-transform duration-200"
+                          imageClass="size-full object-cover"
                         />
                       </a>
                     {/each}
@@ -297,7 +297,7 @@
                               src={getMusicJacketAssetURL(music.assetBundleName, regionData.region)}
                               alt={music.title ?? music.id}
                               loadMode="visible"
-                              imageClass="size-full object-cover transition-transform duration-200"
+                              imageClass="size-full object-cover"
                               buttonClass="block size-full"
                             />
                           {:else}
