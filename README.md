@@ -26,12 +26,11 @@ packages/
   ui-shell/
   ui-tokens/
 deploy/
-  k8s/
-    content-site/
-    tools-site/
-    media-lab-site/
-    account-site/
-    ingress-examples/
+  helm/
+    sekai-viewer-reborn/
+      Chart.yaml
+      values.yaml
+      templates/
 ```
 
 ## Apps
@@ -235,31 +234,47 @@ docker run --rm -p 3000:3000 your-org/content-site:latest
 
 Repeat with the corresponding Dockerfile and image name for the other apps.
 
-## Deployment Templates (Kubernetes)
+## Deployment (Helm and Kubernetes)
 
-Per-app manifests are under:
+The recommended deployment path is the single application Helm chart at
+[`deploy/helm/sekai-viewer-reborn`](deploy/helm/sekai-viewer-reborn). It manages
+the four apps independently through `.Values.apps` in one release. Each enabled
+app gets its own Deployment, ClusterIP Service, Ingress, and (by default) Pod
+DisruptionBudget. The chart does not render a Namespace; Helm scopes names to
+the release namespace, so use `--namespace` and `--create-namespace` when the
+namespace should be created for the release.
 
-- `deploy/k8s/content-site`
-- `deploy/k8s/tools-site`
-- `deploy/k8s/media-lab-site`
-- `deploy/k8s/account-site`
-
-Each app folder includes:
-
-- `deployment.yaml`
-- `service.yaml`
-- `ingress.yaml`
-
-Ingress examples:
-
-- shared ingress: `deploy/k8s/ingress-examples/shared-gateway-ingress.yaml`
-- independent pattern notes: `deploy/k8s/ingress-examples/independent-ingress-pattern.md`
-
-Example independent deployment for one app:
+Validate and render the chart:
 
 ```bash
-kubectl create namespace content-site
-kubectl apply -f deploy/k8s/content-site/
+helm lint deploy/helm/sekai-viewer-reborn
+helm template viewer deploy/helm/sekai-viewer-reborn \
+  --namespace viewer \
+  --set apps.tools-site.enabled=false \
+  --set apps.media-lab-site.enabled=false \
+  --set apps.account-site.enabled=false \
+  --set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
+  --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com
 ```
 
-Repeat per app namespace for independent rollouts.
+Install or upgrade all enabled apps:
+
+```bash
+helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
+  --namespace viewer \
+  --create-namespace \
+  --set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
+  --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com
+```
+
+Disable apps that are not being deployed with, for example,
+`--set apps.tools-site.enabled=false`. Use `--set-string` for URL environment
+values such as
+`--set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=...`. To roll back,
+inspect `helm history viewer --namespace viewer` and run
+`helm rollback viewer <REVISION> --namespace viewer`.
+
+The chart's full values and operating notes are in
+[`deploy/helm/sekai-viewer-reborn/README.md`](deploy/helm/sekai-viewer-reborn/README.md).

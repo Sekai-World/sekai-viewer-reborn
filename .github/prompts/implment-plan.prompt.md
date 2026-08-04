@@ -21,7 +21,7 @@ description: Implementation plan for the SvelteKit multi-site rewrite and monore
 2. 建立 monorepo 结构（`apps/*` + `packages/*`），统一工程规范与任务编排（`build`/`test`/`lint`/`deploy`），并抽取共享 `symbol`：`createApiClient`、`resolveAssetHost`、`loadLocaleNamespaces`（来源于 [src/utils/apiClient.ts](src/utils/apiClient.ts)、[src/utils/urls.ts](src/utils/urls.ts)、[src/utils/i18n.ts](src/utils/i18n.ts)）。
 3. 设计认证架构：Keycloak OIDC + 统一 SSO 会话，站点侧通过 BFF 交换会话并下发最小凭据，替代当前前端直持久 token 方式（参考 [src/stores/user.ts](src/stores/user.ts)）。
 4. 设计渲染策略：前三站 SSR-first（可缓存页面尽量预渲染/ISR），媒体站 CSR-first + SSR 壳；将 Live2D 相关能力隔离成独立前端能力域（依据 [src/utils/live2dLoader.ts](src/utils/live2dLoader.ts)）。
-5. 部署拓扑：每站独立镜像、独立 Helm/Kustomize 参数、统一 Ingress 网关；对高突发任务引入 Knative Service/Eventing（运行在同一 K8s），避免额外云函数供应商锁定。
+5. 部署拓扑：每站独立镜像、通过 Helm chart 参数独立启停、统一 Ingress 网关；对高突发任务引入 Knative Service/Eventing（运行在同一 K8s），避免额外云函数供应商锁定。
 6. 可观测与治理：统一日志追踪（trace-id 跨站透传）、统一 Web Vitals 与 SEO 指标看板，按站点做独立 SLO。
 7. 交付节奏：先落地内容站（SEO 收益最大）→ 工具站 → 账号站 → 媒体站，确保每阶段可独立上线与回滚。
 
