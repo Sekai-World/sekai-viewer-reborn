@@ -10,6 +10,7 @@
   import {
     CURRENT_EVENT_CARD_FRAME_CLASS,
     EVENT_CARD_IMAGE_CLASS,
+    EVENT_CARD_META_BADGE_CLASS,
     EVENT_CARD_MEDIA_CLASS
   } from "$lib/styles/event-card";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
@@ -75,36 +76,25 @@
         src={getEventBannerAssetURL(event.assetBundleName, region)}
         alt={`${event.title} ${bannerAltSuffix}`}
         imageClass={EVENT_CARD_IMAGE_CLASS}
-        buttonClass="block w-full overflow-hidden"
+        buttonClass="block h-full w-full overflow-hidden"
       />
     {:else}
       <div class="flex size-full items-center justify-center text-sm opacity-70">
         {regionLabel}
       </div>
     {/if}
-
-    <div class="absolute left-2 top-2">
-      <span
-        class="badge badge-sm border-none bg-primary font-semibold text-primary-content shadow-sm"
-      >
-        {idLabel}{event.id}
-      </span>
-    </div>
-    <div class="absolute right-2 top-2 flex items-center gap-1">
-      {#if displayEventType}
-        <span
-          class="badge badge-sm border-none bg-primary font-semibold text-primary-content shadow-sm"
-        >
-          {displayEventType}
-        </span>
-      {/if}
-    </div>
   </div>
 
   <div class="flex min-w-0 items-start gap-2">
-    <h3 class="min-w-0 flex-1 text-base/tight font-semibold">
-      {event.title}
-    </h3>
+    <div class="min-w-0 flex-1">
+      <div class="mb-2 flex flex-wrap items-center gap-1.5">
+        <span class={EVENT_CARD_META_BADGE_CLASS}>{idLabel}{event.id}</span>
+        {#if displayEventType}
+          <span class={EVENT_CARD_META_BADGE_CLASS}>{displayEventType}</span>
+        {/if}
+      </div>
+      <h3 class="text-base/tight font-semibold">{event.title}</h3>
+    </div>
     {#if displayUnit}
       <UnitIconBadge unit={event.unit!} fallbackLabel={displayUnit} variant="sm" />
     {/if}

@@ -13,6 +13,7 @@
     EVENT_LIST_CARD_FRAME_CLASS,
     EVENT_LIST_CARD_IMAGE_CLASS,
     EVENT_LIST_CARD_MEDIA_CLASS,
+    EVENT_CARD_META_BADGE_CLASS,
     EVENT_LIST_CARD_TITLE_CLASS
   } from "$lib/styles/event-card";
 
@@ -169,11 +170,11 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-1.5 px-4 pt-3">
-      <span class="badge border-none bg-base-200 font-semibold text-base-content">
+      <span class={EVENT_CARD_META_BADGE_CLASS}>
         {idLabel}{item.id}
       </span>
       {#if getEventTypeDisplay(item.eventType, translate)}
-        <span class="badge border-none bg-base-200 font-semibold text-base-content">
+        <span class={EVENT_CARD_META_BADGE_CLASS}>
           {getEventTypeDisplay(item.eventType, translate)}
         </span>
       {/if}
