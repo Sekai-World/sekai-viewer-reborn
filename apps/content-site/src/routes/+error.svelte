@@ -3,31 +3,9 @@
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
-  import type { LayoutData } from "./$types";
 
-  let { data }: { data: LayoutData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "error"]);
-  let resolvedMessages = $state<Record<string, string>>(fallbackMessages);
-  const messages = $derived(resolvedMessages);
-  $effect(() => {
-    const messagesOrPromise = data.i18nMessages;
-    resolvedMessages = fallbackMessages;
-    if (
-      messagesOrPromise &&
-      typeof (messagesOrPromise as PromiseLike<Record<string, string>>).then === "function"
-    ) {
-      void Promise.resolve(messagesOrPromise)
-        .then((messages) => {
-          if (messagesOrPromise === data.i18nMessages) resolvedMessages = messages;
-        })
-        .catch(() => {
-          // Preserve the synchronous local fallback when streaming fails.
-        });
-    } else if (messagesOrPromise && typeof messagesOrPromise === "object") {
-      resolvedMessages = messagesOrPromise as unknown as Record<string, string>;
-    }
-  });
-  const translate = $derived(createI18nTranslator(data.uiLocale, messages));
+  const translate = createI18nTranslator("en", fallbackMessages);
   const status = $derived(page.status);
   const title = $derived(
     status === 404 ? translate("errorPage.notFoundTitle") : translate("errorPage.title")
