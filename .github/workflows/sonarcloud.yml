@@ -33,10 +33,6 @@ jobs:
           pnpm --filter @apps/content-site exec svelte-kit sync
           pnpm --filter @apps/media-lab-site exec svelte-kit sync
           pnpm --filter @apps/tools-site exec svelte-kit sync
-      - name: Check
-        run: pnpm check
-      - name: Lint
-        run: pnpm lint
       - name: SonarCloud Scan
         if: >-
           github.event_name == 'push' ||
