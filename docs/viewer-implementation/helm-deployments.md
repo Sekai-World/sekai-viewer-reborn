@@ -90,11 +90,12 @@ release namespace with `--namespace` and `--create-namespace`. Use
 The canonical operator workflow is documented in the chart README: copy
 `values.yaml` to an operator-owned file, replace image/Ingress/TLS
 placeholders, set the required content-site URLs, lint and render before
-applying, and use `helm upgrade --install --wait --timeout` for installation
-and upgrades. Use immutable versioned image tags, check `helm status` and
-`kubectl rollout status`, and use `helm rollback --wait --timeout` after
-selecting a revision from `helm history`. Disabling an app removes its Helm-
-managed resources, and `--reuse-values` should only be used deliberately.
+applying, and use `helm upgrade --install --atomic --timeout` for installation
+and upgrades. `--atomic` waits and automatically rolls back a failed install or
+upgrade. Use immutable versioned image tags, check `helm status` and `kubectl
+rollout status`, and use `helm rollback --wait --timeout` after selecting a
+revision from `helm history`. Disabling an app removes its Helm-managed
+resources, and `--reuse-values` should only be used deliberately.
 
 ## Source references
 

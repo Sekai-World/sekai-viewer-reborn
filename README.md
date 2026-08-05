@@ -277,5 +277,6 @@ inspect `helm history viewer --namespace viewer` and run
 `helm rollback viewer <REVISION> --namespace viewer`.
 
 The chart's canonical operator prerequisites, values-file preparation,
-validation, installation, upgrade, and rollback instructions are in
+validation, `--atomic` installation and upgrade recovery, and rollback
+instructions are in
 [`deploy/helm/sekai-viewer-reborn/README.md`](deploy/helm/sekai-viewer-reborn/README.md).

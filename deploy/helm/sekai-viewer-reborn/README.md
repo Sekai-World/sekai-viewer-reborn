@@ -70,9 +70,13 @@ helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
   --namespace viewer \
   --create-namespace \
   --values viewer-values.yaml \
-  --wait \
+  --atomic \
   --timeout 10m
 ```
+
+`--atomic` waits for the release and automatically rolls it back if the
+installation fails; `--timeout` bounds that wait. This keeps a failed first
+installation from remaining in a partial state.
 
 Run Helm's chart validation from the repository root:
 
@@ -107,7 +111,7 @@ upgrade the existing release and check both Helm and the Deployment rollout:
 helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
   --namespace viewer \
   --values viewer-values.yaml \
-  --wait \
+  --atomic \
   --timeout 10m
 helm status viewer --namespace viewer
 kubectl rollout status deployment/viewer-sekai-viewer-reborn-content-site \
@@ -168,5 +172,7 @@ kubectl rollout status deployment/viewer-sekai-viewer-reborn-content-site \
   --timeout=10m
 ```
 
-Use the revision shown by `helm history` (not an image tag) and repeat the
+`--atomic` waits for the upgrade and automatically rolls the release back if it
+fails; `--timeout` bounds that wait. Use the revision shown by `helm history`
+(not an image tag) and repeat the
 rollout check for each enabled application after the rollback.
