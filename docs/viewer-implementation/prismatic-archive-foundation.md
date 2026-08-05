@@ -143,6 +143,7 @@ Phase 3 confirms that `content-site` should read as a calm, readable archive/cat
 - Preserve established behavior: visibility-gated/lazy artwork, spoiler/reveal semantics, and route/query/server state remain authoritative rather than being reinterpreted by presentation code.
 - In the Phase 3 cards catalogue and event detail, apply semantic archive surfaces without changing data, route, or i18n contracts. A multi-card event identity rail flows naturally with the page; it is not a full-column sticky rail.
 - Treat this as a design evolution from generic daisyUI card/base surfaces and ad-hoc spacing/shadows to calmer semantic surfaces and explicit hierarchy, not as a claim that all previous UI has been removed.
+- Keep the homepage current-event card prominent but not oversized on desktop: the page uses a readable `max-w-4xl` region and the card constrains banner media at `lg` widths while preserving the mobile composition and all existing links/data behavior.
 
 ### Surfaces
 

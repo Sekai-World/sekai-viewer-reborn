@@ -165,7 +165,7 @@
       )}
     />
   </div>
-  <section class="mx-auto mb-10 max-w-5xl" aria-labelledby="current-event-title">
+  <section class="mx-auto mb-10 max-w-4xl" aria-labelledby="current-event-title">
     <div class="mb-3 flex items-center justify-between gap-3 px-1">
       <div class="flex items-center gap-2">
         <Icon icon="mdi:calendar-star" class="size-4 text-primary" aria-hidden="true" />

@@ -70,7 +70,9 @@
   href={resolve("/event/[region]/[id]", { region, id: event.id })}
   frameClass={CURRENT_EVENT_CARD_FRAME_CLASS}
 >
-  <div class={EVENT_CARD_MEDIA_CLASS}>
+  <div
+    class={`${EVENT_CARD_MEDIA_CLASS} lg:mx-auto lg:mb-4 lg:aspect-3/1 lg:w-[82%] lg:px-[6%] lg:py-[3%]`}
+  >
     {#if event.assetBundleName}
       <AssetImage
         src={getEventBannerAssetURL(event.assetBundleName, region)}
