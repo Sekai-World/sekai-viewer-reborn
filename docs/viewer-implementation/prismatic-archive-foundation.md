@@ -133,20 +133,6 @@ spacing to distinguish record identity from metadata before adding color.
 
 ## Surface, navigation, motion, and accessibility rules
 
-### Confirmed content-site design language
-
-Phase 3 confirms that `content-site` should read as a calm, readable archive/catalogue, not as a generic dashboard or decorative landing page. Keep these reusable implementation rules grounded in `apps/content-site/src/app.css`, `apps/content-site/src/routes/cards/[region]/+page.svelte`, `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`, and their detail/list components:
-
-- Use four semantic surface roles—canvas/background, panel, inset/sunken, and elevated/overlay—with token-driven archive text, border, accent, and focus roles and the `content-card-*` primitives.
-- In dark mode, preserve a clear lightness ladder: canvas below inset, inset below the default card panel, then raised and overlay above it. Standard card separation comes from this ladder and the subtle border token, not from persistent shadows or component-specific colors; keep the rule aligned across default, sakura, and mint.
-- Keep the visual language restrained: thin borders, modest shadows limited to interaction, no heavy blur or filters, compact but touch-safe controls, visible focus, and transitions that remain safe in low-motion mode.
-- Organize information around clear page identity, composed control decks, grouped result fields, and scannable evidence/data sections. Prefer responsive mobile-first flow over dense desktop-only composition.
-- Preserve established behavior: visibility-gated/lazy artwork, spoiler/reveal semantics, and route/query/server state remain authoritative rather than being reinterpreted by presentation code.
-- In the Phase 3 cards catalogue and event detail, apply semantic archive surfaces without changing data, route, or i18n contracts. A multi-card event identity rail flows naturally with the page; it is not a full-column sticky rail.
-- Treat this as a design evolution from generic daisyUI card/base surfaces and ad-hoc spacing/shadows to calmer semantic surfaces and explicit hierarchy, not as a claim that all previous UI has been removed.
-- The homepage current event is a data-driven Archive Banner: use the selected region's existing streamed current-event payload while preserving its event-detail link, unit metadata, countdown, and asset retry/fallback behavior. For intrinsically small event artwork, use a compact contained preview rather than a stretched hero: at `lg` widths, a modest fixed media column sits beside the content-led details within the bounded `max-w-5xl` track; mobile remains naturally stacked. Loading, empty, and error states reserve that same media/details geometry to limit shift.
-- Dark archive palettes are token-driven and hue-aware: use a gently tinted canvas with a default → raised → overlay surface ramp, restrained borders, and a quieter primary ambient glow than light mode. Preserve theme-specific indigo, sakura, and mint character without component-level hard-coded colors or heavy shadows.
-
 ### Surfaces
 
 - Use a restrained three-level hierarchy: canvas, panel, and inset/elevated
@@ -194,12 +180,6 @@ of scope and is not implied by this contract.
   change preserves sharpness.
 - Honor both `prefers-reduced-motion` and the existing `contentDisplaySettings`
   low-motion mode. Ensure focus indicators are not animated away.
-
-### Prismatic Archive feedback refinement
-
-Prismatic Archive does not remove feedback; it uses restrained, semantic motion. Keep interactions in the 150–300ms range, respect `data-low-motion` and `prefers-reduced-motion`, avoid broad/global animations, and avoid heavy filters. Skeletons should preserve layout at independently streamed boundaries instead of leaving blanks. In `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`, the event payload, unit profiles/info, current-event countdown, and unit-profile BGM are separate streaming boundaries; each uses a visual-only skeleton placeholder with `aria-hidden="true"` while its data resolves.
-
-Skeleton groups should avoid per-item costly shimmer loops. A simple pulse or static reduced-motion state, together with reserved dimensions, provides feedback without jank or cumulative layout shift (CLS). The corresponding app-level motion and surface rules are defined in `apps/content-site/src/app.css`.
 
 ### Accessibility
 
@@ -280,55 +260,6 @@ Compare adoption across all four apps, remove duplicated primitives only after
 their contracts are stable, document token ownership, and measure bundle size,
 SSR output, Web Vitals, keyboard paths, and visual regressions. Any generated
 SDK or deployment changes are separate, explicit work items.
-
-## Delivery progress
-
-### Tools-site first workflow
-
-- `tools-site` now has an SSR-safe, tools-local i18n scope and a current-event
-  comparison flow that uses SDK calls for two validated regions.
-- The selected regions are restored from the URL through GET parameters, and
-  unavailable-region and request-failed results remain distinct localized
-  states.
-- The workflow preserves the existing `ViewerShell` and route-motion boundary.
-  It does not fabricate cross-app record links because no public `content-site`
-  base-URL contract exists.
-
-### Content-site Phase 3 visual polish — cards catalogue and event detail
-
-- Archive semantic surfaces were applied without changing data, route, or i18n
-  contracts.
-- The cards catalogue retains query persistence and URL synchronization,
-  visible-only artwork loading, and spoiler-reveal semantics. Its unbounded
-  lists avoid static heavy image filters and shadows.
-- Event detail retains streamed boundaries, asset preview, BGM, reward
-  expansion, and region swipe behavior. Its left rail flows naturally rather
-  than remaining a sticky full rail, so short viewports do not leave content
-  unreachable.
-- Validated with `pnpm --filter @apps/content-site check`,
-  `pnpm --filter @apps/content-site lint`, and `git diff --check`.
-
-### Content-site i18n no-fallback-flash contract
-
-- `apps/content-site/src/routes/+layout.server.ts` awaits the route-scoped locale
-  bundle before returning layout data. The server keeps remote-fetch failures
-  renderable by resolving to the matching local source bundle instead of
-  returning a rejected/deferred promise. It uses a 2.5-second deadline: long
-  enough for ordinary CDN dictionary loads while bounding a stalled SSR or
-  client navigation; its timer is unrefed on Node so it cannot keep a process
-  alive.
-- The shared `@platform/i18n-runtime` namespace cache applies the deadline at
-  the fetch entry itself, aborting and conditionally evicting only its own
-  pending entry on timeout. This preserves concurrent deduplication but lets a
-  later request retry instead of inheriting a permanently pending promise.
-- Character list and detail page loaders must not return `i18nMessages`; the
-  root layout owns the complete `common`, `character`, `card`, and `error`
-  bundle for both paths.
-- Route components initialize from the resolved layout bundle. On a locale
-  change they keep the currently displayed complete dictionary until the newest
-  request resolves, then replace labels atomically; request IDs prevent a stale
-  request from overwriting a later selection. Do not reset visible labels to
-  local English source messages while waiting.
 
 ## Likely files and components
 
