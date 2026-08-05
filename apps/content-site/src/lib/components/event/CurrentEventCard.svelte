@@ -68,10 +68,10 @@
 <EventCardFrame
   id={`region-${region}`}
   href={resolve("/event/[region]/[id]", { region, id: event.id })}
-  frameClass={CURRENT_EVENT_CARD_FRAME_CLASS}
+  frameClass={`${CURRENT_EVENT_CARD_FRAME_CLASS} archive-event-banner`}
 >
   <div
-    class={`${EVENT_CARD_MEDIA_CLASS} lg:mx-auto lg:mb-4 lg:aspect-3/1 lg:w-[82%] lg:px-[6%] lg:py-[3%]`}
+    class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
   >
     {#if event.assetBundleName}
       <AssetImage
@@ -87,26 +87,30 @@
     {/if}
   </div>
 
-  <div class="flex min-w-0 items-start gap-2">
-    <div class="min-w-0 flex-1">
-      <div class="mb-2 flex flex-wrap items-center gap-1.5">
-        <span class={EVENT_CARD_META_BADGE_CLASS}>{idLabel}{event.id}</span>
-        {#if displayEventType}
-          <span class={EVENT_CARD_META_BADGE_CLASS}>{displayEventType}</span>
-        {/if}
+  <div class="archive-event-banner-details border-t border-(--archive-border-subtle) pt-4">
+    <div class="flex min-w-0 items-start gap-3">
+      <div class="min-w-0 flex-1">
+        <div class="mb-2 flex flex-wrap items-center gap-1.5">
+          <span class={EVENT_CARD_META_BADGE_CLASS}>{idLabel}{event.id}</span>
+          {#if displayEventType}
+            <span class={EVENT_CARD_META_BADGE_CLASS}>{displayEventType}</span>
+          {/if}
+        </div>
+        <h3 class="text-lg/tight font-semibold text-(--archive-text-strong) sm:text-xl/tight">
+          {event.title}
+        </h3>
       </div>
-      <h3 class="text-base/tight font-semibold">{event.title}</h3>
+      {#if displayUnit}
+        <UnitIconBadge unit={event.unit!} fallbackLabel={displayUnit} variant="sm" />
+      {/if}
     </div>
-    {#if displayUnit}
-      <UnitIconBadge unit={event.unit!} fallbackLabel={displayUnit} variant="sm" />
-    {/if}
-  </div>
 
-  <EventCountdownCard
-    startAt={event.startAt}
-    endAt={event.endAt}
-    {uiLocale}
-    {messages}
-    class="mt-0"
-  />
+    <EventCountdownCard
+      startAt={event.startAt}
+      endAt={event.endAt}
+      {uiLocale}
+      {messages}
+      class="mt-4"
+    />
+  </div>
 </EventCardFrame>

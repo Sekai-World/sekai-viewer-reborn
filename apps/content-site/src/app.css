@@ -324,6 +324,29 @@ body {
       0 2px 6px color-mix(in oklab, var(--color-primary) 12%, transparent);
   }
 
+  @media (min-width: 64rem) {
+    .archive-event-banner .card-body {
+      display: grid;
+      grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr);
+      padding: 0;
+    }
+
+    .archive-event-banner .archive-event-banner-media {
+      min-height: 12rem;
+      aspect-ratio: auto;
+      border-right: 1px solid var(--archive-border-subtle);
+    }
+
+    .archive-event-banner .archive-event-banner-details {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      justify-content: center;
+      padding: 1.25rem 1.5rem;
+      border-top: 0;
+    }
+  }
+
   .event-list-spoiler-overlay {
     background-color: color-mix(in oklab, white 90%, transparent);
   }
