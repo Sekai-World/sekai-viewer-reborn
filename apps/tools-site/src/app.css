@@ -4,15 +4,101 @@
 @source not "../daisyui.mjs";
 @plugin "../daisyui.mjs";
 
-.page-switch-shell {
-  isolation: isolate;
+:root {
+  --archive-canvas: var(--color-base-200);
+  --archive-panel: var(--color-base-100);
+  --archive-control: var(--color-base-100);
+  --archive-result: var(--color-base-100);
+}
+
+.archive-canvas {
+  display: grid;
+  gap: 1rem;
+  min-height: 100%;
+  padding: 1rem;
+  background: var(--archive-canvas);
+}
+
+.archive-panel,
+.archive-result {
+  padding: 1rem;
+  background: var(--archive-panel);
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 15%, transparent);
+  border-radius: var(--radius-box);
+}
+
+.archive-control {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.archive-control label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.archive-control select,
+.archive-control button {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  background: var(--archive-control);
+  border: 1px solid color-mix(in srgb, var(--color-base-content) 20%, transparent);
+  border-radius: var(--radius-field);
+}
+
+.archive-control button {
+  cursor: pointer;
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+.archive-control :is(select, button):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.archive-results {
+  display: grid;
+  gap: 1rem;
+}
+
+.archive-result {
+  background: var(--archive-result);
+}
+
+.archive-status {
+  margin-top: 0.5rem;
+  color: color-mix(in srgb, var(--color-base-content) 72%, transparent);
+}
+
+.archive-event {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-base-content) 12%, transparent);
+}
+
+.archive-event h3 {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.archive-event p {
+  color: color-mix(in srgb, var(--color-base-content) 65%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.page-switch-shell-fallback {
+  animation: archive-page-fade 150ms ease-out;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   @supports (view-transition-name: tools-site-main) {
     .page-switch-shell {
+      isolation: isolate;
       view-transition-name: tools-site-main;
-      will-change: transform, opacity;
     }
 
     ::view-transition-old(tools-site-main),
@@ -20,37 +106,31 @@
       animation-duration: 220ms;
       animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
     }
+  }
+}
 
-    ::view-transition-old(tools-site-main) {
-      animation-name: tools-site-page-old;
-    }
+@keyframes archive-page-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 
-    ::view-transition-new(tools-site-main) {
-      animation-name: tools-site-page-new;
-    }
+@media (prefers-reduced-motion: reduce) {
+  .page-switch-shell-fallback {
+    animation: none;
+  }
+}
 
-    @keyframes tools-site-page-old {
-      from {
-        opacity: 1;
-        transform: translateY(0);
-      }
+@media (min-width: 48rem) {
+  .archive-results {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
-      to {
-        opacity: 0;
-        transform: translateY(-8px);
-      }
-    }
-
-    @keyframes tools-site-page-new {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+  .archive-control {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+    align-items: end;
   }
 }

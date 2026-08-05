@@ -2,61 +2,66 @@
   import "../app.css";
   import { onNavigate } from "$app/navigation";
   import { page } from "$app/state";
+  import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
-  import { fade } from "svelte/transition";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import type { LayoutData } from "./$types";
 
-  let { children }: { children: Snippet } = $props();
-  let useFallbackRouteTransition = $state(true);
-  const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
+  let { data, children }: { data: LayoutData; children: Snippet } = $props();
+  const fallbackMessages = getLocalI18nMessages(["common", "comparison"]);
+  let messages = $state(fallbackMessages);
+  let supportsNativeViewTransition = $state(false);
+  let motionAllowed = $state(false);
+  const translate = $derived(createI18nTranslator(data.uiLocale, messages));
+  const navigationTransitionKey = $derived(page.url.pathname);
+  const sidebarItems: SidebarItem[] = $derived([
+    { label: translate("navigation.home"), href: "/", active: true }
+  ]);
 
   onMount(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const documentWithViewTransition = document as Document & {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const viewTransitionDocument = document as Document & {
       startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
     };
-    const supportsViewTransition =
-      typeof documentWithViewTransition.startViewTransition === "function";
-    useFallbackRouteTransition = !supportsViewTransition || prefersReducedMotion;
+    supportsNativeViewTransition = typeof viewTransitionDocument.startViewTransition === "function";
+    motionAllowed = !reducedMotion;
 
-    const maybeDisposeNavigationTransition =
-      supportsViewTransition && !prefersReducedMotion
-        ? onNavigate((navigation) => {
-            if (!documentWithViewTransition.startViewTransition) {
-              return;
-            }
+    if (!supportsNativeViewTransition || reducedMotion) return;
 
-            return new Promise<void>((resolve) => {
-              documentWithViewTransition.startViewTransition(async () => {
-                resolve();
-                await navigation.complete;
-              });
-            });
-          })
-        : undefined;
+    return onNavigate((navigation) => {
+      if (!viewTransitionDocument.startViewTransition) return;
+      return new Promise<void>((resolve) => {
+        viewTransitionDocument.startViewTransition(async () => {
+          resolve();
+          await navigation.complete;
+        });
+      });
+    });
+  });
 
-    const disposeNavigationTransition =
-      typeof maybeDisposeNavigationTransition === "function"
-        ? maybeDisposeNavigationTransition
-        : () => {};
-
-    return () => {
-      disposeNavigationTransition();
-    };
+  $effect(() => {
+    void Promise.resolve(data.i18nMessages).then((next) => {
+      messages = { ...fallbackMessages, ...next };
+    });
   });
 </script>
 
-{#if useFallbackRouteTransition}
-  {#key navigationTransitionKey}
-    <div
-      class="page-switch-shell"
-      in:fade|local={{ duration: 150 }}
-      out:fade|local={{ duration: 110 }}
-    >
-      {@render children()}
-    </div>
-  {/key}
-{:else}
-  <div class="page-switch-shell">
-    {@render children()}
-  </div>
-{/if}
+<ViewerShell
+  drawerId="tools-site-drawer"
+  navTitle={translate("shell.title")}
+  navBadge={translate("shell.badge")}
+  skipToMainLabel={translate("navigation.skipToMain")}
+  openSidebarLabel={translate("navigation.openSidebar")}
+  closeSidebarLabel={translate("navigation.closeSidebar")}
+  sidebarLabel={translate("navigation.tools")}
+  {sidebarItems}
+  showTitle={false}
+>
+  {#if !supportsNativeViewTransition && motionAllowed}
+    {#key navigationTransitionKey}
+      <div class="page-switch-shell page-switch-shell-fallback">{@render children()}</div>
+    {/key}
+  {:else}
+    <div class="page-switch-shell">{@render children()}</div>
+  {/if}
+</ViewerShell>
