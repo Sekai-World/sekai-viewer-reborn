@@ -429,8 +429,8 @@
                     {#each regionData.musics as music (music.id)}
                       <a
                         href="/music/{regionData.region}/{music.id}"
-                        class="group card-hover-lift block overflow-hidden rounded-xl border border-(--archive-border-subtle) bg-(--archive-surface-default) shadow-sm"
-                        data-home-music-tile
+                        class="group card-hover-lift flex min-w-0 items-center gap-3 rounded-xl border border-(--archive-border-subtle) bg-(--archive-surface-default) p-2 shadow-sm"
+                        data-home-music-row
                       >
                         <div
                           class="relative size-16 shrink-0 overflow-hidden rounded-lg bg-base-200/60"
