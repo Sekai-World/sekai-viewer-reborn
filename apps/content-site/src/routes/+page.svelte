@@ -319,17 +319,17 @@
           <div class="space-y-6">
             <div class="space-y-3">
               <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-              <div class="grid grid-cols-3 gap-3">
-                {#each [1, 2, 3] as skeleton (skeleton)}
+              <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as skeleton (skeleton)}
                   <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
                 {/each}
               </div>
             </div>
             <div class="space-y-3">
               <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-              <div class="grid grid-cols-3 gap-3">
+              <div class="grid gap-2">
                 {#each [1, 2, 3] as skeleton (skeleton)}
-                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
+                  <div class="h-16 animate-pulse rounded-xl bg-base-300"></div>
                 {/each}
               </div>
             </div>
@@ -373,7 +373,7 @@
                   </a>
                 </h3>
                 {#if regionData.cards.length > 0}
-                  <div class="grid grid-cols-3 gap-3">
+                  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {#each regionData.cards as card (card.id)}
                       <a
                         href="/card/{regionData.region}/{card.id}"
@@ -427,14 +427,16 @@
                   </a>
                 </h3>
                 {#if regionData.musics.length > 0}
-                  <div class="grid grid-cols-3 gap-3">
+                  <div class="grid gap-2">
                     {#each regionData.musics as music (music.id)}
                       <a
                         href="/music/{regionData.region}/{music.id}"
-                        class="group card-hover-lift block overflow-hidden rounded-xl border border-(--archive-border-subtle) bg-(--archive-surface-default) shadow-sm"
-                        data-home-music-tile
+                        class="group card-hover-lift flex min-w-0 items-center gap-3 rounded-xl border border-(--archive-border-subtle) bg-(--archive-surface-default) p-2 shadow-sm"
+                        data-home-music-row
                       >
-                        <div class="relative aspect-square overflow-hidden">
+                        <div
+                          class="relative size-16 shrink-0 overflow-hidden rounded-lg bg-base-200/60"
+                        >
                           {#if music.assetBundleName}
                             <AssetImage
                               src={getMusicJacketAssetURL(music.assetBundleName, regionData.region)}
@@ -451,15 +453,13 @@
                             </div>
                           {/if}
                         </div>
-                        <div class="p-2">
-                          <p class="line-clamp-2 text-xs/snug font-medium">
+                        <div class="min-w-0">
+                          <p class="line-clamp-2 text-sm/snug font-medium">
                             {music.title ?? music.id}
                           </p>
-                          {#if music.composer}
-                            <p class="mt-0.5 truncate text-[10px] text-base-content/50">
-                              {music.composer}
-                            </p>
-                          {/if}
+                          <p class="mt-1 truncate text-[10px] text-base-content/50">
+                            {music.composer ?? music.id}
+                          </p>
                         </div>
                       </a>
                     {/each}
