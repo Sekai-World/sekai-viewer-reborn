@@ -204,7 +204,13 @@ body {
     .card-hover-lift {
       transition:
         transform 180ms ease-out,
-        box-shadow 180ms ease-out !important;
+        box-shadow 180ms ease-out,
+        border-color 180ms ease-out !important;
+    }
+
+    .card-hover-lift:hover,
+    .card-hover-lift:focus-within {
+      border-color: var(--color-primary);
     }
 
     :root:not([data-low-motion]) .card-hover-lift:hover {
