@@ -333,7 +333,7 @@ body {
   @media (min-width: 64rem) {
     .archive-event-banner > .card > .card-body {
       display: grid !important;
-      grid-template-columns: minmax(17rem, 18rem) minmax(0, 1fr) !important;
+      grid-template-columns: minmax(20rem, 22rem) minmax(0, 1fr) !important;
       padding: 0 !important;
     }
 
@@ -345,9 +345,10 @@ body {
     }
 
     .archive-event-banner .archive-event-banner-media img {
-      width: 100%;
+      width: 100% !important;
       height: auto !important;
       min-width: 0;
+      max-width: none !important;
     }
 
     .archive-event-banner > .card > .card-body > .archive-event-banner-details {
