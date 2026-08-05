@@ -71,7 +71,7 @@
   frameClass={`${CURRENT_EVENT_CARD_FRAME_CLASS} archive-event-banner`}
 >
   <div
-    class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
+    class={`${EVENT_CARD_MEDIA_CLASS} lg:mx-auto lg:mb-4 lg:aspect-3/1 lg:w-[82%] lg:px-[6%] lg:py-[3%]`}
   >
     {#if event.assetBundleName}
       <AssetImage
