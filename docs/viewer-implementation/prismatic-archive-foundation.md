@@ -192,6 +192,12 @@ of scope and is not implied by this contract.
 - Honor both `prefers-reduced-motion` and the existing `contentDisplaySettings`
   low-motion mode. Ensure focus indicators are not animated away.
 
+### Prismatic Archive feedback refinement
+
+Prismatic Archive does not remove feedback; it uses restrained, semantic motion. Keep interactions in the 150–300ms range, respect `data-low-motion` and `prefers-reduced-motion`, avoid broad/global animations, and avoid heavy filters. Skeletons should preserve layout at independently streamed boundaries instead of leaving blanks. In `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`, the event payload, unit profiles/info, current-event countdown, and unit-profile BGM are separate streaming boundaries; each uses a visual-only skeleton placeholder with `aria-hidden="true"` while its data resolves.
+
+Skeleton groups should avoid per-item costly shimmer loops. A simple pulse or static reduced-motion state, together with reserved dimensions, provides feedback without jank or cumulative layout shift (CLS). The corresponding app-level motion and surface rules are defined in `apps/content-site/src/app.css`.
+
 ### Accessibility
 
 - Use semantic headings, landmarks, lists, buttons, and links. Every interactive
