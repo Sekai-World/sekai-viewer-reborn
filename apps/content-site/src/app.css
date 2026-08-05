@@ -333,13 +333,14 @@ body {
   @media (min-width: 64rem) {
     .archive-event-banner > .card > .card-body {
       display: grid !important;
-      grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr) !important;
+      grid-template-columns: minmax(17rem, 18rem) minmax(0, 1fr) !important;
       padding: 0 !important;
     }
 
     .archive-event-banner > .card > .card-body > .archive-event-banner-media {
-      min-height: 12rem !important;
-      aspect-ratio: auto !important;
+      align-self: start;
+      min-height: 0 !important;
+      aspect-ratio: 488 / 208 !important;
       border-right: 1px solid var(--archive-border-subtle);
     }
 
