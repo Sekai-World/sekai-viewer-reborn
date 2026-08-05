@@ -17,6 +17,56 @@ for the release.
 
 ## Validate and render
 
+Before installing, ensure Helm is available and that `kubectl` can access the
+intended Kubernetes cluster and namespace. The chart does not create a
+Namespace, so `--create-namespace` only creates the namespace selected by
+`--namespace`; it does not add a Namespace resource to the release.
+
+Create an operator-owned values file from the chart defaults, then edit it
+before use:
+
+```bash
+cp deploy/helm/sekai-viewer-reborn/values.yaml viewer-values.yaml
+```
+
+In `viewer-values.yaml`, replace every placeholder image repository and tag,
+Ingress host, and TLS Secret name with values for the target environment. Use
+versioned immutable image tags rather than `latest`. Set the required
+`content-site` values `SEKAI_MASTER_API_BASE_URL`, `SEKAI_API_BASE_URL`, and
+`PUBLIC_REMOTE_ASSET_BASE_URL`; review the default i18n URL and all other
+application settings as well. Keep this operator-owned file outside the chart
+if it contains environment-specific or sensitive configuration.
+
+Render and lint the chart before applying it:
+
+```bash
+helm lint deploy/helm/sekai-viewer-reborn
+helm template viewer deploy/helm/sekai-viewer-reborn \
+  --namespace viewer \
+  --values viewer-values.yaml \
+  > /tmp/sekai-viewer-helm.yaml
+kubectl apply --dry-run=client -f /tmp/sekai-viewer-helm.yaml
+```
+
+The content-site-only render used in CI and troubleshooting can be produced by
+adding the app-disable flags and explicit URL values shown below. Do not apply
+rendered output directly in place of Helm; use it to inspect and validate the
+resources Helm will manage.
+
+## First installation
+
+Install the release with the operator-owned values file. `--wait` waits for
+resources to become ready, and `--timeout` bounds that wait:
+
+```bash
+helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
+  --namespace viewer \
+  --create-namespace \
+  --values viewer-values.yaml \
+  --wait \
+  --timeout 10m
+```
+
 Run Helm's chart validation from the repository root:
 
 ```bash
@@ -40,22 +90,33 @@ values are intentionally left unset because the application Dockerfiles use
 `USER appuser` without pinning numeric IDs; the image-defined non-root user is
 used until the Dockerfiles pin those IDs.
 
-## Install or upgrade
+## Upgrade
 
-Install all four applications into a release namespace, creating that
-namespace outside the chart when necessary:
+For a safe upgrade, first update the operator-owned values file to the new
+versioned immutable image tag and review the rendered diff or manifest. Then
+upgrade the existing release and check both Helm and the Deployment rollout:
 
 ```bash
 helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
   --namespace viewer \
-  --create-namespace \
-  --set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
-  --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
-  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com
+  --values viewer-values.yaml \
+  --wait \
+  --timeout 10m
+helm status viewer --namespace viewer
+kubectl rollout status deployment/viewer-sekai-viewer-reborn-content-site \
+  --namespace viewer \
+  --timeout=10m
 ```
 
-To deploy only selected applications, disable the others through values. For
-example:
+Repeat the rollout check for each enabled application. `helm upgrade` uses the
+chart defaults plus the supplied values file; use `--reuse-values` only when
+you intentionally want to retain the release's previous values and have
+reviewed the consequences of omitting newer defaults or operator changes.
+
+To deploy only selected applications, disable the others through the values
+file or explicit flags. Disabling an app causes Helm to remove that app's
+resources from the release, so confirm the intended resource deletion before
+upgrading. For example:
 
 ```bash
 helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
@@ -65,6 +126,10 @@ helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
   --set apps.media-lab-site.enabled=false \
   --set apps.account-site.enabled=false
 ```
+
+When using this targeted form for an existing release, include the complete
+operator-owned values file as well, or use `--reuse-values` deliberately after
+reviewing the resulting values.
 
 The content site has four default environment keys. The three API and asset
 URL values are empty and must be set by the operator; `PUBLIC_SEKAI_I18N_BASE_URL`
@@ -81,9 +146,20 @@ configured independently under each application's `ingress` values. Set
 
 ## Rollback
 
-Inspect release history and roll back to a previous revision with Helm:
+Inspect release history, select the revision to restore, and roll back with
+readiness waiting enabled:
 
 ```bash
 helm history viewer --namespace viewer
-helm rollback viewer <REVISION> --namespace viewer
+helm rollback viewer <REVISION> \
+  --namespace viewer \
+  --wait \
+  --timeout 10m
+helm status viewer --namespace viewer
+kubectl rollout status deployment/viewer-sekai-viewer-reborn-content-site \
+  --namespace viewer \
+  --timeout=10m
 ```
+
+Use the revision shown by `helm history` (not an image tag) and repeat the
+rollout check for each enabled application after the rollback.

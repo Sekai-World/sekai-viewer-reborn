@@ -86,6 +86,15 @@ release namespace with `--namespace` and `--create-namespace`. Use
 `helm history viewer --namespace viewer` followed by
 `helm rollback viewer <REVISION> --namespace viewer` to roll back a release.
 
+The canonical operator workflow is documented in the chart README: copy
+`values.yaml` to an operator-owned file, replace image/Ingress/TLS
+placeholders, set the required content-site URLs, lint and render before
+applying, and use `helm upgrade --install --wait --timeout` for installation
+and upgrades. Use immutable versioned image tags, check `helm status` and
+`kubectl rollout status`, and use `helm rollback --wait --timeout` after
+selecting a revision from `helm history`. Disabling an app removes its Helm-
+managed resources, and `--reuse-values` should only be used deliberately.
+
 ## Source references
 
 - `deploy/helm/sekai-viewer-reborn/values.yaml` — chart defaults and app values.
