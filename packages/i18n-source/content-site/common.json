@@ -1,6 +1,7 @@
 {
   "aria.closeSidebar": "Close navigation",
   "aria.openSidebar": "Open navigation",
+  "aria.skipToMainContent": "Skip to main content",
   "aria.switchTheme": "Switch theme mode",
   "aria.switchUiLanguageCurrent": "Switch UI language. Current language",
   "backToTopLabel": "Back to top",
