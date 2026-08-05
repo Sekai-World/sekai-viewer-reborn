@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
     DEFAULT_REGION,
@@ -186,6 +186,31 @@
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
 <section role="group" use:swipeRegion>
+  <section
+    class="mx-auto mb-6 max-w-5xl rounded-2xl border border-(--archive-border-subtle) bg-(--archive-surface-default) px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-5"
+    aria-labelledby="content-region-title"
+  >
+    <div class="min-w-0">
+      <h2
+        id="content-region-title"
+        class="flex items-center gap-2 text-sm font-semibold text-(--archive-text-strong)"
+      >
+        <Icon icon="mdi:earth" class="size-4 text-primary" aria-hidden="true" />
+        {gameContentRegionLabel}
+      </h2>
+      <p class="mt-1 text-xs/snug text-(--archive-text-muted)">{gameContentRegionDescription}</p>
+    </div>
+    <div class="mt-3 shrink-0 sm:mt-0">
+      <RegionBadgeSwitch
+        options={supportedRegions.map((r) =>
+          r === selectedRegion
+            ? { key: r, label: r.toUpperCase(), active: true }
+            : { key: r, label: r.toUpperCase(), active: false, onclick: () => selectRegion(r) }
+        )}
+      />
+    </div>
+  </section>
+
   <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="current-event-title">
     <div
       class="mb-4 border-b border-(--archive-border-subtle) pb-4 sm:flex sm:items-end sm:justify-between sm:gap-4"
@@ -200,13 +225,6 @@
         </h2>
       </div>
       <div class="mt-3 flex flex-wrap items-center justify-between gap-3 sm:mt-0 sm:justify-end">
-        <RegionBadgeSwitch
-          options={supportedRegions.map((r) =>
-            r === selectedRegion
-              ? { key: r, label: r.toUpperCase(), active: true }
-              : { key: r, label: r.toUpperCase(), active: false, onclick: () => selectRegion(r) }
-          )}
-        />
         <a
           href="/events/{selectedRegion}"
           class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/60 transition-colors duration-200 hover:text-primary"
@@ -280,14 +298,17 @@
     {/await}
   </section>
 
-  <section class="mb-8" aria-labelledby="latest-data-title">
-    <div class="mb-5 border-b border-(--archive-border-subtle) pb-3">
-      <h2
-        id="latest-data-title"
-        class="text-base font-semibold tracking-wide text-(--archive-text-strong)"
-      >
-        {latestDataTitle}
-      </h2>
+  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="latest-data-title">
+    <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
+      <div class="flex items-center gap-2">
+        <Icon icon="mdi:cards-outline" class="size-4 text-primary" aria-hidden="true" />
+        <h2
+          id="latest-data-title"
+          class="text-sm font-semibold tracking-wide text-(--archive-text-muted)"
+        >
+          {latestDataTitle}
+        </h2>
+      </div>
     </div>
     {#if latestDataPromise}
       {#await latestDataPromise}
@@ -330,9 +351,9 @@
         {#if regionData.cards.length === 0 && regionData.musics.length === 0 && regionData.gachas.length === 0}
           <p class="text-center text-sm text-base-content/60">{latestDataNoData}</p>
         {:else}
-          <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <!-- Compact visual release records. -->
-            <div class="space-y-6 lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+            <div class="space-y-4 lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
               <div class="content-card-inset p-3 sm:p-4">
                 <h3
                   class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70"
@@ -502,24 +523,24 @@
     {/if}
   </section>
 
-  <section
-    class="mx-auto mt-12 max-w-7xl border-t border-(--archive-border-subtle) pt-8"
-    aria-labelledby="content-directory-title"
-  >
-    <div class="mb-5 max-w-2xl">
-      <h2
-        id="content-directory-title"
-        class="text-xl/tight font-bold text-base-content sm:text-2xl"
-      >
-        {directoryTitle}
-      </h2>
-      <p class="mt-2 text-sm/6 text-base-content/60">{directoryDescription}</p>
+  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="content-directory-title">
+    <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
+      <div class="flex items-center gap-2">
+        <Icon icon="mdi:account-group" class="size-4 text-primary" aria-hidden="true" />
+        <h2
+          id="content-directory-title"
+          class="text-sm font-semibold tracking-wide text-(--archive-text-muted)"
+        >
+          {directoryTitle}
+        </h2>
+      </div>
+      <p class="mt-2 max-w-2xl text-sm/6 text-(--archive-text-muted)">{directoryDescription}</p>
     </div>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {#each directoryItems as item (item.key)}
         <a
           href={item.href}
-          class="group card-hover-lift content-card-shell flex min-h-28 items-start gap-4 rounded-2xl p-4 shadow-sm hover:border-primary/35 sm:p-5"
+          class="group card-hover-lift content-card-shell flex min-h-28 items-start gap-4 rounded-xl p-4 transition-[border-color] duration-200 hover:border-primary/35 sm:p-5"
         >
           <span
             class="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-content"
@@ -543,11 +564,19 @@
 </section>
 
 <!-- ──── Version Info (standalone, below data area) ─────────────────── -->
-<section class="mt-10 border-t border-(--archive-border-subtle) pt-6">
-  <h2 class="mb-3 text-sm font-semibold tracking-wide text-(--archive-text-muted)">
-    {versionInfoTitle}
-  </h2>
-  <div class="content-card-shell mx-auto max-w-5xl overflow-x-auto rounded-xl">
+<section class="mx-auto mt-12 max-w-5xl" aria-labelledby="version-information-title">
+  <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
+    <div class="flex items-center gap-2">
+      <Icon icon="mdi:earth" class="size-4 text-primary" aria-hidden="true" />
+      <h2
+        id="version-information-title"
+        class="text-sm font-semibold tracking-wide text-(--archive-text-muted)"
+      >
+        {versionInfoTitle}
+      </h2>
+    </div>
+  </div>
+  <div class="content-card-shell overflow-x-auto rounded-xl">
     <table class="table table-sm w-full">
       <thead>
         <tr class="text-xs uppercase tracking-wider text-base-content/50">
