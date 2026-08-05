@@ -20,6 +20,7 @@ Prismatic Archive treats `content-site` as a calm, readable archive/catalogue ra
 - Preserve image and data behavior. Artwork remains visibility-gated/lazy where established; spoiler/reveal semantics stay intact; route, query, and server state remain authoritative.
 - Phase 3 applies these rules to `apps/content-site/src/routes/cards/[region]/+page.svelte` and `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`, composing the existing card and event components (including `CardListCard.svelte`, `EventDetailDataCard.svelte`, `EventDetailInfoCard.svelte`, and `EventDetailAssetCard.svelte`). A multi-card event identity rail must flow naturally with the page rather than becoming a full-column sticky rail.
 - This is a design evolution from older generic daisyUI card/base surfaces and ad-hoc spacing or shadows toward semantic, calmer archive surfaces and explicit hierarchy; it does not claim that all older UI has been removed.
+- The homepage current-event card remains the primary entry point, but its desktop presentation is intentionally contained: keep the card within a readable `max-w-4xl` region and reduce the banner media footprint at `lg` widths rather than treating it as a full-width hero. Mobile sizing remains unchanged.
 
 ## daisyUI Override Rules
 
