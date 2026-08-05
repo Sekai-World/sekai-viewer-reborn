@@ -351,7 +351,19 @@
             {closeLabel}
           />
 
-          {#await data.unitProfiles then unitProfiles}
+          {#await data.unitProfiles}
+            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <div class="h-4 w-2/5 rounded bg-base-300"></div>
+                <div class="space-y-2">
+                  <div class="h-12 rounded-xl bg-base-300"></div>
+                  <div class="h-12 rounded-xl bg-base-300"></div>
+                  <div class="h-12 rounded-xl bg-base-300"></div>
+                  <div class="h-12 rounded-xl bg-base-300"></div>
+                </div>
+              </div>
+            </div>
+          {:then unitProfiles}
             <EventDetailInfoCard
               translate={currentTranslate}
               event={payload.event}
@@ -371,7 +383,14 @@
             />
           {/await}
 
-          {#await data.isCurrentEvent then isCurrentEvent}
+          {#await data.isCurrentEvent}
+            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <div class="h-4 w-2/5 rounded bg-base-300"></div>
+                <div class="h-20 rounded-xl bg-base-300"></div>
+              </div>
+            </div>
+          {:then isCurrentEvent}
             <EventDetailCountdownCard
               messages={currentMessages}
               event={payload.event}
@@ -383,7 +402,14 @@
         </aside>
 
         <div class="flex min-w-0 flex-col gap-5">
-          {#await data.unitProfiles then unitProfiles}
+          {#await data.unitProfiles}
+            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <div class="h-4 w-2/5 rounded bg-base-300"></div>
+                <div class="h-24 rounded-[1.75rem] bg-base-300 sm:h-28"></div>
+              </div>
+            </div>
+          {:then unitProfiles}
             <EventDetailBgmCard
               event={payload.event}
               region={data.region}
