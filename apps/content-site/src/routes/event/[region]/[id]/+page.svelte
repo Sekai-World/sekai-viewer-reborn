@@ -298,7 +298,7 @@
   {/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-5 px-2 pb-6 sm:px-4">
   {#await data.eventPayload}
     <PageHeader
       breadcrumbs={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}
@@ -335,9 +335,9 @@
 
     {#if payload.event}
       <div
-        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)]"
+        class="grid grid-cols-1 gap-5 md:grid-cols-[minmax(17rem,30%)_minmax(0,1fr)] md:items-start xl:grid-cols-[minmax(19rem,28%)_minmax(0,1fr)]"
       >
-        <div class="flex flex-col gap-4">
+        <aside class="flex flex-col gap-4">
           <EventDetailAssetCard
             event={payload.event}
             region={data.region}
@@ -380,9 +380,9 @@
               title={eventCountdownTitle}
             />
           {/await}
-        </div>
+        </aside>
 
-        <div class="flex flex-col gap-4">
+        <div class="flex min-w-0 flex-col gap-5">
           {#await data.unitProfiles then unitProfiles}
             <EventDetailBgmCard
               event={payload.event}
