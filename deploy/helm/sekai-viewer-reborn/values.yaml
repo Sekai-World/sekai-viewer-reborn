@@ -28,8 +28,10 @@ containerSecurityContext:
     drop:
       - ALL
 
-# Prefer placing replicas on different nodes while remaining schedulable on a
-# small cluster. This value can be replaced for a cluster's scheduling policy.
+# Prefer placing replicas of the same application on different nodes while
+# remaining schedulable on a small cluster. The __APP_NAME__ value is replaced
+# with the current app name when rendered. This value can be replaced for a
+# cluster's scheduling policy.
 affinity:
   podAntiAffinity:
     preferredDuringSchedulingIgnoredDuringExecution:
@@ -38,7 +40,7 @@ affinity:
           topologyKey: kubernetes.io/hostname
           labelSelector:
             matchLabels:
-              app.kubernetes.io/part-of: sekai-viewer-reborn
+              app.kubernetes.io/name: __APP_NAME__
 
 tolerations: []
 nodeSelector: {}

@@ -29,7 +29,7 @@ spec:
         {{- toYaml $root.Values.podSecurityContext | nindent 8 }}
       {{- with $root.Values.affinity }}
       affinity:
-        {{- toYaml . | nindent 8 }}
+        {{- toYaml . | replace "__APP_NAME__" $appName | nindent 8 }}
       {{- end }}
       {{- with $root.Values.tolerations }}
       tolerations:

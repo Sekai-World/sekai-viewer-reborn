@@ -22,11 +22,12 @@ intended Kubernetes cluster and namespace. The chart does not create a
 Namespace, so `--create-namespace` only creates the namespace selected by
 `--namespace`; it does not add a Namespace resource to the release.
 
-Create an operator-owned values file from the chart defaults, then edit it
-before use:
+Create the operator-owned values file once from the chart defaults, then edit
+it before use. The command fails rather than overwriting an existing file;
+preserve this file for later upgrades:
 
 ```bash
-cp deploy/helm/sekai-viewer-reborn/values.yaml viewer-values.yaml
+test ! -e viewer-values.yaml && cp deploy/helm/sekai-viewer-reborn/values.yaml viewer-values.yaml
 ```
 
 In `viewer-values.yaml`, replace every placeholder image repository and tag,
@@ -36,6 +37,12 @@ versioned immutable image tags rather than `latest`. Set the required
 `PUBLIC_REMOTE_ASSET_BASE_URL`; review the default i18n URL and all other
 application settings as well. Keep this operator-owned file outside the chart
 if it contains environment-specific or sensitive configuration.
+
+The default preferred pod anti-affinity spreads replicas of each application,
+not different applications in the suite, by replacing the reserved
+`__APP_NAME__` value in the default affinity with the app currently being
+rendered. An operator replacing `affinity` can provide its own cluster-specific
+scheduling policy without Helm evaluating that value as a template.
 
 Render and lint the chart before applying it:
 

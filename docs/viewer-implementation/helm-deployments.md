@@ -30,8 +30,9 @@ IDs; the image-defined non-root user is used until the Dockerfiles pin those
 IDs. Containers disallow privilege escalation and drop all Linux capabilities.
 `readOnlyRootFilesystem` is not enabled by default because no writable-runtime
 assessment or tmpfs configuration has been established. Default preferred pod
-anti-affinity, empty tolerations, and an empty node selector are provided in
-`values.yaml`.
+anti-affinity spreads replicas of each app by substituting the current app name
+for the reserved `__APP_NAME__` affinity value. Empty tolerations and an empty
+node selector are provided in `values.yaml`.
 
 The startup, liveness, and readiness probes are TCP probes against the named
 `http` port, which is container port 3000. The chart does not assume an HTTP
