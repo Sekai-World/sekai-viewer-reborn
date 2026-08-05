@@ -229,6 +229,11 @@ body {
         border-color 180ms ease-out !important;
     }
 
+    .card-hover-lift:hover,
+    .card-hover-lift:focus-within {
+      border-color: var(--color-primary);
+    }
+
     :root:not([data-low-motion]) .card-hover-lift:hover {
       transform: translateY(-0.25rem);
       box-shadow: 0 12px 20px color-mix(in oklab, var(--color-base-content) 12%, transparent) !important;
