@@ -261,6 +261,22 @@ their contracts are stable, document token ownership, and measure bundle size,
 SSR output, Web Vitals, keyboard paths, and visual regressions. Any generated
 SDK or deployment changes are separate, explicit work items.
 
+## Delivery progress
+
+### Content-site Phase 3 visual polish — cards catalogue and event detail
+
+- Archive semantic surfaces were applied without changing data, route, or i18n
+  contracts.
+- The cards catalogue retains query persistence and URL synchronization,
+  visible-only artwork loading, and spoiler-reveal semantics. Its unbounded
+  lists avoid static heavy image filters and shadows.
+- Event detail retains streamed boundaries, asset preview, BGM, reward
+  expansion, and region swipe behavior. Its left rail flows naturally rather
+  than remaining a sticky full rail, so short viewports do not leave content
+  unreachable.
+- Validated with `pnpm --filter @apps/content-site check`,
+  `pnpm --filter @apps/content-site lint`, and `git diff --check`.
+
 ## Likely files and components
 
 These are likely touch points, not a mandate to edit all of them in Phase 1.
