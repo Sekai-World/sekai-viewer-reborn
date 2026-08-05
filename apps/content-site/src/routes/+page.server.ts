@@ -301,7 +301,7 @@ const fetchRegionLatestData = async (
     getCardsByRegionList({
       baseUrl,
       path: { region },
-      query: { page: 1, page_size: 3, spoiler: false, sort_by: "releaseAt", sort_order: "desc" }
+      query: { page: 1, page_size: 9, spoiler: false, sort_by: "releaseAt", sort_order: "desc" }
     }),
     getMusicsByRegionList({
       baseUrl,
