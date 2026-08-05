@@ -402,14 +402,7 @@
         </aside>
 
         <div class="flex min-w-0 flex-col gap-5">
-          {#await data.unitProfiles}
-            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
-              <div class="card-body gap-4 p-3 sm:p-5">
-                <div class="h-4 w-2/5 rounded bg-base-300"></div>
-                <div class="h-24 rounded-[1.75rem] bg-base-300 sm:h-28"></div>
-              </div>
-            </div>
-          {:then unitProfiles}
+          {#await data.unitProfiles then unitProfiles}
             <EventDetailBgmCard
               event={payload.event}
               region={data.region}
