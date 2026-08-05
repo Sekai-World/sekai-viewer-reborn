@@ -263,6 +263,17 @@ SDK or deployment changes are separate, explicit work items.
 
 ## Delivery progress
 
+### Tools-site first workflow
+
+- `tools-site` now has an SSR-safe, tools-local i18n scope and a current-event
+  comparison flow that uses SDK calls for two validated regions.
+- The selected regions are restored from the URL through GET parameters, and
+  unavailable-region and request-failed results remain distinct localized
+  states.
+- The workflow preserves the existing `ViewerShell` and route-motion boundary.
+  It does not fabricate cross-app record links because no public `content-site`
+  base-URL contract exists.
+
 ### Content-site Phase 3 visual polish — cards catalogue and event detail
 
 - Archive semantic surfaces were applied without changing data, route, or i18n

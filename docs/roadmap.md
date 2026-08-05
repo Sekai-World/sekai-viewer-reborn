@@ -19,7 +19,7 @@ scaffolded placeholders and are **not** feature-complete.
 | App              | Status      | Notes                                   |
 | ---------------- | ----------- | --------------------------------------- |
 | `content-site`   | Available   | Primary game-data browser (see below).  |
-| `tools-site`     | Exploratory | Scaffold only; no feature work started. |
+| `tools-site`     | In progress | Current-event comparison workflow: SSR-safe tools-local i18n, URL-restored GET selection for two validated regions, localized unavailable/request-failed states, and no fabricated cross-app links without a public content-site base-URL contract. |
 | `media-lab-site` | Exploratory | Scaffold only; no feature work started. |
 | `account-site`   | Exploratory | Scaffold only; no feature work started. |
 
