@@ -98,7 +98,7 @@
     <main
       id={mainId}
       tabindex="-1"
-      class="mx-auto w-full max-w-384 px-3 pb-8 pt-6 md:px-6 lg:px-8"
+      class="mx-auto w-full max-w-384 px-3 pb-8 pt-6 outline-none md:px-6 lg:px-8"
     >
       {#if showTitle}
         <section class="py-12 text-center">
@@ -126,7 +126,7 @@
         sidebarOpen = false;
       }}
     ></button>
-    <nav
+    <aside
       id={sidebarPanelId}
       aria-label={sidebarLabel}
       class={`viewer-shell-rail menu min-h-full w-72 bg-base-100 p-4 ${desktopRailOpen ? "lg:w-68 lg:border-r lg:border-base-content/10 lg:px-3 lg:py-5" : ""}`}
