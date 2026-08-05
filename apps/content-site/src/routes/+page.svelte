@@ -186,18 +186,10 @@
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
 <section role="group" use:swipeRegion>
-  <!-- Region selector (shared for both sections) -->
-  <div class="mb-6 flex flex-wrap justify-center gap-2">
-    <RegionBadgeSwitch
-      options={supportedRegions.map((r) =>
-        r === selectedRegion
-          ? { key: r, label: r.toUpperCase(), active: true }
-          : { key: r, label: r.toUpperCase(), active: false, onclick: () => selectRegion(r) }
-      )}
-    />
-  </div>
-  <section class="mx-auto mb-10 max-w-4xl" aria-labelledby="current-event-title">
-    <div class="mb-3 flex items-center justify-between gap-3 px-1">
+  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="current-event-title">
+    <div
+      class="mb-4 border-b border-(--archive-border-subtle) pb-4 sm:flex sm:items-end sm:justify-between sm:gap-4"
+    >
       <div class="flex items-center gap-2">
         <Icon icon="mdi:calendar-star" class="size-4 text-primary" aria-hidden="true" />
         <h2
@@ -207,21 +199,36 @@
           {latestDataEventsLabel}
         </h2>
       </div>
-      <a
-        href="/events/{selectedRegion}"
-        class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
-      >
-        {latestDataViewAll}
-        <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
-      </a>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-3 sm:mt-0 sm:justify-end">
+        <RegionBadgeSwitch
+          options={supportedRegions.map((r) =>
+            r === selectedRegion
+              ? { key: r, label: r.toUpperCase(), active: true }
+              : { key: r, label: r.toUpperCase(), active: false, onclick: () => selectRegion(r) }
+          )}
+        />
+        <a
+          href="/events/{selectedRegion}"
+          class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/60 transition-colors duration-200 hover:text-primary"
+        >
+          {latestDataViewAll}
+          <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+        </a>
+      </div>
     </div>
     {#await currentEventPromise}
-      <article class="card content-card-shell w-full shadow-sm">
-        <div class="card-body">
-          <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
-          <div class="space-y-2">
-            <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
-            <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
+      <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`} aria-busy="true">
+        <span class="sr-only" role="status" aria-live="polite">{latestDataLoadingEvents}</span>
+        <div class={EVENT_CARD_BODY_CLASS}>
+          <div
+            class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 animate-pulse bg-base-300/70 p-[5%] lg:mb-0 lg:p-4`}
+          ></div>
+          <div
+            class="archive-event-banner-details space-y-4 border-t border-(--archive-border-subtle) pt-4"
+          >
+            <div class="h-5 w-28 animate-pulse rounded bg-base-300"></div>
+            <div class="h-7 w-4/5 animate-pulse rounded bg-base-300"></div>
+            <div class="h-22 animate-pulse rounded-xl bg-base-300"></div>
           </div>
         </div>
       </article>
@@ -240,21 +247,34 @@
           {bannerAltSuffix}
         />
       {:else}
-        <article class="card content-card-shell w-full shadow-sm">
-          <div class="card-body">
-            <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
-            {#if card.error}
-              <p class="text-sm text-error">{card.error}</p>
-            {:else}
-              <p class="text-sm opacity-70">{noEventLabel}</p>
-            {/if}
+        <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`}>
+          <div class={EVENT_CARD_BODY_CLASS}>
+            <div
+              class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
+            ></div>
+            <div
+              class="archive-event-banner-details flex min-w-0 flex-col justify-end border-t border-(--archive-border-subtle) pt-4"
+            >
+              {#if card.error}
+                <p class="text-sm text-error">{card.error}</p>
+              {:else}
+                <p class="text-sm opacity-70">{noEventLabel}</p>
+              {/if}
+            </div>
           </div>
         </article>
       {/if}
     {:catch _}
-      <article class="card content-card-shell w-full shadow-sm">
-        <div class="card-body">
-          <p class="text-sm text-error">{data.currentEventLoadFailedMessage}</p>
+      <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`}>
+        <div class={EVENT_CARD_BODY_CLASS}>
+          <div
+            class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
+          ></div>
+          <div
+            class="archive-event-banner-details flex min-w-0 flex-col justify-end border-t border-(--archive-border-subtle) pt-4"
+          >
+            <p class="text-sm text-error">{data.currentEventLoadFailedMessage}</p>
+          </div>
         </div>
       </article>
     {/await}
