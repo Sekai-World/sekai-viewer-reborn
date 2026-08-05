@@ -338,10 +338,16 @@ body {
     }
 
     .archive-event-banner > .card > .card-body > .archive-event-banner-media {
-      align-self: start;
-      min-height: 0 !important;
-      aspect-ratio: 488 / 208 !important;
+      align-self: stretch;
+      min-height: 12rem !important;
+      aspect-ratio: auto !important;
       border-right: 1px solid var(--archive-border-subtle);
+    }
+
+    .archive-event-banner .archive-event-banner-media img {
+      width: 100%;
+      height: auto !important;
+      min-width: 0;
     }
 
     .archive-event-banner > .card > .card-body > .archive-event-banner-details {
