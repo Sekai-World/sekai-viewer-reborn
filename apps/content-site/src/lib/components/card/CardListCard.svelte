@@ -167,11 +167,7 @@
     event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
 
   const handleCardClick = (event: MouseEvent): void => {
-    if (
-      !isSpoilerContentMosaicked() ||
-      hasModifier(event) ||
-      event.button !== 0
-    ) {
+    if (!isSpoilerContentMosaicked() || hasModifier(event) || event.button !== 0) {
       return;
     }
 
@@ -421,27 +417,29 @@
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 <a
   {href}
-  class="relative isolate block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100"
+  class="relative isolate block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-(--archive-focus-ring) focus-visible:ring-offset-2 focus-visible:ring-offset-(--archive-focus-offset)"
   aria-label={`${item.prefix} ${idLabel}${item.id}`}
   onclick={handleCardClick}
   onkeydown={handleCardKeydown}
 >
   <article
-    class={`card-hover-lift card content-card-shell relative overflow-hidden shadow-sm ${viewMode === "agenda" ? "min-h-34" : ""}`}
+    class={`archive-card-item card-hover-lift card relative overflow-hidden border ${viewMode === "agenda" ? "min-h-34" : ""}`}
   >
     {#if isSpoilerPlaceholderVisible()}
       <div
-        class={viewMode === "grid" ? "aspect-video bg-base-200/60" : "min-h-32 bg-base-200/60"}
+        class={viewMode === "grid"
+          ? "archive-card-placeholder aspect-video"
+          : "archive-card-placeholder min-h-32"}
       ></div>
       <div class="card-body gap-2 p-3 sm:p-4">
-        <div class="h-5 w-3/4 rounded bg-base-200/70"></div>
-        <div class="h-4 w-1/3 rounded bg-base-200/70"></div>
+        <div class="archive-card-sheen h-5 w-3/4 rounded"></div>
+        <div class="archive-card-sheen h-4 w-1/3 rounded"></div>
       </div>
       <div class="absolute inset-0 z-20">
         {@render spoilerOverlay()}
       </div>
     {:else if viewMode === "agenda"}
-      <div class="grid grid-cols-[9rem_1fr] gap-4 p-3 sm:grid-cols-[12rem_1fr]">
+      <div class="grid grid-cols-[8rem_1fr] gap-3 p-3 sm:grid-cols-[12rem_1fr] sm:gap-4">
         <div class="grid grid-cols-2 gap-2 self-center">
           {#if !isTrainedOnlyCard()}
             {@render placedThumbImage(false)}
@@ -450,7 +448,9 @@
             {@render placedThumbImage(true)}
           {/if}
         </div>
-        <div class="flex min-w-0 flex-col justify-center gap-2">
+        <div
+          class="flex min-w-0 flex-col justify-center gap-2 border-l border-(--archive-border-subtle) pl-3 sm:pl-4"
+        >
           {@render metaBadges()}
           <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
           <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
@@ -540,7 +540,7 @@
           {/if}
         </div>
       </div>
-      <div class="card-body gap-1.5 p-3 sm:p-4">
+      <div class="archive-card-copy card-body gap-1.5 p-3 sm:p-4">
         <h2 class="line-clamp-2 text-base/snug font-semibold">{getCardTitle()}</h2>
         {@render metaBadges()}
         <p class="truncate text-sm opacity-70">{getCharacterLabel()}</p>
@@ -554,7 +554,7 @@
     position: relative;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    background: color-mix(in oklab, var(--color-base-200) 86%, var(--color-base-100));
+    background: var(--archive-surface-sunken);
   }
 
   .card-grid-content {
@@ -651,5 +651,28 @@
 
   .card-grid-hover-area-right:hover ~ .card-grid-content .card-grid-rarity-stack-left {
     opacity: 0;
+  }
+
+  .archive-card-item {
+    background: var(--archive-surface-raised);
+    border-color: var(--archive-border-subtle);
+    transition:
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+
+  .archive-card-item:hover {
+    border-color: var(--archive-border-default);
+    box-shadow: 0 0.5rem 1rem color-mix(in oklab, var(--archive-text-strong) 8%, transparent);
+  }
+
+  .archive-card-placeholder,
+  .archive-card-sheen {
+    background: var(--archive-surface-sunken);
+  }
+
+  .archive-card-copy {
+    background: color-mix(in oklab, var(--archive-surface-raised) 92%, transparent);
   }
 </style>

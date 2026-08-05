@@ -984,28 +984,37 @@
     {/snippet}
   </PageHeader>
 
-  <div class="flex flex-wrap items-center justify-between gap-2">
-    <div class="join">
-      <ListToolbarButton
-        icon="mdi:clock-outline"
-        label={listSortByReleaseAt}
-        ariaLabel={`${listSortByReleaseAt} (${sortBy === "releaseAt" ? sortOrder : "desc"})`}
-        sortIndicatorIcon={sortBy === "releaseAt" ? getSortOrderIcon("releaseAt") : undefined}
-        class={`join-item ${getSortButtonClass("releaseAt")}`}
-        onclick={() => toggleSortBy("releaseAt")}
-      />
+  <div
+    class="archive-card-controls flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
+  >
+    <div class="archive-control-group flex items-center gap-2">
+      <div
+        class="archive-control-label hidden text-xs font-bold tracking-[0.14em] uppercase sm:block"
+      >
+        {listSortByReleaseAt}
+      </div>
+      <div class="join">
+        <ListToolbarButton
+          icon="mdi:clock-outline"
+          label={listSortByReleaseAt}
+          ariaLabel={`${listSortByReleaseAt} (${sortBy === "releaseAt" ? sortOrder : "desc"})`}
+          sortIndicatorIcon={sortBy === "releaseAt" ? getSortOrderIcon("releaseAt") : undefined}
+          class={`join-item ${getSortButtonClass("releaseAt")}`}
+          onclick={() => toggleSortBy("releaseAt")}
+        />
 
-      <ListToolbarButton
-        icon="mdi:numeric"
-        label={listSortById}
-        ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
-        sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
-        class={`join-item ${getSortButtonClass("id")}`}
-        onclick={() => toggleSortBy("id")}
-      />
+        <ListToolbarButton
+          icon="mdi:numeric"
+          label={listSortById}
+          ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+          sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
+          class={`join-item ${getSortButtonClass("id")}`}
+          onclick={() => toggleSortBy("id")}
+        />
+      </div>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="archive-control-group flex items-center justify-between gap-2 sm:justify-end">
       <div class="join">
         <ListToolbarButton
           icon="mdi:view-grid-outline"
@@ -1030,7 +1039,9 @@
       <ListToolbarButton
         icon="mdi:funnel"
         label={listOpenFilters}
-        class={hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
+        class={hasAnyAppliedFilters()
+          ? "btn-primary shadow-sm"
+          : "btn-outline border-primary text-primary"}
         onclick={openFilterDialog}
       />
     </div>
@@ -1038,15 +1049,15 @@
 
   {#if isReloadingFirstPage}
     <div
-      class="content-card-shell flex min-h-48 items-center justify-center rounded-2xl p-8 shadow-sm"
+      class="archive-list-status flex min-h-48 items-center justify-center rounded-2xl border p-8"
     >
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{cardListLoading}</span>
     </div>
   {:else if isInitialLoading || data.region !== loadedRegion}
-    <div class={getListGridClass()}>
+    <div class={`archive-results-field ${getListGridClass()}`}>
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
-        <div class="content-card-shell rounded-2xl p-4 shadow-sm">
+        <div class="archive-card-skeleton rounded-2xl border p-4">
           <div class="skeleton h-48 w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
           <div class="mt-2 skeleton h-3 w-1/2 rounded"></div>
@@ -1056,7 +1067,7 @@
   {:else if items.length === 0 && errorMessage}
     <div class="alert alert-error">{errorMessage}</div>
   {:else}
-    <div class={getListGridClass()}>
+    <div class={`archive-results-field ${getListGridClass()}`}>
       {#each visibleItems as item (item.id)}
         <CardListCard
           href={getCardDetailHref(item)}
@@ -1074,7 +1085,7 @@
     </div>
 
     {#if errorMessage}
-      <div class="flex items-center justify-center gap-3">
+      <div class="archive-list-error flex items-center justify-center gap-3 rounded-2xl border p-3">
         <div class="alert alert-error max-w-xl flex-1">{errorMessage}</div>
         <button
           type="button"
@@ -1087,7 +1098,10 @@
     {/if}
 
     {#if hasNext}
-      <div bind:this={sentinel} class="flex min-h-24 items-center justify-center py-5">
+      <div
+        bind:this={sentinel}
+        class="archive-list-sentinel flex min-h-24 items-center justify-center rounded-2xl py-5"
+      >
         {#if isLoading}
           <span class="loading loading-spinner loading-md"></span>
           <span class="ml-3 text-sm opacity-70">{cardListLoadingMore}</span>
@@ -1098,17 +1112,19 @@
         {/if}
       </div>
     {:else if visibleItems.length > 0}
-      <div class="py-2 text-center text-sm opacity-60">{cardListEnd}</div>
+      <div class="archive-list-end py-3 text-center text-sm">{cardListEnd}</div>
     {/if}
 
     {#if visibleItems.length === 0 && !errorMessage}
-      <div class="py-12 text-center text-sm opacity-70">{cardListEmpty}</div>
+      <div class="archive-list-empty rounded-2xl border py-12 text-center text-sm">
+        {cardListEmpty}
+      </div>
     {/if}
   {/if}
 </section>
 
 <dialog bind:this={filterDialog} class="modal">
-  <div class="modal-box max-w-xl">
+  <div class="modal-box archive-filter-dialog max-w-xl border">
     <div class="flex items-center justify-between gap-3">
       <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
       <form method="dialog">
@@ -1369,3 +1385,58 @@
     <button type="submit" aria-label={closeLabel}></button>
   </form>
 </dialog>
+
+<style>
+  .archive-card-controls,
+  .archive-list-status,
+  .archive-list-error,
+  .archive-list-empty,
+  .archive-filter-dialog {
+    background: var(--archive-surface-raised);
+    border-color: var(--archive-border-default);
+  }
+
+  .archive-control-group {
+    min-width: 0;
+  }
+
+  .archive-control-label {
+    color: var(--archive-text-muted);
+  }
+
+  .archive-results-field {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .archive-results-field::before {
+    position: absolute;
+    z-index: -1;
+    inset: -0.75rem;
+    border: 1px solid var(--archive-border-subtle);
+    border-radius: 1.25rem;
+    background: var(--archive-surface-sunken);
+    content: "";
+  }
+
+  .archive-card-skeleton {
+    background: var(--archive-surface-raised);
+    border-color: var(--archive-border-subtle);
+  }
+
+  .archive-list-sentinel,
+  .archive-list-end {
+    color: var(--archive-text-muted);
+  }
+
+  .archive-filter-dialog {
+    box-shadow: 0 1.5rem 4rem color-mix(in oklab, var(--archive-text-strong) 14%, transparent);
+  }
+
+  @media (max-width: 639px) {
+    .archive-results-field::before {
+      inset: -0.5rem;
+      border-radius: 1rem;
+    }
+  }
+</style>
