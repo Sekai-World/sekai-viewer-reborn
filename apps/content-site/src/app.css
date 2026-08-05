@@ -345,6 +345,13 @@ body {
       max-width: none !important;
     }
 
+    .archive-event-banner .archive-event-banner-media > div,
+    .archive-event-banner .archive-event-banner-media > div > div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .archive-event-banner > .card > .card-body > .archive-event-banner-details {
       display: flex !important;
       min-width: 0;
