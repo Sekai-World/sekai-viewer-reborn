@@ -995,6 +995,11 @@
     class="archive-card-controls flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
   >
     <div class="archive-control-group flex items-center gap-2">
+      <div
+        class="archive-control-label hidden text-xs font-bold tracking-[0.14em] uppercase sm:block"
+      >
+        {listSortByReleaseAt}
+      </div>
       <div class="join">
         <ListToolbarButton
           icon="mdi:clock-outline"
@@ -1400,6 +1405,10 @@
 
   .archive-control-group {
     min-width: 0;
+  }
+
+  .archive-control-label {
+    color: var(--archive-text-muted);
   }
 
   .archive-results-field {
