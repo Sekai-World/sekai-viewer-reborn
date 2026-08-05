@@ -101,7 +101,12 @@
         </h3>
       </div>
       {#if displayUnit}
-        <UnitIconBadge unit={event.unit!} fallbackLabel={displayUnit} variant="sm" />
+        <UnitIconBadge
+          unit={event.unit!}
+          fallbackLabel={displayUnit}
+          variant="sm"
+          class="current-event-unit-badge lg:size-16!"
+        />
       {/if}
     </div>
 
