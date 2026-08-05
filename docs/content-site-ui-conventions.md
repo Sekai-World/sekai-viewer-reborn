@@ -15,6 +15,7 @@ Follow these rules before introducing new page-level patterns, daisyUI overrides
 Prismatic Archive treats `content-site` as a calm, readable archive/catalogue rather than a generic dashboard or decorative landing page. The following rules are confirmed by the Phase 3 cards catalogue and event detail work:
 
 - Use a semantic surface hierarchy: canvas/background, panel, inset/sunken, and elevated/overlay. Prefer the archive text, border, accent, and focus roles plus the `content-card-*` primitives defined in `apps/content-site/src/app.css`.
+- In dark palettes, keep the page canvas visibly darker than the standard panel, with inset below the panel and raised/overlay surfaces above it. `content-card-shell` relies on this separation plus `--archive-border-subtle`; tune those semantic tokens together across default, sakura, and mint rather than adding card-specific shadows or colors.
 - Keep the visual system restrained: thin borders, modest and interaction-limited shadows, no heavy blur or filters, compact but touch-safe controls, visible focus, and low-motion-safe transitions.
 - Make information architecture explicit: clear page identity, composed control decks, grouped result fields, and scannable evidence/data sections. Build mobile-first and let detail rails flow naturally on narrow screens.
 - Preserve image and data behavior. Artwork remains visibility-gated/lazy where established; spoiler/reveal semantics stay intact; route, query, and server state remain authoritative.
