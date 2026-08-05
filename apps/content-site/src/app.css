@@ -354,24 +354,24 @@ body {
   }
 
   @media (min-width: 64rem) {
-    .archive-event-banner .card-body {
-      display: grid;
-      grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr);
-      padding: 0;
+    .archive-event-banner > .card > .card-body {
+      display: grid !important;
+      grid-template-columns: minmax(12rem, 14rem) minmax(0, 1fr) !important;
+      padding: 0 !important;
     }
 
-    .archive-event-banner .archive-event-banner-media {
-      min-height: 12rem;
-      aspect-ratio: auto;
+    .archive-event-banner > .card > .card-body > .archive-event-banner-media {
+      min-height: 12rem !important;
+      aspect-ratio: auto !important;
       border-right: 1px solid var(--archive-border-subtle);
     }
 
-    .archive-event-banner .archive-event-banner-details {
-      display: flex;
+    .archive-event-banner > .card > .card-body > .archive-event-banner-details {
+      display: flex !important;
       min-width: 0;
       flex-direction: column;
       justify-content: center;
-      padding: 1.25rem 1.5rem;
+      padding: 1.25rem 1.5rem !important;
       border-top: 0;
     }
   }
