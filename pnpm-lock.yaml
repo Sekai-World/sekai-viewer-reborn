@@ -142,7 +142,7 @@ importers:
         version: link:../../packages/ui-tokens
       taglib-wasm:
         specifier: ^1.2.2
-        version: 1.6.1(typescript@6.0.3)
+        version: 1.7.2(typescript@6.0.3)
     devDependencies:
       '@iconify-icons/mdi':
         specifier: ^1.2.48
@@ -2773,8 +2773,8 @@ packages:
     resolution: {integrity: sha512-eNRKgb3z66Yp3D2CixVujOUvXLFUTij/zVnV8KRyvFdQwpz7I5DS8UfRkTeLzb64u+dkzDSdelE24izu+zSSUg==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  taglib-wasm@1.6.1:
-    resolution: {integrity: sha512-KSb+AxT1ynzM6ECR373mzO6Heji6EW8O/LOBgCqtvSVSy9ghI/mDmBd9KjQ3QtITqXm/1lkJvOvpZCzLYW6Yag==}
+  taglib-wasm@1.7.2:
+    resolution: {integrity: sha512-+5Q9qofXFCD0Tydc2J+mcQl2eQ7n6cN0p+IDxkDrM22DSFs1j5iFgSvQ2nvFB4b4a0hXYvMP5mmhgQS/6ZNBiw==}
     engines: {node: '>=24.0.0'}
     peerDependencies:
       typescript: '>=4.5.0'
@@ -5388,7 +5388,7 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.3.6
 
-  taglib-wasm@1.6.1(typescript@6.0.3):
+  taglib-wasm@1.7.2(typescript@6.0.3):
     dependencies:
       '@msgpack/msgpack': 3.1.3
     optionalDependencies:
