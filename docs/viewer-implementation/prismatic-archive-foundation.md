@@ -133,6 +133,17 @@ spacing to distinguish record identity from metadata before adding color.
 
 ## Surface, navigation, motion, and accessibility rules
 
+### Confirmed content-site design language
+
+Phase 3 confirms that `content-site` should read as a calm, readable archive/catalogue, not as a generic dashboard or decorative landing page. Keep these reusable implementation rules grounded in `apps/content-site/src/app.css`, `apps/content-site/src/routes/cards/[region]/+page.svelte`, `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`, and their detail/list components:
+
+- Use four semantic surface roles—canvas/background, panel, inset/sunken, and elevated/overlay—with token-driven archive text, border, accent, and focus roles and the `content-card-*` primitives.
+- Keep the visual language restrained: thin borders, modest shadows limited to interaction, no heavy blur or filters, compact but touch-safe controls, visible focus, and transitions that remain safe in low-motion mode.
+- Organize information around clear page identity, composed control decks, grouped result fields, and scannable evidence/data sections. Prefer responsive mobile-first flow over dense desktop-only composition.
+- Preserve established behavior: visibility-gated/lazy artwork, spoiler/reveal semantics, and route/query/server state remain authoritative rather than being reinterpreted by presentation code.
+- In the Phase 3 cards catalogue and event detail, apply semantic archive surfaces without changing data, route, or i18n contracts. A multi-card event identity rail flows naturally with the page; it is not a full-column sticky rail.
+- Treat this as a design evolution from generic daisyUI card/base surfaces and ad-hoc spacing/shadows to calmer semantic surfaces and explicit hierarchy, not as a claim that all previous UI has been removed.
+
 ### Surfaces
 
 - Use a restrained three-level hierarchy: canvas, panel, and inset/elevated
