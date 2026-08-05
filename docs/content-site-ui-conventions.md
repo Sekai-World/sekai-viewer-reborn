@@ -10,6 +10,17 @@ Follow these rules before introducing new page-level patterns, daisyUI overrides
 - Shared Svelte UI is consumed from `packages/ui-shell/src`.
 - Image preview components use the public `@platform/ui-shell/image-retry` subpath for their shared retry controller. `AssetImage` defaults to `STATIC_ASSET_RETRY_POLICY`, which appends one `__image_retry` query parameter before any fragment and uses cancellable same-origin `HEAD` classification with `cache: "no-store"`. Callers handling signed GET URLs may pass `SIGNED_GET_RETRY_POLICY`; it preserves the canonical URL byte-for-byte, skips `HEAD` probes, and is forwarded to interactive preview loading. Both policies use base retry delays of 300ms and 900ms with positive-only bounded jitter up to 20% (300–360ms and 900–1080ms); deterministic controller tests may inject the random source through constructor options, while normal callers use `Math.random`. Stale request snapshots and disposal prevent old callbacks from changing current image state. There is no global concurrency limiter; each controller owns its own retry timers and probes.
 
+## Confirmed Prismatic Archive design language
+
+Prismatic Archive treats `content-site` as a calm, readable archive/catalogue rather than a generic dashboard or decorative landing page. The following rules are confirmed by the Phase 3 cards catalogue and event detail work:
+
+- Use a semantic surface hierarchy: canvas/background, panel, inset/sunken, and elevated/overlay. Prefer the archive text, border, accent, and focus roles plus the `content-card-*` primitives defined in `apps/content-site/src/app.css`.
+- Keep the visual system restrained: thin borders, modest and interaction-limited shadows, no heavy blur or filters, compact but touch-safe controls, visible focus, and low-motion-safe transitions.
+- Make information architecture explicit: clear page identity, composed control decks, grouped result fields, and scannable evidence/data sections. Build mobile-first and let detail rails flow naturally on narrow screens.
+- Preserve image and data behavior. Artwork remains visibility-gated/lazy where established; spoiler/reveal semantics stay intact; route, query, and server state remain authoritative.
+- Phase 3 applies these rules to `apps/content-site/src/routes/cards/[region]/+page.svelte` and `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`, composing the existing card and event components (including `CardListCard.svelte`, `EventDetailDataCard.svelte`, `EventDetailInfoCard.svelte`, and `EventDetailAssetCard.svelte`). A multi-card event identity rail must flow naturally with the page rather than becoming a full-column sticky rail.
+- This is a design evolution from older generic daisyUI card/base surfaces and ad-hoc spacing or shadows toward semantic, calmer archive surfaces and explicit hierarchy; it does not claim that all older UI has been removed.
+
 ## daisyUI Override Rules
 
 ### 1. Override daisyUI component defaults with `@utility`
