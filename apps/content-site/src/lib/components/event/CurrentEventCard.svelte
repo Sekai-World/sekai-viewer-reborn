@@ -105,7 +105,7 @@
           unit={event.unit!}
           fallbackLabel={displayUnit}
           variant="sm"
-          class="current-event-unit-badge lg:size-16!"
+          class="current-event-unit-badge lg:size-12!"
         />
       {/if}
     </div>
