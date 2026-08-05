@@ -303,7 +303,7 @@
   <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="latest-data-title">
     <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
       <div class="flex items-center gap-2">
-        <Icon icon="mdi:cards-outline" class="size-4 text-primary" aria-hidden="true" />
+        <Icon icon="mdi:clock-outline" class="size-4 text-primary" aria-hidden="true" />
         <h2
           id="latest-data-title"
           class="text-sm font-semibold tracking-wide text-(--archive-text-muted)"
