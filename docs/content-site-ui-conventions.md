@@ -88,6 +88,12 @@ Do not scatter hover timing between unrelated global selectors and page template
 For event list cards, prefer slight translation and brightness changes over scaling the banner bitmap itself.
 Direct image scaling can make banners feel soft or blurry due to browser resampling.
 
+### Prismatic Archive feedback refinement
+
+Prismatic Archive does not remove feedback; it uses restrained, semantic motion. Keep interactions in the 150–300ms range, respect both `data-low-motion` and `prefers-reduced-motion`, avoid broad/global animations, and avoid heavy filters. At independently streamed boundaries, skeletons should preserve the layout rather than leave blanks. On event detail, this applies separately to the event payload, unit profiles/info, current-event countdown, and unit-profile BGM boundaries; their skeletons are visual-only placeholders with `aria-hidden="true"`, as implemented in `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`.
+
+Skeleton groups should avoid costly per-item shimmer loops. Prefer a simple pulse or a static reduced-motion state, and reserve the loaded content's dimensions to prevent jank and cumulative layout shift (CLS). The shared motion and surface constraints remain grounded in `apps/content-site/src/app.css`.
+
 ## Shared Card Architecture
 
 Current shared card system:
