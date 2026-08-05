@@ -186,35 +186,18 @@
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
 <section role="group" use:swipeRegion>
-  <section
-    class="mx-auto mb-6 max-w-5xl rounded-2xl border border-(--archive-border-subtle) bg-(--archive-surface-default) px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-5"
-    aria-labelledby="content-region-title"
-  >
-    <div class="min-w-0">
-      <h2
-        id="content-region-title"
-        class="flex items-center gap-2 text-sm font-semibold text-(--archive-text-strong)"
-      >
-        <Icon icon="mdi:earth" class="size-4 text-primary" aria-hidden="true" />
-        {gameContentRegionLabel}
-      </h2>
-      <p class="mt-1 text-xs/snug text-(--archive-text-muted)">{gameContentRegionDescription}</p>
-    </div>
-    <div class="mt-3 shrink-0 sm:mt-0">
-      <RegionBadgeSwitch
-        options={supportedRegions.map((r) =>
-          r === selectedRegion
-            ? { key: r, label: r.toUpperCase(), active: true }
-            : { key: r, label: r.toUpperCase(), active: false, onclick: () => selectRegion(r) }
-        )}
-      />
-    </div>
-  </section>
-
-  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="current-event-title">
-    <div
-      class="mb-4 border-b border-(--archive-border-subtle) pb-4 sm:flex sm:items-end sm:justify-between sm:gap-4"
-    >
+  <!-- Region selector (shared for both sections) -->
+  <div class="mb-6 flex flex-wrap justify-center gap-2">
+    <RegionBadgeSwitch
+      options={supportedRegions.map((r) =>
+        r === selectedRegion
+          ? { key: r, label: r.toUpperCase(), active: true }
+          : { key: r, label: r.toUpperCase(), active: false, onclick: () => selectRegion(r) }
+      )}
+    />
+  </div>
+  <section class="mx-auto mb-10 max-w-5xl" aria-labelledby="current-event-title">
+    <div class="mb-3 flex items-center justify-between gap-3 px-1">
       <div class="flex items-center gap-2">
         <Icon icon="mdi:calendar-star" class="size-4 text-primary" aria-hidden="true" />
         <h2
@@ -224,29 +207,21 @@
           {latestDataEventsLabel}
         </h2>
       </div>
-      <div class="mt-3 flex flex-wrap items-center justify-between gap-3 sm:mt-0 sm:justify-end">
-        <a
-          href="/events/{selectedRegion}"
-          class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/60 transition-colors duration-200 hover:text-primary"
-        >
-          {latestDataViewAll}
-          <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
-        </a>
-      </div>
+      <a
+        href="/events/{selectedRegion}"
+        class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
+      >
+        {latestDataViewAll}
+        <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+      </a>
     </div>
     {#await currentEventPromise}
-      <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`} aria-busy="true">
-        <span class="sr-only" role="status" aria-live="polite">{latestDataLoadingEvents}</span>
-        <div class={EVENT_CARD_BODY_CLASS}>
-          <div
-            class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 animate-pulse bg-base-300/70 p-[5%] lg:mb-0 lg:p-4`}
-          ></div>
-          <div
-            class="archive-event-banner-details space-y-4 border-t border-(--archive-border-subtle) pt-4"
-          >
-            <div class="h-5 w-28 animate-pulse rounded bg-base-300"></div>
-            <div class="h-7 w-4/5 animate-pulse rounded bg-base-300"></div>
-            <div class="h-22 animate-pulse rounded-xl bg-base-300"></div>
+      <article class="card content-card-shell w-full shadow-sm">
+        <div class="card-body">
+          <div class="mb-2 h-4 w-1/3 animate-pulse rounded bg-base-300 md:mb-3"></div>
+          <div class="space-y-2">
+            <div class="h-4 w-full animate-pulse rounded bg-base-300"></div>
+            <div class="h-4 w-2/3 animate-pulse rounded bg-base-300"></div>
           </div>
         </div>
       </article>
@@ -265,50 +240,34 @@
           {bannerAltSuffix}
         />
       {:else}
-        <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`}>
-          <div class={EVENT_CARD_BODY_CLASS}>
-            <div
-              class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
-            ></div>
-            <div
-              class="archive-event-banner-details flex min-w-0 flex-col justify-end border-t border-(--archive-border-subtle) pt-4"
-            >
-              {#if card.error}
-                <p class="text-sm text-error">{card.error}</p>
-              {:else}
-                <p class="text-sm opacity-70">{noEventLabel}</p>
-              {/if}
-            </div>
+        <article class="card content-card-shell w-full shadow-sm">
+          <div class="card-body">
+            <div class="mb-2 text-sm opacity-70 md:mb-3">{card.label}</div>
+            {#if card.error}
+              <p class="text-sm text-error">{card.error}</p>
+            {:else}
+              <p class="text-sm opacity-70">{noEventLabel}</p>
+            {/if}
           </div>
         </article>
       {/if}
     {:catch _}
-      <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`}>
-        <div class={EVENT_CARD_BODY_CLASS}>
-          <div
-            class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
-          ></div>
-          <div
-            class="archive-event-banner-details flex min-w-0 flex-col justify-end border-t border-(--archive-border-subtle) pt-4"
-          >
-            <p class="text-sm text-error">{data.currentEventLoadFailedMessage}</p>
-          </div>
+      <article class="card content-card-shell w-full shadow-sm">
+        <div class="card-body">
+          <p class="text-sm text-error">{data.currentEventLoadFailedMessage}</p>
         </div>
       </article>
     {/await}
   </section>
 
-  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="latest-data-title">
-    <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
-      <div class="flex items-center gap-2">
-        <Icon icon="mdi:clock-outline" class="size-4 text-primary" aria-hidden="true" />
-        <h2
-          id="latest-data-title"
-          class="text-sm font-semibold tracking-wide text-(--archive-text-muted)"
-        >
-          {latestDataTitle}
-        </h2>
-      </div>
+  <section class="mb-8" aria-labelledby="latest-data-title">
+    <div class="mb-5 border-b border-(--archive-border-subtle) pb-3">
+      <h2
+        id="latest-data-title"
+        class="text-base font-semibold tracking-wide text-(--archive-text-strong)"
+      >
+        {latestDataTitle}
+      </h2>
     </div>
     {#if latestDataPromise}
       {#await latestDataPromise}
@@ -351,9 +310,9 @@
         {#if regionData.cards.length === 0 && regionData.musics.length === 0 && regionData.gachas.length === 0}
           <p class="text-center text-sm text-base-content/60">{latestDataNoData}</p>
         {:else}
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             <!-- Compact visual release records. -->
-            <div class="space-y-4 lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+            <div class="space-y-6 lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
               <div class="content-card-inset p-3 sm:p-4">
                 <h3
                   class="mb-3 flex items-center justify-between text-sm font-semibold text-base-content/70"
@@ -429,8 +388,8 @@
                     {#each regionData.musics as music (music.id)}
                       <a
                         href="/music/{regionData.region}/{music.id}"
-                        class="group card-hover-lift flex min-w-0 items-center gap-3 rounded-xl border border-(--archive-border-subtle) bg-(--archive-surface-default) p-2 shadow-sm"
-                        data-home-music-row
+                        class="group card-hover-lift block overflow-hidden rounded-xl border border-(--archive-border-subtle) bg-(--archive-surface-default) shadow-sm"
+                        data-home-music-tile
                       >
                         <div
                           class="relative size-16 shrink-0 overflow-hidden rounded-lg bg-base-200/60"
@@ -523,24 +482,24 @@
     {/if}
   </section>
 
-  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="content-directory-title">
-    <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
-      <div class="flex items-center gap-2">
-        <Icon icon="mdi:account-group" class="size-4 text-primary" aria-hidden="true" />
-        <h2
-          id="content-directory-title"
-          class="text-sm font-semibold tracking-wide text-(--archive-text-muted)"
-        >
-          {directoryTitle}
-        </h2>
-      </div>
-      <p class="mt-2 max-w-2xl text-sm/6 text-(--archive-text-muted)">{directoryDescription}</p>
+  <section
+    class="mx-auto mt-12 max-w-7xl border-t border-(--archive-border-subtle) pt-8"
+    aria-labelledby="content-directory-title"
+  >
+    <div class="mb-5 max-w-2xl">
+      <h2
+        id="content-directory-title"
+        class="text-xl/tight font-bold text-base-content sm:text-2xl"
+      >
+        {directoryTitle}
+      </h2>
+      <p class="mt-2 text-sm/6 text-base-content/60">{directoryDescription}</p>
     </div>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {#each directoryItems as item (item.key)}
         <a
           href={item.href}
-          class="group card-hover-lift content-card-shell flex min-h-28 items-start gap-4 rounded-xl p-4 transition-[border-color] duration-200 hover:border-primary/35 sm:p-5"
+          class="group card-hover-lift content-card-shell flex min-h-28 items-start gap-4 rounded-2xl p-4 shadow-sm hover:border-primary/35 sm:p-5"
         >
           <span
             class="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-content"
@@ -564,19 +523,11 @@
 </section>
 
 <!-- ──── Version Info (standalone, below data area) ─────────────────── -->
-<section class="mx-auto mt-12 max-w-5xl" aria-labelledby="version-information-title">
-  <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
-    <div class="flex items-center gap-2">
-      <Icon icon="mdi:earth" class="size-4 text-primary" aria-hidden="true" />
-      <h2
-        id="version-information-title"
-        class="text-sm font-semibold tracking-wide text-(--archive-text-muted)"
-      >
-        {versionInfoTitle}
-      </h2>
-    </div>
-  </div>
-  <div class="content-card-shell overflow-x-auto rounded-xl">
+<section class="mt-10 border-t border-(--archive-border-subtle) pt-6">
+  <h2 class="mb-3 text-sm font-semibold tracking-wide text-(--archive-text-muted)">
+    {versionInfoTitle}
+  </h2>
+  <div class="content-card-shell mx-auto max-w-5xl overflow-x-auto rounded-xl">
     <table class="table table-sm w-full">
       <thead>
         <tr class="text-xs uppercase tracking-wider text-base-content/50">
