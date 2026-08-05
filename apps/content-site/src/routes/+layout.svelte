@@ -25,6 +25,8 @@
     DEFAULT_UI_LOCALE,
     normalizeRegion,
     normalizeUiLocale,
+    PREFERRED_REGION_CHANGE_EVENT,
+    PREFERRED_REGION_STORAGE_KEY,
     persistPreferredRegion,
     resolvePreferredRegion,
     UI_LOCALE_COOKIE_NAME
@@ -481,7 +483,6 @@
   };
 
   const setPreferredRegion = (region: SupportedRegion): void => {
-    preferredRegion = region;
     persistPreferredRegion(region);
   };
 
@@ -614,6 +615,20 @@
     updateBackToTopVisibility();
     window.addEventListener("scroll", updateBackToTopVisibility, { passive: true });
 
+    const handlePreferredRegionChange = (event: Event): void => {
+      preferredRegion = normalizeRegion(
+        (event as CustomEvent<SupportedRegion>).detail,
+        DEFAULT_REGION
+      );
+    };
+    const handlePreferredRegionStorageChange = (event: StorageEvent): void => {
+      if (event.key === PREFERRED_REGION_STORAGE_KEY) {
+        preferredRegion = normalizeRegion(event.newValue, DEFAULT_REGION);
+      }
+    };
+    window.addEventListener(PREFERRED_REGION_CHANGE_EVENT, handlePreferredRegionChange);
+    window.addEventListener("storage", handlePreferredRegionStorageChange);
+
     const handleDocumentClick = (event: MouseEvent): void => {
       const target = event.target;
       if (isMobileSettingsMenuOpen) {
@@ -661,6 +676,8 @@
       document.removeEventListener("click", handleDocumentClick);
       document.removeEventListener("keydown", handleDocumentKeydown);
       window.removeEventListener("scroll", updateBackToTopVisibility);
+      window.removeEventListener(PREFERRED_REGION_CHANGE_EVENT, handlePreferredRegionChange);
+      window.removeEventListener("storage", handlePreferredRegionStorageChange);
       systemThemeMediaQuery?.removeEventListener("change", handleSystemThemeChange);
     };
   });
@@ -697,23 +714,16 @@
 
 {#snippet regionSelectorSection()}
   <div class="flex flex-col gap-2">
-    <span class="inline-flex items-center gap-1 px-1 text-xs font-semibold opacity-70">
-      <Icon icon="mdi:earth" class="size-3.5" aria-hidden="true" />
-      <span>{gameContentRegionLabel}</span>
-    </span>
-    <div class="grid grid-cols-2 gap-1 sm:grid-cols-3">
+    <span class="px-1 text-xs font-semibold opacity-70">{gameContentRegionLabel}</span>
+    <div class="flex flex-wrap gap-1">
       {#each supportedRegions as regionOption (regionOption)}
         <button
           type="button"
-          class={`btn btn-sm min-h-12! justify-between rounded-lg border-base-content/15 ${preferredRegion === regionOption ? "btn-primary" : "bg-base-100"}`}
-          disabled={preferredRegion === regionOption}
+          class={`btn btn-sm min-h-11! rounded-lg border-base-content/15 px-3 ${preferredRegion === regionOption ? "btn-primary" : "bg-base-100"}`}
           aria-pressed={preferredRegion === regionOption}
           onclick={() => setPreferredRegion(regionOption)}
         >
           <span>{regionLabels[regionOption]}</span>
-          {#if preferredRegion === regionOption}
-            <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
-          {/if}
         </button>
       {/each}
     </div>
