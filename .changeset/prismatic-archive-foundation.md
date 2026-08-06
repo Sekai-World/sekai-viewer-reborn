@@ -7,4 +7,5 @@
 Add the opt-in Prismatic Archive foundation with additive semantic tokens, a
 persistent desktop rail option, and localized skip-to-content navigation. Update
 the content-site home to foreground the current event, group recent releases,
-and clarify its database directory and version provenance.
+and clarify its database directory and version provenance. Add deterministic
+browser visual-regression coverage for the streamed current-event banner.

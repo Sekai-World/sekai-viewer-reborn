@@ -201,6 +201,20 @@ Prismatic Archive does not remove feedback; it uses restrained, semantic motion.
 
 Skeleton groups should avoid per-item costly shimmer loops. A simple pulse or static reduced-motion state, together with reserved dimensions, provides feedback without jank or cumulative layout shift (CLS). The corresponding app-level motion and surface rules are defined in `apps/content-site/src/app.css`.
 
+### Current-event visual regression coverage
+
+`pnpm test:visual` runs the real `content-site` Vite/SvelteKit home page against
+an isolated Node `node:http` mock at `apps/content-site/tests/visual/mock-server.ts`.
+The mock owns master-data, i18n, and asset responses; browser request routing is
+not suitable because the home loader fetches master data on the server. Its
+control endpoint intentionally holds only the JP current-event response open,
+so the spec covers the actual SvelteKit streamed pending branch as well as the
+fulfilled branch. `current-event.spec.ts` freezes the browser clock, disables
+animation frames, waits for state-specific DOM, and screenshots only
+`section[aria-labelledby="current-event-title"]` at 390, 1024, 1280, and 1440
+CSS-pixel Chromium viewports. Keep these fixtures self-contained—no production
+test-mode loader branches and no external API/CDN dependency.
+
 ### Accessibility
 
 - Use semantic headings, landmarks, lists, buttons, and links. Every interactive

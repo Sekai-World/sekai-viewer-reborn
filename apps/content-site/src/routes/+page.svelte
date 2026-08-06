@@ -237,18 +237,41 @@
       </div>
     </div>
     {#await currentEventPromise}
-      <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`} aria-busy="true">
+      <article class="archive-event-banner relative isolate block w-full" aria-busy="true">
         <span class="sr-only" role="status" aria-live="polite">{latestDataLoadingEvents}</span>
-        <div class={EVENT_CARD_BODY_CLASS}>
-          <div
-            class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 animate-pulse bg-base-300/70 p-[5%] lg:mb-0 lg:p-4`}
-          ></div>
-          <div
-            class="archive-event-banner-details space-y-4 border-t border-(--archive-border-subtle) pt-4"
-          >
-            <div class="h-5 w-28 animate-pulse rounded bg-base-300"></div>
-            <div class="h-7 w-4/5 animate-pulse rounded bg-base-300"></div>
-            <div class="h-22 animate-pulse rounded-xl bg-base-300"></div>
+        <div class={EVENT_CARD_SURFACE_CLASS}>
+          <div class={EVENT_CARD_BODY_CLASS}>
+            <div
+              class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 animate-pulse bg-base-300/70 p-[5%] lg:mb-0 lg:p-4`}
+            ></div>
+            <div
+              class="archive-event-banner-details border-t border-(--archive-border-subtle) pt-4"
+            >
+              <div class="flex min-w-0 items-start gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="mb-2 flex flex-wrap items-center gap-1.5">
+                    <div class="h-5 w-28 animate-pulse rounded-full bg-base-300"></div>
+                    <div class="h-5 w-20 animate-pulse rounded-full bg-base-300"></div>
+                  </div>
+                  <div class="h-6 w-4/5 animate-pulse rounded bg-base-300 sm:h-7"></div>
+                </div>
+                <div
+                  class="size-10 shrink-0 animate-pulse rounded-full bg-base-300 lg:size-12"
+                ></div>
+              </div>
+              <div class="content-card-inset mt-4 rounded-xl p-2.5">
+                <div class="mb-2 h-3 w-24 animate-pulse rounded bg-base-300"></div>
+                <div class="grid grid-cols-4 gap-1.5">
+                  {#each [1, 2, 3, 4] as skeleton (skeleton)}
+                    <div class="content-card-elevated rounded-lg px-1 py-1.5">
+                      <div class="mx-auto h-6 w-8 animate-pulse rounded bg-base-300"></div>
+                      <div class="mx-auto mt-1.5 h-2 w-8 animate-pulse rounded bg-base-300"></div>
+                    </div>
+                  {/each}
+                </div>
+                <div class="mt-2 h-1.5 animate-pulse rounded-full bg-base-content/14"></div>
+              </div>
+            </div>
           </div>
         </div>
       </article>
@@ -315,33 +338,35 @@
     {#if latestDataPromise}
       {#await latestDataPromise}
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <!-- skeleton: cards+musics col -->
-          <div class="space-y-6">
-            <div class="space-y-3">
-              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+          <div class="space-y-4 lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+            <div class="content-card-inset p-3 sm:p-4">
+              <div class="mb-3 flex items-center justify-between">
+                <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+                <div class="h-6 w-16 animate-pulse rounded bg-base-300"></div>
+              </div>
               <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as skeleton (skeleton)}
                   <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
                 {/each}
               </div>
             </div>
-            <div class="space-y-3">
-              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="content-card-inset p-3 sm:p-4">
+              <div class="mb-3 flex items-center justify-between">
+                <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+                <div class="h-6 w-16 animate-pulse rounded bg-base-300"></div>
+              </div>
               <div class="grid gap-2">
                 {#each [1, 2, 3] as skeleton (skeleton)}
-                  <div class="h-16 animate-pulse rounded-xl bg-base-300"></div>
+                  <div class="h-20 animate-pulse rounded-xl bg-base-300"></div>
                 {/each}
               </div>
             </div>
           </div>
-          <div class="space-y-3 md:col-span-2 lg:col-span-1">
-            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-            <div class="h-40 animate-pulse rounded-xl bg-base-300"></div>
-          </div>
-
-          <!-- skeleton: gachas col -->
-          <div class="space-y-3">
-            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+          <div class="content-card-inset p-3 sm:p-4">
+            <div class="mb-3 flex items-center justify-between">
+              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+              <div class="h-6 w-16 animate-pulse rounded bg-base-300"></div>
+            </div>
             <div class="space-y-3">
               {#each [1, 2] as skeleton (skeleton)}
                 <div class="h-24 animate-pulse rounded-lg bg-base-300"></div>
