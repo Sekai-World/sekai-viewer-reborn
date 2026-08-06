@@ -59,7 +59,7 @@ jobs:
         run: pnpm verify:ci
 
   visual-regression:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
@@ -81,3 +81,14 @@ jobs:
 
       - name: Run current-event visual regression tests
         run: pnpm test:visual
+
+      - name: Upload visual regression artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.6.2
+        with:
+          name: visual-regression-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            test-results/
+            playwright-report/
+            apps/content-site/tests/visual/**/*-snapshots/

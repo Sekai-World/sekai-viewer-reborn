@@ -194,6 +194,10 @@ dist
 .svelte-kit
 .turbo/
 
+# Playwright visual regression output
+test-results/
+playwright-report/
+
 ### Svelte ###
 # gitignore template for the SvelteKit, frontend web component framework
 # website: https://kit.svelte.dev/

@@ -215,6 +215,17 @@ animation frames, waits for state-specific DOM, and screenshots only
 CSS-pixel Chromium viewports. Keep these fixtures self-contained—no production
 test-mode loader branches and no external API/CDN dependency.
 
+Visual review is artifact-backed: the PR visual-regression job always uploads
+`test-results/` and `playwright-report/`, so Playwright's expected, actual, and
+diff images remain available after a failure. The `test:visual:update` script
+is an explicit local operation. The separate **Visual baseline candidate**
+workflow is started from the default branch with an open PR number. It resolves
+the PR's head SHA through the read-only GitHub API, checks out that exact SHA,
+and can run comparison or snapshot generation. It only uploads an artifact
+named with the PR number and SHA, has `contents: read` and `pull-requests: read`,
+and never commits or pushes. Review candidate PNGs in Linux Chromium before
+copying approved snapshots into a PR, keeping ordinary CI comparison-only.
+
 ### Accessibility
 
 - Use semantic headings, landmarks, lists, buttons, and links. Every interactive
