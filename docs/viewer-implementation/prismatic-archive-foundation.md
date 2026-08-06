@@ -342,6 +342,13 @@ SDK or deployment changes are separate, explicit work items.
   enough for ordinary CDN dictionary loads while bounding a stalled SSR or
   client navigation; its timer is unrefed on Node so it cannot keep a process
   alive.
+- The shared `@platform/i18n-runtime` namespace cache applies the deadline at
+  the fetch entry itself, aborting and conditionally evicting only its own
+  pending entry on timeout. This preserves concurrent deduplication but lets a
+  later request retry instead of inheriting a permanently pending promise.
+- Character list and detail page loaders must not return `i18nMessages`; the
+  root layout owns the complete `common`, `character`, `card`, and `error`
+  bundle for both paths.
 - Route components initialize from the resolved layout bundle. On a locale
   change they keep the currently displayed complete dictionary until the newest
   request resolves, then replace labels atomically; request IDs prevent a stale
