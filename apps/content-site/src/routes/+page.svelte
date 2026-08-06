@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
     DEFAULT_REGION,
@@ -30,9 +30,10 @@
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "home", "event", "error"]);
+  const getInitialMessages = (): Record<string, string> =>
+    resolveStreamingMessages(data.i18nMessages, ["common", "home", "event", "error"]);
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
+    createI18nTranslator(data.uiLocale, getInitialMessages())(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let latestDataLoadingEvents = $state(getInitialI18nText("latestData.loadingEvents"));
@@ -60,7 +61,7 @@
     getInitialI18nText("settings.gameContentRegionDescription")
   );
   let translationRequestId = 0;
-  let currentMessages = $state<Record<string, string>>(fallbackMessages);
+  let currentMessages = $state<Record<string, string>>(getInitialMessages());
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
 
   // ── Region state ───────────────────────────────────────────────────
@@ -97,9 +98,6 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    currentMessages = fallbackMessages;
-    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
-    applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 

@@ -11,7 +11,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
   import type { PageData } from "./$types";
@@ -24,7 +24,7 @@
   type GachaListSortOrder = "asc" | "desc";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "gacha", "error"]);
+  const fallbackMessages = $derived(resolveStreamingMessages(data.i18nMessages, ["common", "gacha", "error"]));
   let translationRequestId = 0;
   let initialPageRequestId = 0;
   let listRequestId = 0;

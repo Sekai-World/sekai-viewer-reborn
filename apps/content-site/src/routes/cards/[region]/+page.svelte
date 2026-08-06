@@ -8,7 +8,7 @@
   import { swipeRegion } from "$lib/actions/swipe-region";
   import { toTimestampMs } from "$lib/time/date-time";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import CardListCard from "$lib/components/card/CardListCard.svelte";
@@ -55,7 +55,7 @@
   };
 
   let { data }: { data: CardListPageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
+  const fallbackMessages = $derived(resolveStreamingMessages(data.i18nMessages, ["common", "card", "event", "error"]));
   let translationRequestId = 0;
   let initialPageRequestId = 0;
   let listRequestId = 0;

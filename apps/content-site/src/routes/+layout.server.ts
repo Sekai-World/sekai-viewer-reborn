@@ -1,5 +1,9 @@
 import type { LayoutServerLoad } from "./$types";
-import { loadI18nMessageBundle, type I18nNamespace } from "$lib/i18n/runtime";
+import {
+  loadI18nMessageBundle,
+  resolveI18nMessageBundle,
+  type I18nNamespace
+} from "$lib/i18n/runtime";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 
 const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
@@ -33,8 +37,11 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
 
 export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const i18nMessages = loadI18nMessageBundle(uiLocale, getRouteI18nNamespaces(url.pathname), fetch);
-  i18nMessages.catch(() => {});
+  const namespaces = getRouteI18nNamespaces(url.pathname);
+  const i18nMessages = await resolveI18nMessageBundle(
+    () => loadI18nMessageBundle(uiLocale, namespaces, fetch),
+    namespaces
+  );
 
   return {
     i18nMessages,

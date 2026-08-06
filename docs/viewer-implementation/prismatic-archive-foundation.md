@@ -333,6 +333,21 @@ SDK or deployment changes are separate, explicit work items.
 - Validated with `pnpm --filter @apps/content-site check`,
   `pnpm --filter @apps/content-site lint`, and `git diff --check`.
 
+### Content-site i18n no-fallback-flash contract
+
+- `apps/content-site/src/routes/+layout.server.ts` awaits the route-scoped locale
+  bundle before returning layout data. The server keeps remote-fetch failures
+  renderable by resolving to the matching local source bundle instead of
+  returning a rejected/deferred promise. It uses a 2.5-second deadline: long
+  enough for ordinary CDN dictionary loads while bounding a stalled SSR or
+  client navigation; its timer is unrefed on Node so it cannot keep a process
+  alive.
+- Route components initialize from the resolved layout bundle. On a locale
+  change they keep the currently displayed complete dictionary until the newest
+  request resolves, then replace labels atomically; request IDs prevent a stale
+  request from overwriting a later selection. Do not reset visible labels to
+  local English source messages while waiting.
+
 ## Likely files and components
 
 These are likely touch points, not a mandate to edit all of them in Phase 1.
