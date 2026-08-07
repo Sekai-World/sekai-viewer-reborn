@@ -46,7 +46,7 @@ export default defineConfig({
   ],
   webServer: {
     command:
-      "pnpm --dir apps/content-site exec svelte-kit sync && pnpm --dir apps/content-site exec vite dev --port 4105",
+      "pnpm --dir apps/content-site exec svelte-kit sync && pnpm --dir apps/content-site exec vite dev --configLoader native --port 4105",
     url: "http://127.0.0.1:4105",
     reuseExistingServer: false,
     timeout: 120_000,
