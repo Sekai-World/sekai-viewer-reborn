@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host localhost --port 5101",
     "test": "svelte-kit sync && vitest run --config ./vitest.config.ts",
+    "test:coverage": "pnpm --filter @apps/account-site exec svelte-kit sync && pnpm --filter @apps/media-lab-site exec svelte-kit sync && svelte-kit sync && vitest run --config ./vitest.config.ts --coverage && node ../../scripts/coverage/normalize-lcov.mjs coverage/lcov.info apps/content-site",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --tsgo",
     "lint": "eslint src --ext .ts,.svelte"
   },
