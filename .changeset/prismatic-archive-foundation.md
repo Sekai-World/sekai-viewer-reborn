@@ -4,7 +4,6 @@
 "@apps/content-site": minor
 ---
 
-Add the opt-in Prismatic Archive foundation with additive semantic tokens, a
-persistent desktop rail option, and localized skip-to-content navigation. Update
-the content-site home to foreground the current event, group recent releases,
-and clarify its database directory and version provenance.
+Add the opt-in Prismatic Archive shared foundation with additive semantic tokens
+and a backward-compatible persistent desktop rail option. Enable the foundation
+in content-site with skip-to-content support.
