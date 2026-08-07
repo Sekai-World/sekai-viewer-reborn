@@ -6,10 +6,48 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../
 const appRoot = path.join(repoRoot, "apps/tools-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/tools-site");
 const namespaces = ["common", "comparison", "server"];
-const keyPatterns = [
-  /(?:createI18nTranslator|tTools)\([^)]*\)\(\s*["']([^"'`]+)["']/g,
-  /getServerI18nText\(\s*[^,]+,\s*["']([^"'`]+)["']/g
+const translatorKeyPatterns = [
+  /createI18nTranslator\([^)]*\)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
+  /tTools\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g
 ];
+
+const skipWhitespace = (content, index) => {
+  while (index < content.length && " \t\n\r".includes(content[index])) index += 1;
+  return index;
+};
+
+const readQuotedKey = (content, index) => {
+  const quote = content[index];
+  if (quote !== '"' && quote !== "'") return undefined;
+
+  const end = content.indexOf(quote, index + 1);
+  return end > index + 1 ? content.slice(index + 1, end) : undefined;
+};
+
+const collectTranslatorKeys = (content, usedKeys) => {
+  for (const pattern of translatorKeyPatterns) {
+    for (const match of content.matchAll(pattern)) {
+      usedKeys.add(match[1]);
+    }
+  }
+};
+
+const collectServerKeys = (content, usedKeys) => {
+  const functionName = "getServerI18nText";
+  let functionIndex = content.indexOf(`${functionName}(`);
+  while (functionIndex !== -1) {
+    const firstArgumentStart = skipWhitespace(content, functionIndex + functionName.length + 1);
+    const separator = content.indexOf(",", firstArgumentStart);
+    const keyStart = skipWhitespace(content, separator + 1);
+
+    if (separator !== -1) {
+      const key = readQuotedKey(content, keyStart);
+      if (key) usedKeys.add(key);
+    }
+
+    functionIndex = content.indexOf(`${functionName}(`, functionIndex + functionName.length + 1);
+  }
+};
 
 const listSourceFiles = async () => {
   const files = [];
@@ -34,23 +72,50 @@ const sourceMessages = await Promise.all(
     JSON.parse(await readFile(path.join(sourceDir, `${namespace}.json`), "utf8"))
   ])
 ).then(Object.fromEntries);
-const availableKeys = new Set(
-  Object.values(sourceMessages).flatMap((messages) => Object.keys(messages))
+const getNamespaceForFile = (filePath) => {
+  const relativePath = path.relative(appRoot, filePath).replaceAll(path.sep, "/");
+  if (relativePath.endsWith(".server.ts")) return "server";
+  if (
+    relativePath === "src/routes/+layout.svelte" ||
+    relativePath === "src/routes/+layout.server.ts"
+  ) {
+    return "common";
+  }
+  return "comparison";
+};
+
+const usedKeysByNamespace = Object.fromEntries(
+  namespaces.map((namespace) => [namespace, new Set()])
 );
-const usedKeys = new Set();
 
 for (const filePath of await listSourceFiles()) {
   const content = await readFile(filePath, "utf8");
-  for (const pattern of keyPatterns) {
-    for (const match of content.matchAll(pattern)) usedKeys.add(match[1]);
-  }
+  const namespace = getNamespaceForFile(filePath);
+  collectTranslatorKeys(content, usedKeysByNamespace[namespace]);
+  collectServerKeys(content, usedKeysByNamespace.server);
 }
 
-const missingKeys = [...usedKeys].filter((key) => !availableKeys.has(key)).sort();
-if (missingKeys.length > 0) {
-  console.error(
-    `Missing tools-site i18n keys:\n${missingKeys.map((key) => `  - ${key}`).join("\n")}`
-  );
+const missingKeysByNamespace = Object.fromEntries(
+  namespaces
+    .map((namespace) => {
+      const availableMessages =
+        namespace === "common"
+          ? sourceMessages.common
+          : { ...sourceMessages.common, ...sourceMessages[namespace] };
+      const missingKeys = [...usedKeysByNamespace[namespace]]
+        .filter((key) => !(key in availableMessages))
+        .sort((left, right) => left.localeCompare(right));
+      return [namespace, missingKeys];
+    })
+    .filter(([, keys]) => keys.length > 0)
+);
+
+if (Object.keys(missingKeysByNamespace).length > 0) {
+  for (const [namespace, missingKeys] of Object.entries(missingKeysByNamespace)) {
+    console.error(
+      `Missing ${namespace} i18n keys:\n${missingKeys.map((key) => "  - " + key).join("\n")}`
+    );
+  }
   process.exitCode = 1;
 } else {
   console.log("tools-site i18n source keys are complete.");
