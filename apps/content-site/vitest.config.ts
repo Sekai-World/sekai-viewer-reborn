@@ -46,6 +46,10 @@ export default defineConfig({
     environment: "jsdom",
     exclude: ["**/node_modules/**", "**/.svelte-kit/**", "**/dist/**", "**/build/**"],
     include: ["src/**/*.test.ts"],
-    setupFiles: ["../../test/setup.js"]
+    setupFiles: ["../../test/setup.js"],
+    coverage: {
+      reporter: ["lcov"],
+      reportsDirectory: "coverage"
+    }
   }
 });

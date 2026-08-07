@@ -6,6 +6,7 @@
   "scripts": {
     "pretest": "pnpm --filter '@apps/*' exec svelte-kit sync",
     "test": "vitest run --config ./vitest.config.ts",
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage",
     "lint": "eslint src --ext .ts,.svelte",
     "check": "pnpm exec svelte-check --tsconfig ./tsconfig.json --tsgo"
   },

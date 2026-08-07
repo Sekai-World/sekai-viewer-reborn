@@ -33,6 +33,12 @@ jobs:
           pnpm --filter @apps/content-site exec svelte-kit sync
           pnpm --filter @apps/media-lab-site exec svelte-kit sync
           pnpm --filter @apps/tools-site exec svelte-kit sync
+      - name: Run unit tests with coverage
+        run: |
+          pnpm --filter @apps/content-site run test:coverage
+          pnpm --filter @apps/tools-site run test:coverage
+          pnpm --filter @platform/i18n-runtime run test:coverage
+          pnpm --filter @platform/ui-shell run test:coverage
       - name: SonarCloud Scan
         if: >-
           github.event_name == 'push' ||
