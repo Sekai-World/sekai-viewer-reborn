@@ -5,7 +5,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [svelte({ prebundleSvelteLibraries: false }), svelteTesting()],
   resolve: {
-    alias: [{ find: /^node:module$/, replacement: "module" }],
+    alias: [
+      { find: /^node:module$/, replacement: "module" },
+    ],
     conditions: ["browser", "node", "module-sync"]
   },
   ssr: {

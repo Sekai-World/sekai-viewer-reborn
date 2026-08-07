@@ -3,7 +3,12 @@ import { svelteTesting } from "@testing-library/svelte/vite";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [svelte({ prebundleSvelteLibraries: false }), svelteTesting()],
+  plugins: [
+    svelte({
+      prebundleSvelteLibraries: false
+    }),
+    svelteTesting()
+  ],
   resolve: {
     alias: [
       { find: /^node:module$/, replacement: "module" },
