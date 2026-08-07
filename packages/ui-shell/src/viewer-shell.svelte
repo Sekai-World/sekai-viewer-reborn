@@ -8,6 +8,8 @@
     navTitle: string;
     navBadge?: string;
     navActions?: Snippet;
+    desktopRailOpen?: boolean;
+    skipToMainLabel?: string;
     openSidebarLabel?: string;
     closeSidebarLabel?: string;
     sidebarLabel?: string;
@@ -23,6 +25,8 @@
     navTitle,
     navBadge,
     navActions,
+    desktopRailOpen = false,
+    skipToMainLabel = "Skip to main content",
     openSidebarLabel = "Open navigation",
     closeSidebarLabel = "Close navigation",
     sidebarLabel = "Navigation",
@@ -35,9 +39,12 @@
 
   let sidebarOpen = $state(false);
   const sidebarPanelId = $derived(`${drawerId}-panel`);
+  const mainId = $derived(`${drawerId}-main`);
 </script>
 
-<div class="drawer min-h-dvh">
+<a class="viewer-shell-skip" href={`#${mainId}`}>{skipToMainLabel}</a>
+
+<div class:lg:drawer-open={desktopRailOpen} class="drawer min-h-dvh">
   <input
     id={drawerId}
     type="checkbox"
@@ -49,13 +56,13 @@
 
   <div class="drawer-content bg-base-200">
     <header
-      class="viewer-shell-nav sticky top-4 z-40 mx-3 mt-4 isolate overflow-visible rounded-full border px-2"
+      class="viewer-shell-nav sticky top-3 z-40 mx-3 mt-3 isolate overflow-visible rounded-full border px-2 lg:top-4 lg:mx-6 lg:mt-4"
     >
       <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-384 px-2">
         <div class="navbar-start">
           <button
             type="button"
-            class="btn btn-ghost btn-circle size-11! min-h-11!"
+            class={`btn btn-ghost btn-circle size-11! min-h-11! ${desktopRailOpen ? "lg:hidden" : ""}`}
             aria-label={openSidebarLabel}
             aria-controls={sidebarPanelId}
             aria-expanded={sidebarOpen}
@@ -65,8 +72,13 @@
           >
             <Icon icon="mdi:menu" class="size-5" aria-hidden="true" />
           </button>
+          <span
+            class="hidden text-xs font-semibold tracking-[0.16em] text-base-content/55 uppercase lg:inline"
+          >
+            {navTitle}
+          </span>
         </div>
-        <div class="navbar-center">
+        <div class="navbar-center lg:hidden">
           <span
             class="max-w-28 truncate text-xs font-semibold tracking-wide sm:max-w-none sm:text-sm"
           >
@@ -83,7 +95,11 @@
       </div>
     </header>
 
-    <main class="mx-auto w-full max-w-384 px-3 pb-8 pt-6 md:px-6 lg:px-8">
+    <main
+      id={mainId}
+      tabindex="-1"
+      class="mx-auto w-full max-w-384 px-3 pb-8 pt-6 md:px-6 lg:px-8"
+    >
       {#if showTitle}
         <section class="py-12 text-center">
           <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">
@@ -101,28 +117,32 @@
     </main>
   </div>
 
-  <div class="drawer-side z-50">
+  <div class={`drawer-side z-50 ${desktopRailOpen ? "lg:z-30" : ""}`}>
     <button
       type="button"
       aria-label={closeSidebarLabel}
-      class="drawer-overlay"
+      class={`drawer-overlay ${desktopRailOpen ? "lg:hidden" : ""}`}
       onclick={() => {
         sidebarOpen = false;
       }}
     ></button>
-    <aside id={sidebarPanelId} class="menu min-h-full w-72 bg-base-100 p-4">
+    <nav
+      id={sidebarPanelId}
+      aria-label={sidebarLabel}
+      class={`viewer-shell-rail menu min-h-full w-72 bg-base-100 p-4 ${desktopRailOpen ? "lg:w-68 lg:border-r lg:border-base-content/10 lg:px-3 lg:py-5" : ""}`}
+    >
       <div class="mb-2 flex items-center justify-between px-2 py-1">
         <span class="text-sm font-semibold">{sidebarLabel}</span>
         <button
           type="button"
-          class="btn btn-ghost btn-sm btn-circle size-11! min-h-11!"
+          class={`btn btn-ghost btn-sm btn-circle size-11! min-h-11! ${desktopRailOpen ? "lg:hidden" : ""}`}
           aria-label={closeSidebarLabel}
           aria-controls={sidebarPanelId}
           onclick={() => {
             sidebarOpen = false;
           }}
         >
-          ✕
+          <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
         </button>
       </div>
       <ul>
@@ -137,6 +157,7 @@
             <li>
               <a
                 href={item.href}
+                aria-current={item.active ? "page" : undefined}
                 class={`grid grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 ${item.active ? "active" : ""}`}
                 onclick={() => {
                   sidebarOpen = false;
@@ -144,7 +165,7 @@
               >
                 {#if item.icon}
                   <span class="grid size-5 shrink-0 place-items-center">
-                    <Icon icon={item.icon} class="size-4 shrink-0" />
+                    <Icon icon={item.icon} class="size-4 shrink-0" aria-hidden="true" />
                   </span>
                 {/if}
                 <span>{item.label}</span>
@@ -159,7 +180,7 @@
               >
                 {#if item.icon}
                   <span class="grid size-5 shrink-0 place-items-center">
-                    <Icon icon={item.icon} class="size-4 shrink-0" />
+                    <Icon icon={item.icon} class="size-4 shrink-0" aria-hidden="true" />
                   </span>
                 {/if}
                 <span>{item.label}</span>
@@ -168,96 +189,52 @@
           {/if}
         {/each}
       </ul>
-    </aside>
+    </nav>
   </div>
 </div>
 
 <style>
+  .viewer-shell-skip {
+    position: fixed;
+    top: 0.75rem;
+    left: 0.75rem;
+    z-index: 100;
+    transform: translateY(-160%);
+    border-radius: 9999px;
+    background: var(--color-primary);
+    color: var(--color-primary-content);
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: transform 150ms ease-out;
+  }
+
+  .viewer-shell-skip:focus-visible {
+    transform: translateY(0);
+    outline: 3px solid var(--color-primary-content);
+    outline-offset: 2px;
+  }
+
   .viewer-shell-nav {
-    background: color-mix(in oklab, var(--color-base-100) 48%, transparent);
-    backdrop-filter: blur(24px) saturate(200%);
-    -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border-color: color-mix(in oklab, var(--color-base-content) 14%, transparent);
-    box-shadow:
-      0 1px 4px color-mix(in oklab, var(--color-base-content) 6%, transparent),
-      0 4px 16px color-mix(in oklab, var(--color-base-content) 4%, transparent),
-      inset 0 1px 0 color-mix(in oklab, white 32%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 5%, transparent);
+    background: color-mix(in oklab, var(--color-base-100) 92%, transparent);
+    border-color: color-mix(in oklab, var(--color-base-content) 12%, transparent);
+    box-shadow: 0 4px 14px color-mix(in oklab, var(--color-base-content) 7%, transparent);
   }
 
-  .viewer-shell-nav::before {
-    content: "";
-    position: absolute;
-    inset: 1px;
-    border-radius: inherit;
-    pointer-events: none;
-    background: linear-gradient(
-      110deg,
-      color-mix(in oklab, white 24%, transparent) 0%,
-      transparent 42%,
-      color-mix(in oklab, var(--color-base-content) 4%, transparent) 100%
-    );
-    opacity: 0.4;
+  @supports (backdrop-filter: blur(1px)) {
+    .viewer-shell-nav {
+      background: color-mix(in oklab, var(--color-base-100) 82%, transparent);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
   }
 
-  /* Specular highlight — liquid glass refraction line */
-  .viewer-shell-nav::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 8%;
-    right: 8%;
-    height: 1px;
-    border-radius: 0 0 50% 50%;
-    pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in oklab, white 42%, transparent) 35%,
-      color-mix(in oklab, white 58%, transparent) 50%,
-      color-mix(in oklab, white 42%, transparent) 65%,
-      transparent
-    );
-  }
-
-  :global(.dark[data-theme="default"]) .viewer-shell-nav {
-    background: color-mix(in oklab, var(--color-base-100) 42%, transparent);
-    box-shadow:
-      0 1px 4px color-mix(in oklab, black 16%, transparent),
-      0 4px 16px color-mix(in oklab, black 8%, transparent),
-      inset 0 1px 0 color-mix(in oklab, white 8%, transparent),
-      inset 0 -1px 0 color-mix(in oklab, var(--color-base-content) 4%, transparent);
-  }
-
-  :global(.dark[data-theme="default"]) .viewer-shell-nav::before {
-    background: linear-gradient(
-      110deg,
-      color-mix(in oklab, white 8%, transparent) 0%,
-      transparent 45%,
-      color-mix(in oklab, var(--color-base-content) 3%, transparent) 100%
-    );
-    opacity: 0.2;
-  }
-
-  :global(.dark[data-theme="default"]) .viewer-shell-nav::after {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in oklab, white 14%, transparent) 35%,
-      color-mix(in oklab, white 20%, transparent) 50%,
-      color-mix(in oklab, white 14%, transparent) 65%,
-      transparent
-    );
-  }
-
-  /* Reduced-motion: skip blur (expensive) and use a solid background instead */
-  :global([data-low-motion]) .viewer-shell-nav {
+  .viewer-shell-rail {
     background: color-mix(in oklab, var(--color-base-100) 96%, var(--color-base-200));
+  }
+
+  :global([data-low-motion]) .viewer-shell-nav {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-  }
-
-  :global([data-low-motion]) .viewer-shell-nav::after {
-    display: none;
   }
 </style>

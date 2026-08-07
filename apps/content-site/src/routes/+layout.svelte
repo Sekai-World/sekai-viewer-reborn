@@ -77,6 +77,7 @@
   let homeLabel = $state(getInitialI18nText("home"));
   let openSidebarLabel = $state(getInitialI18nText("aria.openSidebar"));
   let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
+  let skipToMainLabel = $state(getInitialI18nText("aria.skipToMainContent"));
   let sidebarLabel = $state(getInitialI18nText("navigation.sidebarTitle"));
   let databaseLabel = $state(getInitialI18nText("navigation.database"));
   let charactersLabel = $state(getInitialI18nText("navigation.characters"));
@@ -273,6 +274,7 @@
     homeLabel = translate("home");
     openSidebarLabel = translate("aria.openSidebar");
     closeSidebarLabel = translate("aria.closeSidebar");
+    skipToMainLabel = translate("aria.skipToMainContent");
     sidebarLabel = translate("navigation.sidebarTitle");
     databaseLabel = translate("navigation.database");
     charactersLabel = translate("navigation.characters");
@@ -810,8 +812,10 @@
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
+  desktopRailOpen={true}
   {openSidebarLabel}
   {closeSidebarLabel}
+  {skipToMainLabel}
   {sidebarLabel}
   {sidebarItems}
   showTitle={showPageTitle}

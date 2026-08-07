@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { onDestroy } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import {
     ImageRetryController,
     STATIC_ASSET_RETRY_POLICY,
@@ -38,7 +38,9 @@
   }: Props = $props();
 
   let dialog: HTMLDialogElement | null = $state(null);
-  const imageRetry = new ImageRetryController(src, fallbackSrc, retryPolicy);
+  // Seed the controller for the initial render without making construction the
+  // source of reactivity; the pre-effect keeps it synchronized thereafter.
+  const imageRetry = untrack(() => new ImageRetryController(src, fallbackSrc, retryPolicy));
 
   $effect.pre(() => {
     imageRetry.setSources(src, fallbackSrc, retryPolicy);
