@@ -2,6 +2,7 @@
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { untrack } from "svelte";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import { swipeRegion } from "$lib/actions/swipe-region";
   import GachaListCard from "$lib/components/gacha/GachaListCard.svelte";
@@ -25,12 +26,19 @@
 
   let { data }: { data: PageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "gacha", "error"]);
+  const resolveStreamingMessages = (
+    messagesOrPromise: typeof data.i18nMessages
+  ): Record<string, string> =>
+    messagesOrPromise instanceof Promise ? fallbackMessages : messagesOrPromise;
   let translationRequestId = 0;
   let initialPageRequestId = 0;
   let listRequestId = 0;
+  let currentMessages = $state<Record<string, string>>(
+    resolveStreamingMessages(untrack(() => data.i18nMessages))
+  );
   const gachaListLoadingFallback = "Loading gachas...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
+    createI18nTranslator(data.uiLocale, currentMessages)(key, fallback);
   let items = $state<GachaListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -243,8 +251,6 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
-    applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
@@ -380,6 +386,7 @@
     }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
+    currentMessages = messages;
     applyTranslations(createI18nTranslator(locale, messages));
   };
 

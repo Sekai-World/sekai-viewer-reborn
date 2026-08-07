@@ -1,5 +1,4 @@
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { loadI18nMessageBundle } from "$lib/i18n/runtime";
+import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { fetchUnitProfiles } from "$lib/server/unit-profiles";
 import { parseCharacterList, parseCharacterUnits } from "$lib/server/character-list";
@@ -9,11 +8,8 @@ import {
 } from "$lib/server/character-pages";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
+export const load: PageServerLoad = async ({ params }) => {
   const region = normalizeRegion(params.region);
-  const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const i18nMessages = loadI18nMessageBundle(uiLocale, ["common", "character"], fetch);
-  i18nMessages.catch(() => {});
   const baseUrl = getMasterApiBaseUrl();
   const catalogue = Promise.all([
     aggregateGameCharactersByRegion(baseUrl, region, "seq", "asc"),
@@ -35,5 +31,5 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
     })
     .catch(() => ({ items: [], unitProfiles: {}, loadFailed: true as const }));
   catalogue.catch(() => {});
-  return { region, i18nMessages, catalogue };
+  return { region, catalogue };
 };

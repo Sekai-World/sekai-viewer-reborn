@@ -58,6 +58,7 @@ export type ContentSiteServerMessageKey =
   | "failedToLoadVirtualLiveData";
 
 const DEFAULT_SEKAI_I18N_BASE_URL = "https://sekai-world.github.io/sekai-i18n-reborn";
+export const SERVER_I18N_BUNDLE_TIMEOUT_MS = 2_500;
 const FALLBACK_UI_LOCALE: SupportedUiLocale = "en";
 const LEGACY_COMMON_COMPAT_NAMESPACES = new Set<I18nNamespace>([
   "home",
@@ -119,6 +120,32 @@ export const loadI18nMessageBundle = (
   namespaces: readonly I18nNamespace[],
   fetcher?: I18nFetcher
 ): Promise<I18nMessages> => scopedI18nLoader.loadMessageBundle(localeValue, namespaces, fetcher);
+
+/** Resolves a server bundle within a bounded SSR/navigation budget. */
+export const resolveI18nMessageBundle = async (
+  loadBundle: () => Promise<I18nMessages>,
+  namespaces: readonly I18nNamespace[],
+  timeoutMs = SERVER_I18N_BUNDLE_TIMEOUT_MS
+): Promise<I18nMessages> => {
+  try {
+    const bundle = loadBundle();
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<never>((_, reject) => {
+      timeout = setTimeout(() => reject(new Error("i18n bundle deadline exceeded")), timeoutMs);
+      if (typeof timeout === "object" && "unref" in timeout) {
+        timeout.unref();
+      }
+    });
+
+    try {
+      return await Promise.race([bundle, deadline]);
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+    }
+  } catch {
+    return getLocalI18nMessages(namespaces);
+  }
+};
 
 export const resolveStreamingMessages = (
   messagesOrPromise: I18nMessages | Promise<I18nMessages>,

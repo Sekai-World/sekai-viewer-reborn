@@ -15,7 +15,7 @@
   import { onMount, type Snippet } from "svelte";
   import {
     createI18nTranslator,
-    getLocalI18nMessages,
+    resolveStreamingMessages,
     requestI18nLocale,
     isLocaleLoading,
     setI18nLocale
@@ -50,10 +50,11 @@
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common"]);
-  let currentLayoutMessages = $state<Record<string, string>>(fallbackMessages);
+  const getInitialMessages = (): Record<string, string> =>
+    resolveStreamingMessages(data.i18nMessages, ["common"]);
+  let currentLayoutMessages = $state<Record<string, string>>(getInitialMessages());
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
+    createI18nTranslator(data.uiLocale, getInitialMessages())(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
@@ -206,10 +207,7 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    currentLayoutMessages = fallbackMessages;
     const localeRequestToken = requestI18nLocale();
-    const translate = createI18nTranslator(uiLocale, fallbackMessages);
-    applyTranslations(translate);
     void refreshTranslations(uiLocale, messagesOrPromise, requestId, localeRequestToken);
   });
 

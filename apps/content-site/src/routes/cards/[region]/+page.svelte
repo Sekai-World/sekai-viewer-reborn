@@ -3,6 +3,7 @@
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
+  import { untrack } from "svelte";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { swipeRegion } from "$lib/actions/swipe-region";
@@ -56,11 +57,18 @@
 
   let { data }: { data: CardListPageData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "card", "event", "error"]);
+  const resolveStreamingMessages = (
+    messagesOrPromise: typeof data.i18nMessages
+  ): Record<string, string> =>
+    messagesOrPromise instanceof Promise ? fallbackMessages : messagesOrPromise;
   let translationRequestId = 0;
   let initialPageRequestId = 0;
   let listRequestId = 0;
+  let currentMessages = $state<Record<string, string>>(
+    resolveStreamingMessages(untrack(() => data.i18nMessages))
+  );
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
+    createI18nTranslator(data.uiLocale, currentMessages)(key);
   let items = $state<CardListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -518,8 +526,6 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
-    applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
@@ -678,6 +684,7 @@
     }
     if (requestId !== translationRequestId) return;
     const locale = localeValue;
+    currentMessages = messages;
     applyTranslations(createI18nTranslator(locale, messages));
   };
 
@@ -988,11 +995,6 @@
     class="archive-card-controls flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
   >
     <div class="archive-control-group flex items-center gap-2">
-      <div
-        class="archive-control-label hidden text-xs font-bold tracking-[0.14em] uppercase sm:block"
-      >
-        {listSortByReleaseAt}
-      </div>
       <div class="join">
         <ListToolbarButton
           icon="mdi:clock-outline"
@@ -1398,10 +1400,6 @@
 
   .archive-control-group {
     min-width: 0;
-  }
-
-  .archive-control-label {
-    color: var(--archive-text-muted);
   }
 
   .archive-results-field {
