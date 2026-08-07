@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
         super(args.length ? args[0] : timestamp);
       }
 
-      static now = (): number => timestamp;
+      static readonly now = (): number => timestamp;
     }
 
     Object.defineProperty(window, "Date", { configurable: true, value: FrozenDate });
@@ -27,7 +27,10 @@ test.beforeEach(async ({ page }) => {
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
 });
 
-const stabilizeVisualState = async (page: Page, section: ReturnType<Page["locator"]>): Promise<void> => {
+const stabilizeVisualState = async (
+  page: Page,
+  section: ReturnType<Page["locator"]>
+): Promise<void> => {
   await page.addStyleTag({
     content: `
       *, *::before, *::after {
@@ -43,7 +46,11 @@ const stabilizeVisualState = async (page: Page, section: ReturnType<Page["locato
   });
   if (await section.locator("img").count()) {
     await expect
-      .poll(() => section.locator("img").evaluateAll((images) => images.every((image) => (image as HTMLImageElement).complete)))
+      .poll(() =>
+        section
+          .locator("img")
+          .evaluateAll((images) => images.every((image) => (image as HTMLImageElement).complete))
+      )
       .toBe(true);
   }
 };
@@ -56,7 +63,9 @@ test("current event pending", async ({ page, request }, testInfo) => {
   await expect(section.locator('[aria-busy="true"]')).toBeVisible();
   await page.evaluate(() => window.stop());
   await stabilizeVisualState(page, section);
-  await expect(section).toHaveScreenshot(`current-event-pending-${viewportWidth(testInfo.project.name)}.png`);
+  await expect(section).toHaveScreenshot(
+    `current-event-pending-${viewportWidth(testInfo.project.name)}.png`
+  );
 });
 
 test("current event fulfilled", async ({ page, request }, testInfo) => {
@@ -68,5 +77,7 @@ test("current event fulfilled", async ({ page, request }, testInfo) => {
   await expect(section.locator('[aria-busy="true"]')).toHaveCount(0);
   await stabilizeVisualState(page, section);
   await expect.poll(() => section.boundingBox()).toEqual(expect.any(Object));
-  await expect(section).toHaveScreenshot(`current-event-fulfilled-${viewportWidth(testInfo.project.name)}.png`);
+  await expect(section).toHaveScreenshot(
+    `current-event-fulfilled-${viewportWidth(testInfo.project.name)}.png`
+  );
 });

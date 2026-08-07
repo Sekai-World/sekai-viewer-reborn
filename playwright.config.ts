@@ -27,13 +27,26 @@ export default defineConfig({
     javaScriptEnabled: true
   },
   projects: [
-    { name: "chromium-390", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 900 } } },
-    { name: "chromium-1024", use: { ...devices["Desktop Chrome"], viewport: { width: 1024, height: 900 } } },
-    { name: "chromium-1280", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } } },
-    { name: "chromium-1440", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } }
+    {
+      name: "chromium-390",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 900 } }
+    },
+    {
+      name: "chromium-1024",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1024, height: 900 } }
+    },
+    {
+      name: "chromium-1280",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 } }
+    },
+    {
+      name: "chromium-1440",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } }
+    }
   ],
   webServer: {
-    command: "pnpm --filter @apps/content-site exec vite dev --port 4105",
+    command:
+      "pnpm --filter @apps/content-site exec svelte-kit sync && pnpm --filter @apps/content-site exec vite dev --port 4105",
     url: "http://127.0.0.1:4105",
     reuseExistingServer: false,
     timeout: 120_000,
