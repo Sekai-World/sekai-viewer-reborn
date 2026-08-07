@@ -60,6 +60,42 @@ jobs:
 
       - name: Verify
         run: pnpm verify:ci
-        env:
-          SYNCKIT_TIMEOUT: "120000"
-          TURBO_CONCURRENCY: "2"
+
+  visual-regression:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise tools
+        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
+        with:
+          experimental: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Rebuild esbuild
+        run: pnpm rebuild esbuild
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run current-event visual regression tests
+        run: pnpm test:visual
+
+      - name: Upload visual regression artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.6.2
+        with:
+          name: visual-regression-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            test-results/
+            playwright-report/
+            apps/content-site/tests/visual/**/*-snapshots/

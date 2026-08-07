@@ -1,0 +1,79 @@
+name: Visual baseline candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Open pull request number to review"
+        required: true
+        type: number
+      update_snapshots:
+        description: "Explicitly generate updated snapshots for manual review"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Resolve open pull request head
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ inputs.pr_number }}
+        run: |
+          pr_json="$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json state,headRefOid)"
+          state="$(jq -r '.state' <<< "$pr_json")"
+          head_sha="$(jq -r '.headRefOid' <<< "$pr_json")"
+          if [[ "$state" != "OPEN" || ! "$head_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Expected an open pull request with a 40-character head SHA" >&2
+            exit 1
+          fi
+          {
+            echo "head_sha=$head_sha"
+            echo "head_sha_short=${head_sha:0:12}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout pull request head SHA
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.pr.outputs.head_sha }}
+          persist-credentials: false
+
+      - name: Setup mise tools
+        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654 # v4.2.4
+        with:
+          experimental: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Rebuild esbuild
+        run: pnpm rebuild esbuild
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run visual tests
+        run: |
+          if [[ "${{ inputs.update_snapshots }}" == "true" ]]; then
+            pnpm test:visual:update
+          else
+            pnpm test:visual
+          fi
+
+      - name: Upload baseline candidate and review artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # v4.6.2
+        with:
+          name: visual-baseline-candidate-pr-${{ inputs.pr_number }}-${{ steps.pr.outputs.head_sha_short }}
+          if-no-files-found: warn
+          path: |
+            test-results/
+            playwright-report/
+            apps/content-site/tests/visual/**/*-snapshots/
