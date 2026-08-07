@@ -60,6 +60,7 @@ body {
   --archive-border-default: color-mix(in oklab, var(--color-base-content) 15%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
+
   color-scheme: light;
 }
 
@@ -89,6 +90,7 @@ body {
   --archive-border-default: color-mix(in oklab, var(--color-base-content) 19%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
+
   color-scheme: dark;
 }
 
@@ -112,6 +114,7 @@ body {
   --archive-border-default: color-mix(in oklab, var(--color-base-content) 15%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
+
   color-scheme: light;
 }
 
@@ -143,6 +146,7 @@ body {
   --archive-border-default: color-mix(in oklab, var(--color-base-content) 19%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
+
   color-scheme: dark;
 }
 
@@ -166,6 +170,7 @@ body {
   --archive-border-default: color-mix(in oklab, var(--color-base-content) 15%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
+
   color-scheme: light;
 }
 
@@ -197,6 +202,7 @@ body {
   --archive-border-default: color-mix(in oklab, var(--color-base-content) 19%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
+
   color-scheme: dark;
 }
 
