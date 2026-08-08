@@ -69,6 +69,14 @@ describe("tools-site server loaders", () => {
       event: { id: "123", name: "Primary event", eventType: "marathon", unit: "Leo/need" }
     });
     expect(comparison.secondary).toEqual({ region: "kr", status: "unavailable", event: null });
+    expect(mocks.getEventsByRegionCurrent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ path: { region: "en" }, signal: expect.any(AbortSignal) })
+    );
+    expect(mocks.getEventsByRegionCurrent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ path: { region: "kr" }, signal: expect.any(AbortSignal) })
+    );
   });
 
   it("keeps malformed and failed API responses distinct", async () => {
@@ -81,6 +89,27 @@ describe("tools-site server loaders", () => {
     const comparison = result.comparison as { primary: { status: string }; secondary: { status: string } };
     expect(comparison.primary.status).toBe("unavailable");
     expect(comparison.secondary.status).toBe("failed");
+  });
+
+  it("aborts a stalled regional request at the bounded deadline", async () => {
+    vi.useFakeTimers();
+    mocks.getEventsByRegionCurrent.mockImplementation(
+      ({ path, signal }: { path: { region: string }; signal: AbortSignal }) =>
+        new Promise((_, reject) => {
+          signal.addEventListener("abort", () => reject(new Error(`${path.region} timed out`)));
+        })
+    );
+
+    const result = runPageLoad(request("https://tools.test/?primary=jp&secondary=en"));
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    await expect(result).resolves.toMatchObject({
+      comparison: {
+        primary: { status: "failed" },
+        secondary: { status: "failed" }
+      }
+    });
+    vi.useRealTimers();
   });
 
   it("uses local messages when the remote i18n bundle fails", async () => {

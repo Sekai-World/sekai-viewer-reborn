@@ -20,6 +20,7 @@ export type RegionCurrentEvent =
 
 const DEFAULT_PRIMARY_REGION: SupportedRegion = "jp";
 const DEFAULT_SECONDARY_REGION: SupportedRegion = "en";
+const CURRENT_EVENT_REQUEST_TIMEOUT_MS = 5_000;
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)
@@ -78,8 +79,15 @@ const fetchCurrentEvent = async (
   baseUrl: string,
   region: SupportedRegion
 ): Promise<RegionCurrentEvent> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), CURRENT_EVENT_REQUEST_TIMEOUT_MS);
+
   try {
-    const response = await getEventsByRegionCurrent({ baseUrl, path: { region } });
+    const response = await getEventsByRegionCurrent({
+      baseUrl,
+      path: { region },
+      signal: controller.signal
+    });
 
     if (response.error) {
       return getResponseStatus(response) === 404
@@ -93,6 +101,8 @@ const fetchCurrentEvent = async (
       : { region, status: "unavailable", event: null };
   } catch {
     return { region, status: "failed", event: null };
+  } finally {
+    clearTimeout(timeout);
   }
 };
 

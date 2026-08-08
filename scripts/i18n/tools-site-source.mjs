@@ -8,7 +8,8 @@ const sourceDir = path.join(repoRoot, "packages/i18n-source/tools-site");
 const namespaces = ["common", "comparison", "server"];
 const translatorKeyPatterns = [
   /createI18nTranslator\([^)]*\)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
-  /tTools\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g
+  /\b(?:t|tTools)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
+  /\btranslate\(\s*["']([^"'`]+)["']/g
 ];
 
 const skipWhitespace = (content, index) => {
@@ -24,13 +25,15 @@ const readQuotedKey = (content, index) => {
   return end > index + 1 ? content.slice(index + 1, end) : undefined;
 };
 
-const collectTranslatorKeys = (content, usedKeys) => {
+export const collectTranslatorKeys = (content, usedKeys) => {
   for (const pattern of translatorKeyPatterns) {
     for (const match of content.matchAll(pattern)) {
       usedKeys.add(match[1]);
     }
   }
 };
+
+export const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
 
 const collectServerKeys = (content, usedKeys) => {
   const functionName = "getServerI18nText";
@@ -117,6 +120,6 @@ if (Object.keys(missingKeysByNamespace).length > 0) {
     );
   }
   process.exitCode = 1;
-} else {
+} else if (isMainModule) {
   console.log("tools-site i18n source keys are complete.");
 }

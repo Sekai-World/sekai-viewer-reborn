@@ -51,9 +51,9 @@
   </section>
 
   <section class="archive-results" aria-label={translate("comparison.title")}>
-    {#each [data.comparison.primary, data.comparison.secondary] as result (result.region)}
-      <article class="archive-result" aria-labelledby={`result-${result.region}`}>
-        <h2 id={`result-${result.region}`}>{regionName(result.region)}</h2>
+    {#each [data.comparison.primary, data.comparison.secondary] as result, index (`${result.region}-${index}`)}
+      <article class="archive-result" aria-labelledby={`result-${result.region}-${index}`}>
+        <h2 id={`result-${result.region}-${index}`}>{regionName(result.region)}</h2>
         {#if result.status === "available"}
           <p class="archive-status">{translate(statusKey(result))}</p>
           <div class="archive-event">

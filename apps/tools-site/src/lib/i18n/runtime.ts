@@ -27,7 +27,11 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
 
 const toRepoLocale = (locale: SupportedUiLocale): string => repoLocaleByUiLocale[locale] ?? "en";
 
-const removeTrailingSlashes = (value: string): string => value.replace(/\/+$/, "");
+const removeTrailingSlashes = (value: string): string => {
+  let normalized = value;
+  while (normalized.endsWith("/")) normalized = normalized.slice(0, -1);
+  return normalized;
+};
 
 const getI18nBaseUrl = (): string =>
   removeTrailingSlashes(env.PUBLIC_SEKAI_I18N_BASE_URL?.trim() || DEFAULT_SEKAI_I18N_BASE_URL);
