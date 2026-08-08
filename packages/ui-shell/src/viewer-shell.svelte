@@ -189,7 +189,7 @@
           {/if}
         {/each}
       </ul>
-    </nav>
+    </aside>
   </div>
 </div>
 
