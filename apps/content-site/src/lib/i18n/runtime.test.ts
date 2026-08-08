@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { createRemoteI18nRuntime } from "@platform/i18n-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -88,5 +90,22 @@ describe("remote message cache deadlines", () => {
     resolveResponse?.(new Response(JSON.stringify({ home: "Accueil" }), { status: 200 }));
     await expect(first).resolves.toEqual({ home: "Accueil" });
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("character loader i18n contract", () => {
+  it("lets both character loaders inherit the resolved root layout messages", async () => {
+    const routesDirectory = resolve(process.cwd(), "src/routes");
+    const loaders = await Promise.all(
+      ["characters/[region]/+page.server.ts", "character/[region]/[id]/+page.server.ts"].map((path) =>
+        readFile(resolve(routesDirectory, path), "utf8")
+      )
+    );
+
+    for (const source of loaders) {
+      expect(source).not.toContain("i18nMessages");
+      expect(source).not.toContain("loadI18nMessageBundle");
+      expect(source).not.toContain("UI_LOCALE_COOKIE_NAME");
+    }
   });
 });

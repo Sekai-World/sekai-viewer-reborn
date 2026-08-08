@@ -39,8 +39,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     setupFiles: ["../../test/setup.js"],
     coverage: {
-      reporter: ["lcov"],
-      reportsDirectory: "coverage"
+      reporter: ["lcov"]
     }
   }
 });
