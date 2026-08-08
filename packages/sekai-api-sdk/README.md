@@ -1,6 +1,6 @@
 # @platform/sekai-api-sdk
 
-Type-safe SDK scaffold for `sekai-api`, generated from an OpenAPI document via `@hey-api/openapi-ts`.
+Type-safe SDK for `sekai-api`, generated from the public OpenAPI document via `@hey-api/openapi-ts`.
 
 ## What this package provides
 
@@ -13,29 +13,34 @@ Type-safe SDK scaffold for `sekai-api`, generated from an OpenAPI document via `
 From repository root:
 
 ```bash
-pnpm --filter @platform/sekai-api-sdk generate:sdk -- --input <openapi-file-path-or-url> --output <output-dir>
-```
-
-Examples:
-
-```bash
-pnpm --filter @platform/sekai-api-sdk generate:sdk -- --input F:\sekai-api\docs\swagger.json
-pnpm --filter @platform/sekai-api-sdk generate:sdk -- --input F:\sekai-api\docs\swagger.json --output F:\sekai-viewer-reborn\packages\sekai-api-sdk\src
+pnpm --filter @platform/sekai-api-sdk generate:sdk -- --input https://api.sekai.best/spec --output ./src
 ```
 
 Notes:
 
+- Public spec: <https://api.sekai.best/spec>
 - Default output is `./src`
 - Generating into `src` may overwrite previously generated SDK files
 
-## Default base URL behavior
+## Base URL behavior
 
-- The generator normalizes the default client base URL to `/api/v1`.
-- Server-side callers or non-proxied deployments should pass an explicit `baseUrl`.
+- The generated client has no built-in base URL, so requests use relative paths by default.
+- Browser callers can use a same-origin proxy; server-side callers and direct public API
+  consumers should configure an explicit `baseUrl`, such as `https://api.sekai.best`.
+- The public API paths are generated exactly as specified (for example, `/event/live`);
+  the client does not add an `/api/v1` prefix.
 
-## Current state
+Configure the exported default client before calling an endpoint:
 
-This package is intentionally scaffold-only until a `sekai-api` OpenAPI document is provided and generated into `src/`.
+```ts
+import { client, getEventRankingLive } from "@platform/sekai-api-sdk";
+
+client.setConfig({ baseUrl: "https://api.sekai.best" });
+const response = await getEventRankingLive();
+```
+
+For isolated configuration, use `createClient({ baseUrl: "https://api.sekai.best" })`
+and pass the returned client through an endpoint's `client` option.
 
 ## Build and checks
 
