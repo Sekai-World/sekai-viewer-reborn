@@ -35,6 +35,9 @@ jobs:
 
       - name: Verify
         run: pnpm verify:ci
+        env:
+          SYNCKIT_TIMEOUT: "120000"
+          TURBO_CONCURRENCY: "2"
 
   validate-push:
     if: github.event_name == 'push'
@@ -57,3 +60,6 @@ jobs:
 
       - name: Verify
         run: pnpm verify:ci
+        env:
+          SYNCKIT_TIMEOUT: "120000"
+          TURBO_CONCURRENCY: "2"
