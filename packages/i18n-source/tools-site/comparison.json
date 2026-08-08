@@ -1,0 +1,16 @@
+{
+  "comparison.empty": "No current event data is available.",
+  "comparison.available": "Current event available.",
+  "comparison.primary": "Primary region",
+  "comparison.resultLink": "View event details",
+  "comparison.secondary": "Secondary region",
+  "comparison.title": "Current event comparison",
+  "comparison.unavailable": "No current event is available for this region.",
+  "comparison.unavailableDescription": "Current event data is unavailable.",
+  "comparison.requestFailed": "Current event data could not be requested.",
+  "region.cn": "China",
+  "region.en": "English",
+  "region.jp": "Japan",
+  "region.kr": "Korea",
+  "region.tw": "Taiwan"
+}

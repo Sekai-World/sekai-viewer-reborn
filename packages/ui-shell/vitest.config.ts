@@ -5,7 +5,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   plugins: [svelte({ prebundleSvelteLibraries: false }), svelteTesting()],
   resolve: {
-    alias: [{ find: /^node:module$/, replacement: "module" }],
+    alias: [
+      { find: /^node:module$/, replacement: "module" },
+    ],
     conditions: ["browser", "node", "module-sync"]
   },
   ssr: {
@@ -35,6 +37,10 @@ export default defineConfig({
     environment: "jsdom",
     exclude: ["**/node_modules/**", "**/.svelte-kit/**", "**/dist/**", "**/build/**"],
     include: ["src/**/*.test.ts"],
-    setupFiles: ["../../test/setup.js"]
+    setupFiles: ["../../test/setup.js"],
+    coverage: {
+      reporter: ["lcov"],
+      reportsDirectory: "coverage"
+    }
   }
 });
