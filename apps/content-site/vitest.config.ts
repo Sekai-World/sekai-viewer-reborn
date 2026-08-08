@@ -3,13 +3,22 @@ import { svelteTesting } from "@testing-library/svelte/vite";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [svelte({ prebundleSvelteLibraries: false }), svelteTesting()],
+  plugins: [
+    svelte({
+      prebundleSvelteLibraries: false
+    }),
+    svelteTesting()
+  ],
   resolve: {
     alias: [
       { find: /^node:module$/, replacement: "module" },
       {
         find: "$app/paths",
         replacement: new URL("./src/lib/test/app-paths.ts", import.meta.url).pathname
+      },
+      {
+        find: "$lib",
+        replacement: new URL("./src/lib", import.meta.url).pathname
       }
     ],
     conditions: ["browser", "node", "module-sync"]
@@ -46,6 +55,10 @@ export default defineConfig({
     environment: "jsdom",
     exclude: ["**/node_modules/**", "**/.svelte-kit/**", "**/dist/**", "**/build/**"],
     include: ["src/**/*.test.ts"],
-    setupFiles: ["../../test/setup.js"]
+    setupFiles: ["../../test/setup.js"],
+    coverage: {
+      reporter: ["lcov"],
+      reportsDirectory: "coverage"
+    }
   }
 });

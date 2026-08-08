@@ -8,17 +8,105 @@
     "neutral": {
       "0": "#ffffff",
       "900": "#0f172a"
+    },
+    "surface": {
+      "canvas": "#f6f7fb",
+      "sunken": "#eef0f6",
+      "default": "#ffffff",
+      "raised": "#ffffff",
+      "overlay": "#ffffff"
+    },
+    "text": {
+      "strong": "#202331",
+      "default": "#363b4d",
+      "muted": "#687086",
+      "inverse": "#ffffff",
+      "link": "#4f46e5"
+    },
+    "border": {
+      "subtle": "#e3e6ef",
+      "default": "#cfd4e1",
+      "strong": "#a7afc1"
+    },
+    "accent": {
+      "primary": "#5b5ce2",
+      "primaryHover": "#4948c6",
+      "primarySoft": "#eeefff",
+      "primaryContent": "#ffffff"
+    },
+    "status": {
+      "success": "#16835b",
+      "successSoft": "#e5f6ee",
+      "warning": "#a65d00",
+      "warningSoft": "#fff3d6",
+      "danger": "#bd3458",
+      "dangerSoft": "#ffebf0",
+      "info": "#2469b2",
+      "infoSoft": "#e8f2ff"
+    },
+    "focus": {
+      "ring": "#6366f1",
+      "offset": "#ffffff"
     }
   },
   "space": {
     "xs": "4px",
     "sm": "8px",
     "md": "16px",
-    "lg": "24px"
+    "lg": "24px",
+    "0": "0px",
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "8": "32px",
+    "10": "40px",
+    "12": "48px"
   },
   "radius": {
     "sm": "4px",
     "md": "8px",
-    "lg": "12px"
+    "lg": "12px",
+    "xl": "24px",
+    "pill": "9999px"
+  },
+  "icon": {
+    "xs": "14px",
+    "sm": "16px",
+    "md": "20px",
+    "lg": "24px",
+    "xl": "32px"
+  },
+  "motion": {
+    "duration": {
+      "instant": "1ms",
+      "fast": "150ms",
+      "standard": "180ms",
+      "slow": "280ms"
+    },
+    "easing": {
+      "standard": "cubic-bezier(0.22, 1, 0.36, 1)",
+      "emphasized": "cubic-bezier(0.2, 0.8, 0.2, 1)"
+    }
+  },
+  "gameData": {
+    "immutable": {
+      "attribute": {
+        "cool": "#4b8fd8",
+        "cute": "#ed7094",
+        "happy": "#e8b542",
+        "mysterious": "#8a6acb",
+        "pure": "#61b88b"
+      },
+      "rarity": {
+        "one": "#8b94a8",
+        "two": "#5f9cd6",
+        "three": "#b66dd2",
+        "four": "#df9a3e",
+        "birthday": "#d56f9e"
+      }
+    }
   }
 }

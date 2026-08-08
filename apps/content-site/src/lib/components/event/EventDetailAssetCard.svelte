@@ -53,10 +53,10 @@
   );
   const isCompactTab = (tab: EventAssetTab): boolean => tab === "banner" || tab === "title";
   const getTabClass = (tab: EventAssetTab): string =>
-    `tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
+    `tab min-h-11 flex-1 rounded-xl border border-transparent font-semibold transition-[background-color,border-color,color] duration-150 ${
       resolvedTab === tab
-        ? "border-primary/45 bg-primary text-primary-content shadow-sm"
-        : "text-base-content/70 hover:bg-base-100/80"
+        ? "border-primary/45 bg-primary text-primary-content shadow-[0_4px_12px_color-mix(in_oklab,var(--color-primary)_22%,transparent)]"
+        : "text-[var(--archive-text-muted)] hover:border-(--archive-border-default) hover:bg-(--archive-surface-raised)"
     }`;
   const openPreview = (): void => {
     previewOpen = true;
@@ -98,10 +98,12 @@
   </div>
 {/snippet}
 
-<article class="card content-card-shell overflow-hidden shadow-sm">
-  <div class="card-body items-center gap-3 p-3 sm:p-5 text-center">
+<article
+  class="card content-card-shell overflow-hidden shadow-[0_10px_28px_color-mix(in_oklab,var(--color-base-content)_5%,transparent)]"
+>
+  <div class="card-body items-center gap-4 p-3 sm:p-5 text-center">
     <div
-      class={`tabs tabs-box content-card-inset grid w-full grid-cols-2 p-1 ${
+      class={`tabs tabs-box content-card-inset grid w-full grid-cols-2 border-(--archive-border-default) bg-(--archive-surface-sunken) p-1.5 ${
         shouldShowCharacterTab(event.eventType) ? "sm:grid-cols-4" : "sm:grid-cols-3"
       }`}
     >
@@ -132,7 +134,7 @@
     </div>
 
     <div
-      class={`content-card-inset w-full overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS} transition-[aspect-ratio] duration-300 ease-out ${
+      class={`content-card-inset w-full overflow-hidden border-(--archive-border-default) bg-(--archive-surface-overlay) ${DETAIL_MEDIA_RADIUS_CLASS} transition-[aspect-ratio] duration-300 ease-out ${
         isCompactTab(resolvedTab) ? "aspect-16/7" : "aspect-16/10"
       }`}
     >

@@ -62,7 +62,9 @@
   };
 </script>
 
-<article class="card content-card-shell shadow-sm">
+<article
+  class="card content-card-shell shadow-[0_8px_24px_color-mix(in_oklab,var(--color-base-content)_4%,transparent)]"
+>
   <div class="card-body gap-4 p-3 sm:p-5">
     <div class="flex items-start justify-between gap-3">
       <p
@@ -86,19 +88,21 @@
             decoding="async"
           />
         {/if}
-        <span class="badge badge-outline border-base-content/20 font-semibold">
+        <span
+          class="badge badge-outline border-(--archive-border-default) bg-(--archive-surface-raised) font-semibold text-(--archive-text-default)"
+        >
           {idLabel}{event.id}
         </span>
       </div>
     </div>
 
     <dl class="space-y-2">
-      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+      <div class="content-card-inset rounded-xl border-(--archive-border-subtle) p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameLabel}</dt>
         <dd class="mt-1 text-sm font-medium">{event.title}</dd>
       </div>
       {#if event.eventType}
-        <div class="content-card-inset rounded-xl p-3 sm:px-4">
+        <div class="content-card-inset rounded-xl border-(--archive-border-subtle) p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
             {eventTypeLabel}
           </dt>
@@ -109,7 +113,7 @@
       {/if}
       {#if getDisplayUnitName(event.unit)}
         <div
-          class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4"
+          class="content-card-inset flex items-center justify-between gap-4 rounded-xl border-(--archive-border-subtle) p-3 sm:px-4"
         >
           <div class="min-w-0">
             <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
@@ -127,14 +131,16 @@
         {#if char.id > 0}
           <a
             href={resolve("/character/[region]/[id]", { region, id: String(char.id) })}
-            class="content-card-inset group/banner-character-row flex items-center gap-3 rounded-xl p-3 sm:px-4 outline-none transition-colors hover:bg-base-content/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            class="content-card-inset group/banner-character-row flex items-center gap-3 rounded-xl border-(--archive-border-default) p-3 sm:px-4 outline-none transition-[background-color,border-color] duration-150 hover:border-primary/35 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label={getCharacterDisplayName(char)}
           >
             <div class="min-w-0 flex-1">
               <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                 {bannerCharacterLabel}
               </dt>
-              <dd class="mt-1 text-sm font-medium group-hover/banner-character-row:text-primary group-focus-visible/banner-character-row:text-primary">
+              <dd
+                class="mt-1 text-sm font-medium group-hover/banner-character-row:text-primary group-focus-visible/banner-character-row:text-primary"
+              >
                 {getCharacterDisplayName(char)}
               </dd>
             </div>
@@ -147,7 +153,9 @@
             />
           </a>
         {:else}
-          <div class="content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4">
+          <div
+            class="content-card-inset flex items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 sm:px-4"
+          >
             <div class="min-w-0 flex-1">
               <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                 {bannerCharacterLabel}
@@ -163,19 +171,19 @@
           </div>
         {/if}
       {/if}
-      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+      <div class="content-card-inset rounded-xl border-(--archive-border-subtle) p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{startAtLabel}</dt>
         <dd class="mt-1 text-sm font-medium">
           {formatDisplayDateTime(event.startAt, displayLocale)}
         </dd>
       </div>
-      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+      <div class="content-card-inset rounded-xl border-(--archive-border-subtle) p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{endAtLabel}</dt>
         <dd class="mt-1 text-sm font-medium">
           {formatDisplayDateTime(event.endAt, displayLocale)}
         </dd>
       </div>
-      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+      <div class="content-card-inset rounded-xl border-(--archive-border-subtle) p-3 sm:px-4">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {internalResourceCodeLabel}
         </dt>

@@ -6,6 +6,7 @@
   "scripts": {
     "pretest": "pnpm --filter '@apps/*' exec svelte-kit sync",
     "test": "vitest run --config ./vitest.config.ts",
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage && node ../../scripts/coverage/normalize-lcov.mjs coverage/lcov.info packages/ui-shell",
     "lint": "eslint src --ext .ts,.svelte",
     "check": "pnpm exec svelte-check --tsconfig ./tsconfig.json --tsgo"
   },
@@ -33,7 +34,7 @@
     "jsdom": "^30.0.1",
     "svelte": "^5.56.2",
     "svelte-check": "^4.6.0",
-    "vite": "8.2.0",
+    "vite": "8.2.1",
     "vitest": "^4.1.10"
   },
   "peerDependencies": {
