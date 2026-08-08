@@ -4,3 +4,7 @@ node_modules
 dist
 build
 **/*.gen.ts
+
+# Helm templates contain Go template expressions, which Prettier's YAML parser
+# cannot parse. Validate them with Helm instead.
+deploy/helm/**/templates/**

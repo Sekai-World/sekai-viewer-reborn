@@ -18,7 +18,7 @@ Guidance for coding agents working in this workspace.
   - `sekai-master-api-sdk` (`@platform/sekai-master-api-sdk`)
   - `ui-shell` (`@platform/ui-shell`)
   - `ui-tokens` (`@platform/ui-tokens`)
-- Kubernetes manifests live in `deploy/k8s/*`.
+- Helm deployment configuration lives in `deploy/helm/sekai-viewer-reborn`.
 
 ## Ground Rules
 
@@ -260,20 +260,7 @@ docker run --rm -p 3000:3000 content-site:local
 
 ## Deployment Layout
 
-Per-app manifests:
-
-- `deploy/k8s/content-site`
-- `deploy/k8s/tools-site`
-- `deploy/k8s/media-lab-site`
-- `deploy/k8s/account-site`
-
-Each app folder currently includes:
-
-- `deployment.yaml`
-- `service.yaml`
-- `ingress.yaml`
-
-Ingress examples:
-
-- `deploy/k8s/ingress-examples/shared-gateway-ingress.yaml`
-- `deploy/k8s/ingress-examples/independent-ingress-pattern.md`
+The Helm chart at `deploy/helm/sekai-viewer-reborn` is the deployment solution
+for all four applications. It renders each enabled application's Deployment,
+Service, and Ingress, and does not create a Namespace; select or create the
+release namespace with Helm.

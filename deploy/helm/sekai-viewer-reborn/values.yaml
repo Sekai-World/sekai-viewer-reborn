@@ -1,0 +1,137 @@
+# Default values for the sekai-viewer-reborn chart.
+
+replicaCount: 2
+
+terminationGracePeriodSeconds: 30
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# The application Dockerfiles use a non-root runtime. Leave numeric IDs unset
+# until the Dockerfiles pin the appuser UID/GID; Kubernetes uses the
+# image-defined non-root user in the meantime.
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# Do not enable readOnlyRootFilesystem by default: the application runtime has
+# not been assessed for a read-only root filesystem and writable tmpfs mounts.
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+
+# Prefer placing replicas of the same application on different nodes while
+# remaining schedulable on a small cluster. The __APP_NAME__ value is replaced
+# with the current app name when rendered. This value can be replaced for a
+# cluster's scheduling policy.
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: __APP_NAME__
+
+tolerations: []
+nodeSelector: {}
+
+pdb:
+  enabled: true
+  minAvailable: 1
+
+apps:
+  content-site:
+    enabled: true
+    image:
+      repository: ghcr.io/sekai-world/content-site
+      tag: "0.0.0"
+      pullPolicy: IfNotPresent
+    # Set the three empty values before deploying content-site. The i18n URL is
+    # usable as-is for the default English dictionary source.
+    env:
+      SEKAI_MASTER_API_BASE_URL: ""
+      SEKAI_API_BASE_URL: ""
+      PUBLIC_REMOTE_ASSET_BASE_URL: ""
+      PUBLIC_SEKAI_I18N_BASE_URL: https://sekai-world.github.io/sekai-i18n-reborn
+    envFrom: []
+    extraEnv: []
+    ingress:
+      enabled: true
+      className: nginx
+      annotations: {}
+      host: content.example.com
+      path: /
+      pathType: Prefix
+      tls:
+        enabled: true
+        secretName: content-site-tls
+
+  tools-site:
+    enabled: true
+    image:
+      repository: ghcr.io/sekai-world/tools-site
+      tag: "0.0.0"
+      pullPolicy: IfNotPresent
+    env: {}
+    envFrom: []
+    extraEnv: []
+    ingress:
+      enabled: true
+      className: nginx
+      annotations: {}
+      host: tools.example.com
+      path: /
+      pathType: Prefix
+      tls:
+        enabled: true
+        secretName: tools-site-tls
+
+  media-lab-site:
+    enabled: true
+    image:
+      repository: ghcr.io/sekai-world/media-lab-site
+      tag: "0.0.0"
+      pullPolicy: IfNotPresent
+    env: {}
+    envFrom: []
+    extraEnv: []
+    ingress:
+      enabled: true
+      className: nginx
+      annotations: {}
+      host: media-lab.example.com
+      path: /
+      pathType: Prefix
+      tls:
+        enabled: true
+        secretName: media-lab-site-tls
+
+  account-site:
+    enabled: true
+    image:
+      repository: ghcr.io/sekai-world/account-site
+      tag: "0.0.0"
+      pullPolicy: IfNotPresent
+    env: {}
+    envFrom: []
+    extraEnv: []
+    ingress:
+      enabled: true
+      className: nginx
+      annotations: {}
+      host: account.example.com
+      path: /
+      pathType: Prefix
+      tls:
+        enabled: true
+        secretName: account-site-tls

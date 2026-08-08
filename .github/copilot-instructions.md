@@ -3,7 +3,7 @@
 ## Big Picture
 
 - This is a greenfield monorepo for 4 independently deployable SvelteKit sites plus shared TypeScript packages.
-- Workspace layout is fixed: `apps/*` for deployable frontends, `packages/*` for shared libraries, `deploy/k8s/*` for per-app manifests.
+- Workspace layout is fixed: `apps/*` for deployable frontends, `packages/*` for shared libraries, and `deploy/helm/sekai-viewer-reborn` for deployment.
 - Keep app boundaries explicit: each site (`content-site`, `tools-site`, `media-lab-site`, `account-site`) should remain runnable and deployable on its own.
 - Shared logic belongs in `packages/` when reused across apps (API, auth, tokens).
 
@@ -33,8 +33,8 @@
 
 ## Deployment and Container Conventions
 
-- Kubernetes manifests are per app under `deploy/k8s/<app>/` and assume container port `3000` behind service port `80`.
-- Ingress supports both independent app ingress and shared gateway examples in `deploy/k8s/ingress-examples/`.
+- The Helm chart at `deploy/helm/sekai-viewer-reborn` renders per-app Kubernetes resources and assumes container port `3000` behind service port `80`.
+- Ingress hosts and TLS settings are configured per app through the chart values.
 - Each app has its own Dockerfile (`apps/*/Dockerfile`) using `node:24-alpine` and workspace-aware build commands.
 
 ## Agent Workflow Expectations

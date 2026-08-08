@@ -1,0 +1,17 @@
+{{- $root := . -}}
+{{- range $appName, $app := $root.Values.apps }}
+{{- if and $app.enabled $root.Values.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "sekai-viewer-reborn.appName" (list $root $appName) }}
+  labels:
+    {{- include "sekai-viewer-reborn.labels" (list $root $appName) | nindent 4 }}
+spec:
+  minAvailable: {{ $root.Values.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "sekai-viewer-reborn.selectorLabels" (list $root $appName) | nindent 6 }}
+{{- end }}
+{{- end }}
