@@ -6,7 +6,7 @@ export type ClientOptions = {
 
 export type ResponseStatus = 'success' | 'fail' | 'error';
 
-export type ResponseCodeForFailure = 'UNKNOWN_ENDPOINT' | 'INVALID_REQUEST';
+export type ResponseCodeForFailure = 'UNKNOWN_ENDPOINT' | 'INVALID_REQUEST' | 'UNAUTHORIZED' | 'UNKNOWN_RESOURCE';
 
 export type ResponseCodeForError = 'UNKNOWN_ERROR' | 'INTERNAL_ERROR';
 
@@ -30,7 +30,7 @@ export type FailureResponse = {
 
 export type ErrorResponse = {
     status: ResponseStatus;
-    code: ResponseCodeForFailure;
+    code: ResponseCodeForError;
     data: Array<{
         param?: string;
         message?: string;
