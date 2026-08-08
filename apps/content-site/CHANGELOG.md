@@ -1,5 +1,57 @@
 # @apps/content-site
 
+## 0.4.0
+
+### Minor Changes
+
+- 615125d: Add the opt-in Prismatic Archive foundation with additive semantic tokens, a
+  persistent desktop rail option, and localized skip-to-content navigation. Update
+  the content-site home to foreground the current event, group recent releases,
+  and clarify its database directory and version provenance. Add deterministic
+  browser visual-regression coverage for the streamed current-event banner. Simplify
+  the card-list sorting controls to icon-only buttons. Add artifact-backed visual
+  failure review and a manual, artifact-only baseline candidate workflow; CI never
+  updates or commits snapshots automatically.
+  Ensure content-site waits for its target locale dictionary during SSR and client
+  navigations, retaining the previous complete locale while a user-requested
+  locale change loads instead of visibly resetting to English fallback text.
+  Bound remote dictionary cache lookups so timed-out requests are aborted and
+  evicted for safe retry rather than permanently poisoning a locale/namespace key.
+
+### Patch Changes
+
+- e0f8744: Refine archive home, current-event, cards, and event-detail presentation.
+- d901b1b: Make mosaicked card-list spoilers reveal before opening card details with keyboard activation.
+- 5c3cf63: Automatically retry image and preview loading twice before showing a fallback or failure state, improving recovery from temporary asset delivery errors.
+- c3ee323: Center solitary card artwork in the agenda and comfy card-list views.
+- 65d2675: Group character avatars into content-sized unit cards with proportional unit logos, responsive spacing, and a matching loading skeleton.
+- 85c9c43: Allow shared content-site image callers to provide explicit image retry policies, including signed GET URLs that must remain byte-for-byte unchanged and skip same-origin HEAD probes. Interactive previews and card thumbnails use the same shared retry controller contract as direct asset loading.
+- 2769d84: Make event bonus-character, event banner-character, and card character information rows link directly to character pages with consistent hover and keyboard feedback.
+- 10b1f90: Apply the saved or system theme before the first page paint to prevent a light-to-dark flash.
+- 480d812: Improve event and card navigation, including bonus-character card filters and current-event feedback.
+- 4087be7: Show time-based sorting before ID sorting consistently across content lists.
+- 85c9c43: Add bounded positive jitter to shared image retry scheduling so concurrent image failures recover over staggered 300–360ms and 900–1080ms windows without changing retry policies or adding global concurrency limiting.
+- d9ac1e8: Keep resolved translations visible while a streamed locale refresh loads, preventing
+  temporary fallback text from replacing an already translated interface. Abort and
+  evict timed-out remote dictionary requests so a later locale or namespace load can
+  safely retry instead of reusing a failed in-flight result.
+- 4087be7: Increase list toolbar button sizing on wider screens.
+- 5a7cc8c: Keep card and music artwork at its native scale on hover, reserve current-event banner space
+  while it loads, and use outlined metadata badges above current-event titles.
+- Updated dependencies [5c3cf63]
+- Updated dependencies [85c9c43]
+- Updated dependencies [615125d]
+- Updated dependencies [07d232f]
+- Updated dependencies [1e66948]
+- Updated dependencies [85c9c43]
+- Updated dependencies [d9ac1e8]
+- Updated dependencies [6d814ec]
+  - @platform/ui-shell@0.2.0
+  - @platform/ui-tokens@0.2.0
+  - @platform/i18n-runtime@0.1.3
+  - @platform/sekai-master-api-sdk@1.0.0
+  - @platform/i18n-source@0.2.0
+
 ## 0.3.0
 
 ### Minor Changes
