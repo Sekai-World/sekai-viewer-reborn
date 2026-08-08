@@ -24,11 +24,10 @@ Notes:
 
 ## Base URL behavior
 
-- The generated client has no built-in base URL, so requests use relative paths by default.
-- Browser callers can use a same-origin proxy; server-side callers and direct public API
-  consumers should configure an explicit `baseUrl`, such as `https://api.sekai.best`.
-- The public API paths are generated exactly as specified (for example, `/event/live`);
-  the client does not add an `/api/v1` prefix.
+- The generated client has no built-in base URL. Callers must explicitly provide one with
+  the exported default client's `setConfig({ baseUrl })` or with `createClient({ baseUrl })`.
+- Generated endpoint URLs are OpenAPI absolute-path references (for example, `/event/live`),
+  so configure a base URL such as `https://api.sekai.best` before making requests.
 
 Configure the exported default client before calling an endpoint:
 
@@ -39,8 +38,15 @@ client.setConfig({ baseUrl: "https://api.sekai.best" });
 const response = await getEventRankingLive();
 ```
 
-For isolated configuration, use `createClient({ baseUrl: "https://api.sekai.best" })`
-and pass the returned client through an endpoint's `client` option.
+For isolated configuration, create a client with an explicit base URL and pass it through an
+endpoint's `client` option:
+
+```ts
+import { createClient, getEventRankingLive } from "@platform/sekai-api-sdk";
+
+const client = createClient({ baseUrl: "https://api.sekai.best" });
+const response = await getEventRankingLive({ client });
+```
 
 ## Build and checks
 
