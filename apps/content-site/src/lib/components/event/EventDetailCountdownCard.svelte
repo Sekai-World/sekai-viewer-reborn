@@ -26,7 +26,9 @@
 </script>
 
 {#if isCurrentEvent && !isEventEnded(event.endAt)}
-  <article class="card content-card-shell shadow-sm">
+  <article
+    class="card content-card-shell border-primary/20 shadow-[0_8px_24px_color-mix(in_oklab,var(--color-primary)_9%,transparent)]"
+  >
     <div class="card-body gap-4 p-3 sm:p-5">
       <p
         class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
@@ -38,14 +40,16 @@
         />
         <span>{title}</span>
       </p>
-      <EventCountdownCard
-        startAt={event.startAt}
-        endAt={event.endAt}
-        {uiLocale}
-        {messages}
-        forceShowSeconds={true}
-        showProgress={false}
-      />
+      <div class="content-card-inset border-primary/15 bg-(--archive-surface-raised) p-3 sm:p-4">
+        <EventCountdownCard
+          startAt={event.startAt}
+          endAt={event.endAt}
+          {uiLocale}
+          {messages}
+          forceShowSeconds={true}
+          showProgress={false}
+        />
+      </div>
     </div>
   </article>
 {/if}

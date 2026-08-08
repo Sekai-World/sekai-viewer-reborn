@@ -15,6 +15,10 @@ export default defineConfig({
       {
         find: "$app/paths",
         replacement: new URL("./src/lib/test/app-paths.ts", import.meta.url).pathname
+      },
+      {
+        find: "$lib",
+        replacement: new URL("./src/lib", import.meta.url).pathname
       }
     ],
     conditions: ["browser", "node", "module-sync"]

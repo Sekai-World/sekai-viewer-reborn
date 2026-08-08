@@ -298,7 +298,7 @@
   {/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
+<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-5 px-2 pb-6 sm:px-4">
   {#await data.eventPayload}
     <PageHeader
       breadcrumbs={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}
@@ -335,9 +335,9 @@
 
     {#if payload.event}
       <div
-        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)]"
+        class="grid grid-cols-1 gap-5 md:grid-cols-[minmax(17rem,30%)_minmax(0,1fr)] md:items-start xl:grid-cols-[minmax(19rem,28%)_minmax(0,1fr)]"
       >
-        <div class="flex flex-col gap-4">
+        <aside class="flex flex-col gap-4">
           <EventDetailAssetCard
             event={payload.event}
             region={data.region}
@@ -351,7 +351,19 @@
             {closeLabel}
           />
 
-          {#await data.unitProfiles then unitProfiles}
+          {#await data.unitProfiles}
+            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <div class="h-4 w-2/5 rounded bg-base-300"></div>
+                <div class="space-y-2">
+                  <div class="h-12 rounded-xl bg-base-300"></div>
+                  <div class="h-12 rounded-xl bg-base-300"></div>
+                  <div class="h-12 rounded-xl bg-base-300"></div>
+                  <div class="h-12 rounded-xl bg-base-300"></div>
+                </div>
+              </div>
+            </div>
+          {:then unitProfiles}
             <EventDetailInfoCard
               translate={currentTranslate}
               event={payload.event}
@@ -371,7 +383,14 @@
             />
           {/await}
 
-          {#await data.isCurrentEvent then isCurrentEvent}
+          {#await data.isCurrentEvent}
+            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <div class="h-4 w-2/5 rounded bg-base-300"></div>
+                <div class="h-20 rounded-xl bg-base-300"></div>
+              </div>
+            </div>
+          {:then isCurrentEvent}
             <EventDetailCountdownCard
               messages={currentMessages}
               event={payload.event}
@@ -380,10 +399,17 @@
               title={eventCountdownTitle}
             />
           {/await}
-        </div>
+        </aside>
 
-        <div class="flex flex-col gap-4">
-          {#await data.unitProfiles then unitProfiles}
+        <div class="flex min-w-0 flex-col gap-5">
+          {#await data.unitProfiles}
+            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+              <div class="card-body gap-4 p-3 sm:p-5">
+                <div class="h-4 w-2/5 rounded bg-base-300"></div>
+                <div class="h-24 rounded-[1.75rem] bg-base-300 sm:h-28"></div>
+              </div>
+            </div>
+          {:then unitProfiles}
             <EventDetailBgmCard
               event={payload.event}
               region={data.region}

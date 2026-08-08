@@ -10,6 +10,20 @@ Follow these rules before introducing new page-level patterns, daisyUI overrides
 - Shared Svelte UI is consumed from `packages/ui-shell/src`.
 - Image preview components use the public `@platform/ui-shell/image-retry` subpath for their shared retry controller. `AssetImage` defaults to `STATIC_ASSET_RETRY_POLICY`, which appends one `__image_retry` query parameter before any fragment and uses cancellable same-origin `HEAD` classification with `cache: "no-store"`. Callers handling signed GET URLs may pass `SIGNED_GET_RETRY_POLICY`; it preserves the canonical URL byte-for-byte, skips `HEAD` probes, and is forwarded to interactive preview loading. Both policies use base retry delays of 300ms and 900ms with positive-only bounded jitter up to 20% (300–360ms and 900–1080ms); deterministic controller tests may inject the random source through constructor options, while normal callers use `Math.random`. Stale request snapshots and disposal prevent old callbacks from changing current image state. There is no global concurrency limiter; each controller owns its own retry timers and probes.
 
+## Confirmed Prismatic Archive design language
+
+Prismatic Archive treats `content-site` as a calm, readable archive/catalogue rather than a generic dashboard or decorative landing page. The following rules are confirmed by the Phase 3 cards catalogue and event detail work:
+
+- Use a semantic surface hierarchy: canvas/background, panel, inset/sunken, and elevated/overlay. Prefer the archive text, border, accent, and focus roles plus the `content-card-*` primitives defined in `apps/content-site/src/app.css`.
+- In dark palettes, keep the page canvas visibly darker than the standard panel, with inset below the panel and raised/overlay surfaces above it. `content-card-shell` relies on this separation plus `--archive-border-subtle`; tune those semantic tokens together across default, sakura, and mint rather than adding card-specific shadows or colors.
+- Keep the visual system restrained: thin borders, modest and interaction-limited shadows, no heavy blur or filters, compact but touch-safe controls, visible focus, and low-motion-safe transitions.
+- Make information architecture explicit: clear page identity, composed control decks, grouped result fields, and scannable evidence/data sections. Build mobile-first and let detail rails flow naturally on narrow screens.
+- Preserve image and data behavior. Artwork remains visibility-gated/lazy where established; spoiler/reveal semantics stay intact; route, query, and server state remain authoritative.
+- Phase 3 applies these rules to `apps/content-site/src/routes/cards/[region]/+page.svelte` and `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`, composing the existing card and event components (including `CardListCard.svelte`, `EventDetailDataCard.svelte`, `EventDetailInfoCard.svelte`, and `EventDetailAssetCard.svelte`). A multi-card event identity rail must flow naturally with the page rather than becoming a full-column sticky rail.
+- This is a design evolution from older generic daisyUI card/base surfaces and ad-hoc spacing or shadows toward semantic, calmer archive surfaces and explicit hierarchy; it does not claim that all older UI has been removed.
+- The homepage current event is a data-driven Archive Banner: it uses the selected region's existing streamed current-event payload, preserves its event-detail link, unit metadata, countdown, and asset retry/fallback behavior. When the supplied event artwork is intrinsically small, render it as a compact, contained preview rather than enlarging it into a hero: at `lg` widths use a fixed, modest media column beside content-led details inside the `max-w-5xl` track; on mobile keep the natural stacked order. Loading, empty, and error states use the same media/details geometry to limit shift.
+- Dark theme palettes use a hue-aware archive surface ladder: a gently tinted canvas, then progressively lighter default, raised, and overlay surfaces. Keep the primary ambient glow quieter than light mode and use restrained token-based borders for separation rather than heavier shadows.
+
 ## daisyUI Override Rules
 
 ### 1. Override daisyUI component defaults with `@utility`
@@ -76,6 +90,12 @@ Do not scatter hover timing between unrelated global selectors and page template
 
 For event list cards, prefer slight translation and brightness changes over scaling the banner bitmap itself.
 Direct image scaling can make banners feel soft or blurry due to browser resampling.
+
+### Prismatic Archive feedback refinement
+
+Prismatic Archive does not remove feedback; it uses restrained, semantic motion. Keep interactions in the 150–300ms range, respect both `data-low-motion` and `prefers-reduced-motion`, avoid broad/global animations, and avoid heavy filters. At independently streamed boundaries, skeletons should preserve the layout rather than leave blanks. On event detail, this applies separately to the event payload, unit profiles/info, current-event countdown, and unit-profile BGM boundaries; their skeletons are visual-only placeholders with `aria-hidden="true"`, as implemented in `apps/content-site/src/routes/event/[region]/[id]/+page.svelte`.
+
+Skeleton groups should avoid costly per-item shimmer loops. Prefer a simple pulse or a static reduced-motion state, and reserve the loaded content's dimensions to prevent jank and cumulative layout shift (CLS). The shared motion and surface constraints remain grounded in `apps/content-site/src/app.css`.
 
 ## Shared Card Architecture
 

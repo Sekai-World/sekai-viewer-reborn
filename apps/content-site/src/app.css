@@ -66,28 +66,20 @@ body {
 
 :root.dark[data-theme="default"],
 .theme-palette-preview.dark[data-theme="default"] {
-  --color-base-100: oklch(24.5% 0.018 252.42);
-  --color-base-200: oklch(18.4% 0.015 253.1);
-  --color-base-300: oklch(14.8% 0.012 254.09);
-  --color-base-content: oklch(97.807% 0.029 256.847);
-  --archive-surface-canvas: oklch(16.5% 0.014 253.1);
+  --color-base-100: oklch(25% 0.025 260);
+  --color-base-200: oklch(20.5% 0.021 260);
+  --color-base-300: oklch(17.5% 0.018 260);
+  --color-base-content: oklch(96.5% 0.025 260);
+  --archive-surface-canvas: oklch(16% 0.022 260);
   --archive-surface-sunken: var(--color-base-300);
-  --archive-surface-default: var(--color-base-100);
-  --archive-surface-raised: color-mix(
-    in oklab,
-    var(--color-base-100) 84%,
-    var(--color-base-content) 16%
-  );
-  --archive-surface-overlay: color-mix(
-    in oklab,
-    var(--color-base-100) 92%,
-    var(--color-base-content) 8%
-  );
+  --archive-surface-default: oklch(26% 0.026 260);
+  --archive-surface-raised: oklch(32% 0.028 260);
+  --archive-surface-overlay: oklch(38% 0.03 260);
   --archive-text-strong: var(--color-base-content);
   --archive-text-default: color-mix(in oklab, var(--color-base-content) 90%, transparent);
   --archive-text-muted: color-mix(in oklab, var(--color-base-content) 64%, transparent);
-  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 12%, transparent);
-  --archive-border-default: color-mix(in oklab, var(--color-base-content) 19%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 17%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 26%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
 
@@ -122,28 +114,20 @@ body {
 .theme-palette-preview.dark[data-theme="sakura"] {
   --color-primary: oklch(76% 0.17 350);
   --color-primary-content: oklch(18% 0.03 340);
-  --color-base-100: oklch(25% 0.02 312);
-  --color-base-200: oklch(21% 0.018 312);
-  --color-base-300: oklch(17% 0.016 312);
-  --color-base-content: oklch(96% 0.02 340);
-  --archive-surface-canvas: oklch(18% 0.017 312);
+  --color-base-100: oklch(25.5% 0.031 332);
+  --color-base-200: oklch(21% 0.027 332);
+  --color-base-300: oklch(18% 0.023 332);
+  --color-base-content: oklch(96% 0.027 340);
+  --archive-surface-canvas: oklch(16.5% 0.028 332);
   --archive-surface-sunken: var(--color-base-300);
-  --archive-surface-default: var(--color-base-100);
-  --archive-surface-raised: color-mix(
-    in oklab,
-    var(--color-base-100) 84%,
-    var(--color-base-content) 16%
-  );
-  --archive-surface-overlay: color-mix(
-    in oklab,
-    var(--color-base-100) 92%,
-    var(--color-base-content) 8%
-  );
+  --archive-surface-default: oklch(26.5% 0.032 332);
+  --archive-surface-raised: oklch(32.5% 0.034 332);
+  --archive-surface-overlay: oklch(38.5% 0.036 332);
   --archive-text-strong: var(--color-base-content);
   --archive-text-default: color-mix(in oklab, var(--color-base-content) 90%, transparent);
   --archive-text-muted: color-mix(in oklab, var(--color-base-content) 64%, transparent);
-  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 12%, transparent);
-  --archive-border-default: color-mix(in oklab, var(--color-base-content) 19%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 17%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 26%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
 
@@ -178,32 +162,39 @@ body {
 .theme-palette-preview.dark[data-theme="mint"] {
   --color-primary: oklch(78% 0.13 170);
   --color-primary-content: oklch(18% 0.03 175);
-  --color-base-100: oklch(24% 0.014 210);
-  --color-base-200: oklch(20% 0.012 210);
-  --color-base-300: oklch(16% 0.01 210);
-  --color-base-content: oklch(96% 0.012 180);
-  --archive-surface-canvas: oklch(17% 0.012 210);
+  --color-base-100: oklch(25% 0.025 205);
+  --color-base-200: oklch(20.5% 0.021 205);
+  --color-base-300: oklch(17.5% 0.018 205);
+  --color-base-content: oklch(96% 0.02 185);
+  --archive-surface-canvas: oklch(16% 0.022 205);
   --archive-surface-sunken: var(--color-base-300);
-  --archive-surface-default: var(--color-base-100);
-  --archive-surface-raised: color-mix(
-    in oklab,
-    var(--color-base-100) 84%,
-    var(--color-base-content) 16%
-  );
-  --archive-surface-overlay: color-mix(
-    in oklab,
-    var(--color-base-100) 92%,
-    var(--color-base-content) 8%
-  );
+  --archive-surface-default: oklch(26% 0.026 205);
+  --archive-surface-raised: oklch(32% 0.028 205);
+  --archive-surface-overlay: oklch(38% 0.03 205);
   --archive-text-strong: var(--color-base-content);
   --archive-text-default: color-mix(in oklab, var(--color-base-content) 90%, transparent);
   --archive-text-muted: color-mix(in oklab, var(--color-base-content) 64%, transparent);
-  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 12%, transparent);
-  --archive-border-default: color-mix(in oklab, var(--color-base-content) 19%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 17%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 26%, transparent);
   --archive-focus-ring: var(--color-primary);
   --archive-focus-offset: var(--color-base-100);
 
   color-scheme: dark;
+}
+
+:root.dark body {
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      color-mix(in oklab, var(--color-primary) 5%, transparent),
+      transparent 36rem
+    ),
+    radial-gradient(
+      circle at 100% 20%,
+      color-mix(in oklab, var(--color-primary) 2.5%, transparent),
+      transparent 32rem
+    ),
+    var(--archive-surface-canvas);
 }
 
 @layer components {
@@ -224,11 +215,18 @@ body {
     border-radius: 1rem;
   }
 
+  .card-hover-lift:hover,
+  .card-hover-lift:focus-within,
+  :is(a, button):focus-visible > .card-hover-lift {
+    border-color: var(--color-primary) !important;
+  }
+
   @media (hover: hover) and (pointer: fine) {
     .card-hover-lift {
       transition:
         transform 180ms ease-out,
-        box-shadow 180ms ease-out !important;
+        box-shadow 180ms ease-out,
+        border-color 180ms ease-out !important;
     }
 
     :root:not([data-low-motion]) .card-hover-lift:hover {
@@ -269,8 +267,9 @@ body {
     box-shadow: none;
   }
 
-  .content-breadcrumb-link:hover {
-    border-color: color-mix(in oklab, var(--color-primary) 30%, transparent);
+  .content-breadcrumb-link:hover,
+  .content-breadcrumb-link:focus-visible {
+    border-color: var(--color-primary);
     background-color: color-mix(in oklab, var(--color-primary) 10%, var(--color-base-100));
     color: color-mix(in oklab, var(--color-base-content) 90%, transparent);
   }
@@ -330,6 +329,44 @@ body {
       0 2px 6px color-mix(in oklab, var(--color-primary) 12%, transparent);
   }
 
+  @media (min-width: 64rem) {
+    .archive-event-banner > .card > .card-body {
+      display: grid !important;
+      grid-template-columns: minmax(20rem, 22rem) minmax(0, 1fr) !important;
+      padding: 0 !important;
+    }
+
+    .archive-event-banner > .card > .card-body > .archive-event-banner-media {
+      align-self: stretch;
+      min-height: 12rem !important;
+      aspect-ratio: auto !important;
+      border-right: 1px solid var(--archive-border-subtle);
+    }
+
+    .archive-event-banner .archive-event-banner-media img {
+      width: 100% !important;
+      height: auto !important;
+      min-width: 0;
+      max-width: none !important;
+    }
+
+    .archive-event-banner .archive-event-banner-media > div,
+    .archive-event-banner .archive-event-banner-media > div > div {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .archive-event-banner > .card > .card-body > .archive-event-banner-details {
+      display: flex !important;
+      min-width: 0;
+      flex-direction: column;
+      justify-content: center;
+      padding: 1.25rem 1.5rem !important;
+      border-top: 0;
+    }
+  }
+
   .event-list-spoiler-overlay {
     background-color: color-mix(in oklab, white 90%, transparent);
   }
@@ -379,8 +416,9 @@ body {
     color: color-mix(in oklab, white 74%, var(--color-base-content) 26%);
   }
 
-  :root.dark[data-theme="default"] .content-breadcrumb-link:hover {
-    border-color: color-mix(in oklab, var(--color-primary) 36%, transparent);
+  :root.dark[data-theme="default"] .content-breadcrumb-link:hover,
+  :root.dark[data-theme="default"] .content-breadcrumb-link:focus-visible {
+    border-color: var(--color-primary);
     background-color: color-mix(in oklab, var(--color-primary) 18%, var(--color-base-100));
     color: color-mix(in oklab, white 90%, transparent);
   }
