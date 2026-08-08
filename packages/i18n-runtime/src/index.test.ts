@@ -70,6 +70,26 @@ describe("remote message loading", () => {
       signal: expect.any(AbortSignal)
     });
   });
+
+  it("returns an empty catalog when the remote response is unsuccessful", async () => {
+    const runtime = createRuntime(100);
+
+    await expect(
+      runtime.loadMessages("fr", "common", vi.fn().mockResolvedValue(new Response(null, { status: 503 })))
+    ).resolves.toEqual({});
+  });
+
+  it("uses the default fetcher when retrieving server text", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ greeting: "Bonjour" })));
+    const runtime = createRuntime(100);
+
+    await expect(runtime.getServerText("fr", "common", "greeting")).resolves.toBe("Bonjour");
+    expect(fetchSpy).toHaveBeenCalledWith("https://example.test/fr/common.json", {
+      signal: expect.any(AbortSignal)
+    });
+  });
 });
 
 afterEach(() => {
