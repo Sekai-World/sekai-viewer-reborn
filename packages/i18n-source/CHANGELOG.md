@@ -1,5 +1,12 @@
 # @platform/i18n-source
 
+## 0.2.0
+
+### Minor Changes
+
+- 6d814ec: Add the first tools-site Prismatic Archive workflow for comparing current events
+  across two regions, with localized SSR data loading and URL-restored controls.
+
 ## 0.1.5
 
 ### Patch Changes

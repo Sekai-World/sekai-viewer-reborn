@@ -1,5 +1,12 @@
 # @platform/sekai-api-sdk
 
+## 0.2.0
+
+### Minor Changes
+
+- 12f0432: Replace the `sekai-api` SDK scaffold with generated types and API functions from
+  the public OpenAPI specification.
+
 ## 0.1.1
 
 ### Patch Changes
