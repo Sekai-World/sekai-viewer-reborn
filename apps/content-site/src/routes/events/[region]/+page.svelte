@@ -31,7 +31,6 @@
   let currentMessages = $state<Record<string, string>>(getInitialMessages());
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
   let translationRequestId = 0;
-  const eventListLoadingFallback = "Loading events...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
     createI18nTranslator(data.uiLocale, getInitialMessages())(key, fallback);
   let items = $state<EventListItem[]>([]);
@@ -467,7 +466,7 @@
     mixedUnitLabel = translate("mixedUnitLabel");
     eventListTitle = translate("eventListTitle");
     eventListEmpty = translate("eventListEmpty");
-    eventListLoading = translate("eventListLoading", eventListLoadingFallback);
+    eventListLoading = translate("eventListLoading");
     eventListLoadingMore = translate("eventListLoadingMore");
     listLoadMoreHintDesktop = translate("listLoadMoreHintDesktop");
     listLoadMoreHintMobile = translate("listLoadMoreHintMobile");
