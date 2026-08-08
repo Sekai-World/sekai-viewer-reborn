@@ -18,13 +18,13 @@
     VirtualLiveListSortBy,
     VirtualLiveListSortOrder
   } from "$lib/domain/virtual-live";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "virtual-live", "error"]);
+  const fallbackMessages = $derived(resolveStreamingMessages(data.i18nMessages, ["common", "virtual-live", "error"]));
   const getInitialText = (key: string, fallback?: string): string =>
     createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
   let translateType = $state((key: string, fallback?: string): string =>
@@ -131,11 +131,12 @@
 
   $effect(() => {
     const requestId = ++translationRequestId;
-    applyTranslations(createI18nTranslator(data.uiLocale, fallbackMessages));
-    void Promise.resolve(data.i18nMessages).then((messages) => {
-      if (requestId === translationRequestId)
-        applyTranslations(createI18nTranslator(data.uiLocale, messages));
-    });
+    void Promise.resolve(data.i18nMessages)
+      .then((messages) => {
+        if (requestId === translationRequestId)
+          applyTranslations(createI18nTranslator(data.uiLocale, messages));
+      })
+      .catch(() => {});
   });
 
   $effect(() => {

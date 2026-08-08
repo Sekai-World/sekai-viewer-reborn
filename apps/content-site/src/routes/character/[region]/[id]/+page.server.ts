@@ -4,8 +4,7 @@ import {
   getGameCharactersByRegionByIdProfile,
   getGameCharactersRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { loadI18nMessageBundle } from "$lib/i18n/runtime";
+import { normalizeRegion } from "$lib/i18n/region";
 import type { SupportedRegion } from "$lib/domain/regions";
 import { supportedRegions } from "$lib/domain/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
@@ -93,12 +92,9 @@ const resolveAvailableRegions = async ({
   }
 };
 
-export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
+export const load: PageServerLoad = async ({ params }) => {
   const region = normalizeRegion(params.region);
   const characterId = params.id?.trim() ?? "";
-  const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const i18nMessages = loadI18nMessageBundle(uiLocale, ["common", "character", "card"], fetch);
-  i18nMessages.catch(() => {});
   const baseUrl = getMasterApiBaseUrl();
 
   const payload = characterId
@@ -160,5 +156,5 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
 
   payload.catch(() => {});
   availableRegions.catch(() => {});
-  return { region, characterId, i18nMessages, payload, availableRegions };
+  return { region, characterId, payload, availableRegions };
 };

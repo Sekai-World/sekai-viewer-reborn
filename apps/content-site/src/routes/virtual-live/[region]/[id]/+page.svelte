@@ -25,17 +25,18 @@
     VirtualLiveReward,
     VirtualLiveRewardResourceBoxDetail
   } from "$lib/domain/virtual-live";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { PageData } from "./$types";
   import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "virtual-live", "music", "error"]);
+  const getInitialMessages = (): Record<string, string> =>
+    resolveStreamingMessages(data.i18nMessages, ["common", "virtual-live", "music", "error"]);
+  let messages = $state<Record<string, string>>(getInitialMessages());
   const initialText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
-  let messages = $state<Record<string, string>>(fallbackMessages);
+    createI18nTranslator(data.uiLocale, messages)(key, fallback);
   let translate = $derived(createI18nTranslator(data.uiLocale, messages));
   let translationRequestId = 0;
   let debugDialog = $state<HTMLDialogElement | null>(null);
@@ -44,11 +45,12 @@
 
   $effect(() => {
     const requestId = ++translationRequestId;
-    messages = fallbackMessages;
     if (!browser) return;
-    void Promise.resolve(data.i18nMessages).then((next) => {
-      if (requestId === translationRequestId) messages = next;
-    });
+    void Promise.resolve(data.i18nMessages)
+      .then((next) => {
+        if (requestId === translationRequestId) messages = next;
+      })
+      .catch(() => {});
   });
 
   const t = (key: string, fallback?: string): string => translate(key, fallback);

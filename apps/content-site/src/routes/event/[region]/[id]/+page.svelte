@@ -14,19 +14,20 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "event", "error"]);
+  const getInitialMessages = (): Record<string, string> =>
+    resolveStreamingMessages(data.i18nMessages, ["common", "event", "error"]);
   let translationRequestId = 0;
-  let currentMessages = $state<Record<string, string>>(fallbackMessages);
+  let currentMessages = $state<Record<string, string>>(getInitialMessages());
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
+    createI18nTranslator(data.uiLocale, getInitialMessages())(key);
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state<string>("");
   let activeAssetTab = $state<EventAssetTab>("banner");
@@ -116,14 +117,13 @@
 
   $effect(() => {
     displayLocale = data.uiLocale;
-    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
+    const translate = createI18nTranslator(data.uiLocale, currentMessages);
     applyTranslations(translate);
   });
 
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    currentMessages = fallbackMessages;
     if (!browser) {
       return;
     }

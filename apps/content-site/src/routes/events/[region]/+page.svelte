@@ -6,7 +6,7 @@
   import { toTimestampMs } from "$lib/time/date-time";
   import { swipeRegion } from "$lib/actions/swipe-region";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
   import Icon from "@iconify/svelte";
@@ -26,13 +26,13 @@
   type EventListSortOrder = "asc" | "desc";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "event", "error"]);
-  let currentMessages = $state<Record<string, string>>(fallbackMessages);
+  const getInitialMessages = (): Record<string, string> =>
+    resolveStreamingMessages(data.i18nMessages, ["common", "event", "error"]);
+  let currentMessages = $state<Record<string, string>>(getInitialMessages());
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
   let translationRequestId = 0;
-  const eventListLoadingFallback = "Loading events...";
   const getInitialI18nText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
+    createI18nTranslator(data.uiLocale, getInitialMessages())(key, fallback);
   let items = $state<EventListItem[]>([]);
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -356,9 +356,6 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    currentMessages = fallbackMessages;
-    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
-    applyTranslations(translate);
     void refreshPageTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 
@@ -469,7 +466,7 @@
     mixedUnitLabel = translate("mixedUnitLabel");
     eventListTitle = translate("eventListTitle");
     eventListEmpty = translate("eventListEmpty");
-    eventListLoading = translate("eventListLoading", eventListLoadingFallback);
+    eventListLoading = translate("eventListLoading");
     eventListLoadingMore = translate("eventListLoadingMore");
     listLoadMoreHintDesktop = translate("listLoadMoreHintDesktop");
     listLoadMoreHintMobile = translate("listLoadMoreHintMobile");
