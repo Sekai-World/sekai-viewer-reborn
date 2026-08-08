@@ -1,0 +1,87 @@
+{{- $root := . -}}
+{{- range $appName, $app := $root.Values.apps }}
+{{- if $app.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sekai-viewer-reborn.appName" (list $root $appName) }}
+  labels:
+    {{- include "sekai-viewer-reborn.labels" (list $root $appName) | nindent 4 }}
+spec:
+  replicas: {{ $root.Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      {{- include "sekai-viewer-reborn.selectorLabels" (list $root $appName) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sekai-viewer-reborn.labels" (list $root $appName) | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: {{ $root.Values.terminationGracePeriodSeconds }}
+      securityContext:
+        {{- toYaml $root.Values.podSecurityContext | nindent 8 }}
+      {{- with $root.Values.affinity }}
+      affinity:
+        {{- toYaml . | replace "__APP_NAME__" $appName | nindent 8 }}
+      {{- end }}
+      {{- with $root.Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $root.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: web
+          image: {{ printf "%s:%s" $app.image.repository $app.image.tag | quote }}
+          imagePullPolicy: {{ $app.image.pullPolicy }}
+          securityContext:
+            {{- toYaml $root.Values.containerSecurityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          {{- if or $app.env $app.extraEnv }}
+          env:
+            {{- range $envName, $envValue := $app.env }}
+            - name: {{ $envName | quote }}
+              value: {{ $envValue | quote }}
+            {{- end }}
+            {{- with $app.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with $app.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          startupProbe:
+            tcpSocket:
+              port: http
+            failureThreshold: 30
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            {{- toYaml $root.Values.resources | nindent 12 }}
+{{- end }}
+{{- end }}
