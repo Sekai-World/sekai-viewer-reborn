@@ -325,9 +325,9 @@
             </div>
             <div class="space-y-3">
               <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-              <div class="grid gap-2">
+              <div class="space-y-3">
                 {#each [1, 2, 3] as skeleton (skeleton)}
-                  <div class="h-16 animate-pulse rounded-xl bg-base-300"></div>
+                  <div class="h-20 animate-pulse rounded-xl bg-base-300"></div>
                 {/each}
               </div>
             </div>
