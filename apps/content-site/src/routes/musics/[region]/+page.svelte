@@ -15,7 +15,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {
     formatUnitFallbackLabel,
@@ -41,13 +41,14 @@
   };
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "music", "error"]);
-  let currentMessages = $state<Record<string, string>>(fallbackMessages);
+  const getInitialMessages = (): Record<string, string> =>
+    resolveStreamingMessages(data.i18nMessages, ["common", "music", "error"]);
+  let currentMessages = $state<Record<string, string>>(getInitialMessages());
   let translationRequestId = 0;
   let initialPageRequestId = 0;
   let listRequestId = 0;
   const getInitialI18nText = (key: string): string =>
-    createI18nTranslator(data.uiLocale, fallbackMessages)(key);
+    createI18nTranslator(data.uiLocale, getInitialMessages())(key);
 
   let items = $state<MusicListItem[]>([]);
   let currentPage = $state(1);
@@ -426,9 +427,6 @@
   $effect(() => {
     const requestId = ++translationRequestId;
     const messagesOrPromise = data.i18nMessages;
-    currentMessages = fallbackMessages;
-    const translate = createI18nTranslator(data.uiLocale, fallbackMessages);
-    applyTranslations(translate);
     void refreshTranslations(data.uiLocale, messagesOrPromise, requestId);
   });
 

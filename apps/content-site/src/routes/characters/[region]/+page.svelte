@@ -11,12 +11,13 @@
   import type { CharacterCatalogueItem } from "$lib/domain/character";
   import { resolveUnitLogoUrl } from "$lib/domain/unit-icon";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "character", "card", "error"]);
-  let messages = $state<Record<string, string>>(fallbackMessages);
+  const getInitialMessages = (): Record<string, string> =>
+    resolveStreamingMessages(data.i18nMessages, ["common", "character", "card", "error"]);
+  let messages = $state<Record<string, string>>(getInitialMessages());
   let catalogue = $state<CharacterCatalogueItem[]>([]);
   let unitProfiles = $state<Record<string, string>>({});
   let loadFailed = $state(false);
@@ -61,11 +62,12 @@
 
   $effect(() => {
     const id = ++requestId;
-    messages = fallbackMessages;
     if (browser)
-      void Promise.resolve(data.i18nMessages).then((next) => {
-        if (id === requestId) messages = next;
-      });
+      void Promise.resolve(data.i18nMessages)
+        .then((next) => {
+          if (id === requestId) messages = next;
+        })
+        .catch(() => {});
   });
   $effect(() => {
     loading = true;

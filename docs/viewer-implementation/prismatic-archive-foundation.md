@@ -283,17 +283,6 @@ SDK or deployment changes are separate, explicit work items.
 
 ## Delivery progress
 
-### Tools-site first workflow
-
-- `tools-site` now has an SSR-safe, tools-local i18n scope and a current-event
-  comparison flow that uses SDK calls for two validated regions.
-- The selected regions are restored from the URL through GET parameters, and
-  unavailable-region and request-failed results remain distinct localized
-  states.
-- The workflow preserves the existing `ViewerShell` and route-motion boundary.
-  It does not fabricate cross-app record links because no public `content-site`
-  base-URL contract exists.
-
 ### Content-site Phase 3 visual polish — cards catalogue and event detail
 
 - Archive semantic surfaces were applied without changing data, route, or i18n
@@ -307,6 +296,28 @@ SDK or deployment changes are separate, explicit work items.
   unreachable.
 - Validated with `pnpm --filter @apps/content-site check`,
   `pnpm --filter @apps/content-site lint`, and `git diff --check`.
+
+### Content-site i18n no-fallback-flash contract
+
+- `apps/content-site/src/routes/+layout.server.ts` awaits the route-scoped locale
+  bundle before returning layout data. The server keeps remote-fetch failures
+  renderable by resolving to the matching local source bundle instead of
+  returning a rejected/deferred promise. It uses a 2.5-second deadline: long
+  enough for ordinary CDN dictionary loads while bounding a stalled SSR or
+  client navigation; its timer is unrefed on Node so it cannot keep a process
+  alive.
+- The shared `@platform/i18n-runtime` namespace cache applies the deadline at
+  the fetch entry itself, aborting and conditionally evicting only its own
+  pending entry on timeout. This preserves concurrent deduplication but lets a
+  later request retry instead of inheriting a permanently pending promise.
+- Character list and detail page loaders must not return `i18nMessages`; the
+  root layout owns the complete `common`, `character`, `card`, and `error`
+  bundle for both paths.
+- Route components initialize from the resolved layout bundle. On a locale
+  change they keep the currently displayed complete dictionary until the newest
+  request resolves, then replace labels atomically; request IDs prevent a stale
+  request from overwriting a later selection. Do not reset visible labels to
+  local English source messages while waiting.
 
 ## Likely files and components
 

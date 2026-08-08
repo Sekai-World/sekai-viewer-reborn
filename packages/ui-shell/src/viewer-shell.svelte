@@ -98,7 +98,7 @@
     <main
       id={mainId}
       tabindex="-1"
-      class="mx-auto w-full max-w-384 px-3 pb-8 pt-6 md:px-6 lg:px-8"
+      class="viewer-shell-main mx-auto w-full max-w-384 px-3 pb-8 pt-6 md:px-6 lg:px-8"
     >
       {#if showTitle}
         <section class="py-12 text-center">
@@ -209,9 +209,15 @@
     transition: transform 150ms ease-out;
   }
 
+  .viewer-shell-skip:focus-visible,
+  .viewer-shell-main:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 4px;
+  }
+
   .viewer-shell-skip:focus-visible {
     transform: translateY(0);
-    outline: 3px solid var(--color-primary-content);
+    outline-color: var(--color-primary-content);
     outline-offset: 2px;
   }
 

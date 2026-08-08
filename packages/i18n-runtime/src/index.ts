@@ -2,7 +2,7 @@ import { _, addMessages, init, isLoading, locale as svelteLocale } from "svelte-
 import { derived, get, writable } from "svelte/store";
 
 export type I18nMessages = Record<string, string>;
-export type I18nFetcher = (input: string) => Promise<Response>;
+export type I18nFetcher = (input: string, init?: RequestInit) => Promise<Response>;
 export type I18nLocaleResolver = (localeValue: string) => string;
 export type I18nTranslator = (key: string, fallback?: string) => string;
 export type I18nRequestToken = { readonly version: number; readonly isCurrent: () => boolean };
@@ -13,6 +13,7 @@ export interface RemoteI18nRuntimeOptions {
   toRemoteLocale: I18nLocaleResolver;
   normalizeLocale: I18nLocaleResolver;
   isBrowser?: () => boolean;
+  messageLoadTimeoutMs?: number;
 }
 
 export interface ScopedI18nLoaderOptions<Namespace extends string> {
@@ -138,6 +139,7 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
   const localeLoadingCount = writable(0);
   let initialized = false;
   let requestVersion = 0;
+  const messageLoadTimeoutMs = options.messageLoadTimeoutMs ?? 2_500;
 
   const isLocaleLoading = derived(
     [localeLoadingCount, isLoading],
@@ -160,7 +162,7 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
   const loadMessages = (
     localeValue: string,
     namespace: string,
-    fetcher: I18nFetcher = (input) => fetch(input)
+    fetcher: I18nFetcher = (input, init) => fetch(input, init)
   ): Promise<I18nMessages> => {
     const locale = options.normalizeLocale(localeValue);
     const remoteLocale = options.toRemoteLocale(locale);
@@ -170,19 +172,50 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
       return cached;
     }
 
-    const promise = fetcher(`${getBaseUrl()}/${remoteLocale}/${namespace}.json`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Failed to load ${remoteLocale}/${namespace}.json: ${response.status}`);
-        }
-
-        return response.json() as Promise<unknown>;
+    const controller = typeof AbortController === "undefined" ? undefined : new AbortController();
+    const request = async (): Promise<I18nMessages> => {
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      const fetchMessages = fetcher(`${getBaseUrl()}/${remoteLocale}/${namespace}.json`, {
+        signal: controller?.signal
       })
-      .then(normalizeMessages)
-      .catch(() => {
-        messageCache.delete(cacheKey);
-        return {};
-      });
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Failed to load ${remoteLocale}/${namespace}.json: ${response.status}`);
+          }
+
+          return response.json() as Promise<unknown>;
+        })
+        .then(normalizeMessages);
+
+      try {
+        if (messageLoadTimeoutMs <= 0) return await fetchMessages;
+        const deadline = new Promise<never>((_, reject) => {
+          timeout = setTimeout(
+            () => reject(new Error(`Timed out loading ${remoteLocale}/${namespace}.json`)),
+            messageLoadTimeoutMs
+          );
+          if (
+            typeof timeout === "object" &&
+            timeout !== null &&
+            "unref" in timeout &&
+            typeof (timeout as { unref?: unknown }).unref === "function"
+          ) {
+            (timeout as { unref: () => void }).unref();
+          }
+        });
+        return await Promise.race([fetchMessages, deadline]);
+      } catch (error) {
+        controller?.abort();
+        throw error;
+      } finally {
+        if (timeout !== undefined) clearTimeout(timeout);
+      }
+    };
+
+    const promise = request().catch(() => {
+      if (messageCache.get(cacheKey) === promise) messageCache.delete(cacheKey);
+      return {};
+    });
 
     messageCache.set(cacheKey, promise);
     return promise;
@@ -264,7 +297,7 @@ export const createRemoteI18nRuntime = (options: RemoteI18nRuntimeOptions) => {
     localeValue: string,
     namespace: string,
     key: string,
-    fetcher: I18nFetcher = (input) => fetch(input)
+    fetcher: I18nFetcher = (input, init) => fetch(input, init)
   ): Promise<string> => {
     const messages = await loadMessages(localeValue, namespace, fetcher);
     return createTranslator(localeValue, messages)(key);
