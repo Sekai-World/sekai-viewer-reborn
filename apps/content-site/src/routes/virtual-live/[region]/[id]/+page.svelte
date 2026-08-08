@@ -34,9 +34,9 @@
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
     resolveStreamingMessages(data.i18nMessages, ["common", "virtual-live", "music", "error"]);
-  const initialText = (key: string, fallback?: string): string =>
-    createI18nTranslator(data.uiLocale, getInitialMessages())(key, fallback);
   let messages = $state<Record<string, string>>(getInitialMessages());
+  const initialText = (key: string, fallback?: string): string =>
+    createI18nTranslator(data.uiLocale, messages)(key, fallback);
   let translate = $derived(createI18nTranslator(data.uiLocale, messages));
   let translationRequestId = 0;
   let debugDialog = $state<HTMLDialogElement | null>(null);

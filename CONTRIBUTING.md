@@ -37,18 +37,18 @@ When a visual test fails, download the `visual-regression-*` artifact from the
 workflow run; it contains `test-results/` and `playwright-report/`, including
 the expected, actual, and diff images when Playwright produces them.
 
-Run the same test locally with `pnpm test:visual`. To prepare a candidate
-baseline, use `pnpm test:visual:update` only in a deliberate local review, or
-manually dispatch **Visual baseline candidate** from the repository's default
-branch with the open PR number and `update_snapshots` explicitly enabled. The
-workflow resolves that PR's head SHA through the read-only GitHub API, checks
-out that exact SHA, and uploads an artifact named with the PR number and SHA;
-it has no permission to push or commit.
-Download and review the candidate PNGs in Linux Chromium, then copy the
-approved snapshots into the branch and commit them as part of the pull
-request. Do not directly overwrite baselines from CI. Every visual PR should
-list its viewport/state coverage and confirm review of the expected/actual/diff
-artifact; non-visual PRs should mark the checklist as not applicable.
+Run the same test locally with `pnpm test:visual`. Approved baselines target
+Ubuntu Chromium, so generate candidate snapshots with `pnpm test:visual:update`
+only in that environment. On other systems, manually dispatch **Visual baseline
+candidate** from the repository's default branch with the open PR number and
+`update_snapshots` explicitly enabled. The workflow resolves that PR's head SHA
+through the read-only GitHub API, checks out that exact SHA, and uploads an
+artifact named with the PR number and SHA; it has no permission to push or
+commit. Download and review the candidate PNGs, then copy approved snapshots
+into the branch and commit them as part of the pull request. Do not directly
+overwrite baselines from CI. Every visual PR should list its viewport/state
+coverage and confirm review of the expected/actual/diff artifact; non-visual
+PRs should mark the checklist as not applicable.
 
 ## Changes and commits
 
