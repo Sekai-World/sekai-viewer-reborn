@@ -6,7 +6,7 @@ allowBuilds:
   esbuild: true
 overrides:
   cookie: 0.7.2
-  esbuild: 0.28.1
+  esbuild: 0.28.2
   brace-expansion: 5.0.9
   "@microsoft/api-extractor": 7.58.12
   fast-uri: 4.1.2
