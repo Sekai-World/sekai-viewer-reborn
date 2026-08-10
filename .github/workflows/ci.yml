@@ -41,7 +41,7 @@ jobs:
 
   validate-push:
     if: github.event_name == 'push'
-    runs-on: [self-hosted, linux, x64, rarecloud, sekai-ci]
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
