@@ -92,7 +92,7 @@
   let idLabel = $state(getInitialI18nText("idLabel"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let clearLabel = $state(getInitialI18nText("clearLabel"));
-  let musicListTitle = $state(getInitialI18nText("musicListTitle"));
+  let musicListTitle = $state(getInitialI18nText("navigation.songs"));
   let musicListEmpty = $state(getInitialI18nText("musicListEmpty"));
   let musicListEnd = $state(getInitialI18nText("musicListEnd"));
   let musicListLoading = $state(getInitialI18nText("musicListListLoading"));
@@ -548,7 +548,7 @@
     idLabel = translate("idLabel");
     closeLabel = translate("closeLabel");
     clearLabel = translate("clearLabel");
-    musicListTitle = translate("musicListTitle");
+    musicListTitle = translate("navigation.songs");
     musicListEmpty = translate("musicListEmpty");
     musicListEnd = translate("musicListEnd");
     musicListLoading = translate("musicListListLoading");

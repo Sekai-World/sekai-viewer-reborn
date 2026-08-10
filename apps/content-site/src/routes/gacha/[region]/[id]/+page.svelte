@@ -43,7 +43,7 @@
   let activeAssetTab = $state<GachaAssetTab>("logo");
 
   let homeLabel = $state(getInitialI18nText("home"));
-  let gachaListTitle = $state(getInitialI18nText("gachaListTitle"));
+  let gachaListTitle = $state(getInitialI18nText("navigation.gachas"));
   let pageTitlePrefix = $state(getInitialI18nText("pageTitle.gachaPrefix"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let nameLabel = $state(getInitialI18nText("nameLabel"));
@@ -167,7 +167,7 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
-    gachaListTitle = translate("gachaListTitle");
+    gachaListTitle = translate("navigation.gachas");
     pageTitlePrefix = translate("pageTitle.gachaPrefix");
     idLabel = translate("idLabel");
     nameLabel = translate("nameLabel");

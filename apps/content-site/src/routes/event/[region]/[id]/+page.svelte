@@ -32,7 +32,7 @@
   let displayLocale = $state<string>("");
   let activeAssetTab = $state<EventAssetTab>("banner");
   let homeLabel = $state(getInitialI18nText("home"));
-  let eventListTitle = $state(getInitialI18nText("eventListTitle"));
+  let eventListTitle = $state(getInitialI18nText("navigation.events"));
   let startAtLabel = $state(getInitialI18nText("startAt"));
   let endAtLabel = $state(getInitialI18nText("endAt"));
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -133,7 +133,7 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
-    eventListTitle = translate("eventListTitle");
+    eventListTitle = translate("navigation.events");
     startAtLabel = translate("startAt");
     endAtLabel = translate("endAt");
     idLabel = translate("idLabel");

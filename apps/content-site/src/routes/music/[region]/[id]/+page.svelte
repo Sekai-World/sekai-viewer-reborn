@@ -29,7 +29,7 @@
   let displayLocale = $state<string>("");
 
   let homeLabel = $state(getInitialI18nText("home"));
-  let musicListTitle = $state(getInitialI18nText("musicListTitle"));
+  let musicListTitle = $state(getInitialI18nText("navigation.songs"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let nameLabel = $state(getInitialI18nText("nameLabel"));
   let musicTitlePrefix = $state(getInitialI18nText("pageTitle.musicPrefix"));
@@ -93,7 +93,7 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
-    musicListTitle = translate("musicListTitle");
+    musicListTitle = translate("navigation.songs");
     idLabel = translate("idLabel");
     nameLabel = translate("nameLabel");
     musicTitlePrefix = translate("pageTitle.musicPrefix");

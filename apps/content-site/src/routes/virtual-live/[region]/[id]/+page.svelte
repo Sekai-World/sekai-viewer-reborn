@@ -57,7 +57,7 @@
   const listHref = (): string => resolve("/virtual-lives/[region]", { region: data.region });
   const breadcrumbs = (label: string) => [
     { label: t("home"), href: resolve("/") },
-    { label: t("virtualLiveListTitle"), href: listHref() },
+    { label: t("navigation.virtualLives"), href: listHref() },
     { label }
   ];
   const regionOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];

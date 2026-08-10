@@ -30,7 +30,7 @@
     `${resolve("/cards/[region]", { region: data.region })}?character=${encodeURIComponent(data.characterId)}`;
   const breadcrumbs = (name: string) => [
     { label: t("home", "Home"), href: resolve("/") },
-    { label: t("characterListTitle", "Characters"), href: listHref() },
+    { label: t("navigation.characters", "Characters"), href: listHref() },
     { label: name }
   ];
   const currentRegionOption = (): RegionBadgeOption[] => [

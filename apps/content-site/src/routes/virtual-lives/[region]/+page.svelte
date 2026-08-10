@@ -50,7 +50,7 @@
   let filterDialog: HTMLDialogElement | null = $state(null);
 
   let homeLabel = $state(getInitialText("home"));
-  let title = $state(getInitialText("virtualLiveListTitle"));
+  let title = $state(getInitialText("navigation.virtualLives"));
   let emptyLabel = $state(getInitialText("virtualLiveListEmpty"));
   let endLabel = $state(getInitialText("virtualLiveListEnd"));
   let loadingLabel = $state(getInitialText("virtualLiveListLoading"));
@@ -105,7 +105,7 @@
   const applyTranslations = (translate: (key: string, fallback?: string) => string): void => {
     translateType = translate;
     homeLabel = translate("home");
-    title = translate("virtualLiveListTitle");
+    title = translate("navigation.virtualLives");
     emptyLabel = translate("virtualLiveListEmpty");
     endLabel = translate("virtualLiveListEnd");
     loadingLabel = translate("virtualLiveListLoading");

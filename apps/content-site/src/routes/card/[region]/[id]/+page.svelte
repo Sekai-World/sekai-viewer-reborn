@@ -34,7 +34,7 @@
   let displayLocale = $state("");
   let activeAssetTab = $state<CardAssetTab>("normal");
   let homeLabel = $state(getInitialI18nText("home"));
-  let cardListTitle = $state(getInitialI18nText("cardListTitle"));
+  let cardListTitle = $state(getInitialI18nText("navigation.cards"));
   let pageTitlePrefix = $state(getInitialI18nText("pageTitle.cardPrefix"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let nameLabel = $state(getInitialI18nText("nameLabel"));
@@ -100,7 +100,7 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
-    cardListTitle = translate("cardListTitle");
+    cardListTitle = translate("navigation.cards");
     pageTitlePrefix = translate("pageTitle.cardPrefix");
     idLabel = translate("idLabel");
     nameLabel = translate("nameLabel");

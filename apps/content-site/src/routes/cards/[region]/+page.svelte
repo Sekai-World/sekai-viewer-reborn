@@ -109,7 +109,7 @@
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
-  let cardListTitle = $state(getInitialI18nText("cardListTitle"));
+  let cardListTitle = $state(getInitialI18nText("navigation.cards"));
   let cardListEmpty = $state(getInitialI18nText("cardListEmpty"));
   let cardListLoadingMore = $state(getInitialI18nText("cardListLoadingMore"));
   let listLoadMoreHintDesktop = $state(getInitialI18nText("listLoadMoreHintDesktop"));
@@ -637,7 +637,7 @@
     homeLabel = translate("home");
     idLabel = translate("idLabel");
     closeLabel = translate("closeLabel");
-    cardListTitle = translate("cardListTitle");
+    cardListTitle = translate("navigation.cards");
     cardListEmpty = translate("cardListEmpty");
     cardListLoadingMore = translate("cardListLoadingMore");
     listLoadMoreHintDesktop = translate("listLoadMoreHintDesktop");

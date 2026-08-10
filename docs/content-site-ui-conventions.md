@@ -140,6 +140,12 @@ Current shared navigation/header system:
 Rules:
 
 - Breadcrumb + top-right action layouts should reuse `PageHeader`.
+- Breadcrumb labels for first-class sidebar destinations must reuse the matching
+  `common.navigation.*` key (for example `navigation.cards`), rather than a
+  page-specific `*ListTitle` key. This keeps breadcrumbs, page titles, and the
+  sidebar on the same localized dictionary entry. Apply this to Cards,
+  Characters, Songs, Events, Gachas, and Virtual Lives on both list and detail
+  routes.
 - Region badge groups should reuse `RegionBadgeSwitch`.
 - If a route needs only a single active region badge, still use the shared switch component with one active option.
 - Region-based list and detail routes use `apps/content-site/src/lib/actions/swipe-region.ts` on the page root. The action delegates navigation to the currently visible `RegionBadgeSwitch`, does not wrap at the first or last rendered region, and must stay touch-only. Keep its edge-start guard, `touchmove` vertical-intent and multitouch cancellation, horizontal-dominance threshold, and horizontal-scroll/dialog/form exclusions when extending it to another route. Mark known horizontal scrollers with `data-swipe-region-skip`.
