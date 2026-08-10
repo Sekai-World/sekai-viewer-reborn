@@ -2,9 +2,6 @@
   "audioUnavailableLabel": "No event BGM available",
   "bannerCharacterLabel": "Banner Character",
   "debugEventJsonTitle": "Event JSON",
-  "endAt": "End",
-  "eventAssetTabs.background": "Background",
-  "eventAssetTabs.banner": "Banner",
   "eventAssetTabs.characters": "Characters",
   "eventAssetTabs.title": "Title",
   "eventBgmTitle": "Event BGM",
@@ -33,7 +30,6 @@
   "rankingRewardsLoadingLabel": "Loading rewards...",
   "rankingRewardsLoadErrorLabel": "Failed to load all rewards. Try again.",
   "eventRarityBonusLabel": "Rarity Bonus",
-  "eventRarityLabel": "Rarity",
   "eventVirtualLiveTitle": "Virtual Live",
   "eventListEmpty": "No events found.",
   "eventListEnd": "No more events.",
@@ -51,6 +47,5 @@
   "eventTypeValues.marathon": "Marathon",
   "eventTypeValues.worldLink": "World Link",
   "world_bloom": "World Link",
-  "pageTitle.eventPrefix": "Event",
-  "startAt": "Start"
+  "pageTitle.eventPrefix": "Event"
 }

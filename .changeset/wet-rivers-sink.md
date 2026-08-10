@@ -2,4 +2,4 @@
 "@apps/content-site": patch
 ---
 
-Reuse localized common labels across content pages, consolidate duplicate music labels, remove unused content-site i18n source keys, and localize breadcrumbs consistently with sidebar navigation.
+Reuse localized common labels across content pages, consolidate duplicate content-site labels, remove unused source keys, and localize breadcrumbs consistently with sidebar navigation.

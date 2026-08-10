@@ -62,7 +62,7 @@
   let characterLabel = $state(getInitialI18nText("characterLabel"));
   let unitLabel = $state(getInitialI18nText("unitLabel"));
   let supportUnitLabel = $state(getInitialI18nText("supportUnitLabel"));
-  let attrLabel = $state(getInitialI18nText("attrLabel"));
+  let attrLabel = $state(getInitialI18nText("attributeLabel"));
   let rarityLabel = $state(getInitialI18nText("rarityLabel"));
   let typeLabel = $state(getInitialI18nText("typeLabel"));
   let releaseAtLabel = $state(getInitialI18nText("releaseAtLabel"));
@@ -128,7 +128,7 @@
     characterLabel = translate("characterLabel");
     unitLabel = translate("unitLabel");
     supportUnitLabel = translate("supportUnitLabel");
-    attrLabel = translate("attrLabel");
+    attrLabel = translate("attributeLabel");
     rarityLabel = translate("rarityLabel");
     typeLabel = translate("typeLabel");
     releaseAtLabel = translate("releaseAtLabel");

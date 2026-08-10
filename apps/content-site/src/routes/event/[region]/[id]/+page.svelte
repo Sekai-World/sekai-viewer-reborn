@@ -72,9 +72,9 @@
   let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
   let eventTitlePrefix = $state(getInitialI18nText("pageTitle.eventPrefix"));
-  let bannerTabLabel = $state(getInitialI18nText("eventAssetTabs.banner"));
+  let bannerTabLabel = $state(getInitialI18nText("assetTab.banner"));
   let titleTabLabel = $state(getInitialI18nText("eventAssetTabs.title"));
-  let backgroundTabLabel = $state(getInitialI18nText("eventAssetTabs.background"));
+  let backgroundTabLabel = $state(getInitialI18nText("assetTab.background"));
   let charactersTabLabel = $state(getInitialI18nText("eventAssetTabs.characters"));
   let eventInfoTitle = $state(getInitialI18nText("eventInfoTitle"));
   let eventCountdownTitle = $state(getInitialI18nText("eventCountdownTitle"));
@@ -86,7 +86,7 @@
   let eventBonusCharacterLabel = $state(getInitialI18nText("eventBonusCharacterLabel"));
   let eventAnyCharacterLabel = $state(getInitialI18nText("eventAnyCharacterLabel"));
   let eventRarityBonusLabel = $state(getInitialI18nText("eventRarityBonusLabel"));
-  let eventRarityLabel = $state(getInitialI18nText("eventRarityLabel"));
+  let eventRarityLabel = $state(getInitialI18nText("rarityLabel"));
   let eventFeaturedCardsTitle = $state(getInitialI18nText("eventFeaturedCardsTitle"));
   let eventFeaturedCardBonusLabel = $state(getInitialI18nText("eventFeaturedCardBonusLabel"));
   let eventFeaturedCardBonusShortLabel = $state(
@@ -161,9 +161,9 @@
     imageUnavailableLabel = translate("imageUnavailable");
     noEventLabel = translate("noCurrentEventData");
     eventTitlePrefix = translate("pageTitle.eventPrefix");
-    bannerTabLabel = translate("eventAssetTabs.banner");
+    bannerTabLabel = translate("assetTab.banner");
     titleTabLabel = translate("eventAssetTabs.title");
-    backgroundTabLabel = translate("eventAssetTabs.background");
+    backgroundTabLabel = translate("assetTab.background");
     charactersTabLabel = translate("eventAssetTabs.characters");
     eventInfoTitle = translate("eventInfoTitle");
     eventCountdownTitle = translate("eventCountdownTitle");
@@ -175,7 +175,7 @@
     eventBonusCharacterLabel = translate("eventBonusCharacterLabel");
     eventAnyCharacterLabel = translate("eventAnyCharacterLabel");
     eventRarityBonusLabel = translate("eventRarityBonusLabel");
-    eventRarityLabel = translate("eventRarityLabel");
+    eventRarityLabel = translate("rarityLabel");
     eventFeaturedCardsTitle = translate("eventFeaturedCardsTitle");
     eventFeaturedCardBonusLabel = translate("eventFeaturedCardBonusLabel");
     eventFeaturedCardBonusShortLabel = translate("eventFeaturedCardBonusShortLabel");

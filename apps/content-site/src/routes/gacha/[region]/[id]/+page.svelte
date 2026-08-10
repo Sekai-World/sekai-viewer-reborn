@@ -57,8 +57,8 @@
   let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let gachaCountdownTitle = $state(getInitialI18nText("gachaCountdownTitle"));
   let logoLabel = $state(getInitialI18nText("gachaAssetTabs.logo"));
-  let bannerLabel = $state(getInitialI18nText("gachaAssetTabs.banner"));
-  let backgroundLabel = $state(getInitialI18nText("gachaAssetTabs.background"));
+  let bannerLabel = $state(getInitialI18nText("assetTab.banner"));
+  let backgroundLabel = $state(getInitialI18nText("assetTab.background"));
   let backgroundUnavailableLabel = $state(getInitialI18nText("gachaBackgroundUnavailable"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let pickupTitle = $state(getInitialI18nText("gachaPickupTitle"));
@@ -181,8 +181,8 @@
     internalResourceCodeLabel = translate("internalResourceCodeLabel");
     gachaCountdownTitle = translate("gachaCountdownTitle");
     logoLabel = translate("gachaAssetTabs.logo");
-    bannerLabel = translate("gachaAssetTabs.banner");
-    backgroundLabel = translate("gachaAssetTabs.background");
+    bannerLabel = translate("assetTab.banner");
+    backgroundLabel = translate("assetTab.background");
     backgroundUnavailableLabel = translate("gachaBackgroundUnavailable");
     bannerAltSuffix = translate("bannerAltSuffix");
     pickupTitle = translate("gachaPickupTitle");
