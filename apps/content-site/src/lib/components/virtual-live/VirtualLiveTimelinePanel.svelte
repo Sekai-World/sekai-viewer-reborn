@@ -140,7 +140,7 @@
   <div class="rounded-xl border border-error/20 bg-error/5 p-4 text-center text-sm">
     <p>{t("virtualLiveTimelineLoadFailed")}</p>
     <button type="button" class="btn btn-outline btn-sm mt-3" onclick={retry}
-      >{t("virtualLiveTimelineRetry")}</button
+      >{t("listRetry")}</button
     >
   </div>
 {:else if document}

@@ -29,7 +29,7 @@
   let displayLocale = $state<string>("");
 
   let homeLabel = $state(getInitialI18nText("home"));
-  let musicListTitle = $state(getInitialI18nText("musicListTitle"));
+  let musicListTitle = $state(getInitialI18nText("navigation.songs"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let nameLabel = $state(getInitialI18nText("nameLabel"));
   let musicTitlePrefix = $state(getInitialI18nText("pageTitle.musicPrefix"));
@@ -39,13 +39,13 @@
   let arrangerLabel = $state(getInitialI18nText("musicDetailArrangerLabel"));
   let lyricistLabel = $state(getInitialI18nText("musicDetailLyricistLabel"));
   let difficultyLabel = $state(getInitialI18nText("musicDetailDifficultyLabel"));
-  let levelLabel = $state(getInitialI18nText("musicDetailLevelLabel"));
+  let levelLabel = $state(getInitialI18nText("levelLabel"));
   let noteCountLabel = $state(getInitialI18nText("musicDetailNoteCountLabel"));
   let categoryLabel = $state(getInitialI18nText("musicDetailCategoryLabel"));
   let tagLabel = $state(getInitialI18nText("musicDetailTagLabel"));
   let publishedAtLabel = $state(getInitialI18nText("musicDetailPublishedAtLabel"));
   let vocalLabel = $state(getInitialI18nText("musicDetailVocalLabel"));
-  let vocalTypeLabel = $state(getInitialI18nText("musicDetailVocalTypeLabel"));
+  let vocalTypeLabel = $state(getInitialI18nText("typeLabel"));
   let vocalCharacterLabel = $state(getInitialI18nText("musicDetailVocalCharacterLabel"));
   let noVocals = $state(getInitialI18nText("musicDetailNoVocals"));
   let noDifficulties = $state(getInitialI18nText("musicDetailNoDifficulties"));
@@ -93,7 +93,7 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
-    musicListTitle = translate("musicListTitle");
+    musicListTitle = translate("navigation.songs");
     idLabel = translate("idLabel");
     nameLabel = translate("nameLabel");
     musicTitlePrefix = translate("pageTitle.musicPrefix");
@@ -103,13 +103,13 @@
     arrangerLabel = translate("musicDetailArrangerLabel");
     lyricistLabel = translate("musicDetailLyricistLabel");
     difficultyLabel = translate("musicDetailDifficultyLabel");
-    levelLabel = translate("musicDetailLevelLabel");
+    levelLabel = translate("levelLabel");
     noteCountLabel = translate("musicDetailNoteCountLabel");
     categoryLabel = translate("musicDetailCategoryLabel");
     tagLabel = translate("musicDetailTagLabel");
     publishedAtLabel = translate("musicDetailPublishedAtLabel");
     vocalLabel = translate("musicDetailVocalLabel");
-    vocalTypeLabel = translate("musicDetailVocalTypeLabel");
+    vocalTypeLabel = translate("typeLabel");
     vocalCharacterLabel = translate("musicDetailVocalCharacterLabel");
     noVocals = translate("musicDetailNoVocals");
     noDifficulties = translate("musicDetailNoDifficulties");

@@ -61,7 +61,7 @@
   let idLabel = $state(getInitialI18nText("idLabel"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let mixedUnitLabel = $state(getInitialI18nText("mixedUnitLabel"));
-  let eventListTitle = $state(getInitialI18nText("eventListTitle"));
+  let eventListTitle = $state(getInitialI18nText("navigation.events"));
   let eventListEmpty = $state(getInitialI18nText("eventListEmpty"));
   let eventListLoading = $state(getInitialI18nText("eventListLoading"));
   let eventListLoadingMore = $state(getInitialI18nText("eventListLoadingMore"));
@@ -464,7 +464,7 @@
     idLabel = translate("idLabel");
     closeLabel = translate("closeLabel");
     mixedUnitLabel = translate("mixedUnitLabel");
-    eventListTitle = translate("eventListTitle");
+    eventListTitle = translate("navigation.events");
     eventListEmpty = translate("eventListEmpty");
     eventListLoading = translate("eventListLoading");
     eventListLoadingMore = translate("eventListLoadingMore");

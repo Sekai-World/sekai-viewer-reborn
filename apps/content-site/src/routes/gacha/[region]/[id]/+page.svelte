@@ -43,7 +43,7 @@
   let activeAssetTab = $state<GachaAssetTab>("logo");
 
   let homeLabel = $state(getInitialI18nText("home"));
-  let gachaListTitle = $state(getInitialI18nText("gachaListTitle"));
+  let gachaListTitle = $state(getInitialI18nText("navigation.gachas"));
   let pageTitlePrefix = $state(getInitialI18nText("pageTitle.gachaPrefix"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let nameLabel = $state(getInitialI18nText("nameLabel"));
@@ -57,8 +57,8 @@
   let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let gachaCountdownTitle = $state(getInitialI18nText("gachaCountdownTitle"));
   let logoLabel = $state(getInitialI18nText("gachaAssetTabs.logo"));
-  let bannerLabel = $state(getInitialI18nText("gachaAssetTabs.banner"));
-  let backgroundLabel = $state(getInitialI18nText("gachaAssetTabs.background"));
+  let bannerLabel = $state(getInitialI18nText("assetTab.banner"));
+  let backgroundLabel = $state(getInitialI18nText("assetTab.background"));
   let backgroundUnavailableLabel = $state(getInitialI18nText("gachaBackgroundUnavailable"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let pickupTitle = $state(getInitialI18nText("gachaPickupTitle"));
@@ -78,7 +78,7 @@
   let probabilityUnavailableLabel = $state(getInitialI18nText("gachaProbabilityUnavailable"));
   let probabilityLoadingLabel = $state(getInitialI18nText("gachaProbabilityLoading"));
   let probabilityLoadFailedLabel = $state(getInitialI18nText("gachaProbabilityLoadFailed"));
-  let probabilityRetryLabel = $state(getInitialI18nText("gachaProbabilityRetry"));
+  let probabilityRetryLabel = $state(getInitialI18nText("listRetry"));
   let probabilityConditionalLabel = $state(getInitialI18nText("gachaProbabilityConditional"));
   let probabilityCardIdLabel = $state(getInitialI18nText("gachaProbabilityCardId"));
   let probabilityDiagnosticLabels = $state<Record<string, string>>({});
@@ -167,7 +167,7 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
-    gachaListTitle = translate("gachaListTitle");
+    gachaListTitle = translate("navigation.gachas");
     pageTitlePrefix = translate("pageTitle.gachaPrefix");
     idLabel = translate("idLabel");
     nameLabel = translate("nameLabel");
@@ -181,8 +181,8 @@
     internalResourceCodeLabel = translate("internalResourceCodeLabel");
     gachaCountdownTitle = translate("gachaCountdownTitle");
     logoLabel = translate("gachaAssetTabs.logo");
-    bannerLabel = translate("gachaAssetTabs.banner");
-    backgroundLabel = translate("gachaAssetTabs.background");
+    bannerLabel = translate("assetTab.banner");
+    backgroundLabel = translate("assetTab.background");
     backgroundUnavailableLabel = translate("gachaBackgroundUnavailable");
     bannerAltSuffix = translate("bannerAltSuffix");
     pickupTitle = translate("gachaPickupTitle");
@@ -202,7 +202,7 @@
     probabilityUnavailableLabel = translate("gachaProbabilityUnavailable");
     probabilityLoadingLabel = translate("gachaProbabilityLoading");
     probabilityLoadFailedLabel = translate("gachaProbabilityLoadFailed");
-    probabilityRetryLabel = translate("gachaProbabilityRetry");
+    probabilityRetryLabel = translate("listRetry");
     probabilityConditionalLabel = translate("gachaProbabilityConditional");
     probabilityCardIdLabel = translate("gachaProbabilityCardId");
     probabilityDiagnosticLabels = Object.fromEntries(

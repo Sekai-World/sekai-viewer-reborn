@@ -47,10 +47,10 @@
   let versionDataLabel = $state(getInitialI18nText("versionInfo.dataLabel"));
   let versionAssetLabel = $state(getInitialI18nText("versionInfo.assetLabel"));
   let latestDataTitle = $state(getInitialI18nText("latestData.title"));
-  let latestDataCardsLabel = $state(getInitialI18nText("latestData.cards"));
-  let latestDataMusicsLabel = $state(getInitialI18nText("latestData.musics"));
-  let latestDataGachasLabel = $state(getInitialI18nText("latestData.gachas"));
-  let latestDataEventsLabel = $state(getInitialI18nText("latestData.events"));
+  let latestDataCardsLabel = $state(getInitialI18nText("navigation.cards"));
+  let latestDataMusicsLabel = $state(getInitialI18nText("navigation.songs"));
+  let latestDataGachasLabel = $state(getInitialI18nText("navigation.gachas"));
+  let latestDataEventsLabel = $state(getInitialI18nText("navigation.events"));
   let latestDataNoData = $state(getInitialI18nText("latestData.noData"));
   let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
@@ -115,10 +115,10 @@
     versionDataLabel = translate("versionInfo.dataLabel");
     versionAssetLabel = translate("versionInfo.assetLabel");
     latestDataTitle = translate("latestData.title");
-    latestDataCardsLabel = translate("latestData.cards");
-    latestDataMusicsLabel = translate("latestData.musics");
-    latestDataGachasLabel = translate("latestData.gachas");
-    latestDataEventsLabel = translate("latestData.events");
+    latestDataCardsLabel = translate("navigation.cards");
+    latestDataMusicsLabel = translate("navigation.songs");
+    latestDataGachasLabel = translate("navigation.gachas");
+    latestDataEventsLabel = translate("navigation.events");
     latestDataNoData = translate("latestData.noData");
     latestDataViewAll = translate("latestData.viewAll");
     latestDataLoadFailed = translate("latestData.loadFailed");
@@ -175,12 +175,42 @@
   const latestDataPromise = $derived(data.latestData[regionIndex]);
   const currentEventPromise = $derived(data.cards[regionIndex]);
   const directoryItems = $derived([
-    { key: "characters", href: `/characters/${selectedRegion}`, icon: "mdi:account-group" },
-    { key: "cards", href: `/cards/${selectedRegion}`, icon: "mdi:cards-outline" },
-    { key: "musics", href: `/musics/${selectedRegion}`, icon: "mdi:music-note-outline" },
-    { key: "events", href: `/events/${selectedRegion}`, icon: "mdi:calendar-star" },
-    { key: "gachas", href: `/gachas/${selectedRegion}`, icon: "mdi:gift-outline" },
-    { key: "virtualLives", href: `/virtual-lives/${selectedRegion}`, icon: "mdi:account-voice" }
+    {
+      key: "characters",
+      navigationKey: "navigation.characters",
+      href: `/characters/${selectedRegion}`,
+      icon: "mdi:account-group"
+    },
+    {
+      key: "cards",
+      navigationKey: "navigation.cards",
+      href: `/cards/${selectedRegion}`,
+      icon: "mdi:cards-outline"
+    },
+    {
+      key: "musics",
+      navigationKey: "navigation.songs",
+      href: `/musics/${selectedRegion}`,
+      icon: "mdi:music-note-outline"
+    },
+    {
+      key: "events",
+      navigationKey: "navigation.events",
+      href: `/events/${selectedRegion}`,
+      icon: "mdi:calendar-star"
+    },
+    {
+      key: "gachas",
+      navigationKey: "navigation.gachas",
+      href: `/gachas/${selectedRegion}`,
+      icon: "mdi:gift-outline"
+    },
+    {
+      key: "virtualLives",
+      navigationKey: "navigation.virtualLives",
+      href: `/virtual-lives/${selectedRegion}`,
+      icon: "mdi:account-voice"
+    }
   ]);
 </script>
 
@@ -548,7 +578,7 @@
           >
           <span class="min-w-0 flex-1"
             ><span class="flex items-center justify-between gap-3 text-base font-semibold"
-              ><span>{currentTranslate(`directory.${item.key}.title`)}</span><Icon
+              ><span>{currentTranslate(item.navigationKey)}</span><Icon
                 icon="mdi:arrow-right"
                 class="size-4 shrink-0 text-base-content/35 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-primary"
                 aria-hidden="true"

@@ -34,7 +34,7 @@
   let displayLocale = $state("");
   let activeAssetTab = $state<CardAssetTab>("normal");
   let homeLabel = $state(getInitialI18nText("home"));
-  let cardListTitle = $state(getInitialI18nText("cardListTitle"));
+  let cardListTitle = $state(getInitialI18nText("navigation.cards"));
   let pageTitlePrefix = $state(getInitialI18nText("pageTitle.cardPrefix"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let nameLabel = $state(getInitialI18nText("nameLabel"));
@@ -42,7 +42,7 @@
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let cardImageAltSuffix = $state(getInitialI18nText("cardImageAltSuffix"));
   let noCardLabel = $state(getInitialI18nText("noCardData"));
-  let debugCardJsonButtonLabel = $state(getInitialI18nText("debugCardJsonButton"));
+  let debugCardJsonButtonLabel = $state(getInitialI18nText("debugJsonButton"));
   let debugCardJsonTitle = $state(getInitialI18nText("debugCardJsonTitle"));
   let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let normalLabel = $state(getInitialI18nText("cardAssetTabs.normal"));
@@ -62,7 +62,7 @@
   let characterLabel = $state(getInitialI18nText("characterLabel"));
   let unitLabel = $state(getInitialI18nText("unitLabel"));
   let supportUnitLabel = $state(getInitialI18nText("supportUnitLabel"));
-  let attrLabel = $state(getInitialI18nText("attrLabel"));
+  let attrLabel = $state(getInitialI18nText("attributeLabel"));
   let rarityLabel = $state(getInitialI18nText("rarityLabel"));
   let typeLabel = $state(getInitialI18nText("typeLabel"));
   let releaseAtLabel = $state(getInitialI18nText("releaseAtLabel"));
@@ -100,7 +100,7 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
-    cardListTitle = translate("cardListTitle");
+    cardListTitle = translate("navigation.cards");
     pageTitlePrefix = translate("pageTitle.cardPrefix");
     idLabel = translate("idLabel");
     nameLabel = translate("nameLabel");
@@ -108,7 +108,7 @@
     closeLabel = translate("closeLabel");
     cardImageAltSuffix = translate("cardImageAltSuffix");
     noCardLabel = translate("noCardData");
-    debugCardJsonButtonLabel = translate("debugCardJsonButton");
+    debugCardJsonButtonLabel = translate("debugJsonButton");
     debugCardJsonTitle = translate("debugCardJsonTitle");
     internalResourceCodeLabel = translate("internalResourceCodeLabel");
     normalLabel = translate("cardAssetTabs.normal");
@@ -128,7 +128,7 @@
     characterLabel = translate("characterLabel");
     unitLabel = translate("unitLabel");
     supportUnitLabel = translate("supportUnitLabel");
-    attrLabel = translate("attrLabel");
+    attrLabel = translate("attributeLabel");
     rarityLabel = translate("rarityLabel");
     typeLabel = translate("typeLabel");
     releaseAtLabel = translate("releaseAtLabel");

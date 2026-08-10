@@ -57,7 +57,7 @@
   const listHref = (): string => resolve("/virtual-lives/[region]", { region: data.region });
   const breadcrumbs = (label: string) => [
     { label: t("home"), href: resolve("/") },
-    { label: t("virtualLiveListTitle"), href: listHref() },
+    { label: t("navigation.virtualLives"), href: listHref() },
     { label }
   ];
   const regionOrder: SupportedRegion[] = ["jp", "en", "tw", "kr", "cn"];
@@ -258,7 +258,7 @@
         {#if dev && payload.debugVirtualLiveJson}<button
             type="button"
             class="btn btn-outline btn-sm"
-            onclick={() => debugDialog?.showModal()}>{t("virtualLiveDebugJsonButton")}</button
+            onclick={() => debugDialog?.showModal()}>{t("debugJsonButton")}</button
           >{/if}
         {#await data.availableRegions then available}<RegionBadgeSwitch
             options={regionOptions(available)}
@@ -337,25 +337,25 @@
               <dl class="space-y-2">
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                    {t("virtualLiveNameLabel")}
+                    {t("nameLabel")}
                   </dt>
                   <dd class="mt-1 text-sm font-medium">{live.name ?? live.id}</dd>
                 </div>
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                    {t("virtualLiveTypeLabel")}
+                    {t("typeLabel")}
                   </dt>
                   <dd class="mt-1 text-sm font-medium">{typeLabel(live.virtualLiveType)}</dd>
                 </div>
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                    {t("virtualLiveStartAtLabel")}
+                    {t("startAt")}
                   </dt>
                   <dd class="mt-1 text-sm font-medium">{formatDate(live.startAt)}</dd>
                 </div>
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                    {t("virtualLiveEndAtLabel")}
+                    {t("endAt")}
                   </dt>
                   <dd class="mt-1 text-sm font-medium">{formatDate(live.endAt)}</dd>
                 </div>
@@ -387,13 +387,13 @@
                 <dl class="space-y-2">
                   <div class="content-card-inset rounded-xl p-3 sm:px-4">
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                      {t("virtualLiveWaitingRoomStartAtLabel")}
+                      {t("startAt")}
                     </dt>
                     <dd class="mt-1 text-sm font-medium">{formatDate(live.waitingRoom.startAt)}</dd>
                   </div>
                   <div class="content-card-inset rounded-xl p-3 sm:px-4">
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                      {t("virtualLiveWaitingRoomEndAtLabel")}
+                      {t("endAt")}
                     </dt>
                     <dd class="mt-1 text-sm font-medium">{formatDate(live.waitingRoom.endAt)}</dd>
                   </div>
@@ -417,7 +417,7 @@
             musicFallbackLabel={t("virtualLiveScreenMvMusicFallback")}
             musicJacketAltSuffix={t("musicJacketAltSuffix")}
             imageUnavailableLabel={t("imageUnavailable")}
-            characterLabel={t("virtualLiveCharacterIdentifierLabel")}
+            characterLabel={t("characterLabel")}
             {formatDate}
             formatTicketType={(value) =>
               t(`virtualLiveTicketType.${value}`, value.replaceAll("_", " "))}
@@ -501,7 +501,7 @@
                   <VirtualLiveCharacterGrid
                     characters={live.characters}
                     region={data.region}
-                    characterLabel={t("virtualLiveCharacterIdentifierLabel")}
+                    characterLabel={t("characterLabel")}
                     unavailableLabel={t("virtualLiveValueUnavailable")}
                   />
                 </section>

@@ -56,7 +56,7 @@
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
-  let gachaListTitle = $state(getInitialI18nText("gachaListTitle"));
+  let gachaListTitle = $state(getInitialI18nText("navigation.gachas"));
   let gachaListEmpty = $state(getInitialI18nText("gachaListEmpty"));
   let gachaListLoading = $state(getInitialI18nText("gachaListLoading"));
   let gachaListLoadingMore = $state(getInitialI18nText("gachaListLoadingMore"));
@@ -357,7 +357,7 @@
   const applyTranslations = (translate: (key: string, fallback?: string) => string): void => {
     homeLabel = translate("home");
     idLabel = translate("idLabel");
-    gachaListTitle = translate("gachaListTitle");
+    gachaListTitle = translate("navigation.gachas");
     gachaListEmpty = translate("gachaListEmpty");
     gachaListLoading = translate("gachaListLoading", gachaListLoadingFallback);
     gachaListLoadingMore = translate("gachaListLoadingMore");

@@ -92,7 +92,7 @@
   let idLabel = $state(getInitialI18nText("idLabel"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let clearLabel = $state(getInitialI18nText("clearLabel"));
-  let musicListTitle = $state(getInitialI18nText("musicListTitle"));
+  let musicListTitle = $state(getInitialI18nText("navigation.songs"));
   let musicListEmpty = $state(getInitialI18nText("musicListEmpty"));
   let musicListEnd = $state(getInitialI18nText("musicListEnd"));
   let musicListLoading = $state(getInitialI18nText("musicListListLoading"));
@@ -105,15 +105,15 @@
   let musicListFilterNameLabel = $state(getInitialI18nText("musicListFilterNameLabel"));
   let musicListFilterNamePlaceholder = $state(getInitialI18nText("musicListFilterNamePlaceholder"));
   let musicListFilterCategoryLabel = $state(getInitialI18nText("musicListFilterCategoryLabel"));
-  let musicListComposerLabel = $state(getInitialI18nText("musicListComposerLabel"));
+  let musicListComposerLabel = $state(getInitialI18nText("musicDetailComposerLabel"));
   let musicListComposerPlaceholder = $state(getInitialI18nText("musicListComposerPlaceholder"));
-  let musicListArrangerLabel = $state(getInitialI18nText("musicListArrangerLabel"));
+  let musicListArrangerLabel = $state(getInitialI18nText("musicDetailArrangerLabel"));
   let musicListArrangerPlaceholder = $state(getInitialI18nText("musicListArrangerPlaceholder"));
-  let musicListLyricistLabel = $state(getInitialI18nText("musicListLyricistLabel"));
+  let musicListLyricistLabel = $state(getInitialI18nText("musicDetailLyricistLabel"));
   let musicListLyricistPlaceholder = $state(getInitialI18nText("musicListLyricistPlaceholder"));
   let musicListVocalCharacterLabel = $state(getInitialI18nText("musicListVocalCharacterLabel"));
   let musicListTagLabel = $state(getInitialI18nText("musicListVocalUnitTagLabel"));
-  let musicListDifficultyLabel = $state(getInitialI18nText("musicListDifficultyLabel"));
+  let musicListDifficultyLabel = $state(getInitialI18nText("musicDetailDifficultyLabel"));
   let musicListHasAppendDifficultyLabel = $state(
     getInitialI18nText("musicListHasAppendDifficultyLabel")
   );
@@ -125,7 +125,7 @@
   let listSortByReleaseAt = $state(getInitialI18nText("listSortByReleaseAt"));
   let listViewGrid = $state(getInitialI18nText("listViewGrid"));
   let listViewAgenda = $state(getInitialI18nText("listViewAgenda"));
-  let musicListCreatorLabel = $state(getInitialI18nText("musicListCreatorLabel"));
+  let musicListCreatorLabel = $state(getInitialI18nText("musicDetailComposerLabel"));
   let musicJacketAltSuffix = $state(getInitialI18nText("musicJacketAltSuffix"));
   let spoilerContentLabel = $state(getInitialI18nText("spoilerContent"));
   const gameCharacterValues = Array.from({ length: 26 }, (_, index) => String(index + 1));
@@ -548,7 +548,7 @@
     idLabel = translate("idLabel");
     closeLabel = translate("closeLabel");
     clearLabel = translate("clearLabel");
-    musicListTitle = translate("musicListTitle");
+    musicListTitle = translate("navigation.songs");
     musicListEmpty = translate("musicListEmpty");
     musicListEnd = translate("musicListEnd");
     musicListLoading = translate("musicListListLoading");
@@ -561,15 +561,15 @@
     musicListFilterNameLabel = translate("musicListFilterNameLabel");
     musicListFilterNamePlaceholder = translate("musicListFilterNamePlaceholder");
     musicListFilterCategoryLabel = translate("musicListFilterCategoryLabel");
-    musicListComposerLabel = translate("musicListComposerLabel");
+    musicListComposerLabel = translate("musicDetailComposerLabel");
     musicListComposerPlaceholder = translate("musicListComposerPlaceholder");
-    musicListArrangerLabel = translate("musicListArrangerLabel");
+    musicListArrangerLabel = translate("musicDetailArrangerLabel");
     musicListArrangerPlaceholder = translate("musicListArrangerPlaceholder");
-    musicListLyricistLabel = translate("musicListLyricistLabel");
+    musicListLyricistLabel = translate("musicDetailLyricistLabel");
     musicListLyricistPlaceholder = translate("musicListLyricistPlaceholder");
     musicListVocalCharacterLabel = translate("musicListVocalCharacterLabel");
     musicListTagLabel = translate("musicListVocalUnitTagLabel");
-    musicListDifficultyLabel = translate("musicListDifficultyLabel");
+    musicListDifficultyLabel = translate("musicDetailDifficultyLabel");
     musicListHasAppendDifficultyLabel = translate("musicListHasAppendDifficultyLabel");
     musicListLevelLabel = translate("musicListLevelLabel");
     musicListLevelPlaceholder = translate("musicListLevelPlaceholder");
@@ -579,7 +579,7 @@
     listSortByReleaseAt = translate("listSortByReleaseAt");
     listViewGrid = translate("listViewGrid");
     listViewAgenda = translate("listViewAgenda");
-    musicListCreatorLabel = translate("musicListCreatorLabel");
+    musicListCreatorLabel = translate("musicDetailComposerLabel");
     musicJacketAltSuffix = translate("musicJacketAltSuffix");
     spoilerContentLabel = translate("spoilerContent");
   };

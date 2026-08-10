@@ -83,7 +83,7 @@
 </script>
 
 <svelte:head
-  ><title>{t("characterListTitle", "Characters")} {regionLabels[data.region]} - Sekai Viewer</title
+  ><title>{t("navigation.characters", "Characters")} {regionLabels[data.region]} - Sekai Viewer</title
   ></svelte:head
 >
 
@@ -91,7 +91,7 @@
   <PageHeader
     breadcrumbs={[
       { label: t("home", "Home"), href: resolve("/") },
-      { label: t("characterListTitle", "Characters") }
+      { label: t("navigation.characters", "Characters") }
     ]}
   >
     {#snippet actions()}<RegionBadgeSwitch options={regionOptions()} />{/snippet}

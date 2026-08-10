@@ -70,7 +70,7 @@
     {#if music.vocal?.characters.length}
       <div class="mt-2 flex flex-wrap gap-1.5">
         {#each music.vocal.characters as performer (performer.characterId)}
-          {@const label = `${t("virtualLiveCharacterIdentifierLabel")} #${performer.characterId}`}
+          {@const label = `${t("characterLabel")} #${performer.characterId}`}
           {#if performer.characterId > 0}
             <a
               href={`/character/${region}/${performer.characterId}`}

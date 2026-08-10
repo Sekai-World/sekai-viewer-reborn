@@ -32,7 +32,7 @@
   let displayLocale = $state<string>("");
   let activeAssetTab = $state<EventAssetTab>("banner");
   let homeLabel = $state(getInitialI18nText("home"));
-  let eventListTitle = $state(getInitialI18nText("eventListTitle"));
+  let eventListTitle = $state(getInitialI18nText("navigation.events"));
   let startAtLabel = $state(getInitialI18nText("startAt"));
   let endAtLabel = $state(getInitialI18nText("endAt"));
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -72,13 +72,13 @@
   let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
   let eventTitlePrefix = $state(getInitialI18nText("pageTitle.eventPrefix"));
-  let bannerTabLabel = $state(getInitialI18nText("eventAssetTabs.banner"));
+  let bannerTabLabel = $state(getInitialI18nText("assetTab.banner"));
   let titleTabLabel = $state(getInitialI18nText("eventAssetTabs.title"));
-  let backgroundTabLabel = $state(getInitialI18nText("eventAssetTabs.background"));
+  let backgroundTabLabel = $state(getInitialI18nText("assetTab.background"));
   let charactersTabLabel = $state(getInitialI18nText("eventAssetTabs.characters"));
   let eventInfoTitle = $state(getInitialI18nText("eventInfoTitle"));
   let eventCountdownTitle = $state(getInitialI18nText("eventCountdownTitle"));
-  let debugEventJsonButtonLabel = $state(getInitialI18nText("debugEventJsonButton"));
+  let debugEventJsonButtonLabel = $state(getInitialI18nText("debugJsonButton"));
   let debugEventJsonTitle = $state(getInitialI18nText("debugEventJsonTitle"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let bannerCharacterLabel = $state(getInitialI18nText("bannerCharacterLabel"));
@@ -86,7 +86,7 @@
   let eventBonusCharacterLabel = $state(getInitialI18nText("eventBonusCharacterLabel"));
   let eventAnyCharacterLabel = $state(getInitialI18nText("eventAnyCharacterLabel"));
   let eventRarityBonusLabel = $state(getInitialI18nText("eventRarityBonusLabel"));
-  let eventRarityLabel = $state(getInitialI18nText("eventRarityLabel"));
+  let eventRarityLabel = $state(getInitialI18nText("rarityLabel"));
   let eventFeaturedCardsTitle = $state(getInitialI18nText("eventFeaturedCardsTitle"));
   let eventFeaturedCardBonusLabel = $state(getInitialI18nText("eventFeaturedCardBonusLabel"));
   let eventFeaturedCardBonusShortLabel = $state(
@@ -133,7 +133,7 @@
 
   const applyTranslations = (translate: (key: string) => string): void => {
     homeLabel = translate("home");
-    eventListTitle = translate("eventListTitle");
+    eventListTitle = translate("navigation.events");
     startAtLabel = translate("startAt");
     endAtLabel = translate("endAt");
     idLabel = translate("idLabel");
@@ -161,13 +161,13 @@
     imageUnavailableLabel = translate("imageUnavailable");
     noEventLabel = translate("noCurrentEventData");
     eventTitlePrefix = translate("pageTitle.eventPrefix");
-    bannerTabLabel = translate("eventAssetTabs.banner");
+    bannerTabLabel = translate("assetTab.banner");
     titleTabLabel = translate("eventAssetTabs.title");
-    backgroundTabLabel = translate("eventAssetTabs.background");
+    backgroundTabLabel = translate("assetTab.background");
     charactersTabLabel = translate("eventAssetTabs.characters");
     eventInfoTitle = translate("eventInfoTitle");
     eventCountdownTitle = translate("eventCountdownTitle");
-    debugEventJsonButtonLabel = translate("debugEventJsonButton");
+    debugEventJsonButtonLabel = translate("debugJsonButton");
     debugEventJsonTitle = translate("debugEventJsonTitle");
     closeLabel = translate("closeLabel");
     bannerCharacterLabel = translate("bannerCharacterLabel");
@@ -175,7 +175,7 @@
     eventBonusCharacterLabel = translate("eventBonusCharacterLabel");
     eventAnyCharacterLabel = translate("eventAnyCharacterLabel");
     eventRarityBonusLabel = translate("eventRarityBonusLabel");
-    eventRarityLabel = translate("eventRarityLabel");
+    eventRarityLabel = translate("rarityLabel");
     eventFeaturedCardsTitle = translate("eventFeaturedCardsTitle");
     eventFeaturedCardBonusLabel = translate("eventFeaturedCardBonusLabel");
     eventFeaturedCardBonusShortLabel = translate("eventFeaturedCardBonusShortLabel");
