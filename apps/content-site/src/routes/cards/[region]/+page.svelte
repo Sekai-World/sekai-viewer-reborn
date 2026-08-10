@@ -1438,4 +1438,9 @@
     }
   }
 
+  @media (min-width: 640px) {
+    .archive-results-field {
+      padding: 1rem;
+    }
+  }
 </style>

@@ -600,7 +600,7 @@
       <span class="ml-3 text-sm opacity-70">{gachaListLoading}</span>
     </div>
   {:else if isInitialLoading}
-    <div class="archive-results-field grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="archive-card-skeleton flex flex-col gap-3 rounded-2xl border p-4">
           <div class="skeleton h-32 rounded-xl"></div>
@@ -614,7 +614,7 @@
       <div class="alert alert-error">{errorMessage}</div>
     </div>
   {:else}
-    <div class="archive-results-field grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {#each visibleItems as item (item.id)}
         <GachaListCard
           region={data.region}
@@ -711,4 +711,9 @@
     }
   }
 
+  @media (min-width: 640px) {
+    .archive-results-field {
+      padding: 1rem;
+    }
+  }
 </style>

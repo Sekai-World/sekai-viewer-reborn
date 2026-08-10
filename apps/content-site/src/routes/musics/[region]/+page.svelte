@@ -893,8 +893,8 @@
   {:else}
     <div
       class={`archive-results-field ${viewMode === "agenda"
-        ? "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
-        : "grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}
+        ? "grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3"
+        : "grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}
     >
       {#each visibleItems as item (item.id)}
         <MusicListCard
@@ -1164,4 +1164,9 @@
     }
   }
 
+  @media (min-width: 640px) {
+    .archive-results-field {
+      padding: 1rem;
+    }
+  }
 </style>
