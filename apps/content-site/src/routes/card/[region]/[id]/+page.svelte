@@ -42,7 +42,7 @@
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let cardImageAltSuffix = $state(getInitialI18nText("cardImageAltSuffix"));
   let noCardLabel = $state(getInitialI18nText("noCardData"));
-  let debugCardJsonButtonLabel = $state(getInitialI18nText("debugCardJsonButton"));
+  let debugCardJsonButtonLabel = $state(getInitialI18nText("debugJsonButton"));
   let debugCardJsonTitle = $state(getInitialI18nText("debugCardJsonTitle"));
   let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let normalLabel = $state(getInitialI18nText("cardAssetTabs.normal"));
@@ -108,7 +108,7 @@
     closeLabel = translate("closeLabel");
     cardImageAltSuffix = translate("cardImageAltSuffix");
     noCardLabel = translate("noCardData");
-    debugCardJsonButtonLabel = translate("debugCardJsonButton");
+    debugCardJsonButtonLabel = translate("debugJsonButton");
     debugCardJsonTitle = translate("debugCardJsonTitle");
     internalResourceCodeLabel = translate("internalResourceCodeLabel");
     normalLabel = translate("cardAssetTabs.normal");

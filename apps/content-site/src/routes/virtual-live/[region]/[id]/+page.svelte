@@ -258,7 +258,7 @@
         {#if dev && payload.debugVirtualLiveJson}<button
             type="button"
             class="btn btn-outline btn-sm"
-            onclick={() => debugDialog?.showModal()}>{t("virtualLiveDebugJsonButton")}</button
+            onclick={() => debugDialog?.showModal()}>{t("debugJsonButton")}</button
           >{/if}
         {#await data.availableRegions then available}<RegionBadgeSwitch
             options={regionOptions(available)}

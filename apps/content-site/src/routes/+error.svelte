@@ -58,7 +58,7 @@
           </a>
           <a class="btn btn-outline" href={currentPath}>
             <Icon icon="mdi:reload" class="size-5" aria-hidden="true" />
-            {translate("errorPage.retryAction")}
+            {translate("listRetry")}
           </a>
         </div>
 

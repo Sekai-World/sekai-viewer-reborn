@@ -78,7 +78,7 @@
   let charactersTabLabel = $state(getInitialI18nText("eventAssetTabs.characters"));
   let eventInfoTitle = $state(getInitialI18nText("eventInfoTitle"));
   let eventCountdownTitle = $state(getInitialI18nText("eventCountdownTitle"));
-  let debugEventJsonButtonLabel = $state(getInitialI18nText("debugEventJsonButton"));
+  let debugEventJsonButtonLabel = $state(getInitialI18nText("debugJsonButton"));
   let debugEventJsonTitle = $state(getInitialI18nText("debugEventJsonTitle"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
   let bannerCharacterLabel = $state(getInitialI18nText("bannerCharacterLabel"));
@@ -167,7 +167,7 @@
     charactersTabLabel = translate("eventAssetTabs.characters");
     eventInfoTitle = translate("eventInfoTitle");
     eventCountdownTitle = translate("eventCountdownTitle");
-    debugEventJsonButtonLabel = translate("debugEventJsonButton");
+    debugEventJsonButtonLabel = translate("debugJsonButton");
     debugEventJsonTitle = translate("debugEventJsonTitle");
     closeLabel = translate("closeLabel");
     bannerCharacterLabel = translate("bannerCharacterLabel");

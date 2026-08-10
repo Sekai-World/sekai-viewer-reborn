@@ -78,7 +78,7 @@
   let probabilityUnavailableLabel = $state(getInitialI18nText("gachaProbabilityUnavailable"));
   let probabilityLoadingLabel = $state(getInitialI18nText("gachaProbabilityLoading"));
   let probabilityLoadFailedLabel = $state(getInitialI18nText("gachaProbabilityLoadFailed"));
-  let probabilityRetryLabel = $state(getInitialI18nText("gachaProbabilityRetry"));
+  let probabilityRetryLabel = $state(getInitialI18nText("listRetry"));
   let probabilityConditionalLabel = $state(getInitialI18nText("gachaProbabilityConditional"));
   let probabilityCardIdLabel = $state(getInitialI18nText("gachaProbabilityCardId"));
   let probabilityDiagnosticLabels = $state<Record<string, string>>({});
@@ -202,7 +202,7 @@
     probabilityUnavailableLabel = translate("gachaProbabilityUnavailable");
     probabilityLoadingLabel = translate("gachaProbabilityLoading");
     probabilityLoadFailedLabel = translate("gachaProbabilityLoadFailed");
-    probabilityRetryLabel = translate("gachaProbabilityRetry");
+    probabilityRetryLabel = translate("listRetry");
     probabilityConditionalLabel = translate("gachaProbabilityConditional");
     probabilityCardIdLabel = translate("gachaProbabilityCardId");
     probabilityDiagnosticLabels = Object.fromEntries(
