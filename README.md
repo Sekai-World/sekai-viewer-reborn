@@ -101,8 +101,10 @@ A `post-checkout` hook is provided to auto-restart the SvelteKit dev server
 when switching branches. Without it, Vite's file watcher detects deleted route
 files and crashes the dev server with an ENOENT error.
 
-The hooks are opt-in and are not enabled automatically. The tracked hooks live
-at the relative path `scripts/git-hooks`. Enable them once after cloning:
+This repository uses native Git hooks, not Husky. The hooks are opt-in and are
+not enabled automatically. The tracked hooks live at the relative path
+`scripts/git-hooks`; `pnpm hooks:install` configures Git's local
+`core.hooksPath` to use them. Enable them once after cloning:
 
 ```bash
 pnpm hooks:install
@@ -117,7 +119,10 @@ When installed:
 - `pre-commit` runs fast ESLint validation on staged JavaScript, TypeScript, and
   Svelte source files under `apps/*/src`, `packages/*/src`, and `scripts`.
 - `pre-push` requires a clean worktree, including ordinary untracked files, and
-  runs the full `pnpm verify:ci` validation sequence.
+  runs the local quality gate: `pnpm test`, `pnpm lint`, `pnpm check`, and
+  `pnpm i18n:check`. It intentionally skips the full production build so that
+  pushes get fast local feedback; CI continues to run the unchanged
+  `pnpm verify:ci` sequence, including `pnpm build`.
 
 Use `--no-verify` as an explicit escape hatch when a hook must be bypassed:
 

@@ -17,4 +17,8 @@ if [[ -n "$status_output" ]]; then
   exit 1
 fi
 
-exec pnpm verify:ci
+printf '%s\n' 'pre-push: running local validation (test, lint, check, and i18n:check; production build runs in CI).' >&2
+pnpm test
+pnpm lint
+pnpm check
+pnpm i18n:check
