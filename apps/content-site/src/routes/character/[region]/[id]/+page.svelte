@@ -203,13 +203,13 @@
                 >
               </div>
               <dl class="space-y-2">
-                {#each [[t("characterNameLabel", "Name"), character.name], [t("characterUnitLabel", "Unit"), character.unitName ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]] as row (row[0])}
+                {#each [[t("nameLabel", "Name"), character.name], [t("unitLabel", "Unit"), character.unitName ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]] as row (row[0])}
                   <div class="content-card-inset rounded-xl p-3 sm:px-4">
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                       {row[0]}
                     </dt>
                     <dd class="mt-1 flex items-center gap-2 wrap-break-word text-sm font-medium">
-                      {#if row[0] === t("characterUnitLabel", "Unit") && character.unit}<UnitIconBadge
+                      {#if row[0] === t("unitLabel", "Unit") && character.unit}<UnitIconBadge
                           unit={character.unit}
                           variant="sm"
                         />{/if}{row[1]}

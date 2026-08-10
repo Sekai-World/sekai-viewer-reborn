@@ -30,7 +30,6 @@
   "cardListFilterSkillLabel": "Skill",
   "cardListFilterSupportUnitLabel": "Support Unit",
   "cardListFilterTypeLabel": "Type",
-  "cardListFilterUnitLabel": "Unit",
   "cardListLoadFailed": "Failed to load cards.",
   "cardListLoading": "Loading cards...",
   "cardListLoadingMore": "Loading more cards...",

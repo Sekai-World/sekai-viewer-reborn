@@ -10,7 +10,6 @@
   "failedToLoadVirtualLiveData": "Failed to load virtual live data.",
   "invalidVirtualLiveId": "Invalid virtual live id.",
   "virtualLiveBannerAltSuffix": "virtual live banner",
-  "virtualLiveNameLabel": "Name",
   "virtualLiveTypeLabel": "Type",
   "virtualLiveStartAtLabel": "Start",
   "virtualLiveEndAtLabel": "End",

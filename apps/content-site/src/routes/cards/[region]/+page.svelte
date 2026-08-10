@@ -130,7 +130,7 @@
   let cardListFilterSkillLabel = $state(getInitialI18nText("cardListFilterSkillLabel"));
   let cardListFilterSupportUnitLabel = $state(getInitialI18nText("cardListFilterSupportUnitLabel"));
   let cardListFilterTypeLabel = $state(getInitialI18nText("cardListFilterTypeLabel"));
-  let cardListFilterUnitLabel = $state(getInitialI18nText("cardListFilterUnitLabel"));
+  let cardListFilterUnitLabel = $state(getInitialI18nText("unitLabel"));
   let listFilterReset = $state(getInitialI18nText("listFilterReset"));
   let listFilterApply = $state(getInitialI18nText("listFilterApply"));
   let cardListLoading = $state(getInitialI18nText("cardListLoading"));
@@ -658,7 +658,7 @@
     cardListFilterSkillLabel = translate("cardListFilterSkillLabel");
     cardListFilterSupportUnitLabel = translate("cardListFilterSupportUnitLabel");
     cardListFilterTypeLabel = translate("cardListFilterTypeLabel");
-    cardListFilterUnitLabel = translate("cardListFilterUnitLabel");
+    cardListFilterUnitLabel = translate("unitLabel");
     listFilterReset = translate("listFilterReset");
     listFilterApply = translate("listFilterApply");
     cardListLoading = translate("cardListLoading");

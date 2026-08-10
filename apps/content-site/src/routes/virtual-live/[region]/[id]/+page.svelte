@@ -337,7 +337,7 @@
               <dl class="space-y-2">
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                    {t("virtualLiveNameLabel")}
+                    {t("nameLabel")}
                   </dt>
                   <dd class="mt-1 text-sm font-medium">{live.name ?? live.id}</dd>
                 </div>
