@@ -27,6 +27,7 @@ Prismatic Archive treats `content-site` as a calm, readable archive/catalogue ra
 ### Catalogue list surfaces
 
 - Cards, Music, Events, Gachas, and Virtual Lives catalogue pages use a raised control deck followed by a sunken, bordered results field. Their loading, error, empty, and dialog surfaces should use the same matching surface treatment so the catalogue experience remains coherent across routes.
+- Keep the PageHeader/navigation, control deck, and results-field border on the same page content track. The results field may sit behind its grid, but its border must not extend beyond the header or toolbar edges at any breakpoint.
 - Keep catalogue surface structure shared, but keep each domain's card internals specific: cards, music, events, gachas, and virtual lives may expose different metadata, artwork, and interactions within the common page-level surfaces.
 
 ## daisyUI Override Rules

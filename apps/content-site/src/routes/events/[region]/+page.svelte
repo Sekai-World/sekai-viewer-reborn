@@ -959,7 +959,7 @@
   .archive-results-field::before {
     position: absolute;
     z-index: -1;
-    inset: -0.75rem;
+    inset: 0;
     border: 1px solid var(--archive-border-subtle);
     border-radius: 1.25rem;
     background: var(--archive-surface-sunken);
@@ -980,10 +980,4 @@
     box-shadow: 0 1.5rem 4rem color-mix(in oklab, var(--archive-text-strong) 14%, transparent);
   }
 
-  @media (max-width: 639px) {
-    .archive-results-field::before {
-      inset: -0.5rem;
-      border-radius: 1rem;
-    }
-  }
 </style>
