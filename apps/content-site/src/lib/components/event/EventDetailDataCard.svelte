@@ -356,7 +356,11 @@
       return null;
     }
 
-    return resolve("/character/[region]/[id]", { region, id: String(gameCharacterId) });
+    const highestAttr = getHighestAttrBonus(item)?.attr;
+    const characterQuery = `character=${encodeURIComponent(String(gameCharacterId))}`;
+    const attrQuery = highestAttr ? `&attr=${encodeURIComponent(highestAttr)}` : "";
+
+    return `${resolve("/cards/[region]", { region })}?${characterQuery}${attrQuery}`;
   };
 
   const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {

@@ -3,9 +3,9 @@ const EVENT_CARD_BASE_SHADOW_CLASS =
 
 export const CURRENT_EVENT_CARD_FRAME_CLASS = "card-hover-lift relative isolate block w-full";
 
-export const EVENT_LIST_CARD_FRAME_CLASS = "card-hover-lift relative isolate block w-full";
+export const EVENT_LIST_CARD_FRAME_CLASS = "card-hover-lift relative isolate block h-full w-full";
 
-export const EVENT_CARD_SURFACE_CLASS = `card content-card-shell relative overflow-hidden ${EVENT_CARD_BASE_SHADOW_CLASS}`;
+export const EVENT_CARD_SURFACE_CLASS = `card content-card-shell relative h-full overflow-hidden ${EVENT_CARD_BASE_SHADOW_CLASS}`;
 
 export const EVENT_CARD_BODY_CLASS = "card-body relative z-10 p-3 md:p-4";
 

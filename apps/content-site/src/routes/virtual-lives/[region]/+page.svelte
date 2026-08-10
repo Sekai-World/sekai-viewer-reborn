@@ -294,8 +294,11 @@
     {#snippet actions()}<RegionBadgeSwitch options={regionOptions()} />{/snippet}
   </PageHeader>
 
-  <div class="flex items-center justify-between gap-2">
-    <div class="join">
+  <div
+    class="archive-card-controls flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
+  >
+    <div class="archive-control-group flex items-center gap-2">
+      <div class="join">
       <ListToolbarButton
         icon="mdi:clock-start"
         label={sortStartLabel}
@@ -312,19 +315,22 @@
         class={`join-item ${sortBy === "id" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
         onclick={() => toggleSort("id")}
       />
+      </div>
     </div>
-    <ListToolbarButton
-      icon="mdi:funnel"
-      label={openFiltersLabel}
-      class={hasAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
-      onclick={openFilterDialog}
-    />
+    <div class="archive-control-group flex items-center justify-between gap-2 sm:justify-end">
+      <ListToolbarButton
+        icon="mdi:funnel"
+        label={openFiltersLabel}
+        class={hasAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
+        onclick={openFilterDialog}
+      />
+    </div>
   </div>
 
   {#if isInitialLoading}
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
-        <div class="content-card-shell flex flex-col gap-3 rounded-2xl p-4 shadow-sm">
+        <div class="archive-card-skeleton flex flex-col gap-3 rounded-2xl border p-4">
           <div class="skeleton h-32 rounded-xl"></div>
           <div class="skeleton h-4 w-3/4 rounded"></div>
           <div class="skeleton h-4 w-1/2 rounded"></div>
@@ -332,11 +338,13 @@
       {/each}
     </div>
   {:else if items.length === 0 && errorMessage}
-    <div class="alert alert-error">
-      {errorMessage}<button class="btn btn-sm" onclick={() => void reload()}>{retryLabel}</button>
+    <div class="archive-list-error rounded-2xl border p-3">
+      <div class="alert alert-error">
+        {errorMessage}<button class="btn btn-sm" onclick={() => void reload()}>{retryLabel}</button>
+      </div>
     </div>
   {:else}
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {#each visibleItems as item (item.id)}
         <VirtualLiveListCard
           region={data.region}
@@ -350,29 +358,34 @@
       {/each}
     </div>
     {#if visibleItems.length === 0 && !errorMessage}<div
-        class="content-card-inset py-12 text-center text-sm opacity-70"
+        class="archive-list-empty rounded-2xl border py-12 text-center text-sm"
       >
         {emptyLabel}
       </div>{/if}
-    {#if errorMessage}<div class="alert alert-error mx-auto max-w-xl">
-        {errorMessage}<button class="btn btn-sm" onclick={() => void loadNextPage()}
-          >{retryLabel}</button
-        >
+    {#if errorMessage}<div class="archive-list-error mx-auto max-w-xl rounded-2xl border p-3">
+        <div class="alert alert-error">
+          {errorMessage}<button class="btn btn-sm" onclick={() => void loadNextPage()}
+            >{retryLabel}</button
+          >
+        </div>
       </div>{/if}
     {#if hasNext}
-      <div bind:this={sentinel} class="flex min-h-24 items-center justify-center py-5">
+      <div
+        bind:this={sentinel}
+        class="archive-list-sentinel flex min-h-24 items-center justify-center rounded-2xl py-5"
+      >
         {#if isLoading}<span class="loading loading-spinner loading-md"></span><span
             class="ml-3 text-sm opacity-70">{loadingMoreLabel}</span
           >{:else}<span class="text-sm opacity-60">{loadingLabel}</span>{/if}
       </div>
-    {:else if visibleItems.length > 0}<div class="py-2 text-center text-sm opacity-60">
+    {:else if visibleItems.length > 0}<div class="archive-list-end py-3 text-center text-sm">
         {endLabel}
       </div>{/if}
   {/if}
 </section>
 
 <dialog bind:this={filterDialog} class="modal">
-  <div class="modal-box max-w-xl">
+  <div class="modal-box archive-filter-dialog max-w-xl border">
     <div class="flex items-center justify-between gap-3">
       <h3 class="text-lg font-semibold">{filtersTitle}</h3>
       <form method="dialog">
@@ -444,3 +457,59 @@
     <button type="submit" aria-label={closeLabel}></button>
   </form>
 </dialog>
+
+<style>
+  .archive-card-controls,
+  .archive-list-error,
+  .archive-list-empty,
+  .archive-filter-dialog {
+    background: var(--archive-surface-raised);
+    border-color: var(--archive-border-default);
+  }
+
+  .archive-control-group {
+    min-width: 0;
+  }
+
+  .archive-results-field {
+    position: relative;
+    isolation: isolate;
+    padding: 0.75rem;
+  }
+
+  .archive-results-field::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border: 1px solid var(--archive-border-subtle);
+    border-radius: 1.25rem;
+    background: var(--archive-surface-sunken);
+    content: "";
+  }
+
+  .archive-card-skeleton {
+    background: var(--archive-surface-raised);
+    border-color: var(--archive-border-subtle);
+  }
+
+  .archive-list-sentinel,
+  .archive-list-end {
+    color: var(--archive-text-muted);
+  }
+
+  .archive-filter-dialog {
+    box-shadow: 0 1.5rem 4rem color-mix(in oklab, var(--archive-text-strong) 14%, transparent);
+  }
+
+  @media (max-width: 639px) {
+    .archive-results-field {
+      padding: 0.5rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .archive-results-field {
+      padding: 1rem;
+    }
+  }
+</style>

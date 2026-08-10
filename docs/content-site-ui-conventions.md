@@ -24,6 +24,13 @@ Prismatic Archive treats `content-site` as a calm, readable archive/catalogue ra
 - The homepage current event is a data-driven Archive Banner: it uses the selected region's existing streamed current-event payload, preserves its event-detail link, unit metadata, countdown, and asset retry/fallback behavior. When the supplied event artwork is intrinsically small, render it as a compact, contained preview rather than enlarging it into a hero: at `lg` widths use a fixed, modest media column beside content-led details inside the `max-w-5xl` track; on mobile keep the natural stacked order. Loading, empty, and error states use the same media/details geometry to limit shift.
 - Dark theme palettes use a hue-aware archive surface ladder: a gently tinted canvas, then progressively lighter default, raised, and overlay surfaces. Keep the primary ambient glow quieter than light mode and use restrained token-based borders for separation rather than heavier shadows.
 
+### Catalogue list surfaces
+
+- Cards, Music, Events, Gachas, and Virtual Lives catalogue pages use a raised control deck followed by a sunken, bordered results field. Their loading, error, empty, and dialog surfaces should use the same matching surface treatment so the catalogue experience remains coherent across routes.
+- Keep the PageHeader/navigation, control deck, and results-field border on the same page content track. The results field retains a responsive internal gutter around its grid, but its border must not extend beyond the header or toolbar edges at any breakpoint.
+- Catalogue grids use stretch-aligned rows; each list card's clickable frame must fill its grid cell so cards share a row height without changing their media aspect ratios.
+- Keep catalogue surface structure shared, but keep each domain's card internals specific: cards, music, events, gachas, and virtual lives may expose different metadata, artwork, and interactions within the common page-level surfaces.
+
 ## daisyUI Override Rules
 
 ### 1. Override daisyUI component defaults with `@utility`

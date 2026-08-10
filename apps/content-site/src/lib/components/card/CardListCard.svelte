@@ -417,13 +417,13 @@
 <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 <a
   {href}
-  class="relative isolate block w-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-(--archive-focus-ring) focus-visible:ring-offset-2 focus-visible:ring-offset-(--archive-focus-offset)"
+  class="relative isolate block size-full rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-(--archive-focus-ring) focus-visible:ring-offset-2 focus-visible:ring-offset-(--archive-focus-offset)"
   aria-label={`${item.prefix} ${idLabel}${item.id}`}
   onclick={handleCardClick}
   onkeydown={handleCardKeydown}
 >
   <article
-    class={`archive-card-item card-hover-lift card relative overflow-hidden border ${viewMode === "agenda" ? "min-h-34" : ""}`}
+    class={`archive-card-item card-hover-lift card relative h-full overflow-hidden border ${viewMode === "agenda" ? "min-h-34" : ""}`}
   >
     {#if isSpoilerPlaceholderVisible()}
       <div
