@@ -682,6 +682,7 @@
   .archive-results-field {
     position: relative;
     isolation: isolate;
+    padding: 0.75rem;
   }
 
   .archive-results-field::before {
@@ -702,6 +703,12 @@
   .archive-list-sentinel,
   .archive-list-end {
     color: var(--archive-text-muted);
+  }
+
+  @media (max-width: 639px) {
+    .archive-results-field {
+      padding: 0.5rem;
+    }
   }
 
 </style>

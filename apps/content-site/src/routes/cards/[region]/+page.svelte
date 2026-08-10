@@ -1405,6 +1405,7 @@
   .archive-results-field {
     position: relative;
     isolation: isolate;
+    padding: 0.75rem;
   }
 
   .archive-results-field::before {
@@ -1429,6 +1430,12 @@
 
   .archive-filter-dialog {
     box-shadow: 0 1.5rem 4rem color-mix(in oklab, var(--archive-text-strong) 14%, transparent);
+  }
+
+  @media (max-width: 639px) {
+    .archive-results-field {
+      padding: 0.5rem;
+    }
   }
 
 </style>
