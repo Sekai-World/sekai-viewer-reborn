@@ -26,7 +26,7 @@
 
 <svelte:head><title>{translate("comparison.title")}</title></svelte:head>
 
-<main class="archive-canvas">
+<div class="archive-canvas">
   <section class="archive-panel" aria-labelledby="archive-title">
     <h1 id="archive-title">{translate("comparison.title")}</h1>
     <form class="archive-control" method="get" action="/">
@@ -71,4 +71,4 @@
       <p>{translate("comparison.empty")}</p>
     {/each}
   </section>
-</main>
+</div>

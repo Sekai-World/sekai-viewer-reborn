@@ -16,6 +16,7 @@
     "@platform/auth-client": "workspace:*",
     "@platform/i18n-runtime": "workspace:*",
     "@platform/i18n-source": "workspace:*",
+    "@platform/sekai-api-sdk": "workspace:*",
     "@platform/sekai-master-api-sdk": "workspace:*",
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*"

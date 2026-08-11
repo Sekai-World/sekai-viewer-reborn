@@ -15,3 +15,7 @@
   endpoint's `client` option.
 - Generated endpoint URLs are OpenAPI absolute-path references (for example,
   `/event/live`).
+
+- Server-side tools-site loaders should read `SEKAI_API_BASE_URL` through their
+  local config helper and pass the normalized URL directly to SDK calls. API
+  failures should be converted to typed safe states at the loader boundary.

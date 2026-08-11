@@ -8,14 +8,19 @@
   import type { LayoutData } from "./$types";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
-  const fallbackMessages = getLocalI18nMessages(["common", "comparison"]);
+  const fallbackMessages = getLocalI18nMessages(["common", "comparison", "tracker"]);
   let messages = $state(fallbackMessages);
   let supportsNativeViewTransition = $state(false);
   let motionAllowed = $state(false);
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const navigationTransitionKey = $derived(page.url.pathname);
   const sidebarItems: SidebarItem[] = $derived([
-    { label: translate("navigation.home"), href: "/", active: true }
+    { label: translate("navigation.home"), href: "/", active: page.url.pathname === "/" },
+    {
+      label: translate("navigation.eventTracker"),
+      href: "/tracker/jp",
+      active: page.url.pathname.startsWith("/tracker/")
+    }
   ]);
 
   onMount(() => {

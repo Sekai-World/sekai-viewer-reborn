@@ -242,6 +242,9 @@ importers:
       '@platform/i18n-source':
         specifier: workspace:*
         version: link:../../packages/i18n-source
+      '@platform/sekai-api-sdk':
+        specifier: workspace:*
+        version: link:../../packages/sekai-api-sdk
       '@platform/sekai-master-api-sdk':
         specifier: workspace:*
         version: link:../../packages/sekai-master-api-sdk

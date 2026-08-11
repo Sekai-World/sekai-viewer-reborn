@@ -3,6 +3,7 @@
    Keep daisyUI behind a local proxy module so CSS does not depend on node_modules layout. */
 @source not "../daisyui.mjs";
 @plugin "../daisyui.mjs";
+@source "../../../packages/ui-shell/src";
 
 :root {
   --archive-canvas: var(--color-base-200);

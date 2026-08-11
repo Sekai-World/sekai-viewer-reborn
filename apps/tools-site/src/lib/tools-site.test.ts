@@ -55,12 +55,14 @@ describe("tools-site i18n runtime", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("loads local namespace messages and translates them", async () => {
-    expect(toolsSiteI18nNamespaces).toEqual(["common", "comparison", "server"]);
-    const messages = getLocalI18nMessages(["common", "comparison"]);
+    expect(toolsSiteI18nNamespaces).toEqual(["common", "comparison", "server", "tracker"]);
+    const messages = getLocalI18nMessages(["common", "comparison", "tracker"]);
 
     expect(messages).toMatchObject({
       "navigation.home": "Home",
-      "comparison.title": expect.any(String)
+      "navigation.eventTracker": expect.any(String),
+      "comparison.title": expect.any(String),
+      "tracker.title": expect.any(String)
     });
     const translator = createI18nTranslator("en", messages);
     expect(translator("comparison.title")).toBe(messages["comparison.title"]);

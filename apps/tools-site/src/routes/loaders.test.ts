@@ -118,6 +118,6 @@ describe("tools-site server loaders", () => {
     const result = await runLayoutLoad(request("https://tools.test/"));
 
     expect(result.uiLocale).toBe("ja-JP");
-    expect(result.i18nMessages).toEqual({ namespaces: ["common", "comparison"] });
+    expect(result.i18nMessages).toEqual({ namespaces: ["common", "comparison", "tracker"] });
   });
 });

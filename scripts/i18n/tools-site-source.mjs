@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const appRoot = path.join(repoRoot, "apps/tools-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/tools-site");
-const namespaces = ["common", "comparison", "server"];
+const namespaces = ["common", "comparison", "server", "tracker"];
 const translatorKeyPatterns = [
   /createI18nTranslator\([^)]*\)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
   /\b(?:t|tTools)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
@@ -84,7 +84,7 @@ const getNamespaceForFile = (filePath) => {
   ) {
     return "common";
   }
-  return "comparison";
+  return relativePath.startsWith("src/routes/tracker/") ? "tracker" : "comparison";
 };
 
 const usedKeysByNamespace = Object.fromEntries(

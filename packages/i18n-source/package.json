@@ -16,6 +16,7 @@
     "./content-site/virtual-live.json": "./content-site/virtual-live.json",
     "./tools-site/common.json": "./tools-site/common.json",
     "./tools-site/comparison.json": "./tools-site/comparison.json",
-    "./tools-site/server.json": "./tools-site/server.json"
+    "./tools-site/server.json": "./tools-site/server.json",
+    "./tools-site/tracker.json": "./tools-site/tracker.json"
   }
 }

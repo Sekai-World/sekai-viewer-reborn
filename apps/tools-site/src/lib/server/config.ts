@@ -15,3 +15,13 @@ export const getMasterApiBaseUrl = (): string => {
 
   return removeTrailingSlashes(value) || "/";
 };
+
+export const getSekaiApiBaseUrl = (): string => {
+  const value = env.SEKAI_API_BASE_URL?.trim();
+
+  if (!value) {
+    throw new Error("Missing required environment variable: SEKAI_API_BASE_URL");
+  }
+
+  return removeTrailingSlashes(value) || "/";
+};
