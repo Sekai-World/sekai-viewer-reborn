@@ -19,3 +19,17 @@
 - Server-side tools-site loaders should read `SEKAI_API_BASE_URL` through their
   local config helper and pass the normalized URL directly to SDK calls. API
   failures should be converted to typed safe states at the loader boundary.
+
+## Ranking history integration
+
+- The `sekai-api` 2.2.3 ranking `timestamp` contract is live. For a safe event
+  history flow, call `/event/{id}/rankings/time?region=` first, then use each
+  returned exact timestamp (deduplicated) when requesting `rankings/graph`.
+- Although the OpenAPI spec describes `/rankings` data as an array, the live
+  response is a paginated object containing `eventRankings`. Apps must
+  defensively parse that response shape.
+- Treat a `202` restore payload as rankings being unavailable, rather than as
+  ranking data.
+- In tools-site, proxy client-side ranking interactions through a server-local
+  `+server.ts` endpoint. This keeps the SDK base URL server-only instead of
+  exposing it as a public client configuration value.

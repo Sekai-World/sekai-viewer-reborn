@@ -21,7 +21,7 @@ export type EventTrackerSelection =
 export type EventTrackerResult = {
   selection: EventTrackerSelection;
   loadedAt: string;
-  status: "available" | "sdk-error" | "network-error" | "invalid-data";
+  status: "available" | "sdk-error" | "upstream-error" | "network-error" | "invalid-data";
   rankings: EventTrackerRanking[];
 };
 
@@ -29,6 +29,23 @@ const asObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+
+const unwrapSekaiApiEnvelope = (value: unknown): unknown => {
+  let payload = value;
+  let envelope = asObject(payload);
+  while (envelope && typeof envelope.status === "string" && "data" in envelope) {
+    payload = envelope.data;
+    envelope = asObject(payload);
+  }
+  return payload;
+};
+
+const getRankingRows = (value: unknown): unknown[] | null => {
+  const payload = unwrapSekaiApiEnvelope(value);
+  if (Array.isArray(payload)) return payload;
+  const page = asObject(payload);
+  return Array.isArray(page?.eventRankings) ? page.eventRankings : null;
+};
 
 const asSafeInteger = (value: unknown, minimum: number): number | null => {
   if (typeof value === "number") {
@@ -120,6 +137,9 @@ const withResult = (
   rankings: EventTrackerRanking[] = []
 ): EventTrackerResult => ({ selection, loadedAt: new Date().toISOString(), status, rankings });
 
+const getHistoricalSdkErrorStatus = (response: { response?: { status?: number } }): EventTrackerResult["status"] =>
+  response.response?.status === 500 ? "upstream-error" : "sdk-error";
+
 export const getEventTrackerRankings = async (
   baseUrl: string,
   region: TrackerRegion,
@@ -129,16 +149,31 @@ export const getEventTrackerRankings = async (
     eventId === undefined ? { mode: "live", eventId: null } : { mode: "history", eventId };
 
   try {
-    const response =
-      eventId === undefined
-        ? await getEventRankingLive({ baseUrl, query: { region } })
-        : await getEventRankingsByEventId({
-            baseUrl,
-            path: { id: eventId },
-            query: { limit: 1000, full: true, region }
-          });
+    if (eventId === undefined) {
+      const response = await getEventRankingLive({ baseUrl, query: { region } });
+      if (response.error) return withResult(selection, "sdk-error");
+      const rankings = parseEventTrackerRankings(response.data);
+      return rankings ? withResult(selection, "available", rankings) : withResult(selection, "invalid-data");
+    }
 
-    if (response.error) return withResult(selection, "sdk-error");
+    const latest = await getEventRankingsByEventId({
+      baseUrl,
+      path: { id: eventId },
+      query: { limit: 1, sort: { timestamp: "desc" }, region }
+    });
+    if (latest.error) return withResult(selection, getHistoricalSdkErrorStatus(latest));
+    const latestRows = getRankingRows(latest.data);
+    if (!latestRows) return withResult(selection, "invalid-data");
+    if (latestRows.length === 0) return withResult(selection, "available");
+    const timestamp = asObject(latestRows[0])?.timestamp;
+    if (typeof timestamp !== "string" || !timestamp) return withResult(selection, "invalid-data");
+    const response = await getEventRankingsByEventId({
+      baseUrl,
+      path: { id: eventId },
+      query: { timestamp, region }
+    });
+
+    if (response.error) return withResult(selection, getHistoricalSdkErrorStatus(response));
 
     const rankings = parseEventTrackerRankings(response.data);
     return rankings ? withResult(selection, "available", rankings) : withResult(selection, "invalid-data");

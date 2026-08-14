@@ -48,23 +48,50 @@ describe("event tracker data layer", () => {
   });
 
   it("loads and merges historical first100 and border rankings deterministically", async () => {
-    mocks.getEventRankingsByEventId.mockResolvedValue({
+    mocks.getEventRankingsByEventId
+      .mockResolvedValueOnce({ data: [{ timestamp: "2026-08-08T00:00:00Z" }] })
+      .mockResolvedValueOnce({
       data: {
         first100: [{ rank: 1, userId: "one", score: 100 }],
         border: [{ rank: 1, userId: "one", score: 100 }, { rank: 100, userId: "last", score: 1 }]
       }
-    });
+      });
 
     await expect(getEventTrackerRankings("https://api.example.test", "jp", 42)).resolves.toMatchObject({
       selection: { mode: "history", eventId: 42 },
       status: "available",
       rankings: [{ rank: 1, userId: "one" }, { rank: 100, userId: "last" }]
     });
-    expect(mocks.getEventRankingsByEventId).toHaveBeenCalledWith({
+    expect(mocks.getEventRankingsByEventId).toHaveBeenNthCalledWith(1, {
       baseUrl: "https://api.example.test",
-      path: { id: 42 },
-      query: { limit: 1000, full: true, region: "jp" }
+      path: { id: 42 }, query: { limit: 1, sort: { timestamp: "desc" }, region: "jp" }
     });
+    expect(mocks.getEventRankingsByEventId).toHaveBeenNthCalledWith(2, {
+      baseUrl: "https://api.example.test", path: { id: 42 }, query: { timestamp: "2026-08-08T00:00:00Z", region: "jp" }
+    });
+  });
+
+  it("unwraps the production SDK envelope before selecting a historical snapshot", async () => {
+    mocks.getEventRankingsByEventId
+      .mockResolvedValueOnce({ data: { status: "success", data: { totalCount: 1, limit: 1, page: 1, eventRankings: [{ timestamp: "2026-08-08T00:00:00Z" }] } } })
+      .mockResolvedValueOnce({ data: { status: "success", data: { eventRankings: [{ rank: 1, score: 100 }] } } });
+
+    await expect(getEventTrackerRankings("https://api.example.test", "en", 42)).resolves.toMatchObject({
+      status: "available", rankings: [{ rank: 1, score: 100 }]
+    });
+  });
+
+  it.each([
+    ["latest lookup", [{ error: true, response: { status: 500 } }], "upstream-error"],
+    ["snapshot lookup", [
+      { data: [{ timestamp: "2026-08-08T00:00:00Z" }] },
+      { error: true, response: { status: 500 } }
+    ], "upstream-error"],
+    ["non-500 failure", [{ error: true, response: { status: 503 } }], "sdk-error"]
+  ] as const)("maps historical %s SDK failure to %s", async (_stage, responses, status) => {
+    for (const response of responses) mocks.getEventRankingsByEventId.mockResolvedValueOnce(response);
+
+    await expect(getEventTrackerRankings("https://api.example.test", "jp", 42)).resolves.toMatchObject({ status });
   });
 
   it("converts SDK errors, network failures, and malformed data to safe states", async () => {

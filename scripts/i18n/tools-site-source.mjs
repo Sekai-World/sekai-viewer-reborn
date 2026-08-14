@@ -84,7 +84,9 @@ const getNamespaceForFile = (filePath) => {
   ) {
     return "common";
   }
-  return relativePath.startsWith("src/routes/tracker/") ? "tracker" : "comparison";
+  return relativePath.startsWith("src/routes/tracker/") || relativePath.startsWith("src/routes/tracker-")
+    ? "tracker"
+    : "comparison";
 };
 
 const usedKeysByNamespace = Object.fromEntries(

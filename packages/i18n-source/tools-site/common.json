@@ -1,10 +1,20 @@
 {
   "navigation.closeSidebar": "Close sidebar",
+  "navigation.explore": "Explore",
   "navigation.eventTracker": "Event Tracker",
   "navigation.home": "Home",
+  "navigation.liveData": "Live data",
   "navigation.openSidebar": "Open sidebar",
   "navigation.skipToMain": "Skip to main content",
   "navigation.tools": "Tools",
   "shell.badge": "Utility",
-  "shell.title": "Sekai Tools"
+  "shell.title": "Sekai Tools",
+  "theme.auto": "Auto",
+  "theme.dark": "Dark",
+  "theme.default": "Default",
+  "theme.light": "Light",
+  "theme.mint": "Mint",
+  "theme.mode": "Color mode",
+  "theme.palette": "Palette",
+  "theme.sakura": "Sakura"
 }

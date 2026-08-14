@@ -130,6 +130,10 @@ export type GetEventChapterRankingsByEventIdAndCharaIdData = {
          */
         userId?: number;
         /**
+         * Exact snapshot filter. Use a timestamp returned by /event/{id}/chapter_rankings/time for the same charaId; range queries are not supported.
+         */
+        timestamp?: string;
+        /**
          * Query limit of event rankings, if not set, default 1000
          */
         limit?: number;
@@ -224,6 +228,10 @@ export type GetEventChapterRankingGrpahByEventIdAndCharaIdData = {
          * Query userId of event rankings
          */
         userId?: number;
+        /**
+         * Exact snapshot filter. Use a timestamp returned by /event/{id}/chapter_rankings/time for the same charaId; range queries are not supported.
+         */
+        timestamp?: string;
         /**
          * Requested server region
          */
@@ -407,6 +415,10 @@ export type GetEventRankingsByEventIdData = {
          */
         userId?: number;
         /**
+         * Exact snapshot filter. Use a timestamp returned by /event/{id}/rankings/time; range queries are not supported.
+         */
+        timestamp?: string;
+        /**
          * Query limit of event rankings, if not set, default 1000
          */
         limit?: number;
@@ -497,6 +509,10 @@ export type GetEventRankingGrpahByEventIdData = {
          * Query userId of event rankings
          */
         userId?: number;
+        /**
+         * Exact snapshot filter. Use a timestamp returned by /event/{id}/rankings/time; range queries are not supported.
+         */
+        timestamp?: string;
         /**
          * Requested server region
          */

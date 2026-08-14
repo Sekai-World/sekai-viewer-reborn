@@ -20,6 +20,10 @@
       "types": "./src/image-retry/index.ts",
       "svelte": "./src/image-retry/index.ts",
       "default": "./src/image-retry/index.ts"
+    },
+    "./theme-controls": {
+      "types": "./src/theme-controls.types.ts",
+      "default": "./src/theme-controls.types.ts"
     }
   },
   "dependencies": {
