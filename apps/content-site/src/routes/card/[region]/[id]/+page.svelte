@@ -260,70 +260,66 @@
         <span>{cardStatsTitle}</span>
       </p>
 
-      <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
-        <div class="space-y-3">
-          <div class="content-card-inset rounded-xl p-3 sm:px-4">
+      <div class="space-y-3">
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
+          <div class="flex items-center justify-between gap-4">
+            <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
+            <div class="h-8 w-20 animate-pulse rounded bg-base-300"></div>
+          </div>
+          <div class="mt-3 h-3 animate-pulse rounded-full bg-base-300"></div>
+        </div>
+
+        <div class="content-card-inset space-y-3 rounded-xl p-3 sm:px-4">
+          <div class="flex items-center justify-between gap-3">
+            <div class="h-4 w-32 animate-pulse rounded bg-base-300"></div>
+            <div class="h-5 w-10 animate-pulse rounded-full bg-base-300"></div>
+          </div>
+          <div class="space-y-2">
+            <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="flex gap-2">
+              <div class="h-10 w-12 animate-pulse rounded-lg bg-base-300"></div>
+              <div class="h-10 w-12 animate-pulse rounded-lg bg-base-300"></div>
+            </div>
+          </div>
+          <div>
             <div class="flex items-center justify-between gap-4">
-              <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
-              <div class="h-8 w-20 animate-pulse rounded bg-base-300"></div>
+              <div class="h-4 w-28 animate-pulse rounded bg-base-300"></div>
+              <div class="h-8 w-16 animate-pulse rounded bg-base-300"></div>
             </div>
             <div class="mt-3 h-3 animate-pulse rounded-full bg-base-300"></div>
           </div>
+        </div>
 
-          <div class="content-card-inset space-y-3 rounded-xl p-3 sm:px-4">
-            <div class="flex items-center justify-between gap-3">
-              <div class="h-4 w-32 animate-pulse rounded bg-base-300"></div>
-              <div class="h-5 w-10 animate-pulse rounded-full bg-base-300"></div>
-            </div>
-            <div class="space-y-2">
-              <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
-              <div class="flex gap-2">
-                <div class="h-10 w-12 animate-pulse rounded-lg bg-base-300"></div>
-                <div class="h-10 w-12 animate-pulse rounded-lg bg-base-300"></div>
-              </div>
-            </div>
-            <div>
+        <div class="space-y-2">
+          {#each [0, 1, 2] as panelKey (panelKey)}
+            <div class="content-card-inset rounded-xl px-3 sm:px-4 py-2.5">
               <div class="flex items-center justify-between gap-4">
                 <div class="h-4 w-28 animate-pulse rounded bg-base-300"></div>
-                <div class="h-8 w-16 animate-pulse rounded bg-base-300"></div>
+                <div class="h-6 w-20 animate-pulse rounded bg-base-300"></div>
               </div>
-              <div class="mt-3 h-3 animate-pulse rounded-full bg-base-300"></div>
             </div>
+          {/each}
+        </div>
+
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
+          <div class="flex items-center justify-between gap-4">
+            <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="h-5 w-20 animate-pulse rounded bg-base-300"></div>
+          </div>
+          <div class="mt-3 space-y-2">
+            <div class="h-3 w-full animate-pulse rounded bg-base-300"></div>
+            <div class="h-3 w-5/6 animate-pulse rounded bg-base-300"></div>
+            <div class="h-3 w-4/6 animate-pulse rounded bg-base-300"></div>
           </div>
         </div>
 
-        <div class="space-y-3">
-          <div class="space-y-2">
-            {#each [0, 1, 2] as panelKey (panelKey)}
-              <div class="content-card-inset rounded-xl px-3 sm:px-4 py-2.5">
-                <div class="flex items-center justify-between gap-4">
-                  <div class="h-4 w-28 animate-pulse rounded bg-base-300"></div>
-                  <div class="h-6 w-20 animate-pulse rounded bg-base-300"></div>
-                </div>
-              </div>
-            {/each}
-          </div>
-
-          <div class="content-card-inset rounded-xl p-3 sm:px-4">
+        <div class="pt-2">
+          <div class="content-card-inset rounded-xl px-3 sm:px-4 py-2.5">
             <div class="flex items-center justify-between gap-4">
-              <div class="h-4 w-24 animate-pulse rounded bg-base-300"></div>
-              <div class="h-5 w-20 animate-pulse rounded bg-base-300"></div>
+              <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
+              <div class="h-6 w-24 animate-pulse rounded bg-base-300"></div>
             </div>
-            <div class="mt-3 space-y-2">
-              <div class="h-3 w-full animate-pulse rounded bg-base-300"></div>
-              <div class="h-3 w-5/6 animate-pulse rounded bg-base-300"></div>
-              <div class="h-3 w-4/6 animate-pulse rounded bg-base-300"></div>
-            </div>
-          </div>
-
-          <div class="pt-2">
-            <div class="content-card-inset rounded-xl px-3 sm:px-4 py-2.5">
-              <div class="flex items-center justify-between gap-4">
-                <div class="h-4 w-20 animate-pulse rounded bg-base-300"></div>
-                <div class="h-6 w-24 animate-pulse rounded bg-base-300"></div>
-              </div>
-              <div class="mt-2 h-2 animate-pulse rounded-full bg-base-300"></div>
-            </div>
+            <div class="mt-2 h-2 animate-pulse rounded-full bg-base-300"></div>
           </div>
         </div>
       </div>
@@ -452,48 +448,21 @@
           {/await}
         </div>
 
-        <div class="flex min-w-0 flex-col gap-4">
-          <CardDetailSkillCard
-            skill={payload.card.skill}
-            character={payload.card.character}
-            title={cardSkillTitle}
-            {skillLevelLabel}
-            {durationLabel}
-            {effectValueLabel}
-            {noSkillLabel}
-          />
+        <div class="flex min-w-0 flex-col gap-4 2xl:grid 2xl:grid-cols-2 2xl:items-start">
+          <div class="contents 2xl:flex 2xl:min-w-0 2xl:flex-col 2xl:gap-4">
+            <div class="order-1">
+              <CardDetailSkillCard
+                skill={payload.card.skill}
+                character={payload.card.character}
+                title={cardSkillTitle}
+                {skillLevelLabel}
+                {durationLabel}
+                {effectValueLabel}
+                {noSkillLabel}
+              />
+            </div>
 
-          {#await Promise.all([data.episodes, data.params])}
-            {@render statsCardSkeleton()}
-          {:then [episodes, params]}
-            <CardDetailStatsCard
-              card={payload.card}
-              {params}
-              {episodes}
-              title={cardStatsTitle}
-              {levelLabel}
-              {performanceLabel}
-              {techniqueLabel}
-              {staminaLabel}
-              {totalLabel}
-              {bonusSumLabel}
-              {specialTrainingBonusLabel}
-              {episodeBonusLabel}
-              {masterRankBonusLabel}
-              {noStatsLabel}
-            />
-          {:catch}
-            <article class="card content-card-shell shadow-sm">
-              <div class="card-body gap-4 p-3 sm:p-5">
-                <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
-                  {cardStatsTitle}
-                </p>
-                <p class="text-sm opacity-60">{noStatsLabel}</p>
-              </div>
-            </article>
-          {/await}
-
-          <div class="grid gap-4 lg:grid-cols-2 lg:items-start">
+            <div class="order-3">
             {#await data.episodes then episodes}
               <CardDetailEpisodesCard
                 {episodes}
@@ -513,7 +482,9 @@
                 </div>
               </article>
             {/await}
+          </div>
 
+            <div class="order-4">
             {#await data.relatedEvents then relatedEvents}
               <CardDetailEventsCard
                 translate={currentTranslate}
@@ -535,7 +506,43 @@
                 </div>
               </article>
             {/await}
+            </div>
+          </div>
 
+          <div class="contents 2xl:flex 2xl:min-w-0 2xl:flex-col 2xl:gap-4">
+            <div class="order-2">
+              {#await Promise.all([data.episodes, data.params])}
+                {@render statsCardSkeleton()}
+              {:then [episodes, params]}
+                <CardDetailStatsCard
+                  card={payload.card}
+                  {params}
+                  {episodes}
+                  title={cardStatsTitle}
+                  {levelLabel}
+                  {performanceLabel}
+                  {techniqueLabel}
+                  {staminaLabel}
+                  {totalLabel}
+                  {bonusSumLabel}
+                  {specialTrainingBonusLabel}
+                  {episodeBonusLabel}
+                  {masterRankBonusLabel}
+                  {noStatsLabel}
+                />
+              {:catch}
+                <article class="card content-card-shell shadow-sm">
+                  <div class="card-body gap-4 p-3 sm:p-5">
+                    <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+                      {cardStatsTitle}
+                    </p>
+                    <p class="text-sm opacity-60">{noStatsLabel}</p>
+                  </div>
+                </article>
+              {/await}
+            </div>
+
+            <div class="order-5">
             {#await data.gachas then gachas}
               <CardDetailGachaCard
                 {gachas}
@@ -555,6 +562,7 @@
                 </div>
               </article>
             {/await}
+            </div>
           </div>
         </div>
       </div>

@@ -44,7 +44,7 @@
 
 <a class="viewer-shell-skip" href={`#${mainId}`}>{skipToMainLabel}</a>
 
-<div class:lg:drawer-open={desktopRailOpen} class="drawer min-h-dvh">
+<div class:xl:drawer-open={desktopRailOpen} class="drawer min-h-dvh">
   <input
     id={drawerId}
     type="checkbox"
@@ -62,7 +62,7 @@
         <div class="navbar-start">
           <button
             type="button"
-            class={`btn btn-ghost btn-circle size-11! min-h-11! ${desktopRailOpen ? "lg:hidden" : ""}`}
+            class={`btn btn-ghost btn-circle size-11! min-h-11! ${desktopRailOpen ? "xl:hidden" : ""}`}
             aria-label={openSidebarLabel}
             aria-controls={sidebarPanelId}
             aria-expanded={sidebarOpen}
@@ -117,11 +117,11 @@
     </main>
   </div>
 
-  <div class={`drawer-side z-50 ${desktopRailOpen ? "lg:z-30" : ""}`}>
+  <div class={`drawer-side z-50 ${desktopRailOpen ? "xl:z-30" : ""}`}>
     <button
       type="button"
       aria-label={closeSidebarLabel}
-      class={`drawer-overlay ${desktopRailOpen ? "lg:hidden" : ""}`}
+      class={`drawer-overlay ${desktopRailOpen ? "xl:hidden" : ""}`}
       onclick={() => {
         sidebarOpen = false;
       }}
@@ -129,13 +129,13 @@
     <nav
       id={sidebarPanelId}
       aria-label={sidebarLabel}
-      class={`viewer-shell-rail menu min-h-full w-72 bg-base-100 p-4 ${desktopRailOpen ? "lg:w-68 lg:border-r lg:border-base-content/10 lg:px-3 lg:py-5" : ""}`}
+      class={`viewer-shell-rail menu min-h-full w-72 bg-base-100 p-4 ${desktopRailOpen ? "xl:w-68 xl:border-r xl:border-base-content/10 xl:px-3 xl:py-5" : ""}`}
     >
       <div class="mb-2 flex items-center justify-between px-2 py-1">
         <span class="text-sm font-semibold">{sidebarLabel}</span>
         <button
           type="button"
-          class={`btn btn-ghost btn-sm btn-circle size-11! min-h-11! ${desktopRailOpen ? "lg:hidden" : ""}`}
+          class={`btn btn-ghost btn-sm btn-circle size-11! min-h-11! ${desktopRailOpen ? "xl:hidden" : ""}`}
           aria-label={closeSidebarLabel}
           aria-controls={sidebarPanelId}
           onclick={() => {

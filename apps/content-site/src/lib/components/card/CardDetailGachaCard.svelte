@@ -37,6 +37,18 @@
     const timestampMs = toTimestampMs(value);
     return formatDisplayDateTime(timestampMs ?? value, uiLocale);
   };
+
+  const getGachaTimeRange = (gacha: CardGachaBanner): string => {
+    if (gacha.startAt === null && gacha.endAt === null) {
+      return "--";
+    }
+
+    if (gacha.startAt === null || gacha.endAt === null) {
+      return formatGachaDateTime(gacha.startAt ?? gacha.endAt);
+    }
+
+    return `${formatGachaDateTime(gacha.startAt)} - ${formatGachaDateTime(gacha.endAt)}`;
+  };
 </script>
 
 <article class="card content-card-shell shadow-sm">
@@ -58,7 +70,7 @@
             >
               {#if gacha.assetbundleName}
                 <div
-                  class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
+                  class="relative flex w-full aspect-5/2 max-h-32 items-center justify-center overflow-hidden rounded-xl xl:aspect-3/1"
                 >
                   <AssetImage
                     src={getGachaLogoAssetURL(gacha.assetbundleName, region)}
@@ -76,9 +88,9 @@
                   >
                     #{gacha.id}
                   </span>
-                  {#if gacha.startAt}
+                  {#if gacha.startAt !== null || gacha.endAt !== null}
                     <span class="text-[0.65rem] opacity-50"
-                      >{formatGachaDateTime(gacha.startAt)}</span
+                      >{getGachaTimeRange(gacha)}</span
                     >
                   {/if}
                 </div>
@@ -96,7 +108,7 @@
             >
               {#if latest.assetbundleName}
                 <div
-                  class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
+                  class="relative flex w-full aspect-5/2 max-h-32 items-center justify-center overflow-hidden rounded-xl xl:aspect-3/1"
                 >
                   <AssetImage
                     src={getGachaLogoAssetURL(latest.assetbundleName, region)}
@@ -114,9 +126,9 @@
                   >
                     #{latest.id}
                   </span>
-                  {#if latest.startAt}
+                  {#if latest.startAt !== null || latest.endAt !== null}
                     <span class="text-[0.65rem] opacity-50"
-                      >{formatGachaDateTime(latest.startAt)}</span
+                      >{getGachaTimeRange(latest)}</span
                     >
                   {/if}
                 </div>
@@ -134,7 +146,7 @@
             >
               {#if first.assetbundleName}
                 <div
-                  class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
+                  class="relative flex w-full aspect-5/2 max-h-32 items-center justify-center overflow-hidden rounded-xl xl:aspect-3/1"
                 >
                   <AssetImage
                     src={getGachaLogoAssetURL(first.assetbundleName, region)}
@@ -152,9 +164,9 @@
                   >
                     #{first.id}
                   </span>
-                  {#if first.startAt}
+                  {#if first.startAt !== null || first.endAt !== null}
                     <span class="text-[0.65rem] opacity-50"
-                      >{formatGachaDateTime(first.startAt)}</span
+                      >{getGachaTimeRange(first)}</span
                     >
                   {/if}
                 </div>
