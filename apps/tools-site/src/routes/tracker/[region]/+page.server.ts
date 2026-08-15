@@ -34,6 +34,16 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
   const result = await getEventTrackerRankings(getSekaiApiBaseUrl(), region, eventId ?? undefined);
   depends?.("tools-site:tracker:catalog");
   const catalog = getEventCatalog(getMasterApiBaseUrl(), region);
-  const rewards = eventId === null ? Promise.resolve(null) : getEventRewards(getMasterApiBaseUrl(), region, eventId);
+  const rewards = (async () => {
+    const resolvedFromRankings = eventId ?? result.resolvedCurrentEventId;
+    if (resolvedFromRankings !== null && resolvedFromRankings !== undefined) {
+      return getEventRewards(getMasterApiBaseUrl(), region, resolvedFromRankings);
+    }
+    const catalogResult = await catalog;
+    const resolvedFromCatalog = eventId ?? catalogResult.currentEvent?.id;
+    return resolvedFromCatalog === undefined
+      ? null
+      : getEventRewards(getMasterApiBaseUrl(), region, resolvedFromCatalog);
+  })();
   return { region, selectionStatus: "valid" as const, ...result, catalog, rewards };
 };

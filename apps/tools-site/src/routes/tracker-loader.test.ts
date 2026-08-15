@@ -43,6 +43,21 @@ describe("tracker route loader", () => {
     });
   });
 
+  it("uses the live ranking event id for rewards while catalog metadata is unavailable", async () => {
+    mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [{ rank: 1, eventId: 42 }] } });
+    mocks.getEventsByRegionCurrent.mockRejectedValue(new Error("catalog unavailable"));
+    mocks.getEventsByRegionList.mockRejectedValue(new Error("catalog unavailable"));
+    mocks.getEventsByRegionByIdRewards.mockResolvedValue({ data: { items: [] } });
+
+    const loaded = await runLoad("en");
+    expect(loaded).toMatchObject({ resolvedCurrentEventId: 42, selectionStatus: "valid" });
+    await expect(loaded.rewards).resolves.toMatchObject({ status: "available", items: [] });
+    expect(mocks.getEventsByRegionByIdRewards).toHaveBeenCalledWith({
+      baseUrl: "https://master.example.test",
+      path: { region: "en", id: "42" }
+    });
+  });
+
   it("uses the historical endpoint for a valid eventId", async () => {
     mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
     await expect(runLoad("en", "123")).resolves.toMatchObject({

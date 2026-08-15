@@ -1,9 +1,15 @@
 import { getEventRankingLive, getEventRankingsByEventId } from "@platform/sekai-api-sdk";
-export const trackerRegions = ["jp", "tw", "en", "kr"] as const;
-export type TrackerRegion = (typeof trackerRegions)[number];
+import {
+  isTrackerSupportedRegion,
+  trackerSupportedRegions,
+  type TrackerSupportedRegion
+} from "$lib/regions";
+
+export const trackerRegions = trackerSupportedRegions;
+export type TrackerRegion = TrackerSupportedRegion;
 
 export const isTrackerRegion = (value: string): value is TrackerRegion =>
-  trackerRegions.includes(value as TrackerRegion);
+  isTrackerSupportedRegion(value);
 
 export type EventTrackerRanking = {
   rank: number | null;
@@ -20,6 +26,7 @@ export type EventTrackerSelection =
 
 export type EventTrackerResult = {
   selection: EventTrackerSelection;
+  resolvedCurrentEventId: number | null;
   loadedAt: string;
   status: "available" | "sdk-error" | "upstream-error" | "network-error" | "invalid-data";
   rankings: EventTrackerRanking[];
@@ -134,8 +141,14 @@ export const parseEventTrackerRankings = (payload: unknown): EventTrackerRanking
 const withResult = (
   selection: EventTrackerSelection,
   status: EventTrackerResult["status"],
-  rankings: EventTrackerRanking[] = []
-): EventTrackerResult => ({ selection, loadedAt: new Date().toISOString(), status, rankings });
+  rankings: EventTrackerRanking[] = [],
+  resolvedCurrentEventId: number | null = null
+): EventTrackerResult => ({ selection, resolvedCurrentEventId, loadedAt: new Date().toISOString(), status, rankings });
+
+const getResolvedCurrentEventId = (rankings: EventTrackerRanking[]): number | null => {
+  const eventIds = new Set(rankings.map((ranking) => ranking.eventId).filter((id): id is number => id !== null));
+  return eventIds.size === 1 ? [...eventIds][0] ?? null : null;
+};
 
 const getHistoricalSdkErrorStatus = (response: { response?: { status?: number } }): EventTrackerResult["status"] =>
   response.response?.status === 500 ? "upstream-error" : "sdk-error";
@@ -153,7 +166,9 @@ export const getEventTrackerRankings = async (
       const response = await getEventRankingLive({ baseUrl, query: { region } });
       if (response.error) return withResult(selection, "sdk-error");
       const rankings = parseEventTrackerRankings(response.data);
-      return rankings ? withResult(selection, "available", rankings) : withResult(selection, "invalid-data");
+      return rankings
+        ? withResult(selection, "available", rankings, getResolvedCurrentEventId(rankings))
+        : withResult(selection, "invalid-data");
     }
 
     const latest = await getEventRankingsByEventId({
