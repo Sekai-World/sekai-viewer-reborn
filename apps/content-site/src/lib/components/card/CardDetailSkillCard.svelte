@@ -74,8 +74,7 @@
     </p>
 
     {#if skill}
-      <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
-        <div class="space-y-3">
+      <div class="space-y-3">
           <label class="content-card-inset block rounded-xl p-3 sm:px-4">
             <span class="flex items-center justify-between gap-4 text-sm font-semibold">
               <span>{skillLevelLabel}</span>
@@ -102,7 +101,7 @@
           </label>
 
           {#if selectedEffectDetails.length > 0}
-            <div class="grid gap-2 sm:grid-cols-2">
+            <div class="grid gap-2">
               {#each selectedEffectDetails as item, index (`effect-${index}`)}
                 <div class="content-card-inset rounded-xl p-3 sm:px-4">
                   <p class="text-sm font-semibold">{formatEffectType(item.effect.type)}</p>
@@ -123,8 +122,6 @@
               {/each}
             </div>
           {/if}
-        </div>
-
         <dl class="space-y-2">
           {#if skill.name || descriptionText}
             <div class="content-card-inset rounded-xl p-3 sm:px-4">
