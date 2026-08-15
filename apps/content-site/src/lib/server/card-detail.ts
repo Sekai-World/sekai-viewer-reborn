@@ -565,7 +565,8 @@ export const parseCardGachaBanners = (payload: unknown): CardGachaBanner[] => {
         id,
         name: pickFirstString(node, ["name"]),
         assetbundleName: pickFirstString(node, ["assetbundleName", "assetBundleName"]),
-        startAt: pickFirstDateValue(node, ["startAt", "start_at"])
+        startAt: pickFirstDateValue(node, ["startAt", "start_at"]),
+        endAt: pickFirstDateValue(node, ["endAt", "end_at"])
       };
     })
     .filter((banner): banner is CardGachaBanner => banner !== null);
