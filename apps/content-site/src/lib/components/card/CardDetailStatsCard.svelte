@@ -169,10 +169,18 @@
     }
   };
   const setMasterRank = (value: string): void => {
-    const nextValue = Number(value);
-    if (Number.isFinite(nextValue)) {
-      masterRank = clampNumber(Math.trunc(nextValue), 0, maxMasterRank);
+    if (value.trim() === "") {
+      masterRank = clampNumber(masterRank, 0, maxMasterRank);
+      return;
     }
+
+    const nextValue = Number(value);
+    masterRank = Number.isFinite(nextValue)
+      ? clampNumber(Math.trunc(nextValue), 0, maxMasterRank)
+      : clampNumber(masterRank, 0, maxMasterRank);
+  };
+  const adjustMasterRank = (amount: number): void => {
+    masterRank = clampNumber(masterRank + amount, 0, maxMasterRank);
   };
   const getStatAccentClass = (type: "performance" | "technique" | "stamina" | "total"): string => {
     if (type === "performance") {
@@ -274,29 +282,67 @@
     </p>
 
     {#if displayedStats}
-      <div class="grid gap-3 lg:grid-cols-2 lg:items-start">
-        <div class="space-y-3">
-          <label class="content-card-inset block rounded-xl p-3 sm:px-4">
-            <span class="flex items-center justify-between gap-4 text-sm font-semibold">
-              <span>{levelLabel}</span>
-              <input
-                type="number"
-                min={minLevel}
-                max={maxLevel}
-                value={selectedLevel}
-                class="input input-bordered input-xs h-8 w-20 text-right tabular-nums"
-                aria-label={levelLabel}
-                onchange={(event) => setSelectedLevel(event.currentTarget.value)}
-              />
-            </span>
+      <div class="space-y-3">
+          <div class="content-card-inset block w-full min-w-0 rounded-xl p-3 sm:px-4">
+            <div class="flex min-w-0 items-center justify-between gap-3 text-sm font-semibold">
+              <span class="min-w-0">{levelLabel}</span>
+              <span class="join">
+                <button
+                  type="button"
+                  class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                  aria-label={`${levelLabel}: ${minLevel}`}
+                  disabled={selectedLevel <= minLevel}
+                  onclick={() => setSelectedLevel(String(minLevel))}
+                >
+                  {minLevel}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                  aria-label={`${levelLabel} -`}
+                  disabled={selectedLevel <= minLevel}
+                  onclick={() => setSelectedLevel(String(selectedLevel - 1))}
+                >
+                  −
+                </button>
+                <input
+                  type="number"
+                  min={minLevel}
+                  max={maxLevel}
+                  value={selectedLevel}
+                  class="input input-bordered input-sm join-item h-10! w-16 text-center tabular-nums"
+                  aria-label={levelLabel}
+                  onchange={(event) => setSelectedLevel(event.currentTarget.value)}
+                />
+                <button
+                  type="button"
+                  class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                  aria-label={`${levelLabel} +`}
+                  disabled={selectedLevel >= maxLevel}
+                  onclick={() => setSelectedLevel(String(selectedLevel + 1))}
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                  aria-label={`${levelLabel}: ${maxLevel}`}
+                  disabled={selectedLevel >= maxLevel}
+                  onclick={() => setSelectedLevel(String(maxLevel))}
+                >
+                  {maxLevel}
+                </button>
+              </span>
+            </div>
             <input
               type="range"
               min={minLevel}
               max={maxLevel}
               bind:value={selectedLevel}
-              class="range range-primary range-sm mt-3"
+              class="range range-primary range-sm mt-3 block w-full min-w-0"
+              aria-label={levelLabel}
             />
-          </label>
+          </div>
 
           <div class="content-card-inset space-y-3 rounded-xl p-3 sm:px-4 text-sm">
             <label class="flex items-center justify-between gap-3">
@@ -332,55 +378,62 @@
               </div>
             </div>
 
-            <label class="block">
-              <span class="flex items-center justify-between gap-4 font-semibold">
-                <span>{masterRankBonusLabel}</span>
-                <span class="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min="0"
-                    max={maxMasterRank}
-                    value={masterRank}
-                    class="input input-bordered input-xs h-8 w-16 text-right tabular-nums"
-                    aria-label={masterRankBonusLabel}
-                    onchange={(event) => setMasterRank(event.currentTarget.value)}
-                  />
-                  <span class="opacity-60">/{maxMasterRank}</span>
-                </span>
-              </span>
-              <input
-                type="range"
-                min="0"
-                max={maxMasterRank}
-                bind:value={masterRank}
-                class="range range-primary range-sm mt-3"
-              />
-            </label>
+          </div>
+        <div class="space-y-2">
+          {@render statPanel(performanceLabel, displayedStats.performance, "performance")}
+          {@render statPanel(techniqueLabel, displayedStats.technique, "technique")}
+          {@render statPanel(staminaLabel, displayedStats.stamina, "stamina")}
+        </div>
+
+        <div class="content-card-inset rounded-xl p-3 sm:px-4 text-sm">
+          <p class="flex items-center justify-between gap-4 font-semibold">
+            <span>{bonusSumLabel}</span>
+            <span class="tabular-nums text-base-content">{formatNumber(bonusSumTotal)}</span>
+          </p>
+          <div class="mt-2 space-y-1">
+            {@render bonusRow(specialTrainingBonusLabel, specialTrainingBonusTotal)}
+            {@render bonusRow(episodeBonusLabel, episodeBonusTotal)}
+            {@render bonusRow(masterRankBonusLabel, masterRankBonusTotal)}
           </div>
         </div>
 
-        <div class="space-y-3">
-          <div class="space-y-2">
-            {@render statPanel(performanceLabel, displayedStats.performance, "performance")}
-            {@render statPanel(techniqueLabel, displayedStats.technique, "technique")}
-            {@render statPanel(staminaLabel, displayedStats.stamina, "stamina")}
-          </div>
-
-          <div class="content-card-inset rounded-xl p-3 sm:px-4 text-sm">
-            <p class="flex items-center justify-between gap-4 font-semibold">
-              <span>{bonusSumLabel}</span>
-              <span class="tabular-nums text-base-content">{formatNumber(bonusSumTotal)}</span>
-            </p>
-            <div class="mt-2 space-y-1">
-              {@render bonusRow(specialTrainingBonusLabel, specialTrainingBonusTotal)}
-              {@render bonusRow(episodeBonusLabel, episodeBonusTotal)}
-              {@render bonusRow(masterRankBonusLabel, masterRankBonusTotal)}
+        <div class="content-card-inset rounded-xl p-3 sm:px-4 text-sm">
+          <div class="flex items-center justify-between gap-3">
+            <span class="font-semibold">{masterRankBonusLabel}</span>
+            <div class="join">
+              <button
+                type="button"
+                class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                aria-label={`${masterRankBonusLabel} -`}
+                disabled={masterRank <= 0}
+                onclick={() => adjustMasterRank(-1)}
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min="0"
+                max={maxMasterRank}
+                value={masterRank}
+                class="input input-bordered input-sm join-item h-10! w-16 text-center tabular-nums"
+                aria-label={masterRankBonusLabel}
+                onchange={(event) => setMasterRank(event.currentTarget.value)}
+              />
+              <button
+                type="button"
+                class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                aria-label={`${masterRankBonusLabel} +`}
+                disabled={masterRank >= maxMasterRank}
+                onclick={() => adjustMasterRank(1)}
+              >
+                +
+              </button>
             </div>
           </div>
+        </div>
 
-          <div class="pt-2">
-            {@render totalPanel(displayedStats.total)}
-          </div>
+        <div class="pt-2">
+          {@render totalPanel(displayedStats.total)}
         </div>
       </div>
     {:else}

@@ -163,7 +163,7 @@
     href={characterHref ?? undefined}
     class={`content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4 ${
       characterHref
-        ? "group/card-character-row outline-none transition-colors hover:bg-base-content/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        ? "group/card-character-row outline-none transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         : ""
     }`}
     aria-label={characterHref ? value : undefined}

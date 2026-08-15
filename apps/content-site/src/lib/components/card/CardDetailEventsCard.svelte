@@ -79,7 +79,7 @@
             class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <div
-              class="relative aspect-5/2 overflow-hidden rounded-xl bg-base-200/70 lg:aspect-3/1"
+              class="relative flex w-full aspect-5/2 max-h-32 items-center justify-center overflow-hidden rounded-xl xl:aspect-3/1"
             >
               {#if event.assetBundleName}
                 <AssetImage
