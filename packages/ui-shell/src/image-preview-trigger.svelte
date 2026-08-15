@@ -79,7 +79,7 @@
       {#if imageRetry.imageLoaded}
         <!-- magnifying glass overlay — bottom-right -->
         <span
-          class="pointer-events-none absolute right-3 bottom-3 flex size-10 items-center justify-center rounded-full bg-base-100/60 text-base-content/70 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 sm:opacity-0"
+          class="image-preview-magnifier pointer-events-none absolute right-3 bottom-3 flex size-10 items-center justify-center rounded-full bg-base-100/60 text-base-content/70 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 sm:opacity-0"
           aria-hidden="true"
         >
           <Icon icon="mdi:magnify-plus-outline" class="size-5" />

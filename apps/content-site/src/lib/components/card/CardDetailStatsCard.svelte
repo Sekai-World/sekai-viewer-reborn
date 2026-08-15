@@ -284,9 +284,11 @@
     {#if displayedStats}
       <div class="space-y-3">
         <div class="content-card-inset block w-full min-w-0 rounded-xl p-3 sm:px-4">
-          <div class="flex min-w-0 items-center justify-between gap-3 text-sm font-semibold">
+          <div
+            class="flex min-w-0 flex-wrap items-center justify-between gap-3 text-sm font-semibold"
+          >
             <span class="min-w-0">{levelLabel}</span>
-            <span class="join">
+            <span class="join shrink-0">
               <button
                 type="button"
                 class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
@@ -354,13 +356,15 @@
             />
           </label>
 
-          <div class="space-y-2">
-            <p class="font-semibold">{episodeBonusLabel}</p>
+          <fieldset class="space-y-2">
+            <legend class="font-semibold">{episodeBonusLabel}</legend>
             <div class="flex flex-wrap gap-2">
               {#if episodes[0]}
                 <button
                   type="button"
                   class={`btn btn-sm min-h-10! ${firstEpisodeBonusEnabled ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+                  aria-label={`${episodeBonusLabel}: #${episodes[0].episodeNo ?? 1}`}
+                  aria-pressed={firstEpisodeBonusEnabled}
                   onclick={() => (firstEpisodeBonusEnabled = !firstEpisodeBonusEnabled)}
                 >
                   #{episodes[0].episodeNo ?? 1}
@@ -370,13 +374,15 @@
                 <button
                   type="button"
                   class={`btn btn-sm min-h-10! ${secondEpisodeBonusEnabled ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+                  aria-label={`${episodeBonusLabel}: #${episodes[1].episodeNo ?? 2}`}
+                  aria-pressed={secondEpisodeBonusEnabled}
                   onclick={() => (secondEpisodeBonusEnabled = !secondEpisodeBonusEnabled)}
                 >
                   #{episodes[1].episodeNo ?? 2}
                 </button>
               {/if}
             </div>
-          </div>
+          </fieldset>
         </div>
         <div class="space-y-2">
           {@render statPanel(performanceLabel, displayedStats.performance, "performance")}

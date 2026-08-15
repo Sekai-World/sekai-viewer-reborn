@@ -245,7 +245,8 @@ body {
   }
 
   :root[data-low-motion] .event-list-spoiler-mosaic-overlay,
-  :root[data-low-motion] .image-preview-loading {
+  :root[data-low-motion] .image-preview-loading,
+  :root[data-low-motion] .image-preview-magnifier {
     animation: none !important;
     transition: none !important;
   }
