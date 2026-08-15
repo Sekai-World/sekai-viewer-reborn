@@ -283,102 +283,107 @@
 
     {#if displayedStats}
       <div class="space-y-3">
-          <div class="content-card-inset block w-full min-w-0 rounded-xl p-3 sm:px-4">
-            <div class="flex min-w-0 items-center justify-between gap-3 text-sm font-semibold">
-              <span class="min-w-0">{levelLabel}</span>
-              <span class="join">
-                <button
-                  type="button"
-                  class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
-                  aria-label={`${levelLabel}: ${minLevel}`}
-                  disabled={selectedLevel <= minLevel}
-                  onclick={() => setSelectedLevel(String(minLevel))}
-                >
-                  {minLevel}
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
-                  aria-label={`${levelLabel} -`}
-                  disabled={selectedLevel <= minLevel}
-                  onclick={() => setSelectedLevel(String(selectedLevel - 1))}
-                >
-                  −
-                </button>
-                <input
-                  type="number"
-                  min={minLevel}
-                  max={maxLevel}
-                  value={selectedLevel}
-                  class="input input-bordered input-sm join-item h-10! w-16 text-center tabular-nums"
-                  aria-label={levelLabel}
-                  onchange={(event) => setSelectedLevel(event.currentTarget.value)}
-                />
-                <button
-                  type="button"
-                  class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
-                  aria-label={`${levelLabel} +`}
-                  disabled={selectedLevel >= maxLevel}
-                  onclick={() => setSelectedLevel(String(selectedLevel + 1))}
-                >
-                  +
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
-                  aria-label={`${levelLabel}: ${maxLevel}`}
-                  disabled={selectedLevel >= maxLevel}
-                  onclick={() => setSelectedLevel(String(maxLevel))}
-                >
-                  {maxLevel}
-                </button>
-              </span>
-            </div>
-            <input
-              type="range"
-              min={minLevel}
-              max={maxLevel}
-              bind:value={selectedLevel}
-              class="range range-primary range-sm mt-3 block w-full min-w-0"
-              aria-label={levelLabel}
-            />
-          </div>
-
-          <div class="content-card-inset space-y-3 rounded-xl p-3 sm:px-4 text-sm">
-            <label class="flex items-center justify-between gap-3">
-              <span class="font-semibold">{specialTrainingBonusLabel}</span>
+        <div class="content-card-inset block w-full min-w-0 rounded-xl p-3 sm:px-4">
+          <div
+            class="flex min-w-0 flex-wrap items-center justify-between gap-3 text-sm font-semibold"
+          >
+            <span class="min-w-0">{levelLabel}</span>
+            <span class="join shrink-0">
+              <button
+                type="button"
+                class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                aria-label={`${levelLabel}: ${minLevel}`}
+                disabled={selectedLevel <= minLevel}
+                onclick={() => setSelectedLevel(String(minLevel))}
+              >
+                {minLevel}
+              </button>
+              <button
+                type="button"
+                class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                aria-label={`${levelLabel} -`}
+                disabled={selectedLevel <= minLevel}
+                onclick={() => setSelectedLevel(String(selectedLevel - 1))}
+              >
+                −
+              </button>
               <input
-                type="checkbox"
-                class="toggle toggle-primary toggle-sm"
-                bind:checked={specialTrainingEnabled}
+                type="number"
+                min={minLevel}
+                max={maxLevel}
+                value={selectedLevel}
+                class="input input-sm join-item h-10! w-16 text-center tabular-nums"
+                aria-label={levelLabel}
+                onchange={(event) => setSelectedLevel(event.currentTarget.value)}
               />
-            </label>
-
-            <div class="space-y-2">
-              <p class="font-semibold">{episodeBonusLabel}</p>
-              <div class="flex flex-wrap gap-2">
-                {#if episodes[0]}
-                  <button
-                    type="button"
-                    class={`btn btn-sm min-h-10! ${firstEpisodeBonusEnabled ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
-                    onclick={() => (firstEpisodeBonusEnabled = !firstEpisodeBonusEnabled)}
-                  >
-                    #{episodes[0].episodeNo ?? 1}
-                  </button>
-                {/if}
-                {#if episodes[1]}
-                  <button
-                    type="button"
-                    class={`btn btn-sm min-h-10! ${secondEpisodeBonusEnabled ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
-                    onclick={() => (secondEpisodeBonusEnabled = !secondEpisodeBonusEnabled)}
-                  >
-                    #{episodes[1].episodeNo ?? 2}
-                  </button>
-                {/if}
-              </div>
-            </div>
-
+              <button
+                type="button"
+                class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                aria-label={`${levelLabel} +`}
+                disabled={selectedLevel >= maxLevel}
+                onclick={() => setSelectedLevel(String(selectedLevel + 1))}
+              >
+                +
+              </button>
+              <button
+                type="button"
+                class="btn btn-square btn-sm join-item h-10! min-h-10! min-w-10!"
+                aria-label={`${levelLabel}: ${maxLevel}`}
+                disabled={selectedLevel >= maxLevel}
+                onclick={() => setSelectedLevel(String(maxLevel))}
+              >
+                {maxLevel}
+              </button>
+            </span>
           </div>
+          <input
+            type="range"
+            min={minLevel}
+            max={maxLevel}
+            bind:value={selectedLevel}
+            class="range range-primary range-sm mt-3 block w-full min-w-0"
+            aria-label={levelLabel}
+          />
+        </div>
+
+        <div class="content-card-inset space-y-3 rounded-xl p-3 sm:px-4 text-sm">
+          <label class="flex items-center justify-between gap-3">
+            <span class="font-semibold">{specialTrainingBonusLabel}</span>
+            <input
+              type="checkbox"
+              class="toggle toggle-primary toggle-sm"
+              bind:checked={specialTrainingEnabled}
+            />
+          </label>
+
+          <fieldset class="space-y-2">
+            <legend class="font-semibold">{episodeBonusLabel}</legend>
+            <div class="flex flex-wrap gap-2">
+              {#if episodes[0]}
+                <button
+                  type="button"
+                  class={`btn btn-sm min-h-10! ${firstEpisodeBonusEnabled ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+                  aria-label={`${episodeBonusLabel}: #${episodes[0].episodeNo ?? 1}`}
+                  aria-pressed={firstEpisodeBonusEnabled}
+                  onclick={() => (firstEpisodeBonusEnabled = !firstEpisodeBonusEnabled)}
+                >
+                  #{episodes[0].episodeNo ?? 1}
+                </button>
+              {/if}
+              {#if episodes[1]}
+                <button
+                  type="button"
+                  class={`btn btn-sm min-h-10! ${secondEpisodeBonusEnabled ? "btn-primary" : "btn-outline border-base-content/20 text-primary"}`}
+                  aria-label={`${episodeBonusLabel}: #${episodes[1].episodeNo ?? 2}`}
+                  aria-pressed={secondEpisodeBonusEnabled}
+                  onclick={() => (secondEpisodeBonusEnabled = !secondEpisodeBonusEnabled)}
+                >
+                  #{episodes[1].episodeNo ?? 2}
+                </button>
+              {/if}
+            </div>
+          </fieldset>
+        </div>
         <div class="space-y-2">
           {@render statPanel(performanceLabel, displayedStats.performance, "performance")}
           {@render statPanel(techniqueLabel, displayedStats.technique, "technique")}
@@ -415,7 +420,7 @@
                 min="0"
                 max={maxMasterRank}
                 value={masterRank}
-                class="input input-bordered input-sm join-item h-10! w-16 text-center tabular-nums"
+                class="input input-sm join-item h-10! w-16 text-center tabular-nums"
                 aria-label={masterRankBonusLabel}
                 onchange={(event) => setMasterRank(event.currentTarget.value)}
               />

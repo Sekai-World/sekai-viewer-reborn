@@ -53,7 +53,7 @@
   <div
     class="dropdown-content z-120 mt-3 w-66 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm sm:w-[18rem]"
   >
-    <div class="grid grid-cols-[1fr_auto_1fr] gap-2">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:gap-2">
       <section>
         <p class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide opacity-70">
           {primaryTitle}
@@ -80,7 +80,7 @@
         </ul>
       </section>
 
-      <div class="my-1 w-px bg-base-content/12"></div>
+      <div class="h-px w-full bg-base-content/12 sm:my-1 sm:h-auto sm:w-px"></div>
 
       <section>
         <p class="mb-1 px-2 text-xs font-semibold uppercase tracking-wide opacity-70">

@@ -243,4 +243,8 @@
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
+
+  :global([data-low-motion]) .viewer-shell-skip {
+    transition: none;
+  }
 </style>

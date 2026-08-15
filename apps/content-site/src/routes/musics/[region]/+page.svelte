@@ -827,50 +827,52 @@
   >
     <div class="archive-control-group flex items-center gap-2">
       <div class="join">
-      {#each [{ value: "publishedAt", icon: "mdi:clock-outline", label: listSortByReleaseAt }, { value: "id", icon: "mdi:numeric", label: listSortById }] as option (option.value)}
-        <ListToolbarButton
-          icon={option.icon}
-          label={option.label}
-          ariaLabel={`${option.label} (${sortBy === option.value ? sortOrder : "desc"})`}
-          sortIndicatorIcon={sortBy === option.value
-            ? sortOrder === "asc"
-              ? "mdi:arrow-up"
-              : "mdi:arrow-down"
-            : undefined}
-          class={`join-item ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          onclick={() => toggleSort(option.value as MusicListSortBy)}
-        />
-      {/each}
+        {#each [{ value: "publishedAt", icon: "mdi:clock-outline", label: listSortByReleaseAt }, { value: "id", icon: "mdi:numeric", label: listSortById }] as option (option.value)}
+          <ListToolbarButton
+            icon={option.icon}
+            label={option.label}
+            ariaLabel={`${option.label} (${sortBy === option.value ? sortOrder : "desc"})`}
+            sortIndicatorIcon={sortBy === option.value
+              ? sortOrder === "asc"
+                ? "mdi:arrow-up"
+                : "mdi:arrow-down"
+              : undefined}
+            class={`join-item ${sortBy === option.value ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+            onclick={() => toggleSort(option.value as MusicListSortBy)}
+          />
+        {/each}
       </div>
     </div>
     <div class="archive-control-group flex items-center justify-between gap-2 sm:justify-end">
       <div class="flex gap-2">
-      <div class="join">
+        <div class="join">
+          <ListToolbarButton
+            icon="mdi:view-grid-outline"
+            label={listViewGrid}
+            class={`join-item ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+            onclick={() => setViewMode("grid")}
+          />
+          <ListToolbarButton
+            icon="mdi:view-agenda-outline"
+            label={listViewAgenda}
+            class={`join-item ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+            onclick={() => setViewMode("agenda")}
+          />
+        </div>
         <ListToolbarButton
-          icon="mdi:view-grid-outline"
-          label={listViewGrid}
-          class={`join-item ${viewMode === "grid" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          onclick={() => setViewMode("grid")}
+          icon="mdi:funnel"
+          label={listOpenFilters}
+          class={hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
+          onclick={openFilters}
         />
-        <ListToolbarButton
-          icon="mdi:view-agenda-outline"
-          label={listViewAgenda}
-          class={`join-item ${viewMode === "agenda" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-          onclick={() => setViewMode("agenda")}
-        />
-      </div>
-      <ListToolbarButton
-        icon="mdi:funnel"
-        label={listOpenFilters}
-        class={hasFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
-        onclick={openFilters}
-      />
       </div>
     </div>
   </div>
 
   {#if isReloading}
-    <div class="archive-list-status flex min-h-48 items-center justify-center rounded-2xl border p-8">
+    <div
+      class="archive-list-status flex min-h-48 items-center justify-center rounded-2xl border p-8"
+    >
       <span class="loading loading-spinner loading-md"></span>
       <span class="ml-3 text-sm opacity-70">{musicListLoading}</span>
     </div>
@@ -892,9 +894,11 @@
     </div>
   {:else}
     <div
-      class={`archive-results-field ${viewMode === "agenda"
-        ? "grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3"
-        : "grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}
+      class={`archive-results-field ${
+        viewMode === "agenda"
+          ? "grid grid-cols-1 items-stretch gap-4 md:grid-cols-2 xl:grid-cols-3"
+          : "grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+      }`}
     >
       {#each visibleItems as item (item.id)}
         <MusicListCard
@@ -912,7 +916,9 @@
       {/each}
     </div>
     {#if visibleItems.length === 0 && !errorMessage}
-      <p class="archive-list-empty rounded-2xl border py-12 text-center text-sm">{musicListEmpty}</p>
+      <p class="archive-list-empty rounded-2xl border py-12 text-center text-sm">
+        {musicListEmpty}
+      </p>
     {/if}
     {#if errorMessage}
       <div class="archive-list-error rounded-2xl border p-3">
@@ -955,11 +961,11 @@
       </form>
     </div>
     <div class="mt-4 grid gap-3">
-      <label class="form-control">
-        <span class="label-text mb-1 text-sm font-medium">{musicListFilterNameLabel}</span>
+      <label class="flex flex-col">
+        <span class="mb-1 text-sm font-medium">{musicListFilterNameLabel}</span>
         <div class="relative">
           <input
-            class="input input-bordered w-full pr-10"
+            class="input w-full pr-10"
             bind:value={nameDraft}
             placeholder={musicListFilterNamePlaceholder}
           />
@@ -976,8 +982,8 @@
           {/if}
         </div>
       </label>
-      <fieldset class="form-control gap-2">
-        <legend class="label-text text-sm font-medium">{musicListFilterCategoryLabel}</legend>
+      <fieldset class="fieldset gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{musicListFilterCategoryLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each data.filterMeta.categories as category (category)}
             <label
@@ -994,8 +1000,8 @@
           {/each}
         </div>
       </fieldset>
-      <fieldset class="form-control gap-2">
-        <legend class="label-text text-sm font-medium">{musicListTagLabel}</legend>
+      <fieldset class="fieldset gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{musicListTagLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
             {@const unitCode = unitCodeByMusicTag[tag]}
@@ -1021,8 +1027,8 @@
           {/each}
         </div>
       </fieldset>
-      <fieldset class="form-control gap-2">
-        <legend class="label-text text-sm font-medium">{musicListVocalCharacterLabel}</legend>
+      <fieldset class="fieldset gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{musicListVocalCharacterLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each gameCharacterValues as character (character)}
             <label
@@ -1053,8 +1059,8 @@
           {/each}
         </div>
       </fieldset>
-      <fieldset class="form-control gap-2">
-        <legend class="label-text text-sm font-medium">{musicListDifficultyLabel}</legend>
+      <fieldset class="fieldset gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{musicListDifficultyLabel}</legend>
         <label
           class="flex min-h-10 items-center justify-between gap-3 rounded-box border border-base-content/20 px-3 py-2"
         >
@@ -1068,12 +1074,12 @@
         </label>
       </fieldset>
       {#each textFilters as filter (filter.label)}
-        <label class="form-control">
-          <span class="label-text mb-1 text-sm font-medium">{filter.label}</span>
+        <label class="flex flex-col">
+          <span class="mb-1 text-sm font-medium">{filter.label}</span>
           <div class="relative">
             <input
               type="text"
-              class="input input-bordered w-full pr-10"
+              class="input w-full pr-10"
               list={filter.listId}
               autocomplete="off"
               value={filter.value}

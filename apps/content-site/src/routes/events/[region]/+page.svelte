@@ -732,23 +732,23 @@
   >
     <div class="archive-control-group flex items-center gap-2">
       <div class="join">
-      <ListToolbarButton
-        icon="mdi:clock-start"
-        label={eventListSortByStartAt}
-        ariaLabel={`${eventListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
-        sortIndicatorIcon={sortBy === "startAt" ? getSortOrderIcon("startAt") : undefined}
-        class={`join-item ${getSortButtonClass("startAt")}`}
-        onclick={() => toggleSortBy("startAt")}
-      />
+        <ListToolbarButton
+          icon="mdi:clock-start"
+          label={eventListSortByStartAt}
+          ariaLabel={`${eventListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
+          sortIndicatorIcon={sortBy === "startAt" ? getSortOrderIcon("startAt") : undefined}
+          class={`join-item ${getSortButtonClass("startAt")}`}
+          onclick={() => toggleSortBy("startAt")}
+        />
 
-      <ListToolbarButton
-        icon="mdi:numeric"
-        label={listSortById}
-        ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
-        sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
-        class={`join-item ${getSortButtonClass("id")}`}
-        onclick={() => toggleSortBy("id")}
-      />
+        <ListToolbarButton
+          icon="mdi:numeric"
+          label={listSortById}
+          ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+          sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
+          class={`join-item ${getSortButtonClass("id")}`}
+          onclick={() => toggleSortBy("id")}
+        />
       </div>
     </div>
 
@@ -770,7 +770,9 @@
       <span class="ml-3 text-sm opacity-70">{eventListLoading}</span>
     </div>
   {:else if isInitialLoading}
-    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div
+      class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    >
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="archive-card-skeleton rounded-2xl border p-4">
           <div class="skeleton h-36 w-full rounded-xl"></div>
@@ -784,7 +786,9 @@
       <div class="alert alert-error">{errorMessage}</div>
     </div>
   {:else}
-    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div
+      class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    >
       {#each visibleItems as item (getEventItemKey(item))}
         <EventListCard
           translate={currentTranslate}
@@ -832,7 +836,9 @@
     {/if}
 
     {#if visibleItems.length === 0 && !errorMessage}
-      <div class="archive-list-empty rounded-2xl border py-12 text-center text-sm">{eventListEmpty}</div>
+      <div class="archive-list-empty rounded-2xl border py-12 text-center text-sm">
+        {eventListEmpty}
+      </div>
     {/if}
   {/if}
 </section>
@@ -854,18 +860,18 @@
     </div>
 
     <div class="mt-4 grid grid-cols-1 gap-3">
-      <label class="form-control w-full">
-        <span class="label-text mb-1 text-sm font-medium">{eventListFilterNameLabel}</span>
+      <label class="flex w-full flex-col">
+        <span class="mb-1 text-sm font-medium">{eventListFilterNameLabel}</span>
         <input
           type="text"
-          class="input input-bordered w-full"
+          class="input w-full"
           bind:value={filterNameDraft}
           placeholder={eventListFilterNamePlaceholder}
         />
       </label>
 
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{eventListFilterEventTypeLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{eventListFilterEventTypeLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each getEventTypeOptions() as option (option.value)}
             <label
@@ -891,8 +897,8 @@
         </div>
       </fieldset>
 
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{eventListFilterUnitLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{eventListFilterUnitLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each getUnitOptions() as option (`unit:${option.value}`)}
             <label

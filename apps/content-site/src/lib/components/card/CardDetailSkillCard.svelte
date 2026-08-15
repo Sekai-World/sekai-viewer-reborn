@@ -84,7 +84,7 @@
                   min="1"
                   max={maxSkillLevel}
                   value={selectedLevel}
-                  class="input input-bordered input-xs h-8 w-16 text-right tabular-nums"
+                  class="input input-xs h-8 w-16 text-right tabular-nums"
                   aria-label={skillLevelLabel}
                   onchange={(event) => setSelectedLevel(event.currentTarget.value)}
                 />
