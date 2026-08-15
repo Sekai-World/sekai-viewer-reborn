@@ -169,6 +169,11 @@
     }
   };
   const setMasterRank = (value: string): void => {
+    if (value.trim() === "") {
+      masterRank = clampNumber(masterRank, 0, maxMasterRank);
+      return;
+    }
+
     const nextValue = Number(value);
     masterRank = Number.isFinite(nextValue)
       ? clampNumber(Math.trunc(nextValue), 0, maxMasterRank)
