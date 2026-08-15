@@ -1050,7 +1050,7 @@
               <span class="px-1 text-xs font-semibold opacity-70">
                 {themePaletteLabel}
               </span>
-              <div class="grid grid-cols-3 gap-1">
+              <div class="grid grid-cols-2 gap-1 min-[22rem]:grid-cols-3">
                 {#each themeNameOptions as themeNameOption (themeNameOption)}
                   <button
                     type="button"
@@ -1074,7 +1074,7 @@
               <span class="px-1 text-xs font-semibold opacity-70">
                 {themeControlLabel}
               </span>
-              <div class="grid grid-cols-3 gap-1">
+              <div class="grid grid-cols-2 gap-1 min-[22rem]:grid-cols-3">
                 {#each ["auto", "light", "dark"] as themeOption (themeOption)}
                   <button
                     type="button"

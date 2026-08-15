@@ -284,7 +284,7 @@
                 min={minLevel}
                 max={maxLevel}
                 value={selectedLevel}
-                class="input input-bordered input-xs h-8 w-20 text-right tabular-nums"
+                class="input input-xs h-8 w-20 text-right tabular-nums"
                 aria-label={levelLabel}
                 onchange={(event) => setSelectedLevel(event.currentTarget.value)}
               />
@@ -341,7 +341,7 @@
                     min="0"
                     max={maxMasterRank}
                     value={masterRank}
-                    class="input input-bordered input-xs h-8 w-16 text-right tabular-nums"
+                    class="input input-xs h-8 w-16 text-right tabular-nums"
                     aria-label={masterRankBonusLabel}
                     onchange={(event) => setMasterRank(event.currentTarget.value)}
                   />

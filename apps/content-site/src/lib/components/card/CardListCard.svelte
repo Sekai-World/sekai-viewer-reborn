@@ -588,6 +588,12 @@
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  :global(:root[data-low-motion]) .card-grid-split-wrapper,
+  :global(:root[data-low-motion]) .card-grid-rarity-stack,
+  :global(:root[data-low-motion]) .archive-card-item {
+    transition: none;
+  }
+
   .card-grid-split-wrapper-left {
     left: 0;
     width: 50%;

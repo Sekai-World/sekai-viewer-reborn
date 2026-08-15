@@ -241,7 +241,13 @@ body {
   }
 
   :root[data-low-motion] .card-hover-lift {
-    transition: box-shadow 1ms linear !important;
+    transition: none !important;
+  }
+
+  :root[data-low-motion] .event-list-spoiler-mosaic-overlay,
+  :root[data-low-motion] .image-preview-loading {
+    animation: none !important;
+    transition: none !important;
   }
 
   .content-breadcrumbs {
@@ -467,12 +473,6 @@ body {
   isolation: isolate;
 }
 
-:root[data-low-motion] *,
-:root[data-low-motion] *::before,
-:root[data-low-motion] *::after {
-  animation-duration: 1ms !important;
-  animation-iteration-count: 1 !important;
+:root[data-low-motion] {
   scroll-behavior: auto !important;
-  transition-delay: 0ms !important;
-  transition-duration: 1ms !important;
 }

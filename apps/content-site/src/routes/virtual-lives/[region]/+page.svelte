@@ -24,7 +24,9 @@
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
-  const fallbackMessages = $derived(resolveStreamingMessages(data.i18nMessages, ["common", "virtual-live", "error"]));
+  const fallbackMessages = $derived(
+    resolveStreamingMessages(data.i18nMessages, ["common", "virtual-live", "error"])
+  );
   const getInitialText = (key: string, fallback?: string): string =>
     createI18nTranslator(data.uiLocale, fallbackMessages)(key, fallback);
   let translateType = $state((key: string, fallback?: string): string =>
@@ -299,22 +301,22 @@
   >
     <div class="archive-control-group flex items-center gap-2">
       <div class="join">
-      <ListToolbarButton
-        icon="mdi:clock-start"
-        label={sortStartLabel}
-        ariaLabel={`${sortStartLabel} (${sortOrder})`}
-        sortIndicatorIcon={sortBy === "startAt" ? sortIcon("startAt") : undefined}
-        class={`join-item ${sortBy === "startAt" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-        onclick={() => toggleSort("startAt")}
-      />
-      <ListToolbarButton
-        icon="mdi:numeric"
-        label={sortIdLabel}
-        ariaLabel={`${sortIdLabel} (${sortOrder})`}
-        sortIndicatorIcon={sortBy === "id" ? sortIcon("id") : undefined}
-        class={`join-item ${sortBy === "id" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-        onclick={() => toggleSort("id")}
-      />
+        <ListToolbarButton
+          icon="mdi:clock-start"
+          label={sortStartLabel}
+          ariaLabel={`${sortStartLabel} (${sortOrder})`}
+          sortIndicatorIcon={sortBy === "startAt" ? sortIcon("startAt") : undefined}
+          class={`join-item ${sortBy === "startAt" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+          onclick={() => toggleSort("startAt")}
+        />
+        <ListToolbarButton
+          icon="mdi:numeric"
+          label={sortIdLabel}
+          ariaLabel={`${sortIdLabel} (${sortOrder})`}
+          sortIndicatorIcon={sortBy === "id" ? sortIcon("id") : undefined}
+          class={`join-item ${sortBy === "id" ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+          onclick={() => toggleSort("id")}
+        />
       </div>
     </div>
     <div class="archive-control-group flex items-center justify-between gap-2 sm:justify-end">
@@ -328,7 +330,9 @@
   </div>
 
   {#if isInitialLoading}
-    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div
+      class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    >
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="archive-card-skeleton flex flex-col gap-3 rounded-2xl border p-4">
           <div class="skeleton h-32 rounded-xl"></div>
@@ -344,7 +348,9 @@
       </div>
     </div>
   {:else}
-    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div
+      class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    >
       {#each visibleItems as item (item.id)}
         <VirtualLiveListCard
           region={data.region}
@@ -407,26 +413,26 @@
         applyFilters();
       }}
     >
-      <label class="form-control w-full">
-        <span class="label-text mb-1 text-sm font-medium">{nameLabel}</span>
+      <label class="flex w-full flex-col">
+        <span class="mb-1 text-sm font-medium">{nameLabel}</span>
         <input
-          class="input input-bordered w-full"
+          class="input w-full"
           type="search"
           bind:value={filterName}
           placeholder={namePlaceholder}
         />
       </label>
-      <label class="form-control w-full">
-        <span class="label-text mb-1 text-sm font-medium">{filterIdLabel}</span>
+      <label class="flex w-full flex-col">
+        <span class="mb-1 text-sm font-medium">{filterIdLabel}</span>
         <input
-          class="input input-bordered w-full"
+          class="input w-full"
           inputmode="numeric"
           bind:value={filterId}
           placeholder={filterIdPlaceholder}
         />
       </label>
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{filterTypeLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{filterTypeLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each typeValues as value (value)}
             <label
