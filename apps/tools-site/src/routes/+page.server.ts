@@ -1,5 +1,5 @@
 import { getEventsByRegionCurrent } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion, type SupportedRegion } from "$lib/regions";
+import { trackerSupportedRegions, type TrackerSupportedRegion } from "$lib/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
 
@@ -14,12 +14,10 @@ export type EventSummary = {
 };
 
 export type RegionCurrentEvent =
-  | { region: SupportedRegion; status: "available"; event: EventSummary }
-  | { region: SupportedRegion; status: "unavailable"; event: null }
-  | { region: SupportedRegion; status: "failed"; event: null };
+  | { region: TrackerSupportedRegion; status: "available"; event: EventSummary }
+  | { region: TrackerSupportedRegion; status: "unavailable"; event: null }
+  | { region: TrackerSupportedRegion; status: "failed"; event: null };
 
-const DEFAULT_PRIMARY_REGION: SupportedRegion = "jp";
-const DEFAULT_SECONDARY_REGION: SupportedRegion = "en";
 const CURRENT_EVENT_REQUEST_TIMEOUT_MS = 5_000;
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
@@ -77,7 +75,7 @@ const getResponseStatus = (response: { response?: Response }): number | null =>
 
 const fetchCurrentEvent = async (
   baseUrl: string,
-  region: SupportedRegion
+  region: TrackerSupportedRegion
 ): Promise<RegionCurrentEvent> => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CURRENT_EVENT_REQUEST_TIMEOUT_MS);
@@ -106,17 +104,11 @@ const fetchCurrentEvent = async (
   }
 };
 
-export const load: PageServerLoad = async ({ url }) => {
-  const primaryRegion = normalizeRegion(url.searchParams.get("primary"), DEFAULT_PRIMARY_REGION);
-  const secondaryRegion = normalizeRegion(
-    url.searchParams.get("secondary"),
-    DEFAULT_SECONDARY_REGION
-  );
+export const load: PageServerLoad = async () => {
   const baseUrl = getMasterApiBaseUrl();
-  const [primary, secondary] = await Promise.all([
-    fetchCurrentEvent(baseUrl, primaryRegion),
-    fetchCurrentEvent(baseUrl, secondaryRegion)
-  ]);
+  const events = await Promise.all(
+    trackerSupportedRegions.map((region) => fetchCurrentEvent(baseUrl, region))
+  );
 
-  return { primaryRegion, secondaryRegion, comparison: { primary, secondary } };
+  return { events };
 };

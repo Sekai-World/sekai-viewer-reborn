@@ -193,6 +193,7 @@ dist
 # SvelteKit build / generate output
 .svelte-kit
 .turbo/
+.slim/deepwork/
 
 # Playwright visual regression output
 test-results/

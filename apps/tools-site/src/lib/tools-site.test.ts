@@ -18,12 +18,17 @@ import {
   loadI18nMessageBundle,
   toolsSiteI18nNamespaces
 } from "$lib/i18n/runtime";
-import { normalizeRegion, supportedRegions } from "$lib/regions";
+import {
+  normalizeRegion,
+  supportedRegions,
+  trackerSupportedRegions
+} from "$lib/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 
 describe("tools-site region and locale helpers", () => {
   it("normalizes supported regions and falls back for invalid values", () => {
     expect(supportedRegions).toEqual(["jp", "en", "tw", "kr", "cn"]);
+    expect(trackerSupportedRegions).toEqual(["jp", "tw", "en", "kr"]);
     expect(normalizeRegion(" EN ", "jp")).toBe("en");
     expect(normalizeRegion("unknown", "jp")).toBe("jp");
     expect(normalizeRegion(null, "en")).toBe("en");
@@ -55,17 +60,22 @@ describe("tools-site i18n runtime", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("loads local namespace messages and translates them", async () => {
-    expect(toolsSiteI18nNamespaces).toEqual(["common", "comparison", "server", "tracker"]);
-    const messages = getLocalI18nMessages(["common", "comparison", "tracker"]);
+    expect(toolsSiteI18nNamespaces).toEqual(["common", "server", "tracker"]);
+    const messages = getLocalI18nMessages(["common", "tracker"]);
 
     expect(messages).toMatchObject({
       "navigation.home": "Home",
       "navigation.eventTracker": expect.any(String),
-      "comparison.title": expect.any(String),
+      "home.title": expect.any(String),
+      "region.jp": expect.any(String),
+      "region.en": expect.any(String),
+      "region.tw": expect.any(String),
+      "region.kr": expect.any(String),
+      "region.cn": expect.any(String),
       "tracker.title": expect.any(String)
     });
     const translator = createI18nTranslator("en", messages);
-    expect(translator("comparison.title")).toBe(messages["comparison.title"]);
+    expect(translator("home.title")).toBe(messages["home.title"]);
     await expect(loadI18nMessageBundle("en", ["common"])).resolves.toMatchObject({
       "navigation.home": "Home"
     });
