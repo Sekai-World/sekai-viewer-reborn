@@ -131,7 +131,10 @@ export const parseEventTrackerRankings = (payload: unknown): EventTrackerRanking
 
   const seen = new Set<string>();
   return parsed.filter((ranking) => {
-    const key = `${ranking.rank ?? ""}:${ranking.userId ?? ranking.score ?? ""}`;
+    // A graph response contains many snapshots for the same rank/player. Keep
+    // one row per timestamp, while still collapsing duplicate rows inside an
+    // individual snapshot response.
+    const key = `${ranking.timestamp ?? ""}:${ranking.rank ?? ""}:${ranking.userId ?? ranking.score ?? ""}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

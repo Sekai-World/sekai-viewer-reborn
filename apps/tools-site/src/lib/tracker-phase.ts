@@ -16,6 +16,8 @@ export type TrackerRefreshInput = Readonly<{
 
 export const TRACKER_REFRESH_INTERVAL_MS = 3 * 60_000;
 export const TRACKER_REFRESH_OFFSET_MS = 10_000;
+const TRACKER_TERMINAL_REFRESH_OFFSETS_MS = [10 * 60_000 + 10_000, 15 * 60_000 + 10_000] as const;
+const HOUR_MS = 60 * 60_000;
 
 export const parseTrackerTimestamp = (value: TrackerDateValue): number | null => {
   const timestamp = value instanceof Date ? value.getTime() : typeof value === "number" ? value : Date.parse(value ?? "");
@@ -42,9 +44,9 @@ export const getTrackerPhase = ({ startAt, aggregateAt, now }: TrackerPhaseInput
 };
 
 /**
- * Returns the next aligned automatic-refresh time, or null when it would run at
- * or after aggregation. The defaults preserve the legacy three-minute cadence
- * with a ten-second offset.
+ * Returns the next automatic-refresh time. Live refreshes follow the three-minute
+ * cadence with a ten-second offset. After aggregation, exactly two terminal
+ * refreshes run at 10:10 and 15:10 after the following UTC hour begins.
  */
 export const getNextTrackerRefreshDeadline = ({
   aggregateAt,
@@ -59,14 +61,22 @@ export const getNextTrackerRefreshDeadline = ({
     nowTimestamp === null ||
     !Number.isFinite(intervalMs) ||
     intervalMs <= 0 ||
-    !Number.isFinite(offsetMs) ||
-    nowTimestamp >= aggregateTimestamp
+    !Number.isFinite(offsetMs)
   ) {
     return null;
   }
 
-  const deadline = Math.floor((nowTimestamp - offsetMs) / intervalMs + 1) * intervalMs + offsetMs;
-  return deadline < aggregateTimestamp ? deadline : null;
+  if (nowTimestamp < aggregateTimestamp) {
+    const deadline = Math.floor((nowTimestamp - offsetMs) / intervalMs + 1) * intervalMs + offsetMs;
+    if (deadline < aggregateTimestamp) return deadline;
+  }
+
+  const followingHour = (Math.floor(aggregateTimestamp / HOUR_MS) + 1) * HOUR_MS;
+  return (
+    TRACKER_TERMINAL_REFRESH_OFFSETS_MS.map((offset) => followingHour + offset).find(
+      (deadline) => deadline > nowTimestamp
+    ) ?? null
+  );
 };
 
 export const getNextTrackerRefreshCountdownMs = (input: TrackerRefreshInput): number | null => {

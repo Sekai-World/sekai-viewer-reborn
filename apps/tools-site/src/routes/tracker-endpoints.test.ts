@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getEventRankingTimePoints: vi.fn(),
-  getEventRankingsByEventId: vi.fn(),
-  getEventRankingGrpahByEventId: vi.fn()
+  getEventRankingsByEventId: vi.fn()
 }));
+
+const fetchMock = vi.fn();
 
 vi.mock("@platform/sekai-api-sdk", () => mocks);
 vi.mock("$env/dynamic/private", () => ({
@@ -19,7 +20,12 @@ const request = (path: string, region = "en") =>
   ({ params: { region }, url: new URL(`https://tools.example.test${path}`) }) as never;
 
 describe("tracker time-travel endpoints", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
 
   it("returns deduplicated time points from the SDK", async () => {
     mocks.getEventRankingTimePoints.mockResolvedValue({
@@ -55,12 +61,12 @@ describe("tracker time-travel endpoints", () => {
     ).resolves.toEqual({ status: "invalid-request", points: [] });
     expect(mocks.getEventRankingTimePoints).not.toHaveBeenCalled();
     expect(mocks.getEventRankingsByEventId).not.toHaveBeenCalled();
-    expect(mocks.getEventRankingGrpahByEventId).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("converts SDK errors and rejected SDK calls to typed responses", async () => {
+  it("converts upstream errors and rejected requests to typed responses", async () => {
     mocks.getEventRankingsByEventId.mockResolvedValueOnce({ error: true });
-    mocks.getEventRankingGrpahByEventId.mockRejectedValueOnce(new Error("offline"));
+    fetchMock.mockRejectedValueOnce(new Error("offline"));
 
     await expect(
       (await snapshot(request("/tracker/en/snapshot?eventId=42&timestamp=2026-01-01"))).json()
@@ -75,9 +81,7 @@ describe("tracker time-travel endpoints", () => {
       response: { status: 202 },
       data: { restore: true }
     });
-    mocks.getEventRankingGrpahByEventId.mockResolvedValueOnce({
-      data: { eventRankings: [{ rank: "not-a-rank" }] }
-    });
+    fetchMock.mockResolvedValueOnce(Response.json({ eventRankings: [{ rank: "not-a-rank" }] }));
 
     await expect((await time(request("/tracker/en/time?eventId=42"))).json()).resolves.toEqual({
       status: "unavailable",
@@ -95,12 +99,10 @@ describe("tracker time-travel endpoints", () => {
         data: { totalCount: 1, limit: 1, page: 1, eventRankings: [{ rank: 1, score: 100 }] }
       }
     });
-    mocks.getEventRankingGrpahByEventId.mockResolvedValueOnce({
-      data: {
-        status: "success",
-        data: { eventRankings: [{ rank: 1, score: 100, timestamp: "2026-01-01T00:00:00Z" }] }
-      }
-    });
+    fetchMock.mockResolvedValueOnce(Response.json({
+      status: "success",
+      data: { eventRankings: [{ rank: 1, score: 100, timestamp: "2026-01-01T00:00:00Z" }] }
+    }));
 
     await expect(
       (await snapshot(request("/tracker/en/snapshot?eventId=42&timestamp=2026-01-01"))).json()
@@ -111,5 +113,15 @@ describe("tracker time-travel endpoints", () => {
       status: "available",
       points: [{ rank: 1, score: 100, timestamp: "2026-01-01T00:00:00Z" }]
     });
+  });
+
+  it("uses the legacy graph URL without a timestamp when no snapshot is selected", async () => {
+    fetchMock.mockResolvedValueOnce(Response.json({ eventRankings: [] }));
+
+    await expect((await graph(request("/tracker/tw/graph?eventId=176&rank=1", "tw"))).json()).resolves.toEqual({
+      status: "available",
+      points: []
+    });
+    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/event/176/rankings/graph?region=tw&rank=1");
   });
 });

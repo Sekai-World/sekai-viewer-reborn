@@ -35,6 +35,23 @@ describe("event tracker data layer", () => {
     expect(parseEventTrackerRankings({ data: {} })).toEqual([]);
   });
 
+  it("keeps graph snapshots for the same rank and player when their timestamps differ", () => {
+    expect(
+      parseEventTrackerRankings({
+        data: {
+          eventRankings: [
+            { rank: 1, score: 100, userId: "one", timestamp: "2026-08-08T00:00:00Z" },
+            { rank: 1, score: 200, userId: "one", timestamp: "2026-08-08T00:30:00Z" },
+            { rank: 1, score: 200, userId: "one", timestamp: "2026-08-08T00:30:00Z" }
+          ]
+        }
+      })
+    ).toEqual([
+      { rank: 1, score: 100, userId: "one", eventId: null, userName: null, timestamp: "2026-08-08T00:00:00Z" },
+      { rank: 1, score: 200, userId: "one", eventId: null, userName: null, timestamp: "2026-08-08T00:30:00Z" }
+    ]);
+  });
+
   it("calls the SDK with the base URL and region", async () => {
     mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [] } });
 
