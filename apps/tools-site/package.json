@@ -20,7 +20,8 @@
     "@platform/sekai-master-api-sdk": "workspace:*",
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*",
-    "@iconify/svelte": "^5.2.1"
+    "@iconify/svelte": "^5.2.1",
+    "layerchart": "^2.2.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-node": "^5.5.4",
@@ -28,6 +29,11 @@
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "^4.3.0",
     "@iconify-icons/mdi": "^1.2.48",
+    "@types/d3": "^7.4.3",
+    "@types/d3-shape": "^3.1.8",
+    "@types/d3-time": "^3.0.4",
+    "@types/d3-scale": "^4.0.9",
+    "@types/d3-sankey": "^0.12.5",
     "@types/node": "^25.9.1",
     "daisyui": "^5.5.20",
     "svelte": "^5.56.2",

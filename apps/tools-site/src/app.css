@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "layerchart/daisyui-5.css";
 @import "@platform/ui-tokens/palettes.css";
 /* Tailwind v4 in this workspace mis-resolves package-name plugins during build.
    Keep daisyUI behind a local proxy module so CSS does not depend on node_modules layout. */
@@ -32,7 +33,7 @@ body {
   position: relative;
   overflow: hidden;
   border: 1px solid color-mix(in oklab, var(--color-primary) 30%, var(--archive-border-subtle));
-  border-radius: 1.5rem;
+  border-radius: var(--radius-box);
   padding: clamp(1.5rem, 4vw, 3.5rem);
   background:
     linear-gradient(115deg, color-mix(in oklab, var(--color-primary) 16%, var(--archive-surface-raised)), var(--archive-surface-raised) 58%),
@@ -130,7 +131,8 @@ body {
 .live-mark span { background: var(--color-success); box-shadow: 0 0 0 0.22rem color-mix(in oklab, var(--color-success) 18%, transparent); }
 
 .event-grid { display: grid; gap: 1rem; }
-.event-card { display: grid; min-height: 13.5rem; grid-template-rows: auto 1fr; border: 1px solid var(--archive-border-subtle); border-radius: 1.25rem; background: var(--archive-surface-default); padding: 1.15rem; }
+.event-card { display: grid; min-height: 13.5rem; grid-template-rows: auto 1fr; border: 1px solid var(--archive-border-subtle); border-radius: var(--radius-box); background: var(--archive-surface-default); padding: 1.15rem; transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease; }
+.event-card:hover { border-color: color-mix(in oklab, var(--color-primary) 34%, var(--archive-border-subtle)); transform: translateY(-2px); box-shadow: 0 10px 22px color-mix(in oklab, var(--color-primary) 8%, transparent); }
 .event-card.has-event { border-color: color-mix(in oklab, var(--color-primary) 26%, var(--archive-border-subtle)); background: linear-gradient(145deg, color-mix(in oklab, var(--color-primary) 7%, var(--archive-surface-default)), var(--archive-surface-default) 65%); }
 .region-tag { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; }
 .status-pill { display: inline-flex; align-items: center; gap: 0.35rem; color: color-mix(in oklab, var(--color-base-content) 56%, transparent); font-size: 0.72rem; font-weight: 700; }
