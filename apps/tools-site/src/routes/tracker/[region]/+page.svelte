@@ -5,6 +5,7 @@
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import RankingHistoryChart from "$lib/components/RankingHistoryChart.svelte";
   import { getTrackerRankLadder, type TrackerRankLadder } from "$lib/tracker-ladders";
   import {
     getNextTrackerRefreshDeadline,
@@ -12,6 +13,7 @@
     parseTrackerTimestamp
   } from "$lib/tracker-phase";
   import { createTrackerRows, type TrackerRow } from "$lib/tracker-rows";
+  import { calculateRecentRates, sortTrackerRatePoints } from "$lib/tracker-rates";
   import type { EventRewardsResult } from "$lib/server/event-rewards";
   import type { PageData } from "./$types";
 
@@ -31,7 +33,13 @@
     selectedEvent?: EventMetadata | null;
     eligibleEvents: EventMetadata[];
   };
-  type GraphPoint = { rank: number; score: number; timestamp: string | null };
+  type GraphPoint = {
+    rank: number;
+    score: number;
+    timestamp: string | null;
+    userId: string | null | undefined;
+    userName: string | null | undefined;
+  };
   type TimePointGroup = {
     id: number;
     day: number;
@@ -76,6 +84,7 @@
   let snapshotStatus = $state<TimeTravelStatus>("idle");
   let selectedRow = $state<TrackerRow<SharedEventRewardRangeResponse> | null>(null);
   let graphPoints = $state<GraphPoint[]>([]);
+  let activeGraphPoint = $state<GraphPoint | null>(null);
   let graphMode = $state<"snapshot" | "trend">("snapshot");
   let graphStatus = $state<"idle" | "loading" | "available" | "empty" | "error">("idle");
   let isRefreshing = $state(false);
@@ -177,35 +186,22 @@
     })
   );
   const nextRefreshAt = $derived(
-    isCurrentEvent && phase === "live"
+    isCurrentEvent && phase !== "upcoming"
       ? getNextTrackerRefreshDeadline({ aggregateAt: selectedEvent?.aggregateAt ?? null, now })
       : null
   );
   const nextRefreshSeconds = $derived(
     nextRefreshAt === null ? null : Math.max(0, Math.ceil((nextRefreshAt - now) / 1000))
   );
-  const graphMinimum = $derived(
-    graphPoints.length ? Math.min(...graphPoints.map((point) => point.score)) : 0
-  );
-  const graphMaximum = $derived(
-    graphPoints.length ? Math.max(...graphPoints.map((point) => point.score)) : 0
-  );
-  const graphTicks = $derived([graphMinimum, (graphMinimum + graphMaximum) / 2, graphMaximum]);
-  const graphX = (index: number): number =>
-    72 + (index / Math.max(graphPoints.length - 1, 1)) * 602;
-  const graphY = (score: number): number =>
-    202 - ((score - graphMinimum) / Math.max(graphMaximum - graphMinimum, 1)) * 168;
-  const graphPointCoordinates = $derived(
-    graphPoints.map((point, index) => `${graphX(index)},${graphY(point.score)}`).join(" ")
-  );
-  const graphTimePoints = $derived.by(() => {
-    if (graphPoints.length < 2 || graphPoints.some((point) => !point.timestamp)) return [];
-    return [...new Set([0, Math.floor((graphPoints.length - 1) / 2), graphPoints.length - 1])].map(
-      (index) => ({ index, point: graphPoints[index]! })
-    );
-  });
   const selectedTimePoint = $derived(timePoints[timePointIndex] ?? null);
   const rankingLoading = $derived(isRefreshing || snapshotStatus === "loading");
+  const sortedGraphPoints = $derived(sortTrackerRatePoints(graphPoints));
+  const recentRateTarget = $derived(activeGraphPoint ?? sortedGraphPoints.at(-1) ?? null);
+  const recentRates = $derived(calculateRecentRates(graphPoints, recentRateTarget));
+
+  const rankTier = (rank: number): "top" | "elite" | "high" | "mid" | "long" =>
+    rank === 1 ? "top" : rank <= 10 ? "elite" : rank <= 100 ? "high" : rank <= 1000 ? "mid" : "long";
+  const rankTierLabel = (rank: number): string => translate(`tracker.tier.${rankTier(rank)}`);
 
   const formatNumber = (value: number | null): string =>
     value === null
@@ -405,7 +401,9 @@
       : {
           rank: toNumber(record.rank ?? record.ranking) ?? rank,
           score,
-          timestamp: typeof record.timestamp === "string" ? record.timestamp : null
+          timestamp: typeof record.timestamp === "string" ? record.timestamp : null,
+          userId: typeof record.userId === "string" ? record.userId : null,
+          userName: typeof record.userName === "string" ? record.userName : null
         };
   };
   const fetchGraphPoints = async (
@@ -429,6 +427,7 @@
     graphRequestToken += 1;
     graphIdentity = null;
     graphPoints = [];
+    activeGraphPoint = null;
     graphStatus = "idle";
     if (!detailsDialog?.open) detailsDialog?.showModal();
     void openGraph(row);
@@ -439,6 +438,7 @@
     selectedRow = null;
     graphIdentity = null;
     graphPoints = [];
+    activeGraphPoint = null;
     graphStatus = "idle";
   };
   const openGraph = async (row = selectedRow): Promise<void> => {
@@ -450,6 +450,7 @@
     const requestTimestamp = snapshotTimestamp;
     graphStatus = "loading";
     graphPoints = [];
+    activeGraphPoint = null;
     graphMode = requestTimestamp ? "snapshot" : "trend";
     try {
       let points = await fetchGraphPoints(
@@ -908,46 +909,21 @@
             )}
           </div>{/if}
         <table class="table tracker-table">
-          <thead
-            ><tr
-              ><th scope="col">{translate("tracker.rank")}</th><th scope="col"
-                >{translate("tracker.player")}</th
-              ><th scope="col">{translate("tracker.score")}</th><th scope="col"
-                >{translate("tracker.speed")}</th
-              ><th scope="col">{translate("tracker.degree")}</th></tr
-            ></thead
-          ><tbody
-            >{#each rows as row (row.ladderRank)}{#if row.status === "available"}<tr
-                  class="tracker-ranking-row"
-                  tabindex="0"
-                  role="button"
-                  aria-label={interpolate("tracker.openRankDetailsAndTrend", {
-                    rank: row.ladderRank
-                  })}
-                  onclick={() => openDetails(row)}
-                  onkeydown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      openDetails(row);
-                    }
-                  }}
-                  ><th scope="row">#{formatNumber(row.ladderRank)}</th><td
-                    >{row.ranking?.userName ??
-                      row.ranking?.userId ??
-                      translate("tracker.unavailable")}</td
-                  ><td>{formatNumber(row.score)}</td><td>{formatSpeed(row.speedPerHour)}</td><td
-                    >{formatRewardRange(row.reward)}</td
-                  ><td class="tracker-row-icon"
-                    ><Icon icon="mdi:chart-line" aria-hidden="true" /></td
-                  ></tr
-                >{:else}<tr class="tracker-unavailable"
-                  ><th scope="row">#{formatNumber(row.ladderRank)}</th><td
-                    >{translate("tracker.unavailable")}</td
-                  ><td>{formatNumber(row.score)}</td><td>{formatSpeed(row.speedPerHour)}</td><td
-                    >{formatRewardRange(row.reward)}</td
-                  ></tr
-                >{/if}{/each}</tbody
-          >
+          <thead><tr><th scope="col">{translate("tracker.rank")}</th><th scope="col">{translate("tracker.player")}</th><th scope="col">{translate("tracker.score")}</th><th scope="col">{translate("tracker.speed")}</th><th scope="col">{translate("tracker.degree")}</th><th scope="col"><span class="sr-only">{translate("tracker.viewTrend")}</span></th></tr></thead>
+          <tbody>
+            {#each rows as row (row.ladderRank)}
+              {#if row.status === "available"}
+                <tr class="tracker-ranking-row" class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"} tabindex="0" role="button" aria-label={interpolate("tracker.openRankDetailsAndTrend", { rank: row.ladderRank })} onclick={() => openDetails(row)} onkeydown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openDetails(row); } }}>
+                  <th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th>
+                  <td><strong class="tracker-player-name">{row.ranking?.userName ?? row.ranking?.userId ?? translate("tracker.unavailable")}</strong></td>
+                  <td class="tracker-score">{formatNumber(row.score)}</td><td class="tracker-speed">{formatSpeed(row.speedPerHour)}</td><td><span class="tracker-reward-badge">{formatRewardRange(row.reward)}</span></td>
+                  <td class="tracker-row-icon"><Icon icon="mdi:chart-line" aria-hidden="true" /><Icon icon="mdi:chevron-right" aria-hidden="true" /></td>
+                </tr>
+              {:else}
+                <tr class="tracker-unavailable"><th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th><td>{translate("tracker.unavailable")}</td><td>{formatNumber(row.score)}</td><td>{formatSpeed(row.speedPerHour)}</td><td>{formatRewardRange(row.reward)}</td><td></td></tr>
+              {/if}
+            {/each}
+          </tbody>
         </table>
       </div>
       <div class="tracker-ranking-cards">
@@ -956,7 +932,7 @@
               type="button"
               onclick={() => openDetails(row)}
               aria-label={interpolate("tracker.openRankDetailsAndTrend", { rank: row.ladderRank })}
-              ><strong>#{formatNumber(row.ladderRank)}</strong><span
+              ><div class="tracker-card-heading"><strong class="tracker-rank-number">#{formatNumber(row.ladderRank)}</strong><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span><Icon class="tracker-row-icon" icon="mdi:chart-line" aria-hidden="true" /><Icon class="tracker-row-chevron" icon="mdi:chevron-right" aria-hidden="true" /></div><span
                 >{row.ranking?.userName ??
                   row.ranking?.userId ??
                   translate("tracker.unavailable")}</span
@@ -968,7 +944,7 @@
                 aria-hidden="true"
               /></button
             >{:else}<article class="tracker-ranking-card tracker-unavailable">
-              <strong>#{formatNumber(row.ladderRank)}</strong><span
+              <div class="tracker-card-heading"><strong class="tracker-rank-number">#{formatNumber(row.ladderRank)}</strong><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></div><span
                 >{translate("tracker.unavailable")}</span
               >
             </article>{/if}{/each}
@@ -1003,14 +979,10 @@
         <div>
           <dt>{translate("tracker.player")}</dt>
           <dd>
-            {selectedRow.ranking?.userName ??
+            {activeGraphPoint?.userName ?? selectedRow.ranking?.userName ??
               selectedRow.ranking?.userId ??
               translate("tracker.unavailable")}
           </dd>
-        </div>
-        <div>
-          <dt>{translate("tracker.userId")}</dt>
-          <dd>{selectedRow.ranking?.userId ?? translate("tracker.unavailable")}</dd>
         </div>
         <div>
           <dt>{translate("tracker.degree")}</dt>
@@ -1018,15 +990,33 @@
         </div>
         <div>
           <dt>{translate("tracker.score")}</dt>
-          <dd>{formatNumber(selectedRow.score)}</dd>
+          <dd>{formatNumber(activeGraphPoint?.score ?? selectedRow.score)}</dd>
         </div>
         <div>
           <dt>{translate("tracker.speed")}</dt>
-          <dd>{formatSpeed(selectedRow.speedPerHour)}</dd>
+          <dd>{formatSpeed(
+            activeGraphPoint?.timestamp
+              ? (() => {
+                  const start = parseTrackerTimestamp(selectedEvent?.startAt);
+                  const captured = parseTrackerTimestamp(activeGraphPoint.timestamp);
+                  return start !== null && captured !== null && captured > start
+                    ? ((activeGraphPoint.score - 0) / ((captured - start) / 3_600_000))
+                    : null;
+                })()
+              : selectedRow.speedPerHour
+          )}</dd>
+        </div>
+        <div>
+          <dt>{translate("tracker.recentRate1h")}</dt>
+          <dd>{formatSpeed(recentRates.oneHour)}</dd>
+        </div>
+        <div>
+          <dt>{translate("tracker.recentRate3h")}</dt>
+          <dd>{formatSpeed(recentRates.threeHours)}</dd>
         </div>
         <div>
           <dt>{translate("tracker.capturedAt")}</dt>
-          <dd>{formatTimestamp(selectedRow.ranking?.timestamp)}</dd>
+          <dd>{formatTimestamp(activeGraphPoint?.timestamp ?? selectedRow.ranking?.timestamp)}</dd>
         </div>
       </dl>
       {#if graphStatus === "loading"}<p class="tracker-graph-loading" role="status">
@@ -1039,51 +1029,14 @@
               ? translate("tracker.graphTrend")
               : translate("tracker.graphSnapshot")}
           </h3>
-          <svg
-            class="tracker-graph"
-            viewBox="0 0 720 250"
-            role="img"
-            aria-label={interpolate("tracker.graphAriaLabel", { rank: selectedRow.ladderRank })}
-            ><text class="tracker-graph-axis-title" x="18" y="112" transform="rotate(-90 18 112)"
-              >{translate("tracker.score")}</text
-            >{#each graphTicks as tick, index (index)}<line
-                class="tracker-graph-grid"
-                x1="72"
-                x2="674"
-                y1={graphY(tick)}
-                y2={graphY(tick)}
-              /><text class="tracker-graph-axis-label" x="64" y={graphY(tick) + 4} text-anchor="end"
-                >{formatNumber(tick)}</text
-              >{/each}<line class="tracker-graph-axis" x1="72" x2="72" y1="18" y2="202" /><line
-              class="tracker-graph-axis"
-              x1="72"
-              x2="674"
-              y1="202"
-              y2="202"
-            />{#if graphPoints.length > 1}<polyline
-                points={graphPointCoordinates}
-                fill="none"
-              />{:else}<circle
-                class="tracker-graph-point"
-                cx={graphX(0)}
-                cy={graphY(graphPoints[0]?.score ?? 0)}
-                r="4"
-              />{/if}{#each graphTimePoints as entry, index (entry.index)}<text
-                class:tracker-graph-middle-time={index === 1}
-                class="tracker-graph-axis-label tracker-graph-time-label"
-                x={graphX(entry.index)}
-                y="228"
-                text-anchor={index === 0
-                  ? "start"
-                  : index === graphTimePoints.length - 1
-                    ? "end"
-                    : "middle"}>{formatSnapshotOption(entry.point.timestamp ?? "")}</text
-              >{/each}</svg
-          >
-          <p>
-            {translate("tracker.graphRange")}
-            {formatNumber(graphMinimum)}–{formatNumber(graphMaximum)}
-          </p>
+          <RankingHistoryChart
+            points={graphPoints}
+            bind:activePoint={activeGraphPoint}
+            locale={data.uiLocale}
+            scoreLabel={translate("tracker.score")}
+            timeLabel={translate("tracker.capturedAt")}
+            ariaLabel={interpolate("tracker.graphAriaLabel", { rank: selectedRow.ladderRank })}
+          />
         </section>{:else if graphStatus === "empty" || graphStatus === "error"}<p>
           {translate("tracker.graphUnavailable")}
         </p>{/if}
@@ -1148,7 +1101,8 @@
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
     background: var(--archive-surface-raised);
-    padding: 0.75rem 1rem;
+    padding: 1rem;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--color-primary) 5%, transparent);
   }
   .tracker-event-picker,
   .tracker-control-row {
@@ -1164,7 +1118,7 @@
   .tracker-control-row {
     align-items: stretch;
     border-top: 1px solid var(--archive-border-subtle);
-    padding-top: 1rem;
+    padding-top: 0.85rem;
   }
   .tracker-ladder-control,
   .tracker-history-control {
@@ -1172,6 +1126,16 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
+  }
+  .tracker-ladder-control .join {
+    padding: 0.2rem;
+    border: 1px solid var(--archive-border-subtle);
+    border-radius: 9999px;
+    background: var(--archive-surface-sunken);
+  }
+  .tracker-ladder-control .btn {
+    border: 0;
+    border-radius: 9999px;
   }
   .tracker-history-control {
     flex: 1 1 28rem;
@@ -1247,8 +1211,10 @@
     grid-template-columns: minmax(14rem, 0.8fr) minmax(18rem, 1.2fr);
     align-items: end;
     gap: 1rem;
-    border-top: 1px solid var(--archive-border-subtle);
-    padding-top: 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--archive-border-subtle));
+    border-radius: var(--radius-box);
+    background: color-mix(in srgb, var(--color-primary) 4%, var(--archive-surface-sunken));
+    padding: 1rem;
   }
   .tracker-time-travel-copy h2 {
     font-size: 1rem;
@@ -1269,7 +1235,7 @@
     display: grid;
     gap: 1rem;
     border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--archive-border-subtle));
-    border-radius: 1.25rem;
+    border-radius: var(--radius-box);
     background: var(--archive-surface-default);
     padding: clamp(1rem, 2.5vw, 1.5rem);
     box-shadow: 0 12px 28px color-mix(in srgb, var(--color-primary) 8%, transparent);
@@ -1283,9 +1249,55 @@
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
     background: var(--archive-surface-sunken);
+    box-shadow: inset 0 1px color-mix(in srgb, var(--color-base-content) 4%, transparent);
   }
   .tracker-table {
     min-width: 48rem;
+  }
+  .tracker-table th,
+  .tracker-table td {
+    vertical-align: middle;
+  }
+  .tracker-table th:first-child,
+  .tracker-table td:first-child {
+    border-left: 3px solid transparent;
+  }
+  .tracker-table .tier-top th:first-child { border-left-color: var(--color-error); }
+  .tracker-table .tier-elite th:first-child { border-left-color: var(--color-warning); }
+  .tracker-table .tier-high th:first-child { border-left-color: var(--color-info); }
+  .tracker-table .tier-mid th:first-child { border-left-color: var(--color-success); }
+  .tracker-rank-number,
+  .tracker-score {
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+  }
+  .tracker-tier {
+    display: block;
+    margin-top: 0.15rem;
+    color: color-mix(in srgb, var(--color-base-content) 52%, transparent);
+    font-size: 0.62rem;
+    font-weight: 750;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .tracker-player-name {
+    overflow-wrap: anywhere;
+  }
+  .tracker-speed {
+    color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.82rem;
+  }
+  .tracker-reward-badge {
+    display: inline-flex;
+    max-width: 12rem;
+    align-items: center;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--archive-border-subtle));
+    border-radius: 9999px;
+    padding: 0.2rem 0.55rem;
+    color: color-mix(in srgb, var(--color-primary) 78%, var(--color-base-content));
+    font-size: 0.72rem;
+    line-height: 1.2;
   }
   .tracker-unavailable {
     color: color-mix(in srgb, var(--color-base-content) 55%, transparent);
@@ -1303,6 +1315,16 @@
     background: var(--archive-panel);
     color: inherit;
     text-align: left;
+  }
+  .tracker-ranking-card:hover,
+  .tracker-ranking-card:focus-visible {
+    border-color: color-mix(in srgb, var(--color-primary) 45%, var(--archive-border-subtle));
+    background: color-mix(in srgb, var(--color-primary) 7%, var(--archive-panel));
+  }
+  .tracker-card-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
   }
   .tracker-ranking-loading {
     display: flex;
@@ -1345,14 +1367,6 @@
   dd {
     margin: 0;
     overflow-wrap: anywhere;
-  }
-  .tracker-graph {
-    width: 100%;
-    min-height: 12rem;
-  }
-  .tracker-graph polyline {
-    stroke: var(--color-primary);
-    stroke-width: 1.2;
   }
   @media (max-width: 47.999rem) {
     .tracker-context,
@@ -1416,45 +1430,10 @@
     font-size: 1rem;
     font-weight: 800;
   }
-  .tracker-graph {
-    display: block;
-    width: 100%;
-    min-height: clamp(16rem, 32vw, 26rem);
-    overflow: visible;
-  }
-  .tracker-graph polyline {
-    stroke: var(--color-primary);
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .tracker-graph-point {
-    fill: var(--color-primary);
-  }
-  .tracker-graph-grid {
-    stroke: color-mix(in srgb, var(--color-base-content) 15%, transparent);
-    stroke-width: 1;
-  }
-  .tracker-graph-axis {
-    stroke: color-mix(in srgb, var(--color-base-content) 45%, transparent);
-    stroke-width: 1.25;
-  }
-  .tracker-graph-axis-label,
-  .tracker-graph-axis-title {
-    fill: color-mix(in srgb, var(--color-base-content) 70%, transparent);
-    font-size: 13px;
-    font-variant-numeric: tabular-nums;
-  }
   @media (max-width: 47.999rem) {
     .tracker-dialog .modal-box {
       width: calc(100vw - 2rem);
       max-width: none;
-    }
-    .tracker-graph {
-      min-height: 14rem;
-    }
-    .tracker-graph-middle-time {
-      display: none;
     }
   }
 </style>

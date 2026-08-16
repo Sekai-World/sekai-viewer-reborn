@@ -67,6 +67,8 @@
   "tracker.snapshotLoading": "Loading ranking snapshot…",
   "tracker.speed": "Avg. speed",
   "tracker.speedUnavailable": "Speed unavailable",
+  "tracker.recentRate1h": "Last 1 hour",
+  "tracker.recentRate3h": "Last 3 hours",
   "tracker.snapshotPicker": "Saved ranking snapshots",
   "tracker.timePoint": "Saved ranking snapshot",
   "tracker.timePointError.invalid-data": "Ranking history returned invalid data. Try again in a moment.",
@@ -80,4 +82,9 @@
   "tracker.viewTrend": "View trend",
   "tracker.openRankDetailsAndTrend": "Open rank {rank} details and trend",
   "tracker.graphAriaLabel": "Ranking score trend for rank {rank}"
+  ,"tracker.tier.top": "Top rank"
+  ,"tracker.tier.elite": "Top 10"
+  ,"tracker.tier.high": "Top 100"
+  ,"tracker.tier.mid": "Top 1000"
+  ,"tracker.tier.long": "Milestone"
 }

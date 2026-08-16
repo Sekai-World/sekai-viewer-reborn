@@ -130,7 +130,7 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain("tracker.viewRankingHistory");
     expect(source).not.toContain("openPrimaryGraph");
     expect(source).toContain("tracker.goToCurrentEvent");
-    expect(source).not.toContain('translate("tracker.viewTrend")');
+    expect(source).toContain('translate("tracker.viewTrend")');
     expect(source).toContain("tracker.openRankDetailsAndTrend");
     expect(source).toContain("graphIdentity?.eventId !== requestEventKey");
     expect(source).toContain("graphIdentity.rank !== requestRank");
@@ -245,11 +245,10 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain("tracker.chapterUnavailable");
     expect(source).toContain("aggregateAt: selectedEvent?.aggregateAt");
     expect(source).toContain("formatRewardRange(row.reward)");
-    expect(source).toContain("const graphTicks = $derived");
-    expect(source).toContain("const graphTimePoints = $derived.by");
-    expect(source).toContain('viewBox="0 0 720 250"');
+    expect(source).toContain("RankingHistoryChart");
+    expect(source).not.toContain('viewBox="0 0 720 250"');
     expect(source).toContain("tracker.graphAriaLabel");
-    expect(source).toContain('class="tracker-graph-grid"');
+    expect(source).toContain('class="tracker-graph-panel"');
   });
 
   it("guards stale time-travel requests and presents each endpoint failure distinctly", async () => {
