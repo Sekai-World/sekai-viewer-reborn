@@ -41,4 +41,23 @@ describe("tools-site i18n source collection", () => {
       "tracker.snapshotError.invalid-data": expect.any(String)
     });
   });
+
+  it("uses the approved past-rankings labels without obsolete snapshot controls", async () => {
+    const source = JSON.parse(
+      await readFile(resolve(process.cwd(), "../../packages/i18n-source/tools-site/tracker.json"), "utf8")
+    );
+    expect(source).toMatchObject({ "tracker.goToCurrentEvent": "Go to current event" });
+    expect(source).not.toHaveProperty("tracker.rankCount");
+    expect(source).not.toHaveProperty("tracker.viewRankingHistory");
+
+    expect(source).toMatchObject({
+      "tracker.viewPastRankings": "View past rankings",
+      "tracker.backToLatestRankings": "Back to latest rankings",
+      "tracker.pastRankings": "Past rankings"
+    });
+    expect(source).not.toHaveProperty("tracker.browseSavedSnapshots");
+    expect(source).not.toHaveProperty("tracker.closeSnapshots");
+    expect(source).toMatchObject({ "tracker.latest": "Latest" });
+    expect(source).not.toHaveProperty("tracker.timeTravelControls");
+  });
 });
