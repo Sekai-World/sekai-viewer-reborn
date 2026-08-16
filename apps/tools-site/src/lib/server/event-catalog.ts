@@ -1,4 +1,8 @@
-import { getEventsByRegionCurrent, getEventsByRegionList } from "@platform/sekai-master-api-sdk";
+import {
+  getEventsByRegionById,
+  getEventsByRegionCurrent,
+  getEventsByRegionList
+} from "@platform/sekai-master-api-sdk";
 import type { TrackerRegion } from "./event-tracker";
 
 export type TrackerEventMetadata = {
@@ -12,11 +16,13 @@ export type TrackerEventMetadata = {
 };
 export type CatalogRequestStatus = "available" | "sdk-error" | "network-error" | "invalid-data";
 export type EventCatalogResult = {
-  /** Overall status follows the required current-event metadata request. */
+  /** Overall status follows the selected event metadata request. */
   status: CatalogRequestStatus;
   currentStatus: CatalogRequestStatus;
   listStatus: CatalogRequestStatus;
   currentEvent: TrackerEventMetadata | null;
+  /** The requested event, which must never fall back to current-event metadata. */
+  selectedEvent: TrackerEventMetadata | null;
   eligibleEvents: TrackerEventMetadata[];
 };
 
@@ -58,6 +64,7 @@ const unavailableCatalog = (currentStatus: CatalogRequestStatus, listStatus: Cat
   currentStatus,
   listStatus,
   currentEvent: null,
+  selectedEvent: null,
   eligibleEvents: []
 });
 
@@ -97,7 +104,21 @@ const mergeEventMetadata = (
   };
 };
 
-export const getEventCatalog = async (baseUrl: string, region: TrackerRegion): Promise<EventCatalogResult> => {
+const getListEvents = (value: unknown): TrackerEventMetadata[] | null => {
+  const items = record(unwrap(value))?.items;
+  if (!Array.isArray(items)) return null;
+  return items.map(event).filter((value): value is TrackerEventMetadata => value !== null).filter((value) => {
+    if (value.startAt === null) return false;
+    const start = new Date(value.startAt).getTime();
+    return Number.isNaN(start) || start <= Date.now();
+  });
+};
+
+export const getEventCatalog = async (
+  baseUrl: string,
+  region: TrackerRegion,
+  selectedEventId?: number
+): Promise<EventCatalogResult> => {
   const [current, list] = await Promise.all([
     withTimeout((signal) => getEventsByRegionCurrent({ baseUrl, path: { region }, signal })),
     withTimeout((signal) => getEventsByRegionList({ baseUrl, path: { region }, query: { page_size: 1000, sort_by: "startAt", sort_order: "desc" }, signal }))
@@ -112,24 +133,57 @@ export const getEventCatalog = async (baseUrl: string, region: TrackerRegion): P
     ? list.value && "error" in list.value && list.value.error ? "sdk-error" : "available"
     : list.status;
 
-  if (currentStatus !== "available") return unavailableCatalog(currentStatus, listStatus);
-  const currentEvent = event(current.value && "data" in current.value ? current.value.data : null);
-  if (!currentEvent) return unavailableCatalog("invalid-data", listStatus);
+  const listEvents = listStatus === "available" ? getListEvents(list.value && "data" in list.value ? list.value.data : null) : null;
+  const eligibleEvents = listEvents ?? [];
+  const normalizedListStatus = listStatus === "available" && listEvents === null ? "invalid-data" : listStatus;
+  const currentEvent = currentStatus === "available"
+    ? event(current.value && "data" in current.value ? current.value.data : null)
+    : null;
+  const mergedCurrentEvent = mergeEventMetadata(currentEvent, eligibleEvents);
 
-  const items = listStatus === "available" ? record(unwrap(list.value && "data" in list.value ? list.value.data : null))?.items : null;
-  const eligibleEvents = Array.isArray(items)
-    ? items.map(event).filter((value): value is TrackerEventMetadata => value !== null).filter((value) => {
-        if (value.startAt === null) return false;
-        const start = new Date(value.startAt).getTime();
-        return Number.isNaN(start) || start <= Date.now();
-      })
-    : [];
-  const normalizedListStatus = listStatus === "available" && !Array.isArray(items) ? "invalid-data" : listStatus;
+  if (selectedEventId !== undefined) {
+    const listedEvent = eligibleEvents.find((candidate) => candidate.id === selectedEventId) ?? null;
+    if (listedEvent) {
+      return {
+        status: "available",
+        currentStatus,
+        listStatus: normalizedListStatus,
+        currentEvent: mergedCurrentEvent,
+        selectedEvent: listedEvent,
+        eligibleEvents
+      };
+    }
+
+    const selected = await withTimeout((signal) =>
+      getEventsByRegionById({ baseUrl, path: { region, id: String(selectedEventId) }, signal })
+    );
+    const selectedMetadata = selected.value && "data" in selected.value
+      ? event(selected.value.data)
+      : null;
+    const selectedStatus: CatalogRequestStatus = selected.status === "available"
+      ? selected.value && "error" in selected.value && selected.value.error
+        ? "sdk-error"
+        : selectedMetadata?.id === selectedEventId ? "available" : "invalid-data"
+      : selected.status;
+    return {
+      status: selectedStatus,
+      currentStatus,
+      listStatus: normalizedListStatus,
+      currentEvent: mergedCurrentEvent,
+      selectedEvent: selectedStatus === "available" ? selectedMetadata : null,
+      eligibleEvents
+    };
+  }
+
+  if (currentStatus !== "available" || !mergedCurrentEvent) {
+    return unavailableCatalog(currentStatus === "available" ? "invalid-data" : currentStatus, normalizedListStatus);
+  }
   return {
     status: "available",
     currentStatus: "available",
     listStatus: normalizedListStatus,
-    currentEvent: mergeEventMetadata(currentEvent, eligibleEvents),
+    currentEvent: mergedCurrentEvent,
+    selectedEvent: mergedCurrentEvent,
     eligibleEvents
   };
 };

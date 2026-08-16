@@ -174,7 +174,8 @@ export const getEventTrackerRankings = async (
     const latest = await getEventRankingsByEventId({
       baseUrl,
       path: { id: eventId },
-      query: { limit: 1, sort: { timestamp: "desc" }, region }
+      query: { limit: 1, sort: { timestamp: "desc" }, region },
+      querySerializer: () => `limit=1&sort%5Btimestamp%5D=desc&region=${region}`
     });
     if (latest.error) return withResult(selection, getHistoricalSdkErrorStatus(latest));
     const latestRows = getRankingRows(latest.data);

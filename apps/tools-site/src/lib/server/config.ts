@@ -6,6 +6,11 @@ const removeTrailingSlashes = (value: string): string => {
   return normalized;
 };
 
+const normalizeSekaiApiBaseUrl = (value: string): string => {
+  const normalized = removeTrailingSlashes(value);
+  return normalized.endsWith("/api") ? normalized.slice(0, -4) : normalized;
+};
+
 export const getMasterApiBaseUrl = (): string => {
   const value = env.SEKAI_MASTER_API_BASE_URL?.trim();
 
@@ -23,5 +28,5 @@ export const getSekaiApiBaseUrl = (): string => {
     throw new Error("Missing required environment variable: SEKAI_API_BASE_URL");
   }
 
-  return removeTrailingSlashes(value) || "/";
+  return normalizeSekaiApiBaseUrl(value) || "/";
 };

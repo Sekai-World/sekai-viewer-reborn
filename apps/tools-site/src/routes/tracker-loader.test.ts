@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   getEventRankingsByEventId: vi.fn(),
   getEventsByRegionCurrent: vi.fn(),
   getEventsByRegionList: vi.fn(),
+  getEventsByRegionById: vi.fn(),
   getEventsByRegionByIdRewards: vi.fn(),
   getSekaiApiBaseUrl: vi.fn(() => "https://api.example.test")
 }));
@@ -16,6 +17,7 @@ vi.mock("@platform/sekai-api-sdk", () => ({
 vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionCurrent: mocks.getEventsByRegionCurrent,
   getEventsByRegionList: mocks.getEventsByRegionList,
+  getEventsByRegionById: mocks.getEventsByRegionById,
   getEventsByRegionByIdRewards: mocks.getEventsByRegionByIdRewards
 }));
 vi.mock("$env/dynamic/private", () => ({ env: { SEKAI_API_BASE_URL: "https://api.example.test/", SEKAI_MASTER_API_BASE_URL: "https://master.example.test/" } }));
@@ -60,13 +62,40 @@ describe("tracker route loader", () => {
 
   it("uses the historical endpoint for a valid eventId", async () => {
     mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
+    mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 123, name: "Historical event" } });
     await expect(runLoad("en", "123")).resolves.toMatchObject({
       selection: { mode: "history", eventId: 123 }, selectionStatus: "valid", status: "available"
     });
     expect(mocks.getEventRankingsByEventId).toHaveBeenCalledWith({
-      baseUrl: "https://api.example.test", path: { id: 123 }, query: { limit: 1, sort: { timestamp: "desc" }, region: "en" }
+      baseUrl: "https://api.example.test",
+      path: { id: 123 },
+      query: { limit: 1, sort: { timestamp: "desc" }, region: "en" },
+      querySerializer: expect.any(Function)
     });
     expect(mocks.getEventRankingLive).not.toHaveBeenCalled();
+    await expect((await runLoad("en", "123")).catalog).resolves.toMatchObject({
+      selectedEvent: { id: 123, name: "Historical event" }
+    });
+  });
+
+  it("loads explicit historical metadata by ID when the event list is unavailable", async () => {
+    mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
+    mocks.getEventsByRegionList.mockRejectedValue(new Error("list unavailable"));
+    mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 123, name: "Historical event" } });
+
+    const loaded = await runLoad("tw", "123");
+    await expect(loaded.catalog).resolves.toMatchObject({
+      status: "available",
+      listStatus: "network-error",
+      selectedEvent: { id: 123, name: "Historical event" },
+      currentEvent: null
+    });
+    expect(mocks.getEventsByRegionCurrent).toHaveBeenCalledWith({
+      baseUrl: "https://master.example.test", path: { region: "tw" }, signal: expect.any(AbortSignal)
+    });
+    expect(mocks.getEventsByRegionById).toHaveBeenCalledWith({
+      baseUrl: "https://master.example.test", path: { region: "tw", id: "123" }, signal: expect.any(AbortSignal)
+    });
   });
 
   it("preserves the explicit historical upstream-error status", async () => {

@@ -80,7 +80,9 @@ describe("event tracker data layer", () => {
     });
     expect(mocks.getEventRankingsByEventId).toHaveBeenNthCalledWith(1, {
       baseUrl: "https://api.example.test",
-      path: { id: 42 }, query: { limit: 1, sort: { timestamp: "desc" }, region: "jp" }
+      path: { id: 42 },
+      query: { limit: 1, sort: { timestamp: "desc" }, region: "jp" },
+      querySerializer: expect.any(Function)
     });
     expect(mocks.getEventRankingsByEventId).toHaveBeenNthCalledWith(2, {
       baseUrl: "https://api.example.test", path: { id: 42 }, query: { timestamp: "2026-08-08T00:00:00Z", region: "jp" }

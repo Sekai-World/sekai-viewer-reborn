@@ -2,12 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getEventsByRegionCurrent: vi.fn(),
-  getEventsByRegionList: vi.fn()
+  getEventsByRegionList: vi.fn(),
+  getEventsByRegionById: vi.fn()
 }));
 
 vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionCurrent: mocks.getEventsByRegionCurrent,
-  getEventsByRegionList: mocks.getEventsByRegionList
+  getEventsByRegionList: mocks.getEventsByRegionList,
+  getEventsByRegionById: mocks.getEventsByRegionById
 }));
 
 import { getEventCatalog } from "./event-catalog";
@@ -91,6 +93,31 @@ describe("getEventCatalog", () => {
       listStatus: "sdk-error",
       currentEvent: { id: 42, aggregateAt: "2026-08-10T00:00:00Z" },
       eligibleEvents: []
+    });
+  });
+
+  it("loads current metadata alongside an explicit selected event", async () => {
+    mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 42, name: "Current" } });
+    mocks.getEventsByRegionList.mockResolvedValue({ data: { items: [{ id: 42, name: "Current", startAt: "2026-08-01T00:00:00Z" }] } });
+
+    await expect(getEventCatalog("https://master.example.test", "en", 42)).resolves.toMatchObject({
+      status: "available",
+      currentStatus: "available",
+      currentEvent: { id: 42 },
+      selectedEvent: { id: 42 }
+    });
+    expect(mocks.getEventsByRegionById).not.toHaveBeenCalled();
+  });
+
+  it("falls back to by-id selected metadata without losing a successful current event", async () => {
+    mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 42, name: "Current" } });
+    mocks.getEventsByRegionList.mockResolvedValue({ data: { items: [] } });
+    mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 12, name: "Archived" } });
+
+    await expect(getEventCatalog("https://master.example.test", "en", 12)).resolves.toMatchObject({
+      status: "available",
+      currentEvent: { id: 42 },
+      selectedEvent: { id: 12 }
     });
   });
 });

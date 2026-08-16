@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("$env/dynamic/private", () => ({
-  env: { SEKAI_MASTER_API_BASE_URL: " https://master.example.test/// " }
+  env: {
+    SEKAI_API_BASE_URL: " https://api.example.test/api/// ",
+    SEKAI_MASTER_API_BASE_URL: " https://master.example.test/api/v1/// "
+  }
 }));
 
 vi.mock("$env/dynamic/public", () => ({
@@ -23,7 +26,7 @@ import {
   supportedRegions,
   trackerSupportedRegions
 } from "$lib/regions";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "$lib/server/config";
 
 describe("tools-site region and locale helpers", () => {
   it("normalizes supported regions and falls back for invalid values", () => {
@@ -83,7 +86,8 @@ describe("tools-site i18n runtime", () => {
 });
 
 describe("tools-site server configuration", () => {
-  it("trims and removes trailing slashes from the master API URL", () => {
-    expect(getMasterApiBaseUrl()).toBe("https://master.example.test");
+  it("normalizes only the Sekai API legacy /api suffix", () => {
+    expect(getSekaiApiBaseUrl()).toBe("https://api.example.test");
+    expect(getMasterApiBaseUrl()).toBe("https://master.example.test/api/v1");
   });
 });
