@@ -23,6 +23,11 @@ body {
   padding-block: 0.5rem 2rem;
 }
 
+.tools-home-lockup {
+  padding-block: 3rem 2rem;
+  text-align: center;
+}
+
 .tools-hero {
   position: relative;
   overflow: hidden;
@@ -82,12 +87,6 @@ body {
   max-width: 14ch;
   font-size: clamp(2rem, 5vw, 3.75rem);
   line-height: 0.98;
-}
-
-.tools-brand-lockup {
-  margin-bottom: 1.5rem;
-  transform-origin: left center;
-  transform: scale(0.72);
 }
 
 .tools-hero p:not(.eyebrow) {

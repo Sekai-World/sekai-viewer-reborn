@@ -40,11 +40,12 @@
 <svelte:head><title>Sekai Viewer - Tools</title></svelte:head>
 
 <div class="tools-home">
+  <div class="tools-home-lockup"><BrandLockup /></div>
+
   <section class="tools-hero" aria-labelledby="home-title">
     <p class="eyebrow">{translate("home.eyebrow")}</p>
     <div class="hero-copy">
       <div>
-        <div class="tools-brand-lockup"><BrandLockup /></div>
         <h1 id="home-title">{translate("home.title")}</h1>
         <p>{translate("home.description")}</p>
       </div>
