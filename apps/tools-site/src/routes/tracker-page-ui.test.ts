@@ -49,6 +49,13 @@ describe("tracker page UI contract", () => {
       "const isHistoricalEvent = $derived(isExplicitSelection && isCurrentEventKnown && !isCurrentEvent);"
     );
     expect(source).toContain("const activityLabel = $derived(");
+    expect(source).toContain('import { getTrackerCountdown } from "$lib/tracker-countdown";');
+    expect(source).toContain("const countdown = $derived(");
+    expect(source).toContain("closedAt: selectedEvent?.closedAt");
+    expect(source).toContain('translate("tracker.countdownEndsIn")');
+    expect(source).toContain('translate("tracker.countdownStartsIn")');
+    expect(source).toContain('class="tracker-countdown"');
+    expect(source).toContain("font-variant-numeric: tabular-nums");
   });
 
   it("uses one accessible event combobox for catalog search and direct ID navigation", async () => {

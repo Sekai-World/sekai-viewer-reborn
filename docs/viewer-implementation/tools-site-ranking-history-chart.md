@@ -1,5 +1,15 @@
 # Tools Site Ranking History Chart
 
+## Event tracker header clock
+
+The Event Tracker header's countdown derives from the route's existing one-second
+`now` state in `apps/tools-site/src/routes/tracker/[region]/+page.svelte`. Do not
+add a second interval or copy content-site's requestAnimationFrame-based
+`EventCountdownCard`: tools-site needs only a compact text countdown. Its pure
+`$lib/tracker-countdown` helper parses current catalog metadata through
+`parseTrackerTimestamp`, prioritizes `aggregateAt`, and uses `closedAt` only as
+a fallback.
+
 The Event Tracker uses LayerChart v2 for the per-rank history visualization in
 the details dialog. LayerChart is Svelte 5-compatible and provides responsive
 scales, hover tooltips, and crosshair highlights without hand-maintained SVG

@@ -6,6 +6,7 @@
   import { onMount } from "svelte";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import RankingHistoryChart from "$lib/components/RankingHistoryChart.svelte";
+  import { getTrackerCountdown } from "$lib/tracker-countdown";
   import { getTrackerRankLadder, type TrackerRankLadder } from "$lib/tracker-ladders";
   import {
     getNextTrackerRefreshDeadline,
@@ -155,6 +156,21 @@
           : phase === "finished"
             ? translate("tracker.savedRankings")
             : translate("tracker.phaseUnavailable")
+  );
+  const countdown = $derived(
+    isCurrentEvent
+      ? getTrackerCountdown({
+          startAt: selectedEvent?.startAt,
+          aggregateAt: selectedEvent?.aggregateAt,
+          closedAt: selectedEvent?.closedAt,
+          now
+        })
+      : null
+  );
+  const countdownLabel = $derived(
+    countdown?.mode === "ends"
+      ? translate("tracker.countdownEndsIn")
+      : translate("tracker.countdownStartsIn")
   );
   const elapsedMs = $derived.by(() => {
     const start = parseTrackerTimestamp(selectedEvent?.startAt);
@@ -676,6 +692,17 @@
       <span class:badge-success={isCurrentEvent && phase === "live"} class="badge badge-outline"
         >{activityLabel}</span
       >
+      {#if countdown}
+        <span class="tracker-countdown">
+          <span class="tracker-countdown-label">{countdownLabel}</span>
+          <span class="tracker-countdown-values">
+            {#if countdown.values.days > 0}<span>{countdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
+            <span>{String(countdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
+            <span>{String(countdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
+            <span>{String(countdown.values.seconds).padStart(2, "0")}<small>{translate("tracker.timeUnit.second")}</small></span>
+          </span>
+        </span>
+      {/if}
       <span>{interpolate("tracker.loadedAt", { time: formatTimestamp(data.loadedAt) })}</span>
       {#if nextRefreshSeconds !== null}<span
           >{interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })}</span
@@ -1094,6 +1121,31 @@
   .tracker-live-status {
     color: color-mix(in srgb, var(--color-base-content) 65%, transparent);
     font-size: 0.78rem;
+  }
+  .tracker-countdown,
+  .tracker-countdown-values {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem;
+  }
+  .tracker-countdown {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+  .tracker-countdown-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .tracker-countdown-values {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-variant-numeric: tabular-nums;
+  }
+  .tracker-countdown-values small {
+    margin-left: 0.08rem;
+    font-family: inherit;
+    font-size: 0.65em;
   }
   .tracker-control-deck {
     display: grid;
