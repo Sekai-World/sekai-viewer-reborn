@@ -49,6 +49,17 @@ describe("tracker page UI contract", () => {
       "const isHistoricalEvent = $derived(isExplicitSelection && isCurrentEventKnown && !isCurrentEvent);"
     );
     expect(source).toContain("const activityLabel = $derived(");
+    expect(source).toContain("let trackerResult = $state<EventTrackerResult | null>(null);");
+    expect(source).toContain("const isTrackerLoading = $derived(trackerResult === null);");
+    expect(source).toContain('class="tracker-ranking-skeleton"');
+    expect(source).toContain('class="skeleton h-9 w-12"');
+    expect(source).toContain('role="status"');
+    expect(source).toContain('aria-busy="true"');
+    expect(source).toContain('class="tracker-heading-skeleton skeleton h-3 w-20"');
+    expect(source).toContain("let trackerRequestIdentity = $state<string | null>(null);");
+    expect(source).toContain("trackerRequestIdentity !== null && trackerRequestIdentity !== requestIdentity");
+    expect(source).toContain("trackerResult = createTrackerNetworkFailure();");
+    expect(source).not.toContain('trackerStatus !== "available"}<p role="status">{translate("tracker.loading")}</p>');
     expect(source).toContain('import { getTrackerCountdown } from "$lib/tracker-countdown";');
     expect(source).toContain("const countdown = $derived(");
     expect(source).toContain("closedAt: selectedEvent?.closedAt");

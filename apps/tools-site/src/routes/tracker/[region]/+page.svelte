@@ -16,6 +16,7 @@
   import { createTrackerRows, type TrackerRow } from "$lib/tracker-rows";
   import { calculateRecentRates, sortTrackerRatePoints } from "$lib/tracker-rates";
   import type { EventRewardsResult } from "$lib/server/event-rewards";
+  import type { EventTrackerResult } from "$lib/server/event-tracker";
   import type { PageData } from "./$types";
 
   type EventMetadata = {
@@ -59,6 +60,7 @@
     | "network-error"
     | "invalid-data";
   type ExtendedData = PageData & {
+    trackerResult?: Promise<EventTrackerResult>;
     catalog?: Promise<Catalog>;
     rewards?: Promise<EventRewardsResult | null>;
     status?: string;
@@ -70,6 +72,8 @@
   let ladder = $state<TrackerRankLadder>("critical");
   let now = $state(Date.now());
   let hasMounted = $state(false);
+  let trackerResult = $state<EventTrackerResult | null>(null);
+  let trackerRequestIdentity = $state<string | null>(null);
   let catalog = $state<Catalog | null>(null);
   let eventQuery = $state("");
   let isEventPickerOpen = $state(false);
@@ -80,7 +84,7 @@
   let timePoints = $state<string[]>([]);
   let timePointsStatus = $state<TimeTravelStatus>("idle");
   let timePointIndex = $state(0);
-  let snapshotRankings = $state<typeof data.rankings | null>(null);
+  let snapshotRankings = $state<EventTrackerResult["rankings"] | null>(null);
   let snapshotTimestamp = $state<string | null>(null);
   let snapshotStatus = $state<TimeTravelStatus>("idle");
   let selectedRow = $state<TrackerRow<SharedEventRewardRangeResponse> | null>(null);
@@ -101,7 +105,11 @@
   const extendedData = $derived(data as ExtendedData);
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const trackerPath = $derived(resolve("/tracker/[region]", { region: data.region }));
-  const trackerStatus = $derived(String(extendedData.status ?? ""));
+  const trackerStatus = $derived(trackerResult?.status ?? null);
+  const isTrackerLoading = $derived(trackerResult === null);
+  const trackerIdentity = $derived(
+    `${data.region}:${data.selectionStatus}:${data.selection.eventId ?? "live"}`
+  );
   const isExplicitSelection = $derived(data.selection.eventId !== null);
   const catalogStatus = $derived(catalog?.status ?? null);
   const listStatus = $derived(catalog?.listStatus ?? catalogStatus);
@@ -175,11 +183,11 @@
   const elapsedMs = $derived.by(() => {
     const start = parseTrackerTimestamp(selectedEvent?.startAt);
     const aggregateAt = parseTrackerTimestamp(selectedEvent?.aggregateAt);
-    const loaded = parseTrackerTimestamp(data.loadedAt);
+    const loaded = parseTrackerTimestamp(trackerResult?.loadedAt);
     if (start === null || loaded === null || loaded <= start) return null;
     return aggregateAt === null ? loaded - start : Math.min(loaded, aggregateAt) - start;
   });
-  const displayRankings = $derived(snapshotRankings ?? data.rankings);
+  const displayRankings = $derived(snapshotRankings ?? trackerResult?.rankings ?? []);
   const getReward = (rank: number): SharedEventRewardRangeResponse | null =>
     rewards?.status === "available"
       ? (rewards.items.find((reward) => {
@@ -403,6 +411,16 @@
       isRefreshing = false;
     }
   };
+  const createTrackerNetworkFailure = (): EventTrackerResult => ({
+    selection:
+      data.selection.eventId === null
+        ? { mode: "live", eventId: null }
+        : { mode: "history", eventId: data.selection.eventId },
+    resolvedCurrentEventId: null,
+    loadedAt: new Date().toISOString(),
+    status: "network-error",
+    rankings: []
+  });
   const toNumber = (value: unknown): number | null => {
     const parsed =
       typeof value === "number" ? value : typeof value === "string" ? Number(value) : Number.NaN;
@@ -573,7 +591,7 @@
       );
       const payload = (await response.json()) as {
         status?: string;
-        rankings?: typeof data.rankings;
+        rankings?: EventTrackerResult["rankings"];
       };
       if (
         requestToken !== snapshotRequestToken ||
@@ -652,8 +670,25 @@
   });
   $effect(() => {
     let cancelled = false;
-    catalog = null;
-    rewards = null;
+    const requestIdentity = trackerIdentity;
+    const selectionChanged =
+      trackerRequestIdentity !== null && trackerRequestIdentity !== requestIdentity;
+    if (selectionChanged) {
+      trackerResult = null;
+      catalog = null;
+      rewards = null;
+    }
+    trackerRequestIdentity = requestIdentity;
+    void extendedData.trackerResult?.then(
+      (value) => {
+        if (!cancelled && trackerRequestIdentity === requestIdentity) trackerResult = value;
+      },
+      () => {
+        if (!cancelled && trackerRequestIdentity === requestIdentity) {
+          trackerResult = createTrackerNetworkFailure();
+        }
+      }
+    );
     void extendedData.catalog?.then((value) => {
       if (!cancelled) catalog = value;
     });
@@ -689,43 +724,51 @@
       <h1 id="tracker-title">{translate("tracker.title")}</h1>
     </div>
     <div class="tracker-status-panel" aria-live="polite">
-      <div class="tracker-primary-status">
-        <span class:badge-success={isCurrentEvent && phase === "live"} class="badge badge-outline"
-          >{activityLabel}</span
-        >
-        {#if countdown}
-          <span class="tracker-countdown">
-            <span class="tracker-countdown-label">{countdownLabel}</span>
-            <span class="tracker-countdown-values">
-              {#if countdown.values.days > 0}<span>{countdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
-              <span>{String(countdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
-              <span>{String(countdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
-              <span>{String(countdown.values.seconds).padStart(2, "0")}<small>{translate("tracker.timeUnit.second")}</small></span>
-            </span>
-          </span>
-        {/if}
-      </div>
-      <div class="tracker-freshness-action">
-        <div class="tracker-freshness">
-          <span>{interpolate("tracker.loadedAt", { time: formatTimestamp(data.loadedAt) })}</span>
-          {#if nextRefreshSeconds !== null}<span
-              >{interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })}</span
-            >{/if}
+      {#if isTrackerLoading || (catalog === null && !isInvalidSelection)}
+        <div class="tracker-status-skeleton" aria-hidden="true">
+          <span class="skeleton h-6 w-24 rounded-full"></span>
+          <span class="skeleton h-4 w-36"></span>
+          <span class="skeleton h-4 w-28"></span>
         </div>
-        <button
-          class="btn btn-square btn-sm btn-outline tracker-refresh-action"
-          type="button"
-          onclick={refresh}
-          disabled={isRefreshing || isHistoricalEvent}
-          aria-label={isRefreshing
-            ? translate("tracker.refreshing")
-            : translate("tracker.refreshRankings")}
-          title={isRefreshing
-            ? translate("tracker.refreshing")
-            : translate("tracker.refreshRankings")}
-          ><Icon icon={isRefreshing ? "mdi:loading" : "mdi:refresh"} aria-hidden="true" /></button
-        >
-      </div>
+      {:else}
+        <div class="tracker-primary-status">
+          <span class:badge-success={isCurrentEvent && phase === "live"} class="badge badge-outline"
+            >{activityLabel}</span
+          >
+          {#if countdown}
+            <span class="tracker-countdown">
+              <span class="tracker-countdown-label">{countdownLabel}</span>
+              <span class="tracker-countdown-values">
+                {#if countdown.values.days > 0}<span>{countdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
+                <span>{String(countdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
+                <span>{String(countdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
+                <span>{String(countdown.values.seconds).padStart(2, "0")}<small>{translate("tracker.timeUnit.second")}</small></span>
+              </span>
+            </span>
+          {/if}
+        </div>
+        <div class="tracker-freshness-action">
+          <div class="tracker-freshness">
+            <span>{interpolate("tracker.loadedAt", { time: formatTimestamp(trackerResult?.loadedAt) })}</span>
+            {#if nextRefreshSeconds !== null}<span
+                >{interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })}</span
+              >{/if}
+          </div>
+          <button
+            class="btn btn-square btn-sm btn-outline tracker-refresh-action"
+            type="button"
+            onclick={refresh}
+            disabled={isRefreshing || isHistoricalEvent}
+            aria-label={isRefreshing
+              ? translate("tracker.refreshing")
+              : translate("tracker.refreshRankings")}
+            title={isRefreshing
+              ? translate("tracker.refreshing")
+              : translate("tracker.refreshRankings")}
+            ><Icon icon={isRefreshing ? "mdi:loading" : "mdi:refresh"} aria-hidden="true" /></button
+          >
+        </div>
+      {/if}
     </div>
   </header>
 
@@ -913,7 +956,11 @@
   <section class="tracker-ranking-workspace" aria-labelledby="tracker-results-title">
     <div class="tracker-workspace-heading">
       <div>
-        <p class="tracker-kicker">{activityLabel}</p>
+        {#if isTrackerLoading}
+          <span class="tracker-heading-skeleton skeleton h-3 w-20" aria-hidden="true"></span>
+        {:else}
+          <p class="tracker-kicker">{activityLabel}</p>
+        {/if}
         <h2 id="tracker-results-title">{translate("tracker.rankings")}</h2>
       </div>
       {#if isHistoricalEvent}<a class="btn btn-sm btn-outline" href={trackerPath}
@@ -922,7 +969,26 @@
           )}</a
         >{/if}
     </div>
-    {#if isInvalidSelection}<p role="alert">{translate("tracker.eventIdInvalid")}</p>
+    {#if isTrackerLoading}
+      <div
+        class="tracker-ranking-skeleton"
+        role="status"
+        aria-live="polite"
+        aria-label={translate("tracker.loading")}
+        aria-busy="true"
+      >
+        <div class="tracker-skeleton-heading" aria-hidden="true">
+          <span class="skeleton h-3 w-20"></span><span class="skeleton h-7 w-32"></span>
+        </div>
+        <div class="tracker-skeleton-table" aria-hidden="true">
+          {#each getTrackerRankLadder(ladder) as rank (rank)}
+            <div class="tracker-skeleton-row">
+              <span class="skeleton h-9 w-12"></span><span class="skeleton h-5 w-full max-w-48"></span><span class="skeleton h-5 w-20"></span><span class="skeleton h-5 w-16"></span><span class="skeleton h-6 w-24 rounded-full"></span>
+            </div>
+          {/each}
+        </div>
+      </div>
+    {:else if isInvalidSelection}<p role="alert">{translate("tracker.eventIdInvalid")}</p>
     {:else if trackerStatus === "upstream-error"}<p role="alert">
         {translate("tracker.error.historyUpstream")}
       </p>
@@ -933,7 +999,7 @@
     {:else if trackerStatus === "invalid-data"}<p role="alert">
         {translate("tracker.error.invalidData")}
       </p>
-    {:else if trackerStatus !== "available"}<p role="status">{translate("tracker.loading")}</p>
+    {:else if trackerStatus !== "available"}<p role="alert">{translate("tracker.error.invalidData")}</p>
     {:else}
       <div class="tracker-table-wrap">
         {#if rankingLoading}<div class="tracker-ranking-loading" role="status">
@@ -1136,6 +1202,11 @@
     align-items: center;
     min-width: 0;
   }
+  .tracker-status-skeleton {
+    display: grid;
+    justify-items: end;
+    gap: 0.45rem;
+  }
   .tracker-primary-status {
     flex-wrap: wrap;
     gap: 0.65rem;
@@ -1324,6 +1395,37 @@
     padding: clamp(1rem, 2.5vw, 1.5rem);
     box-shadow: 0 12px 28px color-mix(in srgb, var(--color-primary) 8%, transparent);
   }
+  .tracker-ranking-skeleton {
+    display: grid;
+    gap: 1rem;
+  }
+  .tracker-heading-skeleton {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .tracker-skeleton-heading {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .tracker-skeleton-table {
+    display: grid;
+    overflow: hidden;
+    border: 1px solid var(--archive-border-subtle);
+    border-radius: var(--radius-box);
+    background: var(--archive-surface-sunken);
+  }
+  .tracker-skeleton-row {
+    display: grid;
+    grid-template-columns: 3.5rem minmax(8rem, 1.5fr) 5rem 4rem 7rem;
+    align-items: center;
+    gap: 1rem;
+    min-height: 4.2rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--archive-border-subtle);
+  }
+  .tracker-skeleton-row:last-child {
+    border-bottom: 0;
+  }
   .tracker-workspace-heading h2 {
     font-size: 1.35rem;
     font-weight: 800;
@@ -1464,6 +1566,9 @@
       flex-direction: column;
       gap: 0.75rem;
     }
+    .tracker-status-skeleton {
+      justify-items: start;
+    }
     .tracker-primary-status {
       align-items: flex-start;
       flex-direction: column;
@@ -1503,6 +1608,14 @@
     .tracker-ranking-cards {
       display: grid;
       gap: 0.75rem;
+    }
+    .tracker-skeleton-row {
+      grid-template-columns: 3.25rem minmax(0, 1fr) 4.5rem;
+      gap: 0.75rem;
+    }
+    .tracker-skeleton-row > :nth-child(4),
+    .tracker-skeleton-row > :nth-child(5) {
+      display: none;
     }
     .tracker-detail-grid {
       grid-template-columns: 1fr;

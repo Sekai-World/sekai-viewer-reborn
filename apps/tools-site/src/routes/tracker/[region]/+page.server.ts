@@ -3,7 +3,11 @@ import { getSekaiApiBaseUrl } from "$lib/server/config";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { getEventCatalog } from "$lib/server/event-catalog";
 import { getEventRewards } from "$lib/server/event-rewards";
-import { getEventTrackerRankings, isTrackerRegion } from "$lib/server/event-tracker";
+import {
+  getEventTrackerRankings,
+  isTrackerRegion,
+  type EventTrackerResult
+} from "$lib/server/event-tracker";
 import type { PageServerLoad } from "./$types";
 
 const parseEventId = (value: string | null): number | null | "invalid" => {
@@ -25,16 +29,23 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
       region,
       selection: { mode: "history" as const, eventId: null },
       selectionStatus: "invalid-event-id" as const,
-      status: "invalid-data" as const,
-      loadedAt: new Date().toISOString(),
-      rankings: []
+      trackerResult: Promise.resolve({
+        selection: { mode: "history" as const, eventId: 0 },
+        resolvedCurrentEventId: null,
+        status: "invalid-data" as const,
+        loadedAt: new Date().toISOString(),
+        rankings: []
+      } satisfies EventTrackerResult),
+      catalog: Promise.resolve(null),
+      rewards: Promise.resolve(null)
     };
   }
 
-  const result = await getEventTrackerRankings(getSekaiApiBaseUrl(), region, eventId ?? undefined);
+  const trackerResult = getEventTrackerRankings(getSekaiApiBaseUrl(), region, eventId ?? undefined);
   depends?.("tools-site:tracker:catalog");
   const catalog = getEventCatalog(getMasterApiBaseUrl(), region, eventId ?? undefined);
   const rewards = (async () => {
+    const result = await trackerResult;
     const resolvedFromRankings = eventId ?? result.resolvedCurrentEventId;
     if (resolvedFromRankings !== null && resolvedFromRankings !== undefined) {
       return getEventRewards(getMasterApiBaseUrl(), region, resolvedFromRankings);
@@ -45,5 +56,21 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
       ? null
       : getEventRewards(getMasterApiBaseUrl(), region, resolvedFromCatalog);
   })();
-  return { region, selectionStatus: "valid" as const, ...result, catalog, rewards };
+  // Keep rankings unresolved so SvelteKit can send the page shell immediately.
+  // The page deliberately renders a shape-matched skeleton until this settles.
+  trackerResult.catch(() => {});
+  catalog.catch(() => {});
+  rewards.catch(() => {});
+
+  return {
+    region,
+    selection:
+      eventId === null
+        ? ({ mode: "live", eventId: null } as const)
+        : ({ mode: "history", eventId } as const),
+    selectionStatus: "valid" as const,
+    trackerResult: trackerResult as Promise<EventTrackerResult>,
+    catalog,
+    rewards
+  };
 };

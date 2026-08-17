@@ -38,7 +38,9 @@ describe("tracker route loader", () => {
 
   it.each(["jp", "en", "tw", "kr"])("loads tracker region %s", async (region) => {
     mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [{ rank: 1 }] } });
-    await expect(runLoad(region)).resolves.toMatchObject({ region, status: "available" });
+    const loaded = await runLoad(region);
+    expect(loaded).toMatchObject({ region, selectionStatus: "valid" });
+    await expect(loaded.trackerResult).resolves.toMatchObject({ status: "available" });
     expect(mocks.getEventRankingLive).toHaveBeenCalledWith({
       baseUrl: "https://api.example.test",
       query: { region }
@@ -52,7 +54,8 @@ describe("tracker route loader", () => {
     mocks.getEventsByRegionByIdRewards.mockResolvedValue({ data: { items: [] } });
 
     const loaded = await runLoad("en");
-    expect(loaded).toMatchObject({ resolvedCurrentEventId: 42, selectionStatus: "valid" });
+    expect(loaded).toMatchObject({ selectionStatus: "valid" });
+    await expect(loaded.trackerResult).resolves.toMatchObject({ resolvedCurrentEventId: 42 });
     await expect(loaded.rewards).resolves.toMatchObject({ status: "available", items: [] });
     expect(mocks.getEventsByRegionByIdRewards).toHaveBeenCalledWith({
       baseUrl: "https://master.example.test",
@@ -63,9 +66,9 @@ describe("tracker route loader", () => {
   it("uses the historical endpoint for a valid eventId", async () => {
     mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
     mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 123, name: "Historical event" } });
-    await expect(runLoad("en", "123")).resolves.toMatchObject({
-      selection: { mode: "history", eventId: 123 }, selectionStatus: "valid", status: "available"
-    });
+    const loaded = await runLoad("en", "123");
+    expect(loaded).toMatchObject({ selection: { mode: "history", eventId: 123 }, selectionStatus: "valid" });
+    await expect(loaded.trackerResult).resolves.toMatchObject({ status: "available" });
     expect(mocks.getEventRankingsByEventId).toHaveBeenCalledWith({
       baseUrl: "https://api.example.test",
       path: { id: 123 },
@@ -73,7 +76,7 @@ describe("tracker route loader", () => {
       querySerializer: expect.any(Function)
     });
     expect(mocks.getEventRankingLive).not.toHaveBeenCalled();
-    await expect((await runLoad("en", "123")).catalog).resolves.toMatchObject({
+    await expect(loaded.catalog).resolves.toMatchObject({
       selectedEvent: { id: 123, name: "Historical event" }
     });
   });
@@ -101,17 +104,22 @@ describe("tracker route loader", () => {
   it("preserves the explicit historical upstream-error status", async () => {
     mocks.getEventRankingsByEventId.mockResolvedValue({ error: true, response: { status: 500 } });
 
-    await expect(runLoad("en", "123")).resolves.toMatchObject({
-      selection: { mode: "history", eventId: 123 }, selectionStatus: "valid", status: "upstream-error"
-    });
+    const loaded = await runLoad("en", "123");
+    expect(loaded).toMatchObject({ selection: { mode: "history", eventId: 123 }, selectionStatus: "valid" });
+    await expect(loaded.trackerResult).resolves.toMatchObject({ status: "upstream-error" });
   });
 
   it.each(["invalid", "0", "-1", "1.5", "9007199254740992"])("returns an invalid selection for eventId %s without SDK calls", async (eventId) => {
-    await expect(runLoad("en", eventId)).resolves.toMatchObject({
-      selection: { mode: "history", eventId: null }, selectionStatus: "invalid-event-id", rankings: []
-    });
+    const loaded = await runLoad("en", eventId);
+    expect(loaded).toMatchObject({ selection: { mode: "history", eventId: null }, selectionStatus: "invalid-event-id" });
+    await expect(loaded.trackerResult).resolves.toMatchObject({ rankings: [] });
     expect(mocks.getEventRankingLive).not.toHaveBeenCalled();
     expect(mocks.getEventRankingsByEventId).not.toHaveBeenCalled();
+  });
+
+  it("returns a settled invalid-data result for an invalid event ID", async () => {
+    const loaded = await runLoad("en", "invalid");
+    await expect(loaded.trackerResult).resolves.toMatchObject({ status: "invalid-data", rankings: [] });
   });
 
   it.each(["cn", "invalid"])("returns a SvelteKit 404 for unsupported region %s without calling the SDK", async (region) => {
