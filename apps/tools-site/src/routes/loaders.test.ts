@@ -52,7 +52,9 @@ describe("tools-site server loaders", () => {
             unit: { unitName: "Leo/need" },
             start_at: "2026-01-01",
             aggregate_at: 456,
-            closed_at: "2026-01-03"
+            closed_at: "2026-01-03",
+            assetbundleName: "event_123",
+            assetBundleName: "wrong-camel-case"
           }
         }
       })
@@ -61,12 +63,18 @@ describe("tools-site server loaders", () => {
 
     const result = await runPageLoad(request("https://tools.test/"));
 
-    const events = result.events as unknown[];
+    const events = await (result.events as Promise<unknown[]>);
     expect(events).toHaveLength(4);
     expect(events[0]).toMatchObject({
       region: "jp",
       status: "available",
-      event: { id: "123", name: "Primary event", eventType: "marathon", unit: "Leo/need" }
+      event: {
+        id: "123",
+        name: "Primary event",
+        eventType: "marathon",
+        unit: "Leo/need",
+        assetBundleName: "event_123"
+      }
     });
     expect(events[1]).toEqual({ region: "tw", status: "unavailable", event: null });
     expect(mocks.getEventsByRegionCurrent).toHaveBeenNthCalledWith(
@@ -90,9 +98,24 @@ describe("tools-site server loaders", () => {
 
     const result = await runPageLoad(request("https://tools.test/"));
 
-    const events = result.events as { status: string }[];
+    const events = await (result.events as Promise<{ status: string }[]>);
     expect(events[0].status).toBe("unavailable");
     expect(events[1].status).toBe("failed");
+  });
+
+  it("returns the current-event collection as an unresolved stream", async () => {
+    const resolveRequests: Array<(value: unknown) => void> = [];
+    mocks.getEventsByRegionCurrent.mockImplementation(
+      () => new Promise((resolve) => resolveRequests.push(resolve))
+    );
+
+    const loaded = await runPageLoad(request("https://tools.test/"));
+    expect(loaded.events).toBeInstanceOf(Promise);
+
+    for (const resolveRequest of resolveRequests) {
+      resolveRequest({ error: true, response: { status: 404 } });
+    }
+    await expect(loaded.events as Promise<unknown[]>).resolves.toHaveLength(4);
   });
 
   it("aborts a stalled regional request at the bounded deadline", async () => {
@@ -108,7 +131,7 @@ describe("tools-site server loaders", () => {
     await vi.advanceTimersByTimeAsync(5_000);
 
     const loaded = await result;
-    expect((loaded.events as { status: string }[]).every((event) => event.status === "failed")).toBe(true);
+    expect((await (loaded.events as Promise<{ status: string }[]>)).every((event) => event.status === "failed")).toBe(true);
     vi.useRealTimers();
   });
 

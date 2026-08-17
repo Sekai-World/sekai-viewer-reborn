@@ -844,18 +844,19 @@
     <div class="tracker-control-row">
       <div class="tracker-ladder-control">
         <span class="tracker-control-label">{translate("tracker.rankings")}</span>
-        <div class="join" aria-label={translate("tracker.rankRange")}>
+        <div class="tracker-ladder-switcher" aria-label={translate("tracker.rankRange")}>
+          <span class:tracker-ladder-indicator-full={ladder === "full"} class="tracker-ladder-indicator" aria-hidden="true"></span>
           <button
             class:btn-primary={ladder === "critical"}
             class:btn-outline={ladder !== "critical"}
-            class="btn btn-sm join-item"
+            class="btn btn-sm tracker-ladder-option"
             type="button"
             aria-pressed={ladder === "critical"}
             onclick={() => (ladder = "critical")}>{translate("tracker.ranks.critical")}</button
           ><button
             class:btn-primary={ladder === "full"}
             class:btn-outline={ladder !== "full"}
-            class="btn btn-sm join-item"
+            class="btn btn-sm tracker-ladder-option"
             type="button"
             aria-pressed={ladder === "full"}
             onclick={() => (ladder = "full")}>{translate("tracker.ranks.all")}</button
@@ -885,7 +886,6 @@
       >
         <div class="tracker-time-travel-copy">
           <h2 id="tracker-time-travel-title">{translate("tracker.pastRankings")}</h2>
-          <p class="tracker-time-travel-description">{translate("tracker.historyDescription")}</p>
         </div>
         {#if timePointsStatus === "available"}
           <div class="tracker-time-selects">
@@ -1161,7 +1161,6 @@
     grid-template-columns: minmax(0, 1fr);
     align-items: end;
     gap: 1rem;
-    border-top: 3px solid var(--color-primary);
     padding: 1.25rem 0 1rem;
   }
   .tracker-title-block h1 {
@@ -1185,8 +1184,7 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
-  .tracker-time-note,
-  .tracker-time-travel-description {
+  .tracker-time-note {
     color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
   }
   .tracker-status-panel {
@@ -1282,11 +1280,36 @@
     align-items: center;
     gap: 0.75rem;
   }
-  .tracker-ladder-control .join {
+  .tracker-ladder-switcher {
+    position: relative;
+    display: inline-grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     padding: 0.2rem;
     border: 1px solid var(--archive-border-subtle);
     border-radius: 9999px;
     background: var(--archive-surface-sunken);
+    isolation: isolate;
+  }
+  .tracker-ladder-indicator {
+    position: absolute;
+    z-index: -1;
+    inset: 0.2rem 50% 0.2rem 0.2rem;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--color-primary) 16%, var(--archive-surface-raised));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 22%, transparent);
+    transition: transform 180ms ease-out, background-color 180ms ease-out;
+  }
+  .tracker-ladder-indicator-full {
+    transform: translateX(100%);
+  }
+  .tracker-ladder-option {
+    position: relative;
+    z-index: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-ladder-indicator {
+      transition-duration: 1ms;
+    }
   }
   .tracker-ladder-control .btn {
     border: 0;
@@ -1303,10 +1326,6 @@
     font-weight: 750;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-  }
-  .tracker-time-travel-description {
-    margin-top: 0.5rem;
-    font-size: 0.9rem;
   }
   .tracker-event-combobox {
     position: relative;

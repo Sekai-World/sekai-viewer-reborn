@@ -29,6 +29,22 @@ describe("tracker page UI contract", () => {
     );
     expect(homeSource).not.toContain('class="tools-brand-lockup"');
     expect(homeSource).not.toContain('src={asset("/favicon.svg")}');
+    expect(homeSource).toContain("let events = $state<RegionCurrentEvent[] | null>(null);");
+    expect(homeSource).toContain("const isEventsLoading = $derived(events === null);");
+    expect(homeSource).toContain('role={isEventsLoading ? "status" : undefined}');
+    expect(homeSource).toContain('aria-busy={isEventsLoading}');
+    expect(homeSource).toContain('aria-hidden="true"');
+    expect(homeSource).toContain('translate("home.eventsLoading")');
+    expect(homeSource).toContain("events = trackerSupportedRegions.map((region) => ({ region, status: \"failed\", event: null }));");
+    expect(homeSource).toContain('import { getEventBannerAssetURL } from "$lib/event-assets";');
+    expect(homeSource).toContain('import { getTrackerCountdown } from "$lib/tracker-countdown";');
+    expect(homeSource).toContain("const clock = window.setInterval(() => (now = Date.now()), 1_000);");
+    expect(homeSource).toContain('class="event-card event-card-link has-event"');
+    expect(homeSource).toContain('aria-label={`${regionName(result.region)}: ${result.event.name} — ${translate("home.openRegionalTracker")}`}');
+    expect(homeSource).toContain('class="event-banner"');
+    expect(homeSource).toContain('import AssetImage from "@platform/ui-shell/asset-image";');
+    expect(homeSource).toContain('<AssetImage src={source}');
+    expect(homeSource).toContain('class="tracker-link-arrow"');
     expect(trackerSource).toContain(
       '<title>{translate("tracker.title")} | Sekai Viewer - Tools</title>'
     );
@@ -118,6 +134,12 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('@media (min-width: 48rem) and (max-width: 63.999rem)');
     expect(source).toContain('@media (min-width: 64rem)');
     expect(source).toContain('.tracker-status-panel {');
+    expect(source).not.toContain('border-top: 3px solid var(--color-primary);');
+    expect(source).toContain('class="tracker-ladder-switcher"');
+    expect(source).toContain('class="tracker-ladder-indicator"');
+    expect(source).toContain('class:tracker-ladder-indicator-full={ladder === "full"}');
+    expect(source).toContain('transition: transform 180ms ease-out');
+    expect(source).toContain('@media (prefers-reduced-motion: reduce)');
   });
 
   it("uses a deterministic SSR timestamp before switching to the browser local time", async () => {

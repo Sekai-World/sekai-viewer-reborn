@@ -1,5 +1,51 @@
 # Tools Site Ranking History Chart
 
+## Streamed current-event surfaces
+
+The tools home loader returns the cross-region current-event collection as an
+unawaited `events` Promise. This lets the brand lockup, hero copy, and primary
+tracker link SSR immediately. `apps/tools-site/src/routes/+page.svelte` converts
+the runtime Promise (which SvelteKit types as an already awaited value) back to a
+local `RegionCurrentEvent[] | null` state and handles both resolution and
+rejection. While the state is `null`, it renders one layout-matched daisyUI
+`skeleton` card per supported region; those cards are `aria-hidden`, while the
+stable region section carries `role="status"`, `aria-busy`, and the localized
+loading announcement. Only resolved data may render available, empty, or failure
+copy.
+
+Keep the aggregate Promise's noop catch in the loader and the page's rejection
+handler together. `fetchCurrentEvent` currently converts ordinary per-region
+transport failures itself, but both safeguards prevent an unexpected future
+aggregate failure from producing an unhandled rejection or a permanent skeleton.
+
+Available tools-home event cards use the same confirmed event-banner URL contract
+as content-site: `{bucket}/home/banner/{assetBundleName}/{assetBundleName}.webp`.
+The tools-site helper owns only its supported region-to-bucket map and takes the
+configured public asset base from the runtime public environment; it must not
+hardcode an asset host. Cards reserve the same `aspect-ratio: 5 / 2` banner frame
+in both resolved and skeleton states, and a failed image falls back to a
+decorative surface without changing the card's navigation target.
+
+During local development, `PUBLIC_REMOTE_ASSET_BASE_URL=/storage` is served by
+the tools-site Vite proxy to `https://storage.sekai.best`; production does not
+enable this development-only proxy.
+
+An available card is one anchor rather than a card plus a nested action link.
+Its tracker action row is visual affordance only: remove its text underline,
+and move the arrow only for fine-pointer hover or keyboard focus when motion is
+not reduced. The homepage owns a single one-second clock and passes it to the
+existing `getTrackerCountdown` pure helper, which uses `aggregateAt` and only
+falls back to `closedAt`; expired results say that ranking has ended instead of
+being labeled live.
+
+## Event tracker ladder control
+
+The tracker ladder switch is a two-option, stateful control: its moving accent
+indicator communicates the selected ladder without animating the result table.
+Keep the buttons' `aria-pressed` state as the source of truth, keep the indicator
+decorative, and reduce the indicator transition to an effectively instant change
+under `prefers-reduced-motion`.
+
 ## Event tracker header clock
 
 The Event Tracker header's countdown derives from the route's existing one-second

@@ -31,7 +31,6 @@
   "tracker.graphTrend": "Full trend",
   "tracker.graphUnavailable": "No graph data is available for this rank.",
   "tracker.goToCurrentEvent": "Go to current event",
-  "tracker.historyDescription": "Review a saved ranking point, then open any rank for its history graph.",
   "tracker.historyHeading": "Ranking history",
   "tracker.historical": "Historical event",
   "tracker.historicalMetadataUnavailable": "Event {eventId} — historical event metadata unavailable",

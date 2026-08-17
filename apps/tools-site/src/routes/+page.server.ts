@@ -11,6 +11,7 @@ export type EventSummary = {
   startAt: string | number | null;
   aggregateAt: string | number | null;
   closedAt: string | number | null;
+  assetBundleName: string | null;
 };
 
 export type RegionCurrentEvent =
@@ -66,7 +67,8 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
     unit: pick(unitRecord ?? event, ["unit", "unitName"], getString),
     startAt: pick(event, ["startAt", "start_at", "startDate"], getDateValue),
     aggregateAt: pick(event, ["aggregateAt", "aggregate_at", "endAt", "end_at"], getDateValue),
-    closedAt: pick(event, ["closedAt", "closed_at"], getDateValue)
+    closedAt: pick(event, ["closedAt", "closed_at"], getDateValue),
+    assetBundleName: pick(event, ["assetbundleName", "assetBundleName", "asset_bundle_name"], getString)
   };
 };
 
@@ -106,9 +108,9 @@ const fetchCurrentEvent = async (
 
 export const load: PageServerLoad = async () => {
   const baseUrl = getMasterApiBaseUrl();
-  const events = await Promise.all(
-    trackerSupportedRegions.map((region) => fetchCurrentEvent(baseUrl, region))
-  );
+  const events = Promise.all(trackerSupportedRegions.map((region) => fetchCurrentEvent(baseUrl, region)));
+  // Keep the page shell renderable if a future change makes the aggregate promise reject.
+  events.catch(() => {});
 
   return { events };
 };

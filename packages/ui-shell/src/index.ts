@@ -3,6 +3,7 @@ export { default as BrandLockup } from "./brand-lockup.svelte";
 export { default as RegionSwitcher } from "./region-switcher.svelte";
 export { default as ImagePreviewDialog } from "./image-preview-dialog.svelte";
 export { default as ImagePreviewTrigger } from "./image-preview-trigger.svelte";
+export { default as AssetImage } from "./asset-image.svelte";
 export { default as AudioPlayer } from "./audio-player.svelte";
 export { default as ThemeControls } from "./theme-controls.svelte";
 export { isThemeMode, isThemeName, themeModes, themeNames } from "./theme-controls.types";

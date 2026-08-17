@@ -21,6 +21,11 @@
       "svelte": "./src/image-retry/index.ts",
       "default": "./src/image-retry/index.ts"
     },
+    "./asset-image": {
+      "types": "./src/asset-image.ts",
+      "svelte": "./src/asset-image.svelte",
+      "default": "./src/asset-image.svelte"
+    },
     "./theme-controls": {
       "types": "./src/theme-controls.types.ts",
       "default": "./src/theme-controls.types.ts"
