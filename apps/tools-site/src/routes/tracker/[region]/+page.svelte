@@ -688,38 +688,44 @@
       </p>
       <h1 id="tracker-title">{translate("tracker.title")}</h1>
     </div>
-    <div class="tracker-live-status" aria-live="polite">
-      <span class:badge-success={isCurrentEvent && phase === "live"} class="badge badge-outline"
-        >{activityLabel}</span
-      >
-      {#if countdown}
-        <span class="tracker-countdown">
-          <span class="tracker-countdown-label">{countdownLabel}</span>
-          <span class="tracker-countdown-values">
-            {#if countdown.values.days > 0}<span>{countdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
-            <span>{String(countdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
-            <span>{String(countdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
-            <span>{String(countdown.values.seconds).padStart(2, "0")}<small>{translate("tracker.timeUnit.second")}</small></span>
+    <div class="tracker-status-panel" aria-live="polite">
+      <div class="tracker-primary-status">
+        <span class:badge-success={isCurrentEvent && phase === "live"} class="badge badge-outline"
+          >{activityLabel}</span
+        >
+        {#if countdown}
+          <span class="tracker-countdown">
+            <span class="tracker-countdown-label">{countdownLabel}</span>
+            <span class="tracker-countdown-values">
+              {#if countdown.values.days > 0}<span>{countdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
+              <span>{String(countdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
+              <span>{String(countdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
+              <span>{String(countdown.values.seconds).padStart(2, "0")}<small>{translate("tracker.timeUnit.second")}</small></span>
+            </span>
           </span>
-        </span>
-      {/if}
-      <span>{interpolate("tracker.loadedAt", { time: formatTimestamp(data.loadedAt) })}</span>
-      {#if nextRefreshSeconds !== null}<span
-          >{interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })}</span
-        >{/if}
-      <button
-        class="btn btn-square btn-sm btn-outline"
-        type="button"
-        onclick={refresh}
-        disabled={isRefreshing || isHistoricalEvent}
-        aria-label={isRefreshing
-          ? translate("tracker.refreshing")
-          : translate("tracker.refreshRankings")}
-        title={isRefreshing
-          ? translate("tracker.refreshing")
-          : translate("tracker.refreshRankings")}
-        ><Icon icon={isRefreshing ? "mdi:loading" : "mdi:refresh"} aria-hidden="true" /></button
-      >
+        {/if}
+      </div>
+      <div class="tracker-freshness-action">
+        <div class="tracker-freshness">
+          <span>{interpolate("tracker.loadedAt", { time: formatTimestamp(data.loadedAt) })}</span>
+          {#if nextRefreshSeconds !== null}<span
+              >{interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })}</span
+            >{/if}
+        </div>
+        <button
+          class="btn btn-square btn-sm btn-outline tracker-refresh-action"
+          type="button"
+          onclick={refresh}
+          disabled={isRefreshing || isHistoricalEvent}
+          aria-label={isRefreshing
+            ? translate("tracker.refreshing")
+            : translate("tracker.refreshRankings")}
+          title={isRefreshing
+            ? translate("tracker.refreshing")
+            : translate("tracker.refreshRankings")}
+          ><Icon icon={isRefreshing ? "mdi:loading" : "mdi:refresh"} aria-hidden="true" /></button
+        >
+      </div>
     </div>
   </header>
 
@@ -1085,10 +1091,9 @@
     gap: 1rem;
   }
   .tracker-context {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-items: end;
-    justify-content: space-between;
     gap: 1rem;
     border-top: 3px solid var(--color-primary);
     padding: 1.25rem 0 1rem;
@@ -1098,7 +1103,7 @@
     font-weight: 800;
     letter-spacing: -0.04em;
   }
-  .tracker-live-status,
+  .tracker-status-panel,
   .tracker-workspace-heading,
   .tracker-snapshot-banner {
     display: flex;
@@ -1118,9 +1123,36 @@
   .tracker-time-travel-description {
     color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
   }
-  .tracker-live-status {
+  .tracker-status-panel {
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+    min-width: 0;
+  }
+  .tracker-primary-status,
+  .tracker-freshness-action,
+  .tracker-freshness {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  .tracker-primary-status {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+  .tracker-freshness-action {
+    gap: 0.75rem;
+  }
+  .tracker-freshness {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.2rem 0.75rem;
     color: color-mix(in srgb, var(--color-base-content) 65%, transparent);
     font-size: 0.78rem;
+    text-align: right;
+  }
+  .tracker-refresh-action {
+    flex: none;
   }
   .tracker-countdown,
   .tracker-countdown-values {
@@ -1427,6 +1459,31 @@
     .tracker-history-control {
       align-items: stretch;
     }
+    .tracker-status-panel {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .tracker-primary-status {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+    .tracker-freshness-action {
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 0.75rem;
+      border-top: 1px solid var(--archive-border-subtle);
+      padding-top: 0.75rem;
+    }
+    .tracker-freshness {
+      justify-content: flex-start;
+      text-align: left;
+    }
+    .tracker-refresh-action {
+      min-width: 2.75rem;
+      min-height: 2.75rem;
+    }
     .tracker-event-combobox {
       width: 100%;
     }
@@ -1449,6 +1506,35 @@
     }
     .tracker-detail-grid {
       grid-template-columns: 1fr;
+    }
+  }
+  @media (min-width: 48rem) and (max-width: 63.999rem) {
+    .tracker-context {
+      align-items: start;
+    }
+    .tracker-status-panel {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.25rem;
+    }
+  }
+  @media (min-width: 64rem) {
+    .tracker-context {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .tracker-status-panel {
+      display: grid;
+      grid-template-columns: auto auto;
+      align-items: center;
+      gap: 0.75rem 1.25rem;
+    }
+    .tracker-primary-status {
+      grid-row: 1;
+    }
+    .tracker-freshness-action {
+      grid-row: 2;
+      grid-column: 1 / -1;
+      justify-content: flex-end;
     }
   }
   .tracker-time-travel-panel {

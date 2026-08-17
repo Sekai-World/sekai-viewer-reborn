@@ -99,6 +99,14 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('translate("tracker.refreshing")');
     expect(source).toContain('icon={isRefreshing ? "mdi:loading" : "mdi:refresh"}');
     expect(source).toContain('interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })');
+    expect(source).toContain('class="tracker-status-panel" aria-live="polite"');
+    expect(source).toContain('class="tracker-primary-status"');
+    expect(source).toContain('class="tracker-freshness-action"');
+    expect(source).toContain('class="tracker-freshness"');
+    expect(source).toContain('class="btn btn-square btn-sm btn-outline tracker-refresh-action"');
+    expect(source).toContain('@media (min-width: 48rem) and (max-width: 63.999rem)');
+    expect(source).toContain('@media (min-width: 64rem)');
+    expect(source).toContain('.tracker-status-panel {');
   });
 
   it("uses a deterministic SSR timestamp before switching to the browser local time", async () => {
