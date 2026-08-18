@@ -41,11 +41,11 @@ describe("tracker time-travel endpoints", () => {
       status: "available",
       timePoints: ["2026-01-01T00:00:00Z"]
     });
-    expect(mocks.getEventRankingTimePoints).toHaveBeenCalledWith({
+    expect(mocks.getEventRankingTimePoints).toHaveBeenCalledWith(expect.objectContaining({
       baseUrl: "https://api.example.test",
       path: { id: 42 },
       query: { region: "en" }
-    });
+    }));
   });
 
   it("returns typed empty responses for invalid route and query parameters", async () => {
@@ -122,6 +122,9 @@ describe("tracker time-travel endpoints", () => {
       status: "available",
       points: []
     });
-    expect(fetchMock).toHaveBeenCalledWith("https://api.example.test/event/176/rankings/graph?region=tw&rank=1");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.test/event/176/rankings/graph?region=tw&rank=1",
+      { signal: expect.any(AbortSignal) }
+    );
   });
 });

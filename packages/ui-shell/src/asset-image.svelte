@@ -42,7 +42,15 @@
 </script>
 
 {#if interactive}
-  <ImagePreviewTrigger {src} {fallbackSrc} {alt} {fallbackLabel} ariaLabel={alt || fallbackLabel} {buttonClass} {imageClass} {retryPolicy} {onclick} />
+  {#if shouldRenderImage}
+    <ImagePreviewTrigger {src} {fallbackSrc} {alt} {fallbackLabel} ariaLabel={alt || fallbackLabel} {buttonClass} {imageClass} {retryPolicy} {onclick} />
+  {:else}
+    <div class={buttonClass} bind:this={observedNode}>
+      <div class="relative size-full overflow-hidden">
+        <div class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse" aria-hidden="true"><span class="loading loading-spinner loading-md text-base-content/60"></span></div>
+      </div>
+    </div>
+  {/if}
 {:else}
   <div class={buttonClass}>
     <div class="relative size-full overflow-hidden" bind:this={observedNode}>

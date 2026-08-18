@@ -23,7 +23,10 @@ export default defineConfig(({ mode }) => {
                 target: proxyTarget,
                 changeOrigin: true,
                 secure: true,
-                rewrite: (path: string) => path.replace(new RegExp(`^${proxyPath as string}`), ""),
+                rewrite: (path: string) =>
+                  path.startsWith(proxyPath as string)
+                    ? path.slice((proxyPath as string).length) || "/"
+                    : path,
                 configure: (proxy) => {
                   proxy.on("proxyReq", (proxyReq) => {
                     proxyReq.removeHeader("origin");

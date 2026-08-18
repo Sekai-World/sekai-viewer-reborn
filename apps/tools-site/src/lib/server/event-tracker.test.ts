@@ -52,16 +52,23 @@ describe("event tracker data layer", () => {
     ]);
   });
 
+  it("does not merge rows when both userId and score are absent", () => {
+    expect(parseEventTrackerRankings({ data: { eventRankings: [
+      { rank: 1, timestamp: "2026-08-08T00:00:00Z" },
+      { rank: 1, timestamp: "2026-08-08T00:00:00Z" }
+    ] } })).toHaveLength(2);
+  });
+
   it("calls the SDK with the base URL and region", async () => {
     mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [] } });
 
     await expect(getEventTrackerRankings("https://api.example.test", "en")).resolves.toMatchObject({
       status: "available", selection: { mode: "live", eventId: null }, resolvedCurrentEventId: null, rankings: []
     });
-    expect(mocks.getEventRankingLive).toHaveBeenCalledWith({
+    expect(mocks.getEventRankingLive).toHaveBeenCalledWith(expect.objectContaining({
       baseUrl: "https://api.example.test",
       query: { region: "en" }
-    });
+    }));
   });
 
   it("exposes a live event id only when every ranking row identifies the same event", async () => {
@@ -95,15 +102,15 @@ describe("event tracker data layer", () => {
       status: "available",
       rankings: [{ rank: 1, userId: "one" }, { rank: 100, userId: "last" }]
     });
-    expect(mocks.getEventRankingsByEventId).toHaveBeenNthCalledWith(1, {
+    expect(mocks.getEventRankingsByEventId).toHaveBeenNthCalledWith(1, expect.objectContaining({
       baseUrl: "https://api.example.test",
       path: { id: 42 },
       query: { limit: 1, sort: { timestamp: "desc" }, region: "jp" },
       querySerializer: expect.any(Function)
-    });
-    expect(mocks.getEventRankingsByEventId).toHaveBeenNthCalledWith(2, {
+    }));
+    expect(mocks.getEventRankingsByEventId).toHaveBeenNthCalledWith(2, expect.objectContaining({
       baseUrl: "https://api.example.test", path: { id: 42 }, query: { timestamp: "2026-08-08T00:00:00Z", region: "jp" }
-    });
+    }));
   });
 
   it("unwraps the production SDK envelope before selecting a historical snapshot", async () => {

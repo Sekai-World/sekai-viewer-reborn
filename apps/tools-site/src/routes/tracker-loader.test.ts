@@ -41,10 +41,10 @@ describe("tracker route loader", () => {
     const loaded = await runLoad(region);
     expect(loaded).toMatchObject({ region, selectionStatus: "valid" });
     await expect(loaded.trackerResult).resolves.toMatchObject({ status: "available" });
-    expect(mocks.getEventRankingLive).toHaveBeenCalledWith({
+    expect(mocks.getEventRankingLive).toHaveBeenCalledWith(expect.objectContaining({
       baseUrl: "https://api.example.test",
       query: { region }
-    });
+    }));
   });
 
   it("uses the live ranking event id for rewards while catalog metadata is unavailable", async () => {
@@ -57,10 +57,10 @@ describe("tracker route loader", () => {
     expect(loaded).toMatchObject({ selectionStatus: "valid" });
     await expect(loaded.trackerResult).resolves.toMatchObject({ resolvedCurrentEventId: 42 });
     await expect(loaded.rewards).resolves.toMatchObject({ status: "available", items: [] });
-    expect(mocks.getEventsByRegionByIdRewards).toHaveBeenCalledWith({
+    expect(mocks.getEventsByRegionByIdRewards).toHaveBeenCalledWith(expect.objectContaining({
       baseUrl: "https://master.example.test",
       path: { region: "en", id: "42" }
-    });
+    }));
   });
 
   it("uses the historical endpoint for a valid eventId", async () => {
@@ -69,12 +69,12 @@ describe("tracker route loader", () => {
     const loaded = await runLoad("en", "123");
     expect(loaded).toMatchObject({ selection: { mode: "history", eventId: 123 }, selectionStatus: "valid" });
     await expect(loaded.trackerResult).resolves.toMatchObject({ status: "available" });
-    expect(mocks.getEventRankingsByEventId).toHaveBeenCalledWith({
+    expect(mocks.getEventRankingsByEventId).toHaveBeenCalledWith(expect.objectContaining({
       baseUrl: "https://api.example.test",
       path: { id: 123 },
       query: { limit: 1, sort: { timestamp: "desc" }, region: "en" },
       querySerializer: expect.any(Function)
-    });
+    }));
     expect(mocks.getEventRankingLive).not.toHaveBeenCalled();
     await expect(loaded.catalog).resolves.toMatchObject({
       selectedEvent: { id: 123, name: "Historical event" }

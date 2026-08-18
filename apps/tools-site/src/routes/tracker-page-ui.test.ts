@@ -83,6 +83,10 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('translate("tracker.countdownStartsIn")');
     expect(source).toContain('class="tracker-countdown"');
     expect(source).toContain("font-variant-numeric: tabular-nums");
+    expect(source).toContain("parseTrackerTimestamp(snapshotTimestamp) ??");
+    expect(source).toContain('class="tracker-row-detail-button"');
+    expect(source).not.toContain('tabindex="0" role="button"');
+    expect(source).toContain("new AbortController()");
   });
 
   it("uses one accessible event combobox for catalog search and direct ID navigation", async () => {

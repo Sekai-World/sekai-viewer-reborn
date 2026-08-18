@@ -183,9 +183,9 @@
   const elapsedMs = $derived.by(() => {
     const start = parseTrackerTimestamp(selectedEvent?.startAt);
     const aggregateAt = parseTrackerTimestamp(selectedEvent?.aggregateAt);
-    const loaded = parseTrackerTimestamp(trackerResult?.loadedAt);
-    if (start === null || loaded === null || loaded <= start) return null;
-    return aggregateAt === null ? loaded - start : Math.min(loaded, aggregateAt) - start;
+    const reference = parseTrackerTimestamp(snapshotTimestamp) ?? parseTrackerTimestamp(trackerResult?.loadedAt);
+    if (start === null || reference === null || reference <= start) return null;
+    return aggregateAt === null ? reference - start : Math.min(reference, aggregateAt) - start;
   });
   const displayRankings = $derived(snapshotRankings ?? trackerResult?.rankings ?? []);
   const getReward = (rank: number): SharedEventRewardRangeResponse | null =>
@@ -447,7 +447,10 @@
   ): Promise<GraphPoint[]> => {
     const params: Record<string, string> = { eventId: String(eventId), rank: String(rank) };
     if (timestamp) params.timestamp = timestamp;
-    const response = await fetch(endpoint("graph", params));
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15_000);
+    const response = await fetch(endpoint("graph", params), { signal: controller.signal });
+    window.clearTimeout(timeout);
     const payload = (await response.json()) as { status?: string; points?: unknown };
     if (!response.ok || payload.status !== "available" || !Array.isArray(payload.points))
       throw new Error("Ranking graph unavailable");
@@ -548,7 +551,10 @@
     }
     timePointsStatus = "loading";
     try {
-      const response = await fetch(endpoint("time", { eventId: String(requestEventKey) }));
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 15_000);
+      const response = await fetch(endpoint("time", { eventId: String(requestEventKey) }), { signal: controller.signal });
+      window.clearTimeout(timeout);
       const payload = (await response.json()) as { status?: string; timePoints?: unknown };
       if (
         requestToken !== timePointsRequestToken ||
@@ -586,9 +592,10 @@
     const requestEventKey = eventKey;
     snapshotStatus = "loading";
     try {
-      const response = await fetch(
-        endpoint("snapshot", { eventId: String(requestEventKey), timestamp })
-      );
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 15_000);
+      const response = await fetch(endpoint("snapshot", { eventId: String(requestEventKey), timestamp }), { signal: controller.signal });
+      window.clearTimeout(timeout);
       const payload = (await response.json()) as {
         status?: string;
         rankings?: EventTrackerResult["rankings"];
@@ -1012,11 +1019,11 @@
           <tbody>
             {#each rows as row (row.ladderRank)}
               {#if row.status === "available"}
-                <tr class="tracker-ranking-row" class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"} tabindex="0" role="button" aria-label={interpolate("tracker.openRankDetailsAndTrend", { rank: row.ladderRank })} onclick={() => openDetails(row)} onkeydown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openDetails(row); } }}>
+                <tr class="tracker-ranking-row" class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"}>
                   <th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th>
                   <td><strong class="tracker-player-name">{row.ranking?.userName ?? row.ranking?.userId ?? translate("tracker.unavailable")}</strong></td>
                   <td class="tracker-score">{formatNumber(row.score)}</td><td class="tracker-speed">{formatSpeed(row.speedPerHour)}</td><td><span class="tracker-reward-badge">{formatRewardRange(row.reward)}</span></td>
-                  <td class="tracker-row-icon"><Icon icon="mdi:chart-line" aria-hidden="true" /><Icon icon="mdi:chevron-right" aria-hidden="true" /></td>
+                  <td class="tracker-row-icon"><button class="tracker-row-detail-button" type="button" aria-label={interpolate("tracker.openRankDetailsAndTrend", { rank: row.ladderRank })} onclick={() => openDetails(row)}><Icon icon="mdi:chart-line" aria-hidden="true" /><Icon icon="mdi:chevron-right" aria-hidden="true" /></button></td>
                 </tr>
               {:else}
                 <tr class="tracker-unavailable"><th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th><td>{translate("tracker.unavailable")}</td><td>{formatNumber(row.score)}</td><td>{formatSpeed(row.speedPerHour)}</td><td>{formatRewardRange(row.reward)}</td><td></td></tr>

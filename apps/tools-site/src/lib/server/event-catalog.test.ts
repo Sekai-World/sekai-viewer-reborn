@@ -96,6 +96,19 @@ describe("getEventCatalog", () => {
     });
   });
 
+  it("excludes list events with invalid startAt values", async () => {
+    mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 42, name: "Current" } });
+    mocks.getEventsByRegionList.mockResolvedValue({ data: { items: [
+      { id: 1, name: "Invalid", startAt: "not-a-date" },
+      { id: 2, name: "Future", startAt: "2999-01-01T00:00:00Z" },
+      { id: 3, name: "Past", startAt: "2020-01-01T00:00:00Z" }
+    ] } });
+
+    await expect(getEventCatalog("https://master.example.test", "en")).resolves.toMatchObject({
+      eligibleEvents: [{ id: 3 }]
+    });
+  });
+
   it("loads current metadata alongside an explicit selected event", async () => {
     mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 42, name: "Current" } });
     mocks.getEventsByRegionList.mockResolvedValue({ data: { items: [{ id: 42, name: "Current", startAt: "2026-08-01T00:00:00Z" }] } });

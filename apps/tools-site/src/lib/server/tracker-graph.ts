@@ -1,23 +1,6 @@
 import { parseEventTrackerRankings, type EventTrackerRanking, type TrackerRegion } from "./event-tracker";
 import type { TrackerTimeTravelStatus } from "./tracker-time-travel";
-
-const isRestoreResponse = (response: { data?: unknown; response?: { status?: number } }): boolean =>
-  response.response?.status === 202 ||
-  (response.data !== null && typeof response.data === "object" && !Array.isArray(response.data) &&
-    ((response.data as { restore?: unknown }).restore === true ||
-      ((response.data as { status?: unknown; data?: { restore?: unknown } }).status === "string" &&
-        (response.data as { data?: { restore?: unknown } }).data?.restore === true)));
-
-const unwrapSekaiApiEnvelope = (value: unknown): unknown => {
-  let payload = value;
-  while (
-    payload !== null && typeof payload === "object" && !Array.isArray(payload) &&
-    typeof (payload as { status?: unknown }).status === "string" && "data" in payload
-  ) {
-    payload = (payload as { data: unknown }).data;
-  }
-  return payload;
-};
+import { isRestoreResponse, unwrapSekaiApiEnvelope, withRequestTimeout } from "./network";
 
 export const getTrackerGraph = async (
   baseUrl: string,
@@ -32,7 +15,7 @@ export const getTrackerGraph = async (
 
   let response: Response;
   try {
-    response = await fetch(url);
+    response = await withRequestTimeout((signal) => fetch(url, { signal }));
   } catch {
     return { status: "network-error", points: [] };
   }

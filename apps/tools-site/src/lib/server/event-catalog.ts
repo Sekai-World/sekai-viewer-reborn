@@ -4,6 +4,7 @@ import {
   getEventsByRegionList
 } from "@platform/sekai-master-api-sdk";
 import type { TrackerRegion } from "./event-tracker";
+import { withRequestTimeout } from "./network";
 
 export type TrackerEventMetadata = {
   id: number;
@@ -25,8 +26,6 @@ export type EventCatalogResult = {
   selectedEvent: TrackerEventMetadata | null;
   eligibleEvents: TrackerEventMetadata[];
 };
-
-const EVENT_CATALOG_TIMEOUT_MS = 5_000;
 
 const record = (value: unknown): Record<string, unknown> | null => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const unwrap = (value: unknown): unknown => {
@@ -69,23 +68,11 @@ const unavailableCatalog = (currentStatus: CatalogRequestStatus, listStatus: Cat
 });
 
 const withTimeout = async <T>(request: (signal: AbortSignal) => Promise<T>): Promise<{ status: CatalogRequestStatus; value?: T }> => {
-  const controller = new AbortController();
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    const value = await Promise.race([
-      request(controller.signal),
-      new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-          controller.abort();
-          reject(new Error("Event catalog request timed out"));
-        }, EVENT_CATALOG_TIMEOUT_MS);
-      })
-    ]);
+    const value = await withRequestTimeout(request);
     return { status: "available", value };
-  } catch (error) {
-    return { status: error instanceof Error && error.message === "Event catalog request timed out" ? "network-error" : "network-error" };
-  } finally {
-    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  } catch {
+    return { status: "network-error" };
   }
 };
 
@@ -110,7 +97,7 @@ const getListEvents = (value: unknown): TrackerEventMetadata[] | null => {
   return items.map(event).filter((value): value is TrackerEventMetadata => value !== null).filter((value) => {
     if (value.startAt === null) return false;
     const start = new Date(value.startAt).getTime();
-    return Number.isNaN(start) || start <= Date.now();
+    return Number.isFinite(start) && start <= Date.now();
   });
 };
 

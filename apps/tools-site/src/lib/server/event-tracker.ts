@@ -4,6 +4,7 @@ import {
   trackerSupportedRegions,
   type TrackerSupportedRegion
 } from "$lib/regions";
+import { withRequestTimeout } from "./network";
 
 export const trackerRegions = trackerSupportedRegions;
 export type TrackerRegion = TrackerSupportedRegion;
@@ -130,11 +131,12 @@ export const parseEventTrackerRankings = (payload: unknown): EventTrackerRanking
   if (!parsed.every((ranking): ranking is EventTrackerRanking => ranking !== null)) return null;
 
   const seen = new Set<string>();
-  return parsed.filter((ranking) => {
+  return parsed.filter((ranking, index) => {
     // A graph response contains many snapshots for the same rank/player. Keep
     // one row per timestamp, while still collapsing duplicate rows inside an
     // individual snapshot response.
-    const key = `${ranking.timestamp ?? ""}:${ranking.rank ?? ""}:${ranking.userId ?? ranking.score ?? ""}`;
+    const identity = ranking.userId ?? (ranking.score !== null ? `score:${ranking.score}` : `row:${index}`);
+    const key = `${ranking.timestamp ?? ""}:${ranking.rank ?? ""}:${identity}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -166,33 +168,42 @@ export const getEventTrackerRankings = async (
 
   try {
     if (eventId === undefined) {
-      const response = await getEventRankingLive({ baseUrl, query: { region } });
-      if (response.error) return withResult(selection, "sdk-error");
+      const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingLive>>>((signal) => getEventRankingLive({ baseUrl, query: { region }, signal } as Parameters<typeof getEventRankingLive>[0]));
+      if ("error" in response && response.error) return withResult(selection, "sdk-error");
       const rankings = parseEventTrackerRankings(response.data);
       return rankings
         ? withResult(selection, "available", rankings, getResolvedCurrentEventId(rankings))
         : withResult(selection, "invalid-data");
     }
 
-    const latest = await getEventRankingsByEventId({
+    const latest = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingsByEventId>>>((signal) => getEventRankingsByEventId({
       baseUrl,
       path: { id: eventId },
       query: { limit: 1, sort: { timestamp: "desc" }, region },
-      querySerializer: () => `limit=1&sort%5Btimestamp%5D=desc&region=${region}`
-    });
-    if (latest.error) return withResult(selection, getHistoricalSdkErrorStatus(latest));
+      querySerializer: (query) => {
+        const values = query as Record<string, unknown>;
+        const sort = values.sort as Record<string, unknown> | undefined;
+        return new URLSearchParams({
+          limit: String(values.limit),
+          "sort[timestamp]": String(sort?.timestamp),
+          region: String(values.region)
+        }).toString();
+      },
+      signal
+    } as Parameters<typeof getEventRankingsByEventId>[0]));
+    if ("error" in latest && latest.error) return withResult(selection, getHistoricalSdkErrorStatus(latest));
     const latestRows = getRankingRows(latest.data);
     if (!latestRows) return withResult(selection, "invalid-data");
     if (latestRows.length === 0) return withResult(selection, "available");
-    const timestamp = asObject(latestRows[0])?.timestamp;
+    const timestamp = (asObject(latestRows[0]) as { timestamp?: unknown } | null)?.timestamp;
     if (typeof timestamp !== "string" || !timestamp) return withResult(selection, "invalid-data");
-    const response = await getEventRankingsByEventId({
+    const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingsByEventId>>>((signal) => getEventRankingsByEventId({
       baseUrl,
       path: { id: eventId },
-      query: { timestamp, region }
-    });
+      query: { timestamp, region }, signal
+    } as Parameters<typeof getEventRankingsByEventId>[0]));
 
-    if (response.error) return withResult(selection, getHistoricalSdkErrorStatus(response));
+    if ("error" in response && response.error) return withResult(selection, getHistoricalSdkErrorStatus(response));
 
     const rankings = parseEventTrackerRankings(response.data);
     return rankings ? withResult(selection, "available", rankings) : withResult(selection, "invalid-data");
