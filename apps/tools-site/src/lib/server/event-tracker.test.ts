@@ -9,6 +9,10 @@ import { getEventTrackerRankings, parseEventTrackerRankings } from "./event-trac
 describe("event tracker data layer", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  const completeLiveRows = () => ({
+    data: { eventRankings: [1, 2, 3, 10, 100, 1000, 5000, 10_000, 50_000, 100_000].map((rank) => ({ rank })) }
+  });
+
   it("parses the live API's numeric-string ranking fields safely", () => {
     expect(
       parseEventTrackerRankings({
@@ -60,10 +64,11 @@ describe("event tracker data layer", () => {
   });
 
   it("calls the SDK with the base URL and region", async () => {
-    mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [] } });
+    mocks.getEventRankingLive.mockResolvedValue(completeLiveRows());
 
     await expect(getEventTrackerRankings("https://api.example.test", "en")).resolves.toMatchObject({
-      status: "available", selection: { mode: "live", eventId: null }, resolvedCurrentEventId: null, rankings: []
+      status: "available", selection: { mode: "live", eventId: null }, resolvedCurrentEventId: null,
+      rankings: expect.any(Array)
     });
     expect(mocks.getEventRankingLive).toHaveBeenCalledWith(expect.objectContaining({
       baseUrl: "https://api.example.test",
@@ -73,14 +78,14 @@ describe("event tracker data layer", () => {
 
   it("exposes a live event id only when every ranking row identifies the same event", async () => {
     mocks.getEventRankingLive.mockResolvedValueOnce({
-      data: { eventRankings: [{ rank: 1, eventId: "42" }, { rank: 2, eventId: 42 }] }
+      data: { eventRankings: [1, 2, 3, 10, 100, 1000, 5000, 10_000, 50_000, 100_000].map((rank) => ({ rank, eventId: "42" })) }
     });
     await expect(getEventTrackerRankings("https://api.example.test", "en")).resolves.toMatchObject({
       resolvedCurrentEventId: 42
     });
 
     mocks.getEventRankingLive.mockResolvedValueOnce({
-      data: { eventRankings: [{ rank: 1, eventId: 42 }, { rank: 2, eventId: 43 }] }
+      data: { eventRankings: [1, 2, 3, 10, 100, 1000, 5000, 10_000, 50_000, 100_000].map((rank) => ({ rank, eventId: rank === 2 ? 43 : 42 })) }
     });
     await expect(getEventTrackerRankings("https://api.example.test", "en")).resolves.toMatchObject({
       resolvedCurrentEventId: null
@@ -156,5 +161,69 @@ describe("event tracker data layer", () => {
     await expect(getEventTrackerRankings("https://api.example.test", "jp")).resolves.toMatchObject({
       status: "invalid-data"
     });
+  });
+
+  it.each([
+    [500, "upstream-error"],
+    [503, "sdk-error"]
+  ] as const)("maps live HTTP %s SDK failures to %s without retrying", async (status, expectedStatus) => {
+    mocks.getEventRankingLive.mockResolvedValue({ error: true, response: { status } });
+
+    await expect(getEventTrackerRankings("https://api.example.test", "jp")).resolves.toMatchObject({
+      status: expectedStatus
+    });
+    expect(mocks.getEventRankingLive).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries an incomplete live snapshot and accepts the second complete response", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.getEventRankingLive
+        .mockResolvedValueOnce({ data: { eventRankings: [{ rank: 1 }] } })
+        .mockResolvedValueOnce(completeLiveRows());
+      const result = getEventTrackerRankings("https://api.example.test", "jp");
+      await vi.advanceTimersByTimeAsync(500);
+      await expect(result).resolves.toMatchObject({ completeness: { status: "complete", missingRanks: [] } });
+      expect(mocks.getEventRankingLive).toHaveBeenCalledTimes(2);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("stops after bounded retries and preserves rows plus missing ranks", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [{ rank: 1, score: 10 }] } });
+      const result = getEventTrackerRankings("https://api.example.test", "jp");
+      await vi.advanceTimersByTimeAsync(500 + 1500);
+      await expect(result).resolves.toMatchObject({
+        rankings: [{ rank: 1, score: 10 }],
+        completeness: { status: "incomplete", missingRanks: expect.arrayContaining([2, 100_000]) }
+      });
+      expect(mocks.getEventRankingLive).toHaveBeenCalledTimes(3);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it("marks KR missing only rank 50000 as accepted-incomplete", async () => {
+    const rows = completeLiveRows();
+    rows.data.eventRankings = rows.data.eventRankings.filter(({ rank }) => rank !== 50_000);
+    mocks.getEventRankingLive.mockResolvedValue(rows);
+    await expect(getEventTrackerRankings("https://api.example.test", "kr")).resolves.toMatchObject({
+      completeness: { status: "accepted-incomplete", missingRanks: [50_000] }
+    });
+    expect(mocks.getEventRankingLive).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries KR when the first response misses 50000 and another critical rank, then accepts only 50000 missing", async () => {
+    vi.useFakeTimers();
+    try {
+      const firstRows = completeLiveRows();
+      firstRows.data.eventRankings = firstRows.data.eventRankings.filter(({ rank }) => rank !== 50_000 && rank !== 100);
+      const secondRows = completeLiveRows();
+      secondRows.data.eventRankings = secondRows.data.eventRankings.filter(({ rank }) => rank !== 50_000);
+      mocks.getEventRankingLive.mockResolvedValueOnce(firstRows).mockResolvedValueOnce(secondRows);
+      const result = getEventTrackerRankings("https://api.example.test", "kr");
+      await vi.advanceTimersByTimeAsync(500);
+      await expect(result).resolves.toMatchObject({ completeness: { status: "accepted-incomplete", missingRanks: [50_000] } });
+      expect(mocks.getEventRankingLive).toHaveBeenCalledTimes(2);
+    } finally { vi.useRealTimers(); }
   });
 });

@@ -5,6 +5,7 @@ import {
   type TrackerSupportedRegion
 } from "$lib/regions";
 import { withRequestTimeout } from "./network";
+import { CRITICAL_RANK_LADDER } from "$lib/tracker-ladders";
 
 export const trackerRegions = trackerSupportedRegions;
 export type TrackerRegion = TrackerSupportedRegion;
@@ -31,7 +32,16 @@ export type EventTrackerResult = {
   loadedAt: string;
   status: "available" | "sdk-error" | "upstream-error" | "network-error" | "invalid-data";
   rankings: EventTrackerRanking[];
+  completeness?: EventTrackerCompleteness;
 };
+
+export type EventTrackerCompleteness = {
+  status: "complete" | "incomplete" | "accepted-incomplete";
+  missingRanks: number[];
+};
+
+const LIVE_MAX_ATTEMPTS = 3;
+const LIVE_RETRY_DELAYS_MS = [500, 1500] as const;
 
 const asObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)
@@ -155,8 +165,26 @@ const getResolvedCurrentEventId = (rankings: EventTrackerRanking[]): number | nu
   return eventIds.size === 1 ? [...eventIds][0] ?? null : null;
 };
 
-const getHistoricalSdkErrorStatus = (response: { response?: { status?: number } }): EventTrackerResult["status"] =>
+const getSdkErrorStatus = (response: { response?: { status?: number } }): EventTrackerResult["status"] =>
   response.response?.status === 500 ? "upstream-error" : "sdk-error";
+
+const getLiveCompleteness = (
+  region: TrackerRegion,
+  rankings: EventTrackerRanking[]
+): EventTrackerCompleteness => {
+  const presentRanks = new Set(rankings.map((ranking) => ranking.rank).filter((rank): rank is number => rank !== null));
+  const missingRanks = CRITICAL_RANK_LADDER.filter((rank) => !presentRanks.has(rank));
+  const acceptedIncomplete = region === "kr" && missingRanks.length === 1 && missingRanks[0] === 50_000;
+  return {
+    status: missingRanks.length === 0 ? "complete" : acceptedIncomplete ? "accepted-incomplete" : "incomplete",
+    missingRanks: [...missingRanks]
+  };
+};
+
+const waitForLiveRetry = (attempt: number): Promise<void> => {
+  const delay = LIVE_RETRY_DELAYS_MS[attempt - 1];
+  return delay === undefined ? Promise.resolve() : new Promise((resolve) => setTimeout(resolve, delay));
+};
 
 export const getEventTrackerRankings = async (
   baseUrl: string,
@@ -168,12 +196,23 @@ export const getEventTrackerRankings = async (
 
   try {
     if (eventId === undefined) {
-      const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingLive>>>((signal) => getEventRankingLive({ baseUrl, query: { region }, signal } as Parameters<typeof getEventRankingLive>[0]));
-      if ("error" in response && response.error) return withResult(selection, "sdk-error");
-      const rankings = parseEventTrackerRankings(response.data);
-      return rankings
-        ? withResult(selection, "available", rankings, getResolvedCurrentEventId(rankings))
-        : withResult(selection, "invalid-data");
+      let lastRankings: EventTrackerRanking[] = [];
+      for (let attempt = 0; attempt < LIVE_MAX_ATTEMPTS; attempt += 1) {
+        const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingLive>>>((signal) => getEventRankingLive({ baseUrl, query: { region }, signal } as Parameters<typeof getEventRankingLive>[0]));
+        if ("error" in response && response.error) return withResult(selection, getSdkErrorStatus(response));
+        const rankings = parseEventTrackerRankings(response.data);
+        if (!rankings) return withResult(selection, "invalid-data");
+        lastRankings = rankings;
+        const completeness = getLiveCompleteness(region, rankings);
+        if (completeness.status !== "incomplete" || attempt === LIVE_MAX_ATTEMPTS - 1) {
+          return {
+            ...withResult(selection, "available", rankings, getResolvedCurrentEventId(rankings)),
+            completeness
+          };
+        }
+        await waitForLiveRetry(attempt + 1);
+      }
+      return { ...withResult(selection, "available", lastRankings), completeness: getLiveCompleteness(region, lastRankings) };
     }
 
     const latest = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingsByEventId>>>((signal) => getEventRankingsByEventId({
@@ -191,7 +230,7 @@ export const getEventTrackerRankings = async (
       },
       signal
     } as Parameters<typeof getEventRankingsByEventId>[0]));
-    if ("error" in latest && latest.error) return withResult(selection, getHistoricalSdkErrorStatus(latest));
+    if ("error" in latest && latest.error) return withResult(selection, getSdkErrorStatus(latest));
     const latestRows = getRankingRows(latest.data);
     if (!latestRows) return withResult(selection, "invalid-data");
     if (latestRows.length === 0) return withResult(selection, "available");
@@ -203,7 +242,7 @@ export const getEventTrackerRankings = async (
       query: { timestamp, region }, signal
     } as Parameters<typeof getEventRankingsByEventId>[0]));
 
-    if ("error" in response && response.error) return withResult(selection, getHistoricalSdkErrorStatus(response));
+    if ("error" in response && response.error) return withResult(selection, getSdkErrorStatus(response));
 
     const rankings = parseEventTrackerRankings(response.data);
     return rankings ? withResult(selection, "available", rankings) : withResult(selection, "invalid-data");

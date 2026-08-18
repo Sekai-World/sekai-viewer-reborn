@@ -78,6 +78,11 @@ The ranking table uses visual tiers for the requested ladder ranks: rank 1,
 top 10, top 100, top 1000, and other milestones. Tier labels are localized in
 the tools-site tracker dictionary and do not change ranking semantics.
 
+For desktop mouse convenience, an available native ranking-table row may use a
+guarded click that ignores targets within `button, a, input`. Keep the real
+detail cell button as the keyboard-accessible control, preserving native table
+semantics without adding row roles, tabindex, or keyboard handlers.
+
 The graph proxy deliberately uses a direct upstream request rather than the
 generated SDK. For a current graph it must request
 `/event/{id}/rankings/graph?region={region}&rank={rank}` without `timestamp`,
@@ -90,3 +95,14 @@ latest time-sorted point when there is no hover selection. Each horizon uses
 the latest snapshot at or before target minus the horizon and divides the score
 delta by the actual elapsed hours, remaining unavailable without a baseline.
 This avoids look-ahead estimates when graph cadence or gaps differ.
+
+## Live ranking completeness
+
+Parsed live snapshots are checked against the critical rank ladder. Missing
+critical ranks are retried in the same request at most twice, after 500 ms and
+1500 ms. Restore/202, SDK/network failures, and invalid payloads retain their
+existing status semantics and do not enter completeness retries. The final
+compatible `available` result retains its rows and exposes internal
+`completeness` metadata with `status: "incomplete"` and `missingRanks` rather
+than claiming completeness. KR alone may omit rank 50000 as
+`accepted-incomplete`; all other missing-rank combinations remain incomplete.

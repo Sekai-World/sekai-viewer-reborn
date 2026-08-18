@@ -479,6 +479,13 @@
     if (!detailsDialog?.open) detailsDialog?.showModal();
     void openGraph(row);
   };
+  const handleRankingRowClick = (
+    event: MouseEvent,
+    row: TrackerRow<SharedEventRewardRangeResponse>
+  ): void => {
+    if (event.target instanceof Element && event.target.closest("button, a, input")) return;
+    openDetails(row);
+  };
   const closeDetails = (): void => {
     graphRequestToken += 1;
     detailsDialog?.close();
@@ -1024,11 +1031,11 @@
           <tbody>
             {#each rows as row (row.ladderRank)}
               {#if row.status === "available"}
-                <tr class="tracker-ranking-row" class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"}>
+                <tr class="tracker-ranking-row" class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"} onclick={(event) => handleRankingRowClick(event, row)}>
                   <th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th>
                   <td><strong class="tracker-player-name">{row.ranking?.userName ?? row.ranking?.userId ?? translate("tracker.unavailable")}</strong></td>
                   <td class="tracker-score">{formatNumber(row.score)}</td><td class="tracker-speed">{formatSpeed(row.speedPerHour)}</td><td><span class="tracker-reward-badge">{formatRewardRange(row.reward)}</span></td>
-                  <td class="tracker-row-icon"><button class="tracker-row-detail-button" type="button" aria-label={interpolate("tracker.openRankDetailsAndTrend", { rank: row.ladderRank })} onclick={() => openDetails(row)}><Icon icon="mdi:chart-line" aria-hidden="true" /><Icon icon="mdi:chevron-right" aria-hidden="true" /></button></td>
+                  <td class="tracker-row-icon"><button class="tracker-row-detail-button" type="button" aria-label={interpolate("tracker.openRankDetailsAndTrend", { rank: row.ladderRank })} onclick={() => openDetails(row)}><Icon icon="mdi:chart-line" aria-hidden="true" /></button></td>
                 </tr>
               {:else}
                 <tr class="tracker-unavailable"><th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th><td>{translate("tracker.unavailable")}</td><td>{formatNumber(row.score)}</td><td>{formatSpeed(row.speedPerHour)}</td><td>{formatRewardRange(row.reward)}</td><td></td></tr>

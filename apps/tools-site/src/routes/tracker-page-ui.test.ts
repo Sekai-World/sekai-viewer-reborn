@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const pagePath = resolve(process.cwd(), "src/routes/tracker/[region]/+page.svelte");
 const homePagePath = resolve(process.cwd(), "src/routes/+page.svelte");
 const layoutPath = resolve(process.cwd(), "src/routes/+layout.svelte");
+const appCssPath = resolve(process.cwd(), "src/app.css");
 const trackerMessagesPath = resolve(
   process.cwd(),
   "../../packages/i18n-source/tools-site/tracker.json"
@@ -12,10 +13,11 @@ const trackerMessagesPath = resolve(
 
 describe("tracker page UI contract", () => {
   it("uses the tools-site title format and the shared Sekai Viewer brand lockup", async () => {
-    const [trackerSource, homeSource, layoutSource, trackerMessagesSource] = await Promise.all([
+    const [trackerSource, homeSource, layoutSource, appCssSource, trackerMessagesSource] = await Promise.all([
       readFile(pagePath, "utf8"),
       readFile(homePagePath, "utf8"),
       readFile(layoutPath, "utf8"),
+      readFile(appCssPath, "utf8"),
       readFile(trackerMessagesPath, "utf8")
     ]);
 
@@ -45,6 +47,13 @@ describe("tracker page UI contract", () => {
     expect(homeSource).toContain('import AssetImage from "@platform/ui-shell/asset-image";');
     expect(homeSource).toContain('<AssetImage src={source}');
     expect(homeSource).toContain('class="tracker-link-arrow"');
+    expect(appCssSource).toContain(".event-banner {");
+    expect(appCssSource).toContain("min-height: 8rem;");
+    expect(appCssSource).toContain(".event-banner img {");
+    expect(appCssSource).toContain("height: auto;");
+    expect(appCssSource).toContain("object-fit: contain;");
+    expect(appCssSource).not.toContain("aspect-ratio: 5 / 2;");
+    expect(appCssSource).not.toContain("object-fit: cover;");
     expect(trackerSource).toContain(
       '<title>{translate("tracker.title")} | Sekai Viewer - Tools</title>'
     );
@@ -169,9 +178,15 @@ describe("tracker page UI contract", () => {
     const source = await readFile(pagePath, "utf8");
     expect(source).toContain('<table class="table tracker-table">');
     expect(source).toContain("onclick={() => openDetails(row)}");
+    expect(source).toContain("const handleRankingRowClick = (");
+    expect(source).toContain('event.target instanceof Element && event.target.closest("button, a, input")');
+    expect(source).toContain("onclick={(event) => handleRankingRowClick(event, row)}");
     expect(source).not.toContain(
       '<tr class:tracker-unavailable={row.status === "unavailable"} tabindex="0" role="button"'
     );
+    expect(source).not.toContain('class="tracker-ranking-row" tabindex=');
+    expect(source).not.toContain('class="tracker-ranking-row" role=');
+    expect(source).not.toContain('class="tracker-ranking-row" onkeydown=');
     expect(source).toContain("bind:this={detailsDialog}");
     expect(source).toContain("detailsDialog?.showModal()");
     expect(source).not.toContain("tracker-inspector");
