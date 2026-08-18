@@ -323,6 +323,17 @@
     );
   const endpoint = (path: string, params: Record<string, string>): string =>
     `${trackerPath}/${path}?${new URLSearchParams(params)}`;
+  const fetchJsonWithDeadline = async <Payload>(url: string): Promise<{ response: Response; payload: Payload }> => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15_000);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      const payload = (await response.json()) as Payload;
+      return { response, payload };
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  };
   const isTimeTravelStatus = (
     value: unknown
   ): value is Exclude<TimeTravelStatus, "idle" | "loading"> =>
@@ -447,11 +458,10 @@
   ): Promise<GraphPoint[]> => {
     const params: Record<string, string> = { eventId: String(eventId), rank: String(rank) };
     if (timestamp) params.timestamp = timestamp;
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 15_000);
-    const response = await fetch(endpoint("graph", params), { signal: controller.signal });
-    window.clearTimeout(timeout);
-    const payload = (await response.json()) as { status?: string; points?: unknown };
+    const { response, payload } = await fetchJsonWithDeadline<{
+      status?: string;
+      points?: unknown;
+    }>(endpoint("graph", params));
     if (!response.ok || payload.status !== "available" || !Array.isArray(payload.points))
       throw new Error("Ranking graph unavailable");
     return payload.points
@@ -551,11 +561,10 @@
     }
     timePointsStatus = "loading";
     try {
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 15_000);
-      const response = await fetch(endpoint("time", { eventId: String(requestEventKey) }), { signal: controller.signal });
-      window.clearTimeout(timeout);
-      const payload = (await response.json()) as { status?: string; timePoints?: unknown };
+      const { payload } = await fetchJsonWithDeadline<{
+        status?: string;
+        timePoints?: unknown;
+      }>(endpoint("time", { eventId: String(requestEventKey) }));
       if (
         requestToken !== timePointsRequestToken ||
         !isTimeTravelActive ||
@@ -592,14 +601,10 @@
     const requestEventKey = eventKey;
     snapshotStatus = "loading";
     try {
-      const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 15_000);
-      const response = await fetch(endpoint("snapshot", { eventId: String(requestEventKey), timestamp }), { signal: controller.signal });
-      window.clearTimeout(timeout);
-      const payload = (await response.json()) as {
+      const { payload } = await fetchJsonWithDeadline<{
         status?: string;
         rankings?: EventTrackerResult["rankings"];
-      };
+      }>(endpoint("snapshot", { eventId: String(requestEventKey), timestamp }));
       if (
         requestToken !== snapshotRequestToken ||
         !isTimeTravelActive ||

@@ -63,7 +63,10 @@ coordinate math.
 
 The chart receives normalized `score` and `timestamp` points from the tracker
 page. Invalid points are filtered in the presentation component; the page
-continues to own loading, unavailable, and request-cancellation states.
+continues to own loading, unavailable, and request-cancellation states. Client
+history requests use a 15-second `AbortController` deadline that stays active
+through response-body JSON parsing, not only until response headers arrive, and
+clear the timer in `finally`.
 
 `parseEventTrackerRankings` must include `timestamp` in its de-duplication
 identity. List and snapshot responses may collapse duplicate rank/player rows,

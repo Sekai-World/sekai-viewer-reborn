@@ -87,6 +87,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class="tracker-row-detail-button"');
     expect(source).not.toContain('tabindex="0" role="button"');
     expect(source).toContain("new AbortController()");
+    expect(source).toContain("const fetchJsonWithDeadline = async <Payload>");
+    expect(source).toContain("const payload = (await response.json()) as Payload;");
+    expect(source).toContain("window.clearTimeout(timeout);");
   });
 
   it("uses one accessible event combobox for catalog search and direct ID navigation", async () => {
