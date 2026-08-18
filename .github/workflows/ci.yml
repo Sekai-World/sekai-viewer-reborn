@@ -61,7 +61,42 @@ jobs:
       - name: Verify
         run: pnpm verify:ci
 
+  detect-visual-changes:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    outputs:
+      changed: ${{ steps.filter.outputs.changed }}
+
+    steps:
+      - name: Checkout repository history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect Svelte and stylesheet changes
+        id: filter
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            diff_range="$BASE_SHA...$GITHUB_SHA"
+          else
+            diff_range="$BEFORE_SHA...$GITHUB_SHA"
+          fi
+
+          changed_files="$(git diff --name-only "$diff_range")"
+          if grep -Eq '\.(svelte|css|scss)$' <<< "$changed_files"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
   visual-regression:
+    needs: detect-visual-changes
+    if: needs.detect-visual-changes.outputs.changed == 'true'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
