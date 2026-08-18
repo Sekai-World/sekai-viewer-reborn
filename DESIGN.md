@@ -38,13 +38,15 @@ keyboard behavior, and feedback language remain recognizably Archive.
 
 Use four semantic levels in order. Names describe roles, not literal colors:
 
-1. **Canvas** — the page background and the quietest reading field.
-2. **Panel** — a primary section, control deck, card shell, or normal content
-   surface sitting above the canvas.
-3. **Inset / result** — a sunken or contained field used for grouped evidence,
-   result output, thumbnails, or a catalogue results area.
-4. **Raised / overlay** — a locally elevated card, popover, dialog, drawer, or
-   other surface that must read above its surrounding panel.
+1. **Canvas** — `color.surface.canvas`, the page background and the quietest
+   reading field.
+2. **Panel** — `color.surface.default`, a primary section, control deck, card
+   shell, or normal content surface sitting above the canvas.
+3. **Inset / result** — `color.surface.sunken`, a contained field used for
+   grouped evidence, result output, thumbnails, or a catalogue results area.
+4. **Raised / overlay** — `color.surface.raised` for a locally elevated card and
+   `color.surface.overlay` for a popover, dialog, drawer, or other surface that
+   must read above its surrounding panel.
 
 Choose separation by tone first, then by a subtle border. Shadows are occasional
 interaction or elevation cues, never the main structure. In dark mode the canvas
@@ -125,6 +127,13 @@ drawer-closes-on-link behavior intact. Shared primitives currently include
 `image-preview-trigger.svelte`, `image-preview-dialog.svelte`, and the
 `image-retry/` controller and policies.
 
+`unit-icon-badge.svelte` is the canonical shared `UnitIconBadge` implementation;
+its generic unit icon, fallback-label, and border-color interfaces are owned by
+`@platform/ui-shell` and may be consumed by any site. Content-site does not
+maintain a second `UnitIconBadge` component. Its content-site-specific unit
+profile loading and unit-code mapping remain in the content domain layer and
+are passed into the shared primitive through its resolver props.
+
 When adding Tailwind utilities to this package, consuming apps must scan
 `packages/ui-shell/src` (both current app CSS files do). Prefer Iconify icons;
 content-site `mdi:*` icons must also be registered synchronously in
@@ -136,7 +145,10 @@ Keep catalogue and detail semantics in `apps/content-site/src/lib/components`
 and route-level layouts. The existing card frame, `AssetImage`,
 `CardListCard`, `CurrentEventCard`, `EventListCard`, `MusicListCard`,
 `PageHeader`, `RegionBadgeSwitch`, `CharacterAvatar`, and `UnitIconBadge`
-patterns are domain-aware compositions, not automatically shared components.
+patterns are domain-aware compositions, not automatically shared components;
+in particular, the `UnitIconBadge` entry here refers to content-site's
+domain-specific resolver data passed to the canonical shared primitive, not to a
+second component implementation.
 Reuse the documented content-site card and navigation conventions rather than
 duplicating their structure.
 
