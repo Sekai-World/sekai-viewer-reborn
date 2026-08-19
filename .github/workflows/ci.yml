@@ -82,12 +82,13 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
         run: |
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
-            diff_range="$BASE_SHA...$GITHUB_SHA"
+            changed_files="$(git diff --name-only "$BASE_SHA...$GITHUB_SHA")"
+          elif [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            changed_files="$(git diff --name-only "$(git hash-object -t tree /dev/null)" "$GITHUB_SHA")"
           else
-            diff_range="$BEFORE_SHA...$GITHUB_SHA"
+            changed_files="$(git diff --name-only "$BEFORE_SHA...$GITHUB_SHA")"
           fi
 
-          changed_files="$(git diff --name-only "$diff_range")"
           if grep -Eq '\.(svelte|css|scss)$' <<< "$changed_files"; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
