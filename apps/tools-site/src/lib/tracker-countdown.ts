@@ -21,6 +21,13 @@ export type TrackerCountdownInput = Readonly<{
   now: TrackerDateValue;
 }>;
 
+export type TrackerChapterCountdownInput = Readonly<{
+  currentStartAt: TrackerDateValue;
+  nextStartAt: TrackerDateValue;
+  currentEndAt: TrackerDateValue;
+  now: TrackerDateValue;
+}>;
+
 const SECOND_MS = 1_000;
 const MINUTE_SECONDS = 60;
 const HOUR_SECONDS = 60 * MINUTE_SECONDS;
@@ -52,6 +59,47 @@ export const getTrackerCountdown = ({
   const totalSeconds = Math.floor((targetTimestamp - nowTimestamp) / SECOND_MS);
   return {
     mode,
+    values: {
+      days: Math.floor(totalSeconds / DAY_SECONDS),
+      hours: Math.floor((totalSeconds % DAY_SECONDS) / HOUR_SECONDS),
+      minutes: Math.floor((totalSeconds % HOUR_SECONDS) / MINUTE_SECONDS),
+      seconds: totalSeconds % MINUTE_SECONDS
+    }
+  };
+};
+
+/** Counts down to the next chapter start, falling back to the current chapter end. */
+export const getTrackerChapterCountdown = ({
+  currentStartAt,
+  nextStartAt,
+  currentEndAt,
+  now
+}: TrackerChapterCountdownInput): TrackerCountdown | null => {
+  const startTimestamp = parseTrackerTimestamp(currentStartAt);
+  const nextTimestamp = parseTrackerTimestamp(nextStartAt);
+  const endTimestamp = parseTrackerTimestamp(currentEndAt);
+  const nowTimestamp = parseTrackerTimestamp(now);
+
+  if (nowTimestamp === null) return null;
+
+  if (startTimestamp !== null && nowTimestamp < startTimestamp) {
+    const totalSeconds = Math.floor((startTimestamp - nowTimestamp) / SECOND_MS);
+    return {
+      mode: "starts",
+      values: {
+        days: Math.floor(totalSeconds / DAY_SECONDS),
+        hours: Math.floor((totalSeconds % DAY_SECONDS) / HOUR_SECONDS),
+        minutes: Math.floor((totalSeconds % HOUR_SECONDS) / MINUTE_SECONDS),
+        seconds: totalSeconds % MINUTE_SECONDS
+      }
+    };
+  }
+
+  const targetTimestamp = nextTimestamp !== null && nextTimestamp > nowTimestamp ? nextTimestamp : endTimestamp;
+  if (targetTimestamp === null || targetTimestamp <= nowTimestamp) return null;
+  const totalSeconds = Math.floor((targetTimestamp - nowTimestamp) / SECOND_MS);
+  return {
+    mode: "ends",
     values: {
       days: Math.floor(totalSeconds / DAY_SECONDS),
       hours: Math.floor((totalSeconds % DAY_SECONDS) / HOUR_SECONDS),

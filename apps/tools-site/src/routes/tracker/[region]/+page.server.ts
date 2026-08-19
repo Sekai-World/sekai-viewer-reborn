@@ -3,6 +3,8 @@ import { getSekaiApiBaseUrl } from "$lib/server/config";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { getEventCatalog } from "$lib/server/event-catalog";
 import { getEventRewards } from "$lib/server/event-rewards";
+import { getChapterTrackerRankings, type ChapterTrackerResult } from "$lib/server/chapter-tracker";
+import { getWorldBloomMetadata, type WorldBloomMetadata } from "$lib/server/world-bloom";
 import {
   getEventTrackerRankings,
   isTrackerRegion,
@@ -37,13 +39,15 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
         rankings: []
       } satisfies EventTrackerResult),
       catalog: Promise.resolve(null),
-      rewards: Promise.resolve(null)
+      rewards: Promise.resolve(null),
+      chapters: Promise.resolve(null)
     };
   }
 
   const trackerResult = getEventTrackerRankings(getSekaiApiBaseUrl(), region, eventId ?? undefined);
   depends?.("tools-site:tracker:catalog");
   const catalog = getEventCatalog(getMasterApiBaseUrl(), region, eventId ?? undefined);
+  const worldBloom = getWorldBloomMetadata(getMasterApiBaseUrl(), region);
   const rewards = (async () => {
     const result = await trackerResult;
     const resolvedFromRankings = eventId ?? result.resolvedCurrentEventId;
@@ -56,11 +60,37 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
       ? null
       : getEventRewards(getMasterApiBaseUrl(), region, resolvedFromCatalog);
   })();
+  const chapters = (async (): Promise<{
+    metadata: WorldBloomMetadata | null;
+    rankings: Array<{ chapter: WorldBloomMetadata["chapters"][number]; result: ChapterTrackerResult }>;
+  } | null> => {
+    const [result, catalogResult, bloomResult] = await Promise.all([trackerResult, catalog, worldBloom]);
+    const resolvedEventId = eventId ?? result.resolvedCurrentEventId ?? catalogResult.currentEvent?.id;
+    if (resolvedEventId === undefined || bloomResult.status !== "available") return null;
+    const metadata = bloomResult.items.find((item) => item.eventId === resolvedEventId) ?? null;
+    if (!metadata) return null;
+    const currentEventId = catalogResult.currentEvent?.id ?? result.resolvedCurrentEventId ?? null;
+    const isCurrentEvent = currentEventId === resolvedEventId;
+    const rankings = await Promise.all(
+      metadata.chapters.map(async (chapter) => ({
+        chapter,
+        result: await getChapterTrackerRankings(
+          getSekaiApiBaseUrl(),
+          region,
+          chapter.gameCharacterId,
+          isCurrentEvent ? undefined : resolvedEventId
+        )
+      }))
+    );
+    return { metadata, rankings };
+  })();
   // Keep rankings unresolved so SvelteKit can send the page shell immediately.
   // The page deliberately renders a shape-matched skeleton until this settles.
   trackerResult.catch(() => {});
   catalog.catch(() => {});
   rewards.catch(() => {});
+  worldBloom.catch(() => {});
+  chapters.catch(() => {});
 
   return {
     region,
@@ -71,6 +101,7 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
     selectionStatus: "valid" as const,
     trackerResult: trackerResult as Promise<EventTrackerResult>,
     catalog,
-    rewards
+    rewards,
+    chapters
   };
 };

@@ -989,6 +989,13 @@ export type SharedVirtualLiveWaitingRoom = {
     virtualLiveId: number;
 };
 
+export type SharedWorldBloomListResponse = {
+    items?: Array<{
+        [key: string]: unknown;
+    }>;
+    pagination?: SharedPaginationResponse;
+};
+
 export type GetAdminLoginData = {
     body?: never;
     path?: never;
@@ -3552,3 +3559,62 @@ export type GetVirtualLivesByRegionByIdSetlistsResponses = {
 };
 
 export type GetVirtualLivesByRegionByIdSetlistsResponse = GetVirtualLivesByRegionByIdSetlistsResponses[keyof GetVirtualLivesByRegionByIdSetlistsResponses];
+
+export type GetWorldBloomsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/worldBlooms/{region}/list';
+};
+
+export type GetWorldBloomsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetWorldBloomsByRegionListError = GetWorldBloomsByRegionListErrors[keyof GetWorldBloomsByRegionListErrors];
+
+export type GetWorldBloomsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedWorldBloomListResponse;
+};
+
+export type GetWorldBloomsByRegionListResponse = GetWorldBloomsByRegionListResponses[keyof GetWorldBloomsByRegionListResponses];

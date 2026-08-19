@@ -86,7 +86,19 @@
   "tracker.viewPastRankings": "View past rankings",
   "tracker.viewTrend": "View trend",
   "tracker.openRankDetailsAndTrend": "Open rank {rank} details and trend",
-  "tracker.graphAriaLabel": "Ranking score trend for rank {rank}"
+  "tracker.graphAriaLabel": "Ranking score trend for rank {rank}",
+  "tracker.worldBloom": "World Bloom",
+  "tracker.rankingWorkspace": "Ranking workspace",
+  "tracker.eventRankings": "Event rankings",
+  "tracker.currentChapter": "Current",
+  "tracker.chapterRankings": "Chapter rankings",
+  "tracker.chapter": "Chapter {number}",
+  "tracker.chapterEmpty": "No chapter ranking records are available yet.",
+  "tracker.chapterError.sdk-error": "This chapter ranking could not be loaded.",
+  "tracker.chapterError.network-error": "This chapter ranking service could not be reached.",
+  "tracker.chapterError.invalid-data": "This chapter ranking returned invalid data.",
+  "tracker.chapterEnded": "Chapter ended",
+  "tracker.chapterCountdownUnavailable": "Chapter timing unavailable"
   ,"tracker.tier.top": "Top rank"
   ,"tracker.tier.elite": "Top 10"
   ,"tracker.tier.high": "Top 100"

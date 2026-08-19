@@ -20,7 +20,13 @@ const TRACKER_TERMINAL_REFRESH_OFFSETS_MS = [10 * 60_000 + 10_000, 15 * 60_000 +
 const HOUR_MS = 60 * 60_000;
 
 export const parseTrackerTimestamp = (value: TrackerDateValue): number | null => {
-  const timestamp = value instanceof Date ? value.getTime() : typeof value === "number" ? value : Date.parse(value ?? "");
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.getTime() : null;
+  if (typeof value === "number" || (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value)))) {
+    const numeric = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(numeric)) return null;
+    return Math.abs(numeric) < 100_000_000_000 ? numeric * 1_000 : numeric;
+  }
+  const timestamp = typeof value === "string" ? Date.parse(value) : Number.NaN;
   return Number.isFinite(timestamp) ? timestamp : null;
 };
 

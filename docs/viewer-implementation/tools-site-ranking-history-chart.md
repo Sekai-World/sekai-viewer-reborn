@@ -90,6 +90,22 @@ which preserves parity with the legacy API response; add `timestamp` only for
 an explicitly selected historical snapshot. See
 `apps/tools-site/src/lib/server/tracker-graph.ts`.
 
+## World Bloom chapter rankings
+
+The event tracker loader resolves World Bloom chapter metadata through the
+master-api `worldBlooms/{region}/list` endpoint, then requests each chapter's
+live ranking through the existing sekai-api SDK. The chapter workspace is
+rendered only when metadata exists for the selected event; unavailable chapter
+data is shown inside its own card rather than replacing the main event ranking.
+The `/tracker/[region]/chapter` GET route validates `charaId` and provides the
+same typed chapter response for future client refresh interactions.
+
+World Bloom uses one ranking workspace: the event ranking and chapter tabs swap
+the same table, responsive cards, details dialog, graph, and ranking context.
+Ordinary events do not render chapter tabs. A current chapter keeps a separate
+current marker from the selected tab, and its countdown targets the next
+chapter start or falls back to the current chapter end.
+
 Recent-rate details use the active hovered graph point as the target, or the
 latest time-sorted point when there is no hover selection. Each horizon uses
 the latest snapshot at or before target minus the horizon and divides the score

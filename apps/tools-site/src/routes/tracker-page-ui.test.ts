@@ -85,7 +85,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("trackerRequestIdentity !== null && trackerRequestIdentity !== requestIdentity");
     expect(source).toContain("trackerResult = createTrackerNetworkFailure();");
     expect(source).not.toContain('trackerStatus !== "available"}<p role="status">{translate("tracker.loading")}</p>');
-    expect(source).toContain('import { getTrackerCountdown } from "$lib/tracker-countdown";');
+    expect(source).toContain('getTrackerCountdown } from "$lib/tracker-countdown";');
     expect(source).toContain("const countdown = $derived(");
     expect(source).toContain("closedAt: selectedEvent?.closedAt");
     expect(source).toContain('translate("tracker.countdownEndsIn")');
@@ -99,6 +99,64 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("const fetchJsonWithDeadline = async <Payload>");
     expect(source).toContain("const payload = (await response.json()) as Payload;");
     expect(source).toContain("window.clearTimeout(timeout);");
+  });
+
+  it("uses one World Bloom ranking workspace and keeps ordinary events chapter-free", async () => {
+    const source = await readFile(pagePath, "utf8");
+    expect(source).toContain('const isWorldBloom = $derived(');
+    expect(source).toContain('translate("tracker.eventRankings")');
+    expect(source).toContain('role="tablist"');
+    expect(source).toContain('id="tracker-ranking-panel"');
+    expect(source).toContain('class="table tracker-table"');
+    expect(source).toContain('class="tracker-ranking-cards"');
+    expect(source).toContain('selectedRankingTab === "event" || !selectedChapter ? rows : chapterRows');
+    expect(source).not.toContain("tracker-chapter-workspace");
+    expect(source).not.toContain("tracker-chapter-panel");
+  });
+
+  it("marks the current chapter independently from the selected tab", async () => {
+    const source = await readFile(pagePath, "utf8");
+    expect(source).toContain("const currentChapter = $derived(");
+    expect(source).toContain("class:tracker-current-tab={isCurrent}");
+    expect(source).toContain('aria-current={isCurrent ? "true" : undefined}');
+    expect(source).toContain('translate("tracker.currentChapter")');
+    expect(source).toContain(".tracker-current-tab:not(.btn-primary)");
+    expect(source).toContain("background: color-mix(in srgb, var(--color-accent)");
+    expect(source).toContain("border-color: color-mix(in srgb, var(--color-accent)");
+    expect(source).toContain("0 0 0 2px color-mix(in srgb, var(--color-accent)");
+    expect(source).toContain(".tracker-current-tab.btn-primary .tracker-current-marker");
+    expect(source).toContain("color: var(--color-primary-content);");
+    const eventTab = source.slice(
+      source.indexOf('id="tracker-event-ranking-tab"'),
+      source.indexOf('id={`tracker-chapter-tab-${chapter.chapter.id}`}')
+    );
+    expect(eventTab).not.toContain("tracker-current-tab");
+  });
+
+  it("hides the World Bloom chapter countdown on the default event tab", async () => {
+    const source = await readFile(pagePath, "utf8");
+    const countdownBlock = source.slice(
+      source.indexOf('{#if isWorldBloom && selectedRankingTab !== "event" && selectedChapter}'),
+      source.indexOf(
+        '{/if}',
+        source.indexOf('{#if isWorldBloom && selectedRankingTab !== "event" && selectedChapter}')
+      )
+    );
+    expect(countdownBlock).toContain('selectedRankingTab !== "event"');
+    expect(countdownBlock).toContain("selectedChapter.chapter.chapterEndAt");
+    expect(countdownBlock).toContain("selectedChapter.chapter.aggregateAt ?? selectedChapter.chapter.chapterEndAt");
+    expect(countdownBlock).not.toContain("selectedChapter.chapter.startAt");
+    expect(countdownBlock).not.toContain("selectedChapter.chapter.endAt");
+    expect(source).toContain("chapter.chapterStartAt");
+    expect(source).toContain("chapters?.rankings[0] ??");
+  });
+
+  it("only renders World Bloom tabs when chapter data is valid", async () => {
+    const source = await readFile(pagePath, "utf8");
+    expect(source).toContain("chapters.metadata.chapters.length > 0");
+    expect(source).toContain("chapters.rankings.length > 0");
+    expect(source).toContain("class:tracker-current-tab={isCurrent}");
+    expect(source).toContain('translate("tracker.currentChapter")');
   });
 
   it("uses one accessible event combobox for catalog search and direct ID navigation", async () => {
@@ -177,7 +235,7 @@ describe("tracker page UI contract", () => {
   it("uses a real button in available rows and a modal rather than a permanent inspector", async () => {
     const source = await readFile(pagePath, "utf8");
     expect(source).toContain('<table class="table tracker-table">');
-    expect(source).toContain("onclick={() => openDetails(row)}");
+    expect(source).toContain("onclick={() => openDetails(row, activeRankingContext)}");
     expect(source).toContain("const handleRankingRowClick = (");
     expect(source).toContain('event.target instanceof Element && event.target.closest("button, a, input")');
     expect(source).toContain("onclick={(event) => handleRankingRowClick(event, row)}");
@@ -311,8 +369,49 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class:btn-outline={ladder !== "critical"}');
     expect(source).toContain('aria-pressed={ladder === "critical"}');
     expect(source).toContain('aria-pressed={ladder === "full"}');
-    expect(source).not.toContain("tracker.worldBloom");
-    expect(source).not.toContain("tracker.chapterUnavailable");
+    expect(source).toContain('translate("tracker.eventRankings")');
+    expect(source).toContain('class="tracker-ranking-tabs"');
+    expect(source).toContain('class="btn btn-sm tracker-ladder-option"');
+    expect(source).toContain('class:btn-primary={selectedRankingTab === chapter.chapter.id}');
+    expect(source).toContain('class:btn-outline={selectedRankingTab !== chapter.chapter.id}');
+    expect(source).not.toContain("tracker-chapter-tabs");
+    expect(source).not.toContain("tracker-chapter-tab-active");
+    expect(source).toContain("chapters?.metadata");
+    expect(source).toContain("chapters = null;");
+    expect(source).toContain("trackerRequestIdentity === requestIdentity) chapters = value;");
+    expect(source).toContain('interpolate("tracker.chapter", { number: chapter.chapter.chapterNo })');
+    expect(source).not.toContain("chapter.chapter.gameCharacterId}</span>");
+    expect(source).toContain('import { createChapterRows, type ChapterRow } from "$lib/tracker-chapter-rows";');
+    expect(source).toContain("selectedChapterRows = createChapterRows(chapter.result.rankings, ladder);");
+    expect(source).toContain("reward: getReward(row.rank)");
+    expect(source).toContain("calculateChapterElapsedMs");
+    expect(source).not.toContain("speedPerHour: null");
+    expect(source).not.toContain("reward: null");
+    expect(source).toContain('class="table tracker-table"');
+    expect(source).toContain("chapterRows");
+    const chapterMarkup = source.slice(source.indexOf("tracker-ranking-tabs"));
+    expect(source).toContain(
+      'class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"}'
+    );
+    expect(chapterMarkup).toContain('class:tier-top={rankTier(row.ladderRank) === "top"}');
+    expect(chapterMarkup).toContain('class:tier-elite={rankTier(row.ladderRank) === "elite"}');
+    expect(chapterMarkup).toContain('class:tier-high={rankTier(row.ladderRank) === "high"}');
+    expect(chapterMarkup).toContain('class:tier-mid={rankTier(row.ladderRank) === "mid"}');
+    expect(chapterMarkup).toContain('class:tier-long={rankTier(row.ladderRank) === "long"}');
+    expect(chapterMarkup).toContain('class="tracker-ranking-cards"');
+    expect(source).toContain('role="tablist"');
+    expect(source).toContain('role="tab"');
+    expect(source).toContain("aria-selected={selectedRankingTab === chapter.chapter.id}");
+    expect(source).toContain('if (event.key === "ArrowRight")');
+    expect(source).toContain('if (event.key === "ArrowLeft")');
+    expect(source).toContain('if (event.key === "Home")');
+    expect(source).toContain('if (event.key === "End")');
+    expect(source).toContain("handleRankingTabKeydown");
+    expect(source).not.toContain('icon="mdi:chevron-right"');
+    expect(source.match(/icon="mdi:chart-line"/g)?.length).toBe(2);
+    expect(source).toContain("selectedChapterRows = [];");
+    expect(source).toContain("chapterRequestToken");
+    expect(source).toContain('getTrackerChapterCountdown');
     expect(source).toContain("aggregateAt: selectedEvent?.aggregateAt");
     expect(source).toContain("formatRewardRange(row.reward)");
     expect(source).toContain("RankingHistoryChart");

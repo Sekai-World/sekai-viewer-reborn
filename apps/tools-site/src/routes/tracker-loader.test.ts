@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getEventsByRegionList: vi.fn(),
   getEventsByRegionById: vi.fn(),
   getEventsByRegionByIdRewards: vi.fn(),
+  getWorldBloomsByRegionList: vi.fn(),
   getSekaiApiBaseUrl: vi.fn(() => "https://api.example.test")
 }));
 
@@ -18,7 +19,8 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionCurrent: mocks.getEventsByRegionCurrent,
   getEventsByRegionList: mocks.getEventsByRegionList,
   getEventsByRegionById: mocks.getEventsByRegionById,
-  getEventsByRegionByIdRewards: mocks.getEventsByRegionByIdRewards
+  getEventsByRegionByIdRewards: mocks.getEventsByRegionByIdRewards,
+  getWorldBloomsByRegionList: mocks.getWorldBloomsByRegionList
 }));
 vi.mock("$env/dynamic/private", () => ({ env: { SEKAI_API_BASE_URL: "https://api.example.test/", SEKAI_MASTER_API_BASE_URL: "https://master.example.test/" } }));
 
@@ -34,6 +36,7 @@ describe("tracker route loader", () => {
     vi.clearAllMocks();
     mocks.getEventsByRegionCurrent.mockResolvedValue({ data: {} });
     mocks.getEventsByRegionList.mockResolvedValue({ data: { items: [] } });
+    mocks.getWorldBloomsByRegionList.mockResolvedValue({ data: { items: [] } });
   });
 
   it.each(["jp", "en", "tw", "kr"])("loads tracker region %s", async (region) => {
@@ -79,6 +82,18 @@ describe("tracker route loader", () => {
     await expect(loaded.catalog).resolves.toMatchObject({
       selectedEvent: { id: 123, name: "Historical event" }
     });
+  });
+
+  it("loads historical World Bloom chapters through historical chapter snapshots", async () => {
+    mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
+    mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 123, name: "Historical event" } });
+    mocks.getWorldBloomsByRegionList.mockResolvedValue({
+      data: { items: [{ id: 1, eventId: 123, chapterNo: 1, gameCharacterId: 2 }] }
+    });
+
+    const loaded = await runLoad("en", "123");
+    await expect(loaded.chapters).resolves.toMatchObject({ metadata: { eventId: 123 } });
+    expect(mocks.getEventRankingLive).not.toHaveBeenCalled();
   });
 
   it("loads explicit historical metadata by ID when the event list is unavailable", async () => {

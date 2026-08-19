@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getEventRankingTimePoints: vi.fn(),
-  getEventRankingsByEventId: vi.fn()
+  getEventRankingsByEventId: vi.fn(),
+  getEventChapterRankingLive: vi.fn(),
+  getEventChapterRankingsByEventIdAndCharaId: vi.fn()
 }));
 
 const fetchMock = vi.fn();
@@ -15,6 +17,7 @@ vi.mock("$env/dynamic/private", () => ({
 import { GET as graph } from "./tracker/[region]/graph/+server";
 import { GET as snapshot } from "./tracker/[region]/snapshot/+server";
 import { GET as time } from "./tracker/[region]/time/+server";
+import { GET as chapter } from "./tracker/[region]/chapter/+server";
 
 const request = (path: string, region = "en") =>
   ({ params: { region }, url: new URL(`https://tools.example.test${path}`) }) as never;
@@ -59,9 +62,36 @@ describe("tracker time-travel endpoints", () => {
     await expect(
       (await graph(request("/tracker/cn/graph?eventId=42&rank=1", "cn"))).json()
     ).resolves.toEqual({ status: "invalid-request", points: [] });
+    await expect(
+      (await chapter(request("/tracker/en/chapter?charaId=0&mode=live"))).json()
+    ).resolves.toEqual({ status: "invalid-request", rankings: [] });
     expect(mocks.getEventRankingTimePoints).not.toHaveBeenCalled();
     expect(mocks.getEventRankingsByEventId).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("loads a validated chapter ranking by character id", async () => {
+    mocks.getEventChapterRankingLive.mockResolvedValueOnce({
+      data: { status: "success", data: { eventRankings: [{ rank: 1, score: 321, userId: "7", userName: "Bloom" }] } }
+    });
+
+    await expect(
+      (await chapter(request("/tracker/en/chapter?charaId=12&mode=live"))).json()
+    ).resolves.toEqual({
+      status: "available",
+      rankings: [{ rank: 1, score: 321, userId: "7", userName: "Bloom", eventId: null, timestamp: null }]
+    });
+    expect(mocks.getEventChapterRankingLive).toHaveBeenCalledWith(expect.objectContaining({
+      baseUrl: "https://api.example.test",
+      query: { charaId: 12, region: "en" }
+    }));
+  });
+
+  it("rejects a historical event request routed through live mode", async () => {
+    await expect(
+      (await chapter(request("/tracker/en/chapter?charaId=12&eventId=42&mode=live"))).json()
+    ).resolves.toEqual({ status: "invalid-request", rankings: [] });
+    expect(mocks.getEventChapterRankingLive).not.toHaveBeenCalled();
   });
 
   it("converts upstream errors and rejected requests to typed responses", async () => {
