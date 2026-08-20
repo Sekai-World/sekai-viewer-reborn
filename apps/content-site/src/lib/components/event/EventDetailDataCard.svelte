@@ -356,11 +356,7 @@
       return null;
     }
 
-    const highestAttr = getHighestAttrBonus(item)?.attr;
-    const characterQuery = `character=${encodeURIComponent(String(gameCharacterId))}`;
-    const attrQuery = highestAttr ? `&attr=${encodeURIComponent(highestAttr)}` : "";
-
-    return `${resolve("/cards/[region]", { region })}?${characterQuery}${attrQuery}`;
+    return resolve("/character/[region]/[id]", { region, id: String(gameCharacterId) });
   };
 
   const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {
@@ -815,7 +811,7 @@
     href={bonusCharacterHref ?? undefined}
     class={`content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 ${
       bonusCharacterHref
-        ? "group/bonus-row outline-none transition-[background-color,border-color] duration-150 hover:border-primary/35 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        ? "group/bonus-row outline-none transition-[background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         : ""
     }`}
     aria-label={bonusCharacterHref
@@ -842,7 +838,7 @@
     </div>
     <div class="min-w-0">
       <p
-        class="truncate text-sm font-semibold text-base-content group-hover/bonus-row:text-primary group-focus-visible/bonus-row:text-primary"
+        class="truncate text-sm font-semibold text-base-content [@media(hover:hover)]:group-hover/bonus-row:text-primary group-focus-visible/bonus-row:text-primary"
       >
         {displayName}
       </p>
@@ -952,7 +948,7 @@
   {#if href}
     <a
       {href}
-      class="content-card-inset group grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-150 hover:border-primary/35 hover:-translate-y-0.5 hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
+      class="content-card-inset group grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
     >
       <CardThumbnail
         src={getCardThumbnailSrc(content)}
@@ -971,7 +967,7 @@
         <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {formatHashId(content.cardId)}
         </p>
-        <p class="mt-1 line-clamp-2 text-sm font-semibold group-hover:text-primary">
+        <p class="mt-1 line-clamp-2 text-sm font-semibold [@media(hover:hover)]:group-hover:text-primary">
           {getCardTitle(content)}
         </p>
       </div>
@@ -1016,7 +1012,7 @@
     {@const jacketSrc = getMusicJacketSrc(content)}
     <a
       {href}
-      class="content-card-inset group grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-150 hover:border-primary/35 hover:-translate-y-0.5 hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+      class="content-card-inset group grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
     >
       <div class="aspect-square overflow-hidden rounded-lg bg-base-200">
         {#if jacketSrc}
@@ -1037,7 +1033,7 @@
         <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {formatHashId(content.musicId)}
         </p>
-        <p class="mt-1 line-clamp-2 text-sm font-semibold group-hover:text-primary">
+        <p class="mt-1 line-clamp-2 text-sm font-semibold [@media(hover:hover)]:group-hover:text-primary">
           {getMusicTitle(content)}
         </p>
       </div>
@@ -1137,7 +1133,7 @@
       </div>
     {/if}
     <div class="min-w-0">
-      <p class="line-clamp-2 text-sm/5 font-semibold group-hover:text-primary">
+      <p class="line-clamp-2 text-sm/5 font-semibold [@media(hover:hover)]:group-hover:text-primary">
         {virtualLive.name ?? virtualLiveTitle}
       </p>
       <div class="mt-1.5 grid gap-1.5">
@@ -1304,7 +1300,7 @@
       {#if shouldShowRankingRewardToggle(displayRelatedData)}
         <button
           type="button"
-          class="btn btn-outline btn-sm border-(--archive-border-default) bg-(--archive-surface-raised) text-primary hover:border-primary/45 hover:bg-primary/10"
+          class="btn btn-outline btn-sm border-(--archive-border-default) bg-(--archive-surface-raised) text-primary [@media(hover:hover)]:hover:border-primary/45 [@media(hover:hover)]:hover:bg-primary/10"
           disabled={rewardsLoading}
           onclick={() =>
             areAllRankingRewardsVisible
@@ -1351,7 +1347,7 @@
       {#if virtualLive.id}
         <a
           href={resolve("/virtual-live/[region]/[id]", { region, id: virtualLive.id })}
-          class="content-card-inset group @container block rounded-xl border-(--archive-border-subtle) p-2.5 transition-[transform,background-color,border-color] duration-150 hover:border-primary/35 hover:-translate-y-0.5 hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:p-3"
+          class="content-card-inset group @container block rounded-xl border-(--archive-border-subtle) p-2.5 transition-[transform,background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:p-3"
         >
           {@render virtualLiveContent(virtualLive, virtualLiveBannerSrc)}
         </a>
