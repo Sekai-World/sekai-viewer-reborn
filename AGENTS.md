@@ -25,8 +25,11 @@ Guidance for coding agents working in this workspace.
 - Keep app boundaries explicit; do not couple app internals across `apps/*`.
 - Prefer shared logic in `packages/*` when reused by multiple apps.
 - Keep changes minimal and scoped to the request.
-- All coding agents and non-GitHub Copilot tools used in this workspace must also consult the applicable guidance under `.github/instructions/` and `.github/prompts/` before making changes.
-- Treat this file together with `.github/copilot-instructions.md` and the applicable files in `.github/instructions/` and `.github/prompts/` as the authoritative repository guidance.
+- Before making changes, read this file, `docs/instructions/README.md`, and the
+  applicable topic guidance. For UI/UX work, also read `DESIGN.md` first and
+  consult `docs/content-site-ui-conventions.md` when changing content-site.
+  `DESIGN.md` takes precedence for visual and component decisions; applicable
+  topic guidance remains authoritative for technical and security rules.
 - Commit messages must follow the Conventional Commits specification.
 - Changes under `apps/` or `packages/` require Changeset coverage before merge.
 - Prefer updating an existing unpublished Changeset that already covers the same workspace instead of creating a new one for every commit.
