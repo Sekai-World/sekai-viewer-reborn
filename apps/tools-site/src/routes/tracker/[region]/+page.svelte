@@ -1131,12 +1131,18 @@
         >{/if}
     </div>
     {#if isWorldBloom}
-      <div class="tracker-ranking-tabs" role="tablist" aria-label={translate("tracker.rankingWorkspace")}>
+      <div class="tracker-ranking-tabs-scroll">
+        <div
+          class="tabs tabs-box tracker-ranking-tabs min-w-max flex-nowrap"
+          role="tablist"
+          aria-label={translate("tracker.rankingWorkspace")}
+        >
         <button
           id="tracker-event-ranking-tab"
+          class:tab-active={selectedRankingTab === "event"}
           class:btn-primary={selectedRankingTab === "event"}
           class:btn-outline={selectedRankingTab !== "event"}
-          class="btn btn-sm tracker-ladder-option"
+          class="tab shrink-0 btn btn-sm tracker-ladder-option"
           type="button"
           role="tab"
           aria-selected={selectedRankingTab === "event"}
@@ -1149,10 +1155,11 @@
           {@const isCurrent = currentChapter?.chapter.id === chapter.chapter.id}
           <button
             id={`tracker-chapter-tab-${chapter.chapter.id}`}
+            class:tab-active={selectedRankingTab === chapter.chapter.id}
             class:btn-primary={selectedRankingTab === chapter.chapter.id}
             class:btn-outline={selectedRankingTab !== chapter.chapter.id}
             class:tracker-current-tab={isCurrent}
-            class="btn btn-sm tracker-ladder-option"
+            class="tab shrink-0 btn btn-sm tracker-ladder-option"
             type="button"
             role="tab"
             aria-selected={selectedRankingTab === chapter.chapter.id}
@@ -1163,6 +1170,7 @@
             onkeydown={(event) => handleRankingTabKeydown(event, index + 1)}
           >{interpolate("tracker.chapter", { number: chapter.chapter.chapterNo })}{#if isCurrent}<span class="tracker-current-marker">{translate("tracker.currentChapter")}</span>{/if}</button>
         {/each}
+        </div>
       </div>
     {/if}
     {#if isWorldBloom && selectedRankingTab !== "event" && selectedChapter}
@@ -1738,16 +1746,41 @@
   }
   .tracker-ranking-tabs {
     display: flex;
-    flex-wrap: wrap;
     gap: 0.35rem;
-    padding: 0.25rem;
-    border: 1px solid var(--archive-border-subtle);
-    border-radius: var(--radius-box);
-    background: var(--archive-surface-sunken);
+    flex-wrap: nowrap;
+  }
+  .tracker-ranking-tabs-scroll {
+    position: relative;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.25rem 0.75rem;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 0.65rem,
+      black calc(100% - 0.65rem),
+      transparent
+    );
   }
   .tracker-ranking-tabs .tracker-ladder-option {
     min-height: 2.75rem;
     border-radius: calc(var(--radius-box) - 0.2rem);
+  }
+  .tracker-ranking-tabs .tab.tab-active {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+  .tracker-ranking-tabs .tab.tab-active:hover {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-primary-content);
+  }
+  .tracker-ranking-tabs .tab:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
   .tracker-current-tab {
     box-shadow: inset 0 -2px var(--color-secondary);
