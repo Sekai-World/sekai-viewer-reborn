@@ -5,12 +5,14 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const appRoot = path.join(repoRoot, "apps/tools-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/tools-site");
-const namespaces = ["common", "comparison", "server"];
+const namespaces = ["common", "server", "tracker"];
 const translatorKeyPatterns = [
   /createI18nTranslator\([^)]*\)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
   /\b(?:t|tTools)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
   /\btranslate\(\s*["']([^"'`]+)["']/g
 ];
+const dynamicRegionKeyPattern = /\btranslate\(\s*`region\.\$\{[^}]+\}`\s*\)/g;
+const dynamicRegionKeys = ["region.jp", "region.en", "region.tw", "region.kr", "region.cn"];
 
 const skipWhitespace = (content, index) => {
   while (index < content.length && " \t\n\r".includes(content[index])) index += 1;
@@ -31,6 +33,11 @@ export const collectTranslatorKeys = (content, usedKeys) => {
       usedKeys.add(match[1]);
     }
   }
+
+  if (dynamicRegionKeyPattern.test(content)) {
+    for (const key of dynamicRegionKeys) usedKeys.add(key);
+  }
+  dynamicRegionKeyPattern.lastIndex = 0;
 };
 
 export const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
@@ -84,7 +91,9 @@ const getNamespaceForFile = (filePath) => {
   ) {
     return "common";
   }
-  return "comparison";
+  return relativePath.startsWith("src/routes/tracker/") || relativePath.startsWith("src/routes/tracker-")
+    ? "tracker"
+    : "common";
 };
 
 const usedKeysByNamespace = Object.fromEntries(

@@ -10,7 +10,8 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./design-tokens": "./src/design-tokens.json"
+    "./design-tokens": "./src/design-tokens.json",
+    "./palettes.css": "./src/palettes.css"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

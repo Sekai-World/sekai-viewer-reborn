@@ -41,7 +41,7 @@ describe("tools-site server loaders", () => {
     mocks.loadI18nMessageBundle.mockResolvedValue({ "navigation.home": "Home" });
   });
 
-  it("loads the selected regions and parses current events", async () => {
+  it("loads every tracker-supported region and parses current events", async () => {
     mocks.getEventsByRegionCurrent
       .mockResolvedValueOnce({
         data: {
@@ -52,43 +52,70 @@ describe("tools-site server loaders", () => {
             unit: { unitName: "Leo/need" },
             start_at: "2026-01-01",
             aggregate_at: 456,
-            closed_at: "2026-01-03"
+            closed_at: "2026-01-03",
+            assetbundleName: "event_123",
+            assetBundleName: "wrong-camel-case"
           }
         }
       })
-      .mockResolvedValueOnce({ error: true, response: { status: 404 } });
+      .mockResolvedValueOnce({ error: true, response: { status: 404 } })
+      .mockResolvedValue({ error: true, response: { status: 404 } });
 
-    const result = await runPageLoad(request("https://tools.test/?primary= EN &secondary=kr"));
+    const result = await runPageLoad(request("https://tools.test/"));
 
-    expect(result.primaryRegion).toBe("en");
-    expect(result.secondaryRegion).toBe("kr");
-    const comparison = result.comparison as { primary: unknown; secondary: unknown };
-    expect(comparison.primary).toMatchObject({
-      region: "en",
+    const events = await (result.events as Promise<unknown[]>);
+    expect(events).toHaveLength(4);
+    expect(events[0]).toMatchObject({
+      region: "jp",
       status: "available",
-      event: { id: "123", name: "Primary event", eventType: "marathon", unit: "Leo/need" }
+      event: {
+        id: "123",
+        name: "Primary event",
+        eventType: "marathon",
+        unit: "Leo/need",
+        assetBundleName: "event_123"
+      }
     });
-    expect(comparison.secondary).toEqual({ region: "kr", status: "unavailable", event: null });
+    expect(events[1]).toEqual({ region: "tw", status: "unavailable", event: null });
     expect(mocks.getEventsByRegionCurrent).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ path: { region: "en" }, signal: expect.any(AbortSignal) })
+      expect.objectContaining({ path: { region: "jp" }, signal: expect.any(AbortSignal) })
     );
     expect(mocks.getEventsByRegionCurrent).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ path: { region: "kr" }, signal: expect.any(AbortSignal) })
+      expect.objectContaining({ path: { region: "tw" }, signal: expect.any(AbortSignal) })
+    );
+    expect(mocks.getEventsByRegionCurrent).not.toHaveBeenCalledWith(
+      expect.objectContaining({ path: { region: "cn" } })
     );
   });
 
   it("keeps malformed and failed API responses distinct", async () => {
     mocks.getEventsByRegionCurrent
       .mockResolvedValueOnce({ data: { title: "missing id" } })
-      .mockRejectedValueOnce(new Error("network"));
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue({ error: true, response: { status: 404 } });
 
-    const result = await runPageLoad(request("https://tools.test/?primary=jp&secondary=en"));
+    const result = await runPageLoad(request("https://tools.test/"));
 
-    const comparison = result.comparison as { primary: { status: string }; secondary: { status: string } };
-    expect(comparison.primary.status).toBe("unavailable");
-    expect(comparison.secondary.status).toBe("failed");
+    const events = await (result.events as Promise<{ status: string }[]>);
+    expect(events[0].status).toBe("unavailable");
+    expect(events[1].status).toBe("failed");
+  });
+
+  it("returns the current-event collection as an unresolved stream", async () => {
+    const resolveRequests: Array<(value: unknown) => void> = [];
+    mocks.getEventsByRegionCurrent.mockImplementation(
+      () => new Promise((resolve) => resolveRequests.push(resolve))
+    );
+
+    const loaded = await runPageLoad(request("https://tools.test/"));
+    expect(loaded.events).toBeInstanceOf(Promise);
+
+    for (const resolveRequest of resolveRequests) {
+      resolveRequest({ error: true, response: { status: 404 } });
+    }
+    await expect(loaded.events as Promise<unknown[]>).resolves.toHaveLength(4);
   });
 
   it("aborts a stalled regional request at the bounded deadline", async () => {
@@ -100,15 +127,11 @@ describe("tools-site server loaders", () => {
         })
     );
 
-    const result = runPageLoad(request("https://tools.test/?primary=jp&secondary=en"));
+    const result = runPageLoad(request("https://tools.test/"));
     await vi.advanceTimersByTimeAsync(5_000);
 
-    await expect(result).resolves.toMatchObject({
-      comparison: {
-        primary: { status: "failed" },
-        secondary: { status: "failed" }
-      }
-    });
+    const loaded = await result;
+    expect((await (loaded.events as Promise<{ status: string }[]>)).every((event) => event.status === "failed")).toBe(true);
     vi.useRealTimers();
   });
 
@@ -118,6 +141,6 @@ describe("tools-site server loaders", () => {
     const result = await runLayoutLoad(request("https://tools.test/"));
 
     expect(result.uiLocale).toBe("ja-JP");
-    expect(result.i18nMessages).toEqual({ namespaces: ["common", "comparison"] });
+    expect(result.i18nMessages).toEqual({ namespaces: ["common", "tracker"] });
   });
 });

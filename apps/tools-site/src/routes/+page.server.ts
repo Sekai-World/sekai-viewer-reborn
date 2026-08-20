@@ -1,5 +1,5 @@
 import { getEventsByRegionCurrent } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion, type SupportedRegion } from "$lib/regions";
+import { trackerSupportedRegions, type TrackerSupportedRegion } from "$lib/regions";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import type { PageServerLoad } from "./$types";
 
@@ -11,15 +11,14 @@ export type EventSummary = {
   startAt: string | number | null;
   aggregateAt: string | number | null;
   closedAt: string | number | null;
+  assetBundleName: string | null;
 };
 
 export type RegionCurrentEvent =
-  | { region: SupportedRegion; status: "available"; event: EventSummary }
-  | { region: SupportedRegion; status: "unavailable"; event: null }
-  | { region: SupportedRegion; status: "failed"; event: null };
+  | { region: TrackerSupportedRegion; status: "available"; event: EventSummary }
+  | { region: TrackerSupportedRegion; status: "unavailable"; event: null }
+  | { region: TrackerSupportedRegion; status: "failed"; event: null };
 
-const DEFAULT_PRIMARY_REGION: SupportedRegion = "jp";
-const DEFAULT_SECONDARY_REGION: SupportedRegion = "en";
 const CURRENT_EVENT_REQUEST_TIMEOUT_MS = 5_000;
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
@@ -68,7 +67,8 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
     unit: pick(unitRecord ?? event, ["unit", "unitName"], getString),
     startAt: pick(event, ["startAt", "start_at", "startDate"], getDateValue),
     aggregateAt: pick(event, ["aggregateAt", "aggregate_at", "endAt", "end_at"], getDateValue),
-    closedAt: pick(event, ["closedAt", "closed_at"], getDateValue)
+    closedAt: pick(event, ["closedAt", "closed_at"], getDateValue),
+    assetBundleName: pick(event, ["assetbundleName", "assetBundleName", "asset_bundle_name"], getString)
   };
 };
 
@@ -77,7 +77,7 @@ const getResponseStatus = (response: { response?: Response }): number | null =>
 
 const fetchCurrentEvent = async (
   baseUrl: string,
-  region: SupportedRegion
+  region: TrackerSupportedRegion
 ): Promise<RegionCurrentEvent> => {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CURRENT_EVENT_REQUEST_TIMEOUT_MS);
@@ -106,17 +106,11 @@ const fetchCurrentEvent = async (
   }
 };
 
-export const load: PageServerLoad = async ({ url }) => {
-  const primaryRegion = normalizeRegion(url.searchParams.get("primary"), DEFAULT_PRIMARY_REGION);
-  const secondaryRegion = normalizeRegion(
-    url.searchParams.get("secondary"),
-    DEFAULT_SECONDARY_REGION
-  );
+export const load: PageServerLoad = async () => {
   const baseUrl = getMasterApiBaseUrl();
-  const [primary, secondary] = await Promise.all([
-    fetchCurrentEvent(baseUrl, primaryRegion),
-    fetchCurrentEvent(baseUrl, secondaryRegion)
-  ]);
+  const events = Promise.all(trackerSupportedRegions.map((region) => fetchCurrentEvent(baseUrl, region)));
+  // Keep the page shell renderable if a future change makes the aggregate promise reject.
+  events.catch(() => {});
 
-  return { primaryRegion, secondaryRegion, comparison: { primary, secondary } };
+  return { events };
 };

@@ -96,10 +96,49 @@ export type EventTrackerRanking = {
     }>;
 };
 
+export type EventTrackerRankingResponse = {
+    id?: number;
+    eventId?: number;
+    timestamp?: string;
+    score?: number;
+    rank?: number;
+    userName?: string;
+    userCard?: {
+        cardId?: number;
+        level?: number;
+        masterRank?: number;
+        specialTrainingStatus?: string;
+        defaultImage?: string;
+    };
+    userProfile?: {
+        word?: string;
+        honorId1?: number;
+        honorLevel1?: number;
+        honorId2?: number;
+        honorLevel2?: number;
+        honorId3?: number;
+        honorLevel3?: number;
+        twitterId?: string;
+        profileImageType?: string;
+    };
+    userCheerfulCarnival?: {
+        [key: string]: never;
+    };
+    userProfileHonors?: Array<{
+        [key: string]: unknown;
+    }>;
+    userHonorMissions?: Array<{
+        [key: string]: unknown;
+    }>;
+    userPlayerFrames?: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
 export type EventChapterTrackerRanking = {
     eventId?: number;
     gameCharacterId?: number;
-    rankings?: Array<EventTrackerRanking>;
+    rankings?: Array<EventTrackerRankingResponse>;
     userRankingStatus?: string;
 };
 
@@ -129,6 +168,10 @@ export type GetEventChapterRankingsByEventIdAndCharaIdData = {
          * Query userId of event rankings
          */
         userId?: number;
+        /**
+         * Exact snapshot filter. Use a timestamp returned by /event/{id}/chapter_rankings/time for the same charaId; range queries are not supported.
+         */
+        timestamp?: string;
         /**
          * Query limit of event rankings, if not set, default 1000
          */
@@ -161,7 +204,7 @@ export type GetEventChapterRankingsByEventIdAndCharaIdResponses = {
      */
     200: {
         status?: string;
-        data?: Array<EventTrackerRanking>;
+        data?: Array<EventTrackerRankingResponse>;
     };
 };
 
@@ -225,6 +268,10 @@ export type GetEventChapterRankingGrpahByEventIdAndCharaIdData = {
          */
         userId?: number;
         /**
+         * Exact snapshot filter. Use a timestamp returned by /event/{id}/chapter_rankings/time for the same charaId; range queries are not supported.
+         */
+        timestamp?: string;
+        /**
          * Requested server region
          */
         region?: 'jp' | 'tw' | 'en' | 'kr';
@@ -239,7 +286,7 @@ export type GetEventChapterRankingGrpahByEventIdAndCharaIdResponses = {
     200: {
         status?: string;
         data?: {
-            eventRankings?: Array<EventTrackerRanking>;
+            eventRankings?: Array<EventTrackerRankingResponse>;
         };
     };
 };
@@ -306,7 +353,7 @@ export type GetEventRankingLiveResponses = {
     200: {
         status?: string;
         data?: {
-            eventRankings?: Array<EventTrackerRanking>;
+            eventRankings?: Array<EventTrackerRankingResponse>;
         };
     };
 };
@@ -344,7 +391,7 @@ export type GetEventChapterRankingLiveResponses = {
     200: {
         status?: string;
         data?: {
-            eventRankings?: Array<EventTrackerRanking>;
+            eventRankings?: Array<EventTrackerRankingResponse>;
         };
     };
 };
@@ -382,7 +429,7 @@ export type GetEventLatestChapterRankingLiveResponses = {
              * ID of the game character
              */
             gameCharacterId?: number;
-            eventRankings?: Array<EventTrackerRanking>;
+            eventRankings?: Array<EventTrackerRankingResponse>;
         };
     };
 };
@@ -406,6 +453,10 @@ export type GetEventRankingsByEventIdData = {
          * Query userId of event rankings
          */
         userId?: number;
+        /**
+         * Exact snapshot filter. Use a timestamp returned by /event/{id}/rankings/time; range queries are not supported.
+         */
+        timestamp?: string;
         /**
          * Query limit of event rankings, if not set, default 1000
          */
@@ -438,7 +489,7 @@ export type GetEventRankingsByEventIdResponses = {
      */
     200: {
         status?: string;
-        data?: Array<EventTrackerRanking>;
+        data?: Array<EventTrackerRankingResponse>;
     };
 };
 
@@ -498,6 +549,10 @@ export type GetEventRankingGrpahByEventIdData = {
          */
         userId?: number;
         /**
+         * Exact snapshot filter. Use a timestamp returned by /event/{id}/rankings/time; range queries are not supported.
+         */
+        timestamp?: string;
+        /**
          * Requested server region
          */
         region?: 'jp' | 'tw' | 'en' | 'kr';
@@ -512,7 +567,7 @@ export type GetEventRankingGrpahByEventIdResponses = {
     200: {
         status?: string;
         data?: {
-            eventRankings?: Array<EventTrackerRanking>;
+            eventRankings?: Array<EventTrackerRankingResponse>;
         };
     };
 };

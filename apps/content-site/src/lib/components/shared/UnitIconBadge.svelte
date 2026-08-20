@@ -1,8 +1,5 @@
 <script lang="ts">
-  import { getStaticUnitColor } from "$lib/domain/unit-colors";
-  import { resolveUnitIconUrl } from "$lib/domain/unit-icon";
-
-  type Variant = "sm" | "default" | "lg";
+  import { UnitIconBadge as SharedUnitIconBadge } from "@platform/ui-shell";
 
   let {
     unit,
@@ -18,56 +15,17 @@
     /** Treat the support-unit "none" slug as the piapro icon. */
     mapNoneToPiapro?: boolean;
     /** Visual size: "sm" (card list), "default" (event cards), "lg" (detail cards). */
-    variant?: Variant;
+    variant?: "sm" | "default" | "lg";
     /** Extra classes forwarded to the outer element. */
     class?: string;
   } = $props();
 
-  const iconUrl = $derived(resolveUnitIconUrl(unit, mapNoneToPiapro));
-  const borderColor = $derived(getStaticUnitColor(unit, mapNoneToPiapro) ?? undefined);
-
-  const frameClass: Record<Variant, string> = {
-    sm: "size-7 border border-base-content/15 bg-white",
-    default: "size-9 border border-base-content/15 bg-white",
-    lg: "size-11 border-2 border-base-content/15 bg-white"
-  };
-
-  const imgClass: Record<Variant, string> = {
-    sm: "size-7",
-    default: "size-10 max-w-none",
-    lg: "size-12 max-w-none"
-  };
-
-  const textPillClass: Record<Variant, string> = {
-    sm: "h-5 min-w-5 px-1 text-[0.55rem]",
-    default: "h-7 min-w-7 px-1 text-[0.65rem]",
-    lg: "h-9 min-w-9 px-1.5 text-xs"
-  };
 </script>
 
-{#if iconUrl}
-  <span
-    class="unit-icon-frame inline-flex shrink-0 items-center justify-center rounded-full {frameClass[
-      variant
-    ]} {className ?? ''}"
-    style:border-color={borderColor}
-  >
-    <img
-      src={iconUrl}
-      alt=""
-      aria-hidden="true"
-      class="{imgClass[variant]} shrink-0 object-contain"
-      loading="lazy"
-      decoding="async"
-    />
-  </span>
-{:else if fallbackLabel}
-  <span
-    class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-white font-semibold leading-none {textPillClass[
-      variant
-    ]} {className ?? ''}"
-    style:border-color={borderColor}
-  >
-    <span class="opacity-70">{fallbackLabel}</span>
-  </span>
-{/if}
+<SharedUnitIconBadge
+  {unit}
+  {fallbackLabel}
+  {mapNoneToPiapro}
+  {variant}
+  class={className}
+/>
