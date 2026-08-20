@@ -1,8 +1,11 @@
 ---
 "@apps/tools-site": minor
+"@platform/ui-shell": minor
 ---
 
-Add the Event Tracker MVP with a regional current-event workspace and
+Add regional event tracking cards with localized event IDs and unit badges, and share the configurable unit icon badge component with content-site.
+
+The Event Tracker MVP provides a regional current-event workspace and
 server-side data loader, live and historical ranking views, URL-restored event
 selection, refresh feedback, localized accessible states, a themed interactive
 ranking-history chart, and layout-matched skeletons while ranking requests are

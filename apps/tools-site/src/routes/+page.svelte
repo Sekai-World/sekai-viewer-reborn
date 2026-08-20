@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { BrandLockup } from "@platform/ui-shell";
+  import { BrandLockup, UnitIconBadge } from "@platform/ui-shell";
+  import { asset } from "$app/paths";
   import AssetImage from "@platform/ui-shell/asset-image";
   import { onMount } from "svelte";
   import type { PageData } from "./$types";
@@ -24,6 +25,36 @@
         ? "home.status.empty"
         : "home.status.failed";
   const isEventsLoading = $derived(events === null);
+  const knownUnits = new Set([
+    "idol",
+    "light_sound",
+    "piapro",
+    "school_refusal",
+    "street",
+    "theme_park"
+  ]);
+  const normalizeUnit = (unit: string | null): string => unit?.trim().toLowerCase() ?? "";
+  const unitLabel = (unit: string): string =>
+    unit.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
+  const resolveUnitIconUrl = (unit: string, mapNoneToPiapro = false): string | null => {
+    const normalized = normalizeUnit(unit);
+    const slug = normalized === "none" && mapNoneToPiapro ? "piapro" : normalized;
+    return knownUnits.has(slug) ? asset(`/icons/icon_${slug}.png`) : null;
+  };
+  const getUnitBorderColor = (unit: string, mapNoneToPiapro = false): string | null => {
+    const normalized = normalizeUnit(unit);
+    const slug = normalized === "none" && mapNoneToPiapro ? "piapro" : normalized;
+    return (
+      {
+        light_sound: "#4455dd",
+        idol: "#88dd44",
+        street: "#ee1166",
+        theme_park: "#ff9900",
+        school_refusal: "#884499",
+        piapro: "#ffffff"
+      }[slug] ?? null
+    );
+  };
   const getCountdown = (event: Extract<RegionCurrentEvent, { status: "available" }>['event']) =>
     getTrackerCountdown({
       startAt: event.startAt,
@@ -150,7 +181,20 @@
             </div>
             <div class="event-card-body">
               <h3 id={`result-${result.region}`}>{result.event.name}</h3>
-              <p class="event-meta">{result.event.unit ?? translate("home.unitUnknown")} · {translate("home.eventId")} {result.event.id}</p>
+              <div class="event-meta">
+                {#if result.event.unit}
+                  <UnitIconBadge
+                    unit={result.event.unit}
+                    fallbackLabel={unitLabel(result.event.unit)}
+                    resolveIconUrl={resolveUnitIconUrl}
+                    getBorderColor={getUnitBorderColor}
+                    variant="sm"
+                  />
+                {:else}
+                  <span>{translate("home.unitUnknown")}</span>
+                {/if}
+                <span>· {translate("home.eventId")} {result.event.id}</span>
+              </div>
               <p class="event-time">{formatDate(result.event.startAt)} — {formatDate(result.event.aggregateAt ?? result.event.closedAt)}</p>
               <p class="event-countdown" aria-live="off">{formatCountdown(result.event)}</p>
               <span class="tracker-link">{translate("home.openRegionalTracker")} <span class="tracker-link-arrow" aria-hidden="true">→</span></span>

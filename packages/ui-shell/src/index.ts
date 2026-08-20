@@ -6,7 +6,13 @@ export { default as ImagePreviewTrigger } from "./image-preview-trigger.svelte";
 export { default as AssetImage } from "./asset-image.svelte";
 export { default as AudioPlayer } from "./audio-player.svelte";
 export { default as ThemeControls } from "./theme-controls.svelte";
+export { default as UnitIconBadge } from "./unit-icon-badge.svelte";
 export { isThemeMode, isThemeName, themeModes, themeNames } from "./theme-controls.types";
 export type { ThemeMode, ThemeName } from "./theme-controls.types";
+export type {
+  UnitColorResolver,
+  UnitIconBadgeVariant,
+  UnitIconResolver
+} from "./unit-icon-badge.types";
 export type { SidebarItem } from "./viewer-shell.types";
 export type { RegionOption } from "./region-switcher.types";

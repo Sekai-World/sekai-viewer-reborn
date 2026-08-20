@@ -177,11 +177,14 @@ Rules:
 
 Current shared unit icon component:
 
-- `apps/content-site/src/lib/components/shared/UnitIconBadge.svelte`
+- `packages/ui-shell/src/unit-icon-badge.svelte`
+- `apps/content-site/src/lib/components/shared/UnitIconBadge.svelte` remains the
+  content-site adapter. It supplies the content-site asset and color resolvers,
+  keeping the shared component independent of app-specific asset paths.
 
 Rules:
 
-- Unit/group icons in cards, event UI, music UI, and list filter controls should reuse `UnitIconBadge` instead of hand-rolled `/icons/icon_*.png` image tags.
+- Unit/group icons in cards, event UI, music UI, and list filter controls should reuse `UnitIconBadge` instead of hand-rolled `/icons/icon_*.png` image tags. Other apps import the shared `@platform/ui-shell` component and provide their own local asset and color resolvers.
 - Use `variant="sm"` for compact list/filter controls, `variant="default"` for normal cards, and `variant="lg"` for detail cards.
 - `UnitIconBadge` derives its border color from the static confirmed JP `unitProfiles.colorCode` mapping in `apps/content-site/src/lib/domain/unit-colors.ts`; when `mapNoneToPiapro` is true, support-unit `none` uses the piapro color and icon.
 - Keep unit display names from `/unitProfiles/{region}/list`; the static color helper is for visual border accents only and must not replace unit profile loading.
