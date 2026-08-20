@@ -36,6 +36,7 @@ jobs:
       - name: Run unit tests with coverage
         run: |
           pnpm --filter @apps/content-site exec vitest run --config ./vitest.config.ts --coverage
+          pnpm --filter @apps/tools-site run test:coverage
           pnpm --filter @platform/i18n-runtime run test:coverage
           pnpm --filter @platform/ui-shell exec vitest run --config ./vitest.config.ts --coverage
       - name: SonarCloud Scan
