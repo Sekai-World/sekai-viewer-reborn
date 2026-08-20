@@ -17,7 +17,7 @@ target platform does not support.
 - Render and review the affected chart before deployment. At minimum run:
 
   ```bash
-  helm template <release> deploy/helm/sekai-viewer-reborn
+  helm template release-name deploy/helm/sekai-viewer-reborn
   ```
 
   Also run the chart's documented validation commands and cluster-side dry runs
