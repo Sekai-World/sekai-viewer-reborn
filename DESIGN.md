@@ -255,6 +255,11 @@ horizontal page overflow.
 
 - The stack is SvelteKit 2, Svelte 5, Tailwind CSS 4, and daisyUI. Use Tailwind
   v4 utilities and the existing local daisyUI proxy pattern in each app CSS.
+- Start with the existing components and templates in the official daisyUI
+  documentation whenever they can meet the need. Prefer their semantic
+  structure, interaction, and accessibility behavior; create a custom component
+  only when an available component or template cannot meet the product's
+  semantic, interaction, or visual contract.
 - If a daisyUI default needs a global change, use `@utility` in that app's
   `src/app.css` (for example the content-site `card` radius override). If the
   difference is local, use markup utilities. Keep custom classes for app-specific

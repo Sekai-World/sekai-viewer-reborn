@@ -12,8 +12,10 @@ Use Node.js 24 and pnpm 11.13.0.
 pnpm install
 ```
 
-Read the repository `AGENTS.md` and the applicable guidance under
-`.github/instructions/` before making changes.
+Read the repository `AGENTS.md` and `docs/instructions/README.md`, then the
+applicable topic guidance, before making changes. UI changes must follow
+`DESIGN.md` first; consult `docs/content-site-ui-conventions.md` for
+content-site-specific implementation details.
 
 ## Checks
 
@@ -31,8 +33,9 @@ pnpm build
 
 ## Visual regression workflow
 
-The regular PR CI runs the visual regression job alongside the other checks.
-It uses Linux Chromium and never updates or commits snapshots automatically.
+PR CI runs the visual regression job when the change set includes Svelte or
+stylesheet files. It uses Linux Chromium and never updates or commits snapshots
+automatically. Non-visual changes skip that job.
 When a visual test fails, download the `visual-regression-*` artifact from the
 workflow run; it contains `test-results/` and `playwright-report/`, including
 the expected, actual, and diff images when Playwright produces them.
