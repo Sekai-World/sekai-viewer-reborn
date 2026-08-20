@@ -4,6 +4,7 @@
     UnitIconBadgeVariant,
     UnitIconResolver
   } from "./unit-icon-badge.types";
+  import { getUnitIconBorderColor, resolveUnitIconUrl } from "./unit-icon-data";
 
   let {
     unit,
@@ -11,15 +12,15 @@
     mapNoneToPiapro = false,
     variant = "default",
     class: className,
-    resolveIconUrl,
-    getBorderColor = () => null
+    resolveIconUrl = resolveUnitIconUrl,
+    getBorderColor = getUnitIconBorderColor
   }: {
     unit: string;
     fallbackLabel?: string;
     mapNoneToPiapro?: boolean;
     variant?: UnitIconBadgeVariant;
     class?: string;
-    resolveIconUrl: UnitIconResolver;
+    resolveIconUrl?: UnitIconResolver;
     getBorderColor?: UnitColorResolver;
   } = $props();
 

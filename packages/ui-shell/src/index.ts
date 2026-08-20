@@ -7,6 +7,12 @@ export { default as AssetImage } from "./asset-image.svelte";
 export { default as AudioPlayer } from "./audio-player.svelte";
 export { default as ThemeControls } from "./theme-controls.svelte";
 export { default as UnitIconBadge } from "./unit-icon-badge.svelte";
+export {
+  getUnitIconBorderColor,
+  normalizeUnitIconSlug,
+  resolveUnitIconUrl,
+  unitIconSlugs
+} from "./unit-icon-data";
 export { isThemeMode, isThemeName, themeModes, themeNames } from "./theme-controls.types";
 export type { ThemeMode, ThemeName } from "./theme-controls.types";
 export type {
@@ -14,5 +20,6 @@ export type {
   UnitIconBadgeVariant,
   UnitIconResolver
 } from "./unit-icon-badge.types";
+export type { UnitIconSlug } from "./unit-icon-data";
 export type { SidebarItem } from "./viewer-shell.types";
 export type { RegionOption } from "./region-switcher.types";

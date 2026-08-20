@@ -179,15 +179,15 @@ Current shared unit icon component:
 
 - `packages/ui-shell/src/unit-icon-badge.svelte`
 - `apps/content-site/src/lib/components/shared/UnitIconBadge.svelte` remains the
-  content-site adapter. It supplies the content-site asset and color resolvers,
-  keeping the shared component independent of app-specific asset paths.
+  content-site adapter so existing consumers keep a stable local import path.
 
 Rules:
 
-- Unit/group icons in cards, event UI, music UI, and list filter controls should reuse `UnitIconBadge` instead of hand-rolled `/icons/icon_*.png` image tags. Other apps import the shared `@platform/ui-shell` component and provide their own local asset and color resolvers.
+- `@platform/ui-shell` owns the six canonical unit icon PNGs, supported-slug normalization, `none` to `piapro` mapping, and border colors. Apps should use `UnitIconBadge` defaults rather than duplicating icon files, mappings, or resolver props.
+- Unit/group icons in cards, event UI, music UI, and list filter controls should reuse `UnitIconBadge` instead of hand-rolled image tags.
 - Use `variant="sm"` for compact list/filter controls, `variant="default"` for normal cards, and `variant="lg"` for detail cards.
-- `UnitIconBadge` derives its border color from the static confirmed JP `unitProfiles.colorCode` mapping in `apps/content-site/src/lib/domain/unit-colors.ts`; when `mapNoneToPiapro` is true, support-unit `none` uses the piapro color and icon.
-- Keep unit display names from `/unitProfiles/{region}/list`; the static color helper is for visual border accents only and must not replace unit profile loading.
+- When `mapNoneToPiapro` is true, support-unit `none` uses the package-owned piapro color and icon.
+- Keep unit display names and other domain data from `/unitProfiles/{region}/list`; the package-owned color resolver is for visual border accents only and must not replace unit profile loading.
 - Exception: `routes/characters/[region]/+page.svelte` retains `resolveUnitLogoUrl` for the large unit logo above each roster; it is a page-level visual identifier, not a `UnitIconBadge` placement.
 
 ## Sidebar Rules

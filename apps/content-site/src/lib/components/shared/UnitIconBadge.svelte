@@ -1,7 +1,5 @@
 <script lang="ts">
   import { UnitIconBadge as SharedUnitIconBadge } from "@platform/ui-shell";
-  import { getStaticUnitColor } from "$lib/domain/unit-colors";
-  import { resolveUnitIconUrl } from "$lib/domain/unit-icon";
 
   let {
     unit,
@@ -30,6 +28,4 @@
   {mapNoneToPiapro}
   {variant}
   class={className}
-  resolveIconUrl={resolveUnitIconUrl}
-  getBorderColor={getStaticUnitColor}
 />
