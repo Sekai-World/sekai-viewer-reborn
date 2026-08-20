@@ -8,7 +8,21 @@ const assetBucketByRegion: Record<TrackerSupportedRegion, string> = {
   kr: "sekai-kr-assets"
 };
 
-const trimTrailingSlash = (value: string): string => value.trim().replace(/\/+$/, "");
+const trimTrailingSlashes = (value: string): string => {
+  const trimmed = value.trim();
+  let end = trimmed.length;
+  while (end > 0 && trimmed[end - 1] === "/") end -= 1;
+  return trimmed.slice(0, end);
+};
+
+const trimBoundarySlashes = (value: string): string => {
+  const trimmed = value.trim();
+  let start = 0;
+  let end = trimmed.length;
+  while (start < end && trimmed[start] === "/") start += 1;
+  while (end > start && trimmed[end - 1] === "/") end -= 1;
+  return trimmed.slice(start, end);
+};
 
 /** Matches content-site's confirmed event-banner endpoint and regional asset buckets. */
 export const getEventBannerAssetURL = (
@@ -16,8 +30,8 @@ export const getEventBannerAssetURL = (
   region: TrackerSupportedRegion,
   baseUrl = env.PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
 ): string | null => {
-  const bundle = assetBundleName.trim().replace(/^\/+|\/+$/g, "");
-  const baseUrlValue = trimTrailingSlash(baseUrl);
+  const bundle = trimBoundarySlashes(assetBundleName);
+  const baseUrlValue = trimTrailingSlashes(baseUrl);
   if (!bundle || !baseUrlValue) return null;
 
   return `${baseUrlValue}/${assetBucketByRegion[region]}/home/banner/${bundle}/${bundle}.webp`;

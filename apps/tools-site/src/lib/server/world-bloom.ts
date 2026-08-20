@@ -40,7 +40,12 @@ const object = (value: unknown): Record<string, unknown> | null =>
     : null;
 
 const positiveInteger = (value: unknown): number | null => {
-  const parsed = typeof value === "number" ? value : typeof value === "string" && /^\d+$/.test(value) ? Number(value) : null;
+  let parsed: number | null = null;
+  if (typeof value === "number") {
+    parsed = value;
+  } else if (typeof value === "string" && /^\d+$/.test(value)) {
+    parsed = Number(value);
+  }
   return parsed !== null && Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
@@ -58,7 +63,7 @@ const unwrap = (value: unknown): unknown => {
 };
 
 const parseChapter = (
-  value: WorldBloomResponse | unknown
+  value: unknown
 ): { eventId: number; chapter: WorldBloomChapter } | null => {
   const source = object(value);
   if (!source) return null;

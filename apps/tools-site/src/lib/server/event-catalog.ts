@@ -27,7 +27,10 @@ export type EventCatalogResult = {
   eligibleEvents: TrackerEventMetadata[];
 };
 
-const record = (value: unknown): Record<string, unknown> | null => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+const record = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
 const unwrap = (value: unknown): unknown => {
   let current = value;
   let source = record(current);
@@ -38,8 +41,19 @@ const unwrap = (value: unknown): unknown => {
   return current;
 };
 const positiveId = (value: unknown): number | null => {
-  const id = typeof value === "number" ? value : typeof value === "string" && /^\d+$/.test(value) ? Number(value) : null;
+  let id: number | null = null;
+  if (typeof value === "number") {
+    id = value;
+  } else if (typeof value === "string" && /^\d+$/.test(value)) {
+    id = Number(value);
+  }
   return id !== null && Number.isSafeInteger(id) && id > 0 ? id : null;
+};
+
+const dateValue = (value: unknown): string | number | null => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  return null;
 };
 const event = (value: unknown): TrackerEventMetadata | null => {
   const unwrapped = unwrap(value);
@@ -48,13 +62,12 @@ const event = (value: unknown): TrackerEventMetadata | null => {
   const id = positiveId(source?.id);
   const name = source?.name;
   if (id === null || typeof name !== "string" || !name) return null;
-  const date = (value: unknown): string | number | null => typeof value === "string" || (typeof value === "number" && Number.isFinite(value)) ? value : null;
   return {
     id,
     name,
-    startAt: date(source.startAt),
-    aggregateAt: date(source.aggregateAt),
-    closedAt: date(source.closedAt)
+    startAt: dateValue(source.startAt),
+    aggregateAt: dateValue(source.aggregateAt),
+    closedAt: dateValue(source.closedAt)
   };
 };
 
@@ -76,6 +89,31 @@ const withTimeout = async <T>(request: (signal: AbortSignal) => Promise<T>): Pro
   }
 };
 
+const responseData = (value: unknown): unknown => {
+  const source = record(value);
+  return source && "data" in source ? source.data : null;
+};
+
+const hasSdkError = (value: unknown): boolean => {
+  const source = record(value);
+  return Boolean(source?.error);
+};
+
+type ParsedEventResponse = {
+  status: CatalogRequestStatus;
+  metadata: TrackerEventMetadata | null;
+};
+
+const parseEventResponse = (result: { status: CatalogRequestStatus; value?: unknown }): ParsedEventResponse => {
+  if (result.status !== "available") return { status: result.status, metadata: null };
+  if (hasSdkError(result.value)) return { status: "sdk-error", metadata: null };
+
+  const metadata = event(responseData(result.value));
+  return metadata
+    ? { status: "available", metadata }
+    : { status: "invalid-data", metadata: null };
+};
+
 const mergeEventMetadata = (
   currentEvent: TrackerEventMetadata | null,
   listEvents: TrackerEventMetadata[]
@@ -91,14 +129,54 @@ const mergeEventMetadata = (
   };
 };
 
+const isEligibleEvent = (value: TrackerEventMetadata): boolean => {
+  if (value.startAt === null) return false;
+  const start = new Date(value.startAt).getTime();
+  return Number.isFinite(start) && start <= Date.now();
+};
+
 const getListEvents = (value: unknown): TrackerEventMetadata[] | null => {
   const items = record(unwrap(value))?.items;
   if (!Array.isArray(items)) return null;
-  return items.map(event).filter((value): value is TrackerEventMetadata => value !== null).filter((value) => {
-    if (value.startAt === null) return false;
-    const start = new Date(value.startAt).getTime();
-    return Number.isFinite(start) && start <= Date.now();
-  });
+  return items
+    .map(event)
+    .filter((value): value is TrackerEventMetadata => value !== null)
+    .filter(isEligibleEvent);
+};
+
+const parseListResponse = (result: { status: CatalogRequestStatus; value?: unknown }): {
+  status: CatalogRequestStatus;
+  events: TrackerEventMetadata[];
+} => {
+  if (result.status !== "available") return { status: result.status, events: [] };
+  if (hasSdkError(result.value)) return { status: "sdk-error", events: [] };
+
+  const events = getListEvents(responseData(result.value));
+  return events
+    ? { status: "available", events }
+    : { status: "invalid-data", events: [] };
+};
+
+const getSelectedEvent = async (
+  baseUrl: string,
+  region: TrackerRegion,
+  selectedEventId: number,
+  eligibleEvents: TrackerEventMetadata[]
+): Promise<{ status: CatalogRequestStatus; metadata: TrackerEventMetadata | null }> => {
+  const listedEvent = eligibleEvents.find((candidate) => candidate.id === selectedEventId);
+  if (listedEvent) return { status: "available", metadata: listedEvent };
+
+  const result = await withTimeout((signal) =>
+    getEventsByRegionById({ baseUrl, path: { region, id: String(selectedEventId) }, signal })
+  );
+  const parsed = parseEventResponse(result);
+  if (parsed.status !== "available" || parsed.metadata?.id !== selectedEventId) {
+    return {
+      status: parsed.status === "available" ? "invalid-data" : parsed.status,
+      metadata: null
+    };
+  }
+  return parsed;
 };
 
 export const getEventCatalog = async (
@@ -111,53 +189,20 @@ export const getEventCatalog = async (
     withTimeout((signal) => getEventsByRegionList({ baseUrl, path: { region }, query: { page_size: 1000, sort_by: "startAt", sort_order: "desc" }, signal }))
   ]);
 
-  const currentStatus: CatalogRequestStatus = current.status === "available"
-    ? current.value && "error" in current.value && current.value.error
-      ? "sdk-error"
-      : event(current.value && "data" in current.value ? current.value.data : null) ? "available" : "invalid-data"
-    : current.status;
-  const listStatus: CatalogRequestStatus = list.status === "available"
-    ? list.value && "error" in list.value && list.value.error ? "sdk-error" : "available"
-    : list.status;
-
-  const listEvents = listStatus === "available" ? getListEvents(list.value && "data" in list.value ? list.value.data : null) : null;
-  const eligibleEvents = listEvents ?? [];
-  const normalizedListStatus = listStatus === "available" && listEvents === null ? "invalid-data" : listStatus;
-  const currentEvent = currentStatus === "available"
-    ? event(current.value && "data" in current.value ? current.value.data : null)
-    : null;
+  const currentResult = parseEventResponse(current);
+  const listResult = parseListResponse(list);
+  const { status: currentStatus, metadata: currentEvent } = currentResult;
+  const { status: normalizedListStatus, events: eligibleEvents } = listResult;
   const mergedCurrentEvent = mergeEventMetadata(currentEvent, eligibleEvents);
 
   if (selectedEventId !== undefined) {
-    const listedEvent = eligibleEvents.find((candidate) => candidate.id === selectedEventId) ?? null;
-    if (listedEvent) {
-      return {
-        status: "available",
-        currentStatus,
-        listStatus: normalizedListStatus,
-        currentEvent: mergedCurrentEvent,
-        selectedEvent: listedEvent,
-        eligibleEvents
-      };
-    }
-
-    const selected = await withTimeout((signal) =>
-      getEventsByRegionById({ baseUrl, path: { region, id: String(selectedEventId) }, signal })
-    );
-    const selectedMetadata = selected.value && "data" in selected.value
-      ? event(selected.value.data)
-      : null;
-    const selectedStatus: CatalogRequestStatus = selected.status === "available"
-      ? selected.value && "error" in selected.value && selected.value.error
-        ? "sdk-error"
-        : selectedMetadata?.id === selectedEventId ? "available" : "invalid-data"
-      : selected.status;
+    const selected = await getSelectedEvent(baseUrl, region, selectedEventId, eligibleEvents);
     return {
-      status: selectedStatus,
+      status: selected.status,
       currentStatus,
       listStatus: normalizedListStatus,
       currentEvent: mergedCurrentEvent,
-      selectedEvent: selectedStatus === "available" ? selectedMetadata : null,
+      selectedEvent: selected.metadata,
       eligibleEvents
     };
   }

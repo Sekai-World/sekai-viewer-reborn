@@ -20,9 +20,9 @@ export const calculateRecentRate = (
   if (!target || !Number.isFinite(target.score) || target.timestamp === null) return null;
   const targetAt = new Date(target.timestamp).getTime();
   if (Number.isNaN(targetAt) || !Number.isFinite(horizonHours) || horizonHours <= 0) return null;
-  const baseline = sortTrackerRatePoints(points)
-    .filter((point) => new Date(point.timestamp!).getTime() <= targetAt - horizonHours * HOUR_MS)
-    .at(-1);
+  const baseline = sortTrackerRatePoints(points).findLast(
+    (point) => new Date(point.timestamp!).getTime() <= targetAt - horizonHours * HOUR_MS
+  );
   if (!baseline) return null;
   const elapsedHours = (targetAt - new Date(baseline.timestamp!).getTime()) / HOUR_MS;
   return elapsedHours > 0 ? (target.score - baseline.score) / elapsedHours : null;

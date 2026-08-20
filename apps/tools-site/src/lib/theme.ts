@@ -11,6 +11,9 @@ export type ResolvedTheme = "light" | "dark";
 export const THEME_MODE_STORAGE_KEY = "tools_site_theme_mode";
 export const THEME_NAME_STORAGE_KEY = "tools_site_theme_name";
 
+const hasDataset = (element: Element): element is Element & { dataset: DOMStringMap } =>
+  "dataset" in element;
+
 export const normalizeThemeMode = (value: string | null): ThemeMode =>
   value !== null && isThemeMode(value) ? value : "auto";
 
@@ -27,7 +30,11 @@ export const applyDocumentTheme = (
   systemTheme: ResolvedTheme
 ): ResolvedTheme => {
   const resolvedTheme = resolveThemeMode(mode, systemTheme);
-  documentElement.setAttribute("data-theme", name);
+  if (hasDataset(documentElement)) {
+    documentElement.dataset.theme = name;
+  } else {
+    documentElement.setAttribute("data-theme", name);
+  }
   documentElement.classList.toggle("dark", resolvedTheme === "dark");
   return resolvedTheme;
 };

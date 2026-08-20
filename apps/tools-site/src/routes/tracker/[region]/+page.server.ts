@@ -1,6 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { getSekaiApiBaseUrl } from "$lib/server/config";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "$lib/server/config";
 import { getEventCatalog } from "$lib/server/event-catalog";
 import { getEventRewards } from "$lib/server/event-rewards";
 import { getChapterTrackerRankings, type ChapterTrackerResult } from "$lib/server/chapter-tracker";
