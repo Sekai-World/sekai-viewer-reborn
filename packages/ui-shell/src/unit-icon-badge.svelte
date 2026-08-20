@@ -61,11 +61,11 @@
   </span>
 {:else if fallbackLabel}
   <span
-    class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-white font-semibold leading-none {textPillClass[
+    class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-base-200 text-base-content font-semibold leading-none {textPillClass[
       variant
     ]} {className ?? ''}"
     style:border-color={borderColor}
   >
-    <span class="opacity-70">{fallbackLabel}</span>
+    <span>{fallbackLabel}</span>
   </span>
 {/if}
