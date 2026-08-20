@@ -17,6 +17,7 @@
   import { createChapterRows, type ChapterRow } from "$lib/tracker-chapter-rows";
   import { calculateRecentRates, sortTrackerRatePoints } from "$lib/tracker-rates";
   import { calculateChapterElapsedMs, calculateScorePerElapsedHour } from "$lib/tracker-math";
+  import { resolveTrackerEventId } from "$lib/tracker-event-identity";
   import type { EventRewardsResult } from "$lib/server/event-rewards";
   import type { EventTrackerResult } from "$lib/server/event-tracker";
   import type { ChapterTrackerResult } from "$lib/server/chapter-tracker";
@@ -110,12 +111,16 @@
   let eventPickerInput = $state<HTMLInputElement>();
   let detailsDialog = $state<HTMLDialogElement>();
   let snapshotTimer: ReturnType<typeof setTimeout> | undefined;
+  let refreshTimer: number | undefined;
+  let refreshedDeadline: number | null = null;
   let timePointsRequestToken = 0;
   let snapshotRequestToken = 0;
   let graphRequestToken = 0;
   let graphIdentity: { eventId: number; rank: number } | null = null;
   let observedEventKey: number | null = null;
   let chapterRequestToken = 0;
+  let isDetailsDialogClosing = $state(false);
+  let detailsCloseTimer: ReturnType<typeof setTimeout> | undefined;
 
   const extendedData = $derived(data as ExtendedData);
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
@@ -160,8 +165,30 @@
       (isCurrentEventKnown && catalog?.currentEvent?.id === data.selection.eventId)
   );
   const isHistoricalEvent = $derived(isExplicitSelection && isCurrentEventKnown && !isCurrentEvent);
-  /** Includes the catalog-resolved current event, so live rankings can use time travel too. */
-  const eventKey = $derived(data.selection.eventId ?? catalog?.currentEvent?.id ?? null);
+  const queryEventId = $derived.by(() => {
+    // This route's `selection` field may be shadowed by the parent layout's
+    // live selection in PageData, so the browser URL is authoritative here.
+    const value =
+      typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("eventId");
+    if (!value || !/^\d+$/.test(value)) return null;
+    const eventId = Number(value);
+    return Number.isSafeInteger(eventId) && eventId > 0 ? eventId : null;
+  });
+  /**
+   * The ranking result is available before catalog metadata in the live flow,
+   * so it must identify graph and chapter-detail requests when the catalog is
+   * still pending or unavailable. Explicit historical selections still win.
+   */
+  const eventKey = $derived(
+    resolveTrackerEventId({
+      selectedEventId: queryEventId ?? data.selection.eventId,
+      resultSelectionEventId:
+        trackerResult?.selection.mode === "history" ? trackerResult.selection.eventId : null,
+      resolvedCurrentEventId: trackerResult?.resolvedCurrentEventId,
+      rankingEventIds: trackerResult?.rankings.map((ranking) => ranking.eventId),
+      catalogCurrentEventId: catalog?.currentEvent?.id
+    })
+  );
   const phase = $derived(
     getTrackerPhase({
       startAt: selectedEvent?.startAt,
@@ -437,7 +464,10 @@
     );
   const endpoint = (path: string, params: Record<string, string>): string =>
     `${trackerPath}/${path}?${new URLSearchParams(params)}`;
-  const fetchJsonWithDeadline = async <Payload>(url: string): Promise<{ response: Response; payload: Payload }> => {
+  async function fetchJsonWithDeadline<Payload>(url: string): Promise<{
+    response: Response;
+    payload: Payload;
+  }> {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 15_000);
     try {
@@ -447,7 +477,7 @@
     } finally {
       window.clearTimeout(timeout);
     }
-  };
+  }
   const isTimeTravelStatus = (
     value: unknown
   ): value is Exclude<TimeTravelStatus, "idle" | "loading"> =>
@@ -593,6 +623,8 @@
     graphPoints = [];
     activeGraphPoint = null;
     graphStatus = "idle";
+    if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
+    isDetailsDialogClosing = false;
     if (!detailsDialog?.open) detailsDialog?.showModal();
     void openGraph(row);
   };
@@ -604,15 +636,25 @@
     if (event.target instanceof Element && event.target.closest("button, a, input")) return;
     openDetails(row, context);
   };
-  const closeDetails = (): void => {
+  const resetDetails = (): void => {
     graphRequestToken += 1;
-    detailsDialog?.close();
     selectedRow = null;
     selectedRankingContext = null;
     graphIdentity = null;
     graphPoints = [];
     activeGraphPoint = null;
     graphStatus = "idle";
+  };
+  const closeDetails = (): void => {
+    if (!detailsDialog?.open || isDetailsDialogClosing) return;
+    isDetailsDialogClosing = true;
+    detailsCloseTimer = setTimeout(() => detailsDialog?.close(), 180);
+  };
+  const handleDetailsClosed = (): void => {
+    if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
+    detailsCloseTimer = undefined;
+    isDetailsDialogClosing = false;
+    resetDetails();
   };
   const openGraph = async (row = selectedRow): Promise<void> => {
     if (!row || eventKey === null) return;
@@ -783,6 +825,8 @@
     return () => {
       window.clearInterval(clock);
       if (snapshotTimer) clearTimeout(snapshotTimer);
+      if (refreshTimer) clearTimeout(refreshTimer);
+      if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
     };
   });
   $effect(() => {
@@ -844,13 +888,25 @@
     return () => (cancelled = true);
   });
   $effect(() => {
-    if (nextRefreshAt !== null && !isRefreshing) {
-      const timer = window.setTimeout(
-        () => void refresh(),
-        Math.max(0, nextRefreshAt - Date.now())
-      );
-      return () => window.clearTimeout(timer);
+    if (nextRefreshAt === null) {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = undefined;
+      refreshedDeadline = null;
+      return;
     }
+    if (isRefreshing) {
+      if (refreshTimer) clearTimeout(refreshTimer);
+      refreshTimer = undefined;
+      return;
+    }
+    if (nextRefreshAt === refreshedDeadline) return;
+    if (refreshTimer) clearTimeout(refreshTimer);
+    refreshedDeadline = nextRefreshAt;
+    refreshTimer = window.setTimeout(() => {
+      refreshTimer = undefined;
+      refreshedDeadline = null;
+      void refresh();
+    }, Math.max(0, nextRefreshAt - Date.now()));
   });
   $effect(() => {
     void Promise.resolve(data.i18nMessages).then(
@@ -859,6 +915,7 @@
   });
   $effect(() => {
     const chapter = selectedChapter;
+    const selectedLadder = ladder;
     const requestToken = ++chapterRequestToken;
     selectedChapterRows = [];
     if (!chapter) return;
@@ -870,7 +927,7 @@
         eventKey !== requestEventKey ||
         selectedChapter?.chapter.id !== requestChapterId
       ) return;
-      selectedChapterRows = createChapterRows(chapter.result.rankings, ladder);
+      selectedChapterRows = createChapterRows(chapter.result.rankings, selectedLadder);
     });
   });
 </script>
@@ -900,7 +957,7 @@
           {#if countdown}
             <span class="tracker-countdown">
               <span class="tracker-countdown-label">{countdownLabel}</span>
-              <span class="tracker-countdown-values">
+              <span class="tracker-countdown-values" aria-live="off">
                 {#if countdown.values.days > 0}<span>{countdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
                 <span>{String(countdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
                 <span>{String(countdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
@@ -912,7 +969,7 @@
         <div class="tracker-freshness-action">
           <div class="tracker-freshness">
             <span>{interpolate("tracker.loadedAt", { time: formatTimestamp(trackerResult?.loadedAt) })}</span>
-            {#if nextRefreshSeconds !== null}<span
+            {#if nextRefreshSeconds !== null}<span aria-live="off"
                 >{interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })}</span
               >{/if}
           </div>
@@ -1190,7 +1247,7 @@
                 : translate("tracker.chapterCountdownUnavailable")}
         </span>
         {#if chapterCountdown}
-          <span class="tracker-countdown-values">
+          <span class="tracker-countdown-values" aria-live="off">
             {#if chapterCountdown.values.days > 0}<span>{chapterCountdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
             <span>{String(chapterCountdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
             <span>{String(chapterCountdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
@@ -1237,13 +1294,13 @@
               "tracker.rankingsLoading"
             )}
           </div>{/if}
-        <div id="tracker-ranking-panel" role="tabpanel" aria-labelledby={selectedRankingTab === "event" ? "tracker-event-ranking-tab" : `tracker-chapter-tab-${selectedChapter?.chapter.id}`}>
+        <div id="tracker-ranking-panel" role={isWorldBloom ? "tabpanel" : undefined} aria-labelledby={isWorldBloom ? selectedRankingTab === "event" ? "tracker-event-ranking-tab" : `tracker-chapter-tab-${selectedChapter?.chapter.id}` : undefined}>
         <table class="table tracker-table">
           <thead><tr><th scope="col">{translate("tracker.rank")}</th><th scope="col">{translate("tracker.player")}</th><th scope="col">{translate("tracker.score")}</th><th scope="col">{translate("tracker.speed")}</th><th scope="col">{translate("tracker.degree")}</th><th scope="col"><span class="sr-only">{translate("tracker.viewTrend")}</span></th></tr></thead>
           <tbody>
             {#each activeRankingRows as row (row.ladderRank)}
               {#if row.status === "available"}
-                <tr class="tracker-ranking-row" class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"} onclick={(event) => handleRankingRowClick(event, row)}>
+                <tr class="tracker-ranking-row" class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"} onclick={(event) => handleRankingRowClick(event, row, activeRankingContext)}>
                   <th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th>
                   <td><strong class="tracker-player-name">{row.ranking?.userName ?? row.ranking?.userId ?? translate("tracker.unavailable")}</strong></td>
                   <td class="tracker-score">{formatNumber(row.score)}</td><td class="tracker-speed">{formatSpeed(row.speedPerHour)}</td><td><span class="tracker-reward-badge">{formatRewardRange(row.reward)}</span></td>
@@ -1290,7 +1347,12 @@
   bind:this={detailsDialog}
   class="modal tracker-dialog"
   aria-labelledby="tracker-details-title"
-  onclose={closeDetails}
+  data-closing={isDetailsDialogClosing || undefined}
+  oncancel={(event) => {
+    event.preventDefault();
+    closeDetails();
+  }}
+  onclose={handleDetailsClosed}
 >
   <div class="modal-box">
     <div class="tracker-workspace-heading">
@@ -1376,7 +1438,7 @@
     {/if}
   </div>
   <form method="dialog" class="modal-backdrop">
-    <button aria-label={translate("tracker.detailsClose")}
+    <button type="button" onclick={closeDetails} aria-label={translate("tracker.detailsClose")}
       >{translate("tracker.detailsClose")}</button
     >
   </form>
@@ -1989,6 +2051,32 @@
   .tracker-dialog .modal-box {
     width: min(92vw, 64rem);
     max-width: 64rem;
+    max-height: min(85vh, 64rem);
+    overflow-y: auto;
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    transform-origin: top;
+    transition:
+      max-height 180ms ease-out,
+      opacity 140ms ease-out,
+      transform 180ms ease-out;
+  }
+  .tracker-dialog[data-closing] .modal-box {
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-0.5rem) scaleY(0.96);
+  }
+  .tracker-dialog::backdrop {
+    transition: background-color 180ms ease-out;
+  }
+  .tracker-dialog[data-closing]::backdrop {
+    background-color: transparent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-dialog .modal-box,
+    .tracker-dialog::backdrop {
+      transition-duration: 1ms;
+    }
   }
   .tracker-graph-loading {
     display: flex;

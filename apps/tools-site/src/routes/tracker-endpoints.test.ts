@@ -63,11 +63,32 @@ describe("tracker time-travel endpoints", () => {
       (await graph(request("/tracker/cn/graph?eventId=42&rank=1", "cn"))).json()
     ).resolves.toEqual({ status: "invalid-request", points: [] });
     await expect(
+      (await graph(request("/tracker/en/graph?eventId=42&rank=1&charaId=invalid"))).json()
+    ).resolves.toEqual({ status: "invalid-request", points: [] });
+    await expect(
+      (await graph(request("/tracker/en/graph?eventId=42&rank=1&timestamp=invalid"))).json()
+    ).resolves.toEqual({ status: "invalid-request", points: [] });
+    await expect(
+      (await snapshot(request("/tracker/en/snapshot?eventId=42&timestamp=invalid"))).json()
+    ).resolves.toEqual({ status: "invalid-request", rankings: [] });
+    await expect(
       (await chapter(request("/tracker/en/chapter?charaId=0&mode=live"))).json()
     ).resolves.toEqual({ status: "invalid-request", rankings: [] });
     expect(mocks.getEventRankingTimePoints).not.toHaveBeenCalled();
     expect(mocks.getEventRankingsByEventId).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("accepts valid ISO and Unix-second timestamps", async () => {
+    mocks.getEventRankingsByEventId.mockResolvedValueOnce({ data: { eventRankings: [] } });
+    fetchMock.mockResolvedValueOnce(Response.json({ eventRankings: [] }));
+
+    await expect(
+      (await snapshot(request("/tracker/en/snapshot?eventId=42&timestamp=2026-01-01T00:00:00Z"))).json()
+    ).resolves.toEqual({ status: "available", rankings: [] });
+    await expect(
+      (await graph(request("/tracker/en/graph?eventId=42&rank=1&timestamp=1767225600"))).json()
+    ).resolves.toEqual({ status: "available", points: [] });
   });
 
   it("loads a validated chapter ranking by character id", async () => {

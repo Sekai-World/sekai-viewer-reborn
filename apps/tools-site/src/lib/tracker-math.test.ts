@@ -45,6 +45,17 @@ describe("chapter elapsed time", () => {
     ).toBe(24 * 60 * 60_000);
   });
 
+  it("accepts numeric Unix-second chapter timestamps", () => {
+    expect(
+      calculateChapterElapsedMs({
+        startAt: 1_767_225_600,
+        endAt: 1_767_312_000,
+        now: Date.now(),
+        isCurrent: false
+      })
+    ).toBe(24 * 60 * 60_000);
+  });
+
   it("rejects invalid chapter metadata", () => {
     expect(
       calculateChapterElapsedMs({ startAt: "invalid", endAt, now: Date.now(), isCurrent: false })

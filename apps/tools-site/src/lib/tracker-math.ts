@@ -1,3 +1,5 @@
+import { parseTrackerTimestamp } from "$lib/tracker-phase";
+
 export type ScorePerElapsedHourInput = Readonly<{
   score: number | null | undefined;
   elapsedMs: number | null | undefined;
@@ -13,12 +15,6 @@ export type ChapterElapsedInput = Readonly<{
   snapshotAt?: string | number | null;
 }>;
 
-const parseTimestamp = (value: string | number | null | undefined): number | null => {
-  if (value === null || value === undefined) return null;
-  const timestamp = typeof value === "number" ? value : new Date(value).getTime();
-  return Number.isFinite(timestamp) ? timestamp : null;
-};
-
 /** Uses one chapter-wide reference time so rates remain comparable across ranks. */
 export const calculateChapterElapsedMs = ({
   startAt,
@@ -27,8 +23,8 @@ export const calculateChapterElapsedMs = ({
   isCurrent,
   snapshotAt
 }: ChapterElapsedInput): number | null => {
-  const start = parseTimestamp(startAt);
-  const reference = isCurrent ? now : parseTimestamp(snapshotAt) ?? parseTimestamp(endAt);
+  const start = parseTrackerTimestamp(startAt);
+  const reference = isCurrent ? now : parseTrackerTimestamp(snapshotAt) ?? parseTrackerTimestamp(endAt);
   if (start === null || reference === null || !Number.isFinite(now) || reference <= start) return null;
   return reference - start;
 };

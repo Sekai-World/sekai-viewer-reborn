@@ -4,7 +4,7 @@ import {
   trackerSupportedRegions,
   type TrackerSupportedRegion
 } from "$lib/regions";
-import { withRequestTimeout } from "./network";
+import { isRestoreResponse, withRequestTimeout } from "./network";
 import { CRITICAL_RANK_LADDER } from "$lib/tracker-ladders";
 
 export const trackerRegions = trackerSupportedRegions;
@@ -200,6 +200,7 @@ export const getEventTrackerRankings = async (
       for (let attempt = 0; attempt < LIVE_MAX_ATTEMPTS; attempt += 1) {
         const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingLive>>>((signal) => getEventRankingLive({ baseUrl, query: { region }, signal } as Parameters<typeof getEventRankingLive>[0]));
         if ("error" in response && response.error) return withResult(selection, getSdkErrorStatus(response));
+        if (isRestoreResponse(response)) return withResult(selection, "available");
         const rankings = parseEventTrackerRankings(response.data);
         if (!rankings) return withResult(selection, "invalid-data");
         lastRankings = rankings;

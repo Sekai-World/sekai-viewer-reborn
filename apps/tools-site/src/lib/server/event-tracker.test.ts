@@ -188,6 +188,16 @@ describe("event tracker data layer", () => {
     } finally { vi.useRealTimers(); }
   });
 
+  it("preserves restore responses as unavailable data without retrying", async () => {
+    mocks.getEventRankingLive.mockResolvedValue({ response: { status: 202 }, data: { restore: true } });
+
+    await expect(getEventTrackerRankings("https://api.example.test", "jp")).resolves.toMatchObject({
+      status: "available",
+      rankings: []
+    });
+    expect(mocks.getEventRankingLive).toHaveBeenCalledTimes(1);
+  });
+
   it("stops after bounded retries and preserves rows plus missing ranks", async () => {
     vi.useFakeTimers();
     try {

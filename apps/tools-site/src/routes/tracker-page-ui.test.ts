@@ -96,9 +96,13 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class="tracker-row-detail-button"');
     expect(source).not.toContain('tabindex="0" role="button"');
     expect(source).toContain("new AbortController()");
-    expect(source).toContain("const fetchJsonWithDeadline = async <Payload>");
+    expect(source).toContain("async function fetchJsonWithDeadline<Payload>");
+    expect(source).not.toContain("const fetchJsonWithDeadline = async <Payload>");
     expect(source).toContain("const payload = (await response.json()) as Payload;");
     expect(source).toContain("window.clearTimeout(timeout);");
+    expect(source).toContain('new URLSearchParams(window.location.search).get("eventId")');
+    expect(source).toContain("selectedEventId: queryEventId ?? data.selection.eventId");
+    expect(source).toContain("resultSelectionEventId:");
   });
 
   it("uses one World Bloom ranking workspace and keeps ordinary events chapter-free", async () => {
@@ -252,7 +256,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("onclick={() => openDetails(row, activeRankingContext)}");
     expect(source).toContain("const handleRankingRowClick = (");
     expect(source).toContain('event.target instanceof Element && event.target.closest("button, a, input")');
-    expect(source).toContain("onclick={(event) => handleRankingRowClick(event, row)}");
+    expect(source).toContain("onclick={(event) => handleRankingRowClick(event, row, activeRankingContext)}");
     expect(source).not.toContain(
       '<tr class:tracker-unavailable={row.status === "unavailable"} tabindex="0" role="button"'
     );
@@ -261,6 +265,13 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain('class="tracker-ranking-row" onkeydown=');
     expect(source).toContain("bind:this={detailsDialog}");
     expect(source).toContain("detailsDialog?.showModal()");
+    expect(source).toContain("let isDetailsDialogClosing = $state(false);");
+    expect(source).toContain("data-closing={isDetailsDialogClosing || undefined}");
+    expect(source).toContain("oncancel={(event) => {");
+    expect(source).toContain("event.preventDefault();");
+    expect(source).toContain("setTimeout(() => detailsDialog?.close(), 180)");
+    expect(source).toContain(".tracker-dialog[data-closing] .modal-box");
+    expect(source).toContain("max-height 180ms ease-out");
     expect(source).not.toContain("tracker-inspector");
     expect(source).toContain('translate("tracker.degree")');
     expect(source).toContain('translate("tracker.speedUnavailable")');
@@ -277,6 +288,11 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("graphIdentity?.eventId !== requestEventKey");
     expect(source).toContain("graphIdentity.rank !== requestRank");
     expect(source).toContain('payload.status !== "available" || !Array.isArray(payload.points)');
+    expect(source).toContain('import { resolveTrackerEventId } from "$lib/tracker-event-identity";');
+    expect(source).toContain("resolvedCurrentEventId: trackerResult?.resolvedCurrentEventId");
+    expect(source).toContain("catalogCurrentEventId: catalog?.currentEvent?.id");
+    expect(source).toContain("void openGraph(row);");
+    expect(source).toContain("<RankingHistoryChart\n            points={graphPoints}");
   });
 
   it("keeps time travel opt-in in an inline panel below the unchanged rankings toolbar", async () => {
@@ -396,14 +412,15 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('interpolate("tracker.chapter", { number: chapter.chapter.chapterNo })');
     expect(source).not.toContain("chapter.chapter.gameCharacterId}</span>");
     expect(source).toContain('import { createChapterRows, type ChapterRow } from "$lib/tracker-chapter-rows";');
-    expect(source).toContain("selectedChapterRows = createChapterRows(chapter.result.rankings, ladder);");
+    expect(source).toContain("const selectedLadder = ladder;");
+    expect(source).toContain("selectedChapterRows = createChapterRows(chapter.result.rankings, selectedLadder);");
     expect(source).toContain("reward: getReward(row.rank)");
     expect(source).toContain("calculateChapterElapsedMs");
     expect(source).not.toContain("speedPerHour: null");
     expect(source).not.toContain("reward: null");
     expect(source).toContain('class="table tracker-table"');
     expect(source).toContain("chapterRows");
-    const chapterMarkup = source.slice(source.indexOf("tracker-ranking-tabs"));
+    const chapterMarkup = source.slice(source.indexOf('<div class="tracker-ranking-tabs-scroll">'));
     expect(source).toContain(
       'class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"}'
     );
