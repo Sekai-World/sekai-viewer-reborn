@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { BrandLockup, UnitIconBadge } from "@platform/ui-shell";
+  import { BrandLockup } from "@platform/ui-shell";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import { asset } from "$app/paths";
   import AssetImage from "@platform/ui-shell/asset-image";
   import { onMount } from "svelte";
