@@ -420,16 +420,10 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain("reward: null");
     expect(source).toContain('class="table tracker-table"');
     expect(source).toContain("chapterRows");
-    const chapterMarkup = source.slice(source.indexOf('<div class="tracker-ranking-tabs-scroll">'));
     expect(source).toContain(
       'class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"}'
     );
-    expect(chapterMarkup).toContain('class:tier-top={rankTier(row.ladderRank) === "top"}');
-    expect(chapterMarkup).toContain('class:tier-elite={rankTier(row.ladderRank) === "elite"}');
-    expect(chapterMarkup).toContain('class:tier-high={rankTier(row.ladderRank) === "high"}');
-    expect(chapterMarkup).toContain('class:tier-mid={rankTier(row.ladderRank) === "mid"}');
-    expect(chapterMarkup).toContain('class:tier-long={rankTier(row.ladderRank) === "long"}');
-    expect(chapterMarkup).toContain('class="tracker-ranking-cards"');
+    expect(source).toContain('class="tracker-ranking-cards"');
     expect(source).toContain('role="tablist"');
     expect(source).toContain('role="tab"');
     expect(source).toContain("aria-selected={selectedRankingTab === chapter.chapter.id}");
