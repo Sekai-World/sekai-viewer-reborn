@@ -266,11 +266,24 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("bind:this={detailsDialog}");
     expect(source).toContain("detailsDialog?.showModal()");
     expect(source).toContain("let isDetailsDialogClosing = $state(false);");
+    expect(source).toContain("let isDetailsDialogOpening = $state(false);");
+    expect(source).toContain("data-opening={isDetailsDialogOpening || undefined}");
     expect(source).toContain("data-closing={isDetailsDialogClosing || undefined}");
+    expect(source).toContain("requestAnimationFrame(() => {");
+    expect(source).toContain("{#if selectedRow}\n  <div class=\"modal-box\">");
     expect(source).toContain("oncancel={(event) => {");
     expect(source).toContain("event.preventDefault();");
     expect(source).toContain("setTimeout(() => detailsDialog?.close(), 180)");
-    expect(source).toContain(".tracker-dialog[data-closing] .modal-box");
+    const closeHandler = source.slice(
+      source.indexOf("const handleDetailsClosed"),
+      source.indexOf("const openGraph", source.indexOf("const handleDetailsClosed"))
+    );
+    expect(closeHandler).not.toContain("resetDetails();");
+    expect(closeHandler).not.toContain("isDetailsDialogClosing = false;");
+    expect(source).toContain("isDetailsDialogClosing = false;\n    if (!detailsDialog?.open)");
+    expect(source).toContain("selectedRow = row;");
+    expect(source).toContain(".tracker-dialog:not([data-opening]):not([data-closing]) .modal-box");
+    expect(source).toContain(".tracker-dialog[data-opening]::backdrop,");
     expect(source).toContain("max-height 180ms ease-out");
     expect(source).not.toContain("tracker-inspector");
     expect(source).toContain('translate("tracker.degree")');
@@ -278,7 +291,11 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain('tracker."prediction"');
     expect(source).not.toContain("tracker.openHistoryGraph");
     expect(source).toContain("void openGraph(row);");
-    expect(source).toContain('class="tracker-graph-loading"');
+    expect(source).toContain('class="tracker-graph-region"');
+    expect(source).toContain('class="tracker-graph-loading" role="status"');
+    expect(source).toContain('class="tracker-graph-skeleton"');
+    expect(source).toContain('class="tracker-graph-skeleton-plot"');
+    expect(source).toContain('class="tracker-graph-message"');
     expect(source).not.toContain("tracker.rankCount");
     expect(source).not.toContain("tracker.viewRankingHistory");
     expect(source).not.toContain("openPrimaryGraph");
@@ -292,7 +309,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("resolvedCurrentEventId: trackerResult?.resolvedCurrentEventId");
     expect(source).toContain("catalogCurrentEventId: catalog?.currentEvent?.id");
     expect(source).toContain("void openGraph(row);");
-    expect(source).toContain("<RankingHistoryChart\n            points={graphPoints}");
+    expect(source).toContain("<RankingHistoryChart");
   });
 
   it("keeps time travel opt-in in an inline panel below the unchanged rankings toolbar", async () => {
@@ -443,6 +460,10 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain('viewBox="0 0 720 250"');
     expect(source).toContain("tracker.graphAriaLabel");
     expect(source).toContain('class="tracker-graph-panel"');
+    expect(source).toContain('height: clamp(18rem, 52vw, 24.5rem);');
+    expect(source).toContain('animation: tracker-graph-fade-in 180ms ease-out forwards;');
+    expect(source).toContain('@keyframes tracker-graph-skeleton-pulse');
+    expect(source).toContain('@media (prefers-reduced-motion: reduce)');
   });
 
   it("guards stale time-travel requests and presents each endpoint failure distinctly", async () => {

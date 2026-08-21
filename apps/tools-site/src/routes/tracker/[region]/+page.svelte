@@ -120,7 +120,9 @@
   let observedEventKey: number | null = null;
   let chapterRequestToken = 0;
   let isDetailsDialogClosing = $state(false);
+  let isDetailsDialogOpening = $state(false);
   let detailsCloseTimer: ReturnType<typeof setTimeout> | undefined;
+  let detailsOpenFrame: number | undefined;
 
   const extendedData = $derived(data as ExtendedData);
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
@@ -624,8 +626,19 @@
     activeGraphPoint = null;
     graphStatus = "idle";
     if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
+    if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
+    detailsCloseTimer = undefined;
     isDetailsDialogClosing = false;
-    if (!detailsDialog?.open) detailsDialog?.showModal();
+    if (!detailsDialog?.open) {
+      isDetailsDialogOpening = true;
+      detailsDialog?.showModal();
+      detailsOpenFrame = requestAnimationFrame(() => {
+        detailsOpenFrame = undefined;
+        isDetailsDialogOpening = false;
+      });
+    } else {
+      isDetailsDialogOpening = false;
+    }
     void openGraph(row);
   };
   const handleRankingRowClick = (
@@ -636,15 +649,6 @@
     if (event.target instanceof Element && event.target.closest("button, a, input")) return;
     openDetails(row, context);
   };
-  const resetDetails = (): void => {
-    graphRequestToken += 1;
-    selectedRow = null;
-    selectedRankingContext = null;
-    graphIdentity = null;
-    graphPoints = [];
-    activeGraphPoint = null;
-    graphStatus = "idle";
-  };
   const closeDetails = (): void => {
     if (!detailsDialog?.open || isDetailsDialogClosing) return;
     isDetailsDialogClosing = true;
@@ -652,9 +656,12 @@
   };
   const handleDetailsClosed = (): void => {
     if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
+    if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
     detailsCloseTimer = undefined;
-    isDetailsDialogClosing = false;
-    resetDetails();
+    detailsOpenFrame = undefined;
+    isDetailsDialogOpening = false;
+    // Keep the collapsed state through native dialog reconciliation. The next
+    // open clears it immediately before showModal() starts a fresh entrance.
   };
   const openGraph = async (row = selectedRow): Promise<void> => {
     if (!row || eventKey === null) return;
@@ -827,6 +834,7 @@
       if (snapshotTimer) clearTimeout(snapshotTimer);
       if (refreshTimer) clearTimeout(refreshTimer);
       if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
+      if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
     };
   });
   $effect(() => {
@@ -1347,6 +1355,7 @@
   bind:this={detailsDialog}
   class="modal tracker-dialog"
   aria-labelledby="tracker-details-title"
+  data-opening={isDetailsDialogOpening || undefined}
   data-closing={isDetailsDialogClosing || undefined}
   oncancel={(event) => {
     event.preventDefault();
@@ -1354,6 +1363,7 @@
   }}
   onclose={handleDetailsClosed}
 >
+  {#if selectedRow}
   <div class="modal-box">
     <div class="tracker-workspace-heading">
       <h2 id="tracker-details-title">
@@ -1369,7 +1379,6 @@
         ><Icon icon="mdi:close" aria-hidden="true" /></button
       >
     </div>
-    {#if selectedRow}
       <dl class="tracker-detail-grid">
         <div>
           <dt>{translate("tracker.player")}</dt>
@@ -1414,29 +1423,38 @@
           <dd>{formatTimestamp(activeGraphPoint?.timestamp ?? selectedRow.ranking?.timestamp)}</dd>
         </div>
       </dl>
-      {#if graphStatus === "loading"}<p class="tracker-graph-loading" role="status">
-          <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>{translate(
-            "tracker.graphLoading"
-          )}
-        </p>{:else if graphStatus === "available"}<section class="tracker-graph-panel">
-          <h3>
-            {translate("tracker.graph")} · {graphMode === "trend"
-              ? translate("tracker.graphTrend")
-              : translate("tracker.graphSnapshot")}
-          </h3>
-          <RankingHistoryChart
-            points={graphPoints}
-            bind:activePoint={activeGraphPoint}
-            locale={data.uiLocale}
-            scoreLabel={translate("tracker.score")}
-            timeLabel={translate("tracker.capturedAt")}
-            ariaLabel={interpolate("tracker.graphAriaLabel", { rank: selectedRow.ladderRank })}
-          />
-        </section>{:else if graphStatus === "empty" || graphStatus === "error"}<p>
-          {translate("tracker.graphUnavailable")}
-        </p>{/if}
-    {/if}
+      <div class="tracker-graph-region" aria-live="polite">
+        {#if graphStatus === "loading"}
+          <div class="tracker-graph-loading" role="status">
+            <span class="sr-only">{translate("tracker.graphLoading")}</span>
+            <div class="tracker-graph-skeleton" aria-hidden="true">
+              <span class="tracker-graph-skeleton-heading"></span>
+              <span class="tracker-graph-skeleton-plot"></span>
+              <span class="tracker-graph-skeleton-axis"></span>
+            </div>
+          </div>
+        {:else if graphStatus === "available"}
+          <section class="tracker-graph-panel">
+            <h3>
+              {translate("tracker.graph")} · {graphMode === "trend"
+                ? translate("tracker.graphTrend")
+                : translate("tracker.graphSnapshot")}
+            </h3>
+            <RankingHistoryChart
+              points={graphPoints}
+              bind:activePoint={activeGraphPoint}
+              locale={data.uiLocale}
+              scoreLabel={translate("tracker.score")}
+              timeLabel={translate("tracker.capturedAt")}
+              ariaLabel={interpolate("tracker.graphAriaLabel", { rank: selectedRow.ladderRank })}
+            />
+          </section>
+        {:else if graphStatus === "empty" || graphStatus === "error"}
+          <p class="tracker-graph-message">{translate("tracker.graphUnavailable")}</p>
+        {/if}
+      </div>
   </div>
+  {/if}
   <form method="dialog" class="modal-backdrop">
     <button type="button" onclick={closeDetails} aria-label={translate("tracker.detailsClose")}
       >{translate("tracker.detailsClose")}</button
@@ -1939,6 +1957,82 @@
     margin: 0;
     overflow-wrap: anywhere;
   }
+  .tracker-graph-region {
+    display: grid;
+    height: clamp(18rem, 52vw, 24.5rem);
+    min-height: 18rem;
+    margin-top: 1rem;
+    overflow: hidden;
+  }
+  .tracker-graph-loading,
+  .tracker-graph-message {
+    display: grid;
+    min-height: 0;
+    place-items: center;
+  }
+  .tracker-graph-skeleton {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: 1.25rem minmax(0, 1fr) 0.75rem;
+    gap: 0.85rem;
+    padding: 0.25rem 0;
+  }
+  .tracker-graph-skeleton-heading,
+  .tracker-graph-skeleton-plot,
+  .tracker-graph-skeleton-axis {
+    display: block;
+    border-radius: var(--radius-box);
+    background: color-mix(in srgb, var(--color-base-content) 10%, transparent);
+    animation: tracker-graph-skeleton-pulse 1.6s ease-in-out infinite;
+  }
+  .tracker-graph-skeleton-heading {
+    width: 42%;
+  }
+  .tracker-graph-skeleton-plot {
+    border: 1px solid color-mix(in srgb, var(--color-base-content) 10%, transparent);
+    background:
+      linear-gradient(color-mix(in srgb, var(--color-base-content) 8%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--color-base-content) 8%, transparent) 1px, transparent 1px),
+      color-mix(in srgb, var(--color-base-content) 4%, transparent);
+    background-size: 100% 25%, 20% 100%, auto;
+    animation-delay: 100ms;
+  }
+  .tracker-graph-skeleton-axis {
+    width: 68%;
+    animation-delay: 200ms;
+  }
+  .tracker-graph-panel {
+    min-height: 0;
+    opacity: 0;
+    animation: tracker-graph-fade-in 180ms ease-out forwards;
+  }
+  .tracker-graph-panel :global(.history-chart) {
+    height: calc(100% - 2rem);
+    min-height: 0;
+  }
+  .tracker-graph-message {
+    color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
+    text-align: center;
+  }
+  @keyframes tracker-graph-fade-in {
+    to { opacity: 1; }
+  }
+  @keyframes tracker-graph-skeleton-pulse {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-graph-panel {
+      animation: none;
+      opacity: 1;
+    }
+    .tracker-graph-skeleton-heading,
+    .tracker-graph-skeleton-plot,
+    .tracker-graph-skeleton-axis {
+      animation: none;
+    }
+  }
   @media (max-width: 47.999rem) {
     .tracker-context,
     .tracker-event-picker,
@@ -2051,24 +2145,26 @@
   .tracker-dialog .modal-box {
     width: min(92vw, 64rem);
     max-width: 64rem;
-    max-height: min(85vh, 64rem);
-    overflow-y: auto;
-    opacity: 1;
-    transform: translateY(0) scaleY(1);
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-0.5rem) scaleY(0.96);
     transform-origin: top;
     transition:
       max-height 180ms ease-out,
       opacity 140ms ease-out,
       transform 180ms ease-out;
   }
-  .tracker-dialog[data-closing] .modal-box {
-    max-height: 0;
-    opacity: 0;
-    transform: translateY(-0.5rem) scaleY(0.96);
+  .tracker-dialog:not([data-opening]):not([data-closing]) .modal-box {
+    max-height: min(85vh, 64rem);
+    overflow-y: auto;
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
   }
   .tracker-dialog::backdrop {
     transition: background-color 180ms ease-out;
   }
+  .tracker-dialog[data-opening]::backdrop,
   .tracker-dialog[data-closing]::backdrop {
     background-color: transparent;
   }
@@ -2077,12 +2173,6 @@
     .tracker-dialog::backdrop {
       transition-duration: 1ms;
     }
-  }
-  .tracker-graph-loading {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 8rem;
   }
   .tracker-graph-panel {
     margin-top: 1rem;
@@ -2093,6 +2183,9 @@
     font-weight: 800;
   }
   @media (max-width: 47.999rem) {
+    .tracker-graph-region {
+      height: 18rem;
+    }
     .tracker-dialog .modal-box {
       width: calc(100vw - 2rem);
       max-width: none;
