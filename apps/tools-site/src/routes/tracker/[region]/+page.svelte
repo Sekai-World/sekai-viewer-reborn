@@ -1264,6 +1264,7 @@
         {/if}
       </div>
     {/if}
+    <div class="tracker-ranking-result-region" aria-live="polite">
     {#if isTrackerLoading}
       <div
         class="tracker-ranking-skeleton"
@@ -1283,18 +1284,18 @@
           {/each}
         </div>
       </div>
-    {:else if isInvalidSelection}<p role="alert">{translate("tracker.eventIdInvalid")}</p>
-    {:else if trackerStatus === "upstream-error"}<p role="alert">
+    {:else if isInvalidSelection}<p class="tracker-ranking-result-message" role="alert">{translate("tracker.eventIdInvalid")}</p>
+    {:else if trackerStatus === "upstream-error"}<p class="tracker-ranking-result-message" role="alert">
         {translate("tracker.error.historyUpstream")}
       </p>
-    {:else if trackerStatus === "sdk-error"}<p role="alert">{translate("tracker.error.sdk")}</p>
-    {:else if trackerStatus === "network-error"}<p role="alert">
+    {:else if trackerStatus === "sdk-error"}<p class="tracker-ranking-result-message" role="alert">{translate("tracker.error.sdk")}</p>
+    {:else if trackerStatus === "network-error"}<p class="tracker-ranking-result-message" role="alert">
         {translate("tracker.error.network")}
       </p>
-    {:else if trackerStatus === "invalid-data"}<p role="alert">
+    {:else if trackerStatus === "invalid-data"}<p class="tracker-ranking-result-message" role="alert">
         {translate("tracker.error.invalidData")}
       </p>
-    {:else if trackerStatus !== "available"}<p role="alert">{translate("tracker.error.invalidData")}</p>
+    {:else if trackerStatus !== "available"}<p class="tracker-ranking-result-message" role="alert">{translate("tracker.error.invalidData")}</p>
     {:else}
       <div class="tracker-table-wrap">
         {#if rankingLoading}<div class="tracker-ranking-loading" role="status">
@@ -1347,6 +1348,7 @@
             </article>{/if}{/each}
       </div>
     {/if}
+    </div>
   </section>
 
 </main>
@@ -1731,6 +1733,20 @@
   .tracker-ranking-skeleton {
     display: grid;
     gap: 1rem;
+  }
+  .tracker-ranking-result-region {
+    display: grid;
+    min-height: 28rem;
+    align-content: start;
+  }
+  .tracker-ranking-result-message {
+    display: grid;
+    min-height: 28rem;
+    place-items: center;
+    margin: 0;
+    padding: 2rem;
+    color: color-mix(in srgb, var(--color-base-content) 62%, transparent);
+    text-align: center;
   }
   .tracker-heading-skeleton {
     display: block;

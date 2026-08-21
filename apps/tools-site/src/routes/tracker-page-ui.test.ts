@@ -292,6 +292,8 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain("tracker.openHistoryGraph");
     expect(source).toContain("void openGraph(row);");
     expect(source).toContain('class="tracker-graph-region"');
+    expect(source).toContain('class="tracker-ranking-result-region"');
+    expect(source).toContain('class="tracker-ranking-result-message"');
     expect(source).toContain('class="tracker-graph-loading" role="status"');
     expect(source).toContain('class="tracker-graph-skeleton"');
     expect(source).toContain('class="tracker-graph-skeleton-plot"');
