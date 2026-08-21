@@ -1565,6 +1565,7 @@
     align-items: center;
     justify-content: flex-end;
     gap: 1rem;
+    min-height: 4.75rem;
     min-width: 0;
   }
   .tracker-primary-status,
@@ -2140,6 +2141,7 @@
       align-items: stretch;
       flex-direction: column;
       gap: 0.75rem;
+      min-height: 6.25rem;
     }
     .tracker-status-skeleton {
       justify-items: start;
@@ -2209,6 +2211,7 @@
       justify-content: flex-start;
       flex-wrap: wrap;
       gap: 0.75rem 1.25rem;
+      min-height: 4.75rem;
     }
   }
   @media (min-width: 64rem) {

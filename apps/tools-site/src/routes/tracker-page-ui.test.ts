@@ -226,6 +226,8 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('@media (min-width: 48rem) and (max-width: 63.999rem)');
     expect(source).toContain('@media (min-width: 64rem)');
     expect(source).toContain('.tracker-status-panel {');
+    expect(source).toContain('min-height: 4.75rem;');
+    expect(source).toContain('min-height: 6.25rem;');
     expect(source).not.toContain('border-top: 3px solid var(--color-primary);');
     expect(source).toContain('class="tracker-ladder-switcher"');
     expect(source).toContain('class="tracker-ladder-indicator"');
