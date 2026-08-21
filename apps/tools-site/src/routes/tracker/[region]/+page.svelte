@@ -1830,6 +1830,7 @@
     font-weight: 800;
   }
   .tracker-table-wrap {
+    position: relative;
     overflow-x: auto;
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
@@ -1985,12 +1986,30 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    min-height: 2.75rem;
+    position: absolute;
+    z-index: 1;
+    top: 0.5rem;
+    right: 0.75rem;
+    min-height: 2rem;
     padding: 0.65rem 0.85rem;
-    border-bottom: 1px solid var(--archive-border-subtle);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--archive-border-subtle));
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--archive-surface-sunken) 92%, transparent);
     color: color-mix(in srgb, var(--color-primary) 80%, var(--color-base-content));
     font-size: 0.85rem;
     font-weight: 700;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-base-content) 10%, transparent);
+    opacity: 0;
+    animation: tracker-ranking-loading-fade-in 160ms ease-out forwards;
+  }
+  @keyframes tracker-ranking-loading-fade-in {
+    to { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-ranking-loading {
+      animation: none;
+      opacity: 1;
+    }
   }
   .tracker-ranking-row {
     cursor: pointer;
