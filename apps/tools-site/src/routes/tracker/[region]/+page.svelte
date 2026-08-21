@@ -1173,12 +1173,19 @@
         >{translate("tracker.backToLatestRankings")}</button
       >
     </div>{/if}
-  {#if snapshotStatus === "loading"}<p role="status">{translate("tracker.snapshotLoading")}</p>{/if}
-  {#if snapshotStatus !== "idle" && snapshotStatus !== "loading"}<p
-      role={snapshotStatus === "unavailable" ? undefined : "alert"}
-    >
-      {timeTravelMessage(snapshotStatus, "snapshot")}
-    </p>{/if}
+  <div
+    class:tracker-status-visible={snapshotStatus !== "idle"}
+    class="tracker-snapshot-status-region"
+    aria-live="polite"
+  >
+    {#if snapshotStatus === "loading"}
+      <p role="status">{translate("tracker.snapshotLoading")}</p>
+    {:else if snapshotStatus !== "idle"}
+      <p role={snapshotStatus === "unavailable" ? undefined : "alert"}>
+        {timeTravelMessage(snapshotStatus, "snapshot")}
+      </p>
+    {/if}
+  </div>
 
   <section class="tracker-ranking-workspace" aria-labelledby="tracker-results-title">
     <div class="tracker-workspace-heading">
@@ -1502,6 +1509,24 @@
   }
   .tracker-time-note {
     color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+  }
+  .tracker-snapshot-status-region {
+    display: grid;
+    min-height: 2.75rem;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 160ms ease-out;
+  }
+  .tracker-snapshot-status-region p {
+    margin: 0;
+  }
+  .tracker-snapshot-status-region.tracker-status-visible {
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-snapshot-status-region {
+      transition-duration: 1ms;
+    }
   }
   .tracker-status-panel {
     align-items: center;
