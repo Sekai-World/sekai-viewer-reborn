@@ -126,22 +126,25 @@
     };
     document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleDocumentKeydown);
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reducedMotionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handleReducedMotionChange = (): void => {};
     const viewTransitionDocument = document as Document & {
       startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
     };
     const supportsNativeViewTransition = typeof viewTransitionDocument.startViewTransition === "function";
 
-    if (!supportsNativeViewTransition || reducedMotion) {
+    if (!supportsNativeViewTransition) {
       return () => {
         colorScheme.removeEventListener("change", handleSystemThemeChange);
+        reducedMotionPreference.removeEventListener("change", handleReducedMotionChange);
         document.removeEventListener("click", handleDocumentClick);
         document.removeEventListener("keydown", handleDocumentKeydown);
       };
     }
 
+    reducedMotionPreference.addEventListener("change", handleReducedMotionChange);
     onNavigate((navigation) => {
-      if (!viewTransitionDocument.startViewTransition) return;
+      if (!viewTransitionDocument.startViewTransition || reducedMotionPreference.matches) return;
       return new Promise<void>((resolve) => {
         viewTransitionDocument.startViewTransition(async () => {
           resolve();
@@ -151,6 +154,7 @@
     });
     return () => {
       colorScheme.removeEventListener("change", handleSystemThemeChange);
+      reducedMotionPreference.removeEventListener("change", handleReducedMotionChange);
       document.removeEventListener("click", handleDocumentClick);
       document.removeEventListener("keydown", handleDocumentKeydown);
     };

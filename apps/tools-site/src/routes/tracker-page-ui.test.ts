@@ -12,6 +12,14 @@ const trackerMessagesPath = resolve(
 );
 
 describe("tracker page UI contract", () => {
+  it("checks reduced motion at navigation time and cleans up its media listener", async () => {
+    const source = await readFile(layoutPath, "utf8");
+    expect(source).toContain('const reducedMotionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");');
+    expect(source).toContain('reducedMotionPreference.addEventListener("change", handleReducedMotionChange);');
+    expect(source).toContain('reducedMotionPreference.removeEventListener("change", handleReducedMotionChange);');
+    expect(source).toContain("reducedMotionPreference.matches");
+  });
+
   it("uses the tools-site title format and the shared Sekai Viewer brand lockup", async () => {
     const [trackerSource, homeSource, layoutSource, appCssSource, trackerMessagesSource] = await Promise.all([
       readFile(pagePath, "utf8"),
