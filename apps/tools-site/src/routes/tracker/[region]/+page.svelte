@@ -1291,6 +1291,14 @@
             </div>
           {/each}
         </div>
+        <div class="tracker-skeleton-cards" aria-hidden="true">
+          {#each getTrackerRankLadder(ladder) as rank (rank)}
+            <div class="tracker-skeleton-card">
+              <div class="tracker-skeleton-card-heading"><span class="skeleton h-6 w-16"></span><span class="skeleton h-4 w-20"></span></div>
+              <span class="skeleton h-5 w-3/5"></span><span class="skeleton h-4 w-2/5"></span><span class="skeleton h-4 w-1/2"></span><span class="skeleton h-4 w-3/5"></span>
+            </div>
+          {/each}
+        </div>
       </div>
     {:else if isInvalidSelection}<p class="tracker-ranking-result-message" role="alert">{translate("tracker.eventIdInvalid")}</p>
     {:else if trackerStatus === "upstream-error"}<p class="tracker-ranking-result-message" role="alert">
@@ -1825,6 +1833,9 @@
   .tracker-skeleton-row:last-child {
     border-bottom: 0;
   }
+  .tracker-skeleton-cards { display: none; }
+  .tracker-skeleton-card { display: grid; gap: 0.55rem; padding: 1rem; border: 1px solid var(--archive-border-subtle); border-radius: var(--radius-box); background: var(--archive-panel); }
+  .tracker-skeleton-card-heading { display: flex; justify-content: space-between; align-items: center; }
   .tracker-workspace-heading h2 {
     font-size: 1.35rem;
     font-weight: 800;
@@ -2172,6 +2183,8 @@
     .tracker-table-wrap {
       display: none;
     }
+    .tracker-ranking-skeleton .tracker-skeleton-table { display: none; }
+    .tracker-ranking-skeleton .tracker-skeleton-cards { display: grid; gap: 0.75rem; }
     .tracker-ranking-cards {
       display: grid;
       gap: 0.75rem;
