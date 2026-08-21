@@ -8,7 +8,7 @@ overrides:
   cookie: 0.7.2
   esbuild: 0.28.2
   brace-expansion: 5.0.9
-  '@microsoft/api-extractor': 7.58.12
+  '@microsoft/api-extractor': 7.58.13
   fast-uri: 4.1.2
   postcss: 8.5.26
   nanoid: 6.0.1
@@ -2973,7 +2973,7 @@ packages:
   unplugin-dts@1.0.3:
     resolution: {integrity: sha512-/GR887wfG4r1cWyt1UZsLRuMIjsmEbGkS9yJrz+0dsToHAYUD5CTyP3JMGVLv25j9K0mJcwAVvZno/aTuSUvNg==}
     peerDependencies:
-      '@microsoft/api-extractor': 7.58.12
+      '@microsoft/api-extractor': 7.58.13
       '@rspack/core': ^1
       '@vue/language-core': ^3.1.5
       esbuild: 0.28.2
@@ -3021,7 +3021,7 @@ packages:
   vite-plugin-dts@5.0.3:
     resolution: {integrity: sha512-gIth6NdCEHWPiiRMCK3N6C8WjvdsrtEQrmsiG8h6Ov+lFP+b07Y+wcs9H0H7n146l0PDTYK4cQN1vgeG1pMdRQ==}
     peerDependencies:
-      '@microsoft/api-extractor': 7.58.12
+      '@microsoft/api-extractor': 7.58.13
       rollup: '>=3'
       vite: '>=3'
     peerDependenciesMeta:
