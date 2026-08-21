@@ -296,6 +296,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class="tracker-ranking-result-message"');
     expect(source).toContain('class="tracker-snapshot-status-region"');
     expect(source).toContain("tracker-status-visible");
+    expect(source).toContain('class="tracker-time-travel-content"');
+    expect(source).toContain('class="tracker-time-select-skeleton"');
+    expect(source).toContain('tracker-time-note tracker-time-status');
     expect(source).toContain('class="tracker-graph-loading" role="status"');
     expect(source).toContain('class="tracker-graph-skeleton"');
     expect(source).toContain('class="tracker-graph-skeleton-plot"');

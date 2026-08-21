@@ -1114,6 +1114,7 @@
         <div class="tracker-time-travel-copy">
           <h2 id="tracker-time-travel-title">{translate("tracker.pastRankings")}</h2>
         </div>
+        <div class="tracker-time-travel-content">
         {#if timePointsStatus === "available"}
           <div class="tracker-time-selects">
             <label class="tracker-time-control" for="tracker-activity-day"
@@ -1149,20 +1150,20 @@
               ></label
             >
           </div>
+        {:else if timePointsStatus === "idle" || timePointsStatus === "loading"}
+          <div class="tracker-time-select-skeleton" role="status" aria-label={translate("tracker.snapshotLoading")}>
+            <span class="skeleton h-3 w-28"></span>
+            <span class="skeleton h-10 w-full rounded-field"></span>
+            <span class="skeleton h-3 w-32"></span>
+            <span class="skeleton h-10 w-full rounded-field"></span>
+          </div>
         {:else}
           <p
-            class="tracker-time-note"
-            role={timePointsStatus === "idle" || timePointsStatus === "loading"
-              ? "status"
-              : timePointsStatus === "unavailable"
-                ? undefined
-                : "alert"}
-          >
-            {timePointsStatus === "idle" || timePointsStatus === "loading"
-              ? translate("tracker.snapshotLoading")
-              : timeTravelMessage(timePointsStatus, "timePoint")}
-          </p>
+            class="tracker-time-note tracker-time-status"
+            role={timePointsStatus === "unavailable" ? undefined : "alert"}
+          >{timeTravelMessage(timePointsStatus, "timePoint")}</p>
         {/if}
+        </div>
       </section>
     {/if}
   </section>
@@ -1509,6 +1510,30 @@
   }
   .tracker-time-note {
     color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+  }
+  .tracker-time-travel-content {
+    display: grid;
+    min-height: 4.75rem;
+    align-items: end;
+    opacity: 1;
+    transition: opacity 160ms ease-out;
+  }
+  .tracker-time-select-skeleton {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.35rem 0.75rem;
+  }
+  .tracker-time-status {
+    display: grid;
+    min-height: 4.75rem;
+    place-items: center start;
+    margin: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-time-travel-content {
+      transition-duration: 1ms;
+    }
   }
   .tracker-snapshot-status-region {
     display: grid;
@@ -2118,6 +2143,9 @@
     .tracker-time-selects {
       grid-template-columns: 1fr;
       width: 100%;
+    }
+    .tracker-time-select-skeleton {
+      grid-template-columns: 1fr;
     }
     .tracker-time-control {
       min-width: 100%;
