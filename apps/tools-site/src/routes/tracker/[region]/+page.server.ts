@@ -87,9 +87,9 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
   // World Link identity must be known in the initial SSR payload so its
   // heading and tab bar are present on first paint without reserving space
   // for ordinary events.
-  const isWorldBloom = await Promise.all([trackerResult, catalog, worldBloom]).then(
-    ([result, catalogResult, bloomResult]) => {
-      const resolvedEventId = eventId ?? result.resolvedCurrentEventId ?? catalogResult.currentEvent?.id;
+  const isWorldBloom = await Promise.all([catalog, worldBloom]).then(
+    ([catalogResult, bloomResult]) => {
+      const resolvedEventId = eventId ?? catalogResult.currentEvent?.id;
       return resolvedEventId !== undefined &&
         bloomResult.status === "available" &&
         bloomResult.items.some((item) => item.eventId === resolvedEventId);

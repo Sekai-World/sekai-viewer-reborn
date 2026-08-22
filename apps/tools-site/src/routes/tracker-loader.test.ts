@@ -85,6 +85,28 @@ describe("tracker route loader", () => {
     });
   });
 
+  it("derives World Link from catalog and bloom metadata without waiting for rankings", async () => {
+    mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 123, name: "Current event" } });
+    mocks.getWorldBloomsByRegionList.mockResolvedValue({
+      data: { items: [{ id: 1, eventId: 123, chapterNo: 1, gameCharacterId: 2 }] }
+    });
+    mocks.getEventRankingLive.mockReturnValue(new Promise(() => {}));
+
+    const loaded = await runLoad("en");
+    expect(loaded).toMatchObject({ isWorldBloom: true });
+  });
+
+  it("keeps World Link false when catalog data is unavailable", async () => {
+    mocks.getEventsByRegionCurrent.mockRejectedValue(new Error("catalog unavailable"));
+    mocks.getEventsByRegionList.mockRejectedValue(new Error("catalog unavailable"));
+    mocks.getWorldBloomsByRegionList.mockResolvedValue({
+      data: { items: [{ id: 1, eventId: 123, chapterNo: 1, gameCharacterId: 2 }] }
+    });
+
+    const loaded = await runLoad("en");
+    expect(loaded).toMatchObject({ isWorldBloom: false });
+  });
+
   it("loads historical World Bloom chapters through historical chapter snapshots", async () => {
     mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
     mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 123, name: "Historical event" } });
