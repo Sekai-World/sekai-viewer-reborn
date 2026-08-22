@@ -123,6 +123,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class:tab-active={selectedRankingTab === "event"}');
     expect(source).toContain('class:tab-active={selectedRankingTab === chapter.chapter.id}');
     expect(source).toContain('class="tracker-ranking-tabs-scroll"');
+    expect(source).toContain('class="tracker-kicker tracker-world-bloom-kicker"');
+    expect(source).toContain('class="tracker-ranking-tabs-shell"');
+    expect(source).toContain('min-height: 3.25rem;');
     expect(source).toContain('overflow-x: auto;');
     expect(source).toContain('overscroll-behavior-x: contain;');
     expect(source).toContain('-webkit-overflow-scrolling: touch;');

@@ -1191,7 +1191,7 @@
   <section class="tracker-ranking-workspace" aria-labelledby="tracker-results-title">
     <div class="tracker-workspace-heading">
       <div>
-        {#if isWorldBloom}<p class="tracker-kicker">{translate("tracker.worldBloom")}</p>{/if}
+        <p class:tracker-world-bloom-kicker-visible={isWorldBloom} class="tracker-kicker tracker-world-bloom-kicker" aria-hidden={!isWorldBloom}>{translate("tracker.worldBloom")}</p>
         {#if isTrackerLoading}
           <span class="tracker-heading-skeleton skeleton h-3 w-20" aria-hidden="true"></span>
         {/if}
@@ -1203,7 +1203,7 @@
           )}</a
         >{/if}
     </div>
-    {#if isWorldBloom}
+    <div class:tracker-world-bloom-tabs-visible={isWorldBloom} class="tracker-ranking-tabs-shell" aria-hidden={!isWorldBloom}>
       <div class="tracker-ranking-tabs-scroll">
         <div
           class="tabs tabs-box tracker-ranking-tabs min-w-max flex-nowrap"
@@ -1245,9 +1245,10 @@
         {/each}
         </div>
       </div>
-    {/if}
-    {#if isWorldBloom && selectedRankingTab !== "event" && selectedChapter}
-      <div class="tracker-chapter-countdown" aria-live="polite">
+    </div>
+    <div class="tracker-chapter-countdown-slot">
+      {#if isWorldBloom && selectedRankingTab !== "event" && selectedChapter}
+        <div class="tracker-chapter-countdown" aria-live="polite">
         <span class="tracker-countdown-label">
           {chapterCountdown?.mode === "starts"
             ? translate("tracker.countdownStartsIn")
@@ -1270,8 +1271,9 @@
             <span>{String(chapterCountdown.values.seconds).padStart(2, "0")}<small>{translate("tracker.timeUnit.second")}</small></span>
           </span>
         {/if}
-      </div>
-    {/if}
+        </div>
+      {/if}
+    </div>
     <div class="tracker-ranking-result-region" aria-live="polite">
     {#if isTrackerLoading}
       <div
@@ -1515,6 +1517,14 @@
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+  }
+  .tracker-world-bloom-kicker {
+    min-height: 1rem;
+    opacity: 0;
+    transition: opacity 160ms ease-out;
+  }
+  .tracker-world-bloom-kicker-visible {
+    opacity: 1;
   }
   .tracker-time-note {
     color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
@@ -1922,6 +1932,25 @@
       black calc(100% - 0.65rem),
       transparent
     );
+  }
+  .tracker-ranking-tabs-shell {
+    min-height: 3.25rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease-out;
+  }
+  .tracker-world-bloom-tabs-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .tracker-chapter-countdown-slot {
+    min-height: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-world-bloom-kicker,
+    .tracker-ranking-tabs-shell {
+      transition-duration: 1ms;
+    }
   }
   .tracker-ranking-tabs .tracker-ladder-option {
     min-height: 2.75rem;
