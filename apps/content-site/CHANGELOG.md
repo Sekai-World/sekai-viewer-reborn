@@ -1,5 +1,18 @@
 # @apps/content-site
 
+## 0.4.1
+
+### Patch Changes
+
+- 1a75424: Read the dev server host and allowed hosts from `VITE_DEV_HOST` / `VITE_DEV_ALLOWED_HOSTS` with loopback defaults instead of hardcoding machine-specific Tailscale values in `vite.config.ts`.
+- f02e5fa: Migrate shared and content-site UI patterns for daisyUI 5 compatibility.
+- 742389d: Improve card detail page layout at large viewport widths by giving right-column content more consistent reading widths and grouping related cards more clearly. Delay the shared desktop navigation rail until extra-large viewports.
+- 10fe2a4: Unify the catalogue list surfaces across Cards, Music, Events, Gachas, and Virtual Lives with consistent control, results, and state treatments.
+- b18d4d2: Reuse localized common labels across content pages, consolidate duplicate content-site labels, remove unused source keys, and localize breadcrumbs consistently with sidebar navigation.
+- Updated dependencies [f02e5fa]
+- Updated dependencies [742389d]
+  - @platform/ui-shell@0.2.1
+
 ## 0.4.0
 
 ### Minor Changes
