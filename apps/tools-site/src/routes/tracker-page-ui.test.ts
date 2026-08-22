@@ -88,7 +88,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class="skeleton h-9 w-12"');
     expect(source).toContain('role="status"');
     expect(source).toContain('aria-busy="true"');
-    expect(source).toContain('class="tracker-heading-skeleton skeleton h-3 w-20"');
+    expect(source).not.toContain("tracker-heading-skeleton");
     expect(source).toContain("let trackerRequestIdentity = $state<string | null>(null);");
     expect(source).toContain("trackerRequestIdentity !== null && trackerRequestIdentity !== requestIdentity");
     expect(source).toContain("trackerResult = createTrackerNetworkFailure();");
@@ -124,6 +124,8 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class:tab-active={selectedRankingTab === chapter.chapter.id}');
     expect(source).toContain('class="tracker-ranking-tabs-scroll"');
     expect(source).toContain('class="tracker-kicker tracker-world-bloom-kicker"');
+    expect(source).toContain('{#if isWorldBloom}<p class="tracker-kicker tracker-world-bloom-kicker">');
+    expect(source).not.toContain("tracker-world-bloom-kicker-visible");
     expect(source).toContain('class="tracker-ranking-tabs-shell"');
     expect(source).toContain('min-height: 3.25rem;');
     expect(source).toContain('class="tracker-ranking-tabs-loading"');

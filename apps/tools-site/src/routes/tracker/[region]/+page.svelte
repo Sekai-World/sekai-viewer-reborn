@@ -1187,10 +1187,7 @@
   <section class="tracker-ranking-workspace" aria-labelledby="tracker-results-title">
     <div class="tracker-workspace-heading">
       <div>
-        <p class:tracker-world-bloom-kicker-visible={isWorldBloom} class="tracker-kicker tracker-world-bloom-kicker" aria-hidden={!isWorldBloom}>{translate("tracker.worldBloom")}</p>
-        {#if isTrackerLoading}
-          <span class="tracker-heading-skeleton skeleton h-3 w-20" aria-hidden="true"></span>
-        {/if}
+        {#if isWorldBloom}<p class="tracker-kicker tracker-world-bloom-kicker">{translate("tracker.worldBloom")}</p>{/if}
         <h2 id="tracker-results-title">{translate("tracker.rankings")}</h2>
       </div>
       {#if isHistoricalEvent}<a class="btn btn-sm btn-outline" href={trackerPath}
@@ -1522,14 +1519,6 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
-  .tracker-world-bloom-kicker {
-    min-height: 1rem;
-    opacity: 0;
-    transition: opacity 160ms ease-out;
-  }
-  .tracker-world-bloom-kicker-visible {
-    opacity: 1;
-  }
   .tracker-time-note {
     color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
   }
@@ -1821,10 +1810,6 @@
     color: color-mix(in srgb, var(--color-base-content) 62%, transparent);
     text-align: center;
   }
-  .tracker-heading-skeleton {
-    display: block;
-    margin-bottom: 0.5rem;
-  }
   .tracker-skeleton-heading {
     display: grid;
     gap: 0.5rem;
@@ -1946,11 +1931,6 @@
   }
   .tracker-chapter-countdown-slot {
     min-height: 0;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .tracker-world-bloom-kicker {
-      transition-duration: 1ms;
-    }
   }
   .tracker-ranking-tabs .tracker-ladder-option {
     min-height: 2.75rem;
