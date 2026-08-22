@@ -126,6 +126,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class="tracker-kicker tracker-world-bloom-kicker"');
     expect(source).toContain('class="tracker-ranking-tabs-shell"');
     expect(source).toContain('min-height: 3.25rem;');
+    expect(source).toContain('class="tracker-ranking-tabs-loading"');
     expect(source).toContain('overflow-x: auto;');
     expect(source).toContain('overscroll-behavior-x: contain;');
     expect(source).toContain('-webkit-overflow-scrolling: touch;');
@@ -182,8 +183,7 @@ describe("tracker page UI contract", () => {
 
   it("only renders World Bloom tabs when chapter data is valid", async () => {
     const source = await readFile(pagePath, "utf8");
-    expect(source).toContain("chapters.metadata.chapters.length > 0");
-    expect(source).toContain("chapters.rankings.length > 0");
+    expect(source).toContain("chapters === null");
     expect(source).toContain("class:tracker-current-tab={isCurrent}");
     expect(source).toContain('translate("tracker.currentChapter")');
   });
@@ -445,7 +445,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class:btn-outline={selectedRankingTab !== chapter.chapter.id}');
     expect(source).not.toContain("tracker-chapter-tabs");
     expect(source).not.toContain("tracker-chapter-tab-active");
-    expect(source).toContain("chapters?.metadata");
+    expect(source).toContain("data.isWorldBloom === true");
     expect(source).toContain("chapters = null;");
     expect(source).toContain("trackerRequestIdentity === requestIdentity) chapters = value;");
     expect(source).toContain('interpolate("tracker.chapter", { number: chapter.chapter.chapterNo })');

@@ -74,9 +74,10 @@
       rankings: Array<{ chapter: WorldBloomMetadata["chapters"][number]; result: ChapterTrackerResult }>;
     } | null>;
     status?: string;
+    isWorldBloom?: boolean;
   };
 
-  let { data }: { data: PageData } = $props();
+  let { data }: { data: ExtendedData } = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "tracker"]);
   let messages = $state(fallbackMessages);
   let ladder = $state<TrackerRankLadder>("critical");
@@ -275,12 +276,7 @@
       chapters?.rankings[0] ??
       null
   );
-  const isWorldBloom = $derived(
-    chapters?.metadata !== null &&
-      chapters?.metadata !== undefined &&
-      chapters.metadata.chapters.length > 0 &&
-      chapters.rankings.length > 0
-  );
+  const isWorldBloom = $derived(data.isWorldBloom === true);
   const chapterElapsedMs = $derived(
     selectedRankingTab !== "event" && selectedChapter
       ? calculateChapterElapsedMs({
@@ -1203,13 +1199,20 @@
           )}</a
         >{/if}
     </div>
-    <div class:tracker-world-bloom-tabs-visible={isWorldBloom} class="tracker-ranking-tabs-shell" aria-hidden={!isWorldBloom}>
+    {#if isWorldBloom}<div class="tracker-ranking-tabs-shell">
       <div class="tracker-ranking-tabs-scroll">
         <div
           class="tabs tabs-box tracker-ranking-tabs min-w-max flex-nowrap"
           role="tablist"
           aria-label={translate("tracker.rankingWorkspace")}
         >
+        {#if chapters === null}
+          <span class="tracker-ranking-tabs-loading" aria-hidden="true">
+            <span class="skeleton h-11 w-32 rounded-box"></span>
+            <span class="skeleton h-11 w-28 rounded-box"></span>
+            <span class="skeleton h-11 w-28 rounded-box"></span>
+          </span>
+        {:else}
         <button
           id="tracker-event-ranking-tab"
           class:tab-active={selectedRankingTab === "event"}
@@ -1243,10 +1246,11 @@
             onkeydown={(event) => handleRankingTabKeydown(event, index + 1)}
           >{interpolate("tracker.chapter", { number: chapter.chapter.chapterNo })}{#if isCurrent}<span class="tracker-current-marker">{translate("tracker.currentChapter")}</span>{/if}</button>
         {/each}
+        {/if}
         </div>
       </div>
-    </div>
-    <div class="tracker-chapter-countdown-slot">
+    </div>{/if}
+    {#if isWorldBloom}<div class="tracker-chapter-countdown-slot">
       {#if isWorldBloom && selectedRankingTab !== "event" && selectedChapter}
         <div class="tracker-chapter-countdown" aria-live="polite">
         <span class="tracker-countdown-label">
@@ -1273,7 +1277,7 @@
         {/if}
         </div>
       {/if}
-    </div>
+    </div>{/if}
     <div class="tracker-ranking-result-region" aria-live="polite">
     {#if isTrackerLoading}
       <div
@@ -1918,6 +1922,10 @@
     gap: 0.35rem;
     flex-wrap: nowrap;
   }
+  .tracker-ranking-tabs-loading {
+    display: flex;
+    gap: 0.35rem;
+  }
   .tracker-ranking-tabs-scroll {
     position: relative;
     min-width: 0;
@@ -1935,20 +1943,12 @@
   }
   .tracker-ranking-tabs-shell {
     min-height: 3.25rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 160ms ease-out;
-  }
-  .tracker-world-bloom-tabs-visible {
-    opacity: 1;
-    pointer-events: auto;
   }
   .tracker-chapter-countdown-slot {
     min-height: 0;
   }
   @media (prefers-reduced-motion: reduce) {
-    .tracker-world-bloom-kicker,
-    .tracker-ranking-tabs-shell {
+    .tracker-world-bloom-kicker {
       transition-duration: 1ms;
     }
   }

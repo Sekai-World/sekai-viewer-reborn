@@ -39,7 +39,8 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
       } satisfies EventTrackerResult),
       catalog: Promise.resolve(null),
       rewards: Promise.resolve(null),
-      chapters: Promise.resolve(null)
+      chapters: Promise.resolve(null),
+      isWorldBloom: false
     };
   }
 
@@ -83,6 +84,18 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
     );
     return { metadata, rankings };
   })();
+  // World Link identity must be known in the initial SSR payload so its
+  // heading and tab bar are present on first paint without reserving space
+  // for ordinary events.
+  const isWorldBloom = await Promise.all([trackerResult, catalog, worldBloom]).then(
+    ([result, catalogResult, bloomResult]) => {
+      const resolvedEventId = eventId ?? result.resolvedCurrentEventId ?? catalogResult.currentEvent?.id;
+      return resolvedEventId !== undefined &&
+        bloomResult.status === "available" &&
+        bloomResult.items.some((item) => item.eventId === resolvedEventId);
+    },
+    () => false
+  );
   // Keep rankings unresolved so SvelteKit can send the page shell immediately.
   // The page deliberately renders a shape-matched skeleton until this settles.
   trackerResult.catch(() => {});
@@ -101,6 +114,7 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
     trackerResult: trackerResult as Promise<EventTrackerResult>,
     catalog,
     rewards,
-    chapters
+    chapters,
+    isWorldBloom
   };
 };

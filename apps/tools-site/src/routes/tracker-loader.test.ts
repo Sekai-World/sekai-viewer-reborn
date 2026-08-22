@@ -42,7 +42,7 @@ describe("tracker route loader", () => {
   it.each(["jp", "en", "tw", "kr"])("loads tracker region %s", async (region) => {
     mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [{ rank: 1 }] } });
     const loaded = await runLoad(region);
-    expect(loaded).toMatchObject({ region, selectionStatus: "valid" });
+    expect(loaded).toMatchObject({ region, selectionStatus: "valid", isWorldBloom: false });
     await expect(loaded.trackerResult).resolves.toMatchObject({ status: "available" });
     expect(mocks.getEventRankingLive).toHaveBeenCalledWith(expect.objectContaining({
       baseUrl: "https://api.example.test",
@@ -70,6 +70,7 @@ describe("tracker route loader", () => {
     mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
     mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 123, name: "Historical event" } });
     const loaded = await runLoad("en", "123");
+    expect(loaded).toMatchObject({ isWorldBloom: false });
     expect(loaded).toMatchObject({ selection: { mode: "history", eventId: 123 }, selectionStatus: "valid" });
     await expect(loaded.trackerResult).resolves.toMatchObject({ status: "available" });
     expect(mocks.getEventRankingsByEventId).toHaveBeenCalledWith(expect.objectContaining({
