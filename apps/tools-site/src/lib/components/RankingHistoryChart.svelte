@@ -1,7 +1,7 @@
 <script lang="ts">
   import { LineChart } from "layerchart";
   import type { ChartState } from "layerchart";
-  import { findTrackerNameChanges } from "$lib/tracker-name-changes";
+  import { findNearestHoverMarker, findTrackerNameChanges } from "$lib/tracker-name-changes";
 
   type RankingHistoryPoint = Readonly<{
     rank: number;
@@ -49,16 +49,26 @@
   const captureHoveredPoint = (event: PointerEvent): void => {
     queueMicrotask(() => {
       const context = chartContext;
-      const rect = chartElement?.getBoundingClientRect();
-      if (context && rect) {
-        const pointerX = event.clientX - rect.left;
-        const snappedMarker = markerPoints
-          .map((marker) => ({ marker, distance: Math.abs(context.xGet(marker.point) - pointerX) }))
-          .sort((a, b) => a.distance - b.distance)[0];
-        if (snappedMarker && snappedMarker.distance <= 14) {
-          context.tooltip.show(event, snappedMarker.marker.point);
-          activateMarker(snappedMarker.marker.point);
-          return;
+      if (context && chartElement) {
+        try {
+          const svg = chartElement.querySelector("svg");
+          const svgRect = svg?.getBoundingClientRect();
+          const markerIndex = svg && svgRect
+            ? findNearestHoverMarker({
+                clientX: event.clientX,
+                svgRect,
+                viewBoxWidth: svg.viewBox.baseVal.width || null,
+                markerXs: markerPoints.map((marker) => context.xGet(marker.point))
+              })
+            : null;
+          const snappedMarker = markerIndex === null ? null : markerPoints[markerIndex];
+          if (snappedMarker) {
+            context.tooltip.show(event, snappedMarker.point);
+            activateMarker(snappedMarker.point);
+            return;
+          }
+        } catch {
+          // Keep LayerChart's normal hover behavior if the SVG is not measurable yet.
         }
       }
       const hovered = chartContext?.tooltip.data;
