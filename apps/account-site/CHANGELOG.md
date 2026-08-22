@@ -1,5 +1,13 @@
 # @apps/account-site
 
+## 0.1.8
+
+### Patch Changes
+
+- Updated dependencies [f02e5fa]
+- Updated dependencies [742389d]
+  - @platform/ui-shell@0.2.1
+
 ## 0.1.7
 
 ### Patch Changes
