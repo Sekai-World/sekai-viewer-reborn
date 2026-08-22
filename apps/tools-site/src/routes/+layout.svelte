@@ -3,8 +3,7 @@
   import "$lib/icons/mdi";
   import { asset } from "$app/paths";
   import { onNavigate } from "$app/navigation";
-  import { page } from "$app/state";
-  import { navigating } from "$app/state";
+  import { navigating, page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
@@ -35,6 +34,8 @@
   let isDesktopSettingsMenuOpen = $state(false);
   let isDesktopThemeMenuOpen = $state(false);
   let isMobileSettingsMenuOpen = $state(false);
+  let isTrackerNavigationOverlayVisible = $state(false);
+  let trackerNavigationOverlayTimer: ReturnType<typeof setTimeout> | undefined;
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const activeRegion = $derived.by<TrackerSupportedRegion>(() => {
     const [, route, region] = page.url.pathname.split("/");
@@ -169,6 +170,25 @@
       messages = { ...fallbackMessages, ...next };
     });
   });
+
+  $effect(() => {
+    if (!isTrackerNavigationPending) {
+      if (trackerNavigationOverlayTimer !== undefined) clearTimeout(trackerNavigationOverlayTimer);
+      trackerNavigationOverlayTimer = undefined;
+      isTrackerNavigationOverlayVisible = false;
+      return;
+    }
+
+    trackerNavigationOverlayTimer = setTimeout(() => {
+      isTrackerNavigationOverlayVisible = true;
+      trackerNavigationOverlayTimer = undefined;
+    }, 200);
+
+    return () => {
+      if (trackerNavigationOverlayTimer !== undefined) clearTimeout(trackerNavigationOverlayTimer);
+      trackerNavigationOverlayTimer = undefined;
+    };
+  });
 </script>
 
 <svelte:head>
@@ -226,49 +246,46 @@
       </div>
     </div>
   {/snippet}
-  <div class:tracker-navigation-pending={isTrackerNavigationPending} class="page-switch-shell">
-    {#if isTrackerNavigationPending}<div class="tracker-navigation-progress" aria-hidden="true"></div>{/if}
+  <div class:tracker-navigation-pending={isTrackerNavigationOverlayVisible} class="page-switch-shell">
     {@render children()}
   </div>
 </ViewerShell>
+
+{#if isTrackerNavigationOverlayVisible}
+  <div class="tracker-navigation-overlay" aria-busy="true" aria-live="polite">
+    <span class="loading loading-spinner tracker-navigation-spinner" aria-hidden="true"></span>
+  </div>
+{/if}
 
 <style>
   .page-switch-shell {
     position: relative;
   }
-  .tracker-navigation-progress {
-    position: absolute;
-    z-index: 1;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 0.15rem;
-    overflow: hidden;
-    background: var(--color-primary);
-  }
-  .tracker-navigation-progress::after {
-    position: absolute;
+  .tracker-navigation-overlay {
+    position: fixed;
+    z-index: 200;
     inset: 0;
-    background: color-mix(in srgb, var(--color-primary-content) 55%, transparent);
-    content: "";
-    transform: translateX(-100%);
-    animation: tracker-navigation-progress 1.2s ease-in-out infinite;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--color-base-100) 70%, transparent);
+    backdrop-filter: blur(3px);
   }
-  .tracker-navigation-pending > :not(.tracker-navigation-progress) {
+  .tracker-navigation-pending {
     opacity: 0.58;
     transition: opacity 120ms ease-out;
   }
-  @keyframes tracker-navigation-progress {
-    0% { transform: translateX(-100%); }
-    55% { transform: translateX(20%); }
-    100% { transform: translateX(100%); }
+  .tracker-navigation-spinner {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-width: 0.35rem;
+    color: var(--color-primary);
+    filter: drop-shadow(0 0 1.25rem color-mix(in srgb, var(--color-primary) 45%, transparent));
   }
   @media (prefers-reduced-motion: reduce) {
-    .tracker-navigation-progress::after {
+    .tracker-navigation-spinner {
       animation: none;
-      transform: translateX(35%);
     }
-    .tracker-navigation-pending > :not(.tracker-navigation-progress) {
+    .tracker-navigation-pending {
       transition: none;
     }
   }

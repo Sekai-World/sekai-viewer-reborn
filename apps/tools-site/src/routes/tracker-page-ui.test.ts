@@ -22,9 +22,13 @@ describe("tracker page UI contract", () => {
 
   it("shows a layout-neutral tracker navigation transition only while navigating", async () => {
     const layoutSource = await readFile(layoutPath, "utf8");
-    expect(layoutSource).toContain('import { navigating } from "$app/state";');
+    expect(layoutSource).toContain('import { navigating, page } from "$app/state";');
     expect(layoutSource).toContain("isTrackerNavigationPending");
-    expect(layoutSource).toContain('class="tracker-navigation-progress"');
+    expect(layoutSource).toContain("isTrackerNavigationOverlayVisible");
+    expect(layoutSource).toContain("}, 200);");
+    expect(layoutSource).toContain('class="tracker-navigation-overlay"');
+    expect(layoutSource).toContain('class="loading loading-spinner tracker-navigation-spinner"');
+    expect(layoutSource).not.toContain("tracker-navigation-progress");
     expect(layoutSource).toContain("tracker-navigation-pending");
     expect(layoutSource).toContain("@media (prefers-reduced-motion: reduce)");
     expect(layoutSource).toContain("animation: none;");
