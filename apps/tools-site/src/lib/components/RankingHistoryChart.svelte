@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { LineChart, Point } from "layerchart";
+  import { LineChart } from "layerchart";
   import type { ChartState } from "layerchart";
   import { findTrackerNameChanges } from "$lib/tracker-name-changes";
 
@@ -93,21 +93,18 @@
     new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" })
   );
   const scoreFormatter = $derived(new Intl.NumberFormat(locale));
-  const nameChanges = $derived(findTrackerNameChanges(points, rank));
-  const markerPoints = $derived(
-    nameChanges.flatMap((change) => {
-      const time = new Date(change.timestamp);
-      const point = validPoints
-        .filter((candidate) => candidate.date.getTime() <= time.getTime())
-        .at(-1);
-      return point ? [{ change, point }] : [];
-    })
+  const nameChanges = $derived(
+    findTrackerNameChanges(points, rank).map((change) => ({
+      ...change,
+      time: new Date(change.timestamp)
+    }))
   );
-  const nameChangeText = (change: (typeof nameChanges)[number]): string =>
-    nameChangeLabel
-      .replace("{previousName}", change.previousName)
-      .replace("{nextName}", change.nextName)
-      .replace("{time}", timeFormatter.format(new Date(change.timestamp)));
+  const nameChangePosition = (change: (typeof nameChanges)[number]): string => {
+    const firstDate = dates[0]?.getTime();
+    const lastDate = dates.at(-1)?.getTime();
+    if (firstDate === undefined || lastDate === undefined || lastDate <= firstDate) return "50%";
+    return `${((change.time.getTime() - firstDate) / (lastDate - firstDate)) * 100}%`;
+  };
 </script>
 
 <div class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
@@ -145,33 +142,21 @@
           "stroke-linejoin": "round"
         }
       }}
-    >
-      {#snippet marks()}
-        {#each markerPoints as marker (marker.change.timestamp)}
-          <Point d={marker.point}>
-            {#snippet children({ x, y })}
-              <g
-                class="history-chart-name-change"
-                transform={`translate(${x} ${y})`}
-                tabindex="0"
-                role="button"
-                aria-label={nameChangeText(marker.change)}
-                onkeydown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    activePoint = marker.point;
-                  }
-                }}
-                onclick={() => (activePoint = marker.point)}
-              >
-                <title>{nameChangeText(marker.change)}</title>
-                <rect x="-6" y="-6" width="12" height="12" transform="rotate(45)" />
-              </g>
-            {/snippet}
-          </Point>
-        {/each}
-      {/snippet}
-    </LineChart>
+    />
+    {#each nameChanges as change (change.timestamp)}
+      <button
+        type="button"
+        class="history-chart-name-change"
+        style={`left: ${nameChangePosition(change)}`}
+        aria-label={nameChangeLabel
+          .replace("{previousName}", change.previousName)
+          .replace("{nextName}", change.nextName)
+          .replace("{time}", timeFormatter.format(change.time))}
+        title={`${change.previousName} → ${change.nextName} · ${timeFormatter.format(change.time)}`}
+      >
+        <span aria-hidden="true"></span>
+      </button>
+    {/each}
   {:else}
     <p class="history-chart-empty">{ariaLabel}</p>
   {/if}
@@ -227,16 +212,33 @@
     color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
   }
 
-  .history-chart-name-change rect {
+  .history-chart-name-change {
+    position: absolute;
+    top: 1.125rem;
+    width: 2.75rem;
+    height: calc(100% - 3.375rem);
+    transform: translateX(-50%);
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  .history-chart-name-change span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0.7rem;
+    height: 0.7rem;
+    transform: translate(-50%, -50%) rotate(45deg);
     border: 2px solid var(--color-base-100);
     background: var(--color-secondary);
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-secondary) 65%, transparent);
-    cursor: pointer;
-    pointer-events: all;
   }
 
-  .history-chart-name-change:hover rect,
-  .history-chart-name-change:focus-visible rect {
+  .history-chart-name-change:hover span,
+  .history-chart-name-change:focus-visible span {
     background: var(--color-accent);
   }
 
@@ -246,7 +248,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .history-chart-name-change rect {
+    .history-chart-name-change span {
       transition: none;
     }
   }
