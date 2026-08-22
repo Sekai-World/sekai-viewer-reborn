@@ -17,8 +17,9 @@ describe("tracker page UI contract", () => {
     const source = await readFile(chartPath, "utf8");
     expect(source).toContain("findTrackerNameChanges");
     expect(source).toContain('class="history-chart-name-change"');
-    expect(source).toContain("aria-label={nameChangeLabel");
-    expect(source).toContain("title={`${change.previousName} → ${change.nextName}");
+    expect(source).toContain("aria-label={nameChangeText(marker.change)}");
+    expect(source).toContain("<Point d={marker.point}>");
+    expect(source).toContain("transform={`translate(${x} ${y})`}");
     expect(source).toContain("prefers-reduced-motion: reduce");
   });
   it("checks reduced motion at navigation time and cleans up its media listener", async () => {
