@@ -5,6 +5,7 @@ import {
 } from "@platform/sekai-master-api-sdk";
 import type { TrackerRegion } from "./event-tracker";
 import { withRequestTimeout } from "./network";
+import { getCachedMetadata } from "./metadata-cache";
 
 export type TrackerEventMetadata = {
   id: number;
@@ -71,7 +72,10 @@ const event = (value: unknown): TrackerEventMetadata | null => {
   };
 };
 
-const unavailableCatalog = (currentStatus: CatalogRequestStatus, listStatus: CatalogRequestStatus): EventCatalogResult => ({
+const unavailableCatalog = (
+  currentStatus: CatalogRequestStatus,
+  listStatus: CatalogRequestStatus
+): EventCatalogResult => ({
   status: currentStatus,
   currentStatus,
   listStatus,
@@ -80,7 +84,9 @@ const unavailableCatalog = (currentStatus: CatalogRequestStatus, listStatus: Cat
   eligibleEvents: []
 });
 
-const withTimeout = async <T>(request: (signal: AbortSignal) => Promise<T>): Promise<{ status: CatalogRequestStatus; value?: T }> => {
+const withTimeout = async <T>(
+  request: (signal: AbortSignal) => Promise<T>
+): Promise<{ status: CatalogRequestStatus; value?: T }> => {
   try {
     const value = await withRequestTimeout(request);
     return { status: "available", value };
@@ -104,14 +110,15 @@ type ParsedEventResponse = {
   metadata: TrackerEventMetadata | null;
 };
 
-const parseEventResponse = (result: { status: CatalogRequestStatus; value?: unknown }): ParsedEventResponse => {
+const parseEventResponse = (result: {
+  status: CatalogRequestStatus;
+  value?: unknown;
+}): ParsedEventResponse => {
   if (result.status !== "available") return { status: result.status, metadata: null };
   if (hasSdkError(result.value)) return { status: "sdk-error", metadata: null };
 
   const metadata = event(responseData(result.value));
-  return metadata
-    ? { status: "available", metadata }
-    : { status: "invalid-data", metadata: null };
+  return metadata ? { status: "available", metadata } : { status: "invalid-data", metadata: null };
 };
 
 const mergeEventMetadata = (
@@ -144,7 +151,10 @@ const getListEvents = (value: unknown): TrackerEventMetadata[] | null => {
     .filter(isEligibleEvent);
 };
 
-const parseListResponse = (result: { status: CatalogRequestStatus; value?: unknown }): {
+const parseListResponse = (result: {
+  status: CatalogRequestStatus;
+  value?: unknown;
+}): {
   status: CatalogRequestStatus;
   events: TrackerEventMetadata[];
 } => {
@@ -152,9 +162,7 @@ const parseListResponse = (result: { status: CatalogRequestStatus; value?: unkno
   if (hasSdkError(result.value)) return { status: "sdk-error", events: [] };
 
   const events = getListEvents(responseData(result.value));
-  return events
-    ? { status: "available", events }
-    : { status: "invalid-data", events: [] };
+  return events ? { status: "available", events } : { status: "invalid-data", events: [] };
 };
 
 const getSelectedEvent = async (
@@ -184,10 +192,23 @@ export const getEventCatalog = async (
   region: TrackerRegion,
   selectedEventId?: number
 ): Promise<EventCatalogResult> => {
-  const [current, list] = await Promise.all([
-    withTimeout((signal) => getEventsByRegionCurrent({ baseUrl, path: { region }, signal })),
-    withTimeout((signal) => getEventsByRegionList({ baseUrl, path: { region }, query: { page_size: 1000, sort_by: "startAt", sort_order: "desc" }, signal }))
-  ]);
+  const { current, list } = await getCachedMetadata(
+    `event-catalog|${baseUrl}|${region}`,
+    () =>
+      Promise.all([
+        withTimeout((signal) => getEventsByRegionCurrent({ baseUrl, path: { region }, signal })),
+        withTimeout((signal) =>
+          getEventsByRegionList({
+            baseUrl,
+            path: { region },
+            query: { page_size: 1000, sort_by: "startAt", sort_order: "desc" },
+            signal
+          })
+        )
+      ]).then(([current, list]) => ({ current, list })),
+    5 * 60 * 1000,
+    ({ current, list }) => current.status === "available" && list.status === "available"
+  );
 
   const currentResult = parseEventResponse(current);
   const listResult = parseListResponse(list);
@@ -208,7 +229,10 @@ export const getEventCatalog = async (
   }
 
   if (currentStatus !== "available" || !mergedCurrentEvent) {
-    return unavailableCatalog(currentStatus === "available" ? "invalid-data" : currentStatus, normalizedListStatus);
+    return unavailableCatalog(
+      currentStatus === "available" ? "invalid-data" : currentStatus,
+      normalizedListStatus
+    );
   }
   return {
     status: "available",
