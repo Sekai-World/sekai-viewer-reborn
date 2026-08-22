@@ -23,8 +23,7 @@ export type EventTrackerRanking = {
 };
 
 export type EventTrackerSelection =
-  | { mode: "live"; eventId: null }
-  | { mode: "history"; eventId: number };
+  { mode: "live"; eventId: null } | { mode: "history"; eventId: number };
 
 export type EventTrackerResult = {
   selection: EventTrackerSelection;
@@ -41,7 +40,7 @@ export type EventTrackerCompleteness = {
 };
 
 const LIVE_MAX_ATTEMPTS = 3;
-const LIVE_RETRY_DELAYS_MS = [500, 1500] as const;
+const LIVE_RETRY_DELAYS_MS = [400] as const;
 
 const asObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)
@@ -88,8 +87,7 @@ const asUserId = (value: unknown): string | null => {
   return userId === null ? null : String(userId);
 };
 
-const asString = (value: unknown): string | null =>
-  typeof value === "string" ? value : null;
+const asString = (value: unknown): string | null => (typeof value === "string" ? value : null);
 
 const parseRanking = (value: unknown): EventTrackerRanking | null => {
   const ranking = asObject(value);
@@ -100,12 +98,18 @@ const parseRanking = (value: unknown): EventTrackerRanking | null => {
     ["score", asScore],
     ["eventId", asEventId]
   ] as const;
-  if (integerFields.some(([field, parser]) => ranking[field] !== undefined && parser(ranking[field]) === null)) {
+  if (
+    integerFields.some(
+      ([field, parser]) => ranking[field] !== undefined && parser(ranking[field]) === null
+    )
+  ) {
     return null;
   }
   if (ranking.userId !== undefined && asUserId(ranking.userId) === null) return null;
   const stringFields = ["userName", "timestamp"] as const;
-  if (stringFields.some((field) => ranking[field] !== undefined && asString(ranking[field]) === null)) {
+  if (
+    stringFields.some((field) => ranking[field] !== undefined && asString(ranking[field]) === null)
+  ) {
     return null;
   }
 
@@ -122,7 +126,9 @@ const parseRanking = (value: unknown): EventTrackerRanking | null => {
 export const parseEventTrackerRankings = (payload: unknown): EventTrackerRanking[] | null => {
   if (Array.isArray(payload)) {
     const parsed = payload.map(parseRanking);
-    return parsed.every((ranking): ranking is EventTrackerRanking => ranking !== null) ? parsed : null;
+    return parsed.every((ranking): ranking is EventTrackerRanking => ranking !== null)
+      ? parsed
+      : null;
   }
 
   const root = asObject(payload);
@@ -145,7 +151,8 @@ export const parseEventTrackerRankings = (payload: unknown): EventTrackerRanking
     // A graph response contains many snapshots for the same rank/player. Keep
     // one row per timestamp, while still collapsing duplicate rows inside an
     // individual snapshot response.
-    const identity = ranking.userId ?? (ranking.score !== null ? `score:${ranking.score}` : `row:${index}`);
+    const identity =
+      ranking.userId ?? (ranking.score !== null ? `score:${ranking.score}` : `row:${index}`);
     const key = `${ranking.timestamp ?? ""}:${ranking.rank ?? ""}:${identity}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -158,23 +165,36 @@ const withResult = (
   status: EventTrackerResult["status"],
   rankings: EventTrackerRanking[] = [],
   resolvedCurrentEventId: number | null = null
-): EventTrackerResult => ({ selection, resolvedCurrentEventId, loadedAt: new Date().toISOString(), status, rankings });
+): EventTrackerResult => ({
+  selection,
+  resolvedCurrentEventId,
+  loadedAt: new Date().toISOString(),
+  status,
+  rankings
+});
 
 const getResolvedCurrentEventId = (rankings: EventTrackerRanking[]): number | null => {
-  const eventIds = new Set(rankings.map((ranking) => ranking.eventId).filter((id): id is number => id !== null));
-  return eventIds.size === 1 ? [...eventIds][0] ?? null : null;
+  const eventIds = new Set(
+    rankings.map((ranking) => ranking.eventId).filter((id): id is number => id !== null)
+  );
+  return eventIds.size === 1 ? ([...eventIds][0] ?? null) : null;
 };
 
-const getSdkErrorStatus = (response: { response?: { status?: number } }): EventTrackerResult["status"] =>
+const getSdkErrorStatus = (response: {
+  response?: { status?: number };
+}): EventTrackerResult["status"] =>
   response.response?.status === 500 ? "upstream-error" : "sdk-error";
 
 const getLiveCompleteness = (
   region: TrackerRegion,
   rankings: EventTrackerRanking[]
 ): EventTrackerCompleteness => {
-  const presentRanks = new Set(rankings.map((ranking) => ranking.rank).filter((rank): rank is number => rank !== null));
+  const presentRanks = new Set(
+    rankings.map((ranking) => ranking.rank).filter((rank): rank is number => rank !== null)
+  );
   const missingRanks = CRITICAL_RANK_LADDER.filter((rank) => !presentRanks.has(rank));
-  const acceptedIncomplete = region === "kr" && missingRanks.length === 1 && missingRanks[0] === 50_000;
+  const acceptedIncomplete =
+    region === "kr" && missingRanks.length === 1 && missingRanks[0] === 50_000;
   let status: EventTrackerCompleteness["status"] = "incomplete";
   if (missingRanks.length === 0) {
     status = "complete";
@@ -187,7 +207,9 @@ const getLiveCompleteness = (
 
 const waitForLiveRetry = (attempt: number): Promise<void> => {
   const delay = LIVE_RETRY_DELAYS_MS[attempt - 1];
-  return delay === undefined ? Promise.resolve() : new Promise((resolve) => setTimeout(resolve, delay));
+  return delay === undefined
+    ? Promise.resolve()
+    : new Promise((resolve) => setTimeout(resolve, delay));
 };
 
 const getLiveEventTrackerRankings = async (
@@ -197,10 +219,14 @@ const getLiveEventTrackerRankings = async (
 ): Promise<EventTrackerResult> => {
   let lastRankings: EventTrackerRanking[] = [];
   for (let attempt = 0; attempt < LIVE_MAX_ATTEMPTS; attempt += 1) {
-    const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingLive>>>((signal) =>
-      getEventRankingLive({ baseUrl, query: { region }, signal } as Parameters<typeof getEventRankingLive>[0])
+    const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingLive>>>(
+      (signal) =>
+        getEventRankingLive({ baseUrl, query: { region }, signal } as Parameters<
+          typeof getEventRankingLive
+        >[0])
     );
-    if ("error" in response && response.error) return withResult(selection, getSdkErrorStatus(response));
+    if ("error" in response && response.error)
+      return withResult(selection, getSdkErrorStatus(response));
     if (isRestoreResponse(response)) return withResult(selection, "available");
 
     const rankings = parseEventTrackerRankings(response.data);
@@ -229,21 +255,24 @@ const getHistoricalEventTrackerRankings = async (
   eventId: number,
   selection: EventTrackerSelection
 ): Promise<EventTrackerResult> => {
-  const latest = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingsByEventId>>>((signal) => getEventRankingsByEventId({
-    baseUrl,
-    path: { id: eventId },
-    query: { limit: 1, sort: { timestamp: "desc" }, region },
-    querySerializer: (query) => {
-      const values = query as Record<string, unknown>;
-      const sort = values.sort as Record<string, unknown> | undefined;
-      return new URLSearchParams({
-        limit: String(values.limit),
-        "sort[timestamp]": String(sort?.timestamp),
-        region: String(values.region)
-      }).toString();
-    },
-    signal
-  } as Parameters<typeof getEventRankingsByEventId>[0]));
+  const latest = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingsByEventId>>>(
+    (signal) =>
+      getEventRankingsByEventId({
+        baseUrl,
+        path: { id: eventId },
+        query: { limit: 1, sort: { timestamp: "desc" }, region },
+        querySerializer: (query) => {
+          const values = query as Record<string, unknown>;
+          const sort = values.sort as Record<string, unknown> | undefined;
+          return new URLSearchParams({
+            limit: String(values.limit),
+            "sort[timestamp]": String(sort?.timestamp),
+            region: String(values.region)
+          }).toString();
+        },
+        signal
+      } as Parameters<typeof getEventRankingsByEventId>[0])
+  );
   if ("error" in latest && latest.error) return withResult(selection, getSdkErrorStatus(latest));
 
   const latestRows = getRankingRows(latest.data);
@@ -253,16 +282,22 @@ const getHistoricalEventTrackerRankings = async (
   const timestamp = (asObject(latestRows[0]) as { timestamp?: unknown } | null)?.timestamp;
   if (typeof timestamp !== "string" || !timestamp) return withResult(selection, "invalid-data");
 
-  const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingsByEventId>>>((signal) => getEventRankingsByEventId({
-    baseUrl,
-    path: { id: eventId },
-    query: { timestamp, region },
-    signal
-  } as Parameters<typeof getEventRankingsByEventId>[0]));
-  if ("error" in response && response.error) return withResult(selection, getSdkErrorStatus(response));
+  const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventRankingsByEventId>>>(
+    (signal) =>
+      getEventRankingsByEventId({
+        baseUrl,
+        path: { id: eventId },
+        query: { timestamp, region },
+        signal
+      } as Parameters<typeof getEventRankingsByEventId>[0])
+  );
+  if ("error" in response && response.error)
+    return withResult(selection, getSdkErrorStatus(response));
 
   const rankings = parseEventTrackerRankings(response.data);
-  return rankings ? withResult(selection, "available", rankings) : withResult(selection, "invalid-data");
+  return rankings
+    ? withResult(selection, "available", rankings)
+    : withResult(selection, "invalid-data");
 };
 
 export const getEventTrackerRankings = async (
