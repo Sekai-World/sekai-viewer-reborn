@@ -1,14 +1,17 @@
 <script lang="ts">
   import { LineChart } from "layerchart";
   import type { ChartState } from "layerchart";
+  import { findTrackerNameChanges } from "$lib/tracker-name-changes";
 
   type RankingHistoryPoint = Readonly<{
+    rank: number;
     userId: string | null | undefined;
     userName: string | null | undefined;
     score: number;
     timestamp: string | null;
   }>;
   type ChartPoint = {
+    rank: number;
     date: Date;
     score: number;
     sourceIndex: number;
@@ -23,6 +26,8 @@
     scoreLabel,
     timeLabel,
     ariaLabel,
+    nameChangeLabel,
+    rank,
     activePoint = $bindable(null)
   }: {
     points: readonly RankingHistoryPoint[];
@@ -30,6 +35,8 @@
     scoreLabel: string;
     timeLabel: string;
     ariaLabel: string;
+    nameChangeLabel: string;
+    rank: number;
     activePoint?: RankingHistoryPoint | null;
   } = $props();
 
@@ -44,6 +51,7 @@
       activePoint = {
         score: point.score,
         timestamp: point.timestamp,
+        rank,
         userId: point.userId,
         userName: point.userName
       };
@@ -54,6 +62,7 @@
     points
       .map((point, sourceIndex) => ({
         date: point.timestamp ? new Date(point.timestamp) : null,
+        rank: point.rank,
         score: point.score,
         sourceIndex,
         timestamp: point.timestamp,
@@ -84,6 +93,18 @@
     new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" })
   );
   const scoreFormatter = $derived(new Intl.NumberFormat(locale));
+  const nameChanges = $derived(
+    findTrackerNameChanges(points, rank).map((change) => ({
+      ...change,
+      time: new Date(change.timestamp)
+    }))
+  );
+  const nameChangePosition = (change: (typeof nameChanges)[number]): string => {
+    const firstDate = dates[0]?.getTime();
+    const lastDate = dates.at(-1)?.getTime();
+    if (firstDate === undefined || lastDate === undefined || lastDate <= firstDate) return "50%";
+    return `${((change.time.getTime() - firstDate) / (lastDate - firstDate)) * 100}%`;
+  };
 </script>
 
 <div class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
@@ -122,6 +143,20 @@
         }
       }}
     />
+    {#each nameChanges as change (change.timestamp)}
+      <button
+        type="button"
+        class="history-chart-name-change"
+        style={`left: ${nameChangePosition(change)}`}
+        aria-label={nameChangeLabel
+          .replace("{previousName}", change.previousName)
+          .replace("{nextName}", change.nextName)
+          .replace("{time}", timeFormatter.format(change.time))}
+        title={`${change.previousName} → ${change.nextName} · ${timeFormatter.format(change.time)}`}
+      >
+        <span aria-hidden="true"></span>
+      </button>
+    {/each}
   {:else}
     <p class="history-chart-empty">{ariaLabel}</p>
   {/if}
@@ -129,6 +164,7 @@
 
 <style>
   .history-chart {
+    position: relative;
     width: 100%;
     height: clamp(15rem, 35vw, 22rem);
     min-height: 18rem;
@@ -174,6 +210,47 @@
     height: 100%;
     place-items: center;
     color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
+  }
+
+  .history-chart-name-change {
+    position: absolute;
+    top: 1.125rem;
+    width: 2.75rem;
+    height: calc(100% - 3.375rem);
+    transform: translateX(-50%);
+    border: 0;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  .history-chart-name-change span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0.7rem;
+    height: 0.7rem;
+    transform: translate(-50%, -50%) rotate(45deg);
+    border: 2px solid var(--color-base-100);
+    background: var(--color-secondary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-secondary) 65%, transparent);
+  }
+
+  .history-chart-name-change:hover span,
+  .history-chart-name-change:focus-visible span {
+    background: var(--color-accent);
+  }
+
+  .history-chart-name-change:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .history-chart-name-change span {
+      transition: none;
+    }
   }
 
   @media (max-width: 47.999rem) {

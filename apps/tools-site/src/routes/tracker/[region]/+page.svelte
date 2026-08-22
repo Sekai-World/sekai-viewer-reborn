@@ -1463,10 +1463,12 @@
             </h3>
             <RankingHistoryChart
               points={graphPoints}
+              rank={selectedRow.ladderRank}
               bind:activePoint={activeGraphPoint}
               locale={data.uiLocale}
               scoreLabel={translate("tracker.score")}
               timeLabel={translate("tracker.capturedAt")}
+              nameChangeLabel={translate("tracker.nameChange")}
               ariaLabel={interpolate("tracker.graphAriaLabel", { rank: selectedRow.ladderRank })}
             />
           </section>

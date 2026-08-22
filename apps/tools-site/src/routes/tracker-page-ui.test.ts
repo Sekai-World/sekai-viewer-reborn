@@ -10,8 +10,17 @@ const trackerMessagesPath = resolve(
   process.cwd(),
   "../../packages/i18n-source/tools-site/tracker.json"
 );
+const chartPath = resolve(process.cwd(), "src/lib/components/RankingHistoryChart.svelte");
 
 describe("tracker page UI contract", () => {
+  it("renders accessible player-change markers without motion-dependent behavior", async () => {
+    const source = await readFile(chartPath, "utf8");
+    expect(source).toContain("findTrackerNameChanges");
+    expect(source).toContain('class="history-chart-name-change"');
+    expect(source).toContain("aria-label={nameChangeLabel");
+    expect(source).toContain("title={`${change.previousName} → ${change.nextName}");
+    expect(source).toContain("prefers-reduced-motion: reduce");
+  });
   it("checks reduced motion at navigation time and cleans up its media listener", async () => {
     const source = await readFile(layoutPath, "utf8");
     expect(source).toContain('const reducedMotionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");');
