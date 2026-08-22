@@ -4,6 +4,7 @@
   import { asset } from "$app/paths";
   import { onNavigate } from "$app/navigation";
   import { page } from "$app/state";
+  import { navigating } from "$app/state";
   import Icon from "@iconify/svelte";
   import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
@@ -40,6 +41,9 @@
     if (route !== "tracker") return "jp";
     return isTrackerSupportedRegion(region) ? region : "jp";
   });
+  const isTrackerNavigationPending = $derived(
+    navigating !== null && navigating.to?.url.pathname.startsWith("/tracker/") === true
+  );
   const trackerRegionHref = (region: TrackerSupportedRegion): string => {
     const search = page.url.search;
     return page.url.pathname.startsWith("/tracker/") ? `/tracker/${region}${search}` : `/tracker/${region}`;
@@ -222,8 +226,53 @@
       </div>
     </div>
   {/snippet}
-  <div class="page-switch-shell">{@render children()}</div>
+  <div class:tracker-navigation-pending={isTrackerNavigationPending} class="page-switch-shell">
+    {#if isTrackerNavigationPending}<div class="tracker-navigation-progress" aria-hidden="true"></div>{/if}
+    {@render children()}
+  </div>
 </ViewerShell>
+
+<style>
+  .page-switch-shell {
+    position: relative;
+  }
+  .tracker-navigation-progress {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 0.15rem;
+    overflow: hidden;
+    background: var(--color-primary);
+  }
+  .tracker-navigation-progress::after {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--color-primary-content) 55%, transparent);
+    content: "";
+    transform: translateX(-100%);
+    animation: tracker-navigation-progress 1.2s ease-in-out infinite;
+  }
+  .tracker-navigation-pending > :not(.tracker-navigation-progress) {
+    opacity: 0.58;
+    transition: opacity 120ms ease-out;
+  }
+  @keyframes tracker-navigation-progress {
+    0% { transform: translateX(-100%); }
+    55% { transform: translateX(20%); }
+    100% { transform: translateX(100%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-navigation-progress::after {
+      animation: none;
+      transform: translateX(35%);
+    }
+    .tracker-navigation-pending > :not(.tracker-navigation-progress) {
+      transition: none;
+    }
+  }
+</style>
 
 {#snippet regionSelector()}
   <div class="flex flex-col gap-2">

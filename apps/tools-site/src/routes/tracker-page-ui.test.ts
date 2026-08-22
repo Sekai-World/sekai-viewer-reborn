@@ -20,6 +20,16 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("reducedMotionPreference.matches");
   });
 
+  it("shows a layout-neutral tracker navigation transition only while navigating", async () => {
+    const layoutSource = await readFile(layoutPath, "utf8");
+    expect(layoutSource).toContain('import { navigating } from "$app/state";');
+    expect(layoutSource).toContain("isTrackerNavigationPending");
+    expect(layoutSource).toContain('class="tracker-navigation-progress"');
+    expect(layoutSource).toContain("tracker-navigation-pending");
+    expect(layoutSource).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(layoutSource).toContain("animation: none;");
+  });
+
   it("uses the tools-site title format and the shared Sekai Viewer brand lockup", async () => {
     const [trackerSource, homeSource, layoutSource, appCssSource, trackerMessagesSource] = await Promise.all([
       readFile(pagePath, "utf8"),
