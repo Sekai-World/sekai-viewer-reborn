@@ -22,7 +22,13 @@ Use parent-child selectors when different compatible major versions are needed
 for separate consumers (for example, `@changesets/parse>js-yaml` and
 `@hey-api/json-schema-ref-parser>js-yaml`). Regenerate `pnpm-lock.yaml` with
 `pnpm install --lockfile-only`, then verify with a frozen install and
-`pnpm audit --json`.
+`pnpm audit --json`:
+
+```bash
+pnpm install --lockfile-only
+pnpm install --frozen-lockfile
+pnpm audit --json
+```
 
 Source: `sekai-viewer-reborn/pnpm-workspace.yaml` and the Dependabot remediation
 validated on 2026-07-25.

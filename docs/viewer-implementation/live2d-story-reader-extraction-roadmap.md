@@ -414,8 +414,10 @@ Goal: move playback behavior, not page concerns, into
   `ParamMouthOpenY` lip sync behavior, and cleanup behavior for the first
   release.
 - Make `load`, `abort`, and `destroy` idempotent. Every failed preload must
-  settle a terminal error state or event and release partially created
-  resources; rendering that error stays in the React or Svelte host.
+  record a terminal failure in observable state that survives host remounts —
+  a one-shot event alone is insufficient because a remounted host can miss it —
+  and release partially created resources; rendering that error stays in the
+  React or Svelte host.
 - Add non-WebGL tests for checkpoint grouping, model queue generation, motion
   pruning, action dispatch, volume mapping, and abort/cleanup behavior.
 - Keep a thin React compatibility adapter only as a parity harness. It is not

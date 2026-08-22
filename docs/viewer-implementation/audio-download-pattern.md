@@ -53,8 +53,9 @@ content-site におけるサーバーサイド音声ダウンロード＆メタ�
 ```typescript
 import { TagLib, type Picture } from "taglib-wasm";
 
-// 音声バイト列へタグ付け（実際の入口は download/+server.ts を参照）
-await TagLib.edit(audioBytes, async (file) => {
+// TagLib.edit は buffer 入力の場合、タグ付け済みの Uint8Array を返す。
+// 実装ではこの戻り値をそのままレスポンスボディとして使う（download/+server.ts 参照）。
+const taggedAudio = await TagLib.edit(audioBytes, async (file) => {
   const tag = file.tag();
   tag.setTitle(title);
   tag.setArtist(artist);
@@ -76,6 +77,8 @@ await TagLib.edit(audioBytes, async (file) => {
 
   file.save();
 });
+
+// taggedAudio をレスポンスとして返す
 ```
 
 ### 注意点

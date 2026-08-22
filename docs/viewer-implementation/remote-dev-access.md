@@ -18,11 +18,20 @@ tailnet 内其他设备访问：
 https://<machine>.<tailnet>.ts.net/
 ```
 
-停止发布：
+停止发布（原命令参数保持不变，末尾加 `off`，只移除这一个端点）：
 
 ```bash
-tailscale serve reset
+tailscale serve --bg 4101 off
 ```
+
+查看当前全部 Serve 配置：
+
+```bash
+tailscale serve status
+```
+
+注意：`tailscale serve reset` 会清除本机**所有** Serve 端点。若同一台机器上还有
+其他 Serve 配置，请使用上面的端点级 `off` 形式，不要用 `reset`。
 
 流量经 tailscaled 反代到 loopback，因此不需要修改 `vite.config.ts`，也不存在
 allowedHosts 403 问题。

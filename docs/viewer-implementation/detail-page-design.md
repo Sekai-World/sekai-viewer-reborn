@@ -293,12 +293,28 @@ This card is **the canonical info card** used by **every detail page** (Event, C
       </span>
     </div>
 
-    <!-- Metadata rows: name first, then status/type and page-specific fields -->
+    <!-- Metadata rows: name first; omit any row whose value is unavailable -->
     <dl class="space-y-2">
+      <div class="content-card-inset rounded-xl p-3 sm:px-4">
+        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{nameRowLabel}</dt>
+        <dd class="mt-1 wrap-break-word text-sm font-medium">{title ?? id}</dd>
+      </div>
+
+      {#if status}
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{statusLabel}</dt>
+          <dd class="mt-1 wrap-break-word text-sm font-medium">{displayValue(status)}</dd>
+        </div>
+      {/if}
+
+      {#if type}
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{typeLabel}</dt>
+          <dd class="mt-1 wrap-break-word text-sm font-medium">{displayValue(type)}</dd>
+        </div>
+      {/if}
+
       {#each [
-        [nameRowLabel, title ?? id],
-        [statusLabel, displayValue(status)],
-        [typeLabel, displayValue(type)],
         [startAtLabel, formatDate(startAt)],
         [endAtLabel, formatDate(endAt)],
         [platformLabel, displayValue(platform)],
@@ -329,7 +345,7 @@ This card is **the canonical info card** used by **every detail page** (Event, C
 | Row label (`dt`) | ✅ Yes | `text-xs font-semibold uppercase tracking-[0.16em] opacity-60` |
 | Row value (`dd`) | ✅ Yes | `mt-1 wrap-break-word text-sm font-medium` |
 
-**First row is always the name/title** (e.g., `event.title`, `card.title`, `music.title`, `virtualLive.name`). Status and type are subsequent rows, **not badges**. This matches `EventDetailInfoCard.svelte` exactly.
+**First row is always the name/title** (e.g., `event.title`, `card.title`, `music.title`, `virtualLive.name`). **Rows are omitted, never placeholder-filled**: render a row only when its value exists, guarded by `{#if}` — this matches `MusicDetailInfoCard.svelte`, which defines neither a status nor a type row, and Event/Card/Gacha, which render the type row only when a value exists. Status and type are subsequent rows, **not badges**. This matches `EventDetailInfoCard.svelte` exactly.
 
 ### Page-Specific Variations (only these)
 
