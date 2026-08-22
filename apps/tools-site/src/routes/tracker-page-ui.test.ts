@@ -22,6 +22,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("aria-label={markerLabel}");
     expect(source).toContain("context.xGet(marker.point)");
     expect(source).toContain("context.yGet(marker.point)");
+    expect(source).toContain("distance <= 14");
+    expect(source).toContain("tooltip.show(event, snappedMarker.marker.point)");
+    expect(source).toContain("history-chart-legend");
     expect(source).toContain("onkeydown={(event) => handleMarkerKeydown(event, marker.point)}");
     expect(source).toContain("title>{`${marker.change.previousName} → ${marker.change.nextName}");
     expect(source).toContain("prefers-reduced-motion: reduce");

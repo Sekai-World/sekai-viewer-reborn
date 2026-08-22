@@ -88,6 +88,7 @@
   "tracker.openRankDetailsAndTrend": "Open rank {rank} details and trend",
   "tracker.graphAriaLabel": "Ranking score trend for rank {rank}",
   "tracker.nameChange": "Name changed from {previousName} to {nextName} at {time}",
+  "tracker.nameChangeLegend": "Player changed at this rank",
   "tracker.worldBloom": "World Link",
   "tracker.rankingWorkspace": "Ranking workspace",
   "tracker.eventRankings": "Event rankings",

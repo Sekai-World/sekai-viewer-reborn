@@ -27,6 +27,7 @@
     timeLabel,
     ariaLabel,
     nameChangeLabel,
+    nameChangeLegend,
     rank,
     activePoint = $bindable(null)
   }: {
@@ -36,15 +37,30 @@
     timeLabel: string;
     ariaLabel: string;
     nameChangeLabel: string;
+    nameChangeLegend: string;
     rank: number;
     activePoint?: RankingHistoryPoint | null;
   } = $props();
 
   let chartContext = $state<ChartState<ChartPoint> | undefined>();
+  let chartElement = $state<HTMLDivElement | undefined>();
   const selectedPoint = $derived(activePoint);
 
-  const captureHoveredPoint = (): void => {
+  const captureHoveredPoint = (event: PointerEvent): void => {
     queueMicrotask(() => {
+      const context = chartContext;
+      const rect = chartElement?.getBoundingClientRect();
+      if (context && rect) {
+        const pointerX = event.clientX - rect.left;
+        const snappedMarker = markerPoints
+          .map((marker) => ({ marker, distance: Math.abs(context.xGet(marker.point) - pointerX) }))
+          .sort((a, b) => a.distance - b.distance)[0];
+        if (snappedMarker && snappedMarker.distance <= 14) {
+          context.tooltip.show(event, snappedMarker.marker.point);
+          activateMarker(snappedMarker.marker.point);
+          return;
+        }
+      }
       const hovered = chartContext?.tooltip.data;
       if (!hovered || typeof hovered !== "object" || !("score" in hovered) || !("date" in hovered)) return;
       const point = hovered as ChartPoint;
@@ -125,8 +141,12 @@
   };
 </script>
 
-<div class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
+<div bind:this={chartElement} class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
   <span class="sr-only">{scoreLabel} · {timeLabel}{selectedPoint ? ` · ${selectedPoint.score}` : ""}</span>
+  <div class="history-chart-legend" aria-label={nameChangeLegend}>
+    <span class="history-chart-legend-diamond" aria-hidden="true"></span>
+    <span>{nameChangeLegend}</span>
+  </div>
   {#if validPoints.length === 1}
     <div class="history-chart-single-point">
       <span class="history-chart-point" aria-hidden="true"></span>
@@ -226,6 +246,32 @@
     height: 100%;
     place-items: center;
     color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
+  }
+
+  .history-chart-legend {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.5rem;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-base-content) 14%, transparent);
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--color-base-100) 88%, transparent);
+    color: color-mix(in srgb, var(--color-base-content) 72%, transparent);
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  .history-chart-legend-diamond {
+    width: 0.55rem;
+    height: 0.55rem;
+    flex: 0 0 auto;
+    transform: rotate(45deg);
+    border: 1px solid var(--color-base-100);
+    background: var(--color-secondary);
   }
 
   .history-chart-name-change {

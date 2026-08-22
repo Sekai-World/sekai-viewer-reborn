@@ -1469,6 +1469,7 @@
               scoreLabel={translate("tracker.score")}
               timeLabel={translate("tracker.capturedAt")}
               nameChangeLabel={translate("tracker.nameChange")}
+              nameChangeLegend={translate("tracker.nameChangeLegend")}
               ariaLabel={interpolate("tracker.graphAriaLabel", { rank: selectedRow.ladderRank })}
             />
           </section>
