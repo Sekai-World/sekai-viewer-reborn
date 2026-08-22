@@ -22,9 +22,13 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("aria-label={markerLabel}");
     expect(source).toContain("context.xGet(marker.point)");
     expect(source).toContain("context.yGet(marker.point)");
-    expect(source).toContain("findNearestHoverMarker({");
-    expect(source).toContain("svgRect");
-    expect(source).toContain("viewBoxWidth: svg.viewBox.baseVal.width || null");
+    expect(source).toContain("findSnappedNameChange({");
+    expect(source).toContain("const hovered = context?.tooltip.data;");
+    expect(source).toContain("const range = context.xScale.range();");
+    expect(source).toContain("const domain = context.xScale.domain();");
+    expect(source).not.toContain("getBoundingClientRect");
+    expect(source).not.toContain("svgRect");
+    expect(source).not.toContain("clientX");
     expect(source).toContain("context.tooltip.show(event, snappedMarker.point)");
     expect(source).toContain("history-chart-legend");
     expect(source).toContain("onkeydown={(event) => handleMarkerKeydown(event, marker.point)}");

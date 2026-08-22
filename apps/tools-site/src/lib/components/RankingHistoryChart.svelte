@@ -1,7 +1,7 @@
 <script lang="ts">
   import { LineChart } from "layerchart";
   import type { ChartState } from "layerchart";
-  import { findNearestHoverMarker, findTrackerNameChanges } from "$lib/tracker-name-changes";
+  import { findSnappedNameChange, findTrackerNameChanges } from "$lib/tracker-name-changes";
 
   type RankingHistoryPoint = Readonly<{
     rank: number;
@@ -43,37 +43,33 @@
   } = $props();
 
   let chartContext = $state<ChartState<ChartPoint> | undefined>();
-  let chartElement = $state<HTMLDivElement | undefined>();
   const selectedPoint = $derived(activePoint);
 
   const captureHoveredPoint = (event: PointerEvent): void => {
     queueMicrotask(() => {
       const context = chartContext;
-      if (context && chartElement) {
-        try {
-          const svg = chartElement.querySelector("svg");
-          const svgRect = svg?.getBoundingClientRect();
-          const markerIndex = svg && svgRect
-            ? findNearestHoverMarker({
-                clientX: event.clientX,
-                svgRect,
-                viewBoxWidth: svg.viewBox.baseVal.width || null,
-                markerXs: markerPoints.map((marker) => context.xGet(marker.point))
-              })
-            : null;
-          const snappedMarker = markerIndex === null ? null : markerPoints[markerIndex];
-          if (snappedMarker) {
-            context.tooltip.show(event, snappedMarker.point);
-            activateMarker(snappedMarker.point);
-            return;
-          }
-        } catch {
-          // Keep LayerChart's normal hover behavior if the SVG is not measurable yet.
-        }
-      }
-      const hovered = chartContext?.tooltip.data;
+      const hovered = context?.tooltip.data;
       if (!hovered || typeof hovered !== "object" || !("score" in hovered) || !("date" in hovered)) return;
       const point = hovered as ChartPoint;
+      if (!(point.date instanceof Date) || !Number.isFinite(point.date.getTime())) return;
+      if (context) {
+        try {
+          const range = context.xScale.range();
+          const domain = context.xScale.domain();
+          const pxPerMs = (range[1] - range[0]) / (Number(domain[1]) - Number(domain[0]));
+          const thresholdMs = 14 / pxPerMs;
+          if (Number.isFinite(pxPerMs) && pxPerMs > 0 && Number.isFinite(thresholdMs)) {
+            const snappedMarker = findSnappedNameChange({ hoveredDate: point.date, markers: markerPoints, thresholdMs });
+            if (snappedMarker) {
+              context.tooltip.show(event, snappedMarker.point);
+              activateMarker(snappedMarker.point);
+              return;
+            }
+          }
+        } catch {
+          // Keep LayerChart's normal hover behavior if its scale is not ready.
+        }
+      }
       activePoint = {
         score: point.score,
         timestamp: point.timestamp,
@@ -151,7 +147,7 @@
   };
 </script>
 
-<div bind:this={chartElement} class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
+<div class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
   <span class="sr-only">{scoreLabel} · {timeLabel}{selectedPoint ? ` · ${selectedPoint.score}` : ""}</span>
   <div class="history-chart-legend" aria-label={nameChangeLegend}>
     <span class="history-chart-legend-diamond" aria-hidden="true"></span>

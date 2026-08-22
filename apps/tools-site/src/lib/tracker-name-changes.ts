@@ -13,50 +13,33 @@ export type TrackerNameChange = Readonly<{
   nextName: string;
 }>;
 
-const HOVER_SNAP_THRESHOLD_PX = 14;
-
-export type HoverSnapGeometry = Readonly<{
-  clientX: number;
-  svgRect: Readonly<Pick<DOMRect, "left" | "width">>;
-  viewBoxWidth: number | null;
-  markerXs: readonly number[];
+export type HoverMarker<TPoint extends { date: Date } = { date: Date }> = Readonly<{
+  point: TPoint;
 }>;
 
-/**
- * Returns the nearest marker in SVG user space while keeping a screen-pixel threshold.
- * When markers are equally distant, the first marker (lowest index) wins.
- */
-export const findNearestHoverMarker = ({
-  clientX,
-  svgRect,
-  viewBoxWidth,
-  markerXs
-}: HoverSnapGeometry): number | null => {
-  if (!Number.isFinite(clientX) || !Number.isFinite(svgRect.left) || !Number.isFinite(svgRect.width) || svgRect.width <= 0) {
-    return null;
-  }
+/** Finds the nearest marker in time space; first-wins ties are intentional. */
+export const findSnappedNameChange = <TPoint extends { date: Date }>({
+  hoveredDate,
+  markers,
+  thresholdMs
+}: Readonly<{
+  hoveredDate: Date;
+  markers: readonly HoverMarker<TPoint>[];
+  thresholdMs: number;
+}>): HoverMarker<TPoint> | null => {
+  const hoveredTime = hoveredDate.getTime();
+  if (!Number.isFinite(hoveredTime) || !Number.isFinite(thresholdMs) || thresholdMs < 0) return null;
 
-  const factor =
-    viewBoxWidth !== null && Number.isFinite(viewBoxWidth) && viewBoxWidth > 0
-      ? viewBoxWidth / svgRect.width
-      : 1;
-  if (!Number.isFinite(factor) || factor <= 0) return null;
-
-  const pointerX = (clientX - svgRect.left) * factor;
-  const threshold = HOVER_SNAP_THRESHOLD_PX / factor;
-  let nearestIndex: number | null = null;
+  let nearestMarker: HoverMarker<TPoint> | null = null;
   let nearestDistance = Number.POSITIVE_INFINITY;
-
-  markerXs.forEach((markerX, index) => {
-    if (!Number.isFinite(markerX)) return;
-    const distance = Math.abs(markerX - pointerX);
-    if (distance < nearestDistance) {
+  for (const marker of markers) {
+    const distance = Math.abs(marker.point.date.getTime() - hoveredTime);
+    if (Number.isFinite(distance) && distance < nearestDistance) {
       nearestDistance = distance;
-      nearestIndex = index;
+      nearestMarker = marker;
     }
-  });
-
-  return nearestIndex !== null && nearestDistance <= threshold ? nearestIndex : null;
+  }
+  return nearestMarker !== null && nearestDistance <= thresholdMs ? nearestMarker : null;
 };
 
 /** Finds real player-name changes while treating missing names as unknown data. */
