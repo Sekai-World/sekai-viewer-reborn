@@ -173,6 +173,7 @@ Any menu, dialog, dropdown, or popover that closes on outside click **must rende
 - Region badge popover in `RegionBadgeSwitch.svelte` — backdrop captures outside taps
 
 **Anti-patterns to avoid:**
+
 | ❌ Don't | ✅ Do |
 |---------|-------|
 | No backdrop; click passes through to page links | Full-viewport backdrop at correct z-index |
@@ -292,20 +293,12 @@ This card is **the canonical info card** used by **every detail page** (Event, C
       </span>
     </div>
 
-    <!-- Main title + status/type badges -->
-    <div class="space-y-3">
-      <h1 class="wrap-break-word text-2xl/tight font-bold sm:text-3xl">
-        {title ?? id}
-      </h1>
-      <div class="flex flex-wrap gap-2">
-        <span class="badge badge-primary font-semibold">{statusLabel}</span>
-        <span class="badge badge-outline font-semibold">{typeLabel}</span>
-      </div>
-    </div>
-
-    <!-- Metadata rows: each in content-card-inset -->
+    <!-- Metadata rows: name first, then status/type and page-specific fields -->
     <dl class="space-y-2">
       {#each [
+        [nameRowLabel, title ?? id],
+        [statusLabel, displayValue(status)],
+        [typeLabel, displayValue(type)],
         [startAtLabel, formatDate(startAt)],
         [endAtLabel, formatDate(endAt)],
         [platformLabel, displayValue(platform)],

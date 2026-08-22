@@ -33,7 +33,7 @@ export const load = async ({ ... }): Promise<PageData> => {
   const initialQuery = parseQueryState(url);
   const filterMeta = await fetchFilterMeta(); // 同期取得
 
-  const initialPage = fetchInitialPage(region, queryState)
+  const initialPage = fetchInitialPage(region, initialQuery)
     .then((page) => ({ page, loadFailed: false }))
     .catch(() => ({ page: emptyPage, loadFailed: true }));
 
@@ -81,9 +81,12 @@ export const load = async ({ ... }): Promise<PageData> => {
 
 ### 原因
 
-フィルタ状態 (`sortBy`, `sortOrder`, `nameFilter` 等) を `$effect` 内で
-`data.initialQuery` から初期化すると、書き込んだリアクティブ変数が
-`$effect` の依存関係として追跡され、effect が自己再起動 → 無限ループになる。
+`$effect` が依存を追跡するのは「読み込み」であって「代入」ではない。
+この落とし穴の本質は、effect 内で `data.initialQuery` を**同期的に読んでいる**点にある:
+ストリーミング Promise の解決などで `data` が更新されるたびに effect が再実行され、
+その中でフィルタ state への代入が繰り返される。代入自体は新しい依存を作らないが、
+再実行のたびに state 書き込みが走り、他の effect や復元処理と競合して
+`effect_update_depth_exceeded` に至る。
 
 ```svelte
 <!-- ❌ これをやってはいけない -->
@@ -218,7 +221,7 @@ const refreshTranslations = async (locale: string): Promise<void> => {
 Every page component under `apps/content-site/src/routes/` that consumes
 `data.i18nMessages`:
 
-- `+layout.svelte`, `+error.svelte`
+- `+layout.svelte`
 - `+page.svelte` (home)
 - `cards/[region]/+page.svelte`
 - `events/[region]/+page.svelte`

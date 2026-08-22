@@ -11,13 +11,13 @@ content-site におけるサーバーサイド音声ダウンロード＆メタ�
 
 ## エンドポイント構成
 
-各ダウンロード機能には 2 つのエンドポイントが必要:
+各ダウンロード機能には 2 つの URL パス・3 つのオペレーションが必要:
 
-| エンドポイント | 役割 |
+| オペレーション | 役割 |
 |---|---|
-| `GET .../download` | 音声取得 → タグ付け → レスポンス（taskId クエリパラメータ必須） |
-| `GET .../download/progress` | SSE で進捗をストリーミング（taskId クエリパラメータ必須） |
-| `POST .../download/progress` | ダウンロードをキャンセル（taskId クエリパラメータ必須） |
+| `GET .../download` | 音声取得 → タグ付け → レスポンス（taskId は省略可 — 指定なしでも進捗トラッキングなしでダウンロードできる） |
+| `GET .../download/progress` | SSE で進捗をストリーミング（taskId 必須） |
+| `POST .../download/progress` | ダウンロードをキャンセル（taskId 必須） |
 
 ### 実装例
 
@@ -51,33 +51,38 @@ content-site におけるサーバーサイド音声ダウンロード＆メタ�
 ### 基本フロー
 
 ```typescript
-import { TagLib } from "taglib-wasm";
+import { TagLib, type Picture } from "taglib-wasm";
 
-const tagLib = await TagLib.load();
-const file = tagLib.open(audioBuffer);
-const tag = file.tag();
+// 音声バイト列へタグ付け（実際の入口は download/+server.ts を参照）
+await TagLib.edit(audioBytes, async (file) => {
+  const tag = file.tag();
+  tag.setTitle(title);
+  tag.setArtist(artist);
+  tag.setAlbum(album);
 
-tag.setTitle(title);
-tag.setArtist(artist);
-tag.setAlbum(album);
-tag.setProperty("albumArtist", albumArtist); // カスタムプロパティ
-tag.setProperty("lyricist", lyricist);
+  // カスタムプロパティは file.setProperty（null 不許可・string のみ）
+  file.setProperty("albumArtist", albumArtist);
+  file.setProperty("lyrics", lyricist); // 作詞者は lyrics キーに格納する
 
-// カバー画像
-const picture = new Picture(coverBuffer);
-picture.mimeType = "image/webp";
-picture.type = PictureType.FrontCover;
-file.setPictures([picture]);
+  // カバー画像: Picture は interface。プレーンオブジェクト + satisfies で渡す
+  file.setPictures([
+    {
+      data: coverBytes,
+      mimeType: "image/webp",
+      type: "FrontCover",
+      description: title
+    } satisfies Picture
+  ]);
 
-const result = file.save();
-file.dispose();
+  file.save();
+});
 ```
 
 ### 注意点
 
 - `setProperty` は `null` を受け付けない — `string` のみ。null 可能値は事前にフィルタする。
 - `Picture.mimeType` は画像形式に合わせる（webp → `"image/webp"`）。
-- `file.dispose()` を必ず呼んでリソースを解放する。
+- `TagLib.edit` のコールバック外で自分でファイルを開いた場合は `file.dispose()` を必ず呼んでリソースを解放する。
 - 非圧縮フォーマット（wav）でもタグは書き込めるが、ファイルサイズに注意。
 
 ## AudioPlayer コンポーネント連携
@@ -172,7 +177,7 @@ controls were in `MusicPreviewCard`. These were merged because:
 
 ### Current structure
 
-```
+```text
 MusicPreviewCard
 ├── Header: "Vocals" label with microphone icon
 ├── If no vocals: "No vocals" message
@@ -230,8 +235,8 @@ Location: `apps/content-site/src/lib/assets/index.ts`
 export function getMusicAssetServer(
   region: SupportedRegion,
   availableRegions: SupportedRegion[]
-): SupportedRegion {
-  return availableRegions.includes("jp" as SupportedRegion) ? "jp" : region;
+): AssetServer {
+  return availableRegions.includes("jp") ? "jp" : region;
 }
 ```
 

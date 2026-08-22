@@ -30,17 +30,22 @@ validated on 2026-07-25.
 ## Changesets YAML Compatibility
 
 `@changesets/cli` reaches `read-yaml-file` through `@manypkg/get-packages`.
-Do not force `read-yaml-file@1` to a `js-yaml` release without `safeLoad`:
-scope an override of `read-yaml-file@1` to `^2.1.0` instead. Keep overrides for
-other `js-yaml` consumers bounded below major 5 (for example,
-`>=4.2.0 <5.0.0`); an unbounded `>=4.2.0` range can resolve js-yaml 5 and break
-legacy `safeLoad` callers.
+Two distinct override groups keep this dependency tree healthy:
+
+1. **Package override for the legacy loader**: scope `read-yaml-file@1` to
+   `^2.1.0`. Do not force it onto a `js-yaml` release without `safeLoad`.
+2. **Dependency overrides for direct `js-yaml` consumers** such as
+   `@changesets/parse>js-yaml` and
+   `@hey-api/json-schema-ref-parser>js-yaml`: bound them below major 5 (for
+   example, `>=4.2.0 <5.0.0`). An unbounded `>=4.2.0` range can resolve
+   js-yaml 5 and break legacy `safeLoad` callers.
 
 After changing these overrides, run:
 
 ```bash
 pnpm install --lockfile-only
 pnpm install --frozen-lockfile
+pnpm audit --json
 pnpm why read-yaml-file
 pnpm why js-yaml
 pnpm changeset status

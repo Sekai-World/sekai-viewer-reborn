@@ -1,39 +1,52 @@
 # Content-Site Remote Dev Access
 
-通过 Tailscale 从 tailnet 内远程访问 content-site 的 dev server。
+通过 tailnet 远程访问本机 content-site dev server。tracked 配置必须保持机器无关：
+不要把 Tailscale IP 或 MagicDNS 主机名提交进仓库。
 
-## 配置方法
+## 方式 A（推荐）：`tailscale serve`，不改项目配置
 
-修改 `apps/content-site/vite.config.ts` 的 `server` 配置：
+dev server 保持默认绑定 loopback（`host: "127.0.0.1"`），用 Tailscale 把本地端口
+发布到 tailnet：
 
-```ts
-server: {
-  host: "<tailscale-ip>",  // 替换为当前机器 Tailscale IPv4
-  allowedHosts: ["<machine>.tail<xxxxx>.ts.net", "<tailscale-ip>"],
-  // ... proxy 配置
-}
+```bash
+tailscale serve --bg 4101
 ```
 
-关键参数：
-- `host`: 绑定到 Tailscale IP，而不是 `0.0.0.0`（避免暴露到所有网络接口）
-- `allowedHosts`: 放行 MagicDNS 域名和 IP，否则 Vite 8 会返回 403
+tailnet 内其他设备访问：
 
-同时移除 `package.json` 的 `dev` 脚本中 `--host localhost` CLI flag，否则会覆盖 vite.config.ts 的 `host`。
+```text
+https://<machine>.<tailnet>.ts.net/
+```
 
-## 访问方式
+停止发布：
 
-启动后可通过以下方式访问：
-- `http://<machine>.tail<xxxxx>.ts.net:4101/`（MagicDNS）
-- `http://<tailscale-ip>:4101/`（直接 IP）
+```bash
+tailscale serve reset
+```
+
+流量经 tailscaled 反代到 loopback，因此不需要修改 `vite.config.ts`，也不存在
+allowedHosts 403 问题。
+
+## 方式 B：`.env.local` 覆盖（确需 Vite 直接绑定 tailnet 接口时）
+
+把机器相关值放进被 git 忽略的 `.env.local`（例如 `VITE_DEV_HOST` /
+`VITE_DEV_ALLOWED_HOSTS`），由 `vite.config.ts` 以安全默认值（`127.0.0.1`）兜底
+读取；不要把具体 IP / MagicDNS 主机名写进 tracked 文件。
+
+直接绑定时需在 server 配置中放行对应主机名，否则 Vite 8 会返回 403。
 
 ## 查看当前 Tailscale IP
 
 ```bash
+# 任意平台（CLI 在 PATH 中时）
+tailscale ip -4
+
+# macOS（App 版未提供 CLI 时）
 /Applications/Tailscale.app/Contents/MacOS/Tailscale ip -4
 ```
 
 ## 注意
 
-- `localhost:4101` 不再可用（dev server 不再绑定 loopback），在本地也需使用 Tailscale IP 访问
-- Tailscale IP 变更时需同步更新 vite.config.ts
-- 不使用时建议恢复为 `host: "localhost"` 以保持本地开发体验
+- 不要把机器相关的 Tailscale IP / MagicDNS 主机名提交进 tracked 配置；历史遗留的
+  硬编码值应迁移到 `.env.local`。
+- 不使用远程访问时无需任何额外配置，dev server 默认仅监听 loopback。

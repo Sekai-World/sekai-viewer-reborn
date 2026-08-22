@@ -155,8 +155,10 @@ not on React rendering.
 | `ui_assets.ts`                                                                                | Vite SVG imports and `import.meta.env` through URL helpers                | Provide UI asset URLs from the host or a package asset manifest.                                    |
 | `utils/urls.ts`                                                                               | Vite environment variables                                                | Provide a region-aware `AssetResolver` interface.                                                   |
 
-The `@pixi/react` dependency is only required by the current page wrapper. The
-runtime itself does not need it.
+The `@pixi/react` dependency is only required by the legacy React page
+wrappers — including the Live2D page that renders through
+`StoryReaderLive2DStage` (`useApp`). Only the extracted framework-neutral
+runtime can drop it; the wrappers keep it until they are retired.
 
 ## Target site: `media-lab-site`
 
@@ -281,7 +283,10 @@ rewrite.
 ### Proposed imperative API
 
 Names are illustrative; the important property is that no API type mentions
-React, MUI, or a global store.
+React, MUI, or a global store. The lifecycle verbs used later in Phase 4 and
+the acceptance checklist (`load`, `play`, `pause`, `reload`) are conceptual
+shorthands over this surface — for example, `playUntilCheckpoint()` is the
+checkpoint-scoped form of `play`.
 
 ```ts
 const player = await createLive2DStoryPlayer({
@@ -409,7 +414,8 @@ Goal: move playback behavior, not page concerns, into
   `ParamMouthOpenY` lip sync behavior, and cleanup behavior for the first
   release.
 - Make `load`, `abort`, and `destroy` idempotent. Every failed preload must
-  settle a visible error state and release partially created resources.
+  settle a terminal error state or event and release partially created
+  resources; rendering that error stays in the React or Svelte host.
 - Add non-WebGL tests for checkpoint grouping, model queue generation, motion
   pruning, action dispatch, volume mapping, and abort/cleanup behavior.
 - Keep a thin React compatibility adapter only as a parity harness. It is not
@@ -545,25 +551,24 @@ second monolith.
 
 ## Source map
 
-- Page loading and UI: `sekai-viewer/src/pages/storyreader-live2d/`
-- Runtime controller: `sekai-viewer/src/utils/Live2DPlayer/Live2DController.ts`
-- Pixi root and layer ordering: `sekai-viewer/src/utils/Live2DPlayer/Live2DPlayer.ts`
-- Model/audio layer: `sekai-viewer/src/utils/Live2DPlayer/layer/Live2D.ts`
-- Scenario actions: `sekai-viewer/src/utils/Live2DPlayer/action/`
-- Loading/preload: `sekai-viewer/src/utils/Live2DPlayer/load.ts`
+Legacy `sekai-viewer` paths are pinned to commit `0504bee6`. Reborn target
+paths are repository-relative to this monorepo root.
+
+- Page loading and UI: `sekai-viewer@0504bee6:src/pages/storyreader-live2d/`
+- Runtime controller: `sekai-viewer@0504bee6:src/utils/Live2DPlayer/Live2DController.ts`
+- Pixi root and layer ordering: `sekai-viewer@0504bee6:src/utils/Live2DPlayer/Live2DPlayer.ts`
+- Model/audio layer: `sekai-viewer@0504bee6:src/utils/Live2DPlayer/layer/Live2D.ts`
+- Scenario actions: `sekai-viewer@0504bee6:src/utils/Live2DPlayer/action/`
+- Loading/preload: `sekai-viewer@0504bee6:src/utils/Live2DPlayer/load.ts`
 - Scenario and asset URL resolution:
-  `sekai-viewer/src/utils/storyLoader.ts`
-- Scenario action/type contract: `sekai-viewer/src/story-scenerio.d.ts`
-- Model JSON/motion URL normalization: `sekai-viewer/src/utils/live2dLoader.ts`
-- Pixi/Live2D dependency versions: `sekai-viewer/package.json`
-- Target app shell: `sekai-viewer-reborn/apps/media-lab-site/src/routes/`
-- Target app manifest: `sekai-viewer-reborn/apps/media-lab-site/package.json`
-- Target SvelteKit layout pattern:
-  `sekai-viewer-reborn/apps/content-site/src/routes/+layout.server.ts`
-- Target remote asset convention:
-  `sekai-viewer-reborn/apps/content-site/src/lib/assets/index.ts`
-- Target shared shell: `sekai-viewer-reborn/packages/ui-shell/src/`
-- Target master API exports:
-  `sekai-viewer-reborn/packages/sekai-master-api-sdk/src/index.ts`
-- Target i18n source package:
-  `sekai-viewer-reborn/packages/i18n-source/`
+  `sekai-viewer@0504bee6:src/utils/storyLoader.ts`
+- Scenario action/type contract: `sekai-viewer@0504bee6:src/story-scenerio.d.ts`
+- Model JSON/motion URL normalization: `sekai-viewer@0504bee6:src/utils/live2dLoader.ts`
+- Pixi/Live2D dependency versions: `sekai-viewer@0504bee6:package.json`
+- Target app shell: `apps/media-lab-site/src/routes/`
+- Target app manifest: `apps/media-lab-site/package.json`
+- Target SvelteKit layout pattern: `apps/content-site/src/routes/+layout.server.ts`
+- Target remote asset convention: `apps/content-site/src/lib/assets/index.ts`
+- Target shared shell: `packages/ui-shell/src/`
+- Target master API exports: `packages/sekai-master-api-sdk/src/index.ts`
+- Target i18n source package: `packages/i18n-source/`
