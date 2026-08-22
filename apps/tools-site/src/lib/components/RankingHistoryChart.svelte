@@ -99,11 +99,29 @@
       time: new Date(change.timestamp)
     }))
   );
-  const nameChangePosition = (change: (typeof nameChanges)[number]): string => {
-    const firstDate = dates[0]?.getTime();
-    const lastDate = dates.at(-1)?.getTime();
-    if (firstDate === undefined || lastDate === undefined || lastDate <= firstDate) return "50%";
-    return `${((change.time.getTime() - firstDate) / (lastDate - firstDate)) * 100}%`;
+  const markerPoints = $derived(
+    nameChanges
+      .map((change) => {
+        const point = validPoints
+          .filter((candidate) => candidate.date.getTime() <= change.time.getTime())
+          .at(-1);
+        return point ? { change, point } : null;
+      })
+      .filter((marker): marker is NonNullable<typeof marker> => marker !== null)
+  );
+  const activateMarker = (point: ChartPoint): void => {
+    activePoint = {
+      score: point.score,
+      timestamp: point.timestamp,
+      rank,
+      userId: point.userId,
+      userName: point.userName
+    };
+  };
+  const handleMarkerKeydown = (event: KeyboardEvent, point: ChartPoint): void => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    activateMarker(point);
   };
 </script>
 
@@ -142,21 +160,19 @@
           "stroke-linejoin": "round"
         }
       }}
-    />
-    {#each nameChanges as change (change.timestamp)}
-      <button
-        type="button"
-        class="history-chart-name-change"
-        style={`left: ${nameChangePosition(change)}`}
-        aria-label={nameChangeLabel
-          .replace("{previousName}", change.previousName)
-          .replace("{nextName}", change.nextName)
-          .replace("{time}", timeFormatter.format(change.time))}
-        title={`${change.previousName} → ${change.nextName} · ${timeFormatter.format(change.time)}`}
-      >
-        <span aria-hidden="true"></span>
-      </button>
-    {/each}
+    >
+      {#snippet aboveMarks({ context })}
+        {#each markerPoints as marker (marker.change.timestamp)}
+          {@const cx = context.xGet(marker.point)}
+          {@const cy = context.yGet(marker.point)}
+          {@const markerLabel = nameChangeLabel.replace("{previousName}", marker.change.previousName).replace("{nextName}", marker.change.nextName).replace("{time}", timeFormatter.format(marker.change.time))}
+          <g class="history-chart-name-change" tabindex="0" role="button" aria-label={markerLabel} onclick={() => activateMarker(marker.point)} onkeydown={(event) => handleMarkerKeydown(event, marker.point)}>
+            <title>{`${marker.change.previousName} → ${marker.change.nextName} · ${timeFormatter.format(marker.change.time)}`}</title>
+            <path d={`M ${cx} ${cy - 7} L ${cx + 7} ${cy} L ${cx} ${cy + 7} L ${cx - 7} ${cy} Z`} />
+          </g>
+        {/each}
+      {/snippet}
+    </LineChart>
   {:else}
     <p class="history-chart-empty">{ariaLabel}</p>
   {/if}
@@ -213,33 +229,21 @@
   }
 
   .history-chart-name-change {
-    position: absolute;
-    top: 1.125rem;
-    width: 2.75rem;
-    height: calc(100% - 3.375rem);
-    transform: translateX(-50%);
-    border: 0;
-    padding: 0;
-    background: transparent;
     cursor: pointer;
-    z-index: 2;
+    outline: none;
+    pointer-events: visiblePainted;
   }
 
-  .history-chart-name-change span {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0.7rem;
-    height: 0.7rem;
-    transform: translate(-50%, -50%) rotate(45deg);
-    border: 2px solid var(--color-base-100);
-    background: var(--color-secondary);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-secondary) 65%, transparent);
+  .history-chart-name-change path {
+    fill: var(--color-secondary);
+    stroke: var(--color-base-100);
+    stroke-width: 1.5;
+    transition: fill 150ms ease;
   }
 
-  .history-chart-name-change:hover span,
-  .history-chart-name-change:focus-visible span {
-    background: var(--color-accent);
+  .history-chart-name-change:hover path,
+  .history-chart-name-change:focus-visible path {
+    fill: var(--color-accent);
   }
 
   .history-chart-name-change:focus-visible {
@@ -248,7 +252,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .history-chart-name-change span {
+    .history-chart-name-change path {
       transition: none;
     }
   }

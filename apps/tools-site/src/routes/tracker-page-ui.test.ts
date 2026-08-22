@@ -16,9 +16,14 @@ describe("tracker page UI contract", () => {
   it("renders accessible player-change markers without motion-dependent behavior", async () => {
     const source = await readFile(chartPath, "utf8");
     expect(source).toContain("findTrackerNameChanges");
+    expect(source).toContain("{#snippet aboveMarks({ context })}");
+    expect(source).not.toContain("{#snippet marks");
     expect(source).toContain('class="history-chart-name-change"');
-    expect(source).toContain("aria-label={nameChangeLabel");
-    expect(source).toContain("title={`${change.previousName} → ${change.nextName}");
+    expect(source).toContain("aria-label={markerLabel}");
+    expect(source).toContain("context.xGet(marker.point)");
+    expect(source).toContain("context.yGet(marker.point)");
+    expect(source).toContain("onkeydown={(event) => handleMarkerKeydown(event, marker.point)}");
+    expect(source).toContain("title>{`${marker.change.previousName} → ${marker.change.nextName}");
     expect(source).toContain("prefers-reduced-motion: reduce");
   });
   it("checks reduced motion at navigation time and cleans up its media listener", async () => {
