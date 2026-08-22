@@ -7,6 +7,11 @@ export default defineConfig(({ mode }) => {
   const proxyPath = env.VITE_REMOTE_ASSET_PROXY_PATH;
   const proxyTarget = env.VITE_REMOTE_ASSET_PROXY_TARGET;
   const enableProxy = mode === "development" && env.VITE_REMOTE_ASSET_PROXY_ENABLED === "true";
+  const devHost = env.VITE_DEV_HOST || "127.0.0.1";
+  const devAllowedHosts = (env.VITE_DEV_ALLOWED_HOSTS ?? "")
+    .split(",")
+    .map((host) => host.trim())
+    .filter(Boolean);
 
   if (enableProxy && (!proxyPath || !proxyTarget)) {
     throw new Error(
@@ -17,9 +22,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [sveltekit(), tailwindcss()],
     server: {
-      host: "127.0.0.1",
+      host: devHost,
       strictPort: true,
-      allowedHosts: ["peimacbook-air.tailb18840.ts.net", "100.82.87.88"],
+      ...(devAllowedHosts.length > 0 ? { allowedHosts: devAllowedHosts } : {}),
       ...(enableProxy
         ? {
             proxy: {
