@@ -1554,15 +1554,21 @@
     }
   }
   .tracker-snapshot-status-region {
-    display: grid;
+    position: relative;
+    height: 0;
     min-width: 0;
-    min-height: 2.75rem;
-    align-items: center;
     opacity: 0;
     transition: opacity 160ms ease-out;
   }
   .tracker-snapshot-status-region p {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 0;
+    right: 0;
     margin: 0;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
   .tracker-snapshot-status-region.tracker-status-visible {
     opacity: 1;
