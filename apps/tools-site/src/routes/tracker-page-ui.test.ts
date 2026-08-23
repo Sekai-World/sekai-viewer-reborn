@@ -322,7 +322,8 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("data-opening={isDetailsDialogOpening || undefined}");
     expect(source).toContain("data-closing={isDetailsDialogClosing || undefined}");
     expect(source).toContain("requestAnimationFrame(() => {");
-    expect(source).toContain("{#if selectedRow}\n  <div class=\"modal-box\">");
+    expect(source).toContain("{#if selectedRow}");
+    expect(source).toContain('class="modal-box"');
     expect(source).toContain("oncancel={(event) => {");
     expect(source).toContain("event.preventDefault();");
     expect(source).toContain("setTimeout(() => detailsDialog?.close(), 180)");
@@ -332,7 +333,8 @@ describe("tracker page UI contract", () => {
     );
     expect(closeHandler).not.toContain("resetDetails();");
     expect(closeHandler).not.toContain("isDetailsDialogClosing = false;");
-    expect(source).toContain("isDetailsDialogClosing = false;\n    if (!detailsDialog?.open)");
+    expect(source).toContain("isDetailsDialogClosing = false;");
+    expect(source).toContain("if (!detailsDialog?.open)");
     expect(source).toContain("selectedRow = row;");
     expect(source).toContain(".tracker-dialog:not([data-opening]):not([data-closing]) .modal-box");
     expect(source).toContain(".tracker-dialog[data-opening]::backdrop,");

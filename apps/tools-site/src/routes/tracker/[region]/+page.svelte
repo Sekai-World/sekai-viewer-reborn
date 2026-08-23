@@ -122,6 +122,8 @@
   let chapterRequestToken = 0;
   let isDetailsDialogClosing = $state(false);
   let isDetailsDialogOpening = $state(false);
+  let isDetailsIdentityVisible = $state(false);
+  let detailsModalBox = $state<HTMLDivElement>();
   let detailsCloseTimer: ReturnType<typeof setTimeout> | undefined;
   let detailsOpenFrame: number | undefined;
   let removeDetailsDialogResizeListener: (() => void) | undefined;
@@ -619,6 +621,9 @@
     detailsDialog?.style.removeProperty("margin-left");
     detailsDialog?.style.removeProperty("margin-right");
   };
+  const handleDetailsScroll = (): void => {
+    isDetailsIdentityVisible = (detailsModalBox?.scrollTop ?? 0) > 8;
+  };
   const centerDetailsDialog = (): void => {
     if (typeof window === "undefined" || !detailsDialog) return;
 
@@ -660,6 +665,7 @@
     if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
     detailsCloseTimer = undefined;
     isDetailsDialogClosing = false;
+    isDetailsIdentityVisible = false;
     if (!detailsDialog?.open) {
       isDetailsDialogOpening = true;
       detailsDialog?.showModal();
@@ -698,6 +704,7 @@
     detailsCloseTimer = undefined;
     detailsOpenFrame = undefined;
     isDetailsDialogOpening = false;
+    isDetailsIdentityVisible = false;
     resetDetailsDialogCentering();
     // Keep the collapsed state through native dialog reconciliation. The next
     // open clears it immediately before showModal() starts a fresh entrance.
@@ -1429,7 +1436,7 @@
   onclose={handleDetailsClosed}
 >
   {#if selectedRow}
-  <div class="modal-box">
+  <div bind:this={detailsModalBox} class="modal-box" onscroll={handleDetailsScroll}>
     <div class="tracker-workspace-heading">
       <h2 id="tracker-details-title">
         {selectedRow
@@ -1444,6 +1451,15 @@
         ><Icon icon="mdi:close" aria-hidden="true" /></button
       >
     </div>
+      <div
+        class:is-visible={isDetailsIdentityVisible}
+        class="tracker-identity-strip"
+        aria-hidden={!isDetailsIdentityVisible}
+      >
+        <strong>{activeGraphPoint?.userName ?? selectedRow.ranking?.userName ?? selectedRow.ranking?.userId ?? translate("tracker.unavailable")}</strong>
+        <span>#{formatNumber(selectedRow.ladderRank)}</span>
+        <span>{translate("tracker.score")}: {formatNumber(activeGraphPoint?.score ?? selectedRow.score)}</span>
+      </div>
       <dl class="tracker-detail-grid">
         <div>
           <dt>{translate("tracker.player")}</dt>
@@ -2337,6 +2353,39 @@
       opacity 140ms ease-out,
       transform 180ms ease-out;
   }
+  .tracker-identity-strip {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.25rem;
+    margin: 0 -0.75rem 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-base-content) 16%, transparent);
+    background: var(--color-base-100);
+    color: var(--color-base-content);
+    font-size: 0.75rem;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-100%);
+    transition: opacity 140ms ease-out, transform 140ms ease-out;
+  }
+  .tracker-identity-strip strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tracker-identity-strip span {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .tracker-identity-strip.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
   .tracker-dialog {
     inset: 0;
     width: 100vw;
@@ -2358,7 +2407,8 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .tracker-dialog .modal-box,
-    .tracker-dialog::backdrop {
+    .tracker-dialog::backdrop,
+    .tracker-identity-strip {
       transition-duration: 1ms;
     }
   }
