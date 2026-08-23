@@ -115,6 +115,13 @@
     new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" })
   );
   const scoreFormatter = $derived(new Intl.NumberFormat(locale));
+  const axisScoreFormatter = $derived(
+    new Intl.NumberFormat(locale, {
+      notation: "compact",
+      compactDisplay: "short",
+      maximumFractionDigits: 1
+    })
+  );
   const nameChanges = $derived(
     findTrackerNameChanges(points, rank).map((change) => ({
       ...change,
@@ -168,20 +175,25 @@
         yDomain={scoreExtent}
         xNice
         yNice
-        padding={{ top: 18, right: 18, bottom: 36, left: 62 }}
-        tooltipContext={{ mode: "bisect-x" }}
-        highlight={{
-          axis: "x",
-          lines: { stroke: "var(--color-primary)", dashArray: "4 4", opacity: 0.55 },
-          points: { r: 5, fill: "var(--color-primary)", stroke: "var(--color-base-100)", strokeWidth: 2 }
-        }}
+        padding={{ top: 18, right: 18, bottom: 36, left: 46 }}
         props={{
+          yAxis: {
+            format: (value: number) => axisScoreFormatter.format(value),
+            ticks: 4,
+            tickLabelProps: { fontSize: 11 }
+          },
           spline: {
             stroke: "var(--color-primary)",
             strokeWidth: 3,
             "stroke-linecap": "round",
             "stroke-linejoin": "round"
           }
+        }}
+        tooltipContext={{ mode: "bisect-x" }}
+        highlight={{
+          axis: "x",
+          lines: { stroke: "var(--color-primary)", dashArray: "4 4", opacity: 0.55 },
+          points: { r: 5, fill: "var(--color-primary)", stroke: "var(--color-base-100)", strokeWidth: 2 }
         }}
       >
         {#snippet aboveMarks({ context })}
