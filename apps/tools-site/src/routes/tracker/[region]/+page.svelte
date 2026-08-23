@@ -2293,6 +2293,11 @@
       opacity 140ms ease-out,
       transform 180ms ease-out;
   }
+  .tracker-dialog {
+    inset: 0;
+    width: calc(100vw + 15px);
+    max-width: none;
+  }
   .tracker-dialog:not([data-opening]):not([data-closing]) .modal-box {
     max-height: min(85vh, 64rem);
     overflow-y: auto;
