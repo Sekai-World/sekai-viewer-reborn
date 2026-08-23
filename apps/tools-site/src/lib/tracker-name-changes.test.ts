@@ -24,6 +24,9 @@ describe("findTrackerNameChanges", () => {
   it("ignores other ranks and preserves equal-time input order", () => {
     expect(findTrackerNameChanges([point("2026-01-01T01:00:00Z", "B", 11), point("2026-01-01T00:00:00Z", "A"), point("2026-01-01T01:00:00Z", "B")], 10)).toHaveLength(1);
   });
+  it("returns no markers beyond the top ten even for a genuine name change", () => {
+    expect(findTrackerNameChanges([point("2026-01-01T00:00:00Z", "A", 11), point("2026-01-01T01:00:00Z", "B", 11)], 11)).toEqual([]);
+  });
 });
 
 describe("findSnappedNameChange", () => {

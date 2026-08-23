@@ -42,11 +42,18 @@ export const findSnappedNameChange = <TPoint extends { date: Date }>({
   return nearestMarker !== null && nearestDistance <= thresholdMs ? nearestMarker : null;
 };
 
+/**
+ * Player-change markers are only meaningful for top-10 ranks; beyond that,
+ * frequent name/rank churn makes markers meaningless noise.
+ */
+export const NAME_CHANGE_MARKER_MAX_RANK = 10;
+
 /** Finds real player-name changes while treating missing names as unknown data. */
 export const findTrackerNameChanges = (
   snapshots: readonly TrackerNameSnapshot[],
   rank: number
 ): TrackerNameChange[] => {
+  if (rank > NAME_CHANGE_MARKER_MAX_RANK) return [];
   const ordered = snapshots
     .map((snapshot, index) => ({
       snapshot,
