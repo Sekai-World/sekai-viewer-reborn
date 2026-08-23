@@ -149,68 +149,74 @@
 
 <div class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
   <span class="sr-only">{scoreLabel} · {timeLabel}{selectedPoint ? ` · ${selectedPoint.score}` : ""}</span>
+  <div class="history-chart-plot">
+    {#if validPoints.length === 1}
+      <div class="history-chart-single-point">
+        <span class="history-chart-point" aria-hidden="true"></span>
+        <strong>{scoreFormatter.format(validPoints[0]!.score)}</strong>
+        {#if validPoints[0]?.timestamp}
+          <span>{timeFormatter.format(validPoints[0]!.date!)}</span>
+        {/if}
+      </div>
+    {:else if validPoints.length > 1}
+      <LineChart
+        bind:context={chartContext}
+        data={validPoints}
+        x="date"
+        y="score"
+        {xDomain}
+        yDomain={scoreExtent}
+        xNice
+        yNice
+        padding={{ top: 18, right: 18, bottom: 36, left: 62 }}
+        tooltipContext={{ mode: "bisect-x" }}
+        highlight={{
+          axis: "x",
+          lines: { stroke: "var(--color-primary)", dashArray: "4 4", opacity: 0.55 },
+          points: { r: 5, fill: "var(--color-primary)", stroke: "var(--color-base-100)", strokeWidth: 2 }
+        }}
+        props={{
+          spline: {
+            stroke: "var(--color-primary)",
+            strokeWidth: 3,
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round"
+          }
+        }}
+      >
+        {#snippet aboveMarks({ context })}
+          {#each markerPoints as marker (marker.change.timestamp)}
+            {@const cx = context.xGet(marker.point)}
+            {@const cy = context.yGet(marker.point)}
+            {@const markerLabel = nameChangeLabel.replace("{previousName}", marker.change.previousName).replace("{nextName}", marker.change.nextName).replace("{time}", timeFormatter.format(marker.change.time))}
+            <g class="history-chart-name-change" tabindex="0" role="button" aria-label={markerLabel} onclick={() => activateMarker(marker.point)} onkeydown={(event) => handleMarkerKeydown(event, marker.point)}>
+              <title>{`${marker.change.previousName} → ${marker.change.nextName} · ${timeFormatter.format(marker.change.time)}`}</title>
+              <path d={`M ${cx} ${cy - 7} L ${cx + 7} ${cy} L ${cx} ${cy + 7} L ${cx - 7} ${cy} Z`} />
+            </g>
+          {/each}
+        {/snippet}
+      </LineChart>
+    {:else}
+      <p class="history-chart-empty">{ariaLabel}</p>
+    {/if}
+  </div>
   <div class="history-chart-legend" aria-label={nameChangeLegend}>
     <span class="history-chart-legend-diamond" aria-hidden="true"></span>
     <span>{nameChangeLegend}</span>
   </div>
-  {#if validPoints.length === 1}
-    <div class="history-chart-single-point">
-      <span class="history-chart-point" aria-hidden="true"></span>
-      <strong>{scoreFormatter.format(validPoints[0]!.score)}</strong>
-      {#if validPoints[0]?.timestamp}
-        <span>{timeFormatter.format(validPoints[0]!.date!)}</span>
-      {/if}
-    </div>
-  {:else if validPoints.length > 1}
-    <LineChart
-      bind:context={chartContext}
-      data={validPoints}
-      x="date"
-      y="score"
-      {xDomain}
-      yDomain={scoreExtent}
-      xNice
-      yNice
-      padding={{ top: 18, right: 18, bottom: 36, left: 62 }}
-      tooltipContext={{ mode: "bisect-x" }}
-      highlight={{
-        axis: "x",
-        lines: { stroke: "var(--color-primary)", dashArray: "4 4", opacity: 0.55 },
-        points: { r: 5, fill: "var(--color-primary)", stroke: "var(--color-base-100)", strokeWidth: 2 }
-      }}
-      props={{
-        spline: {
-          stroke: "var(--color-primary)",
-          strokeWidth: 3,
-          "stroke-linecap": "round",
-          "stroke-linejoin": "round"
-        }
-      }}
-    >
-      {#snippet aboveMarks({ context })}
-        {#each markerPoints as marker (marker.change.timestamp)}
-          {@const cx = context.xGet(marker.point)}
-          {@const cy = context.yGet(marker.point)}
-          {@const markerLabel = nameChangeLabel.replace("{previousName}", marker.change.previousName).replace("{nextName}", marker.change.nextName).replace("{time}", timeFormatter.format(marker.change.time))}
-          <g class="history-chart-name-change" tabindex="0" role="button" aria-label={markerLabel} onclick={() => activateMarker(marker.point)} onkeydown={(event) => handleMarkerKeydown(event, marker.point)}>
-            <title>{`${marker.change.previousName} → ${marker.change.nextName} · ${timeFormatter.format(marker.change.time)}`}</title>
-            <path d={`M ${cx} ${cy - 7} L ${cx + 7} ${cy} L ${cx} ${cy + 7} L ${cx - 7} ${cy} Z`} />
-          </g>
-        {/each}
-      {/snippet}
-    </LineChart>
-  {:else}
-    <p class="history-chart-empty">{ariaLabel}</p>
-  {/if}
 </div>
 
 <style>
   .history-chart {
+    width: 100%;
+    color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+  }
+
+  .history-chart-plot {
     position: relative;
     width: 100%;
     height: clamp(15rem, 35vw, 22rem);
     min-height: 18rem;
-    color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
   }
 
   .history-chart :global(.chart-container) {
@@ -255,13 +261,12 @@
   }
 
   .history-chart-legend {
-    position: absolute;
-    right: 0.75rem;
-    bottom: 0.5rem;
-    z-index: 1;
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.45rem;
+    width: 100%;
+    margin-top: 0.5rem;
     padding: 0.25rem 0.5rem;
     border: 1px solid color-mix(in srgb, var(--color-base-content) 14%, transparent);
     border-radius: 0.5rem;
@@ -310,8 +315,8 @@
   }
 
   @media (max-width: 47.999rem) {
-    .history-chart,
-    .history-chart :global(.chart-container) {
+    .history-chart-plot,
+    .history-chart-plot :global(.chart-container) {
       min-height: 15rem;
     }
   }
