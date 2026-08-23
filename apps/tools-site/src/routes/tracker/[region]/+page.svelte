@@ -1489,6 +1489,8 @@
 <style>
   .tracker-canvas {
     max-width: 82rem;
+    width: 100%;
+    min-width: 0;
     margin: 0 auto;
     padding: clamp(1rem, 3vw, 2rem);
     display: grid;
@@ -1496,6 +1498,7 @@
   }
   .tracker-context {
     display: grid;
+    min-width: 0;
     grid-template-columns: minmax(0, 1fr);
     align-items: end;
     gap: 1rem;
@@ -1510,6 +1513,7 @@
   .tracker-workspace-heading,
   .tracker-snapshot-banner {
     display: flex;
+    min-width: 0;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
@@ -1551,6 +1555,7 @@
   }
   .tracker-snapshot-status-region {
     display: grid;
+    min-width: 0;
     min-height: 2.75rem;
     align-items: center;
     opacity: 0;
@@ -1631,6 +1636,7 @@
   }
   .tracker-control-deck {
     display: grid;
+    min-width: 0;
     gap: 0.75rem;
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
@@ -1641,6 +1647,7 @@
   .tracker-event-picker,
   .tracker-control-row {
     display: flex;
+    min-width: 0;
     flex-wrap: wrap;
     align-items: end;
     justify-content: space-between;
@@ -1657,6 +1664,7 @@
   .tracker-ladder-control,
   .tracker-history-control {
     display: flex;
+    min-width: 0;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem;
@@ -1710,6 +1718,7 @@
   }
   .tracker-event-combobox {
     position: relative;
+    min-width: 0;
     width: min(100%, 38rem);
   }
   .tracker-event-combobox > input {
@@ -1788,6 +1797,7 @@
   }
   .tracker-ranking-workspace {
     display: grid;
+    min-width: 0;
     gap: 1rem;
     border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--archive-border-subtle));
     border-radius: var(--radius-box);
@@ -1916,6 +1926,8 @@
   }
   .tracker-ranking-tabs-scroll {
     position: relative;
+    width: 100%;
+    max-width: 100%;
     min-width: 0;
     overflow-x: auto;
     overscroll-behavior-x: contain;
@@ -1930,9 +1942,12 @@
     );
   }
   .tracker-ranking-tabs-shell {
+    min-width: 0;
+    max-width: 100%;
     min-height: 3.25rem;
   }
   .tracker-chapter-countdown-slot {
+    min-width: 0;
     min-height: 0;
   }
   .tracker-ranking-tabs .tracker-ladder-option {
@@ -2003,6 +2018,7 @@
   }
   .tracker-card-heading {
     display: flex;
+    min-width: 0;
     align-items: center;
     gap: 0.45rem;
   }
