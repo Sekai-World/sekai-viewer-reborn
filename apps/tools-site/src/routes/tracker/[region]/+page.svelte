@@ -663,10 +663,15 @@
     if (!detailsDialog?.open) {
       isDetailsDialogOpening = true;
       detailsDialog?.showModal();
-      centerDetailsDialog();
       detailsOpenFrame = requestAnimationFrame(() => {
-        detailsOpenFrame = undefined;
-        isDetailsDialogOpening = false;
+        centerDetailsDialog();
+        // The first frame can still expose the pre-top-layer 100vw geometry.
+        // Measure once more after that layout has settled.
+        detailsOpenFrame = requestAnimationFrame(() => {
+          detailsOpenFrame = undefined;
+          centerDetailsDialog();
+          isDetailsDialogOpening = false;
+        });
       });
     } else {
       isDetailsDialogOpening = false;
