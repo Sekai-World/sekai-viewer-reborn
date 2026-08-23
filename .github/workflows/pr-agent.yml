@@ -47,7 +47,7 @@ jobs:
         # its OCI index digest (Sigstore build-provenance attestation verified
         # against The-PR-Agent/pr-agent). Re-pin only after re-verifying:
         #   gh attestation verify oci://index.docker.io/pragent/pr-agent@sha256:<digest> --repo The-PR-Agent/pr-agent
-        uses: docker://pragent/pr-agent@sha256:162427075a59d581c9dbb6fe856864bdd564ce2580433b6122deed0ed9b59a17 # v0.43.0-github_action
+        uses: docker://pragent/pr-agent@sha256:6f5c0ca9d335b6d1974559f355aa570a337b56988045ec73a4abbd7893cd8b0d # v0.43.0-github_action
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Create these Actions secrets to enable the providers. Gemini is preferred;
