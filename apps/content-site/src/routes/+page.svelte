@@ -217,7 +217,7 @@
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
 <section role="group" use:swipeRegion>
   <section
-    class="mx-auto mb-6 max-w-5xl rounded-2xl border border-(--archive-border-subtle) bg-(--archive-surface-default) px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-5"
+    class="mx-auto mb-6 rounded-2xl border border-(--archive-border-subtle) bg-(--archive-surface-default) px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-5"
     aria-labelledby="content-region-title"
   >
     <div class="min-w-0">
@@ -241,7 +241,7 @@
     </div>
   </section>
 
-  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="current-event-title">
+  <section class="mx-auto mb-12" aria-labelledby="current-event-title">
     <div
       class="mb-4 border-b border-(--archive-border-subtle) pb-4 sm:flex sm:items-end sm:justify-between sm:gap-4"
     >
@@ -328,7 +328,7 @@
     {/await}
   </section>
 
-  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="latest-data-title">
+  <section class="mx-auto mb-12" aria-labelledby="latest-data-title">
     <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
       <div class="flex items-center gap-2">
         <Icon icon="mdi:clock-outline" class="size-4 text-primary" aria-hidden="true" />
@@ -553,7 +553,7 @@
     {/if}
   </section>
 
-  <section class="mx-auto mb-12 max-w-5xl" aria-labelledby="content-directory-title">
+  <section class="mx-auto mb-12" aria-labelledby="content-directory-title">
     <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
       <div class="flex items-center gap-2">
         <Icon icon="mdi:account-group" class="size-4 text-primary" aria-hidden="true" />
@@ -594,7 +594,7 @@
 </section>
 
 <!-- ──── Version Info (standalone, below data area) ─────────────────── -->
-<section class="mx-auto mt-12 max-w-5xl" aria-labelledby="version-information-title">
+<section class="mx-auto mt-12" aria-labelledby="version-information-title">
   <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
     <div class="flex items-center gap-2">
       <Icon icon="mdi:earth" class="size-4 text-primary" aria-hidden="true" />
@@ -656,7 +656,7 @@
 </svelte:head>
 
 <footer
-  class="mx-auto mt-12 max-w-4xl border-t border-(--archive-border-subtle) px-4 py-7 text-center"
+  class="mx-auto mt-12 border-t border-(--archive-border-subtle) px-4 py-7 text-center"
 >
   <p class="text-xs font-semibold tracking-wide text-base-content/55">{footerBrandLabel}</p>
   <p class="mt-1 text-xs text-base-content/45">{footerDescription}</p>
