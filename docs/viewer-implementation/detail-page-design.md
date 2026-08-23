@@ -7,7 +7,7 @@ This document records the unified design patterns for **all detail pages** in `a
 All detail pages share the same responsive grid:
 
 ```svelte
-<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
+<section use:swipeRegion class="mx-auto flex w-full flex-col gap-4 px-2">
   <PageHeader ... />
   <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(300px,380px)_minmax(0,1fr)] md:items-start lg:grid-cols-[minmax(320px,420px)_minmax(0,1fr)]">
     <!-- Left column (narrow): visual asset + primary info + secondary cards -->

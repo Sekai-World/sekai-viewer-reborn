@@ -288,7 +288,7 @@
 
 <svelte:head><title>{title} {regionLabels[data.region]} - Sekai Viewer</title></svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
+<section use:swipeRegion class="mx-auto flex w-full flex-col gap-5 px-2">
   <PageHeader
     breadcrumbs={[{ label: homeLabel, href: resolve("/") }, { label: title }]}
     breadcrumbClass="md:max-w-[60%]"

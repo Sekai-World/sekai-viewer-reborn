@@ -87,7 +87,7 @@
   ></svelte:head
 >
 
-<section use:swipeRegion class="mx-auto flex w-full max-w-360 flex-col gap-5 px-2">
+<section use:swipeRegion class="mx-auto flex w-full flex-col gap-5 px-2">
   <PageHeader
     breadcrumbs={[
       { label: t("home", "Home"), href: resolve("/") },
