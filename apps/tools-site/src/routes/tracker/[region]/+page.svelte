@@ -2295,7 +2295,8 @@
   }
   .tracker-dialog {
     inset: 0;
-    width: calc(100vw + 15px);
+    width: 100vw;
+    margin-inline: auto;
     max-width: none;
   }
   .tracker-dialog:not([data-opening]):not([data-closing]) .modal-box {
