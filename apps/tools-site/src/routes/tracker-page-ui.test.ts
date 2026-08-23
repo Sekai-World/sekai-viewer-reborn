@@ -324,6 +324,13 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("requestAnimationFrame(() => {");
     expect(source).toContain("{#if selectedRow}");
     expect(source).toContain('class="modal-box"');
+    expect(source).toContain('let detailsIdentityObserver: IntersectionObserver | undefined;');
+    expect(source).toContain('root: detailsModalBox, threshold: 0');
+    expect(source).toContain('isDetailsIdentityVisible = !entry.isIntersecting;');
+    expect(source).toContain('bind:this={detailsPlayerEntry}');
+    expect(source).not.toContain('onscroll={handleDetailsScroll}');
+    expect(source).toContain('typeof IntersectionObserver === "undefined"');
+    expect(source).toContain('detailsIdentityObserver?.disconnect();');
     expect(source).toContain("oncancel={(event) => {");
     expect(source).toContain("event.preventDefault();");
     expect(source).toContain("setTimeout(() => detailsDialog?.close(), 180)");

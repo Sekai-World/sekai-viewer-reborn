@@ -3,7 +3,7 @@
   import { resolve } from "$app/paths";
   import type { SharedEventRewardRangeResponse } from "@platform/sekai-master-api-sdk";
   import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import RankingHistoryChart from "$lib/components/RankingHistoryChart.svelte";
   import { getTrackerChapterCountdown, getTrackerCountdown } from "$lib/tracker-countdown";
@@ -124,6 +124,8 @@
   let isDetailsDialogOpening = $state(false);
   let isDetailsIdentityVisible = $state(false);
   let detailsModalBox = $state<HTMLDivElement>();
+  let detailsPlayerEntry = $state<HTMLElement>();
+  let detailsIdentityObserver: IntersectionObserver | undefined;
   let detailsCloseTimer: ReturnType<typeof setTimeout> | undefined;
   let detailsOpenFrame: number | undefined;
   let removeDetailsDialogResizeListener: (() => void) | undefined;
@@ -621,8 +623,20 @@
     detailsDialog?.style.removeProperty("margin-left");
     detailsDialog?.style.removeProperty("margin-right");
   };
-  const handleDetailsScroll = (): void => {
-    isDetailsIdentityVisible = (detailsModalBox?.scrollTop ?? 0) > 8;
+  const disconnectDetailsIdentityObserver = (): void => {
+    detailsIdentityObserver?.disconnect();
+    detailsIdentityObserver = undefined;
+  };
+  const observeDetailsIdentity = (): void => {
+    disconnectDetailsIdentityObserver();
+    if (typeof IntersectionObserver === "undefined" || !detailsModalBox || !detailsPlayerEntry) return;
+    detailsIdentityObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry) isDetailsIdentityVisible = !entry.isIntersecting;
+      },
+      { root: detailsModalBox, threshold: 0 }
+    );
+    detailsIdentityObserver.observe(detailsPlayerEntry);
   };
   const centerDetailsDialog = (): void => {
     if (typeof window === "undefined" || !detailsDialog) return;
@@ -677,11 +691,13 @@
           detailsOpenFrame = undefined;
           centerDetailsDialog();
           isDetailsDialogOpening = false;
+          void tick().then(observeDetailsIdentity);
         });
       });
     } else {
       isDetailsDialogOpening = false;
       centerDetailsDialog();
+      void tick().then(observeDetailsIdentity);
     }
     void openGraph(row);
   };
@@ -705,6 +721,7 @@
     detailsOpenFrame = undefined;
     isDetailsDialogOpening = false;
     isDetailsIdentityVisible = false;
+    disconnectDetailsIdentityObserver();
     resetDetailsDialogCentering();
     // Keep the collapsed state through native dialog reconciliation. The next
     // open clears it immediately before showModal() starts a fresh entrance.
@@ -881,6 +898,7 @@
       if (refreshTimer) clearTimeout(refreshTimer);
       if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
       if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
+      disconnectDetailsIdentityObserver();
       resetDetailsDialogCentering();
     };
   });
@@ -1436,7 +1454,7 @@
   onclose={handleDetailsClosed}
 >
   {#if selectedRow}
-  <div bind:this={detailsModalBox} class="modal-box" onscroll={handleDetailsScroll}>
+  <div bind:this={detailsModalBox} class="modal-box">
     <div class="tracker-workspace-heading">
       <h2 id="tracker-details-title">
         {selectedRow
@@ -1461,7 +1479,7 @@
         <span>{translate("tracker.score")}: {formatNumber(activeGraphPoint?.score ?? selectedRow.score)}</span>
       </div>
       <dl class="tracker-detail-grid">
-        <div>
+        <div bind:this={detailsPlayerEntry}>
           <dt>{translate("tracker.player")}</dt>
           <dd>
             {activeGraphPoint?.userName ?? selectedRow.ranking?.userName ??
