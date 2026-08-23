@@ -124,6 +124,7 @@
   let isDetailsDialogOpening = $state(false);
   let detailsCloseTimer: ReturnType<typeof setTimeout> | undefined;
   let detailsOpenFrame: number | undefined;
+  let removeDetailsDialogResizeListener: (() => void) | undefined;
 
   const extendedData = $derived(data as ExtendedData);
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
@@ -612,6 +613,40 @@
       .map((point) => normalizePoint(point, rank))
       .filter((point): point is GraphPoint => point !== null);
   };
+  const resetDetailsDialogCentering = (): void => {
+    removeDetailsDialogResizeListener?.();
+    removeDetailsDialogResizeListener = undefined;
+    detailsDialog?.style.removeProperty("margin-left");
+    detailsDialog?.style.removeProperty("margin-right");
+  };
+  const centerDetailsDialog = (): void => {
+    if (typeof window === "undefined" || !detailsDialog) return;
+
+    try {
+      // Measure from the CSS baseline on every pass. Keeping the previous
+      // compensation in place would make resize measurements cumulative.
+      detailsDialog.style.removeProperty("margin-left");
+      detailsDialog.style.removeProperty("margin-right");
+
+      const rect = detailsDialog.getBoundingClientRect();
+      const targetLeft = (window.innerWidth - rect.width) / 2;
+      const shift = targetLeft - rect.left;
+      if (Math.abs(shift) < 0.5) {
+        detailsDialog.style.removeProperty("margin-left");
+        detailsDialog.style.removeProperty("margin-right");
+      } else {
+        detailsDialog.style.marginLeft = `${shift}px`;
+        detailsDialog.style.marginRight = "0px";
+      }
+      if (!removeDetailsDialogResizeListener) {
+        const handleResize = (): void => centerDetailsDialog();
+        window.addEventListener("resize", handleResize);
+        removeDetailsDialogResizeListener = () => window.removeEventListener("resize", handleResize);
+      }
+    } catch {
+      // Keep the CSS baseline usable if the browser blocks layout measurements.
+    }
+  };
   const openDetails = (row: TrackerRow<SharedEventRewardRangeResponse>, context: RankingContext = null): void => {
     if (row.status === "unavailable") return;
     selectedRow = row;
@@ -628,12 +663,14 @@
     if (!detailsDialog?.open) {
       isDetailsDialogOpening = true;
       detailsDialog?.showModal();
+      centerDetailsDialog();
       detailsOpenFrame = requestAnimationFrame(() => {
         detailsOpenFrame = undefined;
         isDetailsDialogOpening = false;
       });
     } else {
       isDetailsDialogOpening = false;
+      centerDetailsDialog();
     }
     void openGraph(row);
   };
@@ -656,6 +693,7 @@
     detailsCloseTimer = undefined;
     detailsOpenFrame = undefined;
     isDetailsDialogOpening = false;
+    resetDetailsDialogCentering();
     // Keep the collapsed state through native dialog reconciliation. The next
     // open clears it immediately before showModal() starts a fresh entrance.
   };
@@ -831,6 +869,7 @@
       if (refreshTimer) clearTimeout(refreshTimer);
       if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
       if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
+      resetDetailsDialogCentering();
     };
   });
   $effect(() => {
