@@ -7,7 +7,7 @@ import {
   type EventTrackerRanking,
   type TrackerRegion
 } from "./event-tracker";
-import { withRequestTimeout, unwrapSekaiApiEnvelope } from "./network";
+import { withRequestTimeout, unwrapSekaiApiEnvelope, isRestoreResponse } from "./network";
 
 export type ChapterRanking = EventTrackerRanking;
 
@@ -54,6 +54,9 @@ export const getChapterTrackerRankings = async (
         getEventChapterRankingLive({ baseUrl, query: { charaId: gameCharacterId, region }, signal })
       );
       if ("error" in response && response.error) return { status: "sdk-error", rankings: [] };
+      // A 202 restore payload means chapter data is not available yet; keep it
+      // distinct from a valid empty snapshot, consistent with other paths.
+      if (isRestoreResponse(response)) return { status: "unavailable", rankings: [] };
       return resultFromPayload(response.data);
     }
 

@@ -167,12 +167,17 @@ export const getWorldBloomMetadata = async (
           return { status: "available", items: parseWorldBloomItems(allItems) };
         if (firstPayloadPages !== null) {
           const totalPages = Math.min(firstPayloadPages, MAX_PAGES);
-          const pages = await Promise.all(
-            Array.from({ length: totalPages - 1 }, (_, index) => fetchPage(index + 2))
-          );
-          for (const result of pages) {
-            if ("status" in result) return result;
-            allItems.push(...result.items);
+          // Cap upstream concurrency so a cold cache cannot burst dozens of
+          // parallel requests at the master API.
+          const batchSize = 5;
+          const remainingPages = Array.from({ length: totalPages - 1 }, (_, index) => index + 2);
+          for (let start = 0; start < remainingPages.length; start += batchSize) {
+            const batch = remainingPages.slice(start, start + batchSize);
+            const results = await Promise.all(batch.map((page) => fetchPage(page)));
+            for (const result of results) {
+              if ("status" in result) return result;
+              allItems.push(...result.items);
+            }
           }
         } else {
           let page = 2;
