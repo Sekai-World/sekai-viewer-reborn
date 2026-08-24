@@ -53,7 +53,7 @@ apps:
   content-site:
     enabled: true
     image:
-      repository: ghcr.io/sekai-world/content-site
+      repository: docker.dnaroma.eu/sekai-viewer-reborn/content-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # Set the three empty values before deploying content-site. The i18n URL is
@@ -79,7 +79,7 @@ apps:
   tools-site:
     enabled: true
     image:
-      repository: ghcr.io/sekai-world/tools-site
+      repository: docker.dnaroma.eu/sekai-viewer-reborn/tools-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     env: {}
@@ -99,7 +99,7 @@ apps:
   media-lab-site:
     enabled: true
     image:
-      repository: ghcr.io/sekai-world/media-lab-site
+      repository: docker.dnaroma.eu/sekai-viewer-reborn/media-lab-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     env: {}
@@ -119,7 +119,7 @@ apps:
   account-site:
     enabled: true
     image:
-      repository: ghcr.io/sekai-world/account-site
+      repository: docker.dnaroma.eu/sekai-viewer-reborn/account-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     env: {}
