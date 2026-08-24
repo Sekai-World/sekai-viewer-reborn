@@ -17,8 +17,12 @@ an Ingress by default. PodDisruptionBudgets are enabled by default through
 release namespace is supplied by the command line.
 
 The default image repositories are
-`ghcr.io/sekai-world/<app-name>`, and every app uses the explicit default tag
-`0.0.0`. Repository, tag, and pull policy are configurable per app. Deployments
+`docker.dnaroma.eu/sekai-viewer-reborn/<app-name>`, and every app uses the
+explicit default tag `0.0.0`. Images are published by the `Docker Publish`
+workflow (`.github/workflows/docker-publish.yml`), which builds each app image
+when a release tag `@apps/<app-name>@<version>` is pushed and pushes both the
+version tag and a `sha-<commit>` tag to the registry. Repository, tag, and pull
+policy remain configurable per app. Deployments
 default to two replicas, a rolling update with `maxUnavailable: 0` and
 `maxSurge: 1`, resource requests of `100m` CPU and `128Mi` memory, and limits of
 `500m` CPU and `512Mi` memory.

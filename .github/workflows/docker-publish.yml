@@ -1,0 +1,67 @@
+name: Docker Publish
+
+on:
+  push:
+    tags:
+      # Release tags look like "@apps/content-site@1.2.3"; "**" is required so
+      # the pattern crosses the "/" inside the app name.
+      - "@apps/**@*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_REGISTRY: docker.dnaroma.eu
+  IMAGE_REPOSITORY_PREFIX: sekai-viewer-reborn
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve app and version from release tag
+        id: meta
+        run: |
+          tag="${GITHUB_REF_NAME#@apps/}"
+          app="${tag%@*}"
+          version="${tag##*@}"
+          if [ ! -f "apps/${app}/Dockerfile" ]; then
+            echo "::error::No Dockerfile found for app '${app}' (tag ${GITHUB_REF_NAME})"
+            exit 1
+          fi
+          echo "app=${app}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Log in to container registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.IMAGE_REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          file: apps/${{ steps.meta.outputs.app }}/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_REPOSITORY_PREFIX }}/${{ steps.meta.outputs.app }}:${{ steps.meta.outputs.version }}
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_REPOSITORY_PREFIX }}/${{ steps.meta.outputs.app }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+          cache-from: type=gha,scope=${{ steps.meta.outputs.app }}
+          cache-to: type=gha,mode=max,scope=${{ steps.meta.outputs.app }}
