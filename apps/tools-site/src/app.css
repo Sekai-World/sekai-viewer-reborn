@@ -22,6 +22,7 @@ body {
   gap: 2.5rem;
   min-height: 100%;
   padding-block: 0.5rem 2rem;
+  overflow-x: clip;
 }
 
 .tools-home-lockup {

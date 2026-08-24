@@ -105,7 +105,7 @@
 
   <section
     class="region-grid"
-    aria-labelledby="regions-title"
+    aria-label={translate("home.regionsTitle")}
     role={isEventsLoading ? "status" : undefined}
     aria-live={isEventsLoading ? "polite" : undefined}
     aria-busy={isEventsLoading}
@@ -113,7 +113,6 @@
     <div class="section-heading">
       <div>
         <p class="eyebrow">{translate("home.liveEyebrow")}</p>
-        <h2 id="regions-title">{translate("home.regionsTitle")}</h2>
       </div>
       <span class="live-mark"><span></span>{translate("home.live")}</span>
     </div>
