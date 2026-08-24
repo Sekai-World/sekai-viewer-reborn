@@ -8,6 +8,7 @@
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
   import VoicePlayButton from "$lib/components/shared/VoicePlayButton.svelte";
   import Icon from "@iconify/svelte";
 
@@ -115,10 +116,27 @@
   unitSlug: string | null = null
 )}
   {#if value}
-    <div class="content-card-inset flex items-center justify-between gap-4 rounded-xl p-3 sm:px-4">
-      <div class="min-w-0">
+    {@const canonicalUnit = unitSlug ? resolveCanonicalUnitSlug(unitSlug) : null}
+    {@const unitHref =
+      canonicalUnit ? resolve("/unit/[region]/[unit]", { region, unit: canonicalUnit }) : null}
+    <svelte:element
+      this={unitHref ? "a" : "div"}
+      href={unitHref ?? undefined}
+      class={`content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4 outline-none transition-[background-color,border-color,transform] duration-180 ease-out ${
+        unitHref
+          ? "group/card-unit-row hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+          : ""
+      }`}
+      aria-label={unitHref ? `${label}: ${value}` : undefined}
+      title={unitHref ? `${label}: ${value}` : undefined}
+    >
+      <div class="min-w-0 flex-1">
         <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{label}</dt>
-        <dd class="mt-1 truncate text-sm font-medium">{value}</dd>
+        <dd
+          class={`mt-1 truncate text-sm font-medium ${unitHref ? "group-hover/card-unit-row:text-primary group-focus-visible/card-unit-row:text-primary" : ""}`}
+        >
+          {value}
+        </dd>
       </div>
       {#if unitSlug}
         <UnitIconBadge unit={unitSlug} variant="lg" />
@@ -147,7 +165,7 @@
           />
         {/if}
       {/if}
-    </div>
+    </svelte:element>
   {/if}
 {/snippet}
 

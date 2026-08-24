@@ -298,7 +298,7 @@
   {/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full flex-col gap-5 px-2 pb-6 sm:px-4">
+<section use:swipeRegion class="content-page-shell gap-5 px-2 pb-6 sm:px-4">
   {#await data.eventPayload}
     <PageHeader
       breadcrumbs={getEventBreadcrumbItems(`${eventTitlePrefix} ${data.eventId}`)}

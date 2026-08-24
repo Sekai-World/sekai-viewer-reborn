@@ -1,4 +1,4 @@
-import { browser } from "$app/environment";
+import { browser, dev } from "$app/environment";
 import { PUBLIC_SEKAI_I18N_BASE_URL } from "$env/static/public";
 import {
   createScopedI18nLoader,
@@ -17,6 +17,7 @@ import homeSourceMessages from "@platform/i18n-source/content-site/home.json";
 import musicSourceMessages from "@platform/i18n-source/content-site/music.json";
 import serverSourceMessages from "@platform/i18n-source/content-site/server.json";
 import virtualLiveSourceMessages from "@platform/i18n-source/content-site/virtual-live.json";
+import unitSourceMessages from "@platform/i18n-source/content-site/unit.json";
 import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n/config";
 import { normalizeUiLocale } from "$lib/i18n/region";
 
@@ -33,7 +34,8 @@ export const contentSiteI18nNamespaces = [
   "music",
   "error",
   "server",
-  "virtual-live"
+  "virtual-live",
+  "unit"
 ] as const;
 
 export type I18nNamespace = (typeof contentSiteI18nNamespaces)[number];
@@ -80,6 +82,7 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
   home: homeSourceMessages,
   music: musicSourceMessages,
   server: serverSourceMessages,
+  unit: unitSourceMessages,
   "virtual-live": virtualLiveSourceMessages
 };
 
@@ -96,6 +99,21 @@ const i18nRuntime = createRemoteI18nRuntime({
   toRemoteLocale: (localeValue) => toRepoLocale(normalizeUiLocale(localeValue))
 });
 
+/**
+ * In dev, English resolves from the local source files instead of the remote
+ * dictionary so source edits show up without waiting for a dictionary sync.
+ */
+const loadRemoteMessagesWithDevLocalEnglish = (
+  localeValue: string,
+  namespace: I18nNamespace,
+  fetcher?: I18nFetcher
+): Promise<I18nMessages> => {
+  if (dev && toRepoLocale(normalizeUiLocale(localeValue)) === "en") {
+    return Promise.resolve(localSourceMessagesByNamespace[namespace] ?? {});
+  }
+  return i18nRuntime.loadMessages(localeValue, namespace, fetcher);
+};
+
 export const isLocaleLoading = i18nRuntime.isLocaleLoading;
 
 const scopedI18nLoader = createScopedI18nLoader<I18nNamespace>({
@@ -103,8 +121,7 @@ const scopedI18nLoader = createScopedI18nLoader<I18nNamespace>({
   fallbackLocale: FALLBACK_UI_LOCALE,
   legacyCommonCompatNamespaces: LEGACY_COMMON_COMPAT_NAMESPACES,
   localSourceMessagesByNamespace,
-  loadRemoteMessages: (localeValue, namespace, fetcher) =>
-    i18nRuntime.loadMessages(localeValue, namespace, fetcher),
+  loadRemoteMessages: loadRemoteMessagesWithDevLocalEnglish,
   normalizeLocale: (localeValue) => normalizeUiLocale(localeValue),
   toRemoteLocale: (localeValue) => toRepoLocale(normalizeUiLocale(localeValue))
 });

@@ -32,6 +32,10 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
     return ["common", "character", "card", "error"];
   }
 
+  if (pathname.startsWith("/unit/")) {
+    return ["common", "unit", "error"];
+  }
+
   return pathname === "/" ? ["common", "home", "event", "error"] : ["common", "error"];
 };
 

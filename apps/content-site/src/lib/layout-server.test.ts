@@ -38,6 +38,20 @@ describe("content-site layout server load", () => {
     );
   });
 
+  it("loads the unit namespace for unit detail routes", async () => {
+    loadI18nMessageBundle.mockResolvedValueOnce({ unitRosterTitle: "Members" });
+
+    await expect(load(createLoadEvent("/unit/jp/idol"))).resolves.toEqual({
+      i18nMessages: { unitRosterTitle: "Members" },
+      uiLocale: "en"
+    });
+    expect(loadI18nMessageBundle).toHaveBeenCalledWith(
+      "en",
+      ["common", "unit", "error"],
+      expect.any(Function)
+    );
+  });
+
   it("returns local route messages when remote bundle loading fails", async () => {
     loadI18nMessageBundle.mockRejectedValueOnce(new Error("dictionary unavailable"));
 

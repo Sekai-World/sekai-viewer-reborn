@@ -14,6 +14,7 @@
     "./content-site/music.json": "./content-site/music.json",
     "./content-site/server.json": "./content-site/server.json",
     "./content-site/virtual-live.json": "./content-site/virtual-live.json",
+    "./content-site/unit.json": "./content-site/unit.json",
     "./tools-site/common.json": "./tools-site/common.json",
     "./tools-site/server.json": "./tools-site/server.json",
     "./tools-site/tracker.json": "./tools-site/tracker.json"

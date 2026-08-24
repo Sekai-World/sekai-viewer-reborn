@@ -13,6 +13,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
   import type { CharacterDetail, CharacterRelatedCard } from "$lib/domain/character";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
@@ -106,7 +107,7 @@
     >{/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full flex-col gap-4 px-2">
+<section use:swipeRegion class="content-page-shell gap-4 px-2">
   {#await data.payload}
     <PageHeader breadcrumbs={breadcrumbs(`#${data.characterId}`)} breadcrumbClass="md:max-w-[68%]"
       >{#snippet actions()}
@@ -204,17 +205,36 @@
               </div>
               <dl class="space-y-2">
                 {#each [[t("nameLabel", "Name"), character.name], [t("unitLabel", "Unit"), character.unitName ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]] as row (row[0])}
-                  <div class="content-card-inset rounded-xl p-3 sm:px-4">
+                  {@const isUnitRow = row[0] === t("unitLabel", "Unit") && character.unit}
+                  {@const canonicalUnit = isUnitRow ? resolveCanonicalUnitSlug(character.unit) : null}
+                  {@const unitHref =
+                    canonicalUnit
+                      ? resolve("/unit/[region]/[unit]", {
+                          region: data.region,
+                          unit: canonicalUnit
+                        })
+                      : null}
+                  <svelte:element
+                    this={unitHref ? "a" : "div"}
+                    href={unitHref ?? undefined}
+                    class={`content-card-inset block rounded-xl p-3 sm:px-4 outline-none transition-[background-color,border-color,transform] duration-180 ease-out ${
+                      unitHref
+                        ? "group/character-unit-row hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        : ""
+                    }`}
+                    aria-label={unitHref ? row[1] : undefined}
+                  >
                     <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                       {row[0]}
                     </dt>
-                    <dd class="mt-1 flex items-center gap-2 wrap-break-word text-sm font-medium">
-                      {#if row[0] === t("unitLabel", "Unit") && character.unit}<UnitIconBadge
-                          unit={character.unit}
-                          variant="sm"
-                        />{/if}{row[1]}
+                    <dd
+                      class={`mt-1 flex items-center gap-2 wrap-break-word text-sm font-medium ${unitHref ? "group-hover/character-unit-row:text-primary group-focus-visible/character-unit-row:text-primary" : ""}`}
+                    >
+                      {#if isUnitRow && character.unit}
+                        <UnitIconBadge unit={character.unit} variant="sm" />
+                      {/if}{row[1]}
                     </dd>
-                  </div>
+                  </svelte:element>
                 {/each}
               </dl>
             </div>

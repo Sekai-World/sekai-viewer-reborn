@@ -162,6 +162,7 @@ Rules:
 - Region badge groups should reuse `RegionBadgeSwitch`.
 - If a route needs only a single active region badge, still use the shared switch component with one active option.
 - Region-based list and detail routes use `apps/content-site/src/lib/actions/swipe-region.ts` on the page root. The action delegates navigation to the currently visible `RegionBadgeSwitch`, does not wrap at the first or last rendered region, and must stay touch-only. Keep its edge-start guard, `touchmove` vertical-intent and multitouch cancellation, horizontal-dominance threshold, and horizontal-scroll/dialog/form exclusions when extending it to another route. Mark known horizontal scrollers with `data-swipe-region-skip`.
+- Page-root containers use the `content-page-shell` utility from `apps/content-site/src/app.css` (owns `mx-auto flex w-full flex-col px-2`; the shell supplies the width track). Pages add only their own vertical rhythm on top, e.g. `content-page-shell gap-4` or `content-page-shell gap-5 pb-6 sm:px-4`. Do not hand-roll `mx-auto flex w-full flex-col px-2` per page or add page-local `max-w-*` constraints — that is how the unit detail page drifted from the shared track.
 - List page icon-only sort, view, and filter controls should reuse `ListToolbarButton` so touch target sizing and sort indicators stay aligned across routes.
 
 ## Character Avatar Component

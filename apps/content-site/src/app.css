@@ -40,6 +40,156 @@ body {
   @apply rounded-2xl;
 }
 
+/* Shared page-root container for swipeRegion sections. Pages add their own
+   gap (gap-4/gap-5) and optional extra padding on top; do not hand-roll the
+   mx-auto/flex/px-2 boilerplate per page. */
+@utility content-page-shell {
+  @apply mx-auto flex w-full flex-col px-2;
+}
+
+:root,
+:root[data-theme="default"],
+.theme-palette-preview[data-theme="default"] {
+  --color-primary: oklch(58% 0.233 277.117);
+  --color-primary-content: oklch(96% 0.018 272.314);
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98% 0 0);
+  --color-base-300: oklch(95% 0 0);
+  --color-base-content: oklch(21% 0.006 285.885);
+  --archive-surface-canvas: oklch(97.5% 0.008 272.314);
+  --archive-surface-sunken: oklch(95.7% 0.012 272.314);
+  --archive-surface-default: var(--color-base-100);
+  --archive-surface-raised: color-mix(in oklab, var(--color-base-100) 94%, white 6%);
+  --archive-surface-overlay: var(--color-base-100);
+  --archive-text-strong: var(--color-base-content);
+  --archive-text-default: color-mix(in oklab, var(--color-base-content) 88%, transparent);
+  --archive-text-muted: color-mix(in oklab, var(--color-base-content) 58%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 8%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 15%, transparent);
+  --archive-focus-ring: var(--color-primary);
+  --archive-focus-offset: var(--color-base-100);
+
+  color-scheme: light;
+}
+
+:root.dark[data-theme="default"],
+.theme-palette-preview.dark[data-theme="default"] {
+  --color-base-100: oklch(25% 0.025 260);
+  --color-base-200: oklch(20.5% 0.021 260);
+  --color-base-300: oklch(17.5% 0.018 260);
+  --color-base-content: oklch(96.5% 0.025 260);
+  --archive-surface-canvas: oklch(16% 0.022 260);
+  --archive-surface-sunken: var(--color-base-300);
+  --archive-surface-default: oklch(26% 0.026 260);
+  --archive-surface-raised: oklch(32% 0.028 260);
+  --archive-surface-overlay: oklch(38% 0.03 260);
+  --archive-text-strong: var(--color-base-content);
+  --archive-text-default: color-mix(in oklab, var(--color-base-content) 90%, transparent);
+  --archive-text-muted: color-mix(in oklab, var(--color-base-content) 64%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 17%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 26%, transparent);
+  --archive-focus-ring: var(--color-primary);
+  --archive-focus-offset: var(--color-base-100);
+
+  color-scheme: dark;
+}
+
+:root[data-theme="sakura"],
+.theme-palette-preview[data-theme="sakura"] {
+  --color-primary: oklch(70% 0.18 350);
+  --color-primary-content: oklch(98% 0.01 345);
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98% 0.01 350);
+  --color-base-300: oklch(95% 0.02 350);
+  --color-base-content: oklch(24% 0.03 330);
+  --archive-surface-canvas: oklch(98% 0.008 350);
+  --archive-surface-sunken: var(--color-base-200);
+  --archive-surface-default: var(--color-base-100);
+  --archive-surface-raised: color-mix(in oklab, var(--color-base-100) 93%, white 7%);
+  --archive-surface-overlay: var(--color-base-100);
+  --archive-text-strong: var(--color-base-content);
+  --archive-text-default: color-mix(in oklab, var(--color-base-content) 88%, transparent);
+  --archive-text-muted: color-mix(in oklab, var(--color-base-content) 58%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 8%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 15%, transparent);
+  --archive-focus-ring: var(--color-primary);
+  --archive-focus-offset: var(--color-base-100);
+
+  color-scheme: light;
+}
+
+:root.dark[data-theme="sakura"],
+.theme-palette-preview.dark[data-theme="sakura"] {
+  --color-primary: oklch(76% 0.17 350);
+  --color-primary-content: oklch(18% 0.03 340);
+  --color-base-100: oklch(25.5% 0.031 332);
+  --color-base-200: oklch(21% 0.027 332);
+  --color-base-300: oklch(18% 0.023 332);
+  --color-base-content: oklch(96% 0.027 340);
+  --archive-surface-canvas: oklch(16.5% 0.028 332);
+  --archive-surface-sunken: var(--color-base-300);
+  --archive-surface-default: oklch(26.5% 0.032 332);
+  --archive-surface-raised: oklch(32.5% 0.034 332);
+  --archive-surface-overlay: oklch(38.5% 0.036 332);
+  --archive-text-strong: var(--color-base-content);
+  --archive-text-default: color-mix(in oklab, var(--color-base-content) 90%, transparent);
+  --archive-text-muted: color-mix(in oklab, var(--color-base-content) 64%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 17%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 26%, transparent);
+  --archive-focus-ring: var(--color-primary);
+  --archive-focus-offset: var(--color-base-100);
+
+  color-scheme: dark;
+}
+
+:root[data-theme="mint"],
+.theme-palette-preview[data-theme="mint"] {
+  --color-primary: oklch(72% 0.14 170);
+  --color-primary-content: oklch(20% 0.03 175);
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(97% 0.008 170);
+  --color-base-300: oklch(94% 0.012 170);
+  --color-base-content: oklch(22% 0.02 200);
+  --archive-surface-canvas: oklch(97% 0.007 170);
+  --archive-surface-sunken: var(--color-base-200);
+  --archive-surface-default: var(--color-base-100);
+  --archive-surface-raised: color-mix(in oklab, var(--color-base-100) 93%, white 7%);
+  --archive-surface-overlay: var(--color-base-100);
+  --archive-text-strong: var(--color-base-content);
+  --archive-text-default: color-mix(in oklab, var(--color-base-content) 88%, transparent);
+  --archive-text-muted: color-mix(in oklab, var(--color-base-content) 58%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 8%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 15%, transparent);
+  --archive-focus-ring: var(--color-primary);
+  --archive-focus-offset: var(--color-base-100);
+
+  color-scheme: light;
+}
+
+:root.dark[data-theme="mint"],
+.theme-palette-preview.dark[data-theme="mint"] {
+  --color-primary: oklch(78% 0.13 170);
+  --color-primary-content: oklch(18% 0.03 175);
+  --color-base-100: oklch(25% 0.025 205);
+  --color-base-200: oklch(20.5% 0.021 205);
+  --color-base-300: oklch(17.5% 0.018 205);
+  --color-base-content: oklch(96% 0.02 185);
+  --archive-surface-canvas: oklch(16% 0.022 205);
+  --archive-surface-sunken: var(--color-base-300);
+  --archive-surface-default: oklch(26% 0.026 205);
+  --archive-surface-raised: oklch(32% 0.028 205);
+  --archive-surface-overlay: oklch(38% 0.03 205);
+  --archive-text-strong: var(--color-base-content);
+  --archive-text-default: color-mix(in oklab, var(--color-base-content) 90%, transparent);
+  --archive-text-muted: color-mix(in oklab, var(--color-base-content) 64%, transparent);
+  --archive-border-subtle: color-mix(in oklab, var(--color-base-content) 17%, transparent);
+  --archive-border-default: color-mix(in oklab, var(--color-base-content) 26%, transparent);
+  --archive-focus-ring: var(--color-primary);
+  --archive-focus-offset: var(--color-base-100);
+
+  color-scheme: dark;
+}
+
 :root.dark body {
   background:
     radial-gradient(
