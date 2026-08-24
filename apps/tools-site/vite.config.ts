@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [sveltekit(), tailwindcss()],
     server: {
-      host: "0.0.0.0",
+      host: "localhost",
       ...(enableProxy
         ? {
             proxy: {
