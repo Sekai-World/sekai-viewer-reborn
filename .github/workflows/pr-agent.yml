@@ -61,6 +61,7 @@ jobs:
           # PR-Agent raises for models missing from its MAX_TOKENS registry unless
           # this is set; required for the OpenRouter fallback slug (free list rotates).
           config.custom_model_max_tokens: "200000"
+          config.max_model_tokens: "200000"
           config.ai_timeout: "300"
           # Defense-in-depth: skip tools that require elevated permissions
           # (e.g. /update_changelog commit-push mode); we never grant contents: write.
