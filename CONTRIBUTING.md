@@ -59,6 +59,9 @@ PRs should mark the checklist as not applicable.
   existing unpublished Changeset for the same workspace; create a new one only
   when no suitable Changeset exists. Use `pnpm changeset` for user-facing
   changes, or `pnpm changeset --empty` when a change is not user-facing.
+  When a change touches a shared package under `packages/*`, also include the
+  consuming apps under `apps/*` in a Changeset so their versions bump and their
+  images are rebuilt on release (see `.changeset/README.md`).
 - Use Conventional Commits for commit messages.
 - Do not hand-edit generated build output or generated SDK artifacts.
 

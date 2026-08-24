@@ -30,3 +30,10 @@ pnpm release
 - `pnpm release:tag` creates Git tags for the versioned packages after the version commit is ready.
 - `pnpm release:github` is the explicit entrypoint for creating missing git tags and matching GitHub Releases after a release commit lands.
 - `pnpm release:publish` is the CI-safe publish step. It only tags and creates releases for workspaces whose `package.json` version changed in the current release diff.
+- Shared-package changes require app Changesets: when a pull request modifies a
+  workspace under `packages/*`, every consuming app under `apps/*` must also be
+  included in a Changeset (bump) in the same PR. App container images are built
+  and published only when the app's own version changes (release tag
+  `@apps/<name>@<version>`), so a shared-package-only release would otherwise
+  leave deployed app images outdated. See
+  `.github/workflows/docker-publish.yml`.
