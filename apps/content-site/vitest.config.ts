@@ -21,7 +21,7 @@ export default defineConfig({
         replacement: new URL("./src/lib/test/app-environment.ts", import.meta.url).pathname
       },
       {
-        find: "$env/static/public",
+        find: "$env/dynamic/public",
         replacement: new URL("./src/lib/test/public-env.ts", import.meta.url).pathname
       },
       {

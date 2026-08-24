@@ -1,5 +1,5 @@
 import { browser, dev } from "$app/environment";
-import { PUBLIC_SEKAI_I18N_BASE_URL } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import {
   createScopedI18nLoader,
   createRemoteI18nRuntime,
@@ -87,7 +87,7 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
 };
 
 const getI18nBaseUrl = (): string => {
-  const value = PUBLIC_SEKAI_I18N_BASE_URL?.trim() || DEFAULT_SEKAI_I18N_BASE_URL;
+  const value = env.PUBLIC_SEKAI_I18N_BASE_URL?.trim() || DEFAULT_SEKAI_I18N_BASE_URL;
   return value.replace(/\/+$/, "");
 };
 
