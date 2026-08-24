@@ -122,3 +122,17 @@ compatible `available` result retains its rows and exposes internal
 `completeness` metadata with `status: "incomplete"` and `missingRanks` rather
 than claiming completeness. KR alone may omit rank 50000 as
 `accepted-incomplete`; all other missing-rank combinations remain incomplete.
+
+## Live rankings response shape
+
+Although the generated OpenAPI types describe `/event/{id}/rankings` data as a
+plain array, the live sekai-api response is a paginated object whose rows live
+under `eventRankings`. Tools-site parsers must defensively read that shape
+instead of trusting the spec-derived array type.
+
+Server-side tools-site loaders read `SEKAI_API_BASE_URL` through their local
+config helper and pass the normalized URL directly to SDK or proxied calls;
+API failures are converted to typed safe states at the loader boundary, and
+client-side ranking interactions are proxied through a server-local
+`+server.ts` endpoint so the SDK base URL is never exposed as public client
+configuration.

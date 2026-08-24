@@ -341,7 +341,7 @@
   {/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full max-w-400 flex-col gap-4 px-2">
+<section use:swipeRegion class="mx-auto flex w-full flex-col gap-4 px-2">
   {#await data.cardPayload}
     <PageHeader
       breadcrumbs={getBreadcrumbItems(`${pageTitlePrefix} ${data.cardId}`)}

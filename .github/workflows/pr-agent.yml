@@ -1,0 +1,70 @@
+name: PR Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  pr-agent:
+    # Gating rules:
+    # 1. Never react to bot senders (loop prevention).
+    # 2. Slash commands via issue_comment run only for trusted actors (repo owner
+    #    account, org members with public membership, direct collaborators).
+    #    GitHub events do not expose an admin/maintain role, so OWNER/MEMBER/
+    #    COLLABORATOR is the closest available proxy for admins and maintainers.
+    # 3. Automatic reviews run only for same-repository PRs because fork PR
+    #    events do not receive repository secrets; maintainers can still invoke
+    #    commands on fork PRs through issue_comment. Never switch this workflow
+    #    to pull_request_target.
+    if: >-
+      ${{
+        github.event.sender.type != 'Bot'
+        && (
+          github.event_name == 'pull_request'
+          || contains('OWNER MEMBER COLLABORATOR', github.event.comment.author_association)
+        )
+        && (
+          github.event_name == 'issue_comment'
+          || github.event.pull_request.head.repo.full_name == github.repository
+        )
+      }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run PR-Agent
+        # Official PR-Agent GitHub Action image, pinned to the v0.43.0 release by
+        # version tag plus its OCI index digest (Sigstore build-provenance
+        # attestation verified against The-PR-Agent/pr-agent). The explicit tag
+        # keeps Renovate resolving the pinned reference instead of `latest`.
+        # Re-pin only after re-verifying:
+        #   gh attestation verify oci://index.docker.io/pragent/pr-agent@sha256:<digest> --repo The-PR-Agent/pr-agent
+        uses: docker://pragent/pr-agent:0.43.0-github_action@sha256:162427075a59d581c9dbb6fe856864bdd564ce2580433b6122deed0ed9b59a17
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Create these Actions secrets to enable the providers. Gemini is preferred;
+          # OpenRouter free tier is the fallback and may remain unset.
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          openrouter.key: ${{ secrets.OPENROUTER_API_KEY }}
+          config.model: gemini/gemini-3.7-flash
+          config.fallback_models: '["openrouter/z-ai/glm-5.2:free"]'
+          # PR-Agent raises for models missing from its MAX_TOKENS registry unless
+          # this is set; required for the OpenRouter fallback slug (free list rotates).
+          config.custom_model_max_tokens: "32000"
+          config.ai_timeout: "300"
+          # Defense-in-depth: skip tools that require elevated permissions
+          # (e.g. /update_changelog commit-push mode); we never grant contents: write.
+          config.restricted_mode: "true"
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "false"
+          github_action_config.auto_improve: "false"

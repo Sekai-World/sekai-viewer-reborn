@@ -30,6 +30,11 @@ Guidance for coding agents working in this workspace.
   consult `docs/content-site-ui-conventions.md` when changing content-site.
   `DESIGN.md` takes precedence for visual and component decisions; applicable
   topic guidance remains authoritative for technical and security rules.
+- Before writing any documentation, follow the workspace Documentation
+  Placement rules in the root workspace `AGENTS.md`: cross-repo knowledge goes
+  to the workspace `docs/`, repo-specific docs go to this repo's `docs/`.
+  Check both locations before creating a new doc, update existing files
+  instead of duplicating, and ask the user when ownership is unclear.
 - Commit messages must follow the Conventional Commits specification.
 - Changes under `apps/` or `packages/` require Changeset coverage before merge.
 - Prefer updating an existing unpublished Changeset that already covers the same workspace instead of creating a new one for every commit.
