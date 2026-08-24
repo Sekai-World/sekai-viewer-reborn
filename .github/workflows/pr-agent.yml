@@ -57,7 +57,7 @@ jobs:
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           openrouter.key: ${{ secrets.OPENROUTER_API_KEY }}
           config.model: gemini/gemini-2.5-flash
-          config.fallback_models: '["openrouter/z-ai/glm-5.2:free", "openrouter/deepseek/deepseek-chat-v3.1:free", "openrouter/meta-llama/llama-3.3-70b-instruct:free"]'
+          config.fallback_models: '["openrouter/z-ai/glm-5.2:free", "openrouter/nvidia/nemotron-3-super-120b-a12b:free", "openrouter/thinkingmachines/inkling:free", "openrouter/cohere/north-mini-code:free"]'
           # Retry transient 429s (free shared pools) before moving to the next model.
           config.litellm_retries: "6"
           # PR-Agent raises for models missing from its MAX_TOKENS registry unless
