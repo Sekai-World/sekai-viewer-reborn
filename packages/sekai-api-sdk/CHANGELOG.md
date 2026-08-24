@@ -1,5 +1,11 @@
 # @platform/sekai-api-sdk
 
+## 0.2.1
+
+### Patch Changes
+
+- 3ef365c: Regenerate the public ranking SDK with timestamp query support for event and chapter ranking list and graph endpoints.
+
 ## 0.2.0
 
 ### Minor Changes

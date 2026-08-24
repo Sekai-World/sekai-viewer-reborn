@@ -1,5 +1,29 @@
 # @apps/tools-site
 
+## 0.0.1
+
+### Patch Changes
+
+- 3ef365c: Move canonical unit icon resolution and border colors into the shared UI shell.
+- 3ef365c: Mark player-name changes on ranking history graphs with accessible, localized markers.
+- 97be962: Reset app versions to restart the 0.0.x line from 0.0.1.
+- 3ef365c: Share the Prismatic Archive palette mappings and controlled theme controls, and add tools-site palette and color-mode preferences.
+  Replace the shared palette source for content-site with no intended visual change.
+
+  Expose the private shared `AssetImage` component through its supported
+  `@platform/ui-shell/asset-image` subpath for the tools-site banner.
+
+- Updated dependencies [3ef365c]
+- Updated dependencies [4dc89ad]
+- Updated dependencies [f02e5fa]
+- Updated dependencies [742389d]
+- Updated dependencies [3ef365c]
+- Updated dependencies [3ef365c]
+  - @platform/ui-shell@0.3.0
+  - @platform/sekai-master-api-sdk@1.0.1
+  - @platform/sekai-api-sdk@0.2.1
+  - @platform/ui-tokens@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

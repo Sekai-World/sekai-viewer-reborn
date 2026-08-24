@@ -1,5 +1,19 @@
 # @apps/media-lab-site
 
+## 0.0.1
+
+### Patch Changes
+
+- 97be962: Reset app versions to restart the 0.0.x line from 0.0.1.
+- Updated dependencies [3ef365c]
+- Updated dependencies [4dc89ad]
+- Updated dependencies [f02e5fa]
+- Updated dependencies [742389d]
+- Updated dependencies [3ef365c]
+  - @platform/ui-shell@0.3.0
+  - @platform/sekai-master-api-sdk@1.0.1
+  - @platform/ui-tokens@0.3.0
+
 ## 0.1.7
 
 ### Patch Changes
