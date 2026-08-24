@@ -1,5 +1,35 @@
 # @apps/content-site
 
+## 0.0.1
+
+### Patch Changes
+
+- 3ef365c: Move canonical unit icon resolution and border colors into the shared UI shell.
+- 482bd34: Add localized unit detail pages with member navigation.
+- 1a75424: Read the dev server host and allowed hosts from `VITE_DEV_HOST` / `VITE_DEV_ALLOWED_HOSTS` with loopback defaults instead of hardcoding machine-specific Tailscale values in `vite.config.ts`.
+- f02e5fa: Migrate shared and content-site UI patterns for daisyUI 5 compatibility.
+- 742389d: Improve card detail page layout at large viewport widths by giving right-column content more consistent reading widths and grouping related cards more clearly. Delay the shared desktop navigation rail until extra-large viewports.
+- 3248b17: Fix unit icon 404s by migrating content-site to the shared ui-shell UnitIconBadge with bundled icons.
+- 97be962: Reset app versions to restart the 0.0.x line from 0.0.1.
+- 3581584: Read public env vars at runtime instead of build time so container images stay environment-independent.
+- 3ef365c: Share the Prismatic Archive palette mappings and controlled theme controls, and add tools-site palette and color-mode preferences.
+  Replace the shared palette source for content-site with no intended visual change.
+
+  Expose the private shared `AssetImage` component through its supported
+  `@platform/ui-shell/asset-image` subpath for the tools-site banner.
+
+- eda3c0c: Align content-site list, detail, and homepage sections to the shell's shared content width.
+- 10fe2a4: Unify the catalogue list surfaces across Cards, Music, Events, Gachas, and Virtual Lives with consistent control, results, and state treatments.
+- b18d4d2: Reuse localized common labels across content pages, consolidate duplicate content-site labels, remove unused source keys, and localize breadcrumbs consistently with sidebar navigation.
+- Updated dependencies [3ef365c]
+- Updated dependencies [4dc89ad]
+- Updated dependencies [f02e5fa]
+- Updated dependencies [742389d]
+- Updated dependencies [3ef365c]
+  - @platform/ui-shell@0.3.0
+  - @platform/sekai-master-api-sdk@1.0.1
+  - @platform/ui-tokens@0.3.0
+
 ## 0.4.0
 
 ### Minor Changes

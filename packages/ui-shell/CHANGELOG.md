@@ -1,5 +1,21 @@
 # @platform/ui-shell
 
+## 0.3.0
+
+### Minor Changes
+
+- 3ef365c: Share the Prismatic Archive palette mappings and controlled theme controls, and add tools-site palette and color-mode preferences.
+  Replace the shared palette source for content-site with no intended visual change.
+
+  Expose the private shared `AssetImage` component through its supported
+  `@platform/ui-shell/asset-image` subpath for the tools-site banner.
+
+### Patch Changes
+
+- 3ef365c: Move canonical unit icon resolution and border colors into the shared UI shell.
+- f02e5fa: Migrate shared and content-site UI patterns for daisyUI 5 compatibility.
+- 742389d: Improve card detail page layout at large viewport widths by giving right-column content more consistent reading widths and grouping related cards more clearly. Delay the shared desktop navigation rail until extra-large viewports.
+
 ## 0.2.0
 
 ### Minor Changes

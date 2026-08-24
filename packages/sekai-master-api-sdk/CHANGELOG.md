@@ -1,5 +1,11 @@
 # @platform/sekai-master-api-sdk
 
+## 1.0.1
+
+### Patch Changes
+
+- 4dc89ad: Regenerate SDK from the current sekai-master-api OpenAPI spec, adding the build info endpoint (`getBuildInfo`, `SystemBuildInfoResponse`).
+
 ## 1.0.0
 
 ### Major Changes
