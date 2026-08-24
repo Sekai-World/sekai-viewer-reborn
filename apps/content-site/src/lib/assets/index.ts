@@ -1,4 +1,4 @@
-import { PUBLIC_REMOTE_ASSET_BASE_URL } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import type { SupportedRegion } from "$lib/domain/regions";
 
 const trimTrailingSlash = (value: string): string => {
@@ -12,7 +12,7 @@ const trimTrailingSlash = (value: string): string => {
 };
 
 export const getRemoteAssetBaseURL = (baseUrlOverride?: string | null): string => {
-  const configuredBaseUrl = trimTrailingSlash(baseUrlOverride ?? PUBLIC_REMOTE_ASSET_BASE_URL);
+  const configuredBaseUrl = trimTrailingSlash(baseUrlOverride ?? env.PUBLIC_REMOTE_ASSET_BASE_URL ?? "");
   if (!configuredBaseUrl) {
     throw new Error("Missing required environment variable: PUBLIC_REMOTE_ASSET_BASE_URL");
   }
