@@ -92,7 +92,7 @@
     <a
       {href}
       aria-label={ariaLabel ?? fallbackLabel}
-      class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-white font-semibold leading-none outline-none transition-[transform,border-color] duration-150 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 {textPillClass[
+      class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-base-100 font-semibold leading-none outline-none transition-[transform,border-color] duration-150 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 {textPillClass[
         variant
       ]} {className ?? ''}"
       style:border-color={borderColor}
@@ -101,7 +101,7 @@
     </a>
   {:else}
     <span
-      class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-white font-semibold leading-none {textPillClass[
+      class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-base-100 font-semibold leading-none {textPillClass[
         variant
       ]} {className ?? ''}"
       style:border-color={borderColor}
