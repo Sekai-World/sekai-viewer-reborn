@@ -57,7 +57,7 @@
   {/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full max-w-384 flex-col gap-4 px-2 sm:px-4">
+<section use:swipeRegion class="content-page-shell gap-4 px-2">
   {#await data.payload}
     <PageHeader breadcrumbs={breadcrumbs(t("unitPageTitlePrefix", "Unit"))}>
       {#snippet actions()}<RegionBadgeSwitch options={currentRegionOption()} />{/snippet}

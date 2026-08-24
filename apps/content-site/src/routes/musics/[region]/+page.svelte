@@ -817,7 +817,7 @@
   <title>{musicListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full flex-col gap-5 px-2">
+<section use:swipeRegion class="content-page-shell gap-5 px-2">
   <PageHeader breadcrumbs={[{ label: homeLabel, href: resolve("/") }, { label: musicListTitle }]}>
     {#snippet actions()}<RegionBadgeSwitch options={getRegionOptions()} />{/snippet}
   </PageHeader>

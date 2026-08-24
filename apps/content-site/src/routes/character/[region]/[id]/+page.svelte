@@ -107,7 +107,7 @@
     >{/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full flex-col gap-4 px-2">
+<section use:swipeRegion class="content-page-shell gap-4 px-2">
   {#await data.payload}
     <PageHeader breadcrumbs={breadcrumbs(`#${data.characterId}`)} breadcrumbClass="md:max-w-[68%]"
       >{#snippet actions()}

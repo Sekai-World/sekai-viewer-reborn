@@ -226,7 +226,7 @@
   {/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full flex-col gap-4 px-2">
+<section use:swipeRegion class="content-page-shell gap-4 px-2">
   {#await data.musicPayload}
     <PageHeader
       breadcrumbs={getMusicBreadcrumbItems(`${musicTitlePrefix} ${data.musicId}`)}
