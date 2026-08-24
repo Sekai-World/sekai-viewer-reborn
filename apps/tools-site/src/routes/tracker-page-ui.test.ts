@@ -93,10 +93,10 @@ describe("tracker page UI contract", () => {
     expect(homeSource).toContain('<AssetImage src={source}');
     expect(homeSource).toContain('class="tracker-link-arrow"');
     expect(appCssSource).toContain(".event-banner {");
-    expect(appCssSource).toContain("min-height: 5rem;");
+    expect(appCssSource).toContain("min-height: 6rem;");
     expect(appCssSource).toContain(".event-banner img {");
     expect(appCssSource).toContain("height: auto;");
-    expect(appCssSource).toContain("max-height: 5rem;");
+    expect(appCssSource).toContain("max-height: 6rem;");
     expect(appCssSource).toContain("object-fit: contain;");
     expect(appCssSource).toContain("background: transparent");
     expect(appCssSource).not.toContain("aspect-ratio: 5 / 2;");
