@@ -49,6 +49,7 @@
     default: "h-7 min-w-7 px-1 text-[0.65rem]",
     lg: "h-9 min-w-9 px-1.5 text-xs"
   };
+
 </script>
 
 {#if iconUrl}

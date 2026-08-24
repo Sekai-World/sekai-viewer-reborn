@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import type { Snippet } from "svelte";
+  import BrandLockup from "./brand-lockup.svelte";
   import type { SidebarItem } from "./viewer-shell.types";
 
   type Props = {
@@ -102,14 +103,18 @@
     >
       {#if showTitle}
         <section class="py-12 text-center">
-          <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">
-            {title}
-            <span
-              class="badge badge-error absolute -right-11 -top-5 -rotate-12 border border-error-content/25 px-2.5 py-2 text-[0.62rem] leading-none font-black uppercase tracking-wide text-error-content shadow-sm"
-            >
-              {titleBadge}
-            </span>
-          </h1>
+          {#if title === "Sekai Viewer" && titleBadge === "reborn"}
+            <BrandLockup heading={true} />
+          {:else}
+            <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">
+              {title}
+              <span
+                class="badge badge-error absolute -right-11 -top-5 -rotate-12 border border-error-content/25 px-2.5 py-2 text-[0.62rem] leading-none font-black uppercase tracking-wide text-error-content shadow-sm"
+              >
+                {titleBadge}
+              </span>
+            </h1>
+          {/if}
         </section>
       {/if}
 

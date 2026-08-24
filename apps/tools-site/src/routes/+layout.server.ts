@@ -4,7 +4,7 @@ import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const namespaces = ["common", "comparison"] as const;
+  const namespaces = ["common", "tracker"] as const;
   const localMessages = getLocalI18nMessages(namespaces);
   let i18nMessages = localMessages;
 

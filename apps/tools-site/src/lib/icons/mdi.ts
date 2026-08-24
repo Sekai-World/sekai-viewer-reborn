@@ -1,0 +1,24 @@
+import { addIcon } from "@iconify/svelte";
+import menu from "@iconify-icons/mdi/menu";
+import close from "@iconify-icons/mdi/close";
+import homeVariantOutline from "@iconify-icons/mdi/home-variant-outline";
+import chartLine from "@iconify-icons/mdi/chart-line";
+import cogOutline from "@iconify-icons/mdi/cog-outline";
+import paletteOutline from "@iconify-icons/mdi/palette-outline";
+import tuneVariant from "@iconify-icons/mdi/tune-variant";
+import check from "@iconify-icons/mdi/check";
+import brightnessAuto from "@iconify-icons/mdi/brightness-auto";
+import whiteBalanceSunny from "@iconify-icons/mdi/white-balance-sunny";
+import weatherNight from "@iconify-icons/mdi/weather-night";
+
+addIcon("mdi:menu", menu);
+addIcon("mdi:close", close);
+addIcon("mdi:home-variant-outline", homeVariantOutline);
+addIcon("mdi:chart-line", chartLine);
+addIcon("mdi:cog-outline", cogOutline);
+addIcon("mdi:palette-outline", paletteOutline);
+addIcon("mdi:tune-variant", tuneVariant);
+addIcon("mdi:check", check);
+addIcon("mdi:brightness-auto", brightnessAuto);
+addIcon("mdi:white-balance-sunny", whiteBalanceSunny);
+addIcon("mdi:weather-night", weatherNight);

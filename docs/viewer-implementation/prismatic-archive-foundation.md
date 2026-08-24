@@ -159,6 +159,21 @@ Phase 3 confirms that `content-site` should read as a calm, readable archive/cat
   introduce a shared component only when the interaction or semantic contract
   repeats across routes/apps.
 
+### Cross-site palette and shell boundary
+
+- `@platform/ui-tokens/palettes.css` owns the static default, sakura, and mint
+  mappings for the established `data-theme` plus `.dark` contract, including the
+  archive surface, text, border, focus, and daisyUI-compatible base variables.
+  It contains no browser state, persistence, locale text, or framework code.
+- Each app imports that CSS and owns its theme mode/name preference, storage
+  keys, `prefers-color-scheme` listener, and document updates. This keeps SSR
+  safe and prevents one site's preferences from leaking into another.
+- `ThemeControls` in `@platform/ui-shell` is a controlled display primitive:
+  callers supply labels, values, and callbacks. Apps remain responsible for
+  localization and state. Content-site intentionally retains its established,
+  richer settings menu in this phase to avoid changing its visual output;
+  tools-site uses the shared control directly.
+
 ### Adaptive desktop rail
 
 The approved navigation direction is an **adaptive desktop rail**, with the

@@ -23,6 +23,11 @@ patterns in `docs/content-site-ui-conventions.md` for content-site work.
   empty, and error states without discarding usable adjacent content.
 - Avoid module-level mutable request state in SSR. Use component state or scoped
   context for reactive state shared within a request or component tree.
+- In `.svelte` component scripts, do not use generic arrow functions (for
+  example, `const request = async <T>(url: string) => ...`). Use a generic
+  function declaration (`async function request<T>(url: string) { ... }`) or
+  move the helper to a `.ts` module. Svelte 5.56.9 can compile the generic-arrow
+  form without its parameters, causing runtime `ReferenceError`s.
 
 ## UI, CSS, and accessibility
 

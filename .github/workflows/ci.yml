@@ -33,6 +33,9 @@ jobs:
       - name: Rebuild esbuild
         run: pnpm rebuild esbuild
 
+      - name: Configure content-site environment
+        run: cp apps/content-site/.env.example apps/content-site/.env
+
       - name: Verify
         run: pnpm verify:ci
         env:
