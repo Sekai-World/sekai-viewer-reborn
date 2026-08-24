@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --ignore-scripts
 
+      - name: Configure content-site environment
+        run: cp apps/content-site/.env.example apps/content-site/.env
+
       - name: Rebuild esbuild
         run: pnpm rebuild esbuild
 
