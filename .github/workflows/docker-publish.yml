@@ -6,9 +6,14 @@ on:
       # Release tags look like "@apps/content-site@1.2.3"; "**" is required so
       # the pattern crosses the "/" inside the app name.
       - "@apps/**@*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, e.g. @apps/content-site@0.0.1"
+        required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.tag || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -25,12 +30,14 @@ jobs:
     steps:
       - name: Resolve app and version from release tag
         id: meta
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          tag="${GITHUB_REF_NAME#@apps/}"
+          tag="${RELEASE_TAG#@apps/}"
           app="${tag%@*}"
           version="${tag##*@}"
           if [ ! -f "apps/${app}/Dockerfile" ]; then
-            echo "::error::No Dockerfile found for app '${app}' (tag ${GITHUB_REF_NAME})"
+            echo "::error::No Dockerfile found for app '${app}' (tag ${RELEASE_TAG})"
             exit 1
           fi
           echo "app=${app}" >> "$GITHUB_OUTPUT"
