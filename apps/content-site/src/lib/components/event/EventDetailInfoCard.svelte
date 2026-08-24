@@ -9,6 +9,7 @@
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
   import Icon from "@iconify/svelte";
   import type { I18nTranslator } from "@platform/i18n-runtime";
 
@@ -112,19 +113,33 @@
         </div>
       {/if}
       {#if getDisplayUnitName(event.unit)}
-        <div
-          class="content-card-inset flex items-center justify-between gap-4 rounded-xl border-(--archive-border-subtle) p-3 sm:px-4"
+        {@const canonicalUnit = event.unit ? resolveCanonicalUnitSlug(event.unit) : null}
+        {@const unitHref =
+          canonicalUnit ? resolve("/unit/[region]/[unit]", { region, unit: canonicalUnit }) : null}
+        <svelte:element
+          this={unitHref ? "a" : "div"}
+          href={unitHref ?? undefined}
+          class={`content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4 outline-none transition-[background-color,border-color,transform] duration-180 ease-out ${
+            unitHref
+              ? "group/event-unit-row border-(--archive-border-default) hover:-translate-y-0.5 hover:border-primary/35 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              : "border-(--archive-border-subtle)"
+          }`}
+          aria-label={unitHref ? (getDisplayUnitName(event.unit) ?? undefined) : undefined}
         >
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
               {unitLabel}
             </dt>
-            <dd class="mt-1 truncate text-sm font-medium">{getDisplayUnitName(event.unit)}</dd>
+            <dd
+              class={`mt-1 truncate text-sm font-medium ${unitHref ? "group-hover/event-unit-row:text-primary group-focus-visible/event-unit-row:text-primary" : ""}`}
+            >
+              {getDisplayUnitName(event.unit)}
+            </dd>
           </div>
           {#if event.unit}
             <UnitIconBadge unit={event.unit} variant="lg" />
           {/if}
-        </div>
+        </svelte:element>
       {/if}
       {#if event.bannerGameCharacter}
         {@const char = event.bannerGameCharacter}

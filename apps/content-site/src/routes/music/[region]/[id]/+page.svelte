@@ -273,6 +273,7 @@
             <MusicDetailInfoCard
               music={payload.music}
               {displayLocale}
+              region={data.region}
               title={musicDetailInfoTitle}
               {idLabel}
               {internalResourceCodeLabel}

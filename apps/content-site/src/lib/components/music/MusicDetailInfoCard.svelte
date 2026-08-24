@@ -1,11 +1,15 @@
 <script lang="ts">
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import type { MusicDetail } from "$lib/domain/music-detail";
+  import { unitCodeByMusicTag } from "$lib/domain/unit-profile";
+  import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
+  import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
 
   let {
     music,
     displayLocale,
+    region,
     title,
     idLabel,
     internalResourceCodeLabel,
@@ -21,6 +25,7 @@
   }: {
     music: MusicDetail;
     displayLocale: string;
+    region: string;
     title: string;
     idLabel: string;
     internalResourceCodeLabel: string;
@@ -108,10 +113,18 @@
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{tagLabel}</dt>
           <dd class="mt-1 flex flex-wrap gap-1.5">
             {#each music.tags as tag (tag)}
-              <span
-                class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content"
-                >{getTagLabel(tag)}</span
-              >
+              {@const unitSlug = resolveCanonicalUnitSlug(unitCodeByMusicTag[tag])}
+              {#if unitSlug}
+                <a
+                  href={resolve("/unit/[region]/[unit]", { region, unit: unitSlug })}
+                  class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content outline-none transition-colors duration-150 hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60"
+                >{getTagLabel(tag)}</a>
+              {:else}
+                <span
+                  class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content"
+                  >{getTagLabel(tag)}</span
+                >
+              {/if}
             {/each}
           </dd>
         </div>

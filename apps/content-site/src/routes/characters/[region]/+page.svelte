@@ -9,7 +9,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { CharacterCatalogueItem } from "$lib/domain/character";
-  import { resolveUnitLogoUrl } from "$lib/domain/unit-icon";
+  import { resolveCanonicalUnitSlug, resolveUnitLogoUrl } from "$lib/domain/unit-icon";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import type { PageData } from "./$types";
@@ -139,11 +139,26 @@
             {group === "__unassigned" ? t("characterUnassignedGroup", "Other characters") : group}
           </h2>
           {#if group !== "__unassigned" && resolveUnitLogoUrl(characters[0]?.unit ?? "")}
-            <img
-              src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined}
-              alt=""
-              class="h-auto w-52 max-w-full object-contain sm:w-64"
-            />
+            {@const unitSlug = resolveCanonicalUnitSlug(characters[0]?.unit ?? "")}
+            {#if unitSlug}
+              <a
+                href={resolve("/unit/[region]/[unit]", { region: data.region, unit: unitSlug })}
+                class="rounded-lg outline-none transition-transform duration-180 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                aria-label={group}
+              >
+                <img
+                  src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined}
+                  alt=""
+                  class="h-auto w-52 max-w-full object-contain sm:w-64"
+                />
+              </a>
+            {:else}
+              <img
+                src={resolveUnitLogoUrl(characters[0]?.unit ?? "") ?? undefined}
+                alt=""
+                class="h-auto w-52 max-w-full object-contain sm:w-64"
+              />
+            {/if}
           {/if}
           <div
             class="scrollbar-none flex max-w-full flex-nowrap items-center justify-center gap-2 overflow-x-auto p-2 sm:gap-6 sm:px-3 lg:gap-10"
