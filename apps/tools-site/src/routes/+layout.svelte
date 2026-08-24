@@ -192,7 +192,7 @@
 </script>
 
 <svelte:head>
-  <title>Sekai Viewer - Tools</title>
+  <title>Sekai Viewer Tools</title>
   <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 

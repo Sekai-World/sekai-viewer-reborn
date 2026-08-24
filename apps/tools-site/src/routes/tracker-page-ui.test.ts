@@ -66,8 +66,8 @@ describe("tracker page UI contract", () => {
       readFile(trackerMessagesPath, "utf8")
     ]);
 
-    expect(layoutSource).toContain("<title>Sekai Viewer - Tools</title>");
-    expect(homeSource).toContain("<title>Sekai Viewer - Tools</title>");
+    expect(layoutSource).toContain("<title>Sekai Viewer Tools</title>");
+    expect(homeSource).toContain("<title>Sekai Viewer Tools</title>");
     expect(homeSource).toContain('import { BrandLockup } from "@platform/ui-shell";');
     expect(homeSource).toContain("<BrandLockup />");
     expect(homeSource).toContain('<div class="tools-home-lockup"><BrandLockup /></div>');
@@ -102,7 +102,7 @@ describe("tracker page UI contract", () => {
     expect(appCssSource).not.toContain("aspect-ratio: 5 / 2;");
     expect(appCssSource).not.toContain("object-fit: cover;");
     expect(trackerSource).toContain(
-      '<title>{translate("tracker.title")} | Sekai Viewer - Tools</title>'
+      '<title>{translate("tracker.title")} | Sekai Viewer Tools</title>'
     );
     expect(JSON.parse(trackerMessagesSource)).toMatchObject({ "tracker.title": "Event Tracker" });
     expect(trackerSource).toContain('<h1 id="tracker-title">{translate("tracker.title")}</h1>');

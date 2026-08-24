@@ -1005,7 +1005,7 @@
   });
 </script>
 
-<svelte:head><title>{translate("tracker.title")} | Sekai Viewer - Tools</title></svelte:head>
+<svelte:head><title>{translate("tracker.title")} | Sekai Viewer Tools</title></svelte:head>
 
 <main class="tracker-canvas" aria-labelledby="tracker-title">
   <header class="tracker-context">
