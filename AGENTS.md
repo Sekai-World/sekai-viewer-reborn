@@ -39,6 +39,7 @@ Guidance for coding agents working in this workspace.
 - Changes under `apps/` or `packages/` require Changeset coverage before merge.
 - Prefer updating an existing unpublished Changeset that already covers the same workspace instead of creating a new one for every commit.
 - Create a new Changeset only when no suitable existing one covers the affected workspace; use `pnpm changeset --empty` when the change is not user-facing.
+- When a change touches a shared package under `packages/*`, also include every consuming app under `apps/*` in Changeset coverage in the same change: app images are only rebuilt when the app's own version bumps (see `.changeset/README.md`).
 - Preserve existing naming conventions:
   - apps: `@apps/*`
   - shared packages: `@platform/*`
