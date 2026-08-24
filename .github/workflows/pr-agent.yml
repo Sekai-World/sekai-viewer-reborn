@@ -55,7 +55,10 @@ jobs:
           # Create these Actions secrets to enable the providers. Gemini is preferred;
           # OpenRouter free tier is the fallback and may remain unset.
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          openrouter.key: ${{ secrets.OPENROUTER_API_KEY }}
+          # Raw env var: litellm reads it natively for openrouter/* fallback models.
+          # Do NOT use pr-agent's openrouter.key setting here — its init block would
+          # overwrite openai.key/openai.api_base and hijack the primary model route.
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           # Custom OpenAI-compatible endpoint (Google v1beta/openai), passed by
           # pr-agent directly to litellm so env-var precedence cannot reroute it.
           openai.key: ${{ secrets.GEMINI_API_KEY }}
