@@ -35,12 +35,18 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("title>{`${marker.change.previousName} → ${marker.change.nextName}");
     expect(source).toContain("prefers-reduced-motion: reduce");
   });
-  it("checks reduced motion at navigation time and cleans up its media listener", async () => {
+  it("checks reduced motion at navigation time inside the top-level onNavigate callback", async () => {
     const source = await readFile(layoutPath, "utf8");
-    expect(source).toContain('const reducedMotionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");');
-    expect(source).toContain('reducedMotionPreference.addEventListener("change", handleReducedMotionChange);');
-    expect(source).toContain('reducedMotionPreference.removeEventListener("change", handleReducedMotionChange);');
-    expect(source).toContain("reducedMotionPreference.matches");
+    // onNavigate must be registered during component initialisation (top level),
+    // never inside onMount; reduced motion is evaluated at navigation time.
+    expect(source).toContain("onNavigate((navigation) => {");
+    expect(source).toContain('window.matchMedia("(prefers-reduced-motion: reduce)").matches');
+    const onMountStart = source.indexOf("onMount(() => {");
+    const onNavigateCall = source.indexOf("onNavigate((navigation) => {");
+    expect(onNavigateCall).toBeGreaterThan(-1);
+    if (onMountStart !== -1) {
+      expect(onNavigateCall).toBeLessThan(onMountStart);
+    }
   });
 
   it("shows a layout-neutral tracker navigation transition only while navigating", async () => {

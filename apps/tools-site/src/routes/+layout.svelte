@@ -109,6 +109,23 @@
     themeMode = nextMode;
   };
 
+  // `onNavigate` must be registered during component initialisation; calling it
+  // inside `onMount` throws at runtime. Browser APIs are guarded inside the
+  // callback instead, which only ever runs on the client.
+  onNavigate((navigation) => {
+    const viewTransitionDocument = document as Document & {
+      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
+    };
+    if (!viewTransitionDocument.startViewTransition) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    return new Promise<void>((resolve) => {
+      viewTransitionDocument.startViewTransition(async () => {
+        resolve();
+        await navigation.complete;
+      });
+    });
+  });
+
   onMount(() => {
     themeName = normalizeThemeName(localStorage.getItem(THEME_NAME_STORAGE_KEY));
     themeMode = normalizeThemeMode(localStorage.getItem(THEME_MODE_STORAGE_KEY));
@@ -131,35 +148,8 @@
     };
     document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleDocumentKeydown);
-    const reducedMotionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const handleReducedMotionChange = (): void => {};
-    const viewTransitionDocument = document as Document & {
-      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-    };
-    const supportsNativeViewTransition = typeof viewTransitionDocument.startViewTransition === "function";
-
-    if (!supportsNativeViewTransition) {
-      return () => {
-        colorScheme.removeEventListener("change", handleSystemThemeChange);
-        reducedMotionPreference.removeEventListener("change", handleReducedMotionChange);
-        document.removeEventListener("click", handleDocumentClick);
-        document.removeEventListener("keydown", handleDocumentKeydown);
-      };
-    }
-
-    reducedMotionPreference.addEventListener("change", handleReducedMotionChange);
-    onNavigate((navigation) => {
-      if (!viewTransitionDocument.startViewTransition || reducedMotionPreference.matches) return;
-      return new Promise<void>((resolve) => {
-        viewTransitionDocument.startViewTransition(async () => {
-          resolve();
-          await navigation.complete;
-        });
-      });
-    });
     return () => {
       colorScheme.removeEventListener("change", handleSystemThemeChange);
-      reducedMotionPreference.removeEventListener("change", handleReducedMotionChange);
       document.removeEventListener("click", handleDocumentClick);
       document.removeEventListener("keydown", handleDocumentKeydown);
     };

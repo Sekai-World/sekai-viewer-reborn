@@ -70,7 +70,10 @@
   $effect(() => {
     let cancelled = false;
     events = null;
-    const streamedEvents = data.events as unknown as Promise<RegionCurrentEvent[]>;
+    // Streamed promises arrive as pending Promises on initial load but are
+    // awaited to plain arrays on client-side navigations; Promise.resolve
+    // handles both shapes.
+    const streamedEvents = Promise.resolve(data.events as unknown as Promise<RegionCurrentEvent[]>);
     void streamedEvents.then(
       (next) => {
         if (!cancelled) events = next;
