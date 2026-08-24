@@ -56,7 +56,7 @@ jobs:
           # OpenRouter free tier is the fallback and may remain unset.
           GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           openrouter.key: ${{ secrets.OPENROUTER_API_KEY }}
-          config.model: gemini/gemini-3.5-flash
+          config.model: gemini/gemini-2.5-flash
           config.fallback_models: '["openrouter/z-ai/glm-5.2:free"]'
           # PR-Agent raises for models missing from its MAX_TOKENS registry unless
           # this is set; required for the OpenRouter fallback slug (free list rotates).
