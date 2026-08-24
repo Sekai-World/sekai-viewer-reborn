@@ -61,4 +61,17 @@ describe("unit detail page load", () => {
     await expect(result.payload).resolves.toEqual({ unit: null, members: [], loadFailed: false });
     expect(getMasterApiBaseUrl).toHaveBeenCalledOnce();
   });
+
+  it("reports a load failure when the profile request rejects", async () => {
+    getUnitProfilesByRegionByUnit.mockRejectedValueOnce(new Error("master api unavailable"));
+
+    const result = (await load({ params: { region: "jp", unit: "idol" } } as Parameters<typeof load>[0])) as {
+      payload: Promise<{ loadFailed: boolean }>;
+    };
+    await expect(result.payload).resolves.toEqual({
+      unit: null,
+      members: [],
+      loadFailed: true
+    });
+  });
 });

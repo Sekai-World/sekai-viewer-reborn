@@ -65,7 +65,14 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     setupFiles: ["../../test/setup.js"],
     coverage: {
-      include: ["src/lib/i18n/runtime.ts"],
+      include: [
+        "src/lib/i18n/runtime.ts",
+        "src/lib/server/unit-detail.ts",
+        "src/lib/domain/unit-detail.ts",
+        "src/lib/domain/unit-icon.ts",
+        "src/routes/unit/[region]/[unit]/+page.server.ts",
+        "src/routes/+layout.server.ts"
+      ],
       reporter: ["lcov"]
     }
   }
