@@ -4,11 +4,29 @@ import { createRemoteI18nRuntime } from "@platform/i18n-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getLocalI18nMessages,
+  loadI18nMessages,
   resolveI18nMessageBundle,
   type I18nNamespace
 } from "./runtime";
 
 const namespaces: readonly I18nNamespace[] = ["common", "event"];
+
+describe("loadI18nMessages", () => {
+  it("loads English from the remote dictionary outside dev and lets remote win over local sources", async () => {
+    const fetcher = vi.fn(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ "navigation.characters": "Characters (remote)" }), {
+          status: 200
+        })
+      )
+    );
+
+    const messages = await loadI18nMessages("en", "common", fetcher as unknown as typeof fetch);
+
+    expect(messages["navigation.characters"]).toBe("Characters (remote)");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+});
 
 describe("resolveI18nMessageBundle", () => {
   it("returns the target locale bundle when remote loading succeeds", async () => {

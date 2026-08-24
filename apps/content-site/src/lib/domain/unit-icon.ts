@@ -12,6 +12,12 @@ export const unitIconSlugs = new Set([
   "theme_park"
 ]);
 
+/** Returns a known local unit slug suitable for a unit detail route. */
+export const resolveCanonicalUnitSlug = (slug: string | null | undefined): string | null => {
+  const normalized = slug?.trim().toLowerCase() ?? "";
+  return unitIconSlugs.has(normalized) ? normalized : null;
+};
+
 /**
  * Resolve the icon URL for a unit slug.
  * Returns null for unknown slugs.
@@ -22,10 +28,10 @@ export const resolveUnitIconUrl = (slug: string, mapNoneToPiapro = false): strin
   if (normalized === "none" && mapNoneToPiapro) {
     return asset("/icons/icon_piapro.png");
   }
-  return unitIconSlugs.has(normalized) ? asset(`/icons/icon_${normalized}.png`) : null;
+  return resolveCanonicalUnitSlug(normalized) ? asset(`/icons/icon_${normalized}.png`) : null;
 };
 
 export const resolveUnitLogoUrl = (slug: string): string | null => {
-  const normalized = slug.trim().toLowerCase();
-  return unitIconSlugs.has(normalized) ? asset(`/logos/logo_${normalized}.png`) : null;
+  const normalized = resolveCanonicalUnitSlug(slug);
+  return normalized ? asset(`/logos/logo_${normalized}.png`) : null;
 };

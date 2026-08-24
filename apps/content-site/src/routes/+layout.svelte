@@ -124,7 +124,11 @@
     const [first, second] = page.url.pathname.split("/").filter(Boolean);
 
     if (
-      (first === "character" || first === "characters" || first === "card" || first === "cards") &&
+      (first === "character" ||
+        first === "characters" ||
+        first === "unit" ||
+        first === "card" ||
+        first === "cards") &&
       second
     ) {
       return normalizeRegion(second, preferredRegion);
@@ -163,7 +167,9 @@
       icon: "mdi:account-group",
       href: `/characters/${sidebarRegion}`,
       active:
-        page.url.pathname.startsWith("/characters/") || page.url.pathname.startsWith("/character/")
+        page.url.pathname.startsWith("/characters/") ||
+        page.url.pathname.startsWith("/character/") ||
+        page.url.pathname.startsWith("/unit/")
     },
     {
       label: cardsLabel,

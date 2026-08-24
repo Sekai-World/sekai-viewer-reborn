@@ -9,6 +9,8 @@
     fallbackLabel,
     mapNoneToPiapro = false,
     variant = "default",
+    href,
+    ariaLabel,
     class: className
   }: {
     /** Unit slug, e.g. "idol", "light_sound", "none". */
@@ -19,6 +21,10 @@
     mapNoneToPiapro?: boolean;
     /** Visual size: "sm" (card list), "default" (event cards), "lg" (detail cards). */
     variant?: Variant;
+    /** Makes the complete badge a semantic link while preserving its visual frame. */
+    href?: string;
+    /** Accessible name for a linked badge. */
+    ariaLabel?: string;
     /** Extra classes forwarded to the outer element. */
     class?: string;
   } = $props();
@@ -46,28 +52,61 @@
 </script>
 
 {#if iconUrl}
-  <span
-    class="unit-icon-frame inline-flex shrink-0 items-center justify-center rounded-full {frameClass[
-      variant
-    ]} {className ?? ''}"
-    style:border-color={borderColor}
-  >
-    <img
-      src={iconUrl}
-      alt=""
-      aria-hidden="true"
-      class="{imgClass[variant]} shrink-0 object-contain"
-      loading="lazy"
-      decoding="async"
-    />
-  </span>
+  {#if href}
+    <a
+      {href}
+      aria-label={ariaLabel ?? fallbackLabel ?? unit}
+      class="unit-icon-frame inline-flex shrink-0 items-center justify-center rounded-full outline-none transition-[transform,border-color] duration-150 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 {frameClass[
+        variant
+      ]} {className ?? ''}"
+      style:border-color={borderColor}
+    >
+      <img
+        src={iconUrl}
+        alt=""
+        aria-hidden="true"
+        class="{imgClass[variant]} shrink-0 object-contain"
+        loading="lazy"
+        decoding="async"
+      />
+    </a>
+  {:else}
+    <span
+      class="unit-icon-frame inline-flex shrink-0 items-center justify-center rounded-full {frameClass[
+        variant
+      ]} {className ?? ''}"
+      style:border-color={borderColor}
+    >
+      <img
+        src={iconUrl}
+        alt=""
+        aria-hidden="true"
+        class="{imgClass[variant]} shrink-0 object-contain"
+        loading="lazy"
+        decoding="async"
+      />
+    </span>
+  {/if}
 {:else if fallbackLabel}
-  <span
-    class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-white font-semibold leading-none {textPillClass[
-      variant
-    ]} {className ?? ''}"
-    style:border-color={borderColor}
-  >
-    <span class="opacity-70">{fallbackLabel}</span>
-  </span>
+  {#if href}
+    <a
+      {href}
+      aria-label={ariaLabel ?? fallbackLabel}
+      class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-base-100 font-semibold leading-none outline-none transition-[transform,border-color] duration-150 hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 {textPillClass[
+        variant
+      ]} {className ?? ''}"
+      style:border-color={borderColor}
+    >
+      <span class="opacity-70">{fallbackLabel}</span>
+    </a>
+  {:else}
+    <span
+      class="inline-flex items-center justify-center rounded-full border border-base-content/15 bg-base-100 font-semibold leading-none {textPillClass[
+        variant
+      ]} {className ?? ''}"
+      style:border-color={borderColor}
+    >
+      <span class="opacity-70">{fallbackLabel}</span>
+    </span>
+  {/if}
 {/if}

@@ -39,6 +39,13 @@ body {
   @apply rounded-2xl;
 }
 
+/* Shared page-root container for swipeRegion sections. Pages add their own
+   gap (gap-4/gap-5) and optional extra padding on top; do not hand-roll the
+   mx-auto/flex/px-2 boilerplate per page. */
+@utility content-page-shell {
+  @apply mx-auto flex w-full flex-col px-2;
+}
+
 :root,
 :root[data-theme="default"],
 .theme-palette-preview[data-theme="default"] {

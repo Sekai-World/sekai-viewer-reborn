@@ -238,7 +238,7 @@
   {/await}
 </svelte:head>
 
-<section use:swipeRegion class="mx-auto flex w-full flex-col gap-4 px-2">
+<section use:swipeRegion class="content-page-shell gap-4 px-2">
   {#await data.virtualLivePayload}
     <PageHeader
       breadcrumbs={breadcrumbs(`${t("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)}
