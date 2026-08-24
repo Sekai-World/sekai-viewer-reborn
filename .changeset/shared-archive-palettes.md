@@ -1,7 +1,7 @@
 ---
 "@platform/ui-tokens": minor
 "@platform/ui-shell": minor
-"@apps/tools-site": minor
+"@apps/tools-site": patch
 "@apps/content-site": patch
 ---
 
