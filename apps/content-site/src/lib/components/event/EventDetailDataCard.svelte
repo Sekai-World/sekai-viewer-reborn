@@ -13,7 +13,7 @@
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import type {
     EventDetail,

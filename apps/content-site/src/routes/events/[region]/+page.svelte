@@ -13,7 +13,7 @@
   import EventListCard from "$lib/components/event/EventListCard.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";

@@ -7,7 +7,7 @@
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { getEventTypeDisplay } from "$lib/domain/event";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import type { I18nTranslator } from "@platform/i18n-runtime";
   import {
     EVENT_LIST_CARD_FRAME_CLASS,

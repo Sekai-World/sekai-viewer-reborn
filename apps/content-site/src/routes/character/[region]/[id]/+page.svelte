@@ -12,7 +12,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
   import type { CharacterDetail, CharacterRelatedCard } from "$lib/domain/character";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
