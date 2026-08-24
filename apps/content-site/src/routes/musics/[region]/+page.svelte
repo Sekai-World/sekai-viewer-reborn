@@ -14,7 +14,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import {

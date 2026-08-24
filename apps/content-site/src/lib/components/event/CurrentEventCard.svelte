@@ -4,7 +4,7 @@
   import { getEventBannerAssetURL } from "$lib/assets/index";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
   import { getEventTypeDisplay } from "$lib/domain/event";
   import {

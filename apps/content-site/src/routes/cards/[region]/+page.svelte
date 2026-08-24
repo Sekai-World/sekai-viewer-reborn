@@ -19,7 +19,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import type { CardListPage, CardListItem as CardListItemType } from "$lib/server/card-list";
   import type { PageData } from "./$types";
 

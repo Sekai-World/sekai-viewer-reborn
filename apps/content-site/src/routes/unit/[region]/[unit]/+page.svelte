@@ -9,7 +9,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import { resolveUnitLogoUrl } from "$lib/domain/unit-icon";
   import { regionLabels } from "$lib/domain/regions";
   import { formatUnitMemberName } from "$lib/domain/unit-detail";

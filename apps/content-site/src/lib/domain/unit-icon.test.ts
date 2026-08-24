@@ -1,12 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  resolveCanonicalUnitSlug,
-  resolveUnitIconUrl,
-  resolveUnitLogoUrl
-} from "./unit-icon";
+import { resolveCanonicalUnitSlug, resolveUnitLogoUrl } from "./unit-icon";
 
 describe("resolveCanonicalUnitSlug", () => {
-  it("normalizes known unit slugs", () => {
+  it("delegates to ui-shell normalization for known unit slugs", () => {
     expect(resolveCanonicalUnitSlug(" IDOL ")).toBe("idol");
     expect(resolveCanonicalUnitSlug("Light_Sound")).toBe("light_sound");
   });
@@ -17,20 +13,14 @@ describe("resolveCanonicalUnitSlug", () => {
     expect(resolveCanonicalUnitSlug(null)).toBeNull();
     expect(resolveCanonicalUnitSlug(undefined)).toBeNull();
   });
-});
 
-describe("resolveUnitIconUrl", () => {
-  it("maps the support-unit none slug to the piapro icon on request", () => {
-    expect(resolveUnitIconUrl("none", true)).toBe("/icons/icon_piapro.png");
-  });
-
-  it("returns null for unknown slugs", () => {
-    expect(resolveUnitIconUrl("unknown")).toBeNull();
+  it("does not map the support-unit none slug to piapro by default", () => {
+    expect(resolveCanonicalUnitSlug("none")).toBeNull();
   });
 });
 
 describe("resolveUnitLogoUrl", () => {
-  it("resolves the logo for a known unit", () => {
+  it("resolves the logo for a known unit via asset()", () => {
     expect(resolveUnitLogoUrl("idol")).toBe("/logos/logo_idol.png");
   });
 

@@ -8,7 +8,7 @@
   import type { SupportedRegion } from "$lib/domain/regions";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
   import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
   import Icon from "@iconify/svelte";
   import type { I18nTranslator } from "@platform/i18n-runtime";

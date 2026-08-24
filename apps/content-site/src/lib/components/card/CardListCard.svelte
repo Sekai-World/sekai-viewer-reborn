@@ -9,7 +9,7 @@
   import CardGridImage from "$lib/components/card/CardGridImage.svelte";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import UnitIconBadge from "$lib/components/shared/UnitIconBadge.svelte";
+  import { UnitIconBadge } from "@platform/ui-shell";
 
   type CardListCardItem = {
     id: string;
