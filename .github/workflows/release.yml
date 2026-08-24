@@ -13,6 +13,7 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   release:
@@ -69,3 +70,27 @@ jobs:
           GIT_HEAD_SHA: ${{ github.sha }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Tag pushes made with GITHUB_TOKEN do not trigger other workflows, so
+      # dispatch the image builds explicitly. workflow_dispatch is exempt from
+      # that restriction.
+      - name: Trigger app image builds for pushed release tags
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: |
+          git fetch --force --tags
+          tags="$(git tag --points-at "${GIT_HEAD_SHA:-HEAD}" | grep '^@apps/' || true)"
+          if [ -z "$tags" ]; then
+            echo "No app release tags on this commit; nothing to build."
+            exit 0
+          fi
+          while IFS= read -r tag; do
+            echo "Dispatching Docker Publish for ${tag}"
+            gh workflow run docker-publish.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref main \
+              -f tag="$tag"
+          done <<< "$tags"
+        env:
+          GIT_HEAD_SHA: ${{ github.sha }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
