@@ -16,6 +16,7 @@
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
+  import { getEventTrackerHref } from "$lib/tools-site";
   import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
@@ -71,6 +72,7 @@
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
+  let eventTrackerLabel = $state(getInitialI18nText("eventTrackerLink"));
   let eventTitlePrefix = $state(getInitialI18nText("pageTitle.eventPrefix"));
   let bannerTabLabel = $state(getInitialI18nText("assetTab.banner"));
   let titleTabLabel = $state(getInitialI18nText("eventAssetTabs.title"));
@@ -160,6 +162,7 @@
     bannerAltSuffix = translate("bannerAltSuffix");
     imageUnavailableLabel = translate("imageUnavailable");
     noEventLabel = translate("noCurrentEventData");
+    eventTrackerLabel = translate("eventTrackerLink");
     eventTitlePrefix = translate("pageTitle.eventPrefix");
     bannerTabLabel = translate("assetTab.banner");
     titleTabLabel = translate("eventAssetTabs.title");
@@ -236,6 +239,7 @@
   const getEventBgmProgressHref = (): string =>
     resolve("/event/[region]/[id]/bgm/progress", { region: data.region, id: data.eventId });
   const getEventListHref = (): string => resolve("/events/[region]", { region: data.region });
+  const eventTrackerHref = $derived(getEventTrackerHref(data.region, data.eventId));
   const getEventBreadcrumbItems = (currentLabel: string) => [
     {
       label: homeLabel,
@@ -380,6 +384,8 @@
               {startAtLabel}
               {endAtLabel}
               {bannerCharacterLabel}
+              eventTrackerHref={eventTrackerHref}
+              eventTrackerLabel={eventTrackerLabel}
             />
           {/await}
 

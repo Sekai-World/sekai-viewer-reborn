@@ -193,6 +193,7 @@ When changing shared packages:
 - Server-side sekai-api requests require `SEKAI_API_BASE_URL`.
 - Public asset URL helpers require `PUBLIC_REMOTE_ASSET_BASE_URL`.
 - Client/server i18n loading uses `PUBLIC_SEKAI_I18N_BASE_URL`; the default is `https://sekai-world.github.io/sekai-i18n-reborn`.
+- Cross-site Event Tracker links use the optional `PUBLIC_TOOLS_SITE_BASE_URL`; when unset, tracker entry points stay hidden. Tracker links are only rendered for jp/tw/en/kr (tools-site tracker has no cn support).
 
 ## Shared Package: `sekai-master-api-sdk`
 

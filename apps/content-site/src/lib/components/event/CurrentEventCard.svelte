@@ -14,7 +14,9 @@
     EVENT_CARD_MEDIA_CLASS
   } from "$lib/styles/event-card";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
+  import { getEventTrackerHref } from "$lib/tools-site";
   import type { I18nMessages, I18nTranslator } from "@platform/i18n-runtime";
+  import Icon from "@iconify/svelte";
 
   type CurrentEventSummary = {
     id: string;
@@ -36,7 +38,8 @@
     idLabel,
     mixedUnitLabel,
     unitProfiles,
-    bannerAltSuffix
+    bannerAltSuffix,
+    eventTrackerLabel
   }: {
     region: SupportedRegion;
     regionLabel: string;
@@ -48,6 +51,7 @@
     mixedUnitLabel: string;
     unitProfiles: Record<string, string>;
     bannerAltSuffix: string;
+    eventTrackerLabel: string;
   } = $props();
 
   const getDisplayUnit = (unit: string | null | undefined): string | null => {
@@ -63,6 +67,17 @@
 
   const displayUnit = $derived(getDisplayUnit(event.unit));
   const displayEventType = $derived(getEventTypeDisplay(event.eventType, translate));
+  const eventTrackerHref = $derived(getEventTrackerHref(region, event.id));
+
+  const openEventTracker = (pointerEvent: MouseEvent): void => {
+    pointerEvent.preventDefault();
+    pointerEvent.stopPropagation();
+    if (!eventTrackerHref) {
+      return;
+    }
+
+    window.open(eventTrackerHref, "_blank", "noopener,noreferrer");
+  };
 </script>
 
 <EventCardFrame
@@ -94,6 +109,17 @@
           <span class={EVENT_CARD_META_BADGE_CLASS}>{idLabel}{event.id}</span>
           {#if displayEventType}
             <span class={EVENT_CARD_META_BADGE_CLASS}>{displayEventType}</span>
+          {/if}
+          {#if eventTrackerHref}
+            <button
+              type="button"
+              class="btn btn-sm min-h-11! gap-1 border border-(--archive-border-default) bg-(--archive-surface-raised) px-3 text-(--archive-text-default) shadow-sm transition-[background-color,border-color,box-shadow,color,transform] duration-180 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-primary/45 [@media(hover:hover)]:hover:bg-(--archive-surface-default) [@media(hover:hover)]:hover:text-(--archive-text-strong) [@media(hover:hover)]:hover:shadow-md"
+              aria-label={eventTrackerLabel}
+              onclick={openEventTracker}
+            >
+              <Icon icon="mdi:open-in-new" class="size-4" aria-hidden="true" />
+              {eventTrackerLabel}
+            </button>
           {/if}
         </div>
         <h3 class="text-lg/tight font-semibold text-(--archive-text-strong) sm:text-xl/tight">
