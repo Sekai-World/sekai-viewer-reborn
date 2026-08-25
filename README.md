@@ -94,6 +94,7 @@ pnpm --filter @apps/content-site dev
 - `SEKAI_API_BASE_URL`
 - `PUBLIC_REMOTE_ASSET_BASE_URL`
 - `PUBLIC_SEKAI_I18N_BASE_URL` (defaults to `https://sekai-world.github.io/sekai-i18n-reborn`)
+- `PUBLIC_TOOLS_SITE_BASE_URL` (optional; when unset, Event Tracker entry points stay hidden)
 
 ## Git Hooks
 

@@ -28,7 +28,9 @@
     eventTypeLabel,
     startAtLabel,
     endAtLabel,
-    bannerCharacterLabel
+    bannerCharacterLabel,
+    eventTrackerHref,
+    eventTrackerLabel
   }: {
     event: EventDetail;
     region: SupportedRegion;
@@ -45,6 +47,8 @@
     startAtLabel: string;
     endAtLabel: string;
     bannerCharacterLabel: string;
+    eventTrackerHref: string | null;
+    eventTrackerLabel: string;
   } = $props();
   const getCharacterDisplayName = (char: BannerGameCharacter): string => {
     const parts = [char.firstName, char.givenName].filter(Boolean);
@@ -204,6 +208,28 @@
         </dt>
         <dd class="mt-1 text-sm font-medium">{event.assetBundleName ?? "--"}</dd>
       </div>
+      {#if eventTrackerHref}
+        <div class="content-card-inset rounded-xl border-(--archive-border-default) p-3 sm:px-4">
+          <a
+            href={eventTrackerHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group/event-tracker-row -m-1 flex items-center gap-3 rounded-lg p-1 outline-none transition-[background-color,color] duration-180 ease-out focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            aria-label={eventTrackerLabel}
+          >
+            <span
+              class="min-w-0 flex-1 text-sm font-medium transition-colors duration-180 ease-out group-hover/event-tracker-row:text-primary group-focus-visible/event-tracker-row:text-primary"
+            >
+              {eventTrackerLabel}
+            </span>
+            <Icon
+              icon="mdi:open-in-new"
+              class="size-4 shrink-0 text-base-content/55 transition-colors duration-180 group-hover/event-tracker-row:text-primary group-focus-visible/event-tracker-row:text-primary"
+              aria-hidden="true"
+            />
+          </a>
+        </div>
+      {/if}
     </dl>
   </div>
 </article>

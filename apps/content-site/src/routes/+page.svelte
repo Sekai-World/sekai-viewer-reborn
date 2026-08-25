@@ -38,6 +38,7 @@
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let latestDataLoadingEvents = $state(getInitialI18nText("latestData.loadingEvents"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
+  let eventTrackerLabel = $state(getInitialI18nText("eventTrackerLink"));
   let disclaimerText = $state(getInitialI18nText("disclaimer"));
   let mixedUnitLabel = $state(getInitialI18nText("mixedUnitLabel"));
   let footerBrandLabel = $state(getInitialI18nText("footer.brand"));
@@ -106,6 +107,7 @@
     bannerAltSuffix = translate("bannerAltSuffix");
     latestDataLoadingEvents = translate("latestData.loadingEvents");
     noEventLabel = translate("noCurrentEventData");
+    eventTrackerLabel = translate("eventTrackerLink");
     disclaimerText = translate("disclaimer");
     mixedUnitLabel = translate("mixedUnitLabel");
     footerBrandLabel = translate("footer.brand");
@@ -283,6 +285,7 @@
     {:then card}
       {#if card.event}
         <CurrentEventCard
+          eventTrackerLabel={eventTrackerLabel}
           messages={currentMessages}
           translate={currentTranslate}
           region={card.region}
