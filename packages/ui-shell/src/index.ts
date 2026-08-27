@@ -24,6 +24,12 @@ export type {
 export type { UnitIconSlug } from "./unit-icon-data";
 export type { SidebarItem } from "./viewer-shell.types";
 export type { RegionOption } from "./region-switcher.types";
+export {
+  fetchGlobalNotices,
+  normalizeGlobalNotice,
+  parseGlobalNoticesPayload,
+  stripTrailingSlashes
+} from "./global-notices";
 export type {
   GlobalNotice,
   GlobalNoticeAction,

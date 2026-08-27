@@ -29,6 +29,10 @@
     "./theme-controls": {
       "types": "./src/theme-controls.types.ts",
       "default": "./src/theme-controls.types.ts"
+    },
+    "./global-notices": {
+      "types": "./src/global-notices.ts",
+      "default": "./src/global-notices.ts"
     }
   },
   "dependencies": {

@@ -109,6 +109,26 @@ describe("normalizeGlobalNotice", () => {
       action: { label: "Go", href: "/status" }
     });
   });
+
+  it("ignores an action target that is not in the allow-list", () => {
+    expect(
+      normalizeGlobalNotice({
+        id: "x",
+        version: 1,
+        severity: "info",
+        title: "T",
+        message: "M",
+        action: { label: "Go", href: "/status", target: "_weird" }
+      })
+    ).toEqual({
+      id: "x",
+      version: 1,
+      severity: "info",
+      title: "T",
+      message: "M",
+      action: { label: "Go", href: "/status" }
+    });
+  });
 });
 
 describe("parseGlobalNoticesPayload", () => {

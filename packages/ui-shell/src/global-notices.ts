@@ -2,21 +2,27 @@ import type {
   GlobalNotice,
   GlobalNoticeAction,
   GlobalNoticeSeverity
-} from "@platform/ui-shell";
+} from "./global-notification-banner.types";
 
-const NOTICE_SEVERITIES: readonly GlobalNoticeSeverity[] = [
+const NOTICE_SEVERITIES: ReadonlySet<GlobalNoticeSeverity> = new Set([
   "info",
   "success",
   "warning",
   "error"
-];
+]);
 
-const ACTION_TARGETS: readonly string[] = ["_blank", "_self", "_parent", "_top"];
+const ACTION_TARGETS: ReadonlySet<string> = new Set([
+  "_blank",
+  "_self",
+  "_parent",
+  "_top"
+]);
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
+/** Type guard: only plain objects (not arrays or null) pass. */
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-const isNonEmptyString = (value: unknown): value is string =>
+export const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
 /**
@@ -36,7 +42,7 @@ const normalizeAction = (value: unknown): GlobalNoticeAction | undefined => {
   }
 
   const action: GlobalNoticeAction = { label, href };
-  if (typeof value.target === "string" && ACTION_TARGETS.includes(value.target)) {
+  if (typeof value.target === "string" && ACTION_TARGETS.has(value.target)) {
     action.target = value.target as GlobalNoticeAction["target"];
   }
   if (typeof value.rel === "string" && value.rel.trim().length > 0) {
@@ -63,7 +69,7 @@ export const normalizeGlobalNotice = (value: unknown): GlobalNotice | null => {
   if (typeof version !== "string" && typeof version !== "number") {
     return null;
   }
-  if (!NOTICE_SEVERITIES.includes(severity as GlobalNoticeSeverity)) {
+  if (!NOTICE_SEVERITIES.has(severity as GlobalNoticeSeverity)) {
     return null;
   }
   if (!isNonEmptyString(title) || !isNonEmptyString(message)) {
@@ -108,4 +114,64 @@ export const parseGlobalNoticesPayload = (payload: unknown): readonly GlobalNoti
   }
 
   return notices;
+};
+
+/**
+ * Removes every trailing slash from a base URL without using a regular
+ * expression (which would risk super-linear backtracking). Returns the original
+ * string when no trailing slash is present, or an empty string when only
+ * slashes are present so callers can treat the value as unconfigured.
+ */
+export const stripTrailingSlashes = (value: string): string => {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47 /* "/" */) {
+    end -= 1;
+  }
+  return end === value.length ? value : value.slice(0, end);
+};
+
+export const NOTIFICATION_FETCH_TIMEOUT_MS = 3_000;
+
+const fetchWithTimeout = (url: string, fetcher: typeof fetch): Promise<Response> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), NOTIFICATION_FETCH_TIMEOUT_MS);
+  if (typeof timeout === "object" && "unref" in timeout) {
+    timeout.unref();
+  }
+
+  const request = fetcher(url, {
+    headers: { accept: "application/json" },
+    signal: controller.signal
+  });
+
+  return request.finally(() => clearTimeout(timeout));
+};
+
+export { fetchWithTimeout };
+
+/**
+ * Fetches active global notifications from the sekai-api `/notifications`
+ * endpoint and normalizes them into the frontend `GlobalNotice` shape. Any
+ * failure (null base URL, network error, non-OK status, or an invalid envelope)
+ * resolves to an empty list so root layouts always render.
+ */
+export const fetchGlobalNotices = async (
+  baseUrl: string | null,
+  fetcher: typeof fetch = fetch
+): Promise<readonly GlobalNotice[]> => {
+  if (baseUrl === null) {
+    return [];
+  }
+
+  try {
+    const response = await fetchWithTimeout(`${baseUrl}/notifications`, fetcher);
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload: unknown = await response.json();
+    return parseGlobalNoticesPayload(payload);
+  } catch {
+    return [];
+  }
 };
