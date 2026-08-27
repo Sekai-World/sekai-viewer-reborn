@@ -6,6 +6,7 @@ import {
 } from "$lib/i18n/runtime";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { fetchGlobalNotices } from "$lib/server/notifications";
+import packageJson from "../../package.json";
 
 const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
   // always include "error" so +error.svelte can resolve its keys on any path
@@ -54,6 +55,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {
   return {
     i18nMessages,
     uiLocale,
-    globalNotices
+    globalNotices,
+    siteVersion: packageJson.version
   };
 };

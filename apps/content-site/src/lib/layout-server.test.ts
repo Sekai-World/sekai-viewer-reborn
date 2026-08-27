@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { I18nMessages } from "@platform/i18n-runtime";
 import { getLocalI18nMessages, type I18nNamespace } from "$lib/i18n/runtime";
+import packageJson from "../../package.json";
 
 const { loadI18nMessageBundle } = vi.hoisted(() => ({
   loadI18nMessageBundle: vi.fn<
@@ -42,7 +43,8 @@ describe("content-site layout server load", () => {
     await expect(load(createLoadEvent("/event/jp/123", "en-US"))).resolves.toEqual({
       i18nMessages: messages,
       uiLocale: "en",
-      globalNotices: []
+      globalNotices: [],
+      siteVersion: packageJson.version
     });
     expect(loadI18nMessageBundle).toHaveBeenCalledWith(
       "en",
@@ -57,7 +59,8 @@ describe("content-site layout server load", () => {
     await expect(load(createLoadEvent("/unit/jp/idol"))).resolves.toEqual({
       i18nMessages: { unitRosterTitle: "Members" },
       uiLocale: "en",
-      globalNotices: []
+      globalNotices: [],
+      siteVersion: packageJson.version
     });
     expect(loadI18nMessageBundle).toHaveBeenCalledWith(
       "en",
@@ -72,7 +75,8 @@ describe("content-site layout server load", () => {
     await expect(load(createLoadEvent("/cards/jp"))).resolves.toEqual({
       i18nMessages: getLocalI18nMessages(["common", "card", "event", "error"]),
       uiLocale: "en",
-      globalNotices: []
+      globalNotices: [],
+      siteVersion: packageJson.version
     });
   });
 
@@ -86,7 +90,8 @@ describe("content-site layout server load", () => {
     await expect(result).resolves.toEqual({
       i18nMessages: getLocalI18nMessages(["common", "music", "error"]),
       uiLocale: "en",
-      globalNotices: []
+      globalNotices: [],
+      siteVersion: packageJson.version
     });
   });
 
@@ -101,7 +106,8 @@ describe("content-site layout server load", () => {
     await expect(load(event)).resolves.toEqual({
       i18nMessages: {},
       uiLocale: "en",
-      globalNotices: notices
+      globalNotices: notices,
+      siteVersion: packageJson.version
     });
     expect(fetchGlobalNotices).toHaveBeenCalledWith(event.fetch);
   });
@@ -114,7 +120,8 @@ describe("content-site layout server load", () => {
     await expect(load(createLoadEvent("/"))).resolves.toEqual({
       i18nMessages: {},
       uiLocale: "en",
-      globalNotices: []
+      globalNotices: [],
+      siteVersion: packageJson.version
     });
   });
 });

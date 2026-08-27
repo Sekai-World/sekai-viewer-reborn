@@ -1,5 +1,8 @@
 <script lang="ts">
   import { RegionSwitcher, ViewerShell, type SidebarItem } from "@platform/ui-shell";
+  import type { PageData } from "./$types";
+
+  let { data }: { data: PageData } = $props();
 
   const supportedRegions = ["jp", "en", "tw", "kr", "cn"] as const;
   type SupportedRegion = (typeof supportedRegions)[number];
@@ -32,6 +35,7 @@
   drawerId="media-lab-site-drawer"
   navTitle="Sekai Media Lab"
   navBadge="Lab"
+  siteVersion={data.siteVersion}
   {sidebarItems}
 >
   <RegionSwitcher

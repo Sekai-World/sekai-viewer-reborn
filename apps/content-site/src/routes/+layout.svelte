@@ -692,7 +692,10 @@
   <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
-<GlobalNotificationBanner notices={data.globalNotices} />
+<GlobalNotificationBanner
+  notices={data.globalNotices}
+  externalLinkLabel={layoutTranslate("notification.opensInNewWindow")}
+/>
 
 {#if $isLocaleLoading || localeLoadingProgress > 0}
   <div class="pointer-events-none fixed inset-x-0 top-2 z-240 flex justify-center px-4">
@@ -828,6 +831,7 @@
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
+  siteVersion={data.siteVersion}
   desktopRailOpen={true}
   {openSidebarLabel}
   {closeSidebarLabel}

@@ -186,12 +186,16 @@
   <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
-<GlobalNotificationBanner notices={data.globalNotices} />
+<GlobalNotificationBanner
+  notices={data.globalNotices}
+  externalLinkLabel={translate("notification.opensInNewWindow")}
+/>
 
 <ViewerShell
   drawerId="tools-site-drawer"
   navTitle={translate("shell.title")}
   navBadge={translate("shell.badge")}
+  siteVersion={data.siteVersion}
   skipToMainLabel={translate("navigation.skipToMain")}
   openSidebarLabel={translate("navigation.openSidebar")}
   closeSidebarLabel={translate("navigation.closeSidebar")}

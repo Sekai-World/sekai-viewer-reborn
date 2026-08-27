@@ -24,19 +24,66 @@ describe("GlobalNotificationBanner", () => {
   it("renders the configured notice with severity semantics and an action link", () => {
     render(GlobalNotificationBanner, {
       notices: [notice],
-      announcementsLabel: "Announcements"
+      announcementsLabel: "Announcements",
+      externalLinkLabel: "Opens in a new window"
     });
 
     const banner = screen.getByRole("status", { name: "Scheduled maintenance" });
     expect(banner.getAttribute("aria-live")).toBe("polite");
-    expect(banner.textContent).toContain("Warning");
+    expect(banner.textContent).not.toContain("Warning");
     expect(screen.getByRole("region", { name: "Announcements" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Read the details" }).getAttribute("target")).toBe(
-      "_blank"
-    );
-    expect(screen.getByRole("link", { name: "Read the details" }).getAttribute("rel")).toBe(
-      "noreferrer"
-    );
+    const actionLink = screen.getByRole("link", {
+      name: "Read the details (Opens in a new window)"
+    });
+    expect(actionLink.getAttribute("target")).toBe("_blank");
+    expect(actionLink.getAttribute("rel")).toBe("noreferrer");
+    expect(actionLink.querySelector("svg")).toBeTruthy();
+    expect(actionLink.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("removes visible severity labels while keeping each severity marker", () => {
+    const { container } = render(GlobalNotificationBanner, {
+      notices: (["info", "success", "warning", "error"] as const).map((severity) => ({
+        ...notice,
+        id: `notice-${severity}`,
+        severity,
+        title: `${severity} notice`,
+        message: `Message for ${severity}`,
+        action: undefined
+      })),
+      severityLabels: {
+        info: "Information",
+        success: "Completed",
+        warning: "Attention",
+        error: "Problem"
+      }
+    });
+
+    for (const label of ["Info", "Success", "Warning", "Error", "Information", "Completed", "Attention", "Problem"]) {
+      expect(screen.queryByText(label, { exact: true })).toBeNull();
+    }
+
+    for (const severity of ["info", "success", "warning", "error"] as const) {
+      const marker = container.querySelector(`.global-notice-${severity} .global-notice-marker`);
+      expect(marker).not.toBeNull();
+      expect(marker?.getAttribute("aria-hidden")).toBe("true");
+    }
+  });
+
+  it("keeps the API action label unchanged for same-window actions", () => {
+    render(GlobalNotificationBanner, {
+      notices: [
+        {
+          ...notice,
+          action: { label: "Open archive", href: "/archive", target: "_self" }
+        }
+      ],
+      externalLinkLabel: "Opens in a new window"
+    });
+
+    const actionLink = screen.getByRole("link", { name: "Open archive" });
+    expect(actionLink.textContent).toContain("Open archive");
+    expect(actionLink.querySelector("svg")).toBeNull();
   });
 
   it("uses assertive alert semantics for error notices", () => {

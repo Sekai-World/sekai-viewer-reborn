@@ -26,5 +26,11 @@ export type GlobalNotificationBannerProps = {
   storageKey?: string;
   announcementsLabel?: string;
   dismissLabel?: string;
+  /** Accessible suffix for actions that open a new window. */
+  externalLinkLabel?: string;
+  /**
+   * @deprecated Severity labels are no longer rendered. Retained for source
+   * compatibility with callers that still pass this option.
+   */
   severityLabels?: Partial<Record<GlobalNoticeSeverity, string>>;
 };

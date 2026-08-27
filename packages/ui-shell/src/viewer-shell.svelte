@@ -9,6 +9,7 @@
     navTitle: string;
     navBadge?: string;
     navActions?: Snippet;
+    siteVersion?: string;
     desktopRailOpen?: boolean;
     skipToMainLabel?: string;
     openSidebarLabel?: string;
@@ -26,6 +27,7 @@
     navTitle,
     navBadge,
     navActions,
+    siteVersion,
     desktopRailOpen = false,
     skipToMainLabel = "Skip to main content",
     openSidebarLabel = "Open navigation",
@@ -41,6 +43,10 @@
   let sidebarOpen = $state(false);
   const sidebarPanelId = $derived(`${drawerId}-panel`);
   const mainId = $derived(`${drawerId}-main`);
+
+  const siteVersionDisplay = $derived(
+    siteVersion ? (siteVersion.startsWith("v") ? siteVersion : `v${siteVersion}`) : ""
+  );
 </script>
 
 <a class="viewer-shell-skip" href={`#${mainId}`}>{skipToMainLabel}</a>
@@ -86,7 +92,15 @@
             {navTitle}
           </span>
         </div>
-        <div class="navbar-end">
+        <div class="navbar-end gap-2">
+          {#if siteVersion}
+            <span
+              class="inline-flex items-center rounded-full border border-base-content/15 px-2.5 py-1 text-xs font-medium text-base-content/60"
+              title="Site version"
+            >
+              <span class="sr-only">Site version: </span>{siteVersionDisplay}
+            </span>
+          {/if}
           {#if navActions}
             {@render navActions()}
           {:else if navBadge}

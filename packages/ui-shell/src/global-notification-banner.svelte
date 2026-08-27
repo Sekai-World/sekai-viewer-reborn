@@ -1,18 +1,20 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
   import type {
     GlobalNotice,
-    GlobalNotificationBannerProps,
-    GlobalNoticeSeverity
+    GlobalNoticeAction,
+    GlobalNotificationBannerProps
   } from "./global-notification-banner.types";
 
   const DEFAULT_STORAGE_KEY = "platform-ui-shell:dismissed-notifications";
-  const defaultSeverityLabels: Record<GlobalNoticeSeverity, string> = {
-    info: "Info",
-    success: "Success",
-    warning: "Warning",
-    error: "Error"
+  // Keep the icon data in the shared package so it does not depend on an app's
+  // Iconify registry (content-site registers its mdi icons at app startup).
+  const openInNewIcon = {
+    body: '<path fill="currentColor" d="M14 3v2h3.59l-9.83 9.83l1.41 1.41L19 6.41V10h2V3m-2 16H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2z"/>',
+    height: 24,
+    width: 24
   };
 
   let {
@@ -20,7 +22,7 @@
     storageKey = DEFAULT_STORAGE_KEY,
     announcementsLabel = "System announcements",
     dismissLabel = "Dismiss announcement",
-    severityLabels = {}
+    externalLinkLabel = ""
   }: GlobalNotificationBannerProps = $props();
 
   const dismissedNoticeKeys = new SvelteSet<string>();
@@ -80,8 +82,15 @@
     persistDismissedNoticeKeys(dismissedNoticeKeys);
   }
 
-  function getSeverityLabel(severity: GlobalNoticeSeverity): string {
-    return severityLabels[severity] ?? defaultSeverityLabels[severity];
+  function getActionAriaLabel(
+    label: string,
+    target?: GlobalNoticeAction["target"]
+  ): string | undefined {
+    if (target !== "_blank" || !externalLinkLabel) {
+      return undefined;
+    }
+
+    return `${label} (${externalLinkLabel})`;
   }
 
   function getNoticeId(index: number, notice: GlobalNotice, suffix: "title" | "message"): string {
@@ -118,24 +127,31 @@
       >
         <span class="global-notice-marker" aria-hidden="true"></span>
         <div class="global-notice-content">
-          <div class="global-notice-heading">
-            <span class="global-notice-severity">{getSeverityLabel(notice.severity)}</span>
-            <h2 id={titleId}>{notice.title}</h2>
-          </div>
+          <h2 id={titleId}>{notice.title}</h2>
           <p id={messageId}>{notice.message}</p>
-          {#if notice.action}
+        </div>
+        {#if notice.action}
+          <div class="global-notice-actions">
             <a
               class="global-notice-action"
               href={notice.action.href}
               target={notice.action.target}
+              aria-label={getActionAriaLabel(notice.action.label, notice.action.target)}
               rel={notice.action.target === "_blank"
                 ? (notice.action.rel ?? "noreferrer")
                 : notice.action.rel}
             >
               <span>{notice.action.label}</span>
+              {#if notice.action.target === "_blank"}
+                <Icon
+                  icon={openInNewIcon}
+                  class="global-notice-action-icon"
+                  aria-hidden="true"
+                />
+              {/if}
             </a>
-          {/if}
-        </div>
+          </div>
+        {/if}
         {#if notice.dismissible !== false}
           <button
             class="global-notice-dismiss"
@@ -162,7 +178,7 @@
     max-width: 96rem;
     gap: 0.5rem;
     margin: 0 auto;
-    padding: 0.75rem 0.75rem 0;
+    padding: 0.75rem;
     pointer-events: none;
   }
 
@@ -212,16 +228,11 @@
 
   .global-notice-content {
     min-width: 0;
+    grid-column: 2;
+    grid-row: 1;
   }
 
-  .global-notice-heading {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.5rem;
-  }
-
-  .global-notice-heading h2 {
+  .global-notice-content h2 {
     min-width: 0;
     margin: 0;
     font-size: 1rem;
@@ -229,16 +240,6 @@
     line-height: 1.35;
     letter-spacing: -0.01em;
     overflow-wrap: anywhere;
-  }
-
-  .global-notice-severity {
-    flex: none;
-    color: color-mix(in oklab, var(--notice-accent) 82%, var(--color-base-content));
-    font-size: 0.68rem;
-    font-weight: 850;
-    letter-spacing: 0.1em;
-    line-height: 1.4;
-    text-transform: uppercase;
   }
 
   .global-notice-content p {
@@ -250,8 +251,18 @@
     overflow-wrap: anywhere;
   }
 
+  .global-notice-actions {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: flex-start;
+    grid-column: 2 / -1;
+    grid-row: 2;
+  }
+
   .global-notice-action {
     display: inline-flex;
+    max-width: 100%;
     min-height: 2.75rem;
     align-items: center;
     gap: 0.4rem;
@@ -263,6 +274,7 @@
     font-size: 0.875rem;
     font-weight: 750;
     text-decoration: none;
+    overflow-wrap: anywhere;
     transition:
       background-color 180ms ease-out,
       color 180ms ease-out,
@@ -273,6 +285,12 @@
     background: var(--notice-accent);
     color: var(--color-base-100);
     transform: translateY(-1px);
+  }
+
+  .global-notice-action-icon {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
   }
 
   .global-notice-dismiss {
@@ -289,6 +307,8 @@
     font-size: 1.5rem;
     line-height: 1;
     cursor: pointer;
+    grid-column: 3;
+    grid-row: 1;
     transition:
       background-color 180ms ease-out,
       color 180ms ease-out;
@@ -339,6 +359,26 @@
 
     .global-notice {
       padding: 1rem 1.125rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .global-notice {
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+    }
+
+    .global-notice-actions {
+      grid-column: 3;
+      grid-row: 1;
+      justify-content: flex-end;
+    }
+
+    .global-notice-action {
+      margin-top: 0;
+    }
+
+    .global-notice-dismiss {
+      grid-column: 4;
     }
   }
 

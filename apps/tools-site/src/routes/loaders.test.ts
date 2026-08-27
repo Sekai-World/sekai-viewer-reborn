@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import packageJson from "../../package.json";
 
 const mocks = vi.hoisted(() => ({
   loadI18nMessageBundle: vi.fn(),
@@ -142,5 +143,6 @@ describe("tools-site server loaders", () => {
 
     expect(result.uiLocale).toBe("ja-JP");
     expect(result.i18nMessages).toEqual({ namespaces: ["common", "tracker"] });
+    expect(result.siteVersion).toBe(packageJson.version);
   });
 });
