@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { I18nMessages } from "@platform/i18n-runtime";
 import { getLocalI18nMessages, type I18nNamespace } from "$lib/i18n/runtime";
 
@@ -13,6 +13,14 @@ vi.mock("$lib/i18n/runtime", async (importOriginal) => ({
   loadI18nMessageBundle
 }));
 
+const { fetchGlobalNotices } = vi.hoisted(() => ({
+  fetchGlobalNotices: vi.fn()
+}));
+
+vi.mock("$lib/server/notifications", () => ({
+  fetchGlobalNotices
+}));
+
 import { load } from "../routes/+layout.server";
 
 const createLoadEvent = (pathname: string, locale = "en") =>
@@ -23,13 +31,18 @@ const createLoadEvent = (pathname: string, locale = "en") =>
   }) as unknown as Parameters<typeof load>[0];
 
 describe("content-site layout server load", () => {
+  beforeEach(() => {
+    fetchGlobalNotices.mockResolvedValue([]);
+  });
+
   it("returns the remote route bundle for the selected locale", async () => {
     const messages = { eventDetailTitle: "Event details" };
     loadI18nMessageBundle.mockResolvedValueOnce(messages);
 
     await expect(load(createLoadEvent("/event/jp/123", "en-US"))).resolves.toEqual({
       i18nMessages: messages,
-      uiLocale: "en"
+      uiLocale: "en",
+      globalNotices: []
     });
     expect(loadI18nMessageBundle).toHaveBeenCalledWith(
       "en",
@@ -43,7 +56,8 @@ describe("content-site layout server load", () => {
 
     await expect(load(createLoadEvent("/unit/jp/idol"))).resolves.toEqual({
       i18nMessages: { unitRosterTitle: "Members" },
-      uiLocale: "en"
+      uiLocale: "en",
+      globalNotices: []
     });
     expect(loadI18nMessageBundle).toHaveBeenCalledWith(
       "en",
@@ -57,7 +71,8 @@ describe("content-site layout server load", () => {
 
     await expect(load(createLoadEvent("/cards/jp"))).resolves.toEqual({
       i18nMessages: getLocalI18nMessages(["common", "card", "event", "error"]),
-      uiLocale: "en"
+      uiLocale: "en",
+      globalNotices: []
     });
   });
 
@@ -70,7 +85,36 @@ describe("content-site layout server load", () => {
 
     await expect(result).resolves.toEqual({
       i18nMessages: getLocalI18nMessages(["common", "music", "error"]),
-      uiLocale: "en"
+      uiLocale: "en",
+      globalNotices: []
+    });
+  });
+
+  it("includes global notices fetched from the notifications feed", async () => {
+    const notices = [
+      { id: "maintenance", version: 1, severity: "info" as const, title: "Watch", message: "Here" }
+    ];
+    fetchGlobalNotices.mockResolvedValueOnce(notices);
+    loadI18nMessageBundle.mockResolvedValueOnce({});
+
+    const event = createLoadEvent("/cards/jp");
+    await expect(load(event)).resolves.toEqual({
+      i18nMessages: {},
+      uiLocale: "en",
+      globalNotices: notices
+    });
+    expect(fetchGlobalNotices).toHaveBeenCalledWith(event.fetch);
+  });
+
+  it("keeps rendering with empty notices when the notifications feed is unavailable", async () => {
+    // fetchGlobalNotices never rejects: an unavailable feed resolves to [].
+    fetchGlobalNotices.mockResolvedValueOnce([]);
+    loadI18nMessageBundle.mockResolvedValueOnce({});
+
+    await expect(load(createLoadEvent("/"))).resolves.toEqual({
+      i18nMessages: {},
+      uiLocale: "en",
+      globalNotices: []
     });
   });
 });

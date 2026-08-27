@@ -5,6 +5,7 @@ import {
   type I18nNamespace
 } from "$lib/i18n/runtime";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
+import { fetchGlobalNotices } from "$lib/server/notifications";
 
 const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
   // always include "error" so +error.svelte can resolve its keys on any path
@@ -42,13 +43,17 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
 export const load: LayoutServerLoad = async ({ cookies, fetch, url }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
   const namespaces = getRouteI18nNamespaces(url.pathname);
-  const i18nMessages = await resolveI18nMessageBundle(
-    () => loadI18nMessageBundle(uiLocale, namespaces, fetch),
-    namespaces
-  );
+  const [i18nMessages, globalNotices] = await Promise.all([
+    resolveI18nMessageBundle(
+      () => loadI18nMessageBundle(uiLocale, namespaces, fetch),
+      namespaces
+    ),
+    fetchGlobalNotices(fetch)
+  ]);
 
   return {
     i18nMessages,
-    uiLocale
+    uiLocale,
+    globalNotices
   };
 };

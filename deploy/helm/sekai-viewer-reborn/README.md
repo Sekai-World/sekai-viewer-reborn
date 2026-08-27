@@ -32,8 +32,9 @@ test ! -e viewer-values.yaml && cp deploy/helm/sekai-viewer-reborn/values.yaml v
 
 In `viewer-values.yaml`, replace every placeholder image repository and tag,
 Ingress host, and TLS Secret name with values for the target environment. Use
-versioned immutable image tags rather than `latest`. Set the required
-`content-site` values `SEKAI_MASTER_API_BASE_URL`, `SEKAI_API_BASE_URL`, and
+versioned immutable image tags rather than `latest`. All four applications need
+`SEKAI_API_BASE_URL` set for server-side dynamic notifications. `content-site`
+additionally requires `SEKAI_MASTER_API_BASE_URL` and
 `PUBLIC_REMOTE_ASSET_BASE_URL`; review the default i18n URL and all other
 application settings as well. Keep this operator-owned file outside the chart
 if it contains environment-specific or sensitive configuration.
@@ -55,10 +56,9 @@ helm template viewer deploy/helm/sekai-viewer-reborn \
 kubectl apply --dry-run=client -f /tmp/sekai-viewer-helm.yaml
 ```
 
-The content-site-only render used in CI and troubleshooting can be produced by
-adding the app-disable flags and explicit URL values shown below. Do not apply
-rendered output directly in place of Helm; use it to inspect and validate the
-resources Helm will manage.
+The validation render shown under first installation exposes `SEKAI_API_BASE_URL`
+for every enabled application. Do not apply rendered output directly in place of
+Helm; use it to inspect and validate the resources Helm will manage.
 
 ## First installation
 
@@ -84,12 +84,12 @@ Run Helm's chart validation from the repository root:
 helm lint deploy/helm/sekai-viewer-reborn
 helm template viewer deploy/helm/sekai-viewer-reborn \
   --namespace viewer \
-  --set apps.tools-site.enabled=false \
-  --set apps.media-lab-site.enabled=false \
-  --set apps.account-site.enabled=false \
   --set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
   --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
-  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com
+  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com \
+  --set-string apps.tools-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.media-lab-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.account-site.env.SEKAI_API_BASE_URL=https://api.example.com
 ```
 
 The chart uses TCP startup, liveness, and readiness probes against the named
@@ -142,13 +142,15 @@ When using this targeted form for an existing release, include the complete
 operator-owned values file as well, or use `--reuse-values` deliberately after
 reviewing the resulting values.
 
-The content site has four default environment keys. The three API and asset
-URL values are empty and must be set by the operator; `PUBLIC_SEKAI_I18N_BASE_URL`
-defaults to `https://sekai-world.github.io/sekai-i18n-reborn`. Values are quoted
-when rendered, so an intentionally empty value remains an empty string. Other
-applications have empty `env` maps by default. `envFrom` and `extraEnv` are
-available per application for straightforward Secret/ConfigMap references and
-additional environment entries.
+The content site has four default environment keys. The `SEKAI_API_BASE_URL`,
+`SEKAI_MASTER_API_BASE_URL`, and `PUBLIC_REMOTE_ASSET_BASE_URL` URL values are
+empty and must be set by the operator; `PUBLIC_SEKAI_I18N_BASE_URL` defaults to
+`https://sekai-world.github.io/sekai-i18n-reborn`. Values are quoted when
+rendered, so an intentionally empty value remains an empty string. Every app
+declares an empty `SEKAI_API_BASE_URL` default for server-side dynamic
+notifications; `tools-site`, `media-lab-site`, and `account-site` provide only
+that key by default. `envFrom` and `extraEnv` are available per application for
+straightforward Secret/ConfigMap references and additional environment entries.
 
 Ingress hosts, ingress class, annotations, paths, and TLS settings are
 configured independently under each application's `ingress` values. Set

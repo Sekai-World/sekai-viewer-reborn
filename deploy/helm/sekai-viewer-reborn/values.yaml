@@ -56,8 +56,11 @@ apps:
       repository: docker.dnaroma.eu/sekai-viewer-reborn/content-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
-    # Set the three empty values before deploying content-site. The i18n URL is
-    # usable as-is for the default English dictionary source.
+    # Set the required empty values before deploying. content-site needs
+    # SEKAI_MASTER_API_BASE_URL, SEKAI_API_BASE_URL, and
+    # PUBLIC_REMOTE_ASSET_BASE_URL; all four apps need SEKAI_API_BASE_URL for
+    # server-side dynamic notifications. The i18n URL is usable as-is for the
+    # default English dictionary source.
     env:
       SEKAI_MASTER_API_BASE_URL: ""
       SEKAI_API_BASE_URL: ""
@@ -82,7 +85,10 @@ apps:
       repository: docker.dnaroma.eu/sekai-viewer-reborn/tools-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
-    env: {}
+    # tools-site reads SEKAI_API_BASE_URL for server-side dynamic
+    # notifications. Set this empty value before deploying.
+    env:
+      SEKAI_API_BASE_URL: ""
     envFrom: []
     extraEnv: []
     ingress:
@@ -102,7 +108,10 @@ apps:
       repository: docker.dnaroma.eu/sekai-viewer-reborn/media-lab-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
-    env: {}
+    # media-lab-site reads SEKAI_API_BASE_URL for server-side dynamic
+    # notifications. Set this empty value before deploying.
+    env:
+      SEKAI_API_BASE_URL: ""
     envFrom: []
     extraEnv: []
     ingress:
@@ -122,7 +131,10 @@ apps:
       repository: docker.dnaroma.eu/sekai-viewer-reborn/account-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
-    env: {}
+    # account-site reads SEKAI_API_BASE_URL for server-side dynamic
+    # notifications. Set this empty value before deploying.
+    env:
+      SEKAI_API_BASE_URL: ""
     envFrom: []
     extraEnv: []
     ingress:

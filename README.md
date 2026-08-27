@@ -256,12 +256,12 @@ Validate and render the chart:
 helm lint deploy/helm/sekai-viewer-reborn
 helm template viewer deploy/helm/sekai-viewer-reborn \
   --namespace viewer \
-  --set apps.tools-site.enabled=false \
-  --set apps.media-lab-site.enabled=false \
-  --set apps.account-site.enabled=false \
   --set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
   --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
-  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com
+  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com \
+  --set-string apps.tools-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.media-lab-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.account-site.env.SEKAI_API_BASE_URL=https://api.example.com
 ```
 
 Install or upgrade all enabled apps:
@@ -272,7 +272,10 @@ helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
   --create-namespace \
   --set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
   --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
-  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com
+  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com \
+  --set-string apps.tools-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.media-lab-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.account-site.env.SEKAI_API_BASE_URL=https://api.example.com
 ```
 
 Disable apps that are not being deployed with, for example,
