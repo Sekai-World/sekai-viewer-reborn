@@ -25,6 +25,77 @@ export const isRecord = (value: unknown): value is Record<string, unknown> =>
 export const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
 
+// Precompiled matcher for ASCII C0 control characters (U+0000–U+001F) and DEL
+// (U+007F). The control characters are intentional defense-in-depth here, so the
+// `no-control-regex` rule is disabled for this one expression.
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHAR_RE = new RegExp("[\\u0000-\\u001f\\u007f]");
+
+/**
+ * Returns true for href values that are safe to render as a link target.
+ *
+ * Allowed values:
+ * - Relative references (path, "/", "./", "../", "#", "?", or a bare path
+ *   segment) which carry no scheme.
+ * - Absolute `http:` / `https:` URLs (scheme matched case-insensitively).
+ *
+ * Rejected values (defense in depth for persisted or legacy API records that
+ * may carry an executable payload in `action.href`):
+ * - Any scheme other than http/https (e.g. `javascript:`, `data:`,
+ *   `vbscript:`, `mailto:`, `ftp:`).
+ * - Protocol-relative URLs beginning with `//`, which inherit the page's
+ *   scheme and can point at an arbitrary external host.
+ * - Values containing a backslash. Some URL parsers normalize backslashes to
+ *   forward slashes, so `"\/\/host"` or `"\host\path"` can resolve to a
+ *   protocol-relative or external URL; backslashes never appear in legitimate
+ *   relative or http/https hrefs.
+ * - Scheme-like tokens with embedded whitespace/control characters
+ *   (e.g. `java<tab>script:`), which browsers may still treat as a scheme.
+ */
+export const isSafeHref = (href: unknown): boolean => {
+  if (typeof href !== "string") {
+    return false;
+  }
+  const trimmed = href.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+
+  // Reject ASCII C0 control characters (U+0000–U+001F) and DEL (U+007F).
+  // Browser URL parsing can normalize embedded control characters (e.g. tab,
+  // newline, carriage return) into host/path separators, leaking to an
+  // external or protocol-relative host even inside an otherwise-relative path.
+  if (CONTROL_CHAR_RE.test(trimmed)) {
+    return false;
+  }
+
+  // Backslashes are never valid in a relative or http/https href and can be
+  // normalized to "/" by some parsers, leaking to an external host.
+  if (trimmed.includes("\\")) {
+    return false;
+  }
+
+  // Protocol-relative URLs ("//host/path") inherit the page scheme.
+  if (trimmed.startsWith("//")) {
+    return false;
+  }
+
+  // Detect a scheme as the token before the first ":" that occurs before any
+  // "/", "?", or "#". A colon inside an authority/path/query (e.g. a port) is
+  // not a scheme separator. Without a scheme the reference is relative.
+  const schemeEnd = trimmed.indexOf(":");
+  if (schemeEnd !== -1) {
+    const beforeColon = trimmed.slice(0, schemeEnd);
+    if (beforeColon.includes("/") || beforeColon.includes("?") || beforeColon.includes("#")) {
+      return true;
+    }
+    const scheme = beforeColon.toLowerCase();
+    return scheme === "http" || scheme === "https";
+  }
+
+  return true;
+};
+
 /**
  * Normalizes the optional `action` object of a global notice. Returns
  * undefined when the action is absent, null, or missing required fields so the
@@ -37,7 +108,7 @@ const normalizeAction = (value: unknown): GlobalNoticeAction | undefined => {
 
   const label = value.label;
   const href = value.href;
-  if (!isNonEmptyString(label) || !isNonEmptyString(href)) {
+  if (!isNonEmptyString(label) || !isNonEmptyString(href) || !isSafeHref(href)) {
     return undefined;
   }
 
