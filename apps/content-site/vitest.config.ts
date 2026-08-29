@@ -68,6 +68,8 @@ export default defineConfig({
       include: [
         "src/lib/i18n/runtime.ts",
         "src/lib/tools-site.ts",
+        "src/lib/server/music-list.ts",
+        "src/lib/server/music-detail.ts",
         "src/lib/server/unit-detail.ts",
         "src/lib/domain/unit-detail.ts",
         "src/lib/domain/unit-icon.ts",
