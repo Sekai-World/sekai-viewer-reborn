@@ -1,4 +1,5 @@
 import type { MusicDetail, MusicDifficulty, MusicVocal } from "$lib/domain/music-detail";
+import { parseMusicCategories } from "./music-list";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -142,11 +143,7 @@ const parseMusicDetail = (payload: unknown): MusicDetail | null => {
     return null;
   }
 
-  const categories = Array.isArray(musicNode.categories)
-    ? (musicNode.categories as unknown[])
-        .map((v) => getString(v))
-        .filter((v): v is string => v !== null)
-    : [];
+  const categories = parseMusicCategories(musicNode.categories);
 
   const difficultiesRaw = Array.isArray(root.difficulties) ? root.difficulties : [];
   const difficulties = difficultiesRaw

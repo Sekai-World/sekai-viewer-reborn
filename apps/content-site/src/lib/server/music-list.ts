@@ -189,7 +189,25 @@ const pickMusicDifficultyLevels = (
   return [];
 };
 
-const parseMusicListItem = (payload: unknown): MusicListItem | null => {
+/**
+ * Normalizes the future master-api canonical `categories` field (a `string[]`)
+ * into a stable `string[]`. Missing, non-array, or malformed input (null,
+ * numbers, objects, empty strings) is collapsed to `[]` so downstream UI code
+ * can always rely on an array of non-empty category strings.
+ */
+export const parseMusicCategories = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const normalized = value
+    .map((entry) => getString(entry))
+    .filter((entry): entry is string => entry !== null);
+
+  return [...new Set(normalized)];
+};
+
+export const parseMusicListItem = (payload: unknown): MusicListItem | null => {
   const root = getObject(payload);
   if (!root) {
     return null;
@@ -201,9 +219,7 @@ const parseMusicListItem = (payload: unknown): MusicListItem | null => {
     return null;
   }
 
-  const categories = Array.isArray(root.categories)
-    ? root.categories.map(getString).filter((value): value is string => value !== null)
-    : [];
+  const categories = parseMusicCategories(root.categories);
   const difficultyLevels = pickMusicDifficultyLevels(root);
 
   return {

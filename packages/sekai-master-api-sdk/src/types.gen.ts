@@ -631,6 +631,7 @@ export type SharedMusicArtistResponse = {
 };
 
 export type SharedMusicDetailResponse = {
+    categories?: Array<string>;
     difficulties?: Array<SharedMusicDifficultyDetailResponse>;
     music?: SharedMusicObjectResponse;
     tags?: Array<string>;
@@ -659,6 +660,7 @@ export type SharedMusicDifficultyResponse = {
 export type SharedMusicListItemResponse = {
     arranger?: unknown;
     assetbundleName?: unknown;
+    categories?: Array<string>;
     composer?: unknown;
     creatorArtist?: SharedMusicArtistResponse;
     dancerCount?: unknown;
@@ -684,6 +686,7 @@ export type SharedMusicListResponse = {
 export type SharedMusicObjectResponse = {
     arranger?: unknown;
     assetbundleName?: unknown;
+    categories?: Array<string>;
     composer?: unknown;
     creatorArtist?: SharedMusicArtistResponse;
     dancerCount?: unknown;
