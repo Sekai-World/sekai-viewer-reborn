@@ -34,6 +34,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
       region,
       queryState.spoiler,
       queryState.hasAppend,
+      queryState.categories,
       queryState.tags,
       queryState.level
     ).then((catalog) => buildMusicListFilterMeta(catalog))
@@ -47,6 +48,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
     region,
     queryState.spoiler,
     queryState.hasAppend,
+    queryState.categories,
     queryState.tags,
     queryState.level
   )
