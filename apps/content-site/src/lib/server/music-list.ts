@@ -319,18 +319,24 @@ export const logMusicListFilterDebug = (label: string, details: Record<string, u
   console.debug("[content-site:music-filter]", label, details);
 };
 
+const normalizeCategories = (values: string[]): string[] =>
+  [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+
 export const fetchMusicCatalog = async (
   baseUrl: string,
   region: string,
   includeSpoilerContent: boolean,
   hasAppend: boolean,
+  categories: string[],
   tags: string[],
   playLevel: string
 ): Promise<MusicListItem[]> => {
+  const normalizedCategories = normalizeCategories(categories);
+  const categoryQuery = normalizedCategories.join(",");
   const normalizedTags = normalizeMusicTagFilters(tags);
   const tagQuery = normalizedTags.join(",");
   const normalizedPlayLevel = playLevel.trim();
-  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}|${tagQuery}|${normalizedPlayLevel}`;
+  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}|${categoryQuery}|${tagQuery}|${normalizedPlayLevel}`;
   const now = Date.now();
   const cached = catalogCache.get(key);
   if (cached && cached.expiresAt > now) {
@@ -349,6 +355,7 @@ export const fetchMusicCatalog = async (
         page,
         page_size: MUSIC_CATALOG_REQUEST_PAGE_SIZE,
         spoiler: includeSpoilerContent,
+        category: categoryQuery || undefined,
         tag: tagQuery || undefined,
         playLevel: normalizedPlayLevel || undefined,
         hasAppend: hasAppend || undefined,

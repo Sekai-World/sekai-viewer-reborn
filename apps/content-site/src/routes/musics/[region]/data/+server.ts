@@ -36,6 +36,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
       region,
       queryState.spoiler,
       queryState.hasAppend,
+      queryState.categories,
       queryState.tags,
       queryState.level
     );
