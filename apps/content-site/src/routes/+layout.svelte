@@ -11,7 +11,7 @@
   } from "$lib/settings/content-display";
   import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n/config";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
-  import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
+  import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import {
     createI18nTranslator,
@@ -692,6 +692,11 @@
   <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
+<GlobalNotificationBanner
+  notices={data.globalNotices}
+  externalLinkLabel={layoutTranslate("notification.opensInNewWindow")}
+/>
+
 {#if $isLocaleLoading || localeLoadingProgress > 0}
   <div class="pointer-events-none fixed inset-x-0 top-2 z-240 flex justify-center px-4">
     <div
@@ -826,6 +831,7 @@
 <ViewerShell
   drawerId="content-site-drawer"
   navTitle="Sekai Viewer"
+  siteVersion={data.siteVersion}
   desktopRailOpen={true}
   {openSidebarLabel}
   {closeSidebarLabel}

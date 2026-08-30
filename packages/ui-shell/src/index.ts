@@ -7,6 +7,7 @@ export { default as AssetImage } from "./asset-image.svelte";
 export { default as AudioPlayer } from "./audio-player.svelte";
 export { default as ThemeControls } from "./theme-controls.svelte";
 export { default as UnitIconBadge } from "./unit-icon-badge.svelte";
+export { default as GlobalNotificationBanner } from "./global-notification-banner.svelte";
 export {
   getUnitIconBorderColor,
   normalizeUnitIconSlug,
@@ -23,3 +24,15 @@ export type {
 export type { UnitIconSlug } from "./unit-icon-data";
 export type { SidebarItem } from "./viewer-shell.types";
 export type { RegionOption } from "./region-switcher.types";
+export {
+  fetchGlobalNotices,
+  normalizeGlobalNotice,
+  parseGlobalNoticesPayload,
+  stripTrailingSlashes
+} from "./global-notices";
+export type {
+  GlobalNotice,
+  GlobalNoticeAction,
+  GlobalNoticeSeverity,
+  GlobalNotificationBannerProps
+} from "./global-notification-banner.types";

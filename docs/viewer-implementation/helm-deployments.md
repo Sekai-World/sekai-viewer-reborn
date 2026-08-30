@@ -42,7 +42,7 @@ The startup, liveness, and readiness probes are TCP probes against the named
 `http` port, which is container port 3000. The chart does not assume an HTTP
 health endpoint.
 
-## Content-site configuration
+## Application environment configuration
 
 `apps.content-site.env` contains these default keys:
 
@@ -52,26 +52,28 @@ health endpoint.
 - `PUBLIC_SEKAI_I18N_BASE_URL`: defaults to
   `https://sekai-world.github.io/sekai-i18n-reborn`
 
-The other app `env` maps are empty by default. `envFrom` and `extraEnv` can be
-set per app for simple Secret/ConfigMap references and additional environment
-entries. Environment map values are rendered as quoted strings, including
-empty strings.
+Every app (`content-site`, `tools-site`, `media-lab-site`, `account-site`)
+declares an empty `SEKAI_API_BASE_URL` default for server-side dynamic
+notifications; the three non-content apps provide only that key by default
+(`env` maps are otherwise empty). `envFrom` and `extraEnv` can be set per app
+for simple Secret/ConfigMap references and additional environment entries.
+Environment map values are rendered as quoted strings, including empty strings.
 
 ## Confirmed workflow
 
-From the repository root, validate the chart and render a content-site-only
-release:
+From the repository root, validate the chart and render a release that exposes
+`SEKAI_API_BASE_URL` for every enabled application:
 
 ```bash
 helm lint deploy/helm/sekai-viewer-reborn
 helm template viewer deploy/helm/sekai-viewer-reborn \
   --namespace viewer \
-  --set apps.tools-site.enabled=false \
-  --set apps.media-lab-site.enabled=false \
-  --set apps.account-site.enabled=false \
   --set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
   --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
-  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com
+  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com \
+  --set-string apps.tools-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.media-lab-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.account-site.env.SEKAI_API_BASE_URL=https://api.example.com
 ```
 
 Install or upgrade a release with an explicitly selected namespace:
@@ -82,7 +84,10 @@ helm upgrade --install viewer deploy/helm/sekai-viewer-reborn \
   --create-namespace \
   --set-string apps.content-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
   --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
-  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com
+  --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com \
+  --set-string apps.tools-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.media-lab-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.account-site.env.SEKAI_API_BASE_URL=https://api.example.com
 ```
 
 Use `--set apps.<app-name>.enabled=false` for an app that should not be
@@ -93,7 +98,9 @@ release namespace with `--namespace` and `--create-namespace`. Use
 
 The canonical operator workflow is documented in the chart README: copy
 `values.yaml` to an operator-owned file, replace image/Ingress/TLS
-placeholders, set the required content-site URLs, lint and render before
+placeholders, set the required URLs (`SEKAI_API_BASE_URL` for every app, plus
+the content-site-only `SEKAI_MASTER_API_BASE_URL` and
+`PUBLIC_REMOTE_ASSET_BASE_URL`), lint and render before
 applying, and use `helm upgrade --install --atomic --timeout` for installation
 and upgrades. `--atomic` waits and automatically rolls back a failed install or
 upgrade. Use immutable versioned image tags, check `helm status` and `kubectl

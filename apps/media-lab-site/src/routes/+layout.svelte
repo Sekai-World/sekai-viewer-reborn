@@ -4,8 +4,10 @@
   import { page } from "$app/state";
   import { onMount, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
+  import { GlobalNotificationBanner } from "@platform/ui-shell";
+  import type { LayoutData } from "./$types";
 
-  let { children }: { children: Snippet } = $props();
+  let { children, data }: { children: Snippet; data: LayoutData } = $props();
   let useFallbackRouteTransition = $state(true);
   const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
 
@@ -44,6 +46,8 @@
     };
   });
 </script>
+
+<GlobalNotificationBanner notices={data.globalNotices} />
 
 {#if useFallbackRouteTransition}
   {#key navigationTransitionKey}

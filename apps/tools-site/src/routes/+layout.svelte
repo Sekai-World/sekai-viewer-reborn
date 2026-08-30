@@ -5,7 +5,7 @@
   import { onNavigate } from "$app/navigation";
   import { navigating, page } from "$app/state";
   import Icon from "@iconify/svelte";
-  import { ViewerShell, type SidebarItem } from "@platform/ui-shell";
+  import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import type { LayoutData } from "./$types";
@@ -186,10 +186,16 @@
   <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
+<GlobalNotificationBanner
+  notices={data.globalNotices}
+  externalLinkLabel={translate("notification.opensInNewWindow")}
+/>
+
 <ViewerShell
   drawerId="tools-site-drawer"
   navTitle={translate("shell.title")}
   navBadge={translate("shell.badge")}
+  siteVersion={data.siteVersion}
   skipToMainLabel={translate("navigation.skipToMain")}
   openSidebarLabel={translate("navigation.openSidebar")}
   closeSidebarLabel={translate("navigation.closeSidebar")}

@@ -2,7 +2,7 @@ name: PR Agent
 
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
   issue_comment:
     types: [created]
 
@@ -77,6 +77,8 @@ jobs:
           # Defense-in-depth: skip tools that require elevated permissions
           # (e.g. /update_changelog commit-push mode); we never grant contents: write.
           config.restricted_mode: "true"
+          github_action_config.handle_push_trigger: "true"
+          github_action_config.push_commands: '["/review"]'
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "false"
           github_action_config.auto_improve: "false"
