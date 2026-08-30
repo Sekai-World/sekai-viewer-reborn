@@ -1,5 +1,18 @@
 # @apps/content-site
 
+## 0.0.2
+
+### Patch Changes
+
+- 7e65cc0: Add an opt-in, dismissible global notification banner with accessible severity states and persistent local dismissal across all sites. Each site's root layout now loads active notifications server-side from the sekai-api `GET /notifications` endpoint (via `SEKAI_API_BASE_URL`) and falls back to rendering nothing when the feed is unavailable or misconfigured. The duplicated per-app notification parsers and request helpers have been extracted into shared, exported plain TypeScript utilities in `@platform/ui-shell` (`normalizeGlobalNotice`, `parseGlobalNoticesPayload`, `fetchGlobalNotices`, `stripTrailingSlashes`), with thin per-app adapters owning only private env/config access.
+- 05ab7b4: Expose and consume the canonical master-api music `categories` field (a `string[]`) sourced from independent music category records. Malformed or missing categories are normalized to an empty array, and the shared `parseMusicCategories` helper keeps list and detail parsing consistent.
+- 78d7c11: Pass selected music categories through the music list catalog request so category filters return matching songs.
+- 31c209f: Reuse localized common labels across content pages, consolidate duplicate content-site labels, remove unused source keys, and localize breadcrumbs consistently with sidebar navigation. Add optional Event Tracker entry points to the home current-event card and event detail page.
+- Updated dependencies [7e65cc0]
+- Updated dependencies [05ab7b4]
+  - @platform/ui-shell@0.4.0
+  - @platform/sekai-master-api-sdk@1.0.2
+
 ## 0.0.1
 
 ### Patch Changes
