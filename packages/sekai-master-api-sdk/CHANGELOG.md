@@ -1,5 +1,11 @@
 # @platform/sekai-master-api-sdk
 
+## 1.0.2
+
+### Patch Changes
+
+- 05ab7b4: Expose and consume the canonical master-api music `categories` field (a `string[]`) sourced from independent music category records. Malformed or missing categories are normalized to an empty array, and the shared `parseMusicCategories` helper keeps list and detail parsing consistent.
+
 ## 1.0.1
 
 ### Patch Changes
