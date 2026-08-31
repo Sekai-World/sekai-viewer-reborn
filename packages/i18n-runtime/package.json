@@ -16,7 +16,7 @@
     "check": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src --ext .ts",
     "test": "vitest run --config ./vitest.config.ts",
-    "test:coverage": "vitest run --config ./vitest.config.ts --coverage && node ../../scripts/coverage/normalize-lcov.mjs coverage/lcov.info packages/i18n-runtime"
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage && node ../../scripts/lcov/normalize-lcov.mjs coverage/lcov.info packages/i18n-runtime"
   },
   "dependencies": {
     "svelte-i18n": "^4.0.1"
