@@ -23,6 +23,108 @@ scaffolded placeholders and are **not** feature-complete.
 | `media-lab-site` | Exploratory | Scaffold only; no feature work started. |
 | `account-site`   | Exploratory | Scaffold only; no feature work started. |
 
+## media-lab-site — Media Lab
+
+`media-lab-site` is the workspace's general-purpose interactive media
+laboratory, not only a 3D asset viewer. Its planned feature areas are:
+
+- **3D Asset and Animation Lab** — inspect exported Unity models and compatible
+  motion data.
+- **Live2D Model Viewer** — preview Cubism models, motions, expressions, and
+  related assets.
+- **StoryReader** — play story scenarios with Live2D characters, backgrounds,
+  voice, music, video, and translated text.
+
+The Live2D and StoryReader extraction and migration analysis is tracked in
+[`docs/viewer-implementation/live2d-story-reader-extraction-roadmap.md`](viewer-implementation/live2d-story-reader-extraction-roadmap.md).
+
+These areas may share asset loading, media URL resolution, caching, playback
+controls, localization, and diagnostics, but their runtimes should remain
+separate where their asset formats and lifecycle requirements differ.
+
+### Planned — Unity Asset Viewer
+
+The future media lab should provide a browser-based viewer for the Unity assets
+exported by `sekai-assets-updater`. This is a separate consumer workflow: the
+updater remains responsible for downloading bundles and exporting individual
+model files, while the media lab is responsible for presenting compatible
+assets together.
+
+The first supported inputs should remain separate files and preserve their
+source bundle identity:
+
+- FBX model exports with their sibling texture files.
+- Unity animation assets extracted from `model3d/motion/*` bundles.
+- Model, animation, and bundle metadata needed to discover and validate
+  compatibility.
+
+This feature must not assume that every `model3d` or `virtual_live` bundle is a
+mesh. Model discovery should use explicit metadata and/or inspected asset
+capabilities rather than namespace names alone. `live2d/*` remains a separate
+Live2D asset/post-processing concern and is not part of this 3D viewer's model
+pipeline.
+
+### Planned — Implementation Route
+
+1. **Asset contract** — document a stable manifest for model bundles, texture
+   files, animation bundles, Unity versions, source bundle names, and any
+   compatibility identifiers. Preserve the updater's per-bundle directory
+   structure instead of relying on a flat `model.fbx` filename.
+2. **Browser model loading** — add a client-side 3D runtime to
+   `apps/media-lab-site` and establish a supported browser format. Prefer
+   glTF/GLB as a derived viewing format, while treating FBX as an ingestion
+   format; do not require the updater repository to perform model/animation
+   assembly.
+3. **Animation ingestion** — parse or pre-convert Unity `.anim` clips in a
+   dedicated viewer-side or offline toolchain. Keep clips separate from model
+   exports and expose their names, source bundles, and required rig/Avatar
+   information.
+4. **Compatibility and binding** — match clips to models by verified skeleton
+   paths, bone names, Avatar/Animator metadata, BlendShape names, Unity version,
+   and source dependencies. Do not bind animations solely by character or file
+   name.
+5. **Media lab UX** — provide model and animation selectors, a compatibility
+   state, texture/material diagnostics, playback controls, camera controls, and
+   clear error states for missing dependencies or unsupported clips.
+6. **Validation** — test representative character models, stage/lobby models,
+   Virtual Live assets, facial clips, and motion clips in the browser. Confirm
+   that models without compatible animations still render correctly and that
+   animation failures do not hide the underlying model.
+
+### Planned — Live2D Model Viewer
+
+Build a standalone Live2D model showcase in `media-lab-site`, sharing only
+framework-neutral asset loading and media utilities with StoryReader. The
+initial slice should cover model metadata, Cubism model/motion loading,
+expressions, bounded preloading, playback controls, and localized loading or
+unsupported-asset states. The player should not depend on the StoryReader
+scenario interpreter.
+
+### Planned — StoryReader
+
+Migrate the existing Live2D StoryReader as a vertical slice: one route, one
+supported story type, one data adapter, and one player flow before expanding
+story coverage. Keep the imperative PixiJS/Cubism playback runtime behind a
+framework-neutral API, with SvelteKit responsible for route, data, settings,
+and lifecycle integration. The detailed extraction plan covers scenario
+normalization, media URL resolution, model and motion preloading, checkpoint
+playback, voice/audio synchronization, translation lookup, and legacy parity
+validation.
+
+Live2D StoryReader assets are not part of the 3D FBX export pipeline. They
+should remain discoverable through their own asset contracts and post-processing
+outputs.
+
+### Exploratory — Runtime Packaging
+
+Possible later packaging strategies include a model plus multiple animation
+clips in one derived GLB, or separate model and animation artifacts loaded by a
+runtime binding layer. Choose between them after the asset contract and
+compatibility metadata are available. Full character assembly, automatic rig
+retargeting, and universal FBX animation export are explicitly outside the
+current updater scope and should be implemented as viewer-side or standalone
+tooling if needed.
+
 ## content-site — Content Catalogue
 
 ### Available
