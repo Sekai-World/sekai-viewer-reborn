@@ -20,21 +20,14 @@ export const normalizeThemeName = (value: string | null): ThemeName =>
 export const resolveThemeMode = (mode: ThemeMode, systemTheme: ResolvedTheme): ResolvedTheme =>
   mode === "auto" ? systemTheme : mode;
 
-const hasDataset = (element: Element): element is Element & { dataset: DOMStringMap } =>
-  "dataset" in element;
-
 export const applyDocumentTheme = (
-  documentElement: Element,
+  documentElement: HTMLElement,
   name: ThemeName,
   mode: ThemeMode,
   systemTheme: ResolvedTheme
 ): ResolvedTheme => {
   const resolvedTheme = resolveThemeMode(mode, systemTheme);
-  if (hasDataset(documentElement)) {
-    documentElement.dataset.theme = name;
-  } else {
-    documentElement.setAttribute("data-theme", name);
-  }
+  documentElement.dataset.theme = name;
   documentElement.classList.toggle("dark", resolvedTheme === "dark");
   return resolvedTheme;
 };

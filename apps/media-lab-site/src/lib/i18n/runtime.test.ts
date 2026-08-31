@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   createI18nTranslator,
   getLocalI18nMessages,
@@ -21,12 +21,9 @@ describe("media-lab-site local i18n runtime", () => {
     expect(translate("missing", "Fallback")).toBe("Fallback");
   });
 
-  it("resolves a local bundle without using the optional fetcher", async () => {
-    const fetcher = vi.fn();
-
-    await expect(loadI18nMessageBundle("en", ["common"], fetcher)).resolves.toEqual(
+  it("resolves the local bundle for the requested namespaces", async () => {
+    await expect(loadI18nMessageBundle("en", ["common"])).resolves.toEqual(
       getLocalI18nMessages(["common"])
     );
-    expect(fetcher).not.toHaveBeenCalled();
   });
 });

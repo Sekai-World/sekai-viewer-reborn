@@ -1,11 +1,7 @@
-import {
-  repoLocaleByUiLocale,
-  supportedUiLocales,
-  type SupportedUiLocale
-} from "@platform/i18n-runtime";
+import type { SupportedUiLocale } from "@platform/i18n-runtime";
 
-export { repoLocaleByUiLocale, supportedUiLocales };
-export type { SupportedUiLocale };
+export { repoLocaleByUiLocale, supportedUiLocales } from "@platform/i18n-runtime";
+export type { SupportedUiLocale } from "@platform/i18n-runtime";
 
 export const uiLocaleNameByCode: Record<SupportedUiLocale, string> = {
   en: "English",

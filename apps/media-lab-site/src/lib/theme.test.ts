@@ -32,12 +32,12 @@ describe("media-lab-site theme preferences", () => {
           enabled ? classes.add(name) : classes.delete(name)
       },
       setAttribute: vi.fn()
-    } as unknown as Element;
+    } as unknown as HTMLElement;
 
     expect(resolveThemeMode("auto", "dark")).toBe("dark");
     expect(resolveThemeMode("light", "dark")).toBe("light");
     expect(applyDocumentTheme(element, "sakura", "auto", "dark")).toBe("dark");
-    expect((element as Element & { dataset: DOMStringMap }).dataset.theme).toBe("sakura");
+    expect(element.dataset.theme).toBe("sakura");
     expect(classes.has("dark")).toBe(true);
     expect(element.setAttribute).not.toHaveBeenCalled();
   });

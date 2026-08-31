@@ -1,4 +1,4 @@
-import type { I18nFetcher, I18nMessages, I18nTranslator } from "@platform/i18n-runtime";
+import type { I18nMessages, I18nTranslator } from "@platform/i18n-runtime";
 import commonSourceMessages from "$lib/i18n/messages/common.json";
 
 export const mediaLabI18nNamespaces = ["common"] as const;
@@ -22,12 +22,8 @@ export const getLocalI18nMessages = (namespaces: readonly I18nNamespace[]): I18n
 
 export const loadI18nMessageBundle = async (
   _locale: string,
-  namespaces: readonly I18nNamespace[],
-  fetcher?: I18nFetcher
-): Promise<I18nMessages> => {
-  void fetcher;
-  return getLocalI18nMessages(namespaces);
-};
+  namespaces: readonly I18nNamespace[]
+): Promise<I18nMessages> => getLocalI18nMessages(namespaces);
 
 // Mirrors @platform/i18n-runtime's pure translator: a side-effect-free lookup
 // against the provided messages, safe for SSR and fallback rendering.
