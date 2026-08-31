@@ -21,6 +21,11 @@ Read with `AGENTS.md`; see [`instructions/README.md`](instructions/README.md).
   content-site UI architecture and styling rules.
 - [`roadmap.md`](roadmap.md): high-level platform direction.
 
+## media-lab
+
+- [`media-lab/api-contract-audit.md`](media-lab/api-contract-audit.md):
+  StoryReader/3D asset contract audit and data-source decision (issue #256).
+
 ## viewer-implementation
 
 Implementation patterns, guides, and records:
