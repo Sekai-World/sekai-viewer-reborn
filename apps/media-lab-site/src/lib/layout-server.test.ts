@@ -5,7 +5,7 @@ vi.mock("$lib/server/notifications", () => ({
   fetchGlobalNotices: vi.fn().mockResolvedValue([])
 }));
 
-import { getLocalI18nMessages } from "$lib/i18n/runtime";
+import { getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
 import { DEFAULT_UI_LOCALE } from "$lib/i18n/region";
 import { load } from "../routes/+layout.server";
 
@@ -18,7 +18,7 @@ describe("media-lab-site layout server load", () => {
 
     await expect(load(loadEvent)).resolves.toEqual({
       globalNotices: [],
-      i18nMessages: getLocalI18nMessages(["common"]),
+      i18nMessages: getLocalI18nMessages(mediaLabI18nNamespaces),
       uiLocale: DEFAULT_UI_LOCALE,
       siteVersion: packageJson.version
     });

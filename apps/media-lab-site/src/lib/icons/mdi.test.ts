@@ -8,7 +8,7 @@ describe("media-lab-site mdi icon registration", () => {
   it("registers all shell icons synchronously", async () => {
     await import("./mdi");
 
-    expect(addIcon).toHaveBeenCalledTimes(10);
+    expect(addIcon).toHaveBeenCalledTimes(19);
     expect(addIcon.mock.calls.map(([name]) => name)).toEqual([
       "mdi:menu",
       "mdi:close",
@@ -19,7 +19,16 @@ describe("media-lab-site mdi icon registration", () => {
       "mdi:check",
       "mdi:brightness-auto",
       "mdi:white-balance-sunny",
-      "mdi:weather-night"
+      "mdi:weather-night",
+      "mdi:drama-masks",
+      "mdi:cube-outline",
+      "mdi:book-open-variant",
+      "mdi:arrow-right",
+      "mdi:arrow-left",
+      "mdi:progress-wrench",
+      "mdi:map-search-outline",
+      "mdi:refresh-circle",
+      "mdi:reload"
     ]);
   });
 });

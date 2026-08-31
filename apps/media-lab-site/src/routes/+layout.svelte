@@ -90,6 +90,17 @@
       href: "/",
       icon: "mdi:home-variant-outline",
       active: page.url.pathname === "/"
+    },
+    {
+      label: translate("navigation.live2d"),
+      href: "/live2d",
+      icon: "mdi:drama-masks",
+      active: page.url.pathname.startsWith("/live2d")
+    },
+    {
+      label: translate("navigation.assetViewer"),
+      icon: "mdi:cube-outline",
+      disabled: true
     }
   ]);
 
@@ -317,7 +328,7 @@
 
 {#snippet regionSelector()}
   <div class="flex flex-col gap-2">
-    <span class="px-1 text-xs font-semibold opacity-70">{translate("home.primary")}</span>
+    <span class="px-1 text-xs font-semibold opacity-70">{translate("settings.primaryRegion")}</span>
     <div class="flex flex-wrap gap-1">
       {#each supportedRegions as region (region)}
         <button
@@ -332,7 +343,9 @@
         </button>
       {/each}
     </div>
-    <span class="px-1 text-xs font-semibold opacity-70">{translate("home.secondary")}</span>
+    <span class="px-1 text-xs font-semibold opacity-70"
+      >{translate("settings.secondaryRegion")}</span
+    >
     <div class="flex flex-wrap gap-1">
       {#each supportedRegions as region (region)}
         <button
