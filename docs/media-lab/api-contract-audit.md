@@ -71,13 +71,18 @@ Confirmed legacy URL rules (Moesekai reference, read-only):
 - `storyLoader.ts:188-209` selects the voice path by story type and falls back
   to `part_voice` paths using scenario `character2d` `assetName`/`unit`.
 
-## Discrepancy to resolve (blocking #258)
+## Reborn asset rule and legacy comparison
 
-The reborn roadmap names the `sekai-live2d-assets` bucket for Live2D assets,
-but legacy evidence serves scenario JSONs and story media from **region
-buckets**. Which bucket actually hosts live2d scenario/model assets — and
-whether CORS allows the deployed media-lab origin — must be verified with a
-real asset URL in #258 before the adapter URL rules are frozen.
+The reborn roadmap is authoritative for the new implementation:
+Live2D scenario/model assets use the `sekai-live2d-assets` bucket, with the
+story region passed explicitly to the adapter. The bucket map in
+`apps/content-site/src/lib/assets/index.ts:31-41` records the same convention.
+
+The legacy reference uses region buckets (`{domain}/sekai-{region}-assets`) for
+its scenario and story media paths. That is historical evidence for logical
+object-path patterns only; it does not override the reborn bucket contract.
+The remaining #258 verification is to pin one real `sekai-live2d-assets` URL
+and confirm that deployed media-lab origins have the required CORS access.
 
 ## Data-source strategy decision
 
@@ -114,16 +119,15 @@ before the consuming issues finalize the shapes.
 
 ## Open questions
 
-1. Live2D asset bucket ownership (region bucket vs `sekai-live2d-assets`) and
-   CORS from the deployed origin — verify in #258 with a live asset URL.
-2. A proven live asset URL for one region: URL rules are code-confirmed from
-   the legacy reference, but this audit performed no network fetch. Phase 2
-   must pin one working URL before the adapter freezes.
-3. Upstream availability of 3D compatibility metadata (skeleton paths, bone
+1. A proven `sekai-live2d-assets` URL for one region and CORS from the deployed
+   origin: the reborn bucket rule is decided by the roadmap, but this audit
+   performed no network fetch. Phase 2 must pin one working URL before the
+   adapter freezes.
+2. Upstream availability of 3D compatibility metadata (skeleton paths, bone
    names, Avatar/Animator, BlendShape, Unity version, source bundles): the
    asset pipeline is not in this workspace; #262 must confirm before the
    manifest leaves draft.
-4. `IScenarioData`'s full action/effect surface remains defined by the legacy
+3. `IScenarioData`'s full action/effect surface remains defined by the legacy
    pin (`sekai-viewer@0504bee6:src/story-scenerio.d.ts`); the coverage table
    from real scenario data is #258/#259 work.
 
@@ -134,4 +138,5 @@ before the consuming issues finalize the shapes.
 - `StoryDocument` / `ModelBundleManifest` draft interfaces — §Draft contracts.
 - Cross-repo workflow steps — §Data-source strategy decision, item 3.
 - Region/asset URL assumptions backed by a confirmed sample or explicit
-  blocker — §Open questions 1-2 (explicit blocker, honest state).
+  blocker — §Reborn asset rule and legacy comparison plus §Open questions 1
+  (live URL/CORS verification remains explicit).
