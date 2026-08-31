@@ -353,7 +353,7 @@
 {#snippet themeSelector(close: () => void)}
   <div class="flex flex-col gap-1">
     <span class="px-1 text-xs font-semibold opacity-70">{translate("theme.palette")}</span>
-    <ul class="menu p-0">
+    <ul class="menu w-full p-0">
       {#each themeNames as option (option)}
         <li>
           <button
@@ -378,7 +378,7 @@
     </ul>
     <div class="my-2 h-px bg-base-content/12"></div>
     <span class="px-1 text-xs font-semibold opacity-70">{translate("theme.mode")}</span>
-    <ul class="menu p-0">
+    <ul class="menu w-full p-0">
       {#each themeModes as option (option)}
         <li>
           <button
