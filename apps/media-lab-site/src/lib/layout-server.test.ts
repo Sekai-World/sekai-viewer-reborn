@@ -6,7 +6,7 @@ vi.mock("$lib/server/notifications", () => ({
 }));
 
 import { getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
-import { DEFAULT_UI_LOCALE } from "$lib/i18n/region";
+import { DEFAULT_UI_LOCALE, UI_LOCALE_COOKIE_NAME, supportedUiLocales } from "$lib/i18n/region";
 import { load } from "../routes/+layout.server";
 
 describe("media-lab-site layout server load", () => {
@@ -22,6 +22,7 @@ describe("media-lab-site layout server load", () => {
       uiLocale: DEFAULT_UI_LOCALE,
       siteVersion: packageJson.version
     });
+    expect(loadEvent.cookies.get).toHaveBeenCalledWith(UI_LOCALE_COOKIE_NAME);
   });
 
   it("normalizes the persisted UI locale cookie", async () => {
@@ -31,5 +32,25 @@ describe("media-lab-site layout server load", () => {
     } as unknown as Parameters<typeof load>[0];
 
     await expect(load(loadEvent)).resolves.toMatchObject({ uiLocale: "zh-CN" });
+  });
+
+  it("passes every supported locale cookie through to the layout unchanged", async () => {
+    for (const locale of supportedUiLocales) {
+      const loadEvent = {
+        cookies: { get: vi.fn().mockReturnValue(locale) },
+        fetch: vi.fn()
+      } as unknown as Parameters<typeof load>[0];
+
+      await expect(load(loadEvent)).resolves.toMatchObject({ uiLocale: locale });
+    }
+  });
+
+  it("falls back to the default locale for unsupported cookie values", async () => {
+    const loadEvent = {
+      cookies: { get: vi.fn().mockReturnValue("fr-FR") },
+      fetch: vi.fn()
+    } as unknown as Parameters<typeof load>[0];
+
+    await expect(load(loadEvent)).resolves.toMatchObject({ uiLocale: DEFAULT_UI_LOCALE });
   });
 });

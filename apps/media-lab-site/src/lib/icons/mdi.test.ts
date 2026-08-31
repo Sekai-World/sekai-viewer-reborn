@@ -8,7 +8,7 @@ describe("media-lab-site mdi icon registration", () => {
   it("registers all shell icons synchronously", async () => {
     await import("./mdi");
 
-    expect(addIcon).toHaveBeenCalledTimes(19);
+    expect(addIcon).toHaveBeenCalledTimes(20);
     expect(addIcon.mock.calls.map(([name]) => name)).toEqual([
       "mdi:menu",
       "mdi:close",
@@ -28,7 +28,8 @@ describe("media-lab-site mdi icon registration", () => {
       "mdi:progress-wrench",
       "mdi:map-search-outline",
       "mdi:refresh-circle",
-      "mdi:reload"
+      "mdi:reload",
+      "mdi:translate"
     ]);
   });
 });

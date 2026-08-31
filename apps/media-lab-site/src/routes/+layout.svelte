@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
-  import { onNavigate } from "$app/navigation";
+  import { invalidateAll, onNavigate } from "$app/navigation";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
@@ -9,6 +9,13 @@
   import { onMount, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import {
+    DEFAULT_UI_LOCALE,
+    buildUiLocaleCookie,
+    normalizeUiLocale,
+    supportedUiLocales,
+    type SupportedUiLocale
+  } from "$lib/i18n/region";
   import { provideRegionSelection, supportedRegions } from "$lib/region-selection.svelte";
   import type { LayoutData } from "./$types";
   import {
@@ -30,6 +37,7 @@
   let themeMode = $state<ThemeMode>("auto");
   let isDesktopSettingsMenuOpen = $state(false);
   let isDesktopThemeMenuOpen = $state(false);
+  let isDesktopLanguageMenuOpen = $state(false);
   let isMobileSettingsMenuOpen = $state(false);
 
   // Preserve the media-lab page-switch behavior: keyed fade transitions when
@@ -39,16 +47,30 @@
 
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
 
+  // Literal keys keep `pnpm i18n:check` able to verify externalization; the
+  // option set itself comes from the shared supported-locale list. The Record
+  // type fails svelte-check if the shared locale set ever changes shape.
+  const localeNames = $derived<Record<SupportedUiLocale, string>>({
+    en: translate("language.en"),
+    "ja-JP": translate("language.ja-JP"),
+    "ko-KR": translate("language.ko-KR"),
+    "zh-CN": translate("language.zh-CN"),
+    "zh-TW": translate("language.zh-TW")
+  });
+
   const themeNames: ThemeName[] = ["default", "sakura", "mint"];
   const themeModes: ThemeMode[] = ["auto", "light", "dark"];
   const DESKTOP_SETTINGS_MENU_ID = "media-lab-site-desktop-settings-menu";
   const DESKTOP_THEME_MENU_ID = "media-lab-site-desktop-theme-menu";
+  const DESKTOP_LANGUAGE_MENU_ID = "media-lab-site-desktop-language-menu";
   const MOBILE_SETTINGS_MENU_ID = "media-lab-site-mobile-settings-menu";
   let desktopSettingsMenu: HTMLDivElement | null = null;
   let desktopThemeMenu: HTMLDivElement | null = null;
+  let desktopLanguageMenu: HTMLDivElement | null = null;
   let mobileSettingsMenu: HTMLDivElement | null = null;
   let desktopSettingsButton: HTMLButtonElement | null = null;
   let desktopThemeButton: HTMLButtonElement | null = null;
+  let desktopLanguageButton: HTMLButtonElement | null = null;
   let mobileSettingsButton: HTMLButtonElement | null = null;
 
   const getThemeModeIcon = (mode: ThemeMode): string =>
@@ -71,6 +93,11 @@
     if (isDesktopThemeMenuOpen) {
       isDesktopThemeMenuOpen = false;
       if (focusTrigger) desktopThemeButton?.focus();
+      return true;
+    }
+    if (isDesktopLanguageMenuOpen) {
+      isDesktopLanguageMenuOpen = false;
+      if (focusTrigger) desktopLanguageButton?.focus();
       return true;
     }
     return false;
@@ -112,6 +139,15 @@
     localStorage.setItem(THEME_MODE_STORAGE_KEY, nextMode);
     themeName = nextName;
     themeMode = nextMode;
+  };
+
+  // Persists the normalized locale in the site cookie, then re-runs every load
+  // function so the SSR layout returns the selected locale and its messages.
+  const applyUiLocale = async (localeValue: SupportedUiLocale): Promise<void> => {
+    const nextLocale = normalizeUiLocale(localeValue, DEFAULT_UI_LOCALE);
+    if (nextLocale === data.uiLocale) return;
+    document.cookie = buildUiLocaleCookie(nextLocale);
+    await invalidateAll();
   };
 
   // `onNavigate` must be registered during component initialisation; calling it
@@ -162,6 +198,10 @@
       if (isDesktopThemeMenuOpen)
         closeIfClickedOutside(desktopThemeMenu, event.target, () => {
           isDesktopThemeMenuOpen = false;
+        });
+      if (isDesktopLanguageMenuOpen)
+        closeIfClickedOutside(desktopLanguageMenu, event.target, () => {
+          isDesktopLanguageMenuOpen = false;
         });
     };
     const handleDocumentKeydown = (event: KeyboardEvent): void => {
@@ -272,6 +312,37 @@
           </div>
         {/if}
       </div>
+      <div
+        class="dropdown dropdown-end"
+        class:dropdown-open={isDesktopLanguageMenuOpen}
+        bind:this={desktopLanguageMenu}
+      >
+        <button
+          bind:this={desktopLanguageButton}
+          type="button"
+          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
+          aria-label={`${translate("aria.switchUiLanguage")}: ${localeNames[data.uiLocale]}`}
+          aria-haspopup="true"
+          aria-expanded={isDesktopLanguageMenuOpen}
+          aria-controls={DESKTOP_LANGUAGE_MENU_ID}
+          title={`${translate("aria.switchUiLanguage")}: ${localeNames[data.uiLocale]}`}
+          onclick={() => {
+            isDesktopLanguageMenuOpen = !isDesktopLanguageMenuOpen;
+          }}
+        >
+          <Icon icon="mdi:translate" class="size-4" aria-hidden="true" />
+        </button>
+        {#if isDesktopLanguageMenuOpen}
+          <div
+            id={DESKTOP_LANGUAGE_MENU_ID}
+            class="dropdown-content z-120 mt-3 w-max min-w-44 max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+          >
+            {@render languageSelector(() => {
+              isDesktopLanguageMenuOpen = false;
+            })}
+          </div>
+        {/if}
+      </div>
     </div>
     <div class="sm:hidden">
       <div
@@ -304,6 +375,8 @@
             {@render regionSelector()}
             <div class="my-3 h-px bg-base-content/12"></div>
             {@render themeSelector(() => {})}
+            <div class="my-3 h-px bg-base-content/12"></div>
+            {@render languageSelector(() => {})}
           </div>
         {/if}
       </div>
@@ -360,6 +433,33 @@
         </button>
       {/each}
     </div>
+  </div>
+{/snippet}
+
+{#snippet languageSelector(close: () => void)}
+  <div class="flex flex-col gap-1">
+    <span class="px-1 text-xs font-semibold opacity-70"
+      >{translate("settings.interfaceLanguage")}</span
+    >
+    <ul class="menu w-full p-0">
+      {#each supportedUiLocales as locale (locale)}
+        <li>
+          <button
+            type="button"
+            class={data.uiLocale === locale ? "menu-active font-semibold" : ""}
+            aria-current={data.uiLocale === locale ? "true" : undefined}
+            onclick={() => {
+              void applyUiLocale(locale).then(close);
+            }}
+          >
+            <span>{localeNames[locale]}</span>
+            {#if data.uiLocale === locale}
+              <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
+            {/if}
+          </button>
+        </li>
+      {/each}
+    </ul>
   </div>
 {/snippet}
 

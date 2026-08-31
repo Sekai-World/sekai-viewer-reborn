@@ -18,6 +18,7 @@ import progressWrench from "@iconify-icons/mdi/progress-wrench";
 import mapSearchOutline from "@iconify-icons/mdi/map-search-outline";
 import refreshCircle from "@iconify-icons/mdi/refresh-circle";
 import reload from "@iconify-icons/mdi/reload";
+import translate from "@iconify-icons/mdi/translate";
 
 addIcon("mdi:menu", menu);
 addIcon("mdi:close", close);
@@ -38,3 +39,4 @@ addIcon("mdi:progress-wrench", progressWrench);
 addIcon("mdi:map-search-outline", mapSearchOutline);
 addIcon("mdi:refresh-circle", refreshCircle);
 addIcon("mdi:reload", reload);
+addIcon("mdi:translate", translate);
