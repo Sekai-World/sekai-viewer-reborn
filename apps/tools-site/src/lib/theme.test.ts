@@ -12,15 +12,14 @@ describe("tools-site theme preferences", () => {
   });
 
   it("resolves auto against the system theme and updates a document-like element", () => {
-    const attributes = new Map<string, string>();
     const classes = new Set<string>();
     const element = {
-      setAttribute: (name: string, value: string) => attributes.set(name, value),
+      dataset: {} as DOMStringMap,
       classList: { toggle: (name: string, enabled: boolean) => enabled ? classes.add(name) : classes.delete(name) }
-    } as unknown as Element;
+    } as unknown as HTMLElement;
     expect(resolveThemeMode("auto", "dark")).toBe("dark");
     expect(applyDocumentTheme(element, "sakura", "auto", "dark")).toBe("dark");
-    expect(attributes.get("data-theme")).toBe("sakura");
+    expect(element.dataset.theme).toBe("sakura");
     expect(classes.has("dark")).toBe(true);
   });
 });

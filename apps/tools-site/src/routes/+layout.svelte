@@ -303,14 +303,14 @@
 {#snippet themeSelector(close: () => void)}
   <div class="flex flex-col gap-1">
     <span class="px-1 text-xs font-semibold opacity-70">{translate("theme.palette")}</span>
-    <ul class="menu p-0">
+    <ul class="menu w-full p-0">
       {#each themeNames as option (option)}
         <li><button type="button" class={themeName === option ? "menu-active font-semibold" : ""} onclick={() => { applyTheme(option, themeMode); close(); }}><span class={`size-3 rounded-full border border-base-content/20 ${option === "default" ? "bg-indigo-500" : option === "sakura" ? "bg-pink-400" : "bg-teal-400"}`} aria-hidden="true"></span>{translate(`theme.${option}`)}{#if themeName === option}<Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />{/if}</button></li>
       {/each}
     </ul>
     <div class="my-2 h-px bg-base-content/12"></div>
     <span class="px-1 text-xs font-semibold opacity-70">{translate("theme.mode")}</span>
-    <ul class="menu p-0">
+    <ul class="menu w-full p-0">
       {#each themeModes as option (option)}
         <li><button type="button" class={themeMode === option ? "menu-active font-semibold" : ""} onclick={() => { applyTheme(themeName, option); close(); }}><Icon icon={getThemeModeIcon(option)} class="size-4 opacity-80" aria-hidden="true" /><span>{translate(`theme.${option}`)}</span>{#if themeMode === option}<Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />{/if}</button></li>
       {/each}

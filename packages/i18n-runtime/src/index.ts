@@ -7,6 +7,67 @@ export type I18nLocaleResolver = (localeValue: string) => string;
 export type I18nTranslator = (key: string, fallback?: string) => string;
 export type I18nRequestToken = { readonly version: number; readonly isCurrent: () => boolean };
 
+export const supportedUiLocales = ["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"] as const;
+
+export type SupportedUiLocale = (typeof supportedUiLocales)[number];
+
+export const DEFAULT_UI_LOCALE: SupportedUiLocale = "en";
+
+export const repoLocaleByUiLocale: Record<SupportedUiLocale, string> = {
+  en: "en",
+  "ja-JP": "ja",
+  "ko-KR": "ko",
+  "zh-CN": "zh-CN",
+  "zh-TW": "zh-TW"
+};
+
+export const normalizeUiLocale = (
+  value: string | null | undefined,
+  fallback: SupportedUiLocale = DEFAULT_UI_LOCALE
+): SupportedUiLocale => {
+  if (value === "en-US" || value === "en-GB") {
+    return "en";
+  }
+
+  if (value === "zh") {
+    return "zh-CN";
+  }
+
+  return value && supportedUiLocales.includes(value as SupportedUiLocale)
+    ? (value as SupportedUiLocale)
+    : fallback;
+};
+
+export const resolveI18nMessageBundle = async (
+  loadBundle: () => Promise<I18nMessages>,
+  fallbackMessages: I18nMessages,
+  timeoutMs = 2_500
+): Promise<I18nMessages> => {
+  try {
+    const bundle = loadBundle();
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<never>((_, reject) => {
+      timeout = setTimeout(() => reject(new Error("i18n bundle deadline exceeded")), timeoutMs);
+      if (
+        typeof timeout === "object" &&
+        timeout !== null &&
+        "unref" in timeout &&
+        typeof (timeout as { unref?: unknown }).unref === "function"
+      ) {
+        (timeout as { unref: () => void }).unref();
+      }
+    });
+
+    try {
+      return await Promise.race([bundle, deadline]);
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+    }
+  } catch {
+    return fallbackMessages;
+  }
+};
+
 export interface RemoteI18nRuntimeOptions {
   baseUrl: string;
   fallbackLocale: string;

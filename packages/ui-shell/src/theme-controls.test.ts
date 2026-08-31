@@ -1,6 +1,40 @@
 import { render, screen } from "@testing-library/svelte";
 import { expect, it, vi } from "vitest";
 import ThemeControls from "./theme-controls.svelte";
+import {
+  applyDocumentTheme,
+  normalizeThemeMode,
+  normalizeThemeName,
+  resolveThemeMode
+} from "./theme-controls.types";
+
+it("normalizes unsupported theme preferences", () => {
+  expect(normalizeThemeMode("dark")).toBe("dark");
+  expect(normalizeThemeMode("unexpected")).toBe("auto");
+  expect(normalizeThemeMode(null)).toBe("auto");
+  expect(normalizeThemeName("mint")).toBe("mint");
+  expect(normalizeThemeName("unexpected")).toBe("default");
+  expect(normalizeThemeName(null)).toBe("default");
+});
+
+it("resolves and applies a theme to an element with a dataset", () => {
+  const classes = new Set<string>();
+  const element = {
+    dataset: {} as DOMStringMap,
+    classList: {
+      toggle: (name: string, enabled: boolean) =>
+        enabled ? classes.add(name) : classes.delete(name)
+    },
+    setAttribute: vi.fn()
+  } as unknown as HTMLElement;
+
+  expect(resolveThemeMode("auto", "dark")).toBe("dark");
+  expect(resolveThemeMode("light", "dark")).toBe("light");
+  expect(applyDocumentTheme(element, "sakura", "auto", "dark")).toBe("dark");
+  expect(element.dataset.theme).toBe("sakura");
+  expect(classes.has("dark")).toBe(true);
+  expect(element.setAttribute).not.toHaveBeenCalled();
+});
 
 it("delegates palette and mode selections to its controlled callbacks", async () => {
   const onThemeNameChange = vi.fn();
@@ -10,7 +44,14 @@ it("delegates palette and mode selections to its controlled callbacks", async ()
     themeMode: "auto",
     paletteLabel: "Palette",
     modeLabel: "Mode",
-    labels: { default: "Default", sakura: "Sakura", mint: "Mint", auto: "Auto", light: "Light", dark: "Dark" },
+    labels: {
+      default: "Default",
+      sakura: "Sakura",
+      mint: "Mint",
+      auto: "Auto",
+      light: "Light",
+      dark: "Dark"
+    },
     onThemeNameChange,
     onThemeModeChange
   });
@@ -27,9 +68,20 @@ it("delegates palette and mode selections to its controlled callbacks", async ()
 it("does not pass unexpected select values to the mode callback", async () => {
   const onThemeModeChange = vi.fn();
   render(ThemeControls, {
-    themeName: "default", themeMode: "auto", paletteLabel: "Palette", modeLabel: "Mode",
-    labels: { default: "Default", sakura: "Sakura", mint: "Mint", auto: "Auto", light: "Light", dark: "Dark" },
-    onThemeNameChange: vi.fn(), onThemeModeChange
+    themeName: "default",
+    themeMode: "auto",
+    paletteLabel: "Palette",
+    modeLabel: "Mode",
+    labels: {
+      default: "Default",
+      sakura: "Sakura",
+      mint: "Mint",
+      auto: "Auto",
+      light: "Light",
+      dark: "Dark"
+    },
+    onThemeNameChange: vi.fn(),
+    onThemeModeChange
   });
   const mode = screen.getByRole("combobox", { name: "Mode" }) as HTMLSelectElement;
   mode.value = "unexpected";

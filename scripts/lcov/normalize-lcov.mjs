@@ -9,7 +9,10 @@ if (!reportPath || !sourcePrefix) {
 
 const contents = await fs.readFile(reportPath, "utf8");
 const normalized = contents.replace(/^SF:(?!\/)(.*)$/gm, (_, sourcePath) => {
-  const repoPath = path.posix.join(sourcePrefix, sourcePath.replaceAll(path.sep, "/"));
+  const normalizedSourcePath = sourcePath.replaceAll(path.sep, "/");
+  const repoPath = normalizedSourcePath.startsWith(`${sourcePrefix}/`)
+    ? normalizedSourcePath
+    : path.posix.join(sourcePrefix, normalizedSourcePath);
   return `SF:${repoPath}`;
 });
 

@@ -1,14 +1,7 @@
-export const supportedUiLocales = ["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"] as const;
+import type { SupportedUiLocale } from "@platform/i18n-runtime";
 
-export type SupportedUiLocale = (typeof supportedUiLocales)[number];
-
-export const repoLocaleByUiLocale: Record<SupportedUiLocale, string> = {
-  en: "en",
-  "ja-JP": "ja",
-  "ko-KR": "ko",
-  "zh-CN": "zh-CN",
-  "zh-TW": "zh-TW"
-};
+export { repoLocaleByUiLocale, supportedUiLocales } from "@platform/i18n-runtime";
+export type { SupportedUiLocale } from "@platform/i18n-runtime";
 
 export const uiLocaleNameByCode: Record<SupportedUiLocale, string> = {
   en: "English",

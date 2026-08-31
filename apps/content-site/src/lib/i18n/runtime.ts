@@ -3,6 +3,7 @@ import { env } from "$env/dynamic/public";
 import {
   createScopedI18nLoader,
   createRemoteI18nRuntime,
+  resolveI18nMessageBundle as resolveSharedI18nMessageBundle,
   type I18nFetcher,
   type I18nMessages,
   type I18nTranslator
@@ -144,24 +145,7 @@ export const resolveI18nMessageBundle = async (
   namespaces: readonly I18nNamespace[],
   timeoutMs = SERVER_I18N_BUNDLE_TIMEOUT_MS
 ): Promise<I18nMessages> => {
-  try {
-    const bundle = loadBundle();
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    const deadline = new Promise<never>((_, reject) => {
-      timeout = setTimeout(() => reject(new Error("i18n bundle deadline exceeded")), timeoutMs);
-      if (typeof timeout === "object" && "unref" in timeout) {
-        timeout.unref();
-      }
-    });
-
-    try {
-      return await Promise.race([bundle, deadline]);
-    } finally {
-      if (timeout !== undefined) clearTimeout(timeout);
-    }
-  } catch {
-    return getLocalI18nMessages(namespaces);
-  }
+  return resolveSharedI18nMessageBundle(loadBundle, getLocalI18nMessages(namespaces), timeoutMs);
 };
 
 export const resolveStreamingMessages = (

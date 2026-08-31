@@ -14,8 +14,17 @@ export {
   resolveUnitIconUrl,
   unitIconSlugs
 } from "./unit-icon-data";
-export { isThemeMode, isThemeName, themeModes, themeNames } from "./theme-controls.types";
-export type { ThemeMode, ThemeName } from "./theme-controls.types";
+export {
+  applyDocumentTheme,
+  isThemeMode,
+  isThemeName,
+  normalizeThemeMode,
+  normalizeThemeName,
+  resolveThemeMode,
+  themeModes,
+  themeNames
+} from "./theme-controls.types";
+export type { ResolvedTheme, ThemeMode, ThemeName } from "./theme-controls.types";
 export type {
   UnitColorResolver,
   UnitIconBadgeVariant,

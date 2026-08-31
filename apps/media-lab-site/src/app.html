@@ -3,6 +3,50 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      (() => {
+        const root = document.documentElement;
+        let themeName = "default";
+        let themeMode = "auto";
+
+        try {
+          const storedThemeName = localStorage.getItem("media_lab_site_theme_name");
+          const storedThemeMode = localStorage.getItem("media_lab_site_theme_mode");
+
+          if (
+            storedThemeName === "default" ||
+            storedThemeName === "sakura" ||
+            storedThemeName === "mint"
+          ) {
+            themeName = storedThemeName;
+          }
+
+          if (
+            storedThemeMode === "light" ||
+            storedThemeMode === "dark" ||
+            storedThemeMode === "auto"
+          ) {
+            themeMode = storedThemeMode;
+          }
+        } catch {
+          // Storage can be unavailable in privacy-restricted browsing contexts.
+        }
+
+        let resolvedTheme = themeMode;
+        if (themeMode === "auto") {
+          try {
+            resolvedTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+          } catch {
+            resolvedTheme = "light";
+          }
+        }
+
+        root.setAttribute("data-theme", themeName);
+        root.classList.toggle("dark", resolvedTheme === "dark");
+      })();
+    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">
