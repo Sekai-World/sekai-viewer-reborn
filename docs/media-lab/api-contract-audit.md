@@ -89,8 +89,8 @@ and confirm that deployed media-lab origins have the required CORS access.
 For the first vertical slice, use a **split approach** (roadmap option 3):
 
 1. Catalog metadata comes from the existing SDK where it already exists.
-2. Scenario documents are fetched by a media-lab-owned server/browser adapter
-   from the configured asset mirror and normalized into `StoryDocument`.
+2. Scenario documents are fetched by a media-lab-owned data/asset adapter from
+   the configured existing asset source and normalized into `StoryDocument`.
    The adapter owns URL rules, region behavior, and i18n policy; the player
    package must not import them.
 3. Defer adding story catalog endpoints to `sekai-master-api` until #258 has
@@ -103,9 +103,11 @@ For the first vertical slice, use a **split approach** (roadmap option 3):
 
 Trade-offs: the split approach ships the first slice without speculative API
 design and without loading large scenario payloads through `sekai-master-api`,
-at the cost of a temporary media-lab-owned mirror adapter. If multiple
-consumers appear later, the adapter interfaces are shaped to move into
-`packages/*` without an architecture rewrite (roadmap line 277-281).
+at the cost of a temporary media-lab-owned adapter layer. This layer consumes
+the existing configured asset source; it does not create a new CDN, storage
+mirror, or asset copy. If multiple consumers appear later, the adapter
+interfaces are shaped to move into `packages/*` without an architecture
+rewrite (roadmap line 277-281).
 
 ## Draft contracts
 
