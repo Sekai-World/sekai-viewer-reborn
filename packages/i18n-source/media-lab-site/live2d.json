@@ -1,6 +1,6 @@
 {
   "live2d.backToLive2d": "Back to Live2D",
-  "live2d.description": "The Live2D Studio hosts the model viewer and its preview catalog: open a validated model route, inspect the reserved stage, and browse the preview slots. The model player adapter comes next.",
+  "live2d.description": "The Live2D Studio hosts the model viewer catalog: open a preview slot or any path-safe model ID on its validated viewer route. The model player adapter comes next.",
   "live2d.kicker": "Live2D Studio",
   "live2d.modelSelector.description": "Browse the preview slots below or type any path-safe model ID to open its viewer route. Every entry is a placeholder — no verified catalog or model data exists yet.",
   "live2d.modelSelector.empty": "No preview models are listed yet.",
@@ -17,7 +17,6 @@
   "live2d.modelSelector.model.sample.title": "Sample model slot",
   "live2d.modelSelector.previewBadge": "Preview stub",
   "live2d.modelSelector.title": "Model catalog",
-  "live2d.modelViewer.action": "Open the model viewer",
   "live2d.modelViewer.controls.apply": "Apply",
   "live2d.modelViewer.controls.expression": "Expression",
   "live2d.modelViewer.controls.expressionEmpty": "Select an expression",
@@ -34,7 +33,6 @@
   "live2d.modelViewer.controls.title": "Playback controls",
   "live2d.modelViewer.description": "Load a single Cubism model to preview its motions and expressions on a dedicated stage. The route validates the model ID; the model player adapter comes next.",
   "live2d.modelViewer.modelIdLabel": "Model ID",
-  "live2d.modelViewer.sampleNote": "Sample routes show stubbed metadata only — no model data is fetched yet.",
   "live2d.modelViewer.stage.reserved": "Model stage reserved — the canvas mounts here once the player adapter lands.",
   "live2d.modelViewer.status.awaitingAdapter": "Awaiting model player adapter",
   "live2d.modelViewer.status.description": "The route validates the model ID and reserves the stage; Cubism loading and playback controls arrive with the model player adapter work.",
