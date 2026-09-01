@@ -11,7 +11,7 @@ export default defineConfig({
   test: {
     environment: "node",
     exclude: ["**/node_modules/**", "**/.svelte-kit/**", "**/dist/**", "**/build/**"],
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "../../scripts/i18n/media-lab-site-source.test.ts"],
     coverage: {
       reporter: ["lcov"],
       reportsDirectory: "coverage"

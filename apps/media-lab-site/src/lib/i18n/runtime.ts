@@ -1,17 +1,26 @@
 import type { I18nMessages, I18nTranslator } from "@platform/i18n-runtime";
-import commonSourceMessages from "$lib/i18n/messages/common.json";
+import commonSourceMessages from "@platform/i18n-source/media-lab-site/common.json";
+import homeSourceMessages from "@platform/i18n-source/media-lab-site/home.json";
+import live2dSourceMessages from "@platform/i18n-source/media-lab-site/live2d.json";
+import storyReaderSourceMessages from "@platform/i18n-source/media-lab-site/story-reader.json";
 
-export const mediaLabI18nNamespaces = ["common"] as const;
+// Route-aware namespaces: `common` powers the shared shell, while `home`,
+// `live2d`, and `story-reader` scope their route tracks.
+export const mediaLabI18nNamespaces = ["common", "home", "live2d", "story-reader"] as const;
 
 export type I18nNamespace = (typeof mediaLabI18nNamespaces)[number];
 export type MediaLabTranslator = I18nTranslator;
 
-// media-lab has no published namespace in the remote sekai-i18n-reborn
-// dictionaries yet, so the local source bundles are the authoritative messages.
-// The bundle loader stays async and the translator stays pure so a remote
-// runtime can be layered in later without changing call sites.
+// media-lab has no published namespaces in the remote sekai-i18n-reborn
+// dictionaries yet, so the externalized source bundles under
+// `@platform/i18n-source/media-lab-site` are the authoritative local fallback.
+// The bundle loader stays async and the translator stays pure so the shared
+// remote runtime can be layered in later without changing call sites.
 const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
-  common: commonSourceMessages
+  common: commonSourceMessages,
+  home: homeSourceMessages,
+  live2d: live2dSourceMessages,
+  "story-reader": storyReaderSourceMessages
 };
 
 export const getLocalI18nMessages = (namespaces: readonly I18nNamespace[]): I18nMessages =>

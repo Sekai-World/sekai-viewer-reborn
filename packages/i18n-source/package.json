@@ -17,6 +17,10 @@
     "./content-site/unit.json": "./content-site/unit.json",
     "./tools-site/common.json": "./tools-site/common.json",
     "./tools-site/server.json": "./tools-site/server.json",
-    "./tools-site/tracker.json": "./tools-site/tracker.json"
+    "./tools-site/tracker.json": "./tools-site/tracker.json",
+    "./media-lab-site/common.json": "./media-lab-site/common.json",
+    "./media-lab-site/home.json": "./media-lab-site/home.json",
+    "./media-lab-site/live2d.json": "./media-lab-site/live2d.json",
+    "./media-lab-site/story-reader.json": "./media-lab-site/story-reader.json"
   }
 }
