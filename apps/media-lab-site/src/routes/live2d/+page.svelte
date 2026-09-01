@@ -1,12 +1,37 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
+  import Live2dModelSelector from "$lib/components/Live2dModelSelector.svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
+  import { previewLive2dModelEntries } from "$lib/live2d/model-catalog";
   import { supportedRegions } from "$lib/region-selection.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
+
+  // Placeholder catalog entries resolve their display strings through the
+  // route translator so the selector stays reusable without local strings.
+  const modelOptions = $derived(
+    previewLive2dModelEntries.map((entry) => ({
+      id: entry.id,
+      title: translate(entry.titleKey),
+      description: translate(entry.descriptionKey)
+    }))
+  );
+  const selectorLabels = $derived({
+    previewBadge: translate("live2d.modelSelector.previewBadge"),
+    inputLabel: translate("live2d.modelSelector.inputLabel"),
+    inputPlaceholder: translate("live2d.modelSelector.inputPlaceholder"),
+    inputHint: translate("live2d.modelSelector.inputHint"),
+    inputError: translate("live2d.modelSelector.inputError"),
+    inputAction: translate("live2d.modelSelector.inputAction"),
+    empty: translate("live2d.modelSelector.empty")
+  });
+  const openModel = (modelId: string): void => {
+    void goto(`/live2d/${modelId}`);
+  };
 </script>
 
 <svelte:head>
@@ -77,6 +102,29 @@
         </a>
         <p class="text-sm/6 text-base-content/60">{translate("live2d.modelViewer.sampleNote")}</p>
       </div>
+    </div>
+  </article>
+
+  <article class="card bg-base-100 shadow-sm ring-1 ring-base-content/10">
+    <div class="card-body gap-4 p-5 sm:p-6">
+      <div class="flex items-start gap-4">
+        <span
+          class="grid size-11 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary"
+        >
+          <Icon icon="mdi:flask-outline" class="size-6" aria-hidden="true" />
+        </span>
+        <div>
+          <h2 class="card-title text-lg">{translate("live2d.modelSelector.title")}</h2>
+          <p class="mt-2 text-sm/6 text-base-content/70">
+            {translate("live2d.modelSelector.description")}
+          </p>
+        </div>
+      </div>
+      <Live2dModelSelector
+        models={modelOptions}
+        labels={selectorLabels}
+        onOpenModel={openModel}
+      />
     </div>
   </article>
 </section>

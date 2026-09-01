@@ -21,6 +21,8 @@ import reload from "@iconify-icons/mdi/reload";
 import pause from "@iconify-icons/mdi/pause";
 import restart from "@iconify-icons/mdi/restart";
 import translate from "@iconify-icons/mdi/translate";
+import flaskOutline from "@iconify-icons/mdi/flask-outline";
+import alertCircleOutline from "@iconify-icons/mdi/alert-circle-outline";
 
 addIcon("mdi:menu", menu);
 addIcon("mdi:close", close);
@@ -44,3 +46,5 @@ addIcon("mdi:reload", reload);
 addIcon("mdi:pause", pause);
 addIcon("mdi:restart", restart);
 addIcon("mdi:translate", translate);
+addIcon("mdi:flask-outline", flaskOutline);
+addIcon("mdi:alert-circle-outline", alertCircleOutline);
