@@ -19,6 +19,7 @@ const namespaceByRoutePattern = [
   { pattern: /src\/routes\/\+error\.svelte$/, namespace: "common" },
   { pattern: /src\/routes\/live2d\/story-reader\//, namespace: "story-reader" },
   { pattern: /src\/routes\/live2d\//, namespace: "live2d" },
+  { pattern: /src\/routes\/story-reader\//, namespace: "story-reader" },
   { pattern: /src\/routes\/\+page\.svelte$/, namespace: "home" }
 ];
 

@@ -8,6 +8,6 @@
   "home.tracks.assetViewer.title": "3D Asset Lab",
   "home.tracks.live2d.action": "Open Live2D Studio",
   "home.tracks.live2d.badge": "Route shells ready",
-  "home.tracks.live2d.description": "Story routes for unit, event, character, card, area talk, special, and profile scenarios, with the StoryReader player to follow.",
+  "home.tracks.live2d.description": "Live2D model viewer routes with a preview catalog slot browser. Story reading lives in the dedicated StoryReader track.",
   "home.tracks.live2d.title": "Live2D Studio"
 }
