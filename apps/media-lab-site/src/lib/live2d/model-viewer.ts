@@ -99,8 +99,11 @@ const isAbsoluteHttpsUrl = (value: string): boolean => {
   }
 };
 
-const toError = (value: unknown): Error =>
-  value instanceof Error ? value : new Error(typeof value === "string" ? value : "Model viewer failed");
+const toError = (value: unknown): Error => {
+  if (value instanceof Error) return value;
+  if (typeof value === "string") return new Error(value);
+  return new Error("Model viewer failed");
+};
 
 const clampProgress = (value: number): number =>
   Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
@@ -247,6 +250,22 @@ export const createLive2dModelViewer = (
   const isCurrent = (token: number, controller: AbortController): boolean =>
     !isDestroyed && generation === token && abortController === controller && !controller.signal.aborted;
 
+  const preloadModelAssets = async (
+    descriptor: Live2dModelDescriptor,
+    token: number,
+    controller: AbortController,
+    loadedResource: Live2dModelResource
+  ): Promise<boolean> => {
+    for (const url of getLive2dPreloadUrls(descriptor, maxPreload)) {
+      if (!isCurrent(token, controller)) {
+        await safelyDestroy(loadedResource);
+        return false;
+      }
+      await loader.preload!(url, controller.signal);
+    }
+    return true;
+  };
+
   const runReadyCommand = async (
     command: (activeResource: Live2dModelResource) => void | Promise<void>
   ): Promise<boolean> => {
@@ -311,14 +330,8 @@ export const createLive2dModelViewer = (
         return state;
       }
 
-      if (loader.preload) {
-        for (const url of getLive2dPreloadUrls(descriptor, maxPreload)) {
-          if (!isCurrent(token, controller)) {
-            await safelyDestroy(loadedResource);
-            return state;
-          }
-          await loader.preload(url, controller.signal);
-        }
+      if (loader.preload && !(await preloadModelAssets(descriptor, token, controller, loadedResource))) {
+        return state;
       }
 
       if (!isCurrent(token, controller)) {
@@ -355,7 +368,7 @@ export const createLive2dModelViewer = (
 
   const waitForCleanup = async (): Promise<void> => {
     while (pendingLoads.size > 0) {
-      await Promise.all([...pendingLoads]);
+      await Promise.all(pendingLoads);
     }
     if (pendingDestroy) await pendingDestroy;
   };
