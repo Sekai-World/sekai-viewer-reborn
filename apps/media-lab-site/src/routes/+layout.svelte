@@ -370,7 +370,7 @@
             id={MOBILE_SETTINGS_MENU_ID}
             role="dialog"
             aria-label={translate("settings.title")}
-            class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-h-[70vh] max-w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+            class="dropdown-content z-130 mt-3 w-[min(16rem,calc(100vw-1rem))] max-h-[70vh] max-w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
           >
             {@render regionSelector()}
             <div class="my-3 h-px bg-base-content/12"></div>
