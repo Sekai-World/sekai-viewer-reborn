@@ -124,7 +124,7 @@ describe("Live2D model viewer controller", () => {
     expect(resource.playExpression).toHaveBeenCalledWith("smile");
     expect(resource.setIdle).toHaveBeenCalledWith(false);
     expect(resource.resize).toHaveBeenCalledWith(1280, 720);
-    expect(viewer.playMotion("unknown")).resolves.toBe(false);
+    await expect(viewer.playMotion("unknown")).resolves.toBe(false);
     expect(states).toEqual(["idle", "loading", "loading", "loading", "ready"]);
     unsubscribe();
   });
