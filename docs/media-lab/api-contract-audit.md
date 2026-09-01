@@ -81,8 +81,35 @@ story region passed explicitly to the adapter. The bucket map in
 The legacy reference uses region buckets (`{domain}/sekai-{region}-assets`) for
 its scenario and story media paths. That is historical evidence for logical
 object-path patterns only; it does not override the reborn bucket contract.
-The remaining #258 verification is to pin one real `sekai-live2d-assets` URL
-and confirm that deployed media-lab origins have the required CORS access.
+The remaining verification is tracked by
+[#268](https://github.com/Sekai-World/sekai-viewer-reborn/issues/268): pin one
+real `sekai-live2d-assets` URL and confirm that deployed media-lab origins have
+the required CORS access. The adapter implementation remains tracked by
+[#258](https://github.com/Sekai-World/sekai-viewer-reborn/issues/258).
+
+## Verification result: #268
+
+The workspace and available repository references do not currently provide an
+approved real model sample:
+
+- No verified `model3.json`, model ID, complete model bundle, or deterministic
+  motion/expression descriptor is present in `sekai-viewer-reborn`.
+- The legacy viewer confirms only historical lookup rules: it reads
+  `live2d/model/model_list.json`, loads
+  `live2d/model/{modelPath}/{modelFile}`, and resolves referenced model assets
+  relative to that model directory (`sekai-viewer/src/utils/Live2DPlayer/load.ts`
+  and `sekai-viewer/src/utils/live2dLoader.ts`). This is not proof that the
+  corresponding objects exist in the reborn asset source.
+- No browser fetch from a deployed media-lab origin has demonstrated CORS,
+  credentials policy, or content types for the required resources.
+- The preview catalog and test descriptors in the reborn viewer remain
+  intentionally synthetic; they must not be promoted to production metadata.
+
+Accordingly, #268 remains blocked on externally supplied asset evidence. No
+resolver, production fixture, Pixi/Cubism dependency, or guessed URL was added.
+The next acceptable evidence package must identify one explicit region and
+model ID, provide `model3.json` plus every referenced required resource, and
+include browser-origin CORS/content-type results.
 
 ## Data-source strategy decision
 
@@ -122,9 +149,9 @@ before the consuming issues finalize the shapes.
 ## Open questions
 
 1. A proven `sekai-live2d-assets` URL for one region and CORS from the deployed
-   origin: the reborn bucket rule is decided by the roadmap, but this audit
-   performed no network fetch. Phase 2 must pin one working URL before the
-   adapter freezes.
+   origin: the reborn bucket rule is decided by the roadmap, but no working
+   model sample or browser-origin verification is currently available. #268
+   must pin one working URL before the adapter freezes.
 2. Upstream availability of 3D compatibility metadata (skeleton paths, bone
    names, Avatar/Animator, BlendShape, Unity version, source bundles): the
    asset pipeline is not in this workspace; #262 must confirm before the
