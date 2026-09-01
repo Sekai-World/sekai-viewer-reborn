@@ -13,14 +13,14 @@ Status legend:
 ## Platform / Four-Site Architecture
 
 The workspace is a monorepo of four deployable SvelteKit apps. Only
-`content-site` carries real feature coverage today; the other three are
-scaffolded placeholders and are **not** feature-complete.
+`content-site` carries broad feature coverage today; the other three remain
+limited in scope and are **not** feature-complete.
 
 | App              | Status      | Notes                                   |
 | ---------------- | ----------- | --------------------------------------- |
 | `content-site`   | Available   | Primary game-data browser (see below).  |
 | `tools-site`     | In progress | Current-event comparison workflow: SSR-safe tools-local i18n, URL-restored GET selection for two validated regions, localized unavailable/request-failed states, and no fabricated cross-app links without a public content-site base-URL contract. |
-| `media-lab-site` | Exploratory | Scaffold only; no feature work started. |
+| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated. |
 | `account-site`   | Exploratory | Scaffold only; no feature work started. |
 
 ## media-lab-site — Media Lab
@@ -101,6 +101,24 @@ unsupported-asset states. The player should not depend on the StoryReader
 scenario interpreter. It previews exactly one Cubism model at a time and is
 independent from both the StoryReader scenario interpreter and the 3D viewer.
 
+Product information architecture:
+
+- `/live2d` is the Model Viewer catalogue and model-selection destination. It
+  does not also act as the StoryReader entry point; model cards and model
+  search belong here because the user has already chosen the model-inspection
+  workflow.
+- `/live2d/[modelId]` is the single-model viewer destination. A confirmed
+  catalogue or a deliberate deep link supplies the model identity; the route
+  must not infer assets from arbitrary filenames or region fallbacks.
+- StoryReader is a separate product track at `/story-reader`. Its landing page
+  offers exactly two presentation modes for the same story address: **Text-Only**
+  (`/story-reader/[region]/[storyType]/[storyId]`) and **Live2D Player**
+  (`/live2d/story-reader/[region]/[storyType]/[storyId]`). The two modes share
+  route identity but keep their rendering/runtime responsibilities distinct.
+- The sidebar exposes Model Viewer and StoryReader as separate destinations.
+  The Live2D Player route is treated as a StoryReader mode for active navigation,
+  while ordinary `/live2d` paths remain under Model Viewer.
+
 Concrete implementation route:
 
 1. Add a path-param route such as `/live2d/[modelId]` in
@@ -147,6 +165,13 @@ and lifecycle integration. The detailed extraction plan covers scenario
 normalization, media URL resolution, model and motion preloading, checkpoint
 playback, voice/audio synchronization, translation lookup, and legacy parity
 validation.
+
+The reader's product entry is independent from the Model Viewer catalogue. The
+`/story-reader` landing page chooses between the Text-Only and Live2D Player
+presentations, and each presentation can switch to the other mode for the same
+validated story address. Until their data/player adapters are available, both
+routes should preserve their mode-specific empty/status states rather than
+presenting placeholder content as a usable story.
 
 Live2D StoryReader assets are not part of the 3D FBX export pipeline. They
 should remain discoverable through their own asset contracts and post-processing

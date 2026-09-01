@@ -4,7 +4,6 @@
   import Live2dModelSelector from "$lib/components/Live2dModelSelector.svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
   import { previewLive2dModelEntries } from "$lib/live2d/model-catalog";
-  import { supportedRegions } from "$lib/region-selection.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -46,39 +45,6 @@
     </h1>
     <p class="mt-3 text-base/7 text-base-content/75">{translate("live2d.description")}</p>
   </header>
-
-  <article class="card bg-base-100 shadow-sm ring-1 ring-base-content/10">
-    <div class="card-body gap-4 p-5 sm:p-6">
-      <div class="flex items-start gap-4">
-        <span
-          class="grid size-11 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary"
-        >
-          <Icon icon="mdi:book-open-variant" class="size-6" aria-hidden="true" />
-        </span>
-        <div>
-          <h2 class="card-title text-lg">{translate("live2d.storyReader.title")}</h2>
-          <p class="mt-2 text-sm/6 text-base-content/70">
-            {translate("live2d.storyReader.description")}
-          </p>
-        </div>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-          {translate("live2d.regionsLabel")}
-        </span>
-        {#each supportedRegions as region (region)}
-          <span class="badge badge-outline badge-sm">{translate(`region.${region}`)}</span>
-        {/each}
-      </div>
-      <div class="card-actions flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-        <a class="btn btn-primary btn-sm min-h-11! px-4" href="/live2d/story-reader/jp/unit/1">
-          {translate("live2d.storyReader.action")}
-          <Icon icon="mdi:arrow-right" class="size-4" aria-hidden="true" />
-        </a>
-        <p class="text-sm/6 text-base-content/60">{translate("live2d.storyReader.sampleNote")}</p>
-      </div>
-    </div>
-  </article>
 
   <article class="card bg-base-100 shadow-sm ring-1 ring-base-content/10">
     <div class="card-body gap-4 p-5 sm:p-6">

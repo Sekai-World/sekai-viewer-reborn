@@ -20,16 +20,16 @@
 </script>
 
 <svelte:head>
-  <title>{translate("storyReader.player.title")}</title>
+  <title>{translate("storyReader.textOnly.title")}</title>
 </svelte:head>
 
 <StoryReaderRouteShell
   identity={data.identity}
   backHref="/story-reader"
   backLabel={translate("storyReader.backToModes")}
-  kicker={translate("storyReader.player.kicker")}
-  title={translate("storyReader.player.title")}
-  description={translate("storyReader.player.description")}
+  kicker={translate("storyReader.textOnly.kicker")}
+  title={translate("storyReader.textOnly.title")}
+  description={translate("storyReader.textOnly.description")}
   metaLabels={{
     region: translate("storyReader.meta.region"),
     storyType: translate("storyReader.meta.storyType"),
@@ -37,9 +37,9 @@
   }}
   regionLabel={translate(`region.${data.identity.region}`)}
   storyTypeLabel={storyTypeLabels[data.identity.storyType]}
-  statusTitle={translate("storyReader.player.status.title")}
-  statusDescription={translate("storyReader.player.status.description")}
-  stageNote={translate("storyReader.player.loading.label")}
-  switchModeHref={`/story-reader/${data.identity.region}/${data.identity.storyType}/${data.identity.storyId}`}
-  switchModeLabel={translate("storyReader.player.switchToTextOnly")}
+  statusTitle={translate("storyReader.textOnly.status.title")}
+  statusDescription={translate("storyReader.textOnly.status.description")}
+  stageNote={translate("storyReader.textOnly.loading.label")}
+  switchModeHref={`/live2d/story-reader/${data.identity.region}/${data.identity.storyType}/${data.identity.storyId}`}
+  switchModeLabel={translate("storyReader.textOnly.switchToPlayer")}
 />

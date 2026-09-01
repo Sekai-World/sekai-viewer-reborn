@@ -23,6 +23,8 @@ import restart from "@iconify-icons/mdi/restart";
 import translate from "@iconify-icons/mdi/translate";
 import flaskOutline from "@iconify-icons/mdi/flask-outline";
 import alertCircleOutline from "@iconify-icons/mdi/alert-circle-outline";
+import scriptTextOutline from "@iconify-icons/mdi/script-text-outline";
+import swapHorizontal from "@iconify-icons/mdi/swap-horizontal";
 
 addIcon("mdi:menu", menu);
 addIcon("mdi:close", close);
@@ -48,3 +50,5 @@ addIcon("mdi:restart", restart);
 addIcon("mdi:translate", translate);
 addIcon("mdi:flask-outline", flaskOutline);
 addIcon("mdi:alert-circle-outline", alertCircleOutline);
+addIcon("mdi:script-text-outline", scriptTextOutline);
+addIcon("mdi:swap-horizontal", swapHorizontal);

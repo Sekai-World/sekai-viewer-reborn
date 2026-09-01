@@ -110,19 +110,33 @@
     if (!(target instanceof Node) || !element?.contains(target)) close();
   };
 
+  // The `/live2d/story-reader/...` route is the Live2D Player mode of
+  // StoryReader, so it activates the StoryReader destination; every other
+  // `/live2d` path belongs to the Model Viewer destination.
+  const pathname = $derived(page.url.pathname);
+  const isStoryReaderRoute = $derived(
+    pathname.startsWith("/story-reader") || pathname.startsWith("/live2d/story-reader")
+  );
+
   const sidebarItems: SidebarItem[] = $derived([
     { type: "section", label: translate("navigation.labTools") },
     {
       label: translate("navigation.home"),
       href: "/",
       icon: "mdi:home-variant-outline",
-      active: page.url.pathname === "/"
+      active: pathname === "/"
+    },
+    {
+      label: translate("navigation.storyReader"),
+      href: "/story-reader",
+      icon: "mdi:book-open-variant",
+      active: isStoryReaderRoute
     },
     {
       label: translate("navigation.live2d"),
       href: "/live2d",
       icon: "mdi:drama-masks",
-      active: page.url.pathname.startsWith("/live2d")
+      active: pathname.startsWith("/live2d") && !isStoryReaderRoute
     },
     {
       label: translate("navigation.assetViewer"),

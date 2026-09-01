@@ -1,6 +1,6 @@
 {
   "live2d.backToLive2d": "Back to Live2D",
-  "live2d.description": "The Live2D track hosts story playback and model inspection. Route shells are in place; the player adapter comes next.",
+  "live2d.description": "The Live2D Studio hosts the model viewer and its preview catalog: open a validated model route, inspect the reserved stage, and browse the preview slots. The model player adapter comes next.",
   "live2d.kicker": "Live2D Studio",
   "live2d.modelSelector.description": "Browse the preview slots below or type any path-safe model ID to open its viewer route. Every entry is a placeholder — no verified catalog or model data exists yet.",
   "live2d.modelSelector.empty": "No preview models are listed yet.",
@@ -45,10 +45,5 @@
   "live2d.modelViewer.status.unavailableTitle": "This model cannot be loaded yet",
   "live2d.modelViewer.stage.unavailable": "Stage reserved — verified model assets are not available yet.",
   "live2d.modelViewer.title": "Model Viewer",
-  "live2d.regionsLabel": "Regions in route",
-  "live2d.storyReader.action": "Preview a story route shell",
-  "live2d.storyReader.description": "StoryReader routes validate the region, story type, and story ID, then reserve the reader stage with stub metadata until scenario fetching is wired up.",
-  "live2d.storyReader.sampleNote": "Sample routes show stubbed metadata only — no story data is fetched yet.",
-  "live2d.storyReader.title": "StoryReader",
-  "live2d.title": "Live2D tools"
+  "live2d.title": "Live2D Model Viewer"
 }
