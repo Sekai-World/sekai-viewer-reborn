@@ -98,7 +98,44 @@ framework-neutral asset loading and media utilities with StoryReader. The
 initial slice should cover model metadata, Cubism model/motion loading,
 expressions, bounded preloading, playback controls, and localized loading or
 unsupported-asset states. The player should not depend on the StoryReader
-scenario interpreter.
+scenario interpreter. It previews exactly one Cubism model at a time and is
+independent from both the StoryReader scenario interpreter and the 3D viewer.
+
+Concrete implementation route:
+
+1. Add a path-param route such as `/live2d/[modelId]` in
+   `apps/media-lab-site` rather than encoding model identity in query state.
+2. Resolve model metadata, the Cubism model, motions, and expressions through
+   framework-neutral asset/loading utilities. Do not couple those utilities to
+   `StoryDocument` or require StoryReader to be implemented first.
+3. Instantiate Pixi and Cubism only from the client-side mount lifecycle. Keep
+   the active model and a bounded set of explicitly selected/preloaded motions
+   in memory; expose playback, motion, expression, and basic playback-state
+   controls without introducing scenario playback.
+4. Make teardown deterministic and idempotent: cancel pending loads, remove
+   listeners, stop playback, and destroy the Cubism model and Pixi resources
+   when the route is left or the model changes. Localize loading, unsupported,
+   missing-asset, and runtime-error states through the existing i18n path.
+
+The safe first slice can ship the strict descriptor/controller boundary and the
+localized unavailable state without a real asset adapter. The Pixi/Cubism
+adapter remains gated on [#268](https://github.com/Sekai-World/sekai-viewer-reborn/issues/268),
+which must verify one model descriptor, required resources, and browser CORS
+before any production URL or model mapping is introduced.
+
+Issue-sized acceptance guidance:
+
+- `/live2d/:modelId` renders metadata and one model, supports Cubism model and
+  motion loading, expressions, bounded preloading, and playback controls.
+- Server rendering and route loading do not construct Pixi/Cubism or access
+  browser-only APIs; client teardown leaves no active listeners, animation
+  loops, or unresolved model-load work.
+- Missing, unsupported, and failed assets produce localized, actionable states
+  without breaking the surrounding media-lab route.
+- The implementation has no dependency on `StoryDocument`, the StoryReader
+  scenario interpreter, or 3D viewer code, and the standalone viewer remains
+  usable without StoryReader completion. Reuse is limited to
+  framework-neutral asset/loading utilities.
 
 ### Planned — StoryReader
 
