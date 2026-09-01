@@ -335,7 +335,7 @@
         {#if isDesktopLanguageMenuOpen}
           <div
             id={DESKTOP_LANGUAGE_MENU_ID}
-            class="dropdown-content z-120 mt-3 w-max min-w-44 max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
           >
             {@render languageSelector(() => {
               isDesktopLanguageMenuOpen = false;
