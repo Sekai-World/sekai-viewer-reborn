@@ -1,6 +1,12 @@
 import { isModelRouteId } from "./model-route";
 
-export const live2dModelRegions = ["jp", "en", "tw", "kr", "cn"] as const;
+/**
+ * Live2D currently uses the independent `sekai-live2d-assets` asset bucket.
+ * Region is an explicit JP-only product contract; expanding to other regions
+ * requires separate confirmation. Keep this list independent from ordinary
+ * story-route region support.
+ */
+export const live2dModelRegions = ["jp"] as const;
 
 export type Live2dModelRegion = (typeof live2dModelRegions)[number];
 

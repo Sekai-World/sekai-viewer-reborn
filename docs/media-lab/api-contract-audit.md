@@ -75,41 +75,73 @@ Confirmed legacy URL rules (Moesekai reference, read-only):
 
 The reborn roadmap is authoritative for the new implementation:
 Live2D scenario/model assets use the `sekai-live2d-assets` bucket, with the
-story region passed explicitly to the adapter. The bucket map in
-`apps/content-site/src/lib/assets/index.ts:31-41` records the same convention.
+current Live2D product scope fixed to JP (`region: "jp"`) and passed explicitly
+to the adapter. The bucket map in `apps/content-site/src/lib/assets/index.ts:31-41`
+records the independent Live2D bucket convention; it must not be replaced with
+the ordinary per-locale buckets.
 
 The legacy reference uses region buckets (`{domain}/sekai-{region}-assets`) for
 its scenario and story media paths. That is historical evidence for logical
 object-path patterns only; it does not override the reborn bucket contract.
 The remaining verification is tracked by
 [#268](https://github.com/Sekai-World/sekai-viewer-reborn/issues/268): pin one
-real `sekai-live2d-assets` URL and confirm that deployed media-lab origins have
-the required CORS access. The adapter implementation remains tracked by
+real `sekai-live2d-assets` URL, confirm the JP-only asset scope, and verify that
+a deployed media-lab origin has the required CORS access. The adapter
+implementation remains tracked by
 [#258](https://github.com/Sekai-World/sekai-viewer-reborn/issues/258).
 
 ## Verification result: #268
 
-The workspace and available repository references do not currently provide an
-approved real model sample:
+The public asset source now provides a concrete catalog entry and a complete
+base model bundle. The current product contract treats the entire
+`sekai-live2d-assets` source as JP-only: the descriptor region is `jp`, while
+`v1/main` and `v1/collabo` remain internal asset namespaces rather than locale
+values. The evidence closes the current region decision, but not deployed-origin
+browser verification:
 
-- No verified `model3.json`, model ID, complete model bundle, or deterministic
-  motion/expression descriptor is present in `sekai-viewer-reborn`.
-- The legacy viewer confirms only historical lookup rules: it reads
-  `live2d/model/model_list.json`, loads
-  `live2d/model/{modelPath}/{modelFile}`, and resolves referenced model assets
-  relative to that model directory (`sekai-viewer/src/utils/Live2DPlayer/load.ts`
-  and `sekai-viewer/src/utils/live2dLoader.ts`). This is not proof that the
-  corresponding objects exist in the reborn asset source.
-- No browser fetch from a deployed media-lab origin has demonstrated CORS,
-  credentials policy, or content types for the required resources.
-- The preview catalog and test descriptors in the reborn viewer remain
-  intentionally synthetic; they must not be promoted to production metadata.
+- Catalog source: `https://storage.sekai.best/sekai-live2d-assets/live2d/model_list.json`
+  (an S3 object, `application/json`). The entry for the sample is:
+  `modelName=01ichika_cloth001_3.1_f_t01`,
+  `modelBase=01ichika_cloth001`,
+  `modelPath=v1/main/01_ichika/01ichika_cloth001`, and
+  `modelFile=01ichika_cloth001_3.1_f_t01.model3.json`.
+- Model descriptor:
+  `https://storage.sekai.best/sekai-live2d-assets/live2d/model/v1/main/01_ichika/01ichika_cloth001/01ichika_cloth001_3.1_f_t01.model3.json`
+  returns Live2D Version 3 JSON and references exactly one MOC, one PNG
+  texture, and one physics file. The referenced objects return `200` with
+  `application/octet-stream`, `image/png`, and `application/json`
+  respectively.
+- Motion metadata: the same prefix contains `motions/BuildMotionData.json`,
+  which names `w-normal-posetrouble02`, `w-normal-tilthead01r`, and
+  `w-normal-trouble02`. Each corresponding `.motion3.json` is present, valid
+  Version 3 motion JSON, and returns `200` with `application/json`.
+- No expression file is referenced by this `model3.json`, and no `.exp3.json`
+  object was found in the sample prefix. The sample therefore proves a model
+  with known motions and no verified expression set; it must not be presented
+  as having expressions.
+- The catalog's `v1/main` segment is an internal asset namespace (`main`,
+  alongside `collabo` and `sub`), not a locale path. Under the current
+  JP-only product contract, the resolved descriptor uses `region: "jp"` for
+  this bucket and for its collabo models; no `main → jp` URL inference or
+  cross-region fallback is performed. Supporting other Live2D regions later
+  requires separate product and asset-source confirmation.
+- Browser-shaped `GET` requests with an `Origin` header and CORS preflight
+  `OPTIONS` requests returned `200`, an origin-specific
+  `Access-Control-Allow-Origin`, `Vary: Origin`, an allowed GET method, and no
+  `Access-Control-Allow-Credentials` for the catalog, model, MOC, texture,
+  physics, motion metadata, and motion files. This supports anonymous public
+  fetches. It is not yet deployed-origin proof: `media-lab.example.com` is the
+  Helm placeholder host, and `media-lab.sekai.best` was not DNS-resolvable in
+  this environment, so neither can be claimed as the actual running
+  media-lab deployment.
 
-Accordingly, #268 remains blocked on externally supplied asset evidence. No
-resolver, production fixture, Pixi/Cubism dependency, or guessed URL was added.
-The next acceptable evidence package must identify one explicit region and
-model ID, provide `model3.json` plus every referenced required resource, and
-include browser-origin CORS/content-type results.
+The preview catalog and test descriptors in the reborn viewer remain
+intentionally synthetic; they must not be promoted to production metadata.
+Accordingly, #268 is partially unblocked: the current JP-only region contract,
+catalog-backed model sample, resource evidence, and documented sample are now
+available. It remains blocked for a production resolver or fixture until the
+actual deployed origin is confirmed for browser CORS. No resolver, production
+fixture, Pixi/Cubism dependency, or guessed URL was added.
 
 ## Data-source strategy decision
 
@@ -148,10 +180,13 @@ before the consuming issues finalize the shapes.
 
 ## Open questions
 
-1. A proven `sekai-live2d-assets` URL for one region and CORS from the deployed
-   origin: the reborn bucket rule is decided by the roadmap, but no working
-   model sample or browser-origin verification is currently available. #268
-   must pin one working URL before the adapter freezes.
+1. CORS from the deployed origin: #268 now has a catalog-backed model sample,
+   a confirmed current JP-only product contract, and resource-level
+   CORS/content-type observations. The actual media-lab deployment origin
+   remains unconfirmed: `media-lab.example.com` is only a Helm placeholder and
+   `media-lab.sekai.best` was not DNS-resolvable in the verification
+   environment. #268 must confirm the running origin before the production
+   adapter freezes.
 2. Upstream availability of 3D compatibility metadata (skeleton paths, bone
    names, Avatar/Animator, BlendShape, Unity version, source bundles): the
    asset pipeline is not in this workspace; #262 must confirm before the
@@ -167,5 +202,7 @@ before the consuming issues finalize the shapes.
 - `StoryDocument` / `ModelBundleManifest` draft interfaces — §Draft contracts.
 - Cross-repo workflow steps — §Data-source strategy decision, item 3.
 - Region/asset URL assumptions backed by a confirmed sample or explicit
-  blocker — §Reborn asset rule and legacy comparison plus §Open questions 1
-  (live URL/CORS verification remains explicit).
+  blocker — §Reborn asset rule and legacy comparison plus §Verification result:
+  #268 and §Open questions 1 (catalog/resource/CORS evidence is recorded;
+  current JP-only scope is explicit; deployed-origin verification remains
+  explicit).
