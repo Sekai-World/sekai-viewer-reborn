@@ -33,7 +33,8 @@
     "./global-notices": {
       "types": "./src/global-notices.ts",
       "default": "./src/global-notices.ts"
-    }
+    },
+    "./inputs.css": "./src/inputs.css"
   },
   "dependencies": {
     "@iconify/svelte": "^5.2.1",

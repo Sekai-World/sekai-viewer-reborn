@@ -9,6 +9,7 @@
   } from "$lib/assets/index";
   import type { CardDetail } from "$lib/domain/card-detail";
   import Icon from "@iconify/svelte";
+  import { ImagePreviewDialog } from "@platform/ui-shell";
   import { untrack } from "svelte";
 
   type GalleryAssetKind = "thumbnail" | "small" | "full" | "cutout" | "cutoutTrimmed" | "gacha";
@@ -68,6 +69,9 @@
   let headStatusByAsset = $state<Record<string, boolean>>({});
   let imageStatusByAsset = $state<Record<string, ImageAssetStatus>>({});
   let probeGeneration = $state(0);
+  let previewOpen = $state(false);
+  let previewAsset = $state<GalleryAsset | null>(null);
+  const previewFormatOptions = ["webp", "png"];
 
   const isTrainableCard = (): boolean =>
     card.rarityType === "rarity_3" || card.rarityType === "rarity_4";
@@ -159,6 +163,14 @@
         headAvailableAssets.every((asset) => imageStatusByAsset[asset.key] === "unavailable"))
   );
 
+  const getAssetAlt = (asset: GalleryAsset): string =>
+    `${card.title} — ${asset.label} — ${asset.stateLabel}`;
+
+  const openPreview = (asset: GalleryAsset): void => {
+    previewAsset = asset;
+    previewOpen = true;
+  };
+
   const setImageStatus = (
     key: string,
     status: ImageAssetStatus,
@@ -237,6 +249,18 @@
       dialog.close();
     }
   });
+
+  $effect(() => {
+    const asset = previewAsset;
+    const assetStillExists =
+      asset !== null &&
+      galleryAssets.some((candidate) => candidate.key === asset.key && candidate.url === asset.url);
+
+    if (!open || !assetStillExists) {
+      previewOpen = false;
+      previewAsset = null;
+    }
+  });
 </script>
 
 <dialog
@@ -301,6 +325,7 @@
               {@const assetStatus = imageStatusByAsset[asset.key] ?? "loading"}
               {@const imageGeneration = probeGeneration}
               {@const imageProbeSignature = probeSignature}
+              {@const assetAlt = getAssetAlt(asset)}
               {#if assetStatus !== "unavailable"}
                 <article
                   class="overflow-hidden rounded-2xl border border-base-content/10 bg-base-200/30 shadow-sm"
@@ -317,27 +342,34 @@
                         ></span>
                       </div>
                     {/if}
-                    <img
-                      src={asset.url}
-                      alt={`${card.title} — ${asset.label} — ${asset.stateLabel}`}
-                      loading="lazy"
-                      decoding="async"
-                      class={`size-full transition-opacity duration-200 ${asset.kind === "full" ? "object-cover" : "object-contain"} ${assetStatus === "available" ? "opacity-100" : "opacity-0"}`}
-                      onload={() =>
-                        setImageStatus(
-                          asset.key,
-                          "available",
-                          imageGeneration,
-                          imageProbeSignature
-                        )}
-                      onerror={() =>
-                        setImageStatus(
-                          asset.key,
-                          "unavailable",
-                          imageGeneration,
-                          imageProbeSignature
-                        )}
-                    />
+                    <button
+                      type="button"
+                      class="block size-full cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                      aria-label={assetAlt}
+                      onclick={() => openPreview(asset)}
+                    >
+                      <img
+                        src={asset.url}
+                        alt={assetAlt}
+                        loading="lazy"
+                        decoding="async"
+                        class={`size-full transition-opacity duration-200 ${asset.kind === "full" ? "object-cover" : "object-contain"} ${assetStatus === "available" ? "opacity-100" : "opacity-0"}`}
+                        onload={() =>
+                          setImageStatus(
+                            asset.key,
+                            "available",
+                            imageGeneration,
+                            imageProbeSignature
+                          )}
+                        onerror={() =>
+                          setImageStatus(
+                            asset.key,
+                            "unavailable",
+                            imageGeneration,
+                            imageProbeSignature
+                          )}
+                      />
+                    </button>
                   </div>
                   <div
                     class="flex items-center justify-between gap-2 border-t border-base-content/10 px-3 py-2.5"
@@ -365,3 +397,15 @@
     <button type="submit">{closeLabel}</button>
   </form>
 </dialog>
+
+{#if previewAsset}
+  <ImagePreviewDialog
+    bind:open={previewOpen}
+    src={previewAsset.url}
+    alt={getAssetAlt(previewAsset)}
+    fallbackLabel={unavailableLabel}
+    {closeLabel}
+    formatOptions={previewFormatOptions}
+    dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
+  />
+{/if}
