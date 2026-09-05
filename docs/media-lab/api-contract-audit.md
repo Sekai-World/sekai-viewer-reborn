@@ -2,8 +2,8 @@
 
 Status: draft decision record for
 [#256](https://github.com/Sekai-World/sekai-viewer-reborn/issues/256)
-(roadmap Phase 0). Evidence is code-confirmed; open questions are listed
-explicitly and must be resolved in the issues that consume this document.
+(roadmap Phase 0). Evidence is code- or resource-confirmed; open questions are
+listed explicitly and must be resolved in the issues that consume this document.
 
 ## Evidence sources
 
@@ -11,6 +11,8 @@ explicitly and must be resolved in the issues that consume this document.
   (`packages/sekai-master-api-sdk/`).
 - Current reborn asset conventions:
   `apps/content-site/src/lib/assets/index.ts`.
+- Verified future-viewer associated Live2D catalog and representative resources:
+  `https://storage.sekai.best/sekai-live2d-assets/live2d-associated/v1/model_list.json`.
 - Extraction roadmap:
   `docs/viewer-implementation/live2d-story-reader-extraction-roadmap.md`
   (§Target-side data and asset boundary, §Phase 0, §Source map).
@@ -30,8 +32,10 @@ What exists (public operations in `packages/sekai-master-api-sdk/src/sdk.gen.ts`
 
 What is missing for media-lab:
 
-- **StoryReader**: no story/scenario catalog endpoints, no scenario document
-  endpoint, no Live2D model metadata. Nothing scenario-related exists in
+- **StoryReader / Live2D API**: no story/scenario catalog endpoints or scenario
+  document endpoint exist in the SDK. The associated catalog supplies future
+  viewer model/motion metadata outside `sekai-master-api`, but it does not
+  supply scenario-to-model mapping. Nothing scenario-related exists in the
   `sekai-master-api` transport, storage, or usecase layers.
 - **3D track**: `character3ds/{region}/batch` returns name-level lookup data
   only (`SharedCharacter3dBatchItem { gameCharacterId, id, name?, unit? }`,
@@ -83,24 +87,36 @@ the ordinary per-locale buckets.
 The legacy reference uses region buckets (`{domain}/sekai-{region}-assets`) for
 its scenario and story media paths. That is historical evidence for logical
 object-path patterns only; it does not override the reborn bucket contract.
+For future viewer model and motion discovery, the source of truth is the
+associated catalog at
+`https://storage.sekai.best/sekai-live2d-assets/live2d-associated/v1/model_list.json`.
+The previously verified
+`https://storage.sekai.best/sekai-live2d-assets/live2d/model_list.json`
+endpoint remains prior evidence; it is not the future associated-catalog
+contract.
+
 The remaining verification is tracked by
-[#268](https://github.com/Sekai-World/sekai-viewer-reborn/issues/268): pin one
-real `sekai-live2d-assets` URL, confirm the JP-only asset scope, and verify that
-a deployed media-lab origin has the required CORS access. The adapter
-implementation remains tracked by
-[#258](https://github.com/Sekai-World/sekai-viewer-reborn/issues/258).
+[#268](https://github.com/Sekai-World/sekai-viewer-reborn/issues/268): verify
+that the deployed media-lab origin has the required CORS access. The broader
+story/playback data-adapter work remains tracked by
+[#258](https://github.com/Sekai-World/sekai-viewer-reborn/issues/258); the
+associated-catalog adapter and its route/UI integration are now present.
 
 ## Verification result: #268
 
-The public asset source now provides a concrete catalog entry and a complete
-base model bundle. The current product contract treats the entire
+Verification now covers both the previously checked catalog and the future
+associated catalog. The current product contract treats the entire
 `sekai-live2d-assets` source as JP-only: the descriptor region is `jp`, while
 `v1/main` and `v1/collabo` remain internal asset namespaces rather than locale
-values. The evidence closes the current region decision, but not deployed-origin
-browser verification:
+values. The evidence closes the catalog-association and region decisions, but
+not deployed-origin browser verification.
 
-- Catalog source: `https://storage.sekai.best/sekai-live2d-assets/live2d/model_list.json`
-  (an S3 object, `application/json`). The entry for the sample is:
+### Previously verified catalog evidence
+
+The earlier catalog source was
+`https://storage.sekai.best/sekai-live2d-assets/live2d/model_list.json` (an S3
+object, `application/json`). It remains prior verified evidence.
+- Sample entry:
   `modelName=01ichika_cloth001_3.1_f_t01`,
   `modelBase=01ichika_cloth001`,
   `modelPath=v1/main/01_ichika/01ichika_cloth001`, and
@@ -119,40 +135,72 @@ browser verification:
   object was found in the sample prefix. The sample therefore proves a model
   with known motions and no verified expression set; it must not be presented
   as having expressions.
-- The catalog's `v1/main` segment is an internal asset namespace (`main`,
-  alongside `collabo` and `sub`), not a locale path. Under the current
-  JP-only product contract, the resolved descriptor uses `region: "jp"` for
-  this bucket and for its collabo models; no `main → jp` URL inference or
-  cross-region fallback is performed. Supporting other Live2D regions later
-  requires separate product and asset-source confirmation.
-- Browser-shaped `GET` requests with an `Origin` header and CORS preflight
-  `OPTIONS` requests returned `200`, an origin-specific
-  `Access-Control-Allow-Origin`, `Vary: Origin`, an allowed GET method, and no
-  `Access-Control-Allow-Credentials` for the catalog, model, MOC, texture,
-  physics, motion metadata, and motion files. This supports anonymous public
-  fetches. It is not yet deployed-origin proof: `media-lab.example.com` is the
-  Helm placeholder host, and `media-lab.sekai.best` was not DNS-resolvable in
-  this environment, so neither can be claimed as the actual running
-  media-lab deployment.
 
-The preview catalog and test descriptors in the reborn viewer remain
-intentionally synthetic; they must not be promoted to production metadata.
-Accordingly, #268 is partially unblocked: the current JP-only region contract,
-catalog-backed model sample, resource evidence, and documented sample are now
-available. It remains blocked for a production resolver or fixture until the
-actual deployed origin is confirmed for browser CORS. No resolver, production
-fixture, Pixi/Cubism dependency, or guessed URL was added.
+### Future associated catalog evidence
+
+- The future viewer source of truth is
+  `https://storage.sekai.best/sekai-live2d-assets/live2d-associated/v1/model_list.json`.
+  It returns a JSON array. Each model record has `modelBase`, `modelFile`,
+  `modelName`, `modelPath`, and `motionSets`.
+- Each `motionSets` entry has `motionSetId`, `motionPath`, `motionFiles`,
+  `facialPath`, and `facialFiles`. The explicit grouped association removes
+  the prior lack-of-motion/expression-metadata blocker for a catalog/resolver
+  plan.
+- `modelPath`, `motionPath`, and `facialPath` are bucket-relative paths, such
+  as `model/v1/main/...` and `motion/v1/main/...`. A model URL is derived from
+  the bucket root plus `modelPath` plus `modelFile`; motion URLs use the
+  corresponding motion path and file. Resolution must remain safe and reject
+  absolute or traversal paths.
+- The first verified sample is `01ichika_normal_3.0_f_t04`. It resolves a
+  model3/MOC3/PNG/physics bundle and body and facial `.motion3.json` files.
+  `facialFiles` are facial motions, not verified Cubism `.exp3.json` expression
+  assets. They must not be mapped to the existing `expressions` or
+  `playExpression` semantics until adapter behavior is verified.
+- The source has no locale field. `region: "jp"` remains an explicit product
+  convention for the whole independent Live2D bucket, not an inference from
+  `v1/main`; no cross-region fallback is allowed.
+
+### Browser CORS and remaining blocker
+
+Browser-shaped `GET` requests with an `Origin` header and CORS preflight
+`OPTIONS` requests have public-resource CORS evidence: tested catalog, model,
+MOC, texture, physics, and motion resources returned successful responses with
+origin-specific access headers and an allowed GET method. This supports
+anonymous public fetches. It is not deployed-origin proof: `media-lab.example.com`
+is the Helm placeholder host, and `media-lab.sekai.best` was not DNS-resolvable
+in this environment, so neither can be claimed as the actual running
+media-lab deployment.
+
+The legacy preview and test descriptors in the reborn viewer remain
+intentionally synthetic and must not be promoted to production metadata. The
+current `/live2d` route instead consumes the validated associated catalog and
+lists its model metadata, while `/live2d/[modelId]` resolves a serializable
+descriptor only after a successful catalog lookup and returns 404 for an
+unknown model only in that ready state. Catalog unavailable/error results stay
+explicit in the route data. Accordingly, #268 is partially unblocked: the
+current JP-only region contract, associated-catalog model/motion sample,
+resource evidence, and documented sample are now available. The current
+server-side route/UI metadata integration does not depend on deployed-origin
+browser proof. Deployed-origin CORS remains open for future browser asset
+playback, but it is not the sole gate for a production playback fixture: no
+Pixi/Cubism dependency or browser runtime adapter is present, and the
+scenario-to-model mapping is still unverified. Facial `.motion3.json` files
+remain metadata, not expressions.
 
 ## Data-source strategy decision
 
 For the first vertical slice, use a **split approach** (roadmap option 3):
 
 1. Catalog metadata comes from the existing SDK where it already exists.
-2. Scenario documents are fetched by a media-lab-owned data/asset adapter from
+2. Future viewer Live2D model and motion metadata comes from the associated
+   catalog and is fetched, validated, and normalized by a media-lab-owned
+   server adapter. The adapter owns URL rules, region behavior, and catalog
+   availability policy; the player package must not import them.
+3. Scenario documents are fetched by a media-lab-owned data/asset adapter from
    the configured existing asset source and normalized into `StoryDocument`.
    The adapter owns URL rules, region behavior, and i18n policy; the player
    package must not import them.
-3. Defer adding story catalog endpoints to `sekai-master-api` until #258 has
+4. Defer adding story catalog endpoints to `sekai-master-api` until #258 has
    proven which fields routes actually need. The `character3ds` batch endpoint
    is the precedent for adding lookups on demand. Activating this later
    follows the documented cross-repo workflow: change `sekai-master-api` →
@@ -181,17 +229,22 @@ before the consuming issues finalize the shapes.
 ## Open questions
 
 1. CORS from the deployed origin: #268 now has a catalog-backed model sample,
-   a confirmed current JP-only product contract, and resource-level
-   CORS/content-type observations. The actual media-lab deployment origin
-   remains unconfirmed: `media-lab.example.com` is only a Helm placeholder and
-   `media-lab.sekai.best` was not DNS-resolvable in the verification
-   environment. #268 must confirm the running origin before the production
-   adapter freezes.
-2. Upstream availability of 3D compatibility metadata (skeleton paths, bone
+   a confirmed current JP-only product contract, and resource-level CORS
+   observations for the public catalog and assets. The actual media-lab
+   deployment origin remains unconfirmed: `media-lab.example.com` is only a
+   Helm placeholder and `media-lab.sekai.best` was not DNS-resolvable in the
+   verification environment. #268 must confirm the running origin before
+   browser playback or production asset use freezes; this does not block the
+   current server-side catalog route/UI metadata integration.
+2. Facial-motion runtime semantics: the associated catalog supplies
+   `.motion3.json` facial files, not verified `.exp3.json` expressions. The
+   adapter must verify the runtime API before mapping facial motions to any
+   expression behavior.
+3. Upstream availability of 3D compatibility metadata (skeleton paths, bone
    names, Avatar/Animator, BlendShape, Unity version, source bundles): the
    asset pipeline is not in this workspace; #262 must confirm before the
    manifest leaves draft.
-3. `IScenarioData`'s full action/effect surface remains defined by the legacy
+4. `IScenarioData`'s full action/effect surface remains defined by the legacy
    pin (`sekai-viewer@0504bee6:src/story-scenerio.d.ts`); the coverage table
    from real scenario data is #258/#259 work.
 
@@ -200,9 +253,9 @@ before the consuming issues finalize the shapes.
 - Gap analysis document — this file.
 - Data-source strategy decision with trade-offs — §Data-source strategy.
 - `StoryDocument` / `ModelBundleManifest` draft interfaces — §Draft contracts.
-- Cross-repo workflow steps — §Data-source strategy decision, item 3.
+- Cross-repo workflow steps — §Data-source strategy decision, item 4.
 - Region/asset URL assumptions backed by a confirmed sample or explicit
   blocker — §Reborn asset rule and legacy comparison plus §Verification result:
-  #268 and §Open questions 1 (catalog/resource/CORS evidence is recorded;
-  current JP-only scope is explicit; deployed-origin verification remains
-  explicit).
+  #268 and §Open questions 1 (associated-catalog/resource/CORS evidence is
+  recorded; current JP-only scope is explicit; deployed-origin verification
+  remains explicit).
