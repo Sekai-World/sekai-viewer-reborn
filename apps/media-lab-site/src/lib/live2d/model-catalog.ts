@@ -1,10 +1,9 @@
 /**
  * Local preview catalog for the Live2D model selector.
  *
- * No verified model catalog exists yet, so these entries are typed
- * placeholders that exercise the selector flow. They never fetch or imply
- * real model data: every entry resolves to the existing stub viewer route,
- * and display strings stay externalized through i18n source keys.
+ * These entries remain typed placeholders for the existing stub viewer route.
+ * The catalog-backed Live2D routes use `associated-catalog` directly; it is
+ * re-exported here for compatibility with existing catalog imports.
  */
 import { isModelRouteId } from "./model-route";
 
@@ -62,3 +61,5 @@ export const resolveModelSelection = (
   const isKnown = models.some((model) => model.id === modelId);
   return isKnown ? { status: "known", modelId } : { status: "path-safe", modelId };
 };
+
+export * from "./associated-catalog";
