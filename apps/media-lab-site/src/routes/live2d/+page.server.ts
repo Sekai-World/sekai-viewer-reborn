@@ -1,7 +1,12 @@
+import { resolveLive2dCatalogRouteData } from "$lib/live2d/catalog-route-data";
 import type { PageServerLoad } from "./$types";
 
-/**
- * Metadata-only route shell for the Live2D track landing page. No Live2D data
- * adapter exists yet, so the loader only describes the track.
- */
-export const load: PageServerLoad = async () => ({ track: "live2d" as const });
+export const _createLive2dCatalogPageLoad = (
+  resolveCatalog: typeof resolveLive2dCatalogRouteData = resolveLive2dCatalogRouteData
+): PageServerLoad =>
+  async ({ fetch }) => ({
+    track: "live2d" as const,
+    catalog: await resolveCatalog(fetch)
+  });
+
+export const load: PageServerLoad = _createLive2dCatalogPageLoad();

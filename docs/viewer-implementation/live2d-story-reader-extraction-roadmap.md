@@ -22,10 +22,11 @@ The recommended extraction is therefore:
 4. Keep a thin React compatibility adapter for parity checks, then mount the
    same runtime from a SvelteKit page with a normal HTML canvas.
 
-The production destination is `media-lab-site`, which is currently only a
-shell. Its first Live2D feature should be delivered as a complete vertical
-slice: one route, one supported story type, one data adapter, and one player
-flow before expanding story coverage.
+The production destination is `media-lab-site`, which now has its shell and a
+metadata-backed associated-catalog route slice. Its first fully playable
+Live2D feature should still be delivered as a complete vertical slice: one
+route, one supported story type, one data adapter, and one player flow before
+expanding story coverage.
 
 Do not start by rewriting the player in Svelte or replacing `@pixi/react`. The
 important boundary is the player lifecycle and its data adapters, not the JSX.
@@ -166,8 +167,9 @@ runtime can drop it; the wrappers keep it until they are retired.
 
 `apps/media-lab-site` is a SvelteKit 2 / Svelte 5 app with a minimal home page.
 It already uses `ViewerShell`, `RegionSwitcher`, Tailwind 4, daisyUI 5, and a
-route transition shell, but it does not yet have story routes, server data
-loads, an i18n layout, a Live2D host, or a scenario data adapter.
+route transition shell, and it now includes localized Story Reader/Live2D route
+shells plus a server-side associated-catalog load for model metadata. It does
+not yet have a browser Live2D host/runtime or a scenario data adapter.
 
 The target should follow the content-site conventions without importing code
 from the `content-site` app. Shared behavior belongs in `packages/*`; app-only
@@ -218,10 +220,21 @@ second global primary/secondary selection.
 ### Target-side data and asset boundary
 
 The current `@platform/sekai-master-api-sdk` exports card, event, character,
-music, gacha, and virtual-live operations. A complete scenario/Live2D story
-catalog and scenario-asset API was not found in its generated exports. This is
-an explicit migration gate: do not make the new page depend on an assumed SDK
-method.
+music, gacha, and virtual-live operations. A scenario/story catalog and
+scenario-asset API was not found in its generated exports. The future viewer
+does have a verified associated Live2D catalog at
+`https://storage.sekai.best/sekai-live2d-assets/live2d-associated/v1/model_list.json`.
+That source describes model-to-motion associations, not scenario-to-model
+associations; it does not establish which model a story uses. Story-reader
+playback integration therefore remains deferred until a separate
+scenario-to-model mapping source is verified. Do not make the new page depend
+on an assumed SDK method.
+
+For future viewer model and motion metadata, the associated catalog is the
+source of truth. The previously verified
+`https://storage.sekai.best/sekai-live2d-assets/live2d/model_list.json`
+endpoint remains prior evidence and is not the future associated-catalog
+contract.
 
 Resolve this in Phase 0/2 by choosing one of the following and documenting the
 decision in the adapter:
@@ -230,9 +243,14 @@ decision in the adapter:
    SDK through the documented cross-repository workflow.
 2. Add a media-lab server adapter for an existing raw master-data/scenario
    source, returning a stable normalized `StoryDocument`.
-3. Use the SDK for catalog metadata and a separately configured scenario
-   endpoint for the playback document, while keeping that endpoint out of the
-   Pixi package.
+3. Use the SDK for catalog metadata where available, the associated catalog for
+   Live2D model/motion metadata, and a separately configured scenario endpoint
+   for the playback document, while keeping that endpoint out of the Pixi
+   package.
+
+The associated Live2D catalog is consumed by the media-lab server adapter for
+model and motion metadata, but it must not be treated as a story catalog or
+used to infer scenario-to-model mappings.
 
 The target asset resolver should reuse the confirmed remote-asset convention:
 `PUBLIC_REMOTE_ASSET_BASE_URL` plus the `sekai-live2d-assets` bucket, with the
@@ -340,7 +358,10 @@ Goal: know what can be migrated and what the reborn platform must provide.
 - Build an action/effect coverage table from real scenario data, including the
   currently unsupported values.
 - Audit the generated master API SDK and the raw scenario source. Resolve the
-  missing scenario/catalog contract before implementing a route loader.
+  missing scenario/story contract before implementing a scenario-backed route
+  loader. Use the
+  verified associated Live2D catalog for future model/motion metadata, while
+  tracking scenario-to-model mapping as a separate unresolved contract.
 - Run a browser-only compatibility spike with Pixi 7.4.3,
   `@sekai-world/pixi-live2d-display-mulmotion@0.5.1`, Howler, Vite 8, and the
   SvelteKit client build. Do not upgrade Pixi or the Live2D package yet.
@@ -375,8 +396,51 @@ loading/error state with no Pixi or Howler import during SSR.
 
 ### Phase 2 — Build the Sekai data and asset adapter
 
-Goal: produce one normalized playback descriptor independent of React and Pixi.
+Goal: produce one normalized model descriptor for route metadata, then a
+playback descriptor independent of React and Pixi.
 
+The associated-catalog portion of this phase is now implemented in the
+media-lab server boundary: the server loads and validates the JP-only catalog,
+`/live2d` renders metadata-backed models with ready/unavailable/error states,
+and `/live2d/[modelId]` resolves a descriptor only after a successful catalog
+lookup, returning 404 only for an unknown model in that ready state. Browser
+playback remains intentionally unavailable because Pixi/Cubism and a browser
+runtime adapter are not present; facial `.motion3.json` files remain metadata,
+not expressions.
+
+- Treat
+  `https://storage.sekai.best/sekai-live2d-assets/live2d-associated/v1/model_list.json`
+  as the future viewer source of truth for Live2D model and motion
+  associations. Preserve the previously verified `live2d/model_list.json`
+  endpoint as historical evidence only; do not use it as the new
+  associated-catalog contract.
+- Implement a strict parser for the raw catalog. Validate that the root is a
+  JSON array; validate model records with `modelBase`, `modelFile`, `modelName`,
+  `modelPath`, and `motionSets`; and validate each motion set with
+  `motionSetId`, `motionPath`, `motionFiles`, `facialPath`, and `facialFiles`.
+  Reject malformed or unsupported records instead of passing raw data to the
+  player.
+- Add safe bucket-relative path resolution. Resolve against the bucket root
+  `https://storage.sekai.best/sekai-live2d-assets/`; derive model URLs from
+  `modelPath` plus `modelFile`, and derive body/facial motion URLs from their
+  respective paths plus file names. Reject absolute URLs, protocol-relative
+  URLs, traversal segments, and other paths outside the bucket.
+- Add a server-side catalog resolver that owns fetching, parsing, cache
+  invalidation, and explicit unavailable states. Define a bounded cache policy
+  for validated data and a last-known-good/error policy; never cache malformed
+  catalog payloads. Route data should receive a graceful unavailable result
+  rather than failing as if a model were valid when the catalog cannot be
+  fetched or validated.
+- Normalize valid records into serializable model descriptors that retain the
+  complete `motionSets` association, including motion-set IDs, paths, and file
+  lists. Keep the explicit product convention `region: "jp"` for the entire
+  independent Live2D bucket: the catalog has no locale field, `v1/main` is not
+  a locale, and no cross-region fallback is permitted.
+- Expose separate body-motion and facial-motion adapter APIs. Treat
+  `motionFiles` as body motions and `facialFiles` as facial motions;
+  `facialFiles` are `.motion3.json`, not verified Cubism `.exp3.json` assets.
+  Do not map facial motions to the existing `expressions` or `playExpression`
+  semantics until the adapter and runtime behavior are verified.
 - Split the legacy `storyLoader.ts` into pure scenario/asset functions and a
   `SekaiStoryDataSource`. The old React page can keep a compatibility wrapper
   while the new adapter is tested independently.
@@ -392,11 +456,36 @@ Goal: produce one normalized playback descriptor independent of React and Pixi.
 - Keep metadata in `+page.server.ts`. Load large scenario/model/media payloads
   through the browser-side adapter with progress and cancellation. Validate
   CORS for images, audio, video, and model files from the deployed origin.
+- Treat the verified public `GET`/`OPTIONS` CORS evidence as resource-level
+  evidence only; confirm CORS from the actual deployed media-lab origin before
+  production use.
 - Make preprocessing clone input before adding synthetic initial background,
   BGM, and layout snippets; keep source data immutable across readers.
 
-Exit criteria: one route can resolve a complete descriptor and asset list, and
-the legacy React reader can consume the same pure adapter without regressions.
+The catalog route/UI slice is implemented, but no browser playback runtime or
+production playback fixture is added by this slice. The remaining bullets
+define the scenario-data, browser-runtime, and deployed-origin verification
+work needed for playback; deployed-origin CORS is not the sole remaining gate.
+
+Exit criteria:
+
+- One route can resolve a complete descriptor and asset list, or render an
+  explicit unavailable state when the catalog cannot be used.
+- The strict parser accepts the verified array shape and rejects malformed
+  records, duplicate identifiers, and unsupported values with actionable
+  diagnostics.
+- The resolver has a documented bounded cache policy, last-known-good/error
+  behavior, and no malformed catalog is cached.
+- Normalized descriptors retain all `motionSets`, support deterministic
+  multi-motion-set selection, and expose body-motion and facial-motion APIs
+  separately.
+- Path-resolution tests prove that only safe bucket-relative paths produce
+  URLs; absolute URLs and traversal attempts are rejected.
+- The verified sample `01ichika_normal_3.0_f_t04` resolves its model bundle plus
+  body and facial motion files, without treating facial motions as expressions.
+- The legacy React reader can consume the same pure adapter without regressions.
+- Story-reader playback integration is still out of scope until a separate
+  scenario-to-model mapping source and fixture are verified.
 
 ### Phase 3 — Extract the framework-neutral player package
 
@@ -461,6 +550,9 @@ second monolith.
 
 - Add story selectors for unit, event, character, card, area-talk, and special
   stories only after each type has a data adapter and fixture.
+- Keep Story Reader playback integration deferred until a separate
+  scenario-to-model mapping is verified; the associated Live2D catalog alone
+  does not provide that mapping.
 - Add region availability and fallback handling at the route/data layer; never
   silently fall back to another region's scenario or voice asset.
 - Add browser integration tests for one story per supported type, plus visual
@@ -489,9 +581,30 @@ second monolith.
 ## Known risks and decisions
 
 - **Scenario API gap:** the current reborn master SDK does not expose the full
-  legacy scenario/story data surface. This is a delivery gate, not an
-  implementation detail. Select an API or server-adapter strategy before the
-  first playback route is coded.
+  legacy scenario/story data surface. The associated Live2D catalog supplies
+  model/motion metadata but no scenario-to-model mapping. This is a delivery
+  gate, not an implementation detail. Select an API or server-adapter strategy
+  before the first playback route is made playable, and keep Story Reader
+  playback integration deferred until the mapping is verified.
+- **Untrusted catalog data:** the remote catalog is input, not a trusted type.
+  Malformed arrays, records, fields, and file lists must be rejected without
+  poisoning the cache or producing a partial player descriptor.
+- **Catalog identity and selection:** duplicate model or motion IDs and models
+  with multiple motion sets require explicit validation and deterministic
+  selection. Do not silently merge unrelated motion sets.
+- **Path safety:** `modelPath`, `motionPath`, and `facialPath` are expected to
+  be bucket-relative. Reject absolute URLs, protocol-relative URLs, traversal
+  segments, and any resolved path outside the configured bucket.
+- **Facial motion versus expression:** `facialFiles` are `.motion3.json` facial
+  motions, not verified `.exp3.json` expression assets. Keep facial-motion APIs
+  separate from `expressions`/`playExpression` until runtime compatibility is
+  proven.
+- **Motion-set availability:** a model may expose more than one motion set.
+  The resolver must retain the grouping and define how a requested set is
+  selected or reported unavailable; it must not assume one global motion list.
+- **Region convention:** the catalog has no locale field. `region: "jp"` is an
+  explicit convention for the independent Live2D bucket, not a deduction from
+  `v1/main`; there is no cross-region fallback.
 - **SvelteKit SSR boundary:** Pixi, Howler, `Image`, HTML video, and WebGL are
   browser-only. Route `load` functions may return metadata and descriptors, but
   player construction must happen after hydration and must be disposable.
