@@ -99,6 +99,16 @@ describe("Live2D associated catalog parser", () => {
         status: "invalid"
       });
     }
+    expect(
+      parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], modelPath: "motion/v1/\u0000" }])
+    ).toMatchObject({ status: "invalid" });
+
+    expect(
+      parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], modelPath: "model/v1/😀" }])
+    ).toMatchObject({
+      status: "ok",
+      catalog: [{ modelPath: "model/v1/😀" }]
+    });
 
     for (const override of [
       { motionPath: "motion\\v1" },
@@ -116,7 +126,7 @@ describe("Live2D associated catalog parser", () => {
     expect(resolveLive2dAssetUrl("motion/v1/main", "idle.motion3.json")).toBe(
       "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/idle.motion3.json"
     );
-    expect(resolveLive2dAssetUrl("motion/v1/main/", "idle.motion3.json")).toBe(
+    expect(resolveLive2dAssetUrl("motion/v1/main///", "idle.motion3.json")).toBe(
       "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/idle.motion3.json"
     );
     expect(resolveLive2dAssetUrl("../outside", "idle.motion3.json")).toBeNull();

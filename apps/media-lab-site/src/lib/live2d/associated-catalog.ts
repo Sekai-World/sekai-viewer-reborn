@@ -52,8 +52,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const hasControlCharacter = (value: string): boolean =>
   Array.from(value).some((character) => {
-    const code = character.charCodeAt(0);
-    return (code >= 0 && code <= 31) || (code >= 127 && code <= 159);
+    const code = character.codePointAt(0);
+    return (
+      code !== undefined &&
+      ((code >= 0 && code <= 31) || (code >= 127 && code <= 159))
+    );
   });
 
 const hasUnsafeValue = (value: string): boolean =>
@@ -93,7 +96,9 @@ const readRelativePath = (value: unknown, label: string): ValidationResult<strin
     return { reason: `${label} must be bucket-relative` };
   }
 
-  const normalized = result.value.replace(/\/+$/, "");
+  let normalizedEnd = result.value.length;
+  while (normalizedEnd > 0 && result.value[normalizedEnd - 1] === "/") normalizedEnd -= 1;
+  const normalized = result.value.slice(0, normalizedEnd);
   const segments = normalized.split("/");
   if (
     !normalized ||
