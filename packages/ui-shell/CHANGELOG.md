@@ -1,5 +1,11 @@
 # @platform/ui-shell
 
+## 0.5.0
+
+### Minor Changes
+
+- 806897b: Add shared theme preference normalization, resolution, and document application helpers.
+
 ## 0.4.0
 
 ### Minor Changes
