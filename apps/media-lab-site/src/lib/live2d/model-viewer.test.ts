@@ -51,6 +51,9 @@ describe("Live2D model descriptor", () => {
 
   it("rejects untrusted, ambiguous, and malformed asset data", () => {
     expect(parseLive2dModelDescriptor({ ...descriptor, region: "global" }).status).toBe("invalid");
+    for (const region of ["en", "tw", "kr", "cn"]) {
+      expect(parseLive2dModelDescriptor({ ...descriptor, region }).status).toBe("invalid");
+    }
     expect(parseLive2dModelDescriptor({ ...descriptor, modelUrl: "/model3.json" }).status).toBe(
       "invalid"
     );

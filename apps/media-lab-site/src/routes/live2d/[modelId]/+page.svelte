@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { navigating } from "$app/state";
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
@@ -12,6 +13,10 @@
   let { data }: { data: PageData } = $props();
 
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
+  const catalog = $derived(data.catalog);
+  const model = $derived(catalog?.status === "ready" ? catalog.model : null);
+  const descriptor = $derived(catalog?.status === "ready" ? catalog.descriptor : null);
+  const isLoading = $derived(navigating.to?.url.pathname.startsWith("/live2d/") ?? false);
 
   // Viewer selection state. The model player adapter consumes these values once
   // it mounts into the studio stage; until then the stage stays reserved and
@@ -22,10 +27,8 @@
   let playbackLoop = $state(false);
   let playbackSpeed = $state(1);
 
-  // The approved catalog has not supplied a resolved model3.json URL yet. Keep
-  // the controller mounted through the browser lifecycle anyway, so the page
-  // exercises the same cancellation and teardown seam as the future Pixi /
-  // Cubism adapter without guessing an asset path.
+  // Catalog readiness is not player readiness. Preserve the lifecycle seam,
+  // but do not attempt to load a descriptor into a nonexistent browser adapter.
   const viewer = createLive2dModelViewer({
     load: async () => {
       throw new Error("No browser model adapter is configured");
@@ -45,10 +48,7 @@
     reload: () => void viewer.reload()
   });
 
-  const hasUnavailableDescriptor = $derived(viewerState.status === "unavailable");
-  const isUnavailable = $derived(
-    hasUnavailableDescriptor || data.viewerStatus === "unavailable-model-contract"
-  );
+  const isUnavailable = $derived(!descriptor);
 
   onMount(() => {
     const unsubscribe = viewer.subscribe((nextState) => {
@@ -92,9 +92,12 @@
   <title>{translate("live2d.modelViewer.title")}</title>
 </svelte:head>
 
-<section aria-labelledby="live2d-model-viewer-title" class="flex flex-col gap-6">
+<section aria-labelledby="live2d-model-viewer-title" aria-busy={isLoading} class="flex min-w-0 flex-col gap-6">
   <nav class="text-sm">
-    <a class="link link-hover inline-flex items-center gap-1 text-primary" href="/live2d">
+    <a
+      class="link link-hover inline-flex min-h-11 items-center gap-2 rounded-lg text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      href="/live2d"
+    >
       <Icon icon="mdi:arrow-left" class="size-4" aria-hidden="true" />
       {translate("live2d.backToLive2d")}
     </a>
@@ -102,22 +105,48 @@
 
   <header class="flex flex-col gap-3">
     <p class="text-sm font-semibold text-primary">{translate("live2d.kicker")}</p>
-    <h1 id="live2d-model-viewer-title" class="text-3xl font-bold tracking-tight text-base-content">
-      {translate("live2d.modelViewer.title")}
+    <h1
+      id="live2d-model-viewer-title"
+      class="text-3xl font-bold tracking-tight break-all text-base-content"
+    >
+      {model?.modelName ?? translate("live2d.modelViewer.title")}
     </h1>
     <p class="max-w-2xl text-base/7 text-base-content/75">
-      {translate("live2d.modelViewer.description")}
+      {translate("live2d.modelViewer.status.description")}
     </p>
   </header>
 
+  {#if isLoading}
+    <p role="status" class="text-sm text-base-content/70">
+      {translate("live2d.modelViewer.title")}…
+    </p>
+  {/if}
+
+  {#if catalog?.status === "error"}
+    <div class="alert alert-error alert-soft" role="alert">
+      <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
+      <div>
+        <h2 class="font-semibold">
+          {translate("live2d.modelSelector.title")} — {translate("errorPage.title")}
+        </h2>
+        <p class="mt-1 text-sm/6">{translate("errorPage.description")}</p>
+      </div>
+      <a
+        href={`/live2d/${encodeURIComponent(data.identity.modelId)}`}
+        data-sveltekit-reload
+        class="btn btn-outline min-h-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >{translate("errorPage.retryAction")}</a>
+    </div>
+  {/if}
+
   <dl class="grid gap-3 sm:grid-cols-2">
-    <div class="rounded-xl border border-base-content/10 bg-base-100 p-3 shadow-sm">
+    <div class="min-w-0 rounded-xl border border-base-content/10 bg-base-100 p-4">
       <dt class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
         {translate("live2d.modelViewer.modelIdLabel")}
       </dt>
       <dd class="mt-1 font-mono text-sm break-all">{data.identity.modelId}</dd>
     </div>
-    <div class="rounded-xl border border-base-content/10 bg-base-100 p-3 shadow-sm">
+    <div class="min-w-0 rounded-xl border border-base-content/10 bg-base-100 p-4">
       <dt class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
         {translate("live2d.modelViewer.status.label")}
       </dt>
@@ -129,7 +158,57 @@
     </div>
   </dl>
 
-  <div class="alert alert-soft" role="status">
+  {#if model}
+    <section
+      aria-labelledby="model-catalog-title"
+      class="card min-w-0 border border-base-content/10 bg-base-100"
+    >
+      <div class="card-body gap-4 p-5 sm:p-6">
+        <h2 id="model-catalog-title" class="card-title text-lg">
+          {translate("live2d.modelSelector.title")}
+        </h2>
+        <div class="min-w-0 rounded-xl border border-base-content/10 bg-base-200 p-4">
+          <p class="font-mono text-sm font-semibold break-all">{model.modelBase}</p>
+          <p class="mt-2 font-mono text-sm/6 break-all text-base-content/75">
+            {model.modelPath}
+          </p>
+          <p class="mt-2 font-mono text-xs/6 break-all text-base-content/70">
+            {descriptor?.modelUrl}
+          </p>
+        </div>
+        <h3 class="font-semibold">{translate("live2d.modelViewer.controls.motion")}</h3>
+        {#each model.motionSets as motionSet (motionSet.motionSetId)}
+          <details class="min-w-0 rounded-xl border border-base-content/10 bg-base-200">
+            <summary
+              class="min-h-11 cursor-pointer rounded-xl p-4 font-mono text-sm break-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >{motionSet.motionSetId}</summary>
+            <div class="grid min-w-0 gap-4 border-t border-base-content/10 p-4 md:grid-cols-2">
+              <!-- Keep body and facial file groups distinct. Facial motion3
+                   files are metadata, not playable Cubism expressions. -->
+              {#each [{ path: motionSet.motionPath, files: motionSet.motionFiles }, { path: motionSet.facialPath, files: motionSet.facialFiles }] as group, index (index)}
+                <div class="min-w-0">
+                  <h4 class="font-mono text-sm/6 font-semibold break-all">{group.path}</h4>
+                  <ul class="mt-3 space-y-2 text-base-content/75" role="list">
+                    {#each group.files as file (file)}
+                      <li class="font-mono text-xs/6 break-all">{file}</li>
+                    {:else}
+                      <li class="text-sm/6">{translate("live2d.modelViewer.controls.noneLoaded")}</li>
+                    {/each}
+                  </ul>
+                </div>
+              {/each}
+            </div>
+          </details>
+        {:else}
+          <p role="status" class="rounded-xl bg-base-200 p-4 text-sm/6 text-base-content/75">
+            {translate("live2d.modelViewer.controls.noneLoaded")}
+          </p>
+        {/each}
+      </div>
+    </section>
+  {/if}
+
+  <div class="alert alert-warning alert-soft" role="status">
     <Icon icon="mdi:progress-wrench" class="size-5 shrink-0" aria-hidden="true" />
     <div>
       <p class="font-semibold">
@@ -171,9 +250,14 @@
 
 {#snippet modelStage()}
   <div
-    class="absolute inset-0"
+    class="absolute inset-0 grid place-items-center p-4"
     data-live2d-stage={data.identity.modelId}
     data-model-id={data.identity.modelId}
     aria-hidden="true"
-  ></div>
+  >
+    <div class="flex max-w-sm flex-col items-center gap-3 text-center">
+      <Icon icon="mdi:progress-wrench" class="size-8 opacity-60" />
+      <p class="text-sm/6">{translate("live2d.modelViewer.status.awaitingAdapter")}</p>
+    </div>
+  </div>
 {/snippet}
