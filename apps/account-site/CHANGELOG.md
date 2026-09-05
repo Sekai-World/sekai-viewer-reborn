@@ -1,5 +1,13 @@
 # @apps/account-site
 
+## 0.0.3
+
+### Patch Changes
+
+- 806897b: Rebuild app images when shared shell and locale runtime helpers are released.
+- Updated dependencies [806897b]
+  - @platform/ui-shell@0.5.0
+
 ## 0.0.2
 
 ### Patch Changes
