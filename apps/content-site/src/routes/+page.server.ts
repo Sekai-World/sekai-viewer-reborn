@@ -14,6 +14,11 @@ import {
   toUnitProfileMap,
   type UnitProfileMap
 } from "$lib/server/unit-profiles";
+import {
+  LATEST_GACHA_LIMIT,
+  selectLatestGachas,
+  type LatestGachaItem
+} from "$lib/server/home-latest-data";
 import type { PageServerLoad } from "./$types";
 
 type EventSummary = {
@@ -60,14 +65,6 @@ type LatestMusicItem = {
   assetBundleName: string | null;
   composer: string | null;
   publishedAt: string | number | null;
-};
-
-type LatestGachaItem = {
-  id: string;
-  name: string | null;
-  assetBundleName: string | null;
-  startAt: string | number | null;
-  endAt: string | number | null;
 };
 
 type RegionLatestData = {
@@ -311,7 +308,13 @@ const fetchRegionLatestData = async (
     getGachasByRegionList({
       baseUrl,
       path: { region },
-      query: { page: 1, page_size: 2, spoiler: false, sort_by: "startAt", sort_order: "desc" }
+      query: {
+        page: 1,
+        page_size: LATEST_GACHA_LIMIT,
+        spoiler: false,
+        sort_by: "startAt",
+        sort_order: "desc"
+      }
     })
   ]);
 
@@ -331,29 +334,13 @@ const fetchRegionLatestData = async (
     ? ((gachasRes.data as Record<string, unknown>).items as unknown[])
         .map(parseLatestGacha)
         .filter((g): g is LatestGachaItem => g !== null)
-        .filter((g) => {
-          const now = Date.now();
-          const start =
-            typeof g.startAt === "number"
-              ? g.startAt
-              : typeof g.startAt === "string"
-                ? Date.parse(g.startAt)
-                : null;
-          const end =
-            typeof g.endAt === "number"
-              ? g.endAt
-              : typeof g.endAt === "string"
-                ? Date.parse(g.endAt)
-                : null;
-          return start !== null && end !== null && start <= now && now <= end;
-        })
     : [];
 
   return {
     region,
     cards: cardItems,
     musics: musicItems,
-    gachas: gachaItems
+    gachas: selectLatestGachas(gachaItems, Date.now())
   };
 };
 

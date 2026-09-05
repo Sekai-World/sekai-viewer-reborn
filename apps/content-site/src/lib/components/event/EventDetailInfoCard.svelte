@@ -123,9 +123,9 @@
         <svelte:element
           this={unitHref ? "a" : "div"}
           href={unitHref ?? undefined}
-          class={`content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4 outline-none transition-[background-color,border-color,transform] duration-180 ease-out ${
+          class={`content-card-inset flex items-center gap-3 rounded-xl p-3 sm:px-4 outline-none ${
             unitHref
-              ? "group/event-unit-row border-(--archive-border-default) hover:-translate-y-0.5 hover:border-primary/35 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              ? "group/event-unit-row border-(--archive-border-default) transition-[background-color,border-color,transform] duration-180 ease-out motion-reduce:transition-none [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
               : "border-(--archive-border-subtle)"
           }`}
           aria-label={unitHref ? (getDisplayUnitName(event.unit) ?? undefined) : undefined}
@@ -150,7 +150,7 @@
         {#if char.id > 0}
           <a
             href={resolve("/character/[region]/[id]", { region, id: String(char.id) })}
-            class="content-card-inset group/banner-character-row flex items-center gap-3 rounded-xl border-(--archive-border-default) p-3 sm:px-4 outline-none transition-[background-color,border-color] duration-150 hover:border-primary/35 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+            class="content-card-inset group/banner-character-row flex items-center gap-3 rounded-xl border-(--archive-border-default) p-3 sm:px-4 outline-none transition-[background-color,border-color,transform] duration-180 ease-out motion-reduce:transition-none [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             aria-label={getCharacterDisplayName(char)}
           >
             <div class="min-w-0 flex-1">

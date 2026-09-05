@@ -476,6 +476,9 @@
           <GachaSimulatorCard
             gachaId={data.gachaId}
             region={data.region}
+            behaviors={payload.gacha.gachaBehaviors}
+            {behaviorTypeMap}
+            {spinnableTypeMap}
             title={simulatorTitle}
             pull1Label={simulatorPull1}
             pull10Label={simulatorPull10}

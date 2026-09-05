@@ -1,9 +1,11 @@
 <script lang="ts">
   import { getCardThumbnailAssetURL } from "$lib/assets/index";
+  import type { GachaBehavior } from "$lib/domain/gacha-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import Icon from "@iconify/svelte";
   import { resolve, base } from "$app/paths";
+  import { SvelteMap } from "svelte/reactivity";
 
   type PulledGachaCard = {
     cardId: string;
@@ -18,6 +20,9 @@
   let {
     gachaId,
     region,
+    behaviors,
+    behaviorTypeMap,
+    spinnableTypeMap,
     title,
     pull1Label,
     pull10Label,
@@ -36,6 +41,9 @@
   }: {
     gachaId: string;
     region: SupportedRegion;
+    behaviors: GachaBehavior[];
+    behaviorTypeMap: Record<string, string>;
+    spinnableTypeMap: Record<string, string>;
     title: string;
     pull1Label: string;
     pull10Label: string;
@@ -83,6 +91,129 @@
   let pulling = $state(false);
   let pullError = $state(false);
   let pendingCount = $state(0);
+  let selectedBehaviorKey = $state<string | null>(null);
+
+  type BehaviorGroup = {
+    key: string;
+    behaviorType: string;
+    spinnableType: string;
+    display: string;
+    spinnableDisplay: string | null;
+    variants: GachaBehavior[];
+    pullCounts: number[];
+  };
+
+  const getBehaviorGroupKey = (behavior: GachaBehavior): string =>
+    [behavior.gachaBehaviorType ?? "", behavior.gachaSpinnableType ?? ""].join(":");
+
+  const getBehaviorDisplay = (type: string | null): string =>
+    type ? (behaviorTypeMap[type] ?? type) : "—";
+
+  const getSpinnableDisplay = (type: string | null): string | null =>
+    type && type !== "any" ? (spinnableTypeMap[type] ?? type) : null;
+
+  const getAllowedPullCounts = (group: {
+    behaviorType: string;
+    variants: GachaBehavior[];
+  }): number[] => {
+    const counts = [
+      ...new Set(
+        group.variants
+          .map((behavior) => behavior.spinCount)
+          .filter(
+            (count): count is number =>
+              count !== null && Number.isInteger(count) && count >= 1 && count <= 10
+          )
+      )
+    ].sort((a, b) => a - b);
+
+    if (counts.length > 0) return counts;
+    return group.behaviorType === "once_a_day" || group.behaviorType === "once_a_week"
+      ? [1]
+      : [1, 10];
+  };
+
+  const behaviorGroups = $derived.by(() => {
+    const groups = new SvelteMap<string, GachaBehavior[]>();
+    const sorted = [...behaviors].sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+
+    for (const behavior of sorted) {
+      const key = getBehaviorGroupKey(behavior);
+      const variants = groups.get(key);
+      if (variants) {
+        variants.push(behavior);
+      } else {
+        groups.set(key, [behavior]);
+      }
+    }
+
+    return [...groups.entries()].map(([key, variants]): BehaviorGroup => {
+      const first = variants[0];
+      const behaviorType = first?.gachaBehaviorType ?? "";
+      const spinnableType = first?.gachaSpinnableType ?? "";
+      return {
+        key,
+        behaviorType,
+        spinnableType,
+        display: getBehaviorDisplay(first?.gachaBehaviorType ?? null),
+        spinnableDisplay: getSpinnableDisplay(first?.gachaSpinnableType ?? null),
+        variants,
+        pullCounts: getAllowedPullCounts({ behaviorType, variants })
+      };
+    });
+  });
+
+  const selectedBehaviorGroup = $derived.by(() => {
+    if (behaviorGroups.length === 0) return null;
+    return (
+      behaviorGroups.find((group) => group.key === selectedBehaviorKey) ??
+      behaviorGroups.find(
+        (group) => group.behaviorType === "normal" && group.spinnableType === "any"
+      ) ??
+      behaviorGroups[0]
+    );
+  });
+
+  const activePullCounts = $derived(selectedBehaviorGroup?.pullCounts ?? [1, 10]);
+
+  const simulatorId = $derived(
+    `gacha-simulator-${gachaId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`
+  );
+  const behaviorTabId = (index: number): string => `${simulatorId}-behavior-tab-${index}`;
+  const behaviorPanelId = (index: number): string => `${simulatorId}-behavior-panel-${index}`;
+  const activeBehaviorIndex = $derived(
+    selectedBehaviorGroup ? behaviorGroups.indexOf(selectedBehaviorGroup) : -1
+  );
+
+  const selectBehaviorTab = (index: number, focus = false): void => {
+    const group = behaviorGroups[index];
+    if (!group) return;
+    selectedBehaviorKey = group.key;
+    if (focus) {
+      requestAnimationFrame(() => document.getElementById(behaviorTabId(index))?.focus());
+    }
+  };
+
+  const handleBehaviorTabKeydown = (event: KeyboardEvent, index: number): void => {
+    if (behaviorGroups.length === 0) return;
+
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight") nextIndex = (index + 1) % behaviorGroups.length;
+    if (event.key === "ArrowLeft")
+      nextIndex = (index - 1 + behaviorGroups.length) % behaviorGroups.length;
+    if (event.key === "Home") nextIndex = 0;
+    if (event.key === "End") nextIndex = behaviorGroups.length - 1;
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    selectBehaviorTab(nextIndex, true);
+  };
+
+  const getPullLabel = (count: number): string => {
+    if (count === 1) return pull1Label;
+    if (count === 10) return pull10Label;
+    return `×${count}`;
+  };
 
   const totalPulls = $derived(pullHistory.length);
 
@@ -107,10 +238,23 @@
 
     try {
       const url = `${base}/api/gacha/${region}/${gachaId}/pull`;
+      const requestBody: {
+        count: number;
+        behaviorType?: string;
+        spinnableType?: string;
+      } = { count };
+      if (selectedBehaviorGroup) {
+        if (selectedBehaviorGroup.behaviorType) {
+          requestBody.behaviorType = selectedBehaviorGroup.behaviorType;
+        }
+        if (selectedBehaviorGroup.spinnableType) {
+          requestBody.spinnableType = selectedBehaviorGroup.spinnableType;
+        }
+      }
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ count })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -177,35 +321,87 @@
         {noPoolLabel}
       </div>
     {:else}
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          class="btn btn-primary btn-sm gap-1"
-          onclick={() => doPull(1)}
-          disabled={pulling}
+      {#snippet pullControls()}
+        <div class="flex items-center gap-2">
+          {#each activePullCounts as count (`sim-pull-${count}`)}
+            <button
+              type="button"
+              class="btn btn-primary btn-sm gap-1"
+              onclick={() => doPull(count)}
+              disabled={pulling}
+            >
+              <Icon
+                icon={count === 1 ? "mdi:dice-1" : "mdi:dice-multiple"}
+                class="size-4"
+                aria-hidden="true"
+              />
+              {getPullLabel(count)}
+            </button>
+          {/each}
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm ml-auto gap-1"
+            onclick={reset}
+            disabled={pulling}
+          >
+            <Icon icon="mdi:refresh" class="size-4" aria-hidden="true" />
+            {resetLabel}
+          </button>
+        </div>
+      {/snippet}
+
+      {#if behaviorGroups.length > 0}
+        <div
+          role="tablist"
+          aria-label={title}
+          data-swipe-region-skip
+          class="scrollbar-thin -mx-1 flex max-w-full gap-1.5 overflow-x-auto px-1 pb-1"
         >
-          <Icon icon="mdi:dice-1" class="size-4" aria-hidden="true" />
-          {pull1Label}
-        </button>
-        <button
-          type="button"
-          class="btn btn-primary btn-sm gap-1"
-          onclick={() => doPull(10)}
-          disabled={pulling}
-        >
-          <Icon icon="mdi:dice-multiple" class="size-4" aria-hidden="true" />
-          {pull10Label}
-        </button>
-        <button
-          type="button"
-          class="btn btn-ghost btn-sm gap-1 ml-auto"
-          onclick={reset}
-          disabled={pulling}
-        >
-          <Icon icon="mdi:refresh" class="size-4" aria-hidden="true" />
-          {resetLabel}
-        </button>
-      </div>
+          {#each behaviorGroups as group, index (group.key)}
+            <button
+              id={behaviorTabId(index)}
+              type="button"
+              role="tab"
+              aria-selected={group.key === selectedBehaviorGroup?.key}
+              aria-controls={behaviorPanelId(index)}
+              tabindex={group.key === selectedBehaviorGroup?.key ? 0 : -1}
+              class={`btn btn-sm h-auto min-h-10 shrink-0 rounded-xl px-3 py-2 font-sans text-xs font-medium normal-case transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:text-sm ${
+                group.key === selectedBehaviorGroup?.key
+                  ? "btn-primary shadow-sm"
+                  : "border-base-content/10 bg-base-200/55 hover:border-primary/30 hover:bg-base-200"
+              }`}
+              onclick={() => selectBehaviorTab(index)}
+              onkeydown={(event) => handleBehaviorTabKeydown(event, index)}
+            >
+              <span>{group.display}</span>
+              {#if group.spinnableDisplay}
+                <span
+                  class={`badge badge-sm font-medium ${group.key === selectedBehaviorGroup?.key ? "badge-ghost" : "badge-outline"}`}
+                >
+                  {group.spinnableDisplay}
+                </span>
+              {/if}
+            </button>
+          {/each}
+        </div>
+
+        {#each behaviorGroups as group, index (group.key)}
+          <div
+            id={behaviorPanelId(index)}
+            role="tabpanel"
+            aria-labelledby={behaviorTabId(index)}
+            tabindex="0"
+            hidden={index !== activeBehaviorIndex}
+            class="min-w-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          >
+            {#if index === activeBehaviorIndex}
+              {@render pullControls()}
+            {/if}
+          </div>
+        {/each}
+      {:else}
+        {@render pullControls()}
+      {/if}
 
       {#if pullError}
         <div class="content-card-inset rounded-xl p-3 sm:px-4 text-center text-sm text-error/80">
@@ -229,40 +425,36 @@
           </p>
           <div class="grid grid-cols-5 gap-1.5 sm:grid-cols-10">
             {#each sortedLatestResult as card, index (`sim-result-${index}-${card.cardId}`)}
-              <a href={getCardDetailHref(card.cardId)} class="group block">
-                <div
-                  class="relative overflow-hidden rounded-lg bg-base-200/30 ring-1 ring-base-content/5 transition-all hover:shadow-md hover:ring-primary/40"
-                >
-                  <CardThumbnail
-                    src={card.assetBundleName
-                      ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
-                      : null}
-                    fallbackSrc={card.assetBundleName && region !== "jp"
-                      ? getCardThumbnailAssetURL(card.assetBundleName, false, region)
-                      : null}
-                    alt={card.title ? `${card.title} ${cardAltSuffix}` : `Card ${card.cardId}`}
-                    fallbackLabel={card.cardId}
-                    trained={false}
-                    attr={card.attr}
-                    rarityType={card.rarityType}
-                    rarityCount={card.rarityType === "rarity_birthday"
-                      ? 1
-                      : getRarityValue(card.rarityType)}
-                    showFrame={true}
-                    showIcons={true}
-                    loadMode="immediate"
-                    maxSize={64}
-                    containerClass="relative mx-auto aspect-square overflow-hidden rounded-lg"
-                    imageClass="size-full object-cover transition-transform duration-200 group-hover:scale-105"
-                  />
-                  {#if card.isNew}
-                    <span
-                      class="absolute top-0.5 left-0.5 z-10 rounded bg-primary px-1 py-0.5 text-[0.5rem] font-bold leading-none text-primary-content shadow-sm"
-                    >
-                      {newLabel}
-                    </span>
-                  {/if}
-                </div>
+              <a href={getCardDetailHref(card.cardId)} class="group relative block w-full">
+                <CardThumbnail
+                  src={card.assetBundleName
+                    ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
+                    : null}
+                  fallbackSrc={card.assetBundleName && region !== "jp"
+                    ? getCardThumbnailAssetURL(card.assetBundleName, false, region)
+                    : null}
+                  alt={card.title ? `${card.title} ${cardAltSuffix}` : `Card ${card.cardId}`}
+                  fallbackLabel={card.cardId}
+                  trained={false}
+                  attr={card.attr}
+                  rarityType={card.rarityType}
+                  rarityCount={card.rarityType === "rarity_birthday"
+                    ? 1
+                    : getRarityValue(card.rarityType)}
+                  showFrame={true}
+                  showIcons={true}
+                  loadMode="immediate"
+                  maxSize={null}
+                  containerClass="relative aspect-square w-full overflow-hidden rounded-lg bg-base-200/30"
+                  imageClass="size-full object-contain"
+                />
+                {#if card.isNew}
+                  <span
+                    class="absolute top-0.5 left-0.5 z-10 rounded bg-primary px-1 py-0.5 text-[0.5rem] font-bold leading-none text-primary-content shadow-sm"
+                  >
+                    {newLabel}
+                  </span>
+                {/if}
               </a>
             {/each}
           </div>
