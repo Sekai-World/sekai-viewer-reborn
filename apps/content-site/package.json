@@ -20,7 +20,7 @@
     "@platform/sekai-master-api-sdk": "workspace:*",
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*",
-    "taglib-wasm": "^1.2.2"
+    "taglib-wasm": "^2.0.0"
   },
   "devDependencies": {
     "@iconify-icons/mdi": "^2.0.0",
