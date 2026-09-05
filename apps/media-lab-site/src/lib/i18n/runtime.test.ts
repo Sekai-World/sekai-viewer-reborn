@@ -16,7 +16,7 @@ describe("media-lab-site local i18n runtime", () => {
       "shell.title": expect.any(String),
       "home.title": expect.any(String),
       "live2d.title": expect.any(String),
-      "storyReader.title": expect.any(String)
+      "storyReader.landing.title": expect.any(String)
     });
   });
 

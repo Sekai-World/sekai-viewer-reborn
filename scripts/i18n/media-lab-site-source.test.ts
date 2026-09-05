@@ -31,11 +31,18 @@ describe("media-lab-site i18n source collection", () => {
     );
 
     expect(source).toMatchObject({
+      "storyReader.landing.title": expect.any(String),
       "storyReader.meta.region": expect.any(String),
       "storyReader.meta.storyType": expect.any(String),
       "storyReader.meta.storyId": expect.any(String),
-      "storyReader.status.title": expect.any(String),
-      "storyReader.status.description": expect.any(String),
+      "storyReader.modes.textOnly.title": expect.any(String),
+      "storyReader.modes.textOnly.action": expect.any(String),
+      "storyReader.modes.live2dPlayer.title": expect.any(String),
+      "storyReader.modes.live2dPlayer.action": expect.any(String),
+      "storyReader.player.status.title": expect.any(String),
+      "storyReader.player.status.description": expect.any(String),
+      "storyReader.textOnly.status.title": expect.any(String),
+      "storyReader.textOnly.status.description": expect.any(String),
       "storyReader.storyType.area-talk": expect.any(String),
       "storyReader.storyType.profile": expect.any(String)
     });
@@ -57,6 +64,7 @@ describe("media-lab-site i18n source collection", () => {
 
     expect(common).toMatchObject({
       "navigation.live2d": "Live2D Studio",
+      "navigation.storyReader": expect.any(String),
       "navigation.assetViewer": "3D Asset Lab",
       "settings.primaryRegion": expect.any(String),
       "settings.secondaryRegion": expect.any(String),

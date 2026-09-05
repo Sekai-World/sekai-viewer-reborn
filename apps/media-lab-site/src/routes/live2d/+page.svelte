@@ -1,12 +1,36 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
+  import Live2dModelSelector from "$lib/components/Live2dModelSelector.svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
-  import { supportedRegions } from "$lib/region-selection.svelte";
+  import { previewLive2dModelEntries } from "$lib/live2d/model-catalog";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
+
+  // Placeholder catalog entries resolve their display strings through the
+  // route translator so the selector stays reusable without local strings.
+  const modelOptions = $derived(
+    previewLive2dModelEntries.map((entry) => ({
+      id: entry.id,
+      title: translate(entry.titleKey),
+      description: translate(entry.descriptionKey)
+    }))
+  );
+  const selectorLabels = $derived({
+    previewBadge: translate("live2d.modelSelector.previewBadge"),
+    inputLabel: translate("live2d.modelSelector.inputLabel"),
+    inputPlaceholder: translate("live2d.modelSelector.inputPlaceholder"),
+    inputHint: translate("live2d.modelSelector.inputHint"),
+    inputError: translate("live2d.modelSelector.inputError"),
+    inputAction: translate("live2d.modelSelector.inputAction"),
+    empty: translate("live2d.modelSelector.empty")
+  });
+  const openModel = (modelId: string): void => {
+    void goto(`/live2d/${modelId}`);
+  };
 </script>
 
 <svelte:head>
@@ -28,30 +52,20 @@
         <span
           class="grid size-11 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary"
         >
-          <Icon icon="mdi:book-open-variant" class="size-6" aria-hidden="true" />
+          <Icon icon="mdi:flask-outline" class="size-6" aria-hidden="true" />
         </span>
         <div>
-          <h2 class="card-title text-lg">{translate("live2d.storyReader.title")}</h2>
+          <h2 class="card-title text-lg">{translate("live2d.modelSelector.title")}</h2>
           <p class="mt-2 text-sm/6 text-base-content/70">
-            {translate("live2d.storyReader.description")}
+            {translate("live2d.modelSelector.description")}
           </p>
         </div>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-          {translate("live2d.regionsLabel")}
-        </span>
-        {#each supportedRegions as region (region)}
-          <span class="badge badge-outline badge-sm">{translate(`region.${region}`)}</span>
-        {/each}
-      </div>
-      <div class="card-actions flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-        <a class="btn btn-primary btn-sm min-h-11! px-4" href="/live2d/story-reader/jp/unit/1">
-          {translate("live2d.storyReader.action")}
-          <Icon icon="mdi:arrow-right" class="size-4" aria-hidden="true" />
-        </a>
-        <p class="text-sm/6 text-base-content/60">{translate("live2d.storyReader.sampleNote")}</p>
-      </div>
+      <Live2dModelSelector
+        models={modelOptions}
+        labels={selectorLabels}
+        onOpenModel={openModel}
+      />
     </div>
   </article>
 </section>
