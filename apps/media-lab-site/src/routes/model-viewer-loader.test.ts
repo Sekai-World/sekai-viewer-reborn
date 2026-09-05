@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { LIVE2D_ASSOCIATED_CATALOG_URL } from "$lib/live2d/associated-catalog";
 import { createLive2dCatalogRouteDataResolver } from "$lib/live2d/catalog-route-data";
 import {
-  createLive2dCatalogPageLoad,
+  _createLive2dCatalogPageLoad,
   load as defaultCatalogLoad
 } from "./live2d/+page.server";
 import {
-  createLive2dModelPageLoad,
+  _createLive2dModelPageLoad,
   load as defaultModelLoad
 } from "./live2d/[modelId]/+page.server";
 
@@ -41,16 +41,16 @@ const createFailingFetch = (message: string) => async (): Promise<Response> => {
 const createRouteLoads = () => {
   const resolver = createLive2dCatalogRouteDataResolver();
   return {
-    loadCatalog: createLive2dCatalogPageLoad(resolver.resolve),
-    loadModel: createLive2dModelPageLoad(resolver.resolve)
+    loadCatalog: _createLive2dCatalogPageLoad(resolver.resolve),
+    loadModel: _createLive2dModelPageLoad(resolver.resolve)
   };
 };
 
 const createRouteLoadsWithResolver = (
   resolver: ReturnType<typeof createLive2dCatalogRouteDataResolver>
 ) => ({
-  loadCatalog: createLive2dCatalogPageLoad(resolver.resolve),
-  loadModel: createLive2dModelPageLoad(resolver.resolve)
+  loadCatalog: _createLive2dCatalogPageLoad(resolver.resolve),
+  loadModel: _createLive2dModelPageLoad(resolver.resolve)
 });
 
 const buildModelLoadEvent = (

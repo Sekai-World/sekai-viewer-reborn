@@ -6,7 +6,7 @@ import {
 import { parseModelRouteParams } from "$lib/live2d/model-route";
 import type { PageServerLoad } from "./$types";
 
-export const createLive2dModelPageLoad = (
+export const _createLive2dModelPageLoad = (
   resolveCatalog: typeof resolveLive2dCatalogRouteData = resolveLive2dCatalogRouteData
 ): PageServerLoad =>
   async ({ fetch, params }) => {
@@ -45,4 +45,4 @@ export const createLive2dModelPageLoad = (
     };
   };
 
-export const load: PageServerLoad = createLive2dModelPageLoad();
+export const load: PageServerLoad = _createLive2dModelPageLoad();
