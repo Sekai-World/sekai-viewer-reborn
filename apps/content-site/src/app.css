@@ -344,35 +344,43 @@ body {
       0 2px 6px color-mix(in oklab, var(--color-primary) 12%, transparent);
   }
 
+  .archive-event-banner-body > .archive-event-banner-details {
+    min-height: 12rem;
+  }
+
+  .archive-event-banner-empty-body {
+    min-width: 0;
+  }
+
   @media (min-width: 64rem) {
-    .archive-event-banner > .card > .card-body {
+    .archive-event-banner-body {
       display: grid !important;
       grid-template-columns: minmax(20rem, 22rem) minmax(0, 1fr) !important;
       padding: 0 !important;
     }
 
-    .archive-event-banner > .card > .card-body > .archive-event-banner-media {
+    .archive-event-banner-body > .archive-event-banner-media {
       align-self: stretch;
       min-height: 12rem !important;
       aspect-ratio: auto !important;
       border-right: 1px solid var(--archive-border-subtle);
     }
 
-    .archive-event-banner .archive-event-banner-media img {
+    .archive-event-banner-body .archive-event-banner-media img {
       width: 100% !important;
       height: auto !important;
       min-width: 0;
       max-width: none !important;
     }
 
-    .archive-event-banner .archive-event-banner-media > div,
-    .archive-event-banner .archive-event-banner-media > div > div {
+    .archive-event-banner-body .archive-event-banner-media > div,
+    .archive-event-banner-body .archive-event-banner-media > div > div {
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .archive-event-banner > .card > .card-body > .archive-event-banner-details {
+    .archive-event-banner-body > .archive-event-banner-details {
       display: flex !important;
       min-width: 0;
       flex-direction: column;

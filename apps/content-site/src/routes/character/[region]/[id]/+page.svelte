@@ -189,31 +189,35 @@
 
           <article class="card content-card-shell shadow-sm">
             <div class="card-body gap-4 p-3 sm:p-5">
-              <div class="flex items-start justify-between gap-3">
-                <p
-                  class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+              <div class="flex min-h-7 items-center justify-between gap-3">
+                <h2
+                  class="min-w-0 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
                 >
                   <Icon
                     icon="mdi:information-outline"
                     class="size-4 shrink-0 translate-y-[0.5px]"
                     aria-hidden="true"
-                  /><span>{t("characterDetailTitle", "Character details")}</span>
-                </p>
-                <span class="badge badge-outline border-base-content/20 font-semibold"
+                  /><span class="wrap-break-word"
+                    >{t("characterDetailTitle", "Character details")}</span
+                  >
+                </h2>
+                <span
+                  class="badge badge-sm shrink-0 whitespace-nowrap border-base-content/20 font-semibold"
                   >#{character.id}</span
                 >
               </div>
               <dl class="space-y-2">
                 {#each [[t("nameLabel", "Name"), character.name], [t("unitLabel", "Unit"), character.unitName ?? t("characterValueUnavailable", "Not available")], [t("characterHeightLabel", "Height"), character.height === null ? t("characterValueUnavailable", "Not available") : `${character.height} cm`]] as row (row[0])}
                   {@const isUnitRow = row[0] === t("unitLabel", "Unit") && character.unit}
-                  {@const canonicalUnit = isUnitRow ? resolveCanonicalUnitSlug(character.unit) : null}
-                  {@const unitHref =
-                    canonicalUnit
-                      ? resolve("/unit/[region]/[unit]", {
-                          region: data.region,
-                          unit: canonicalUnit
-                        })
-                      : null}
+                  {@const canonicalUnit = isUnitRow
+                    ? resolveCanonicalUnitSlug(character.unit)
+                    : null}
+                  {@const unitHref = canonicalUnit
+                    ? resolve("/unit/[region]/[unit]", {
+                        region: data.region,
+                        unit: canonicalUnit
+                      })
+                    : null}
                   <svelte:element
                     this={unitHref ? "a" : "div"}
                     href={unitHref ?? undefined}
@@ -237,16 +241,28 @@
                   </svelte:element>
                 {/each}
               </dl>
+              {#if profileFactRows(character).length > 0}
+                <dl class="space-y-2">
+                  {#each profileFactRows(character) as row (row[0])}
+                    <div class="content-card-inset rounded-xl p-3 sm:px-4">
+                      <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+                        {row[0]}
+                      </dt>
+                      <dd class="mt-1 wrap-break-word text-sm font-medium">{row[1]}</dd>
+                    </div>
+                  {/each}
+                </dl>
+              {/if}
             </div>
           </article>
         </div>
 
         <div class="flex flex-col gap-4">
-          {#if character.profile?.introduction || profileFactRows(character).length > 0}
+          {#if character.profile?.introduction}
             <article class="card content-card-shell shadow-sm">
               <div class="card-body gap-4 p-3 sm:p-5">
                 <h2
-                  class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+                  class="flex min-h-7 min-w-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
                 >
                   <Icon
                     icon="mdi:card-account-details-outline"
@@ -270,18 +286,6 @@
                       {character.profile.introduction}
                     </p>
                   </section>
-                {/if}
-                {#if profileFactRows(character).length > 0}
-                  <dl class="grid gap-2 sm:grid-cols-2">
-                    {#each profileFactRows(character) as row (row[0])}
-                      <div class="content-card-inset rounded-xl p-3">
-                        <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
-                          {row[0]}
-                        </dt>
-                        <dd class="mt-1 wrap-break-word text-sm font-medium">{row[1]}</dd>
-                      </div>
-                    {/each}
-                  </dl>
                 {/if}
               </div>
             </article>
