@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { selectLatestGachas, type LatestGachaItem } from "./home-latest-data";
+import {
+  LATEST_GACHA_CANDIDATE_LIMIT,
+  LATEST_GACHA_LIMIT,
+  selectLatestGachas,
+  type LatestGachaItem
+} from "./home-latest-data";
 
 const NOW = Date.parse("2026-09-05T12:00:00.000Z");
 
@@ -16,6 +21,10 @@ const makeGacha = (
 });
 
 describe("selectLatestGachas", () => {
+  it("keeps the candidate fetch limit above the display limit", () => {
+    expect(LATEST_GACHA_CANDIDATE_LIMIT).toBeGreaterThan(LATEST_GACHA_LIMIT);
+  });
+
   it("puts ongoing gachas before recent ended gachas", () => {
     const items = [
       makeGacha("newer-ended", NOW - 1_000, NOW - 500),
@@ -47,7 +56,21 @@ describe("selectLatestGachas", () => {
     expect(selectLatestGachas(items, NOW).map((item) => item.id)).toEqual(["started"]);
   });
 
-  it("returns at most two gachas", () => {
+  it("ignores gachas with invalid timestamps", () => {
+    const items = [
+      makeGacha("invalid-number", Number.NaN, NOW),
+      makeGacha("invalid-string", "not-a-date", NOW),
+      makeGacha("valid-string", "2026-09-05T11:00:00.000Z", null),
+      makeGacha("valid", NOW - 1_000, null)
+    ];
+
+    expect(selectLatestGachas(items, NOW).map((item) => item.id)).toEqual([
+      "valid",
+      "valid-string"
+    ]);
+  });
+
+  it("returns at most the display limit", () => {
     const items = [
       makeGacha("ongoing-1", NOW - 5_000, NOW + 5_000),
       makeGacha("ongoing-2", NOW - 4_000, NOW + 4_000),
@@ -56,7 +79,10 @@ describe("selectLatestGachas", () => {
       makeGacha("ended-3", NOW - 1_000, NOW - 500)
     ];
 
-    expect(selectLatestGachas(items, NOW).map((item) => item.id)).toEqual([
+    const selected = selectLatestGachas(items, NOW);
+
+    expect(selected).toHaveLength(LATEST_GACHA_LIMIT);
+    expect(selected.map((item) => item.id)).toEqual([
       "ongoing-2",
       "ongoing-1"
     ]);

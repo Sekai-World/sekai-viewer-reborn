@@ -7,6 +7,7 @@ export type LatestGachaItem = {
 };
 
 export const LATEST_GACHA_LIMIT = 2;
+export const LATEST_GACHA_CANDIDATE_LIMIT = 10;
 
 const toTimestamp = (value: string | number | null): number | null => {
   if (typeof value === "number") {

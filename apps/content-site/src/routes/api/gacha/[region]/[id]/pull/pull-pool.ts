@@ -1,4 +1,5 @@
 import type { GachaDetailSub } from "$lib/domain/gacha-detail";
+import { getStringLike, pickFirstString } from "$lib/server/response-values";
 
 export const GACHA_CARD_METADATA_BATCH_SIZE = 100;
 
@@ -34,38 +35,6 @@ const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
-
-const getString = (value: unknown): string | null => {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const getStringLike = (value: unknown): string | null => {
-  const stringValue = getString(value);
-  if (stringValue) {
-    return stringValue;
-  }
-
-  return typeof value === "number" && Number.isFinite(value) ? String(value) : null;
-};
-
-const pickFirstString = (
-  source: Record<string, unknown>,
-  keys: readonly string[]
-): string | null => {
-  for (const key of keys) {
-    const value = getString(source[key]);
-    if (value) {
-      return value;
-    }
-  }
-
-  return null;
-};
 
 const normalizeCardId = (cardId: string | null): string | null => cardId?.trim() || null;
 

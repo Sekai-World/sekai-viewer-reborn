@@ -38,6 +38,11 @@ const weightedPick = <T extends { weight: number }>(pool: T[], totalWeight: numb
   return pool[pool.length - 1] ?? null;
 };
 
+const appendWeightedPick = (pulledCardIds: string[], entry: RarityRateEntry): void => {
+  const picked = weightedPick(entry.pool, entry.totalWeight);
+  pulledCardIds.push(picked?.cardId ?? "");
+};
+
 const buildCumulativeRates = (rates: RarityRateEntry[]): number[] => {
   const cumulative: number[] = [];
   let sum = 0;
@@ -131,7 +136,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
           totalWeight: pool_.reduce((sum, c) => sum + c.weight, 0)
         };
       })
-      .filter((entry) => entry.pool.length > 0);
+      .filter((entry) => entry.pool.length > 0 && entry.totalWeight > 0);
 
     if (rarityEntries.length === 0) {
       return json({ error: "no_valid_rarity_pool" }, { status: 422 });
@@ -179,8 +184,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
         const idx = rollRarity(guaranteeCumulative);
         if (idx >= 0 && idx < rarityEntries.length) {
           const entry = rarityEntries[idx];
-          const picked = weightedPick(entry.pool, entry.totalWeight);
-          pulledCardIds.push(picked?.cardId ?? "");
+          appendWeightedPick(pulledCardIds, entry);
           noGuaranteeCount = 0;
           continue;
         }
@@ -194,8 +198,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
       if (rarityIdx >= 0 && rarityIdx < rarityEntries.length) {
         const entry = rarityEntries[rarityIdx];
-        const picked = weightedPick(entry.pool, entry.totalWeight);
-        pulledCardIds.push(picked?.cardId ?? "");
+        appendWeightedPick(pulledCardIds, entry);
 
         if (isGuarantee) {
           if (!isRarityAtLeast(rarityEntries[rarityIdx].cardRarityType, guaranteeLevel)) {
@@ -205,8 +208,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
       } else {
         // Fallback: pick from first valid pool
         const entry = rarityEntries[0];
-        const picked = weightedPick(entry.pool, entry.totalWeight);
-        pulledCardIds.push(picked?.cardId ?? "");
+        appendWeightedPick(pulledCardIds, entry);
       }
     }
 

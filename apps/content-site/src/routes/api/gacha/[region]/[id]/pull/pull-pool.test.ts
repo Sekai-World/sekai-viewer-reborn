@@ -53,6 +53,40 @@ describe("pull card metadata", () => {
     ]);
   });
 
+  it("skips malformed metadata items and follows nested response wrappers", () => {
+    expect(
+      parseCardMetadataResponse({
+        data: {
+          data: {
+            items: [
+              null,
+              { id: "  " },
+              { id: "card-2", rarityType: "rarity_2" },
+              { id: "card-3", cardRarity: {}, cardRarityType: "rarity_4" }
+            ]
+          }
+        }
+      })
+    ).toEqual([
+      {
+        cardId: "card-2",
+        title: null,
+        assetBundleName: null,
+        attr: null,
+        rarityType: "rarity_2"
+      },
+      {
+        cardId: "card-3",
+        title: null,
+        assetBundleName: null,
+        attr: null,
+        rarityType: "rarity_4"
+      }
+    ]);
+    expect(parseCardMetadataResponse([])).toEqual([]);
+    expect(parseCardMetadataResponse({ data: {} })).toEqual([]);
+  });
+
   it("requests gacha card ids in batches of at most 100", async () => {
     const details = createDetails(496);
     const fetchBatch = vi.fn(async ({ query }: { query: { ids: string } }) =>
@@ -100,6 +134,33 @@ describe("pull card metadata", () => {
     expect(metadata.has("201")).toBe(true);
   });
 
+  it("normalizes and de-duplicates requested ids while ignoring extra metadata", async () => {
+    const details: GachaDetailSub[] = [
+      { cardId: " 1 ", weight: 1, isWish: false },
+      { cardId: "1", weight: 2, isWish: true },
+      { cardId: " ", weight: 3, isWish: false },
+      { cardId: null, weight: 4, isWish: null }
+    ];
+    const fetchBatch = vi.fn(async ({ query }: { query: { ids: string } }) => ({
+      data: {
+        items: [createBatchResponse(query.ids).data.items[0]!, createBatchResponse("2").data.items[0]!]
+      }
+    }));
+
+    const metadata = await fetchGachaCardMetadata({
+      baseUrl: "https://master-api.test",
+      region: "jp",
+      gachaDetails: details,
+      fetchBatch
+    });
+
+    expect(fetchBatch).toHaveBeenCalledOnce();
+    expect(fetchBatch.mock.calls[0]?.[0].query.ids).toBe("1");
+    expect(metadata).toHaveProperty("size", 1);
+    expect(metadata.has("1")).toBe(true);
+    expect(metadata.has("2")).toBe(false);
+  });
+
   it("builds a complete gacha393-like rarity pool without list pagination", async () => {
     const details = createDetails(496);
     const metadata = await fetchGachaCardMetadata({
@@ -115,5 +176,32 @@ describe("pull card metadata", () => {
     expect(rarityPool).toHaveLength(496);
     expect(rarityPool?.[0]).toMatchObject({ cardId: "1", weight: 1, isWish: true });
     expect(rarityPool?.[495]).toMatchObject({ cardId: "496", weight: 496, isWish: false });
+  });
+
+  it("skips details without metadata and defaults missing weights to zero", () => {
+    const pools = buildRarityPools(
+      [
+        { cardId: "card-1", weight: null, isWish: null },
+        { cardId: " ", weight: 2, isWish: false },
+        { cardId: null, weight: 3, isWish: false },
+        { cardId: "missing", weight: 4, isWish: false }
+      ],
+      new Map([
+        [
+          "card-1",
+          {
+            cardId: "card-1",
+            title: null,
+            assetBundleName: null,
+            attr: null,
+            rarityType: "rarity_3"
+          }
+        ]
+      ])
+    );
+
+    expect(pools.get("rarity_3")).toEqual([
+      { cardId: "card-1", cardRarityType: "rarity_3", weight: 0, isWish: null }
+    ]);
   });
 });
