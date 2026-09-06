@@ -8,6 +8,10 @@
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardGridImage from "$lib/components/card/CardGridImage.svelte";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import {
+    isTrainedOnlyCard as hasTrainedOnlyArtwork,
+    resolveCardTrained
+  } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
 
@@ -72,8 +76,7 @@
 
   const isTrainableCard = (): boolean =>
     item.rarityType === "rarity_3" || item.rarityType === "rarity_4";
-  const isTrainedOnlyCard = (): boolean =>
-    item.initialSpecialTrainingStatus === "done" && isTrainableCard();
+  const isTrainedOnlyCard = (): boolean => hasTrainedOnlyArtwork(item);
   const hasSingleCardArtwork = (): boolean =>
     Boolean(item.assetBundleName) && (!isTrainableCard() || isTrainedOnlyCard());
   const getReleaseAt = (): string | number | null => item.releaseAt ?? item.archivePublishedAt;
@@ -109,7 +112,9 @@
     }
 
     return asset(
-      trained ? "/card_rarity/rarity_star_afterTraining.png" : "/card_rarity/rarity_star_normal.png"
+      resolveCardTrained(item, trained)
+        ? "/card_rarity/rarity_star_afterTraining.png"
+        : "/card_rarity/rarity_star_normal.png"
     );
   };
   const hasSpoiler = (): boolean => {
@@ -217,14 +222,16 @@
     trained: boolean,
     assetRegion = getPrimaryCardAssetRegion()
   ): string | null =>
-    item.assetBundleName ? getCardSmallAssetURL(item.assetBundleName, trained, assetRegion) : null;
+    item.assetBundleName
+      ? getCardSmallAssetURL(item.assetBundleName, resolveCardTrained(item, trained), assetRegion)
+      : null;
 
   const getThumbnailImageUrl = (
     trained: boolean,
     assetRegion = getPrimaryCardAssetRegion()
   ): string | null =>
     item.assetBundleName
-      ? getCardThumbnailAssetURL(item.assetBundleName, trained, assetRegion)
+      ? getCardThumbnailAssetURL(item.assetBundleName, resolveCardTrained(item, trained), assetRegion)
       : null;
 
   const getFallbackImageUrl = (kind: CardImageKind, trained: boolean): string | null => {
@@ -316,7 +323,11 @@
       <image href={attrIconUrl} x="0" y="0" width="21" height="21" class="drop-shadow" />
     {/if}
     {#if normalRarityIconUrl && rarityCount > 0}
-      <g class={isTrainableCard() ? "card-grid-rarity-stack card-grid-rarity-stack-left" : ""}>
+      <g
+        class={isTrainableCard() && !isTrainedOnlyCard()
+          ? "card-grid-rarity-stack card-grid-rarity-stack-left"
+          : ""}
+      >
         {#each Array.from(Array(rarityCount).keys()) as index (`rarity-large-normal-${index}`)}
           <image
             href={normalRarityIconUrl}
@@ -329,7 +340,7 @@
         {/each}
       </g>
     {/if}
-    {#if isTrainableCard() && trainedRarityIconUrl && rarityCount > 0}
+    {#if isTrainableCard() && !isTrainedOnlyCard() && trainedRarityIconUrl && rarityCount > 0}
       <g class="card-grid-rarity-stack card-grid-rarity-stack-right">
         {#each Array.from(Array(rarityCount).keys()) as index (`rarity-large-trained-${index}`)}
           <image
@@ -389,7 +400,7 @@
     fallbackSrc={fallbackUrl}
     alt={`${getCardTitle()} ${cardImageAltSuffix}`}
     fallbackLabel=""
-    {trained}
+    trained={resolveCardTrained(item, trained)}
     attr={item.attr}
     rarityType={item.rarityType}
     rarityCount={item.rarityType === "rarity_birthday" ? 1 : getRarityValue()}

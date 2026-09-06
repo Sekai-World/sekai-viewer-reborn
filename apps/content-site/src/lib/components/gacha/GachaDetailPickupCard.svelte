@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getCardThumbnailAssetURL } from "$lib/assets/index";
+  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import Icon from "@iconify/svelte";
@@ -12,6 +12,7 @@
     assetBundleName: string | null;
     attr: string | null;
     rarityType: string | null;
+    initialSpecialTrainingStatus?: string | null;
   };
 
   let {
@@ -71,15 +72,9 @@
                 class="overflow-hidden rounded-lg bg-base-200/30 ring-1 ring-base-content/5 transition-all hover:shadow-md hover:ring-primary/40"
               >
                 <CardThumbnail
-                  src={pickup.assetBundleName
-                    ? getCardThumbnailAssetURL(pickup.assetBundleName, false, "jp")
-                    : null}
-                  fallbackSrc={pickup.assetBundleName && region !== "jp"
-                    ? getCardThumbnailAssetURL(pickup.assetBundleName, false, region)
-                    : null}
+                  {...getCardThumbnailPresentation(pickup, region)}
                   alt={pickup.title ? `${pickup.title} ${cardAltSuffix}` : `Card ${pickup.cardId}`}
                   fallbackLabel={pickup.cardId ?? ""}
-                  trained={false}
                   attr={pickup.attr}
                   rarityType={pickup.rarityType}
                   rarityCount={pickup.rarityType === "rarity_birthday"

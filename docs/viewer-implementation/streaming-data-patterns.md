@@ -561,7 +561,9 @@ Key design decisions:
 - All SDK list endpoints (`getCardsByRegionList`, `getMusicsByRegionList`,
   `getGachasByRegionList`) support `spoiler: false` to exclude spoiler content.
 - Sort by `releaseAt`/`publishedAt`/`startAt` descending, `page_size` small
-  (3 cards, 3 songs, 2 gachas) to keep the section lightweight.
+  (3 cards, 3 songs, 2 gachas) to keep the section lightweight. Homepage gacha
+  selection prioritizes ongoing entries and then fills with the most recent
+  already-started entries, excluding future entries.
 - Card thumbnails use `server="jp"` because only the JP bucket has card images
   (same rule as `GachaDetailPickupCard.svelte` and `GachaSimulatorCard.svelte`).
 - `getGachaBannerAssetURL` takes `gachaId` (not `assetBundleName`) as its first

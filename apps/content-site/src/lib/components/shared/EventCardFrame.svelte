@@ -8,6 +8,7 @@
     href,
     frameClass,
     useBody = true,
+    bodyClass = EVENT_CARD_BODY_CLASS,
     overlay,
     onclick,
     children
@@ -16,6 +17,7 @@
     href: string;
     frameClass: string;
     useBody?: boolean;
+    bodyClass?: string;
     overlay?: Snippet;
     onclick?: (event: MouseEvent) => void;
     children?: Snippet;
@@ -53,7 +55,7 @@
 <a {id} {href} class={resolvedAnchorClass} {onclick}>
   <div class={resolvedSurfaceClass}>
     {#if useBody}
-      <div class={EVENT_CARD_BODY_CLASS}>
+      <div class={bodyClass}>
         {@render children?.()}
       </div>
     {:else}

@@ -11,10 +11,12 @@
   } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
   import { formatDisplayDateTime } from "$lib/time/date-time";
+  import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import type {
     EventDetail,
     EventFeaturedCard,
@@ -238,7 +240,7 @@
   const getRarityValue = (rarityType: string | null): number =>
     rarityType ? (rarityValueByType[rarityType] ?? 0) : 0;
   const isCardTrained = (card: EventFeaturedCard): boolean =>
-    card.initialSpecialTrainingStatus === "done" || card.rarityType === "rarity_birthday";
+    resolveCardTrained(card, card.rarityType === "rarity_birthday");
   const getCardThumbnailSrc = (card: EventFeaturedCard): string | null =>
     card.assetBundleName
       ? getCardThumbnailAssetURL(card.assetBundleName, isCardTrained(card), "jp")
@@ -356,7 +358,19 @@
       return null;
     }
 
-    return resolve("/character/[region]/[id]", { region, id: String(gameCharacterId) });
+    const searchParams = new SvelteURLSearchParams({ character: String(gameCharacterId) });
+    const seenAttributes = new SvelteSet<string>();
+    for (const bonus of item.attrBonuses) {
+      const attr = bonus.attr?.trim();
+      if (!attr || seenAttributes.has(attr)) {
+        continue;
+      }
+
+      seenAttributes.add(attr);
+      searchParams.append("attr", attr);
+    }
+
+    return `${resolve("/cards/[region]", { region })}?${searchParams.toString()}`;
   };
 
   const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {
@@ -811,7 +825,7 @@
     href={bonusCharacterHref ?? undefined}
     class={`content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 ${
       bonusCharacterHref
-        ? "group/bonus-row outline-none transition-[background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        ? "group/bonus-row outline-none transition-[background-color,border-color,transform] duration-180 ease-out motion-reduce:transition-none [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         : ""
     }`}
     aria-label={bonusCharacterHref
@@ -948,7 +962,7 @@
   {#if href}
     <a
       {href}
-      class="content-card-inset group grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
+      class="content-card-inset group grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-180 ease-out motion-reduce:transition-none [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
     >
       <CardThumbnail
         src={getCardThumbnailSrc(content)}

@@ -5,6 +5,7 @@ export type GachaProbabilityCardMetadata = {
   assetBundleName: string | null;
   attr: string | null;
   rarityType: string | null;
+  initialSpecialTrainingStatus: string | null;
 };
 
 export type GachaProbabilityDiagnostic =
@@ -388,6 +389,7 @@ export const buildGachaProbabilityCards = ({
       assetBundleName: card?.assetBundleName ?? null,
       attr: card?.attr ?? null,
       rarityType: card?.rarityType ?? null,
+      initialSpecialTrainingStatus: card?.initialSpecialTrainingStatus ?? null,
       probability,
       probabilityByLotteryType,
       probabilitySegments,

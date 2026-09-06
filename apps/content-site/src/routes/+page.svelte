@@ -12,18 +12,19 @@
     resolvePreferredRegion
   } from "$lib/i18n/region";
   import {
-    getCardThumbnailAssetURL,
     getMusicJacketAssetURL,
     getGachaBannerAssetURL,
     getGachaLogoAssetURL
   } from "$lib/assets";
+  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { swipeRegion } from "$lib/actions/swipe-region";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import {
-    EVENT_CARD_BODY_CLASS,
+    EVENT_CARD_BANNER_BODY_CLASS,
+    EVENT_CARD_EMPTY_BODY_CLASS,
     EVENT_CARD_MEDIA_CLASS,
     EVENT_CARD_SURFACE_CLASS
   } from "$lib/styles/event-card";
@@ -269,7 +270,7 @@
     {#await currentEventPromise}
       <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`} aria-busy="true">
         <span class="sr-only" role="status" aria-live="polite">{latestDataLoadingEvents}</span>
-        <div class={EVENT_CARD_BODY_CLASS}>
+        <div class={EVENT_CARD_BANNER_BODY_CLASS}>
           <div
             class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 animate-pulse bg-base-300/70 p-[5%] lg:mb-0 lg:p-4`}
           ></div>
@@ -298,14 +299,9 @@
           {bannerAltSuffix}
         />
       {:else}
-        <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`}>
-          <div class={EVENT_CARD_BODY_CLASS}>
-            <div
-              class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
-            ></div>
-            <div
-              class="archive-event-banner-details flex min-w-0 flex-col justify-end border-t border-(--archive-border-subtle) pt-4"
-            >
+        <article class={`${EVENT_CARD_SURFACE_CLASS} w-full`}>
+          <div class={EVENT_CARD_EMPTY_BODY_CLASS}>
+            <div class="flex items-center justify-center text-center">
               {#if card.error}
                 <p class="text-sm text-error">{card.error}</p>
               {:else}
@@ -316,14 +312,9 @@
         </article>
       {/if}
     {:catch _}
-      <article class={`${EVENT_CARD_SURFACE_CLASS} archive-event-banner w-full`}>
-        <div class={EVENT_CARD_BODY_CLASS}>
-          <div
-            class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
-          ></div>
-          <div
-            class="archive-event-banner-details flex min-w-0 flex-col justify-end border-t border-(--archive-border-subtle) pt-4"
-          >
+      <article class={`${EVENT_CARD_SURFACE_CLASS} w-full`}>
+        <div class={EVENT_CARD_EMPTY_BODY_CLASS}>
+          <div class="flex items-center justify-center text-center">
             <p class="text-sm text-error">{data.currentEventLoadFailedMessage}</p>
           </div>
         </div>
@@ -412,18 +403,9 @@
                         data-home-card-thumbnail
                       >
                         <CardThumbnail
-                          src={card.assetBundleName
-                            ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
-                            : null}
+                          {...getCardThumbnailPresentation(card, regionData.region)}
                           alt={card.prefix ?? card.id}
                           fallbackLabel={card.id}
-                          fallbackSrc={card.assetBundleName
-                            ? getCardThumbnailAssetURL(
-                                card.assetBundleName,
-                                false,
-                                regionData.region
-                              )
-                            : null}
                           attr={card.attr}
                           rarityType={card.rarityType}
                           rarityCount={card.rarityCount}

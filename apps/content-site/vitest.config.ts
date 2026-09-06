@@ -21,6 +21,10 @@ export default defineConfig({
         replacement: new URL("./src/lib/test/app-environment.ts", import.meta.url).pathname
       },
       {
+        find: "$app/navigation",
+        replacement: new URL("./src/lib/test/app-navigation.ts", import.meta.url).pathname
+      },
+      {
         find: "$env/dynamic/public",
         replacement: new URL("./src/lib/test/public-env.ts", import.meta.url).pathname
       },
@@ -71,8 +75,16 @@ export default defineConfig({
         "src/lib/server/music-list.ts",
         "src/lib/server/music-detail.ts",
         "src/lib/server/unit-detail.ts",
+        "src/lib/server/gacha-probability.ts",
+        "src/lib/server/home-latest-data.ts",
+        "src/lib/server/response-values.ts",
         "src/lib/domain/unit-detail.ts",
         "src/lib/domain/unit-icon.ts",
+        "src/lib/styles/event-card.ts",
+        "src/routes/api/gacha/[region]/[id]/pull/+server.ts",
+        "src/routes/api/gacha/[region]/[id]/pull/pull-behavior.ts",
+        "src/routes/api/gacha/[region]/[id]/pull/pull-pool.ts",
+        "src/routes/+page.server.ts",
         "src/routes/unit/[region]/[unit]/+page.server.ts",
         "src/routes/+layout.server.ts"
       ],

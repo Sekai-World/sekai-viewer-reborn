@@ -9,6 +9,7 @@
   import { getEventTypeDisplay } from "$lib/domain/event";
   import {
     CURRENT_EVENT_CARD_FRAME_CLASS,
+    EVENT_CARD_BANNER_BODY_CLASS,
     EVENT_CARD_IMAGE_CLASS,
     EVENT_CARD_META_BADGE_CLASS,
     EVENT_CARD_MEDIA_CLASS
@@ -84,6 +85,7 @@
   id={`region-${region}`}
   href={resolve("/event/[region]/[id]", { region, id: event.id })}
   frameClass={`${CURRENT_EVENT_CARD_FRAME_CLASS} archive-event-banner`}
+  bodyClass={EVENT_CARD_BANNER_BODY_CLASS}
 >
   <div
     class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}

@@ -14,6 +14,12 @@ import {
   toUnitProfileMap,
   type UnitProfileMap
 } from "$lib/server/unit-profiles";
+import {
+  LATEST_GACHA_CANDIDATE_LIMIT,
+  LATEST_GACHA_LIMIT,
+  selectLatestGachas,
+  type LatestGachaItem
+} from "$lib/server/home-latest-data";
 import type { PageServerLoad } from "./$types";
 
 type EventSummary = {
@@ -50,6 +56,7 @@ type LatestCardItem = {
   assetBundleName: string | null;
   attr: string | null;
   rarityType: string | null;
+  initialSpecialTrainingStatus: string | null;
   rarityCount: number;
   releaseAt: string | number | null;
 };
@@ -60,14 +67,6 @@ type LatestMusicItem = {
   assetBundleName: string | null;
   composer: string | null;
   publishedAt: string | number | null;
-};
-
-type LatestGachaItem = {
-  id: string;
-  name: string | null;
-  assetBundleName: string | null;
-  startAt: string | number | null;
-  endAt: string | number | null;
 };
 
 type RegionLatestData = {
@@ -248,6 +247,10 @@ const parseLatestCard = (raw: unknown): LatestCardItem | null => {
     assetBundleName: pickFirstString(root, ["assetbundleName", "assetBundleName"]),
     attr: pickFirstString(root, ["attr"]),
     rarityType,
+    initialSpecialTrainingStatus: pickFirstString(root, [
+      "initialSpecialTrainingStatus",
+      "initial_special_training_status"
+    ]),
     rarityCount,
     releaseAt: pickFirstDateValue(root, ["releaseAt", "archivePublishedAt"])
   };
@@ -293,11 +296,190 @@ const parseLatestGacha = (raw: unknown): LatestGachaItem | null => {
   };
 };
 
+// Only pages without trustworthy pagination metadata use this defensive bound.
+// Declared has_next/total_pages/total sequences bypass this fallback limit; the
+// separate emergency ceiling below still applies to every pagination mode.
+const LATEST_GACHA_FALLBACK_PAGE_LIMIT = 10;
+
+// This independent ceiling protects the homepage from a non-terminating upstream,
+// including responses that claim authoritative pagination without a page number.
+const LATEST_GACHA_EMERGENCY_REQUEST_CEILING = 100;
+
+const getPaginationInteger = (
+  pagination: Record<string, unknown> | null,
+  keys: readonly string[],
+  minimum: number
+): number | null => {
+  for (const key of keys) {
+    const value = pagination?.[key];
+    if (typeof value === "number" && Number.isInteger(value) && value >= minimum) {
+      return value;
+    }
+  }
+
+  return null;
+};
+
+type GachaPageContinuation = {
+  hasNext: boolean;
+  authoritative: boolean;
+  reportedPage: number | null;
+  pageProvided: boolean;
+};
+
+const getGachaPageContinuation = (
+  payload: unknown,
+  requestedPage: number,
+  requestedPageSize: number,
+  rawItemCount: number
+): GachaPageContinuation => {
+  const root = getObject(payload);
+  const pagination = getObject(root?.pagination);
+  const reportedPage = getPaginationInteger(pagination, ["page"], 1);
+  const pageProvided =
+    pagination !== null && Object.prototype.hasOwnProperty.call(pagination, "page");
+  const hasNext = pagination?.has_next;
+
+  if (typeof hasNext === "boolean") {
+    return { hasNext, authoritative: true, reportedPage, pageProvided };
+  }
+
+  const page = reportedPage ?? requestedPage;
+  const pageSize =
+    getPaginationInteger(pagination, ["page_size", "pageSize"], 1) ?? requestedPageSize;
+  const totalPages = getPaginationInteger(pagination, ["total_pages", "totalPages"], 1);
+
+  if (totalPages !== null) {
+    return { hasNext: page < totalPages, authoritative: true, reportedPage, pageProvided };
+  }
+
+  const total = getPaginationInteger(pagination, ["total"], 0);
+  if (total !== null) {
+    return { hasNext: page * pageSize < total, authoritative: true, reportedPage, pageProvided };
+  }
+
+  return {
+    hasNext: rawItemCount >= pageSize,
+    authoritative: false,
+    reportedPage,
+    pageProvided
+  };
+};
+
+const toTimestamp = (value: string | number | null): number | null => {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : null;
+};
+
+const isOngoingGacha = (gacha: LatestGachaItem, now: number): boolean => {
+  const startAt = toTimestamp(gacha.startAt);
+  const endAt = toTimestamp(gacha.endAt);
+  return startAt !== null && endAt !== null && startAt <= now && now <= endAt;
+};
+
+const fetchLatestGachas = async (
+  baseUrl: string,
+  region: SupportedRegion
+): Promise<LatestGachaItem[]> => {
+  const items: LatestGachaItem[] = [];
+  const now = Date.now();
+  const reportedPages = new Set<number>();
+  const pageSignatures = new Set<string>();
+  let fallbackPagesFetched = 0;
+
+  for (
+    let page = 1, requestsMade = 0;
+    requestsMade < LATEST_GACHA_EMERGENCY_REQUEST_CEILING;
+    page += 1, requestsMade += 1
+  ) {
+    const response = await getGachasByRegionList({
+      baseUrl,
+      path: { region },
+      query: {
+        page,
+        page_size: LATEST_GACHA_CANDIDATE_LIMIT,
+        spoiler: false,
+        sort_by: "startAt",
+        sort_order: "desc"
+      }
+    });
+
+    if (response.error) {
+      break;
+    }
+
+    const root = getObject(response.data);
+    const rawItems = root && Array.isArray(root.items) ? root.items : [];
+    const pageSignature = JSON.stringify(rawItems);
+    if (pageSignature !== undefined && pageSignatures.has(pageSignature)) {
+      break;
+    }
+    if (pageSignature !== undefined) {
+      pageSignatures.add(pageSignature);
+    }
+
+    items.push(
+      ...rawItems
+        .map(parseLatestGacha)
+        .filter((gacha): gacha is LatestGachaItem => gacha !== null)
+    );
+
+    const latestGachas = selectLatestGachas(items, now);
+    const ongoingGachaCount = items.filter((gacha) => isOngoingGacha(gacha, now)).length;
+    if (latestGachas.length >= LATEST_GACHA_LIMIT && ongoingGachaCount >= LATEST_GACHA_LIMIT) {
+      return latestGachas;
+    }
+
+    const continuation = getGachaPageContinuation(
+      response.data,
+      page,
+      LATEST_GACHA_CANDIDATE_LIMIT,
+      rawItems.length
+    );
+    if (
+      continuation.pageProvided &&
+      (continuation.reportedPage === null || continuation.reportedPage !== page)
+    ) {
+      break;
+    }
+    if (
+      continuation.reportedPage !== null &&
+      reportedPages.has(continuation.reportedPage)
+    ) {
+      break;
+    }
+    if (continuation.reportedPage !== null) {
+      reportedPages.add(continuation.reportedPage);
+    }
+
+    if (!continuation.hasNext) {
+      break;
+    }
+
+    if (!continuation.authoritative) {
+      fallbackPagesFetched += 1;
+      if (fallbackPagesFetched >= LATEST_GACHA_FALLBACK_PAGE_LIMIT) {
+        break;
+      }
+    }
+  }
+
+  return selectLatestGachas(items, now);
+};
+
 const fetchRegionLatestData = async (
   baseUrl: string,
   region: SupportedRegion
 ): Promise<RegionLatestData> => {
-  const [cardsRes, musicsRes, gachasRes] = await Promise.all([
+  const [cardsRes, musicsRes, gachas] = await Promise.all([
     getCardsByRegionList({
       baseUrl,
       path: { region },
@@ -308,11 +490,7 @@ const fetchRegionLatestData = async (
       path: { region },
       query: { page: 1, page_size: 3, spoiler: false, sort_by: "publishedAt", sort_order: "desc" }
     }),
-    getGachasByRegionList({
-      baseUrl,
-      path: { region },
-      query: { page: 1, page_size: 2, spoiler: false, sort_by: "startAt", sort_order: "desc" }
-    })
+    fetchLatestGachas(baseUrl, region)
   ]);
 
   const cardItems = Array.isArray((cardsRes.data as Record<string, unknown>)?.items)
@@ -327,33 +505,11 @@ const fetchRegionLatestData = async (
         .filter((m): m is LatestMusicItem => m !== null)
     : [];
 
-  const gachaItems = Array.isArray((gachasRes.data as Record<string, unknown>)?.items)
-    ? ((gachasRes.data as Record<string, unknown>).items as unknown[])
-        .map(parseLatestGacha)
-        .filter((g): g is LatestGachaItem => g !== null)
-        .filter((g) => {
-          const now = Date.now();
-          const start =
-            typeof g.startAt === "number"
-              ? g.startAt
-              : typeof g.startAt === "string"
-                ? Date.parse(g.startAt)
-                : null;
-          const end =
-            typeof g.endAt === "number"
-              ? g.endAt
-              : typeof g.endAt === "string"
-                ? Date.parse(g.endAt)
-                : null;
-          return start !== null && end !== null && start <= now && now <= end;
-        })
-    : [];
-
   return {
     region,
     cards: cardItems,
     musics: musicItems,
-    gachas: gachaItems
+    gachas
   };
 };
 
