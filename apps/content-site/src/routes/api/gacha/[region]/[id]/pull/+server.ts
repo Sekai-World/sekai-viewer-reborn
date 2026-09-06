@@ -3,6 +3,7 @@ import { getCardsByRegionBatch, getGachasByRegionById } from "@platform/sekai-ma
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import { parseGachaDetail } from "$lib/server/gacha-detail";
+import { getSecureRandomUnit } from "$lib/server/secure-random";
 import type { RequestHandler } from "./$types";
 import {
   getGuaranteeLevel,
@@ -30,7 +31,7 @@ type RarityRateEntry = {
 
 const weightedPick = <T extends { weight: number }>(pool: T[], totalWeight: number): T | null => {
   if (totalWeight <= 0 || pool.length === 0) return null;
-  const rand = Math.random() * totalWeight;
+  const rand = getSecureRandomUnit() * totalWeight;
   let cumulative = 0;
   for (const item of pool) {
     cumulative += item.weight;
@@ -55,7 +56,7 @@ const buildCumulativeRates = (rates: RarityRateEntry[]): number[] => {
 };
 
 const rollRarity = (cumulativeRates: number[]): number => {
-  const roll = Math.random() * 100;
+  const roll = getSecureRandomUnit() * 100;
   return cumulativeRates.findIndex((cuml) => roll < cuml);
 };
 
@@ -160,8 +161,8 @@ export const POST: RequestHandler = async ({ params, request }) => {
     let guaranteeCumulative: number[] = normalCumulative;
 
     if (isGuarantee && guaranteeLevel > 0) {
-      const atOrAbove = rarityEntries.filter(
-        (e) => isRarityAtLeast(e.cardRarityType, guaranteeLevel)
+      const atOrAbove = rarityEntries.filter((e) =>
+        isRarityAtLeast(e.cardRarityType, guaranteeLevel)
       );
       const atOrAboveSum = atOrAbove.reduce((sum, e) => sum + e.rate, 0);
 
