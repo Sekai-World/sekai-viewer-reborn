@@ -1,5 +1,15 @@
 # @platform/ui-shell
 
+## 0.5.0
+
+### Minor Changes
+
+- 806897b: Add shared theme preference normalization, resolution, and document application helpers.
+
+### Patch Changes
+
+- 316ff04: Share the number-input spinner reset across all sites and improve content-site skill-level input readability.
+
 ## 0.4.0
 
 ### Minor Changes
