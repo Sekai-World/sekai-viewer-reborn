@@ -116,6 +116,7 @@ not deployed-origin browser verification.
 The earlier catalog source was
 `https://storage.sekai.best/sekai-live2d-assets/live2d/model_list.json` (an S3
 object, `application/json`). It remains prior verified evidence.
+
 - Sample entry:
   `modelName=01ichika_cloth001_3.1_f_t01`,
   `modelBase=01ichika_cloth001`,
@@ -181,11 +182,14 @@ explicit in the route data. Accordingly, #268 is partially unblocked: the
 current JP-only region contract, associated-catalog model/motion sample,
 resource evidence, and documented sample are now available. The current
 server-side route/UI metadata integration does not depend on deployed-origin
-browser proof. Deployed-origin CORS remains open for future browser asset
-playback, but it is not the sole gate for a production playback fixture: no
-Pixi/Cubism dependency or browser runtime adapter is present, and the
-scenario-to-model mapping is still unverified. Facial `.motion3.json` files
-remain metadata, not expressions.
+browser proof. Deployed-origin CORS remains open for browser asset playback,
+but it is not the sole gate for a production playback fixture: the standalone
+`/live2d/[modelId]` route now has an SSR-safe Pixi/Cubism adapter with a
+dedicated non-shared ticker, separate body/facial motion handling, lifecycle
+cleanup, and model fit/resize. Approved/pinned Cubism Core artifact provenance
+and a real-browser smoke test remain open. The Story Reader scenario-to-model
+mapping and player runtime are still unimplemented. Facial `.motion3.json`
+files remain metadata, not Cubism expressions.
 
 ## Data-source strategy decision
 

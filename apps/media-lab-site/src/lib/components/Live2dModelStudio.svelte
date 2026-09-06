@@ -12,8 +12,6 @@
     noneLoaded: string;
     apply: string;
     pause: string;
-    loop: string;
-    speed: string;
     idleBreath: string;
     reload: string;
     reset: string;
@@ -31,8 +29,6 @@
     selectedMotion?: string;
     selectedExpression?: string;
     idleMotion?: boolean;
-    loop?: boolean;
-    speed?: number;
     /**
      * Lifecycle insertion point: the model player adapter renders its canvas
      * host here. When absent, the studio shows its reserved-stage placeholder.
@@ -54,8 +50,6 @@
     selectedMotion = $bindable(""),
     selectedExpression = $bindable(""),
     idleMotion = $bindable(true),
-    loop = $bindable(false),
-    speed = $bindable(1),
     stage,
     onApplyMotion,
     onApplyExpression,
@@ -80,8 +74,7 @@
         <div class="absolute inset-0 grid place-items-center" aria-hidden="true">
           <div
             class="absolute inset-0 bg-[radial-gradient(closest-side,rgba(255,255,255,0.07),transparent)]"
-          >
-          </div>
+          ></div>
           <Icon icon="mdi:drama-masks" class="relative size-10 opacity-40" aria-hidden="true" />
         </div>
       {/if}
@@ -165,28 +158,6 @@
           <Icon icon="mdi:pause" class="size-4" aria-hidden="true" />
           {labels.pause}
         </button>
-        <label class="flex min-h-11 items-center gap-3 text-sm font-medium">
-          <input
-            type="checkbox"
-            class="toggle toggle-primary"
-            disabled={!controlsEnabled}
-            bind:checked={loop}
-          />
-          {labels.loop}
-        </label>
-        <label class="flex min-h-11 items-center gap-3 text-sm font-medium">
-          {labels.speed}
-          <select
-            class="select min-h-11 w-24 bg-base-100"
-            disabled={!controlsEnabled}
-            bind:value={speed}
-          >
-            <option value={0.5}>0.5×</option>
-            <option value={1}>1×</option>
-            <option value={1.5}>1.5×</option>
-            <option value={2}>2×</option>
-          </select>
-        </label>
         <label class="flex min-h-11 items-center gap-3 text-sm font-medium">
           <input
             type="checkbox"
