@@ -1,5 +1,11 @@
 # @platform/i18n-runtime
 
+## 0.2.0
+
+### Minor Changes
+
+- 806897b: Add shared supported UI locale configuration and locale normalization helpers.
+
 ## 0.1.3
 
 ### Patch Changes
