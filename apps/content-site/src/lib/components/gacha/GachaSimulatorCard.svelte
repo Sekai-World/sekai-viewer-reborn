@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getCardThumbnailAssetURL } from "$lib/assets/index";
+  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
   import type { GachaBehavior } from "$lib/domain/gacha-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
@@ -13,6 +13,7 @@
     assetBundleName: string | null;
     attr: string | null;
     rarityType: string | null;
+    initialSpecialTrainingStatus?: string | null;
   };
 
   type HistoryCard = PulledGachaCard & { isNew: boolean };
@@ -427,15 +428,9 @@
             {#each sortedLatestResult as card, index (`sim-result-${index}-${card.cardId}`)}
               <a href={getCardDetailHref(card.cardId)} class="group relative block w-full">
                 <CardThumbnail
-                  src={card.assetBundleName
-                    ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
-                    : null}
-                  fallbackSrc={card.assetBundleName && region !== "jp"
-                    ? getCardThumbnailAssetURL(card.assetBundleName, false, region)
-                    : null}
+                  {...getCardThumbnailPresentation(card, region)}
                   alt={card.title ? `${card.title} ${cardAltSuffix}` : `Card ${card.cardId}`}
                   fallbackLabel={card.cardId}
-                  trained={false}
                   attr={card.attr}
                   rarityType={card.rarityType}
                   rarityCount={card.rarityType === "rarity_birthday"

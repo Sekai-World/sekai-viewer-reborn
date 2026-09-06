@@ -61,12 +61,17 @@ const mockCardMetadata = (items: unknown[]): void => {
   getCardsByRegionBatch.mockResolvedValue({ data: { items } });
 };
 
-const createCard = (id: string | number, rarityType = "rarity_4"): Record<string, unknown> => ({
+const createCard = (
+  id: string | number,
+  rarityType = "rarity_4",
+  initialSpecialTrainingStatus: string | null = null
+): Record<string, unknown> => ({
   id,
   prefix: " Card title ",
   assetBundleName: "card_asset",
   attribute: "cute",
-  cardRarityType: rarityType
+  cardRarityType: rarityType,
+  initialSpecialTrainingStatus
 });
 
 describe("gacha probability server data", () => {
@@ -77,7 +82,7 @@ describe("gacha probability server data", () => {
   });
 
   it("builds normal probabilities from batched card metadata", async () => {
-    mockCardMetadata([null, createCard(1), createCard("unrequested")]);
+    mockCardMetadata([null, createCard(1, "rarity_4", "done"), createCard("unrequested")]);
 
     const payload = await buildGachaProbabilityPayload({
       baseUrl: "https://master-api.test",
@@ -100,6 +105,7 @@ describe("gacha probability server data", () => {
       assetBundleName: "card_asset",
       attr: "cute",
       rarityType: "rarity_4",
+      initialSpecialTrainingStatus: "done",
       probability: 100,
       probabilityByLotteryType: { normal: 100 },
       diagnostic: "none"

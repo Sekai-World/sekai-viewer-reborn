@@ -23,6 +23,7 @@ type GachaPickupCard = GachaPickup & {
   assetBundleName: string | null;
   attr: string | null;
   rarityType: string | null;
+  initialSpecialTrainingStatus: string | null;
 };
 
 type GachaPayload = {
@@ -168,8 +169,15 @@ const fetchGachaPayload = async ({
       assetBundleName: string | null;
       attr: string | null;
       rarityType: string | null;
+      initialSpecialTrainingStatus: string | null;
     }> => {
-      const empty = { title: null, assetBundleName: null, attr: null, rarityType: null } as const;
+      const empty = {
+        title: null,
+        assetBundleName: null,
+        attr: null,
+        rarityType: null,
+        initialSpecialTrainingStatus: null
+      } as const;
       if (!cardId) return { ...empty };
 
       try {
@@ -184,7 +192,8 @@ const fetchGachaPayload = async ({
           title: card?.title ?? null,
           assetBundleName: card?.assetBundleName ?? null,
           attr: card?.attr ?? null,
-          rarityType: card?.rarityType ?? null
+          rarityType: card?.rarityType ?? null,
+          initialSpecialTrainingStatus: card?.initialSpecialTrainingStatus ?? null
         };
       } catch {
         return { ...empty };

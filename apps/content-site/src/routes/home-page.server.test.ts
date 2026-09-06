@@ -40,6 +40,7 @@ import { load } from "./+page.server";
 
 type LatestData = {
   region: string;
+  cards: { id: string; initialSpecialTrainingStatus: string | null }[];
   gachas: { id: string }[];
 };
 
@@ -72,6 +73,31 @@ describe("homepage latest gacha loading", () => {
     fetchUnitProfiles.mockResolvedValue([]);
     toUnitProfileMap.mockReturnValue({});
     getGachasByRegionList.mockReset();
+  });
+
+  it("preserves special-training metadata for homepage card thumbnails", async () => {
+    getCardsByRegionList.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: "trained-card",
+            prefix: "Trained card",
+            assetbundleName: "trained_card",
+            attr: "cute",
+            cardRarity: { cardRarityType: "rarity_4" },
+            initialSpecialTrainingStatus: "done"
+          }
+        ]
+      }
+    });
+    getGachasByRegionList.mockResolvedValue(emptyListResponse);
+
+    const latestData = await loadHomepageLatestData();
+    const jpData = latestData.find((regionData) => regionData.region === "jp");
+
+    expect(jpData?.cards).toEqual([
+      expect.objectContaining({ id: "trained-card", initialSpecialTrainingStatus: "done" })
+    ]);
   });
 
   it("requests the next gacha page when the first page only contains future entries", async () => {

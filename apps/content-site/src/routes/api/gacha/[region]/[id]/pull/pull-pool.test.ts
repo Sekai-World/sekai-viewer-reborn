@@ -37,7 +37,8 @@ describe("pull card metadata", () => {
               prefix: " Birthday card ",
               assetBundleName: "birthday_asset",
               attribute: "happy",
-              cardRarity: { cardRarityType: "rarity_birthday" }
+              cardRarity: { cardRarityType: "rarity_birthday" },
+              initialSpecialTrainingStatus: "done"
             }
           ]
         }
@@ -48,7 +49,8 @@ describe("pull card metadata", () => {
         title: "Birthday card",
         assetBundleName: "birthday_asset",
         attr: "happy",
-        rarityType: "rarity_birthday"
+        rarityType: "rarity_birthday",
+        initialSpecialTrainingStatus: "done"
       }
     ]);
   });
@@ -73,14 +75,16 @@ describe("pull card metadata", () => {
         title: null,
         assetBundleName: null,
         attr: null,
-        rarityType: "rarity_2"
+        rarityType: "rarity_2",
+        initialSpecialTrainingStatus: null
       },
       {
         cardId: "card-3",
         title: null,
         assetBundleName: null,
         attr: null,
-        rarityType: "rarity_4"
+        rarityType: "rarity_4",
+        initialSpecialTrainingStatus: null
       }
     ]);
     expect(parseCardMetadataResponse([])).toEqual([]);
@@ -194,7 +198,8 @@ describe("pull card metadata", () => {
             title: null,
             assetBundleName: null,
             attr: null,
-            rarityType: "rarity_3"
+            rarityType: "rarity_3",
+            initialSpecialTrainingStatus: null
           }
         ]
       ])

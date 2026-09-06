@@ -56,6 +56,7 @@ type LatestCardItem = {
   assetBundleName: string | null;
   attr: string | null;
   rarityType: string | null;
+  initialSpecialTrainingStatus: string | null;
   rarityCount: number;
   releaseAt: string | number | null;
 };
@@ -246,6 +247,10 @@ const parseLatestCard = (raw: unknown): LatestCardItem | null => {
     assetBundleName: pickFirstString(root, ["assetbundleName", "assetBundleName"]),
     attr: pickFirstString(root, ["attr"]),
     rarityType,
+    initialSpecialTrainingStatus: pickFirstString(root, [
+      "initialSpecialTrainingStatus",
+      "initial_special_training_status"
+    ]),
     rarityCount,
     releaseAt: pickFirstDateValue(root, ["releaseAt", "archivePublishedAt"])
   };

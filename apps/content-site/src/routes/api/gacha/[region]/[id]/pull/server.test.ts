@@ -41,7 +41,12 @@ describe("gacha pull endpoint", () => {
     getCardsByRegionBatch.mockResolvedValue({
       data: {
         items: [
-          { id: "card-1", prefix: "Card 1", cardRarity: { cardRarityType: "rarity_3" } },
+          {
+            id: "card-1",
+            prefix: "Card 1",
+            cardRarity: { cardRarityType: "rarity_3" },
+            initialSpecialTrainingStatus: "done"
+          },
           { id: "card-2", prefix: "Card 2", cardRarity: { cardRarityType: "rarity_3" } }
         ]
       }
@@ -137,7 +142,7 @@ describe("gacha pull endpoint", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
-      results: [{ cardId: "card-1", title: "Card 1" }]
+      results: [{ cardId: "card-1", title: "Card 1", initialSpecialTrainingStatus: "done" }]
     });
   });
 

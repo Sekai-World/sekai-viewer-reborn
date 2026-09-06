@@ -12,11 +12,11 @@
     resolvePreferredRegion
   } from "$lib/i18n/region";
   import {
-    getCardThumbnailAssetURL,
     getMusicJacketAssetURL,
     getGachaBannerAssetURL,
     getGachaLogoAssetURL
   } from "$lib/assets";
+  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
@@ -403,18 +403,9 @@
                         data-home-card-thumbnail
                       >
                         <CardThumbnail
-                          src={card.assetBundleName
-                            ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
-                            : null}
+                          {...getCardThumbnailPresentation(card, regionData.region)}
                           alt={card.prefix ?? card.id}
                           fallbackLabel={card.id}
-                          fallbackSrc={card.assetBundleName
-                            ? getCardThumbnailAssetURL(
-                                card.assetBundleName,
-                                false,
-                                regionData.region
-                              )
-                            : null}
                           attr={card.attr}
                           rarityType={card.rarityType}
                           rarityCount={card.rarityCount}

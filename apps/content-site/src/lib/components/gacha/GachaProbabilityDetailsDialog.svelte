@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve, base } from "$app/paths";
-  import { getCardThumbnailAssetURL } from "$lib/assets/index";
+  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
   import type { GachaProbabilityCard } from "$lib/domain/gacha-probability";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
@@ -455,12 +455,7 @@
                           class="group block"
                         >
                           <CardThumbnail
-                            src={card.assetBundleName
-                              ? getCardThumbnailAssetURL(card.assetBundleName, false, "jp")
-                              : null}
-                            fallbackSrc={card.assetBundleName && region !== "jp"
-                              ? getCardThumbnailAssetURL(card.assetBundleName, false, region)
-                              : null}
+                            {...getCardThumbnailPresentation(card, region)}
                             alt={card.title
                               ? `${card.title} ${cardAltSuffix}`
                               : (card.cardId ?? unavailableLabel)}

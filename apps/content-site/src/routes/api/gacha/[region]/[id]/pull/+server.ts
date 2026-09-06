@@ -18,6 +18,7 @@ type PulledGachaCard = {
   assetBundleName: string | null;
   attr: string | null;
   rarityType: string | null;
+  initialSpecialTrainingStatus: string | null;
 };
 
 type RarityRateEntry = {
@@ -221,7 +222,8 @@ export const POST: RequestHandler = async ({ params, request }) => {
           title: meta?.title ?? null,
           assetBundleName: meta?.assetBundleName ?? null,
           attr: meta?.attr ?? null,
-          rarityType: meta?.rarityType ?? null
+          rarityType: meta?.rarityType ?? null,
+          initialSpecialTrainingStatus: meta?.initialSpecialTrainingStatus ?? null
         } satisfies PulledGachaCard;
       });
 

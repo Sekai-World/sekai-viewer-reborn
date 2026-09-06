@@ -117,7 +117,11 @@ const getCardMetadata = (item: Record<string, unknown>): GachaProbabilityCardMet
   title: pickFirstString(item, ["prefix"]),
   assetBundleName: pickFirstString(item, ["assetbundleName", "assetBundleName"]),
   attr: pickFirstString(item, ["attr", "attribute"]),
-  rarityType: pickFirstString(item, ["rarityType", "cardRarityType", "card_rarity_type"])
+  rarityType: pickFirstString(item, ["rarityType", "cardRarityType", "card_rarity_type"]),
+  initialSpecialTrainingStatus: pickFirstString(item, [
+    "initialSpecialTrainingStatus",
+    "initial_special_training_status"
+  ])
 });
 
 const chunkCardIds = (cardIds: readonly string[]): string[][] => {

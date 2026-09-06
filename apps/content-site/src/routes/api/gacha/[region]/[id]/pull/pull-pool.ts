@@ -9,6 +9,7 @@ export type PullCardMetadata = {
   assetBundleName: string | null;
   attr: string | null;
   rarityType: string | null;
+  initialSpecialTrainingStatus: string | null;
 };
 
 export type PullPoolCard = {
@@ -58,7 +59,11 @@ const parseCardMetadataItem = (value: unknown): PullCardMetadata | null => {
     attr: pickFirstString(card, ["attr", "attribute"]),
     rarityType:
       (cardRarity ? pickFirstString(cardRarity, ["cardRarityType"]) : null) ??
-      pickFirstString(card, ["rarityType", "cardRarityType", "card_rarity_type"])
+      pickFirstString(card, ["rarityType", "cardRarityType", "card_rarity_type"]),
+    initialSpecialTrainingStatus: pickFirstString(card, [
+      "initialSpecialTrainingStatus",
+      "initial_special_training_status"
+    ])
   };
 };
 

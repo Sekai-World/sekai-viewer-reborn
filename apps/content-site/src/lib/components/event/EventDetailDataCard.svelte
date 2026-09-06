@@ -11,6 +11,7 @@
   } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
@@ -239,7 +240,7 @@
   const getRarityValue = (rarityType: string | null): number =>
     rarityType ? (rarityValueByType[rarityType] ?? 0) : 0;
   const isCardTrained = (card: EventFeaturedCard): boolean =>
-    card.initialSpecialTrainingStatus === "done" || card.rarityType === "rarity_birthday";
+    resolveCardTrained(card, card.rarityType === "rarity_birthday");
   const getCardThumbnailSrc = (card: EventFeaturedCard): string | null =>
     card.assetBundleName
       ? getCardThumbnailAssetURL(card.assetBundleName, isCardTrained(card), "jp")

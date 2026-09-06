@@ -6,6 +6,7 @@
   import { getCardThumbnailAssetURL } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
@@ -53,7 +54,10 @@
   const rarityValue = (type: string | null): number =>
     type === "rarity_birthday" ? 1 : Number(type?.match(/\d+/)?.[0] ?? 0);
   const trained = (card: CharacterRelatedCard): boolean =>
-    card.initialSpecialTrainingStatus === "done";
+    resolveCardTrained(
+      card,
+      card.rarityType === "rarity_birthday" && card.initialSpecialTrainingStatus === "done"
+    );
   const cardSrc = (card: CharacterRelatedCard): string | null =>
     card.assetBundleName
       ? getCardThumbnailAssetURL(card.assetBundleName, trained(card), "jp")
