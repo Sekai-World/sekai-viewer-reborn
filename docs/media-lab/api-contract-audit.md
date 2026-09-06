@@ -157,6 +157,8 @@ object, `application/json`). It remains prior verified evidence.
   `facialFiles` are facial motions, not verified Cubism `.exp3.json` expression
   assets. They must not be mapped to the existing `expressions` or
   `playExpression` semantics until adapter behavior is verified.
+- The current associated catalog exposes no voice or sound URL fields. Model
+  voiceline playback is therefore not part of this slice.
 - The source has no locale field. `region: "jp"` remains an explicit product
   convention for the whole independent Live2D bucket, not an inference from
   `v1/main`; no cross-region fallback is allowed.
@@ -186,10 +188,15 @@ browser proof. Deployed-origin CORS remains open for browser asset playback,
 but it is not the sole gate for a production playback fixture: the standalone
 `/live2d/[modelId]` route now has an SSR-safe Pixi/Cubism adapter with a
 dedicated non-shared ticker, separate body/facial motion handling, lifecycle
-cleanup, and model fit/resize. Approved/pinned Cubism Core artifact provenance
-and a real-browser smoke test remain open. The Story Reader scenario-to-model
-mapping and player runtime are still unimplemented. Facial `.motion3.json`
-files remain metadata, not Cubism expressions.
+cleanup, and model fit/resize. The production Cubism Core artifact is now
+pinned and vendor-controlled at
+`apps/media-lab-site/static/live2d/cubism-core/live2dcubismcore.min.js`, from
+SDK 5-r.5, with SHA-256
+`8741f739779b5d5210872bd3d7d99f0f1e56e6c87409e7d26d6bb4b80aa1ef47`.
+Redistribution approval and the SDK license terms must be maintained with
+the artifact. Deployed-origin CORS, real-browser/WebGL smoke validation, and
+the Story Reader scenario-to-model mapping and player runtime remain open.
+Facial `.motion3.json` files remain metadata, not Cubism expressions.
 
 ## Data-source strategy decision
 

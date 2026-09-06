@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildLive2dModelSettings,
   createLive2dModelLoader,
+  ensureCubismCore,
   type Live2dCubismRuntime,
   type Live2dModelInstance,
   type Live2dPixiApplication,
@@ -9,6 +10,101 @@ import {
   type Live2dRuntimeFacade
 } from "./live2d-model-loader";
 import type { Live2dModelDescriptor } from "./model-viewer";
+
+const defaultRuntimeMocks = vi.hoisted(() => {
+  const application = {
+    view: {},
+    ticker: {},
+    stage: {
+      addChild: vi.fn(),
+      removeChild: vi.fn()
+    },
+    renderer: { resize: vi.fn() },
+    render: vi.fn(),
+    stop: vi.fn(),
+    start: vi.fn(),
+    destroy: vi.fn()
+  };
+  const state: { model: unknown } = { model: null };
+
+  return {
+    application,
+    state,
+    addExtension: vi.fn(),
+    loadModel: vi.fn(async () => state.model),
+    config: { LOG_LEVEL_ERROR: 0, logLevel: 0, sound: true }
+  };
+});
+
+vi.mock("pixi.js", () => ({
+  TickerPlugin: {},
+  extensions: { add: defaultRuntimeMocks.addExtension },
+  Application: class {
+    constructor() {
+      return defaultRuntimeMocks.application;
+    }
+  }
+}));
+
+vi.mock("@sekai-world/pixi-live2d-display-mulmotion/cubism4", () => ({
+  config: defaultRuntimeMocks.config,
+  MotionPriority: { FORCE: 3 },
+  Live2DModel: { from: defaultRuntimeMocks.loadModel }
+}));
+
+type TestScript = {
+  async: boolean;
+  src: string;
+  onload: (() => void) | null;
+  onerror: (() => void) | null;
+  parentNode: TestScriptParent | null;
+};
+
+type TestScriptParent = {
+  appendChild(script: TestScript): void;
+  removeChild(script: TestScript): void;
+};
+
+const createBrowserMocks = () => {
+  const appendedScripts: TestScript[] = [];
+  const removedScripts: TestScript[] = [];
+  const head: TestScriptParent = {
+    appendChild: vi.fn((script: TestScript) => {
+      script.parentNode = head;
+      appendedScripts.push(script);
+    }),
+    removeChild: vi.fn((script: TestScript) => {
+      script.parentNode = null;
+      removedScripts.push(script);
+    })
+  };
+  const documentMock = {
+    createElement: vi.fn(
+      () =>
+        ({
+          async: false,
+          src: "",
+          onload: null,
+          onerror: null,
+          parentNode: null
+        }) as TestScript
+    ),
+    head
+  };
+  const windowMock: { Live2DCubismCore?: unknown } = {};
+
+  vi.stubGlobal("document", documentMock);
+  vi.stubGlobal("window", windowMock);
+
+  return { appendedScripts, removedScripts, windowMock };
+};
+
+beforeEach(() => {
+  defaultRuntimeMocks.state.model = null;
+  vi.clearAllMocks();
+});
+
+afterEach(() => vi.unstubAllGlobals());
 
 const descriptor: Live2dModelDescriptor = {
   modelId: "sample-model",
@@ -132,6 +228,37 @@ describe("Live2D Pixi/Cubism loader", () => {
     const loader = createLive2dModelLoader({} as HTMLElement);
 
     expect(loader.load).toEqual(expect.any(Function));
+  });
+
+  it("loads the same-origin Cubism Core once and retries after a failed script", async () => {
+    const browser = createBrowserMocks();
+    const firstLoad = ensureCubismCore();
+    const secondLoad = ensureCubismCore();
+
+    await vi.waitFor(() => expect(browser.appendedScripts).toHaveLength(1));
+    const firstScript = browser.appendedScripts[0];
+    expect(firstScript.src).toBe("/live2d/cubism-core/live2dcubismcore.min.js");
+    expect(firstScript.async).toBe(true);
+
+    firstScript.onerror?.();
+    await expect(firstLoad).rejects.toThrow("Failed to load Live2D Cubism Core");
+    await expect(secondLoad).rejects.toThrow("Failed to load Live2D Cubism Core");
+    expect(browser.removedScripts).toEqual([firstScript]);
+
+    const retryFirstLoad = ensureCubismCore();
+    const retrySecondLoad = ensureCubismCore();
+
+    await vi.waitFor(() => expect(browser.appendedScripts).toHaveLength(2));
+    const retryScript = browser.appendedScripts[1];
+    expect(retryScript.src).toBe("/live2d/cubism-core/live2dcubismcore.min.js");
+    browser.windowMock.Live2DCubismCore = {};
+    retryScript.onload?.();
+
+    await Promise.all([retryFirstLoad, retrySecondLoad]);
+
+    const loadedAgain = ensureCubismCore();
+    expect(browser.appendedScripts).toHaveLength(2);
+    await loadedAgain;
   });
 
   it("does not load browser runtimes until load is called", async () => {

@@ -13,8 +13,7 @@ const EXPRESSION_GROUP = "Expression";
 const PARALLEL_MANAGER_COUNT = 2;
 const BODY_MANAGER_INDEX = 0;
 const FACE_MANAGER_INDEX = 1;
-const CUBISM_CORE_SCRIPT_URL =
-  "https://cdn.jsdelivr.net/npm/live2dcubismcore/live2dcubismcore.min.js";
+const CUBISM_CORE_SCRIPT_URL = "/live2d/cubism-core/live2dcubismcore.min.js";
 
 const DESTROY_OPTIONS = {
   children: true,
@@ -196,7 +195,7 @@ const waitForAbort = async <T>(operation: Promise<T>, signal: AbortSignal): Prom
 
 let cubismCoreLoadPromise: Promise<void> | null = null;
 
-const ensureCubismCore = (): Promise<void> => {
+export const ensureCubismCore = (): Promise<void> => {
   if (typeof window === "undefined" || typeof document === "undefined") {
     return Promise.reject(new Error("Live2D Cubism Core can only be loaded in a browser"));
   }
