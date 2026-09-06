@@ -101,7 +101,7 @@ const pickFirstBoolean = (
   return null;
 };
 
-const parseFloat = (value: unknown): number | null => {
+const parseNumberValue = (value: unknown): number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
   }
@@ -126,7 +126,7 @@ const parseGachaCardRarityRates = (raw: unknown): GachaCardRarityRate[] => {
       }
       return {
         cardRarityType: pickFirstString(obj, ["cardRarityType"]),
-        rate: parseFloat(obj["rate"]),
+        rate: parseNumberValue(obj["rate"]),
         lotteryType: pickFirstString(obj, ["lotteryType"])
       };
     })

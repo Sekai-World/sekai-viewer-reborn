@@ -319,8 +319,9 @@ export const logMusicListFilterDebug = (label: string, details: Record<string, u
   console.debug("[content-site:music-filter]", label, details);
 };
 
-const normalizeCategories = (values: string[]): string[] =>
-  [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+const normalizeCategories = (values: string[]): string[] => [
+  ...new Set(values.map((value) => value.trim()).filter(Boolean))
+];
 
 export const fetchMusicCatalog = async (
   baseUrl: string,
@@ -386,25 +387,33 @@ export const fetchMusicCatalog = async (
 };
 
 export const buildMusicListFilterMeta = (items: MusicListItem[]): MusicListFilterMeta => ({
-  categories: [...new Set(items.flatMap((item) => item.categories))].sort(),
+  categories: [...new Set(items.flatMap((item) => item.categories))].sort((left, right) =>
+    left.localeCompare(right)
+  ),
   composers: [
     ...new Set(
       items.map((item) => item.composer).filter((value): value is string => Boolean(value))
     )
-  ].sort(),
+  ].sort((left, right) => left.localeCompare(right)),
   arrangers: [
     ...new Set(
       items.map((item) => item.arranger).filter((value): value is string => Boolean(value))
     )
-  ].sort(),
+  ].sort((left, right) => left.localeCompare(right)),
   lyricists: [
     ...new Set(
       items.map((item) => item.lyricist).filter((value): value is string => Boolean(value))
     )
-  ].sort(),
-  vocalCharacters: [...new Set(items.flatMap((item) => item.vocalCharacters))].sort(),
-  tags: [...new Set(items.flatMap((item) => item.tags))].sort(),
-  difficulties: [...new Set(items.flatMap((item) => item.difficulties))].sort(),
+  ].sort((left, right) => left.localeCompare(right)),
+  vocalCharacters: [...new Set(items.flatMap((item) => item.vocalCharacters))].sort((left, right) =>
+    left.localeCompare(right)
+  ),
+  tags: [...new Set(items.flatMap((item) => item.tags))].sort((left, right) =>
+    left.localeCompare(right)
+  ),
+  difficulties: [...new Set(items.flatMap((item) => item.difficulties))].sort((left, right) =>
+    left.localeCompare(right)
+  ),
   levels: [...new Set(items.flatMap((item) => item.levels))].sort((left, right) => {
     const numericCompare = Number(left) - Number(right);
     return Number.isFinite(numericCompare) && numericCompare !== 0

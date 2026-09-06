@@ -1,16 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getCardsByRegionBatch, getGachasByRegionById, getMasterApiBaseUrl } = vi.hoisted(() => ({
-  getCardsByRegionBatch: vi.fn(),
-  getGachasByRegionById: vi.fn(),
-  getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
-}));
+const { getCardsByRegionBatch, getGachasByRegionById, getMasterApiBaseUrl, getSecureRandomUnit } =
+  vi.hoisted(() => ({
+    getCardsByRegionBatch: vi.fn(),
+    getGachasByRegionById: vi.fn(),
+    getMasterApiBaseUrl: vi.fn(() => "https://master-api.test"),
+    getSecureRandomUnit: vi.fn()
+  }));
 
 vi.mock("@platform/sekai-master-api-sdk", () => ({
   getCardsByRegionBatch,
   getGachasByRegionById
 }));
 vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("$lib/server/secure-random", () => ({ getSecureRandomUnit }));
 
 import { POST } from "./+server";
 
@@ -38,6 +41,8 @@ describe("gacha pull endpoint", () => {
   beforeEach(() => {
     getCardsByRegionBatch.mockReset();
     getGachasByRegionById.mockReset();
+    getSecureRandomUnit.mockReset();
+    getSecureRandomUnit.mockReturnValue(0);
     getCardsByRegionBatch.mockResolvedValue({
       data: {
         items: [
@@ -136,7 +141,7 @@ describe("gacha pull endpoint", () => {
         gachaBehaviors: []
       }
     });
-    vi.spyOn(Math, "random").mockReturnValueOnce(0.999).mockReturnValueOnce(0);
+    getSecureRandomUnit.mockReturnValueOnce(0.999).mockReturnValueOnce(0);
 
     const response = await postPull(createRequest({}));
 
@@ -144,6 +149,34 @@ describe("gacha pull endpoint", () => {
     await expect(response.json()).resolves.toMatchObject({
       results: [{ cardId: "card-1", title: "Card 1", initialSpecialTrainingStatus: "done" }]
     });
+  });
+
+  it("parses string rarity rates and asserts the upstream and random boundaries", async () => {
+    getGachasByRegionById.mockResolvedValueOnce({
+      data: {
+        id: "gacha-1",
+        gachaCardRarityRates: [{ cardRarityType: "rarity_3", rate: "100" }],
+        gachaDetails: [{ cardId: "card-1", weight: 1, isWish: false }],
+        gachaBehaviors: []
+      }
+    });
+
+    const response = await postPull(createRequest({}));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      results: [{ cardId: "card-1", title: "Card 1" }]
+    });
+    expect(getGachasByRegionById).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test",
+      path: { region: "jp", id: "gacha-1" }
+    });
+    expect(getCardsByRegionBatch).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test",
+      path: { region: "jp" },
+      query: { ids: "card-1" }
+    });
+    expect(getSecureRandomUnit).toHaveBeenCalledTimes(2);
   });
 
   it("selects the final weighted card when earlier weights do not reach the roll", async () => {
@@ -158,7 +191,7 @@ describe("gacha pull endpoint", () => {
         gachaBehaviors: []
       }
     });
-    vi.spyOn(Math, "random").mockReturnValueOnce(0).mockReturnValueOnce(0.999);
+    getSecureRandomUnit.mockReturnValueOnce(0).mockReturnValueOnce(0.999);
 
     const response = await postPull(createRequest({}));
 
@@ -191,7 +224,7 @@ describe("gacha pull endpoint", () => {
         gachaBehaviors: [{ gachaBehaviorType: "over_rarity_4_once" }]
       }
     });
-    vi.spyOn(Math, "random").mockReturnValue(0);
+    getSecureRandomUnit.mockReturnValue(0);
 
     const response = await postPull(createRequest({ count: 10 }));
     const body = (await response.json()) as { results: { cardId: string }[] };
@@ -199,6 +232,7 @@ describe("gacha pull endpoint", () => {
     expect(response.status).toBe(200);
     expect(body.results).toHaveLength(10);
     expect(body.results.at(-1)?.cardId).toBe("card-4");
+    expect(getSecureRandomUnit).toHaveBeenCalledTimes(20);
   });
 
   it("returns a validation error when no rarity pool is usable", async () => {
