@@ -58,6 +58,7 @@ type TestScript = {
   onload: (() => void) | null;
   onerror: (() => void) | null;
   parentNode: TestScriptParent | null;
+  remove(): void;
 };
 
 type TestScriptParent = {
@@ -79,16 +80,19 @@ const createBrowserMocks = () => {
     })
   };
   const documentMock = {
-    createElement: vi.fn(
-      () =>
-        ({
-          async: false,
-          src: "",
-          onload: null,
-          onerror: null,
-          parentNode: null
-        }) as TestScript
-    ),
+    createElement: vi.fn(() => {
+      const script = {
+        async: false,
+        src: "",
+        onload: null,
+        onerror: null,
+        parentNode: null,
+        remove: vi.fn(() => {
+          if (script.parentNode) script.parentNode.removeChild(script);
+        })
+      } as TestScript;
+      return script;
+    }),
     head
   };
   const windowMock: { Live2DCubismCore?: unknown } = {};
@@ -221,6 +225,12 @@ describe("Live2D model settings adapter", () => {
       Idle: [{ File: "guessed-relative-idle.motion3.json" }]
     });
   });
+
+  it("rejects model settings without FileReferences", () => {
+    expect(() => buildLive2dModelSettings({}, descriptor)).toThrow(
+      "Live2D model settings are missing FileReferences"
+    );
+  });
 });
 
 describe("Live2D Pixi/Cubism loader", () => {
@@ -278,6 +288,21 @@ describe("Live2D Pixi/Cubism loader", () => {
       expect.any(AbortSignal)
     );
     await resource.destroy();
+  });
+
+  it("rejects a failed model settings response", async () => {
+    const { model } = createModel();
+    const { runtime } = createRuntime(model);
+    runtime.fetchSettings.mockResolvedValue({
+      ok: false,
+      status: 503,
+      json: async () => settingsPayload
+    });
+    const loader = createLive2dModelLoader({} as HTMLElement, { runtime });
+
+    await expect(loader.load(descriptor, new AbortController().signal, vi.fn())).rejects.toThrow(
+      "Failed to load Live2D model settings (503)"
+    );
   });
 
   it("maps body and facial labels to independent parallel motion slots", async () => {
@@ -342,6 +367,39 @@ describe("Live2D Pixi/Cubism loader", () => {
     expect(model.position.set).toHaveBeenLastCalledWith(600, 300);
     expect(pixi.application.resize).toHaveBeenCalledWith(1200, 600);
     await resource.destroy();
+  });
+
+  it("rejects non-positive or non-finite resize dimensions", async () => {
+    const { model } = createModel();
+    const { runtime, pixi } = createRuntime(model);
+    const loader = createLive2dModelLoader({} as HTMLElement, { runtime });
+    const resource = await loader.load(descriptor, new AbortController().signal, vi.fn());
+
+    expect(() => resource.resize(0, 480)).toThrow(
+      "Live2D resize dimensions must be positive and finite"
+    );
+    expect(() => resource.resize(640, Number.POSITIVE_INFINITY)).toThrow(
+      "Live2D resize dimensions must be positive and finite"
+    );
+    expect(pixi.application.resize).not.toHaveBeenCalled();
+
+    await resource.destroy();
+  });
+
+  it("cleans up an attached model when progress reporting fails", async () => {
+    const { model } = createModel();
+    const { runtime, pixi } = createRuntime(model);
+    const loader = createLive2dModelLoader({} as HTMLElement, { runtime });
+    const onProgress = vi.fn((progress: number) => {
+      if (progress === 1) throw new Error("progress consumer failed");
+    });
+
+    await expect(loader.load(descriptor, new AbortController().signal, onProgress)).rejects.toThrow(
+      "progress consumer failed"
+    );
+    expect(pixi.application.removeModel).toHaveBeenCalledWith(model);
+    expect(model.destroy).toHaveBeenCalledTimes(1);
+    expect(pixi.application.destroy).toHaveBeenCalledTimes(1);
   });
 
   it("destroys the model and Pixi canvas exactly once", async () => {

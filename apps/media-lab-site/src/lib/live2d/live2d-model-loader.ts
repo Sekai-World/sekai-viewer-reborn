@@ -1,10 +1,5 @@
 import type { Ticker } from "pixi.js";
-import type {
-  Live2dModelDescriptor,
-  Live2dModelLoader,
-  Live2dModelResource,
-  Live2dPlaybackOptions
-} from "./model-viewer";
+import type { Live2dModelDescriptor, Live2dModelLoader, Live2dModelResource } from "./model-viewer";
 
 type JsonObject = Record<string, unknown>;
 
@@ -200,7 +195,7 @@ export const ensureCubismCore = (): Promise<void> => {
     return Promise.reject(new Error("Live2D Cubism Core can only be loaded in a browser"));
   }
 
-  if (typeof window.Live2DCubismCore !== "undefined") return Promise.resolve();
+  if (window.Live2DCubismCore !== undefined) return Promise.resolve();
   if (cubismCoreLoadPromise) return cubismCoreLoadPromise;
 
   let script: HTMLScriptElement | null = null;
@@ -209,7 +204,7 @@ export const ensureCubismCore = (): Promise<void> => {
     script.async = true;
     script.src = CUBISM_CORE_SCRIPT_URL;
     script.onload = () => {
-      if (typeof window.Live2DCubismCore === "undefined") {
+      if (window.Live2DCubismCore === undefined) {
         reject(
           new Error(
             `Live2D Cubism Core script loaded but did not expose window.Live2DCubismCore: ${CUBISM_CORE_SCRIPT_URL}`
@@ -227,7 +222,7 @@ export const ensureCubismCore = (): Promise<void> => {
 
   cubismCoreLoadPromise = loadPromise.catch((error: unknown) => {
     cubismCoreLoadPromise = null;
-    if (script?.parentNode) script.parentNode.removeChild(script);
+    if (script?.parentNode) script.remove();
     throw error;
   });
 
@@ -248,7 +243,7 @@ const createDefaultRuntimeFacade = (): Live2dRuntimeFacade => ({
           sharedTicker: false,
           autoStart: true
         });
-        const view = app.view as unknown as Node;
+        const view = app.view as unknown as HTMLElement;
         host.appendChild(view);
 
         type PixiStageChild = Parameters<typeof app.stage.addChild>[0];
@@ -262,8 +257,8 @@ const createDefaultRuntimeFacade = (): Live2dRuntimeFacade => ({
             app.stage.addChild(asStageChild(model));
           },
           removeModel: (model) => {
-            const displayObject = model as unknown as { parent?: unknown };
-            if (displayObject.parent === app.stage) app.stage.removeChild(asStageChild(model));
+            const displayObject = asStageChild(model);
+            if (displayObject.parent === app.stage) displayObject.removeFromParent();
           },
           resize: (width, height) => {
             app.renderer.resize(width, height);
@@ -277,7 +272,7 @@ const createDefaultRuntimeFacade = (): Live2dRuntimeFacade => ({
             try {
               app.destroy(true, DESTROY_OPTIONS);
             } finally {
-              if (view.parentNode === host) host.removeChild(view);
+              if (view.parentNode === host) view.remove();
             }
           }
         };
@@ -462,11 +457,10 @@ export const createLive2dModelLoader = (
         let resourceDestroyed = false;
 
         return {
-          playMotion: async (id: string, playbackOptions: Live2dPlaybackOptions): Promise<void> => {
+          playMotion: async (id: string): Promise<void> => {
             const index = findMotionIndex(descriptor.motions, id, "motion");
             // mulmotion 0.5.1 exposes no stable loop or speed controls on startMotion.
             // Keep the existing seam, but do not pretend these options are applied.
-            void playbackOptions;
             const started = await getParallelMotionManager(
               loadedModel,
               BODY_MANAGER_INDEX,
