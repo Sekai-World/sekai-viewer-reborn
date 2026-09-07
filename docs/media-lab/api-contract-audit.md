@@ -116,6 +116,7 @@ not deployed-origin browser verification.
 The earlier catalog source was
 `https://storage.sekai.best/sekai-live2d-assets/live2d/model_list.json` (an S3
 object, `application/json`). It remains prior verified evidence.
+
 - Sample entry:
   `modelName=01ichika_cloth001_3.1_f_t01`,
   `modelBase=01ichika_cloth001`,
@@ -156,6 +157,8 @@ object, `application/json`). It remains prior verified evidence.
   `facialFiles` are facial motions, not verified Cubism `.exp3.json` expression
   assets. They must not be mapped to the existing `expressions` or
   `playExpression` semantics until adapter behavior is verified.
+- The current associated catalog exposes no voice or sound URL fields. Model
+  voiceline playback is therefore not part of this slice.
 - The source has no locale field. `region: "jp"` remains an explicit product
   convention for the whole independent Live2D bucket, not an inference from
   `v1/main`; no cross-region fallback is allowed.
@@ -181,11 +184,19 @@ explicit in the route data. Accordingly, #268 is partially unblocked: the
 current JP-only region contract, associated-catalog model/motion sample,
 resource evidence, and documented sample are now available. The current
 server-side route/UI metadata integration does not depend on deployed-origin
-browser proof. Deployed-origin CORS remains open for future browser asset
-playback, but it is not the sole gate for a production playback fixture: no
-Pixi/Cubism dependency or browser runtime adapter is present, and the
-scenario-to-model mapping is still unverified. Facial `.motion3.json` files
-remain metadata, not expressions.
+browser proof. Deployed-origin CORS remains open for browser asset playback,
+but it is not the sole gate for a production playback fixture: the standalone
+`/live2d/[modelId]` route now has an SSR-safe Pixi/Cubism adapter with a
+dedicated non-shared ticker, separate body/facial motion handling, lifecycle
+cleanup, and model fit/resize. The production Cubism Core artifact is now
+pinned and vendor-controlled at
+`apps/media-lab-site/static/live2d/cubism-core/live2dcubismcore.min.js`, from
+SDK 5-r.5, with SHA-256
+`8741f739779b5d5210872bd3d7d99f0f1e56e6c87409e7d26d6bb4b80aa1ef47`.
+Redistribution approval and the SDK license terms must be maintained with
+the artifact. Deployed-origin CORS, real-browser/WebGL smoke validation, and
+the Story Reader scenario-to-model mapping and player runtime remain open.
+Facial `.motion3.json` files remain metadata, not Cubism expressions.
 
 ## Data-source strategy decision
 

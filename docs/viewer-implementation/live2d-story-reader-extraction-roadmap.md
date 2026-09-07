@@ -168,8 +168,13 @@ runtime can drop it; the wrappers keep it until they are retired.
 `apps/media-lab-site` is a SvelteKit 2 / Svelte 5 app with a minimal home page.
 It already uses `ViewerShell`, `RegionSwitcher`, Tailwind 4, daisyUI 5, and a
 route transition shell, and it now includes localized Story Reader/Live2D route
-shells plus a server-side associated-catalog load for model metadata. It does
-not yet have a browser Live2D host/runtime or a scenario data adapter.
+shells plus a server-side associated-catalog load for model metadata. The
+standalone `/live2d/[modelId]` route also has an SSR-safe browser Pixi/Cubism
+adapter with a dedicated non-shared ticker, body/facial motion handling,
+lifecycle cleanup, and model fit/resize. The Story Reader path still lacks a
+scenario data adapter, scenario-to-model mapping, and player runtime. Approved/
+pinned Cubism Core provenance, deployed-origin CORS, and a real-browser smoke
+test remain open.
 
 The target should follow the content-site conventions without importing code
 from the `content-site` app. Shared behavior belongs in `packages/*`; app-only
@@ -315,7 +320,7 @@ const player = await createLive2DStoryPlayer({
   text: textResolver,
   audio: audioAdapter,
   onProgress,
-  onWarning,
+  onWarning
 });
 
 await player.loadInitialModels();
@@ -403,10 +408,15 @@ The associated-catalog portion of this phase is now implemented in the
 media-lab server boundary: the server loads and validates the JP-only catalog,
 `/live2d` renders metadata-backed models with ready/unavailable/error states,
 and `/live2d/[modelId]` resolves a descriptor only after a successful catalog
-lookup, returning 404 only for an unknown model in that ready state. Browser
-playback remains intentionally unavailable because Pixi/Cubism and a browser
-runtime adapter are not present; facial `.motion3.json` files remain metadata,
-not expressions.
+lookup, returning 404 only for an unknown model in that ready state. The
+standalone route mounts an SSR-safe browser Pixi/Cubism adapter with a dedicated
+non-shared ticker, separate body/facial motion slots, lifecycle cleanup, and
+model fit/resize. This standalone model viewer is separate from Story Reader
+playback: the Story Reader scenario data adapter, scenario-to-model mapping, and
+player runtime remain unimplemented. Approved/pinned Cubism Core artifact
+provenance, deployed-origin CORS, and a real-browser smoke test remain release
+gates; facial `.motion3.json` files remain facial-motion metadata rather than
+verified Cubism expressions.
 
 - Treat
   `https://storage.sekai.best/sekai-live2d-assets/live2d-associated/v1/model_list.json`
@@ -462,10 +472,13 @@ not expressions.
 - Make preprocessing clone input before adding synthetic initial background,
   BGM, and layout snippets; keep source data immutable across readers.
 
-The catalog route/UI slice is implemented, but no browser playback runtime or
-production playback fixture is added by this slice. The remaining bullets
-define the scenario-data, browser-runtime, and deployed-origin verification
-work needed for playback; deployed-origin CORS is not the sole remaining gate.
+The catalog route/UI slice and standalone model-viewer adapter are implemented,
+but this slice does not add Story Reader browser playback or a production Story
+Reader fixture. The remaining bullets define the scenario-data, scenario-to-
+model mapping, Story Reader player, browser-runtime, and deployed-origin
+verification work needed for playback; approved/pinned Cubism Core provenance,
+deployed-origin CORS, and a real-browser smoke test remain open, so CORS is not
+the sole remaining gate.
 
 Exit criteria:
 

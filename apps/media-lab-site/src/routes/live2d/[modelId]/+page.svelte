@@ -1,13 +1,17 @@
 <script lang="ts">
   import { navigating } from "$app/state";
   import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
   import Live2dModelStudio from "$lib/components/Live2dModelStudio.svelte";
+  import { createLive2dModelLoader } from "$lib/live2d/live2d-model-loader";
   import {
     createLive2dModelViewer,
+    type Live2dModelDescriptor,
+    type Live2dModelViewer,
     type Live2dModelViewerState
   } from "$lib/live2d/model-viewer";
+  import type { Live2dRouteModelDescriptor } from "$lib/live2d/catalog-route-data";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -16,58 +20,119 @@
   const catalog = $derived(data.catalog);
   const model = $derived(catalog?.status === "ready" ? catalog.model : null);
   const descriptor = $derived(catalog?.status === "ready" ? catalog.descriptor : null);
+
+  const toPlayerDescriptor = (
+    source: Live2dRouteModelDescriptor | null
+  ): Live2dModelDescriptor | null => {
+    if (!source) return null;
+
+    return {
+      modelId: source.modelId,
+      region: source.region,
+      modelUrl: source.modelUrl,
+      displayName: source.modelName,
+      motions: source.motionSets.flatMap((set, setIndex) =>
+        set.bodyMotions.map(({ id, url }, index) => ({
+          id: `body-${setIndex}-${index}-${id.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80)}`,
+          url
+        }))
+      ),
+      // Facial motion3 files use the adapter's parallel facial slot, not
+      // Cubism's native exp3 expression API.
+      expressions: source.motionSets.flatMap((set, setIndex) =>
+        set.facialMotions.map(({ id, url }, index) => ({
+          id: `face-${setIndex}-${index}-${id.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80)}`,
+          url
+        }))
+      )
+    };
+  };
+
+  // Catalog filenames include dots and can repeat across sets. Give each option
+  // a unique, path-safe viewer ID without changing its resolved asset URL.
+  const playerDescriptor = $derived(toPlayerDescriptor(descriptor));
   const isLoading = $derived(navigating.to?.url.pathname.startsWith("/live2d/") ?? false);
 
-  // Viewer selection state. The model player adapter consumes these values once
-  // it mounts into the studio stage; until then the stage stays reserved and
-  // the controls render disabled.
+  // Catalog readiness is not player readiness: controls wait for the resource.
   let selectedMotion = $state("");
   let selectedExpression = $state("");
   let idleMotion = $state(true);
-  let playbackLoop = $state(false);
-  let playbackSpeed = $state(1);
 
-  // Catalog readiness is not player readiness. Preserve the lifecycle seam,
-  // but do not attempt to load a descriptor into a nonexistent browser adapter.
-  const viewer = createLive2dModelViewer({
-    load: async () => {
-      throw new Error("No browser model adapter is configured");
-    }
-  });
-  let viewerState = $state<Live2dModelViewerState>(viewer.getState());
+  let stageHost: HTMLDivElement;
+  let viewer = $state.raw<Live2dModelViewer | null>(null);
+  let viewerState = $state<Live2dModelViewerState>({ status: "idle" });
+  let loadedModelId = $state<string | null>(null);
 
   const playerAdapter = $derived({
     controlsEnabled: viewerState.status === "ready",
-    motions: viewerState.status === "ready" ? viewerState.descriptor.motions.map(({ id }) => id) : [],
+    motions:
+      viewerState.status === "ready" ? viewerState.descriptor.motions.map(({ id }) => id) : [],
     expressions:
       viewerState.status === "ready" ? viewerState.descriptor.expressions.map(({ id }) => id) : [],
-    applyMotion: () => void viewer.playMotion(selectedMotion),
-    applyExpression: () => void viewer.playExpression(selectedExpression),
-    pause: () => void viewer.pause(),
-    reset: () => void viewer.reset(),
-    reload: () => void viewer.reload()
+    applyMotion: () => void viewer?.playMotion(selectedMotion),
+    applyExpression: () => void viewer?.playExpression(selectedExpression),
+    pause: () => void viewer?.pause(),
+    reset: () => void viewer?.reset(),
+    reload: () => void viewer?.reload()
   });
 
-  const isUnavailable = $derived(!descriptor);
+  const isUnavailable = $derived(!descriptor || viewerState.status === "unavailable");
+  const stageStatus = $derived(
+    isUnavailable
+      ? translate("live2d.modelViewer.status.unavailable")
+      : viewerState.status === "ready"
+        ? translate("live2d.modelViewer.status.ready")
+        : viewerState.status === "error"
+          ? translate("errorPage.title")
+          : translate("live2d.modelViewer.status.loading")
+  );
 
   onMount(() => {
-    const unsubscribe = viewer.subscribe((nextState) => {
+    const mountedViewer = createLive2dModelViewer(createLive2dModelLoader(stageHost));
+    let active = true;
+    const resize = () => {
+      if (!active) return;
+      const { clientWidth, clientHeight } = stageHost;
+      if (clientWidth > 0 && clientHeight > 0) {
+        void mountedViewer.resize(clientWidth, clientHeight);
+      }
+    };
+    const unsubscribe = mountedViewer.subscribe((nextState) => {
       viewerState = nextState;
+      // Earlier observations may have arrived before the resource was ready.
+      if (nextState.status === "ready") resize();
     });
-    void viewer.load(null);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(resize);
+    observer?.observe(stageHost);
+    if (!observer) window.addEventListener("resize", resize);
+    viewer = mountedViewer;
 
     return () => {
+      active = false;
+      observer?.disconnect();
+      if (!observer) window.removeEventListener("resize", resize);
       unsubscribe();
-      void viewer.destroy();
+      viewer = null;
+      void mountedViewer.destroy();
     };
   });
 
-  // Command synchronization for the playback-state controls: option changes
-  // flow into the imperative controller without racing its ready state. The
-  // controller ignores commands after destroy, so no cleanup is needed.
+  // SvelteKit may reuse this page for another model. Loading the new descriptor
+  // retires/aborts the old resource through the controller's generation guard.
   $effect(() => {
-    viewer.setPlaybackOptions({ loop: playbackLoop, speed: playbackSpeed });
-    void viewer.setIdle(idleMotion);
+    const mountedViewer = viewer;
+    const nextDescriptor = playerDescriptor;
+    if (!mountedViewer) return;
+    if (loadedModelId === (nextDescriptor?.modelId ?? null)) return;
+    loadedModelId = nextDescriptor?.modelId ?? null;
+    selectedMotion = "";
+    selectedExpression = "";
+    untrack(() => void mountedViewer.load(nextDescriptor));
+  });
+
+  // Idle preferences must also be reapplied after each load/reload becomes ready.
+  $effect(() => {
+    if (viewerState.status === "ready") void viewer?.setIdle(idleMotion);
   });
 
   const studioLabels = $derived({
@@ -79,8 +144,6 @@
     noneLoaded: translate("live2d.modelViewer.controls.noneLoaded"),
     apply: translate("live2d.modelViewer.controls.apply"),
     pause: translate("live2d.modelViewer.controls.pause"),
-    loop: translate("live2d.modelViewer.controls.loop"),
-    speed: translate("live2d.modelViewer.controls.speed"),
     idleBreath: translate("live2d.modelViewer.controls.idleBreath"),
     reload: translate("live2d.modelViewer.controls.reload"),
     reset: translate("live2d.modelViewer.controls.reset"),
@@ -92,7 +155,11 @@
   <title>{translate("live2d.modelViewer.title")}</title>
 </svelte:head>
 
-<section aria-labelledby="live2d-model-viewer-title" aria-busy={isLoading} class="flex min-w-0 flex-col gap-6">
+<section
+  aria-labelledby="live2d-model-viewer-title"
+  aria-busy={isLoading}
+  class="flex min-w-0 flex-col gap-6"
+>
   <nav class="text-sm">
     <a
       class="link link-hover inline-flex min-h-11 items-center gap-2 rounded-lg text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
@@ -112,7 +179,7 @@
       {model?.modelName ?? translate("live2d.modelViewer.title")}
     </h1>
     <p class="max-w-2xl text-base/7 text-base-content/75">
-      {translate("live2d.modelViewer.status.description")}
+      {translate("live2d.modelViewer.controls.hint")}
     </p>
   </header>
 
@@ -135,7 +202,8 @@
         href={`/live2d/${encodeURIComponent(data.identity.modelId)}`}
         data-sveltekit-reload
         class="btn btn-outline min-h-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      >{translate("errorPage.retryAction")}</a>
+        >{translate("errorPage.retryAction")}</a
+      >
     </div>
   {/if}
 
@@ -151,9 +219,7 @@
         {translate("live2d.modelViewer.status.label")}
       </dt>
       <dd class="mt-1 font-semibold">
-        {isUnavailable
-          ? translate("live2d.modelViewer.status.unavailable")
-          : translate("live2d.modelViewer.status.awaitingAdapter")}
+        {stageStatus}
       </dd>
     </div>
   </dl>
@@ -181,10 +247,10 @@
           <details class="min-w-0 rounded-xl border border-base-content/10 bg-base-200">
             <summary
               class="min-h-11 cursor-pointer rounded-xl p-4 font-mono text-sm break-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >{motionSet.motionSetId}</summary>
+              >{motionSet.motionSetId}</summary
+            >
             <div class="grid min-w-0 gap-4 border-t border-base-content/10 p-4 md:grid-cols-2">
-              <!-- Keep body and facial file groups distinct. Facial motion3
-                   files are metadata, not playable Cubism expressions. -->
+              <!-- Body and facial motion3 files remain separate groups. -->
               {#each [{ path: motionSet.motionPath, files: motionSet.motionFiles }, { path: motionSet.facialPath, files: motionSet.facialFiles }] as group, index (index)}
                 <div class="min-w-0">
                   <h4 class="font-mono text-sm/6 font-semibold break-all">{group.path}</h4>
@@ -192,7 +258,9 @@
                     {#each group.files as file (file)}
                       <li class="font-mono text-xs/6 break-all">{file}</li>
                     {:else}
-                      <li class="text-sm/6">{translate("live2d.modelViewer.controls.noneLoaded")}</li>
+                      <li class="text-sm/6">
+                        {translate("live2d.modelViewer.controls.noneLoaded")}
+                      </li>
                     {/each}
                   </ul>
                 </div>
@@ -208,29 +276,23 @@
     </section>
   {/if}
 
-  <div class="alert alert-warning alert-soft" role="status">
-    <Icon icon="mdi:progress-wrench" class="size-5 shrink-0" aria-hidden="true" />
-    <div>
-      <p class="font-semibold">
-        {isUnavailable
-          ? translate("live2d.modelViewer.status.unavailableTitle")
-          : translate("live2d.modelViewer.status.title")}
-      </p>
-      <p class="text-sm/6 opacity-80">
-        {isUnavailable
-          ? translate("live2d.modelViewer.status.unavailableDescription")
-          : translate("live2d.modelViewer.status.description")}
-      </p>
+  {#if isUnavailable}
+    <div class="alert alert-warning alert-soft" role="status">
+      <Icon icon="mdi:progress-wrench" class="size-5 shrink-0" aria-hidden="true" />
+      <div>
+        <p class="font-semibold">
+          {translate("live2d.modelViewer.status.unavailableTitle")}
+        </p>
+        <p class="text-sm/6 opacity-80">
+          {translate("live2d.modelViewer.status.unavailableDescription")}
+        </p>
+      </div>
     </div>
-  </div>
+  {/if}
 
   <Live2dModelStudio
     labels={studioLabels}
-    statusLine={
-      isUnavailable
-        ? translate("live2d.modelViewer.stage.unavailable")
-        : translate("live2d.modelViewer.stage.reserved")
-    }
+    statusLine={stageStatus}
     controlsEnabled={playerAdapter.controlsEnabled}
     motions={playerAdapter.motions}
     expressions={playerAdapter.expressions}
@@ -243,21 +305,39 @@
     bind:selectedMotion
     bind:selectedExpression
     bind:idleMotion
-    bind:loop={playbackLoop}
-    bind:speed={playbackSpeed}
   />
 </section>
 
 {#snippet modelStage()}
   <div
-    class="absolute inset-0 grid place-items-center p-4"
+    class="absolute inset-0 overflow-hidden [&_canvas]:block [&_canvas]:size-full"
+    bind:this={stageHost}
     data-live2d-stage={data.identity.modelId}
     data-model-id={data.identity.modelId}
-    aria-hidden="true"
-  >
-    <div class="flex max-w-sm flex-col items-center gap-3 text-center">
-      <Icon icon="mdi:progress-wrench" class="size-8 opacity-60" />
-      <p class="text-sm/6">{translate("live2d.modelViewer.status.awaitingAdapter")}</p>
+    role="img"
+    aria-label={model?.modelName ?? translate("live2d.modelViewer.title")}
+    aria-busy={viewerState.status === "loading"}
+  ></div>
+  {#if viewerState.status !== "ready"}
+    <div class="absolute inset-0 grid place-items-center overflow-auto bg-neutral/90 p-4">
+      <div class="flex max-w-sm flex-col items-center gap-3 text-center">
+        <p class="text-sm/6" aria-hidden="true">{stageStatus}</p>
+        {#if viewerState.status === "loading"}
+          <progress
+            class="progress progress-primary w-40 max-w-full"
+            value={viewerState.progress}
+            max="1"
+            aria-label={translate("live2d.modelViewer.status.loading")}
+          ></progress>
+        {:else if viewerState.status === "error"}
+          <p class="text-sm/6" role="alert">{translate("errorPage.description")}</p>
+          <button
+            type="button"
+            class="btn btn-outline min-h-11 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            onclick={playerAdapter.reload}>{translate("errorPage.retryAction")}</button
+          >
+        {/if}
+      </div>
     </div>
-  </div>
+  {/if}
 {/snippet}
