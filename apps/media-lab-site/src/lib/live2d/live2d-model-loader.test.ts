@@ -255,11 +255,32 @@ describe("Live2D Pixi/Cubism loader", () => {
     await expect(secondLoad).rejects.toThrow("Failed to load Live2D Cubism Core");
     expect(browser.removedScripts).toEqual([firstScript]);
 
+    const missingGlobalFirstLoad = ensureCubismCore();
+    const missingGlobalSecondLoad = ensureCubismCore();
+
+    await vi.waitFor(() => expect(browser.appendedScripts).toHaveLength(2));
+    const missingGlobalScript = browser.appendedScripts[1];
+    missingGlobalScript.onload?.();
+
+    await expect(missingGlobalFirstLoad).rejects.toThrow("did not expose window.Live2DCubismCore");
+    await expect(missingGlobalSecondLoad).rejects.toThrow("did not expose window.Live2DCubismCore");
+    expect(browser.removedScripts).toEqual([firstScript, missingGlobalScript]);
+
+    const detachedLoad = ensureCubismCore();
+
+    await vi.waitFor(() => expect(browser.appendedScripts).toHaveLength(3));
+    const detachedScript = browser.appendedScripts[2];
+    detachedScript.parentNode = null;
+    detachedScript.onerror?.();
+
+    await expect(detachedLoad).rejects.toThrow("Failed to load Live2D Cubism Core");
+    expect(browser.removedScripts).toEqual([firstScript, missingGlobalScript]);
+
     const retryFirstLoad = ensureCubismCore();
     const retrySecondLoad = ensureCubismCore();
 
-    await vi.waitFor(() => expect(browser.appendedScripts).toHaveLength(2));
-    const retryScript = browser.appendedScripts[1];
+    await vi.waitFor(() => expect(browser.appendedScripts).toHaveLength(4));
+    const retryScript = browser.appendedScripts[3];
     expect(retryScript.src).toBe("/live2d/cubism-core/live2dcubismcore.min.js");
     browser.windowMock.Live2DCubismCore = {};
     retryScript.onload?.();
@@ -267,7 +288,7 @@ describe("Live2D Pixi/Cubism loader", () => {
     await Promise.all([retryFirstLoad, retrySecondLoad]);
 
     const loadedAgain = ensureCubismCore();
-    expect(browser.appendedScripts).toHaveLength(2);
+    expect(browser.appendedScripts).toHaveLength(4);
     await loadedAgain;
   });
 
@@ -288,6 +309,44 @@ describe("Live2D Pixi/Cubism loader", () => {
       expect.any(AbortSignal)
     );
     await resource.destroy();
+  });
+
+  it("cleans up attached default-runtime display objects", async () => {
+    const browser = createBrowserMocks();
+    browser.windowMock.Live2DCubismCore = {};
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => settingsPayload
+      }))
+    );
+    const { model } = createModel();
+    const view = { parentNode: null as unknown, remove: vi.fn() };
+    defaultRuntimeMocks.application.view = view;
+    defaultRuntimeMocks.state.model = model;
+
+    type TestElement = { parentNode: unknown };
+    const host = {
+      appendChild: vi.fn((element: TestElement) => {
+        element.parentNode = host;
+      })
+    } as unknown as HTMLElement;
+    const displayObject = model as Live2dModelInstance & {
+      parent: unknown;
+      removeFromParent(): void;
+    };
+    displayObject.parent = defaultRuntimeMocks.application.stage;
+    displayObject.removeFromParent = vi.fn();
+
+    const loader = createLive2dModelLoader(host);
+    const resource = await loader.load(descriptor, new AbortController().signal, vi.fn());
+
+    await resource.destroy();
+
+    expect(displayObject.removeFromParent).toHaveBeenCalledTimes(1);
+    expect(view.remove).toHaveBeenCalledTimes(1);
   });
 
   it("rejects a failed model settings response", async () => {
