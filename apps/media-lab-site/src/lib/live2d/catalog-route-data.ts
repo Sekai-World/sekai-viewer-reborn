@@ -1,5 +1,7 @@
 import {
   createLive2dCatalogResolver,
+  resolveLive2dAssetRelayUrl,
+  type Live2dAssociatedCatalog,
   type Live2dAssociatedModel,
   type Live2dCatalogFetchJson,
   type Live2dCatalogResolution
@@ -9,6 +11,8 @@ const DEFAULT_ROUTE_DATA_CACHE_TTL_MS = 5 * 60 * 1000;
 
 /** Serializable descriptor handed to the Live2D route pages. */
 export type Live2dRouteModelDescriptor = Live2dAssociatedModel & { modelId: string };
+
+type Live2dRouteModelSource = Live2dAssociatedModel & { modelId?: string };
 
 export type Live2dCatalogRouteData =
   | {
@@ -35,9 +39,12 @@ export interface Live2dCatalogRouteDataResolver {
   invalidate(): void;
 }
 
-const toDescriptor = (model: Live2dAssociatedModel): Live2dRouteModelDescriptor => ({
+const toDescriptor = (
+  model: Live2dRouteModelSource,
+  modelId = model.modelId ?? model.modelName
+): Live2dRouteModelDescriptor => ({
   ...model,
-  modelId: model.modelName
+  modelId
 });
 
 export const toLive2dRouteModelDescriptor = toDescriptor;
@@ -45,15 +52,67 @@ export const toLive2dRouteModelDescriptor = toDescriptor;
 const toErrorReason = (error: Error): string =>
   error.message.trim() || "Live2D catalog request failed";
 
+const toRelayAssetUrl = (path: string, fileName: string): string => {
+  const url = resolveLive2dAssetRelayUrl(path, fileName);
+  if (!url) throw new Error("Live2D catalog contains an invalid asset reference");
+  return url;
+};
+
+const toRelayModel = (model: Live2dAssociatedModel): Live2dAssociatedModel => ({
+  ...model,
+  modelUrl: toRelayAssetUrl(model.modelPath, model.modelFile),
+  motionSets: model.motionSets.map((motionSet) => ({
+    ...motionSet,
+    bodyMotions: motionSet.bodyMotions.map((motion) => ({
+      ...motion,
+      url: toRelayAssetUrl(motionSet.motionPath, motion.id)
+    })),
+    facialMotions: motionSet.facialMotions.map((motion) => ({
+      ...motion,
+      url: toRelayAssetUrl(motionSet.facialPath, motion.id)
+    }))
+  }))
+});
+
+const toRouteModels = (
+  catalog: Live2dAssociatedCatalog
+): readonly (Live2dRouteModelDescriptor & { id: string })[] => {
+  const modelNames = new Set(catalog.map((model) => model.modelName));
+  const nameCounts = new Map<string, number>();
+  const nameOccurrences = new Map<string, number>();
+  const routeIds = new Set<string>();
+
+  for (const model of catalog) {
+    nameCounts.set(model.modelName, (nameCounts.get(model.modelName) ?? 0) + 1);
+  }
+
+  return catalog.map((model) => {
+    const relayModel = toRelayModel(model);
+    const occurrence = (nameOccurrences.get(relayModel.modelName) ?? 0) + 1;
+    nameOccurrences.set(relayModel.modelName, occurrence);
+
+    let modelId = relayModel.modelName;
+    const hasDuplicateName = (nameCounts.get(relayModel.modelName) ?? 0) > 1;
+    if (hasDuplicateName && (occurrence > 1 || routeIds.has(modelId))) {
+      let suffix = occurrence;
+      do {
+        modelId = `${relayModel.modelName}-${suffix}`;
+        suffix += 1;
+      } while (routeIds.has(modelId) || modelNames.has(modelId));
+    }
+
+    routeIds.add(modelId);
+    const descriptor = toDescriptor(relayModel, modelId);
+    return { ...descriptor, id: modelId };
+  });
+};
+
 const toRouteData = (resolution: Live2dCatalogResolution): Live2dCatalogRouteData => {
   if (resolution.status === "available") {
     return {
       status: "ready",
       source: resolution.source,
-      models: resolution.catalog.map((model) => {
-        const descriptor = toDescriptor(model);
-        return { ...descriptor, id: descriptor.modelId };
-      }),
+      models: toRouteModels(resolution.catalog),
       ...(resolution.reason ? { reason: resolution.reason } : {})
     };
   }
@@ -63,7 +122,8 @@ const toRouteData = (resolution: Live2dCatalogResolution): Live2dCatalogRouteDat
     : { status: "error", reason: toErrorReason(resolution.error), models: [] };
 };
 
-const createFetchJson = (fetcher: Live2dCatalogResponseFetcher): Live2dCatalogFetchJson =>
+const createFetchJson =
+  (fetcher: Live2dCatalogResponseFetcher): Live2dCatalogFetchJson =>
   async (url) => {
     const response = await fetcher(url);
     if (!response.ok) {
@@ -131,9 +191,7 @@ export const createLive2dCatalogRouteDataResolver = (
 
       if (cached && requestGeneration === generation) {
         const reason =
-          resolution.status === "unavailable"
-            ? resolution.reason
-            : toErrorReason(resolution.error);
+          resolution.status === "unavailable" ? resolution.reason : toErrorReason(resolution.error);
         return toRouteData({
           status: "available",
           catalog: cached.catalog,

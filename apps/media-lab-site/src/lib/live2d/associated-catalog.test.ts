@@ -2,9 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 import {
   createLive2dCatalogResolver,
   LIVE2D_ASSOCIATED_CATALOG_URL,
+  resolveLive2dAssetRelayUrl,
   parseLive2dAssociatedCatalog,
   resolveLive2dAssetUrl,
-  type Live2dCatalogFetchJson
+  toLive2dAssetBucketUrlFromPath,
+  toLive2dAssetRelayUrlFromPath,
+  toLive2dAssetRelayUrlFromUpstreamUrl,
+  type Live2dCatalogFetchJson,
+  validateLive2dAssetPath
 } from "./associated-catalog";
 
 const sampleCatalog = [
@@ -39,7 +44,7 @@ describe("Live2D associated catalog parser", () => {
           modelName: "01ichika_normal_3.0_f_t04",
           modelPath: "model/v1/main/01_ichika/01ichika_normal",
           modelUrl:
-            "https://storage.sekai.best/sekai-live2d-assets/model/v1/main/01_ichika/01ichika_normal/01ichika_normal_3.0_f_t04.model3.json",
+            "https://storage.sekai.best/sekai-live2d-assets/live2d/model/v1/main/01_ichika/01ichika_normal/01ichika_normal_3.0_f_t04.model3.json",
           motionSets: [
             {
               motionSetId: "normal",
@@ -50,17 +55,17 @@ describe("Live2D associated catalog parser", () => {
               bodyMotions: [
                 {
                   id: "idle.motion3.json",
-                  url: "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/01_ichika/01ichika_normal/idle.motion3.json"
+                  url: "https://storage.sekai.best/sekai-live2d-assets/live2d/motion/v1/main/01_ichika/01ichika_normal/idle.motion3.json"
                 },
                 {
                   id: "talk.motion3.json",
-                  url: "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/01_ichika/01ichika_normal/talk.motion3.json"
+                  url: "https://storage.sekai.best/sekai-live2d-assets/live2d/motion/v1/main/01_ichika/01ichika_normal/talk.motion3.json"
                 }
               ],
               facialMotions: [
                 {
                   id: "smile.motion3.json",
-                  url: "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/01_ichika/01ichika_normal/facial/smile.motion3.json"
+                  url: "https://storage.sekai.best/sekai-live2d-assets/live2d/motion/v1/main/01_ichika/01ichika_normal/facial/smile.motion3.json"
                 }
               ]
             }
@@ -94,6 +99,17 @@ describe("Live2D associated catalog parser", () => {
   });
 
   it("rejects unsafe paths and file values", () => {
+    for (const override of [
+      { modelBase: "model base" },
+      { modelName: "model name" },
+      { modelPath: "model path" },
+      { motionSets: [{ ...sampleCatalog[0].motionSets[0], motionPath: "motion path" }] }
+    ]) {
+      expect(parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], ...override }])).toMatchObject({
+        status: "invalid"
+      });
+    }
+
     for (const modelPath of ["../escape", "https://evil.example/models", "//evil.example/models"]) {
       expect(parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], modelPath }])).toMatchObject({
         status: "invalid"
@@ -120,14 +136,90 @@ describe("Live2D associated catalog parser", () => {
       const record = { ...sampleCatalog[0], motionSets: [motionSet] };
       expect(parseLive2dAssociatedCatalog([record])).toMatchObject({ status: "invalid" });
     }
+
+    for (const motionFile of [
+      "../face.motion3.json",
+      "face/motion3.json",
+      "face:motion.motion3.json",
+      "face.motion3.json?cache=1",
+      "face.motion3.json#fragment",
+      "face%20motion.motion3.json",
+      "face.motion.json",
+      "face.motion3.json\u0000"
+    ]) {
+      const motionSet = { ...sampleCatalog[0].motionSets[0], motionFiles: [motionFile] };
+      const record = { ...sampleCatalog[0], motionSets: [motionSet] };
+      expect(parseLive2dAssociatedCatalog([record])).toMatchObject({ status: "invalid" });
+    }
+  });
+
+  it("rejects leading or trailing whitespace in catalog directory paths", () => {
+    for (const modelPath of [` ${sampleCatalog[0].modelPath}`, `${sampleCatalog[0].modelPath} `]) {
+      expect(parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], modelPath }])).toMatchObject({
+        status: "invalid"
+      });
+    }
+
+    for (const pathField of ["motionPath", "facialPath"] as const) {
+      for (const path of [
+        ` ${sampleCatalog[0].motionSets[0][pathField]}`,
+        `${sampleCatalog[0].motionSets[0][pathField]} `
+      ]) {
+        const motionSet = { ...sampleCatalog[0].motionSets[0], [pathField]: path };
+        expect(
+          parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], motionSets: [motionSet] }])
+        ).toMatchObject({ status: "invalid" });
+      }
+    }
+  });
+
+  it("accepts spaces inside validated motion file names", () => {
+    const motionFile = "face_ worry_01.motion3.json";
+    const motionSet = { ...sampleCatalog[0].motionSets[0], motionFiles: [motionFile] };
+
+    expect(
+      parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], motionSets: [motionSet] }])
+    ).toMatchObject({
+      status: "ok",
+      catalog: [
+        {
+          motionSets: [
+            {
+              motionFiles: [motionFile],
+              bodyMotions: [
+                {
+                  id: motionFile,
+                  url: "https://storage.sekai.best/sekai-live2d-assets/live2d/motion/v1/main/01_ichika/01ichika_normal/face_%20worry_01.motion3.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+  });
+
+  it("rejects leading or trailing whitespace in model and motion file names", () => {
+    for (const fileName of [" sample.model3.json", "sample.model3.json "]) {
+      expect(
+        parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], modelFile: fileName }])
+      ).toMatchObject({ status: "invalid" });
+    }
+
+    for (const fileName of [" face.motion3.json", "face.motion3.json "]) {
+      const motionSet = { ...sampleCatalog[0].motionSets[0], motionFiles: [fileName] };
+      expect(
+        parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], motionSets: [motionSet] }])
+      ).toMatchObject({ status: "invalid" });
+    }
   });
 
   it("constructs URLs only for safe bucket-relative path/file pairs", () => {
     expect(resolveLive2dAssetUrl("motion/v1/main", "idle.motion3.json")).toBe(
-      "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/idle.motion3.json"
+      "https://storage.sekai.best/sekai-live2d-assets/live2d/motion/v1/main/idle.motion3.json"
     );
     expect(resolveLive2dAssetUrl("motion/v1/main///", "idle.motion3.json")).toBe(
-      "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/idle.motion3.json"
+      "https://storage.sekai.best/sekai-live2d-assets/live2d/motion/v1/main/idle.motion3.json"
     );
     expect(resolveLive2dAssetUrl("../outside", "idle.motion3.json")).toBeNull();
     expect(resolveLive2dAssetUrl("motion/v1", "../idle.motion3.json")).toBeNull();
@@ -135,7 +227,103 @@ describe("Live2D associated catalog parser", () => {
     expect(resolveLive2dAssetUrl("motion/v1?x=1", "idle.motion3.json")).toBeNull();
   });
 
-  it("rejects duplicate model identities, names, motion sets, and files", () => {
+  it("shares canonical relay and bucket URL validation", () => {
+    const assetPath = "motion/v1/main/01_ichika/01ichika_normal/face_ worry_01.motion3.json";
+    const collabModelPath = "model/v1/collabo/23_len/clb01_23len";
+    const collabModelFile = "23len_collabo01_t01.model3.json";
+    const collabModelUrl =
+      "https://storage.sekai.best/sekai-live2d-assets/live2d/model/v1/collabo/23_len/clb01_23len/23len_collabo01_t01.model3.json";
+    const validation = validateLive2dAssetPath(assetPath);
+
+    expect(validation).toEqual({
+      status: "ok",
+      asset: {
+        path: assetPath,
+        namespace: "motion",
+        fileName: "face_ worry_01.motion3.json"
+      }
+    });
+    expect(toLive2dAssetRelayUrlFromPath(assetPath)).toBe(
+      "/live2d/assets/motion/v1/main/01_ichika/01ichika_normal/face_%20worry_01.motion3.json"
+    );
+    expect(toLive2dAssetBucketUrlFromPath(assetPath)).toBe(
+      "https://storage.sekai.best/sekai-live2d-assets/live2d/motion/v1/main/01_ichika/01ichika_normal/face_%20worry_01.motion3.json"
+    );
+    expect(resolveLive2dAssetUrl(collabModelPath, collabModelFile)).toBe(collabModelUrl);
+    expect(toLive2dAssetRelayUrlFromUpstreamUrl(collabModelUrl)).toBe(
+      "/live2d/assets/model/v1/collabo/23_len/clb01_23len/23len_collabo01_t01.model3.json"
+    );
+    expect(
+      toLive2dAssetRelayUrlFromUpstreamUrl(collabModelUrl.replace("/live2d/model/", "/model/"))
+    ).toBeNull();
+    expect(
+      resolveLive2dAssetRelayUrl(
+        "motion/v1/main/01_ichika/01ichika_normal",
+        "face_ worry_01.motion3.json"
+      )
+    ).toBe("/live2d/assets/motion/v1/main/01_ichika/01ichika_normal/face_%20worry_01.motion3.json");
+    expect(
+      toLive2dAssetRelayUrlFromUpstreamUrl(
+        "https://storage.sekai.best/sekai-live2d-assets/live2d/" +
+          "motion/v1/main/01_ichika/01ichika_normal/face_%20worry_01.motion3.json"
+      )
+    ).toBe("/live2d/assets/motion/v1/main/01_ichika/01ichika_normal/face_%20worry_01.motion3.json");
+
+    for (const invalidPath of [
+      "",
+      "model",
+      "model/",
+      "model//file.moc3",
+      "model/./file.moc3",
+      "model/../file.moc3",
+      "model/path with spaces/file.moc3",
+      "other/file.moc3",
+      "model/file%20name.moc3",
+      "model/file.moc3?cache=1",
+      "model/file.moc3#fragment",
+      "/model/file.moc3",
+      "//storage.sekai.best/model/file.moc3",
+      "https://storage.sekai.best/sekai-live2d-assets/model/file.moc3",
+      " model/file.moc3",
+      "model/file.moc3 "
+    ]) {
+      expect(validateLive2dAssetPath(invalidPath)).toMatchObject({ status: "invalid" });
+    }
+    expect(toLive2dAssetRelayUrlFromUpstreamUrl("https://evil.example/model/file.moc3")).toBeNull();
+    expect(
+      toLive2dAssetRelayUrlFromUpstreamUrl(
+        "https://storage.sekai.best/sekai-live2d-assets/live2d/model/v1/../file.moc3"
+      )
+    ).toBeNull();
+  });
+
+  it("accepts distinct model records that share a model name", () => {
+    const duplicateNameCatalog = [
+      sampleCatalog[0],
+      {
+        ...sampleCatalog[0],
+        modelBase: "01ichika_normal_alt",
+        modelFile: "01ichika_normal_alt.model3.json",
+        modelName: sampleCatalog[0].modelName,
+        modelPath: "model/v1/main/01_ichika/01ichika_normal_alt"
+      }
+    ];
+
+    expect(parseLive2dAssociatedCatalog(duplicateNameCatalog)).toMatchObject({
+      status: "ok",
+      catalog: [
+        { modelName: "01ichika_normal_3.0_f_t04" },
+        {
+          modelName: "01ichika_normal_3.0_f_t04",
+          modelBase: "01ichika_normal_alt",
+          modelUrl:
+            "https://storage.sekai.best/sekai-live2d-assets/live2d/model/v1/main/01_ichika/01ichika_normal_alt/01ichika_normal_alt.model3.json"
+        }
+      ]
+    });
+  });
+
+  it("rejects duplicate model identities, motion sets, and files", () => {
     expect(parseLive2dAssociatedCatalog([sampleCatalog[0], sampleCatalog[0]])).toMatchObject({
       status: "invalid"
     });

@@ -6,7 +6,7 @@
  * how a `modelId` resolves against the remote model list.
  */
 const MAX_MODEL_ID_LENGTH = 128;
-const MODEL_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+const MODEL_ID_PATTERN = /^[A-Za-z0-9_.-]+$/;
 
 export type ParsedModelRouteParams =
   { status: "ok"; modelId: string } | { status: "invalid-model-id" };
@@ -16,7 +16,11 @@ export type ParsedModelRouteParams =
 // smuggle path separators or control characters into metadata rendering.
 // Case is preserved: model list entries are matched case-sensitively later.
 export const isModelRouteId = (value: string): boolean =>
-  value.length > 0 && value.length <= MAX_MODEL_ID_LENGTH && MODEL_ID_PATTERN.test(value);
+  value.length > 0 &&
+  value.length <= MAX_MODEL_ID_LENGTH &&
+  value !== "." &&
+  value !== ".." &&
+  MODEL_ID_PATTERN.test(value);
 
 export const parseModelRouteParams = (params: { modelId?: string }): ParsedModelRouteParams => {
   const modelId = params.modelId?.trim() ?? "";

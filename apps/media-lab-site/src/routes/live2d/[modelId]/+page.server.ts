@@ -6,18 +6,48 @@ import {
 import { parseModelRouteParams } from "$lib/live2d/model-route";
 import type { PageServerLoad } from "./$types";
 
-export const _createLive2dModelPageLoad = (
-  resolveCatalog: typeof resolveLive2dCatalogRouteData = resolveLive2dCatalogRouteData
-): PageServerLoad =>
+const LEGACY_MODEL_ID_PATTERN = /^[A-Za-z0-9_.-]+$/;
+const MAX_LEGACY_MODEL_ID_LENGTH = 128;
+
+const parseLegacyModelRouteParam = (value: string | undefined): string | undefined => {
+  const modelId = value?.trim() ?? "";
+  if (
+    !modelId ||
+    modelId.length > MAX_LEGACY_MODEL_ID_LENGTH ||
+    modelId === "." ||
+    modelId === ".." ||
+    !LEGACY_MODEL_ID_PATTERN.test(modelId)
+  ) {
+    return undefined;
+  }
+
+  return modelId;
+};
+
+export const _createLive2dModelPageLoad =
+  (
+    resolveCatalog: typeof resolveLive2dCatalogRouteData = resolveLive2dCatalogRouteData
+  ): PageServerLoad =>
   async ({ fetch, params }) => {
     const parsed = parseModelRouteParams(params);
-    if (parsed.status !== "ok") {
+    const modelId =
+      parsed.status === "ok" ? parsed.modelId : parseLegacyModelRouteParam(params.modelId);
+    if (!modelId) {
       error(404, "Live2D model route not found");
     }
 
     const catalog = await resolveCatalog(fetch);
     if (catalog.status === "ready") {
-      const model = catalog.models.find((entry) => entry.id === parsed.modelId);
+      // Keep generated route IDs authoritative. The modelName lookup is only
+      // a compatibility path for legacy URLs and must not select among
+      // duplicate source names.
+      const canonicalModel = catalog.models.find((entry) => entry.id === modelId);
+      const model =
+        canonicalModel ??
+        (() => {
+          const namedModels = catalog.models.filter((entry) => entry.modelName === modelId);
+          return namedModels.length === 1 ? namedModels[0] : undefined;
+        })();
       if (!model) {
         error(404, "Live2D model not found");
       }
@@ -25,7 +55,7 @@ export const _createLive2dModelPageLoad = (
       const descriptor = toLive2dRouteModelDescriptor(model);
 
       return {
-        identity: { modelId: parsed.modelId },
+        identity: { modelId },
         viewerStatus: "catalog-model-available" as const,
         catalog: {
           status: "ready" as const,
@@ -38,7 +68,7 @@ export const _createLive2dModelPageLoad = (
     }
 
     return {
-      identity: { modelId: parsed.modelId },
+      identity: { modelId },
       viewerStatus: "unavailable-model-contract" as const,
       catalog,
       descriptor: null

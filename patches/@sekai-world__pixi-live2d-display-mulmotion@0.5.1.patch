@@ -1,0 +1,104 @@
+diff --git a/dist/cubism4.es.js b/dist/cubism4.es.js
+index 1aae6be6b4dcb4176f47801784492d13e04ac84f..f3c490653e3d4e4589d32bb311bfebad95a5e395 100644
+--- a/dist/cubism4.es.js
++++ b/dist/cubism4.es.js
+@@ -2284,7 +2284,7 @@ class CubismModel {
+    * @return Drawableの描画順リスト
+    */
+   getDrawableRenderOrders() {
+-    return this._model.drawables.renderOrders;
++    return this._model.drawables.renderOrders ?? this._model.renderOrders;
+   }
+   /**
+    * @deprecated
+@@ -5708,6 +5708,14 @@ const ShaderCount = 10;
+ let s_instance;
+ let s_viewport;
+ let s_fbo;
++const isValidViewport = (viewport) => {
++  if ((!Array.isArray(viewport) && !ArrayBuffer.isView(viewport)) || viewport.length !== 4) {
++    return false;
++  }
++  return Array.from(viewport).every(
++    (value) => typeof value === "number" && Number.isFinite(value)
++  );
++};
+ class CubismClippingManager_WebGL {
+   /**
+    * カラーチャンネル（RGBA）のフラグを取得する
+@@ -7575,7 +7583,7 @@ class CubismRenderer_WebGL extends CubismRenderer {
+    */
+   setRenderState(fbo, viewport) {
+     s_fbo = fbo;
+-    s_viewport = viewport;
++    s_viewport = isValidViewport(viewport) ? viewport : this.gl.getParameter(this.gl.VIEWPORT);
+   }
+   /**
+    * 描画開始時の追加処理
+@@ -13060,8 +13068,12 @@ const _Automator = class _Automator {
+     this.autoFocus = autoInteract;
+   }
+   onTickerUpdate() {
+-    const deltaMS = this.ticker.deltaMS;
+-    this.model.update(deltaMS);
++    try {
++      const deltaMS = this.ticker.deltaMS;
++      this.model.update(deltaMS);
++    } catch (error) {
++      console.error("[pixi-live2d-display-mulmotion] Live2D ticker update failed", error);
++    }
+   }
+   onTap(event) {
+     this.model.tap(event.global.x, event.global.y);
+diff --git a/dist/cubism4.js b/dist/cubism4.js
+index 7a273421a447ec63c04ea596f10a96b8a1905370..f47c4c6f63687f876cf482a592d3a75dafe2e1be 100644
+--- a/dist/cubism4.js
++++ b/dist/cubism4.js
+@@ -2286,7 +2286,7 @@ var __async = (__this, __arguments, generator) => {
+      * @return Drawableの描画順リスト
+      */
+     getDrawableRenderOrders() {
+-      return this._model.drawables.renderOrders;
++      return this._model.drawables.renderOrders ?? this._model.renderOrders;
+     }
+     /**
+      * @deprecated
+@@ -5710,6 +5710,14 @@ var __async = (__this, __arguments, generator) => {
+   let s_instance;
+   let s_viewport;
+   let s_fbo;
++  const isValidViewport = (viewport) => {
++    if ((!Array.isArray(viewport) && !ArrayBuffer.isView(viewport)) || viewport.length !== 4) {
++      return false;
++    }
++    return Array.from(viewport).every(
++      (value) => typeof value === "number" && Number.isFinite(value)
++    );
++  };
+   class CubismClippingManager_WebGL {
+     /**
+      * カラーチャンネル（RGBA）のフラグを取得する
+@@ -7577,7 +7585,7 @@ var __async = (__this, __arguments, generator) => {
+      */
+     setRenderState(fbo, viewport) {
+       s_fbo = fbo;
+-      s_viewport = viewport;
++      s_viewport = isValidViewport(viewport) ? viewport : this.gl.getParameter(this.gl.VIEWPORT);
+     }
+     /**
+      * 描画開始時の追加処理
+@@ -13062,8 +13070,12 @@ var __async = (__this, __arguments, generator) => {
+       this.autoFocus = autoInteract;
+     }
+     onTickerUpdate() {
+-      const deltaMS = this.ticker.deltaMS;
+-      this.model.update(deltaMS);
++      try {
++        const deltaMS = this.ticker.deltaMS;
++        this.model.update(deltaMS);
++      } catch (error) {
++        console.error("[pixi-live2d-display-mulmotion] Live2D ticker update failed", error);
++      }
+     }
+     onTap(event) {
+       this.model.tap(event.global.x, event.global.y);

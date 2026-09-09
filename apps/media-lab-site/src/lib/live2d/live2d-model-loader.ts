@@ -1,4 +1,12 @@
 import type { Ticker } from "pixi.js";
+import {
+  isLive2dAssetRelayUrl,
+  parseLive2dAssetRelayUrl,
+  toLive2dAssetRelayUrlFromPath,
+  toLive2dAssetRelayUrlFromUpstreamUrl,
+  LIVE2D_ASSET_BUCKET_URL,
+  LIVE2D_ASSET_RELAY_PREFIX
+} from "./associated-catalog";
 import type { Live2dModelDescriptor, Live2dModelLoader, Live2dModelResource } from "./model-viewer";
 
 type JsonObject = Record<string, unknown>;
@@ -9,6 +17,7 @@ const PARALLEL_MANAGER_COUNT = 2;
 const BODY_MANAGER_INDEX = 0;
 const FACE_MANAGER_INDEX = 1;
 const CUBISM_CORE_SCRIPT_URL = "/live2d/cubism-core/live2dcubismcore.min.js";
+const MODEL_FILE_REFERENCE_KEYS = ["Moc", "Physics", "Pose", "DisplayInfo", "UserData"] as const;
 
 const DESTROY_OPTIONS = {
   children: true,
@@ -114,8 +123,165 @@ const cloneJsonValue = (value: unknown): unknown => {
   );
 };
 
-const toMotionDefinitions = (options: readonly { url: string }[]): JsonObject[] =>
-  options.map((option) => ({ File: option.url }));
+type Live2dModelAssetContext = {
+  absoluteModelUrl: string;
+  modelAssetPath: string | null;
+  origin: string;
+  relayOnly: boolean;
+};
+
+const UNSAFE_REFERENCE_PATTERN = /[\\?#%]/;
+const REFERENCE_SCHEME_PATTERN = /^[A-Za-z][A-Za-z\d+.-]*:/;
+
+const getCurrentOrigin = (): string => {
+  if (typeof window !== "undefined" && window.location?.origin) return window.location.origin;
+  if (typeof location !== "undefined" && location.origin) return location.origin;
+  return "http://localhost";
+};
+
+const isUnsafeReference = (value: string): boolean =>
+  value !== value.trim() ||
+  UNSAFE_REFERENCE_PATTERN.test(value) ||
+  Array.from(value).some((character) => {
+    const code = character.codePointAt(0);
+    return code !== undefined && ((code >= 0 && code <= 31) || (code >= 127 && code <= 159));
+  });
+
+const getRawAbsoluteUrlPath = (value: string): string | null => {
+  const schemeSeparator = value.indexOf("://");
+  if (schemeSeparator < 1) return null;
+
+  const pathStart = value.indexOf("/", schemeSeparator + 3);
+  if (pathStart < 0) return "/";
+
+  const pathAndQuery = value.slice(pathStart);
+  const queryOrFragmentStart = pathAndQuery.search(/[?#]/);
+  return queryOrFragmentStart < 0 ? pathAndQuery : pathAndQuery.slice(0, queryOrFragmentStart);
+};
+
+const toCurrentOriginRelayUrl = (value: string, origin: string): string | null => {
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return null;
+  }
+
+  if (
+    parsed.origin !== origin ||
+    parsed.username ||
+    parsed.password ||
+    parsed.search ||
+    parsed.hash
+  ) {
+    return null;
+  }
+
+  const rawPath = getRawAbsoluteUrlPath(value);
+  if (!rawPath) return null;
+
+  const validation = parseLive2dAssetRelayUrl(rawPath);
+  if (validation.status !== "ok") return null;
+
+  const canonical = toLive2dAssetRelayUrlFromPath(validation.asset.path);
+  return canonical && new URL(canonical, origin).href === parsed.href ? canonical : null;
+};
+
+const resolveModelAssetContext = (modelUrl: string): Live2dModelAssetContext => {
+  if (modelUrl !== modelUrl.trim()) throw new Error("Live2D model URL is invalid");
+
+  const origin = getCurrentOrigin();
+  const upstreamBucketOrigin = new URL(LIVE2D_ASSET_BUCKET_URL).origin;
+  let relayUrl = isLive2dAssetRelayUrl(modelUrl) ? modelUrl : null;
+  relayUrl ??= toCurrentOriginRelayUrl(modelUrl, origin);
+  relayUrl ??= toLive2dAssetRelayUrlFromUpstreamUrl(modelUrl);
+
+  if (relayUrl) {
+    const validation = parseLive2dAssetRelayUrl(relayUrl);
+    if (validation.status !== "ok") throw new Error("Live2D model URL is invalid");
+
+    return {
+      absoluteModelUrl: new URL(relayUrl, origin).href,
+      modelAssetPath: validation.asset.path,
+      origin,
+      relayOnly: true
+    };
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(modelUrl);
+  } catch {
+    throw new Error("Live2D model URL is invalid");
+  }
+  if (parsed.protocol !== "https:") throw new Error("Live2D model URL is invalid");
+  if (parsed.origin === upstreamBucketOrigin) {
+    throw new Error("Live2D model URL is not a valid asset");
+  }
+  if (parsed.origin === origin && parsed.pathname.startsWith(LIVE2D_ASSET_RELAY_PREFIX)) {
+    throw new Error("Live2D model URL is not a canonical relay URL");
+  }
+
+  return {
+    absoluteModelUrl: parsed.href,
+    modelAssetPath: null,
+    origin,
+    relayOnly: false
+  };
+};
+
+const isAbsoluteReference = (value: string): boolean =>
+  value.startsWith("/") || value.startsWith("//") || REFERENCE_SCHEME_PATTERN.test(value);
+
+const resolveLive2dAssetReference = (value: unknown, context: Live2dModelAssetContext): string => {
+  if (typeof value !== "string") {
+    throw new Error("Live2D asset reference is invalid");
+  }
+
+  const relayUrl = isLive2dAssetRelayUrl(value)
+    ? value
+    : toLive2dAssetRelayUrlFromUpstreamUrl(value);
+  if (relayUrl) return new URL(relayUrl, context.origin).href;
+
+  const currentOriginRelayUrl = toCurrentOriginRelayUrl(value, context.origin);
+  if (currentOriginRelayUrl) return new URL(currentOriginRelayUrl, context.origin).href;
+
+  if (isUnsafeReference(value)) throw new Error("Live2D asset reference is invalid");
+
+  if (context.relayOnly) {
+    if (isAbsoluteReference(value) || !context.modelAssetPath) {
+      throw new Error("Live2D asset reference is outside the relay");
+    }
+
+    const baseDirectory = context.modelAssetPath.slice(0, context.modelAssetPath.lastIndexOf("/"));
+    const resolvedRelayUrl = toLive2dAssetRelayUrlFromPath(`${baseDirectory}/${value}`);
+    if (!resolvedRelayUrl) throw new Error("Live2D asset reference is outside the relay");
+    return new URL(resolvedRelayUrl, context.origin).href;
+  }
+
+  if (isAbsoluteReference(value)) {
+    let parsed: URL;
+    try {
+      parsed = new URL(value);
+    } catch {
+      throw new Error("Live2D asset reference is invalid");
+    }
+    if (parsed.protocol !== "https:") throw new Error("Live2D asset reference is invalid");
+    if (parsed.origin === new URL(LIVE2D_ASSET_BUCKET_URL).origin) {
+      throw new Error("Live2D asset reference is not a valid asset");
+    }
+    return parsed.href;
+  }
+
+  let resolved: URL;
+  try {
+    resolved = new URL(value, context.absoluteModelUrl);
+  } catch {
+    throw new Error("Live2D asset reference is invalid");
+  }
+  if (resolved.protocol !== "https:") throw new Error("Live2D asset reference is invalid");
+  return resolved.href;
+};
 
 /**
  * Clones a fetched model3.json and routes the catalog-resolved motion URLs into
@@ -134,11 +300,29 @@ export const buildLive2dModelSettings = (
     throw new Error("Live2D model settings are missing FileReferences");
   }
 
-  cloned.url = descriptor.modelUrl;
+  const context = resolveModelAssetContext(descriptor.modelUrl);
+  const resolveReference = (value: unknown): string => resolveLive2dAssetReference(value, context);
+
+  for (const key of MODEL_FILE_REFERENCE_KEYS) {
+    if (fileReferences[key] !== undefined) {
+      fileReferences[key] = resolveReference(fileReferences[key]);
+    }
+  }
+
+  if (fileReferences.Textures !== undefined) {
+    if (!Array.isArray(fileReferences.Textures)) {
+      throw new Error("Live2D model settings Textures must be an array");
+    }
+    fileReferences.Textures = fileReferences.Textures.map(resolveReference);
+  }
+
+  cloned.url = context.absoluteModelUrl;
   fileReferences.Expressions = [];
   fileReferences.Motions = {
-    [MOTION_GROUP]: toMotionDefinitions(descriptor.motions),
-    [EXPRESSION_GROUP]: toMotionDefinitions(descriptor.expressions)
+    [MOTION_GROUP]: descriptor.motions.map((motion) => ({ File: resolveReference(motion.url) })),
+    [EXPRESSION_GROUP]: descriptor.expressions.map((expression) => ({
+      File: resolveReference(expression.url)
+    }))
   };
 
   return cloned;
@@ -229,6 +413,18 @@ export const ensureCubismCore = (): Promise<void> => {
   return cubismCoreLoadPromise;
 };
 
+const getDevicePixelRatio = (): number => {
+  const devicePixelRatio = typeof window === "undefined" ? undefined : window.devicePixelRatio;
+  if (
+    typeof devicePixelRatio !== "number" ||
+    !Number.isFinite(devicePixelRatio) ||
+    devicePixelRatio <= 0
+  ) {
+    return 1;
+  }
+  return devicePixelRatio;
+};
+
 const createDefaultRuntimeFacade = (): Live2dRuntimeFacade => ({
   loadPixi: async () => {
     const pixi = await import("pixi.js");
@@ -238,7 +434,9 @@ const createDefaultRuntimeFacade = (): Live2dRuntimeFacade => ({
         pixi.extensions.add(pixi.TickerPlugin);
         const app = new pixi.Application({
           antialias: true,
+          autoDensity: true,
           backgroundAlpha: 0,
+          resolution: getDevicePixelRatio(),
           resizeTo: host,
           sharedTicker: false,
           autoStart: true
@@ -262,7 +460,6 @@ const createDefaultRuntimeFacade = (): Live2dRuntimeFacade => ({
           },
           resize: (width, height) => {
             app.renderer.resize(width, height);
-            app.render();
           },
           pause: () => app.stop(),
           resume: () => app.start(),
@@ -418,6 +615,7 @@ export const createLive2dModelLoader = (
       };
 
       try {
+        const modelAssetContext = resolveModelAssetContext(descriptor.modelUrl);
         const [pixi, cubism4] = await waitForAbort(
           Promise.all([runtime.loadPixi(), runtime.loadCubism4()]),
           signal
@@ -425,7 +623,7 @@ export const createLive2dModelLoader = (
         onProgress(0.15);
 
         const response = await waitForAbort(
-          runtime.fetchSettings(descriptor.modelUrl, signal),
+          runtime.fetchSettings(modelAssetContext.absoluteModelUrl, signal),
           signal
         );
         if (!response.ok) {

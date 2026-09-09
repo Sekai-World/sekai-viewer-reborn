@@ -25,7 +25,10 @@ const defaultRuntimeMocks = vi.hoisted(() => {
     start: vi.fn(),
     destroy: vi.fn()
   };
-  const state: { model: unknown } = { model: null };
+  const state: { model: unknown; applicationOptions: unknown } = {
+    model: null,
+    applicationOptions: null
+  };
 
   return {
     application,
@@ -40,7 +43,8 @@ vi.mock("pixi.js", () => ({
   TickerPlugin: {},
   extensions: { add: defaultRuntimeMocks.addExtension },
   Application: class {
-    constructor() {
+    constructor(options: unknown) {
+      defaultRuntimeMocks.state.applicationOptions = options;
       return defaultRuntimeMocks.application;
     }
   }
@@ -95,7 +99,7 @@ const createBrowserMocks = () => {
     }),
     head
   };
-  const windowMock: { Live2DCubismCore?: unknown } = {};
+  const windowMock: { Live2DCubismCore?: unknown; devicePixelRatio?: number } = {};
 
   vi.stubGlobal("document", documentMock);
   vi.stubGlobal("window", windowMock);
@@ -105,6 +109,7 @@ const createBrowserMocks = () => {
 
 beforeEach(() => {
   defaultRuntimeMocks.state.model = null;
+  defaultRuntimeMocks.state.applicationOptions = null;
   vi.clearAllMocks();
 });
 
@@ -124,6 +129,13 @@ const descriptor: Live2dModelDescriptor = {
   ]
 };
 
+const relayDescriptor: Live2dModelDescriptor = {
+  ...descriptor,
+  modelUrl: "/live2d/assets/model/v1/sample/sample.model3.json",
+  motions: [{ id: "idle", url: "/live2d/assets/motion/v1/sample/idle.motion3.json" }],
+  expressions: [{ id: "smile", url: "/live2d/assets/motion/v1/sample/face_%20worry.motion3.json" }]
+};
+
 const settingsPayload = {
   Version: 3,
   FileReferences: {
@@ -133,6 +145,20 @@ const settingsPayload = {
     Motions: {
       Idle: [{ File: "guessed-relative-idle.motion3.json" }]
     }
+  }
+};
+
+const relaySettingsPayload = {
+  Version: 3,
+  FileReferences: {
+    Moc: "sample.moc3",
+    Textures: ["textures/texture_00.png"],
+    Physics: "sample.physics3.json",
+    Pose: "sample.pose3.json",
+    DisplayInfo: "sample.cdi3.json",
+    UserData: "sample.userdata3.json",
+    Expressions: [{ Name: "legacy", File: "legacy.exp3.json" }],
+    Motions: { Idle: [{ File: "legacy.motion3.json" }] }
   }
 };
 
@@ -169,7 +195,7 @@ const createModel = () => {
   return { model, bodyMotionManager, faceMotionManager, breath };
 };
 
-const createRuntime = (model: Live2dModelInstance, settings = settingsPayload) => {
+const createRuntime = (model: Live2dModelInstance, settings: unknown = settingsPayload) => {
   const ticker = {} as Live2dPixiApplication["ticker"];
   const application = {
     ticker,
@@ -213,6 +239,8 @@ describe("Live2D model settings adapter", () => {
       url: descriptor.modelUrl,
       FileReferences: {
         ...settingsPayload.FileReferences,
+        Moc: "https://assets.example.test/models/sample.moc3",
+        Textures: ["https://assets.example.test/models/sample.2048/texture_00.png"],
         Expressions: [],
         Motions: {
           Motion: descriptor.motions.map((motion) => ({ File: motion.url })),
@@ -230,6 +258,91 @@ describe("Live2D model settings adapter", () => {
     expect(() => buildLive2dModelSettings({}, descriptor)).toThrow(
       "Live2D model settings are missing FileReferences"
     );
+  });
+
+  it("rewrites relay model references to absolute same-origin relay URLs", () => {
+    vi.stubGlobal("window", { location: { origin: "https://viewer.example.test" } });
+
+    const settings = buildLive2dModelSettings(relaySettingsPayload, relayDescriptor);
+    const references = settings.FileReferences as Record<string, unknown>;
+
+    expect(settings).toMatchObject({
+      url: "https://viewer.example.test/live2d/assets/model/v1/sample/sample.model3.json",
+      FileReferences: {
+        Moc: "https://viewer.example.test/live2d/assets/model/v1/sample/sample.moc3",
+        Textures: [
+          "https://viewer.example.test/live2d/assets/model/v1/sample/textures/texture_00.png"
+        ],
+        Physics: "https://viewer.example.test/live2d/assets/model/v1/sample/sample.physics3.json",
+        Pose: "https://viewer.example.test/live2d/assets/model/v1/sample/sample.pose3.json",
+        DisplayInfo: "https://viewer.example.test/live2d/assets/model/v1/sample/sample.cdi3.json",
+        UserData: "https://viewer.example.test/live2d/assets/model/v1/sample/sample.userdata3.json",
+        Expressions: [],
+        Motions: {
+          Motion: [
+            { File: "https://viewer.example.test/live2d/assets/motion/v1/sample/idle.motion3.json" }
+          ],
+          Expression: [
+            {
+              File: "https://viewer.example.test/live2d/assets/motion/v1/sample/face_%20worry.motion3.json"
+            }
+          ]
+        }
+      }
+    });
+    expect(references.Motions).not.toEqual(relaySettingsPayload.FileReferences.Motions);
+  });
+
+  it("fetches relay model settings from the current origin before Cubism load", async () => {
+    vi.stubGlobal("window", { location: { origin: "https://viewer.example.test" } });
+    const { model } = createModel();
+    const { runtime, cubism } = createRuntime(model, relaySettingsPayload);
+    const loader = createLive2dModelLoader({} as HTMLElement, { runtime });
+
+    const resource = await loader.load(relayDescriptor, new AbortController().signal, vi.fn());
+
+    expect(runtime.fetchSettings).toHaveBeenCalledWith(
+      "https://viewer.example.test/live2d/assets/model/v1/sample/sample.model3.json",
+      expect.any(AbortSignal)
+    );
+    expect(cubism.loadModel).toHaveBeenCalledTimes(1);
+    await resource.destroy();
+  });
+
+  it("rewrites fixed upstream bucket references through the relay", () => {
+    const settings = buildLive2dModelSettings(
+      {
+        FileReferences: {
+          Moc: "https://storage.sekai.best/sekai-live2d-assets/live2d/model/v1/sample/sample.moc3"
+        }
+      },
+      {
+        ...relayDescriptor,
+        modelUrl:
+          "https://storage.sekai.best/sekai-live2d-assets/live2d/model/v1/sample/sample.model3.json"
+      }
+    );
+
+    expect(settings).toMatchObject({
+      url: "http://localhost/live2d/assets/model/v1/sample/sample.model3.json",
+      FileReferences: {
+        Moc: "http://localhost/live2d/assets/model/v1/sample/sample.moc3"
+      }
+    });
+  });
+
+  it("rejects unsafe relay references before Cubism load", async () => {
+    const { model } = createModel();
+    const { runtime, cubism } = createRuntime(model, {
+      FileReferences: { Moc: "https://evil.example.test/model.moc3" }
+    });
+    const loader = createLive2dModelLoader({} as HTMLElement, { runtime });
+
+    await expect(
+      loader.load(relayDescriptor, new AbortController().signal, vi.fn())
+    ).rejects.toThrow("Live2D asset reference is outside the relay");
+    expect(cubism.loadModel).not.toHaveBeenCalled();
+    expect(model.destroy).not.toHaveBeenCalled();
   });
 });
 
@@ -343,10 +456,47 @@ describe("Live2D Pixi/Cubism loader", () => {
     const loader = createLive2dModelLoader(host);
     const resource = await loader.load(descriptor, new AbortController().signal, vi.fn());
 
+    expect(defaultRuntimeMocks.state.applicationOptions).toMatchObject({
+      autoDensity: true,
+      resolution: 1
+    });
+    await resource.resize(640, 480);
+
+    expect(defaultRuntimeMocks.application.renderer.resize).toHaveBeenCalledWith(640, 480);
+    expect(defaultRuntimeMocks.application.render).not.toHaveBeenCalled();
+
     await resource.destroy();
 
     expect(displayObject.removeFromParent).toHaveBeenCalledTimes(1);
     expect(view.remove).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the browser device pixel ratio for default Pixi rendering", async () => {
+    const browser = createBrowserMocks();
+    browser.windowMock.Live2DCubismCore = {};
+    browser.windowMock.devicePixelRatio = 2;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => settingsPayload
+      }))
+    );
+    const { model } = createModel();
+    defaultRuntimeMocks.application.view = {};
+    defaultRuntimeMocks.state.model = model;
+
+    const host = { appendChild: vi.fn() } as unknown as HTMLElement;
+    const loader = createLive2dModelLoader(host);
+    const resource = await loader.load(descriptor, new AbortController().signal, vi.fn());
+
+    expect(defaultRuntimeMocks.state.applicationOptions).toMatchObject({
+      autoDensity: true,
+      resolution: 2
+    });
+
+    await resource.destroy();
   });
 
   it("rejects a failed model settings response", async () => {

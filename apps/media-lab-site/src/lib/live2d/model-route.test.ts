@@ -5,10 +5,15 @@ describe("media-lab-site model viewer route params", () => {
   it("keeps model ids path-safe and bounded", () => {
     expect(isModelRouteId("normal_miku_v3")).toBe(true);
     expect(isModelRouteId("sample-model")).toBe(true);
+    expect(isModelRouteId("01ichika_normal_3.0_f_t04")).toBe(true);
     expect(isModelRouteId("")).toBe(false);
+    expect(isModelRouteId(".")).toBe(false);
+    expect(isModelRouteId("..")).toBe(false);
     expect(isModelRouteId("../escape")).toBe(false);
     expect(isModelRouteId("a/b")).toBe(false);
     expect(isModelRouteId("a b")).toBe(false);
+    expect(isModelRouteId("a\tb")).toBe(false);
+    expect(isModelRouteId("a\u0000b")).toBe(false);
     expect(isModelRouteId("a".repeat(129))).toBe(false);
     expect(isModelRouteId("a".repeat(128))).toBe(true);
   });
@@ -21,6 +26,10 @@ describe("media-lab-site model viewer route params", () => {
     expect(parseModelRouteParams({ modelId: " sample-model " })).toEqual({
       status: "ok",
       modelId: "sample-model"
+    });
+    expect(parseModelRouteParams({ modelId: "01ichika_normal_3.0_f_t04" })).toEqual({
+      status: "ok",
+      modelId: "01ichika_normal_3.0_f_t04"
     });
   });
 

@@ -1,3 +1,4 @@
+import { isLive2dAssetRelayUrl } from "./associated-catalog";
 import { isModelRouteId } from "./model-route";
 
 /**
@@ -29,8 +30,7 @@ export interface Live2dModelDescriptor {
 }
 
 export type ParsedLive2dModelDescriptor =
-  | { status: "ok"; descriptor: Live2dModelDescriptor }
-  | { status: "invalid"; reason: string };
+  { status: "ok"; descriptor: Live2dModelDescriptor } | { status: "invalid"; reason: string };
 
 export interface Live2dPlaybackOptions {
   loop: boolean;
@@ -105,6 +105,9 @@ const isAbsoluteHttpsUrl = (value: string): boolean => {
   }
 };
 
+const isSupportedAssetUrl = (value: string): boolean =>
+  isAbsoluteHttpsUrl(value) || isLive2dAssetRelayUrl(value);
+
 const toError = (value: unknown): Error => {
   if (value instanceof Error) return value;
   if (typeof value === "string") return new Error(value);
@@ -135,7 +138,7 @@ const parseOptions = (
     const id = item.id.trim();
     const url = item.url.trim();
     if (!isModelRouteId(id)) return { reason: `Invalid ${kind} id` };
-    if (!isAbsoluteHttpsUrl(url)) return { reason: `Invalid ${kind} URL` };
+    if (!isSupportedAssetUrl(url)) return { reason: `Invalid ${kind} URL` };
     if (ids.has(id)) return { reason: `Duplicate ${kind} id` };
 
     ids.add(id);
@@ -157,7 +160,7 @@ export const parseLive2dModelDescriptor = (input: unknown): ParsedLive2dModelDes
   const modelUrl = input.modelUrl.trim();
   if (!isModelRouteId(modelId)) return { status: "invalid", reason: "Invalid model id" };
   if (!isLive2dModelRegion(region)) return { status: "invalid", reason: "Invalid region" };
-  if (!isAbsoluteHttpsUrl(modelUrl)) return { status: "invalid", reason: "Invalid model URL" };
+  if (!isSupportedAssetUrl(modelUrl)) return { status: "invalid", reason: "Invalid model URL" };
   if (input.displayName !== undefined && typeof input.displayName !== "string") {
     return { status: "invalid", reason: "Invalid display name" };
   }
@@ -254,7 +257,10 @@ export const createLive2dModelViewer = (
   };
 
   const isCurrent = (token: number, controller: AbortController): boolean =>
-    !isDestroyed && generation === token && abortController === controller && !controller.signal.aborted;
+    !isDestroyed &&
+    generation === token &&
+    abortController === controller &&
+    !controller.signal.aborted;
 
   const preloadModelAssets = async (
     descriptor: Live2dModelDescriptor,
@@ -336,7 +342,10 @@ export const createLive2dModelViewer = (
         return state;
       }
 
-      if (loader.preload && !(await preloadModelAssets(descriptor, token, controller, loadedResource))) {
+      if (
+        loader.preload &&
+        !(await preloadModelAssets(descriptor, token, controller, loadedResource))
+      ) {
         return state;
       }
 
@@ -387,8 +396,7 @@ export const createLive2dModelViewer = (
       return () => listeners.delete(listener);
     },
     load,
-    reload: async () =>
-      lastDescriptor ? load(lastDescriptor) : load(null),
+    reload: async () => (lastDescriptor ? load(lastDescriptor) : load(null)),
     abort: () => {
       if (isDestroyed) return;
       generation += 1;
@@ -410,7 +418,10 @@ export const createLive2dModelViewer = (
       return true;
     },
     playMotion: async (id) => {
-      if (state.status !== "ready" || !state.descriptor.motions.some((motion) => motion.id === id)) {
+      if (
+        state.status !== "ready" ||
+        !state.descriptor.motions.some((motion) => motion.id === id)
+      ) {
         return false;
       }
       return runReadyCommand((activeResource) => activeResource.playMotion(id, playbackOptions));
@@ -425,7 +436,8 @@ export const createLive2dModelViewer = (
       return runReadyCommand((activeResource) => activeResource.playExpression(id));
     },
     setIdle: async (enabled) =>
-      typeof enabled === "boolean" && runReadyCommand((activeResource) => activeResource.setIdle(enabled)),
+      typeof enabled === "boolean" &&
+      runReadyCommand((activeResource) => activeResource.setIdle(enabled)),
     pause: async () => runReadyCommand((activeResource) => activeResource.pause()),
     reset: async () => runReadyCommand((activeResource) => activeResource.reset()),
     resize: async (width, height) => {

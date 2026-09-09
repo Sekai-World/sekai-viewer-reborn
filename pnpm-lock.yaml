@@ -16,6 +16,9 @@ overrides:
   '@changesets/parse>js-yaml': '>=4.2.0 <6.0.0'
   '@hey-api/json-schema-ref-parser>js-yaml': '>=4.2.0 <6.0.0'
 
+patchedDependencies:
+  '@sekai-world/pixi-live2d-display-mulmotion@0.5.1': 2c3ebd247245b0dce23be3bccad074e6826bb0b99c3a6f2bfeeb0844f829066e
+
 importers:
 
   .:
@@ -216,7 +219,7 @@ importers:
         version: link:../../packages/ui-tokens
       '@sekai-world/pixi-live2d-display-mulmotion':
         specifier: ^0.5.1
-        version: 0.5.1(pixi.js@7.4.3)
+        version: 0.5.1(patch_hash=2c3ebd247245b0dce23be3bccad074e6826bb0b99c3a6f2bfeeb0844f829066e)(pixi.js@7.4.3)
       pixi.js:
         specifier: ^7.4.3
         version: 7.4.3
@@ -4613,7 +4616,7 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.62.2':
     optional: true
 
-  '@sekai-world/pixi-live2d-display-mulmotion@0.5.1(pixi.js@7.4.3)':
+  '@sekai-world/pixi-live2d-display-mulmotion@0.5.1(patch_hash=2c3ebd247245b0dce23be3bccad074e6826bb0b99c3a6f2bfeeb0844f829066e)(pixi.js@7.4.3)':
     dependencies:
       pixi.js: 7.4.3
     optionalDependencies:

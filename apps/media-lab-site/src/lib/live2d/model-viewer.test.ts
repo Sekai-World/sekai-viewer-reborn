@@ -22,6 +22,11 @@ const descriptor: Live2dModelDescriptor = {
   ]
 };
 
+const dottedDescriptor: Live2dModelDescriptor = {
+  ...descriptor,
+  modelId: "01ichika_normal_3.0_f_t04"
+};
+
 const createResource = (): Live2dModelResource => ({
   playMotion: vi.fn(async () => undefined),
   playExpression: vi.fn(async () => undefined),
@@ -47,6 +52,30 @@ describe("Live2D model descriptor", () => {
       status: "ok",
       descriptor
     });
+  });
+
+  it("accepts canonical root-relative relay asset URLs", () => {
+    const relayDescriptor = {
+      ...descriptor,
+      modelUrl: "/live2d/assets/model/v1/sample/sample.model3.json",
+      motions: [{ id: "idle", url: "/live2d/assets/motion/v1/sample/idle.motion3.json" }],
+      expressions: [
+        { id: "smile", url: "/live2d/assets/motion/v1/sample/face_%20worry.motion3.json" }
+      ]
+    };
+
+    expect(parseLive2dModelDescriptor(relayDescriptor)).toEqual({
+      status: "ok",
+      descriptor: relayDescriptor
+    });
+    for (const modelUrl of [
+      "/live2d/assets/model/v1/sample/sample.model3.json?cache=1",
+      "/live2d/assets/model/v1/sample/sample%2Emodel3.json",
+      "/live2d/assets/other/v1/sample/sample.model3.json",
+      "live2d/assets/model/v1/sample/sample.model3.json"
+    ]) {
+      expect(parseLive2dModelDescriptor({ ...relayDescriptor, modelUrl }).status).toBe("invalid");
+    }
   });
 
   it("rejects untrusted, ambiguous, and malformed asset data", () => {
@@ -93,6 +122,21 @@ describe("Live2D model viewer controller", () => {
       reason: "No model descriptor is available"
     });
     expect(loader.load).not.toHaveBeenCalled();
+  });
+
+  it("loads a descriptor with a dotted legacy model id", async () => {
+    const loader = createLoader();
+    const viewer = createLive2dModelViewer(loader);
+
+    await expect(viewer.load(dottedDescriptor)).resolves.toEqual({
+      status: "ready",
+      descriptor: dottedDescriptor
+    });
+    expect(loader.load).toHaveBeenCalledWith(
+      dottedDescriptor,
+      expect.any(AbortSignal),
+      expect.any(Function)
+    );
   });
 
   it("loads one resource, bounds preload work, and forwards ready commands", async () => {

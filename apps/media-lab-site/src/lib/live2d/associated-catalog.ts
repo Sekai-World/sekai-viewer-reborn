@@ -1,6 +1,8 @@
 export const LIVE2D_ASSOCIATED_CATALOG_URL =
   "https://storage.sekai.best/sekai-live2d-assets/live2d-associated/v1/model_list.json";
 export const LIVE2D_ASSET_BUCKET_URL = "https://storage.sekai.best/sekai-live2d-assets/";
+export const LIVE2D_ASSET_OBJECT_KEY_PREFIX = "live2d/";
+export const LIVE2D_ASSET_RELAY_PREFIX = "/live2d/assets/";
 export const LIVE2D_CATALOG_REGION = "jp" as const;
 
 const MODEL_FILE_SUFFIX = ".model3.json";
@@ -10,6 +12,7 @@ const DEFAULT_MAX_CACHE_ENTRIES = 1;
 const CATALOG_CACHE_KEY = "associated";
 const UNSAFE_VALUE_PATTERN = /[\\?#%]/;
 const SCHEME_PATTERN = /^[A-Za-z][A-Za-z\d+.-]*:/;
+const LIVE2D_ASSET_NAMESPACES = ["model", "motion"] as const;
 
 export interface Live2dMotionUrlDescriptor {
   /** The source file name, used as the stable descriptor ID. */
@@ -41,6 +44,17 @@ export interface Live2dAssociatedModel {
 
 export type Live2dAssociatedCatalog = readonly Live2dAssociatedModel[];
 
+export type Live2dAssetNamespace = (typeof LIVE2D_ASSET_NAMESPACES)[number];
+
+export interface Live2dValidatedAssetPath {
+  path: string;
+  namespace: Live2dAssetNamespace;
+  fileName: string;
+}
+
+export type Live2dAssetPathValidation =
+  { status: "ok"; asset: Live2dValidatedAssetPath } | { status: "invalid"; reason: string };
+
 export type ParsedLive2dAssociatedCatalog =
   { status: "ok"; catalog: Live2dAssociatedCatalog } | { status: "invalid"; reason: string };
 
@@ -53,21 +67,29 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const hasControlCharacter = (value: string): boolean =>
   Array.from(value).some((character) => {
     const code = character.codePointAt(0);
-    return (
-      code !== undefined &&
-      ((code >= 0 && code <= 31) || (code >= 127 && code <= 159))
-    );
+    return code !== undefined && ((code >= 0 && code <= 31) || (code >= 127 && code <= 159));
   });
 
-const hasUnsafeValue = (value: string): boolean =>
-  UNSAFE_VALUE_PATTERN.test(value) || hasControlCharacter(value) || /\s/.test(value);
+const hasUnsafeValue = (value: string, allowWhitespace = false): boolean =>
+  UNSAFE_VALUE_PATTERN.test(value) ||
+  hasControlCharacter(value) ||
+  (!allowWhitespace && /\s/.test(value));
 
-const readNonEmptyString = (value: unknown, label: string): ValidationResult<string> => {
+const readNonEmptyString = (
+  value: unknown,
+  label: string,
+  allowWhitespace = false
+): ValidationResult<string> => {
   if (typeof value !== "string") return { reason: `${label} must be a string` };
+  if (value !== value.trim()) {
+    return { reason: `${label} contains leading or trailing whitespace` };
+  }
 
   const normalized = value.trim();
   if (!normalized) return { reason: `${label} must not be empty` };
-  if (hasUnsafeValue(normalized)) return { reason: `${label} contains unsafe characters` };
+  if (hasUnsafeValue(normalized, allowWhitespace)) {
+    return { reason: `${label} contains unsafe characters` };
+  }
 
   return { value: normalized };
 };
@@ -117,8 +139,16 @@ const readFileName = (
   label: string,
   requiredSuffix?: string
 ): ValidationResult<string> => {
-  const result = readIdentifier(value, label);
+  const result = readNonEmptyString(value, label, true);
   if ("reason" in result) return result;
+  if (
+    result.value === "." ||
+    result.value === ".." ||
+    result.value.includes("/") ||
+    result.value.includes(":")
+  ) {
+    return { reason: `${label} must be a path-safe identifier` };
+  }
   if (requiredSuffix && !result.value.endsWith(requiredSuffix)) {
     return { reason: `${label} must end with ${requiredSuffix}` };
   }
@@ -126,33 +156,199 @@ const readFileName = (
   return result;
 };
 
+const isLive2dAssetNamespace = (value: string): value is Live2dAssetNamespace =>
+  (LIVE2D_ASSET_NAMESPACES as readonly string[]).includes(value);
+
+const encodeAssetPath = (path: string): string =>
+  path
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+const invalidAssetPath = (reason: string): Live2dAssetPathValidation => ({
+  status: "invalid",
+  reason
+});
+
+/** Validates one decoded, canonical path inside the model or motion namespace. */
+export const validateLive2dAssetPath = (value: unknown): Live2dAssetPathValidation => {
+  if (typeof value !== "string") return invalidAssetPath("Asset path must be a string");
+  if (value !== value.trim()) {
+    return invalidAssetPath("Asset path contains leading or trailing whitespace");
+  }
+
+  const result = readNonEmptyString(value, "Asset path", true);
+  if ("reason" in result) return invalidAssetPath(result.reason);
+
+  const segments = result.value.split("/");
+  const namespace = segments[0];
+  if (segments.length < 2 || !namespace || !isLive2dAssetNamespace(namespace)) {
+    return invalidAssetPath("Asset path must start with model/ or motion/");
+  }
+
+  const directories = segments.slice(0, -1);
+  if (
+    directories.some(
+      (segment) =>
+        !segment ||
+        segment === "." ||
+        segment === ".." ||
+        segment.includes(":") ||
+        hasUnsafeValue(segment)
+    )
+  ) {
+    return invalidAssetPath("Asset path contains an unsafe path segment");
+  }
+
+  const fileName = segments[segments.length - 1];
+  const parsedFile = readFileName(fileName, "Asset file");
+  if ("reason" in parsedFile) return invalidAssetPath(parsedFile.reason);
+
+  return {
+    status: "ok",
+    asset: {
+      path: result.value,
+      namespace,
+      fileName: parsedFile.value
+    }
+  };
+};
+
+const toBucketUrl = (asset: Live2dValidatedAssetPath): string => {
+  const bucketUrl = new URL(LIVE2D_ASSET_BUCKET_URL);
+  const objectKey = `${LIVE2D_ASSET_OBJECT_KEY_PREFIX}${asset.path}`;
+  return new URL(`${bucketUrl.pathname}${encodeAssetPath(objectKey)}`, bucketUrl).href;
+};
+
+const toRelayUrl = (asset: Live2dValidatedAssetPath): string =>
+  `${LIVE2D_ASSET_RELAY_PREFIX}${encodeAssetPath(asset.path)}`;
+
+export const toLive2dAssetBucketUrlFromPath = (path: string): string | null => {
+  const result = validateLive2dAssetPath(path);
+  return result.status === "ok" ? toBucketUrl(result.asset) : null;
+};
+
+export const toLive2dAssetRelayUrlFromPath = (path: string): string | null => {
+  const result = validateLive2dAssetPath(path);
+  return result.status === "ok" ? toRelayUrl(result.asset) : null;
+};
+
+const parseEncodedAssetPath = (
+  encodedPath: string,
+  source: "relay" | "bucket"
+): Live2dAssetPathValidation => {
+  let decodedPath: string;
+  try {
+    decodedPath = decodeURIComponent(encodedPath);
+  } catch {
+    return invalidAssetPath(`Invalid ${source} asset path encoding`);
+  }
+
+  const result = validateLive2dAssetPath(decodedPath);
+  if (result.status !== "ok") return result;
+
+  if (encodeAssetPath(result.asset.path) !== encodedPath) {
+    return invalidAssetPath(`Non-canonical ${source} asset path`);
+  }
+
+  return result;
+};
+
+const getRawAbsoluteUrlPath = (value: string): string | null => {
+  const schemeSeparator = value.indexOf("://");
+  if (schemeSeparator < 1) return null;
+
+  const pathStart = value.indexOf("/", schemeSeparator + 3);
+  if (pathStart < 0) return "/";
+
+  const pathAndQuery = value.slice(pathStart);
+  const queryOrFragmentStart = pathAndQuery.search(/[?#]/);
+  return queryOrFragmentStart < 0 ? pathAndQuery : pathAndQuery.slice(0, queryOrFragmentStart);
+};
+
+/** Validates a canonical root-relative relay URL and returns its decoded path. */
+export const parseLive2dAssetRelayUrl = (value: unknown): Live2dAssetPathValidation => {
+  if (typeof value !== "string" || !value.startsWith(LIVE2D_ASSET_RELAY_PREFIX)) {
+    return invalidAssetPath("Live2D asset relay URL must be root-relative");
+  }
+
+  const encodedPath = value.slice(LIVE2D_ASSET_RELAY_PREFIX.length);
+  if (!encodedPath || value.includes("?") || value.includes("#")) {
+    return invalidAssetPath("Live2D asset relay URL must not contain a query or fragment");
+  }
+
+  return parseEncodedAssetPath(encodedPath, "relay");
+};
+
+/** Converts one fixed-origin upstream bucket URL into a canonical relay URL. */
+export const toLive2dAssetRelayUrlFromUpstreamUrl = (value: unknown): string | null => {
+  if (typeof value !== "string") return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return null;
+  }
+
+  const bucketUrl = new URL(LIVE2D_ASSET_BUCKET_URL);
+  const rawPath = getRawAbsoluteUrlPath(value);
+  if (
+    parsed.origin !== bucketUrl.origin ||
+    parsed.search ||
+    parsed.hash ||
+    !rawPath?.startsWith(bucketUrl.pathname)
+  ) {
+    return null;
+  }
+
+  const objectKey = rawPath.slice(bucketUrl.pathname.length);
+  if (!objectKey.startsWith(LIVE2D_ASSET_OBJECT_KEY_PREFIX)) return null;
+
+  const encodedPath = objectKey.slice(LIVE2D_ASSET_OBJECT_KEY_PREFIX.length);
+  const result = parseEncodedAssetPath(encodedPath, "bucket");
+  if (result.status !== "ok") return null;
+
+  return parsed.href === toBucketUrl(result.asset) ? toRelayUrl(result.asset) : null;
+};
+
+export const isLive2dAssetRelayUrl = (value: string): boolean =>
+  parseLive2dAssetRelayUrl(value).status === "ok";
+
+const parseAssetParts = (
+  path: string,
+  fileName: string,
+  fileSuffix?: string
+): ValidationResult<Live2dValidatedAssetPath> => {
+  const parsedPath = readRelativePath(path, "Asset path");
+  if ("reason" in parsedPath) return { reason: parsedPath.reason };
+
+  const parsedFile = readFileName(fileName, "Asset file", fileSuffix);
+  if ("reason" in parsedFile) return { reason: parsedFile.reason };
+
+  const result = validateLive2dAssetPath(`${parsedPath.value}/${parsedFile.value}`);
+  return result.status === "ok" ? { value: result.asset } : { reason: result.reason };
+};
+
 const resolveAssetUrl = (
   path: string,
   fileName: string,
   fileSuffix?: string
 ): ValidationResult<string> => {
-  const parsedPath = readRelativePath(path, "Asset path");
-  if ("reason" in parsedPath) return parsedPath;
-
-  const parsedFile = readFileName(fileName, "Asset file", fileSuffix);
-  if ("reason" in parsedFile) return parsedFile;
-
-  const bucketUrl = new URL(LIVE2D_ASSET_BUCKET_URL);
-  const resolvedUrl = new URL(`${parsedPath.value}/${parsedFile.value}`, bucketUrl);
-  if (
-    resolvedUrl.origin !== bucketUrl.origin ||
-    !resolvedUrl.pathname.startsWith(bucketUrl.pathname)
-  ) {
-    return { reason: "Asset path escapes the Live2D bucket" };
-  }
-
-  return { value: resolvedUrl.href };
+  const result = parseAssetParts(path, fileName, fileSuffix);
+  return "value" in result ? { value: toBucketUrl(result.value) } : result;
 };
 
 /** Resolves one safe bucket-relative path/file pair, or returns null if unsafe. */
 export const resolveLive2dAssetUrl = (path: string, fileName: string): string | null => {
   const result = resolveAssetUrl(path, fileName);
   return "value" in result ? result.value : null;
+};
+
+/** Resolves one validated path/file pair to the same-origin relay URL. */
+export const resolveLive2dAssetRelayUrl = (path: string, fileName: string): string | null => {
+  const result = parseAssetParts(path, fileName);
+  return "value" in result ? toRelayUrl(result.value) : null;
 };
 
 const invalid = (location: string, reason: string): InvalidResult => ({
@@ -289,7 +485,6 @@ const parseModel = (value: unknown, location: string): ValidationResult<Live2dAs
 export const parseLive2dAssociatedCatalog = (input: unknown): ParsedLive2dAssociatedCatalog => {
   if (!Array.isArray(input)) return { status: "invalid", reason: "Catalog root must be an array" };
 
-  const modelNames = new Set<string>();
   const modelIdentities = new Set<string>();
   const modelUrls = new Set<string>();
   const models: Live2dAssociatedModel[] = [];
@@ -300,10 +495,6 @@ export const parseLive2dAssociatedCatalog = (input: unknown): ParsedLive2dAssoci
     if ("reason" in parsedModel) return { status: "invalid", reason: parsedModel.reason };
 
     const model = parsedModel.value;
-    if (modelNames.has(model.modelName)) {
-      return invalid(location, `modelName ${model.modelName} is a duplicate`);
-    }
-
     const identity = `${model.modelBase}\u0000${model.modelFile}`;
     if (modelIdentities.has(identity)) {
       return invalid(location, "model identity is a duplicate");
@@ -312,7 +503,6 @@ export const parseLive2dAssociatedCatalog = (input: unknown): ParsedLive2dAssoci
       return invalid(location, "model URL is a duplicate");
     }
 
-    modelNames.add(model.modelName);
     modelIdentities.add(identity);
     modelUrls.add(model.modelUrl);
     models.push(model);
