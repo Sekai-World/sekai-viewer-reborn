@@ -46,6 +46,7 @@ export interface Live2dModelResource {
   playExpression(id: string): void | Promise<void>;
   setIdle(enabled: boolean): void | Promise<void>;
   pause(): void | Promise<void>;
+  resume(): void | Promise<void>;
   reset(): void | Promise<void>;
   resize(width: number, height: number): void | Promise<void>;
   destroy(): void | Promise<void>;
@@ -79,6 +80,7 @@ export interface Live2dModelViewer {
   playExpression(id: string): Promise<boolean>;
   setIdle(enabled: boolean): Promise<boolean>;
   pause(): Promise<boolean>;
+  resume(): Promise<boolean>;
   reset(): Promise<boolean>;
   resize(width: number, height: number): Promise<boolean>;
   destroy(): Promise<void>;
@@ -439,6 +441,7 @@ export const createLive2dModelViewer = (
       typeof enabled === "boolean" &&
       runReadyCommand((activeResource) => activeResource.setIdle(enabled)),
     pause: async () => runReadyCommand((activeResource) => activeResource.pause()),
+    resume: async () => runReadyCommand((activeResource) => activeResource.resume()),
     reset: async () => runReadyCommand((activeResource) => activeResource.reset()),
     resize: async (width, height) => {
       if (!isPositiveFinite(width) || !isPositiveFinite(height)) return false;

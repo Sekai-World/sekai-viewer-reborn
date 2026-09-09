@@ -57,6 +57,7 @@
   let selectedMotion = $state("");
   let selectedExpression = $state("");
   let idleMotion = $state(true);
+  let paused = $state(false);
 
   let stageHost: HTMLDivElement;
   let viewer = $state.raw<Live2dModelViewer | null>(null);
@@ -71,7 +72,14 @@
       viewerState.status === "ready" ? viewerState.descriptor.expressions.map(({ id }) => id) : [],
     applyMotion: () => void viewer?.playMotion(selectedMotion),
     applyExpression: () => void viewer?.playExpression(selectedExpression),
-    pause: () => void viewer?.pause(),
+    pause: async () => {
+      if (!(await viewer?.pause())) return;
+      paused = true;
+    },
+    resume: async () => {
+      if (!(await viewer?.resume())) return;
+      paused = false;
+    },
     reset: () => void viewer?.reset(),
     reload: () => void viewer?.reload()
   });
@@ -99,6 +107,7 @@
     };
     const unsubscribe = mountedViewer.subscribe((nextState) => {
       viewerState = nextState;
+      if (nextState.status !== "ready") paused = false;
       // Earlier observations may have arrived before the resource was ready.
       if (nextState.status === "ready") resize();
     });
@@ -144,6 +153,7 @@
     noneLoaded: translate("live2d.modelViewer.controls.noneLoaded"),
     apply: translate("live2d.modelViewer.controls.apply"),
     pause: translate("live2d.modelViewer.controls.pause"),
+    resume: translate("live2d.modelViewer.controls.resume"),
     idleBreath: translate("live2d.modelViewer.controls.idleBreath"),
     reload: translate("live2d.modelViewer.controls.reload"),
     reset: translate("live2d.modelViewer.controls.reset"),
@@ -231,6 +241,8 @@
     onApplyMotion={playerAdapter.applyMotion}
     onApplyExpression={playerAdapter.applyExpression}
     onPause={playerAdapter.pause}
+    onResume={playerAdapter.resume}
+    {paused}
     onReset={playerAdapter.reset}
     onReload={playerAdapter.reload}
     bind:selectedMotion

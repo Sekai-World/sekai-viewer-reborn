@@ -12,6 +12,7 @@
     noneLoaded: string;
     apply: string;
     pause: string;
+    resume: string;
     idleBreath: string;
     reload: string;
     reset: string;
@@ -29,6 +30,7 @@
     selectedMotion?: string;
     selectedExpression?: string;
     idleMotion?: boolean;
+    paused?: boolean;
     /**
      * Lifecycle insertion point: the model player adapter renders its canvas
      * host here. When absent, the studio shows its reserved-stage placeholder.
@@ -37,6 +39,7 @@
     onApplyMotion?: () => void;
     onApplyExpression?: () => void;
     onPause?: () => void;
+    onResume?: () => void;
     onReset?: () => void;
     onReload?: () => void;
   }
@@ -50,10 +53,12 @@
     selectedMotion = $bindable(""),
     selectedExpression = $bindable(""),
     idleMotion = $bindable(true),
+    paused = false,
     stage,
     onApplyMotion,
     onApplyExpression,
     onPause,
+    onResume,
     onReset,
     onReload
   }: Props = $props();
@@ -400,10 +405,12 @@
           type="button"
           class="btn btn-outline btn-sm h-11 min-h-11! shrink-0 px-3 text-sm"
           disabled={!controlsEnabled}
-          onclick={onPause}
+          aria-pressed={paused}
+          data-playback-icon={paused ? "play" : "pause"}
+          onclick={paused ? onResume : onPause}
         >
-          <Icon icon="mdi:pause" class="size-4" aria-hidden="true" />
-          {labels.pause}
+          <Icon icon={paused ? "mdi:play" : "mdi:pause"} class="size-4" aria-hidden="true" />
+          {paused ? labels.resume : labels.pause}
         </button>
         <label class="flex min-h-11 shrink-0 items-center gap-2 px-1 text-sm font-medium">
           <input
