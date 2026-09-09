@@ -25,7 +25,15 @@ const createEmptyPage = () => ({
 export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
-  const unitProfiles = toUnitProfileMap(await fetchUnitProfiles(baseUrl, region));
+  const unitProfiles = fetchUnitProfiles(baseUrl, region)
+    .then(toUnitProfileMap)
+    .catch((error) => {
+      logEventListFilterDebug("unit profile exception", {
+        region,
+        error
+      });
+      return {};
+    });
   const queryState = parseEventListQueryState(url.searchParams);
   const includeSpoilerContent = url.searchParams.get("spoiler") === "true";
   const requestQuery = createEventListRequestQuery(
@@ -89,6 +97,6 @@ export const load: PageServerLoad = async ({ params, url }) => {
     region,
     initialPage,
     initialQuery: queryState,
-    unitProfiles
+    unitProfiles: unitProfiles as unknown as ReturnType<typeof toUnitProfileMap>
   };
 };

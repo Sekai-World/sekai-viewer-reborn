@@ -18,6 +18,7 @@
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import type { EventListPage, EventListItem as EventListItemType } from "$lib/server/event-list";
+  import type { UnitProfileMap } from "$lib/server/unit-profiles";
   import type { PageData } from "./$types";
 
   type EventListPagePayload = EventListPage;
@@ -57,6 +58,8 @@
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let initialPageRequestId = 0;
   let listRequestId = 0;
+  let unitProfilesRequestId = 0;
+  let unitProfiles = $state<UnitProfileMap>({});
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
@@ -92,7 +95,7 @@
       return mixedUnitLabel;
     }
 
-    return data.unitProfiles[value] ?? formatUnitFallbackLabel(value);
+    return unitProfiles[value] ?? formatUnitFallbackLabel(value);
   };
 
   const marathonFallback = "marathon";
@@ -334,6 +337,22 @@
 
       applyInitialPage(result);
     });
+  });
+
+  $effect(() => {
+    const requestId = ++unitProfilesRequestId;
+    unitProfiles = {};
+    const unitProfilesPromise = Promise.resolve(data.unitProfiles as unknown as UnitProfileMap);
+
+    void unitProfilesPromise
+      .then((nextUnitProfiles) => {
+        if (requestId !== unitProfilesRequestId) return;
+        unitProfiles = nextUnitProfiles;
+      })
+      .catch(() => {
+        // Unit labels have a synchronous fallback, so an unavailable profile
+        // request must not block the event list or reject the page boundary.
+      });
   });
 
   $effect(() => {

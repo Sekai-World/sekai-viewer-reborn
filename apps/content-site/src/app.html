@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <script>
       (() => {
         const root = document.documentElement;
@@ -13,11 +13,19 @@
           const storedThemeName = localStorage.getItem("content_site_theme_name");
           const storedThemeMode = localStorage.getItem("content_site_theme_mode");
 
-          if (storedThemeName === "default" || storedThemeName === "sakura" || storedThemeName === "mint") {
+          if (
+            storedThemeName === "default" ||
+            storedThemeName === "sakura" ||
+            storedThemeName === "mint"
+          ) {
             themeName = storedThemeName;
           }
 
-          if (storedThemeMode === "light" || storedThemeMode === "dark" || storedThemeMode === "auto") {
+          if (
+            storedThemeMode === "light" ||
+            storedThemeMode === "dark" ||
+            storedThemeMode === "auto"
+          ) {
             themeMode = storedThemeMode;
           }
         } catch {

@@ -2,8 +2,10 @@ import { json } from "@sveltejs/kit";
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
+  canUsePaginatedMusicList,
   createMusicListPage,
   fetchMusicCatalog,
+  fetchMusicListPage,
   hasMusicListFilters,
   logMusicListFilterDebug,
   parseMusicListQueryState
@@ -31,16 +33,26 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
   try {
     const startedAt = performance.now();
-    const catalog = await fetchMusicCatalog(
-      getMasterApiBaseUrl(),
-      region,
-      queryState.spoiler,
-      queryState.hasAppend,
-      queryState.categories,
-      queryState.tags,
-      queryState.level
-    );
-    const musicListPage = createMusicListPage(catalog, queryState, page);
+    const baseUrl = getMasterApiBaseUrl();
+    const usePaginatedList = canUsePaginatedMusicList(queryState);
+    let musicListPage: ReturnType<typeof createMusicListPage>;
+    let catalogItemCount: number | null = null;
+
+    if (usePaginatedList) {
+      musicListPage = await fetchMusicListPage(baseUrl, region, queryState, page);
+    } else {
+      const catalog = await fetchMusicCatalog(
+        baseUrl,
+        region,
+        queryState.spoiler,
+        queryState.hasAppend,
+        queryState.categories,
+        queryState.tags,
+        queryState.level
+      );
+      catalogItemCount = catalog.length;
+      musicListPage = createMusicListPage(catalog, queryState, page);
+    }
 
     logMusicListFilterDebug("data response", {
       region,
@@ -48,7 +60,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       queryState,
       hasFilters,
       durationMs: Math.round(performance.now() - startedAt),
-      catalogItemCount: catalog.length,
+      initialPageMode: usePaginatedList ? "paginated" : "catalog",
+      catalogItemCount,
       itemCount: musicListPage.items.length,
       itemIds: musicListPage.items.map((item) => item.id),
       pagination: musicListPage.pagination

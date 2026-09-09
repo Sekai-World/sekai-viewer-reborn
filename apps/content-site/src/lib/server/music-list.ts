@@ -1,5 +1,8 @@
 import { dev } from "$app/environment";
-import { getMusicsByRegionList } from "@platform/sekai-master-api-sdk";
+import {
+  getMusicsByRegionList,
+  type GetMusicsByRegionListData
+} from "@platform/sekai-master-api-sdk";
 import { musicTagByUnitCode } from "$lib/server/unit-profiles";
 
 export type MusicListItem = {
@@ -63,6 +66,7 @@ const MUSIC_CATALOG_REQUEST_PAGE_SIZE = 1000;
 const MUSIC_CATALOG_CACHE_DURATION_MS = 60_000;
 
 const catalogCache = new Map<string, { expiresAt: number; items: MusicListItem[] }>();
+const catalogInFlight = new Map<string, Promise<MusicListItem[]>>();
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -311,6 +315,18 @@ export const hasMusicListFilters = (queryState: MusicListQueryState): boolean =>
   queryState.hasAppend ||
   queryState.level.length > 0;
 
+/**
+ * The list endpoint's category/tag/name/creator filters do not have the same
+ * semantics as the local catalog filtering (for example, categories are ANDed
+ * locally and vocal-character filtering is local-only). Keep the paginated
+ * first-screen path limited to the unfiltered default sort until those
+ * semantics are represented by the paginated response itself.
+ */
+export const canUsePaginatedMusicList = (queryState: MusicListQueryState): boolean =>
+  !hasMusicListFilters(queryState) &&
+  queryState.sortBy === "publishedAt" &&
+  queryState.sortOrder === "desc";
+
 export const logMusicListFilterDebug = (label: string, details: Record<string, unknown>): void => {
   if (!dev) {
     return;
@@ -322,27 +338,37 @@ export const logMusicListFilterDebug = (label: string, details: Record<string, u
 const normalizeCategories = (values: string[]): string[] =>
   [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 
-export const fetchMusicCatalog = async (
+const createMusicListRequestQuery = (
+  queryState: MusicListQueryState,
+  page: number,
+  pageSize: number
+): NonNullable<GetMusicsByRegionListData["query"]> => {
+  const categories = normalizeCategories(queryState.categories);
+  const tags = normalizeMusicTagFilters(queryState.tags);
+  const playLevel = queryState.level.trim();
+
+  return {
+    page,
+    page_size: pageSize,
+    spoiler: queryState.spoiler,
+    category: categories.join(",") || undefined,
+    tag: tags.join(",") || undefined,
+    playLevel: playLevel || undefined,
+    hasAppend: queryState.hasAppend || undefined,
+    sort_by: queryState.sortBy,
+    sort_order: queryState.sortOrder
+  };
+};
+
+const fetchMusicCatalogFromApi = async (
   baseUrl: string,
   region: string,
   includeSpoilerContent: boolean,
   hasAppend: boolean,
-  categories: string[],
-  tags: string[],
-  playLevel: string
+  categoryQuery: string,
+  tagQuery: string,
+  normalizedPlayLevel: string
 ): Promise<MusicListItem[]> => {
-  const normalizedCategories = normalizeCategories(categories);
-  const categoryQuery = normalizedCategories.join(",");
-  const normalizedTags = normalizeMusicTagFilters(tags);
-  const tagQuery = normalizedTags.join(",");
-  const normalizedPlayLevel = playLevel.trim();
-  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}|${categoryQuery}|${tagQuery}|${normalizedPlayLevel}`;
-  const now = Date.now();
-  const cached = catalogCache.get(key);
-  if (cached && cached.expiresAt > now) {
-    return cached.items;
-  }
-
   const items: MusicListItem[] = [];
   let page = 1;
   let hasNext = true;
@@ -377,13 +403,132 @@ export const fetchMusicCatalog = async (
     page += 1;
   }
 
-  catalogCache.set(key, {
-    expiresAt: now + MUSIC_CATALOG_CACHE_DURATION_MS,
-    items
-  });
-
   return items;
 };
+
+export const fetchMusicCatalog = async (
+  baseUrl: string,
+  region: string,
+  includeSpoilerContent: boolean,
+  hasAppend: boolean,
+  categories: string[],
+  tags: string[],
+  playLevel: string
+): Promise<MusicListItem[]> => {
+  const normalizedCategories = normalizeCategories(categories);
+  const categoryQuery = normalizedCategories.join(",");
+  const normalizedTags = normalizeMusicTagFilters(tags);
+  const tagQuery = normalizedTags.join(",");
+  const normalizedPlayLevel = playLevel.trim();
+  const key = `${baseUrl}|${region}|${includeSpoilerContent ? "spoiler" : "public"}|${hasAppend ? "append" : "all"}|${categoryQuery}|${tagQuery}|${normalizedPlayLevel}`;
+  const now = Date.now();
+  const cached = catalogCache.get(key);
+  if (cached && cached.expiresAt > now) {
+    return cached.items;
+  }
+
+  const inFlight = catalogInFlight.get(key);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const promise = fetchMusicCatalogFromApi(
+    baseUrl,
+    region,
+    includeSpoilerContent,
+    hasAppend,
+    categoryQuery,
+    tagQuery,
+    normalizedPlayLevel
+  )
+    .then((items) => {
+      catalogCache.set(key, {
+        expiresAt: now + MUSIC_CATALOG_CACHE_DURATION_MS,
+        items
+      });
+      return items;
+    })
+    .finally(() => {
+      if (catalogInFlight.get(key) === promise) {
+        catalogInFlight.delete(key);
+      }
+    });
+
+  catalogInFlight.set(key, promise);
+
+  return promise;
+};
+
+const getNumber = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const getBoolean = (value: unknown): boolean | null =>
+  typeof value === "boolean" ? value : null;
+
+const parseMusicListPagination = (
+  payload: unknown,
+  fallbackPage: number,
+  fallbackPageSize: number,
+  itemCount: number
+): MusicListPage["pagination"] => {
+  const pagination = getObject(payload);
+  const page = getNumber(pagination?.page) ?? fallbackPage;
+  const pageSize = getNumber(pagination?.page_size) ?? fallbackPageSize;
+  const total = getNumber(pagination?.total) ?? itemCount;
+  const totalPages =
+    getNumber(pagination?.total_pages) ?? Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
+  const hasNext =
+    getBoolean(pagination?.has_next) ?? (totalPages > 0 ? page < totalPages : itemCount >= pageSize);
+
+  return { page, pageSize, hasNext, total, totalPages };
+};
+
+export const parseMusicListPage = (
+  payload: unknown,
+  page: number,
+  pageSize: number
+): MusicListPage => {
+  const root = getObject(payload);
+  const items = (Array.isArray(root?.items) ? root.items : [])
+    .map(parseMusicListItem)
+    .filter((item): item is MusicListItem => item !== null);
+
+  return {
+    items,
+    pagination: parseMusicListPagination(root?.pagination, page, pageSize, items.length)
+  };
+};
+
+export const fetchMusicListPage = async (
+  baseUrl: string,
+  region: string,
+  queryState: MusicListQueryState,
+  page = 1,
+  pageSize = DEFAULT_MUSIC_LIST_PAGE_SIZE
+): Promise<MusicListPage> => {
+  const response = await getMusicsByRegionList({
+    baseUrl,
+    path: { region },
+    query: createMusicListRequestQuery(queryState, page, pageSize)
+  });
+
+  if (response.error) {
+    throw new Error("Failed to load music list page.");
+  }
+
+  return parseMusicListPage(response.data, page, pageSize);
+};
+
+export const getDefaultMusicListFilterMeta = (): MusicListFilterMeta => ({
+  categories: [],
+  composers: [],
+  arrangers: [],
+  lyricists: [],
+  vocalCharacters: [],
+  tags: [],
+  difficulties: [],
+  levels: []
+});
 
 export const buildMusicListFilterMeta = (items: MusicListItem[]): MusicListFilterMeta => ({
   categories: [...new Set(items.flatMap((item) => item.categories))].sort(),

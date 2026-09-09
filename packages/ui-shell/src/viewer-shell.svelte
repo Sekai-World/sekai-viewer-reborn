@@ -9,6 +9,7 @@
     navTitle: string;
     navBadge?: string;
     navActions?: Snippet;
+    bottomNavigation?: Snippet;
     siteVersion?: string;
     desktopRailOpen?: boolean;
     skipToMainLabel?: string;
@@ -27,6 +28,7 @@
     navTitle,
     navBadge,
     navActions,
+    bottomNavigation,
     siteVersion,
     desktopRailOpen = false,
     skipToMainLabel = "Skip to main content",
@@ -113,6 +115,7 @@
     <main
       id={mainId}
       tabindex="-1"
+      class:viewer-shell-main-with-bottom-navigation={bottomNavigation}
       class="viewer-shell-main mx-auto w-full max-w-384 px-3 pb-8 pt-6 md:px-6 lg:px-8"
     >
       {#if showTitle}
@@ -211,6 +214,10 @@
     </nav>
   </div>
 </div>
+
+{#if bottomNavigation}
+  {@render bottomNavigation()}
+{/if}
 
 <style>
   .viewer-shell-skip {

@@ -491,6 +491,164 @@ body {
   isolation: isolate;
 }
 
+:root {
+  /* The floating tab capsule keeps its content band separate from the device safe area. */
+  --content-site-quick-nav-height: 4.25rem;
+  --content-site-quick-nav-gap: 0.75rem;
+}
+
+@layer components {
+  .content-site-quick-nav {
+    position: fixed;
+    inset-inline-start: max(var(--content-site-quick-nav-gap), env(safe-area-inset-left, 0px));
+    inset-inline-end: max(var(--content-site-quick-nav-gap), env(safe-area-inset-right, 0px));
+    bottom: calc(var(--content-site-quick-nav-gap) + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 1px solid var(--archive-border-subtle);
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--archive-surface-overlay) 74%, transparent);
+    box-shadow:
+      0 5px 16px color-mix(in oklab, var(--color-base-content) 8%, transparent),
+      inset 0 1px 0 color-mix(in oklab, var(--archive-text-strong) 12%, transparent);
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .content-site-quick-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .content-site-quick-nav-inner {
+    display: flex;
+    width: max-content;
+    min-width: max-content;
+    height: var(--content-site-quick-nav-height);
+    margin-inline: auto;
+    align-items: stretch;
+    padding-inline: 0.5rem;
+  }
+
+  .content-site-quick-nav-item {
+    display: inline-flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    min-width: 4rem;
+    min-height: 44px;
+    width: 4rem;
+    max-width: 4rem;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.125rem;
+    padding: 0.125rem 0.25rem 0.0625rem;
+    color: var(--archive-text-muted);
+    font-size: 0.625rem;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    scroll-snap-align: start;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 150ms ease-out;
+  }
+
+  .content-site-quick-nav-icon {
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+  }
+
+  .content-site-quick-nav-label {
+    display: block;
+    width: 100%;
+    max-width: 3.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .content-site-quick-nav-item-active {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+
+  .content-site-quick-nav-item:focus-visible {
+    outline: 2px solid var(--archive-focus-ring);
+    outline-offset: -3px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .content-site-quick-nav-item:hover {
+      color: var(--archive-text-strong);
+    }
+  }
+
+  .content-site-back-to-top {
+    bottom: calc(
+      var(--content-site-quick-nav-height) + var(--content-site-quick-nav-gap) + 1.25rem +
+        env(safe-area-inset-bottom, 0px)
+    );
+  }
+
+  @media (min-width: 64rem) {
+    .content-site-quick-nav {
+      display: none;
+    }
+
+    .content-site-back-to-top {
+      bottom: 1.25rem;
+    }
+  }
+
+  @supports (backdrop-filter: blur(1px)) {
+    .content-site-quick-nav {
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+    }
+  }
+
+  @supports not (backdrop-filter: blur(1px)) {
+    .content-site-quick-nav {
+      background-color: color-mix(in oklab, var(--archive-surface-overlay) 88%, transparent);
+    }
+  }
+
+  :root[data-low-motion] .content-site-quick-nav-item {
+    transition: none;
+  }
+
+  :root[data-low-motion] .content-site-quick-nav {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .content-site-quick-nav {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: none;
+    }
+
+    .content-site-quick-nav-item {
+      transition: none;
+    }
+  }
+}
+
+@media (max-width: 63.999rem) {
+  .viewer-shell-main-with-bottom-navigation {
+    padding-bottom: calc(
+      2rem + var(--content-site-quick-nav-height) + var(--content-site-quick-nav-gap) +
+        env(safe-area-inset-bottom, 0px)
+    );
+  }
+}
+
 :root[data-low-motion] {
   scroll-behavior: auto !important;
 }
