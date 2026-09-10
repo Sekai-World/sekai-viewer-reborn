@@ -547,6 +547,10 @@
         },
         onseek: () => {
           syncPlaybackState(getNow());
+          // Howler resumes a playing sound internally after seeking without emitting onplay.
+          if (howl?.playing()) {
+            startProgressLoop();
+          }
         }
       });
 
