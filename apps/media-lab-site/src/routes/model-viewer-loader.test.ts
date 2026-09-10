@@ -1,4 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("$env/dynamic/private", () => ({ env: {} }));
+
 import { LIVE2D_ASSOCIATED_CATALOG_URL } from "$lib/live2d/associated-catalog";
 import {
   createLive2dCatalogRouteDataResolver,
@@ -12,6 +15,8 @@ import {
 
 const sampleCatalog = [
   {
+    characterId: 1,
+    character2dId: 101,
     modelBase: "sample",
     modelFile: "sample.model3.json",
     modelName: "sample-model",
@@ -94,40 +99,42 @@ const buildModelLoadEvent = (
 const buildCatalogLoadEvent = (fetch: (url: string) => Promise<Response>) =>
   ({ fetch }) as unknown as Parameters<typeof defaultCatalogLoad>[0];
 
+const getStreamedCatalog = (
+  loaded: Awaited<ReturnType<typeof defaultCatalogLoad>>
+): Promise<Live2dCatalogRouteData> =>
+  (loaded as unknown as { catalog: Promise<Live2dCatalogRouteData> }).catalog;
+
 describe("media-lab-site Live2D catalog route", () => {
   it("returns a serializable catalog model list with separate body and facial motion arrays", async () => {
     const { loadCatalog } = createRouteLoads();
     const loaded = await loadCatalog(buildCatalogLoadEvent(createFetch(sampleCatalog)));
 
-    expect(loaded).toMatchObject({
-      track: "live2d",
-      catalog: {
-        status: "ready",
-        source: "network",
-        models: [
-          {
-            id: "sample-model",
-            modelId: "sample-model",
-            modelUrl: "/live2d/assets/model/sample/sample.model3.json",
-            motionSets: [
-              {
-                bodyMotions: [
-                  {
-                    id: "idle.motion3.json",
-                    url: "/live2d/assets/motion/sample/idle.motion3.json"
-                  }
-                ],
-                facialMotions: [
-                  {
-                    id: "smile.motion3.json",
-                    url: "/live2d/assets/motion/sample/facial/smile.motion3.json"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+    await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
+      status: "ready",
+      source: "network",
+      models: [
+        {
+          id: "sample-model",
+          modelId: "sample-model",
+          modelUrl: "/live2d/assets/model/sample/sample.model3.json",
+          motionSets: [
+            {
+              bodyMotions: [
+                {
+                  id: "idle.motion3.json",
+                  url: "/live2d/assets/motion/sample/idle.motion3.json"
+                }
+              ],
+              facialMotions: [
+                {
+                  id: "smile.motion3.json",
+                  url: "/live2d/assets/motion/sample/facial/smile.motion3.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
     expect(JSON.stringify(loaded)).not.toContain("https://storage.sekai.best");
     expect(() => JSON.stringify(loaded)).not.toThrow();
@@ -150,25 +157,23 @@ describe("media-lab-site Live2D catalog route", () => {
 
     const loaded = await loadCatalog(buildCatalogLoadEvent(createFetch(catalog)));
 
-    expect(loaded).toMatchObject({
-      catalog: {
-        status: "ready",
-        models: [
-          {
-            modelUrl: "/live2d/assets/model/sample/sample%20model.model3.json",
-            motionSets: [
-              {
-                bodyMotions: [
-                  {
-                    id: "face_ worry_01.motion3.json",
-                    url: "/live2d/assets/motion/sample/face_%20worry_01.motion3.json"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
+    await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
+      status: "ready",
+      models: [
+        {
+          modelUrl: "/live2d/assets/model/sample/sample%20model.model3.json",
+          motionSets: [
+            {
+              bodyMotions: [
+                {
+                  id: "face_ worry_01.motion3.json",
+                  url: "/live2d/assets/motion/sample/face_%20worry_01.motion3.json"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
     expect(JSON.stringify(loaded)).not.toContain("https://storage.sekai.best");
   });
@@ -225,19 +230,17 @@ describe("media-lab-site Live2D catalog route", () => {
     const { loadCatalog, loadModel } = createRouteLoads();
     const loaded = await loadCatalog(buildCatalogLoadEvent(createFetch(duplicateNameCatalog)));
 
-    expect(loaded).toMatchObject({
-      catalog: {
-        status: "ready",
-        models: [
-          { id: "sample-model", modelId: "sample-model", modelName: "sample-model" },
-          {
-            id: "sample-model-2",
-            modelId: "sample-model-2",
-            modelName: "sample-model",
-            modelBase: "sample-alt"
-          }
-        ]
-      }
+    await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
+      status: "ready",
+      models: [
+        { id: "sample-model", modelId: "sample-model", modelName: "sample-model" },
+        {
+          id: "sample-model-2",
+          modelId: "sample-model-2",
+          modelName: "sample-model",
+          modelBase: "sample-alt"
+        }
+      ]
     });
 
     await expect(
@@ -270,8 +273,11 @@ describe("media-lab-site Live2D catalog route", () => {
 
   it("returns an explicit unavailable catalog result", async () => {
     const { loadCatalog } = createRouteLoads();
-    await expect(loadCatalog(buildCatalogLoadEvent(createFetch(null)))).resolves.toMatchObject({
-      catalog: { status: "unavailable", reason: "Live2D catalog is unavailable", models: [] }
+    const loaded = await loadCatalog(buildCatalogLoadEvent(createFetch(null)));
+    await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
+      status: "unavailable",
+      reason: "Live2D catalog is unavailable",
+      models: []
     });
   });
 
@@ -279,8 +285,10 @@ describe("media-lab-site Live2D catalog route", () => {
     const { loadCatalog } = createRouteLoads();
     const loaded = await loadCatalog(buildCatalogLoadEvent(createFailingFetch("offline")));
 
-    expect(loaded).toMatchObject({
-      catalog: { status: "error", reason: "offline", models: [] }
+    await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
+      status: "error",
+      reason: "offline",
+      models: []
     });
     expect(() => JSON.stringify(loaded)).not.toThrow();
   });
@@ -373,7 +381,8 @@ describe("media-lab-site Live2D catalog route", () => {
       return fetchCatalog(url);
     };
 
-    await loadCatalog(buildCatalogLoadEvent(fetcher));
+    const landing = await loadCatalog(buildCatalogLoadEvent(fetcher));
+    await getStreamedCatalog(landing);
     const loaded = await loadModel(buildModelLoadEvent({ modelId: "sample-model" }, fetcher));
 
     expect(requestCount).toBe(1);
@@ -400,7 +409,10 @@ describe("media-lab-site Live2D catalog route", () => {
 
     const [landingData, modelData] = await Promise.all([landing, model]);
     expect(requestCount).toBe(1);
-    expect(landingData).toMatchObject({ catalog: { status: "ready", source: "network" } });
+    await expect(getStreamedCatalog(landingData)).resolves.toMatchObject({
+      status: "ready",
+      source: "network"
+    });
     expect(modelData).toMatchObject({
       catalog: { status: "ready", source: "network", model: { modelName: "sample-model" } }
     });
@@ -414,17 +426,17 @@ describe("media-lab-site Live2D catalog route", () => {
     });
     const { loadCatalog } = createRouteLoadsWithResolver(resolver);
 
-    await loadCatalog(buildCatalogLoadEvent(createFetch(sampleCatalog)));
+    const initial = await loadCatalog(buildCatalogLoadEvent(createFetch(sampleCatalog)));
+    await getStreamedCatalog(initial);
     timestamp += 101;
 
-    await expect(
-      loadCatalog(buildCatalogLoadEvent(createFailingFetch("temporarily offline")))
-    ).resolves.toMatchObject({
-      catalog: {
-        status: "ready",
-        source: "last-known-good",
-        reason: "temporarily offline"
-      }
+    const loaded = await loadCatalog(
+      buildCatalogLoadEvent(createFailingFetch("temporarily offline"))
+    );
+    await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
+      status: "ready",
+      source: "last-known-good",
+      reason: "temporarily offline"
     });
   });
 });

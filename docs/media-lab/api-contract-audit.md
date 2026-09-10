@@ -26,9 +26,22 @@ listed explicitly and must be resolved in the issues that consume this document.
 
 What exists (public operations in `packages/sekai-master-api-sdk/src/sdk.gen.ts`):
 `cards`, `events`, `gachas`, `musics`, `unitProfiles`, `gameCharacters`,
-`gameCharacterUnits`, `character3ds` (batch only), `virtualLives`
+`gameCharacterUnits`, `character3ds` and `character2ds` (batch-only lookup
+operations), `virtualLives`
 (list/by-id/items/schedules/setlists), admin master-data endpoints,
 `health`/`build-info`.
+
+The typed `character2ds/{region}/batch` result is the effective identity source
+for Live2D model associations: its `gameCharacterId` and `characterType` are
+used before any catalog-provided identity. Ordinary `game_character` labels
+come from `gameCharacters`. A `mob` label may be provided through
+`mobCharacters.name` (surfaced by the Character2D result). A
+`sub_game_character` label comes from `subGameCharacters.name` (the authoritative
+table is `sekai-master-db-diff/subGameCharacters.json`; for example, `1` is
+ハローキティ and `121` is 漣ジュン), not `mobCharacters`.
+For either non-game type, when `displayName` is missing, the viewer uses
+`assetName` and then `#<gameCharacterId>`. The viewer does not issue a separate
+`mobCharacters` or `subGameCharacters` lookup.
 
 What is missing for media-lab:
 
@@ -141,8 +154,14 @@ object, `application/json`). It remains prior verified evidence.
 
 - The future viewer source of truth is
   `https://storage.sekai.best/sekai-live2d-assets/live2d-associated/v1/model_list.json`.
-  It returns a JSON array. Each model record has `modelBase`, `modelFile`,
-  `modelName`, `modelPath`, and `motionSets`.
+  It returns a JSON array. Each model record has positive-integer
+  `characterId` and `character2dId` association fields, plus `modelBase`,
+  `modelFile`, `modelName`, `modelPath`, and `motionSets`. `characterId` maps to
+  a game character only as a fallback identity, while `character2dId`
+  identifies the associated 2D model variant and the typed Character2D batch
+  result determines the effective identity. One character can have multiple 2D
+  model variants. The current response contains both fields on every record
+  (239 records verified on 2026-09-09).
 - Each `motionSets` entry has `motionSetId`, `motionPath`, `motionFiles`,
   `facialPath`, and `facialFiles`. The explicit grouped association removes
   the prior lack-of-motion/expression-metadata blocker for a catalog/resolver
@@ -212,9 +231,10 @@ For the first vertical slice, use a **split approach** (roadmap option 3):
    The adapter owns URL rules, region behavior, and i18n policy; the player
    package must not import them.
 4. Defer adding story catalog endpoints to `sekai-master-api` until #258 has
-   proven which fields routes actually need. The `character3ds` batch endpoint
-   is the precedent for adding lookups on demand. Activating this later
-   follows the documented cross-repo workflow: change `sekai-master-api` →
+   proven which fields routes actually need. The `character3ds` and
+   `character2ds` batch endpoints are precedents for adding lookups on demand.
+   Activating this later follows the documented cross-repo workflow: change
+   `sekai-master-api` →
    `mise run swagger` → `mise run dev` →
    `mise run update-sekai-master-api-sdk-local` →
    `pnpm --filter @platform/sekai-master-api-sdk check`.

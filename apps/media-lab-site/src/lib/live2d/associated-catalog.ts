@@ -34,6 +34,8 @@ export interface Live2dAssociatedMotionSet {
 
 export interface Live2dAssociatedModel {
   region: typeof LIVE2D_CATALOG_REGION;
+  characterId?: number | null;
+  character2dId?: number | null;
   modelBase: string;
   modelFile: string;
   modelName: string;
@@ -43,6 +45,33 @@ export interface Live2dAssociatedModel {
 }
 
 export type Live2dAssociatedCatalog = readonly Live2dAssociatedModel[];
+
+export interface Live2dModelCharacterGroup<TModel extends { characterId?: number | null }> {
+  characterId: number | null;
+  models: readonly TModel[];
+}
+
+/** Groups models by character while preserving group and model input order. */
+export const groupLive2dModelsByCharacterId = <TModel extends { characterId?: number | null }>(
+  models: readonly TModel[]
+): readonly Live2dModelCharacterGroup<TModel>[] => {
+  const groups = new Map<number | null, TModel[]>();
+
+  for (const model of models) {
+    const characterId = model.characterId ?? null;
+    const group = groups.get(characterId);
+    if (group) {
+      group.push(model);
+    } else {
+      groups.set(characterId, [model]);
+    }
+  }
+
+  return Array.from(groups, ([characterId, groupedModels]) => ({
+    characterId,
+    models: groupedModels
+  }));
+};
 
 export type Live2dAssetNamespace = (typeof LIVE2D_ASSET_NAMESPACES)[number];
 
@@ -108,6 +137,26 @@ const readIdentifier = (value: unknown, label: string): ValidationResult<string>
   }
 
   return result;
+};
+
+const readPositiveSafeInteger = (value: unknown, label: string): ValidationResult<number> => {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+    return { reason: `${label} must be a positive safe integer` };
+  }
+
+  return { value };
+};
+
+const readOptionalPositiveSafeInteger = (
+  record: Record<string, unknown>,
+  field: string,
+  label: string
+): ValidationResult<number | undefined> => {
+  if (!Object.prototype.hasOwnProperty.call(record, field) || record[field] === null) {
+    return { value: undefined };
+  }
+
+  return readPositiveSafeInteger(record[field], label);
 };
 
 const readRelativePath = (value: unknown, label: string): ValidationResult<string> => {
@@ -439,6 +488,18 @@ const parseMotionSet = (
 const parseModel = (value: unknown, location: string): ValidationResult<Live2dAssociatedModel> => {
   if (!isRecord(value)) return { reason: `${location} must be an object` };
 
+  const characterId = readOptionalPositiveSafeInteger(
+    value,
+    "characterId",
+    `${location}.characterId`
+  );
+  if ("reason" in characterId) return characterId;
+  const character2dId = readOptionalPositiveSafeInteger(
+    value,
+    "character2dId",
+    `${location}.character2dId`
+  );
+  if ("reason" in character2dId) return character2dId;
   const modelBase = readIdentifier(value.modelBase, `${location}.modelBase`);
   if ("reason" in modelBase) return modelBase;
   const modelFile = readFileName(value.modelFile, `${location}.modelFile`, MODEL_FILE_SUFFIX);
@@ -471,6 +532,8 @@ const parseModel = (value: unknown, location: string): ValidationResult<Live2dAs
   return {
     value: {
       region: LIVE2D_CATALOG_REGION,
+      ...(characterId.value === undefined ? {} : { characterId: characterId.value }),
+      ...(character2dId.value === undefined ? {} : { character2dId: character2dId.value }),
       modelBase: modelBase.value,
       modelFile: modelFile.value,
       modelName: modelName.value,

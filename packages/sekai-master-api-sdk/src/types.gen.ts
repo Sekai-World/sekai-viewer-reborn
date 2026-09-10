@@ -145,6 +145,22 @@ export type SharedCardSupplyResponse = {
     id?: number;
 };
 
+export type SharedCharacter2dBatchItem = {
+    assetName?: string;
+    characterType?: string;
+    displayName?: string;
+    gameCharacterId: number;
+    id: number;
+    isEnabledFlipDisplay?: boolean;
+    isNextGrade?: boolean;
+    unit?: string;
+};
+
+export type SharedCharacter2dBatchResponse = {
+    items: Array<SharedCharacter2dBatchItem>;
+    missingIds: Array<number>;
+};
+
 export type SharedCharacter3dBatchItem = {
     gameCharacterId: number;
     id: number;
@@ -1724,6 +1740,49 @@ export type GetCardsByRegionByIdParamsResponses = {
 };
 
 export type GetCardsByRegionByIdParamsResponse = GetCardsByRegionByIdParamsResponses[keyof GetCardsByRegionByIdParamsResponses];
+
+export type GetCharacter2DsByRegionBatchData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query: {
+        /**
+         * Comma-separated Character2D IDs (up to 100)
+         */
+        ids: string;
+    };
+    url: '/character2ds/{region}/batch';
+};
+
+export type GetCharacter2DsByRegionBatchErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCharacter2DsByRegionBatchError = GetCharacter2DsByRegionBatchErrors[keyof GetCharacter2DsByRegionBatchErrors];
+
+export type GetCharacter2DsByRegionBatchResponses = {
+    /**
+     * OK
+     */
+    200: SharedCharacter2dBatchResponse;
+};
+
+export type GetCharacter2DsByRegionBatchResponse = GetCharacter2DsByRegionBatchResponses[keyof GetCharacter2DsByRegionBatchResponses];
 
 export type GetCharacter3DsByRegionBatchData = {
     body?: never;

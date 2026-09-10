@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   createLive2dCatalogResolver,
+  groupLive2dModelsByCharacterId,
   LIVE2D_ASSOCIATED_CATALOG_URL,
   resolveLive2dAssetRelayUrl,
   parseLive2dAssociatedCatalog,
@@ -14,6 +15,8 @@ import {
 
 const sampleCatalog = [
   {
+    characterId: 1,
+    character2dId: 101,
     modelBase: "01ichika_normal",
     modelFile: "01ichika_normal_3.0_f_t04.model3.json",
     modelName: "01ichika_normal_3.0_f_t04",
@@ -39,6 +42,8 @@ describe("Live2D associated catalog parser", () => {
       catalog: [
         {
           region: "jp",
+          characterId: 1,
+          character2dId: 101,
           modelBase: "01ichika_normal",
           modelFile: "01ichika_normal_3.0_f_t04.model3.json",
           modelName: "01ichika_normal_3.0_f_t04",
@@ -96,6 +101,59 @@ describe("Live2D associated catalog parser", () => {
         }
       ])
     ).toMatchObject({ status: "invalid" });
+  });
+
+  it("accepts missing or null character identifiers and rejects present invalid values", () => {
+    for (const field of ["characterId", "character2dId"] as const) {
+      const missingField = { ...sampleCatalog[0] };
+      Reflect.deleteProperty(missingField, field);
+      expect(parseLive2dAssociatedCatalog([missingField])).toMatchObject({ status: "ok" });
+
+      expect(parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], [field]: null }])).toMatchObject({
+        status: "ok"
+      });
+
+      for (const value of [
+        undefined,
+        0,
+        -1,
+        1.5,
+        Number.NaN,
+        Number.POSITIVE_INFINITY,
+        Number.MAX_SAFE_INTEGER + 1,
+        "1",
+        true
+      ]) {
+        expect(
+          parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], [field]: value }])
+        ).toMatchObject({
+          status: "invalid",
+          reason: expect.stringContaining(`catalog[0].${field}`)
+        });
+      }
+    }
+
+    const missingCharacterId = { ...sampleCatalog[0] };
+    Reflect.deleteProperty(missingCharacterId, "characterId");
+    const nullCharacterId = {
+      ...sampleCatalog[0],
+      characterId: null,
+      character2dId: null,
+      modelBase: "uncategorized_null",
+      modelFile: "uncategorized_null.model3.json",
+      modelName: "uncategorized_null",
+      modelPath: "model/v1/main/uncategorized_null"
+    };
+    const parsed = parseLive2dAssociatedCatalog([missingCharacterId, nullCharacterId]);
+
+    expect(parsed.status).toBe("ok");
+    if (parsed.status !== "ok") return;
+
+    expect(parsed.catalog.map((model) => model.characterId)).toEqual([undefined, undefined]);
+    expect(parsed.catalog.map((model) => model.character2dId)).toEqual([101, undefined]);
+    expect(groupLive2dModelsByCharacterId(parsed.catalog)).toEqual([
+      { characterId: null, models: parsed.catalog }
+    ]);
   });
 
   it("rejects unsafe paths and file values", () => {
@@ -321,6 +379,57 @@ describe("Live2D associated catalog parser", () => {
         }
       ]
     });
+  });
+
+  it("groups route models stably when one character has multiple 2D IDs", () => {
+    const parsed = parseLive2dAssociatedCatalog([
+      sampleCatalog[0],
+      {
+        ...sampleCatalog[0],
+        character2dId: 102,
+        modelBase: "01ichika_normal_alt",
+        modelFile: "01ichika_normal_alt.model3.json",
+        modelName: "01ichika_normal_alt",
+        modelPath: "model/v1/main/01_ichika/01ichika_normal_alt"
+      },
+      {
+        ...sampleCatalog[0],
+        characterId: 2,
+        character2dId: 201,
+        modelBase: "02saki_normal",
+        modelFile: "02saki_normal.model3.json",
+        modelName: "02saki_normal",
+        modelPath: "model/v1/main/02_saki/02saki_normal"
+      }
+    ]);
+
+    expect(parsed.status).toBe("ok");
+    if (parsed.status !== "ok") return;
+
+    const routeModels = parsed.catalog.map((model, index) => ({
+      ...model,
+      modelId: `route-model-${index}`
+    }));
+    const groups = groupLive2dModelsByCharacterId(routeModels);
+
+    expect(
+      groups.map(({ characterId, models }) => ({
+        characterId,
+        modelIds: models.map((model) => model.modelId),
+        character2dIds: models.map((model) => model.character2dId)
+      }))
+    ).toEqual([
+      {
+        characterId: 1,
+        modelIds: ["route-model-0", "route-model-1"],
+        character2dIds: [101, 102]
+      },
+      {
+        characterId: 2,
+        modelIds: ["route-model-2"],
+        character2dIds: [201]
+      }
+    ]);
   });
 
   it("rejects duplicate model identities, motion sets, and files", () => {
