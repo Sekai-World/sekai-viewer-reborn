@@ -244,11 +244,14 @@
     </div>
   </section>
 
-  <section class="mx-auto mb-12" aria-labelledby="current-event-title">
+  <section
+    class="mx-auto mb-12 [&_.archive-event-banner-details]:border-t-0 [&_.archive-event-banner-details]:pt-2!"
+    aria-labelledby="current-event-title"
+  >
     <div
-      class="mb-4 border-b border-(--archive-border-subtle) pb-4 sm:flex sm:items-end sm:justify-between sm:gap-4"
+      class="mb-4 flex items-center justify-between gap-3 border-b border-(--archive-border-subtle) pb-4 sm:items-end sm:gap-4"
     >
-      <div class="flex items-center gap-2">
+      <div class="flex min-w-0 items-center gap-2">
         <Icon icon="mdi:calendar-star" class="size-4 text-primary" aria-hidden="true" />
         <h2
           id="current-event-title"
@@ -257,10 +260,10 @@
           {latestDataEventsLabel}
         </h2>
       </div>
-      <div class="mt-3 flex flex-wrap items-center justify-between gap-3 sm:mt-0 sm:justify-end">
+      <div class="flex shrink-0 items-center justify-end">
         <a
           href="/events/{selectedRegion}"
-          class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/60 transition-colors duration-200 hover:text-primary"
+          class="btn btn-sm btn-ghost min-h-11 gap-1 whitespace-nowrap text-xs text-base-content/60 transition-colors duration-200 hover:text-primary"
         >
           {latestDataViewAll}
           <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
@@ -275,7 +278,7 @@
             class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 animate-pulse bg-base-300/70 p-[5%] lg:mb-0 lg:p-4`}
           ></div>
           <div
-            class="archive-event-banner-details space-y-4 border-t border-(--archive-border-subtle) pt-4"
+            class="archive-event-banner-details space-y-4 pt-2"
           >
             <div class="h-5 w-28 animate-pulse rounded bg-base-300"></div>
             <div class="h-7 w-4/5 animate-pulse rounded bg-base-300"></div>
@@ -395,7 +398,7 @@
                   </a>
                 </h3>
                 {#if regionData.cards.length > 0}
-                  <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div class="grid grid-cols-3 gap-2 sm:gap-3">
                     {#each regionData.cards as card (card.id)}
                       <a
                         href="/card/{regionData.region}/{card.id}"

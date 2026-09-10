@@ -224,6 +224,24 @@ body {
     border-radius: 1rem;
   }
 
+  @media (max-width: 639px) {
+    .archive-list-toolbar {
+      min-width: 0;
+      max-width: 100%;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .archive-list-toolbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .archive-list-toolbar > .archive-control-group {
+      flex: 0 0 auto;
+    }
+  }
+
   .card-hover-lift:hover,
   .card-hover-lift:focus-within,
   :is(a, button):focus-visible > .card-hover-lift {
@@ -500,7 +518,9 @@ body {
 @layer components {
   .content-site-quick-nav {
     position: fixed;
-    inset-inline-start: max(var(--content-site-quick-nav-gap), env(safe-area-inset-left, 0px));
+    inset-inline-start: calc(
+      max(var(--content-site-quick-nav-gap), env(safe-area-inset-left, 0px)) + 1.5rem
+    );
     inset-inline-end: max(var(--content-site-quick-nav-gap), env(safe-area-inset-right, 0px));
     bottom: calc(var(--content-site-quick-nav-gap) + env(safe-area-inset-bottom, 0px));
     z-index: 40;
@@ -527,9 +547,9 @@ body {
     width: max-content;
     min-width: max-content;
     height: var(--content-site-quick-nav-height);
-    margin-inline: auto;
+    margin-inline: 0;
     align-items: stretch;
-    padding-inline: 0.5rem;
+    padding-inline: 0;
   }
 
   .content-site-quick-nav-item {
@@ -543,12 +563,12 @@ body {
     height: 100%;
     align-items: center;
     justify-content: center;
-    gap: 0.125rem;
+    gap: 0.25rem;
     padding: 0.125rem 0.25rem 0.0625rem;
     color: var(--archive-text-muted);
     font-size: 0.625rem;
-    font-weight: 600;
-    line-height: 1;
+    font-weight: 500;
+    line-height: 1.1;
     text-align: center;
     scroll-snap-align: start;
     -webkit-tap-highlight-color: transparent;
@@ -573,7 +593,7 @@ body {
 
   .content-site-quick-nav-item-active {
     color: var(--color-primary);
-    font-weight: 700;
+    font-weight: 600;
   }
 
   .content-site-quick-nav-item:focus-visible {
