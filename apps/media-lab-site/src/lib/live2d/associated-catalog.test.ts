@@ -17,6 +17,7 @@ const sampleCatalog = [
   {
     characterId: 1,
     character2dId: 101,
+    characterType: "sub_game_character",
     modelBase: "01ichika_normal",
     modelFile: "01ichika_normal_3.0_f_t04.model3.json",
     modelName: "01ichika_normal_3.0_f_t04",
@@ -44,6 +45,7 @@ describe("Live2D associated catalog parser", () => {
           region: "jp",
           characterId: 1,
           character2dId: 101,
+          characterType: "sub_game_character",
           modelBase: "01ichika_normal",
           modelFile: "01ichika_normal_3.0_f_t04.model3.json",
           modelName: "01ichika_normal_3.0_f_t04",
@@ -154,6 +156,44 @@ describe("Live2D associated catalog parser", () => {
     expect(groupLive2dModelsByCharacterId(parsed.catalog)).toEqual([
       { characterId: null, models: parsed.catalog }
     ]);
+  });
+
+  it("preserves valid character types and validates optional values", () => {
+    expect(
+      parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], characterType: "sub_game_character" }])
+    ).toMatchObject({
+      status: "ok",
+      catalog: [{ characterType: "sub_game_character" }]
+    });
+
+    const missingCharacterType = { ...sampleCatalog[0] };
+    Reflect.deleteProperty(missingCharacterType, "characterType");
+    const missing = parseLive2dAssociatedCatalog([missingCharacterType]);
+    expect(missing.status).toBe("ok");
+    if (missing.status !== "ok") return;
+    expect(missing.catalog[0]).not.toHaveProperty("characterType");
+
+    const nullValue = parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], characterType: null }]);
+    expect(nullValue.status).toBe("ok");
+    if (nullValue.status !== "ok") return;
+    expect(nullValue.catalog[0]).not.toHaveProperty("characterType");
+
+    for (const value of [
+      undefined,
+      "",
+      " ",
+      "sub/game_character",
+      "sub?game_character",
+      42,
+      true
+    ]) {
+      expect(
+        parseLive2dAssociatedCatalog([{ ...sampleCatalog[0], characterType: value }])
+      ).toMatchObject({
+        status: "invalid",
+        reason: expect.stringContaining("catalog[0].characterType")
+      });
+    }
   });
 
   it("rejects unsafe paths and file values", () => {

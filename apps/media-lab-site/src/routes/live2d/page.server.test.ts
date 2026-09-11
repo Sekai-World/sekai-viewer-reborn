@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("$env/dynamic/private", () => ({ env: {} }));
@@ -11,10 +12,14 @@ import {
 import { _createLive2dCatalogPageLoad } from "./+page.server";
 
 type ReadyCatalog = Extract<Live2dCatalogRouteData, { status: "ready" }>;
+type CharacterPayload = {
+  models: ReadyCatalog["models"];
+  characters: readonly Live2dCharacterOption[];
+};
 type StreamingPageData = {
   track: "live2d";
   catalog: Promise<Live2dCatalogRouteData>;
-  characters: Promise<readonly Live2dCharacterOption[]>;
+  characters: Promise<CharacterPayload>;
 };
 
 const deferred = <Value>() => {
@@ -65,7 +70,10 @@ describe("Live2D catalog page load", () => {
     >[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toEqual(readyCatalog);
-    await expect(loaded.characters).resolves.toEqual(resolvedCharacters);
+    await expect(loaded.characters).resolves.toEqual({
+      models: resolvedModels,
+      characters: resolvedCharacters
+    });
     expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher);
   });
 
@@ -98,9 +106,10 @@ describe("Live2D catalog page load", () => {
       models: readyCatalog.models,
       characters: [{ id: 1, name: "Hoshino Ichika", modelCount: 1 }]
     });
-    await expect(loaded.characters).resolves.toEqual([
-      { id: 1, name: "Hoshino Ichika", modelCount: 1 }
-    ]);
+    await expect(loaded.characters).resolves.toEqual({
+      models: readyCatalog.models,
+      characters: [{ id: 1, name: "Hoshino Ichika", modelCount: 1 }]
+    });
   });
 
   it("streams effective character options for character2d-only models", async () => {
@@ -121,9 +130,10 @@ describe("Live2D catalog page load", () => {
     >[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toMatchObject({ models: [character2dOnlyModel] });
-    await expect(loaded.characters).resolves.toEqual([
-      { id: 2, name: "Hoshino Ichika", modelCount: 1 }
-    ]);
+    await expect(loaded.characters).resolves.toEqual({
+      models: [resolvedModel],
+      characters: [{ id: 2, name: "Hoshino Ichika", modelCount: 1 }]
+    });
     expect(resolveCharacters).toHaveBeenCalledWith([character2dOnlyModel], fetcher);
   });
 
@@ -137,9 +147,10 @@ describe("Live2D catalog page load", () => {
     >[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toEqual(readyCatalog);
-    await expect(loaded.characters).resolves.toEqual(
-      createLive2dCharacterOptions(readyCatalog.models)
-    );
+    await expect(loaded.characters).resolves.toEqual({
+      models: readyCatalog.models,
+      characters: createLive2dCharacterOptions(readyCatalog.models)
+    });
   });
 
   it("does not resolve character options for an unavailable catalog", async () => {
@@ -157,7 +168,7 @@ describe("Live2D catalog page load", () => {
     >[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toEqual(catalog);
-    await expect(loaded.characters).resolves.toEqual([]);
+    await expect(loaded.characters).resolves.toEqual({ models: [], characters: [] });
     expect(resolveCharacters).not.toHaveBeenCalled();
   });
 
@@ -172,7 +183,63 @@ describe("Live2D catalog page load", () => {
     >[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).rejects.toBe(failure);
-    await expect(loaded.characters).resolves.toEqual([]);
+    await expect(loaded.characters).resolves.toEqual({ models: [], characters: [] });
     expect(resolveCharacters).not.toHaveBeenCalled();
+  });
+
+  it("keeps page rendering behind the streamed catalog and character boundaries", () => {
+    const pageSource = readFileSync(new URL("./+page.svelte", import.meta.url), "utf8");
+
+    expect(pageSource).toContain("const catalogPromise = Promise.resolve(");
+    expect(pageSource).toContain("const charactersPromise = Promise.resolve(");
+    expect(pageSource).not.toContain("const catalog = $derived(data.catalog)");
+    expect(pageSource).not.toContain("const characterOptions = $derived(data.characters ?? [])");
+    expect(pageSource).not.toMatch(/data\.catalog\??\.status/);
+    expect(pageSource).not.toMatch(/data\.catalog\.models/);
+  });
+
+  it("uses persistent category tabs and keeps catalog cards concise", () => {
+    const pageSource = readFileSync(new URL("./+page.svelte", import.meta.url), "utf8");
+    const live2dMessages = readFileSync(
+      new URL("../../../../../packages/i18n-source/media-lab-site/live2d.json", import.meta.url),
+      "utf8"
+    );
+
+    expect(pageSource).toContain("groupedCharacterTypes");
+    expect(pageSource).toContain("live2d.modelSelector.characterType.${key}");
+    expect(pageSource).toContain('class="tabs tabs-box flex w-full flex-wrap gap-1 p-1"');
+    expect(pageSource).not.toContain("characterNavigationDescription");
+    expect(pageSource).toContain('role="tabpanel"');
+    expect(pageSource).not.toContain('translate("live2d.modelSelector.characterType.empty")');
+    expect(pageSource).toContain("getLive2dCharacterTypeKey(group.characterType) === key");
+    expect(pageSource).toContain(".filter((group) => group.groups.length > 0)");
+    expect(pageSource).toContain("groupedCharacterTypes[index]");
+    expect(pageSource).toContain("groupedCharacterTypes.length");
+    expect(pageSource).toContain("selectedCharacterTypeGroup.key");
+    expect(live2dMessages).not.toContain("characterNavigationDescription");
+    expect(live2dMessages).not.toContain('"live2d.modelSelector.character2dId"');
+    expect(live2dMessages).not.toContain('"live2d.modelSelector.character2dId": "2D');
+    expect(pageSource).not.toContain("{model.modelPath}");
+    expect(pageSource).not.toContain("{model.id}");
+    expect(pageSource).not.toContain('translate("live2d.modelSelector.inputAction")');
+  });
+
+  it("keeps the model viewer focused on context, stage, then controls", () => {
+    const viewerSource = readFileSync(new URL("./[modelId]/+page.svelte", import.meta.url), "utf8");
+    const studioSource = readFileSync(
+      new URL("../../lib/components/Live2dModelStudio.svelte", import.meta.url),
+      "utf8"
+    );
+
+    expect(viewerSource).toContain("data-model-context");
+    expect(viewerSource).toContain(
+      'aria-label={`${translate("live2d.modelViewer.status.label")}: ${stageStatus}`}'
+    );
+    expect(viewerSource).toContain("stage={modelStage}");
+    expect(studioSource.indexOf("{#if stage}")).toBeLessThan(
+      studioSource.indexOf("aria-labelledby={`${uid}-controls-title`}")
+    );
+    expect(studioSource).toContain('class="relative aspect-4/5');
+    expect(studioSource).toContain("aria-labelledby={`${uid}-controls-title`}");
   });
 });

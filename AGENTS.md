@@ -124,6 +124,8 @@ Preview ports:
 - For one-off visual differences, prefer utility classes directly in Svelte markup over new global CSS.
 - Avoid broad transition rules like `:root *`; keep theme transition fallbacks narrow so local hover motion is not diluted or overridden.
 - Avoid unnecessary expensive CSS effects that can slow rendering, such as heavy blur, large shadows, excessive filters, or broad animations.
+- Keep page titles and context information non-redundant: when a heading already expresses the content or model ID, remove duplicate visible labels and metadata rows. Live2D category tabs should appear directly without a separate navigation-description row; keep the tablist `aria-label`.
+- Keep user-facing copy purposeful: do not add explanatory text merely to fill space. Do not expose implementation details, raw technical identifiers, runtime diagnostics, or debugging information unless needed to help the user complete an action or recover from an error; use plain language when such context is necessary.
 - For `content-site` card/shared UI conventions, read `docs/content-site-ui-conventions.md` before introducing new patterns.
 
 ## Shared Package Notes

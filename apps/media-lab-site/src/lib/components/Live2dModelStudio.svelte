@@ -21,8 +21,6 @@
 
   interface Props {
     labels: Live2dModelStudioLabels;
-    /** Human-readable stage status rendered under the stage surface. */
-    statusLine: string;
     /** Controls stay disabled until the model player adapter reports readiness. */
     controlsEnabled?: boolean;
     motions?: readonly string[];
@@ -46,7 +44,6 @@
 
   let {
     labels,
-    statusLine,
     controlsEnabled = false,
     motions = [],
     expressions = [],
@@ -225,23 +222,81 @@
   }
 </script>
 
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-5">
+  <div
+    class="relative aspect-4/5 min-h-88 w-full overflow-hidden rounded-2xl border border-base-content/10 bg-neutral text-neutral-content shadow-sm sm:aspect-4/3 sm:min-h-0 lg:aspect-16/10"
+  >
+    {#if stage}
+      {@render stage()}
+    {:else}
+      <!-- Reserved-stage placeholder: purely visual, the adapter owns the
+           accessible canvas once mounted. -->
+      <div class="absolute inset-0 grid place-items-center" aria-hidden="true">
+        <div
+          class="absolute inset-0 bg-[radial-gradient(closest-side,rgba(255,255,255,0.07),transparent)]"
+        ></div>
+        <Icon icon="mdi:drama-masks" class="relative size-10 opacity-40" aria-hidden="true" />
+      </div>
+    {/if}
+  </div>
+
   <section
     aria-labelledby={`${uid}-controls-title`}
-    class="rounded-2xl border border-base-content/10 bg-base-100 p-4 shadow-sm sm:p-5"
+    class="rounded-2xl border border-base-content/10 bg-base-100/80 p-4 sm:p-5"
   >
-    <div class="mb-4 flex items-center justify-between gap-4">
-      <h3 id={`${uid}-controls-title`} class="text-base font-semibold text-base-content">
-        {labels.controlsTitle}
-      </h3>
-      {#if !controlsEnabled}
-        <span class="text-right text-xs font-medium text-base-content/50"
-          >{labels.controlsHint}</span
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex min-w-0 items-center gap-3">
+        <h3 id={`${uid}-controls-title`} class="text-base font-semibold text-base-content">
+          {labels.controlsTitle}
+        </h3>
+        {#if !controlsEnabled}
+          <span class="text-xs font-medium text-base-content/50">{labels.controlsHint}</span>
+        {/if}
+      </div>
+
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          class="btn btn-outline btn-sm h-11 min-h-11! shrink-0 px-3 text-sm"
+          disabled={!controlsEnabled}
+          aria-pressed={paused}
+          data-playback-icon={paused ? "play" : "pause"}
+          onclick={paused ? onResume : onPause}
         >
-      {/if}
+          <Icon icon={paused ? "mdi:play" : "mdi:pause"} class="size-4" aria-hidden="true" />
+          {paused ? labels.resume : labels.pause}
+        </button>
+        <label class="flex min-h-11 shrink-0 items-center gap-2 px-1 text-sm font-medium">
+          <input
+            type="checkbox"
+            class="toggle toggle-primary"
+            disabled={!controlsEnabled}
+            bind:checked={idleMotion}
+          />
+          {labels.idleBreath}
+        </label>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm h-11 min-h-11! shrink-0 px-3 text-sm"
+          disabled={!controlsEnabled}
+          onclick={onReset}
+        >
+          <Icon icon="mdi:restart" class="size-4" aria-hidden="true" />
+          {labels.reset}
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm h-11 min-h-11! shrink-0 px-3 text-sm"
+          disabled={!controlsEnabled}
+          onclick={onReload}
+        >
+          <Icon icon="mdi:reload" class="size-4" aria-hidden="true" />
+          {labels.reload}
+        </button>
+      </div>
     </div>
 
-    <div class="grid gap-3 lg:grid-cols-[minmax(15rem,1fr)_minmax(15rem,1fr)_auto] lg:items-end">
+    <div class="grid gap-4 xl:grid-cols-2 xl:items-end">
       <div class="flex min-w-0 items-end gap-2" onfocusout={handleMotionFocusOut}>
         <div class="relative min-w-0 flex-1">
           <label class="flex min-w-0 flex-col gap-1.5" for={`${uid}-motion`}>
@@ -399,67 +454,6 @@
           {labels.apply}
         </button>
       </div>
-
-      <div class="flex flex-wrap items-center gap-2 lg:flex-nowrap lg:justify-end">
-        <button
-          type="button"
-          class="btn btn-outline btn-sm h-11 min-h-11! shrink-0 px-3 text-sm"
-          disabled={!controlsEnabled}
-          aria-pressed={paused}
-          data-playback-icon={paused ? "play" : "pause"}
-          onclick={paused ? onResume : onPause}
-        >
-          <Icon icon={paused ? "mdi:play" : "mdi:pause"} class="size-4" aria-hidden="true" />
-          {paused ? labels.resume : labels.pause}
-        </button>
-        <label class="flex min-h-11 shrink-0 items-center gap-2 px-1 text-sm font-medium">
-          <input
-            type="checkbox"
-            class="toggle toggle-primary"
-            disabled={!controlsEnabled}
-            bind:checked={idleMotion}
-          />
-          {labels.idleBreath}
-        </label>
-        <button
-          type="button"
-          class="btn btn-outline btn-sm h-11 min-h-11! shrink-0 px-3 text-sm"
-          disabled={!controlsEnabled}
-          onclick={onReset}
-        >
-          <Icon icon="mdi:restart" class="size-4" aria-hidden="true" />
-          {labels.reset}
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline btn-sm h-11 min-h-11! shrink-0 px-3 text-sm"
-          disabled={!controlsEnabled}
-          onclick={onReload}
-        >
-          <Icon icon="mdi:reload" class="size-4" aria-hidden="true" />
-          {labels.reload}
-        </button>
-      </div>
     </div>
   </section>
-
-  <div>
-    <div
-      class="relative aspect-video w-full overflow-hidden rounded-2xl border border-base-content/10 bg-neutral text-neutral-content shadow-sm"
-    >
-      {#if stage}
-        {@render stage()}
-      {:else}
-        <!-- Reserved-stage placeholder: purely visual, the adapter owns the
-             accessible canvas once mounted. -->
-        <div class="absolute inset-0 grid place-items-center" aria-hidden="true">
-          <div
-            class="absolute inset-0 bg-[radial-gradient(closest-side,rgba(255,255,255,0.07),transparent)]"
-          ></div>
-          <Icon icon="mdi:drama-masks" class="relative size-10 opacity-40" aria-hidden="true" />
-        </div>
-      {/if}
-    </div>
-    <p class="mt-2 text-sm text-base-content/60" role="status">{statusLine}</p>
-  </div>
 </div>

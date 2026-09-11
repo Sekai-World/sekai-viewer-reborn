@@ -36,6 +36,7 @@ export interface Live2dAssociatedModel {
   region: typeof LIVE2D_CATALOG_REGION;
   characterId?: number | null;
   character2dId?: number | null;
+  characterType?: string | null;
   modelBase: string;
   modelFile: string;
   modelName: string;
@@ -157,6 +158,18 @@ const readOptionalPositiveSafeInteger = (
   }
 
   return readPositiveSafeInteger(record[field], label);
+};
+
+const readOptionalIdentifier = (
+  record: Record<string, unknown>,
+  field: string,
+  label: string
+): ValidationResult<string | undefined> => {
+  if (!Object.prototype.hasOwnProperty.call(record, field) || record[field] === null) {
+    return { value: undefined };
+  }
+
+  return readIdentifier(record[field], label);
 };
 
 const readRelativePath = (value: unknown, label: string): ValidationResult<string> => {
@@ -500,6 +513,8 @@ const parseModel = (value: unknown, location: string): ValidationResult<Live2dAs
     `${location}.character2dId`
   );
   if ("reason" in character2dId) return character2dId;
+  const characterType = readOptionalIdentifier(value, "characterType", `${location}.characterType`);
+  if ("reason" in characterType) return characterType;
   const modelBase = readIdentifier(value.modelBase, `${location}.modelBase`);
   if ("reason" in modelBase) return modelBase;
   const modelFile = readFileName(value.modelFile, `${location}.modelFile`, MODEL_FILE_SUFFIX);
@@ -534,6 +549,7 @@ const parseModel = (value: unknown, location: string): ValidationResult<Live2dAs
       region: LIVE2D_CATALOG_REGION,
       ...(characterId.value === undefined ? {} : { characterId: characterId.value }),
       ...(character2dId.value === undefined ? {} : { character2dId: character2dId.value }),
+      ...(characterType.value === undefined ? {} : { characterType: characterType.value }),
       modelBase: modelBase.value,
       modelFile: modelFile.value,
       modelName: modelName.value,

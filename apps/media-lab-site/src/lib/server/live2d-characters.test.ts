@@ -123,6 +123,39 @@ describe("Live2D character options", () => {
     );
   });
 
+  it.each(["omitted", "empty"])(
+    "retains a catalog sub-game-character type when the Character2D type is %s",
+    async (responseType) => {
+      envState.SEKAI_MASTER_API_BASE_URL = "https://master-api.test/api/v1";
+      const fetcher = vi.fn() as unknown as typeof fetch;
+      getCharacter2DsByRegionBatch.mockResolvedValue({
+        data: {
+          items: [
+            {
+              id: 101,
+              gameCharacterId: 1,
+              ...(responseType === "empty" ? { characterType: "" } : {})
+            }
+          ],
+          missingIds: []
+        }
+      });
+
+      await expect(
+        resolveLive2dCharacterData(
+          [{ id: "sub", character2dId: 101, characterType: "sub_game_character" }],
+          fetcher
+        )
+      ).resolves.toEqual({
+        models: [
+          { id: "sub", character2dId: 101, characterId: 1, characterType: "sub_game_character" }
+        ],
+        characters: [{ id: 1, characterType: "sub_game_character", name: "#1", modelCount: 1 }]
+      });
+      expect(getGameCharactersByRegionList).not.toHaveBeenCalled();
+    }
+  );
+
   it("prefers API display names for mob and sub-game-character mappings", async () => {
     envState.SEKAI_MASTER_API_BASE_URL = "https://master-api.test/api/v1";
     const fetcher = vi.fn() as unknown as typeof fetch;

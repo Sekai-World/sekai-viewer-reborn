@@ -43,6 +43,15 @@ patterns in `docs/content-site-ui-conventions.md` for content-site work.
 - Use semantic HTML, visible labels, meaningful image alternatives, visible
   focus, keyboard-operable interactions, and non-color-only feedback. Respect
   reduced-motion preferences; do not make meaning depend on hover or motion.
+- Keep page titles and context information non-redundant: when a heading already
+  expresses the content or model ID, remove duplicate visible labels and
+  metadata rows. Live2D category tabs should appear directly without a separate
+  navigation-description row; keep the tablist `aria-label`.
+- Keep user-facing copy purposeful: do not add explanatory text merely to fill
+  space. Do not expose implementation details, raw technical identifiers,
+  runtime diagnostics, or debugging information unless needed to help the user
+  complete an action or recover from an error; use plain language when such
+  context is necessary.
 
 ## Testing
 

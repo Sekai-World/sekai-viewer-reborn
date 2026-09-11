@@ -1,9 +1,19 @@
-import { resolveLive2dCatalogRouteData } from "$lib/live2d/catalog-route-data";
+import {
+  resolveLive2dCatalogRouteData,
+  type Live2dCatalogRouteData
+} from "$lib/live2d/catalog-route-data";
 import {
   createLive2dCharacterOptions,
   resolveLive2dCharacterData
 } from "$lib/server/live2d-characters";
+import type { Live2dCharacterOption } from "$lib/server/live2d-characters";
 import type { PageServerLoad } from "./$types";
+
+type Live2dCatalogModel = Extract<Live2dCatalogRouteData, { status: "ready" }>["models"][number];
+type Live2dCharacterPayload = {
+  readonly models: readonly Live2dCatalogModel[];
+  readonly characters: readonly Live2dCharacterOption[];
+};
 
 export const _createLive2dCatalogPageLoad =
   (
@@ -12,16 +22,20 @@ export const _createLive2dCatalogPageLoad =
   ): PageServerLoad =>
   async ({ fetch }) => {
     const catalog = resolveCatalog(fetch);
-    const characters = catalog.then(
+    const characters: Promise<Live2dCharacterPayload> = catalog.then(
       (catalog) => {
-        if (catalog.status !== "ready") return [];
+        if (catalog.status !== "ready") {
+          return { models: catalog.models, characters: [] };
+        }
 
         return Promise.resolve()
           .then(() => resolveCharacters(catalog.models, fetch))
-          .then(({ characters }) => characters)
-          .catch(() => createLive2dCharacterOptions(catalog.models));
+          .catch(() => ({
+            models: catalog.models,
+            characters: createLive2dCharacterOptions(catalog.models)
+          }));
       },
-      () => []
+      () => ({ models: [], characters: [] })
     );
 
     // Keep the original rejections available to SvelteKit's streaming error
