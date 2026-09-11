@@ -556,6 +556,20 @@ describe("Live2D Pixi/Cubism loader", () => {
     await resource.destroy();
   });
 
+  it("forwards resource pause and resume to the Pixi application", async () => {
+    const { model } = createModel();
+    const { runtime, pixi } = createRuntime(model);
+    const loader = createLive2dModelLoader({} as HTMLElement, { runtime });
+    const resource = await loader.load(descriptor, new AbortController().signal, vi.fn());
+
+    await resource.pause();
+    await resource.resume();
+
+    expect(pixi.application.pause).toHaveBeenCalledTimes(1);
+    expect(pixi.application.resume).toHaveBeenCalledTimes(1);
+    await resource.destroy();
+  });
+
   it("centers and contains the model on load and recomputes its transform on resize", async () => {
     const { model } = createModel();
     const { runtime, pixi } = createRuntime(model);

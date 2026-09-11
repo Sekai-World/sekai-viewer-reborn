@@ -32,6 +32,7 @@ const createResource = (): Live2dModelResource => ({
   playExpression: vi.fn(async () => undefined),
   setIdle: vi.fn(async () => undefined),
   pause: vi.fn(async () => undefined),
+  resume: vi.fn(async () => undefined),
   reset: vi.fn(async () => undefined),
   resize: vi.fn(async () => undefined),
   destroy: vi.fn(async () => undefined)
@@ -174,6 +175,18 @@ describe("Live2D model viewer controller", () => {
     await expect(viewer.playMotion("unknown")).resolves.toBe(false);
     expect(states).toEqual(["idle", "loading", "loading", "loading", "ready"]);
     unsubscribe();
+  });
+
+  it("forwards resume only when the viewer is ready", async () => {
+    const resource = createResource();
+    const viewer = createLive2dModelViewer(createLoader(resource));
+
+    await expect(viewer.resume()).resolves.toBe(false);
+    await expect(viewer.load(descriptor)).resolves.toEqual({ status: "ready", descriptor });
+    await expect(viewer.resume()).resolves.toBe(true);
+
+    expect(resource.resume).toHaveBeenCalledTimes(1);
+    await viewer.destroy();
   });
 
   it("destroys a ready model before replacing it", async () => {

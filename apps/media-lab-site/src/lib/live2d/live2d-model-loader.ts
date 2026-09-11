@@ -684,6 +684,9 @@ export const createLive2dModelLoader = (
           pause: (): void => {
             loadedApplication.pause();
           },
+          resume: (): void => {
+            loadedApplication.resume();
+          },
           reset: (): void => {
             stopAllMotionManagers(loadedModel);
           },

@@ -16,6 +16,7 @@ const labels = {
   noneLoaded: "None loaded",
   apply: "Apply",
   pause: "Pause",
+  resume: "Resume",
   idleBreath: "Idle breath",
   reload: "Reload",
   reset: "Reset",
@@ -80,6 +81,15 @@ function getOptionNames(listboxName: string): string[] {
   return within(screen.getByRole("listbox", { name: listboxName }))
     .getAllByRole("option")
     .map((option) => option.textContent?.trim() ?? "");
+}
+
+function getPlaybackButton(): HTMLButtonElement {
+  const button = screen.getByRole("button", { name: /^(Pause|Resume)$/ });
+  if (!(button instanceof HTMLButtonElement)) {
+    throw new Error("Expected the playback toggle button");
+  }
+
+  return button;
 }
 
 describe("Live2dModelStudio selectors", () => {
@@ -211,5 +221,61 @@ describe("Live2dModelStudio selectors", () => {
     expect(
       screen.queryByRole("button", { name: `${labels.expression} ${labels.reset}` })
     ).toBeNull();
+  });
+
+  it("shows pause first and invokes the pause callback", async () => {
+    const onPause = vi.fn();
+    const onResume = vi.fn();
+    render(Live2dModelStudio, {
+      labels,
+      statusLine: "Ready",
+      controlsEnabled: true,
+      onPause,
+      onResume
+    });
+
+    const playbackButton = getPlaybackButton();
+    expect(playbackButton.textContent).toContain(labels.pause);
+    expect(playbackButton.getAttribute("data-playback-icon")).toBe("pause");
+
+    await fireEvent.click(playbackButton);
+
+    expect(onPause).toHaveBeenCalledOnce();
+    expect(onResume).not.toHaveBeenCalled();
+  });
+
+  it("shows resume and invokes the resume callback while paused", async () => {
+    const onPause = vi.fn();
+    const onResume = vi.fn();
+    render(Live2dModelStudio, {
+      labels,
+      statusLine: "Paused",
+      controlsEnabled: true,
+      paused: true,
+      onPause,
+      onResume
+    });
+
+    const playbackButton = getPlaybackButton();
+    expect(playbackButton.textContent).toContain(labels.resume);
+    expect(playbackButton.getAttribute("aria-pressed")).toBe("true");
+    expect(playbackButton.getAttribute("data-playback-icon")).toBe("play");
+
+    await fireEvent.click(playbackButton);
+
+    expect(onResume).toHaveBeenCalledOnce();
+    expect(onPause).not.toHaveBeenCalled();
+  });
+
+  it("keeps the playback toggle disabled until controls are enabled", () => {
+    render(Live2dModelStudio, {
+      labels,
+      statusLine: "Loading",
+      controlsEnabled: false,
+      onPause: vi.fn(),
+      onResume: vi.fn()
+    });
+
+    expect(getPlaybackButton().disabled).toBe(true);
   });
 });

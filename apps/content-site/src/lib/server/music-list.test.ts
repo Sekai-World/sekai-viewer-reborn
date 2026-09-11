@@ -9,12 +9,14 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
 }));
 
 import {
+  buildMusicListFilterMeta,
   canUsePaginatedMusicList,
   createMusicListPage,
   fetchMusicCatalog,
   fetchMusicListPage,
   parseMusicListQueryState
 } from "./music-list";
+import type { MusicListItem } from "./music-list";
 
 const makeItem = (id: string, categories: string[]): Record<string, unknown> => ({
   id,
@@ -111,15 +113,7 @@ describe("fetchMusicCatalog category propagation", () => {
   it("combines category and tag queries independently", async () => {
     mockSinglePage([makeItem("1", ["vivid"])]);
 
-    await fetchMusicCatalog(
-      "https://f.test",
-      "jp",
-      false,
-      false,
-      ["vivid"],
-      ["original"],
-      ""
-    );
+    await fetchMusicCatalog("https://f.test", "jp", false, false, ["vivid"], ["original"], "");
 
     const query = getMusicsByRegionList.mock.calls[0][0].query;
     expect(query.category).toBe("vivid");
@@ -341,5 +335,36 @@ describe("createMusicListPage multi-category semantics", () => {
     );
 
     expect(page.items.map((item) => item.id)).toEqual(["1"]);
+  });
+});
+
+describe("buildMusicListFilterMeta", () => {
+  it("sorts string filter values alphabetically", () => {
+    const item: MusicListItem = {
+      id: "1",
+      title: "Music 1",
+      assetBundleName: null,
+      categories: ["zeta", "alpha"],
+      composer: "zeta",
+      arranger: "alpha",
+      lyricist: "zeta",
+      vocalCharacters: ["zeta", "alpha"],
+      tags: ["zeta", "alpha"],
+      difficulties: ["expert", "easy"],
+      difficultyLevels: [],
+      levels: [],
+      publishedAt: null
+    };
+
+    expect(buildMusicListFilterMeta([item])).toEqual({
+      categories: ["alpha", "zeta"],
+      composers: ["zeta"],
+      arrangers: ["alpha"],
+      lyricists: ["zeta"],
+      vocalCharacters: ["alpha", "zeta"],
+      tags: ["alpha", "zeta"],
+      difficulties: ["easy", "expert"],
+      levels: []
+    });
   });
 });
