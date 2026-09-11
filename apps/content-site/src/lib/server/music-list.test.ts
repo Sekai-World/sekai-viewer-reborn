@@ -12,16 +12,54 @@ import {
   buildMusicListFilterMeta,
   canUsePaginatedMusicList,
   createMusicListPage,
+  getDefaultMusicListFilterMeta,
   fetchMusicCatalog,
   fetchMusicListPage,
+  hasMusicListFilters,
+  parseMusicCategories,
+  parseMusicListItem,
+  parseMusicListPage,
   parseMusicListQueryState
 } from "./music-list";
-import type { MusicListItem } from "./music-list";
+import type { MusicListItem, MusicListQueryState } from "./music-list";
 
 const makeItem = (id: string, categories: string[]): Record<string, unknown> => ({
   id,
   title: `Music ${id}`,
   categories
+});
+
+const makeListItem = (overrides: Partial<MusicListItem> = {}): MusicListItem => ({
+  id: "1",
+  title: "Music 1",
+  assetBundleName: null,
+  categories: [],
+  composer: null,
+  arranger: null,
+  lyricist: null,
+  vocalCharacters: [],
+  tags: [],
+  difficulties: [],
+  difficultyLevels: [],
+  levels: [],
+  publishedAt: null,
+  ...overrides
+});
+
+const makeQueryState = (overrides: Partial<MusicListQueryState> = {}): MusicListQueryState => ({
+  sortBy: "publishedAt",
+  sortOrder: "desc",
+  name: "",
+  categories: [],
+  composer: "",
+  arranger: "",
+  lyricist: "",
+  vocalCharacter: [],
+  tags: [],
+  hasAppend: false,
+  level: "",
+  spoiler: false,
+  ...overrides
 });
 
 const mockSinglePage = (items: Record<string, unknown>[]): void => {
@@ -37,7 +75,7 @@ type MockMusicResponse = {
   };
 };
 
-const createDeferred = <T,>() => {
+const createDeferred = <T>() => {
   let resolve!: (value: T | PromiseLike<T>) => void;
   let reject!: (reason?: unknown) => void;
   const promise = new Promise<T>((resolvePromise, rejectPromise) => {
@@ -118,6 +156,314 @@ describe("fetchMusicCatalog category propagation", () => {
     const query = getMusicsByRegionList.mock.calls[0][0].query;
     expect(query.category).toBe("vivid");
     expect(query.tag).toBe("original");
+  });
+
+  it("propagates spoiler, append, tag, and level options to the catalog request", async () => {
+    mockSinglePage([makeItem("1", ["vivid"])]);
+
+    await fetchMusicCatalog(
+      "https://options.test",
+      "en",
+      true,
+      true,
+      [" vivid "],
+      ["original"],
+      " 30 "
+    );
+
+    expect(getMusicsByRegionList.mock.calls[0][0]).toMatchObject({
+      baseUrl: "https://options.test",
+      path: { region: "en" },
+      query: {
+        page: 1,
+        page_size: 1000,
+        spoiler: true,
+        category: "vivid",
+        tag: "original",
+        playLevel: "30",
+        hasAppend: true,
+        sort_by: "publishedAt",
+        sort_order: "desc"
+      }
+    });
+  });
+
+  it("throws when the catalog API returns an error", async () => {
+    getMusicsByRegionList.mockResolvedValueOnce({ error: { status: 503 } });
+
+    await expect(
+      fetchMusicCatalog("https://catalog-error.test", "jp", false, false, [], [], "")
+    ).rejects.toThrow("Failed to load music catalog.");
+  });
+
+  it("returns an empty catalog for a response without data", async () => {
+    getMusicsByRegionList.mockResolvedValueOnce({});
+
+    await expect(
+      fetchMusicCatalog("https://catalog-empty.test", "jp", false, false, [], [], "")
+    ).resolves.toEqual([]);
+  });
+
+  it("reloads a catalog after its cache entry expires", async () => {
+    vi.useFakeTimers();
+    try {
+      getMusicsByRegionList
+        .mockResolvedValueOnce({
+          data: { items: [makeItem("1", [])], pagination: { has_next: false, total: 1 } }
+        })
+        .mockResolvedValueOnce({
+          data: { items: [makeItem("2", [])], pagination: { has_next: false, total: 1 } }
+        });
+
+      const first = await fetchMusicCatalog(
+        "https://catalog-expiry.test",
+        "jp",
+        false,
+        false,
+        [],
+        [],
+        ""
+      );
+      vi.advanceTimersByTime(60_001);
+      const second = await fetchMusicCatalog(
+        "https://catalog-expiry.test",
+        "jp",
+        false,
+        false,
+        [],
+        [],
+        ""
+      );
+
+      expect(first.map((item) => item.id)).toEqual(["1"]);
+      expect(second.map((item) => item.id)).toEqual(["2"]);
+      expect(getMusicsByRegionList).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("music list parsing", () => {
+  it("normalizes canonical categories and discards malformed values", () => {
+    expect(parseMusicCategories(["vivid", "vivid", "", "  ", null, 42, {}])).toEqual(["vivid"]);
+    expect(parseMusicCategories(undefined)).toEqual([]);
+    expect(parseMusicCategories("vivid")).toEqual([]);
+  });
+
+  it("parses aliases and nested list values into a stable list item", () => {
+    expect(parseMusicListItem(null)).toBeNull();
+    expect(parseMusicListItem({ title: "Missing id" })).toBeNull();
+    expect(parseMusicListItem({ id: "missing title" })).toBeNull();
+
+    expect(
+      parseMusicListItem({
+        musicId: 42,
+        name: "Alias title",
+        assetBundleName: "alias_bundle",
+        categories: ["vivid", "vivid"],
+        composer: "Composer",
+        arranger: "Arranger",
+        lyricist: "Lyricist",
+        vocalCharacters: [1, { characterId: 2 }, null, {}],
+        music_tag: "original, commissioned, original",
+        musicDifficulties: [
+          { difficulty: "EXPERT", level: 30 },
+          { musicDifficulty: "MASTER", musicLevel: "append" },
+          { difficulty: "" },
+          {},
+          null
+        ],
+        published_at: 123
+      })
+    ).toEqual({
+      id: "42",
+      title: "Alias title",
+      assetBundleName: "alias_bundle",
+      categories: ["vivid"],
+      composer: "Composer",
+      arranger: "Arranger",
+      lyricist: "Lyricist",
+      vocalCharacters: ["1", "2"],
+      tags: ["original", "commissioned"],
+      difficulties: ["expert", "master"],
+      difficultyLevels: [
+        { difficulty: "expert", level: "30" },
+        { difficulty: "master", level: "append" }
+      ],
+      levels: ["30", "append"],
+      publishedAt: 123
+    });
+  });
+
+  it("supports scalar and object list aliases and date aliases", () => {
+    expect(
+      parseMusicListItem({
+        id: "7",
+        title: "Scalar values",
+        vocalCharacterIds: "1, 2, 1",
+        tags: [{ tag: "original" }, "original", 3],
+        levels: [5, "5"],
+        publishedAt: "2026-01-01"
+      })
+    ).toMatchObject({
+      id: "7",
+      vocalCharacters: ["1", "2"],
+      tags: ["original", "3"],
+      difficulties: [],
+      difficultyLevels: [],
+      levels: ["5"],
+      publishedAt: "2026-01-01"
+    });
+  });
+
+  it("parses explicit and fallback pagination while filtering invalid items", () => {
+    const page = parseMusicListPage(
+      {
+        items: [makeItem("1", ["vivid"]), { id: "invalid" }, null],
+        pagination: {
+          page: 2,
+          page_size: 2,
+          has_next: true,
+          total: 5,
+          total_pages: 3
+        }
+      },
+      1,
+      24
+    );
+
+    expect(page.items.map((item) => item.id)).toEqual(["1"]);
+    expect(page.pagination).toEqual({
+      page: 2,
+      pageSize: 2,
+      hasNext: true,
+      total: 5,
+      totalPages: 3
+    });
+
+    expect(parseMusicListPage({ items: [makeItem("2", [])] }, 2, 2).pagination).toEqual({
+      page: 2,
+      pageSize: 2,
+      hasNext: false,
+      total: 1,
+      totalPages: 1
+    });
+
+    expect(
+      parseMusicListPage(
+        {
+          items: [makeItem("3", []), makeItem("4", [])],
+          pagination: {
+            page: "invalid",
+            page_size: "invalid",
+            total: "invalid",
+            total_pages: 0,
+            has_next: "invalid"
+          }
+        },
+        3,
+        2
+      ).pagination
+    ).toEqual({
+      page: 3,
+      pageSize: 2,
+      hasNext: true,
+      total: 2,
+      totalPages: 0
+    });
+
+    expect(
+      parseMusicListPage({ items: [], pagination: { total_pages: 0, has_next: null } }, 1, 2)
+        .pagination.hasNext
+    ).toBe(false);
+  });
+});
+
+describe("music list query state", () => {
+  it("trims, deduplicates, and normalizes all supported query values", () => {
+    const searchParams = new URLSearchParams();
+    searchParams.set("sort_by", "id");
+    searchParams.set("sort_order", "asc");
+    searchParams.set("name", "  world  ");
+    searchParams.append("category", " vivid ");
+    searchParams.append("category", "vivid");
+    searchParams.set("composer", " Composer ");
+    searchParams.set("arranger", " Arranger ");
+    searchParams.set("lyricist", " Lyricist ");
+    searchParams.append("vocal_character", " 1 ");
+    searchParams.append("vocal_character", "1");
+    searchParams.append("music_tag", "original");
+    searchParams.append("vocal_unit", "light_sound");
+    searchParams.append("vocal_unit", "light_sound");
+    searchParams.set("has_append", "true");
+    searchParams.append("difficulty", "append");
+    searchParams.set("playLevel", " 30 ");
+    searchParams.set("level", "29");
+    searchParams.set("spoiler", "true");
+
+    expect(parseMusicListQueryState(searchParams)).toEqual({
+      sortBy: "id",
+      sortOrder: "asc",
+      name: "world",
+      categories: ["vivid"],
+      composer: "Composer",
+      arranger: "Arranger",
+      lyricist: "Lyricist",
+      vocalCharacter: ["1"],
+      tags: ["original", "light_music_club"],
+      hasAppend: true,
+      level: "30",
+      spoiler: true
+    });
+  });
+
+  it("uses safe defaults and the all-tag reset while preserving unknown legacy values", () => {
+    const state = parseMusicListQueryState(
+      new URLSearchParams(
+        "sort_by=unknown&sort_order=unknown&music_tag=all&music_tag=original&vocal_unit=unknown&level=  "
+      )
+    );
+
+    expect(state).toMatchObject({
+      sortBy: "publishedAt",
+      sortOrder: "desc",
+      tags: [],
+      level: ""
+    });
+    expect(parseMusicListQueryState(new URLSearchParams("vocal_unit=unknown")).tags).toEqual([
+      "unknown"
+    ]);
+  });
+
+  it.each([
+    ["hasAppend=true", true],
+    ["has_append=true", true],
+    ["difficulty=append", true],
+    ["difficulty=expert", false]
+  ])("parses append query variant %s", (query, expected) => {
+    expect(parseMusicListQueryState(new URLSearchParams(query)).hasAppend).toBe(expected);
+  });
+
+  it("detects each local filter and permits only the default paginated sort", () => {
+    expect(hasMusicListFilters(makeQueryState())).toBe(false);
+    for (const override of [
+      { name: "world" },
+      { categories: ["vivid"] },
+      { composer: "Composer" },
+      { arranger: "Arranger" },
+      { lyricist: "Lyricist" },
+      { vocalCharacter: ["1"] },
+      { tags: ["original"] },
+      { hasAppend: true },
+      { level: "30" }
+    ]) {
+      expect(hasMusicListFilters(makeQueryState(override))).toBe(true);
+    }
+
+    expect(canUsePaginatedMusicList(makeQueryState())).toBe(true);
+    expect(canUsePaginatedMusicList(makeQueryState({ sortOrder: "asc" }))).toBe(false);
+    expect(canUsePaginatedMusicList(makeQueryState({ spoiler: true }))).toBe(true);
   });
 });
 
@@ -251,6 +597,41 @@ describe("paginated music list helper", () => {
     expect(secondPage.items.map((item) => item.id)).toEqual(["2"]);
   });
 
+  it("normalizes all request query fields for a filtered page", async () => {
+    mockSinglePage([makeItem("1", ["vivid"])]);
+    const queryState = parseMusicListQueryState(
+      new URLSearchParams(
+        "category=%20vivid%20&music_tag=original&playLevel=%2030%20&hasAppend=true&spoiler=true&sort_by=id&sort_order=asc"
+      )
+    );
+
+    await fetchMusicListPage("https://page-options.test", "tw", queryState, 3, 12);
+
+    expect(getMusicsByRegionList.mock.calls[0][0]).toMatchObject({
+      baseUrl: "https://page-options.test",
+      path: { region: "tw" },
+      query: {
+        page: 3,
+        page_size: 12,
+        spoiler: true,
+        category: "vivid",
+        tag: "original",
+        playLevel: "30",
+        hasAppend: true,
+        sort_by: "id",
+        sort_order: "asc"
+      }
+    });
+  });
+
+  it("throws when a paginated page request returns an error", async () => {
+    getMusicsByRegionList.mockResolvedValueOnce({ error: { status: 500 } });
+
+    await expect(
+      fetchMusicListPage("https://page-error.test", "jp", makeQueryState())
+    ).rejects.toThrow("Failed to load music list page.");
+  });
+
   it("follows all pages when the full-catalog fallback is used", async () => {
     getMusicsByRegionList
       .mockResolvedValueOnce({
@@ -338,7 +719,142 @@ describe("createMusicListPage multi-category semantics", () => {
   });
 });
 
+describe("createMusicListPage filtering and sorting", () => {
+  const catalog = [
+    makeListItem({
+      id: "10",
+      title: "The World",
+      categories: ["vivid", "street"],
+      composer: "Composer",
+      arranger: "Arranger",
+      lyricist: "Lyricist",
+      vocalCharacters: ["1", "2"],
+      levels: ["30"],
+      publishedAt: 100
+    }),
+    makeListItem({
+      id: "2",
+      title: "Another Song",
+      categories: ["vivid"],
+      composer: "Other composer",
+      arranger: "Other arranger",
+      lyricist: "Other lyricist",
+      vocalCharacters: ["3"],
+      levels: ["10"],
+      publishedAt: 300
+    }),
+    makeListItem({
+      id: "1",
+      title: "Street Light",
+      categories: ["street"],
+      composer: "Third composer",
+      arranger: "Third arranger",
+      lyricist: "Third lyricist",
+      vocalCharacters: ["4"],
+      levels: ["master"],
+      publishedAt: null
+    })
+  ];
+
+  it("applies name, creator, vocal-character, and level filters", () => {
+    const page = createMusicListPage(
+      catalog,
+      makeQueryState({
+        name: " world ".trim(),
+        categories: ["vivid", "street"],
+        composer: "Composer",
+        arranger: "Arranger",
+        lyricist: "Lyricist",
+        vocalCharacter: ["9", "2"],
+        level: "30",
+        sortBy: "id",
+        sortOrder: "asc"
+      }),
+      1
+    );
+
+    expect(page.items.map((item) => item.id)).toEqual(["10"]);
+  });
+
+  it("rejects items that fail each local filter", () => {
+    const matchingItem = catalog[0];
+    const cases: [string, Partial<MusicListQueryState>][] = [
+      ["name", { name: "missing" }],
+      ["categories", { categories: ["missing"] }],
+      ["composer", { composer: "missing" }],
+      ["arranger", { arranger: "missing" }],
+      ["lyricist", { lyricist: "missing" }],
+      ["vocal character", { vocalCharacter: ["missing"] }],
+      ["level", { level: "99" }]
+    ];
+
+    for (const [label, override] of cases) {
+      expect(createMusicListPage([matchingItem], makeQueryState(override), 1).items, label).toEqual(
+        []
+      );
+    }
+  });
+
+  it.each([
+    ["", ["10", "2", "1", "invalid"]],
+    ["10", ["10", "2"]],
+    ["8-12", ["10", "2"]],
+    ["12-8", ["10", "2"]],
+    [">10", []],
+    [">=10", ["10", "2"]],
+    ["<10", []],
+    ["<=10", ["10", "2"]],
+    ["master", ["1"]]
+  ])("supports level condition %s", (level, expectedIds) => {
+    const levelCatalog = [
+      makeListItem({ id: "10", levels: ["10"] }),
+      makeListItem({ id: "2", levels: ["10"] }),
+      makeListItem({ id: "1", levels: ["master"] }),
+      makeListItem({ id: "invalid", levels: ["not-a-number"] })
+    ];
+
+    const page = createMusicListPage(levelCatalog, makeQueryState({ level }), 1, 20);
+
+    expect(page.items.map((item) => item.id)).toEqual(expectedIds);
+  });
+
+  it("sorts by id or published time in both directions and paginates the result", () => {
+    const ascById = createMusicListPage(
+      catalog,
+      makeQueryState({ sortBy: "id", sortOrder: "asc" }),
+      1,
+      2
+    );
+    expect(ascById.items.map((item) => item.id)).toEqual(["1", "2"]);
+    expect(ascById.pagination).toMatchObject({ hasNext: true, total: 3, totalPages: 2 });
+
+    const descById = createMusicListPage(catalog, makeQueryState({ sortBy: "id" }), 2, 2);
+    expect(descById.items.map((item) => item.id)).toEqual(["1"]);
+
+    const ascByPublishedAt = createMusicListPage(
+      catalog,
+      makeQueryState({ sortBy: "publishedAt", sortOrder: "asc" }),
+      1,
+      3
+    );
+    expect(ascByPublishedAt.items.map((item) => item.id)).toEqual(["1", "10", "2"]);
+  });
+});
+
 describe("buildMusicListFilterMeta", () => {
+  it("returns empty metadata by default", () => {
+    expect(getDefaultMusicListFilterMeta()).toEqual({
+      categories: [],
+      composers: [],
+      arrangers: [],
+      lyricists: [],
+      vocalCharacters: [],
+      tags: [],
+      difficulties: [],
+      levels: []
+    });
+  });
+
   it("sorts string filter values alphabetically", () => {
     const item: MusicListItem = {
       id: "1",
@@ -366,5 +882,43 @@ describe("buildMusicListFilterMeta", () => {
       difficulties: ["easy", "expert"],
       levels: []
     });
+  });
+
+  it("deduplicates all filter values and sorts numeric levels numerically", () => {
+    const first = makeListItem({
+      categories: ["zeta", "alpha", "zeta"],
+      composer: "Composer",
+      arranger: "Arranger",
+      lyricist: "Lyricist",
+      vocalCharacters: ["2", "1"],
+      tags: ["original", "original"],
+      difficulties: ["master", "easy"],
+      levels: ["10", "2", "10"]
+    });
+    const second = makeListItem({
+      id: "2",
+      categories: ["beta"],
+      composer: "Another composer",
+      vocalCharacters: ["1"],
+      tags: ["commissioned"],
+      difficulties: ["easy"],
+      levels: ["3"]
+    });
+
+    expect(buildMusicListFilterMeta([first, second])).toEqual({
+      categories: ["alpha", "beta", "zeta"],
+      composers: ["Another composer", "Composer"],
+      arrangers: ["Arranger"],
+      lyricists: ["Lyricist"],
+      vocalCharacters: ["1", "2"],
+      tags: ["commissioned", "original"],
+      difficulties: ["easy", "master"],
+      levels: ["2", "3", "10"]
+    });
+
+    expect(buildMusicListFilterMeta([makeListItem({ levels: ["zeta", "alpha"] })]).levels).toEqual([
+      "alpha",
+      "zeta"
+    ]);
   });
 });

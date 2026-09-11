@@ -88,7 +88,10 @@ export default defineConfig({
         "src/routes/api/gacha/[region]/[id]/pull/pull-pool.ts",
         "src/routes/+page.server.ts",
         "src/routes/unit/[region]/[unit]/+page.server.ts",
-        "src/routes/+layout.server.ts"
+        "src/routes/+layout.server.ts",
+        "src/routes/musics/[region]/+page.server.ts",
+        "src/routes/musics/[region]/data/+server.ts",
+        "src/routes/musics/[region]/metadata/+server.ts"
       ],
       reporter: ["lcov"]
     }
