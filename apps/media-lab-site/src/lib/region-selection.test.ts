@@ -8,8 +8,11 @@ vi.mock("svelte", () => ({
 }));
 
 import {
+  buildPrimaryRegionUrl,
   DEFAULT_PRIMARY_REGION,
   DEFAULT_SECONDARY_REGION,
+  isSupportedRegion,
+  normalizePrimaryRegion,
   provideRegionSelection,
   RegionSelection,
   supportedRegions,
@@ -25,6 +28,32 @@ describe("media-lab-site region selection", () => {
     expect(DEFAULT_SECONDARY_REGION).toBe("en");
     expect(selection.primary).toBe("jp");
     expect(selection.secondary).toBe("en");
+  });
+
+  it.each([
+    [" JP ", "jp"],
+    ["EN", "en"],
+    [" tw ", "tw"],
+    ["invalid", "jp"],
+    [null, "jp"],
+    [undefined, "jp"]
+  ])("normalizes primary region input %j", (value, expected) => {
+    expect(normalizePrimaryRegion(value)).toBe(expected);
+  });
+
+  it("identifies supported regions and preserves unrelated URL state", () => {
+    expect(isSupportedRegion("cn")).toBe(true);
+    expect(isSupportedRegion("CN")).toBe(false);
+    expect(isSupportedRegion(null)).toBe(false);
+
+    const currentUrl = new URL("https://media-lab.test/live2d?view=grid&region=jp#models");
+    const nextUrl = buildPrimaryRegionUrl(currentUrl, "kr");
+
+    expect(nextUrl.pathname).toBe("/live2d");
+    expect(nextUrl.searchParams.get("region")).toBe("kr");
+    expect(nextUrl.searchParams.get("view")).toBe("grid");
+    expect(nextUrl.hash).toBe("#models");
+    expect(currentUrl.searchParams.get("region")).toBe("jp");
   });
 
   it("allows primary and secondary regions to be selected independently", () => {

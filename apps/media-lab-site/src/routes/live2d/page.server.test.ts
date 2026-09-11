@@ -65,16 +65,42 @@ describe("Live2D catalog page load", () => {
     });
     const fetcher = vi.fn() as unknown as typeof fetch;
     const load = _createLive2dCatalogPageLoad(resolveCatalog, resolveCharacters);
-    const loaded = (await load({ fetch: fetcher } as Parameters<
-      typeof load
-    >[0])) as unknown as StreamingPageData;
+    const loaded = (await load({
+      fetch: fetcher,
+      url: new URL("https://media-lab.test/live2d")
+    } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toEqual(readyCatalog);
     await expect(loaded.characters).resolves.toEqual({
       models: resolvedModels,
       characters: resolvedCharacters
     });
-    expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher);
+    expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher, "jp");
+  });
+
+  it.each([
+    ["?region= TW ", "tw"],
+    ["?region=KR", "kr"],
+    ["?region=invalid", "jp"],
+    ["", "jp"]
+  ])("passes the normalized URL region to character resolution (%s)", async (search, region) => {
+    const resolveCatalog = vi.fn().mockResolvedValue(readyCatalog);
+    const resolveCharacters = vi.fn().mockResolvedValue({
+      models: readyCatalog.models,
+      characters: []
+    });
+    const fetcher = vi.fn() as unknown as typeof fetch;
+    const load = _createLive2dCatalogPageLoad(resolveCatalog, resolveCharacters);
+    const loaded = (await load({
+      fetch: fetcher,
+      url: new URL(`https://media-lab.test/live2d${search}`)
+    } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
+
+    await expect(loaded.characters).resolves.toEqual({
+      models: readyCatalog.models,
+      characters: []
+    });
+    expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher, region);
   });
 
   it("returns before the catalog and character promises settle", async () => {
@@ -90,9 +116,10 @@ describe("Live2D catalog page load", () => {
     const fetcher = vi.fn() as unknown as typeof fetch;
     const load = _createLive2dCatalogPageLoad(resolveCatalog, resolveCharacters);
 
-    const loaded = (await load({ fetch: fetcher } as Parameters<
-      typeof load
-    >[0])) as unknown as StreamingPageData;
+    const loaded = (await load({
+      fetch: fetcher,
+      url: new URL("https://media-lab.test/live2d")
+    } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
     expect(loaded.catalog).toBeInstanceOf(Promise);
     expect(loaded.characters).toBeInstanceOf(Promise);
@@ -100,7 +127,7 @@ describe("Live2D catalog page load", () => {
 
     catalogRequest.resolve(readyCatalog);
     await expect(loaded.catalog).resolves.toEqual(readyCatalog);
-    expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher);
+    expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher, "jp");
 
     characterRequest.resolve({
       models: readyCatalog.models,
@@ -125,16 +152,17 @@ describe("Live2D catalog page load", () => {
     });
     const fetcher = vi.fn() as unknown as typeof fetch;
     const load = _createLive2dCatalogPageLoad(resolveCatalog, resolveCharacters);
-    const loaded = (await load({ fetch: fetcher } as Parameters<
-      typeof load
-    >[0])) as unknown as StreamingPageData;
+    const loaded = (await load({
+      fetch: fetcher,
+      url: new URL("https://media-lab.test/live2d")
+    } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toMatchObject({ models: [character2dOnlyModel] });
     await expect(loaded.characters).resolves.toEqual({
       models: [resolvedModel],
       characters: [{ id: 2, name: "Hoshino Ichika", modelCount: 1 }]
     });
-    expect(resolveCharacters).toHaveBeenCalledWith([character2dOnlyModel], fetcher);
+    expect(resolveCharacters).toHaveBeenCalledWith([character2dOnlyModel], fetcher, "jp");
   });
 
   it("keeps the ready catalog when character resolution fails", async () => {
@@ -142,9 +170,10 @@ describe("Live2D catalog page load", () => {
     const resolveCharacters = vi.fn().mockRejectedValue(new Error("master API offline"));
     const load = _createLive2dCatalogPageLoad(resolveCatalog, resolveCharacters);
     const fetcher = vi.fn() as unknown as typeof fetch;
-    const loaded = (await load({ fetch: fetcher } as Parameters<
-      typeof load
-    >[0])) as unknown as StreamingPageData;
+    const loaded = (await load({
+      fetch: fetcher,
+      url: new URL("https://media-lab.test/live2d")
+    } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toEqual(readyCatalog);
     await expect(loaded.characters).resolves.toEqual({
@@ -163,9 +192,10 @@ describe("Live2D catalog page load", () => {
     const resolveCharacters = vi.fn();
     const load = _createLive2dCatalogPageLoad(resolveCatalog, resolveCharacters);
     const fetcher = vi.fn() as unknown as typeof fetch;
-    const loaded = (await load({ fetch: fetcher } as Parameters<
-      typeof load
-    >[0])) as unknown as StreamingPageData;
+    const loaded = (await load({
+      fetch: fetcher,
+      url: new URL("https://media-lab.test/live2d")
+    } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toEqual(catalog);
     await expect(loaded.characters).resolves.toEqual({ models: [], characters: [] });
@@ -178,9 +208,10 @@ describe("Live2D catalog page load", () => {
     const resolveCharacters = vi.fn();
     const load = _createLive2dCatalogPageLoad(resolveCatalog, resolveCharacters);
     const fetcher = vi.fn() as unknown as typeof fetch;
-    const loaded = (await load({ fetch: fetcher } as Parameters<
-      typeof load
-    >[0])) as unknown as StreamingPageData;
+    const loaded = (await load({
+      fetch: fetcher,
+      url: new URL("https://media-lab.test/live2d")
+    } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).rejects.toBe(failure);
     await expect(loaded.characters).resolves.toEqual({ models: [], characters: [] });

@@ -90,7 +90,8 @@ describe("Live2D character options", () => {
           { character2dId: 101, characterId: 2 },
           { characterId: 3 }
         ],
-        fetcher
+        fetcher,
+        "tw"
       )
     ).resolves.toEqual([
       { id: 2, name: "Hoshino Ichika", modelCount: 2 },
@@ -100,8 +101,14 @@ describe("Live2D character options", () => {
     expect(getCharacter2DsByRegionBatch).toHaveBeenCalledWith({
       baseUrl: "https://master-api.test/api/v1",
       fetch: fetcher,
-      path: { region: LIVE2D_CATALOG_REGION },
+      path: { region: "tw" },
       query: { ids: "101,102" }
+    });
+    expect(getGameCharactersByRegionList).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test/api/v1",
+      fetch: fetcher,
+      path: { region: "tw" },
+      query: { page: 1, page_size: 100, sort_by: "seq", sort_order: "asc" }
     });
   });
 
@@ -121,6 +128,18 @@ describe("Live2D character options", () => {
     await expect(resolveLive2dCharacterOptions([{ character2dId: 101 }], fetcher)).resolves.toEqual(
       [{ id: 1, characterType: "game_character", name: "Hatsune Miku", modelCount: 1 }]
     );
+    expect(getCharacter2DsByRegionBatch).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test/api/v1",
+      fetch: fetcher,
+      path: { region: LIVE2D_CATALOG_REGION },
+      query: { ids: "101" }
+    });
+    expect(getGameCharactersByRegionList).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test/api/v1",
+      fetch: fetcher,
+      path: { region: LIVE2D_CATALOG_REGION },
+      query: { page: 1, page_size: 100, sort_by: "seq", sort_order: "asc" }
+    });
   });
 
   it.each(["omitted", "empty"])(

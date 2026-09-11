@@ -4,6 +4,7 @@ import {
   getGameCharactersByRegionList
 } from "@platform/sekai-master-api-sdk";
 import { LIVE2D_CATALOG_REGION } from "$lib/live2d/associated-catalog";
+import type { SupportedRegion } from "$lib/region-selection.svelte";
 
 export interface Live2dCharacterOption {
   id: number | null;
@@ -175,7 +176,8 @@ const parseCharacter2dBatch = (
 
 const readCharacter2dMappings = async (
   fetcher: typeof fetch,
-  character2dIds: readonly number[]
+  character2dIds: readonly number[],
+  region: SupportedRegion = LIVE2D_CATALOG_REGION
 ): Promise<ReadonlyMap<number, Character2dMapping>> => {
   const baseUrl = resolveMasterApiBaseUrl();
   if (!baseUrl || character2dIds.length === 0) return new Map();
@@ -188,7 +190,7 @@ const readCharacter2dMappings = async (
         getCharacter2DsByRegionBatch({
           baseUrl,
           fetch: fetcher,
-          path: { region: LIVE2D_CATALOG_REGION },
+          path: { region },
           query: { ids: ids.join(",") }
         })
       )
@@ -231,9 +233,8 @@ const resolveModelCharacterType = (
 ): string | null => {
   const character2dId = getPositiveSafeInteger(model.character2dId);
   return (
-    (character2dId === null
-      ? undefined
-      : character2dMappings.get(character2dId)?.characterType) ?? getNamePart(model.characterType)
+    (character2dId === null ? undefined : character2dMappings.get(character2dId)?.characterType) ??
+    getNamePart(model.characterType)
   );
 };
 
@@ -301,7 +302,8 @@ const getCharacterNameResolution = (
 
 const readCharacterNames = async (
   fetcher: typeof fetch,
-  characterIds: ReadonlySet<number>
+  characterIds: ReadonlySet<number>,
+  region: SupportedRegion = LIVE2D_CATALOG_REGION
 ): Promise<ReadonlyMap<number, string>> => {
   const baseUrl = resolveMasterApiBaseUrl();
   if (!baseUrl || characterIds.size === 0) return new Map();
@@ -314,7 +316,7 @@ const readCharacterNames = async (
       const response = await getGameCharactersByRegionList({
         baseUrl,
         fetch: fetcher,
-        path: { region: LIVE2D_CATALOG_REGION },
+        path: { region },
         query: {
           page,
           page_size: PAGE_SIZE,
@@ -350,10 +352,7 @@ const readCharacterNames = async (
 
 const countModelsByCharacter = (
   models: readonly Live2dCharacterModel[]
-): ReadonlyMap<
-  string,
-  { id: number | null; characterType: string | null; modelCount: number }
-> => {
+): ReadonlyMap<string, { id: number | null; characterType: string | null; modelCount: number }> => {
   const counts = new Map<
     string,
     { id: number | null; characterType: string | null; modelCount: number }
@@ -381,7 +380,9 @@ const getCharacterOptionName = (
   stableNames: ReadonlyMap<string, string>
 ): string => {
   if (isNonGameCharacterType(characterType)) {
-    return stableNames.get(getCharacterIdentityKey(characterId, characterType)) ?? `#${characterId}`;
+    return (
+      stableNames.get(getCharacterIdentityKey(characterId, characterType)) ?? `#${characterId}`
+    );
   }
 
   return names.get(characterId) || `#${characterId}`;
@@ -410,12 +411,17 @@ export const createLive2dCharacterOptions = (
  */
 export const resolveLive2dCharacterData = async <TModel extends Live2dCharacterModel>(
   models: readonly TModel[],
-  fetcher: typeof fetch = fetch
+  fetcher: typeof fetch = fetch,
+  region: SupportedRegion = LIVE2D_CATALOG_REGION
 ): Promise<Live2dCharacterResolution<TModel>> => {
-  const character2dMappings = await readCharacter2dMappings(fetcher, getCharacter2dIds(models));
+  const character2dMappings = await readCharacter2dMappings(
+    fetcher,
+    getCharacter2dIds(models),
+    region
+  );
   const resolvedModels = resolveModelCharacterIds(models, character2dMappings);
   const nameResolution = getCharacterNameResolution(resolvedModels, character2dMappings);
-  const names = new Map(await readCharacterNames(fetcher, nameResolution.characterIds));
+  const names = new Map(await readCharacterNames(fetcher, nameResolution.characterIds, region));
   return {
     models: resolvedModels,
     characters: createLive2dCharacterOptions(resolvedModels, names, nameResolution.stableNames)
@@ -424,6 +430,7 @@ export const resolveLive2dCharacterData = async <TModel extends Live2dCharacterM
 
 export const resolveLive2dCharacterOptions = async (
   models: readonly Live2dCharacterModel[],
-  fetcher: typeof fetch = fetch
+  fetcher: typeof fetch = fetch,
+  region: SupportedRegion = LIVE2D_CATALOG_REGION
 ): Promise<readonly Live2dCharacterOption[]> =>
-  (await resolveLive2dCharacterData(models, fetcher)).characters;
+  (await resolveLive2dCharacterData(models, fetcher, region)).characters;

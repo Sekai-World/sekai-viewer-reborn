@@ -7,6 +7,7 @@ import {
   resolveLive2dCharacterData
 } from "$lib/server/live2d-characters";
 import type { Live2dCharacterOption } from "$lib/server/live2d-characters";
+import { normalizePrimaryRegion, type SupportedRegion } from "$lib/region-selection.svelte";
 import type { PageServerLoad } from "./$types";
 
 type Live2dCatalogModel = Extract<Live2dCatalogRouteData, { status: "ready" }>["models"][number];
@@ -20,7 +21,8 @@ export const _createLive2dCatalogPageLoad =
     resolveCatalog: typeof resolveLive2dCatalogRouteData = resolveLive2dCatalogRouteData,
     resolveCharacters: typeof resolveLive2dCharacterData = resolveLive2dCharacterData
   ): PageServerLoad =>
-  async ({ fetch }) => {
+  async ({ fetch, url }) => {
+    const region: SupportedRegion = normalizePrimaryRegion(url?.searchParams.get("region"));
     const catalog = resolveCatalog(fetch);
     const characters: Promise<Live2dCharacterPayload> = catalog.then(
       (catalog) => {
@@ -29,7 +31,7 @@ export const _createLive2dCatalogPageLoad =
         }
 
         return Promise.resolve()
-          .then(() => resolveCharacters(catalog.models, fetch))
+          .then(() => resolveCharacters(catalog.models, fetch, region))
           .catch(() => ({
             models: catalog.models,
             characters: createLive2dCharacterOptions(catalog.models)
