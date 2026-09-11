@@ -21,7 +21,7 @@
     "@platform/ui-shell": "workspace:*",
     "@platform/ui-tokens": "workspace:*",
     "@sekai-world/pixi-live2d-display-mulmotion": "^0.5.1",
-    "pixi.js": "^7.4.3"
+    "pixi.js": "^8.0.0"
   },
   "devDependencies": {
     "@iconify-icons/mdi": "^2.0.0",
