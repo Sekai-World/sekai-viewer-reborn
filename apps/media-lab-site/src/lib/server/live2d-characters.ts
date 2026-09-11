@@ -94,7 +94,9 @@ const resolveMasterApiBaseUrl = (): string | null => {
   const value = env.SEKAI_MASTER_API_BASE_URL?.trim();
   if (!value) return null;
 
-  const normalized = value.replace(/\/+$/, "");
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") end -= 1;
+  const normalized = value.slice(0, end);
   return normalized.length > 0 ? normalized : null;
 };
 
@@ -255,18 +257,19 @@ const resolveModelCharacterIds = <TModel extends Live2dCharacterModel>(
 const isNonGameCharacterType = (characterType: string | null): boolean =>
   characterType === "mob" || characterType === "sub_game_character";
 
+const getCharacterIdentityType = (
+  characterId: number | null,
+  characterType: string | null
+): string => {
+  if (characterId === null) return "uncategorized";
+  if (characterType === null || characterType === "game_character") return "game_character";
+  return characterType;
+};
+
 const getCharacterIdentityKey = (
   characterId: number | null,
   characterType: string | null
-): string =>
-  JSON.stringify([
-    characterId,
-    characterId === null
-      ? "uncategorized"
-      : characterType === null || characterType === "game_character"
-        ? "game_character"
-        : characterType
-  ]);
+): string => JSON.stringify([characterId, getCharacterIdentityType(characterId, characterType)]);
 
 const getCharacterNameResolution = (
   models: readonly Live2dCharacterModel[],
@@ -300,6 +303,47 @@ const getCharacterNameResolution = (
   return { characterIds, stableNames };
 };
 
+type CharacterNamesPageResponse = {
+  data?: unknown;
+  error?: unknown;
+};
+type CharacterNamesPagination = ReturnType<typeof getPaginationFromEnvelope>;
+type CharacterNamesPageResult =
+  | { status: "error" }
+  | { status: "empty" }
+  | { status: "ok"; pagination: CharacterNamesPagination };
+
+const processCharacterNamesPage = (
+  response: CharacterNamesPageResponse,
+  characterIds: ReadonlySet<number>,
+  names: Map<number, string>,
+  seenCharacterIds: Set<number>
+): CharacterNamesPageResult => {
+  if (response.error || !response.data) return { status: "error" };
+
+  const items = getItemsFromEnvelope(response.data);
+  if (!items || items.length === 0) return { status: "empty" };
+
+  for (const item of items) {
+    const character = getObject(item);
+    const id = getPositiveSafeInteger(character?.id);
+    if (!character || id === null || seenCharacterIds.has(id)) continue;
+
+    seenCharacterIds.add(id);
+    if (characterIds.has(id)) names.set(id, getCharacterName(character, id));
+  }
+
+  return { status: "ok", pagination: getPaginationFromEnvelope(response.data) };
+};
+
+const shouldStopCharacterNamePagination = (
+  page: number,
+  pagination: CharacterNamesPagination
+): boolean =>
+  !pagination.hasNext ||
+  (pagination.totalPages !== null && page >= pagination.totalPages) ||
+  (pagination.page !== null && pagination.page !== page);
+
 const readCharacterNames = async (
   fetcher: typeof fetch,
   characterIds: ReadonlySet<number>,
@@ -324,24 +368,10 @@ const readCharacterNames = async (
           sort_order: "asc"
         }
       });
-      if (response.error || !response.data) return new Map();
-
-      const items = getItemsFromEnvelope(response.data);
-      if (!items || items.length === 0) break;
-
-      for (const item of items) {
-        const character = getObject(item);
-        const id = getPositiveSafeInteger(character?.id);
-        if (!character || id === null || seenCharacterIds.has(id)) continue;
-
-        seenCharacterIds.add(id);
-        if (characterIds.has(id)) names.set(id, getCharacterName(character, id));
-      }
-
-      const pagination = getPaginationFromEnvelope(response.data);
-      if (!pagination.hasNext) break;
-      if (pagination.totalPages !== null && page >= pagination.totalPages) break;
-      if (pagination.page !== null && pagination.page !== page) break;
+      const pageResult = processCharacterNamesPage(response, characterIds, names, seenCharacterIds);
+      if (pageResult.status === "error") return new Map();
+      if (pageResult.status === "empty") break;
+      if (shouldStopCharacterNamePagination(page, pageResult.pagination)) break;
     }
 
     return names;

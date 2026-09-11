@@ -153,7 +153,7 @@ const readOptionalPositiveSafeInteger = (
   field: string,
   label: string
 ): ValidationResult<number | undefined> => {
-  if (!Object.prototype.hasOwnProperty.call(record, field) || record[field] === null) {
+  if (!Object.hasOwn(record, field) || record[field] === null) {
     return { value: undefined };
   }
 
@@ -165,7 +165,7 @@ const readOptionalIdentifier = (
   field: string,
   label: string
 ): ValidationResult<string | undefined> => {
-  if (!Object.prototype.hasOwnProperty.call(record, field) || record[field] === null) {
+  if (!Object.hasOwn(record, field) || record[field] === null) {
     return { value: undefined };
   }
 
@@ -498,6 +498,31 @@ const parseMotionSet = (
   };
 };
 
+const parseMotionSets = (
+  value: unknown,
+  location: string
+): ValidationResult<Live2dAssociatedMotionSet[]> => {
+  if (!Array.isArray(value)) {
+    return { reason: `${location}.motionSets must be an array` };
+  }
+
+  const motionSetIds = new Set<string>();
+  const motionSets: Live2dAssociatedMotionSet[] = [];
+  for (const [index, item] of value.entries()) {
+    const motionSetLocation = `${location}.motionSets[${index}]`;
+    const parsedMotionSet = parseMotionSet(item, motionSetLocation);
+    if ("reason" in parsedMotionSet) return parsedMotionSet;
+    if (motionSetIds.has(parsedMotionSet.value.motionSetId)) {
+      return { reason: `${motionSetLocation}.motionSetId is a duplicate` };
+    }
+
+    motionSetIds.add(parsedMotionSet.value.motionSetId);
+    motionSets.push(parsedMotionSet.value);
+  }
+
+  return { value: motionSets };
+};
+
 const parseModel = (value: unknown, location: string): ValidationResult<Live2dAssociatedModel> => {
   if (!isRecord(value)) return { reason: `${location} must be an object` };
 
@@ -526,23 +551,8 @@ const parseModel = (value: unknown, location: string): ValidationResult<Live2dAs
 
   const modelUrl = resolveAssetUrl(modelPath.value, modelFile.value, MODEL_FILE_SUFFIX);
   if ("reason" in modelUrl) return modelUrl;
-  if (!Array.isArray(value.motionSets)) {
-    return { reason: `${location}.motionSets must be an array` };
-  }
-
-  const motionSetIds = new Set<string>();
-  const motionSets: Live2dAssociatedMotionSet[] = [];
-  for (const [index, item] of value.motionSets.entries()) {
-    const motionSetLocation = `${location}.motionSets[${index}]`;
-    const parsedMotionSet = parseMotionSet(item, motionSetLocation);
-    if ("reason" in parsedMotionSet) return parsedMotionSet;
-    if (motionSetIds.has(parsedMotionSet.value.motionSetId)) {
-      return { reason: `${motionSetLocation}.motionSetId is a duplicate` };
-    }
-
-    motionSetIds.add(parsedMotionSet.value.motionSetId);
-    motionSets.push(parsedMotionSet.value);
-  }
+  const motionSets = parseMotionSets(value.motionSets, location);
+  if ("reason" in motionSets) return motionSets;
 
   return {
     value: {
@@ -555,7 +565,7 @@ const parseModel = (value: unknown, location: string): ValidationResult<Live2dAs
       modelName: modelName.value,
       modelPath: modelPath.value,
       modelUrl: modelUrl.value,
-      motionSets
+      motionSets: motionSets.value
     }
   };
 };

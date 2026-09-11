@@ -773,7 +773,7 @@ export const createLive2dModelLoader = (
           },
           pan: (deltaX: number, deltaY: number): void => {
             if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) {
-              throw new Error("Live2D pan deltas must be finite");
+              throw new TypeError("Live2D pan deltas must be finite");
             }
             if (!viewport) throw new Error("Live2D model stage has not been sized");
 
