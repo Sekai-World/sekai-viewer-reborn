@@ -524,10 +524,71 @@ const findMotionIndex = (
 
 const MODEL_STAGE_PADDING = 0.1;
 const MODEL_STAGE_CONTENT_SCALE = 1 - MODEL_STAGE_PADDING * 2;
+const MIN_MODEL_ZOOM = 1;
+const MAX_MODEL_ZOOM = 4;
 
 const isPositiveFinite = (value: number): boolean => Number.isFinite(value) && value > 0;
 
-const fitModelToStage = (model: Live2dModelInstance, width: number, height: number): void => {
+interface Live2dViewportState {
+  width: number;
+  height: number;
+  fitScale: number;
+  zoomFactor: number;
+  offsetX: number;
+  offsetY: number;
+}
+
+interface Live2dViewportPanBounds {
+  maxOffsetX: number;
+  maxOffsetY: number;
+}
+
+const getViewportPanBounds = (
+  model: Live2dModelInstance,
+  viewport: Live2dViewportState
+): Live2dViewportPanBounds => {
+  const scale = viewport.fitScale * viewport.zoomFactor;
+  const modelWidth = model.internalModel.width * scale;
+  const modelHeight = model.internalModel.height * scale;
+  const horizontalOverflow = modelWidth - viewport.width;
+  const verticalOverflow = modelHeight - viewport.height;
+
+  return {
+    maxOffsetX: Number.isFinite(horizontalOverflow)
+      ? Math.abs(horizontalOverflow) / 2
+      : Number.MAX_VALUE,
+    maxOffsetY: Number.isFinite(verticalOverflow)
+      ? Math.abs(verticalOverflow) / 2
+      : Number.MAX_VALUE
+  };
+};
+
+const clampViewportOffset = (offset: number, maximum: number): number => {
+  if (offset === Number.NEGATIVE_INFINITY) return -maximum;
+  if (offset === Number.POSITIVE_INFINITY) return maximum;
+  if (!Number.isFinite(offset)) return 0;
+  return Math.min(maximum, Math.max(-maximum, offset));
+};
+
+const clampViewportOffsets = (model: Live2dModelInstance, viewport: Live2dViewportState): void => {
+  const bounds = getViewportPanBounds(model, viewport);
+  viewport.offsetX = clampViewportOffset(viewport.offsetX, bounds.maxOffsetX);
+  viewport.offsetY = clampViewportOffset(viewport.offsetY, bounds.maxOffsetY);
+};
+
+const applyModelTransform = (model: Live2dModelInstance, viewport: Live2dViewportState): void => {
+  const scale = viewport.fitScale * viewport.zoomFactor;
+  model.anchor.set(0.5, 0.5);
+  model.scale.set(scale, scale);
+  model.position.set(viewport.width / 2 + viewport.offsetX, viewport.height / 2 + viewport.offsetY);
+};
+
+const fitModelToStage = (
+  model: Live2dModelInstance,
+  width: number,
+  height: number,
+  previousViewport: Live2dViewportState | null = null
+): Live2dViewportState => {
   if (!isPositiveFinite(width) || !isPositiveFinite(height)) {
     throw new Error("Live2D stage dimensions must be positive and finite");
   }
@@ -546,11 +607,21 @@ const fitModelToStage = (model: Live2dModelInstance, width: number, height: numb
     throw new Error("Live2D model transform could not be calculated");
   }
 
+  const viewport: Live2dViewportState = {
+    width,
+    height,
+    fitScale: scale,
+    zoomFactor: previousViewport?.zoomFactor ?? MIN_MODEL_ZOOM,
+    offsetX: previousViewport?.offsetX ?? 0,
+    offsetY: previousViewport?.offsetY ?? 0
+  };
+
+  clampViewportOffsets(model, viewport);
   // Live2DModel exposes a Sprite-like anchor. Using its center makes the
   // position the stage center regardless of the model's native dimensions.
-  model.anchor.set(0.5, 0.5);
-  model.scale.set(scale, scale);
-  model.position.set(width / 2, height / 2);
+  // Keep the user's zoom and pan when only the stage size changes.
+  applyModelTransform(model, viewport);
+  return viewport;
 };
 
 const getHostSize = (host: HTMLElement): { width: number; height: number } | null => {
@@ -576,6 +647,14 @@ const stopAllMotionManagers = (model: Live2dModelInstance): void => {
   for (const manager of managers) manager.stopAllMotions();
 };
 
+const resetViewport = (model: Live2dModelInstance, viewport: Live2dViewportState | null): void => {
+  if (!viewport) return;
+  viewport.zoomFactor = MIN_MODEL_ZOOM;
+  viewport.offsetX = 0;
+  viewport.offsetY = 0;
+  applyModelTransform(model, viewport);
+};
+
 /** Creates the browser-only loader used by the framework-agnostic viewer seam. */
 export const createLive2dModelLoader = (
   host: HTMLElement,
@@ -592,6 +671,7 @@ export const createLive2dModelLoader = (
       let model: Live2dModelInstance | null = null;
       let modelPromise: Promise<Live2dModelInstance> | null = null;
       let modelAdded = false;
+      let viewport: Live2dViewportState | null = null;
 
       const cleanup = (): void => {
         if (application && model && modelAdded) {
@@ -643,7 +723,7 @@ export const createLive2dModelLoader = (
         getParallelMotionManager(model, BODY_MANAGER_INDEX, "body");
         getParallelMotionManager(model, FACE_MANAGER_INDEX, "face");
         const hostSize = getHostSize(host);
-        if (hostSize) fitModelToStage(model, hostSize.width, hostSize.height);
+        if (hostSize) viewport = fitModelToStage(model, hostSize.width, hostSize.height);
         application.addModel(model);
         modelAdded = true;
         const breath = model.internalModel.breath;
@@ -689,12 +769,59 @@ export const createLive2dModelLoader = (
           },
           reset: (): void => {
             stopAllMotionManagers(loadedModel);
+            resetViewport(loadedModel, viewport);
+          },
+          pan: (deltaX: number, deltaY: number): void => {
+            if (!Number.isFinite(deltaX) || !Number.isFinite(deltaY)) {
+              throw new Error("Live2D pan deltas must be finite");
+            }
+            if (!viewport) throw new Error("Live2D model stage has not been sized");
+
+            const bounds = getViewportPanBounds(loadedModel, viewport);
+            viewport.offsetX = clampViewportOffset(viewport.offsetX + deltaX, bounds.maxOffsetX);
+            viewport.offsetY = clampViewportOffset(viewport.offsetY + deltaY, bounds.maxOffsetY);
+            applyModelTransform(loadedModel, viewport);
+          },
+          zoom: (factor: number, focalX: number, focalY: number): void => {
+            if (
+              !Number.isFinite(factor) ||
+              factor <= 0 ||
+              !Number.isFinite(focalX) ||
+              !Number.isFinite(focalY)
+            ) {
+              throw new Error("Live2D zoom values must be positive and finite");
+            }
+            if (!viewport) throw new Error("Live2D model stage has not been sized");
+
+            const currentZoom = viewport.zoomFactor;
+            const nextZoom = Math.min(
+              MAX_MODEL_ZOOM,
+              Math.max(MIN_MODEL_ZOOM, currentZoom * factor)
+            );
+            if (nextZoom === currentZoom) return;
+
+            const scaleRatio = nextZoom / currentZoom;
+            const currentPositionX = viewport.width / 2 + viewport.offsetX;
+            const currentPositionY = viewport.height / 2 + viewport.offsetY;
+            const nextPositionX = focalX + (currentPositionX - focalX) * scaleRatio;
+            const nextPositionY = focalY + (currentPositionY - focalY) * scaleRatio;
+            viewport.zoomFactor = nextZoom;
+            const bounds = getViewportPanBounds(loadedModel, viewport);
+            viewport.offsetX = clampViewportOffset(
+              nextPositionX - viewport.width / 2,
+              bounds.maxOffsetX
+            );
+            viewport.offsetY = clampViewportOffset(
+              nextPositionY - viewport.height / 2,
+              bounds.maxOffsetY
+            );
+            applyModelTransform(loadedModel, viewport);
           },
           resize: (width: number, height: number): void => {
             if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(height) || height <= 0) {
               throw new Error("Live2D resize dimensions must be positive and finite");
             }
-            fitModelToStage(loadedModel, width, height);
+            viewport = fitModelToStage(loadedModel, width, height, viewport);
             loadedApplication.resize(width, height);
           },
           destroy: (): void => {

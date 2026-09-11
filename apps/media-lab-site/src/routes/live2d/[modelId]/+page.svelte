@@ -5,6 +5,7 @@
   import { createI18nTranslator } from "$lib/i18n/runtime";
   import Live2dModelStudio from "$lib/components/Live2dModelStudio.svelte";
   import { createLive2dModelLoader } from "$lib/live2d/live2d-model-loader";
+  import { attachLive2dModelInteractions } from "$lib/live2d/live2d-model-interactions";
   import {
     createLive2dModelViewer,
     type Live2dModelDescriptor,
@@ -97,6 +98,7 @@
 
   onMount(() => {
     const mountedViewer = createLive2dModelViewer(createLive2dModelLoader(stageHost));
+    const detachInteractions = attachLive2dModelInteractions(stageHost, mountedViewer);
     let active = true;
     const resize = () => {
       if (!active) return;
@@ -120,6 +122,7 @@
       active = false;
       observer?.disconnect();
       if (!observer) window.removeEventListener("resize", resize);
+      detachInteractions();
       unsubscribe();
       viewer = null;
       void mountedViewer.destroy();
