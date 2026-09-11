@@ -158,7 +158,8 @@
     "rarity_birthday"
   ] as const;
   const supportUnitOptions = ["none", ...UNIT_CODE_ORDER.filter((unit) => unit !== "piapro")];
-  const filterMeta = $derived.by(() => data.filterMeta ?? emptyFilterMeta);
+  let filterMeta = $state<CardListFilterMeta>(emptyFilterMeta);
+  let filterMetaRequestId = 0;
 
   const formatOptionLabel = (value: string): string =>
     value
@@ -512,6 +513,27 @@
 
       applyInitialPage(result);
     });
+  });
+
+  $effect(() => {
+    const requestId = ++filterMetaRequestId;
+    filterMeta = emptyFilterMeta;
+
+    void Promise.resolve(data.filterMeta as unknown as CardListFilterMeta)
+      .then((nextFilterMeta) => {
+        if (requestId !== filterMetaRequestId) {
+          return;
+        }
+
+        filterMeta = nextFilterMeta ?? emptyFilterMeta;
+      })
+      .catch(() => {
+        if (requestId !== filterMetaRequestId) {
+          return;
+        }
+
+        filterMeta = emptyFilterMeta;
+      });
   });
 
   $effect(() => {
@@ -992,7 +1014,8 @@
   </PageHeader>
 
   <div
-    class="archive-card-controls flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
+    class="archive-card-controls archive-list-toolbar flex gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
+    data-swipe-region-skip
   >
     <div class="archive-control-group flex items-center gap-2">
       <div class="join">

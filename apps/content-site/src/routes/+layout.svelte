@@ -11,6 +11,7 @@
   } from "$lib/settings/content-display";
   import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n/config";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+  import MobileQuickNavigation from "$lib/components/MobileQuickNavigation.svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import {
@@ -47,6 +48,7 @@
   const DESKTOP_THEME_MENU_ID = "content-site-desktop-theme-menu";
   const LOCALE_MENU_ID = "content-site-locale-menu";
   const MOBILE_SETTINGS_MENU_ID = "content-site-mobile-settings-menu";
+  const CONTENT_SITE_DRAWER_ID = "content-site-drawer";
   const uiLocaleOptions: UiLocaleOption[] = supportedUiLocales.map((code) => ({ code }));
   const themeNameOptions: ThemeName[] = ["default", "sakura", "mint"];
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
@@ -89,6 +91,7 @@
   let eventsLabel = $state(getInitialI18nText("navigation.events"));
   let gachasLabel = $state(getInitialI18nText("navigation.gachas"));
   let virtualLivesLabel = $state(getInitialI18nText("navigation.virtualLives"));
+  let quickNavigationLabel = $state(getInitialI18nText("navigation.quickNavigation"));
   let settingsLabel = $state(getInitialI18nText("settings.title"));
   let themeControlLabel = $state(getInitialI18nText("settings.appearance"));
   let themePaletteLabel = $state(getInitialI18nText("settings.theme"));
@@ -151,16 +154,19 @@
     return preferredRegion;
   });
 
-  const sidebarItems = $derived<SidebarItem[]>([
+  type ContentSiteNavigationItem = {
+    label: string;
+    href: string;
+    active: boolean;
+    icon: string;
+  };
+
+  const navigationLinks = $derived<ContentSiteNavigationItem[]>([
     {
       label: homeLabel,
       href: "/",
       active: page.url.pathname === "/",
       icon: "mdi:home-variant-outline"
-    },
-    {
-      type: "section",
-      label: databaseLabel
     },
     {
       label: charactersLabel,
@@ -203,6 +209,22 @@
         page.url.pathname.startsWith("/virtual-lives/") ||
         page.url.pathname.startsWith("/virtual-live/")
     }
+  ]);
+  const sidebarItems = $derived<SidebarItem[]>([
+    navigationLinks[0],
+    {
+      type: "section",
+      label: databaseLabel
+    },
+    ...navigationLinks.slice(1)
+  ]);
+  const quickNavigationItems = $derived<ContentSiteNavigationItem[]>([
+    navigationLinks[0],
+    navigationLinks[2],
+    navigationLinks[3],
+    navigationLinks[4],
+    navigationLinks[5],
+    navigationLinks[6]
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");
   const layoutTranslate = $derived(createI18nTranslator(uiLocale, currentLayoutMessages));
@@ -289,6 +311,7 @@
     eventsLabel = translate("navigation.events");
     gachasLabel = translate("navigation.gachas");
     virtualLivesLabel = translate("navigation.virtualLives");
+    quickNavigationLabel = translate("navigation.quickNavigation");
     settingsLabel = translate("settings.title");
     themeControlLabel = translate("settings.appearance");
     themePaletteLabel = translate("settings.theme");
@@ -829,7 +852,7 @@
 {/if}
 
 <ViewerShell
-  drawerId="content-site-drawer"
+  drawerId={CONTENT_SITE_DRAWER_ID}
   navTitle="Sekai Viewer"
   siteVersion={data.siteVersion}
   desktopRailOpen={true}
@@ -840,6 +863,10 @@
   {sidebarItems}
   showTitle={showPageTitle}
 >
+  {#snippet bottomNavigation()}
+    <MobileQuickNavigation items={quickNavigationItems} navigationLabel={quickNavigationLabel} />
+  {/snippet}
+
   {#snippet navActions()}
     <div class="relative z-120 hidden items-center gap-2 sm:flex">
       <div
@@ -1163,7 +1190,7 @@
 {#if showBackToTop}
   <button
     type="button"
-    class="fixed bottom-5 right-5 z-30 inline-flex size-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer"
+    class="content-site-back-to-top fixed right-5 z-30 inline-flex size-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer"
     aria-label={backToTopLabel}
     title={backToTopLabel}
     onclick={scrollToTop}

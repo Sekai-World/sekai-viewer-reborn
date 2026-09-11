@@ -297,7 +297,8 @@
   </PageHeader>
 
   <div
-    class="archive-card-controls flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
+    class="archive-card-controls archive-list-toolbar flex gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
+    data-swipe-region-skip
   >
     <div class="archive-control-group flex items-center gap-2">
       <div class="join">

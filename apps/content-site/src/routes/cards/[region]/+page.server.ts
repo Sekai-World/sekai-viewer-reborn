@@ -30,8 +30,27 @@ export const load: PageServerLoad = async ({ params, url }) => {
   const baseUrl = getMasterApiBaseUrl();
   const queryState = parseCardListQueryState(url.searchParams);
   const hasFilters = hasCardListFilters(queryState);
-  const unitProfiles = toUnitProfileMap(await fetchUnitProfiles(baseUrl, region));
-  const filterMeta = getDefaultCardListFilterMeta(unitProfiles);
+  const unitProfiles = fetchUnitProfiles(baseUrl, region)
+    .then(toUnitProfileMap)
+    .catch((error) => {
+      logCardListFilterDebug("unit profile exception", {
+        region,
+        error
+      });
+      return {};
+    });
+  const filterMeta = unitProfiles
+    .then((profiles) => getDefaultCardListFilterMeta(profiles))
+    .catch((error) => {
+      logCardListFilterDebug("filter metadata exception", {
+        region,
+        error
+      });
+      return getDefaultCardListFilterMeta({});
+    });
+
+  // Attach noop catch to prevent unhandled rejection before SvelteKit renders
+  filterMeta.catch(() => {});
 
   logCardListFilterDebug("initial request", {
     region,

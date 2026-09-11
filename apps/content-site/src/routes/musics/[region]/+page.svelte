@@ -22,7 +22,12 @@
     musicTagByUnitCode,
     unitCodeByMusicTag
   } from "$lib/domain/unit-profile";
-  import type { MusicListPage, MusicListItem as MusicListItemType } from "$lib/server/music-list";
+  import type {
+    MusicListFilterMeta,
+    MusicListPage,
+    MusicListItem as MusicListItemType
+  } from "$lib/server/music-list";
+  import type { UnitProfileMap } from "$lib/server/unit-profiles";
   import Icon from "@iconify/svelte";
   import type { PageData } from "./$types";
 
@@ -31,6 +36,20 @@
   type MusicListSortBy = "publishedAt" | "id";
   type MusicListSortOrder = "asc" | "desc";
   type MusicListViewMode = "grid" | "agenda";
+  type MusicMetadataResponse = {
+    filterMeta?: MusicListFilterMeta;
+    loadFailed?: boolean;
+  };
+  const createEmptyMusicListFilterMeta = (): MusicListFilterMeta => ({
+    categories: [],
+    composers: [],
+    arrangers: [],
+    lyricists: [],
+    vocalCharacters: [],
+    tags: [],
+    difficulties: [],
+    levels: []
+  });
   type MusicTextFilter = {
     value: string;
     label: string;
@@ -87,6 +106,12 @@
   let hasTriedRestoreViewMode = $state(false);
   let spoilerContentAppliedState = $state<boolean | null>(null);
   const contentDisplaySettings = getContentDisplaySettings();
+  let filterMeta = $state<MusicListFilterMeta>(createEmptyMusicListFilterMeta());
+  let unitProfiles = $state<UnitProfileMap>({});
+  let metadataState = $state<"idle" | "loading" | "ready" | "error">("idle");
+  let metadataRequestId = 0;
+  let unitProfilesRequestId = 0;
+  let metadataRequestKey = "";
 
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -145,7 +170,7 @@
       value: levelDraft,
       label: musicListLevelLabel,
       listId: "music-levels",
-      options: data.filterMeta.levels,
+      options: filterMeta.levels,
       placeholder: musicListLevelPlaceholder,
       set: (value: string) => (levelDraft = value)
     },
@@ -153,7 +178,7 @@
       value: composerDraft,
       label: musicListComposerLabel,
       listId: "music-composers",
-      options: data.filterMeta.composers,
+      options: filterMeta.composers,
       placeholder: musicListComposerPlaceholder,
       set: (value: string) => (composerDraft = value)
     },
@@ -161,7 +186,7 @@
       value: arrangerDraft,
       label: musicListArrangerLabel,
       listId: "music-arrangers",
-      options: data.filterMeta.arrangers,
+      options: filterMeta.arrangers,
       placeholder: musicListArrangerPlaceholder,
       set: (value: string) => (arrangerDraft = value)
     },
@@ -169,7 +194,7 @@
       value: lyricistDraft,
       label: musicListLyricistLabel,
       listId: "music-lyricists",
-      options: data.filterMeta.lyricists,
+      options: filterMeta.lyricists,
       placeholder: musicListLyricistPlaceholder,
       set: (value: string) => (lyricistDraft = value)
     }
@@ -187,7 +212,7 @@
 
   const getMusicTagLabel = (value: string): string =>
     unitCodeByMusicTag[value]
-      ? (data.unitProfiles[unitCodeByMusicTag[value]] ??
+      ? (unitProfiles[unitCodeByMusicTag[value]] ??
         formatUnitFallbackLabel(unitCodeByMusicTag[value]))
       : createI18nTranslator(data.uiLocale, currentMessages)(
           `musicListTag.${value}`,
@@ -413,6 +438,10 @@
     const requestId = initialPageRequestId + 1;
     initialPageRequestId = requestId;
     const listRequestIdForInitialPage = beginListRequest();
+    metadataRequestId += 1;
+    metadataRequestKey = "";
+    metadataState = "idle";
+    filterMeta = createEmptyMusicListFilterMeta();
     resetListStateForNavigation();
 
     initialPagePromise.then((result) => {
@@ -422,6 +451,22 @@
 
       applyInitialPage(result);
     });
+  });
+
+  $effect(() => {
+    const requestId = ++unitProfilesRequestId;
+    unitProfiles = {};
+    const unitProfilesPromise = Promise.resolve(data.unitProfiles as unknown as UnitProfileMap);
+
+    void unitProfilesPromise
+      .then((nextUnitProfiles) => {
+        if (requestId !== unitProfilesRequestId) return;
+        unitProfiles = nextUnitProfiles;
+      })
+      .catch(() => {
+        // Unit labels have a synchronous fallback, so an unavailable profile
+        // request must not block the filter dialog or reject the page boundary.
+      });
   });
 
   $effect(() => {
@@ -738,8 +783,79 @@
     if (browser) localStorage.setItem(getViewKey(), next);
   };
 
+  const isMusicListFilterMeta = (value: unknown): value is MusicListFilterMeta => {
+    if (value === null || typeof value !== "object") {
+      return false;
+    }
+
+    const record = value as Record<string, unknown>;
+    return [
+      "categories",
+      "composers",
+      "arrangers",
+      "lyricists",
+      "vocalCharacters",
+      "tags",
+      "difficulties",
+      "levels"
+    ].every(
+      (key) =>
+        Array.isArray(record[key]) &&
+        record[key].every((entry: unknown) => typeof entry === "string")
+    );
+  };
+
+  const getMetadataRequestKey = (): string => {
+    const params = createSearchParams(1);
+    return `${data.region}?${params.toString()}`;
+  };
+
+  const loadFilterMetadata = (): void => {
+    const requestKey = getMetadataRequestKey();
+    if (metadataRequestKey === requestKey && metadataState !== "error") {
+      return;
+    }
+
+    metadataRequestKey = requestKey;
+    const requestId = ++metadataRequestId;
+    const params = createSearchParams(1);
+    metadataState = "loading";
+    filterMeta = createEmptyMusicListFilterMeta();
+
+    void fetch(
+      `${resolve("/musics/[region]/metadata", { region: data.region })}?${params.toString()}`
+    )
+      .then(async (response) => {
+        const payload = (await response.json()) as MusicMetadataResponse;
+        if (
+          !response.ok ||
+          payload.loadFailed ||
+          !payload.filterMeta ||
+          !isMusicListFilterMeta(payload.filterMeta)
+        ) {
+          throw new Error("Failed to load music filter metadata.");
+        }
+
+        return payload.filterMeta;
+      })
+      .then((nextFilterMeta) => {
+        if (requestId !== metadataRequestId || requestKey !== getMetadataRequestKey()) {
+          return;
+        }
+
+        filterMeta = nextFilterMeta;
+        metadataState = "ready";
+      })
+      .catch(() => {
+        if (requestId === metadataRequestId && requestKey === getMetadataRequestKey()) {
+          metadataState = "error";
+        }
+      });
+  };
+
   const openFilters = (): void => {
     syncDrafts();
+    loadFilterMetadata();
     filterDialog?.showModal();
   };
 
@@ -823,7 +939,8 @@
   </PageHeader>
 
   <div
-    class="archive-card-controls flex flex-col gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
+    class="archive-card-controls archive-list-toolbar flex gap-3 rounded-2xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-3.5"
+    data-swipe-region-skip
   >
     <div class="archive-control-group flex items-center gap-2">
       <div class="join">
@@ -869,14 +986,7 @@
     </div>
   </div>
 
-  {#if isReloading}
-    <div
-      class="archive-list-status flex min-h-48 items-center justify-center rounded-2xl border p-8"
-    >
-      <span class="loading loading-spinner loading-md"></span>
-      <span class="ml-3 text-sm opacity-70">{musicListLoading}</span>
-    </div>
-  {:else if isInitialLoading}
+  {#if isInitialLoading || isReloading}
     <div
       class="archive-results-field grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
     >
@@ -985,7 +1095,15 @@
       <fieldset class="fieldset gap-2">
         <legend class="fieldset-legend text-sm font-medium">{musicListFilterCategoryLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
-          {#each data.filterMeta.categories as category (category)}
+          {#if metadataState === "loading"}
+            <div class="alert alert-info py-2 text-sm">
+              <span class="loading loading-spinner loading-sm"></span>
+              <span>{musicListLoading}</span>
+            </div>
+          {:else if metadataState === "error"}
+            <div class="alert alert-error py-2 text-sm">{musicListLoadFailed}</div>
+          {:else}
+          {#each filterMeta.categories as category (category)}
             <label
               class={`btn btn-sm min-h-12! ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
             >
@@ -998,6 +1116,7 @@
               {getCategoryLabel(category)}
             </label>
           {/each}
+          {/if}
         </div>
       </fieldset>
       <fieldset class="fieldset gap-2">

@@ -1,15 +1,23 @@
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
-  buildMusicListFilterMeta,
+  canUsePaginatedMusicList,
   createMusicListPage,
+  DEFAULT_MUSIC_LIST_PAGE_SIZE,
   fetchMusicCatalog,
+  fetchMusicListPage,
+  getDefaultMusicListFilterMeta,
   hasMusicListFilters,
   logMusicListFilterDebug,
   parseMusicListQueryState
 } from "$lib/server/music-list";
+import type { MusicListPage } from "$lib/server/music-list";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
+
+type InitialPageResult =
+  | { page: MusicListPage; loadFailed: false }
+  | { page: MusicListPage; loadFailed: true };
 
 export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
@@ -23,43 +31,35 @@ export const load: PageServerLoad = async ({ params, url }) => {
     includeSpoilerContent: queryState.spoiler
   });
 
-  // filterMeta and unitProfiles are needed for filter rendering even before data loads,
-  // but we can stream them too for faster first-paint if desired.
-  // For now, keep them synchronous since they're needed for the filter dialog structure.
   const baseUrl = getMasterApiBaseUrl();
-  const [unitProfiles, filterMeta] = await Promise.all([
-    fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap),
-    fetchMusicCatalog(
-      baseUrl,
-      region,
-      queryState.spoiler,
-      queryState.hasAppend,
-      queryState.categories,
-      queryState.tags,
-      queryState.level
-    ).then((catalog) => buildMusicListFilterMeta(catalog))
-  ]);
+  const unitProfiles = fetchUnitProfiles(baseUrl, region)
+    .then(toUnitProfileMap)
+    .catch((error) => {
+      logMusicListFilterDebug("unit profile exception", {
+        region,
+        error
+      });
+      return {};
+    });
 
-  const initialPage: Promise<
-    | { page: ReturnType<typeof createMusicListPage>; loadFailed: false }
-    | { page: ReturnType<typeof createMusicListPage>; loadFailed: true }
-  > = fetchMusicCatalog(
-    baseUrl,
-    region,
-    queryState.spoiler,
-    queryState.hasAppend,
-    queryState.categories,
-    queryState.tags,
-    queryState.level
-  )
-    .then((catalog) => {
-      const page = createMusicListPage(catalog, queryState, 1);
-
+  const usePaginatedInitialPage = canUsePaginatedMusicList(queryState);
+  const initialPage: Promise<InitialPageResult> = (usePaginatedInitialPage
+    ? fetchMusicListPage(baseUrl, region, queryState, 1, DEFAULT_MUSIC_LIST_PAGE_SIZE)
+    : fetchMusicCatalog(
+        baseUrl,
+        region,
+        queryState.spoiler,
+        queryState.hasAppend,
+        queryState.categories,
+        queryState.tags,
+        queryState.level
+      ).then((catalog) => createMusicListPage(catalog, queryState, 1)))
+    .then((page) => {
       logMusicListFilterDebug("initial response", {
         region,
         queryState,
         hasFilters,
-        catalogItemCount: catalog.length,
+        initialPageMode: usePaginatedInitialPage ? "paginated" : "catalog",
         itemCount: page.items.length,
         itemIds: page.items.map((item) => item.id),
         pagination: page.pagination
@@ -85,7 +85,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
     region,
     initialPage,
     initialQuery: queryState,
-    filterMeta,
-    unitProfiles
+    // Filter metadata is loaded only when the dialog opens; keep the initial
+    // loader payload cheap and provide an empty, synchronous shape for typing.
+    filterMeta: getDefaultMusicListFilterMeta(),
+    unitProfiles: unitProfiles as unknown as ReturnType<typeof toUnitProfileMap>
   };
 };

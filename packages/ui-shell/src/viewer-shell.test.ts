@@ -53,4 +53,20 @@ describe("ViewerShell", () => {
     expect(navActionsInvoked).toBe(true);
     expect(screen.getByTitle("Site version").textContent).toContain("v0.4.2");
   });
+
+  it("renders the optional bottom-navigation snippet and reserves main clearance", () => {
+    let navigationInvoked = false;
+    renderShell({
+      bottomNavigation: () => {
+        navigationInvoked = true;
+      }
+    });
+
+    expect(navigationInvoked).toBe(true);
+    expect(
+      document
+        .querySelector("#test-drawer-main")
+        ?.classList.contains("viewer-shell-main-with-bottom-navigation")
+    ).toBe(true);
+  });
 });
