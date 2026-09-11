@@ -48,6 +48,8 @@ export interface Live2dModelResource {
   pause(): void | Promise<void>;
   resume(): void | Promise<void>;
   reset(): void | Promise<void>;
+  pan(deltaX: number, deltaY: number): void | Promise<void>;
+  zoom(factor: number, focalX: number, focalY: number): void | Promise<void>;
   resize(width: number, height: number): void | Promise<void>;
   destroy(): void | Promise<void>;
 }
@@ -82,6 +84,8 @@ export interface Live2dModelViewer {
   pause(): Promise<boolean>;
   resume(): Promise<boolean>;
   reset(): Promise<boolean>;
+  pan(deltaX: number, deltaY: number): Promise<boolean>;
+  zoom(factor: number, focalX: number, focalY: number): Promise<boolean>;
   resize(width: number, height: number): Promise<boolean>;
   destroy(): Promise<void>;
 }
@@ -443,6 +447,15 @@ export const createLive2dModelViewer = (
     pause: async () => runReadyCommand((activeResource) => activeResource.pause()),
     resume: async () => runReadyCommand((activeResource) => activeResource.resume()),
     reset: async () => runReadyCommand((activeResource) => activeResource.reset()),
+    pan: async (deltaX, deltaY) =>
+      Number.isFinite(deltaX) &&
+      Number.isFinite(deltaY) &&
+      runReadyCommand((activeResource) => activeResource.pan(deltaX, deltaY)),
+    zoom: async (factor, focalX, focalY) =>
+      isPositiveFinite(factor) &&
+      Number.isFinite(focalX) &&
+      Number.isFinite(focalY) &&
+      runReadyCommand((activeResource) => activeResource.zoom(factor, focalX, focalY)),
     resize: async (width, height) => {
       if (!isPositiveFinite(width) || !isPositiveFinite(height)) return false;
       return runReadyCommand((activeResource) => activeResource.resize(width, height));

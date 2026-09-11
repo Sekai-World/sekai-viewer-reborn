@@ -34,6 +34,8 @@ const createResource = (): Live2dModelResource => ({
   pause: vi.fn(async () => undefined),
   resume: vi.fn(async () => undefined),
   reset: vi.fn(async () => undefined),
+  pan: vi.fn(async () => undefined),
+  zoom: vi.fn(async () => undefined),
   resize: vi.fn(async () => undefined),
   destroy: vi.fn(async () => undefined)
 });
@@ -166,15 +168,37 @@ describe("Live2D model viewer controller", () => {
     await expect(viewer.setIdle(false)).resolves.toBe(true);
     await expect(viewer.pause()).resolves.toBe(true);
     await expect(viewer.reset()).resolves.toBe(true);
+    await expect(viewer.pan(12, -8)).resolves.toBe(true);
+    await expect(viewer.zoom(1.25, 640, 360)).resolves.toBe(true);
     await expect(viewer.resize(1280, 720)).resolves.toBe(true);
 
     expect(resource.playMotion).toHaveBeenCalledWith("wave", { loop: true, speed: 1.5 });
     expect(resource.playExpression).toHaveBeenCalledWith("smile");
     expect(resource.setIdle).toHaveBeenCalledWith(false);
+    expect(resource.reset).toHaveBeenCalledTimes(1);
+    expect(resource.pan).toHaveBeenCalledWith(12, -8);
+    expect(resource.zoom).toHaveBeenCalledWith(1.25, 640, 360);
     expect(resource.resize).toHaveBeenCalledWith(1280, 720);
     await expect(viewer.playMotion("unknown")).resolves.toBe(false);
     expect(states).toEqual(["idle", "loading", "loading", "loading", "ready"]);
     unsubscribe();
+  });
+
+  it("rejects invalid model transform inputs before forwarding them", async () => {
+    const resource = createResource();
+    const viewer = createLive2dModelViewer(createLoader(resource));
+
+    await expect(viewer.pan(Number.NaN, 0)).resolves.toBe(false);
+    await expect(viewer.zoom(0, 0, 0)).resolves.toBe(false);
+    await expect(viewer.zoom(1.2, Number.POSITIVE_INFINITY, 0)).resolves.toBe(false);
+    expect(resource.pan).not.toHaveBeenCalled();
+    expect(resource.zoom).not.toHaveBeenCalled();
+
+    await viewer.load(descriptor);
+    await expect(viewer.pan(4, 6)).resolves.toBe(true);
+    await expect(viewer.zoom(1.1, 20, 30)).resolves.toBe(true);
+    expect(resource.pan).toHaveBeenCalledWith(4, 6);
+    expect(resource.zoom).toHaveBeenCalledWith(1.1, 20, 30);
   });
 
   it("forwards resume only when the viewer is ready", async () => {

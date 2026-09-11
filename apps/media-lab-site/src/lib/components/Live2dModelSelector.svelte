@@ -1,9 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import {
-    resolveModelSelection,
-    type Live2dModelOption
-  } from "$lib/live2d/model-catalog";
+  import { resolveModelSelection, type Live2dModelOption } from "$lib/live2d/model-catalog";
 
   /** Localized labels, resolved by the hosting route's translator. */
   export interface Live2dModelSelectorLabels {
@@ -11,7 +8,6 @@
     previewBadge: string;
     inputLabel: string;
     inputPlaceholder: string;
-    inputHint: string;
     inputError: string;
     inputAction: string;
     empty: string;
@@ -117,7 +113,7 @@
         autocomplete="off"
         spellcheck="false"
         aria-invalid={showDraftError || undefined}
-        aria-describedby={showDraftError ? `${uid}-model-id-error` : `${uid}-model-id-hint`}
+        aria-describedby={showDraftError ? `${uid}-model-id-error` : undefined}
       />
       <button type="submit" class="btn btn-primary btn-sm min-h-11! px-4" disabled={!canOpenDraft}>
         {labels.inputAction}
@@ -125,13 +121,13 @@
       </button>
     </div>
     {#if showDraftError}
-      <p id={`${uid}-model-id-error`} role="alert" class="flex items-center gap-1 text-sm text-error">
+      <p
+        id={`${uid}-model-id-error`}
+        role="alert"
+        class="flex items-center gap-1 text-sm text-error"
+      >
         <Icon icon="mdi:alert-circle-outline" class="size-4 shrink-0" aria-hidden="true" />
         {labels.inputError}
-      </p>
-    {:else}
-      <p id={`${uid}-model-id-hint`} class="text-sm/6 text-base-content/60">
-        {labels.inputHint}
       </p>
     {/if}
   </form>

@@ -5,6 +5,7 @@
   import { createI18nTranslator } from "$lib/i18n/runtime";
   import Live2dModelStudio from "$lib/components/Live2dModelStudio.svelte";
   import { createLive2dModelLoader } from "$lib/live2d/live2d-model-loader";
+  import { attachLive2dModelInteractions } from "$lib/live2d/live2d-model-interactions";
   import {
     createLive2dModelViewer,
     type Live2dModelDescriptor,
@@ -97,6 +98,7 @@
 
   onMount(() => {
     const mountedViewer = createLive2dModelViewer(createLive2dModelLoader(stageHost));
+    const detachInteractions = attachLive2dModelInteractions(stageHost, mountedViewer);
     let active = true;
     const resize = () => {
       if (!active) return;
@@ -120,6 +122,7 @@
       active = false;
       observer?.disconnect();
       if (!observer) window.removeEventListener("resize", resize);
+      detachInteractions();
       unsubscribe();
       viewer = null;
       void mountedViewer.destroy();
@@ -168,7 +171,7 @@
 <section
   aria-labelledby="live2d-model-viewer-title"
   aria-busy={isLoading}
-  class="flex min-w-0 flex-col gap-6"
+  class="flex min-w-0 flex-col gap-5"
 >
   <nav class="text-sm">
     <a
@@ -180,17 +183,24 @@
     </a>
   </nav>
 
-  <header class="flex flex-col gap-3">
-    <p class="text-sm font-semibold text-primary">{translate("live2d.kicker")}</p>
+  <header class="flex flex-col gap-3" data-model-context>
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <p class="text-sm font-semibold text-primary">{translate("live2d.kicker")}</p>
+      <span
+        class="badge badge-outline h-8 gap-2 px-3 text-xs font-semibold"
+        role="status"
+        aria-label={`${translate("live2d.modelViewer.status.label")}: ${stageStatus}`}
+      >
+        <span class="size-1.5 rounded-full bg-current" aria-hidden="true"></span>
+        {stageStatus}
+      </span>
+    </div>
     <h1
       id="live2d-model-viewer-title"
-      class="text-3xl font-bold tracking-tight break-all text-base-content"
+      class="text-3xl font-bold tracking-tight break-all text-base-content sm:text-4xl"
     >
       {model?.modelName ?? translate("live2d.modelViewer.title")}
     </h1>
-    <p class="max-w-2xl text-base/7 text-base-content/75">
-      {translate("live2d.modelViewer.controls.hint")}
-    </p>
   </header>
 
   {#if isLoading}
@@ -233,7 +243,6 @@
 
   <Live2dModelStudio
     labels={studioLabels}
-    statusLine={stageStatus}
     controlsEnabled={playerAdapter.controlsEnabled}
     motions={playerAdapter.motions}
     expressions={playerAdapter.expressions}

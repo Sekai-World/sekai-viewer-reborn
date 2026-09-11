@@ -592,6 +592,67 @@ describe("Live2D Pixi/Cubism loader", () => {
     await resource.destroy();
   });
 
+  it("allows horizontal pan for a model smaller than the viewport and clamps at the stage edge", async () => {
+    const { model } = createModel();
+    const { runtime } = createRuntime(model);
+    const loader = createLive2dModelLoader(
+      { clientWidth: 1000, clientHeight: 800 } as HTMLElement,
+      { runtime }
+    );
+    const resource = await loader.load(descriptor, new AbortController().signal, vi.fn());
+
+    await resource.pan(100, 0);
+    expect(model.position.set).toHaveBeenLastCalledWith(600, 400);
+
+    await resource.pan(10_000, 0);
+    expect(model.position.set).toHaveBeenLastCalledWith(840, 400);
+
+    await resource.destroy();
+  });
+
+  it("preserves zoom and pan while refitting the model after a resize", async () => {
+    const { model } = createModel();
+    const { runtime } = createRuntime(model);
+    const loader = createLive2dModelLoader(
+      { clientWidth: 1000, clientHeight: 800 } as HTMLElement,
+      { runtime }
+    );
+    const resource = await loader.load(descriptor, new AbortController().signal, vi.fn());
+
+    await resource.zoom(4, 500, 400);
+    expect(model.scale.set).toHaveBeenLastCalledWith(3.2, 3.2);
+    expect(model.position.set).toHaveBeenLastCalledWith(500, 400);
+    await resource.pan(100, -50);
+    await resource.resize(900, 700);
+
+    expect(model.scale.set).toHaveBeenLastCalledWith(2.8, 2.8);
+    expect(model.position.set).toHaveBeenLastCalledWith(550, 300);
+    await resource.destroy();
+  });
+
+  it("bounds pan to the model viewport and resets the viewport with motion state", async () => {
+    const { model, bodyMotionManager, faceMotionManager } = createModel();
+    const { runtime } = createRuntime(model);
+    const loader = createLive2dModelLoader(
+      { clientWidth: 1000, clientHeight: 800 } as HTMLElement,
+      { runtime }
+    );
+    const resource = await loader.load(descriptor, new AbortController().signal, vi.fn());
+
+    await resource.zoom(4, 500, 400);
+    await resource.pan(100_000, 100_000);
+
+    expect(model.position.set).toHaveBeenLastCalledWith(640, 1280);
+
+    await resource.reset();
+
+    expect(model.scale.set).toHaveBeenLastCalledWith(0.8, 0.8);
+    expect(model.position.set).toHaveBeenLastCalledWith(500, 400);
+    expect(bodyMotionManager.stopAllMotions).toHaveBeenCalled();
+    expect(faceMotionManager.stopAllMotions).toHaveBeenCalled();
+    await resource.destroy();
+  });
+
   it("rejects non-positive or non-finite resize dimensions", async () => {
     const { model } = createModel();
     const { runtime, pixi } = createRuntime(model);

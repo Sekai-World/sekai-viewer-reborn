@@ -1,4 +1,5 @@
 import { getContext, setContext } from "svelte";
+import { SvelteURL } from "svelte/reactivity";
 
 export const supportedRegions = ["jp", "en", "tw", "kr", "cn"] as const;
 
@@ -6,6 +7,20 @@ export type SupportedRegion = (typeof supportedRegions)[number];
 
 export const DEFAULT_PRIMARY_REGION: SupportedRegion = "jp";
 export const DEFAULT_SECONDARY_REGION: SupportedRegion = "en";
+
+export const isSupportedRegion = (value: unknown): value is SupportedRegion =>
+  typeof value === "string" && (supportedRegions as readonly string[]).includes(value);
+
+export const normalizePrimaryRegion = (value: unknown): SupportedRegion => {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return isSupportedRegion(normalized) ? normalized : DEFAULT_PRIMARY_REGION;
+};
+
+export const buildPrimaryRegionUrl = (currentUrl: URL, region: SupportedRegion): URL => {
+  const nextUrl = new SvelteURL(currentUrl);
+  nextUrl.searchParams.set("region", region);
+  return nextUrl;
+};
 
 const REGION_SELECTION_CONTEXT_KEY = "media-lab-site:region-selection";
 

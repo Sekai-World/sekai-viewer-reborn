@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
-  import { invalidateAll, onNavigate } from "$app/navigation";
+  import { goto, invalidateAll, onNavigate } from "$app/navigation";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
@@ -16,7 +16,13 @@
     supportedUiLocales,
     type SupportedUiLocale
   } from "$lib/i18n/region";
-  import { provideRegionSelection, supportedRegions } from "$lib/region-selection.svelte";
+  import {
+    buildPrimaryRegionUrl,
+    normalizePrimaryRegion,
+    provideRegionSelection,
+    supportedRegions,
+    type SupportedRegion
+  } from "$lib/region-selection.svelte";
   import type { LayoutData } from "./$types";
   import {
     applyDocumentTheme,
@@ -31,6 +37,7 @@
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const regionSelection = provideRegionSelection();
+  regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
   const fallbackMessages = getLocalI18nMessages(["common"]);
   let messages = $state(fallbackMessages);
   let themeName = $state<ThemeName>("default");
@@ -163,6 +170,18 @@
     document.cookie = buildUiLocaleCookie(nextLocale);
     await invalidateAll();
   };
+
+  const applyPrimaryRegion = async (region: SupportedRegion): Promise<void> => {
+    await goto(buildPrimaryRegionUrl(page.url, region), {
+      invalidateAll: true,
+      keepFocus: true,
+      noScroll: true
+    });
+  };
+
+  $effect(() => {
+    regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
+  });
 
   // `onNavigate` must be registered during component initialisation; calling it
   // inside `onMount` throws at runtime. Browser APIs are guarded inside the
@@ -423,7 +442,7 @@
           class={`btn btn-sm min-h-11! rounded-lg border-base-content/15 px-3 ${regionSelection.primary === region ? "btn-primary" : "bg-base-100"}`}
           aria-pressed={regionSelection.primary === region}
           onclick={() => {
-            regionSelection.primary = region;
+            void applyPrimaryRegion(region);
           }}
         >
           {translate(`region.${region}`)}

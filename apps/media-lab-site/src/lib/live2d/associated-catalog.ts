@@ -34,6 +34,9 @@ export interface Live2dAssociatedMotionSet {
 
 export interface Live2dAssociatedModel {
   region: typeof LIVE2D_CATALOG_REGION;
+  characterId?: number | null;
+  character2dId?: number | null;
+  characterType?: string | null;
   modelBase: string;
   modelFile: string;
   modelName: string;
@@ -43,6 +46,33 @@ export interface Live2dAssociatedModel {
 }
 
 export type Live2dAssociatedCatalog = readonly Live2dAssociatedModel[];
+
+export interface Live2dModelCharacterGroup<TModel extends { characterId?: number | null }> {
+  characterId: number | null;
+  models: readonly TModel[];
+}
+
+/** Groups models by character while preserving group and model input order. */
+export const groupLive2dModelsByCharacterId = <TModel extends { characterId?: number | null }>(
+  models: readonly TModel[]
+): readonly Live2dModelCharacterGroup<TModel>[] => {
+  const groups = new Map<number | null, TModel[]>();
+
+  for (const model of models) {
+    const characterId = model.characterId ?? null;
+    const group = groups.get(characterId);
+    if (group) {
+      group.push(model);
+    } else {
+      groups.set(characterId, [model]);
+    }
+  }
+
+  return Array.from(groups, ([characterId, groupedModels]) => ({
+    characterId,
+    models: groupedModels
+  }));
+};
 
 export type Live2dAssetNamespace = (typeof LIVE2D_ASSET_NAMESPACES)[number];
 
@@ -108,6 +138,38 @@ const readIdentifier = (value: unknown, label: string): ValidationResult<string>
   }
 
   return result;
+};
+
+const readPositiveSafeInteger = (value: unknown, label: string): ValidationResult<number> => {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+    return { reason: `${label} must be a positive safe integer` };
+  }
+
+  return { value };
+};
+
+const readOptionalPositiveSafeInteger = (
+  record: Record<string, unknown>,
+  field: string,
+  label: string
+): ValidationResult<number | undefined> => {
+  if (!Object.hasOwn(record, field) || record[field] === null) {
+    return { value: undefined };
+  }
+
+  return readPositiveSafeInteger(record[field], label);
+};
+
+const readOptionalIdentifier = (
+  record: Record<string, unknown>,
+  field: string,
+  label: string
+): ValidationResult<string | undefined> => {
+  if (!Object.hasOwn(record, field) || record[field] === null) {
+    return { value: undefined };
+  }
+
+  return readIdentifier(record[field], label);
 };
 
 const readRelativePath = (value: unknown, label: string): ValidationResult<string> => {
@@ -436,27 +498,17 @@ const parseMotionSet = (
   };
 };
 
-const parseModel = (value: unknown, location: string): ValidationResult<Live2dAssociatedModel> => {
-  if (!isRecord(value)) return { reason: `${location} must be an object` };
-
-  const modelBase = readIdentifier(value.modelBase, `${location}.modelBase`);
-  if ("reason" in modelBase) return modelBase;
-  const modelFile = readFileName(value.modelFile, `${location}.modelFile`, MODEL_FILE_SUFFIX);
-  if ("reason" in modelFile) return modelFile;
-  const modelName = readIdentifier(value.modelName, `${location}.modelName`);
-  if ("reason" in modelName) return modelName;
-  const modelPath = readRelativePath(value.modelPath, `${location}.modelPath`);
-  if ("reason" in modelPath) return modelPath;
-
-  const modelUrl = resolveAssetUrl(modelPath.value, modelFile.value, MODEL_FILE_SUFFIX);
-  if ("reason" in modelUrl) return modelUrl;
-  if (!Array.isArray(value.motionSets)) {
+const parseMotionSets = (
+  value: unknown,
+  location: string
+): ValidationResult<Live2dAssociatedMotionSet[]> => {
+  if (!Array.isArray(value)) {
     return { reason: `${location}.motionSets must be an array` };
   }
 
   const motionSetIds = new Set<string>();
   const motionSets: Live2dAssociatedMotionSet[] = [];
-  for (const [index, item] of value.motionSets.entries()) {
+  for (const [index, item] of value.entries()) {
     const motionSetLocation = `${location}.motionSets[${index}]`;
     const parsedMotionSet = parseMotionSet(item, motionSetLocation);
     if ("reason" in parsedMotionSet) return parsedMotionSet;
@@ -468,15 +520,52 @@ const parseModel = (value: unknown, location: string): ValidationResult<Live2dAs
     motionSets.push(parsedMotionSet.value);
   }
 
+  return { value: motionSets };
+};
+
+const parseModel = (value: unknown, location: string): ValidationResult<Live2dAssociatedModel> => {
+  if (!isRecord(value)) return { reason: `${location} must be an object` };
+
+  const characterId = readOptionalPositiveSafeInteger(
+    value,
+    "characterId",
+    `${location}.characterId`
+  );
+  if ("reason" in characterId) return characterId;
+  const character2dId = readOptionalPositiveSafeInteger(
+    value,
+    "character2dId",
+    `${location}.character2dId`
+  );
+  if ("reason" in character2dId) return character2dId;
+  const characterType = readOptionalIdentifier(value, "characterType", `${location}.characterType`);
+  if ("reason" in characterType) return characterType;
+  const modelBase = readIdentifier(value.modelBase, `${location}.modelBase`);
+  if ("reason" in modelBase) return modelBase;
+  const modelFile = readFileName(value.modelFile, `${location}.modelFile`, MODEL_FILE_SUFFIX);
+  if ("reason" in modelFile) return modelFile;
+  const modelName = readIdentifier(value.modelName, `${location}.modelName`);
+  if ("reason" in modelName) return modelName;
+  const modelPath = readRelativePath(value.modelPath, `${location}.modelPath`);
+  if ("reason" in modelPath) return modelPath;
+
+  const modelUrl = resolveAssetUrl(modelPath.value, modelFile.value, MODEL_FILE_SUFFIX);
+  if ("reason" in modelUrl) return modelUrl;
+  const motionSets = parseMotionSets(value.motionSets, location);
+  if ("reason" in motionSets) return motionSets;
+
   return {
     value: {
       region: LIVE2D_CATALOG_REGION,
+      ...(characterId.value === undefined ? {} : { characterId: characterId.value }),
+      ...(character2dId.value === undefined ? {} : { character2dId: character2dId.value }),
+      ...(characterType.value === undefined ? {} : { characterType: characterType.value }),
       modelBase: modelBase.value,
       modelFile: modelFile.value,
       modelName: modelName.value,
       modelPath: modelPath.value,
       modelUrl: modelUrl.value,
-      motionSets
+      motionSets: motionSets.value
     }
   };
 };

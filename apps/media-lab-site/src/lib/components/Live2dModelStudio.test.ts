@@ -36,7 +36,6 @@ function renderStudio(
   return {
     ...render(Live2dModelStudio, {
       labels,
-      statusLine: "Ready",
       controlsEnabled: true,
       motions,
       expressions,
@@ -131,7 +130,6 @@ describe("Live2dModelStudio selectors", () => {
     const onApplyExpression = vi.fn();
     render(Live2dModelStudio, {
       labels,
-      statusLine: "Ready",
       controlsEnabled: true,
       motions,
       expressions,
@@ -209,7 +207,6 @@ describe("Live2dModelStudio selectors", () => {
   it("does not render clear buttons while controls are disabled", async () => {
     render(Live2dModelStudio, {
       labels,
-      statusLine: "Loading",
       controlsEnabled: false,
       motions,
       expressions,
@@ -228,7 +225,6 @@ describe("Live2dModelStudio selectors", () => {
     const onResume = vi.fn();
     render(Live2dModelStudio, {
       labels,
-      statusLine: "Ready",
       controlsEnabled: true,
       onPause,
       onResume
@@ -249,7 +245,6 @@ describe("Live2dModelStudio selectors", () => {
     const onResume = vi.fn();
     render(Live2dModelStudio, {
       labels,
-      statusLine: "Paused",
       controlsEnabled: true,
       paused: true,
       onPause,
@@ -270,7 +265,6 @@ describe("Live2dModelStudio selectors", () => {
   it("keeps the playback toggle disabled until controls are enabled", () => {
     render(Live2dModelStudio, {
       labels,
-      statusLine: "Loading",
       controlsEnabled: false,
       onPause: vi.fn(),
       onResume: vi.fn()

@@ -38,16 +38,20 @@ async function patchGeneratedFile(filePath, transform) {
 
 async function normalizeGeneratedSdk(outputDir) {
   const normalizedOutputDir = resolve(outputDir);
-  const localApiBaseUrlPattern = /baseUrl: 'http:\/\/localhost:(?:8080|18080)\/api\/v1'/g;
-  const localApiBaseUrlTypePattern =
-    /baseUrl: 'http:\/\/localhost:(?:8080|18080)\/api\/v1' \| \(string & \{\}\);/g;
+  const absoluteApiBaseUrlPattern =
+    /baseUrl: (?:'https?:\/\/[^']+\/api\/v1'|"https?:\/\/[^"]+\/api\/v1"|`https?:\/\/[^`]+\/api\/v1`)/g;
+  const absoluteApiBaseUrlTypePattern =
+    /baseUrl: (?:'https?:\/\/[^']+\/api\/v1'|"https?:\/\/[^"]+\/api\/v1"|`https?:\/\/[^`]+\/api\/v1`) \| \(string & \{\}\);/g;
 
   await patchGeneratedFile(resolve(normalizedOutputDir, "client.gen.ts"), (source) =>
-    source.replace(localApiBaseUrlPattern, "baseUrl: '/api/v1'")
+    source.replace(absoluteApiBaseUrlPattern, "baseUrl: '/api/v1'")
   );
 
   await patchGeneratedFile(resolve(normalizedOutputDir, "types.gen.ts"), (source) =>
-    source.replace(localApiBaseUrlTypePattern, "baseUrl: string;")
+    source.replace(
+      absoluteApiBaseUrlTypePattern,
+      "baseUrl: `${string}://${string}/api/v1` | (string & {});"
+    )
   );
 
   await patchGeneratedFile(resolve(normalizedOutputDir, "index.ts"), (source) =>
