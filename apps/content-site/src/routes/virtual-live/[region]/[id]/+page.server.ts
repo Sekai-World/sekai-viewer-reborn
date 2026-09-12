@@ -33,6 +33,7 @@ type VirtualLivePayload = {
 type VirtualLiveAggregateLookup = {
   region: SupportedRegion;
   virtualLive: VirtualLiveDetail | null;
+  loadFailed: boolean;
   availableRegions: SupportedRegion[];
   exists: boolean;
   rawPayloadJson: string | null;
@@ -344,6 +345,7 @@ const fetchVirtualLiveAggregate = async (
       return {
         region,
         virtualLive: null,
+        loadFailed: true,
         availableRegions: [],
         exists: false,
         rawPayloadJson: null
@@ -355,6 +357,7 @@ const fetchVirtualLiveAggregate = async (
       return {
         region,
         virtualLive: null,
+        loadFailed: false,
         availableRegions: [],
         exists: false,
         rawPayloadJson: null
@@ -392,6 +395,7 @@ const fetchVirtualLiveAggregate = async (
     return {
       region,
       virtualLive: detailWithMusicTitle,
+      loadFailed: false,
       availableRegions: normalizeAvailableRegions(detailResponse.data),
       exists: true,
       rawPayloadJson: JSON.stringify(detailResponse.data, null, 2)
@@ -400,6 +404,7 @@ const fetchVirtualLiveAggregate = async (
     return {
       region,
       virtualLive: null,
+      loadFailed: true,
       availableRegions: [],
       exists: false,
       rawPayloadJson: null
@@ -442,10 +447,12 @@ const fetchAvailableRegions = async ({
 
 const fetchVirtualLivePayload = async ({
   aggregatePromise,
-  invalidVirtualLiveIdMessage
+  invalidVirtualLiveIdMessage,
+  failedToLoadVirtualLiveDataMessage
 }: {
   aggregatePromise: Promise<VirtualLiveAggregateLookup>;
   invalidVirtualLiveIdMessage: string | null;
+  failedToLoadVirtualLiveDataMessage: string;
 }): Promise<VirtualLivePayload> => {
   if (invalidVirtualLiveIdMessage) {
     return {
@@ -461,13 +468,13 @@ const fetchVirtualLivePayload = async ({
     return {
       virtualLive: aggregate.virtualLive,
       debugVirtualLiveJson: dev ? aggregate.rawPayloadJson : null,
-      error: null
+      error: aggregate.loadFailed ? failedToLoadVirtualLiveDataMessage : null
     };
   } catch {
     return {
       virtualLive: null,
       debugVirtualLiveJson: null,
-      error: null
+      error: failedToLoadVirtualLiveDataMessage
     };
   }
 };
@@ -492,6 +499,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
     : Promise.resolve({
         region,
         virtualLive: null,
+        loadFailed: false,
         availableRegions: [region],
         exists: false,
         rawPayloadJson: null
@@ -513,7 +521,8 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
       : Promise.resolve([region] satisfies SupportedRegion[]),
     virtualLivePayload: fetchVirtualLivePayload({
       aggregatePromise,
-      invalidVirtualLiveIdMessage: virtualLiveId ? null : invalidVirtualLiveIdMessage
+      invalidVirtualLiveIdMessage: virtualLiveId ? null : invalidVirtualLiveIdMessage,
+      failedToLoadVirtualLiveDataMessage
     })
   };
 };

@@ -98,6 +98,7 @@ type EventAggregateLookup = {
   region: SupportedRegion;
   event: EventDetail | null;
   relatedData: EventRelatedData | null;
+  loadFailed: boolean;
   availableRegions: SupportedRegion[];
   isCurrentEvent: boolean;
   exists: boolean;
@@ -120,6 +121,7 @@ const fetchEventAggregate = async (
         region,
         event: null,
         relatedData: null,
+        loadFailed: true,
         availableRegions: [],
         isCurrentEvent: false,
         exists: false,
@@ -132,6 +134,7 @@ const fetchEventAggregate = async (
       region,
       event,
       relatedData: event ? parseEventAggregateRelatedData(response.data) : null,
+      loadFailed: false,
       availableRegions: normalizeAvailableRegions(response.data),
       isCurrentEvent: getObject(response.data)?.["isCurrentEvent"] === true,
       exists: event !== null,
@@ -142,6 +145,7 @@ const fetchEventAggregate = async (
       region,
       event: null,
       relatedData: null,
+      loadFailed: true,
       availableRegions: [],
       isCurrentEvent: false,
       exists: false,
@@ -185,10 +189,12 @@ const fetchAvailableRegions = async ({
 
 const fetchEventPayload = async ({
   aggregatePromise,
-  invalidEventIdMessage
+  invalidEventIdMessage,
+  failedToLoadEventDataMessage
 }: {
   aggregatePromise: Promise<EventAggregateLookup>;
   invalidEventIdMessage: string | null;
+  failedToLoadEventDataMessage: string;
 }): Promise<EventPayload> => {
   if (invalidEventIdMessage) {
     return {
@@ -206,14 +212,14 @@ const fetchEventPayload = async ({
       event: aggregate.event,
       relatedData: aggregate.relatedData,
       debugEventJson: dev ? aggregate.rawPayloadJson : null,
-      error: null
+      error: aggregate.loadFailed ? failedToLoadEventDataMessage : null
     };
   } catch {
     return {
       event: null,
       relatedData: null,
       debugEventJson: null,
-      error: null
+      error: failedToLoadEventDataMessage
     };
   }
 };
@@ -252,6 +258,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
         region,
         event: null,
         relatedData: null,
+        loadFailed: false,
         availableRegions: [region],
         isCurrentEvent: false,
         exists: false,
@@ -274,7 +281,8 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
       : Promise.resolve([region] satisfies SupportedRegion[]),
     eventPayload: fetchEventPayload({
       aggregatePromise,
-      invalidEventIdMessage: eventId ? null : invalidEventIdMessage
+      invalidEventIdMessage: eventId ? null : invalidEventIdMessage,
+      failedToLoadEventDataMessage
     }),
     unitProfiles: fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap),
     isCurrentEvent: fetchIsCurrentEvent({
