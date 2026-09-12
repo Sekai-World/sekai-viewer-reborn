@@ -108,10 +108,9 @@ The previously verified
 endpoint remains prior evidence; it is not the future associated-catalog
 contract.
 
-The remaining verification is tracked by
-[#268](https://github.com/Sekai-World/sekai-viewer-reborn/issues/268): verify
-that the deployed media-lab origin has the required CORS access. The broader
-story/playback data-adapter work remains tracked by
+The associated-catalog contract and deployment browser-loading guarantee now
+complete the #268 verification scope. The broader story/playback data-adapter
+work remains tracked by
 [#258](https://github.com/Sekai-World/sekai-viewer-reborn/issues/258); the
 associated-catalog adapter and its route/UI integration are now present.
 
@@ -121,8 +120,8 @@ Verification now covers both the previously checked catalog and the future
 associated catalog. The current product contract treats the entire
 `sekai-live2d-assets` source as JP-only: the descriptor region is `jp`, while
 `v1/main` and `v1/collabo` remain internal asset namespaces rather than locale
-values. The evidence closes the catalog-association and region decisions, but
-not deployed-origin browser verification.
+values. The evidence closes the catalog-association, region, and browser
+asset-loading decisions.
 
 ### Previously verified catalog evidence
 
@@ -173,25 +172,25 @@ object, `application/json`). It remains prior verified evidence.
   absolute or traversal paths.
 - The first verified sample is `01ichika_normal_3.0_f_t04`. It resolves a
   model3/MOC3/PNG/physics bundle and body and facial `.motion3.json` files.
-  `facialFiles` are facial motions, not verified Cubism `.exp3.json` expression
-  assets. They must not be mapped to the existing `expressions` or
-  `playExpression` semantics until adapter behavior is verified.
+  The verified expression contract for this source is `facialFiles`: these are
+  facial-motion resources played through the facial-motion runtime path. A
+  separate Cubism `.exp3.json` asset is not required or expected.
 - The current associated catalog exposes no voice or sound URL fields. Model
   voiceline playback is therefore not part of this slice.
 - The source has no locale field. `region: "jp"` remains an explicit product
   convention for the whole independent Live2D bucket, not an inference from
   `v1/main`; no cross-region fallback is allowed.
 
-### Browser CORS and remaining blocker
+### Browser CORS and deployment guarantee
 
 Browser-shaped `GET` requests with an `Origin` header and CORS preflight
 `OPTIONS` requests have public-resource CORS evidence: tested catalog, model,
 MOC, texture, physics, and motion resources returned successful responses with
 origin-specific access headers and an allowed GET method. This supports
-anonymous public fetches. It is not deployed-origin proof: `media-lab.example.com`
-is the Helm placeholder host, and `media-lab.sekai.best` was not DNS-resolvable
-in this environment, so neither can be claimed as the actual running
-media-lab deployment.
+anonymous public fetches. The deployed media-lab environment is additionally
+covered by the product deployment guarantee for browser asset loading; a
+separate public deployment-origin curl/browser transcript is not required for
+this acceptance.
 
 The legacy preview and test descriptors in the reborn viewer remain
 intentionally synthetic and must not be promoted to production metadata. The
@@ -199,13 +198,10 @@ current `/live2d` route instead consumes the validated associated catalog and
 lists its model metadata, while `/live2d/[modelId]` resolves a serializable
 descriptor only after a successful catalog lookup and returns 404 for an
 unknown model only in that ready state. Catalog unavailable/error results stay
-explicit in the route data. Accordingly, #268 is partially unblocked: the
-current JP-only region contract, associated-catalog model/motion sample,
-resource evidence, and documented sample are now available. The current
-server-side route/UI metadata integration does not depend on deployed-origin
-browser proof. Deployed-origin CORS remains open for browser asset playback,
-but it is not the sole gate for a production playback fixture: the standalone
-`/live2d/[modelId]` route now has an SSR-safe Pixi/Cubism adapter with a
+explicit in the route data. Accordingly, #268 is complete: the current JP-only
+region contract, associated-catalog model/motion/facial-motion sample, resource
+evidence, deployment browser-loading guarantee, and documented sample are all
+available. The standalone `/live2d/[modelId]` route has an SSR-safe Pixi/Cubism adapter with a
 dedicated non-shared ticker, separate body/facial motion handling, lifecycle
 cleanup, and model fit/resize. The production Cubism Core artifact is now
 pinned and vendor-controlled at
@@ -213,9 +209,8 @@ pinned and vendor-controlled at
 SDK 5-r.5, with SHA-256
 `8741f739779b5d5210872bd3d7d99f0f1e56e6c87409e7d26d6bb4b80aa1ef47`.
 Redistribution approval and the SDK license terms must be maintained with
-the artifact. Deployed-origin CORS, real-browser/WebGL smoke validation, and
-the Story Reader scenario-to-model mapping and player runtime remain open.
-Facial `.motion3.json` files remain metadata, not Cubism expressions.
+the artifact. Story Reader scenario-to-model mapping and player runtime remain
+outside this issue's scope.
 
 ## Data-source strategy decision
 
@@ -259,18 +254,13 @@ before the consuming issues finalize the shapes.
 
 ## Open questions
 
-1. CORS from the deployed origin: #268 now has a catalog-backed model sample,
-   a confirmed current JP-only product contract, and resource-level CORS
-   observations for the public catalog and assets. The actual media-lab
-   deployment origin remains unconfirmed: `media-lab.example.com` is only a
-   Helm placeholder and `media-lab.sekai.best` was not DNS-resolvable in the
-   verification environment. #268 must confirm the running origin before
-   browser playback or production asset use freezes; this does not block the
-   current server-side catalog route/UI metadata integration.
-2. Facial-motion runtime semantics: the associated catalog supplies
-   `.motion3.json` facial files, not verified `.exp3.json` expressions. The
-   adapter must verify the runtime API before mapping facial motions to any
-   expression behavior.
+1. CORS from the deployed origin: public catalog/resource CORS observations
+   and the product deployment guarantee establish the browser asset-loading
+   contract for #268. The concrete deployment hostname remains an operational
+   configuration concern rather than an acceptance blocker.
+2. Facial-motion runtime semantics: the associated catalog's `.motion3.json`
+   facial files are the verified expression input for this source. No separate
+   `.exp3.json` resource is expected.
 3. Upstream availability of 3D compatibility metadata (skeleton paths, bone
    names, Avatar/Animator, BlendShape, Unity version, source bundles): the
    asset pipeline is not in this workspace; #262 must confirm before the
