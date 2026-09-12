@@ -1,5 +1,18 @@
 # @platform/ui-shell
 
+## 0.5.0
+
+### Minor Changes
+
+- 806897b: Add shared theme preference normalization, resolution, and document application helpers.
+
+### Patch Changes
+
+- 7382b8f: Keep the shared audio-player progress display synchronized after seeking during playback.
+- 7382b8f: Add a mobile quick-navigation bar for direct access to primary content pages, and refine
+  mobile homepage card/event layouts and catalogue toolbar behavior.
+- 316ff04: Share the number-input spinner reset across all sites and improve content-site skill-level input readability.
+
 ## 0.4.0
 
 ### Minor Changes
