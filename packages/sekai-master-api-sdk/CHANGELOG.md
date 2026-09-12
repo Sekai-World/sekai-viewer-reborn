@@ -1,5 +1,17 @@
 # @platform/sekai-master-api-sdk
 
+## 1.1.0
+
+### Minor Changes
+
+- 5010c80: Route Live2D model and motion assets through a same-origin relay with canonical path validation, streaming responses, and loader-side URL rewriting. Refine the model studio controls with searchable motion and expression inputs, render the Live2D canvas at the device pixel ratio for a sharper model preview, and group the model catalog by character metadata.
+
+  Add viewport interactions to the Live2D preview: wheel zoom, primary-button mouse pan, and two-finger pan and pinch zoom while preserving the current view across stage resizes.
+
+### Patch Changes
+
+- 22be097: Regenerate SDK from sekai-master-api OpenAPI spec: GitHub webhook master-data sync now returns 409 conflict with `Retry-After` while another pod holds the sync lease (#101), and adds the admin sync lease diagnostics endpoint `GET /api/v1/admin/master-data/lease` (#105).
+
 ## 1.0.2
 
 ### Patch Changes

@@ -1,5 +1,25 @@
 # @apps/account-site
 
+## 0.0.3
+
+### Patch Changes
+
+- 7382b8f: Keep the shared audio-player progress display synchronized after seeking during playback.
+- 5010c80: Route Live2D model and motion assets through a same-origin relay with canonical path validation, streaming responses, and loader-side URL rewriting. Refine the model studio controls with searchable motion and expression inputs, render the Live2D canvas at the device pixel ratio for a sharper model preview, and group the model catalog by character metadata.
+
+  Add viewport interactions to the Live2D preview: wheel zoom, primary-button mouse pan, and two-finger pan and pinch zoom while preserving the current view across stage resizes.
+
+- 316ff04: Share the number-input spinner reset across all sites and improve content-site skill-level input readability.
+- 806897b: Rebuild app images when shared shell and locale runtime helpers are released.
+- Updated dependencies [7382b8f]
+- Updated dependencies [5010c80]
+- Updated dependencies [7382b8f]
+- Updated dependencies [22be097]
+- Updated dependencies [316ff04]
+- Updated dependencies [806897b]
+  - @platform/ui-shell@0.5.0
+  - @platform/sekai-master-api-sdk@1.1.0
+
 ## 0.0.2
 
 ### Patch Changes
