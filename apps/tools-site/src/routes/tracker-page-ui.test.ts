@@ -751,10 +751,10 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('timeTravelMessage(snapshotStatus, "snapshot")');
   });
 
-  it("keeps the goal calculator as an accessible tool action with consistent button sizing", async () => {
+  it("keeps tracker tool actions accessible, compact, and touch-safe", async () => {
     const source = await readFile(pagePath, "utf8");
     const actionsStart = source.indexOf('<div class="tracker-tool-actions">');
-    const actionsEnd = source.indexOf("</div>", actionsStart);
+    const actionsEnd = source.indexOf('<span class="tracker-share-message"', actionsStart);
     const actions = source.slice(actionsStart, actionsEnd);
 
     expect(actionsStart).toBeGreaterThan(-1);
@@ -769,25 +769,67 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("goalRankInput?.focus()");
     expect(source).toContain("onsubmit={submitGoal}");
     expect(source).toContain("isGoalSubmitted");
-    expect(actions.match(/<button\b/g)).toHaveLength(3);
-    for (const icon of ["mdi:calculator-variant", "mdi:download", "mdi:share-variant-outline"]) {
+    expect(actions.match(/<button\b/g)).toHaveLength(7);
+    for (const icon of [
+      "mdi:history",
+      "mdi:calculator-variant",
+      "mdi:download",
+      "mdi:share-variant-outline"
+    ]) {
       expect(actions).toMatch(
         new RegExp(`<Icon\\s+icon="${icon}"\\s+class="size-4 shrink-0"\\s+aria-hidden="true"\\s*/>`)
       );
     }
-    expect(actions).toContain("onclick={exportCsv}");
+    expect(actions).toContain('onclick={() => openExport("csv")}');
+    expect(actions).toContain('aria-haspopup="dialog"');
+    expect(actions).toContain('role="menuitem"');
+    expect(actions).toContain('openExport("copy")');
+    expect(actions).toContain('openExport("xlsx")');
     expect(actions).toContain("disabled={!canExportCsv}");
     expect(actions).toContain("onclick={shareTracker}");
+    expect(actions).toContain("aria-expanded={isTimeTravelActive}");
+    expect(actions).toContain('aria-controls="tracker-time-travel-controls"');
     const buttonStyles = source.match(/\.tracker-tool-actions \.btn\s*\{([^}]+)\}/)?.[1];
-    expect(buttonStyles).toContain("min-height: 2.75rem;");
-    expect(buttonStyles).toContain("height: auto;");
+    expect(buttonStyles).toContain("min-height: 2.25rem;");
+    expect(buttonStyles).toContain("height: 2.25rem;");
     expect(buttonStyles).toContain("display: inline-flex;");
     expect(buttonStyles).toContain("align-items: center;");
     expect(buttonStyles).toContain("justify-content: center;");
     expect(buttonStyles).toContain("gap: 0.5rem;");
     expect(buttonStyles).toContain("padding-block: 0.25rem;");
     expect(buttonStyles).toContain("padding-inline: 0.75rem;");
+    expect(source).toContain("@media (max-width: 47.999rem), (pointer: coarse)");
+    expect(source).toMatch(
+      /@media \(max-width: 47\.999rem\), \(pointer: coarse\)[\s\S]*?\.tracker-tool-actions \.btn\s*\{[\s\S]*?min-height: 2\.75rem;[\s\S]*?height: auto;/
+    );
     expect(buttonStyles).toContain("line-height: 1.25;");
+  });
+
+  it("keeps export rows faithful to snapshots and optional World Link chapters", async () => {
+    const source = await readFile(pagePath, "utf8");
+
+    expect(source).toContain(
+      'const exportableRows = $derived(rows.filter((row) => row.status === "available"));'
+    );
+    expect(source).toContain("snapshotRankings !== null && snapshotTimestamp !== null");
+    expect(source).toContain("speedPerHour: row.speedPerHour");
+    expect(source).toContain("reward: formatRewardRange(row.reward)");
+    expect(source).toContain("capturedAt: capturedAt ?? row.ranking?.timestamp ?? null");
+    expect(source).toContain("elapsedMs: eventElapsedMsAt(timestamp)");
+    expect(source).toContain("return createEventSnapshotExportRows(payload.rankings, timestamp);");
+    expect(source).toContain("timestamp !== snapshotTimestamp");
+    expect(source).toContain("const EXPORT_HISTORY_CONCURRENCY = 4;");
+    expect(source).toContain(
+      "return mapWithConcurrency(timestamps, EXPORT_HISTORY_CONCURRENCY, async (timestamp) => {"
+    );
+    expect(source).toContain("results[index] = await mapper(items[index]!, index);");
+    expect(source).not.toContain("Promise.all(\n      historyTimePoints.map");
+    expect(source).toContain("createChapterRows(result.rankings, ladder)");
+    expect(source).toContain("calculateScorePerElapsedHour({");
+    expect(source).toContain("reward: formatRewardRange(getReward(row.rank))");
+    expect(source).toContain("else selectedChapterId = null;");
+    expect(source).toContain("if (!canExportCsv) return;");
+    expect(source).toContain('disabled={exportStatus === "loading"}');
   });
 
   it("lets catalog metadata render while rankings load without faking freshness", async () => {
