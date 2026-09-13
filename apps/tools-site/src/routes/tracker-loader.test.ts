@@ -57,8 +57,9 @@ describe("tracker route loader", () => {
   it.each(["jp", "en", "tw", "kr"])("loads tracker region %s", async (region) => {
     mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [{ rank: 1 }] } });
     const loaded = await runLoad(region);
-    expect(loaded).toMatchObject({ region, selectionStatus: "valid", isWorldBloom: false });
+    expect(loaded).toMatchObject({ region, selectionStatus: "valid" });
     await expect(loaded.trackerResult).resolves.toMatchObject({ status: "available" });
+    await expect(loaded.isWorldBloom).resolves.toBe(false);
     expect(mocks.getEventRankingLive).toHaveBeenCalledWith(
       expect.objectContaining({
         baseUrl: "https://api.example.test",
@@ -88,15 +89,45 @@ describe("tracker route loader", () => {
   });
 
   it("uses the historical endpoint for a valid eventId", async () => {
+    mocks.getEventsByRegionCurrent.mockResolvedValue({
+      data: {
+        id: 42,
+        name: "Current event",
+        startAt: "2026-08-01T00:00:00Z",
+        aggregateAt: "2026-08-10T00:00:00Z",
+        closedAt: "2026-08-12T00:00:00Z"
+      }
+    });
+    mocks.getEventsByRegionList.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 42,
+            name: "Current event",
+            startAt: "2026-08-01T00:00:00Z",
+            aggregateAt: "2026-08-10T00:00:00Z",
+            closedAt: "2026-08-12T00:00:00Z"
+          }
+        ]
+      }
+    });
     mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
-    mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 123, name: "Historical event" } });
+    mocks.getEventsByRegionById.mockResolvedValue({
+      data: {
+        id: 123,
+        name: "Historical event",
+        startAt: "2026-07-01T00:00:00Z",
+        aggregateAt: "2026-07-10T00:00:00Z",
+        closedAt: "2026-07-12T00:00:00Z"
+      }
+    });
     const loaded = await runLoad("en", "123");
-    expect(loaded).toMatchObject({ isWorldBloom: false });
     expect(loaded).toMatchObject({
       selection: { mode: "history", eventId: 123 },
       selectionStatus: "valid"
     });
     await expect(loaded.trackerResult).resolves.toMatchObject({ status: "available" });
+    await expect(loaded.isWorldBloom).resolves.toBe(false);
     expect(mocks.getEventRankingsByEventId).toHaveBeenCalledWith(
       expect.objectContaining({
         baseUrl: "https://api.example.test",
@@ -111,6 +142,33 @@ describe("tracker route loader", () => {
     });
   });
 
+  it("uses the live ranking endpoint when eventId matches the current catalog event", async () => {
+    const currentEvent = {
+      id: 42,
+      name: "Current event",
+      startAt: "2026-08-01T00:00:00Z",
+      aggregateAt: "2026-08-10T00:00:00Z",
+      closedAt: "2026-08-12T00:00:00Z"
+    };
+    mocks.getEventsByRegionCurrent.mockResolvedValue({ data: currentEvent });
+    mocks.getEventsByRegionList.mockResolvedValue({ data: { items: [currentEvent] } });
+    mocks.getEventRankingLive.mockResolvedValue({
+      data: { eventRankings: [{ rank: 1, eventId: 42 }] }
+    });
+
+    const loaded = await runLoad("en", "42");
+    await expect(loaded.trackerResult).resolves.toMatchObject({
+      selection: { mode: "live", eventId: null }
+    });
+    expect(mocks.getEventRankingLive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://api.example.test",
+        query: { region: "en" }
+      })
+    );
+    expect(mocks.getEventRankingsByEventId).not.toHaveBeenCalled();
+  });
+
   it("derives World Link from catalog and bloom metadata without waiting for rankings", async () => {
     mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 123, name: "Current event" } });
     mocks.getWorldBloomsByRegionList.mockResolvedValue({
@@ -119,7 +177,17 @@ describe("tracker route loader", () => {
     mocks.getEventRankingLive.mockReturnValue(new Promise(() => {}));
 
     const loaded = await runLoad("en");
-    expect(loaded).toMatchObject({ isWorldBloom: true });
+    expect(loaded.isWorldBloom).toEqual(expect.any(Promise));
+    await expect(loaded.isWorldBloom).resolves.toBe(true);
+  });
+
+  it("returns the streamed tracker payload while World Link metadata is pending", async () => {
+    mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [{ rank: 1 }] } });
+    mocks.getWorldBloomsByRegionList.mockReturnValue(new Promise(() => {}));
+
+    const loaded = await runLoad("en");
+    expect(loaded).toMatchObject({ region: "en", selectionStatus: "valid" });
+    expect(loaded.isWorldBloom).toEqual(expect.any(Promise));
   });
 
   it("keeps World Link false when catalog data is unavailable", async () => {
@@ -130,7 +198,8 @@ describe("tracker route loader", () => {
     });
 
     const loaded = await runLoad("en");
-    expect(loaded).toMatchObject({ isWorldBloom: false });
+    expect(loaded.isWorldBloom).toEqual(expect.any(Promise));
+    await expect(loaded.isWorldBloom).resolves.toBe(false);
   });
 
   it("loads historical World Bloom chapters through historical chapter snapshots", async () => {

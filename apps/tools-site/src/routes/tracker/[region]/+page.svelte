@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { goto, invalidate } from "$app/navigation";
+  import { goto, invalidate, replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { SharedEventRewardRangeResponse } from "@platform/sekai-master-api-sdk";
   import Icon from "@iconify/svelte";
@@ -71,10 +71,13 @@
     rewards?: Promise<EventRewardsResult | null>;
     chapters?: Promise<{
       metadata: WorldBloomMetadata | null;
-      rankings: Array<{ chapter: WorldBloomMetadata["chapters"][number]; result: ChapterTrackerResult }>;
+      rankings: Array<{
+        chapter: WorldBloomMetadata["chapters"][number];
+        result: ChapterTrackerResult;
+      }>;
     } | null>;
     status?: string;
-    isWorldBloom?: boolean;
+    isWorldBloom?: boolean | Promise<boolean>;
   };
 
   let { data }: { data: ExtendedData } = $props();
@@ -108,10 +111,18 @@
   let activeGraphPoint = $state<GraphPoint | null>(null);
   let graphMode = $state<"snapshot" | "trend">("snapshot");
   let graphStatus = $state<"idle" | "loading" | "available" | "empty" | "error">("idle");
+  let goalRank = $state(100);
+  let goalScore = $state(0);
+  let isGoalSubmitted = $state(false);
+  let shareMessage = $state("");
   let isRefreshing = $state(false);
   let eventPickerInput = $state<HTMLInputElement>();
+  let goalOpenButton = $state<HTMLButtonElement>();
+  let goalRankInput = $state<HTMLInputElement>();
+  let goalDialog = $state<HTMLDialogElement>();
   let detailsDialog = $state<HTMLDialogElement>();
   let snapshotTimer: ReturnType<typeof setTimeout> | undefined;
+  let shareMessageTimer: ReturnType<typeof setTimeout> | undefined;
   let refreshTimer: number | undefined;
   let refreshedDeadline: number | null = null;
   let timePointsRequestToken = 0;
@@ -144,6 +155,8 @@
   const hasEventCatalog = $derived(
     listStatus === "available" && (catalog?.eligibleEvents.length ?? 0) > 0
   );
+  const formatEventLabel = (eventId: number, eventName: string): string =>
+    `#${eventId} — ${eventName}`;
   const matchingEvents = $derived.by(() => {
     const query = eventQuery.trim().toLocaleLowerCase();
     const events = catalog?.eligibleEvents ?? [];
@@ -162,8 +175,16 @@
   );
   const pickerValue = $derived(
     data.selection.eventId !== null
-      ? `${selectedEvent?.name ?? translate("tracker.historicalMetadataUnavailable").replace("{eventId}", String(data.selection.eventId))} #${data.selection.eventId}`
-      : (catalog?.currentEvent?.name ?? "")
+      ? formatEventLabel(
+          data.selection.eventId,
+          selectedEvent?.name ?? translate("tracker.historicalMetadataUnavailable")
+        )
+      : catalog?.currentEvent
+        ? formatEventLabel(catalog.currentEvent.id, catalog.currentEvent.name)
+        : ""
+  );
+  const currentMetadataUnavailable = $derived(
+    catalog !== null && (catalog.currentStatus !== "available" || catalog.currentEvent === null)
   );
   const isCurrentEventKnown = $derived(
     !isExplicitSelection || (catalog?.currentEvent !== null && catalog?.currentEvent !== undefined)
@@ -172,12 +193,16 @@
     !isExplicitSelection ||
       (isCurrentEventKnown && catalog?.currentEvent?.id === data.selection.eventId)
   );
-  const isHistoricalEvent = $derived(isExplicitSelection && isCurrentEventKnown && !isCurrentEvent);
+  const isHistoricalEvent = $derived(
+    isExplicitSelection && !isCurrentEvent && (isCurrentEventKnown || currentMetadataUnavailable)
+  );
   const queryEventId = $derived.by(() => {
     // This route's `selection` field may be shadowed by the parent layout's
     // live selection in PageData, so the browser URL is authoritative here.
     const value =
-      typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("eventId");
+      typeof window === "undefined"
+        ? null
+        : new URLSearchParams(window.location.search).get("eventId");
     if (!value || !/^\d+$/.test(value)) return null;
     const eventId = Number(value);
     return Number.isSafeInteger(eventId) && eventId > 0 ? eventId : null;
@@ -233,7 +258,8 @@
   const elapsedMs = $derived.by(() => {
     const start = parseTrackerTimestamp(selectedEvent?.startAt);
     const aggregateAt = parseTrackerTimestamp(selectedEvent?.aggregateAt);
-    const reference = parseTrackerTimestamp(snapshotTimestamp) ?? parseTrackerTimestamp(trackerResult?.loadedAt);
+    const reference =
+      parseTrackerTimestamp(snapshotTimestamp) ?? parseTrackerTimestamp(trackerResult?.loadedAt);
     if (start === null || reference === null || reference <= start) return null;
     return aggregateAt === null ? reference - start : Math.min(reference, aggregateAt) - start;
   });
@@ -281,7 +307,7 @@
       chapters?.rankings[0] ??
       null
   );
-  const isWorldBloom = $derived(data.isWorldBloom === true);
+  let isWorldBloom = $state(false);
   const chapterElapsedMs = $derived(
     selectedRankingTab !== "event" && selectedChapter
       ? calculateChapterElapsedMs({
@@ -301,12 +327,33 @@
       score: row.score,
       speedPerHour: calculateScorePerElapsedHour({ score: row.score, elapsedMs: chapterElapsedMs }),
       reward: getReward(row.rank),
-      graphPoint: row.score === null ? null : { rank: row.rank, score: row.score, timestamp: row.timestamp }
+      graphPoint:
+        row.score === null ? null : { rank: row.rank, score: row.score, timestamp: row.timestamp }
     }))
   );
   const activeRankingRows = $derived(
     selectedRankingTab === "event" || !selectedChapter ? rows : chapterRows
   );
+  const goalReferenceRow = $derived(
+    activeRankingRows.find((row) => row.status === "available" && row.ladderRank === goalRank) ??
+      null
+  );
+  const goalHours = $derived.by(() => {
+    const target = Number(goalScore);
+    const current = goalReferenceRow?.score;
+    const speed = goalReferenceRow?.speedPerHour;
+    if (
+      !Number.isFinite(target) ||
+      target <= 0 ||
+      current === null ||
+      current === undefined ||
+      speed === null ||
+      speed === undefined ||
+      speed <= 0
+    )
+      return null;
+    return Math.max(0, target - current) / speed;
+  });
   const activeRankingContext = $derived<RankingContext>(
     selectedRankingTab === "event" || !selectedChapter
       ? null
@@ -342,7 +389,9 @@
           currentStartAt: selectedChapter.chapter.chapterStartAt,
           nextStartAt:
             chapters?.rankings[
-              chapters.rankings.findIndex(({ chapter }) => chapter.id === selectedChapter.chapter.id) + 1
+              chapters.rankings.findIndex(
+                ({ chapter }) => chapter.id === selectedChapter.chapter.id
+              ) + 1
             ]?.chapter.chapterStartAt ?? null,
           currentEndAt: selectedChapter.chapter.aggregateAt ?? selectedChapter.chapter.chapterEndAt,
           now
@@ -363,12 +412,28 @@
   );
   const selectedTimePoint = $derived(timePoints[timePointIndex] ?? null);
   const rankingLoading = $derived(isRefreshing || snapshotStatus === "loading");
+  const exportableRows = $derived(activeRankingRows.filter((row) => row.status === "available"));
+  const canExportCsv = $derived(
+    trackerStatus === "available" &&
+      !rankingLoading &&
+      snapshotStatus === "idle" &&
+      (!snapshotTimestamp || snapshotRankings !== null) &&
+      exportableRows.length > 0
+  );
   const sortedGraphPoints = $derived(sortTrackerRatePoints(graphPoints));
   const recentRateTarget = $derived(activeGraphPoint ?? sortedGraphPoints.at(-1) ?? null);
   const recentRates = $derived(calculateRecentRates(graphPoints, recentRateTarget));
 
   const rankTier = (rank: number): "top" | "elite" | "high" | "mid" | "long" =>
-    rank === 1 ? "top" : rank <= 10 ? "elite" : rank <= 100 ? "high" : rank <= 1000 ? "mid" : "long";
+    rank === 1
+      ? "top"
+      : rank <= 10
+        ? "elite"
+        : rank <= 100
+          ? "high"
+          : rank <= 1000
+            ? "mid"
+            : "long";
   const rankTierLabel = (rank: number): string => translate(`tracker.tier.${rankTier(rank)}`);
 
   const formatNumber = (value: number | null): string =>
@@ -442,8 +507,7 @@
   const selectedTimePointLocalDateGroups = $derived.by<SnapshotLocalDateGroup[]>(() => {
     const groups: SnapshotLocalDateGroup[] = [];
     for (const point of selectedTimePointGroup?.points ?? []) {
-      const label =
-        formatSnapshotGroupLabel(point.timestamp) ?? translate("tracker.unavailable");
+      const label = formatSnapshotGroupLabel(point.timestamp) ?? translate("tracker.unavailable");
       const group = groups.at(-1);
       if (group?.label === label) group.points.push(point);
       else groups.push({ label, points: [point] });
@@ -507,7 +571,7 @@
     );
   };
   const selectEvent = (event: EventMetadata): void => {
-    eventQuery = `${event.name} #${event.id}`;
+    eventQuery = formatEventLabel(event.id, event.name);
     navigateToEvent(event.id);
   };
   const handleEventPickerInput = (value: string): void => {
@@ -575,7 +639,7 @@
         ? { mode: "live", eventId: null }
         : { mode: "history", eventId: data.selection.eventId },
     resolvedCurrentEventId: null,
-    loadedAt: new Date().toISOString(),
+    loadedAt: null,
     status: "network-error",
     rankings: []
   });
@@ -629,7 +693,8 @@
   };
   const observeDetailsIdentity = (): void => {
     disconnectDetailsIdentityObserver();
-    if (typeof IntersectionObserver === "undefined" || !detailsModalBox || !detailsPlayerEntry) return;
+    if (typeof IntersectionObserver === "undefined" || !detailsModalBox || !detailsPlayerEntry)
+      return;
     detailsIdentityObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry) isDetailsIdentityVisible = !entry.isIntersecting;
@@ -660,13 +725,17 @@
       if (!removeDetailsDialogResizeListener) {
         const handleResize = (): void => centerDetailsDialog();
         window.addEventListener("resize", handleResize);
-        removeDetailsDialogResizeListener = () => window.removeEventListener("resize", handleResize);
+        removeDetailsDialogResizeListener = () =>
+          window.removeEventListener("resize", handleResize);
       }
     } catch {
       // Keep the CSS baseline usable if the browser blocks layout measurements.
     }
   };
-  const openDetails = (row: TrackerRow<SharedEventRewardRangeResponse>, context: RankingContext = null): void => {
+  const openDetails = (
+    row: TrackerRow<SharedEventRewardRangeResponse>,
+    context: RankingContext = null
+  ): void => {
     if (row.status === "unavailable") return;
     selectedRow = row;
     selectedRankingContext = context;
@@ -745,7 +814,12 @@
         selectedRankingContext
       );
       if (requestTimestamp && points.length < 2) {
-        points = await fetchGraphPoints(requestEventKey, requestRank, undefined, selectedRankingContext);
+        points = await fetchGraphPoints(
+          requestEventKey,
+          requestRank,
+          undefined,
+          selectedRankingContext
+        );
       }
       if (
         requestToken !== graphRequestToken ||
@@ -769,9 +843,18 @@
     }
   };
   const returnToLatest = (): void => {
+    snapshotRequestToken += 1;
+    if (snapshotTimer) clearTimeout(snapshotTimer);
+    snapshotTimer = undefined;
     snapshotRankings = null;
     snapshotTimestamp = null;
     snapshotStatus = "idle";
+    timePointIndex = Math.max(timePoints.length - 1, 0);
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("snapshot")) return;
+    url.searchParams.delete("snapshot");
+    replaceState(url, {});
   };
   const resetTimeTravel = (): void => {
     timePointsRequestToken += 1;
@@ -884,6 +967,71 @@
     }
     queueSnapshot(timestamp);
   };
+  const csvCell = (value: unknown): string => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const exportCsv = (): void => {
+    if (!canExportCsv) return;
+    const header = ["rank", "player", "userId", "score", "speedPerHour", "reward", "capturedAt"];
+    const lines = exportableRows.map((row) =>
+      [
+        row.ladderRank,
+        row.ranking?.userName,
+        row.ranking?.userId,
+        row.score,
+        row.speedPerHour,
+        formatRewardRange(row.reward),
+        row.ranking?.timestamp
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    const blob = new Blob([[header.map(csvCell).join(","), ...lines].join("\n")], {
+      type: "text/csv;charset=utf-8"
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `sekai-tracker-${data.region}-${eventKey ?? "latest"}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+  const shareTracker = async (): Promise<void> => {
+    if (shareMessageTimer) clearTimeout(shareMessageTimer);
+    shareMessageTimer = undefined;
+    const url = new URL(window.location.href);
+    if (snapshotTimestamp) url.searchParams.set("snapshot", snapshotTimestamp);
+    else url.searchParams.delete("snapshot");
+    const canonicalUrl = url.toString();
+    try {
+      await navigator.clipboard.writeText(canonicalUrl);
+      shareMessage = translate("tracker.linkCopied");
+    } catch {
+      shareMessage = canonicalUrl;
+    }
+    shareMessageTimer = setTimeout(() => {
+      shareMessage = "";
+      shareMessageTimer = undefined;
+    }, 3000);
+  };
+  const openGoalCalculator = (): void => {
+    isGoalSubmitted = false;
+    if (!goalDialog?.open) {
+      goalDialog?.showModal();
+      void tick().then(() => goalRankInput?.focus());
+    }
+  };
+  const closeGoalCalculator = (): void => {
+    if (goalDialog?.open) goalDialog.close();
+  };
+  const submitGoal = (event: SubmitEvent): void => {
+    event.preventDefault();
+    isGoalSubmitted = true;
+  };
+  const handleGoalDialogCancel = (event: Event): void => {
+    event.preventDefault();
+    closeGoalCalculator();
+  };
+  const handleGoalDialogClose = (): void => {
+    goalOpenButton?.focus();
+  };
   const selectTimePointGroup = (id: number): void => {
     const group = timePointGroups.find((candidate) => candidate.id === id);
     const newestPoint = group?.points.at(-1);
@@ -891,10 +1039,16 @@
   };
   onMount(() => {
     hasMounted = true;
+    const snapshot = new URLSearchParams(window.location.search).get("snapshot");
+    if (snapshot) {
+      isTimeTravelActive = true;
+      snapshotTimestamp = snapshot;
+    }
     const clock = window.setInterval(() => (now = Date.now()), 1000);
     return () => {
       window.clearInterval(clock);
       if (snapshotTimer) clearTimeout(snapshotTimer);
+      if (shareMessageTimer) clearTimeout(shareMessageTimer);
       if (refreshTimer) clearTimeout(refreshTimer);
       if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
       if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
@@ -907,18 +1061,29 @@
       const requestEventKey = eventKey;
       if (observedEventKey === requestEventKey) return;
       observedEventKey = requestEventKey;
+      const urlSnapshot = new URLSearchParams(window.location.search).get("snapshot");
       timePointsRequestToken += 1;
       snapshotRequestToken += 1;
       graphRequestToken += 1;
       if (snapshotTimer) clearTimeout(snapshotTimer);
       timePoints = [];
       timePointIndex = 0;
-      returnToLatest();
+      if (urlSnapshot) {
+        isTimeTravelActive = true;
+        snapshotRankings = null;
+        snapshotTimestamp = urlSnapshot;
+        snapshotStatus = "idle";
+      } else {
+        returnToLatest();
+      }
       selectedRow = null;
       graphPoints = [];
       graphStatus = "idle";
       graphIdentity = null;
-      if (isTimeTravelActive) void loadTimePoints(requestEventKey);
+      if (isTimeTravelActive) {
+        void loadTimePoints(requestEventKey);
+        if (urlSnapshot && requestEventKey !== null) void loadSnapshot(urlSnapshot);
+      }
     }
   });
   $effect(() => {
@@ -961,6 +1126,15 @@
     return () => (cancelled = true);
   });
   $effect(() => {
+    let cancelled = false;
+    void Promise.resolve(extendedData.isWorldBloom).then((value) => {
+      if (!cancelled) isWorldBloom = value === true;
+    });
+    return () => {
+      cancelled = true;
+    };
+  });
+  $effect(() => {
     if (nextRefreshAt === null) {
       if (refreshTimer) clearTimeout(refreshTimer);
       refreshTimer = undefined;
@@ -975,11 +1149,14 @@
     if (nextRefreshAt === refreshedDeadline) return;
     if (refreshTimer) clearTimeout(refreshTimer);
     refreshedDeadline = nextRefreshAt;
-    refreshTimer = window.setTimeout(() => {
-      refreshTimer = undefined;
-      refreshedDeadline = null;
-      void refresh();
-    }, Math.max(0, nextRefreshAt - Date.now()));
+    refreshTimer = window.setTimeout(
+      () => {
+        refreshTimer = undefined;
+        refreshedDeadline = null;
+        void refresh();
+      },
+      Math.max(0, nextRefreshAt - Date.now())
+    );
   });
   $effect(() => {
     void Promise.resolve(data.i18nMessages).then(
@@ -999,7 +1176,8 @@
         requestToken !== chapterRequestToken ||
         eventKey !== requestEventKey ||
         selectedChapter?.chapter.id !== requestChapterId
-      ) return;
+      )
+        return;
       selectedChapterRows = createChapterRows(chapter.result.rankings, selectedLadder);
     });
   });
@@ -1016,7 +1194,7 @@
       <h1 id="tracker-title">{translate("tracker.title")}</h1>
     </div>
     <div class="tracker-status-panel" aria-live="polite">
-      {#if isTrackerLoading || (catalog === null && !isInvalidSelection)}
+      {#if catalog === null && !isInvalidSelection}
         <div class="tracker-status-skeleton" aria-hidden="true">
           <span class="skeleton h-6 w-24 rounded-full"></span>
           <span class="skeleton h-4 w-36"></span>
@@ -1031,23 +1209,45 @@
             <span class="tracker-countdown">
               <span class="tracker-countdown-label">{countdownLabel}</span>
               <span class="tracker-countdown-values" aria-live="off">
-                {#if countdown.values.days > 0}<span>{countdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
-                <span>{String(countdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
-                <span>{String(countdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
-                <span>{String(countdown.values.seconds).padStart(2, "0")}<small>{translate("tracker.timeUnit.second")}</small></span>
+                {#if countdown.values.days > 0}<span
+                    >{countdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span
+                  >{/if}
+                <span
+                  >{String(countdown.values.hours).padStart(2, "0")}<small
+                    >{translate("tracker.timeUnit.hour")}</small
+                  ></span
+                >
+                <span
+                  >{String(countdown.values.minutes).padStart(2, "0")}<small
+                    >{translate("tracker.timeUnit.minute")}</small
+                  ></span
+                >
+                <span
+                  >{String(countdown.values.seconds).padStart(2, "0")}<small
+                    >{translate("tracker.timeUnit.second")}</small
+                  ></span
+                >
               </span>
             </span>
           {/if}
         </div>
         <div class="tracker-freshness-action">
           <div class="tracker-freshness">
-            <span>{interpolate("tracker.loadedAt", { time: formatTimestamp(trackerResult?.loadedAt) })}</span>
-            {#if nextRefreshSeconds !== null}<span aria-live="off"
-                >{interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })}</span
-              >{/if}
+            {#if trackerResult}
+              <span
+                >{interpolate("tracker.loadedAt", {
+                  time: formatTimestamp(trackerResult.loadedAt)
+                })}</span
+              >
+              {#if nextRefreshSeconds !== null}<span aria-live="off"
+                  >{interpolate("tracker.autoRefresh", { seconds: nextRefreshSeconds })}</span
+                >{/if}
+            {:else}
+              <span class="skeleton h-4 w-36" aria-hidden="true"></span>
+            {/if}
           </div>
           <button
-            class="btn btn-square btn-sm btn-outline tracker-refresh-action"
+            class="btn btn-square btn-sm btn-outline rounded-full tracker-refresh-action"
             type="button"
             onclick={refresh}
             disabled={isRefreshing || isHistoricalEvent}
@@ -1126,7 +1326,7 @@
                   if (keyboardEvent.key === "Enter") selectEvent(event);
                 }}
               >
-                <span>{event.name}</span><small>#{event.id}</small>
+                <span>{formatEventLabel(event.id, event.name)}</span>
               </li>
             {/each}
           </ul>
@@ -1137,7 +1337,11 @@
       <div class="tracker-ladder-control">
         <span class="tracker-control-label">{translate("tracker.rankings")}</span>
         <div class="tracker-ladder-switcher" aria-label={translate("tracker.rankRange")}>
-          <span class:tracker-ladder-indicator-full={ladder === "full"} class="tracker-ladder-indicator" aria-hidden="true"></span>
+          <span
+            class:tracker-ladder-indicator-full={ladder === "full"}
+            class="tracker-ladder-indicator"
+            aria-hidden="true"
+          ></span>
           <button
             class:btn-primary={ladder === "critical"}
             class:btn-outline={ladder !== "critical"}
@@ -1169,6 +1373,40 @@
             : translate("tracker.viewPastRankings")}</button
         >
       </div>
+      <div class="tracker-tool-actions">
+        <button
+          bind:this={goalOpenButton}
+          id="tracker-goal-open"
+          class="btn btn-sm btn-outline"
+          type="button"
+          aria-haspopup="dialog"
+          aria-controls="tracker-goal-dialog"
+          onclick={openGoalCalculator}
+        >
+          <Icon icon="mdi:calculator-variant" class="size-4 shrink-0" aria-hidden="true" />
+          {translate("tracker.openGoalCalculator")}
+        </button>
+        <button
+          class="btn btn-sm btn-outline"
+          type="button"
+          onclick={exportCsv}
+          disabled={!canExportCsv}
+        >
+          <Icon icon="mdi:download" class="size-4 shrink-0" aria-hidden="true" />{translate(
+            "tracker.exportCsv"
+          )}
+        </button>
+        <button class="btn btn-sm btn-outline" type="button" onclick={shareTracker}>
+          <Icon
+            icon="mdi:share-variant-outline"
+            class="size-4 shrink-0"
+            aria-hidden="true"
+          />{translate("tracker.share")}
+        </button>
+        <span class="tracker-share-message" role="status" aria-live="polite">
+          {shareMessage}
+        </span>
+      </div>
     </div>
     {#if isTimeTravelActive}
       <section
@@ -1180,54 +1418,62 @@
           <h2 id="tracker-time-travel-title">{translate("tracker.pastRankings")}</h2>
         </div>
         <div class="tracker-time-travel-content">
-        {#if timePointsStatus === "available"}
-          <div class="tracker-time-selects">
-            <label class="tracker-time-control" for="tracker-activity-day"
-              ><span>{translate("tracker.activityDayLabel")}</span><select
-                id="tracker-activity-day"
-                class="select select-sm select-bordered"
-                value={selectedTimePointGroup?.id ?? ""}
-                onchange={(event) => selectTimePointGroup(Number(event.currentTarget.value))}
-                >{#each timePointGroups as group (group.id)}<option value={group.id}
-                    >{formatActivityDay(group)}</option
-                  >{/each}</select
-              ></label
+          {#if timePointsStatus === "available"}
+            <div class="tracker-time-selects">
+              <label class="tracker-time-control" for="tracker-activity-day"
+                ><span>{translate("tracker.activityDayLabel")}</span><select
+                  id="tracker-activity-day"
+                  class="select select-sm select-bordered"
+                  value={selectedTimePointGroup?.id ?? ""}
+                  onchange={(event) => selectTimePointGroup(Number(event.currentTarget.value))}
+                  >{#each timePointGroups as group (group.id)}<option value={group.id}
+                      >{formatActivityDay(group)}</option
+                    >{/each}</select
+                ></label
+              >
+              <label class="tracker-time-control" for="tracker-saved-time"
+                ><span>{translate("tracker.rankingSnapshotTime")}</span><select
+                  id="tracker-saved-time"
+                  class="select select-sm select-bordered"
+                  value={selectedTimePoint ?? ""}
+                  onchange={(event) => {
+                    const point = selectedTimePointGroup?.points.find(
+                      (candidate) => candidate.timestamp === event.currentTarget.value
+                    );
+                    if (point) selectTimePoint(point.index);
+                  }}
+                  >{#each selectedTimePointLocalDateGroups as group (group.label)}<optgroup
+                      label={group.label}
+                      >{#each group.points as point (point.timestamp)}<option
+                          value={point.timestamp}
+                          >{formatSnapshotOption(
+                            point.timestamp
+                          )}{#if point.index === timePoints.length - 1}
+                            · {translate("tracker.latest")}{/if}</option
+                        >{/each}</optgroup
+                    >{/each}</select
+                ></label
+              >
+            </div>
+          {:else if timePointsStatus === "idle" || timePointsStatus === "loading"}
+            <div
+              class="tracker-time-select-skeleton"
+              role="status"
+              aria-label={translate("tracker.snapshotLoading")}
             >
-            <label class="tracker-time-control" for="tracker-saved-time"
-              ><span>{translate("tracker.rankingSnapshotTime")}</span><select
-                id="tracker-saved-time"
-                class="select select-sm select-bordered"
-                value={selectedTimePoint ?? ""}
-                onchange={(event) => {
-                  const point = selectedTimePointGroup?.points.find(
-                    (candidate) => candidate.timestamp === event.currentTarget.value
-                  );
-                  if (point) selectTimePoint(point.index);
-                }}
-                >{#each selectedTimePointLocalDateGroups as group (group.label)}<optgroup
-                    label={group.label}
-                    >{#each group.points as point (point.timestamp)}<option value={point.timestamp}
-                        >{formatSnapshotOption(point.timestamp)}{#if point.index === timePoints.length - 1} · {translate(
-                          "tracker.latest"
-                        )}{/if}</option
-                      >{/each}</optgroup
-                  >{/each}</select
-              ></label
+              <span class="skeleton h-3 w-28"></span>
+              <span class="skeleton h-10 w-full rounded-field"></span>
+              <span class="skeleton h-3 w-32"></span>
+              <span class="skeleton h-10 w-full rounded-field"></span>
+            </div>
+          {:else}
+            <p
+              class="tracker-time-note tracker-time-status"
+              role={timePointsStatus === "unavailable" ? undefined : "alert"}
             >
-          </div>
-        {:else if timePointsStatus === "idle" || timePointsStatus === "loading"}
-          <div class="tracker-time-select-skeleton" role="status" aria-label={translate("tracker.snapshotLoading")}>
-            <span class="skeleton h-3 w-28"></span>
-            <span class="skeleton h-10 w-full rounded-field"></span>
-            <span class="skeleton h-3 w-32"></span>
-            <span class="skeleton h-10 w-full rounded-field"></span>
-          </div>
-        {:else}
-          <p
-            class="tracker-time-note tracker-time-status"
-            role={timePointsStatus === "unavailable" ? undefined : "alert"}
-          >{timeTravelMessage(timePointsStatus, "timePoint")}</p>
-        {/if}
+              {timeTravelMessage(timePointsStatus, "timePoint")}
+            </p>
+          {/if}
         </div>
       </section>
     {/if}
@@ -1256,7 +1502,9 @@
   <section class="tracker-ranking-workspace" aria-labelledby="tracker-results-title">
     <div class="tracker-workspace-heading">
       <div>
-        {#if isWorldBloom}<p class="tracker-kicker tracker-world-bloom-kicker">{translate("tracker.worldBloom")}</p>{/if}
+        {#if isWorldBloom}<p class="tracker-kicker tracker-world-bloom-kicker">
+            {translate("tracker.worldBloom")}
+          </p>{/if}
         <h2 id="tracker-results-title">{translate("tracker.rankings")}</h2>
       </div>
       {#if isHistoricalEvent}<a class="btn btn-sm btn-outline" href={trackerPath}
@@ -1266,180 +1514,365 @@
         >{/if}
     </div>
     {#if isWorldBloom}<div class="tracker-ranking-tabs-shell">
-      <div class="tracker-ranking-tabs-scroll">
-        <div
-          class="tabs tabs-box tracker-ranking-tabs min-w-max flex-nowrap"
-          role="tablist"
-          aria-label={translate("tracker.rankingWorkspace")}
-        >
-        {#if chapters === null}
-          <span class="tracker-ranking-tabs-loading" aria-hidden="true">
-            <span class="skeleton h-11 w-32 rounded-box"></span>
-            <span class="skeleton h-11 w-28 rounded-box"></span>
-            <span class="skeleton h-11 w-28 rounded-box"></span>
-          </span>
-        {:else}
-        <button
-          id="tracker-event-ranking-tab"
-          class:tab-active={selectedRankingTab === "event"}
-          class:btn-primary={selectedRankingTab === "event"}
-          class:btn-outline={selectedRankingTab !== "event"}
-          class="tab shrink-0 btn btn-sm tracker-ladder-option"
-          type="button"
-          role="tab"
-          aria-selected={selectedRankingTab === "event"}
-          aria-controls="tracker-ranking-panel"
-          tabindex={selectedRankingTab === "event" ? 0 : -1}
-          onclick={() => selectRankingTab("event")}
-          onkeydown={(event) => handleRankingTabKeydown(event, 0)}
-        >{translate("tracker.eventRankings")}</button>
-        {#each chapters?.rankings ?? [] as chapter, index (chapter.chapter.id)}
-          {@const isCurrent = currentChapter?.chapter.id === chapter.chapter.id}
-          <button
-            id={`tracker-chapter-tab-${chapter.chapter.id}`}
-            class:tab-active={selectedRankingTab === chapter.chapter.id}
-            class:btn-primary={selectedRankingTab === chapter.chapter.id}
-            class:btn-outline={selectedRankingTab !== chapter.chapter.id}
-            class:tracker-current-tab={isCurrent}
-            class="tab shrink-0 btn btn-sm tracker-ladder-option"
-            type="button"
-            role="tab"
-            aria-selected={selectedRankingTab === chapter.chapter.id}
-            aria-current={isCurrent ? "true" : undefined}
-            aria-controls="tracker-ranking-panel"
-            tabindex={selectedRankingTab === chapter.chapter.id ? 0 : -1}
-            onclick={() => selectRankingTab(chapter.chapter.id)}
-            onkeydown={(event) => handleRankingTabKeydown(event, index + 1)}
-          >{interpolate("tracker.chapter", { number: chapter.chapter.chapterNo })}{#if isCurrent}<span class="tracker-current-marker">{translate("tracker.currentChapter")}</span>{/if}</button>
-        {/each}
-        {/if}
+        <div class="tracker-ranking-tabs-scroll">
+          <div
+            class="tabs tabs-box tracker-ranking-tabs min-w-max flex-nowrap"
+            role="tablist"
+            aria-label={translate("tracker.rankingWorkspace")}
+          >
+            {#if chapters === null}
+              <span class="tracker-ranking-tabs-loading" aria-hidden="true">
+                <span class="skeleton h-11 w-32 rounded-box"></span>
+                <span class="skeleton h-11 w-28 rounded-box"></span>
+                <span class="skeleton h-11 w-28 rounded-box"></span>
+              </span>
+            {:else}
+              <button
+                id="tracker-event-ranking-tab"
+                class:tab-active={selectedRankingTab === "event"}
+                class:btn-primary={selectedRankingTab === "event"}
+                class:btn-outline={selectedRankingTab !== "event"}
+                class="tab shrink-0 btn btn-sm tracker-ladder-option"
+                type="button"
+                role="tab"
+                aria-selected={selectedRankingTab === "event"}
+                aria-controls="tracker-ranking-panel"
+                tabindex={selectedRankingTab === "event" ? 0 : -1}
+                onclick={() => selectRankingTab("event")}
+                onkeydown={(event) => handleRankingTabKeydown(event, 0)}
+                >{translate("tracker.eventRankings")}</button
+              >
+              {#each chapters?.rankings ?? [] as chapter, index (chapter.chapter.id)}
+                {@const isCurrent = currentChapter?.chapter.id === chapter.chapter.id}
+                <button
+                  id={`tracker-chapter-tab-${chapter.chapter.id}`}
+                  class:tab-active={selectedRankingTab === chapter.chapter.id}
+                  class:btn-primary={selectedRankingTab === chapter.chapter.id}
+                  class:btn-outline={selectedRankingTab !== chapter.chapter.id}
+                  class:tracker-current-tab={isCurrent}
+                  class="tab shrink-0 btn btn-sm tracker-ladder-option"
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedRankingTab === chapter.chapter.id}
+                  aria-current={isCurrent ? "true" : undefined}
+                  aria-controls="tracker-ranking-panel"
+                  tabindex={selectedRankingTab === chapter.chapter.id ? 0 : -1}
+                  onclick={() => selectRankingTab(chapter.chapter.id)}
+                  onkeydown={(event) => handleRankingTabKeydown(event, index + 1)}
+                  >{interpolate("tracker.chapter", {
+                    number: chapter.chapter.chapterNo
+                  })}{#if isCurrent}<span class="tracker-current-marker"
+                      >{translate("tracker.currentChapter")}</span
+                    >{/if}</button
+                >
+              {/each}
+            {/if}
+          </div>
         </div>
-      </div>
-    </div>{/if}
+      </div>{/if}
     {#if isWorldBloom}<div class="tracker-chapter-countdown-slot">
-      {#if isWorldBloom && selectedRankingTab !== "event" && selectedChapter}
-        <div class="tracker-chapter-countdown" aria-live="polite">
-        <span class="tracker-countdown-label">
-          {chapterCountdown?.mode === "starts"
-            ? translate("tracker.countdownStartsIn")
-            : chapterCountdown?.mode === "ends"
-              ? translate("tracker.countdownEndsIn")
-              : parseTrackerTimestamp(
-                    selectedChapter.chapter.aggregateAt ?? selectedChapter.chapter.chapterEndAt
-                  ) !== null &&
-                  parseTrackerTimestamp(
-                    selectedChapter.chapter.aggregateAt ?? selectedChapter.chapter.chapterEndAt
-                  )! <= now
-                ? translate("tracker.chapterEnded")
-                : translate("tracker.chapterCountdownUnavailable")}
-        </span>
-        {#if chapterCountdown}
-          <span class="tracker-countdown-values" aria-live="off">
-            {#if chapterCountdown.values.days > 0}<span>{chapterCountdown.values.days}<small>{translate("tracker.timeUnit.day")}</small></span>{/if}
-            <span>{String(chapterCountdown.values.hours).padStart(2, "0")}<small>{translate("tracker.timeUnit.hour")}</small></span>
-            <span>{String(chapterCountdown.values.minutes).padStart(2, "0")}<small>{translate("tracker.timeUnit.minute")}</small></span>
-            <span>{String(chapterCountdown.values.seconds).padStart(2, "0")}<small>{translate("tracker.timeUnit.second")}</small></span>
-          </span>
+        {#if isWorldBloom && selectedRankingTab !== "event" && selectedChapter}
+          <div class="tracker-chapter-countdown" aria-live="polite">
+            <span class="tracker-countdown-label">
+              {chapterCountdown?.mode === "starts"
+                ? translate("tracker.countdownStartsIn")
+                : chapterCountdown?.mode === "ends"
+                  ? translate("tracker.countdownEndsIn")
+                  : parseTrackerTimestamp(
+                        selectedChapter.chapter.aggregateAt ?? selectedChapter.chapter.chapterEndAt
+                      ) !== null &&
+                      parseTrackerTimestamp(
+                        selectedChapter.chapter.aggregateAt ?? selectedChapter.chapter.chapterEndAt
+                      )! <= now
+                    ? translate("tracker.chapterEnded")
+                    : translate("tracker.chapterCountdownUnavailable")}
+            </span>
+            {#if chapterCountdown}
+              <span class="tracker-countdown-values" aria-live="off">
+                {#if chapterCountdown.values.days > 0}<span
+                    >{chapterCountdown.values.days}<small>{translate("tracker.timeUnit.day")}</small
+                    ></span
+                  >{/if}
+                <span
+                  >{String(chapterCountdown.values.hours).padStart(2, "0")}<small
+                    >{translate("tracker.timeUnit.hour")}</small
+                  ></span
+                >
+                <span
+                  >{String(chapterCountdown.values.minutes).padStart(2, "0")}<small
+                    >{translate("tracker.timeUnit.minute")}</small
+                  ></span
+                >
+                <span
+                  >{String(chapterCountdown.values.seconds).padStart(2, "0")}<small
+                    >{translate("tracker.timeUnit.second")}</small
+                  ></span
+                >
+              </span>
+            {/if}
+          </div>
         {/if}
+      </div>{/if}
+    <div class="tracker-ranking-result-region" aria-live="polite">
+      {#if isTrackerLoading}
+        <div
+          class="tracker-ranking-skeleton"
+          role="status"
+          aria-live="polite"
+          aria-label={translate("tracker.loading")}
+          aria-busy="true"
+        >
+          <div class="tracker-skeleton-heading" aria-hidden="true">
+            <span class="skeleton h-3 w-20"></span><span class="skeleton h-7 w-32"></span>
+          </div>
+          <div class="tracker-skeleton-table" aria-hidden="true">
+            {#each getTrackerRankLadder(ladder) as rank (rank)}
+              <div class="tracker-skeleton-row">
+                <span class="skeleton h-9 w-12"></span><span class="skeleton h-5 w-full max-w-48"
+                ></span><span class="skeleton h-5 w-20"></span><span class="skeleton h-5 w-16"
+                ></span><span class="skeleton h-6 w-24 rounded-full"></span>
+              </div>
+            {/each}
+          </div>
+          <div class="tracker-skeleton-cards" aria-hidden="true">
+            {#each getTrackerRankLadder(ladder) as rank (rank)}
+              <div class="tracker-skeleton-card">
+                <div class="tracker-skeleton-card-heading">
+                  <span class="skeleton h-6 w-16"></span><span class="skeleton h-4 w-20"></span>
+                </div>
+                <span class="skeleton h-5 w-3/5"></span><span class="skeleton h-4 w-2/5"
+                ></span><span class="skeleton h-4 w-1/2"></span><span class="skeleton h-4 w-3/5"
+                ></span>
+              </div>
+            {/each}
+          </div>
+        </div>
+      {:else if isInvalidSelection}<p class="tracker-ranking-result-message" role="alert">
+          {translate("tracker.eventIdInvalid")}
+        </p>
+      {:else if trackerStatus === "upstream-error"}<p
+          class="tracker-ranking-result-message"
+          role="alert"
+        >
+          {translate("tracker.error.historyUpstream")}
+        </p>
+      {:else if trackerStatus === "sdk-error"}<p
+          class="tracker-ranking-result-message"
+          role="alert"
+        >
+          {translate("tracker.error.sdk")}
+        </p>
+      {:else if trackerStatus === "network-error"}<p
+          class="tracker-ranking-result-message"
+          role="alert"
+        >
+          {translate("tracker.error.network")}
+        </p>
+      {:else if trackerStatus === "invalid-data"}<p
+          class="tracker-ranking-result-message"
+          role="alert"
+        >
+          {translate("tracker.error.invalidData")}
+        </p>
+      {:else if trackerStatus !== "available"}<p
+          class="tracker-ranking-result-message"
+          role="alert"
+        >
+          {translate("tracker.error.invalidData")}
+        </p>
+      {:else}
+        <div class="tracker-table-wrap">
+          {#if rankingLoading}<div class="tracker-ranking-loading" role="status">
+              <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>{translate(
+                "tracker.rankingsLoading"
+              )}
+            </div>{/if}
+          <div
+            id="tracker-ranking-panel"
+            role={isWorldBloom ? "tabpanel" : undefined}
+            aria-labelledby={isWorldBloom
+              ? selectedRankingTab === "event"
+                ? "tracker-event-ranking-tab"
+                : `tracker-chapter-tab-${selectedChapter?.chapter.id}`
+              : undefined}
+          >
+            <table class="table tracker-table">
+              <thead
+                ><tr
+                  ><th scope="col">{translate("tracker.rank")}</th><th scope="col"
+                    >{translate("tracker.player")}</th
+                  ><th scope="col">{translate("tracker.score")}</th><th scope="col"
+                    >{translate("tracker.speed")}</th
+                  ><th scope="col">{translate("tracker.degree")}</th><th scope="col"
+                    ><span class="sr-only">{translate("tracker.viewTrend")}</span></th
+                  ></tr
+                ></thead
+              >
+              <tbody>
+                {#each activeRankingRows as row (row.ladderRank)}
+                  {#if row.status === "available"}
+                    <tr
+                      class="tracker-ranking-row"
+                      class:tier-top={rankTier(row.ladderRank) === "top"}
+                      class:tier-elite={rankTier(row.ladderRank) === "elite"}
+                      class:tier-high={rankTier(row.ladderRank) === "high"}
+                      class:tier-mid={rankTier(row.ladderRank) === "mid"}
+                      class:tier-long={rankTier(row.ladderRank) === "long"}
+                      onclick={(event) => handleRankingRowClick(event, row, activeRankingContext)}
+                    >
+                      <th scope="row"
+                        ><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span
+                        ><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th
+                      >
+                      <td
+                        ><strong class="tracker-player-name"
+                          >{row.ranking?.userName ??
+                            row.ranking?.userId ??
+                            translate("tracker.unavailable")}</strong
+                        ></td
+                      >
+                      <td class="tracker-score">{formatNumber(row.score)}</td><td
+                        class="tracker-speed">{formatSpeed(row.speedPerHour)}</td
+                      ><td
+                        ><span class="tracker-reward-badge">{formatRewardRange(row.reward)}</span
+                        ></td
+                      >
+                      <td class="tracker-row-icon"
+                        ><button
+                          class="tracker-row-detail-button"
+                          type="button"
+                          aria-label={interpolate("tracker.openRankDetailsAndTrend", {
+                            rank: row.ladderRank
+                          })}
+                          onclick={() => openDetails(row, activeRankingContext)}
+                          ><Icon icon="mdi:chart-line" aria-hidden="true" /></button
+                        ></td
+                      >
+                    </tr>
+                  {:else}
+                    <tr class="tracker-unavailable"
+                      ><th scope="row"
+                        ><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span
+                        ><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th
+                      ><td>{translate("tracker.unavailable")}</td><td>{formatNumber(row.score)}</td
+                      ><td>{formatSpeed(row.speedPerHour)}</td><td
+                        >{formatRewardRange(row.reward)}</td
+                      ><td></td></tr
+                    >
+                  {/if}
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tracker-ranking-cards">
+          {#each activeRankingRows as row (row.ladderRank)}{#if row.status === "available"}<button
+                class="tracker-ranking-card"
+                class:tier-top={rankTier(row.ladderRank) === "top"}
+                class:tier-elite={rankTier(row.ladderRank) === "elite"}
+                class:tier-high={rankTier(row.ladderRank) === "high"}
+                class:tier-mid={rankTier(row.ladderRank) === "mid"}
+                class:tier-long={rankTier(row.ladderRank) === "long"}
+                type="button"
+                onclick={() => openDetails(row, activeRankingContext)}
+                aria-label={interpolate("tracker.openRankDetailsAndTrend", {
+                  rank: row.ladderRank
+                })}
+                ><div class="tracker-card-heading">
+                  <strong class="tracker-rank-number">#{formatNumber(row.ladderRank)}</strong><span
+                    class="tracker-tier">{rankTierLabel(row.ladderRank)}</span
+                  ><Icon class="tracker-row-icon" icon="mdi:chart-line" aria-hidden="true" />
+                </div>
+                <span
+                  >{row.ranking?.userName ??
+                    row.ranking?.userId ??
+                    translate("tracker.unavailable")}</span
+                ><span>{translate("tracker.score")}: {formatNumber(row.score)}</span><span
+                  >{translate("tracker.speed")}: {formatSpeed(row.speedPerHour)}</span
+                ><span>{translate("tracker.degree")}: {formatRewardRange(row.reward)}</span></button
+              >{:else}<article class="tracker-ranking-card tracker-unavailable">
+                <div class="tracker-card-heading">
+                  <strong class="tracker-rank-number">#{formatNumber(row.ladderRank)}</strong><span
+                    class="tracker-tier">{rankTierLabel(row.ladderRank)}</span
+                  >
+                </div>
+                <span>{translate("tracker.unavailable")}</span>
+              </article>{/if}{/each}
         </div>
       {/if}
-    </div>{/if}
-    <div class="tracker-ranking-result-region" aria-live="polite">
-    {#if isTrackerLoading}
-      <div
-        class="tracker-ranking-skeleton"
-        role="status"
-        aria-live="polite"
-        aria-label={translate("tracker.loading")}
-        aria-busy="true"
-      >
-        <div class="tracker-skeleton-heading" aria-hidden="true">
-          <span class="skeleton h-3 w-20"></span><span class="skeleton h-7 w-32"></span>
-        </div>
-        <div class="tracker-skeleton-table" aria-hidden="true">
-          {#each getTrackerRankLadder(ladder) as rank (rank)}
-            <div class="tracker-skeleton-row">
-              <span class="skeleton h-9 w-12"></span><span class="skeleton h-5 w-full max-w-48"></span><span class="skeleton h-5 w-20"></span><span class="skeleton h-5 w-16"></span><span class="skeleton h-6 w-24 rounded-full"></span>
-            </div>
-          {/each}
-        </div>
-        <div class="tracker-skeleton-cards" aria-hidden="true">
-          {#each getTrackerRankLadder(ladder) as rank (rank)}
-            <div class="tracker-skeleton-card">
-              <div class="tracker-skeleton-card-heading"><span class="skeleton h-6 w-16"></span><span class="skeleton h-4 w-20"></span></div>
-              <span class="skeleton h-5 w-3/5"></span><span class="skeleton h-4 w-2/5"></span><span class="skeleton h-4 w-1/2"></span><span class="skeleton h-4 w-3/5"></span>
-            </div>
-          {/each}
-        </div>
-      </div>
-    {:else if isInvalidSelection}<p class="tracker-ranking-result-message" role="alert">{translate("tracker.eventIdInvalid")}</p>
-    {:else if trackerStatus === "upstream-error"}<p class="tracker-ranking-result-message" role="alert">
-        {translate("tracker.error.historyUpstream")}
-      </p>
-    {:else if trackerStatus === "sdk-error"}<p class="tracker-ranking-result-message" role="alert">{translate("tracker.error.sdk")}</p>
-    {:else if trackerStatus === "network-error"}<p class="tracker-ranking-result-message" role="alert">
-        {translate("tracker.error.network")}
-      </p>
-    {:else if trackerStatus === "invalid-data"}<p class="tracker-ranking-result-message" role="alert">
-        {translate("tracker.error.invalidData")}
-      </p>
-    {:else if trackerStatus !== "available"}<p class="tracker-ranking-result-message" role="alert">{translate("tracker.error.invalidData")}</p>
-    {:else}
-      <div class="tracker-table-wrap">
-        {#if rankingLoading}<div class="tracker-ranking-loading" role="status">
-            <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>{translate(
-              "tracker.rankingsLoading"
-            )}
-          </div>{/if}
-        <div id="tracker-ranking-panel" role={isWorldBloom ? "tabpanel" : undefined} aria-labelledby={isWorldBloom ? selectedRankingTab === "event" ? "tracker-event-ranking-tab" : `tracker-chapter-tab-${selectedChapter?.chapter.id}` : undefined}>
-        <table class="table tracker-table">
-          <thead><tr><th scope="col">{translate("tracker.rank")}</th><th scope="col">{translate("tracker.player")}</th><th scope="col">{translate("tracker.score")}</th><th scope="col">{translate("tracker.speed")}</th><th scope="col">{translate("tracker.degree")}</th><th scope="col"><span class="sr-only">{translate("tracker.viewTrend")}</span></th></tr></thead>
-          <tbody>
-            {#each activeRankingRows as row (row.ladderRank)}
-              {#if row.status === "available"}
-                <tr class="tracker-ranking-row" class:tier-top={rankTier(row.ladderRank) === "top"} class:tier-elite={rankTier(row.ladderRank) === "elite"} class:tier-high={rankTier(row.ladderRank) === "high"} class:tier-mid={rankTier(row.ladderRank) === "mid"} class:tier-long={rankTier(row.ladderRank) === "long"} onclick={(event) => handleRankingRowClick(event, row, activeRankingContext)}>
-                  <th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th>
-                  <td><strong class="tracker-player-name">{row.ranking?.userName ?? row.ranking?.userId ?? translate("tracker.unavailable")}</strong></td>
-                  <td class="tracker-score">{formatNumber(row.score)}</td><td class="tracker-speed">{formatSpeed(row.speedPerHour)}</td><td><span class="tracker-reward-badge">{formatRewardRange(row.reward)}</span></td>
-                  <td class="tracker-row-icon"><button class="tracker-row-detail-button" type="button" aria-label={interpolate("tracker.openRankDetailsAndTrend", { rank: row.ladderRank })} onclick={() => openDetails(row, activeRankingContext)}><Icon icon="mdi:chart-line" aria-hidden="true" /></button></td>
-                </tr>
-              {:else}
-                <tr class="tracker-unavailable"><th scope="row"><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th><td>{translate("tracker.unavailable")}</td><td>{formatNumber(row.score)}</td><td>{formatSpeed(row.speedPerHour)}</td><td>{formatRewardRange(row.reward)}</td><td></td></tr>
-              {/if}
-            {/each}
-          </tbody>
-        </table>
-        </div>
-      </div>
-      <div class="tracker-ranking-cards">
-        {#each activeRankingRows as row (row.ladderRank)}{#if row.status === "available"}<button
-              class="tracker-ranking-card"
-              class:tier-top={rankTier(row.ladderRank) === "top"}
-              class:tier-elite={rankTier(row.ladderRank) === "elite"}
-              class:tier-high={rankTier(row.ladderRank) === "high"}
-              class:tier-mid={rankTier(row.ladderRank) === "mid"}
-              class:tier-long={rankTier(row.ladderRank) === "long"}
-              type="button"
-              onclick={() => openDetails(row, activeRankingContext)}
-              aria-label={interpolate("tracker.openRankDetailsAndTrend", { rank: row.ladderRank })}
-              ><div class="tracker-card-heading"><strong class="tracker-rank-number">#{formatNumber(row.ladderRank)}</strong><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span><Icon class="tracker-row-icon" icon="mdi:chart-line" aria-hidden="true" /></div><span
-                >{row.ranking?.userName ??
-                  row.ranking?.userId ??
-                  translate("tracker.unavailable")}</span
-              ><span>{translate("tracker.score")}: {formatNumber(row.score)}</span><span
-                >{translate("tracker.speed")}: {formatSpeed(row.speedPerHour)}</span
-              ><span>{translate("tracker.degree")}: {formatRewardRange(row.reward)}</span></button
-            >{:else}<article class="tracker-ranking-card tracker-unavailable">
-              <div class="tracker-card-heading"><strong class="tracker-rank-number">#{formatNumber(row.ladderRank)}</strong><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></div><span
-                >{translate("tracker.unavailable")}</span
-              >
-            </article>{/if}{/each}
-      </div>
-    {/if}
     </div>
   </section>
-
 </main>
+
+<dialog
+  bind:this={goalDialog}
+  id="tracker-goal-dialog"
+  class="modal tracker-goal-dialog"
+  aria-labelledby="tracker-goal-dialog-title"
+  aria-describedby="tracker-goal-dialog-description"
+  oncancel={handleGoalDialogCancel}
+  onclose={handleGoalDialogClose}
+>
+  <form
+    class="modal-box tracker-goal-dialog-box"
+    aria-describedby="tracker-goal-dialog-description"
+    onsubmit={submitGoal}
+  >
+    <div class="tracker-goal-dialog-heading">
+      <div>
+        <h2 id="tracker-goal-dialog-title">{translate("tracker.goalCalculator")}</h2>
+        <p id="tracker-goal-dialog-description">{translate("tracker.goalDescription")}</p>
+      </div>
+      <button
+        class="btn btn-square btn-sm btn-ghost size-11 min-h-11 shrink-0"
+        type="button"
+        onclick={closeGoalCalculator}
+        aria-label={translate("tracker.goalClose")}
+        title={translate("tracker.goalClose")}
+      >
+        <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+      </button>
+    </div>
+    <div class="tracker-goal-fields">
+      <label for="tracker-goal-rank">{translate("tracker.referenceRank")}</label>
+      <input
+        bind:this={goalRankInput}
+        id="tracker-goal-rank"
+        class="input input-sm min-h-11 w-full min-w-0"
+        type="number"
+        min="1"
+        step="1"
+        bind:value={goalRank}
+        oninput={() => (isGoalSubmitted = false)}
+      />
+      <label for="tracker-goal-score">{translate("tracker.targetScore")}</label>
+      <input
+        id="tracker-goal-score"
+        class="input input-sm min-h-11 w-full min-w-0"
+        type="number"
+        min="1"
+        step="1"
+        bind:value={goalScore}
+        oninput={() => (isGoalSubmitted = false)}
+      />
+    </div>
+    <div class="tracker-goal-dialog-actions">
+      {#if isGoalSubmitted}
+        <output class="tracker-goal-output" for="tracker-goal-rank tracker-goal-score">
+          {goalHours === null
+            ? translate("tracker.goalUnavailable")
+            : interpolate("tracker.goalResult", { hours: goalHours.toFixed(1) })}
+        </output>
+      {/if}
+      <button class="btn btn-primary min-h-11" type="submit">
+        {translate("tracker.calculateGoal")}
+      </button>
+    </div>
+  </form>
+  <form method="dialog" class="modal-backdrop">
+    <button type="submit" aria-label={translate("tracker.goalClose")}></button>
+  </form>
+</dialog>
 
 <dialog
   bind:this={detailsDialog}
@@ -1454,35 +1887,45 @@
   onclose={handleDetailsClosed}
 >
   {#if selectedRow}
-  <div bind:this={detailsModalBox} class="modal-box">
-    <div class="tracker-workspace-heading">
-      <h2 id="tracker-details-title">
-        {selectedRow
-          ? `${selectedRankingContext ? `${interpolate("tracker.chapter", { number: selectedRankingContext.chapterNo })} · ` : ""}${interpolate("tracker.detailRank", { rank: selectedRow.ladderRank })}`
-          : translate("tracker.playerDetails")}
-      </h2>
-      <button
-        class="btn btn-square btn-sm btn-ghost"
-        type="button"
-        onclick={closeDetails}
-        aria-label={translate("tracker.detailsClose")}
-        ><Icon icon="mdi:close" aria-hidden="true" /></button
-      >
-    </div>
+    <div bind:this={detailsModalBox} class="modal-box">
+      <div class="tracker-workspace-heading">
+        <h2 id="tracker-details-title">
+          {selectedRow
+            ? `${selectedRankingContext ? `${interpolate("tracker.chapter", { number: selectedRankingContext.chapterNo })} · ` : ""}${interpolate("tracker.detailRank", { rank: selectedRow.ladderRank })}`
+            : translate("tracker.playerDetails")}
+        </h2>
+        <button
+          class="btn btn-square btn-sm btn-ghost"
+          type="button"
+          onclick={closeDetails}
+          aria-label={translate("tracker.detailsClose")}
+          ><Icon icon="mdi:close" aria-hidden="true" /></button
+        >
+      </div>
       <div
         class:is-visible={isDetailsIdentityVisible}
         class="tracker-identity-strip"
         aria-hidden={!isDetailsIdentityVisible}
       >
-        <strong>{activeGraphPoint?.userName ?? selectedRow.ranking?.userName ?? selectedRow.ranking?.userId ?? translate("tracker.unavailable")}</strong>
+        <strong
+          >{activeGraphPoint?.userName ??
+            selectedRow.ranking?.userName ??
+            selectedRow.ranking?.userId ??
+            translate("tracker.unavailable")}</strong
+        >
         <span>#{formatNumber(selectedRow.ladderRank)}</span>
-        <span>{translate("tracker.score")}: {formatNumber(activeGraphPoint?.score ?? selectedRow.score)}</span>
+        <span
+          >{translate("tracker.score")}: {formatNumber(
+            activeGraphPoint?.score ?? selectedRow.score
+          )}</span
+        >
       </div>
       <dl class="tracker-detail-grid">
         <div bind:this={detailsPlayerEntry}>
           <dt>{translate("tracker.player")}</dt>
           <dd>
-            {activeGraphPoint?.userName ?? selectedRow.ranking?.userName ??
+            {activeGraphPoint?.userName ??
+              selectedRow.ranking?.userName ??
               selectedRow.ranking?.userId ??
               translate("tracker.unavailable")}
           </dd>
@@ -1497,17 +1940,19 @@
         </div>
         <div>
           <dt>{translate("tracker.speed")}</dt>
-          <dd>{formatSpeed(
-            activeGraphPoint?.timestamp
-              ? (() => {
-                  const start = parseTrackerTimestamp(selectedEvent?.startAt);
-                  const captured = parseTrackerTimestamp(activeGraphPoint.timestamp);
-                  return start !== null && captured !== null && captured > start
-                    ? ((activeGraphPoint.score - 0) / ((captured - start) / 3_600_000))
-                    : null;
-                })()
-              : selectedRow.speedPerHour
-          )}</dd>
+          <dd>
+            {formatSpeed(
+              activeGraphPoint?.timestamp
+                ? (() => {
+                    const start = parseTrackerTimestamp(selectedEvent?.startAt);
+                    const captured = parseTrackerTimestamp(activeGraphPoint.timestamp);
+                    return start !== null && captured !== null && captured > start
+                      ? (activeGraphPoint.score - 0) / ((captured - start) / 3_600_000)
+                      : null;
+                  })()
+                : selectedRow.speedPerHour
+            )}
+          </dd>
         </div>
         <div>
           <dt>{translate("tracker.recentRate1h")}</dt>
@@ -1555,7 +2000,7 @@
           <p class="tracker-graph-message">{translate("tracker.graphUnavailable")}</p>
         {/if}
       </div>
-  </div>
+    </div>
   {/if}
   <form method="dialog" class="modal-backdrop">
     <button type="button" onclick={closeDetails} aria-label={translate("tracker.detailsClose")}
@@ -1676,7 +2121,9 @@
     gap: 0.45rem;
   }
   .tracker-primary-status {
+    flex: 1 1 100%;
     flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 0.65rem;
   }
   .tracker-freshness-action {
@@ -1753,6 +2200,117 @@
     align-items: center;
     gap: 0.75rem;
   }
+  .tracker-tool-actions {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .tracker-share-message {
+    display: inline-flex;
+    width: 8.5rem;
+    min-width: 8.5rem;
+    min-height: 2.75rem;
+    align-items: center;
+    overflow: hidden;
+    color: color-mix(in srgb, var(--color-success) 78%, var(--color-base-content));
+    font-size: 0.8rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tracker-goal-fields {
+    display: grid;
+    grid-template-columns: auto minmax(6rem, 1fr);
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+  }
+  .tracker-goal-fields label {
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .tracker-goal-output {
+    min-width: 12rem;
+    color: var(--color-primary);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .tracker-tool-actions .btn {
+    display: inline-flex;
+    min-height: 2.75rem;
+    height: auto;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding-block: 0.25rem;
+    padding-inline: 0.75rem;
+    line-height: 1.25;
+  }
+  .tracker-goal-dialog-box {
+    display: grid;
+    width: min(92vw, 32rem);
+    max-width: 32rem;
+    max-height: calc(100dvh - 2rem);
+    min-width: 0;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+    gap: 1.25rem;
+    border: 1px solid var(--archive-border-subtle);
+    border-radius: var(--radius-box);
+    background: var(--archive-surface-overlay, var(--archive-surface-raised));
+    color: var(--color-base-content);
+    padding: 1.25rem;
+    box-shadow: 0 18px 48px color-mix(in srgb, var(--color-base-content) 22%, transparent);
+  }
+  .tracker-goal-dialog::backdrop {
+    background: color-mix(in srgb, var(--color-base-content) 38%, transparent);
+  }
+  .tracker-goal-dialog-heading,
+  .tracker-goal-dialog-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .tracker-goal-dialog-heading h2,
+  .tracker-goal-dialog-heading p {
+    margin: 0;
+  }
+  .tracker-goal-dialog-heading h2 {
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+  .tracker-goal-dialog-heading p {
+    margin-top: 0.25rem;
+    color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
+    font-size: 0.8rem;
+  }
+  .tracker-goal-dialog-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    border-top: 1px solid var(--archive-border-subtle);
+    padding-top: 1rem;
+  }
+  @media (max-width: 48rem) {
+    .tracker-goal-fields {
+      grid-template-columns: 1fr;
+    }
+    .tracker-goal-output {
+      min-width: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tracker-tool-actions *,
+    .tracker-goal-dialog * {
+      transition-duration: 1ms !important;
+    }
+  }
+  .tracker-goal-dialog :is(button, input):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
   .tracker-ladder-switcher {
     position: relative;
     display: inline-grid;
@@ -1770,7 +2328,9 @@
     border-radius: 9999px;
     background: color-mix(in srgb, var(--color-primary) 16%, var(--archive-surface-raised));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 22%, transparent);
-    transition: transform 180ms ease-out, background-color 180ms ease-out;
+    transition:
+      transform 180ms ease-out,
+      background-color 180ms ease-out;
   }
   .tracker-ladder-indicator-full {
     transform: translateX(100%);
@@ -1849,11 +2409,6 @@
     background: color-mix(in srgb, var(--color-primary) 13%, transparent);
     color: var(--color-base-content);
   }
-  .tracker-event-suggestions small {
-    flex: none;
-    color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
-    font-variant-numeric: tabular-nums;
-  }
   .tracker-time-travel-panel {
     display: grid;
     grid-template-columns: minmax(14rem, 0.8fr) minmax(18rem, 1.2fr);
@@ -1930,9 +2485,22 @@
   .tracker-skeleton-row:last-child {
     border-bottom: 0;
   }
-  .tracker-skeleton-cards { display: none; }
-  .tracker-skeleton-card { display: grid; gap: 0.55rem; padding: 1rem; border: 1px solid var(--archive-border-subtle); border-radius: var(--radius-box); background: var(--archive-panel); }
-  .tracker-skeleton-card-heading { display: flex; justify-content: space-between; align-items: center; }
+  .tracker-skeleton-cards {
+    display: none;
+  }
+  .tracker-skeleton-card {
+    display: grid;
+    gap: 0.55rem;
+    padding: 1rem;
+    border: 1px solid var(--archive-border-subtle);
+    border-radius: var(--radius-box);
+    background: var(--archive-panel);
+  }
+  .tracker-skeleton-card-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
   .tracker-workspace-heading h2 {
     font-size: 1.35rem;
     font-weight: 800;
@@ -1956,10 +2524,18 @@
   .tracker-table td:first-child {
     border-left: 3px solid transparent;
   }
-  .tracker-table .tier-top th:first-child { border-left-color: var(--color-error); }
-  .tracker-table .tier-elite th:first-child { border-left-color: var(--color-warning); }
-  .tracker-table .tier-high th:first-child { border-left-color: var(--color-info); }
-  .tracker-table .tier-mid th:first-child { border-left-color: var(--color-success); }
+  .tracker-table .tier-top th:first-child {
+    border-left-color: var(--color-error);
+  }
+  .tracker-table .tier-elite th:first-child {
+    border-left-color: var(--color-warning);
+  }
+  .tracker-table .tier-high th:first-child {
+    border-left-color: var(--color-info);
+  }
+  .tracker-table .tier-mid th:first-child {
+    border-left-color: var(--color-success);
+  }
   .tracker-rank-number,
   .tracker-score {
     font-variant-numeric: tabular-nums;
@@ -2127,7 +2703,9 @@
     animation: tracker-ranking-loading-fade-in 160ms ease-out forwards;
   }
   @keyframes tracker-ranking-loading-fade-in {
-    to { opacity: 1; }
+    to {
+      opacity: 1;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .tracker-ranking-loading {
@@ -2201,10 +2779,20 @@
   .tracker-graph-skeleton-plot {
     border: 1px solid color-mix(in srgb, var(--color-base-content) 10%, transparent);
     background:
-      linear-gradient(color-mix(in srgb, var(--color-base-content) 8%, transparent) 1px, transparent 1px),
-      linear-gradient(90deg, color-mix(in srgb, var(--color-base-content) 8%, transparent) 1px, transparent 1px),
+      linear-gradient(
+        color-mix(in srgb, var(--color-base-content) 8%, transparent) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--color-base-content) 8%, transparent) 1px,
+        transparent 1px
+      ),
       color-mix(in srgb, var(--color-base-content) 4%, transparent);
-    background-size: 100% 25%, 20% 100%, auto;
+    background-size:
+      100% 25%,
+      20% 100%,
+      auto;
     animation-delay: 100ms;
   }
   .tracker-graph-skeleton-axis {
@@ -2225,11 +2813,18 @@
     text-align: center;
   }
   @keyframes tracker-graph-fade-in {
-    to { opacity: 1; }
+    to {
+      opacity: 1;
+    }
   }
   @keyframes tracker-graph-skeleton-pulse {
-    0%, 100% { opacity: 0.55; }
-    50% { opacity: 1; }
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 1;
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     .tracker-graph-panel {
@@ -2261,7 +2856,10 @@
     .tracker-primary-status {
       align-items: flex-start;
       flex-direction: column;
+      flex-basis: auto;
       gap: 0.55rem;
+      justify-content: flex-start;
+      width: auto;
     }
     .tracker-freshness-action {
       align-items: flex-end;
@@ -2297,8 +2895,13 @@
     .tracker-table-wrap {
       display: none;
     }
-    .tracker-ranking-skeleton .tracker-skeleton-table { display: none; }
-    .tracker-ranking-skeleton .tracker-skeleton-cards { display: grid; gap: 0.75rem; }
+    .tracker-ranking-skeleton .tracker-skeleton-table {
+      display: none;
+    }
+    .tracker-ranking-skeleton .tracker-skeleton-cards {
+      display: grid;
+      gap: 0.75rem;
+    }
     .tracker-ranking-cards {
       display: grid;
       gap: 0.75rem;
@@ -2337,6 +2940,7 @@
       gap: 0.75rem 1.25rem;
     }
     .tracker-primary-status {
+      grid-column: 1 / -1;
       grid-row: 1;
     }
     .tracker-freshness-action {
@@ -2388,7 +2992,9 @@
     opacity: 0;
     pointer-events: none;
     transform: translateY(-100%);
-    transition: opacity 140ms ease-out, transform 140ms ease-out;
+    transition:
+      opacity 140ms ease-out,
+      transform 140ms ease-out;
   }
   .tracker-identity-strip strong {
     min-width: 0;
