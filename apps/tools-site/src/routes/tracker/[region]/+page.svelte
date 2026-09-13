@@ -18,6 +18,13 @@
   import { calculateRecentRates, sortTrackerRatePoints } from "$lib/tracker-rates";
   import { calculateChapterElapsedMs, calculateScorePerElapsedHour } from "$lib/tracker-math";
   import { resolveTrackerEventId } from "$lib/tracker-event-identity";
+  import {
+    TRACKER_EXPORT_SOURCES,
+    createTrackerExportCsv,
+    createTrackerExportWorkbookBlob,
+    mergeTrackerExportRows,
+    type TrackerExportRowInput
+  } from "$lib/tracker-export";
   import type { EventRewardsResult } from "$lib/server/event-rewards";
   import type { EventTrackerResult } from "$lib/server/event-tracker";
   import type { ChapterTrackerResult } from "$lib/server/chapter-tracker";
@@ -121,6 +128,17 @@
   let goalRankInput = $state<HTMLInputElement>();
   let goalDialog = $state<HTMLDialogElement>();
   let detailsDialog = $state<HTMLDialogElement>();
+  let exportDialog = $state<HTMLDialogElement>();
+  let exportOpenButton = $state<HTMLButtonElement>();
+  let exportMenu = $state<HTMLUListElement>();
+  let isExportMenuOpen = $state(false);
+  let exportFormat = $state<"copy" | "csv" | "xlsx">("csv");
+  let includeHistory = $state(false);
+  let selectedExportChapterIds = $state<number[]>([]);
+  let exportChapterSelectionInitialized = $state(false);
+  let exportStatus = $state<"idle" | "loading" | "error">("idle");
+  let exportError = $state("");
+  let exportRequestToken = 0;
   let snapshotTimer: ReturnType<typeof setTimeout> | undefined;
   let shareMessageTimer: ReturnType<typeof setTimeout> | undefined;
   let refreshTimer: number | undefined;
@@ -401,6 +419,7 @@
   const selectRankingTab = (tab: "event" | number): void => {
     selectedRankingTab = tab;
     if (typeof tab === "number") selectedChapterId = tab;
+    else selectedChapterId = null;
   };
   const nextRefreshAt = $derived(
     isCurrentEvent && phase !== "upcoming"
@@ -412,7 +431,7 @@
   );
   const selectedTimePoint = $derived(timePoints[timePointIndex] ?? null);
   const rankingLoading = $derived(isRefreshing || snapshotStatus === "loading");
-  const exportableRows = $derived(activeRankingRows.filter((row) => row.status === "available"));
+  const exportableRows = $derived(rows.filter((row) => row.status === "available"));
   const canExportCsv = $derived(
     trackerStatus === "available" &&
       !rankingLoading &&
@@ -967,32 +986,244 @@
     }
     queueSnapshot(timestamp);
   };
-  const csvCell = (value: unknown): string => `"${String(value ?? "").replaceAll('"', '""')}"`;
-  const exportCsv = (): void => {
-    if (!canExportCsv) return;
-    const header = ["rank", "player", "userId", "score", "speedPerHour", "reward", "capturedAt"];
-    const lines = exportableRows.map((row) =>
-      [
-        row.ladderRank,
-        row.ranking?.userName,
-        row.ranking?.userId,
-        row.score,
-        row.speedPerHour,
-        formatRewardRange(row.reward),
-        row.ranking?.timestamp
-      ]
-        .map(csvCell)
-        .join(",")
-    );
-    const blob = new Blob([[header.map(csvCell).join(","), ...lines].join("\n")], {
-      type: "text/csv;charset=utf-8"
-    });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `sekai-tracker-${data.region}-${eventKey ?? "latest"}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+  const EXPORT_HISTORY_CONCURRENCY = 4;
+  async function mapWithConcurrency<Item, Result>(
+    items: readonly Item[],
+    concurrency: number,
+    mapper: (item: Item, index: number) => Promise<Result>
+  ): Promise<Result[]> {
+    if (!items.length) return [];
+    const results = Array<Result>(items.length);
+    let nextIndex = 0;
+    const worker = async (): Promise<void> => {
+      while (true) {
+        const index = nextIndex;
+        nextIndex += 1;
+        if (index >= items.length) return;
+        results[index] = await mapper(items[index]!, index);
+      }
+    };
+    const workerCount = Math.min(Math.max(1, Math.floor(concurrency)), items.length);
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+    return results;
+  }
+  const exportChapterIds = $derived(
+    selectedExportChapterIds.filter((id) =>
+      chapters?.rankings.some(({ chapter }) => chapter.id === id)
+    )
+  );
+  const toEventExportRows = (
+    rankingRows: readonly TrackerRow<SharedEventRewardRangeResponse>[],
+    source: string,
+    capturedAt: string | null = null
+  ): TrackerExportRowInput[] =>
+    rankingRows
+      .filter((row) => row.status === "available")
+      .map((row) => ({
+        section: "event",
+        source,
+        rank: row.ladderRank,
+        player: row.ranking?.userName ?? null,
+        userId: row.ranking?.userId ?? null,
+        score: row.score,
+        speedPerHour: row.speedPerHour,
+        reward: formatRewardRange(row.reward),
+        capturedAt: capturedAt ?? row.ranking?.timestamp ?? null
+      }));
+  const eventElapsedMsAt = (timestamp: string): number | null => {
+    const start = parseTrackerTimestamp(selectedEvent?.startAt);
+    const aggregateAt = parseTrackerTimestamp(selectedEvent?.aggregateAt);
+    const reference = parseTrackerTimestamp(timestamp);
+    if (start === null || reference === null || reference <= start) return null;
+    return aggregateAt === null ? reference - start : Math.min(reference, aggregateAt) - start;
   };
+  const createEventSnapshotExportRows = (
+    rankings: readonly EventTrackerResult["rankings"][number][],
+    timestamp: string
+  ): TrackerExportRowInput[] => {
+    const snapshotRows = createTrackerRows({
+      ladderRanks: getTrackerRankLadder(ladder),
+      rankings,
+      elapsedMs: eventElapsedMsAt(timestamp),
+      getReward
+    });
+    return toEventExportRows(snapshotRows, TRACKER_EXPORT_SOURCES.historySnapshot, timestamp);
+  };
+  const chapterExportRows = (): TrackerExportRowInput[] =>
+    (chapters?.rankings ?? [])
+      .filter(({ chapter }) => exportChapterIds.includes(chapter.id))
+      .flatMap(({ chapter, result }) => {
+        const chapterElapsedMs = calculateChapterElapsedMs({
+          startAt: chapter.chapterStartAt,
+          endAt: chapter.chapterEndAt,
+          now,
+          isCurrent: chapterIsCurrent(chapter),
+          snapshotAt: snapshotTimestamp
+        });
+        return createChapterRows(result.rankings, ladder)
+          .filter((row) => row.status === "available")
+          .map((row) => ({
+            section: "chapter",
+            source: TRACKER_EXPORT_SOURCES.worldLinkChapter,
+            rank: row.rank,
+            player: row.userName
+              ? `${interpolate("tracker.chapter", { number: chapter.chapterNo })}: ${row.userName}`
+              : interpolate("tracker.chapter", { number: chapter.chapterNo }),
+            userId: row.userId,
+            score: row.score,
+            speedPerHour: calculateScorePerElapsedHour({
+              score: row.score,
+              elapsedMs: chapterElapsedMs
+            }),
+            reward: formatRewardRange(getReward(row.rank)),
+            capturedAt: row.timestamp
+          }));
+      });
+  const closeExportMenu = (): void => {
+    isExportMenuOpen = false;
+  };
+  const toggleExportMenu = (): void => {
+    if (!canExportCsv) return;
+    isExportMenuOpen = !isExportMenuOpen;
+  };
+  const handleExportTriggerKeydown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      closeExportMenu();
+      exportOpenButton?.focus();
+      return;
+    }
+    if (event.key === "ArrowDown" && !isExportMenuOpen) {
+      event.preventDefault();
+      toggleExportMenu();
+      void tick().then(() => exportMenu?.querySelector<HTMLButtonElement>("button")?.focus());
+    }
+  };
+  const initializeExportChapterSelection = (): void => {
+    if (exportChapterSelectionInitialized || !chapters?.rankings.length) return;
+    const fallbackChapter =
+      chapters.rankings.find(({ chapter }) => chapter.id === selectedChapterId) ??
+      chapters.rankings.find(({ chapter }) => chapterIsCurrent(chapter)) ??
+      chapters.rankings[0];
+    if (!fallbackChapter) return;
+    selectedExportChapterIds = [fallbackChapter.chapter.id];
+    exportChapterSelectionInitialized = true;
+  };
+  const openExport = (format: "copy" | "csv" | "xlsx"): void => {
+    if (!canExportCsv) return;
+    closeExportMenu();
+    exportFormat = format;
+    exportError = "";
+    initializeExportChapterSelection();
+    exportDialog?.showModal();
+  };
+  const closeExport = (): void => {
+    exportRequestToken += 1;
+    exportStatus = "idle";
+    if (exportDialog?.open) exportDialog.close();
+  };
+  const handleExportDialogClose = (): void => {
+    exportRequestToken += 1;
+    exportStatus = "idle";
+    exportOpenButton?.focus();
+  };
+  const downloadBlob = (blob: Blob, extension: string): void => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `sekai-tracker-${data.region}-${eventKey ?? "latest"}.${extension}`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
+  const buildExportRows = async (token: number): Promise<TrackerExportRowInput[]> => {
+    const source =
+      snapshotRankings !== null && snapshotTimestamp !== null
+        ? TRACKER_EXPORT_SOURCES.historySnapshot
+        : TRACKER_EXPORT_SOURCES.currentEvent;
+    const current = toEventExportRows(exportableRows, source, snapshotTimestamp);
+    const history = includeHistory && eventKey !== null ? await loadExportHistory(eventKey) : [];
+    if (token !== exportRequestToken) throw new Error("stale");
+    return mergeTrackerExportRows(current, ...history, chapterExportRows());
+  };
+  const loadExportHistory = async (requestEventKey: number): Promise<TrackerExportRowInput[][]> => {
+    const historyTimePoints = timePoints.length
+      ? timePoints
+      : await fetchExportTimePoints(requestEventKey);
+    const timestamps = [...new Set(historyTimePoints)].filter(
+      (timestamp) => timestamp !== snapshotTimestamp
+    );
+    return mapWithConcurrency(timestamps, EXPORT_HISTORY_CONCURRENCY, async (timestamp) => {
+      const { response, payload } = await fetchJsonWithDeadline<{
+        status?: string;
+        rankings?: EventTrackerResult["rankings"];
+      }>(endpoint("snapshot", { eventId: String(requestEventKey), timestamp }));
+      if (!response.ok || payload.status !== "available" || !Array.isArray(payload.rankings)) {
+        throw new Error(translate("tracker.exportHistoryError"));
+      }
+      return createEventSnapshotExportRows(payload.rankings, timestamp);
+    });
+  };
+  const fetchExportTimePoints = async (requestEventKey: number): Promise<string[]> => {
+    const { response, payload } = await fetchJsonWithDeadline<{
+      status?: string;
+      timePoints?: unknown;
+    }>(endpoint("time", { eventId: String(requestEventKey) }));
+    if (!response.ok || payload.status !== "available" || !Array.isArray(payload.timePoints)) {
+      throw new Error(translate("tracker.exportHistoryError"));
+    }
+    const points = payload.timePoints.filter((point): point is string => typeof point === "string");
+    if (points.length === 0) throw new Error(translate("tracker.exportHistoryError"));
+    return [...new Set(points)];
+  };
+  const performExport = async (): Promise<void> => {
+    if (!canExportCsv) return;
+    const token = ++exportRequestToken;
+    exportStatus = "loading";
+    exportError = "";
+    try {
+      const rows = await buildExportRows(token);
+      if (exportFormat === "copy") {
+        await navigator.clipboard.writeText(createTrackerExportCsv(rows));
+        shareMessage = translate("tracker.exportCopied");
+      } else if (exportFormat === "csv") {
+        downloadBlob(
+          new Blob(["\ufeff" + createTrackerExportCsv(rows)], {
+            type: "text/csv;charset=utf-8"
+          }),
+          "csv"
+        );
+      } else {
+        downloadBlob(await createTrackerExportWorkbookBlob(rows, { sheetName: "tracker" }), "xlsx");
+      }
+      closeExport();
+    } catch (error) {
+      if (token === exportRequestToken && error instanceof Error && error.message !== "stale") {
+        exportStatus = "error";
+        exportError = translate("tracker.exportFailed");
+      }
+      return;
+    }
+    if (token === exportRequestToken) exportStatus = "idle";
+  };
+  const handleExportKeydown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") closeExport();
+  };
+  const handleExportMenuKeydown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      closeExportMenu();
+      exportOpenButton?.focus();
+    }
+  };
+  const handleDocumentPointerDown = (event: PointerEvent): void => {
+    if (!isExportMenuOpen || !(event.target instanceof Node)) return;
+    if (!exportMenu?.contains(event.target) && !exportOpenButton?.contains(event.target)) {
+      closeExportMenu();
+    }
+  };
+  $effect(() => {
+    if (exportDialog?.open && isWorldBloom && chapters?.rankings.length) {
+      initializeExportChapterSelection();
+    }
+  });
   const shareTracker = async (): Promise<void> => {
     if (shareMessageTimer) clearTimeout(shareMessageTimer);
     shareMessageTimer = undefined;
@@ -1045,8 +1276,10 @@
       snapshotTimestamp = snapshot;
     }
     const clock = window.setInterval(() => (now = Date.now()), 1000);
+    document.addEventListener("pointerdown", handleDocumentPointerDown);
     return () => {
       window.clearInterval(clock);
+      document.removeEventListener("pointerdown", handleDocumentPointerDown);
       if (snapshotTimer) clearTimeout(snapshotTimer);
       if (shareMessageTimer) clearTimeout(shareMessageTimer);
       if (refreshTimer) clearTimeout(refreshTimer);
@@ -1102,6 +1335,8 @@
       selectedChapterId = null;
       selectedRankingTab = "event";
       selectedChapterRows = [];
+      selectedExportChapterIds = [];
+      exportChapterSelectionInitialized = false;
     }
     trackerRequestIdentity = requestIdentity;
     void extendedData.trackerResult?.then(
@@ -1359,21 +1594,21 @@
           >
         </div>
       </div>
-      <div class="tracker-history-control">
+      <div class="tracker-tool-actions">
         <button
           class:btn-primary={isTimeTravelActive}
           class:btn-outline={!isTimeTravelActive}
-          class="btn btn-sm"
+          class="btn btn-sm tracker-history-tool"
           type="button"
           aria-expanded={isTimeTravelActive}
           aria-controls="tracker-time-travel-controls"
           onclick={toggleTimeTravel}
-          >{isTimeTravelActive
-            ? translate("tracker.backToLatestRankings")
-            : translate("tracker.viewPastRankings")}</button
         >
-      </div>
-      <div class="tracker-tool-actions">
+          <Icon icon="mdi:history" class="size-4 shrink-0" aria-hidden="true" />
+          {isTimeTravelActive
+            ? translate("tracker.backToLatestRankings")
+            : translate("tracker.viewPastRankings")}
+        </button>
         <button
           bind:this={goalOpenButton}
           id="tracker-goal-open"
@@ -1386,16 +1621,53 @@
           <Icon icon="mdi:calculator-variant" class="size-4 shrink-0" aria-hidden="true" />
           {translate("tracker.openGoalCalculator")}
         </button>
-        <button
-          class="btn btn-sm btn-outline"
-          type="button"
-          onclick={exportCsv}
-          disabled={!canExportCsv}
-        >
-          <Icon icon="mdi:download" class="size-4 shrink-0" aria-hidden="true" />{translate(
-            "tracker.exportCsv"
-          )}
-        </button>
+        <div class="dropdown dropdown-end">
+          <button
+            bind:this={exportOpenButton}
+            class="btn btn-sm btn-outline"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={isExportMenuOpen}
+            aria-controls="tracker-export-menu"
+            onclick={toggleExportMenu}
+            onkeydown={handleExportTriggerKeydown}
+            disabled={!canExportCsv}
+          >
+            <Icon icon="mdi:download" class="size-4 shrink-0" aria-hidden="true" />{translate(
+              "tracker.export"
+            )}
+          </button>
+          {#if isExportMenuOpen}
+            <ul
+              bind:this={exportMenu}
+              id="tracker-export-menu"
+              class="dropdown-content menu tracker-export-menu z-20 mt-2 w-52 rounded-box bg-base-100 p-2 shadow"
+              role="menu"
+              tabindex="-1"
+              onkeydown={handleExportMenuKeydown}
+            >
+              <li>
+                <button type="button" role="menuitem" onclick={() => openExport("copy")}>
+                  <Icon icon="mdi:content-copy" aria-hidden="true" />{translate("tracker.copyCsv")}
+                </button>
+              </li>
+              <li>
+                <button type="button" role="menuitem" onclick={() => openExport("csv")}>
+                  <Icon icon="mdi:file-delimited" aria-hidden="true" />{translate(
+                    "tracker.downloadCsv"
+                  )}
+                </button>
+              </li>
+              <li>
+                <button type="button" role="menuitem" onclick={() => openExport("xlsx")}>
+                  <Icon icon="mdi:file-excel" aria-hidden="true" />{translate(
+                    "tracker.downloadXlsx"
+                  )}
+                </button>
+              </li>
+            </ul>
+          {/if}
+        </div>
         <button class="btn btn-sm btn-outline" type="button" onclick={shareTracker}>
           <Icon
             icon="mdi:share-variant-outline"
@@ -1805,6 +2077,107 @@
 </main>
 
 <dialog
+  bind:this={exportDialog}
+  id="tracker-export-dialog"
+  class="modal"
+  aria-labelledby="tracker-export-title"
+  aria-describedby="tracker-export-description"
+  oncancel={(event) => {
+    event.preventDefault();
+    closeExport();
+  }}
+  onkeydown={handleExportKeydown}
+  onclose={handleExportDialogClose}
+>
+  <form
+    class="modal-box tracker-export-dialog-box"
+    onsubmit={(event) => {
+      event.preventDefault();
+      void performExport();
+    }}
+  >
+    <h2 id="tracker-export-title">{translate("tracker.exportOptions")}</h2>
+    <p id="tracker-export-description">{translate("tracker.exportDescription")}</p>
+    <label class="label cursor-pointer justify-start gap-3" for="tracker-export-history">
+      <input
+        id="tracker-export-history"
+        class="checkbox"
+        type="checkbox"
+        bind:checked={includeHistory}
+        disabled={exportStatus === "loading"}
+      />
+      <span>{translate("tracker.includeHistory")}</span>
+    </label>
+    {#if isWorldBloom}
+      {#if chapters?.rankings.length}
+        <fieldset class="tracker-export-chapters">
+          <legend>{translate("tracker.worldLinkChapters")}</legend>
+          <div class="tracker-export-chapter-actions">
+            <button
+              class="btn btn-ghost btn-xs"
+              type="button"
+              onclick={() =>
+                (selectedExportChapterIds =
+                  chapters?.rankings.map(({ chapter }) => chapter.id) ?? [])}
+              disabled={exportStatus === "loading"}>{translate("tracker.selectAll")}</button
+            >
+            <button
+              class="btn btn-ghost btn-xs"
+              type="button"
+              onclick={() => (selectedExportChapterIds = [])}
+              disabled={exportStatus === "loading"}>{translate("tracker.clearSelection")}</button
+            >
+          </div>
+          {#each chapters.rankings as item (item.chapter.id)}
+            <label
+              class="label cursor-pointer justify-start gap-3"
+              for={`tracker-export-chapter-${item.chapter.id}`}
+            >
+              <input
+                id={`tracker-export-chapter-${item.chapter.id}`}
+                class="checkbox checkbox-sm"
+                type="checkbox"
+                checked={selectedExportChapterIds.includes(item.chapter.id)}
+                onchange={(event) => {
+                  const id = item.chapter.id;
+                  selectedExportChapterIds = event.currentTarget.checked
+                    ? [...selectedExportChapterIds, id]
+                    : selectedExportChapterIds.filter((value) => value !== id);
+                }}
+                disabled={exportStatus === "loading"}
+              />
+              <span>{interpolate("tracker.chapter", { number: item.chapter.chapterNo })}</span>
+            </label>
+          {/each}
+        </fieldset>
+      {:else}
+        <p class="tracker-export-empty">{translate("tracker.chapterEmpty")}</p>
+      {/if}
+    {/if}
+    {#if exportStatus === "loading"}
+      <p class="tracker-export-status" role="status" aria-live="polite">
+        {translate("tracker.preparingExport")}
+      </p>
+    {/if}
+    {#if exportError}
+      <p class="alert alert-error" role="alert">{exportError}</p>
+    {/if}
+    <div class="modal-action">
+      <button class="btn btn-primary" type="submit" disabled={exportStatus === "loading"}
+        >{exportStatus === "loading"
+          ? translate("tracker.preparingExport")
+          : translate("tracker.export")}</button
+      >
+      <button class="btn" type="button" onclick={closeExport} disabled={exportStatus === "loading"}>
+        {translate("tracker.goalClose")}
+      </button>
+    </div>
+  </form>
+  <form method="dialog" class="modal-backdrop">
+    <button type="submit" aria-label={translate("tracker.goalClose")}></button>
+  </form>
+</dialog>
+<dialog
   bind:this={goalDialog}
   id="tracker-goal-dialog"
   class="modal tracker-goal-dialog"
@@ -2192,8 +2565,7 @@
     border-top: 1px solid var(--archive-border-subtle);
     padding-top: 0.85rem;
   }
-  .tracker-ladder-control,
-  .tracker-history-control {
+  .tracker-ladder-control {
     display: flex;
     min-width: 0;
     flex-wrap: wrap;
@@ -2202,9 +2574,11 @@
   }
   .tracker-tool-actions {
     display: flex;
+    margin-inline-start: auto;
     min-width: 0;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.5rem;
   }
   .tracker-share-message {
@@ -2239,14 +2613,37 @@
   }
   .tracker-tool-actions .btn {
     display: inline-flex;
-    min-height: 2.75rem;
-    height: auto;
+    min-height: 2.25rem;
+    height: 2.25rem;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     padding-block: 0.25rem;
     padding-inline: 0.75rem;
     line-height: 1.25;
+  }
+  .tracker-export-menu {
+    inset-inline-end: 0;
+    inset-inline-start: auto;
+    max-width: min(14rem, calc(100vw - 2rem));
+  }
+  @media (max-width: 47.999rem), (pointer: coarse) {
+    .tracker-control-row {
+      align-items: stretch;
+    }
+    .tracker-tool-actions {
+      width: 100%;
+      margin-inline-start: 0;
+    }
+    .tracker-share-message {
+      width: min(8.5rem, 100%);
+      min-width: min(8.5rem, 100%);
+      flex: 1 1 8.5rem;
+    }
+    .tracker-tool-actions .btn {
+      min-height: 2.75rem;
+      height: auto;
+    }
   }
   .tracker-goal-dialog-box {
     display: grid;
@@ -2347,10 +2744,6 @@
   .tracker-ladder-control .btn {
     border: 0;
     border-radius: 9999px;
-  }
-  .tracker-history-control {
-    flex: 1 1 28rem;
-    justify-content: flex-end;
   }
   .tracker-control-label {
     display: block;
@@ -2840,8 +3233,7 @@
   @media (max-width: 47.999rem) {
     .tracker-context,
     .tracker-event-picker,
-    .tracker-control-row,
-    .tracker-history-control {
+    .tracker-control-row {
       align-items: stretch;
     }
     .tracker-status-panel {
