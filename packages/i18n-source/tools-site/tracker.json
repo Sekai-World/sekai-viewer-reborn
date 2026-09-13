@@ -24,6 +24,18 @@
   "tracker.eventSelection": "Choose an event",
   "tracker.eventPickerPlaceholder": "Search events or enter an ID",
   "tracker.eventSuggestions": "Matching events",
+  "tracker.exportCsv": "Export CSV",
+  "tracker.share": "Share",
+  "tracker.linkCopied": "Link copied",
+  "tracker.goalCalculator": "Goal calculator",
+  "tracker.openGoalCalculator": "Set a goal",
+  "tracker.calculateGoal": "Calculate",
+  "tracker.goalClose": "Close",
+  "tracker.goalDescription": "Estimate time at the displayed pace.",
+  "tracker.referenceRank": "Reference rank",
+  "tracker.targetScore": "Target score",
+  "tracker.goalUnavailable": "Enter a valid target and available ranking data.",
+  "tracker.goalResult": "{hours} hours at the displayed pace",
   "tracker.graph": "Ranking graph",
   "tracker.graphLoading": "Loading ranking graph…",
   "tracker.graphRange": "Range",
@@ -33,7 +45,7 @@
   "tracker.goToCurrentEvent": "Go to current event",
   "tracker.historyHeading": "Ranking history",
   "tracker.historical": "Historical event",
-  "tracker.historicalMetadataUnavailable": "Event {eventId} — historical event metadata unavailable",
+  "tracker.historicalMetadataUnavailable": "Historical event metadata unavailable",
   "tracker.live": "Live event",
   "tracker.loadedAt": "Last loaded {time}",
   "tracker.loading": "Refreshing ranking data…",
@@ -100,10 +112,10 @@
   "tracker.chapterError.network-error": "This chapter ranking service could not be reached.",
   "tracker.chapterError.invalid-data": "This chapter ranking returned invalid data.",
   "tracker.chapterEnded": "Chapter ended",
-  "tracker.chapterCountdownUnavailable": "Chapter timing unavailable"
-  ,"tracker.tier.top": "Top rank"
-  ,"tracker.tier.elite": "Top 10"
-  ,"tracker.tier.high": "Top 100"
-  ,"tracker.tier.mid": "Top 1000"
-  ,"tracker.tier.long": "Milestone"
+  "tracker.chapterCountdownUnavailable": "Chapter timing unavailable",
+  "tracker.tier.top": "Top rank",
+  "tracker.tier.elite": "Top 10",
+  "tracker.tier.high": "Top 100",
+  "tracker.tier.mid": "Top 1000",
+  "tracker.tier.long": "Milestone"
 }

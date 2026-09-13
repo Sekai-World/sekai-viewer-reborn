@@ -136,19 +136,38 @@ const mergeEventMetadata = (
   };
 };
 
+const timestamp = (value: string | number | null): number | null => {
+  if (value === null) return null;
+  const result = new Date(value).getTime();
+  return Number.isFinite(result) ? result : null;
+};
+
 const isEligibleEvent = (value: TrackerEventMetadata): boolean => {
-  if (value.startAt === null) return false;
-  const start = new Date(value.startAt).getTime();
-  return Number.isFinite(start) && start <= Date.now();
+  const start = timestamp(value.startAt);
+  return start !== null && start <= Date.now();
+};
+
+const getCurrentEventFromList = (events: TrackerEventMetadata[]): TrackerEventMetadata | null => {
+  const now = Date.now();
+  return (
+    events
+      .filter((value) => {
+        const start = timestamp(value.startAt);
+        const closed = timestamp(value.closedAt);
+        return start !== null && closed !== null && start <= now && now <= closed;
+      })
+      .sort(
+        (left, right) =>
+          (timestamp(right.startAt) ?? -Infinity) - (timestamp(left.startAt) ?? -Infinity)
+      )
+      .at(0) ?? null
+  );
 };
 
 const getListEvents = (value: unknown): TrackerEventMetadata[] | null => {
   const items = record(unwrap(value))?.items;
   if (!Array.isArray(items)) return null;
-  return items
-    .map(event)
-    .filter((value): value is TrackerEventMetadata => value !== null)
-    .filter(isEligibleEvent);
+  return items.map(event).filter((value): value is TrackerEventMetadata => value !== null);
 };
 
 const parseListResponse = (result: {
@@ -157,20 +176,25 @@ const parseListResponse = (result: {
 }): {
   status: CatalogRequestStatus;
   events: TrackerEventMetadata[];
+  allEvents: TrackerEventMetadata[];
 } => {
-  if (result.status !== "available") return { status: result.status, events: [] };
-  if (hasSdkError(result.value)) return { status: "sdk-error", events: [] };
+  if (result.status !== "available") return { status: result.status, events: [], allEvents: [] };
+  if (hasSdkError(result.value)) return { status: "sdk-error", events: [], allEvents: [] };
 
   const events = getListEvents(responseData(result.value));
-  return events ? { status: "available", events } : { status: "invalid-data", events: [] };
+  return events
+    ? { status: "available", events: events.filter(isEligibleEvent), allEvents: events }
+    : { status: "invalid-data", events: [], allEvents: [] };
 };
 
 const getSelectedEvent = async (
   baseUrl: string,
   region: TrackerRegion,
   selectedEventId: number,
-  eligibleEvents: TrackerEventMetadata[]
+  eligibleEvents: TrackerEventMetadata[],
+  currentEvent: TrackerEventMetadata | null
 ): Promise<{ status: CatalogRequestStatus; metadata: TrackerEventMetadata | null }> => {
+  if (currentEvent?.id === selectedEventId) return { status: "available", metadata: currentEvent };
   const listedEvent = eligibleEvents.find((candidate) => candidate.id === selectedEventId);
   if (listedEvent) return { status: "available", metadata: listedEvent };
 
@@ -213,11 +237,19 @@ export const getEventCatalog = async (
   const currentResult = parseEventResponse(current);
   const listResult = parseListResponse(list);
   const { status: currentStatus, metadata: currentEvent } = currentResult;
-  const { status: normalizedListStatus, events: eligibleEvents } = listResult;
-  const mergedCurrentEvent = mergeEventMetadata(currentEvent, eligibleEvents);
+  const { status: normalizedListStatus, events: eligibleEvents, allEvents } = listResult;
+  const listedCurrentEvent =
+    currentStatus === "available" ? null : getCurrentEventFromList(allEvents);
+  const mergedCurrentEvent = mergeEventMetadata(currentEvent ?? listedCurrentEvent, eligibleEvents);
 
   if (selectedEventId !== undefined) {
-    const selected = await getSelectedEvent(baseUrl, region, selectedEventId, eligibleEvents);
+    const selected = await getSelectedEvent(
+      baseUrl,
+      region,
+      selectedEventId,
+      eligibleEvents,
+      mergedCurrentEvent
+    );
     return {
       status: selected.status,
       currentStatus,
@@ -228,7 +260,7 @@ export const getEventCatalog = async (
     };
   }
 
-  if (currentStatus !== "available" || !mergedCurrentEvent) {
+  if (!mergedCurrentEvent) {
     return unavailableCatalog(
       currentStatus === "available" ? "invalid-data" : currentStatus,
       normalizedListStatus
@@ -236,7 +268,7 @@ export const getEventCatalog = async (
   }
   return {
     status: "available",
-    currentStatus: "available",
+    currentStatus,
     listStatus: normalizedListStatus,
     currentEvent: mergedCurrentEvent,
     selectedEvent: mergedCurrentEvent,

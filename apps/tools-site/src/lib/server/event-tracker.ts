@@ -28,7 +28,7 @@ export type EventTrackerSelection =
 export type EventTrackerResult = {
   selection: EventTrackerSelection;
   resolvedCurrentEventId: number | null;
-  loadedAt: string;
+  loadedAt: string | null;
   status: "available" | "sdk-error" | "upstream-error" | "network-error" | "invalid-data";
   rankings: EventTrackerRanking[];
   completeness?: EventTrackerCompleteness;
@@ -160,6 +160,17 @@ export const parseEventTrackerRankings = (payload: unknown): EventTrackerRanking
   });
 };
 
+const getLatestRankingTimestamp = (rankings: EventTrackerRanking[]): string | null => {
+  let latest: { value: string; time: number } | null = null;
+  for (const timestamp of rankings.map((ranking) => ranking.timestamp)) {
+    if (timestamp === null || timestamp.trim() === "") continue;
+    const time = Date.parse(timestamp);
+    if (!Number.isFinite(time) || (latest !== null && time <= latest.time)) continue;
+    latest = { value: timestamp, time };
+  }
+  return latest?.value ?? null;
+};
+
 const withResult = (
   selection: EventTrackerSelection,
   status: EventTrackerResult["status"],
@@ -168,7 +179,7 @@ const withResult = (
 ): EventTrackerResult => ({
   selection,
   resolvedCurrentEventId,
-  loadedAt: new Date().toISOString(),
+  loadedAt: getLatestRankingTimestamp(rankings),
   status,
   rankings
 });
@@ -249,6 +260,43 @@ const getLiveEventTrackerRankings = async (
   };
 };
 
+type LiveInFlightEntries = Map<TrackerRegion, Promise<EventTrackerResult>>;
+
+const liveEventTrackerRankingsInFlight = new Map<string, LiveInFlightEntries>();
+
+const clearLiveEventTrackerRankingsInFlight = (
+  baseUrl: string,
+  region: TrackerRegion,
+  request: Promise<EventTrackerResult>
+): void => {
+  const entries = liveEventTrackerRankingsInFlight.get(baseUrl);
+  if (entries?.get(region) !== request) return;
+
+  entries.delete(region);
+  if (entries.size === 0) liveEventTrackerRankingsInFlight.delete(baseUrl);
+};
+
+const getLiveEventTrackerRankingsDeduplicated = (
+  baseUrl: string,
+  region: TrackerRegion,
+  selection: EventTrackerSelection
+): Promise<EventTrackerResult> => {
+  const entries = liveEventTrackerRankingsInFlight.get(baseUrl);
+  const existing = entries?.get(region);
+  if (existing) return existing;
+
+  const request = getLiveEventTrackerRankings(baseUrl, region, selection);
+  const currentEntries = entries ?? new Map<TrackerRegion, Promise<EventTrackerResult>>();
+  if (!entries) liveEventTrackerRankingsInFlight.set(baseUrl, currentEntries);
+  currentEntries.set(region, request);
+
+  void request
+    .finally(() => clearLiveEventTrackerRankingsInFlight(baseUrl, region, request))
+    .catch(() => undefined);
+
+  return request;
+};
+
 const getHistoricalEventTrackerRankings = async (
   baseUrl: string,
   region: TrackerRegion,
@@ -310,7 +358,7 @@ export const getEventTrackerRankings = async (
 
   try {
     if (eventId === undefined) {
-      return await getLiveEventTrackerRankings(baseUrl, region, selection);
+      return await getLiveEventTrackerRankingsDeduplicated(baseUrl, region, selection);
     }
 
     return await getHistoricalEventTrackerRankings(baseUrl, region, eventId, selection);

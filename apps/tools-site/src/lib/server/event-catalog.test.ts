@@ -140,6 +140,50 @@ describe("getEventCatalog", () => {
     });
   });
 
+  it("derives the latest active current event from the list when current metadata fails", async () => {
+    vi.setSystemTime(new Date("2026-08-15T12:00:00Z"));
+    mocks.getEventsByRegionCurrent.mockResolvedValue({ error: true, response: { status: 503 } });
+    mocks.getEventsByRegionList.mockResolvedValue({
+      data: {
+        items: [
+          {
+            id: 10,
+            name: "Older active event",
+            startAt: "2026-08-01T00:00:00Z",
+            closedAt: "2026-08-20T00:00:00Z"
+          },
+          {
+            id: 12,
+            name: "Latest active event",
+            startAt: "2026-08-10T00:00:00Z",
+            closedAt: "2026-08-25T00:00:00Z"
+          },
+          {
+            id: 13,
+            name: "Closed event",
+            startAt: "2026-08-05T00:00:00Z",
+            closedAt: "2026-08-14T00:00:00Z"
+          },
+          {
+            id: 14,
+            name: "Future event",
+            startAt: "2026-08-20T00:00:00Z",
+            closedAt: "2026-08-30T00:00:00Z"
+          }
+        ]
+      }
+    });
+
+    await expect(getEventCatalog("https://master.example.test", "en")).resolves.toMatchObject({
+      status: "available",
+      currentStatus: "sdk-error",
+      listStatus: "available",
+      currentEvent: { id: 12, name: "Latest active event" },
+      selectedEvent: { id: 12, name: "Latest active event" },
+      eligibleEvents: [{ id: 10 }, { id: 12 }, { id: 13 }]
+    });
+  });
+
   it("excludes list events with invalid startAt values", async () => {
     mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 42, name: "Current" } });
     mocks.getEventsByRegionList.mockResolvedValue({

@@ -23,6 +23,8 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
   }
 
   const region = params.region;
+  const apiBaseUrl = getSekaiApiBaseUrl();
+  const masterBaseUrl = getMasterApiBaseUrl();
   depends?.("tools-site:tracker:rankings");
   const eventId = parseEventId(url.searchParams.get("eventId"));
   if (eventId === "invalid") {
@@ -34,7 +36,7 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
         selection: { mode: "history" as const, eventId: 0 },
         resolvedCurrentEventId: null,
         status: "invalid-data" as const,
-        loadedAt: new Date().toISOString(),
+        loadedAt: null,
         rankings: []
       } satisfies EventTrackerResult),
       catalog: Promise.resolve(null),
@@ -44,28 +46,47 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
     };
   }
 
-  const trackerResult = getEventTrackerRankings(getSekaiApiBaseUrl(), region, eventId ?? undefined);
   depends?.("tools-site:tracker:catalog");
-  const catalog = getEventCatalog(getMasterApiBaseUrl(), region, eventId ?? undefined);
-  const worldBloom = getWorldBloomMetadata(getMasterApiBaseUrl(), region);
+  const catalog = getEventCatalog(masterBaseUrl, region, eventId ?? undefined);
+  const trackerResult =
+    eventId === null
+      ? getEventTrackerRankings(apiBaseUrl, region)
+      : catalog.then(
+          (catalogResult) =>
+            getEventTrackerRankings(
+              apiBaseUrl,
+              region,
+              catalogResult.currentEvent?.id === eventId ? undefined : eventId
+            ),
+          () => getEventTrackerRankings(apiBaseUrl, region, eventId)
+        );
+  const worldBloom = getWorldBloomMetadata(masterBaseUrl, region);
   const rewards = (async () => {
     const result = await trackerResult;
     const resolvedFromRankings = eventId ?? result.resolvedCurrentEventId;
     if (resolvedFromRankings !== null && resolvedFromRankings !== undefined) {
-      return getEventRewards(getMasterApiBaseUrl(), region, resolvedFromRankings);
+      return getEventRewards(masterBaseUrl, region, resolvedFromRankings);
     }
     const catalogResult = await catalog;
     const resolvedFromCatalog = eventId ?? catalogResult.currentEvent?.id;
     return resolvedFromCatalog === undefined
       ? null
-      : getEventRewards(getMasterApiBaseUrl(), region, resolvedFromCatalog);
+      : getEventRewards(masterBaseUrl, region, resolvedFromCatalog);
   })();
   const chapters = (async (): Promise<{
     metadata: WorldBloomMetadata | null;
-    rankings: Array<{ chapter: WorldBloomMetadata["chapters"][number]; result: ChapterTrackerResult }>;
+    rankings: Array<{
+      chapter: WorldBloomMetadata["chapters"][number];
+      result: ChapterTrackerResult;
+    }>;
   } | null> => {
-    const [result, catalogResult, bloomResult] = await Promise.all([trackerResult, catalog, worldBloom]);
-    const resolvedEventId = eventId ?? result.resolvedCurrentEventId ?? catalogResult.currentEvent?.id;
+    const [result, catalogResult, bloomResult] = await Promise.all([
+      trackerResult,
+      catalog,
+      worldBloom
+    ]);
+    const resolvedEventId =
+      eventId ?? result.resolvedCurrentEventId ?? catalogResult.currentEvent?.id;
     if (resolvedEventId === undefined || bloomResult.status !== "available") return null;
     const metadata = bloomResult.items.find((item) => item.eventId === resolvedEventId) ?? null;
     if (!metadata) return null;
@@ -75,7 +96,7 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
       metadata.chapters.map(async (chapter) => ({
         chapter,
         result: await getChapterTrackerRankings(
-          getSekaiApiBaseUrl(),
+          apiBaseUrl,
           region,
           chapter.gameCharacterId,
           isCurrentEvent ? undefined : resolvedEventId
@@ -87,12 +108,14 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
   // World Link identity must be known in the initial SSR payload so its
   // heading and tab bar are present on first paint without reserving space
   // for ordinary events.
-  const isWorldBloom = await Promise.all([catalog, worldBloom]).then(
+  const isWorldBloom = Promise.all([catalog, worldBloom]).then(
     ([catalogResult, bloomResult]) => {
       const resolvedEventId = eventId ?? catalogResult.currentEvent?.id;
-      return resolvedEventId !== undefined &&
+      return (
+        resolvedEventId !== undefined &&
         bloomResult.status === "available" &&
-        bloomResult.items.some((item) => item.eventId === resolvedEventId);
+        bloomResult.items.some((item) => item.eventId === resolvedEventId)
+      );
     },
     () => false
   );
