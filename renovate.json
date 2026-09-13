@@ -32,6 +32,13 @@
       "allowedVersions": ">=7.0.0"
     },
     {
+      "description": "pixi.js v8 is blocked: @sekai-world/pixi-live2d-display-mulmotion@0.5.1 peer-depends on pixi.js ^7 and imports @pixi/* scoped packages that no longer exist in v8. Re-enable majors when the Live2D plugin ecosystem supports v8.",
+      "matchManagers": ["npm"],
+      "matchDepNames": ["pixi.js"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["minor", "patch"],
       "platformAutomerge": true
