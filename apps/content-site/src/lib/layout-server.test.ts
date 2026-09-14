@@ -69,6 +69,22 @@ describe("content-site layout server load", () => {
     );
   });
 
+  it("loads the home namespace for news routes", async () => {
+    loadI18nMessageBundle.mockResolvedValueOnce({ gameNewsTitle: "Game News" });
+
+    await expect(load(createLoadEvent("/news/jp"))).resolves.toEqual({
+      i18nMessages: { gameNewsTitle: "Game News" },
+      uiLocale: "en",
+      globalNotices: [],
+      siteVersion: packageJson.version
+    });
+    expect(loadI18nMessageBundle).toHaveBeenCalledWith(
+      "en",
+      ["common", "home", "error"],
+      expect.any(Function)
+    );
+  });
+
   it("returns local route messages when remote bundle loading fails", async () => {
     loadI18nMessageBundle.mockRejectedValueOnce(new Error("dictionary unavailable"));
 

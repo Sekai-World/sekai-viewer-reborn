@@ -5,13 +5,15 @@ const {
   getEventsByRegionCurrent,
   getGachasByRegionList,
   getMusicsByRegionList,
-  getVersions
+  getVersions,
+  loadGameNews
 } = vi.hoisted(() => ({
   getCardsByRegionList: vi.fn(),
   getEventsByRegionCurrent: vi.fn(),
   getGachasByRegionList: vi.fn(),
   getMusicsByRegionList: vi.fn(),
-  getVersions: vi.fn()
+  getVersions: vi.fn(),
+  loadGameNews: vi.fn()
 }));
 
 vi.mock("@platform/sekai-master-api-sdk", () => ({
@@ -21,6 +23,8 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getMusicsByRegionList,
   getVersions
 }));
+
+vi.mock("$lib/server/game-news", () => ({ loadGameNews }));
 
 const { getServerI18nText } = vi.hoisted(() => ({ getServerI18nText: vi.fn() }));
 vi.mock("$lib/i18n/runtime", () => ({ getServerI18nText }));
@@ -37,12 +41,17 @@ const { fetchUnitProfiles, toUnitProfileMap } = vi.hoisted(() => ({
 vi.mock("$lib/server/unit-profiles", () => ({ fetchUnitProfiles, toUnitProfileMap }));
 
 import { load } from "./+page.server";
+import { supportedRegions } from "$lib/domain/regions";
 
 type LatestData = {
   region: string;
   cards: { id: string; initialSpecialTrainingStatus: string | null }[];
   gachas: { id: string }[];
 };
+
+type HomepageNewsResult =
+  | { status: "ready"; items: unknown[] }
+  | { status: "empty" | "error" | "unavailable" };
 
 const emptyListResponse = {
   data: {
@@ -62,6 +71,17 @@ const loadHomepageLatestData = async (): Promise<LatestData[]> => {
   return Promise.all(result.latestData);
 };
 
+const loadHomepageNews = async (): Promise<HomepageNewsResult[]> => {
+  const result = (await load({
+    cookies: { get: () => undefined },
+    fetch: vi.fn()
+  } as unknown as Parameters<typeof load>[0])) as {
+    news: Promise<HomepageNewsResult>[];
+  };
+
+  return Promise.all(result.news);
+};
+
 describe("homepage latest gacha loading", () => {
   beforeEach(() => {
     getCardsByRegionList.mockResolvedValue({ data: { items: [] } });
@@ -73,6 +93,8 @@ describe("homepage latest gacha loading", () => {
     fetchUnitProfiles.mockResolvedValue([]);
     toUnitProfileMap.mockReturnValue({});
     getGachasByRegionList.mockReset();
+    loadGameNews.mockReset();
+    loadGameNews.mockResolvedValue({ status: "empty" });
   });
 
   it("preserves special-training metadata for homepage card thumbnails", async () => {
@@ -307,5 +329,38 @@ describe("homepage latest gacha loading", () => {
     expect(jpGachaRequests[emergencyRequestCeiling - 1]?.[0].query.page).toBe(
       emergencyRequestCeiling
     );
+  });
+
+  it("loads game news for all supported regions in order", async () => {
+    loadGameNews.mockImplementation(async (region) => ({
+      status: "ready",
+      items: [{ region }]
+    }));
+
+    const news = await loadHomepageNews();
+
+    expect(loadGameNews.mock.calls.map(([region]) => region)).toEqual(supportedRegions);
+    expect(news).toEqual(
+      supportedRegions.map((region) => ({
+        status: "ready",
+        items: [{ region }]
+      }))
+    );
+  });
+
+  it("isolates a rejected game news load to its region", async () => {
+    const rejectedRegion = "tw";
+    loadGameNews.mockImplementation((region) =>
+      region === rejectedRegion
+        ? Promise.reject(new Error("news unavailable"))
+        : Promise.resolve({ status: "empty" })
+    );
+
+    await expect(loadHomepageNews()).resolves.toEqual(
+      supportedRegions.map((region) => ({
+        status: region === rejectedRegion ? "error" : "empty"
+      }))
+    );
+    expect(loadGameNews.mock.calls.map(([region]) => region)).toEqual(supportedRegions);
   });
 });

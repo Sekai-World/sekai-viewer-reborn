@@ -14,6 +14,7 @@ import {
   toUnitProfileMap,
   type UnitProfileMap
 } from "$lib/server/unit-profiles";
+import { loadGameNews, type GameNewsLoadResult } from "$lib/server/game-news";
 import {
   LATEST_GACHA_CANDIDATE_LIMIT,
   LATEST_GACHA_LIMIT,
@@ -597,9 +598,18 @@ export const load: PageServerLoad = async ({ cookies, fetch }) => {
     }
   });
 
+  const news = supportedRegions.map(async (region): Promise<GameNewsLoadResult> => {
+    try {
+      return await loadGameNews(region);
+    } catch {
+      return { status: "error" };
+    }
+  });
+
   return {
     cards,
     currentEventLoadFailedMessage: homeEventDataRequestFailed,
-    latestData
+    latestData,
+    news
   };
 };

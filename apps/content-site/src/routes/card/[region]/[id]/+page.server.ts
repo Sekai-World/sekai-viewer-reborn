@@ -33,6 +33,7 @@ type CardPayload = {
 type CardDetailFetchResult = {
   card: CardDetail | null;
   cardExists: boolean;
+  loadFailed: boolean;
   debugCardJson: string | null;
   params: CardDetailParams;
   episodes: CardDetailEpisode[];
@@ -96,6 +97,7 @@ const fetchCardDetail = async ({
   const empty: CardDetailFetchResult = {
     card: null,
     cardExists: false,
+    loadFailed: true,
     debugCardJson: null,
     params: parseCardDetailParams(null),
     episodes: [],
@@ -120,6 +122,7 @@ const fetchCardDetail = async ({
     return {
       card,
       cardExists,
+      loadFailed: false,
       debugCardJson: dev ? JSON.stringify(data, null, 2) : null,
       params: parseCardDetailParams(data?.params),
       episodes: parseCardDetailEpisodes(data?.episodes),
@@ -166,10 +169,12 @@ const fetchAvailableRegions = async ({
 
 const fetchCardPayload = async ({
   detailPromise,
-  invalidCardIdMessage
+  invalidCardIdMessage,
+  failedToLoadCardDataMessage
 }: {
   detailPromise: Promise<CardDetailFetchResult>;
   invalidCardIdMessage: string | null;
+  failedToLoadCardDataMessage: string;
 }): Promise<CardPayload> => {
   if (invalidCardIdMessage) {
     return {
@@ -184,13 +189,13 @@ const fetchCardPayload = async ({
     return {
       card: detail.card,
       debugCardJson: detail.debugCardJson,
-      error: null
+      error: detail.loadFailed ? failedToLoadCardDataMessage : null
     };
   } catch {
     return {
       card: null,
       debugCardJson: null,
-      error: null
+      error: failedToLoadCardDataMessage
     };
   }
 };
@@ -212,6 +217,7 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
     : Promise.resolve({
         card: null,
         cardExists: false,
+        loadFailed: false,
         debugCardJson: null,
         params: parseCardDetailParams(null),
         episodes: [],
@@ -235,7 +241,8 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
       : Promise.resolve([region] satisfies SupportedRegion[]),
     cardPayload: fetchCardPayload({
       detailPromise,
-      invalidCardIdMessage: invalidMessage
+      invalidCardIdMessage: invalidMessage,
+      failedToLoadCardDataMessage
     }),
     params: invalidMessage
       ? Promise.resolve(parseCardDetailParams(null))

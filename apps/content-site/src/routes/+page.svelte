@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
@@ -21,6 +21,9 @@
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { swipeRegion } from "$lib/actions/swipe-region";
+  import { toTimestampMs } from "$lib/time/date-time";
+  import type { GameNewsItem, GameNewsLoadResult } from "$lib/server/game-news";
+  import { getContentDisplaySettings } from "$lib/settings/content-display";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import {
     EVENT_CARD_BANNER_BODY_CLASS,
@@ -56,6 +59,13 @@
   let latestDataNoData = $state(getInitialI18nText("latestData.noData"));
   let latestDataViewAll = $state(getInitialI18nText("latestData.viewAll"));
   let latestDataLoadFailed = $state(getInitialI18nText("latestData.loadFailed"));
+  let homeNewsTitle = $state(getInitialI18nText("homeNews.title"));
+  let homeNewsViewAll = $state(getInitialI18nText("homeNews.viewAll"));
+  let homeNewsLoading = $state(getInitialI18nText("homeNews.loading"));
+  let homeNewsEmpty = $state(getInitialI18nText("homeNews.empty"));
+  let homeNewsUnavailable = $state(getInitialI18nText("homeNews.unavailable"));
+  let homeNewsError = $state(getInitialI18nText("homeNews.error"));
+  let homeNewsDateUnavailable = $state(getInitialI18nText("homeNews.dateUnavailable"));
   let directoryTitle = $state(getInitialI18nText("directory.title"));
   let directoryDescription = $state(getInitialI18nText("directory.description"));
   let gameContentRegionLabel = $state(getInitialI18nText("settings.gameContentRegion"));
@@ -65,6 +75,8 @@
   let translationRequestId = 0;
   let currentMessages = $state<Record<string, string>>(getInitialMessages());
   let currentTranslate = $derived(createI18nTranslator(data.uiLocale, currentMessages));
+  let iframeDialog = $state<HTMLDialogElement | null>(null);
+  let iframeUrl = $state<string | null>(null);
 
   // ── Region state ───────────────────────────────────────────────────
   let selectedRegion = $state<SupportedRegion>(DEFAULT_REGION);
@@ -125,6 +137,13 @@
     latestDataNoData = translate("latestData.noData");
     latestDataViewAll = translate("latestData.viewAll");
     latestDataLoadFailed = translate("latestData.loadFailed");
+    homeNewsTitle = translate("homeNews.title");
+    homeNewsViewAll = translate("homeNews.viewAll");
+    homeNewsLoading = translate("homeNews.loading");
+    homeNewsEmpty = translate("homeNews.empty");
+    homeNewsUnavailable = translate("homeNews.unavailable");
+    homeNewsError = translate("homeNews.error");
+    homeNewsDateUnavailable = translate("homeNews.dateUnavailable");
     directoryTitle = translate("directory.title");
     directoryDescription = translate("directory.description");
     gameContentRegionLabel = translate("settings.gameContentRegion");
@@ -173,9 +192,19 @@
     return versions?.dataVersion ?? null;
   };
 
+  const openInternal = (url: string): void => {
+    iframeUrl = url;
+    void tick().then(() => {
+      if (iframeUrl === url && iframeDialog && !iframeDialog.open) iframeDialog.showModal();
+    });
+  };
+
   // ── Derived data for selected region ───────────────────────────────
   const regionIndex = $derived(supportedRegions.indexOf(selectedRegion));
   const latestDataPromise = $derived(data.latestData[regionIndex]);
+  const newsPromise = $derived(
+    (data as PageData & { news?: Array<Promise<GameNewsLoadResult> | undefined> }).news?.[regionIndex]
+  );
   const currentEventPromise = $derived(data.cards[regionIndex]);
   const directoryItems = $derived([
     {
@@ -215,6 +244,19 @@
       icon: "mdi:account-voice"
     }
   ]);
+  const formatNewsDate = (value: number | null): string => {
+    const timestamp = toTimestampMs(value);
+    return timestamp === null
+      ? homeNewsDateUnavailable
+      : new Intl.DateTimeFormat(data.uiLocale, { dateStyle: "medium" }).format(timestamp);
+  };
+  const visibleNews = (result: GameNewsLoadResult): GameNewsItem[] =>
+    result.status === "ready"
+      ? result.items
+          .filter((item) => getContentDisplaySettings().showSpoilerContent || item.startAt <= Date.now())
+          .sort((a, b) => b.startAt - a.startAt)
+          .slice(0, 3)
+      : [];
 </script>
 
 <!-- ──── Region-switchable data area ────────────────────────────────── -->
@@ -340,31 +382,22 @@
     {#if latestDataPromise}
       {#await latestDataPromise}
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <!-- skeleton: cards+musics col -->
-          <div class="space-y-6">
-            <div class="space-y-3">
-              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-              <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as skeleton (skeleton)}
-                  <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
-                {/each}
-              </div>
-            </div>
-            <div class="space-y-3">
-              <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-              <div class="space-y-3">
-                {#each [1, 2, 3] as skeleton (skeleton)}
-                  <div class="h-20 animate-pulse rounded-xl bg-base-300"></div>
-                {/each}
-              </div>
-            </div>
-          </div>
-          <div class="space-y-3 md:col-span-2 lg:col-span-1">
+          <div class="space-y-3">
             <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-            <div class="h-40 animate-pulse rounded-xl bg-base-300"></div>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as skeleton (skeleton)}
+                <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
+              {/each}
+            </div>
           </div>
-
-          <!-- skeleton: gachas col -->
+          <div class="space-y-3">
+            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+            <div class="space-y-3">
+              {#each [1, 2, 3] as skeleton (skeleton)}
+                <div class="h-20 animate-pulse rounded-xl bg-base-300"></div>
+              {/each}
+            </div>
+          </div>
           <div class="space-y-3">
             <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
             <div class="space-y-3">
@@ -541,6 +574,85 @@
     {/if}
   </section>
 
+  {#snippet newsCardContent(item: GameNewsItem)}
+    <div class="flex items-center justify-between gap-2 text-xs text-(--archive-text-muted)">
+      <span class="badge badge-primary badge-outline">{currentTranslate(`gameNews.tags.${item.informationTag}`)}</span>
+      <time datetime={new Date(item.startAt).toISOString()}>{formatNewsDate(item.startAt)}</time>
+    </div>
+    <h3 class="mt-3 line-clamp-2 text-base font-semibold text-(--archive-text-strong)">{item.title}</h3>
+  {/snippet}
+
+  <section class="mx-auto mb-12 w-full" aria-labelledby="home-news-title">
+    <div class="mb-4 flex items-center justify-between gap-3 border-b border-(--archive-border-subtle) pb-4">
+      <div class="flex items-center gap-2">
+        <Icon icon="mdi:information-outline" class="size-4 text-primary" aria-hidden="true" />
+        <h2 id="home-news-title" class="text-sm font-semibold tracking-wide text-(--archive-text-muted)">
+          {homeNewsTitle}
+        </h2>
+      </div>
+      <a href="/news/{selectedRegion}" class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/60 hover:text-primary">
+        {homeNewsViewAll}<Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
+      </a>
+    </div>
+    {#if newsPromise}
+      {#await newsPromise}
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3" aria-busy="true">
+          {#each [1, 2, 3] as skeleton (skeleton)}
+            <div class="h-36 animate-pulse rounded-xl bg-base-300" aria-hidden="true"></div>
+          {/each}
+        </div>
+        <span class="sr-only" role="status" aria-live="polite">{homeNewsLoading}</span>
+      {:then result}
+        {#if result.status === "unavailable"}
+          <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60">{homeNewsUnavailable}</p>
+        {:else if result.status === "error"}
+          <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-error">{homeNewsError}</p>
+        {:else if visibleNews(result).length === 0}
+          <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60">{homeNewsEmpty}</p>
+        {:else}
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {#each visibleNews(result) as item (item.id)}
+              {#if item.target.kind === "none"}
+                <article class="content-card-shell card-hover-lift flex min-h-36 flex-col rounded-xl border p-4">
+                  {@render newsCardContent(item)}
+                </article>
+              {:else}
+                <article class="content-card-shell card-hover-lift flex min-h-36 flex-col rounded-xl border p-4">
+                  <div class="flex min-h-0 flex-1 items-start gap-2">
+                    <button
+                      type="button"
+                      class="group flex min-w-0 flex-1 flex-col text-left"
+                      aria-label={`${currentTranslate("gameNews.openInternal")}: ${item.title}`}
+                      title={currentTranslate("gameNews.openInternal")}
+                      onclick={() =>
+                        item.target.kind !== "none" && openInternal(item.target.url)}
+                    >
+                      {@render newsCardContent(item)}
+                    </button>
+                    <a
+                      class="btn btn-square btn-sm btn-ghost min-h-11 min-w-11 shrink-0"
+                      href={item.target.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={currentTranslate("gameNews.openExternal")}
+                      title={currentTranslate("gameNews.openExternal")}
+                    >
+                      <Icon icon="mdi:open-in-new" class="size-4" aria-hidden="true" />
+                    </a>
+                  </div>
+                </article>
+              {/if}
+            {/each}
+          </div>
+        {/if}
+      {:catch _}
+        <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-error">{homeNewsError}</p>
+      {/await}
+    {:else}
+      <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60">{homeNewsUnavailable}</p>
+    {/if}
+  </section>
+
   <section class="mx-auto mb-12" aria-labelledby="content-directory-title">
     <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
       <div class="flex items-center gap-2">
@@ -652,3 +764,27 @@
     {disclaimerText}
   </p>
 </footer>
+
+{#if iframeUrl}
+  <dialog
+    bind:this={iframeDialog}
+    class="modal"
+    onclose={() => (iframeUrl = null)}
+    onclick={(event) => event.target === iframeDialog && iframeDialog?.close()}
+  >
+    <div class="modal-box max-w-5xl p-2 sm:p-4">
+      <iframe
+        title={currentTranslate("gameNews.internalFrameTitle")}
+        src={iframeUrl}
+        class="h-[75vh] w-full rounded-xl"
+        sandbox="allow-scripts allow-forms allow-same-origin"
+        referrerpolicy="no-referrer"
+      ></iframe>
+      <div class="modal-action">
+        <button class="btn min-h-11" type="button" onclick={() => iframeDialog?.close()}
+          >{currentTranslate("closeLabel")}</button
+        >
+      </div>
+    </div>
+  </dialog>
+{/if}

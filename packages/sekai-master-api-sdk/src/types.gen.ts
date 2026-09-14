@@ -594,6 +594,25 @@ export type SharedGameCharacterUnitObjectResponse = {
     unit?: unknown;
 };
 
+export type SharedGameNewsItemResponse = {
+    bannerAssetbundleName?: unknown;
+    browseType?: unknown;
+    displayOrder?: unknown;
+    endAt?: number | null;
+    id?: unknown;
+    informationTag?: unknown;
+    informationType?: unknown;
+    path?: unknown;
+    platform?: unknown;
+    seq?: unknown;
+    startAt: number;
+    title?: unknown;
+};
+
+export type SharedGameNewsListResponse = {
+    items?: Array<SharedGameNewsItemResponse>;
+};
+
 export type SharedGenericObjectResponse = {
     [key: string]: unknown;
 };
@@ -2492,6 +2511,49 @@ export type GetGachasByRegionByIdRateChoiceWishesResponses = {
 };
 
 export type GetGachasByRegionByIdRateChoiceWishesResponse = GetGachasByRegionByIdRateChoiceWishesResponses[keyof GetGachasByRegionByIdRateChoiceWishesResponses];
+
+export type GetGameNewsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Include all game news records
+         */
+        includeAll?: boolean;
+    };
+    url: '/game-news/{region}/list';
+};
+
+export type GetGameNewsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetGameNewsByRegionListError = GetGameNewsByRegionListErrors[keyof GetGameNewsByRegionListErrors];
+
+export type GetGameNewsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGameNewsListResponse;
+};
+
+export type GetGameNewsByRegionListResponse = GetGameNewsByRegionListResponses[keyof GetGameNewsByRegionListResponses];
 
 export type GetGameCharacterUnitsRegionsByIdAvailabilityData = {
     body?: never;
