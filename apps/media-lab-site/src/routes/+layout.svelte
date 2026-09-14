@@ -280,6 +280,7 @@
   {sidebarItems}
   desktopRailOpen={true}
   showTitle={false}
+  mainWidthClass="max-w-320"
 >
   {#snippet navActions()}
     <div class="relative z-120 hidden items-center gap-2 sm:flex">
