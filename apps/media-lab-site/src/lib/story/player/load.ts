@@ -1,0 +1,427 @@
+import { Howl } from "howler";
+import type { IScenarioData } from "../scenario-types";
+import { log } from "./log";
+
+import type {
+  ILive2DCachedAsset,
+  ILive2DAssetUrl,
+  ILive2DScenarioResource,
+  ILive2DControllerData,
+  ILive2DModelDataCollection,
+  ILive2DLoadProgressHandler,
+  ILive2DLoadWarningHandler,
+  ILive2DStoryModelSource,
+} from "./player-types";
+
+import {
+  isLive2DImageAsset,
+  isLive2DAudioAsset,
+  isLive2DVideoAsset,
+  Live2DLoadProgressType,
+} from "./player-types";
+
+import { getUIMediaUrls } from "./ui_assets";
+import { PreloadQueue } from "./PreloadQueue";
+import { live2dRequest } from "./rate-limited-fetch";
+import { gatherStoryMotion } from "./motions";
+
+/**
+ * Extracts and URL-decodes the filename from an asset URL.
+ *
+ * @param url - The asset URL or path.
+ * @returns The decoded final pathname segment, or the original filename when the URL cannot be parsed.
+ */
+function getAssetFilename(url: string) {
+  try {
+    const pathname = new URL(url, window.location.href).pathname;
+    return decodeURIComponent(pathname.split("/").pop() || url);
+  } catch {
+    return url.split(/[?#]/, 1)[0].split("/").pop() || url;
+  }
+}
+
+/**
+ * Formats a warning message for a failed asset load.
+ *
+ * @param kind - The type of asset that failed to load
+ * @param label - The asset's display label
+ * @param url - The asset URL
+ * @param error - The error encountered while loading the asset
+ * @returns A formatted asset-load failure warning, including an HTTP status when available
+ */
+function getAssetLoadWarning(
+  kind: string,
+  label: string,
+  url: string,
+  error: unknown
+) {
+  const status =
+    error instanceof Response || (error as { status?: number })?.status
+      ? `: ${(error as { status: number }).status}`
+      : "";
+  return `Failed to load ${kind} ${label} (${getAssetFilename(url)})${status}`;
+}
+
+/**
+ * Host-provided URL policy for assets the player itself has to discover.
+ */
+export interface ILive2DPlayerUrlContext {
+  /** Resolves a scenario-effect texture path on the story region bucket. */
+  regionAssetUrl: (path: string) => string;
+}
+
+/**
+ * Preloads scenario media and combines it with Live2D model data for controller initialization.
+ *
+ * @param snData - Processed scenario data.
+ * @param mediaUrlForLive2D - Asset URLs to preload, including Live2D UI media URLs.
+ * @param modelDataPromise - Promise resolving to the model data for the scenario.
+ * @param urlContext - Host-provided asset URL builders.
+ * @returns The scenario data, loaded media resources, and model data.
+ */
+export async function getLive2DControllerData(
+  snData: IScenarioData,
+  mediaUrlForLive2D: ILive2DAssetUrl[],
+  modelDataPromise: Promise<ILive2DModelDataCollection[]>,
+  onProgress: ILive2DLoadProgressHandler,
+  onWarning: ILive2DLoadWarningHandler,
+  urlContext: ILive2DPlayerUrlContext
+): Promise<ILive2DControllerData> {
+  // step 3.1.2 - get live2d player ui urls
+  mediaUrlForLive2D.push(...getUIMediaUrls(snData, urlContext.regionAssetUrl));
+  // step 3.2 - preload sound/image
+  const [scenarioResource, modelData] = await Promise.all([
+    preloadMedia(mediaUrlForLive2D, onProgress, onWarning),
+    modelDataPromise,
+  ]);
+  return {
+    scenarioData: snData,
+    scenarioResource,
+    modelData,
+  };
+}
+
+/**
+ * Loads model metadata for each character appearing in a scenario.
+ *
+ * @param snData - Scenario data containing the appearing characters and their costume types
+ * @param modelSource - Host-provided model data source
+ * @param onProgress - Callback invoked as each character's model metadata loads
+ * @param onWarning - Callback invoked when a costume has no resolvable model
+ * @returns Model metadata associated with each appearing character
+ */
+export async function getLive2DModelData(
+  snData: IScenarioData,
+  modelSource: ILive2DStoryModelSource,
+  onProgress: ILive2DLoadProgressHandler,
+  onWarning: ILive2DLoadWarningHandler
+): Promise<ILive2DModelDataCollection[]> {
+  const total = snData.AppearCharacters.length;
+  const collections: ILive2DModelDataCollection[] = [];
+  const seenCostumes = new Set<string>();
+  let count = 0;
+  for (const c of snData.AppearCharacters) {
+    if (seenCostumes.has(c.CostumeType)) {
+      count++;
+      continue;
+    }
+    seenCostumes.add(c.CostumeType);
+    const md = await modelSource.getModelDataForCostume(
+      c.CostumeType,
+      c.Character2dId
+    );
+    count++;
+    if (!md) {
+      onWarning(`Model not found for ${c.CostumeType} (${c.Character2dId})`);
+    } else {
+      collections.push(md);
+    }
+    onProgress(Live2DLoadProgressType.ModelData, count, total, c.CostumeType);
+  }
+  return collections;
+}
+/**
+ * Preloads the texture, moc, and physics assets for each Live2D model.
+ *
+ * @param controllerData - The controller data containing the models and their asset references
+ * @param onProgress - Reports progress as model assets are loaded
+ * @param onWarning - Reports asset-loading warnings
+ * @throws If any model asset fails to download
+ */
+export async function preloadModels(
+  controllerData: ILive2DControllerData,
+  onProgress: ILive2DLoadProgressHandler,
+  onWarning?: ILive2DLoadWarningHandler
+) {
+  let count = 0;
+  const total = controllerData.modelData.length * 3;
+  // step 4.1 - preload model assets
+  const taskList = [];
+  for (const model of controllerData.modelData) {
+    const modelAssets = [
+      {
+        kind: "texture",
+        path: model.data.FileReferences.Textures[0],
+      },
+      {
+        kind: "moc",
+        path: model.data.FileReferences.Moc,
+      },
+      {
+        kind: "physics",
+        path: model.data.FileReferences.Physics,
+      },
+    ];
+    for (const asset of modelAssets) {
+      const url = model.data.url + asset.path;
+      taskList.push({
+        task: () =>
+          live2dRequest(async () => {
+            const response = await fetch(url);
+            if (!response.ok) throw response;
+            return response;
+          }).catch((err: unknown) => {
+            onWarning?.(
+              getAssetLoadWarning(
+                asset.kind,
+                `${model.costume}/${asset.kind}`,
+                url,
+                err
+              )
+            );
+            throw err;
+          }),
+        callback: function () {
+          onProgress(
+            Live2DLoadProgressType.ModelAssets,
+            count,
+            total,
+            `${model.costume}/${asset.kind}`
+          );
+          count++;
+        },
+      });
+    }
+  }
+  const queue = new PreloadQueue(taskList);
+  const rst = await queue.run();
+  if (rst.filter((r) => r === null).length > 0)
+    throw new Error("Asset download failed.");
+}
+
+// step 3.2 - preload sound/image/video
+export async function preloadMedia(
+  urls: ILive2DAssetUrl[],
+  onProgress: ILive2DLoadProgressHandler,
+  onWarning: ILive2DLoadWarningHandler
+): Promise<ILive2DScenarioResource> {
+  const total = urls.length;
+
+  // image
+  const taskList = [];
+  let count = 0;
+  for (const url of urls) {
+    taskList.push({
+      task: async (): Promise<ILive2DCachedAsset> => {
+        try {
+          if (isLive2DImageAsset(url)) {
+            const data = await preloadImage(url.url);
+            log.log("Live2DPlayerLoader", `${url.url} loaded.`);
+            return { ...url, data };
+          } else if (isLive2DVideoAsset(url)) {
+            const data = await preloadVideo(url.url);
+            log.log("Live2DPlayerLoader", `${url.url} loaded.`);
+            return { ...url, data };
+          } else if (isLive2DAudioAsset(url)) {
+            const data = await preloadSound(url.url);
+            log.log("Live2DPlayerLoader", `${url.url} loaded.`);
+            return { ...url, data };
+          } else {
+            throw new Error("Wrong asset type.");
+          }
+        } catch (err) {
+          if (err instanceof Error) onWarning(err.message);
+          throw err;
+        }
+      },
+      callback: function () {
+        count++;
+        onProgress(Live2DLoadProgressType.Media, count, total, url.identifier);
+      },
+    });
+  }
+  const queue = new PreloadQueue<ILive2DCachedAsset>(taskList);
+  const assetList = (await queue.run()).filter((d) => !!d);
+  const scenario_resource: ILive2DScenarioResource = {
+    image: assetList.filter((a) => isLive2DImageAsset(a)),
+    video: assetList.filter((a) => isLive2DVideoAsset(a)),
+    audio: assetList.filter((a) => isLive2DAudioAsset(a)),
+  };
+  return scenario_resource;
+}
+/**
+ * Loads an image from a URL.
+ *
+ * @param url - The image URL
+ * @returns The loaded image element
+ */
+function preloadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    img.crossOrigin = "anonymous";
+    img.src = url;
+  });
+}
+/**
+ * Preloads a sound from a URL.
+ *
+ * @param url - The sound URL
+ * @returns The loaded sound
+ */
+function preloadSound(url: string): Promise<Howl> {
+  return new Promise((resolve, reject) => {
+    const sound = new Howl({
+      src: [url],
+      onload: () => resolve(sound),
+      onloaderror: () => reject(new Error(`Failed to load sound: ${url}`)),
+      loop: false,
+      html5: false,
+    });
+  });
+}
+
+/**
+ * Loads a video resource.
+ *
+ * @param url - The video URL
+ * @returns The loaded video element
+ */
+function preloadVideo(url: string): Promise<HTMLVideoElement> {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.onloadeddata = () => resolve(video);
+    video.onerror = () => reject(new Error(`Failed to load video: ${url}`));
+    video.crossOrigin = "anonymous";
+    video.preload = "metadata";
+    video.src = url;
+  });
+}
+
+/**
+ * Filters each model to retain only the motion and expression assets referenced by the scenario.
+ *
+ * @param scenarioData - Scenario data containing the referenced motion and expression assets
+ * @param modelData - Model data whose motion and expression definitions are filtered in place
+ * @returns The filtered model data collection
+ */
+export function discardMotion(
+  scenarioData: IScenarioData,
+  modelData: ILive2DModelDataCollection[]
+) {
+  const motion_list = gatherStoryMotion(scenarioData);
+  // remove dupulicate
+  const unique_motion: typeof motion_list = [];
+  motion_list.forEach((m) => {
+    if (
+      !unique_motion.find(
+        (u) =>
+          m.costume === u.costume && m.motion === u.motion && m.type === u.type
+      )
+    ) {
+      unique_motion.push(m);
+    }
+  });
+  // prune
+  modelData.forEach((md) => {
+    const motion_for_this_model = unique_motion.filter(
+      (m) => m.costume === md.costume
+    );
+    md.data.FileReferences.Motions.Motion = motion_for_this_model
+      .filter((m) => m.type === "motion")
+      .map((m) =>
+        md.data.FileReferences.Motions.Motion.find(
+          (all_m) => all_m.Name === m.motion
+        )
+      )
+      .filter((m) => !!m); // skip motions that not in model defination
+    md.data.FileReferences.Motions.Expression = motion_for_this_model
+      .filter((m) => m.type === "expression")
+      .map((m) =>
+        md.data.FileReferences.Motions.Expression.find(
+          (all_m) => all_m.Name === m.motion
+        )
+      )
+      .filter((m) => !!m); // skip motions that not in model defination
+  });
+  return modelData;
+}
+/**
+ * Preloads all unique motion and expression assets referenced by the models.
+ *
+ * @param modelData - Model definitions containing motion and expression asset references
+ * @param onProgress - Reports progress for each asset
+ * @param onWarning - Reports asset-loading warnings
+ * @throws An error if an asset fails to load
+ */
+export async function preloadModelMotion(
+  modelData: ILive2DModelDataCollection[],
+  onProgress: ILive2DLoadProgressHandler,
+  onWarning: ILive2DLoadWarningHandler
+) {
+  // gather all motions
+  const motion_list: {
+    origin: string;
+    url: string;
+  }[] = [];
+  for (const model of modelData) {
+    motion_list.push(
+      ...model.data.FileReferences.Motions.Motion.map((motion) => ({
+        origin: `${model.costume}/${motion.Name}`,
+        url: motion.File,
+      })),
+      ...model.data.FileReferences.Motions.Expression.map((motion) => ({
+        origin: `${model.costume}/${motion.Name}`,
+        url: motion.File,
+      }))
+    );
+  }
+  // remove dupulicate
+  const unique_motion: typeof motion_list = [];
+  motion_list.forEach((m) => {
+    if (!unique_motion.find((u) => m.url === u.url)) {
+      unique_motion.push(m);
+    }
+  });
+  // preload
+  const total = unique_motion.length;
+  let count = 0;
+  const taskList = [];
+  for (const motion of unique_motion) {
+    taskList.push({
+      task: () =>
+        live2dRequest(async () => {
+          const response = await fetch(motion.url);
+          if (!response.ok) throw response;
+          return response;
+        }).catch((err: unknown) => {
+          onWarning(
+            getAssetLoadWarning("motion", motion.origin, motion.url, err)
+          );
+          throw err;
+        }),
+      callback: function () {
+        count++;
+        onProgress(
+          Live2DLoadProgressType.ModelMotion,
+          count,
+          total,
+          motion.origin
+        );
+      },
+    });
+  }
+  const queue = new PreloadQueue(taskList);
+  await queue.run();
+}

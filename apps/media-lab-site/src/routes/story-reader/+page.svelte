@@ -1,16 +1,38 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import StoryPicker from "$lib/components/story-reader/StoryPicker.svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
+  import { supportedRegions } from "$lib/region-selection.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
 
-  // Mode targets stay on the documented sample story address so both actions
-  // deep-link into the same validated route identity.
-  const sampleStoryHref = "/story-reader/jp/unit/1";
-  const samplePlayerHref = "/live2d/story-reader/jp/unit/1";
+  const regions = $derived(
+    supportedRegions.map((region) => ({
+      value: region,
+      label: translate(`region.${region}`)
+    }))
+  );
+  const storyTypes = $derived(
+    (
+      [
+        "unit",
+        "event",
+        "character",
+        "card",
+        "area-talk",
+        "special"
+      ] as const
+    ).map((storyType) => ({
+      value: storyType,
+      label: translate(`storyReader.storyType.${storyType}`)
+    }))
+  );
+
+  let mode = $state<"text" | "player">("text");
+  const modeBase = $derived(mode === "text" ? "/story-reader" : "/live2d/story-reader");
 </script>
 
 <svelte:head>
@@ -32,7 +54,10 @@
   </header>
 
   <div class="grid gap-4 md:grid-cols-2">
-    <article class="card h-full bg-base-100 shadow-sm ring-1 ring-base-content/10">
+    <article
+      class="card h-full bg-base-100 shadow-sm ring-1 ring-base-content/10 transition-colors"
+      class:ring-primary={mode === "text"}
+    >
       <div class="card-body gap-4 p-5 sm:p-6">
         <div class="flex items-start justify-between gap-3">
           <span
@@ -40,9 +65,14 @@
           >
             <Icon icon="mdi:script-text-outline" class="size-6" aria-hidden="true" />
           </span>
-          <span class="badge badge-outline badge-primary">
-            {translate("storyReader.modes.textOnly.badge")}
-          </span>
+          <input
+            type="radio"
+            name="story-reader-mode"
+            class="radio radio-primary radio-sm"
+            aria-label={translate("storyReader.modes.textOnly.title")}
+            bind:group={mode}
+            value="text"
+          />
         </div>
         <div>
           <h2 class="card-title text-lg">
@@ -52,16 +82,13 @@
             {translate("storyReader.modes.textOnly.description")}
           </p>
         </div>
-        <div class="card-actions mt-auto flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-          <a class="btn btn-primary btn-sm min-h-11! px-4" href={sampleStoryHref}>
-            {translate("storyReader.modes.textOnly.action")}
-            <Icon icon="mdi:arrow-right" class="size-4" aria-hidden="true" />
-          </a>
-        </div>
       </div>
     </article>
 
-    <article class="card h-full bg-base-100 shadow-sm ring-1 ring-base-content/10">
+    <article
+      class="card h-full bg-base-100 shadow-sm ring-1 ring-base-content/10"
+      class:ring-primary={mode === "player"}
+    >
       <div class="card-body gap-4 p-5 sm:p-6">
         <div class="flex items-start justify-between gap-3">
           <span
@@ -69,9 +96,14 @@
           >
             <Icon icon="mdi:drama-masks" class="size-6" aria-hidden="true" />
           </span>
-          <span class="badge badge-outline badge-primary">
-            {translate("storyReader.modes.live2dPlayer.badge")}
-          </span>
+          <input
+            type="radio"
+            name="story-reader-mode"
+            class="radio radio-primary radio-sm"
+            aria-label={translate("storyReader.modes.live2dPlayer.title")}
+            bind:group={mode}
+            value="player"
+          />
         </div>
         <div>
           <h2 class="card-title text-lg">
@@ -81,17 +113,23 @@
             {translate("storyReader.modes.live2dPlayer.description")}
           </p>
         </div>
-        <div class="card-actions mt-auto flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-          <a class="btn btn-primary btn-sm min-h-11! px-4" href={samplePlayerHref}>
-            {translate("storyReader.modes.live2dPlayer.action")}
-            <Icon icon="mdi:arrow-right" class="size-4" aria-hidden="true" />
-          </a>
-        </div>
       </div>
     </article>
   </div>
 
-  <p class="text-sm/6 text-base-content/60" role="note">
-    {translate("storyReader.modes.sampleNote")}
-  </p>
+  <StoryPicker
+    {regions}
+    {storyTypes}
+    {modeBase}
+    labels={{
+      region: translate("storyReader.meta.region"),
+      type: translate("storyReader.meta.storyType"),
+      search: translate("storyReader.picker.search"),
+      loading: translate("storyReader.picker.loading"),
+      loadFailed: translate("storyReader.picker.loadFailed"),
+      empty: translate("storyReader.picker.empty"),
+      noMatch: translate("storyReader.picker.noMatch"),
+      open: translate("storyReader.picker.open")
+    }}
+  />
 </section>
