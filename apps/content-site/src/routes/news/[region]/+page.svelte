@@ -8,20 +8,20 @@
   import { createPageTitle } from "$lib/page-title";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import type { GameNewsItem, GameNewsLoadResult, GameNewsTag } from "$lib/server/game-news";
+  import type { GameNewsItem, GameNewsTag } from "$lib/server/game-news";
   import { toTimestampMs } from "$lib/time/date-time";
   import { tick } from "svelte";
-  import type { PageData } from "./$types";
+  import type { PageProps } from "./$types";
+  import { getNewsRegionOptions } from "./region-options";
 
   type LegacyInformationTag = GameNewsTag;
   type LegacyNewsItem = GameNewsItem;
-  type NewsResult = GameNewsLoadResult;
-  let { data }: { data: PageData } = $props();
+  let { data }: PageProps = $props();
   const messages = $derived(
     resolveStreamingMessages(data.i18nMessages, ["common", "home", "error"])
   );
   const t = $derived(createI18nTranslator(data.uiLocale, messages));
-  const news = $derived(data.news as NewsResult);
+  const news = $derived(data.news);
   const tags: LegacyInformationTag[] = [
     "information",
     "event",
@@ -77,12 +77,7 @@
       if (iframeUrl === url && iframeDialog && !iframeDialog.open) iframeDialog.showModal();
     });
   };
-  const regionOptions = supportedRegions.map((region) => ({
-    key: region,
-    label: region.toUpperCase(),
-    active: region === data.region,
-    href: `/news/${region}`
-  }));
+  const regionOptions = $derived(getNewsRegionOptions(supportedRegions, data.region));
 </script>
 
 <svelte:head><title>{createPageTitle(t("gameNews.title"), regionLabels[data.region])}</title></svelte:head>

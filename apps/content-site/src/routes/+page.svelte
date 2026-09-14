@@ -202,9 +202,7 @@
   // ── Derived data for selected region ───────────────────────────────
   const regionIndex = $derived(supportedRegions.indexOf(selectedRegion));
   const latestDataPromise = $derived(data.latestData[regionIndex]);
-  const newsPromise = $derived(
-    (data as PageData & { news?: Array<Promise<GameNewsLoadResult> | undefined> }).news?.[regionIndex]
-  );
+  const newsPromise = $derived(data.news[regionIndex]);
   const currentEventPromise = $derived(data.cards[regionIndex]);
   const directoryItems = $derived([
     {
@@ -384,9 +382,9 @@
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div class="space-y-3">
             <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div class="grid grid-cols-3 gap-2 sm:gap-3">
               {#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as skeleton (skeleton)}
-                <div class="aspect-square animate-pulse rounded-xl bg-base-300"></div>
+                <div class="mx-auto aspect-square w-full animate-pulse rounded-xl bg-base-300 sm:w-[94%]"></div>
               {/each}
             </div>
           </div>
@@ -448,7 +446,7 @@
                           showFrame={true}
                           showIcons={true}
                           maxSize={null}
-                          containerClass="card-hover-lift relative aspect-square overflow-hidden rounded-xl bg-(--archive-surface-default)"
+                          containerClass="card-hover-lift relative mx-auto aspect-square w-full overflow-hidden rounded-xl bg-(--archive-surface-default) sm:w-[94%]"
                           imageClass="size-full object-cover"
                         />
                       </a>
@@ -484,7 +482,7 @@
                         data-home-music-row
                       >
                         <div
-                          class="relative size-16 shrink-0 overflow-hidden rounded-lg bg-base-200/60"
+                          class="relative size-20 shrink-0 overflow-hidden rounded-lg bg-base-200/60 sm:size-24"
                         >
                           {#if music.assetBundleName}
                             <AssetImage
