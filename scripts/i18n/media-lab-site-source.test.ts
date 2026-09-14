@@ -44,7 +44,6 @@ describe("media-lab-site i18n source collection", () => {
       "storyReader.player.controls.next": expect.any(String),
       "storyReader.player.state.finished": expect.any(String),
       "storyReader.textOnly.title": expect.any(String),
-      "storyReader.textOnly.description": expect.any(String),
       "storyReader.textOnly.cast": expect.any(String),
       "storyReader.state.unavailable": expect.any(String),
       "storyReader.state.unsupported": expect.any(String),

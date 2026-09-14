@@ -7,9 +7,9 @@
     identity: StoryRouteIdentity;
     backHref: string;
     backLabel: string;
-    kicker: string;
+    kicker?: string;
     title: string;
-    description: string;
+    description?: string;
     metaLabels: { region: string; storyType: string; storyId: string };
     regionLabel: string;
     storyTypeLabel: string;
@@ -58,16 +58,33 @@
     {/if}
   </nav>
 
-  <header class="flex flex-col gap-3">
-    <p class="text-sm font-semibold text-primary">{kicker}</p>
-    <h1 id={`${uid}-title`} class="text-3xl font-bold tracking-tight text-base-content">
-      {title}
-    </h1>
-    {#if subtitle}
-      <p class="max-w-3xl text-lg/7 font-medium text-base-content/85">{subtitle}</p>
+  <!-- Episode banners are small fixed-size thumbnails (e.g. 280x144); they sit
+       beside the title row on wide screens and wrap below it on mobile. -->
+  <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+    <header class="flex min-w-0 flex-col gap-3">
+      {#if kicker}
+        <p class="text-sm font-semibold text-primary">{kicker}</p>
+      {/if}
+      <h1 id={`${uid}-title`} class="text-3xl font-bold tracking-tight text-base-content">
+        {title}
+      </h1>
+      {#if subtitle}
+        <p class="max-w-3xl text-lg/7 font-medium text-base-content/85">{subtitle}</p>
+      {/if}
+      {#if description}
+        <p class="max-w-2xl text-base/7 text-base-content/75">{description}</p>
+      {/if}
+    </header>
+
+    {#if bannerUrl}
+      <img
+        src={bannerUrl}
+        alt=""
+        class="mx-auto size-auto max-h-56 max-w-full self-center rounded-2xl border border-base-content/10 lg:mx-0 lg:shrink-0 lg:self-start"
+        loading="lazy"
+      />
     {/if}
-    <p class="max-w-2xl text-base/7 text-base-content/75">{description}</p>
-  </header>
+  </div>
 
   <dl class="grid gap-3 sm:grid-cols-3">
     <div class="rounded-xl border border-base-content/10 bg-base-100 p-3 shadow-sm">
@@ -89,15 +106,4 @@
       <dd class="mt-1 font-mono text-sm break-all">{identity.storyId}</dd>
     </div>
   </dl>
-
-  {#if bannerUrl}
-    <!-- Episode banners are small fixed-size thumbnails (e.g. 280x144); render
-         them at their natural ratio instead of stretching with a crop. -->
-    <img
-      src={bannerUrl}
-      alt=""
-      class="mx-auto size-auto max-h-56 max-w-full rounded-2xl border border-base-content/10"
-      loading="lazy"
-    />
-  {/if}
 </section>

@@ -60,8 +60,6 @@
   "storyReader.textOnly.audio.seek": "Seek",
   "storyReader.textOnly.audio.unavailable": "Audio unavailable",
   "storyReader.textOnly.audio.volume": "Volume",
-  "storyReader.textOnly.description": "Reads the scenario as a script: dialogue with voices, background changes, and BGM or sound cues in one scrollable view.",
-  "storyReader.textOnly.kicker": "StoryReader · Text-Only",
   "storyReader.textOnly.preview.close": "Close",
   "storyReader.textOnly.preview.download": "Download image",
   "storyReader.textOnly.preview.openInNewWindow": "Open in new window",

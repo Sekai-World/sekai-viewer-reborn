@@ -42,9 +42,7 @@
     identity={data.identity}
     backHref="/story-reader"
     backLabel={translate("storyReader.backToModes")}
-    kicker={translate("storyReader.textOnly.kicker")}
     title={translate("storyReader.textOnly.title")}
-    description={translate("storyReader.textOnly.description")}
     metaLabels={{
       region: translate("storyReader.meta.region"),
       storyType: translate("storyReader.meta.storyType"),
