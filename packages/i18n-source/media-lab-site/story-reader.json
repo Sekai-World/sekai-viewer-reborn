@@ -1,7 +1,5 @@
 {
   "storyReader.backToModes": "All StoryReader modes",
-  "storyReader.kicker": "StoryReader",
-  "storyReader.landing.description": "Pick a Project Sekai story and read it as plain text, or play it on the Live2D stage. The region, story type, and story ID stay in the URL so any story can be bookmarked.",
   "storyReader.landing.title": "Story Reader",
   "storyReader.meta.region": "Region",
   "storyReader.meta.storyId": "Story ID",

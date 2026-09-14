@@ -40,17 +40,10 @@
 </svelte:head>
 
 <section aria-labelledby="story-reader-landing-title" class="flex flex-col gap-6">
-  <header class="max-w-2xl">
-    <p class="text-sm font-semibold text-primary">{translate("storyReader.kicker")}</p>
-    <h1
-      id="story-reader-landing-title"
-      class="mt-1 text-3xl font-bold tracking-tight text-base-content"
-    >
+  <header>
+    <h1 id="story-reader-landing-title" class="text-3xl font-bold tracking-tight text-base-content">
       {translate("storyReader.landing.title")}
     </h1>
-    <p class="mt-3 text-base/7 text-base-content/75">
-      {translate("storyReader.landing.description")}
-    </p>
   </header>
 
   <div class="grid gap-4 md:grid-cols-2">
