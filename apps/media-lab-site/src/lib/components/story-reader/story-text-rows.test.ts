@@ -35,34 +35,6 @@ const labels = {
   audioDownloadCancelled: "Cancelled"
 };
 
-class MockAudio {
-  static instances: MockAudio[] = [];
-  preload = "";
-  src = "";
-  loop = false;
-  duration = Number.NaN;
-  onended: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-  onplay: (() => void) | null = null;
-  currentTime = 0;
-  paused = true;
-  play = vi.fn(() => {
-    this.paused = false;
-    this.onplay?.();
-    return Promise.resolve();
-  });
-  pause = vi.fn(() => {
-    this.paused = true;
-  });
-  load = vi.fn();
-  removeAttribute = vi.fn();
-  addEventListener = vi.fn();
-
-  constructor() {
-    MockAudio.instances.push(this);
-  }
-}
-
 const rows: StoryTextRowView[] = [
   { kind: "background", name: "Street", imageUrl: "/storage/bg.webp" },
   { kind: "bgm", name: "Cheerful Theme", url: "/storage/bgm.mp3" },
@@ -76,39 +48,51 @@ const rows: StoryTextRowView[] = [
   { kind: "fullscreen-text", text: "To the stage!", voiceUrls: ["/storage/fs.mp3"] }
 ];
 
+const getAudioElement = (container: HTMLElement): HTMLAudioElement => {
+  const element = container.querySelector("audio");
+  if (!element) {
+    throw new Error("Expected a voice button to render an audio element.");
+  }
+  return element;
+};
+
 beforeEach(() => {
-  MockAudio.instances = [];
-  vi.stubGlobal("Audio", MockAudio);
+  vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+  vi.spyOn(HTMLMediaElement.prototype, "pause").mockReturnValue(undefined);
+  vi.spyOn(HTMLMediaElement.prototype, "load").mockReturnValue(undefined);
 });
 
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("StoryTextRows", () => {
-  it("renders the talk line with a circular voice toggle that plays the first source", async () => {
-    render(StoryTextRows, { rows: [rows[2]], labels });
+  it("renders the talk line with a ring voice toggle that plays the first source", async () => {
+    const { container } = render(StoryTextRows, { rows: [rows[2]], labels });
 
-    const play = screen.getByRole("button", { name: "Play voice" });
-    await fireEvent.click(play);
+    await fireEvent.click(screen.getByRole("button", { name: "Play voice" }));
 
-    expect(MockAudio.instances[0]?.src).toBe("/storage/voice.mp3");
+    expect(getAudioElement(container).getAttribute("src")).toBe("/storage/voice.mp3");
     expect(screen.getByRole("button", { name: "Stop" })).toBeTruthy();
 
     await fireEvent.click(screen.getByRole("button", { name: "Stop" }));
-    expect(MockAudio.instances[0]?.pause).toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Play voice" })).toBeTruthy();
   });
 
-  it("falls through to the fallback source when the canonical voice fails", async () => {
-    render(StoryTextRows, { rows: [rows[2]], labels });
+  it("falls through to the part-voice fallback and then reports unavailable", async () => {
+    const { container } = render(StoryTextRows, { rows: [rows[2]], labels });
 
     await fireEvent.click(screen.getByRole("button", { name: "Play voice" }));
-    const element = MockAudio.instances[0];
-    element?.onerror?.();
+    const audioElement = getAudioElement(container);
+    await fireEvent(audioElement, new Event("error"));
+    expect(audioElement.getAttribute("src")).toBe("/storage/partvoice.mp3");
 
-    expect(MockAudio.instances[0]?.src).toBe("/storage/partvoice.mp3");
+    await fireEvent(audioElement, new Event("error"));
+    const button = screen.getByRole("button", {
+      name: "Voice unavailable"
+    }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
   });
 
   it("exposes the background row as a preview trigger with the caption label", () => {

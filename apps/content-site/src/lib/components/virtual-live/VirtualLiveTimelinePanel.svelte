@@ -6,11 +6,11 @@
     VirtualLiveTimelineEvent
   } from "$lib/domain/virtual-live-timeline";
   import { resolve } from "$app/paths";
+import { VoicePlayButton } from "@platform/ui-shell";
   import { page } from "$app/state";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import VoicePlayButton from "$lib/components/shared/VoicePlayButton.svelte";
-
+  
   const categories: VirtualLiveTimelineCategory[] = [
     "dialogue",
     "annotation",
@@ -219,7 +219,7 @@
                     {formatValue(getAttribute(event, ["serif"]) ?? "")}
                   </p>
                   {#if enrichedEvent.voiceUrl}<VoicePlayButton
-                      src={enrichedEvent.voiceUrl}
+                      sources={[enrichedEvent.voiceUrl]}
                       playLabel={t("virtualLiveTimelineVoicePlay")}
                       stopLabel={t("virtualLiveTimelineVoiceStop")}
                       errorLabel={t("virtualLiveTimelineVoiceUnavailable")}

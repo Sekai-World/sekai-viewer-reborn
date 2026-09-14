@@ -1,7 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { AudioPlayer, ImagePreviewDialog, ImagePreviewTrigger } from "@platform/ui-shell";
-  import StoryVoiceButton from "./StoryVoiceButton.svelte";
+  import {
+    AudioPlayer,
+    ImagePreviewDialog,
+    ImagePreviewTrigger,
+    VoicePlayButton
+  } from "@platform/ui-shell";
 
   /**
    * Script-style (台本) rendering of flattened scenario rows. All labels are
@@ -78,11 +82,11 @@
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="badge badge-outline badge-primary">{row.name}</span>
               {#if row.voiceUrls && row.voiceUrls.length > 0}
-                <StoryVoiceButton
+                <VoicePlayButton
                   sources={row.voiceUrls}
                   playLabel={labels.voicePlay}
                   stopLabel={labels.voiceStop}
-                  unavailableLabel={labels.voiceUnavailable}
+                  errorLabel={labels.voiceUnavailable}
                 />
               {/if}
             </div>
@@ -148,12 +152,12 @@
             {row.stop === true ? labels.seStopLabel : labels.seLabel}
           </span>
           {#if row.urls && !row.stop && row.urls.length > 0}
-            <StoryVoiceButton
+            <VoicePlayButton
               sources={row.urls}
               loop={row.loop === true}
               playLabel={labels.voicePlay}
               stopLabel={labels.voiceStop}
-              unavailableLabel={labels.voiceUnavailable}
+              errorLabel={labels.voiceUnavailable}
             />
           {/if}
         </div>
@@ -167,11 +171,11 @@
               <p class="text-base/7 font-semibold whitespace-pre-wrap">{row.text}</p>
             </div>
             {#if row.voiceUrls && row.voiceUrls.length > 0}
-              <StoryVoiceButton
+              <VoicePlayButton
                 sources={row.voiceUrls}
                 playLabel={labels.voicePlay}
                 stopLabel={labels.voiceStop}
-                unavailableLabel={labels.voiceUnavailable}
+                errorLabel={labels.voiceUnavailable}
               />
             {/if}
           </div>
