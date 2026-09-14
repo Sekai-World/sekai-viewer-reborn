@@ -1,4 +1,18 @@
 import { env } from "$env/dynamic/private";
+import {
+  getActionSetsByRegionList,
+  getCardEpisodesByRegionList,
+  getCharacter2DsByRegionList,
+  getCharacterProfilesByRegionList,
+  getEventStoriesByRegionList,
+  getEventsByRegionList,
+  getGameCharactersByRegionList,
+  getMobCharactersByRegionList,
+  getSpecialStoriesByRegionList,
+  getSubGameCharactersByRegionList,
+  getUnitProfilesByRegionList,
+  getUnitStoriesByRegionList
+} from "@platform/sekai-master-api-sdk";
 import type { StoryRouteRegion } from "$lib/live2d/story-route";
 import type {
   StoryActionSet,
@@ -13,21 +27,11 @@ import type {
 } from "./story-identity";
 
 /**
- * Server-side client for raw story master data on the published
- * `sekai-master-db*diff` GitHub Pages mirrors. Collections are fetched
- * whole, parsed defensively, and cached in memory with a bounded TTL —
- * the story feature only needs a handful of small collections.
+ * Server-side client for story master data served by sekai-master-api.
+ * Collections are read through the paginated public list endpoints, parsed
+ * defensively, and cached in memory with a bounded TTL — the story feature
+ * only needs a handful of small collections.
  */
-
-const DEFAULT_MASTER_DB_BASE_URL = "https://sekai-world.github.io";
-
-const REGION_REPO_SUFFIX: Record<StoryRouteRegion, string> = {
-  jp: "sekai-master-db-diff",
-  en: "sekai-master-db-en-diff",
-  tw: "sekai-master-db-tc-diff",
-  kr: "sekai-master-db-kr-diff",
-  cn: "sekai-master-db-cn-diff"
-};
 
 /** Story master data collections, by logical name. */
 export type StoryCollectionName =
@@ -46,6 +50,8 @@ export type StoryCollectionName =
 
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
 const MAX_CACHE_ENTRIES = 64;
+const PAGE_SIZE = 100;
+const MAX_PAGES = 100;
 
 interface CacheEntry {
   value: unknown;
@@ -56,6 +62,7 @@ const cache = new Map<string, CacheEntry>();
 
 export interface StoryMasterDataClientOptions {
   fetch?: typeof fetch;
+  /** sekai-master-api origin including the `/api/v1` prefix. */
   baseUrl?: string;
   ttlMs?: number;
   now?: () => number;
@@ -163,13 +170,19 @@ const collectionParsers: Record<
   cardEpisodes: (raw) =>
     asArray(raw).map((row) => {
       const r = row as Record<string, unknown>;
+      const releaseCondition = (r.releaseCondition ?? null) as Record<
+        string,
+        unknown
+      > | null;
       const episode: StoryCardEpisode = {
         id: asNumber(r.id),
         cardId: asNumber(r.cardId),
         title: asString(r.title),
         scenarioId: asString(r.scenarioId),
         assetbundleName: asOptionalString(r.assetbundleName),
-        releaseConditionId: asOptionalNumber(r.releaseConditionId)
+        // The API expands the top-level releaseConditionId into a full
+        // releaseCondition record; recover the id for the typed shape.
+        releaseConditionId: asOptionalNumber(releaseCondition?.id)
       };
       return episode;
     }),
@@ -228,6 +241,37 @@ export interface StoryCharacterTables {
   subGameCharacterNames: Map<number, string>;
 }
 
+interface StoryListRequest {
+  baseUrl: string;
+  fetch: typeof fetch;
+  path: { region: string };
+  query: { page: number; page_size: number; spoiler: boolean };
+}
+
+interface StoryListResponseLike {
+  data?: { items?: Array<Record<string, unknown>>; pagination?: { has_next?: boolean } };
+  error?: unknown;
+  response?: Response;
+}
+
+const storyListEndpoints: Record<
+  StoryCollectionName,
+  (request: StoryListRequest) => Promise<StoryListResponseLike>
+> = {
+  unitStories: (request) => getUnitStoriesByRegionList(request),
+  unitProfiles: (request) => getUnitProfilesByRegionList(request),
+  eventStories: (request) => getEventStoriesByRegionList(request),
+  events: (request) => getEventsByRegionList(request),
+  characterProfiles: (request) => getCharacterProfilesByRegionList(request),
+  cardEpisodes: (request) => getCardEpisodesByRegionList(request),
+  actionSets: (request) => getActionSetsByRegionList(request),
+  specialStories: (request) => getSpecialStoriesByRegionList(request),
+  character2ds: (request) => getCharacter2DsByRegionList(request),
+  gameCharacters: (request) => getGameCharactersByRegionList(request),
+  mobCharacters: (request) => getMobCharactersByRegionList(request),
+  subGameCharacters: (request) => getSubGameCharactersByRegionList(request)
+};
+
 const cacheKey = (region: StoryRouteRegion, name: StoryCollectionName): string =>
   `${region}:${name}`;
 
@@ -242,10 +286,62 @@ const evictIfNeeded = (now: number, ttlMs: number): void => {
   void ttlMs;
 };
 
+const resolveApiBaseUrl = (options: StoryMasterDataClientOptions): string => {
+  const base = (
+    options.baseUrl ??
+    env.SEKAI_MASTER_API_BASE_URL?.trim() ??
+    ""
+  ).replace(/\/+$/, "");
+  if (!base) {
+    throw new Error(
+      "Missing required environment variable: SEKAI_MASTER_API_BASE_URL"
+    );
+  }
+  return base;
+};
+
 /**
- * Fetches one collection for a region. A collection missing on a regional
- * mirror resolves to an empty array (regional diffs roll out at different
- * times); a malformed payload throws.
+ * Reads one collection through its paginated list endpoint. A region whose
+ * master data does not include the entity yet resolves to an empty array
+ * (regional rollouts happen at different times); any other failure throws.
+ */
+const listCollection = async (
+  region: StoryRouteRegion,
+  name: StoryCollectionName,
+  fetcher: typeof fetch,
+  baseUrl: string
+): Promise<unknown[]> => {
+  const endpoint = storyListEndpoints[name];
+  const rows: unknown[] = [];
+
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const response = await endpoint({
+      baseUrl,
+      fetch: fetcher,
+      path: { region },
+      query: { page, page_size: PAGE_SIZE, spoiler: true }
+    });
+    if (response.error || !response.data) {
+      const status = response.response?.status ?? 0;
+      // Region data not synced for this entity — mirrors the previous
+      // "collection missing on a regional mirror" tolerance.
+      if (status === 503) return [];
+      throw new Error(
+        `Failed to fetch story master data ${name} (${status || "unknown error"})`
+      );
+    }
+
+    const items = Array.isArray(response.data.items) ? response.data.items : [];
+    rows.push(...items);
+    if (response.data.pagination?.has_next !== true) break;
+  }
+
+  return rows;
+};
+
+/**
+ * Fetches one collection for a region through sekai-master-api and parses it
+ * into the story feature's typed shape.
  */
 export const fetchStoryCollection = async <T = unknown>(
   region: StoryRouteRegion,
@@ -258,29 +354,10 @@ export const fetchStoryCollection = async <T = unknown>(
   const cached = cache.get(key);
   if (cached && cached.expiresAt > now()) return cached.value as T;
 
-  const base = (
-    options.baseUrl ??
-    env.SEKAI_MASTER_DB_BASE_URL?.trim() ??
-    DEFAULT_MASTER_DB_BASE_URL
-  ).replace(/\/+$/, "");
-  const url = `${base}/${REGION_REPO_SUFFIX[region]}/${name}.json`;
-
-  const response = await (options.fetch ?? fetch)(url);
-  if (response.status === 404) {
-    // Not (yet) published for this regional mirror.
-    const empty = collectionParsers[name]([]) as T;
-    evictIfNeeded(now(), ttlMs);
-    cache.set(key, { value: empty, expiresAt: now() + ttlMs });
-    return empty;
-  }
-  if (!response.ok) {
-    throw new Error(`Failed to fetch story master data ${name} (${response.status})`);
-  }
-  const raw: unknown = await response.json();
-  if (!Array.isArray(raw)) {
-    throw new Error(`Story master data ${name} is malformed`);
-  }
-  const parsed = collectionParsers[name](raw) as T;
+  const fetcher = options.fetch ?? fetch;
+  const baseUrl = resolveApiBaseUrl(options);
+  const rows = await listCollection(region, name, fetcher, baseUrl);
+  const parsed = collectionParsers[name](rows) as T;
   evictIfNeeded(now(), ttlMs);
   cache.set(key, { value: parsed, expiresAt: now() + ttlMs });
   return parsed;
@@ -331,11 +408,6 @@ export const fetchStoryCollections = async (
   };
 };
 
-const requireArray = (value: unknown): unknown[] => {
-  if (!Array.isArray(value)) throw new Error("Character table is malformed");
-  return value;
-};
-
 /** Fetches the character identity tables used for names and part voices. */
 export const fetchStoryCharacterTables = async (
   region: StoryRouteRegion,
@@ -350,7 +422,7 @@ export const fetchStoryCharacterTables = async (
     ]);
 
   const gameCharacterNames = new Map<number, string>();
-  for (const row of requireArray(gameCharacters)) {
+  for (const row of asArray(gameCharacters)) {
     const r = row as Record<string, unknown>;
     const id = asNumber(r.id);
     gameCharacterNames.set(
@@ -359,17 +431,17 @@ export const fetchStoryCharacterTables = async (
     );
   }
   const mobCharacterNames = new Map<number, string>();
-  for (const row of requireArray(mobCharacters)) {
+  for (const row of asArray(mobCharacters)) {
     const r = row as Record<string, unknown>;
     mobCharacterNames.set(asNumber(r.id), asString(r.name));
   }
   const subGameCharacterNames = new Map<number, string>();
-  for (const row of requireArray(subGameCharacters)) {
+  for (const row of asArray(subGameCharacters)) {
     const r = row as Record<string, unknown>;
     subGameCharacterNames.set(asNumber(r.id), asString(r.name));
   }
 
-  const character2dRows = requireArray(character2ds).map((row) => {
+  const character2dRows = asArray(character2ds).map((row) => {
     const r = row as Record<string, unknown>;
     return {
       id: asNumber(r.id),
