@@ -120,6 +120,13 @@ export interface StoryGameCharacter {
   givenName: string;
 }
 
+export interface StoryUnitProfile {
+  unit: string;
+  /** In-game display name (e.g. "Leo/need", "25時、ナイトコードで。"). */
+  unitName: string;
+  seq?: number;
+}
+
 /** Master-data collections the story feature consumes. */
 export interface StoryMasterCollections {
   unitStories: StoryUnitStory[];
@@ -129,6 +136,7 @@ export interface StoryMasterCollections {
   cardEpisodes: StoryCardEpisode[];
   actionSets: StoryActionSet[];
   specialStories: StorySpecialStory[];
+  unitProfiles?: StoryUnitProfile[];
 }
 
 // ---------------------------------------------------------------------------
@@ -376,7 +384,11 @@ export const buildStoryCatalog = (
         .sort((a, b) => a.seq - b.seq)
         .map((unit) => ({
           key: unit.unit,
-          label: unit.unit,
+          // Group by the in-game unit name; fall back to the raw slug when
+          // the unitProfiles table has not been fetched for this region.
+          label:
+            collections.unitProfiles?.find((profile) => profile.unit === unit.unit)?.unitName ??
+            unit.unit,
           items: unit.chapters
             .slice()
             .sort((a, b) => a.chapterNo - b.chapterNo)
@@ -387,7 +399,9 @@ export const buildStoryCatalog = (
                 .map((episode) => ({
                   storyId: `${unit.unit}-${chapter.chapterNo}-${episode.episodeNo}`,
                   label: episode.title,
-                  sublabel: `${chapter.chapterNo}-${episode.episodeNo}`
+                  // In-game episode label (第1話 / Episode 1); the raw
+                  // episodeNo stays in the storyId slug only.
+                  sublabel: episode.episodeNoLabel ?? String(episode.episodeNo)
                 }))
             )
         }));

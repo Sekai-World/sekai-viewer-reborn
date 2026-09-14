@@ -21,6 +21,7 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 
   const collections = await fetchStoryCollections(region, [
     "unitStories",
+    "unitProfiles",
     "eventStories",
     "events",
     "characterProfiles",

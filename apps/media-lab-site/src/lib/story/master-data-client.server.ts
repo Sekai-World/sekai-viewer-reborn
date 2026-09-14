@@ -8,6 +8,7 @@ import type {
   StoryEventStory,
   StoryMasterCollections,
   StorySpecialStory,
+  StoryUnitProfile,
   StoryUnitStory
 } from "./story-identity";
 
@@ -31,6 +32,7 @@ const REGION_REPO_SUFFIX: Record<StoryRouteRegion, string> = {
 /** Story master data collections, by logical name. */
 export type StoryCollectionName =
   | "unitStories"
+  | "unitProfiles"
   | "eventStories"
   | "events"
   | "characterProfiles"
@@ -110,6 +112,16 @@ const collectionParsers: Record<
         })
       };
       return unitStory;
+    }),
+  unitProfiles: (raw) =>
+    asArray(raw).map((row) => {
+      const r = row as Record<string, unknown>;
+      const unitProfile: StoryUnitProfile = {
+        unit: asString(r.unit),
+        unitName: asString(r.unitName),
+        seq: asOptionalNumber(r.seq)
+      };
+      return unitProfile;
     }),
   eventStories: (raw) =>
     asArray(raw).map((row) => {
@@ -280,10 +292,13 @@ export const fetchStoryCollections = async (
   names: readonly StoryCollectionName[],
   options: StoryMasterDataClientOptions = {}
 ): Promise<StoryMasterCollections> => {
-  const [unitStories, eventStories, events, characterProfiles, cardEpisodes, actionSets, specialStories] =
+  const [unitStories, unitProfiles, eventStories, events, characterProfiles, cardEpisodes, actionSets, specialStories] =
     await Promise.all([
       names.includes("unitStories")
         ? fetchStoryCollection<StoryUnitStory[]>(region, "unitStories", options)
+        : Promise.resolve([]),
+      names.includes("unitProfiles")
+        ? fetchStoryCollection<StoryUnitProfile[]>(region, "unitProfiles", options)
         : Promise.resolve([]),
       names.includes("eventStories")
         ? fetchStoryCollection<StoryEventStory[]>(region, "eventStories", options)
@@ -306,6 +321,7 @@ export const fetchStoryCollections = async (
     ]);
   return {
     unitStories,
+    unitProfiles,
     eventStories,
     events,
     characterProfiles,

@@ -23,6 +23,7 @@ const collections: StoryMasterCollections = {
               id: 1,
               chapterNo: 1,
               episodeNo: 2,
+              episodeNoLabel: "Episode 2",
               title: "EP2",
               assetbundleName: "ep2",
               scenarioId: "idol_01_02"
@@ -31,6 +32,7 @@ const collections: StoryMasterCollections = {
               id: 2,
               chapterNo: 1,
               episodeNo: 1,
+              episodeNoLabel: "Episode 1",
               title: "EP1",
               assetbundleName: "ep1",
               scenarioId: "idol_01_01"
@@ -44,6 +46,10 @@ const collections: StoryMasterCollections = {
       seq: 1,
       chapters: []
     }
+  ],
+  unitProfiles: [
+    { unit: "idol", unitName: "MORE MORE JUMP！", seq: 3 },
+    { unit: "mmj", unitName: "More More Friends", seq: 2 }
   ],
   eventStories: [
     {
@@ -240,12 +246,33 @@ describe("resolveStoryIdentity", () => {
 });
 
 describe("buildStoryCatalog", () => {
-  it("groups unit stories by unit ordered by seq with sorted episodes", () => {
+  it("groups unit stories by unit name with in-game episode labels", () => {
     const groups = buildStoryCatalog("unit", collections);
     expect(groups.map((g) => g.key)).toEqual(["mmj", "idol"]);
+    expect(groups.map((g) => g.label)).toEqual(["More More Friends", "MORE MORE JUMP！"]);
     const idol = groups.find((g) => g.key === "idol");
     expect(idol?.items.map((item) => item.storyId)).toEqual(["idol-1-1", "idol-1-2"]);
-    expect(idol?.items[0]).toMatchObject({ label: "EP1", sublabel: "1-1" });
+    expect(idol?.items[0]).toMatchObject({ label: "EP1", sublabel: "Episode 1" });
+  });
+
+  it("falls back to the unit slug and raw episodeNo without profiles or labels", () => {
+    const groups = buildStoryCatalog("unit", {
+      ...collections,
+      unitProfiles: undefined,
+      unitStories: collections.unitStories.map((unit) => ({
+        ...unit,
+        chapters: unit.chapters.map((chapter) => ({
+          ...chapter,
+          episodes: chapter.episodes.map((episode) => ({
+            ...episode,
+            episodeNoLabel: undefined
+          }))
+        }))
+      }))
+    });
+    expect(groups.map((g) => g.label)).toEqual(["mmj", "idol"]);
+    const idol = groups.find((g) => g.key === "idol");
+    expect(idol?.items[0].sublabel).toBe("1");
   });
 
   it("groups event stories by event id with event names", () => {
