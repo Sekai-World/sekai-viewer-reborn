@@ -43,12 +43,23 @@ const COLLECTIONS_BY_STORY_TYPE: Record<
   profile: ["characterProfiles"]
 };
 
-/** The configured remote asset origin, without trailing slash. */
+/** The configured remote asset origin (or same-origin dev path), without trailing slash. */
 export const getStoryAssetBase = (): string =>
   (
     publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL?.trim() ||
     "https://storage.sekai.best"
   ).replace(/\/+$/, "");
+
+/**
+ * The asset origin for server-side `fetch` calls. A relative public base
+ * (same-origin `/storage` path through the Vite dev proxy) must be qualified
+ * with the request origin — Node `fetch` cannot resolve relative URLs.
+ */
+export const getStoryFetchBase = (requestOrigin?: string): string => {
+  const base = getStoryAssetBase();
+  if (!base.startsWith("/")) return base;
+  return requestOrigin ? `${requestOrigin}${base}` : base;
+};
 
 export interface StoryRouteResolution {
   identity: StoryRouteIdentity;
@@ -69,7 +80,8 @@ export type ResolveStoryRouteResult =
  */
 export const resolveStoryRoute = async (
   identity: StoryRouteIdentity,
-  fetchFn: typeof fetch
+  fetchFn: typeof fetch,
+  requestOrigin?: string
 ): Promise<ResolveStoryRouteResult> => {
   let result: StoryResolutionResult;
   try {
@@ -96,7 +108,10 @@ export const resolveStoryRoute = async (
     value: {
       identity,
       resolution: result.resolution,
-      urls: createStoryRegionAssetUrls(getStoryAssetBase, identity.region)
+      urls: createStoryRegionAssetUrls(
+        () => getStoryFetchBase(requestOrigin),
+        identity.region
+      )
     }
   };
 };

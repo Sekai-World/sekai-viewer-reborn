@@ -6,6 +6,7 @@ import {
   getStoryAssetBase,
   resolveStoryRoute
 } from "$lib/story/story-resolver.server";
+import { createStoryRegionAssetUrls } from "$lib/story/story-urls";
 import {
   buildVoiceCharacterLookup,
   flattenScenarioToRows
@@ -15,16 +16,17 @@ import type { PageServerLoad } from "./$types";
 /**
  * Text-only StoryReader route. Resolves the story against raw master data,
  * fetches the scenario document server-side, and flattens it into
- * script-style rows with fully resolved media URLs.
+ * script-style rows. Row media URLs stay relative to the configured asset
+ * base so the browser resolves them against whichever host it is on.
  */
-export const load: PageServerLoad = async ({ params, fetch }) => {
+export const load: PageServerLoad = async ({ params, fetch, url }) => {
   const parsed = parseStoryRouteParams(params);
   if (parsed.status !== "ok") {
     error(404, "Story route not found");
   }
   const identity = parsed.identity;
 
-  const resolved = await resolveStoryRoute(identity, fetch);
+  const resolved = await resolveStoryRoute(identity, fetch, url.origin);
   if (resolved.status === "not-found") {
     error(404, "Story not found");
   }
@@ -42,11 +44,13 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
     };
   }
 
-  const { resolution, urls } = resolved.value;
+  const { resolution } = resolved.value;
+  // Client-facing URLs keep the configured (possibly relative) asset base.
+  const pageUrls = createStoryRegionAssetUrls(getStoryAssetBase, identity.region);
 
   try {
     const [scenarioData, characters] = await Promise.all([
-      fetchScenarioDocument(urls, resolution.scenarioPath, fetch),
+      fetchScenarioDocument(resolved.value.urls, resolution.scenarioPath, fetch),
       fetchStoryCharactersOrEmpty(identity.region, fetch)
     ]);
 
@@ -59,23 +63,23 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
     const rows = document_.rows.map((row) => {
       switch (row.kind) {
         case "background":
-          return { ...row, imageUrl: urls.region(row.imagePath) };
+          return { ...row, imageUrl: pageUrls.region(row.imagePath) };
         case "bgm":
-          return { ...row, url: urls.region(row.path) };
+          return { ...row, url: pageUrls.region(row.path) };
         case "se":
-          return { ...row, urls: row.paths.map((path) => urls.region(path)) };
+          return { ...row, urls: row.paths.map((path) => pageUrls.region(path)) };
         case "talk":
           return {
             ...row,
-            voiceUrls: row.voicePaths.map((path) => urls.region(path))
+            voiceUrls: row.voicePaths.map((path) => pageUrls.region(path))
           };
         case "fullscreen-text":
           return {
             ...row,
-            voiceUrls: row.voicePaths.map((path) => urls.region(path))
+            voiceUrls: row.voicePaths.map((path) => pageUrls.region(path))
           };
         case "movie":
-          return { ...row, fallbackUrl: urls.region(row.fallbackPath) };
+          return { ...row, fallbackUrl: pageUrls.region(row.fallbackPath) };
         default:
           return row;
       }
@@ -89,7 +93,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
         episodeTitle: resolution.episodeTitle ?? "",
         scenarioId: resolution.scenarioId,
         bannerUrl: resolution.bannerPath
-          ? urls.region(resolution.bannerPath)
+          ? pageUrls.region(resolution.bannerPath)
           : undefined
       },
       assetBase: getStoryAssetBase(),

@@ -35,7 +35,11 @@ type LoadedText =
     };
 
 const buildLoadEvent = (params: Record<string, string | undefined>) =>
-  ({ params, fetch: vi.fn() }) as unknown as Parameters<typeof load>[0];
+  ({
+    params,
+    fetch: vi.fn(),
+    url: new URL("http://localhost:4103/story-reader/jp/unit/idol-1-1")
+  }) as unknown as Parameters<typeof load>[0];
 
 const okResolution = {
   status: "ok" as const,

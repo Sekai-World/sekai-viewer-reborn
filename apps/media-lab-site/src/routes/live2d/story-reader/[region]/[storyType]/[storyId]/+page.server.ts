@@ -7,7 +7,7 @@ import {
   resolveStoryRoute
 } from "$lib/story/story-resolver.server";
 import { processScenarioDataForPlayer } from "$lib/story/scenario-process";
-import { storyRegionBuckets } from "$lib/story/story-urls";
+import { createStoryRegionAssetUrls, storyRegionBuckets } from "$lib/story/story-urls";
 import type { PageServerLoad } from "./$types";
 
 /**
@@ -16,14 +16,14 @@ import type { PageServerLoad } from "./$types";
  * synthesis applied) plus the identity tables the browser session needs.
  * Pixi/Howler stay client-only.
  */
-export const load: PageServerLoad = async ({ params, fetch }) => {
+export const load: PageServerLoad = async ({ params, fetch, url }) => {
   const parsed = parseStoryRouteParams(params);
   if (parsed.status !== "ok") {
     error(404, "Story route not found");
   }
   const identity = parsed.identity;
 
-  const resolved = await resolveStoryRoute(identity, fetch);
+  const resolved = await resolveStoryRoute(identity, fetch, url.origin);
   if (resolved.status === "not-found") {
     error(404, "Story not found");
   }
@@ -42,6 +42,8 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
   }
 
   const { resolution, urls } = resolved.value;
+  // Client-facing URLs keep the configured (possibly relative) asset base.
+  const pageUrls = createStoryRegionAssetUrls(getStoryAssetBase, identity.region);
 
   try {
     const [scenarioData, characters] = await Promise.all([
@@ -59,7 +61,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
         episodeTitle: resolution.episodeTitle ?? "",
         scenarioId: resolution.scenarioId,
         bannerUrl: resolution.bannerPath
-          ? urls.region(resolution.bannerPath)
+          ? pageUrls.region(resolution.bannerPath)
           : undefined
       },
       isCardStory: resolution.isCardStory,
