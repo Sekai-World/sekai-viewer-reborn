@@ -91,10 +91,12 @@
   </dl>
 
   {#if bannerUrl}
+    <!-- Episode banners are small fixed-size thumbnails (e.g. 280x144); render
+         them at their natural ratio instead of stretching with a crop. -->
     <img
       src={bannerUrl}
       alt=""
-      class="aspect-video max-h-56 w-full rounded-2xl border border-base-content/10 object-cover object-top"
+      class="mx-auto size-auto max-h-56 max-w-full rounded-2xl border border-base-content/10"
       loading="lazy"
     />
   {/if}

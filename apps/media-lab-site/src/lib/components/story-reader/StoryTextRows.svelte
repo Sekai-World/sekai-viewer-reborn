@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import { AudioPlayer, ImagePreviewDialog, ImagePreviewTrigger } from "@platform/ui-shell";
   import StoryVoiceButton from "./StoryVoiceButton.svelte";
 
   /**
@@ -33,10 +34,39 @@
       seStopLabel: string;
       fullscreenLabel: string;
       movieLabel: string;
+      previewClose: string;
+      previewDownload: string;
+      previewOpenInNewWindow: string;
+      audioPlay: string;
+      audioPause: string;
+      audioDownload: string;
+      audioDownloadClose: string;
+      audioVolume: string;
+      audioSeek: string;
+      audioUnavailable: string;
+      audioDownloadPreparing: string;
+      audioDownloadFetchingAudio: string;
+      audioDownloadFetchingCover: string;
+      audioDownloadWritingMetadata: string;
+      audioDownloadFinalizing: string;
+      audioDownloadReady: string;
+      audioDownloadFailed: string;
+      audioDownloadCancelled: string;
     };
   }
 
   let { rows, labels }: Props = $props();
+
+  let previewOpen = $state(false);
+  let previewSrc = $state("");
+  let previewAlt = $state("");
+
+  const openBackgroundPreview = (row: StoryTextRowView): void => {
+    if (!row.imageUrl) return;
+    previewSrc = row.imageUrl;
+    previewAlt = row.name ?? labels.backgroundLabel;
+    previewOpen = true;
+  };
 </script>
 
 <ol class="flex flex-col gap-3">
@@ -63,29 +93,52 @@
         </article>
       {:else if row.kind === "background"}
         <figure class="overflow-hidden rounded-xl border border-base-content/10">
-          <img
-            src={row.imageUrl}
-            alt={row.name ?? ""}
-            loading="lazy"
-            class="aspect-video w-full object-cover"
-          />
+          {#if row.imageUrl}
+            <ImagePreviewTrigger
+              src={row.imageUrl}
+              alt={row.name ?? labels.backgroundLabel}
+              ariaLabel={labels.backgroundLabel}
+              imageClass="max-h-72 w-full bg-base-200/40 object-contain"
+              onclick={() => openBackgroundPreview(row)}
+            />
+          {/if}
           <figcaption class="flex items-center gap-1 bg-base-200/60 px-3 py-2 text-xs text-base-content/60">
             <Icon icon="mdi:image-outline" class="size-4" aria-hidden="true" />
             {labels.backgroundLabel}
           </figcaption>
         </figure>
       {:else if row.kind === "bgm"}
-        <div class="flex items-center gap-2 rounded-xl border border-base-content/10 bg-base-100 px-3 py-2">
-          <Icon icon="mdi:music-note-outline" class="size-4 text-base-content/60" aria-hidden="true" />
-          <span class="text-sm text-base-content/70">{labels.bgmLabel}</span>
+        <div class="rounded-xl border border-base-content/10 bg-base-100 px-3 py-2">
+          <div class="flex items-center gap-1.5">
+            <Icon icon="mdi:music-note-outline" class="size-4 text-base-content/60" aria-hidden="true" />
+            <span class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
+              {labels.bgmLabel}
+            </span>
+          </div>
           {#if row.url}
-            <StoryVoiceButton
-              sources={[row.url]}
-              loop={true}
-              playLabel={labels.voicePlay}
-              stopLabel={labels.voiceStop}
-              unavailableLabel={labels.voiceUnavailable}
-            />
+            <div class="mt-1">
+              <AudioPlayer
+                src={row.url}
+                title={row.name ?? labels.bgmLabel}
+                downloadProgressMessages={{
+                  preparing: labels.audioDownloadPreparing,
+                  fetchingAudio: labels.audioDownloadFetchingAudio,
+                  fetchingCover: labels.audioDownloadFetchingCover,
+                  writingMetadata: labels.audioDownloadWritingMetadata,
+                  finalizing: labels.audioDownloadFinalizing,
+                  ready: labels.audioDownloadReady,
+                  failed: labels.audioDownloadFailed,
+                  cancelled: labels.audioDownloadCancelled
+                }}
+                playLabel={labels.audioPlay}
+                pauseLabel={labels.audioPause}
+                downloadLabel={labels.audioDownload}
+                downloadCloseLabel={labels.audioDownloadClose}
+                volumeLabel={labels.audioVolume}
+                seekLabel={labels.audioSeek}
+                unavailableLabel={labels.audioUnavailable}
+              />
+            </div>
           {/if}
         </div>
       {:else if row.kind === "se"}
@@ -140,3 +193,12 @@
     </li>
   {/each}
 </ol>
+
+<ImagePreviewDialog
+  bind:open={previewOpen}
+  src={previewSrc}
+  alt={previewAlt}
+  closeLabel={labels.previewClose}
+  downloadLabel={labels.previewDownload}
+  openInNewWindowLabel={labels.previewOpenInNewWindow}
+/>

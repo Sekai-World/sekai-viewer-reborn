@@ -1,8 +1,12 @@
 <script lang="ts">
+  import Icon from "@iconify/svelte";
+  import { CirclePlayButton } from "@platform/ui-shell";
+
   /**
-   * Audio playback button for story voice/BGM/SE rows. Tries the provided
-   * sources in order (canonical path first, part-voice fallbacks after) and
-   * exposes an unavailable state when every candidate fails.
+   * Audio playback button for story voice/SE rows. Tries the provided sources
+   * in order (canonical path first, part-voice fallbacks after) and exposes an
+   * unavailable state when every candidate fails. The control mirrors the
+   * circular play button used by the shared AudioPlayer.
    */
   interface Props {
     sources: string[];
@@ -71,23 +75,21 @@
 </script>
 
 {#if exhausted}
-  <button type="button" class="btn btn-sm btn-ghost no-animation" disabled aria-disabled="true">
-    <span class="iconify" data-icon="mdi:volume-off"></span>
-    {unavailableLabel}
-  </button>
-{:else}
   <button
     type="button"
-    class="btn btn-sm btn-ghost text-primary"
-    onclick={toggle}
-    aria-pressed={playing}
+    class="btn btn-circle btn-sm btn-ghost no-animation"
+    disabled
+    aria-disabled="true"
+    aria-label={unavailableLabel}
+    title={unavailableLabel}
   >
-    {#if playing}
-      <span class="iconify" data-icon="mdi:stop-circle-outline"></span>
-      {stopLabel}
-    {:else}
-      <span class="iconify" data-icon="mdi:play-circle-outline"></span>
-      {playLabel}
-    {/if}
+    <Icon icon="mdi:volume-off" class="size-4" aria-hidden="true" />
   </button>
+{:else}
+  <CirclePlayButton
+    size="md"
+    playing={playing}
+    label={playing ? stopLabel : playLabel}
+    onclick={toggle}
+  />
 {/if}

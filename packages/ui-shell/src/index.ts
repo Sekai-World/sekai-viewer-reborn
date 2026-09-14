@@ -5,6 +5,7 @@ export { default as ImagePreviewDialog } from "./image-preview-dialog.svelte";
 export { default as ImagePreviewTrigger } from "./image-preview-trigger.svelte";
 export { default as AssetImage } from "./asset-image.svelte";
 export { default as AudioPlayer } from "./audio-player.svelte";
+export { default as CirclePlayButton } from "./circle-play-button.svelte";
 export { default as ThemeControls } from "./theme-controls.svelte";
 export { default as UnitIconBadge } from "./unit-icon-badge.svelte";
 export { default as GlobalNotificationBanner } from "./global-notification-banner.svelte";

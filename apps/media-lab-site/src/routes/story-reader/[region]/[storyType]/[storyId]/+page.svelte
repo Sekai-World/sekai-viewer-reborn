@@ -81,7 +81,37 @@
         seLabel: translate("storyReader.textOnly.row.se"),
         seStopLabel: translate("storyReader.textOnly.row.seStop"),
         fullscreenLabel: translate("storyReader.textOnly.row.fullscreen"),
-        movieLabel: translate("storyReader.textOnly.row.movie")
+        movieLabel: translate("storyReader.textOnly.row.movie"),
+        previewClose: translate("storyReader.textOnly.preview.close"),
+        previewDownload: translate("storyReader.textOnly.preview.download"),
+        previewOpenInNewWindow: translate("storyReader.textOnly.preview.openInNewWindow"),
+        audioPlay: translate("storyReader.textOnly.audio.play"),
+        audioPause: translate("storyReader.textOnly.audio.pause"),
+        audioDownload: translate("storyReader.textOnly.audio.download"),
+        audioDownloadClose: translate("storyReader.textOnly.audio.downloadClose"),
+        audioVolume: translate("storyReader.textOnly.audio.volume"),
+        audioSeek: translate("storyReader.textOnly.audio.seek"),
+        audioUnavailable: translate("storyReader.textOnly.audio.unavailable"),
+        audioDownloadPreparing: translate(
+          "storyReader.textOnly.audio.downloadProgress.preparing"
+        ),
+        audioDownloadFetchingAudio: translate(
+          "storyReader.textOnly.audio.downloadProgress.fetchingAudio"
+        ),
+        audioDownloadFetchingCover: translate(
+          "storyReader.textOnly.audio.downloadProgress.fetchingCover"
+        ),
+        audioDownloadWritingMetadata: translate(
+          "storyReader.textOnly.audio.downloadProgress.writingMetadata"
+        ),
+        audioDownloadFinalizing: translate(
+          "storyReader.textOnly.audio.downloadProgress.finalizing"
+        ),
+        audioDownloadReady: translate("storyReader.textOnly.audio.downloadProgress.ready"),
+        audioDownloadFailed: translate("storyReader.textOnly.audio.downloadProgress.failed"),
+        audioDownloadCancelled: translate(
+          "storyReader.textOnly.audio.downloadProgress.cancelled"
+        )
       }}
     />
   {:else if data.readerStatus === "unavailable"}
