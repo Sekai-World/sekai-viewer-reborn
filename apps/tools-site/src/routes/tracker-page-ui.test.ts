@@ -431,8 +431,9 @@ describe("tracker page UI contract", () => {
     expect(source.slice(toolActionsStart, toolActionsEnd)).toContain("flex-wrap: wrap;");
     expect(source).toContain("@media (min-width: 48rem)");
     expect(source).toContain("grid-template-columns: minmax(0, 1fr) auto;");
-    expect(source).toContain(".tracker-tool-actions {\n      grid-column: 2;\n      justify-self: end;");
-    expect(source).toContain(".tracker-action-region {");
+    expect(source).toContain(
+      ".tracker-tool-action-region {\n      grid-column: 2;\n      justify-self: end;"
+    );
     expect(source).toContain(".tracker-share-message {");
     expect(source).toContain(".tracker-tool-actions .btn {");
     expect(source).not.toContain(".tracker-tool-actions .btn,");
