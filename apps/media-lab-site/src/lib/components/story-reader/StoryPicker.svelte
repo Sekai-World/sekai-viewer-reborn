@@ -232,17 +232,20 @@
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {#each group.episodes as episode (episode.storyId)}
                 <a
-                  class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 transition-colors hover:border-primary/40"
+                  class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                   href={itemHref(episode.storyId)}
                 >
                   <img
                     src={episode.bannerUrl}
                     alt=""
                     loading="lazy"
-                    class="aspect-280/144 w-full object-cover"
+                    class="aspect-280/144 w-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
                   />
                   <div class="flex items-center justify-between gap-2 px-3 py-2">
-                    <span class="min-w-0 truncate text-sm">{episode.title}</span>
+                    <span
+                      class="min-w-0 truncate text-sm transition-colors duration-180 group-hover:text-primary"
+                      >{episode.title}</span
+                    >
                     {#if episode.sublabel}
                       <span class="shrink-0 text-xs text-base-content/50">{episode.sublabel}</span>
                     {/if}
@@ -258,15 +261,18 @@
         {#each filteredUnits as unit (unit.unit)}
           <button
             type="button"
-            class="flex cursor-pointer flex-col items-center gap-3 rounded-2xl border border-base-content/10 bg-base-200/40 px-4 py-6 transition-colors hover:bg-base-200"
+            class="group flex cursor-pointer flex-col items-center gap-3 rounded-2xl border border-base-content/10 bg-base-200/40 px-4 py-6 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
             onclick={() => (selectedUnit = unit.unit)}
           >
             <img
               src={resolveUnitLogoUrl(unit.unit) ?? undefined}
               alt=""
-              class="h-12 w-auto max-w-full object-contain"
+              class="h-12 w-auto max-w-full object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
             />
-            <span class="text-sm font-semibold">{unit.unitName}</span>
+            <span
+              class="text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
+              >{unit.unitName}</span
+            >
           </button>
         {/each}
         {#if filteredUnits.length === 0}
