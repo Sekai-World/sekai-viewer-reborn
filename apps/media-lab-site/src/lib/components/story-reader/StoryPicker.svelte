@@ -4,10 +4,10 @@
   import { useRegionSelection } from "$lib/region-selection.svelte";
 
   /**
-   * Story picker for the reader landing page. The region follows the shared
-   * primary-region setting; story types switch via tabs. Unit stories use a
-   * two-level picker (unit blocks → story lines of episode cards); the other
-   * types keep a grouped searchable list.
+   * Story picker for one story type sub-page. The region follows the shared
+   * primary-region setting; type navigation lives in the sidebar. Unit
+   * stories use a two-level picker (unit blocks → story lines of episode
+   * cards); the other types keep a grouped searchable list.
    */
   interface StoryCatalogItem {
     storyId: string;
@@ -42,10 +42,9 @@
   }
 
   interface Props {
-    storyTypes: { value: string; label: string }[];
+    storyType: string;
     modeBase: string;
     labels: {
-      type: string;
       search: string;
       loading: string;
       loadFailed: string;
@@ -56,11 +55,10 @@
     };
   }
 
-  let { storyTypes, modeBase, labels }: Props = $props();
+  let { storyType, modeBase, labels }: Props = $props();
 
   const regionSelection = useRegionSelection();
 
-  let storyType = $state(storyTypes[0]?.value ?? "unit");
   let query = $state("");
   let groups = $state<StoryCatalogGroup[]>([]);
   let units = $state<StoryUnitCatalogView[]>([]);
@@ -164,27 +162,7 @@
 
 <section class="card bg-base-100 shadow-sm ring-1 ring-base-content/10" aria-label={labels.open}>
   <div class="card-body gap-4 p-5">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="card-title text-lg">{labels.open}</h2>
-      <div
-        role="tablist"
-        aria-label={labels.type}
-        class="tabs tabs-box flex-nowrap overflow-x-auto"
-      >
-        {#each storyTypes as option (option.value)}
-          <button
-            type="button"
-            role="tab"
-            aria-selected={storyType === option.value}
-            class="tab"
-            class:tab-active={storyType === option.value}
-            onclick={() => (storyType = option.value)}
-          >
-            {option.label}
-          </button>
-        {/each}
-      </div>
-    </div>
+    <h2 class="card-title text-lg">{labels.open}</h2>
 
     <label class="input input-bordered flex min-h-11 items-center gap-2">
       <Icon icon="mdi:magnify" class="size-4 text-base-content/50" aria-hidden="true" />

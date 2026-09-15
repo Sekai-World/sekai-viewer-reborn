@@ -10,6 +10,11 @@
   import { fade } from "svelte/transition";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import {
+    isActivePickerStoryTypePath,
+    pickerStoryTypeIcons,
+    pickerStoryTypes
+  } from "$lib/story/story-picker";
+  import {
     DEFAULT_UI_LOCALE,
     buildUiLocaleCookie,
     normalizeUiLocale,
@@ -126,19 +131,20 @@
   );
 
   const sidebarItems: SidebarItem[] = $derived([
-    { type: "section", label: translate("navigation.labTools") },
     {
       label: translate("navigation.home"),
       href: "/",
       icon: "mdi:home-variant-outline",
       active: pathname === "/"
     },
-    {
-      label: translate("navigation.storyReader"),
-      href: "/story-reader",
-      icon: "mdi:book-open-variant",
-      active: isStoryReaderRoute
-    },
+    { type: "section", label: translate("navigation.storyReader") },
+    ...pickerStoryTypes.map((storyType) => ({
+      label: translate(`storyReader.storyType.${storyType}`),
+      href: `/story-reader/${storyType}`,
+      icon: pickerStoryTypeIcons[storyType],
+      active: isActivePickerStoryTypePath(pathname, storyType)
+    })),
+    { type: "section", label: translate("navigation.studios") },
     {
       label: translate("navigation.live2d"),
       href: "/live2d",
@@ -180,7 +186,13 @@
   };
 
   $effect(() => {
-    regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
+    // Only an explicit `?region=` updates the shared selection. In-app links
+    // that omit the param (e.g. the sidebar picker sub-pages) keep the
+    // sticky selection instead of resetting it to the default.
+    const regionParam = page.url.searchParams.get("region");
+    if (regionParam !== null) {
+      regionSelection.primary = normalizePrimaryRegion(regionParam);
+    }
   });
 
   // `onNavigate` must be registered during component initialisation; calling it
