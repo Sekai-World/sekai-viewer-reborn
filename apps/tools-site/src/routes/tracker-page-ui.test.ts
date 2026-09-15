@@ -105,6 +105,8 @@ describe("tracker page UI contract", () => {
       "const clock = window.setInterval(() => (now = Date.now()), 1_000);"
     );
     expect(homeSource).toContain('class="event-card event-card-link has-event"');
+    expect(homeSource).toContain('href={`/tracker/${result.region}`}');
+    expect(homeSource).not.toContain("?eventId=");
     expect(homeSource).toContain(
       'aria-label={`${regionName(result.region)}: ${result.event.name} — ${translate("home.openRegionalTracker")}`}'
     );
