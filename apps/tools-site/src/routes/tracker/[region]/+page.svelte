@@ -17,7 +17,10 @@
   import { createTrackerRows, type TrackerRow } from "$lib/tracker-rows";
   import { createChapterRows, type ChapterRow } from "$lib/tracker-chapter-rows";
   import { calculateRecentRates, sortTrackerRatePoints } from "$lib/tracker-rates";
-  import { calculateChapterElapsedMs, calculateScorePerElapsedHour } from "$lib/tracker-math";
+  import {
+    calculateRankingElapsedMs,
+    calculateScorePerElapsedHour
+  } from "$lib/tracker-math";
   import { resolveTrackerEventId } from "$lib/tracker-event-identity";
   import {
     createTrackerExportCsv,
@@ -288,14 +291,6 @@
       ? translate("tracker.countdownEndsIn")
       : translate("tracker.countdownStartsIn")
   );
-  const elapsedMs = $derived.by(() => {
-    const start = parseTrackerTimestamp(selectedEvent?.startAt);
-    const aggregateAt = parseTrackerTimestamp(selectedEvent?.aggregateAt);
-    const reference =
-      parseTrackerTimestamp(snapshotTimestamp) ?? parseTrackerTimestamp(trackerResult?.loadedAt);
-    if (start === null || reference === null || reference <= start) return null;
-    return aggregateAt === null ? reference - start : Math.min(reference, aggregateAt) - start;
-  });
   const displayRankings = $derived(snapshotRankings ?? trackerResult?.rankings ?? []);
   const getReward = (rank: number): SharedEventRewardRangeResponse | null =>
     rewards?.status === "available"
@@ -314,7 +309,7 @@
     createTrackerRows({
       ladderRanks: getTrackerRankLadder(ladder),
       rankings: displayRankings,
-      elapsedMs,
+      startAt: selectedEvent?.startAt,
       getReward
     })
   );
@@ -341,24 +336,19 @@
       null
   );
   let isWorldBloom = $state(false);
-  const chapterElapsedMs = $derived(
-    selectedRankingTab !== "event" && selectedChapter
-      ? calculateChapterElapsedMs({
-          startAt: selectedChapter.chapter.chapterStartAt,
-          endAt: selectedChapter.chapter.chapterEndAt,
-          now,
-          isCurrent: chapterIsCurrent(selectedChapter.chapter),
-          snapshotAt: snapshotTimestamp
-        })
-      : null
-  );
   const chapterRows = $derived<TrackerRow<SharedEventRewardRangeResponse>[]>(
     selectedChapterRows.map((row) => ({
       ladderRank: row.rank,
       status: row.status,
       ranking: row,
       score: row.score,
-      speedPerHour: calculateScorePerElapsedHour({ score: row.score, elapsedMs: chapterElapsedMs }),
+      speedPerHour: calculateScorePerElapsedHour({
+        score: row.score,
+        elapsedMs: calculateRankingElapsedMs({
+          startAt: selectedChapter?.chapter.chapterStartAt,
+          timestamp: row.timestamp
+        })
+      }),
       reward: getReward(row.rank),
       graphPoint:
         row.score === null ? null : { rank: row.rank, score: row.score, timestamp: row.timestamp }
@@ -1137,13 +1127,6 @@
         reward: formatRewardRange(row.reward),
         capturedAt: capturedAt ?? row.ranking?.timestamp ?? null
       }));
-  const eventElapsedMsAt = (timestamp: string): number | null => {
-    const start = parseTrackerTimestamp(selectedEvent?.startAt);
-    const aggregateAt = parseTrackerTimestamp(selectedEvent?.aggregateAt);
-    const reference = parseTrackerTimestamp(timestamp);
-    if (start === null || reference === null || reference <= start) return null;
-    return aggregateAt === null ? reference - start : Math.min(reference, aggregateAt) - start;
-  };
   const createEventSnapshotExportRows = (
     rankings: readonly EventTrackerResult["rankings"][number][],
     timestamp: string
@@ -1151,7 +1134,7 @@
     const snapshotRows = createTrackerRows({
       ladderRanks: getTrackerRankLadder(ladder),
       rankings,
-      elapsedMs: eventElapsedMsAt(timestamp),
+      startAt: selectedEvent?.startAt,
       getReward
     });
     return toEventExportRows(snapshotRows, "History snapshot", timestamp);
@@ -1160,13 +1143,6 @@
     (chapters?.rankings ?? [])
       .filter(({ chapter }) => exportChapterIds.includes(chapter.id))
       .map(({ chapter, result }) => {
-        const chapterElapsedMs = calculateChapterElapsedMs({
-          startAt: chapter.chapterStartAt,
-          endAt: chapter.chapterEndAt,
-          now,
-          isCurrent: chapterIsCurrent(chapter),
-          snapshotAt: snapshotTimestamp
-        });
         const chapterLabel = interpolate("tracker.chapter", { number: chapter.chapterNo });
         const rows = createChapterRows(result.rankings, ladder)
           .filter((row) => row.status === "available")
@@ -1178,7 +1154,10 @@
             score: row.score,
             speedPerHour: calculateScorePerElapsedHour({
               score: row.score,
-              elapsedMs: chapterElapsedMs
+              elapsedMs: calculateRankingElapsedMs({
+                startAt: chapter.chapterStartAt,
+                timestamp: row.timestamp
+              })
             }),
             reward: formatRewardRange(getReward(row.rank)),
             capturedAt: row.timestamp

@@ -162,7 +162,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('translate("tracker.countdownStartsIn")');
     expect(source).toContain('class="tracker-countdown"');
     expect(source).toContain("font-variant-numeric: tabular-nums");
-    expect(source).toContain("parseTrackerTimestamp(snapshotTimestamp) ??");
+    expect(source).toContain(
+      "const displayRankings = $derived(snapshotRankings ?? trackerResult?.rankings ?? []);"
+    );
     expect(source).toContain('class="tracker-row-detail-button"');
     expect(source).not.toContain('tabindex="0" role="button"');
     expect(source).toContain("new AbortController()");
@@ -759,7 +761,7 @@ describe("tracker page UI contract", () => {
       "selectedChapterRows = createChapterRows(chapter.result.rankings, selectedLadder);"
     );
     expect(source).toContain("reward: getReward(row.rank)");
-    expect(source).toContain("calculateChapterElapsedMs");
+    expect(source).toContain("calculateRankingElapsedMs");
     expect(source).not.toContain("speedPerHour: null");
     expect(source).not.toContain("reward: null");
     expect(source).toContain('class="table tracker-table"');
@@ -873,7 +875,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("speedPerHour: row.speedPerHour");
     expect(source).toContain("reward: formatRewardRange(row.reward)");
     expect(source).toContain("capturedAt: capturedAt ?? row.ranking?.timestamp ?? null");
-    expect(source).toContain("elapsedMs: eventElapsedMsAt(timestamp)");
+    expect(source).toContain("startAt: selectedEvent?.startAt");
     expect(source).toContain(
       "const rows = createEventSnapshotExportRows(payload.rankings, timestamp);"
     );

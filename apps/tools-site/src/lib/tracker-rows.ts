@@ -1,4 +1,9 @@
-import { calculateScorePerElapsedHour, type ScorePerElapsedHour } from "./tracker-math";
+import {
+  calculateRankingElapsedMs,
+  calculateScorePerElapsedHour,
+  type ScorePerElapsedHour
+} from "./tracker-math";
+import type { TrackerDateValue } from "$lib/tracker-phase";
 
 export type TrackerRankingRecord = Readonly<{
   rank: number | null | undefined;
@@ -27,7 +32,7 @@ export type TrackerRow<TReward = never> = Readonly<{
 export type CreateTrackerRowsInput<TReward = never> = Readonly<{
   ladderRanks: readonly number[];
   rankings: readonly TrackerRankingRecord[];
-  elapsedMs?: number | null;
+  startAt?: TrackerDateValue;
   getReward?: (rank: number) => TReward | null | undefined;
 }>;
 
@@ -41,7 +46,7 @@ const isUsableScore = (value: number | null | undefined): value is number =>
 export const createTrackerRows = <TReward = never>({
   ladderRanks,
   rankings,
-  elapsedMs = null,
+  startAt,
   getReward
 }: CreateTrackerRowsInput<TReward>): TrackerRow<TReward>[] => {
   const rankingsByRank = new Map<number, TrackerRankingRecord>();
@@ -60,7 +65,10 @@ export const createTrackerRows = <TReward = never>({
       status: ranking === null ? "unavailable" : "available",
       ranking,
       score,
-      speedPerHour: calculateScorePerElapsedHour({ score, elapsedMs }),
+      speedPerHour: calculateScorePerElapsedHour({
+        score,
+        elapsedMs: calculateRankingElapsedMs({ startAt, timestamp: ranking?.timestamp })
+      }),
       reward: getReward?.(ladderRank) ?? null,
       graphPoint: ranking && score !== null ? { rank: ladderRank, score, timestamp: ranking.timestamp ?? null } : null
     };
