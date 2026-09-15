@@ -213,6 +213,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain(
       'selectedRankingTab === "event" || !selectedChapter ? rows : chapterRows'
     );
+    expect(source).toContain("overflow-x: clip;");
+    expect(source).toContain(".tracker-table-wrap");
+    expect(source).toContain("overflow-x: auto;");
     expect(source).not.toContain("tracker-chapter-workspace");
     expect(source).not.toContain("tracker-chapter-panel");
   });

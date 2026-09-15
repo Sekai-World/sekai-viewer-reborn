@@ -2523,6 +2523,7 @@
     max-width: 82rem;
     width: 100%;
     min-width: 0;
+    overflow-x: clip;
     margin: 0 auto;
     padding: clamp(1rem, 3vw, 2rem);
     display: grid;
