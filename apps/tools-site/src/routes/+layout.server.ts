@@ -9,15 +9,18 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
   const namespaces = ["common", "tracker"] as const;
   const localMessages = getLocalI18nMessages(namespaces);
-  const i18nMessages = await resolveI18nMessageBundle(
-    () => loadI18nMessageBundle(uiLocale, namespaces, fetch),
-    localMessages
-  );
+  const [i18nMessages, globalNotices] = await Promise.all([
+    resolveI18nMessageBundle(
+      () => loadI18nMessageBundle(uiLocale, namespaces, fetch),
+      localMessages
+    ),
+    fetchGlobalNotices(fetch)
+  ]);
 
   return {
     i18nMessages,
     uiLocale,
-    globalNotices: await fetchGlobalNotices(fetch),
+    globalNotices,
     siteVersion: packageJson.version
   };
 };

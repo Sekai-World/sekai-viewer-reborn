@@ -104,7 +104,6 @@ describe("event tracker data layer", () => {
     await expect(getEventTrackerRankings("https://api.example.test", "en")).resolves.toMatchObject({
       status: "available",
       selection: { mode: "live", eventId: null },
-      resolvedCurrentEventId: null,
       rankings: expect.any(Array)
     });
     expect(mocks.getEventRankingLive).toHaveBeenCalledWith(
@@ -210,32 +209,6 @@ describe("event tracker data layer", () => {
     expect(mocks.getEventRankingLive).toHaveBeenCalledTimes(3);
     for (const resolve of pendingResolvers) resolve(liveResponse);
     await Promise.all(requests);
-  });
-
-  it("exposes a live event id only when every ranking row identifies the same event", async () => {
-    mocks.getEventRankingLive.mockResolvedValueOnce({
-      data: {
-        eventRankings: [1, 2, 3, 10, 100, 1000, 5000, 10_000, 50_000, 100_000].map((rank) => ({
-          rank,
-          eventId: "42"
-        }))
-      }
-    });
-    await expect(getEventTrackerRankings("https://api.example.test", "en")).resolves.toMatchObject({
-      resolvedCurrentEventId: 42
-    });
-
-    mocks.getEventRankingLive.mockResolvedValueOnce({
-      data: {
-        eventRankings: [1, 2, 3, 10, 100, 1000, 5000, 10_000, 50_000, 100_000].map((rank) => ({
-          rank,
-          eventId: rank === 2 ? 43 : 42
-        }))
-      }
-    });
-    await expect(getEventTrackerRankings("https://api.example.test", "en")).resolves.toMatchObject({
-      resolvedCurrentEventId: null
-    });
   });
 
   it("loads and merges historical first100 and border rankings deterministically", async () => {

@@ -1,32 +1,17 @@
 /**
  * Resolves the event identity used by tracker detail and history endpoints.
- * An explicit history selection always wins; live rankings provide the next
- * most reliable identity because they are returned by the same source as the
- * ranking rows being inspected.
+ * Explicit route selections and current-event metadata are authoritative.
+ * Ranking row event IDs are observational data and must not be used as a
+ * metadata or activity-status fallback.
  */
 export const resolveTrackerEventId = ({
   selectedEventId,
   resultSelectionEventId,
-  resolvedCurrentEventId,
-  rankingEventIds,
   catalogCurrentEventId
 }: {
   selectedEventId: number | null;
   resultSelectionEventId?: number | null;
-  resolvedCurrentEventId: number | null | undefined;
-  rankingEventIds?: Array<number | null | undefined>;
   catalogCurrentEventId: number | null | undefined;
 }): number | null => {
-  const rankingIds = new Set(
-    (rankingEventIds ?? []).filter((eventId): eventId is number => eventId !== null && eventId !== undefined)
-  );
-  const rankingEventId = rankingIds.size === 1 ? [...rankingIds][0] ?? null : null;
-  return (
-    resultSelectionEventId ??
-    selectedEventId ??
-    resolvedCurrentEventId ??
-    rankingEventId ??
-    catalogCurrentEventId ??
-    null
-  );
+  return resultSelectionEventId ?? selectedEventId ?? catalogCurrentEventId ?? null;
 };

@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { resolveTrackerEventId } from "$lib/tracker-event-identity";
 
 const pagePath = resolve(process.cwd(), "src/routes/tracker/[region]/+page.svelte");
 const homePagePath = resolve(process.cwd(), "src/routes/+page.svelte");
@@ -267,7 +268,7 @@ describe("tracker page UI contract", () => {
   it("uses one accessible event combobox for catalog search and direct ID navigation", async () => {
     const source = await readFile(pagePath, "utf8");
     expect(source).toContain('role="combobox"');
-    expect(source).toContain("aria-expanded={isEventPickerOpen && hasEventCatalog}");
+    expect(source).toContain("aria-expanded={isEventPickerOpen}");
     expect(source).toContain('aria-controls="tracker-event-options"');
     expect(source).toContain("aria-activedescendant=");
     expect(source).toContain('role="listbox"');
@@ -276,10 +277,20 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('event.key === "ArrowUp"');
     expect(source).toContain('event.key === "Escape"');
     expect(source).toContain(
-      "if (/^[1-9]\\d*$/.test(trimmedQuery)) navigateToEvent(Number(trimmedQuery));"
+      "if (isPositiveEventIdQuery(trimmedQuery)) navigateToEvent(Number(trimmedQuery));"
     );
     expect(source).toContain("navigateToEvent(null);");
     expect(source).toContain("const matchingEvents = $derived.by");
+    expect(source).toContain(
+      "const eventSearchCache = new SvelteMap<string, EventSearchResponse>();"
+    );
+    expect(source).toContain(
+      "const eventSearchInFlight = new SvelteMap<string, Promise<EventSearchResponse>>();"
+    );
+    expect(source).toContain("const requestEventSearch = (query: string)");
+    expect(source).toContain('endpoint("events", { query })');
+    expect(source).toContain("eventSearchStatus = result.status;");
+    expect(source).toContain('translate(`tracker.metadataError.${eventSearchStatus}`)');
     expect(source).toContain("`${event.name} ${event.id}`.toLocaleLowerCase().includes(query)");
     expect(source).toContain(
       "const visibleMatchingEvents = $derived(matchingEvents.slice(0, 10));"
@@ -293,6 +304,9 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain("tracker.clearEventSelection");
     expect(source).toContain("max-height: 17rem");
     expect(source).toContain("new URLSearchParams({ eventId: String(eventId) })");
+    expect(source).toContain("isPositiveEventIdQuery(query) ? 0 : 220");
+    expect(source).toContain("scheduleEventSearch(value);");
+    expect(source).toContain("eventSearchStatus === \"available\" && eventQuery.trim().length > 0");
     expect(source).not.toContain("tracker-event-browser");
     expect(source).not.toContain("tracker-event-id-form");
     expect(source).not.toContain("tracker.currentEvent");
@@ -415,39 +429,80 @@ describe("tracker page UI contract", () => {
     const toolActionsEnd = source.indexOf("}", toolActionsStart);
     expect(source.slice(toolActionsStart, toolActionsEnd)).toContain("min-width: 0;");
     expect(source.slice(toolActionsStart, toolActionsEnd)).toContain("flex-wrap: wrap;");
+    expect(source).toContain("@media (min-width: 48rem)");
+    expect(source).toContain("grid-template-columns: minmax(0, 1fr) auto;");
+    expect(source).toContain(
+      ".tracker-tool-actions {\n      grid-column: 2;\n      justify-self: end;"
+    );
     expect(source).toContain(".tracker-tool-actions .btn {");
     expect(source).not.toContain(".tracker-tool-actions .btn,");
     expect(source).not.toContain(".tracker-goal-dialog .btn {");
   });
 
-  it("uses ID-first labels for selected and suggested events with a metadata fallback", async () => {
-    const [source, trackerMessagesSource] = await Promise.all([
-      readFile(pagePath, "utf8"),
-      readFile(trackerMessagesPath, "utf8")
-    ]);
+  it("uses explicit or current metadata with an ID-only fallback", async () => {
+    const source = await readFile(pagePath, "utf8");
 
     expect(source).toContain(
-      "const formatEventLabel = (eventId: number, eventName: string): string =>"
+      "const formatEventLabel = (eventId: number, eventName?: string | null): string =>"
     );
     expect(source).toContain("`#${eventId} — ${eventName}`");
-    expect(source).toContain(
-      "formatEventLabel(catalog.currentEvent.id, catalog.currentEvent.name)"
-    );
+    expect(source).toContain("eventName ? `#${eventId} — ${eventName}` : `#${eventId}`");
+    expect(source).toContain("const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;");
+    expect(source).toContain("event?.id === eventKey ? event : null");
     const pickerStart = source.indexOf("const pickerValue = $derived(");
     const pickerEnd = source.indexOf("const currentMetadataUnavailable", pickerStart);
     expect(pickerStart).toBeGreaterThan(-1);
     expect(pickerEnd).toBeGreaterThan(pickerStart);
     const picker = source.slice(pickerStart, pickerEnd);
-    expect(picker).toMatch(
-      /data\.selection\.eventId !== null\s*\?\s*formatEventLabel\(\s*data\.selection\.eventId,\s*selectedEvent\?\.name \?\? translate\("tracker\.historicalMetadataUnavailable"\)/
+    expect(picker).toContain(
+      'eventKey === null ? "" : formatEventLabel(eventKey, selectedEvent?.name)'
     );
     expect(source).toContain("eventQuery = formatEventLabel(event.id, event.name);");
     expect(source).toContain("<span>{formatEventLabel(event.id, event.name)}</span>");
     expect(source).not.toContain("${event.name} #${event.id}");
     expect(source).not.toContain('replace("{eventId}", String(data.selection.eventId))');
-    expect(JSON.parse(trackerMessagesSource)).toMatchObject({
-      "tracker.historicalMetadataUnavailable": "Historical event metadata unavailable"
-    });
+  });
+
+  it("syncs the current metadata event into the picker without overriding history or focus", async () => {
+    const source = await readFile(pagePath, "utf8");
+    expect(source).toMatch(
+      /!isEventPickerFocused &&\s*queryEventId === null &&\s*trackerResult\?\.selection\.mode === "live" &&\s*eventKey !== null &&\s*pickerValue !== ""[\s\S]*?eventQuery = pickerValue;/
+    );
+    expect(source).not.toContain("liveRankingEventId");
+  });
+
+  it("does not use ranking IDs when current metadata lookup fails", async () => {
+    const source = await readFile(pagePath, "utf8");
+
+    expect(
+      resolveTrackerEventId({
+        selectedEventId: null,
+        catalogCurrentEventId: null
+      })
+    ).toBeNull();
+    expect(source).not.toContain("resolvedCurrentEventId");
+    expect(source).not.toContain("rankingEventIds");
+    expect(source).toContain("catalogCurrentEventId: trackerPageReady?.resolvedEventId ?? null");
+    expect(source).toContain("const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;");
+    expect(source).toContain("eventName ? `#${eventId} — ${eventName}` : `#${eventId}`");
+  });
+
+  it("uses the current metadata ID for current-event status", async () => {
+    const source = await readFile(pagePath, "utf8");
+    const statusStart = source.indexOf("const currentEventId = $derived(");
+    const statusEnd = source.indexOf("const currentMetadataUnavailable", statusStart);
+    expect(statusStart).toBeGreaterThan(-1);
+    expect(statusEnd).toBeGreaterThan(statusStart);
+
+    const status = source.slice(statusStart, statusEnd);
+    expect(status).toContain("!isExplicitSelection");
+    expect(status).toContain("trackerPageReady?.resolvedEventId ?? null");
+    expect(status).toContain("catalog?.currentEvent?.id ?? null");
+    expect(source).toContain("const isCurrentEventKnown = $derived(currentEventId !== null);");
+    expect(source).toContain(
+      "isCurrentEventKnown && eventKey !== null && currentEventId === eventKey"
+    );
+    expect(source).toContain("class:badge-success={isCurrentEvent && phase === \"live\"}");
   });
 
   it("uses a deterministic SSR timestamp before switching to the browser local time", async () => {
@@ -459,11 +514,12 @@ describe("tracker page UI contract", () => {
 
   it("shows catalog failures as metadata errors rather than indefinitely loading", async () => {
     const source = await readFile(pagePath, "utf8");
-    expect(source).toContain("const catalogStatus = $derived(catalog?.status ?? null);");
     expect(source).not.toContain("tracker.context-event");
     expect(source).toContain('translate("tracker.eventPickerPlaceholder")');
-    expect(source).toContain("catalog?.selectedEvent?.id === data.selection.eventId");
-    expect(source).toContain('translate("tracker.historicalMetadataUnavailable")');
+    expect(source).toContain("const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;");
+    expect(source).toContain(
+      'eventKey === null ? "" : formatEventLabel(eventKey, selectedEvent?.name)'
+    );
   });
 
   it("keeps explicit historical selections labeled as historical when current metadata is unavailable", async () => {
@@ -472,7 +528,7 @@ describe("tracker page UI contract", () => {
       /const currentMetadataUnavailable = \$derived\(\s*catalog !== null &&\s*\(catalog\.currentStatus !== "available" \|\| catalog\.currentEvent === null\)\s*\);/
     );
     expect(source).toMatch(
-      /const isHistoricalEvent = \$derived\(\s*isExplicitSelection &&\s*!isCurrentEvent &&\s*\(isCurrentEventKnown \|\| currentMetadataUnavailable\)\s*\);/
+      /const isHistoricalEvent = \$derived\(\s*isExplicitSelection &&[\s\S]*?!isCurrentEvent &&[\s\S]*?\(isCurrentEventKnown \|\| currentMetadataUnavailable\)\s*\);/
     );
 
     const activityStart = source.indexOf("const activityLabel = $derived(");
@@ -566,8 +622,8 @@ describe("tracker page UI contract", () => {
     expect(source).toContain(
       'import { resolveTrackerEventId } from "$lib/tracker-event-identity";'
     );
-    expect(source).toContain("resolvedCurrentEventId: trackerResult?.resolvedCurrentEventId");
-    expect(source).toContain("catalogCurrentEventId: catalog?.currentEvent?.id");
+    expect(source).not.toContain("resolvedCurrentEventId: trackerResult?.resolvedCurrentEventId");
+    expect(source).toContain("catalogCurrentEventId: trackerPageReady?.resolvedEventId ?? null");
     expect(source).toContain("void openGraph(row);");
     expect(source).toContain("<RankingHistoryChart");
   });
@@ -799,6 +855,7 @@ describe("tracker page UI contract", () => {
     expect(buttonStyles).toContain("padding-block: 0.25rem;");
     expect(buttonStyles).toContain("padding-inline: 0.75rem;");
     expect(source).toContain("@media (max-width: 47.999rem), (pointer: coarse)");
+    expect(source).toContain("display: flex;");
     expect(source).toMatch(
       /@media \(max-width: 47\.999rem\), \(pointer: coarse\)[\s\S]*?\.tracker-tool-actions \.btn\s*\{[\s\S]*?min-height: 2\.75rem;[\s\S]*?height: auto;/
     );
@@ -816,7 +873,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("reward: formatRewardRange(row.reward)");
     expect(source).toContain("capturedAt: capturedAt ?? row.ranking?.timestamp ?? null");
     expect(source).toContain("elapsedMs: eventElapsedMsAt(timestamp)");
-    expect(source).toContain("return createEventSnapshotExportRows(payload.rankings, timestamp);");
+    expect(source).toContain(
+      "const rows = createEventSnapshotExportRows(payload.rankings, timestamp);"
+    );
     expect(source).toContain("timestamp !== snapshotTimestamp");
     expect(source).toContain("const EXPORT_HISTORY_CONCURRENCY = 4;");
     expect(source).toContain(
@@ -827,16 +886,46 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("createChapterRows(result.rankings, ladder)");
     expect(source).toContain("calculateScorePerElapsedHour({");
     expect(source).toContain("reward: formatRewardRange(getReward(row.rank))");
+    expect(source).toContain(
+      'const currentScope = isSelectedSnapshot ? "History snapshot" : "Current event";'
+    );
+    expect(source).toContain("scope,");
+    expect(source).toContain("scope: chapterLabel");
+    expect(source).toContain('const chapterLabel = interpolate("tracker.chapter"');
+    expect(source).toContain("const chapterExportGroups = (): TrackerExportGroup[] =>");
+    expect(source).toContain(
+      "createTrackerExportReport([currentGroup, ...history, ...chapterExportGroups()])"
+    );
+    expect(source).toContain("sheetName: `History ${timestamp}`");
+    expect(source).toContain("player: row.userName ?? row.userId ?? null");
+    expect(source).toContain("createTrackerExportCsv(report)");
+    expect(source).toContain('createTrackerExportWorkbookBlob(report, { sheetName: "tracker" })');
+    expect(source).not.toContain('section: "event"');
+    expect(source).not.toContain("source:");
     expect(source).toContain("else selectedChapterId = null;");
     expect(source).toContain("if (!canExportCsv) return;");
     expect(source).toContain('disabled={exportStatus === "loading"}');
   });
 
-  it("lets catalog metadata render while rankings load without faking freshness", async () => {
+  it("gates tracker content until streamed metadata settles for live and history", async () => {
     const source = await readFile(pagePath, "utf8");
-    expect(source).toContain("{#if catalog === null && !isInvalidSelection}");
+    expect(source).toContain(
+      "const isMetadataLoading = $derived(!isInvalidSelection && trackerPageReady === null);"
+    );
+    expect(source).toContain("trackerReady?: Promise<TrackerPageReady>;");
+    expect(source).toContain("void extendedData.trackerReady?.then(");
+    expect(source).toContain("trackerPageReady = value;");
+    expect(source).toContain("{#if isMetadataLoading}");
+    expect(source).toContain('aria-label={translate("tracker.loading")}');
+    expect(source).toContain('aria-busy="true"');
+    const bodyGateStart = source.indexOf("{#if isMetadataLoading}", source.indexOf("</header>"));
+    const bodyGateElse = source.indexOf("{:else}", bodyGateStart);
+    const controlDeck = source.indexOf('<section class="tracker-control-deck"');
+    expect(bodyGateStart).toBeGreaterThan(-1);
+    expect(bodyGateElse).toBeGreaterThan(bodyGateStart);
+    expect(bodyGateElse).toBeLessThan(controlDeck);
     expect(source).not.toContain(
-      "{#if isTrackerLoading || (catalog === null && !isInvalidSelection)}"
+      "{#if catalog === null && !isInvalidSelection}"
     );
     expect(source).toContain("{#if trackerResult}");
     expect(source).toContain("trackerResult.loadedAt");
