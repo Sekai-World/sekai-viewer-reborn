@@ -60,7 +60,8 @@
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
-  let preferredRegion = $state<SupportedRegion>(DEFAULT_REGION);
+  const getInitialPreferredRegion = (): SupportedRegion => data.preferredRegion;
+  let preferredRegion = $state<SupportedRegion>(getInitialPreferredRegion());
   let resolvedTheme = $state<ResolvedTheme>("light");
   let isDesktopSettingsMenuOpen = $state(false);
   let isDesktopThemeMenuOpen = $state(false);
@@ -84,7 +85,8 @@
   let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
   let skipToMainLabel = $state(getInitialI18nText("aria.skipToMainContent"));
   let sidebarLabel = $state(getInitialI18nText("navigation.sidebarTitle"));
-  let databaseLabel = $state(getInitialI18nText("navigation.database"));
+  let exploreLabel = $state(getInitialI18nText("navigation.explore"));
+  let gameNewsLabel = $state(getInitialI18nText("navigation.gameNews"));
   let charactersLabel = $state(getInitialI18nText("navigation.characters"));
   let cardsLabel = $state(getInitialI18nText("navigation.cards"));
   let songsLabel = $state(getInitialI18nText("navigation.songs"));
@@ -151,6 +153,10 @@
       return normalizeRegion(second, preferredRegion);
     }
 
+    if (first === "news" && second) {
+      return normalizeRegion(second, preferredRegion);
+    }
+
     return preferredRegion;
   });
 
@@ -167,6 +173,12 @@
       href: "/",
       active: page.url.pathname === "/",
       icon: "mdi:home-variant-outline"
+    },
+    {
+      label: gameNewsLabel,
+      href: `/news/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/news/"),
+      icon: "mdi:information-outline"
     },
     {
       label: charactersLabel,
@@ -212,15 +224,16 @@
   ]);
   const sidebarItems = $derived<SidebarItem[]>([
     navigationLinks[0],
+    navigationLinks[1],
     {
       type: "section",
-      label: databaseLabel
+      label: exploreLabel
     },
-    ...navigationLinks.slice(1)
+    ...navigationLinks.slice(2)
   ]);
   const quickNavigationItems = $derived<ContentSiteNavigationItem[]>([
     navigationLinks[0],
-    navigationLinks[2],
+    navigationLinks[1],
     navigationLinks[3],
     navigationLinks[4],
     navigationLinks[5],
@@ -304,7 +317,8 @@
     closeSidebarLabel = translate("aria.closeSidebar");
     skipToMainLabel = translate("aria.skipToMainContent");
     sidebarLabel = translate("navigation.sidebarTitle");
-    databaseLabel = translate("navigation.database");
+    exploreLabel = translate("navigation.explore");
+    gameNewsLabel = translate("navigation.gameNews");
     charactersLabel = translate("navigation.characters");
     cardsLabel = translate("navigation.cards");
     songsLabel = translate("navigation.songs");
