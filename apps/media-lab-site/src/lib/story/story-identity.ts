@@ -33,7 +33,22 @@ export interface StoryUnitEpisode {
   title: string;
   assetbundleName: string;
   scenarioId: string;
+  /** Unit story episode group (story line) this episode belongs to. */
+  unitStoryEpisodeGroupId?: number;
   releaseConditionId?: number;
+}
+
+/**
+ * Story line grouping for unit stories (`unitStoryEpisodeGroups.json`):
+ * one `unitEpisodeCategory: "none"` group per regular unit, and five groups
+ * for Virtual Singer — one per other unit's sekai, each with its `outline`.
+ */
+export interface StoryUnitEpisodeGroup {
+  id: number;
+  unit: string;
+  unitEpisodeCategory: string;
+  outline?: string;
+  assetbundleName?: string;
 }
 
 export interface StoryUnitChapter {
@@ -137,6 +152,7 @@ export interface StoryMasterCollections {
   actionSets: StoryActionSet[];
   specialStories: StorySpecialStory[];
   unitProfiles?: StoryUnitProfile[];
+  unitStoryEpisodeGroups?: StoryUnitEpisodeGroup[];
 }
 
 // ---------------------------------------------------------------------------
@@ -221,6 +237,12 @@ export interface StoryResolution {
   scenarioId: string;
 }
 
+/** Bucket-relative banner image for a unit story episode. */
+export const unitEpisodeBannerPath = (
+  chapterAssetbundleName: string,
+  episodeAssetbundleName: string
+): string => `story/episode_image/${chapterAssetbundleName}/${episodeAssetbundleName}.webp`;
+
 export type StoryResolutionResult =
   | { status: "ok"; resolution: StoryResolution }
   | { status: "not-found" }
@@ -251,7 +273,7 @@ export const resolveStoryIdentity = (
           scenarioPath: unitStoryScenarioPath(chapter.assetbundleName, episode.scenarioId),
           isCardStory: false,
           isActionSet: false,
-          bannerPath: `story/episode_image/${chapter.assetbundleName}/${episode.assetbundleName}.webp`,
+          bannerPath: unitEpisodeBannerPath(chapter.assetbundleName, episode.assetbundleName),
           chapterTitle: chapter.title,
           episodeTitle: episode.title,
           scenarioId: episode.scenarioId
@@ -499,4 +521,102 @@ export const buildStoryCatalog = (
     default:
       return [];
   }
+};
+
+// ---------------------------------------------------------------------------
+// Unit story catalog (story picker)
+// ---------------------------------------------------------------------------
+
+/** One episode card in the unit story picker. */
+export interface StoryUnitEpisodeCard {
+  storyId: string;
+  title: string;
+  /** In-game episode label (第1話 / Episode 1); episodeNo otherwise. */
+  sublabel?: string;
+  /** Bucket-relative banner image path. */
+  bannerPath: string;
+}
+
+/** A story line within a unit: its outline and episode cards. */
+export interface StoryUnitEpisodeGroupCard {
+  groupId: number;
+  /** `"none"` for a regular unit's main line; otherwise the unit slug whose
+   * sekai the Virtual Singer line is set in. */
+  categoryUnit: string;
+  outline?: string;
+  episodes: StoryUnitEpisodeCard[];
+}
+
+/** A unit entry in the story picker: icon/name plus its story lines. */
+export interface StoryUnitCatalogEntry {
+  unit: string;
+  unitName: string;
+  groups: StoryUnitEpisodeGroupCard[];
+}
+
+/**
+ * Groups a unit's episodes into story lines via `unitStoryEpisodeGroupId`
+ * and the `unitStoryEpisodeGroups` collection (Virtual Singer resolves to
+ * five lines, one per other unit's sekai; regular units to a single main
+ * line). Falls back to one synthetic line when the collection is missing.
+ */
+export const buildUnitStoryCatalog = (
+  collections: StoryMasterCollections
+): StoryUnitCatalogEntry[] => {
+  const unitNameBySlug = new Map(
+    (collections.unitProfiles ?? []).map((profile) => [profile.unit, profile.unitName])
+  );
+
+  return collections.unitStories
+    .slice()
+    .sort((a, b) => a.seq - b.seq)
+    .map((unitStory) => {
+      const groupRows = (collections.unitStoryEpisodeGroups ?? [])
+        .filter((group) => group.unit === unitStory.unit)
+        .slice()
+        .sort((a, b) => a.id - b.id);
+
+      const episodesByGroupId = new Map<number, StoryUnitEpisodeCard[]>();
+      for (const chapter of unitStory.chapters.slice().sort((a, b) => a.chapterNo - b.chapterNo)) {
+        for (const episode of chapter.episodes.slice().sort((a, b) => a.episodeNo - b.episodeNo)) {
+          const groupId = episode.unitStoryEpisodeGroupId ?? 0;
+          const cards = episodesByGroupId.get(groupId) ?? [];
+          cards.push({
+            storyId: `${unitStory.unit}-${chapter.chapterNo}-${episode.episodeNo}`,
+            title: episode.title,
+            sublabel: episode.episodeNoLabel ?? String(episode.episodeNo),
+            bannerPath: unitEpisodeBannerPath(chapter.assetbundleName, episode.assetbundleName)
+          });
+          episodesByGroupId.set(groupId, cards);
+        }
+      }
+
+      const toGroupCard = (
+        groupId: number,
+        categoryUnit: string,
+        outline?: string
+      ): StoryUnitEpisodeGroupCard => ({
+        groupId,
+        categoryUnit,
+        ...(outline ? { outline } : {}),
+        episodes: episodesByGroupId.get(groupId) ?? []
+      });
+
+      const groups =
+        groupRows.length > 0
+          ? groupRows.map((row) => toGroupCard(row.id, row.unitEpisodeCategory, row.outline))
+          : [
+              {
+                groupId: 0,
+                categoryUnit: "none",
+                episodes: Array.from(episodesByGroupId.values()).flat()
+              }
+            ];
+
+      return {
+        unit: unitStory.unit,
+        unitName: unitNameBySlug.get(unitStory.unit) ?? unitStory.unit,
+        groups: groups.filter((group) => group.episodes.length > 0)
+      };
+    });
 };

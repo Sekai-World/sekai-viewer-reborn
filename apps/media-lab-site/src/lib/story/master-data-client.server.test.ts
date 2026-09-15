@@ -14,7 +14,8 @@ const listEndpointMocks = vi.hoisted(() => ({
   getSpecialStoriesByRegionList: vi.fn(),
   getSubGameCharactersByRegionList: vi.fn(),
   getUnitProfilesByRegionList: vi.fn(),
-  getUnitStoriesByRegionList: vi.fn()
+  getUnitStoriesByRegionList: vi.fn(),
+  getUnitStoryEpisodeGroupsByRegionList: vi.fn()
 }));
 
 vi.mock("@platform/sekai-master-api-sdk", () => listEndpointMocks);
@@ -270,5 +271,62 @@ describe("story master-data client", () => {
     expect(tables.gameCharacterNames.get(1)).toBe("星乃 一歌");
     expect(tables.mobCharacterNames.get(50)).toBe("モブ子");
     expect(tables.subGameCharacterNames.get(90)).toBe("_sub");
+  });
+
+  it("parses unit story episode groups and episode group ids", async () => {
+    listEndpointMocks.getUnitStoriesByRegionList.mockResolvedValue(
+      okPage([
+        {
+          unit: "idol",
+          seq: 1,
+          chapters: [
+            {
+              id: 1,
+              unit: "idol",
+              chapterNo: 1,
+              title: "Chapter 1",
+              assetbundleName: "idol-story-chapter",
+              episodes: [
+                {
+                  id: 1,
+                  chapterNo: 1,
+                  episodeNo: 1,
+                  title: "EP1",
+                  assetbundleName: "ep1",
+                  scenarioId: "idol_01_01",
+                  unitStoryEpisodeGroupId: 7
+                }
+              ]
+            }
+          ]
+        }
+      ])
+    );
+    listEndpointMocks.getUnitStoryEpisodeGroupsByRegionList.mockResolvedValue(
+      okPage([{ id: 7, unit: "idol", unitEpisodeCategory: "none", outline: "Main" }])
+    );
+
+    const result = await fetchStoryCollections(
+      "jp",
+      ["unitStories", "unitStoryEpisodeGroups"],
+      { baseUrl: "https://master.test/api/v1" }
+    );
+
+    expect(listEndpointMocks.getUnitStoryEpisodeGroupsByRegionList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { region: "jp" },
+        query: { page: 1, page_size: 100, spoiler: true }
+      })
+    );
+    expect(result.unitStoryEpisodeGroups).toEqual([
+      {
+        id: 7,
+        unit: "idol",
+        unitEpisodeCategory: "none",
+        outline: "Main",
+        assetbundleName: undefined
+      }
+    ]);
+    expect(result.unitStories[0].chapters[0].episodes[0].unitStoryEpisodeGroupId).toBe(7);
   });
 });

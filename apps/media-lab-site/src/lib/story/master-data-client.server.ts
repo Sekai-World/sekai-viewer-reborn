@@ -11,7 +11,8 @@ import {
   getSpecialStoriesByRegionList,
   getSubGameCharactersByRegionList,
   getUnitProfilesByRegionList,
-  getUnitStoriesByRegionList
+  getUnitStoriesByRegionList,
+  getUnitStoryEpisodeGroupsByRegionList
 } from "@platform/sekai-master-api-sdk";
 import type { StoryRouteRegion } from "$lib/live2d/story-route";
 import type {
@@ -22,6 +23,7 @@ import type {
   StoryEventStory,
   StoryMasterCollections,
   StorySpecialStory,
+  StoryUnitEpisodeGroup,
   StoryUnitProfile,
   StoryUnitStory
 } from "./story-identity";
@@ -37,6 +39,7 @@ import type {
 export type StoryCollectionName =
   | "unitStories"
   | "unitProfiles"
+  | "unitStoryEpisodeGroups"
   | "eventStories"
   | "events"
   | "characterProfiles"
@@ -112,6 +115,7 @@ const collectionParsers: Record<
                 title: asString(e.title),
                 assetbundleName: asString(e.assetbundleName),
                 scenarioId: asString(e.scenarioId),
+                unitStoryEpisodeGroupId: asOptionalNumber(e.unitStoryEpisodeGroupId),
                 releaseConditionId: asOptionalNumber(e.releaseConditionId)
               };
             })
@@ -129,6 +133,18 @@ const collectionParsers: Record<
         seq: asOptionalNumber(r.seq)
       };
       return unitProfile;
+    }),
+  unitStoryEpisodeGroups: (raw) =>
+    asArray(raw).map((row) => {
+      const r = row as Record<string, unknown>;
+      const group: StoryUnitEpisodeGroup = {
+        id: asNumber(r.id),
+        unit: asString(r.unit),
+        unitEpisodeCategory: asString(r.unitEpisodeCategory),
+        outline: asOptionalString(r.outline),
+        assetbundleName: asOptionalString(r.assetbundleName)
+      };
+      return group;
     }),
   eventStories: (raw) =>
     asArray(raw).map((row) => {
@@ -260,6 +276,7 @@ const storyListEndpoints: Record<
 > = {
   unitStories: (request) => getUnitStoriesByRegionList(request),
   unitProfiles: (request) => getUnitProfilesByRegionList(request),
+  unitStoryEpisodeGroups: (request) => getUnitStoryEpisodeGroupsByRegionList(request),
   eventStories: (request) => getEventStoriesByRegionList(request),
   events: (request) => getEventsByRegionList(request),
   characterProfiles: (request) => getCharacterProfilesByRegionList(request),
@@ -369,36 +386,49 @@ export const fetchStoryCollections = async (
   names: readonly StoryCollectionName[],
   options: StoryMasterDataClientOptions = {}
 ): Promise<StoryMasterCollections> => {
-  const [unitStories, unitProfiles, eventStories, events, characterProfiles, cardEpisodes, actionSets, specialStories] =
-    await Promise.all([
-      names.includes("unitStories")
-        ? fetchStoryCollection<StoryUnitStory[]>(region, "unitStories", options)
-        : Promise.resolve([]),
-      names.includes("unitProfiles")
-        ? fetchStoryCollection<StoryUnitProfile[]>(region, "unitProfiles", options)
-        : Promise.resolve([]),
-      names.includes("eventStories")
-        ? fetchStoryCollection<StoryEventStory[]>(region, "eventStories", options)
-        : Promise.resolve([]),
-      names.includes("events")
-        ? fetchStoryCollection<StoryEvent[]>(region, "events", options)
-        : Promise.resolve([]),
-      names.includes("characterProfiles")
-        ? fetchStoryCollection<StoryCharacterProfile[]>(region, "characterProfiles", options)
-        : Promise.resolve([]),
-      names.includes("cardEpisodes")
-        ? fetchStoryCollection<StoryCardEpisode[]>(region, "cardEpisodes", options)
-        : Promise.resolve([]),
-      names.includes("actionSets")
-        ? fetchStoryCollection<StoryActionSet[]>(region, "actionSets", options)
-        : Promise.resolve([]),
-      names.includes("specialStories")
-        ? fetchStoryCollection<StorySpecialStory[]>(region, "specialStories", options)
-        : Promise.resolve([])
-    ]);
+  const [
+    unitStories,
+    unitProfiles,
+    unitStoryEpisodeGroups,
+    eventStories,
+    events,
+    characterProfiles,
+    cardEpisodes,
+    actionSets,
+    specialStories
+  ] = await Promise.all([
+    names.includes("unitStories")
+      ? fetchStoryCollection<StoryUnitStory[]>(region, "unitStories", options)
+      : Promise.resolve([]),
+    names.includes("unitProfiles")
+      ? fetchStoryCollection<StoryUnitProfile[]>(region, "unitProfiles", options)
+      : Promise.resolve([]),
+    names.includes("unitStoryEpisodeGroups")
+      ? fetchStoryCollection<StoryUnitEpisodeGroup[]>(region, "unitStoryEpisodeGroups", options)
+      : Promise.resolve([]),
+    names.includes("eventStories")
+      ? fetchStoryCollection<StoryEventStory[]>(region, "eventStories", options)
+      : Promise.resolve([]),
+    names.includes("events")
+      ? fetchStoryCollection<StoryEvent[]>(region, "events", options)
+      : Promise.resolve([]),
+    names.includes("characterProfiles")
+      ? fetchStoryCollection<StoryCharacterProfile[]>(region, "characterProfiles", options)
+      : Promise.resolve([]),
+    names.includes("cardEpisodes")
+      ? fetchStoryCollection<StoryCardEpisode[]>(region, "cardEpisodes", options)
+      : Promise.resolve([]),
+    names.includes("actionSets")
+      ? fetchStoryCollection<StoryActionSet[]>(region, "actionSets", options)
+      : Promise.resolve([]),
+    names.includes("specialStories")
+      ? fetchStoryCollection<StorySpecialStory[]>(region, "specialStories", options)
+      : Promise.resolve([])
+  ]);
   return {
     unitStories,
     unitProfiles,
+    unitStoryEpisodeGroups,
     eventStories,
     events,
     characterProfiles,

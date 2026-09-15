@@ -2688,6 +2688,10 @@ export type GetGachasByRegionListData = {
          */
         spoiler?: boolean;
         /**
+         * Only include gachas active now (startAt <= now <= endAt)
+         */
+        ongoing?: boolean;
+        /**
          * Sort field (id|startAt)
          */
         sort_by?: string;
@@ -3997,6 +4001,65 @@ export type GetUnitStoriesByRegionListResponses = {
 };
 
 export type GetUnitStoriesByRegionListResponse = GetUnitStoriesByRegionListResponses[keyof GetUnitStoriesByRegionListResponses];
+
+export type GetUnitStoryEpisodeGroupsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/unitStoryEpisodeGroups/{region}/list';
+};
+
+export type GetUnitStoryEpisodeGroupsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetUnitStoryEpisodeGroupsByRegionListError = GetUnitStoryEpisodeGroupsByRegionListErrors[keyof GetUnitStoryEpisodeGroupsByRegionListErrors];
+
+export type GetUnitStoryEpisodeGroupsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetUnitStoryEpisodeGroupsByRegionListResponse = GetUnitStoryEpisodeGroupsByRegionListResponses[keyof GetUnitStoryEpisodeGroupsByRegionListResponses];
 
 export type GetVersionsData = {
     body?: never;

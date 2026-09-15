@@ -71,5 +71,6 @@
   "storyReader.textOnly.title": "Text-Only Reader",
   "storyReader.textOnly.voice.play": "Play voice",
   "storyReader.textOnly.voice.stop": "Stop",
-  "storyReader.textOnly.voice.unavailable": "Voice unavailable"
+  "storyReader.textOnly.voice.unavailable": "Voice unavailable",
+  "storyReader.picker.backToUnits": "All units"
 }

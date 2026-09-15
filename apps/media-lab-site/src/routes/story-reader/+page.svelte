@@ -2,19 +2,12 @@
   import Icon from "@iconify/svelte";
   import StoryPicker from "$lib/components/story-reader/StoryPicker.svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
-  import { supportedRegions } from "$lib/region-selection.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
 
-  const regions = $derived(
-    supportedRegions.map((region) => ({
-      value: region,
-      label: translate(`region.${region}`)
-    }))
-  );
   const storyTypes = $derived(
     (
       [
@@ -111,18 +104,17 @@
   </div>
 
   <StoryPicker
-    {regions}
     {storyTypes}
     {modeBase}
     labels={{
-      region: translate("storyReader.meta.region"),
       type: translate("storyReader.meta.storyType"),
       search: translate("storyReader.picker.search"),
       loading: translate("storyReader.picker.loading"),
       loadFailed: translate("storyReader.picker.loadFailed"),
       empty: translate("storyReader.picker.empty"),
       noMatch: translate("storyReader.picker.noMatch"),
-      open: translate("storyReader.picker.open")
+      open: translate("storyReader.picker.open"),
+      backToUnits: translate("storyReader.picker.backToUnits")
     }}
   />
 </section>

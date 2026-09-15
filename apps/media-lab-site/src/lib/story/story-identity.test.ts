@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildStoryCatalog,
+  buildUnitStoryCatalog,
   parseStoryId,
   resolveStoryIdentity,
   type StoryMasterCollections
@@ -298,5 +299,141 @@ describe("buildStoryCatalog", () => {
     const groups = buildStoryCatalog("special", collections);
     expect(groups[0]).toMatchObject({ key: "2", label: "Connect Live" });
     expect(groups[0].items[0].storyId).toBe("2-1");
+  });
+});
+
+describe("buildUnitStoryCatalog", () => {
+  const unitCollections: StoryMasterCollections = {
+    unitStories: [
+      {
+        unit: "piapro",
+        seq: 6,
+        chapters: [
+          {
+            id: 90,
+            unit: "piapro",
+            chapterNo: 1,
+            title: "piaproストーリー 第1章",
+            assetbundleName: "piapro-story-chapter",
+            episodes: [
+              {
+                id: 1,
+                chapterNo: 1,
+                episodeNo: 4,
+                episodeNoLabel: "第1話",
+                title: "秘密の練習",
+                assetbundleName: "vs_ep4",
+                scenarioId: "vsleo_01_01",
+                unitStoryEpisodeGroupId: 1
+              },
+              {
+                id: 2,
+                chapterNo: 1,
+                episodeNo: 5,
+                title: "先輩だからできること",
+                assetbundleName: "vs_ep5",
+                scenarioId: "vsleo_01_02",
+                unitStoryEpisodeGroupId: 1
+              },
+              {
+                id: 3,
+                chapterNo: 1,
+                episodeNo: 8,
+                title: "全力ライブ！",
+                assetbundleName: "vs_ep8",
+                scenarioId: "vsmmj_01_01",
+                unitStoryEpisodeGroupId: 2
+              }
+            ]
+          }
+        ]
+      },
+      {
+        unit: "idol",
+        seq: 2,
+        chapters: [
+          {
+            id: 10,
+            unit: "idol",
+            chapterNo: 1,
+            title: "MORE MORE JUMP！ストーリー 第1章",
+            assetbundleName: "idol-story-chapter",
+            episodes: [
+              {
+                id: 20,
+                chapterNo: 1,
+                episodeNo: 1,
+                title: "EP1",
+                assetbundleName: "ep1",
+                scenarioId: "idol_01_01",
+                unitStoryEpisodeGroupId: 7
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    unitProfiles: [
+      { unit: "piapro", unitName: "バーチャル・シンガー" },
+      { unit: "idol", unitName: "MORE MORE JUMP！" }
+    ],
+    unitStoryEpisodeGroups: [
+      { id: 1, unit: "piapro", unitEpisodeCategory: "light_sound", outline: "Leo/need sekai arc" },
+      { id: 2, unit: "piapro", unitEpisodeCategory: "idol", outline: "MMJ sekai arc" },
+      { id: 7, unit: "idol", unitEpisodeCategory: "none", outline: "Main idol story" }
+    ],
+    eventStories: [],
+    characterProfiles: [],
+    cardEpisodes: [],
+    actionSets: [],
+    specialStories: []
+  };
+
+  it("orders units by seq with unit profile display names", () => {
+    const units = buildUnitStoryCatalog(unitCollections);
+    expect(units.map((unit) => unit.unit)).toEqual(["idol", "piapro"]);
+    expect(units[0].unitName).toBe("MORE MORE JUMP！");
+    expect(units[1].unitName).toBe("バーチャル・シンガー");
+  });
+
+  it("splits virtual singer stories into per-sekai story lines", () => {
+    const piapro = buildUnitStoryCatalog(unitCollections).find(
+      (unit) => unit.unit === "piapro"
+    );
+    expect(piapro?.groups.map((group) => group.categoryUnit)).toEqual([
+      "light_sound",
+      "idol"
+    ]);
+    expect(piapro?.groups[0].outline).toBe("Leo/need sekai arc");
+    expect(piapro?.groups[0].episodes).toHaveLength(2);
+    expect(piapro?.groups[0].episodes[0]).toEqual({
+      storyId: "piapro-1-4",
+      title: "秘密の練習",
+      sublabel: "第1話",
+      bannerPath: "story/episode_image/piapro-story-chapter/vs_ep4.webp"
+    });
+    expect(piapro?.groups[1].episodes[0].sublabel).toBe("8");
+  });
+
+  it("keeps regular units on a single main story line", () => {
+    const idol = buildUnitStoryCatalog(unitCollections).find(
+      (unit) => unit.unit === "idol"
+    );
+    expect(idol?.groups).toHaveLength(1);
+    expect(idol?.groups[0]).toMatchObject({
+      groupId: 7,
+      categoryUnit: "none",
+      outline: "Main idol story"
+    });
+  });
+
+  it("falls back to one synthetic line without the groups collection", () => {
+    const rest = { ...unitCollections };
+    delete rest.unitStoryEpisodeGroups;
+    const units = buildUnitStoryCatalog(rest);
+    const idol = units.find((unit) => unit.unit === "idol");
+    expect(idol?.groups).toHaveLength(1);
+    expect(idol?.groups[0]).toMatchObject({ groupId: 0, categoryUnit: "none" });
+    expect(idol?.groups[0].episodes[0].storyId).toBe("idol-1-1");
   });
 });
