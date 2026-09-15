@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { getUnitIconBorderColor, resolveUnitIconUrl } from "@platform/ui-shell";
+  import { resolveUnitLogoUrl } from "@platform/ui-shell";
   import { useRegionSelection } from "$lib/region-selection.svelte";
 
   /**
@@ -160,11 +160,6 @@
 
   const itemHref = (storyId: string): string =>
     `${modeBase}/${regionSelection.primary}/${storyType}/${storyId}`;
-
-  const unitIconStyle = (unit: string): string | undefined => {
-    const color = getUnitIconBorderColor(unit);
-    return color ? `box-shadow: inset 0 0 0 2px ${color};` : undefined;
-  };
 </script>
 
 <section class="card bg-base-100 shadow-sm ring-1 ring-base-content/10" aria-label={labels.open}>
@@ -218,10 +213,9 @@
         </button>
         <div class="flex items-center gap-3">
           <img
-            src={resolveUnitIconUrl(selectedUnitEntry.unit) ?? undefined}
+            src={resolveUnitLogoUrl(selectedUnitEntry.unit) ?? undefined}
             alt=""
-            class="size-12"
-            style={unitIconStyle(selectedUnitEntry.unit)}
+            class="h-9 w-auto object-contain"
           />
           <h3 class="text-base font-semibold">{selectedUnitEntry.unitName}</h3>
         </div>
@@ -268,10 +262,9 @@
             onclick={() => (selectedUnit = unit.unit)}
           >
             <img
-              src={resolveUnitIconUrl(unit.unit) ?? undefined}
+              src={resolveUnitLogoUrl(unit.unit) ?? undefined}
               alt=""
-              class="size-20"
-              style={unitIconStyle(unit.unit)}
+              class="h-12 w-auto max-w-full object-contain"
             />
             <span class="text-sm font-semibold">{unit.unitName}</span>
           </button>

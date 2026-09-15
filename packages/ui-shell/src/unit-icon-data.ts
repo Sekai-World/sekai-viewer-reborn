@@ -4,6 +4,12 @@ import piaproIconUrl from "./assets/unit-icons/icon_piapro.png";
 import schoolRefusalIconUrl from "./assets/unit-icons/icon_school_refusal.png";
 import streetIconUrl from "./assets/unit-icons/icon_street.png";
 import themeParkIconUrl from "./assets/unit-icons/icon_theme_park.png";
+import idolLogoUrl from "./assets/unit-logos/logo_idol.png";
+import lightSoundLogoUrl from "./assets/unit-logos/logo_light_sound.png";
+import piaproLogoUrl from "./assets/unit-logos/logo_piapro.png";
+import schoolRefusalLogoUrl from "./assets/unit-logos/logo_school_refusal.png";
+import streetLogoUrl from "./assets/unit-logos/logo_street.png";
+import themeParkLogoUrl from "./assets/unit-logos/logo_theme_park.png";
 
 export const unitIconSlugs = [
   "idol",
@@ -23,6 +29,15 @@ const unitIconBySlug: Record<UnitIconSlug, string> = {
   school_refusal: schoolRefusalIconUrl,
   street: streetIconUrl,
   theme_park: themeParkIconUrl
+};
+
+const unitLogoBySlug: Record<UnitIconSlug, string> = {
+  idol: idolLogoUrl,
+  light_sound: lightSoundLogoUrl,
+  piapro: piaproLogoUrl,
+  school_refusal: schoolRefusalLogoUrl,
+  street: streetLogoUrl,
+  theme_park: themeParkLogoUrl
 };
 
 const unitBorderColorBySlug: Record<UnitIconSlug, `#${string}`> = {
@@ -50,6 +65,14 @@ export const resolveUnitIconUrl = (
 ): string | null => {
   const slug = normalizeUnitIconSlug(unit, mapNoneToPiapro);
   return slug ? unitIconBySlug[slug] : null;
+};
+
+export const resolveUnitLogoUrl = (
+  unit: string | null | undefined,
+  mapNoneToPiapro = false
+): string | null => {
+  const slug = normalizeUnitIconSlug(unit, mapNoneToPiapro);
+  return slug ? unitLogoBySlug[slug] : null;
 };
 
 export const getUnitIconBorderColor = (

@@ -14,6 +14,7 @@ export {
   getUnitIconBorderColor,
   normalizeUnitIconSlug,
   resolveUnitIconUrl,
+  resolveUnitLogoUrl,
   unitIconSlugs
 } from "./unit-icon-data";
 export {
