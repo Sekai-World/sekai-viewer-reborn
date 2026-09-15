@@ -87,6 +87,21 @@ const loadHomepageRegionData = async (preferredRegion?: string): Promise<Homepag
   return { region: result.initialRegion, card, latestData, news };
 };
 
+const loadHomepagePage = async () => {
+  const result = (await load({
+    cookies: { get: () => undefined },
+    fetch: vi.fn()
+  } as unknown as Parameters<typeof load>[0])) as {
+    versionsByRegion: unknown;
+    initialCard: Promise<unknown>;
+    initialLatestData: Promise<unknown>;
+    initialNews: Promise<unknown>;
+  };
+
+  await Promise.all([result.initialCard, result.initialLatestData, result.initialNews]);
+  return result;
+};
+
 describe("homepage latest gacha loading", () => {
   beforeEach(() => {
     getCardsByRegionList.mockReset();
@@ -393,5 +408,13 @@ describe("homepage latest gacha loading", () => {
 
     expect(regionData.news).toEqual({ status: "error" });
     expect(loadGameNews.mock.calls.map(([region]) => region)).toEqual([DEFAULT_REGION]);
+  });
+
+  it("keeps versions empty when the versions request fails", async () => {
+    getVersions.mockResolvedValueOnce({ error: { status: 503 } });
+    expect((await loadHomepagePage()).versionsByRegion).toEqual({});
+
+    getVersions.mockRejectedValueOnce(new Error("versions unavailable"));
+    expect((await loadHomepagePage()).versionsByRegion).toEqual({});
   });
 });

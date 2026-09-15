@@ -102,4 +102,17 @@ describe("event detail page load", () => {
       });
     }
   );
+
+  it("does not report an error when the detail API succeeds", async () => {
+    getEventsByRegionByIdDetail.mockResolvedValue({ data: {} });
+
+    const result = (await runLoad("jp", "event-1")) as EventPageLoadResult;
+
+    await expect(result.eventPayload).resolves.toEqual({
+      event: null,
+      relatedData: null,
+      debugEventJson: null,
+      error: null
+    });
+  });
 });

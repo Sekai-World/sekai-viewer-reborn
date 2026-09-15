@@ -220,6 +220,8 @@ describe("home page data", () => {
               cardRarity: { cardRarityType: "unknown" },
               releaseAt: "2026-09-01T00:00:00.000Z"
             },
+            { id: "card-no-rarity" },
+            {},
             null
           ]
         }
@@ -234,7 +236,8 @@ describe("home page data", () => {
               composer: "Composer",
               publishedAt: 20
             },
-            {}
+            {},
+            null
           ]
         }
       });
@@ -263,6 +266,16 @@ describe("home page data", () => {
             initialSpecialTrainingStatus: null,
             rarityCount: 0,
             releaseAt: "2026-09-01T00:00:00.000Z"
+          },
+          {
+            id: "card-no-rarity",
+            prefix: null,
+            assetBundleName: null,
+            attr: null,
+            rarityType: null,
+            initialSpecialTrainingStatus: null,
+            rarityCount: 0,
+            releaseAt: null
           }
         ],
         musics: [

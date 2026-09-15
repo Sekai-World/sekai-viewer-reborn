@@ -57,6 +57,8 @@ describe("game news normalization", () => {
     );
     expect(parseGameNewsTimestamp(Number.NaN)).toBeNull();
     expect(parseGameNewsTimestamp(Number.POSITIVE_INFINITY)).toBeNull();
+    expect(parseGameNewsTimestamp(" ")).toBeNull();
+    expect(parseGameNewsTimestamp(null)).toBeNull();
     expect(parseGameNewsTimestamp("not-a-date")).toBeNull();
     expect(parseGameNewsTimestamp(Number.MAX_SAFE_INTEGER)).toBeNull();
   });
@@ -106,6 +108,16 @@ describe("game news normalization", () => {
       displayOrder: null,
       bannerAssetbundleName: null
     });
+    expect(
+      normalizeGameNewsItem(
+        makeItem({ id: Number.MAX_SAFE_INTEGER + 1, displayOrder: "9007199254740992" }),
+        "jp"
+      )
+    ).toBeNull();
+
+    const itemWithoutEndAt = makeItem();
+    delete itemWithoutEndAt.endAt;
+    expect(normalizeGameNewsItem(itemWithoutEndAt, "jp")).toMatchObject({ endAt: null });
   });
 
   it("accepts both raw arrays and items envelopes", () => {
@@ -117,6 +129,7 @@ describe("game news normalization", () => {
   });
 
   it("rejects invalid required fields and timestamps as a schema failure", () => {
+    expect(normalizeGameNewsItem(null, "jp")).toBeNull();
     expect(parseGameNewsPayload([makeItem({ title: " " })], "jp")).toBeNull();
     expect(parseGameNewsPayload([makeItem({ informationTag: "unknown" })], "jp")).toBeNull();
     expect(parseGameNewsPayload([makeItem({ startAt: "invalid" })], "jp")).toBeNull();
@@ -159,6 +172,26 @@ describe("game news targets", () => {
     ).toEqual({ kind: "external", url: "https://news.example.test/article/1" });
   });
 
+  it("rejects empty, unsupported, and malformed target paths", () => {
+    expect(resolveGameNewsTarget({ region: "jp", browseType: "internal", path: " " })).toEqual({
+      kind: "none",
+      reason: "invalid-path"
+    });
+    expect(resolveGameNewsTarget({ region: "jp", browseType: "other", path: "/news" })).toEqual({
+      kind: "none",
+      reason: "unsupported-browse-type"
+    });
+    expect(
+      resolveGameNewsTarget({ region: "jp", browseType: "internal", path: "http://[" })
+    ).toEqual({ kind: "none", reason: "invalid-path" });
+    expect(
+      resolveGameNewsTarget({ region: "jp", browseType: "external", path: "http://[" })
+    ).toEqual({ kind: "none", reason: "invalid-path" });
+    expect(
+      resolveGameNewsTarget({ region: "jp", browseType: "internal", path: "javascript:alert(1)" })
+    ).toEqual({ kind: "none", reason: "unsafe-scheme" });
+  });
+
   it.each([
     "javascript:alert(1)",
     "data:text/html,unsafe",
@@ -178,6 +211,29 @@ describe("game news targets", () => {
         path: "https://evil.example.test/news"
       })
     ).toEqual({ kind: "none", reason: "cross-origin-internal-path" });
+  });
+
+  it("exposes target fields for external and rejected normalized items", () => {
+    expect(
+      normalizeGameNewsItem(
+        makeItem({ browseType: "external", path: "https://news.example.test/article/1" }),
+        "jp"
+      )
+    ).toMatchObject({
+      target: { kind: "external", url: "https://news.example.test/article/1" },
+      internalUrl: null,
+      externalUrl: "https://news.example.test/article/1",
+      internalUrlKind: "none",
+      externalUrlKind: "external"
+    });
+
+    expect(normalizeGameNewsItem(makeItem({ browseType: "other" }), "jp")).toMatchObject({
+      target: { kind: "none", reason: "unsupported-browse-type" },
+      internalUrl: null,
+      externalUrl: null,
+      internalUrlKind: "none",
+      externalUrlKind: "none"
+    });
   });
 });
 
@@ -263,6 +319,49 @@ describe("loadGameNews", () => {
     clearGameNewsCache();
     getGameNewsByRegionList.mockResolvedValue({ data: { items: [makeItem({ title: "" })] } });
     await expect(loadGameNews("jp")).resolves.toEqual({ status: "error" });
+  });
+
+  it("shares an in-flight request for the same region", async () => {
+    let resolveResponse: ((value: { data: { items: unknown[] } }) => void) | undefined;
+    const response = new Promise<{ data: { items: unknown[] } }>((resolve) => {
+      resolveResponse = resolve;
+    });
+    getGameNewsByRegionList.mockReturnValue(response);
+
+    const first = loadGameNews("jp");
+    const second = loadGameNews("jp");
+
+    expect(getGameNewsByRegionList).toHaveBeenCalledOnce();
+    resolveResponse?.({ data: { items: [] } });
+
+    await expect(first).resolves.toEqual({ status: "empty" });
+    await expect(second).resolves.toEqual({ status: "empty" });
+  });
+
+  it("does not restore a cache entry after an in-flight request is cleared", async () => {
+    let resolveResponse: ((value: { data: { items: unknown[] } }) => void) | undefined;
+    const response = new Promise<{ data: { items: unknown[] } }>((resolve) => {
+      resolveResponse = resolve;
+    });
+    getGameNewsByRegionList.mockReturnValueOnce(response).mockResolvedValueOnce({
+      data: { items: [] }
+    });
+
+    const request = loadGameNews("jp");
+    clearGameNewsCache();
+    resolveResponse?.({ data: { items: [] } });
+
+    await expect(request).resolves.toEqual({ status: "empty" });
+    await expect(loadGameNews("jp")).resolves.toEqual({ status: "empty" });
+    expect(getGameNewsByRegionList).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns unavailable for an unsupported region before resolving configuration", async () => {
+    const unsupportedRegion = "global" as unknown as Parameters<typeof loadGameNews>[0];
+
+    await expect(loadGameNews(unsupportedRegion)).resolves.toEqual({ status: "unavailable" });
+    expect(getMasterApiBaseUrl).not.toHaveBeenCalled();
+    expect(getGameNewsByRegionList).not.toHaveBeenCalled();
   });
 
   it("returns unavailable without calling the SDK when the master API is not configured", async () => {

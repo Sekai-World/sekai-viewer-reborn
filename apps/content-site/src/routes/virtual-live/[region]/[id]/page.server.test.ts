@@ -155,4 +155,16 @@ describe("virtual live detail page load", () => {
       });
     }
   );
+
+  it("does not report an error when the detail API succeeds", async () => {
+    getVirtualLivesByRegionById.mockResolvedValue({ data: {} });
+
+    const result = (await runLoad("jp", "virtual-live-1")) as VirtualLivePageLoadResult;
+
+    await expect(result.virtualLivePayload).resolves.toEqual({
+      virtualLive: null,
+      debugVirtualLiveJson: null,
+      error: null
+    });
+  });
 });
