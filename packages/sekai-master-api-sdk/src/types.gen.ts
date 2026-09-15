@@ -649,6 +649,9 @@ export type SharedMasterDataLease = {
 };
 
 export type SharedMasterDataLeaseResponse = {
+    /**
+     * null when sync lease coordination is disabled
+     */
     lease?: SharedMasterDataLease;
     status?: string;
 };
@@ -2382,6 +2385,10 @@ export type GetGachasByRegionListData = {
          * Include spoiler content
          */
         spoiler?: boolean;
+        /**
+         * Only include gachas active now (startAt <= now <= endAt)
+         */
+        ongoing?: boolean;
         /**
          * Sort field (id|startAt)
          */
