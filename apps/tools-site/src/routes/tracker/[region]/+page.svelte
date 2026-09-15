@@ -4,6 +4,7 @@
   import type { SharedEventRewardRangeResponse } from "@platform/sekai-master-api-sdk";
   import Icon from "@iconify/svelte";
   import { onMount, tick } from "svelte";
+  import { SvelteMap } from "svelte/reactivity";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import RankingHistoryChart from "$lib/components/RankingHistoryChart.svelte";
   import { getTrackerChapterCountdown, getTrackerCountdown } from "$lib/tracker-countdown";
@@ -19,10 +20,11 @@
   import { calculateChapterElapsedMs, calculateScorePerElapsedHour } from "$lib/tracker-math";
   import { resolveTrackerEventId } from "$lib/tracker-event-identity";
   import {
-    TRACKER_EXPORT_SOURCES,
     createTrackerExportCsv,
+    createTrackerExportReport,
     createTrackerExportWorkbookBlob,
-    mergeTrackerExportRows,
+    type TrackerExportGroup,
+    type TrackerExportReport,
     type TrackerExportRowInput
   } from "$lib/tracker-export";
   import type { EventRewardsResult } from "$lib/server/event-rewards";
@@ -39,13 +41,21 @@
     closedAt: string | number | null;
   };
   type CatalogStatus = "available" | "sdk-error" | "network-error" | "invalid-data";
+  type EventSearchResponse = {
+    status: CatalogStatus;
+    events: EventMetadata[];
+  };
   type Catalog = {
     status: CatalogStatus;
-    currentStatus?: CatalogStatus;
-    listStatus?: CatalogStatus;
+    currentStatus: CatalogStatus;
+    selectedStatus: CatalogStatus;
     currentEvent: EventMetadata | null;
-    selectedEvent?: EventMetadata | null;
-    eligibleEvents: EventMetadata[];
+    selectedEvent: EventMetadata | null;
+  };
+  type TrackerPageReady = {
+    catalog: Catalog | null;
+    trackerResult: EventTrackerResult;
+    resolvedEventId: number | null;
   };
   type GraphPoint = {
     rank: number;
@@ -74,7 +84,8 @@
     | "invalid-data";
   type ExtendedData = PageData & {
     trackerResult?: Promise<EventTrackerResult>;
-    catalog?: Promise<Catalog>;
+    catalog?: Promise<Catalog | null>;
+    trackerReady?: Promise<TrackerPageReady>;
     rewards?: Promise<EventRewardsResult | null>;
     chapters?: Promise<{
       metadata: WorldBloomMetadata | null;
@@ -94,9 +105,12 @@
   let now = $state(Date.now());
   let hasMounted = $state(false);
   let trackerResult = $state<EventTrackerResult | null>(null);
+  let trackerPageReady = $state<TrackerPageReady | null>(null);
   let trackerRequestIdentity = $state<string | null>(null);
   let catalog = $state<Catalog | null>(null);
   let eventQuery = $state("");
+  let eventSearchStatus = $state<"idle" | "loading" | CatalogStatus>("idle");
+  let eventSearchEvents = $state<EventMetadata[]>([]);
   let isEventPickerOpen = $state(false);
   let isEventPickerFocused = $state(false);
   let activeEventIndex = $state(-1);
@@ -139,7 +153,11 @@
   let exportStatus = $state<"idle" | "loading" | "error">("idle");
   let exportError = $state("");
   let exportRequestToken = 0;
+  const eventSearchCache = new SvelteMap<string, EventSearchResponse>();
+  const eventSearchInFlight = new SvelteMap<string, Promise<EventSearchResponse>>();
   let snapshotTimer: ReturnType<typeof setTimeout> | undefined;
+  let eventSearchTimer: number | undefined;
+  let eventSearchRequestToken = 0;
   let shareMessageTimer: ReturnType<typeof setTimeout> | undefined;
   let refreshTimer: number | undefined;
   let refreshedDeadline: number | null = null;
@@ -168,52 +186,31 @@
     `${data.region}:${data.selectionStatus}:${data.selection.eventId ?? "live"}`
   );
   const isExplicitSelection = $derived(data.selection.eventId !== null);
-  const catalogStatus = $derived(catalog?.status ?? null);
-  const listStatus = $derived(catalog?.listStatus ?? catalogStatus);
-  const hasEventCatalog = $derived(
-    listStatus === "available" && (catalog?.eligibleEvents.length ?? 0) > 0
-  );
-  const formatEventLabel = (eventId: number, eventName: string): string =>
-    `#${eventId} — ${eventName}`;
+  const formatEventLabel = (eventId: number, eventName?: string | null): string =>
+    eventName ? `#${eventId} — ${eventName}` : `#${eventId}`;
   const matchingEvents = $derived.by(() => {
     const query = eventQuery.trim().toLocaleLowerCase();
-    const events = catalog?.eligibleEvents ?? [];
+    const events = eventSearchEvents;
     return query
       ? events.filter((event) => `${event.name} ${event.id}`.toLocaleLowerCase().includes(query))
       : events;
   });
   const visibleMatchingEvents = $derived(matchingEvents.slice(0, 10));
+  const eventSearchMessage = $derived(
+    eventSearchStatus === "loading"
+      ? translate("tracker.loadingMetadata")
+      : eventSearchStatus === "available"
+        ? visibleMatchingEvents.length
+          ? ""
+          : translate("tracker.unavailable")
+        : eventSearchStatus === "idle"
+          ? ""
+          : translate(`tracker.metadataError.${eventSearchStatus}`)
+  );
   const isInvalidSelection = $derived(data.selectionStatus === "invalid-event-id");
-  const selectedEvent = $derived.by(() =>
-    data.selection.eventId === null
-      ? (catalog?.selectedEvent ?? null)
-      : catalog?.selectedEvent?.id === data.selection.eventId
-        ? catalog.selectedEvent
-        : null
-  );
-  const pickerValue = $derived(
-    data.selection.eventId !== null
-      ? formatEventLabel(
-          data.selection.eventId,
-          selectedEvent?.name ?? translate("tracker.historicalMetadataUnavailable")
-        )
-      : catalog?.currentEvent
-        ? formatEventLabel(catalog.currentEvent.id, catalog.currentEvent.name)
-        : ""
-  );
-  const currentMetadataUnavailable = $derived(
-    catalog !== null && (catalog.currentStatus !== "available" || catalog.currentEvent === null)
-  );
-  const isCurrentEventKnown = $derived(
-    !isExplicitSelection || (catalog?.currentEvent !== null && catalog?.currentEvent !== undefined)
-  );
-  const isCurrentEvent = $derived(
-    !isExplicitSelection ||
-      (isCurrentEventKnown && catalog?.currentEvent?.id === data.selection.eventId)
-  );
-  const isHistoricalEvent = $derived(
-    isExplicitSelection && !isCurrentEvent && (isCurrentEventKnown || currentMetadataUnavailable)
-  );
+  // The server streams both requests, but the tracker body must not consume
+  // either result until the shared readiness promise has settled.
+  const isMetadataLoading = $derived(!isInvalidSelection && trackerPageReady === null);
   const queryEventId = $derived.by(() => {
     // This route's `selection` field may be shadowed by the parent layout's
     // live selection in PageData, so the browser URL is authoritative here.
@@ -225,20 +222,38 @@
     const eventId = Number(value);
     return Number.isSafeInteger(eventId) && eventId > 0 ? eventId : null;
   });
-  /**
-   * The ranking result is available before catalog metadata in the live flow,
-   * so it must identify graph and chapter-detail requests when the catalog is
-   * still pending or unavailable. Explicit historical selections still win.
-   */
   const eventKey = $derived(
     resolveTrackerEventId({
       selectedEventId: queryEventId ?? data.selection.eventId,
       resultSelectionEventId:
         trackerResult?.selection.mode === "history" ? trackerResult.selection.eventId : null,
-      resolvedCurrentEventId: trackerResult?.resolvedCurrentEventId,
-      rankingEventIds: trackerResult?.rankings.map((ranking) => ranking.eventId),
-      catalogCurrentEventId: catalog?.currentEvent?.id
+      catalogCurrentEventId: trackerPageReady?.resolvedEventId ?? null
     })
+  );
+  const selectedEvent = $derived.by(() => {
+    if (eventKey === null) return null;
+    const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;
+    return event?.id === eventKey ? event : null;
+  });
+  const pickerValue = $derived(
+    eventKey === null ? "" : formatEventLabel(eventKey, selectedEvent?.name)
+  );
+  const currentEventId = $derived(
+    !isExplicitSelection
+      ? (trackerPageReady?.resolvedEventId ?? null)
+      : (catalog?.currentEvent?.id ?? null)
+  );
+  const currentMetadataUnavailable = $derived(
+    catalog !== null && (catalog.currentStatus !== "available" || catalog.currentEvent === null)
+  );
+  const isCurrentEventKnown = $derived(currentEventId !== null);
+  const isCurrentEvent = $derived(
+    isCurrentEventKnown && eventKey !== null && currentEventId === eventKey
+  );
+  const isHistoricalEvent = $derived(
+    isExplicitSelection &&
+      !isCurrentEvent &&
+      (isCurrentEventKnown || currentMetadataUnavailable)
   );
   const phase = $derived(
     getTrackerPhase({
@@ -250,7 +265,7 @@
   const activityLabel = $derived(
     isHistoricalEvent
       ? translate("tracker.historical")
-      : !isCurrentEvent
+      : currentMetadataUnavailable || !isCurrentEvent
         ? translate("tracker.phaseUnavailable")
         : phase === "live"
           ? translate("tracker.live")
@@ -471,7 +486,7 @@
       : new Intl.DateTimeFormat(data.uiLocale, {
           dateStyle: "medium",
           timeStyle: "short",
-          // Keep SSR and the first hydrated render deterministic, then show the viewer's own local time.
+          // Keep SSR deterministic, then show the ranking timestamp in the viewer's local time.
           timeZone: hasMounted ? undefined : "UTC"
         }).format(date);
   };
@@ -564,6 +579,90 @@
       window.clearTimeout(timeout);
     }
   }
+  const isCatalogStatus = (value: unknown): value is CatalogStatus =>
+    value === "available" ||
+    value === "sdk-error" ||
+    value === "network-error" ||
+    value === "invalid-data";
+  const isEventMetadata = (value: unknown): value is EventMetadata => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const event = value as Record<string, unknown>;
+    return (
+      typeof event.id === "number" &&
+      Number.isSafeInteger(event.id) &&
+      event.id > 0 &&
+      typeof event.name === "string"
+    );
+  };
+  const parseEventSearchResponse = (payload: unknown): EventSearchResponse => {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+      return { status: "invalid-data", events: [] };
+    }
+    const source = payload as Record<string, unknown>;
+    const status = isCatalogStatus(source.status) ? source.status : "invalid-data";
+    const events = Array.isArray(source.events)
+      ? source.events.filter((event): event is EventMetadata => isEventMetadata(event))
+      : [];
+    return { status, events };
+  };
+  const eventSearchKey = (query: string): string =>
+    `${data.region}:${query.trim().toLocaleLowerCase()}`;
+  const requestEventSearch = (query: string): Promise<EventSearchResponse> => {
+    const key = eventSearchKey(query);
+    const cached = eventSearchCache.get(key);
+    if (cached) return Promise.resolve(cached);
+    const existing = eventSearchInFlight.get(key);
+    if (existing) return existing;
+
+    const request = fetchJsonWithDeadline<unknown>(endpoint("events", { query }))
+      .then(({ response, payload }) =>
+        response.ok
+          ? parseEventSearchResponse(payload)
+          : ({ status: "network-error", events: [] } satisfies EventSearchResponse)
+      )
+      .catch((): EventSearchResponse => ({ status: "network-error", events: [] }))
+      .then((result) => {
+        if (result.status === "available") eventSearchCache.set(key, result);
+        return result;
+      });
+    eventSearchInFlight.set(key, request);
+    void request
+      .finally(() => {
+        if (eventSearchInFlight.get(key) === request) eventSearchInFlight.delete(key);
+      })
+      .catch(() => undefined);
+    return request;
+  };
+  const loadEventSearch = async (query: string, requestToken: number): Promise<void> => {
+    const result = await requestEventSearch(query);
+    if (requestToken !== eventSearchRequestToken || eventQuery.trim() !== query) return;
+    eventSearchEvents = result.events;
+    eventSearchStatus = result.status;
+    isEventPickerOpen = true;
+    activeEventIndex = -1;
+  };
+  const isPositiveEventIdQuery = (value: string): boolean => /^[1-9]\d*$/.test(value);
+  const scheduleEventSearch = (value: string): void => {
+    if (eventSearchTimer !== undefined) window.clearTimeout(eventSearchTimer);
+    const requestToken = ++eventSearchRequestToken;
+    const query = value.trim();
+    eventSearchEvents = [];
+    eventSearchStatus = "idle";
+    if (!query) {
+      isEventPickerOpen = false;
+      return;
+    }
+
+    isEventPickerOpen = true;
+    eventSearchStatus = "loading";
+    eventSearchTimer = window.setTimeout(
+      () => {
+        eventSearchTimer = undefined;
+        void loadEventSearch(query, requestToken);
+      },
+      isPositiveEventIdQuery(query) ? 0 : 220
+    );
+  };
   const isTimeTravelStatus = (
     value: unknown
   ): value is Exclude<TimeTravelStatus, "idle" | "loading"> =>
@@ -580,6 +679,9 @@
       ? translate(`tracker.${subject}Unavailable`)
       : translate(`tracker.${subject}Error.${status}`);
   const navigateToEvent = (eventId: number | null): void => {
+    eventSearchRequestToken += 1;
+    if (eventSearchTimer !== undefined) window.clearTimeout(eventSearchTimer);
+    eventSearchTimer = undefined;
     isEventPickerOpen = false;
     isEventPickerFocused = false;
     activeEventIndex = -1;
@@ -596,13 +698,13 @@
   const handleEventPickerInput = (value: string): void => {
     eventQuery = value;
     activeEventIndex = -1;
-    isEventPickerOpen = hasEventCatalog;
+    scheduleEventSearch(value);
   };
   const clearEventSearch = (): void => {
     eventQuery = "";
+    scheduleEventSearch("");
     activeEventIndex = -1;
     isEventPickerFocused = true;
-    isEventPickerOpen = hasEventCatalog;
     eventPickerInput?.focus();
   };
   const handleEventPickerKeydown = (event: KeyboardEvent): void => {
@@ -612,7 +714,7 @@
       return;
     }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      if (!hasEventCatalog) return;
+      if (eventSearchStatus !== "available" || !visibleMatchingEvents.length) return;
       event.preventDefault();
       isEventPickerOpen = true;
       const direction = event.key === "ArrowDown" ? 1 : -1;
@@ -634,7 +736,7 @@
       navigateToEvent(null);
       return;
     }
-    if (/^[1-9]\d*$/.test(trimmedQuery)) navigateToEvent(Number(trimmedQuery));
+    if (isPositiveEventIdQuery(trimmedQuery)) navigateToEvent(Number(trimmedQuery));
   };
   const formatRewardRange = (reward: SharedEventRewardRangeResponse | null): string => {
     if (reward === null) return translate("tracker.degreeUnavailable");
@@ -657,10 +759,16 @@
       data.selection.eventId === null
         ? { mode: "live", eventId: null }
         : { mode: "history", eventId: data.selection.eventId },
-    resolvedCurrentEventId: null,
     loadedAt: null,
     status: "network-error",
     rankings: []
+  });
+  const createCatalogNetworkFailure = (): Catalog => ({
+    status: "network-error",
+    currentStatus: "network-error",
+    selectedStatus: "network-error",
+    currentEvent: null,
+    selectedEvent: null
   });
   const toNumber = (value: unknown): number | null => {
     const parsed =
@@ -1014,16 +1122,15 @@
   );
   const toEventExportRows = (
     rankingRows: readonly TrackerRow<SharedEventRewardRangeResponse>[],
-    source: string,
+    scope: string,
     capturedAt: string | null = null
   ): TrackerExportRowInput[] =>
     rankingRows
       .filter((row) => row.status === "available")
       .map((row) => ({
-        section: "event",
-        source,
+        scope,
         rank: row.ladderRank,
-        player: row.ranking?.userName ?? null,
+        player: row.ranking?.userName ?? row.ranking?.userId ?? null,
         userId: row.ranking?.userId ?? null,
         score: row.score,
         speedPerHour: row.speedPerHour,
@@ -1047,12 +1154,12 @@
       elapsedMs: eventElapsedMsAt(timestamp),
       getReward
     });
-    return toEventExportRows(snapshotRows, TRACKER_EXPORT_SOURCES.historySnapshot, timestamp);
+    return toEventExportRows(snapshotRows, "History snapshot", timestamp);
   };
-  const chapterExportRows = (): TrackerExportRowInput[] =>
+  const chapterExportGroups = (): TrackerExportGroup[] =>
     (chapters?.rankings ?? [])
       .filter(({ chapter }) => exportChapterIds.includes(chapter.id))
-      .flatMap(({ chapter, result }) => {
+      .map(({ chapter, result }) => {
         const chapterElapsedMs = calculateChapterElapsedMs({
           startAt: chapter.chapterStartAt,
           endAt: chapter.chapterEndAt,
@@ -1060,15 +1167,13 @@
           isCurrent: chapterIsCurrent(chapter),
           snapshotAt: snapshotTimestamp
         });
-        return createChapterRows(result.rankings, ladder)
+        const chapterLabel = interpolate("tracker.chapter", { number: chapter.chapterNo });
+        const rows = createChapterRows(result.rankings, ladder)
           .filter((row) => row.status === "available")
           .map((row) => ({
-            section: "chapter",
-            source: TRACKER_EXPORT_SOURCES.worldLinkChapter,
+            scope: chapterLabel,
             rank: row.rank,
-            player: row.userName
-              ? `${interpolate("tracker.chapter", { number: chapter.chapterNo })}: ${row.userName}`
-              : interpolate("tracker.chapter", { number: chapter.chapterNo }),
+            player: row.userName ?? row.userId ?? null,
             userId: row.userId,
             score: row.score,
             speedPerHour: calculateScorePerElapsedHour({
@@ -1078,7 +1183,9 @@
             reward: formatRewardRange(getReward(row.rank)),
             capturedAt: row.timestamp
           }));
-      });
+        return { label: chapterLabel, sheetName: chapterLabel, rows };
+      })
+      .filter(({ rows }) => rows.length > 0);
   const closeExportMenu = (): void => {
     isExportMenuOpen = false;
   };
@@ -1134,17 +1241,23 @@
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
   };
-  const buildExportRows = async (token: number): Promise<TrackerExportRowInput[]> => {
-    const source =
-      snapshotRankings !== null && snapshotTimestamp !== null
-        ? TRACKER_EXPORT_SOURCES.historySnapshot
-        : TRACKER_EXPORT_SOURCES.currentEvent;
-    const current = toEventExportRows(exportableRows, source, snapshotTimestamp);
+  const buildExportReport = async (token: number): Promise<TrackerExportReport> => {
+    const isSelectedSnapshot = snapshotRankings !== null && snapshotTimestamp !== null;
+    const currentScope = isSelectedSnapshot ? "History snapshot" : "Current event";
+    const currentRows = toEventExportRows(exportableRows, currentScope, snapshotTimestamp);
+    const currentSheetName = isSelectedSnapshot
+      ? `History ${snapshotTimestamp}`
+      : "Current rankings";
+    const currentGroup: TrackerExportGroup = {
+      label: currentSheetName,
+      sheetName: currentSheetName,
+      rows: currentRows
+    };
     const history = includeHistory && eventKey !== null ? await loadExportHistory(eventKey) : [];
     if (token !== exportRequestToken) throw new Error("stale");
-    return mergeTrackerExportRows(current, ...history, chapterExportRows());
+    return createTrackerExportReport([currentGroup, ...history, ...chapterExportGroups()]);
   };
-  const loadExportHistory = async (requestEventKey: number): Promise<TrackerExportRowInput[][]> => {
+  const loadExportHistory = async (requestEventKey: number): Promise<TrackerExportGroup[]> => {
     const historyTimePoints = timePoints.length
       ? timePoints
       : await fetchExportTimePoints(requestEventKey);
@@ -1159,7 +1272,8 @@
       if (!response.ok || payload.status !== "available" || !Array.isArray(payload.rankings)) {
         throw new Error(translate("tracker.exportHistoryError"));
       }
-      return createEventSnapshotExportRows(payload.rankings, timestamp);
+      const rows = createEventSnapshotExportRows(payload.rankings, timestamp);
+      return { label: `History ${timestamp}`, sheetName: `History ${timestamp}`, rows };
     });
   };
   const fetchExportTimePoints = async (requestEventKey: number): Promise<string[]> => {
@@ -1180,19 +1294,22 @@
     exportStatus = "loading";
     exportError = "";
     try {
-      const rows = await buildExportRows(token);
+      const report = await buildExportReport(token);
       if (exportFormat === "copy") {
-        await navigator.clipboard.writeText(createTrackerExportCsv(rows));
+        await navigator.clipboard.writeText(createTrackerExportCsv(report));
         shareMessage = translate("tracker.exportCopied");
       } else if (exportFormat === "csv") {
         downloadBlob(
-          new Blob(["\ufeff" + createTrackerExportCsv(rows)], {
+          new Blob(["\ufeff" + createTrackerExportCsv(report)], {
             type: "text/csv;charset=utf-8"
           }),
           "csv"
         );
       } else {
-        downloadBlob(await createTrackerExportWorkbookBlob(rows, { sheetName: "tracker" }), "xlsx");
+        downloadBlob(
+          await createTrackerExportWorkbookBlob(report, { sheetName: "tracker" }),
+          "xlsx"
+        );
       }
       closeExport();
     } catch (error) {
@@ -1281,6 +1398,7 @@
       window.clearInterval(clock);
       document.removeEventListener("pointerdown", handleDocumentPointerDown);
       if (snapshotTimer) clearTimeout(snapshotTimer);
+      if (eventSearchTimer !== undefined) window.clearTimeout(eventSearchTimer);
       if (shareMessageTimer) clearTimeout(shareMessageTimer);
       if (refreshTimer) clearTimeout(refreshTimer);
       if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
@@ -1320,7 +1438,15 @@
     }
   });
   $effect(() => {
-    if (!isEventPickerFocused) eventQuery = pickerValue;
+    if (
+      !isEventPickerFocused &&
+      queryEventId === null &&
+      trackerResult?.selection.mode === "live" &&
+      eventKey !== null &&
+      pickerValue !== ""
+    ) {
+      eventQuery = pickerValue;
+    }
   });
   $effect(() => {
     let cancelled = false;
@@ -1329,7 +1455,13 @@
       trackerRequestIdentity !== null && trackerRequestIdentity !== requestIdentity;
     if (selectionChanged) {
       trackerResult = null;
+      trackerPageReady = null;
       catalog = null;
+      eventSearchRequestToken += 1;
+      eventSearchEvents = [];
+      eventSearchStatus = "idle";
+      if (eventSearchTimer !== undefined) window.clearTimeout(eventSearchTimer);
+      eventSearchTimer = undefined;
       rewards = null;
       chapters = null;
       selectedChapterId = null;
@@ -1339,19 +1471,24 @@
       exportChapterSelectionInitialized = false;
     }
     trackerRequestIdentity = requestIdentity;
-    void extendedData.trackerResult?.then(
+    void extendedData.trackerReady?.then(
       (value) => {
-        if (!cancelled && trackerRequestIdentity === requestIdentity) trackerResult = value;
+        if (cancelled || trackerRequestIdentity !== requestIdentity) return;
+        trackerResult = value.trackerResult;
+        catalog = value.catalog;
+        trackerPageReady = value;
       },
       () => {
-        if (!cancelled && trackerRequestIdentity === requestIdentity) {
-          trackerResult = createTrackerNetworkFailure();
-        }
+        if (cancelled || trackerRequestIdentity !== requestIdentity) return;
+        trackerResult = createTrackerNetworkFailure();
+        catalog = createCatalogNetworkFailure();
+        trackerPageReady = {
+          catalog,
+          trackerResult,
+          resolvedEventId: null
+        };
       }
     );
-    void extendedData.catalog?.then((value) => {
-      if (!cancelled && trackerRequestIdentity === requestIdentity) catalog = value;
-    });
     void extendedData.rewards?.then((value) => {
       if (!cancelled && trackerRequestIdentity === requestIdentity) rewards = value;
     });
@@ -1429,7 +1566,7 @@
       <h1 id="tracker-title">{translate("tracker.title")}</h1>
     </div>
     <div class="tracker-status-panel" aria-live="polite">
-      {#if catalog === null && !isInvalidSelection}
+      {#if isMetadataLoading}
         <div class="tracker-status-skeleton" aria-hidden="true">
           <span class="skeleton h-6 w-24 rounded-full"></span>
           <span class="skeleton h-4 w-36"></span>
@@ -1499,6 +1636,29 @@
     </div>
   </header>
 
+  {#if isMetadataLoading}
+    <section class="tracker-ranking-workspace" aria-live="polite">
+      <div
+        class="tracker-ranking-skeleton"
+        role="status"
+        aria-label={translate("tracker.loading")}
+        aria-busy="true"
+      >
+        <div class="tracker-skeleton-heading" aria-hidden="true">
+          <span class="skeleton h-3 w-20"></span><span class="skeleton h-7 w-32"></span>
+        </div>
+        <div class="tracker-skeleton-table" aria-hidden="true">
+          {#each getTrackerRankLadder(ladder) as rank (rank)}
+            <div class="tracker-skeleton-row">
+              <span class="skeleton h-9 w-12"></span><span class="skeleton h-5 w-full max-w-48"
+              ></span><span class="skeleton h-5 w-20"></span><span class="skeleton h-5 w-16"
+              ></span><span class="skeleton h-6 w-24 rounded-full"></span>
+            </div>
+          {/each}
+        </div>
+      </div>
+    </section>
+  {:else}
   <section class="tracker-control-deck" aria-label={translate("tracker.eventSelection")}>
     <div class="tracker-event-picker">
       <div class="tracker-event-combobox">
@@ -1511,7 +1671,7 @@
           inputmode="search"
           autocomplete="off"
           aria-label={translate("tracker.eventSelection")}
-          aria-expanded={isEventPickerOpen && hasEventCatalog}
+          aria-expanded={isEventPickerOpen}
           aria-controls="tracker-event-options"
           aria-activedescendant={activeEventIndex >= 0
             ? `tracker-event-option-${visibleMatchingEvents[activeEventIndex]?.id}`
@@ -1520,7 +1680,7 @@
           placeholder={translate("tracker.eventPickerPlaceholder")}
           onfocus={() => {
             isEventPickerFocused = true;
-            isEventPickerOpen = hasEventCatalog;
+            isEventPickerOpen = eventSearchStatus === "available" && eventQuery.trim().length > 0;
           }}
           oninput={(event) => handleEventPickerInput(event.currentTarget.value)}
           onkeydown={handleEventPickerKeydown}
@@ -1542,28 +1702,36 @@
             <Icon icon="mdi:close" aria-hidden="true" />
           </button>
         {/if}
-        {#if isEventPickerOpen && hasEventCatalog}
+        {#if isEventPickerOpen}
           <ul
             id="tracker-event-options"
             class="tracker-event-suggestions"
             role="listbox"
             aria-label={translate("tracker.eventSuggestions")}
           >
-            {#each visibleMatchingEvents as event, index (event.id)}
+            {#if eventSearchStatus === "available" && visibleMatchingEvents.length > 0}
+              {#each visibleMatchingEvents as event, index (event.id)}
+                <li
+                  id={`tracker-event-option-${event.id}`}
+                  role="option"
+                  aria-selected={eventKey === event.id || activeEventIndex === index}
+                  tabindex="-1"
+                  onmousedown={(mouseEvent) => mouseEvent.preventDefault()}
+                  onclick={() => selectEvent(event)}
+                  onkeydown={(keyboardEvent) => {
+                    if (keyboardEvent.key === "Enter") selectEvent(event);
+                  }}
+                >
+                  <span>{formatEventLabel(event.id, event.name)}</span>
+                </li>
+              {/each}
+            {:else}
               <li
-                id={`tracker-event-option-${event.id}`}
-                role="option"
-                aria-selected={data.selection.eventId === event.id || activeEventIndex === index}
-                tabindex="-1"
-                onmousedown={(mouseEvent) => mouseEvent.preventDefault()}
-                onclick={() => selectEvent(event)}
-                onkeydown={(keyboardEvent) => {
-                  if (keyboardEvent.key === "Enter") selectEvent(event);
-                }}
-              >
-                <span>{formatEventLabel(event.id, event.name)}</span>
-              </li>
-            {/each}
+                class="tracker-event-search-status"
+                role={eventSearchStatus === "loading" || eventSearchStatus === "available" ? "status" : "alert"}
+                aria-live="polite"
+              >{eventSearchMessage}</li>
+            {/if}
           </ul>
         {/if}
       </div>
@@ -1594,7 +1762,11 @@
           >
         </div>
       </div>
-      <div class="tracker-tool-actions">
+      <div
+        class="tracker-tool-action-region"
+        class:tracker-tool-action-region-has-message={shareMessage.trim().length > 0}
+      >
+        <div class="tracker-tool-actions">
         <button
           class:btn-primary={isTimeTravelActive}
           class:btn-outline={!isTimeTravelActive}
@@ -1675,9 +1847,10 @@
             aria-hidden="true"
           />{translate("tracker.share")}
         </button>
-        <span class="tracker-share-message" role="status" aria-live="polite">
-          {shareMessage}
-        </span>
+        </div>
+        {#if shareMessage.trim()}
+          <span class="tracker-share-message" role="status" aria-live="polite">{shareMessage}</span>
+        {/if}
       </div>
     </div>
     {#if isTimeTravelActive}
@@ -2074,6 +2247,7 @@
       {/if}
     </div>
   </section>
+  {/if}
 </main>
 
 <dialog
@@ -2572,6 +2746,14 @@
     align-items: center;
     gap: 0.75rem;
   }
+  .tracker-tool-action-region {
+    position: relative;
+    min-width: 0;
+    margin-inline-start: auto;
+  }
+  .tracker-tool-action-region-has-message {
+    padding-block-end: 3.25rem;
+  }
   .tracker-tool-actions {
     display: flex;
     margin-inline-start: auto;
@@ -2581,7 +2763,23 @@
     justify-content: flex-end;
     gap: 0.5rem;
   }
+  @media (min-width: 48rem) {
+    .tracker-control-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .tracker-ladder-control {
+      grid-column: 1;
+    }
+    .tracker-tool-action-region {
+      grid-column: 2;
+      justify-self: end;
+    }
+  }
   .tracker-share-message {
+    position: absolute;
+    inset-inline-end: 0;
+    inset-block-end: 0;
     display: inline-flex;
     width: 8.5rem;
     min-width: 8.5rem;
@@ -2629,16 +2827,30 @@
   }
   @media (max-width: 47.999rem), (pointer: coarse) {
     .tracker-control-row {
+      display: flex;
       align-items: stretch;
+    }
+    .tracker-tool-action-region {
+      width: 100%;
+      margin-inline-start: 0;
+    }
+    .tracker-tool-action-region-has-message {
+      padding-block-end: 0;
     }
     .tracker-tool-actions {
       width: 100%;
       margin-inline-start: 0;
     }
     .tracker-share-message {
+      position: static;
+      display: flex;
       width: min(8.5rem, 100%);
       min-width: min(8.5rem, 100%);
-      flex: 1 1 8.5rem;
+      max-width: 100%;
+      margin-block-start: 0.5rem;
+      margin-inline-start: auto;
+      overflow-wrap: anywhere;
+      white-space: normal;
     }
     .tracker-tool-actions .btn {
       min-height: 2.75rem;

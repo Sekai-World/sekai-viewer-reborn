@@ -27,7 +27,6 @@ export type EventTrackerSelection =
 
 export type EventTrackerResult = {
   selection: EventTrackerSelection;
-  resolvedCurrentEventId: number | null;
   loadedAt: string | null;
   status: "available" | "sdk-error" | "upstream-error" | "network-error" | "invalid-data";
   rankings: EventTrackerRanking[];
@@ -174,22 +173,13 @@ const getLatestRankingTimestamp = (rankings: EventTrackerRanking[]): string | nu
 const withResult = (
   selection: EventTrackerSelection,
   status: EventTrackerResult["status"],
-  rankings: EventTrackerRanking[] = [],
-  resolvedCurrentEventId: number | null = null
+  rankings: EventTrackerRanking[] = []
 ): EventTrackerResult => ({
   selection,
-  resolvedCurrentEventId,
   loadedAt: getLatestRankingTimestamp(rankings),
   status,
   rankings
 });
-
-const getResolvedCurrentEventId = (rankings: EventTrackerRanking[]): number | null => {
-  const eventIds = new Set(
-    rankings.map((ranking) => ranking.eventId).filter((id): id is number => id !== null)
-  );
-  return eventIds.size === 1 ? ([...eventIds][0] ?? null) : null;
-};
 
 const getSdkErrorStatus = (response: {
   response?: { status?: number };
@@ -247,7 +237,7 @@ const getLiveEventTrackerRankings = async (
     const completeness = getLiveCompleteness(region, rankings);
     if (completeness.status !== "incomplete" || attempt === LIVE_MAX_ATTEMPTS - 1) {
       return {
-        ...withResult(selection, "available", rankings, getResolvedCurrentEventId(rankings)),
+        ...withResult(selection, "available", rankings),
         completeness
       };
     }
