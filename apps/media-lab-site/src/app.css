@@ -20,6 +20,14 @@
     ::view-transition-new(media-lab-site-main) {
       animation-duration: 220ms;
       animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+      /* Snapshots default to object-fit: fill, so they stretch with the
+         group's animated box: entering a page taller than the previous one
+         (e.g. Home into the story picker) renders the incoming snapshot
+         squashed flat before it expands. Cover keeps each snapshot at its
+         own aspect ratio, top-aligned, so only the opacity cross-fade
+         reads. */
+      object-fit: cover;
+      object-position: top;
     }
   }
 }
