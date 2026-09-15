@@ -34,6 +34,12 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("history-chart-legend");
     expect(source).toContain("onkeydown={(event) => handleMarkerKeydown(event, marker.point)}");
     expect(source).toContain("title>{`${marker.change.previousName} → ${marker.change.nextName}");
+    const plotStyleStart = source.indexOf(".history-chart-plot {");
+    const plotStyleEnd = source.indexOf(".history-chart :global(.chart-container)", plotStyleStart);
+    expect(plotStyleStart).toBeGreaterThan(-1);
+    expect(plotStyleEnd).toBeGreaterThan(plotStyleStart);
+    expect(source.slice(plotStyleStart, plotStyleEnd)).toContain("touch-action: none;");
+    expect(source).toContain("onpointermove={captureHoveredPoint}");
     expect(source).toContain("prefers-reduced-motion: reduce");
   });
   it("checks reduced motion at navigation time inside the top-level onNavigate callback", async () => {
@@ -48,6 +54,21 @@ describe("tracker page UI contract", () => {
     if (onMountStart !== -1) {
       expect(onNavigateCall).toBeLessThan(onMountStart);
     }
+  });
+
+  it("keeps Home ungrouped while preserving the Live Data sidebar group", async () => {
+    const source = await readFile(layoutPath, "utf8");
+    const sidebarStart = source.indexOf("const sidebarItems: SidebarItem[]");
+    const sidebarEnd = source.indexOf("]);", sidebarStart);
+    const sidebar = source.slice(sidebarStart, sidebarEnd);
+    const homeIndex = sidebar.indexOf('label: translate("navigation.home")');
+
+    expect(sidebarStart).toBeGreaterThan(-1);
+    expect(sidebarEnd).toBeGreaterThan(sidebarStart);
+    expect(homeIndex).toBeGreaterThan(-1);
+    expect(sidebar.slice(0, homeIndex)).not.toContain('type: "section"');
+    expect(sidebar).not.toContain('translate("navigation.explore")');
+    expect(sidebar).toContain('{ type: "section", label: translate("navigation.liveData") }');
   });
 
   it("keeps navigation shell neutral and owns stable tracker loading shapes", async () => {
@@ -455,7 +476,15 @@ describe("tracker page UI contract", () => {
     );
     expect(source).toContain("`#${eventId} — ${eventName}`");
     expect(source).toContain("eventName ? `#${eventId} — ${eventName}` : `#${eventId}`");
-    expect(source).toContain("const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;");
+    expect(source).toMatch(
+      /const isExplicitSelection = \$derived\(\s*queryEventId !== null \|\| data\.selection\.eventId !== null\s*\);/
+    );
+    expect(source.indexOf("const queryEventId = $derived.by(")).toBeLessThan(
+      source.indexOf("const isExplicitSelection = $derived(")
+    );
+    expect(source).toContain(
+      "const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;"
+    );
     expect(source).toContain("event?.id === eventKey ? event : null");
     const pickerStart = source.indexOf("const pickerValue = $derived(");
     const pickerEnd = source.indexOf("const currentMetadataUnavailable", pickerStart);

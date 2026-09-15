@@ -192,7 +192,20 @@
   const trackerIdentity = $derived(
     `${data.region}:${data.selectionStatus}:${data.selection.eventId ?? "live"}`
   );
-  const isExplicitSelection = $derived(data.selection.eventId !== null);
+  const queryEventId = $derived.by(() => {
+    // This route's `selection` field may be shadowed by the parent layout's
+    // live selection in PageData, so the browser URL is authoritative here.
+    const value =
+      typeof window === "undefined"
+        ? null
+        : new URLSearchParams(window.location.search).get("eventId");
+    if (!value || !/^\d+$/.test(value)) return null;
+    const eventId = Number(value);
+    return Number.isSafeInteger(eventId) && eventId > 0 ? eventId : null;
+  });
+  const isExplicitSelection = $derived(
+    queryEventId !== null || data.selection.eventId !== null
+  );
   const formatEventLabel = (eventId: number, eventName?: string | null): string =>
     eventName ? `#${eventId} — ${eventName}` : `#${eventId}`;
   const matchingEvents = $derived.by(() => {
@@ -218,17 +231,6 @@
   // The server streams both requests, but the tracker body must not consume
   // either result until the shared readiness promise has settled.
   const isMetadataLoading = $derived(!isInvalidSelection && trackerPageReady === null);
-  const queryEventId = $derived.by(() => {
-    // This route's `selection` field may be shadowed by the parent layout's
-    // live selection in PageData, so the browser URL is authoritative here.
-    const value =
-      typeof window === "undefined"
-        ? null
-        : new URLSearchParams(window.location.search).get("eventId");
-    if (!value || !/^\d+$/.test(value)) return null;
-    const eventId = Number(value);
-    return Number.isSafeInteger(eventId) && eventId > 0 ? eventId : null;
-  });
   const eventKey = $derived(
     resolveTrackerEventId({
       selectedEventId: queryEventId ?? data.selection.eventId,
