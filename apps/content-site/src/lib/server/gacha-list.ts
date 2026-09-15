@@ -27,6 +27,7 @@ export type GachaListQueryState = {
   sortBy: "id" | "startAt";
   sortOrder: "asc" | "desc";
   spoiler: boolean;
+  ongoing: boolean;
 };
 
 export const DEFAULT_GACHA_LIST_PAGE_SIZE = 20;
@@ -117,7 +118,8 @@ const parseSortOrder = (value: string | null): "asc" | "desc" => (value === "asc
 export const parseGachaListQueryState = (searchParams: URLSearchParams): GachaListQueryState => ({
   sortBy: parseSortBy(searchParams.get("sort_by")),
   sortOrder: parseSortOrder(searchParams.get("sort_order")),
-  spoiler: searchParams.get("spoiler") === "true"
+  spoiler: searchParams.get("spoiler") === "true",
+  ongoing: searchParams.get("ongoing") === "true"
 });
 
 export const createGachaListRequestQuery = (
@@ -132,6 +134,11 @@ export const createGachaListRequestQuery = (
     sort_by: queryState.sortBy,
     sort_order: queryState.sortOrder
   };
+
+  if (queryState.ongoing) {
+    query.ongoing = true;
+  }
+
   return query;
 };
 

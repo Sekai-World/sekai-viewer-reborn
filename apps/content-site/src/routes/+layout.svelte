@@ -60,7 +60,8 @@
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
-  let preferredRegion = $state<SupportedRegion>(DEFAULT_REGION);
+  const getInitialPreferredRegion = (): SupportedRegion => data.preferredRegion;
+  let preferredRegion = $state<SupportedRegion>(getInitialPreferredRegion());
   let resolvedTheme = $state<ResolvedTheme>("light");
   let isDesktopSettingsMenuOpen = $state(false);
   let isDesktopThemeMenuOpen = $state(false);

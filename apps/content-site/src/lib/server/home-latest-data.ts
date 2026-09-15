@@ -7,7 +7,6 @@ export type LatestGachaItem = {
 };
 
 export const LATEST_GACHA_LIMIT = 2;
-export const LATEST_GACHA_CANDIDATE_LIMIT = 10;
 
 const toTimestamp = (value: string | number | null): number | null => {
   if (typeof value === "number") {
@@ -46,6 +45,12 @@ const compareByStartAtDescending = (left: TimestampedGacha, right: TimestampedGa
   return left.startAt > right.startAt ? -1 : 1;
 };
 
+export const isOngoingGacha = (gacha: LatestGachaItem, now: number): boolean => {
+  const startAt = toTimestamp(gacha.startAt);
+  const endAt = toTimestamp(gacha.endAt);
+  return startAt !== null && endAt !== null && startAt <= now && now <= endAt;
+};
+
 export const selectLatestGachas = (
   items: readonly LatestGachaItem[],
   now: number
@@ -57,15 +62,22 @@ export const selectLatestGachas = (
     index
   }));
 
-  const startedItems = timestampedItems.filter(
-    ({ startAt }) => startAt !== null && startAt <= now
-  );
+  const startedItems = timestampedItems.filter(({ startAt }) => startAt !== null && startAt <= now);
   const ongoingItems = startedItems
     .filter(({ startAt, endAt }) => startAt !== null && endAt !== null && now <= endAt)
     .sort(compareByStartAtDescending);
   const recentItems = startedItems
     .filter(({ startAt, endAt }) => !(startAt !== null && endAt !== null && now <= endAt))
     .sort(compareByStartAtDescending);
+  const seenIds = new Set<string>();
+  const prioritizedItems = [...ongoingItems, ...recentItems].filter(({ item }) => {
+    if (seenIds.has(item.id)) {
+      return false;
+    }
 
-  return [...ongoingItems, ...recentItems].slice(0, LATEST_GACHA_LIMIT).map(({ item }) => item);
+    seenIds.add(item.id);
+    return true;
+  });
+
+  return prioritizedItems.slice(0, LATEST_GACHA_LIMIT).map(({ item }) => item);
 };

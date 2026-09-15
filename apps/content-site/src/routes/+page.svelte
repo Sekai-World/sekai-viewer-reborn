@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount, tick } from "svelte";
+  import { SvelteMap } from "svelte/reactivity";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
@@ -25,6 +26,7 @@
   import type { GameNewsItem, GameNewsLoadResult } from "$lib/server/game-news";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import type { HomeRegionData } from "$lib/server/home-page-data";
   import {
     EVENT_CARD_BANNER_BODY_CLASS,
     EVENT_CARD_EMPTY_BODY_CLASS,
@@ -79,24 +81,121 @@
   let iframeUrl = $state<string | null>(null);
 
   // ── Region state ───────────────────────────────────────────────────
-  let selectedRegion = $state<SupportedRegion>(DEFAULT_REGION);
+  const getInitialSelectedRegion = (): SupportedRegion => data.initialRegion;
+  let selectedRegion = $state<SupportedRegion>(getInitialSelectedRegion());
+  const loadedRegionData = $state<Partial<Record<SupportedRegion, HomeRegionData>>>({});
+  const regionDataPromises = $state<Partial<Record<SupportedRegion, Promise<HomeRegionData>>>>({});
+  const regionDataAbortControllers = new SvelteMap<SupportedRegion, AbortController>();
+  const pendingRegionData = new Promise<HomeRegionData>(() => {});
+  function getInitialRegionData(): Promise<HomeRegionData> {
+    return Promise.all([data.initialCard, data.initialLatestData, data.initialNews]).then(
+      ([card, latestData, news]) =>
+        ({
+          region: data.initialRegion,
+          card,
+          latestData,
+          news
+        }) satisfies HomeRegionData
+    );
+  }
+
+  const initialRegionData = getInitialRegionData();
 
   const selectRegion = (r: SupportedRegion): void => {
     persistPreferredRegion(r);
   };
 
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    value !== null && typeof value === "object" && !Array.isArray(value);
+
+  const isHomeRegionData = (value: unknown, region: SupportedRegion): value is HomeRegionData => {
+    if (!isRecord(value) || value.region !== region) {
+      return false;
+    }
+
+    const card = value.card;
+    const latestData = value.latestData;
+    return (
+      isRecord(card) &&
+      isRecord(latestData) &&
+      Array.isArray(latestData.cards) &&
+      Array.isArray(latestData.musics) &&
+      Array.isArray(latestData.gachas) &&
+      isRecord(value.news)
+    );
+  };
+
+  async function fetchHomeRegionData(
+    region: SupportedRegion,
+    signal: AbortSignal
+  ): Promise<HomeRegionData> {
+    const response = await globalThis.fetch(`/api/home/${encodeURIComponent(region)}`, { signal });
+    if (!response.ok) {
+      throw new Error(`Failed to load homepage data for ${region}.`);
+    }
+
+    const payload: unknown = await response.json();
+    if (!isHomeRegionData(payload, region)) {
+      throw new Error(`Homepage data for ${region} was malformed.`);
+    }
+
+    return payload;
+  }
+
+  function ensureRegionData(region: SupportedRegion): Promise<HomeRegionData> {
+    if (region === data.initialRegion) {
+      return initialRegionData;
+    }
+
+    const loaded = loadedRegionData[region];
+    if (loaded) {
+      return Promise.resolve(loaded);
+    }
+
+    const pending = regionDataPromises[region];
+    if (pending) {
+      return pending;
+    }
+
+    const controller = new AbortController();
+    regionDataAbortControllers.set(region, controller);
+    const request = fetchHomeRegionData(region, controller.signal)
+      .then((regionData) => {
+        loadedRegionData[region] = regionData;
+        if (regionDataPromises[region] === request) {
+          delete regionDataPromises[region];
+        }
+        return regionData;
+      })
+      .finally(() => {
+        if (regionDataAbortControllers.get(region) === controller) {
+          regionDataAbortControllers.delete(region);
+        }
+      });
+    regionDataPromises[region] = request;
+    return request;
+  }
+
+  const updateSelectedRegion = (region: SupportedRegion): void => {
+    if (region === selectedRegion) {
+      return;
+    }
+
+    void ensureRegionData(region).catch(() => {});
+    selectedRegion = region;
+  };
+
   onMount(() => {
-    selectedRegion = resolvePreferredRegion();
+    updateSelectedRegion(resolvePreferredRegion());
 
     const handlePreferredRegionChange = (event: Event): void => {
-      selectedRegion = normalizeRegion(
-        (event as CustomEvent<SupportedRegion>).detail,
-        DEFAULT_REGION
+      updateSelectedRegion(
+        normalizeRegion((event as CustomEvent<SupportedRegion>).detail, DEFAULT_REGION)
       );
     };
     const handlePreferredRegionStorageChange = (event: StorageEvent): void => {
       if (event.key === PREFERRED_REGION_STORAGE_KEY) {
-        selectedRegion = normalizeRegion(event.newValue, DEFAULT_REGION);
+        updateSelectedRegion(normalizeRegion(event.newValue, DEFAULT_REGION));
       }
     };
     window.addEventListener(PREFERRED_REGION_CHANGE_EVENT, handlePreferredRegionChange);
@@ -105,6 +204,10 @@
     return () => {
       window.removeEventListener(PREFERRED_REGION_CHANGE_EVENT, handlePreferredRegionChange);
       window.removeEventListener("storage", handlePreferredRegionStorageChange);
+      for (const controller of regionDataAbortControllers.values()) {
+        controller.abort();
+      }
+      regionDataAbortControllers.clear();
     };
   });
 
@@ -200,10 +303,31 @@
   };
 
   // ── Derived data for selected region ───────────────────────────────
-  const regionIndex = $derived(supportedRegions.indexOf(selectedRegion));
-  const latestDataPromise = $derived(data.latestData[regionIndex]);
-  const newsPromise = $derived(data.news[regionIndex]);
-  const currentEventPromise = $derived(data.cards[regionIndex]);
+  const selectedRegionDataPromise = $derived.by(() => {
+    if (selectedRegion === data.initialRegion) {
+      return initialRegionData;
+    }
+
+    const loaded = loadedRegionData[selectedRegion];
+    return loaded
+      ? Promise.resolve(loaded)
+      : (regionDataPromises[selectedRegion] ?? pendingRegionData);
+  });
+  const latestDataPromise = $derived.by(() =>
+    selectedRegion === data.initialRegion
+      ? data.initialLatestData
+      : selectedRegionDataPromise.then((regionData) => regionData.latestData)
+  );
+  const newsPromise = $derived.by(() =>
+    selectedRegion === data.initialRegion
+      ? data.initialNews
+      : selectedRegionDataPromise.then((regionData) => regionData.news)
+  );
+  const currentEventPromise = $derived.by(() =>
+    selectedRegion === data.initialRegion
+      ? data.initialCard
+      : selectedRegionDataPromise.then((regionData) => regionData.card)
+  );
   const directoryItems = $derived([
     {
       key: "characters",
@@ -251,7 +375,9 @@
   const visibleNews = (result: GameNewsLoadResult): GameNewsItem[] =>
     result.status === "ready"
       ? result.items
-          .filter((item) => getContentDisplaySettings().showSpoilerContent || item.startAt <= Date.now())
+          .filter(
+            (item) => getContentDisplaySettings().showSpoilerContent || item.startAt <= Date.now()
+          )
           .sort((a, b) => b.startAt - a.startAt)
           .slice(0, 3)
       : [];
@@ -317,9 +443,7 @@
           <div
             class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 animate-pulse bg-base-300/70 p-[5%] lg:mb-0 lg:p-4`}
           ></div>
-          <div
-            class="archive-event-banner-details space-y-4 pt-2"
-          >
+          <div class="archive-event-banner-details space-y-4 pt-2">
             <div class="h-5 w-28 animate-pulse rounded bg-base-300"></div>
             <div class="h-7 w-4/5 animate-pulse rounded bg-base-300"></div>
             <div class="h-22 animate-pulse rounded-xl bg-base-300"></div>
@@ -329,7 +453,7 @@
     {:then card}
       {#if card.event}
         <CurrentEventCard
-          eventTrackerLabel={eventTrackerLabel}
+          {eventTrackerLabel}
           messages={currentMessages}
           translate={currentTranslate}
           region={card.region}
@@ -384,7 +508,9 @@
             <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
             <div class="grid grid-cols-3 gap-2 sm:gap-3">
               {#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as skeleton (skeleton)}
-                <div class="mx-auto aspect-square w-full animate-pulse rounded-xl bg-base-300 sm:w-[94%]"></div>
+                <div
+                  class="mx-auto aspect-square w-full animate-pulse rounded-xl bg-base-300 sm:w-[94%]"
+                ></div>
               {/each}
             </div>
           </div>
@@ -574,21 +700,33 @@
 
   {#snippet newsCardContent(item: GameNewsItem)}
     <div class="flex items-center justify-between gap-2 text-xs text-(--archive-text-muted)">
-      <span class="badge badge-primary badge-outline">{currentTranslate(`gameNews.tags.${item.informationTag}`)}</span>
+      <span class="badge badge-primary badge-outline"
+        >{currentTranslate(`gameNews.tags.${item.informationTag}`)}</span
+      >
       <time datetime={new Date(item.startAt).toISOString()}>{formatNewsDate(item.startAt)}</time>
     </div>
-    <h3 class="mt-3 line-clamp-2 text-base font-semibold text-(--archive-text-strong)">{item.title}</h3>
+    <h3 class="mt-3 line-clamp-2 text-base font-semibold text-(--archive-text-strong)">
+      {item.title}
+    </h3>
   {/snippet}
 
   <section class="mx-auto mb-12 w-full" aria-labelledby="home-news-title">
-    <div class="mb-4 flex items-center justify-between gap-3 border-b border-(--archive-border-subtle) pb-4">
+    <div
+      class="mb-4 flex items-center justify-between gap-3 border-b border-(--archive-border-subtle) pb-4"
+    >
       <div class="flex items-center gap-2">
         <Icon icon="mdi:information-outline" class="size-4 text-primary" aria-hidden="true" />
-        <h2 id="home-news-title" class="text-sm font-semibold tracking-wide text-(--archive-text-muted)">
+        <h2
+          id="home-news-title"
+          class="text-sm font-semibold tracking-wide text-(--archive-text-muted)"
+        >
           {homeNewsTitle}
         </h2>
       </div>
-      <a href="/news/{selectedRegion}" class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/60 hover:text-primary">
+      <a
+        href="/news/{selectedRegion}"
+        class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/60 hover:text-primary"
+      >
         {homeNewsViewAll}<Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
       </a>
     </div>
@@ -602,28 +740,41 @@
         <span class="sr-only" role="status" aria-live="polite">{homeNewsLoading}</span>
       {:then result}
         {#if result.status === "unavailable"}
-          <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60">{homeNewsUnavailable}</p>
+          <p
+            class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60"
+          >
+            {homeNewsUnavailable}
+          </p>
         {:else if result.status === "error"}
-          <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-error">{homeNewsError}</p>
+          <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-error">
+            {homeNewsError}
+          </p>
         {:else if visibleNews(result).length === 0}
-          <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60">{homeNewsEmpty}</p>
+          <p
+            class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60"
+          >
+            {homeNewsEmpty}
+          </p>
         {:else}
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             {#each visibleNews(result) as item (item.id)}
               {#if item.target.kind === "none"}
-                <article class="content-card-shell card-hover-lift flex min-h-36 flex-col rounded-xl border p-4">
+                <article
+                  class="content-card-shell card-hover-lift flex min-h-36 flex-col rounded-xl border p-4"
+                >
                   {@render newsCardContent(item)}
                 </article>
               {:else}
-                <article class="content-card-shell card-hover-lift flex min-h-36 flex-col rounded-xl border p-4">
+                <article
+                  class="content-card-shell card-hover-lift flex min-h-36 flex-col rounded-xl border p-4"
+                >
                   <div class="flex min-h-0 flex-1 items-start gap-2">
                     <button
                       type="button"
                       class="group flex min-w-0 flex-1 flex-col text-left"
                       aria-label={`${currentTranslate("gameNews.openInternal")}: ${item.title}`}
                       title={currentTranslate("gameNews.openInternal")}
-                      onclick={() =>
-                        item.target.kind !== "none" && openInternal(item.target.url)}
+                      onclick={() => item.target.kind !== "none" && openInternal(item.target.url)}
                     >
                       {@render newsCardContent(item)}
                     </button>
@@ -644,10 +795,14 @@
           </div>
         {/if}
       {:catch _}
-        <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-error">{homeNewsError}</p>
+        <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-error">
+          {homeNewsError}
+        </p>
       {/await}
     {:else}
-      <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60">{homeNewsUnavailable}</p>
+      <p class="content-card-shell rounded-xl border p-6 text-center text-sm text-base-content/60">
+        {homeNewsUnavailable}
+      </p>
     {/if}
   </section>
 
@@ -715,34 +870,18 @@
         </tr>
       </thead>
       <tbody>
-        {#each supportedRegions as region, index (region)}
-          {#await data.cards[index]}
-            <tr>
-              <td
-                ><span
-                  class="badge badge-sm homepage-region-badge version-region-badge font-semibold"
-                  >{region.toUpperCase()}</span
-                ></td
-              >
-              <td><span class="inline-block h-3 w-16 animate-pulse rounded bg-base-300"></span></td>
-              <td><span class="inline-block h-3 w-20 animate-pulse rounded bg-base-300"></span></td>
-              <td><span class="inline-block h-3 w-20 animate-pulse rounded bg-base-300"></span></td>
-            </tr>
-          {:then card}
-            <tr>
-              <td
-                ><span
-                  class="badge badge-sm homepage-region-badge version-region-badge font-semibold"
-                  >{card.region.toUpperCase()}</span
-                ></td
-              >
-              <td class="font-mono text-xs">{card.versions?.appVersion ?? "—"}</td>
-              <td class="font-mono text-xs">{getDisplayDataVersion(card.versions) ?? "—"}</td>
-              <td class="font-mono text-xs"
-                >{getDisplayAssetVersion(card.region, card.versions) ?? "—"}</td
-              >
-            </tr>
-          {/await}
+        {#each supportedRegions as region (region)}
+          {@const versions = data.versionsByRegion[region] ?? null}
+          <tr>
+            <td
+              ><span class="badge badge-sm homepage-region-badge version-region-badge font-semibold"
+                >{region.toUpperCase()}</span
+              ></td
+            >
+            <td class="font-mono text-xs">{versions?.appVersion ?? "—"}</td>
+            <td class="font-mono text-xs">{getDisplayDataVersion(versions) ?? "—"}</td>
+            <td class="font-mono text-xs">{getDisplayAssetVersion(region, versions) ?? "—"}</td>
+          </tr>
         {/each}
       </tbody>
     </table>
@@ -753,9 +892,7 @@
   <title>Sekai Viewer</title>
 </svelte:head>
 
-<footer
-  class="mx-auto mt-12 border-t border-(--archive-border-subtle) px-4 py-7 text-center"
->
+<footer class="mx-auto mt-12 border-t border-(--archive-border-subtle) px-4 py-7 text-center">
   <p class="text-xs font-semibold tracking-wide text-base-content/55">{footerBrandLabel}</p>
   <p class="mt-1 text-xs text-base-content/45">{footerDescription}</p>
   <p class="mx-auto mt-3 max-w-3xl text-[0.68rem] leading-relaxed text-base-content/35">

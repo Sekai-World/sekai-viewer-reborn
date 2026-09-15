@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  LATEST_GACHA_CANDIDATE_LIMIT,
-  LATEST_GACHA_LIMIT,
-  selectLatestGachas,
-  type LatestGachaItem
-} from "./home-latest-data";
+import { LATEST_GACHA_LIMIT, selectLatestGachas, type LatestGachaItem } from "./home-latest-data";
 
 const NOW = Date.parse("2026-09-05T12:00:00.000Z");
 
@@ -21,10 +16,6 @@ const makeGacha = (
 });
 
 describe("selectLatestGachas", () => {
-  it("keeps the candidate fetch limit above the display limit", () => {
-    expect(LATEST_GACHA_CANDIDATE_LIMIT).toBeGreaterThan(LATEST_GACHA_LIMIT);
-  });
-
   it("puts ongoing gachas before recent ended gachas", () => {
     const items = [
       makeGacha("newer-ended", NOW - 1_000, NOW - 500),
@@ -82,10 +73,17 @@ describe("selectLatestGachas", () => {
     const selected = selectLatestGachas(items, NOW);
 
     expect(selected).toHaveLength(LATEST_GACHA_LIMIT);
-    expect(selected.map((item) => item.id)).toEqual([
-      "ongoing-2",
-      "ongoing-1"
-    ]);
+    expect(selected.map((item) => item.id)).toEqual(["ongoing-2", "ongoing-1"]);
+  });
+
+  it("deduplicates gachas while preserving ongoing priority", () => {
+    const items = [
+      makeGacha("duplicate", NOW - 1_000, NOW - 500),
+      makeGacha("duplicate", NOW - 2_000, NOW + 10_000),
+      makeGacha("ongoing", NOW - 3_000, NOW + 10_000)
+    ];
+
+    expect(selectLatestGachas(items, NOW).map((item) => item.id)).toEqual(["duplicate", "ongoing"]);
   });
 
   it("treats both start and end boundaries as ongoing", () => {

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { DEFAULT_REGION, PREFERRED_REGION_COOKIE_NAME } from "$lib/i18n/region";
 
 const {
   getCardsByRegionList,
@@ -41,17 +42,22 @@ const { fetchUnitProfiles, toUnitProfileMap } = vi.hoisted(() => ({
 vi.mock("$lib/server/unit-profiles", () => ({ fetchUnitProfiles, toUnitProfileMap }));
 
 import { load } from "./+page.server";
-import { supportedRegions } from "$lib/domain/regions";
 
-type LatestData = {
+type HomepageLatestData = {
   region: string;
   cards: { id: string; initialSpecialTrainingStatus: string | null }[];
   gachas: { id: string }[];
 };
 
+type HomepageRegionData = {
+  region: string;
+  card: { region: string };
+  latestData: HomepageLatestData;
+  news: HomepageNewsResult;
+};
+
 type HomepageNewsResult =
-  | { status: "ready"; items: unknown[] }
-  | { status: "empty" | "error" | "unavailable" };
+  { status: "ready"; items: unknown[] } | { status: "empty" | "error" | "unavailable" };
 
 const emptyListResponse = {
   data: {
@@ -60,30 +66,37 @@ const emptyListResponse = {
   }
 };
 
-const loadHomepageLatestData = async (): Promise<LatestData[]> => {
+const loadHomepageRegionData = async (preferredRegion?: string): Promise<HomepageRegionData> => {
   const result = (await load({
-    cookies: { get: () => undefined },
+    cookies: {
+      get: (name: string) => (name === PREFERRED_REGION_COOKIE_NAME ? preferredRegion : undefined)
+    },
     fetch: vi.fn()
   } as unknown as Parameters<typeof load>[0])) as {
-    latestData: Promise<LatestData>[];
+    initialRegion: string;
+    initialCard: Promise<HomepageRegionData["card"]>;
+    initialLatestData: Promise<HomepageLatestData>;
+    initialNews: Promise<HomepageNewsResult>;
   };
+  const [card, latestData, news] = await Promise.all([
+    result.initialCard,
+    result.initialLatestData,
+    result.initialNews
+  ]);
 
-  return Promise.all(result.latestData);
-};
-
-const loadHomepageNews = async (): Promise<HomepageNewsResult[]> => {
-  const result = (await load({
-    cookies: { get: () => undefined },
-    fetch: vi.fn()
-  } as unknown as Parameters<typeof load>[0])) as {
-    news: Promise<HomepageNewsResult>[];
-  };
-
-  return Promise.all(result.news);
+  return { region: result.initialRegion, card, latestData, news };
 };
 
 describe("homepage latest gacha loading", () => {
   beforeEach(() => {
+    getCardsByRegionList.mockReset();
+    getEventsByRegionCurrent.mockReset();
+    getMusicsByRegionList.mockReset();
+    getVersions.mockReset();
+    getServerI18nText.mockReset();
+    getMasterApiBaseUrl.mockReset();
+    fetchUnitProfiles.mockReset();
+    toUnitProfileMap.mockReset();
     getCardsByRegionList.mockResolvedValue({ data: { items: [] } });
     getEventsByRegionCurrent.mockResolvedValue({ data: null });
     getMusicsByRegionList.mockResolvedValue({ data: { items: [] } });
@@ -114,253 +127,271 @@ describe("homepage latest gacha loading", () => {
     });
     getGachasByRegionList.mockResolvedValue(emptyListResponse);
 
-    const latestData = await loadHomepageLatestData();
-    const jpData = latestData.find((regionData) => regionData.region === "jp");
+    const regionData = await loadHomepageRegionData();
 
-    expect(jpData?.cards).toEqual([
+    expect(regionData.latestData.cards).toEqual([
       expect.objectContaining({ id: "trained-card", initialSpecialTrainingStatus: "done" })
     ]);
   });
 
-  it("requests the next gacha page when the first page only contains future entries", async () => {
-    const futureItems = Array.from({ length: 10 }, (_, index) => ({
-      id: `future-${index}`,
-      name: `Future ${index}`,
-      assetbundleName: `future_${index}`,
-      startAt: "2999-01-01T00:00:00.000Z",
-      endAt: "3000-01-01T00:00:00.000Z"
-    }));
-
-    getGachasByRegionList.mockImplementation(async ({ path, query }) => {
-      if (path.region === "jp" && query.page === 1) {
-        return {
-          data: {
-            items: futureItems,
-            pagination: { page: 1, page_size: 10, has_next: true, total: 12, total_pages: 2 }
-          }
-        };
-      }
-
-      if (path.region === "jp" && query.page === 2) {
-        return {
-          data: {
-            items: [
-              {
-                id: "started-new",
-                name: "Started new",
-                assetbundleName: "started_new",
-                startAt: "2026-01-01T00:00:00.000Z",
-                endAt: "2026-01-02T00:00:00.000Z"
-              },
-              {
-                id: "started-old",
-                name: "Started old",
-                assetbundleName: "started_old",
-                startAt: "2025-01-01T00:00:00.000Z",
-                endAt: "2025-01-02T00:00:00.000Z"
-              }
-            ],
-            pagination: { page: 2, page_size: 10, has_next: false, total: 12, total_pages: 2 }
-          }
-        };
-      }
-
-      return emptyListResponse;
-    });
-
-    const latestData = await loadHomepageLatestData();
-    const jpData = latestData.find((regionData) => regionData.region === "jp");
-    const jpGachaRequests = getGachasByRegionList.mock.calls.filter(
-      ([request]) => request.path.region === "jp"
-    );
-
-    expect(jpGachaRequests.map(([request]) => request.query.page)).toEqual([1, 2]);
-    expect(jpData?.gachas.map((gacha) => gacha.id)).toEqual(["started-new", "started-old"]);
-  });
-
-  it("keeps an older ongoing gacha ahead of ended gachas from the first page", async () => {
+  it("requests ongoing gachas first with only the display-sized page", async () => {
     const now = Date.now();
-    getGachasByRegionList.mockImplementation(async ({ path, query }) => {
-      if (path.region === "jp" && query.page === 1) {
-        return {
-          data: {
-            items: [
-              {
-                id: "ended-new",
-                name: "Ended new",
-                startAt: now - 2_000,
-                endAt: now - 1_000
-              },
-              {
-                id: "ended-old",
-                name: "Ended old",
-                startAt: now - 4_000,
-                endAt: now - 3_000
-              }
-            ],
-            pagination: { page: 1, page_size: 10, has_next: true, total: 3, total_pages: 2 }
+    getGachasByRegionList.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "ongoing-new",
+            name: "Ongoing new",
+            startAt: now - 1_000,
+            endAt: now + 10_000
+          },
+          {
+            id: "ongoing-old",
+            name: "Ongoing old",
+            startAt: now - 2_000,
+            endAt: now + 20_000
           }
-        };
+        ],
+        pagination: { page: 1, page_size: 2, has_next: false }
       }
-
-      if (path.region === "jp" && query.page === 2) {
-        return {
-          data: {
-            items: [
-              {
-                id: "ongoing-old",
-                name: "Ongoing old",
-                startAt: now - 10_000,
-                endAt: now + 10_000
-              }
-            ],
-            pagination: { page: 2, page_size: 10, has_next: false, total: 3, total_pages: 2 }
-          }
-        };
-      }
-
-      return emptyListResponse;
     });
 
-    const latestData = await loadHomepageLatestData();
-    const jpData = latestData.find((regionData) => regionData.region === "jp");
-    const jpGachaRequests = getGachasByRegionList.mock.calls.filter(
-      ([request]) => request.path.region === "jp"
-    );
+    const regionData = await loadHomepageRegionData();
 
-    expect(jpGachaRequests.map(([request]) => request.query.page)).toEqual([1, 2]);
-    expect(jpData?.gachas.map((gacha) => gacha.id)).toEqual(["ongoing-old", "ended-new"]);
-  });
-
-  it("follows authoritative pagination beyond ten future-only pages", async () => {
-    const totalPages = 12;
-    getGachasByRegionList.mockImplementation(async ({ path, query }) => {
-      if (path.region === "jp" && query.page <= totalPages) {
-        const page = query.page;
-        const pagination = {
-          page,
-          page_size: 10,
-          has_next: page < totalPages,
-          total: totalPages * 10,
-          total_pages: totalPages
-        };
-
-        if (page === totalPages) {
-          return {
-            data: {
-              items: [
-                {
-                  id: "started-after-pagination",
-                  name: "Started after pagination",
-                  startAt: "2026-01-01T00:00:00.000Z",
-                  endAt: "2026-01-02T00:00:00.000Z"
-                },
-                {
-                  id: "started-second-after-pagination",
-                  name: "Started second after pagination",
-                  startAt: "2025-01-01T00:00:00.000Z",
-                  endAt: "2025-01-02T00:00:00.000Z"
-                }
-              ],
-              pagination
-            }
-          };
-        }
-
-        return {
-          data: {
-            items: Array.from({ length: 10 }, (_, index) => ({
-              id: `future-${page}-${index}`,
-              name: `Future ${page}-${index}`,
-              startAt: "2999-01-01T00:00:00.000Z",
-              endAt: "3000-01-01T00:00:00.000Z"
-            })),
-            pagination
-          }
-        };
+    expect(getGachasByRegionList).toHaveBeenCalledTimes(1);
+    expect(getGachasByRegionList).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test",
+      path: { region: "jp" },
+      query: {
+        page: 1,
+        page_size: 2,
+        spoiler: false,
+        ongoing: true,
+        sort_by: "startAt",
+        sort_order: "desc"
       }
-
-      return emptyListResponse;
     });
-
-    const latestData = await loadHomepageLatestData();
-    const jpData = latestData.find((regionData) => regionData.region === "jp");
-    const jpGachaRequests = getGachasByRegionList.mock.calls.filter(
-      ([request]) => request.path.region === "jp"
-    );
-
-    expect(jpGachaRequests.map(([request]) => request.query.page)).toEqual(
-      Array.from({ length: totalPages }, (_, index) => index + 1)
-    );
-    expect(jpData?.gachas.map((gacha) => gacha.id)).toEqual([
-      "started-after-pagination",
-      "started-second-after-pagination"
+    expect(regionData.latestData.gachas.map((gacha) => gacha.id)).toEqual([
+      "ongoing-new",
+      "ongoing-old"
     ]);
   });
 
-  it("stops non-terminating pagination at the emergency request ceiling", async () => {
-    const emergencyRequestCeiling = 100;
-    getGachasByRegionList.mockImplementation(async ({ path, query }) => {
-      if (path.region === "jp") {
-        return {
-          data: {
-            items: [
-              {
-                id: `future-${query.page}`,
-                name: `Future ${query.page}`,
-                startAt: "2999-01-01T00:00:00.000Z",
-                endAt: "3000-01-01T00:00:00.000Z"
-              }
-            ],
-            pagination: { has_next: true }
-          }
-        };
-      }
+  it("fills the remaining slot with an exact-sized ordinary latest query", async () => {
+    const now = Date.now();
+    getGachasByRegionList
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "ongoing",
+              name: "Ongoing",
+              startAt: now - 10_000,
+              endAt: now + 10_000
+            }
+          ],
+          pagination: { page: 1, page_size: 2, has_next: false }
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "ongoing",
+              name: "Duplicate ongoing",
+              startAt: now - 10_000,
+              endAt: now + 10_000
+            },
+            {
+              id: "ended-new",
+              name: "Ended new",
+              startAt: now - 1_000,
+              endAt: now - 500
+            },
+            {
+              id: "future",
+              name: "Future",
+              startAt: now + 10_000,
+              endAt: now + 20_000
+            }
+          ],
+          pagination: { page: 1, page_size: 1, has_next: false }
+        }
+      });
 
-      return emptyListResponse;
+    const regionData = await loadHomepageRegionData();
+    const requests = getGachasByRegionList.mock.calls.map(([request]) => request);
+
+    expect(requests).toHaveLength(2);
+    expect(requests[0]).toMatchObject({
+      path: { region: "jp" },
+      query: { page: 1, page_size: 2, ongoing: true }
+    });
+    expect(requests[1]).toMatchObject({
+      path: { region: "jp" },
+      query: {
+        page: 1,
+        page_size: 1,
+        spoiler: false,
+        sort_by: "startAt",
+        sort_order: "desc"
+      }
+    });
+    expect(requests[1].query).not.toHaveProperty("ongoing");
+    expect(regionData.latestData.gachas.map((gacha) => gacha.id)).toEqual(["ongoing", "ended-new"]);
+  });
+
+  it("uses the full gap and excludes future, invalid, and duplicate entries", async () => {
+    const now = Date.now();
+    getGachasByRegionList
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "future-ongoing",
+              name: "Future",
+              startAt: now + 10_000,
+              endAt: now + 20_000
+            },
+            {
+              id: "invalid-ongoing",
+              name: "Invalid",
+              startAt: "not-a-date",
+              endAt: now + 20_000
+            }
+          ],
+          pagination: { page: 1, page_size: 2, has_next: false }
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              id: "ended-new",
+              name: "Ended new",
+              startAt: now - 1_000,
+              endAt: now - 500
+            },
+            {
+              id: "ended-new",
+              name: "Duplicate ended new",
+              startAt: now - 1_000,
+              endAt: now - 500
+            },
+            {
+              id: "ended-old",
+              name: "Ended old",
+              startAt: now - 2_000,
+              endAt: now - 1_500
+            },
+            {
+              id: "future",
+              name: "Future",
+              startAt: now + 10_000,
+              endAt: now + 20_000
+            },
+            { id: "invalid", name: "Invalid", startAt: "not-a-date", endAt: now }
+          ],
+          pagination: { page: 1, page_size: 2, has_next: false }
+        }
+      });
+
+    const regionData = await loadHomepageRegionData();
+    const requests = getGachasByRegionList.mock.calls.map(([request]) => request);
+
+    expect(requests).toHaveLength(2);
+    expect(requests.map((request) => request.query.page_size)).toEqual([2, 2]);
+    expect(regionData.latestData.gachas.map((gacha) => gacha.id)).toEqual([
+      "ended-new",
+      "ended-old"
+    ]);
+  });
+
+  it("does not issue a fallback query after two valid ongoing gachas", async () => {
+    const now = Date.now();
+    getGachasByRegionList.mockResolvedValueOnce({
+      data: {
+        items: [
+          {
+            id: "ongoing-new",
+            name: "Ongoing new",
+            startAt: now - 1_000,
+            endAt: now + 10_000
+          },
+          {
+            id: "ongoing-old",
+            name: "Ongoing old",
+            startAt: now - 2_000,
+            endAt: now + 20_000
+          },
+          {
+            id: "ongoing-new",
+            name: "Duplicate ongoing",
+            startAt: now - 1_000,
+            endAt: now + 10_000
+          },
+          {
+            id: "future",
+            name: "Future",
+            startAt: now + 10_000,
+            endAt: now + 20_000
+          }
+        ],
+        pagination: { page: 1, page_size: 2, has_next: true }
+      }
     });
 
-    await loadHomepageLatestData();
-    const jpGachaRequests = getGachasByRegionList.mock.calls.filter(
-      ([request]) => request.path.region === "jp"
-    );
+    const regionData = await loadHomepageRegionData();
 
-    expect(jpGachaRequests).toHaveLength(emergencyRequestCeiling);
-    expect(jpGachaRequests[emergencyRequestCeiling - 1]?.[0].query.page).toBe(
-      emergencyRequestCeiling
-    );
+    expect(getGachasByRegionList).toHaveBeenCalledTimes(1);
+    expect(regionData.latestData.gachas.map((gacha) => gacha.id)).toEqual([
+      "ongoing-new",
+      "ongoing-old"
+    ]);
   });
 
-  it("loads game news for all supported regions in order", async () => {
-    loadGameNews.mockImplementation(async (region) => ({
-      status: "ready",
-      items: [{ region }]
-    }));
+  it("prefetches only the default region for homepage data", async () => {
+    const regionData = await loadHomepageRegionData();
 
-    const news = await loadHomepageNews();
-
-    expect(loadGameNews.mock.calls.map(([region]) => region)).toEqual(supportedRegions);
-    expect(news).toEqual(
-      supportedRegions.map((region) => ({
-        status: "ready",
-        items: [{ region }]
-      }))
-    );
+    expect(regionData.region).toBe(DEFAULT_REGION);
+    expect(getCardsByRegionList.mock.calls.map(([request]) => request.path.region)).toEqual([
+      DEFAULT_REGION
+    ]);
+    expect(getEventsByRegionCurrent.mock.calls.map(([request]) => request.path.region)).toEqual([
+      DEFAULT_REGION
+    ]);
+    expect(getMusicsByRegionList.mock.calls.map(([request]) => request.path.region)).toEqual([
+      DEFAULT_REGION
+    ]);
+    expect(getGachasByRegionList.mock.calls.map(([request]) => request.path.region)).toEqual([
+      DEFAULT_REGION
+    ]);
+    expect(loadGameNews.mock.calls.map(([region]) => region)).toEqual([DEFAULT_REGION]);
   });
 
-  it("isolates a rejected game news load to its region", async () => {
-    const rejectedRegion = "tw";
-    loadGameNews.mockImplementation((region) =>
-      region === rejectedRegion
-        ? Promise.reject(new Error("news unavailable"))
-        : Promise.resolve({ status: "empty" })
-    );
+  it("uses the persisted cookie region for the initial SSR data load", async () => {
+    const regionData = await loadHomepageRegionData("kr");
 
-    await expect(loadHomepageNews()).resolves.toEqual(
-      supportedRegions.map((region) => ({
-        status: region === rejectedRegion ? "error" : "empty"
-      }))
-    );
-    expect(loadGameNews.mock.calls.map(([region]) => region)).toEqual(supportedRegions);
+    expect(regionData.region).toBe("kr");
+    expect(getCardsByRegionList.mock.calls.map(([request]) => request.path.region)).toEqual(["kr"]);
+    expect(getEventsByRegionCurrent.mock.calls.map(([request]) => request.path.region)).toEqual([
+      "kr"
+    ]);
+    expect(getMusicsByRegionList.mock.calls.map(([request]) => request.path.region)).toEqual([
+      "kr"
+    ]);
+    expect(getGachasByRegionList.mock.calls.map(([request]) => request.path.region)).toEqual([
+      "kr"
+    ]);
+    expect(loadGameNews.mock.calls.map(([region]) => region)).toEqual(["kr"]);
+  });
+
+  it("isolates a rejected initial-region game news load", async () => {
+    loadGameNews.mockRejectedValueOnce(new Error("news unavailable"));
+
+    const regionData = await loadHomepageRegionData();
+
+    expect(regionData.news).toEqual({ status: "error" });
+    expect(loadGameNews.mock.calls.map(([region]) => region)).toEqual([DEFAULT_REGION]);
   });
 });

@@ -1,12 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { I18nMessages } from "@platform/i18n-runtime";
 import { getLocalI18nMessages, type I18nNamespace } from "$lib/i18n/runtime";
+import {
+  DEFAULT_REGION,
+  PREFERRED_REGION_COOKIE_NAME,
+  UI_LOCALE_COOKIE_NAME
+} from "$lib/i18n/region";
 import packageJson from "../../package.json";
 
 const { loadI18nMessageBundle } = vi.hoisted(() => ({
-  loadI18nMessageBundle: vi.fn<
-    (locale: string, namespaces: readonly I18nNamespace[], fetcher?: typeof fetch) => Promise<I18nMessages>
-  >()
+  loadI18nMessageBundle:
+    vi.fn<
+      (
+        locale: string,
+        namespaces: readonly I18nNamespace[],
+        fetcher?: typeof fetch
+      ) => Promise<I18nMessages>
+    >()
 }));
 
 vi.mock("$lib/i18n/runtime", async (importOriginal) => ({
@@ -24,9 +34,17 @@ vi.mock("$lib/server/notifications", () => ({
 
 import { load } from "../routes/+layout.server";
 
-const createLoadEvent = (pathname: string, locale = "en") =>
+const createLoadEvent = (pathname: string, locale = "en", region?: string) =>
   ({
-    cookies: { get: vi.fn().mockReturnValue(locale) },
+    cookies: {
+      get: vi.fn((name: string) =>
+        name === UI_LOCALE_COOKIE_NAME
+          ? locale
+          : name === PREFERRED_REGION_COOKIE_NAME
+            ? region
+            : undefined
+      )
+    },
     fetch: vi.fn(),
     url: new URL(`https://viewer.test${pathname}`)
   }) as unknown as Parameters<typeof load>[0];
@@ -43,6 +61,7 @@ describe("content-site layout server load", () => {
     await expect(load(createLoadEvent("/event/jp/123", "en-US"))).resolves.toEqual({
       i18nMessages: messages,
       uiLocale: "en",
+      preferredRegion: DEFAULT_REGION,
       globalNotices: [],
       siteVersion: packageJson.version
     });
@@ -59,6 +78,7 @@ describe("content-site layout server load", () => {
     await expect(load(createLoadEvent("/unit/jp/idol"))).resolves.toEqual({
       i18nMessages: { unitRosterTitle: "Members" },
       uiLocale: "en",
+      preferredRegion: DEFAULT_REGION,
       globalNotices: [],
       siteVersion: packageJson.version
     });
@@ -75,6 +95,7 @@ describe("content-site layout server load", () => {
     await expect(load(createLoadEvent("/news/jp"))).resolves.toEqual({
       i18nMessages: { gameNewsTitle: "Game News" },
       uiLocale: "en",
+      preferredRegion: DEFAULT_REGION,
       globalNotices: [],
       siteVersion: packageJson.version
     });
@@ -85,12 +106,21 @@ describe("content-site layout server load", () => {
     );
   });
 
+  it("returns the normalized preferred region from its cookie", async () => {
+    loadI18nMessageBundle.mockResolvedValueOnce({});
+
+    await expect(load(createLoadEvent("/", "en", "kr"))).resolves.toMatchObject({
+      preferredRegion: "kr"
+    });
+  });
+
   it("returns local route messages when remote bundle loading fails", async () => {
     loadI18nMessageBundle.mockRejectedValueOnce(new Error("dictionary unavailable"));
 
     await expect(load(createLoadEvent("/cards/jp"))).resolves.toEqual({
       i18nMessages: getLocalI18nMessages(["common", "card", "event", "error"]),
       uiLocale: "en",
+      preferredRegion: DEFAULT_REGION,
       globalNotices: [],
       siteVersion: packageJson.version
     });
@@ -106,6 +136,7 @@ describe("content-site layout server load", () => {
     await expect(result).resolves.toEqual({
       i18nMessages: getLocalI18nMessages(["common", "music", "error"]),
       uiLocale: "en",
+      preferredRegion: DEFAULT_REGION,
       globalNotices: [],
       siteVersion: packageJson.version
     });
@@ -122,6 +153,7 @@ describe("content-site layout server load", () => {
     await expect(load(event)).resolves.toEqual({
       i18nMessages: {},
       uiLocale: "en",
+      preferredRegion: DEFAULT_REGION,
       globalNotices: notices,
       siteVersion: packageJson.version
     });
@@ -136,6 +168,7 @@ describe("content-site layout server load", () => {
     await expect(load(createLoadEvent("/"))).resolves.toEqual({
       i18nMessages: {},
       uiLocale: "en",
+      preferredRegion: DEFAULT_REGION,
       globalNotices: [],
       siteVersion: packageJson.version
     });

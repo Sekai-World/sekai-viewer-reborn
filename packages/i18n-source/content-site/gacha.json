@@ -6,6 +6,7 @@
   "gachaListLoadingMore": "Loading more gachas...",
   "gachaListLoadFailed": "Failed to load gachas.",
   "gachaListSortByStartAt": "Sort by Start Time",
+  "gachaListFilterOngoing": "Ongoing Gachas",
   "pageTitle.gachaPrefix": "Gacha",
   "gachaTypeLabel": "Gacha Type",
   "gachaSummary": "Summary",
