@@ -47,8 +47,8 @@
   </header>
 
   <div class="grid gap-4 md:grid-cols-2">
-    <article
-      class="card h-full bg-base-100 shadow-sm ring-1 ring-base-content/10 transition-colors"
+    <label
+      class="card h-full cursor-pointer bg-base-100 shadow-sm ring-1 ring-base-content/10 transition-colors"
       class:ring-primary={mode === "text"}
     >
       <div class="card-body gap-4 p-5 sm:p-6">
@@ -76,10 +76,10 @@
           </p>
         </div>
       </div>
-    </article>
+    </label>
 
-    <article
-      class="card h-full bg-base-100 shadow-sm ring-1 ring-base-content/10"
+    <label
+      class="card h-full cursor-pointer bg-base-100 shadow-sm ring-1 ring-base-content/10 transition-colors"
       class:ring-primary={mode === "player"}
     >
       <div class="card-body gap-4 p-5 sm:p-6">
@@ -107,7 +107,7 @@
           </p>
         </div>
       </div>
-    </article>
+    </label>
   </div>
 
   <StoryPicker
