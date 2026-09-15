@@ -753,9 +753,8 @@ describe("tracker page UI contract", () => {
       /interpolate\("tracker\.chapter",\s*\{\s*number:\s*chapter\.chapter\.chapterNo\s*\}\)/
     );
     expect(source).not.toContain("chapter.chapter.gameCharacterId}</span>");
-    expect(source).toContain(
-      'import { createChapterRows, type ChapterRow } from "$lib/tracker-chapter-rows";'
-    );
+    expect(source).toContain('calculateChapterRowSpeed,');
+    expect(source).toContain('createChapterRows,');
     expect(source).toContain("const selectedLadder = ladder;");
     expect(source).toContain(
       "selectedChapterRows = createChapterRows(chapter.result.rankings, selectedLadder);"
