@@ -522,11 +522,26 @@
               {/each}
             </div>
           </div>
-          <div class="space-y-3">
-            <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
+          <div class="content-card-inset p-3 sm:p-4" aria-hidden="true">
+            <div class="mb-3 flex h-6 items-center">
+              <div
+                class="h-5 w-24 animate-pulse rounded bg-base-300 motion-reduce:animate-none"
+              ></div>
+            </div>
             <div class="space-y-3">
               {#each [1, 2] as skeleton (skeleton)}
-                <div class="h-24 animate-pulse rounded-lg bg-base-300"></div>
+                <div
+                  class="overflow-hidden rounded-lg border border-(--archive-border-subtle) bg-(--archive-surface-default) shadow-sm"
+                >
+                  <div
+                    class="aspect-3/1 w-full animate-pulse bg-base-300 pt-2 motion-reduce:animate-none"
+                  ></div>
+                  <div class="px-3 py-2">
+                    <div
+                      class="h-5 w-3/4 animate-pulse rounded bg-base-300 motion-reduce:animate-none"
+                    ></div>
+                  </div>
+                </div>
               {/each}
             </div>
           </div>
