@@ -1,11 +1,30 @@
 import { getTrackerRankLadder, type TrackerRankLadder } from "$lib/tracker-ladders";
 import type { ChapterTrackerResult } from "$lib/server/chapter-tracker";
+import { calculateRankingElapsedMs, calculateScorePerElapsedHour } from "./tracker-math";
+import type { TrackerDateValue } from "$lib/tracker-phase";
 
 export type ChapterRow = ChapterTrackerResult["rankings"][number] & {
   rank: number;
   score: number | null;
   status: "available" | "unavailable";
 };
+
+export type ChapterRowSpeedInput = Readonly<{
+  score: number | null | undefined;
+  startAt: TrackerDateValue;
+  timestamp: TrackerDateValue;
+}>;
+
+/** Calculates a World Link row rate from that row's captured ranking timestamp. */
+export const calculateChapterRowSpeed = ({
+  score,
+  startAt,
+  timestamp
+}: ChapterRowSpeedInput): number | null =>
+  calculateScorePerElapsedHour({
+    score,
+    elapsedMs: calculateRankingElapsedMs({ startAt, timestamp })
+  });
 
 export const createChapterRows = (
   rankings: ChapterTrackerResult["rankings"],

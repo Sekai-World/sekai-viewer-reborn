@@ -15,7 +15,11 @@
     parseTrackerTimestamp
   } from "$lib/tracker-phase";
   import { createTrackerRows, type TrackerRow } from "$lib/tracker-rows";
-  import { createChapterRows, type ChapterRow } from "$lib/tracker-chapter-rows";
+  import {
+    calculateChapterRowSpeed,
+    createChapterRows,
+    type ChapterRow
+  } from "$lib/tracker-chapter-rows";
   import { calculateRecentRates, sortTrackerRatePoints } from "$lib/tracker-rates";
   import {
     calculateRankingElapsedMs,
@@ -342,12 +346,10 @@
       status: row.status,
       ranking: row,
       score: row.score,
-      speedPerHour: calculateScorePerElapsedHour({
+      speedPerHour: calculateChapterRowSpeed({
         score: row.score,
-        elapsedMs: calculateRankingElapsedMs({
-          startAt: selectedChapter?.chapter.chapterStartAt,
-          timestamp: row.timestamp
-        })
+        startAt: selectedChapter?.chapter.chapterStartAt,
+        timestamp: row.timestamp
       }),
       reward: getReward(row.rank),
       graphPoint:
