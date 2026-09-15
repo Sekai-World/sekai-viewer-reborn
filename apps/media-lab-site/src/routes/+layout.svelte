@@ -8,7 +8,7 @@
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
   import {
     isActivePickerStoryTypePath,
     pickerStoryTypeIcons,
@@ -43,7 +43,10 @@
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const regionSelection = provideRegionSelection();
   regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
-  const fallbackMessages = getLocalI18nMessages(["common"]);
+  // The shell (including the sidebar's story-type labels) translates keys
+  // from every namespace, so the SSR fallback must too; `data.i18nMessages`
+  // layers any remote overrides on top after hydration.
+  const fallbackMessages = getLocalI18nMessages(mediaLabI18nNamespaces);
   let messages = $state(fallbackMessages);
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");

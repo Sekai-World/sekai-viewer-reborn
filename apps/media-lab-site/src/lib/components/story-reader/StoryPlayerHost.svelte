@@ -88,6 +88,11 @@
     const mount = async (): Promise<void> => {
       if (!stageHost) return;
       try {
+        // The player engine statically imports the pixi-live2d-display
+        // plugin, which requires window.Live2DCubismCore while its module
+        // evaluates; load the Cubism Core runtime before anything else.
+        const { ensureCubismCore } = await import("$lib/live2d/cubism-core");
+        await ensureCubismCore();
         const [{ createStoryPlayerSession }, { createStoryRegionAssetUrls }] =
           await Promise.all([
             import("$lib/story/story-player-session"),
@@ -130,7 +135,8 @@
           instance.resize(nextWidth, nextHeight);
         });
         observer.observe(stageHost);
-      } catch {
+      } catch (error) {
+        console.error("story player failed to mount", error);
         loadFailed = true;
         playerState = "error";
       }
