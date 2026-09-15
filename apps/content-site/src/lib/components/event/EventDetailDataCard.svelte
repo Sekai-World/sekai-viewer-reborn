@@ -1,5 +1,7 @@
 <script lang="ts">
   import { asset, resolve } from "$app/paths";
+  import { page } from "$app/state";
+  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
   import { parseEventRewardRanges } from "$lib/domain/event-rewards";
   import {
     getCardThumbnailAssetURL,
@@ -370,7 +372,10 @@
       searchParams.append("attr", attr);
     }
 
-    return `${resolve("/cards/[region]", { region })}?${searchParams.toString()}`;
+    return withCardListView(
+      `${resolve("/cards/[region]", { region })}?${searchParams.toString()}`,
+      getCardListViewFromSearchParams(page.url.searchParams)
+    );
   };
 
   const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {

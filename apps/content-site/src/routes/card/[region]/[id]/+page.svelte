@@ -1,7 +1,9 @@
 <script lang="ts">
   import { browser, dev } from "$app/environment";
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import { swipeRegion } from "$lib/actions/swipe-region";
+  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
   import CardDetailAssetCard, {
     type CardAssetTab
   } from "$lib/components/card/CardDetailAssetCard.svelte";
@@ -212,7 +214,11 @@
     hasAlternativeRegion(availableRegions)
       ? data.cardUnavailableInCurrentRegionMessage
       : data.failedToLoadCardDataMessage;
-  const getCardListHref = (): string => resolve("/cards/[region]", { region: data.region });
+  const getCardListHref = (): string =>
+    withCardListView(
+      resolve("/cards/[region]", { region: data.region }),
+      getCardListViewFromSearchParams(page.url.searchParams)
+    );
   const getBreadcrumbItems = (currentLabel: string) => [
     {
       label: homeLabel,
@@ -237,7 +243,10 @@
         : {
             key: regionOption,
             label: regionOption.toUpperCase(),
-            href: resolve("/card/[region]/[id]", { region: regionOption, id: data.cardId }),
+            href: withCardListView(
+              resolve("/card/[region]/[id]", { region: regionOption, id: data.cardId }),
+              getCardListViewFromSearchParams(page.url.searchParams)
+            ),
             active: false
           }
     );

@@ -11,6 +11,7 @@
   } from "$lib/settings/content-display";
   import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n/config";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
   import MobileQuickNavigation from "$lib/components/MobileQuickNavigation.svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
@@ -160,6 +161,12 @@
     return preferredRegion;
   });
 
+  const getCardsNavigationHref = (): string =>
+    withCardListView(
+      `/cards/${sidebarRegion}`,
+      getCardListViewFromSearchParams(page.url.searchParams)
+    );
+
   type ContentSiteNavigationItem = {
     label: string;
     href: string;
@@ -192,7 +199,7 @@
     {
       label: cardsLabel,
       icon: "mdi:cards-outline",
-      href: `/cards/${sidebarRegion}`,
+      href: getCardsNavigationHref(),
       active: page.url.pathname.startsWith("/cards/")
     },
     {
