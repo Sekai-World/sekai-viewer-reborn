@@ -631,6 +631,16 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("<RankingHistoryChart");
   });
 
+  it("renders only available rows in desktop tables and mobile cards", async () => {
+    const source = await readFile(pagePath, "utf8");
+    const availableRowsEach =
+      '{#each activeRankingRows.filter((row) => row.status === "available") as row (row.ladderRank)}';
+
+    expect(source.split(availableRowsEach)).toHaveLength(3);
+    expect(source).not.toContain('<tr class="tracker-unavailable">');
+    expect(source).not.toContain('<article class="tracker-ranking-card tracker-unavailable">');
+  });
+
   it("keeps time travel opt-in in an inline panel below the unchanged rankings toolbar", async () => {
     // The ranking heading exposes only the historical-event return affordance;
     // per-row trend actions remain covered by the page contract.

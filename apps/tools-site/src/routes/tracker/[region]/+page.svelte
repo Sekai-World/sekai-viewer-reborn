@@ -2135,64 +2135,52 @@
                 ></thead
               >
               <tbody>
-                {#each activeRankingRows as row (row.ladderRank)}
-                  {#if row.status === "available"}
-                    <tr
-                      class="tracker-ranking-row"
-                      class:tier-top={rankTier(row.ladderRank) === "top"}
-                      class:tier-elite={rankTier(row.ladderRank) === "elite"}
-                      class:tier-high={rankTier(row.ladderRank) === "high"}
-                      class:tier-mid={rankTier(row.ladderRank) === "mid"}
-                      class:tier-long={rankTier(row.ladderRank) === "long"}
-                      onclick={(event) => handleRankingRowClick(event, row, activeRankingContext)}
+                {#each activeRankingRows.filter((row) => row.status === "available") as row (row.ladderRank)}
+                  <tr
+                    class="tracker-ranking-row"
+                    class:tier-top={rankTier(row.ladderRank) === "top"}
+                    class:tier-elite={rankTier(row.ladderRank) === "elite"}
+                    class:tier-high={rankTier(row.ladderRank) === "high"}
+                    class:tier-mid={rankTier(row.ladderRank) === "mid"}
+                    class:tier-long={rankTier(row.ladderRank) === "long"}
+                    onclick={(event) => handleRankingRowClick(event, row, activeRankingContext)}
+                  >
+                    <th scope="row"
+                      ><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span
+                      ><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th
                     >
-                      <th scope="row"
-                        ><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span
-                        ><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th
-                      >
-                      <td
-                        ><strong class="tracker-player-name"
-                          >{row.ranking?.userName ??
-                            row.ranking?.userId ??
-                            translate("tracker.unavailable")}</strong
-                        ></td
-                      >
-                      <td class="tracker-score">{formatNumber(row.score)}</td><td
-                        class="tracker-speed">{formatSpeed(row.speedPerHour)}</td
-                      ><td
-                        ><span class="tracker-reward-badge">{formatRewardRange(row.reward)}</span
-                        ></td
-                      >
-                      <td class="tracker-row-icon"
-                        ><button
-                          class="tracker-row-detail-button"
-                          type="button"
-                          aria-label={interpolate("tracker.openRankDetailsAndTrend", {
-                            rank: row.ladderRank
-                          })}
-                          onclick={() => openDetails(row, activeRankingContext)}
-                          ><Icon icon="mdi:chart-line" aria-hidden="true" /></button
-                        ></td
-                      >
-                    </tr>
-                  {:else}
-                    <tr class="tracker-unavailable"
-                      ><th scope="row"
-                        ><span class="tracker-rank-number">#{formatNumber(row.ladderRank)}</span
-                        ><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th
-                      ><td>{translate("tracker.unavailable")}</td><td>{formatNumber(row.score)}</td
-                      ><td>{formatSpeed(row.speedPerHour)}</td><td
-                        >{formatRewardRange(row.reward)}</td
-                      ><td></td></tr
+                    <td
+                      ><strong class="tracker-player-name"
+                        >{row.ranking?.userName ??
+                          row.ranking?.userId ??
+                          translate("tracker.unavailable")}</strong
+                      ></td
                     >
-                  {/if}
+                    <td class="tracker-score">{formatNumber(row.score)}</td><td
+                      class="tracker-speed">{formatSpeed(row.speedPerHour)}</td
+                    ><td
+                      ><span class="tracker-reward-badge">{formatRewardRange(row.reward)}</span
+                      ></td
+                    >
+                    <td class="tracker-row-icon"
+                      ><button
+                        class="tracker-row-detail-button"
+                        type="button"
+                        aria-label={interpolate("tracker.openRankDetailsAndTrend", {
+                          rank: row.ladderRank
+                        })}
+                        onclick={() => openDetails(row, activeRankingContext)}
+                        ><Icon icon="mdi:chart-line" aria-hidden="true" /></button
+                      ></td
+                    >
+                  </tr>
                 {/each}
               </tbody>
             </table>
           </div>
         </div>
         <div class="tracker-ranking-cards">
-          {#each activeRankingRows as row (row.ladderRank)}{#if row.status === "available"}<button
+          {#each activeRankingRows.filter((row) => row.status === "available") as row (row.ladderRank)}<button
                 class="tracker-ranking-card"
                 class:tier-top={rankTier(row.ladderRank) === "top"}
                 class:tier-elite={rankTier(row.ladderRank) === "elite"}
@@ -2216,14 +2204,7 @@
                 ><span>{translate("tracker.score")}: {formatNumber(row.score)}</span><span
                   >{translate("tracker.speed")}: {formatSpeed(row.speedPerHour)}</span
                 ><span>{translate("tracker.degree")}: {formatRewardRange(row.reward)}</span></button
-              >{:else}<article class="tracker-ranking-card tracker-unavailable">
-                <div class="tracker-card-heading">
-                  <strong class="tracker-rank-number">#{formatNumber(row.ladderRank)}</strong><span
-                    class="tracker-tier">{rankTierLabel(row.ladderRank)}</span
-                  >
-                </div>
-                <span>{translate("tracker.unavailable")}</span>
-              </article>{/if}{/each}
+              >{/each}
         </div>
       {/if}
     </div>
@@ -3154,9 +3135,6 @@
     color: color-mix(in srgb, var(--color-primary) 78%, var(--color-base-content));
     font-size: 0.72rem;
     line-height: 1.2;
-  }
-  .tracker-unavailable {
-    color: color-mix(in srgb, var(--color-base-content) 55%, transparent);
   }
   .tracker-ranking-cards {
     display: none;
