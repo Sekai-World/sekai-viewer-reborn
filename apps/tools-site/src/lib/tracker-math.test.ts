@@ -1,5 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { calculateChapterElapsedMs, calculateScorePerElapsedHour } from "./tracker-math";
+import {
+  calculateChapterElapsedMs,
+  calculateRankingElapsedMs,
+  calculateScorePerElapsedHour
+} from "./tracker-math";
+
+describe("ranking elapsed time", () => {
+  it("uses the ranking timestamp relative to the event start", () => {
+    expect(
+      calculateRankingElapsedMs({
+        startAt: "2026-01-01T00:00:00.000Z",
+        timestamp: "2026-01-01T01:30:00.000Z"
+      })
+    ).toBe(90 * 60_000);
+  });
+
+  it.each([null, undefined, "", "invalid"])(
+    "rejects an unusable ranking timestamp %s",
+    (timestamp) => {
+      expect(
+        calculateRankingElapsedMs({ startAt: "2026-01-01T00:00:00.000Z", timestamp })
+      ).toBeNull();
+    }
+  );
+});
 
 describe("score per elapsed hour", () => {
   it("calculates a rate from valid score and elapsed time", () => {
