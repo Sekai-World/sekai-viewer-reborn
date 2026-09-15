@@ -80,7 +80,7 @@
       <img
         src={bannerUrl}
         alt=""
-        class="mx-auto size-auto max-h-56 max-w-full self-center rounded-2xl border border-base-content/10 lg:mx-0 lg:shrink-0 lg:self-start"
+        class="mx-auto size-auto max-h-56 max-w-full self-center rounded-xl border border-base-content/10 lg:mx-0 lg:shrink-0 lg:self-start"
         loading="lazy"
       />
     {/if}

@@ -7,6 +7,13 @@
 @plugin "../daisyui.mjs";
 @source "../../../packages/ui-shell/src";
 
+/* Cards and banners share one corner radius (rounded-xl, 0.75rem). daisyUI
+   components (.card, rounded-box) resolve through --radius-box, whose stock
+   0.5rem left mode cards visibly squarer than the picker cards beside them. */
+:root {
+  --radius-box: var(--radius-xl);
+}
+
 /* Page-switch animation mirrors tools-site: a plain cross-fade of the main
    shell via the View Transitions API (keyed Svelte fade as the fallback). */
 @media (prefers-reduced-motion: no-preference) {

@@ -196,7 +196,7 @@
 
 <div class="flex flex-col gap-3">
   <div
-    class="relative aspect-video w-full overflow-hidden rounded-2xl border border-base-content/10 bg-black"
+    class="relative aspect-video w-full overflow-hidden rounded-xl border border-base-content/10 bg-black"
   >
     <div
       bind:this={stageHost}
@@ -254,7 +254,7 @@
     <span class="text-sm text-base-content/60" role="status">{stateLabel}</span>
   </div>
 
-  <div class="grid gap-4 rounded-2xl border border-base-content/10 bg-base-100 p-4 sm:grid-cols-2">
+  <div class="grid gap-4 rounded-xl border border-base-content/10 bg-base-100 p-4 sm:grid-cols-2">
     <label class="flex items-center justify-between gap-3">
       <span class="text-sm text-base-content/70">{labels.autoplay}</span>
       <input
