@@ -17,6 +17,7 @@
     getGachaBannerAssetURL,
     getGachaLogoAssetURL
   } from "$lib/assets";
+  import { trackPromise } from "$lib/promise-cache";
   import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
@@ -162,9 +163,6 @@
     const request = fetchHomeRegionData(region, controller.signal)
       .then((regionData) => {
         loadedRegionData[region] = regionData;
-        if (regionDataPromises[region] === request) {
-          delete regionDataPromises[region];
-        }
         return regionData;
       })
       .finally(() => {
@@ -172,8 +170,7 @@
           regionDataAbortControllers.delete(region);
         }
       });
-    regionDataPromises[region] = request;
-    return request;
+    return trackPromise(regionDataPromises, region, request);
   }
 
   const updateSelectedRegion = (region: SupportedRegion): void => {

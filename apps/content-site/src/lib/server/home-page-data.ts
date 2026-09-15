@@ -266,12 +266,11 @@ export const fetchLatestGachas = async (
     isOngoingGacha(gacha, now)
   );
   const ongoingGachas = selectLatestGachas(ongoingItems, now);
-  const remaining = LATEST_GACHA_LIMIT - ongoingGachas.length;
-  if (remaining <= 0) {
+  if (ongoingGachas.length >= LATEST_GACHA_LIMIT) {
     return ongoingGachas;
   }
 
-  const latestItems = await fetchGachaItems(false, remaining);
+  const latestItems = await fetchGachaItems(false, LATEST_GACHA_LIMIT);
   return selectLatestGachas([...ongoingGachas, ...latestItems], now);
 };
 

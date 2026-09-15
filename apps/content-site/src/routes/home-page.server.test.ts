@@ -192,7 +192,7 @@ describe("homepage latest gacha loading", () => {
     ]);
   });
 
-  it("fills the remaining slot with an exact-sized ordinary latest query", async () => {
+  it("fills the remaining slot after deduplication with a full-sized ordinary latest query", async () => {
     const now = Date.now();
     getGachasByRegionList
       .mockResolvedValueOnce({
@@ -246,7 +246,7 @@ describe("homepage latest gacha loading", () => {
       path: { region: "jp" },
       query: {
         page: 1,
-        page_size: 1,
+        page_size: 2,
         spoiler: false,
         sort_by: "startAt",
         sort_order: "desc"
