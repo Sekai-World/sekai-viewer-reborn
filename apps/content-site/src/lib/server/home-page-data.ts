@@ -17,6 +17,13 @@ import {
   selectLatestGachas,
   type LatestGachaItem
 } from "$lib/server/home-latest-data";
+import {
+  getObject,
+  pickFirstDateValuePreservingWhitespace as pickFirstDateValue,
+  pickFirstObject,
+  pickFirstStringLikePreservingWhitespace as pickFirstStringLike,
+  pickFirstStringPreservingWhitespace as pickFirstString
+} from "$lib/server/response-values";
 
 export type EventSummary = {
   id: string;
@@ -85,89 +92,6 @@ export type LoadHomeRegionDataOptions = {
   requestFailedErrorText: string;
 };
 
-const getString = (value: unknown): string | null =>
-  typeof value === "string" && value.trim().length > 0 ? value : null;
-
-const getStringLike = (value: unknown): string | null => {
-  const stringValue = getString(value);
-  if (stringValue) {
-    return stringValue;
-  }
-
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return String(value);
-  }
-
-  return null;
-};
-
-const getDateValue = (value: unknown): string | number | null => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-
-  return getString(value);
-};
-
-const getObject = (value: unknown): Record<string, unknown> | null =>
-  value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
-
-const getNestedObject = (
-  source: Record<string, unknown>,
-  keys: readonly string[]
-): Record<string, unknown> | null => {
-  for (const key of keys) {
-    const nested = getObject(source[key]);
-    if (nested) {
-      return nested;
-    }
-  }
-
-  return null;
-};
-
-const pickFirstString = (
-  source: Record<string, unknown>,
-  keys: readonly string[]
-): string | null => {
-  for (const key of keys) {
-    const value = getString(source[key]);
-    if (value) {
-      return value;
-    }
-  }
-
-  return null;
-};
-
-const pickFirstStringLike = (
-  source: Record<string, unknown>,
-  keys: readonly string[]
-): string | null => {
-  for (const key of keys) {
-    const value = getStringLike(source[key]);
-    if (value) {
-      return value;
-    }
-  }
-
-  return null;
-};
-
-const pickFirstDateValue = (
-  source: Record<string, unknown>,
-  keys: readonly string[]
-): string | number | null => {
-  for (const key of keys) {
-    const value = getDateValue(source[key]);
-    if (value !== null) {
-      return value;
-    }
-  }
-
-  return null;
-};
-
 export const parseRegionVersions = (payload: unknown): RegionVersions | null => {
   const root = getObject(payload);
   if (!root) {
@@ -201,8 +125,8 @@ const parseEventSummary = (payload: unknown): EventSummary | null => {
     return null;
   }
 
-  const eventNode = getNestedObject(root, ["event", "currentEvent", "data"]) ?? root;
-  const unitNode = getNestedObject(eventNode, ["unit"]);
+  const eventNode = pickFirstObject(root, ["event", "currentEvent", "data"]) ?? root;
+  const unitNode = pickFirstObject(eventNode, ["unit"]);
   const id = pickFirstStringLike(eventNode, ["id", "eventId"]);
   const title = pickFirstString(eventNode, ["name", "title", "eventName"]);
 
@@ -246,7 +170,7 @@ const parseLatestCard = (raw: unknown): LatestCardItem | null => {
     return null;
   }
 
-  const rarityNode = getNestedObject(root, ["cardRarity"]);
+  const rarityNode = pickFirstObject(root, ["cardRarity"]);
   const rarityType = rarityNode ? pickFirstString(rarityNode, ["cardRarityType"]) : null;
   const rarityCount = rarityType ? (RARITY_COUNT_BY_TYPE[rarityType] ?? 0) : 0;
 
