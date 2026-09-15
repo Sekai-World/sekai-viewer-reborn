@@ -136,7 +136,7 @@
         {totalMatches === 0 && groups.length > 0 ? labels.noMatch : labels.empty}
       </p>
     {:else}
-      <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1">
+      <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[60vh]">
         {#each filteredGroups as group (group.key)}
           <details class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40">
             <summary class="collapse-title text-sm font-semibold">
