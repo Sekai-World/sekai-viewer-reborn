@@ -89,7 +89,6 @@
     if (!(target instanceof Node) || !element?.contains(target)) close();
   };
   const sidebarItems: SidebarItem[] = $derived([
-    { type: "section", label: translate("navigation.explore") },
     {
       label: translate("navigation.home"),
       href: "/",

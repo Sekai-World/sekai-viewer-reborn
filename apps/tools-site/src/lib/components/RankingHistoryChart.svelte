@@ -229,6 +229,7 @@
     width: 100%;
     height: clamp(15rem, 35vw, 22rem);
     min-height: 18rem;
+    touch-action: none;
   }
 
   .history-chart :global(.chart-container) {
