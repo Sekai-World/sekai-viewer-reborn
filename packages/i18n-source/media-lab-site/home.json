@@ -1,13 +1,15 @@
 {
-  "home.description": "Media tooling for Project Sekai assets. Every track keeps its region in the route, so deep links stay shareable.",
-  "home.kicker": "Media lab",
-  "home.title": "Pick a lab track",
+  "home.tagline": "Read Project Sekai stories and explore Live2D models — more labs on the way.",
   "home.tracks.assetViewer.badge": "In preparation",
   "home.tracks.assetViewer.description": "Browse model bundles, textures, and animation clips in the 3D asset viewer. Its route shell lands with the asset pipeline work.",
   "home.tracks.assetViewer.pending": "Not available yet",
   "home.tracks.assetViewer.title": "3D Asset Lab",
   "home.tracks.live2d.action": "Open Live2D Studio",
-  "home.tracks.live2d.badge": "Route shells ready",
-  "home.tracks.live2d.description": "Live2D model viewer routes with a preview catalog slot browser. Story reading lives in the dedicated StoryReader track.",
-  "home.tracks.live2d.title": "Live2D Studio"
+  "home.tracks.live2d.badge": "Interactive preview",
+  "home.tracks.live2d.description": "Preview Live2D models with textures, motions, and physics on an interactive stage.",
+  "home.tracks.live2d.title": "Live2D Studio",
+  "home.tracks.storyReader.action": "Open Story Reader",
+  "home.tracks.storyReader.badge": "Text & Live2D",
+  "home.tracks.storyReader.description": "Browse unit, event, card, character, special, and area-talk stories; read them as text or play them on a Live2D stage.",
+  "home.tracks.storyReader.title": "Story Reader"
 }

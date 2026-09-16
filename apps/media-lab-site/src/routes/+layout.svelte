@@ -270,7 +270,7 @@
   sidebarLabel={translate("navigation.sidebar")}
   {sidebarItems}
   desktopRailOpen={true}
-  showTitle={false}
+  showTitle={page.url.pathname === "/"}
   mainWidthClass="max-w-320"
 >
   {#snippet navActions()}
