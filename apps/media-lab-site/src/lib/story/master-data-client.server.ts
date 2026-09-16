@@ -2,6 +2,7 @@ import { env } from "$env/dynamic/private";
 import {
   getActionSetsByRegionList,
   getCardEpisodesByRegionList,
+  getAreasByRegionList,
   getCardsByRegionList,
   getCharacter2DsByRegionList,
   getCharacterProfilesByRegionList,
@@ -18,6 +19,7 @@ import {
 import type { StoryRouteRegion } from "$lib/live2d/story-route";
 import type {
   StoryActionSet,
+  StoryArea,
   StoryCardEpisode,
   StoryCardSummary,
   StoryCharacterProfile,
@@ -48,6 +50,7 @@ export type StoryCollectionName =
   | "characterProfiles"
   | "cardEpisodes"
   | "cards"
+  | "areas"
   | "actionSets"
   | "specialStories"
   | "character2ds"
@@ -237,9 +240,25 @@ const collectionParsers: Record<
         id: asNumber(r.id),
         areaId: asNumber(r.areaId),
         scriptId: asOptionalString(r.scriptId),
-        scenarioId: asOptionalString(r.scenarioId)
+        scenarioId: asOptionalString(r.scenarioId),
+        // `character2ds.id` values; the picker maps them to game
+        // character ids via the character2ds collection.
+        characterIds: asArray(r.characterIds).map(asNumber)
       };
       return actionSet;
+    }),
+  areas: (raw) =>
+    asArray(raw).map((row) => {
+      const r = row as Record<string, unknown>;
+      const area: StoryArea = {
+        id: asNumber(r.id),
+        assetBundleName: asOptionalString(r.assetbundleName),
+        areaType: asOptionalString(r.areaType),
+        name: asOptionalString(r.name),
+        subName: asOptionalString(r.subName),
+        label: asOptionalString(r.label)
+      };
+      return area;
     }),
   specialStories: (raw) =>
     asArray(raw).map((row) => {
@@ -319,6 +338,7 @@ const storyListEndpoints: Record<
   characterProfiles: (request) => getCharacterProfilesByRegionList(request),
   cardEpisodes: (request) => getCardEpisodesByRegionList(request),
   cards: (request) => getCardsByRegionList(request),
+  areas: (request) => getAreasByRegionList(request),
   actionSets: (request) => getActionSetsByRegionList(request),
   specialStories: (request) => getSpecialStoriesByRegionList(request),
   character2ds: (request) => getCharacter2DsByRegionList(request),
@@ -434,6 +454,7 @@ export const fetchStoryCollections = async (
     cardEpisodes,
     cards,
     gameCharacters,
+    areas,
     actionSets,
     specialStories
   ] = await Promise.all([
@@ -464,6 +485,9 @@ export const fetchStoryCollections = async (
     names.includes("gameCharacters")
       ? fetchStoryCollection<StoryGameCharacter[]>(region, "gameCharacters", options)
       : Promise.resolve([]),
+    names.includes("areas")
+      ? fetchStoryCollection<StoryArea[]>(region, "areas", options)
+      : Promise.resolve([]),
     names.includes("actionSets")
       ? fetchStoryCollection<StoryActionSet[]>(region, "actionSets", options)
       : Promise.resolve([]),
@@ -481,6 +505,7 @@ export const fetchStoryCollections = async (
     cardEpisodes,
     cards,
     gameCharacters,
+    areas,
     actionSets,
     specialStories
   };

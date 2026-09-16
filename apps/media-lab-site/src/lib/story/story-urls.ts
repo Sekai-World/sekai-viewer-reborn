@@ -132,6 +132,50 @@ export const specialStoryScenarioPath = (
 export const backgroundImagePath = (name: string): string =>
   `scenario/background/${name}/${name}.webp`;
 
+/**
+ * World-map area thumbnails used by the area-talk picker. Path rules ported
+ * from the legacy sekai-viewer `AreaTalk` selector and re-verified against
+ * storage.sekai.best on 2026-09-14:
+ * - reality_world areas map to shared world-map sheets
+ *   `worldmap/contents/normal/worldmap_area{NN}.webp` via their position in
+ *   `areas.json` (only the first seven reality areas have a sheet).
+ * - other areas use `worldmap/contents/normal/img_worldmap_areas{NN}.webp`
+ *   (exists for area ids 5/7/8/9/10/27 on JP; other ids 404 and fall back to
+ *   a generic tile in the UI).
+ * - collaboration areas (rows carrying a `label`) live under
+ *   `worldmap/contents/collaboration/{assetBundleName}/img_worldmap_areas{NN}.webp`.
+ */
+
+/** Reality-area sequence (1-based, `areas.json` order) -> world-map sheet. */
+const REALITY_AREA_WORLDMAP_SHEETS: Record<number, number> = {
+  1: 3,
+  2: 1,
+  3: 4,
+  4: 5,
+  5: 2,
+  6: 7,
+  7: 6
+};
+
+/** Bucket-relative thumbnail for the Nth reality area; null when no sheet. */
+export const realityWorldmapAreaImagePath = (realitySeq: number): string | null => {
+  const sheet = REALITY_AREA_WORLDMAP_SHEETS[realitySeq];
+  return sheet
+    ? `worldmap/contents/normal/worldmap_area${String(sheet).padStart(2, "0")}.webp`
+    : null;
+};
+
+/** Bucket-relative thumbnail for a non-collaboration area id. */
+export const spiritWorldmapAreaImagePath = (areaId: number): string =>
+  `worldmap/contents/normal/img_worldmap_areas${String(areaId).padStart(2, "0")}.webp`;
+
+/** Bucket-relative thumbnail for a collaboration area. */
+export const collaborationWorldmapAreaImagePath = (
+  assetBundleName: string,
+  areaId: number
+): string =>
+  `worldmap/contents/collaboration/${assetBundleName}/img_worldmap_areas${String(areaId).padStart(2, "0")}.webp`;
+
 export const bgmPath = (name: string): string =>
   `sound/scenario/bgm/${name}/${name}.mp3`;
 

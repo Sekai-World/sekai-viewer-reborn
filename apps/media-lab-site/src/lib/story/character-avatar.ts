@@ -5,11 +5,11 @@
  * back to a generic avatar.
  */
 
-const MIN_LOCAL_AVATAR_CHARACTER_ID = 1;
-const MAX_LOCAL_AVATAR_CHARACTER_ID = 26;
+export const LOCAL_AVATAR_CHARACTER_ID_MIN = 1;
+export const LOCAL_AVATAR_CHARACTER_ID_MAX = 26;
 
 export const localCharacterAvatarUrl = (characterId: number): string | null =>
-  characterId >= MIN_LOCAL_AVATAR_CHARACTER_ID &&
-  characterId <= MAX_LOCAL_AVATAR_CHARACTER_ID
+  characterId >= LOCAL_AVATAR_CHARACTER_ID_MIN &&
+  characterId <= LOCAL_AVATAR_CHARACTER_ID_MAX
     ? `/chr_ts/chr_ts_${characterId}_g1.png`
     : null;

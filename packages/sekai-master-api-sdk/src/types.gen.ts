@@ -1365,6 +1365,65 @@ export type GetAdminProfileResponses = {
 
 export type GetAdminProfileResponse = GetAdminProfileResponses[keyof GetAdminProfileResponses];
 
+export type GetAreasByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/areas/{region}/list';
+};
+
+export type GetAreasByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetAreasByRegionListError = GetAreasByRegionListErrors[keyof GetAreasByRegionListErrors];
+
+export type GetAreasByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetAreasByRegionListResponse = GetAreasByRegionListResponses[keyof GetAreasByRegionListResponses];
+
 export type GetBuildInfoData = {
     body?: never;
     path?: never;

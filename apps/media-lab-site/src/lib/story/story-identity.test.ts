@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildStoryAreaTalkPicker,
   buildStoryCardPicker,
   buildStoryCatalog,
   buildStoryCharacterPicker,
@@ -104,6 +105,12 @@ const collections: StoryMasterCollections = {
   actionSets: [
     { id: 1838, areaId: 3, scriptId: "areatalk03_266", scenarioId: "areatalk03_266" },
     { id: 1900, areaId: 4, scriptId: "broken", scenarioId: undefined }
+  ],
+  areas: [
+    { id: 1, assetBundleName: "area1", areaType: "reality_world", name: "Area One" },
+    { id: 2, assetBundleName: "area2", areaType: "reality_world", name: "Area Two" },
+    { id: 5, assetBundleName: "area5", areaType: "spirit_world", name: "Area Five", subName: "School" },
+    { id: 14, assetBundleName: "area14", areaType: "spirit_world", name: "Collab", label: "コラボ中！" }
   ],
   specialStories: [
     {
@@ -405,6 +412,88 @@ describe("buildStoryCharacterPicker", () => {
       gameCharacters: undefined
     });
     expect(characters[0]).toMatchObject({ characterId: 1, name: null });
+  });
+});
+
+describe("buildStoryAreaTalkPicker", () => {
+  const twoDToGameCharacter = new Map([
+    [101, 1],
+    [102, 2],
+    [103, 30]
+  ]);
+
+  it("groups playable talks by area with names and world-map thumbnails", () => {
+    const areas = buildStoryAreaTalkPicker(
+      {
+        ...collections,
+        actionSets: [
+          {
+            id: 10,
+            areaId: 1,
+            scriptId: "as_school",
+            scenarioId: "as_school_1",
+            characterIds: [101, 102, 103]
+          },
+          {
+            id: 11,
+            areaId: 1,
+            scenarioId: "as_school_2",
+            characterIds: []
+          },
+          { id: 12, areaId: 5, scenarioId: "as_spirit", characterIds: [] },
+          { id: 13, areaId: 14, scenarioId: "as_collab", characterIds: [] }
+        ]
+      },
+      twoDToGameCharacter
+    );
+    expect(areas.map((area) => area.areaId)).toEqual([1, 5, 14]);
+
+    const reality = areas[0];
+    expect(reality).toMatchObject({
+      name: "Area One",
+      thumbnailPath: "worldmap/contents/normal/worldmap_area03.webp"
+    });
+    expect(reality.talks).toHaveLength(2);
+    expect(reality.talks[0].characterIds).toEqual([1, 2]);
+
+    const spirit = areas[1];
+    expect(spirit).toMatchObject({
+      name: "Area Five",
+      subName: "School",
+      thumbnailPath: "worldmap/contents/normal/img_worldmap_areas05.webp"
+    });
+
+    const collab = areas[2];
+    expect(collab.thumbnailPath).toBe(
+      "worldmap/contents/collaboration/area14/img_worldmap_areas14.webp"
+    );
+  });
+
+  it("derives reality sheet numbers from areas.json order, not area ids", () => {
+    const areas = buildStoryAreaTalkPicker({
+      ...collections,
+      actionSets: [{ id: 20, areaId: 2, scenarioId: "as_two", characterIds: [] }]
+    });
+    expect(areas[0].thumbnailPath).toBe(
+      "worldmap/contents/normal/worldmap_area01.webp"
+    );
+  });
+
+  it("falls back to null thumbnails and names for unknown areas", () => {
+    const areas = buildStoryAreaTalkPicker({
+      ...collections,
+      areas: undefined,
+      actionSets: [{ id: 30, areaId: 99, scenarioId: "as_x", characterIds: [] }]
+    });
+    expect(areas[0]).toMatchObject({ areaId: 99, name: null, thumbnailPath: null });
+  });
+
+  it("omits action sets without a scenario", () => {
+    const areas = buildStoryAreaTalkPicker({
+      ...collections,
+      actionSets: [{ id: 40, areaId: 1, scriptId: "no_scenario" }]
+    });
+    expect(areas).toEqual([]);
   });
 });
 

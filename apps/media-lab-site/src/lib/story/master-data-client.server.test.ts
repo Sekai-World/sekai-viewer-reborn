@@ -5,6 +5,7 @@ vi.mock("$env/dynamic/private", () => ({ env: {} }));
 const listEndpointMocks = vi.hoisted(() => ({
   getActionSetsByRegionList: vi.fn(),
   getCardEpisodesByRegionList: vi.fn(),
+  getAreasByRegionList: vi.fn(),
   getCardsByRegionList: vi.fn(),
   getCharacter2DsByRegionList: vi.fn(),
   getCharacterProfilesByRegionList: vi.fn(),
@@ -192,6 +193,51 @@ describe("story master-data client", () => {
         assetBundleName: undefined,
         characterId: undefined,
         characterName: undefined
+      }
+    ]);
+  });
+
+  it("parses area rows and keeps action set cast ids", async () => {
+    listEndpointMocks.getAreasByRegionList.mockResolvedValue(
+      okPage([
+        {
+          id: 5,
+          assetbundleName: "area5",
+          areaType: "spirit_world",
+          name: "教室のセカイ",
+          subName: "学校",
+          releaseConditionId: 1
+        }
+      ])
+    );
+    listEndpointMocks.getActionSetsByRegionList.mockResolvedValue(
+      okPage([{ id: 8, areaId: 5, scriptId: "as_x", characterIds: [101, 102] }])
+    );
+
+    const areas = await fetchStoryCollection("jp", "areas", {
+      baseUrl: "https://master.test/api/v1"
+    });
+    expect(areas).toEqual([
+      {
+        id: 5,
+        assetBundleName: "area5",
+        areaType: "spirit_world",
+        name: "教室のセカイ",
+        subName: "学校",
+        label: undefined
+      }
+    ]);
+
+    const actionSets = await fetchStoryCollection("jp", "actionSets", {
+      baseUrl: "https://master.test/api/v1"
+    });
+    expect(actionSets).toEqual([
+      {
+        id: 8,
+        areaId: 5,
+        scriptId: "as_x",
+        scenarioId: undefined,
+        characterIds: [101, 102]
       }
     ]);
   });

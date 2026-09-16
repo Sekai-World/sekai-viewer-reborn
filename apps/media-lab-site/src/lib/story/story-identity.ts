@@ -15,11 +15,18 @@ import {
   areaTalkScenarioPath,
   cardStoryScenarioPath,
   characterProfileScenarioPath,
+  collaborationWorldmapAreaImagePath,
   eventStoryScenarioPath,
+  realityWorldmapAreaImagePath,
   specialStoryScenarioPath,
+  spiritWorldmapAreaImagePath,
   unitStoryScenarioPath
 } from "./story-urls";
-import { localCharacterAvatarUrl } from "./character-avatar";
+import {
+  localCharacterAvatarUrl,
+  LOCAL_AVATAR_CHARACTER_ID_MAX,
+  LOCAL_AVATAR_CHARACTER_ID_MIN
+} from "./character-avatar";
 import type { StoryRouteStoryType } from "$lib/live2d/story-route";
 
 // ---------------------------------------------------------------------------
@@ -125,6 +132,20 @@ export interface StoryActionSet {
   areaId: number;
   scriptId?: string;
   scenarioId?: string;
+  /** `character2ds.id` values; map them to game character ids for busts. */
+  characterIds?: number[];
+}
+
+/** Area master-data row (`areas.json`), area-picker fields only. */
+export interface StoryArea {
+  id: number;
+  assetBundleName?: string;
+  /** `reality_world` | `spirit_world` (collaboration rows carry a label). */
+  areaType?: string;
+  name?: string;
+  subName?: string;
+  /** Collaboration banner label (e.g. "コラボ中！"). */
+  label?: string;
 }
 
 export interface StorySpecialEpisode {
@@ -164,6 +185,7 @@ export interface StoryMasterCollections {
   cardEpisodes: StoryCardEpisode[];
   cards?: StoryCardSummary[];
   gameCharacters?: StoryGameCharacter[];
+  areas?: StoryArea[];
   actionSets: StoryActionSet[];
   specialStories: StorySpecialStory[];
   unitProfiles?: StoryUnitProfile[];
@@ -646,6 +668,101 @@ export const buildStoryCharacterPicker = (
         avatarUrl: localCharacterAvatarUrl(profile.characterId)
       };
     });
+
+/** One playable area talk inside an area. */
+export interface StoryAreaTalk {
+  storyId: string;
+  scenarioId?: string;
+  scriptId?: string;
+  /** Game character ids (1-26) appearing in the talk, sorted. */
+  characterIds: number[];
+}
+
+/** An area entry in the area-talk picker: names, art, and its talks. */
+export interface StoryAreaTalkCard {
+  areaId: number;
+  name: string | null;
+  subName?: string;
+  /** Bucket-relative world-map thumbnail path; null shows a generic tile. */
+  thumbnailPath: string | null;
+  talks: StoryAreaTalk[];
+}
+
+/**
+ * Builds the area-talk picker: one card per area that has playable talks,
+ * with names from `areas` and world-map thumbnails following the legacy
+ * sekai-viewer path rules (reality areas map to the seven shared sheets,
+ * collaboration areas carry their own bundle). `characterIds` on action
+ * sets are `character2ds.id` values, so pass the 2D-id → game-character-id
+ * map to resolve talk casts; without it the casts stay empty.
+ */
+export const buildStoryAreaTalkPicker = (
+  collections: StoryMasterCollections,
+  gameCharacterIdBy2dId?: Map<number, number>
+): StoryAreaTalkCard[] => {
+  const areas = collections.areas ?? [];
+  const areasById = new Map(areas.map((area) => [area.id, area]));
+
+  let realitySeq = 0;
+  const realitySeqById = new Map<number, number>();
+  for (const area of areas) {
+    if (area.areaType === "reality_world") {
+      realitySeq += 1;
+      realitySeqById.set(area.id, realitySeq);
+    }
+  }
+
+  const talksByArea = new Map<number, StoryAreaTalk[]>();
+  for (const actionSet of collections.actionSets) {
+    if (!actionSet.scenarioId) continue;
+    const gameCharacterIds = Array.from(
+      new Set(
+        (actionSet.characterIds ?? [])
+          .map((character2dId) => gameCharacterIdBy2dId?.get(character2dId))
+          .filter(
+            (characterId): characterId is number =>
+              characterId !== undefined &&
+              characterId >= LOCAL_AVATAR_CHARACTER_ID_MIN &&
+              characterId <= LOCAL_AVATAR_CHARACTER_ID_MAX
+          )
+      )
+    ).sort((a, b) => a - b);
+    const talks = talksByArea.get(actionSet.areaId) ?? [];
+    talks.push({
+      storyId: String(actionSet.id),
+      scenarioId: actionSet.scenarioId,
+      scriptId: actionSet.scriptId,
+      characterIds: gameCharacterIds
+    });
+    talksByArea.set(actionSet.areaId, talks);
+  }
+
+  return Array.from(talksByArea.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([areaId, talks]) => {
+      const area = areasById.get(areaId);
+      let thumbnailPath: string | null = null;
+      if (area?.label && area.assetBundleName) {
+        thumbnailPath = collaborationWorldmapAreaImagePath(
+          area.assetBundleName,
+          areaId
+        );
+      } else if (area && realitySeqById.has(areaId)) {
+        thumbnailPath = realityWorldmapAreaImagePath(
+          realitySeqById.get(areaId) as number
+        );
+      } else if (area) {
+        thumbnailPath = spiritWorldmapAreaImagePath(areaId);
+      }
+      return {
+        areaId,
+        name: area?.name ?? null,
+        ...(area?.subName ? { subName: area.subName } : {}),
+        thumbnailPath,
+        talks: talks.sort((a, b) => Number(a.storyId) - Number(b.storyId))
+      };
+    });
+};
 
 // ---------------------------------------------------------------------------
 // Unit story catalog (story picker)

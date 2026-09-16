@@ -4,15 +4,18 @@ import {
   backgroundImagePath,
   bgmPath,
   cardStoryScenarioPath,
+  collaborationWorldmapAreaImagePath,
   createStoryRegionAssetUrls,
   eventStoryScenarioPath,
   movieDirPath,
   movieFallbackPath,
   partVoicePathVariants,
+  realityWorldmapAreaImagePath,
   scenarioIdToAssetbundleName,
   scenarioVoicePath,
   soundEffectPaths,
   specialStoryScenarioPath,
+  spiritWorldmapAreaImagePath,
   talkVoicePathCandidates,
   unitStoryScenarioPath
 } from "./story-urls";
@@ -260,5 +263,33 @@ describe("talkVoicePathCandidates", () => {
         isActionSet: false
       })
     ).toEqual(["sound/scenario/voice/story_event_168_1/voice_1.mp3"]);
+  });
+});
+
+describe("worldmap area thumbnails", () => {
+  it("maps the first seven reality areas onto shared world-map sheets", () => {
+    expect(realityWorldmapAreaImagePath(1)).toBe(
+      "worldmap/contents/normal/worldmap_area03.webp"
+    );
+    expect(realityWorldmapAreaImagePath(2)).toBe(
+      "worldmap/contents/normal/worldmap_area01.webp"
+    );
+    expect(realityWorldmapAreaImagePath(7)).toBe(
+      "worldmap/contents/normal/worldmap_area06.webp"
+    );
+  });
+
+  it("returns null for reality areas without a sheet", () => {
+    expect(realityWorldmapAreaImagePath(8)).toBeNull();
+    expect(realityWorldmapAreaImagePath(0)).toBeNull();
+  });
+
+  it("builds spirit and collaboration thumbnails with padded area ids", () => {
+    expect(spiritWorldmapAreaImagePath(5)).toBe(
+      "worldmap/contents/normal/img_worldmap_areas05.webp"
+    );
+    expect(
+      collaborationWorldmapAreaImagePath("area14", 14)
+    ).toBe("worldmap/contents/collaboration/area14/img_worldmap_areas14.webp");
   });
 });
