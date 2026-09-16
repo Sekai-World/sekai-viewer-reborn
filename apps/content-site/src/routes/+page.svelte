@@ -88,6 +88,7 @@
   const loadedRegionData = $state<Partial<Record<SupportedRegion, HomeRegionData>>>({});
   const regionDataPromises = $state<Partial<Record<SupportedRegion, Promise<HomeRegionData>>>>({});
   const regionDataAbortControllers = new SvelteMap<SupportedRegion, AbortController>();
+  const regionDataErrors = new SvelteMap<SupportedRegion, unknown>();
   const pendingRegionData = new Promise<HomeRegionData>(() => {});
   function getInitialRegionData(): Promise<HomeRegionData> {
     return Promise.all([data.initialCard, data.initialLatestData, data.initialNews]).then(
@@ -159,12 +160,17 @@
       return pending;
     }
 
+    regionDataErrors.delete(region);
     const controller = new AbortController();
     regionDataAbortControllers.set(region, controller);
     const request = fetchHomeRegionData(region, controller.signal)
       .then((regionData) => {
         loadedRegionData[region] = regionData;
         return regionData;
+      })
+      .catch((error: unknown) => {
+        regionDataErrors.set(region, error);
+        throw error;
       })
       .finally(() => {
         if (regionDataAbortControllers.get(region) === controller) {
@@ -311,9 +317,15 @@
     }
 
     const loaded = loadedRegionData[selectedRegion];
-    return loaded
-      ? Promise.resolve(loaded)
-      : (regionDataPromises[selectedRegion] ?? pendingRegionData);
+    if (loaded) {
+      return Promise.resolve(loaded);
+    }
+
+    if (regionDataErrors.has(selectedRegion)) {
+      return Promise.reject(regionDataErrors.get(selectedRegion));
+    }
+
+    return regionDataPromises[selectedRegion] ?? pendingRegionData;
   });
   const latestDataPromise = $derived.by(() =>
     selectedRegion === data.initialRegion
