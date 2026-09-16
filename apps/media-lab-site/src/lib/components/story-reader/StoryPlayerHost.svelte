@@ -23,7 +23,6 @@
     isActionSet: boolean;
     labels: {
       tapToPlay: string;
-      tapToContinue: string;
       playing: string;
       finished: string;
       next: string;
@@ -183,15 +182,10 @@
       ? Math.min(100, Math.round((progress.count / progress.total) * 100))
       : 0
   );
-  const stageHint = $derived(
-    playerState === "ready"
-      ? labels.tapToPlay
-      : playerState === "playing"
-        ? labels.tapToContinue
-        : playerState === "finished"
-          ? labels.finished
-          : ""
-  );
+  /* Only the pre-start affordance stays on the stage; once playback has
+     begun, the state row below the stage carries progress, per product
+     decision to keep the video area clean. */
+  const stageHint = $derived(playerState === "ready" ? labels.tapToPlay : "");
 </script>
 
 <div class="flex flex-col gap-3">

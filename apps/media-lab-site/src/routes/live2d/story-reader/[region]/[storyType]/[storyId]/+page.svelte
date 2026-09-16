@@ -80,7 +80,6 @@
       isActionSet={player.isActionSet}
       labels={{
         tapToPlay: translate("storyReader.player.hint.tapToPlay"),
-        tapToContinue: translate("storyReader.player.hint.tapToContinue"),
         playing: translate("storyReader.player.state.playing"),
         finished: translate("storyReader.player.state.finished"),
         stateReady: translate("storyReader.player.state.ready"),
