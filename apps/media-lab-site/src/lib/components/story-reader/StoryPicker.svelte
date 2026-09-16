@@ -2,7 +2,6 @@
   import Icon from "@iconify/svelte";
   import { resolveUnitLogoUrl } from "@platform/ui-shell";
   import { goto } from "$app/navigation";
-  import { tick } from "svelte";
   import { useRegionSelection } from "$lib/region-selection.svelte";
   import {
     readRememberedStoryReaderMode,
@@ -123,26 +122,6 @@
 
   const normalizedQuery = $derived(query.trim().toLowerCase());
 
-  /* The unit grid ↔ episode wall swap is component state, not a route
-     change, so it never hits the layout's onNavigate view transition. Wrap
-     it in one manually — same cross-fade, same reduced-motion guard. */
-  const swapUnitView = (next: string | null): void => {
-    const documentWithViewTransition = document as Document & {
-      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-    };
-    if (
-      typeof documentWithViewTransition.startViewTransition !== "function" ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ) {
-      selectedUnit = next;
-      return;
-    }
-    documentWithViewTransition.startViewTransition(async () => {
-      selectedUnit = next;
-      await tick();
-    });
-  };
-
   const filteredGroups = $derived(
     normalizedQuery
       ? groups
@@ -258,7 +237,7 @@
         <button
           type="button"
           class="btn btn-ghost btn-sm -ml-2 self-start"
-          onclick={() => swapUnitView(null)}
+          onclick={() => (selectedUnit = null)}
         >
           <Icon icon="mdi:arrow-left" class="size-4" aria-hidden="true" />
           {labels.backToUnits}
@@ -315,7 +294,7 @@
           <button
             type="button"
             class="group flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-base-content/10 bg-base-200/40 px-4 py-6 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
-            onclick={() => swapUnitView(unit.unit)}
+            onclick={() => (selectedUnit = unit.unit)}
           >
             <img
               src={resolveUnitLogoUrl(unit.unit) ?? undefined}

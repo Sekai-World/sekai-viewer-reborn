@@ -1,13 +1,12 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
-  import { goto, invalidateAll, onNavigate } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
-  import { fade } from "svelte/transition";
   import { createI18nTranslator, getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
   import { registerStoryAssetCache } from "$lib/story/asset-cache-client";
   import {
@@ -55,11 +54,6 @@
   let isDesktopThemeMenuOpen = $state(false);
   let isDesktopLanguageMenuOpen = $state(false);
   let isMobileSettingsMenuOpen = $state(false);
-
-  // Preserve the media-lab page-switch behavior: keyed fade transitions when
-  // native view transitions are unavailable or reduced motion is preferred.
-  let useFallbackRouteTransition = $state(true);
-  const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
 
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
 
@@ -197,32 +191,6 @@
     if (regionParam !== null) {
       regionSelection.primary = normalizePrimaryRegion(regionParam);
     }
-  });
-
-  // `onNavigate` must be registered during component initialisation; calling it
-  // inside `onMount` throws at runtime. Browser APIs are guarded inside the
-  // callback instead, which only ever runs on the client.
-  onNavigate((navigation) => {
-    const viewTransitionDocument = document as Document & {
-      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-    };
-    if (!viewTransitionDocument.startViewTransition) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    return new Promise<void>((resolve) => {
-      viewTransitionDocument.startViewTransition(async () => {
-        resolve();
-        await navigation.complete;
-      });
-    });
-  });
-
-  onMount(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const documentWithViewTransition = document as Document & {
-      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-    };
-    useFallbackRouteTransition =
-      typeof documentWithViewTransition.startViewTransition !== "function" || prefersReducedMotion;
   });
 
   // Best-effort LRU cache for story assets; the allowlist follows the
@@ -439,21 +407,7 @@
       </div>
     </div>
   {/snippet}
-  {#if useFallbackRouteTransition}
-    {#key navigationTransitionKey}
-      <div
-        class="page-switch-shell"
-        in:fade|local={{ duration: 150 }}
-        out:fade|local={{ duration: 110 }}
-      >
-        {@render children()}
-      </div>
-    {/key}
-  {:else}
-    <div class="page-switch-shell">
-      {@render children()}
-    </div>
-  {/if}
+  {@render children()}
 </ViewerShell>
 
 {#snippet regionSelector()}
