@@ -1,13 +1,21 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { resolveUnitLogoUrl } from "@platform/ui-shell";
+  import { goto } from "$app/navigation";
   import { useRegionSelection } from "$lib/region-selection.svelte";
+  import {
+    readRememberedStoryReaderMode,
+    rememberStoryReaderMode,
+    type StoryReaderMode
+  } from "$lib/story/story-reader-mode";
 
   /**
    * Story picker for one story type sub-page. The region follows the shared
    * primary-region setting; type navigation lives in the sidebar. Unit
    * stories use a two-level picker (unit blocks → story lines of episode
-   * cards); the other types keep a grouped searchable list.
+   * cards); the other types keep a grouped searchable list. Opening a story
+   * asks for the reader mode in a dialog unless the user chose to remember
+   * one.
    */
   interface StoryCatalogItem {
     storyId: string;
@@ -43,7 +51,6 @@
 
   interface Props {
     storyType: string;
-    modeBase: string;
     labels: {
       search: string;
       loading: string;
@@ -52,10 +59,21 @@
       noMatch: string;
       open: string;
       backToUnits: string;
+      modeDialogTitle: string;
+      textMode: string;
+      playerMode: string;
+      rememberChoice: string;
+      cancel: string;
     };
   }
 
-  let { storyType, modeBase, labels }: Props = $props();
+  let { storyType, labels }: Props = $props();
+
+  /** Reader route prefix per mode; hrefs differ only in this segment. */
+  const MODE_BASES: Record<StoryReaderMode, string> = {
+    text: "/story-reader",
+    player: "/live2d/story-reader"
+  };
 
   const regionSelection = useRegionSelection();
 
@@ -156,8 +174,43 @@
     new Map(units.map((unit) => [unit.unit, unit.unitName] as const))
   );
 
-  const itemHref = (storyId: string): string =>
-    `${modeBase}/${regionSelection.primary}/${storyType}/${storyId}`;
+  const storyHref = (storyId: string, mode: StoryReaderMode): string =>
+    `${MODE_BASES[mode]}/${regionSelection.primary}/${storyType}/${storyId}`;
+
+  let modeDialog = $state<HTMLDialogElement | null>(null);
+  let pendingStoryId = $state<string | null>(null);
+  let rememberChoice = $state(false);
+
+  const openStory = (event: MouseEvent, storyId: string): void => {
+    // Modified or middle clicks keep the browser's own link behavior.
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    const remembered = readRememberedStoryReaderMode();
+    if (!remembered && !modeDialog) return;
+    event.preventDefault();
+    if (remembered) {
+      void goto(storyHref(storyId, remembered));
+      return;
+    }
+    pendingStoryId = storyId;
+    rememberChoice = false;
+    modeDialog?.showModal();
+  };
+
+  const chooseMode = (mode: StoryReaderMode): void => {
+    if (rememberChoice) rememberStoryReaderMode(mode);
+    modeDialog?.close();
+    const storyId = pendingStoryId;
+    pendingStoryId = null;
+    if (storyId) void goto(storyHref(storyId, mode));
+  };
 </script>
 
 <section class="card bg-base-100 shadow-sm ring-1 ring-base-content/10" aria-label={labels.open}>
@@ -211,7 +264,8 @@
               {#each group.episodes as episode (episode.storyId)}
                 <a
                   class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
-                  href={itemHref(episode.storyId)}
+                  href={storyHref(episode.storyId, "text")}
+                  onclick={(event) => openStory(event, episode.storyId)}
                 >
                   <img
                     src={episode.bannerUrl}
@@ -276,7 +330,8 @@
                 {#each group.items as item (item.storyId)}
                   <a
                     class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-base-200"
-                    href={itemHref(item.storyId)}
+                    href={storyHref(item.storyId, "text")}
+                    onclick={(event) => openStory(event, item.storyId)}
                   >
                     <span class="min-w-0 truncate">{item.label}</span>
                     {#if item.sublabel}
@@ -292,3 +347,39 @@
     {/if}
   </div>
 </section>
+
+<dialog bind:this={modeDialog} class="modal" onclose={() => (pendingStoryId = null)}>
+  <div class="modal-box max-w-sm">
+    <h3 class="text-base font-bold">{labels.modeDialogTitle}</h3>
+    <div class="mt-4 grid gap-2">
+      <button
+        type="button"
+        class="btn justify-start gap-3 border-base-content/10 bg-base-100 hover:border-primary/40 hover:bg-primary/5"
+        onclick={() => chooseMode("text")}
+      >
+        <Icon icon="mdi:script-text-outline" class="size-5 text-primary" aria-hidden="true" />
+        {labels.textMode}
+      </button>
+      <button
+        type="button"
+        class="btn justify-start gap-3 border-base-content/10 bg-base-100 hover:border-primary/40 hover:bg-primary/5"
+        onclick={() => chooseMode("player")}
+      >
+        <Icon icon="mdi:drama-masks" class="size-5 text-primary" aria-hidden="true" />
+        {labels.playerMode}
+      </button>
+    </div>
+    <label class="mt-4 flex cursor-pointer items-center gap-2 text-sm text-base-content/80">
+      <input type="checkbox" class="checkbox checkbox-sm checkbox-primary" bind:checked={rememberChoice} />
+      {labels.rememberChoice}
+    </label>
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn btn-ghost btn-sm">{labels.cancel}</button>
+      </form>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button aria-label={labels.cancel}></button>
+  </form>
+</dialog>
