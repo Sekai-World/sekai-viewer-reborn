@@ -9,6 +9,7 @@
   import { onMount, type Snippet } from "svelte";
   import { fade } from "svelte/transition";
   import { createI18nTranslator, getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
+  import { registerStoryAssetCache } from "$lib/story/asset-cache-client";
   import {
     isActivePickerStoryTypePath,
     pickerStoryTypeIcons,
@@ -222,6 +223,12 @@
     };
     useFallbackRouteTransition =
       typeof documentWithViewTransition.startViewTransition !== "function" || prefersReducedMotion;
+  });
+
+  // Best-effort LRU cache for story assets; registration failures are
+  // swallowed inside the helper so rendering never depends on it.
+  onMount(() => {
+    void registerStoryAssetCache();
   });
 
   onMount(() => {
