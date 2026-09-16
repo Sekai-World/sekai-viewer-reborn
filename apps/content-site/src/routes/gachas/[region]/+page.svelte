@@ -4,6 +4,7 @@
   import { resolve } from "$app/paths";
   import { untrack } from "svelte";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
+  import Icon from "@iconify/svelte";
   import { swipeRegion } from "$lib/actions/swipe-region";
   import GachaListCard from "$lib/components/gacha/GachaListCard.svelte";
   import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
@@ -52,6 +53,9 @@
   let lastTouchY = $state<number | null>(null);
   let sortBy = $state<GachaListSortBy>("startAt");
   let sortOrder = $state<GachaListSortOrder>("desc");
+  let ongoingFilter = $state(false);
+  let ongoingFilterDraft = $state(false);
+  let filterDialog: HTMLDialogElement | null = $state(null);
   let hasTriedRestorePersistedSort = $state(false);
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
@@ -67,6 +71,12 @@
   let gachaListEnd = $state(getInitialI18nText("gachaListEnd"));
   let listSortById = $state(getInitialI18nText("listSortById"));
   let gachaListSortByStartAt = $state(getInitialI18nText("gachaListSortByStartAt"));
+  let listOpenFilters = $state(getInitialI18nText("listOpenFilters"));
+  let listFiltersTitle = $state(getInitialI18nText("listFiltersTitle"));
+  let closeLabel = $state(getInitialI18nText("closeLabel"));
+  let listFilterReset = $state(getInitialI18nText("listFilterReset"));
+  let listFilterApply = $state(getInitialI18nText("listFilterApply"));
+  let gachaListFilterOngoing = $state(getInitialI18nText("gachaListFilterOngoing"));
   let spoilerContentLabel = $state(getInitialI18nText("spoilerContent"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let currentGachaLabel = $state(getInitialI18nText("currentGachaLabel"));
@@ -119,7 +129,7 @@
     }
 
     const searchParams = new URLSearchParams(window.location.search);
-    return ["sort_by", "sort_order", "spoiler"].some((key) => searchParams.has(key));
+    return ["sort_by", "sort_order", "ongoing", "spoiler"].some((key) => searchParams.has(key));
   };
 
   const getSortStorageKey = (): string => `content-site:gacha-list-sort:${data.region}`;
@@ -129,6 +139,7 @@
       region: data.region,
       sortBy,
       sortOrder,
+      ongoing: ongoingFilter,
       spoiler: contentDisplaySettings.showSpoilerContent
     });
 
@@ -197,6 +208,8 @@
     hasNext = page.pagination.hasNext;
     sortBy = data.initialQuery.sortBy;
     sortOrder = data.initialQuery.sortOrder;
+    ongoingFilter = data.initialQuery.ongoing;
+    ongoingFilterDraft = ongoingFilter;
     errorMessage = loadFailed ? getInitialI18nText("gachaListLoadFailed") : null;
     isInitialLoading = false;
 
@@ -368,6 +381,12 @@
     gachaListEnd = translate("gachaListEnd");
     listSortById = translate("listSortById");
     gachaListSortByStartAt = translate("gachaListSortByStartAt");
+    listOpenFilters = translate("listOpenFilters");
+    listFiltersTitle = translate("listFiltersTitle");
+    closeLabel = translate("closeLabel");
+    listFilterReset = translate("listFilterReset");
+    listFilterApply = translate("listFilterApply");
+    gachaListFilterOngoing = translate("gachaListFilterOngoing");
     spoilerContentLabel = translate("spoilerContent");
     bannerAltSuffix = translate("bannerAltSuffix");
     currentGachaLabel = translate("currentGachaLabel");
@@ -396,6 +415,9 @@
     searchParams.set("sort_by", sortBy);
     searchParams.set("sort_order", sortOrder);
     searchParams.set("spoiler", String(contentDisplaySettings.showSpoilerContent));
+    if (ongoingFilter) {
+      searchParams.set("ongoing", "true");
+    }
 
     return searchParams;
   };
@@ -548,6 +570,27 @@
     void reloadFirstPage();
   };
 
+  const hasAnyAppliedFilters = (): boolean => ongoingFilter;
+
+  const openFilterDialog = (): void => {
+    ongoingFilterDraft = ongoingFilter;
+    filterDialog?.showModal();
+  };
+
+  const resetFilterDrafts = (): void => {
+    ongoingFilterDraft = false;
+  };
+
+  const applyFilters = (): void => {
+    const hasChanged = ongoingFilterDraft !== ongoingFilter;
+    ongoingFilter = ongoingFilterDraft;
+    filterDialog?.close();
+
+    if (hasChanged) {
+      void reloadFirstPage();
+    }
+  };
+
   const getSortOrderIcon = (targetSortBy: GachaListSortBy): string =>
     sortBy === targetSortBy && sortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down";
 
@@ -572,24 +615,33 @@
   >
     <div class="archive-control-group flex items-center gap-2">
       <div class="join">
-      <ListToolbarButton
-        icon="mdi:clock-start"
-        label={gachaListSortByStartAt}
-        ariaLabel={`${gachaListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
-        sortIndicatorIcon={sortBy === "startAt" ? getSortOrderIcon("startAt") : undefined}
-        class={`join-item ${getSortButtonClass("startAt")}`}
-        onclick={() => toggleSortBy("startAt")}
-      />
+        <ListToolbarButton
+          icon="mdi:clock-start"
+          label={gachaListSortByStartAt}
+          ariaLabel={`${gachaListSortByStartAt} (${sortBy === "startAt" ? sortOrder : "desc"})`}
+          sortIndicatorIcon={sortBy === "startAt" ? getSortOrderIcon("startAt") : undefined}
+          class={`join-item ${getSortButtonClass("startAt")}`}
+          onclick={() => toggleSortBy("startAt")}
+        />
 
-      <ListToolbarButton
-        icon="mdi:numeric"
-        label={listSortById}
-        ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
-        sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
-        class={`join-item ${getSortButtonClass("id")}`}
-        onclick={() => toggleSortBy("id")}
-      />
+        <ListToolbarButton
+          icon="mdi:numeric"
+          label={listSortById}
+          ariaLabel={`${listSortById} (${sortBy === "id" ? sortOrder : "desc"})`}
+          sortIndicatorIcon={sortBy === "id" ? getSortOrderIcon("id") : undefined}
+          class={`join-item ${getSortButtonClass("id")}`}
+          onclick={() => toggleSortBy("id")}
+        />
       </div>
+    </div>
+
+    <div class="archive-control-group flex items-center justify-between gap-2 sm:justify-end">
+      <ListToolbarButton
+        icon="mdi:funnel"
+        label={listOpenFilters}
+        class={hasAnyAppliedFilters() ? "btn-primary" : "btn-outline border-primary text-primary"}
+        onclick={openFilterDialog}
+      />
     </div>
   </div>
 
@@ -667,11 +719,55 @@
   {/if}
 </section>
 
+<dialog bind:this={filterDialog} class="modal">
+  <div class="modal-box archive-filter-dialog max-w-xl border">
+    <div class="flex items-center justify-between gap-3">
+      <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+      <form method="dialog">
+        <button
+          type="submit"
+          class="btn btn-circle btn-ghost btn-sm min-h-12! w-12!"
+          aria-label={closeLabel}
+          title={closeLabel}
+        >
+          <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+        </button>
+      </form>
+    </div>
+
+    <form
+      class="mt-4 grid grid-cols-1 gap-3"
+      onsubmit={(event) => {
+        event.preventDefault();
+        applyFilters();
+      }}
+    >
+      <label
+        class="flex min-h-12 items-center justify-between gap-3 rounded-box border border-base-content/20 px-3 py-2"
+      >
+        <span class="text-sm font-medium">{gachaListFilterOngoing}</span>
+        <input type="checkbox" class="toggle toggle-primary" bind:checked={ongoingFilterDraft} />
+      </label>
+
+      <div class="modal-action flex-wrap gap-2">
+        <button type="button" class="btn btn-outline min-h-12!" onclick={resetFilterDrafts}>
+          {listFilterReset}
+        </button>
+        <button type="submit" class="btn btn-primary min-h-12!">{listFilterApply}</button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button type="submit" aria-label={closeLabel}></button>
+  </form>
+</dialog>
+
 <style>
   .archive-card-controls,
   .archive-list-status,
   .archive-list-error,
-  .archive-list-empty {
+  .archive-list-empty,
+  .archive-filter-dialog {
     background: var(--archive-surface-raised);
     border-color: var(--archive-border-default);
   }
@@ -704,6 +800,10 @@
   .archive-list-sentinel,
   .archive-list-end {
     color: var(--archive-text-muted);
+  }
+
+  .archive-filter-dialog {
+    box-shadow: 0 1.5rem 4rem color-mix(in oklab, var(--archive-text-strong) 14%, transparent);
   }
 
   @media (max-width: 639px) {
