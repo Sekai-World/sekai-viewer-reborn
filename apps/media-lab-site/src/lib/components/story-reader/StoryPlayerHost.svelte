@@ -24,9 +24,12 @@
     labels: {
       tapToLoad: string;
       tapToPlay: string;
+      tapToContinue: string;
+      rotateToPlay: string;
       previous: string;
       next: string;
       autoplay: string;
+      fullscreen: string;
       textAnimation: string;
       voiceVolume: string;
       bgmVolume: string;
@@ -54,6 +57,7 @@
   }: Props = $props();
 
   let stageHost: HTMLDivElement | undefined = $state();
+  let stageContainer: HTMLDivElement | undefined = $state();
   // Raw state: the session wraps pixi/Howler internals that must not be
   // deep-proxied; only reassignment (mount/cleanup) needs to be reactive.
   let session: StoryPlayerSession | null = $state.raw(null);
@@ -63,6 +67,10 @@
   // for it, so a story only downloads its assets when actually opened.
   let loadStarted = $state(false);
   let startLoading: () => void = () => {};
+  let isFullscreen = $state(false);
+  // True only on touch devices held upright (pointer: coarse keeps desktop
+  // narrow windows unaffected); playback is landscape-only there.
+  let isPortraitCoarse = $state(false);
   /* Per-phase load progress (media / model data / model files / motions),
      keyed by Live2DLoadProgressType. Phases start at different times, so an
      aggregate count/total would jump backwards whenever a new phase's total
@@ -92,6 +100,55 @@
 
   const pushWarning = (reason: string): void => {
     warnings = [...warnings.slice(-9), reason];
+  };
+
+  /* Fullscreen playback on the stage container; locking the orientation to
+     landscape is best-effort — Android honours it inside fullscreen, iOS
+     Safari exposes neither API and just ignores it. */
+  const lockLandscape = async (): Promise<void> => {
+    try {
+      const orientation = screen.orientation as ScreenOrientation & {
+        lock?: (orientation: string) => Promise<void>;
+      };
+      await orientation.lock?.("landscape");
+    } catch {
+      // Unsupported or denied; fullscreen alone is still fine.
+    }
+  };
+
+  const unlockOrientation = (): void => {
+    try {
+      (screen.orientation as ScreenOrientation & { unlock?: () => void }).unlock?.();
+    } catch {
+      // Nothing to unlock.
+    }
+  };
+
+  const enterStageFullscreen = async (): Promise<void> => {
+    const element = stageContainer as
+      | (HTMLElement & { webkitRequestFullscreen?: () => Promise<void> })
+      | undefined;
+    if (!element) return;
+    try {
+      if (element.requestFullscreen) await element.requestFullscreen();
+      else await element.webkitRequestFullscreen?.();
+      await lockLandscape();
+    } catch {
+      // Fullscreen denied; stay in the normal layout.
+    }
+  };
+
+  const toggleFullscreen = async (): Promise<void> => {
+    if (document.fullscreenElement) {
+      unlockOrientation();
+      try {
+        await document.exitFullscreen();
+      } catch {
+        // Already gone.
+      }
+      return;
+    }
+    await enterStageFullscreen();
   };
 
   onMount(() => {
@@ -160,7 +217,20 @@
       void mount();
     };
 
+    const portraitQuery = window.matchMedia("(orientation: portrait) and (pointer: coarse)");
+    const syncPortrait = (): void => {
+      isPortraitCoarse = portraitQuery.matches;
+    };
+    const syncFullscreen = (): void => {
+      isFullscreen = document.fullscreenElement === stageContainer;
+    };
+    syncPortrait();
+    portraitQuery.addEventListener("change", syncPortrait);
+    document.addEventListener("fullscreenchange", syncFullscreen);
+
     return () => {
+      portraitQuery.removeEventListener("change", syncPortrait);
+      document.removeEventListener("fullscreenchange", syncFullscreen);
       observer?.disconnect();
       instance?.destroy();
       session = null;
@@ -233,10 +303,24 @@
   $effect(() => {
     if (playerState === "playing") hasStarted = true;
   });
+
+  /* Landscape-only playback on touch devices. Entering the portrait gate
+     also stops any running playback so nothing advances while hidden. */
+  const portraitGate = $derived(isPortraitCoarse && !isFullscreen);
+
+  $effect(() => {
+    if (!portraitGate) return;
+    if (autoplay) {
+      autoplay = false;
+      session?.setAutoplay(false);
+    }
+    if (playerState === "playing") session?.abort();
+  });
 </script>
 
 <div class="flex flex-col gap-3">
   <div
+    bind:this={stageContainer}
     class="relative aspect-video w-full overflow-hidden rounded-xl border border-base-content/10 bg-black"
   >
     <div
@@ -290,6 +374,16 @@
         >
           <Icon icon="mdi:skip-next" class="size-5" aria-hidden="true" />
         </button>
+        <button
+          type="button"
+          class="grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+          aria-label={labels.fullscreen}
+          title={labels.fullscreen}
+          aria-pressed={isFullscreen}
+          onclick={() => void toggleFullscreen()}
+        >
+          <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} class="size-5" aria-hidden="true" />
+        </button>
       </div>
     {/if}
     {#if loadFailed}
@@ -298,6 +392,25 @@
           <Icon icon="mdi:alert-circle-outline" class="size-5" aria-hidden="true" />
           {labels.loadFailed}
         </p>
+      </div>
+    {:else if portraitGate}
+      <div class="absolute inset-0 z-20 grid place-items-center bg-black/80 text-base-100">
+        <div class="flex flex-col items-center gap-4 px-6 text-center">
+          <Icon icon="mdi:phone-rotate-landscape" class="size-14 text-white/90" aria-hidden="true" />
+          <p class="text-sm text-white/90">{labels.rotateToPlay}</p>
+          <button
+            type="button"
+            class="grid size-12 place-items-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25"
+            aria-label={labels.fullscreen}
+            title={labels.fullscreen}
+            onclick={() => {
+              void enterStageFullscreen();
+              startLoading();
+            }}
+          >
+            <Icon icon="mdi:fullscreen" class="size-6" aria-hidden="true" />
+          </button>
+        </div>
       </div>
     {:else if !loadStarted}
       <div class="pointer-events-none absolute inset-0 grid place-items-center">
@@ -339,13 +452,22 @@
         </div>
       </div>
     {/if}
-    {#if autoplay && playerState !== "loading" && !loadFailed}
-      <span
-        class="pointer-events-none absolute right-3 bottom-3 rounded bg-green-600 px-2 py-0.5 text-xs font-bold tracking-wide text-white"
-        aria-hidden="true"
-      >
-        AUTO
-      </span>
+    {#if playerState !== "loading" && !loadFailed && !portraitGate}
+      {#if autoplay}
+        <span
+          class="pointer-events-none absolute right-3 bottom-3 rounded bg-green-600 px-2 py-0.5 text-xs font-bold tracking-wide text-white"
+          aria-hidden="true"
+        >
+          AUTO
+        </span>
+      {:else if playerState === "ready"}
+        <span
+          class="pointer-events-none absolute right-3 bottom-3 rounded bg-black/45 px-2 py-0.5 text-xs text-white/80 backdrop-blur-sm"
+          aria-hidden="true"
+        >
+          {labels.tapToContinue}
+        </span>
+      {/if}
     {/if}
   </div>
 
