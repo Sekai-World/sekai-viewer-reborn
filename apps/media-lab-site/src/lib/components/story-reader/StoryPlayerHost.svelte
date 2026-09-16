@@ -36,6 +36,11 @@
       loadFailed: string;
       warnings: string;
       stateReady: string;
+      phaseAssets: string;
+      phaseModels: string;
+      phaseModelFiles: string;
+      phaseMotions: string;
+      phaseStage: string;
     };
   }
 
@@ -56,7 +61,11 @@
   let session: StoryPlayerSession | null = $state.raw(null);
   let playerState = $state<StoryPlayerSessionState>("loading");
   let loadFailed = $state(false);
-  let progress = $state({ count: 0, total: 0, label: "" });
+  /* Per-phase load progress (media / model data / model files / motions),
+     keyed by Live2DLoadProgressType; phases run in parallel, so a single
+     count/total pair would jump back and forth. */
+  let loadBuckets = $state<Record<string, { count: number; total: number }>>({});
+  let currentLoadItem = $state("");
   let warnings = $state<string[]>([]);
   let autoplay = $state(false);
   let textAnimation = $state(true);
@@ -119,7 +128,8 @@
           },
           callbacks: {
             onProgress: (type, count, total, info) => {
-              progress = { count, total, label: info ?? type };
+              currentLoadItem = info ?? "";
+              loadBuckets = { ...loadBuckets, [type]: { count, total } };
             },
             onWarning: pushWarning,
             onStateChange: (state) => {
@@ -177,9 +187,29 @@
           ? labels.stateReady
           : labels.loading
   );
-  const progressPercent = $derived(
-    progress.total > 0 ? Math.min(100, Math.round((progress.count / progress.total) * 100)) : 0
-  );
+  const loadSummary = $derived.by(() => {
+    const entries = Object.entries(loadBuckets).filter(([, bucket]) => bucket.total > 0);
+    const count = entries.reduce((sum, [, bucket]) => sum + bucket.count, 0);
+    const total = entries.reduce((sum, [, bucket]) => sum + bucket.total, 0);
+    const phaseName = (type: string): string =>
+      type === "media"
+        ? labels.phaseAssets
+        : type === "model-data"
+          ? labels.phaseModels
+          : type === "model-assets"
+            ? labels.phaseModelFiles
+            : type === "model-motion"
+              ? labels.phaseMotions
+              : type === "render-model"
+                ? labels.phaseStage
+                : type;
+    const parts = entries.map(
+      ([type, bucket]) => `${phaseName(type)} ${bucket.count}/${bucket.total}`
+    );
+    const percent =
+      total > 0 ? ` · ${Math.min(100, Math.round((count / total) * 100))}%` : "";
+    return { total, count, text: `${parts.join(" · ")}${percent}` };
+  });
   /* The start affordance only flashes briefly once the stage is ready, then
      gets out of the way; the stage itself stays clickable afterwards, and the
      state row below the stage carries progress once playback has begun. */
@@ -223,9 +253,18 @@
           <div class="flex w-2/3 max-w-xs flex-col items-center gap-3">
             <span class="loading loading-spinner loading-md" aria-hidden="true"></span>
             <span class="text-sm">{labels.loading}</span>
-            {#if progress.total > 0}
-              <progress class="progress progress-primary w-full" value={progressPercent} max="100"
+            {#if loadSummary.total > 0}
+              <progress
+                class="progress progress-primary w-full"
+                value={loadSummary.count}
+                max={loadSummary.total}
               ></progress>
+              <p class="w-full truncate text-center text-xs text-base-100/70">
+                {currentLoadItem}
+              </p>
+              <p class="w-full truncate text-center text-xs text-base-100/70">
+                {loadSummary.text}
+              </p>
             {/if}
           </div>
         {/if}

@@ -92,7 +92,12 @@
         seVolume: translate("storyReader.player.controls.seVolume"),
         loading: translate("storyReader.player.loading.label"),
         loadFailed: translate("storyReader.player.loading.failed"),
-        warnings: translate("storyReader.player.warnings")
+        warnings: translate("storyReader.player.warnings"),
+        phaseAssets: translate("storyReader.player.loading.phase.assets"),
+        phaseModels: translate("storyReader.player.loading.phase.models"),
+        phaseModelFiles: translate("storyReader.player.loading.phase.modelFiles"),
+        phaseMotions: translate("storyReader.player.loading.phase.motions"),
+        phaseStage: translate("storyReader.player.loading.phase.stage")
       }}
     />
   {:else if data.readerStatus === "unavailable"}
