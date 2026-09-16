@@ -192,13 +192,13 @@ export async function preloadModels(
             throw err;
           }),
         callback: function () {
+          count++;
           onProgress(
             Live2DLoadProgressType.ModelAssets,
             count,
             total,
             `${model.costume}/${asset.kind}`
           );
-          count++;
         },
       });
     }
