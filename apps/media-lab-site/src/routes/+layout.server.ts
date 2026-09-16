@@ -5,6 +5,7 @@ import {
 } from "$lib/i18n/runtime";
 import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { fetchGlobalNotices } from "$lib/server/notifications";
+import { getStoryAssetBase } from "$lib/story/story-resolver.server";
 import { resolveI18nMessageBundle } from "@platform/i18n-runtime";
 import packageJson from "../../package.json";
 import type { LayoutServerLoad } from "./$types";
@@ -21,6 +22,11 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
     i18nMessages,
     uiLocale,
     globalNotices: await fetchGlobalNotices(fetch),
-    siteVersion: packageJson.version
+    siteVersion: packageJson.version,
+    // The same resolved base the story pages build asset URLs from; the
+    // asset-cache allowlist follows this value instead of re-deriving it on
+    // the client, so production deployments with a custom asset base cache
+    // exactly what the player fetches.
+    assetBase: getStoryAssetBase()
   };
 };

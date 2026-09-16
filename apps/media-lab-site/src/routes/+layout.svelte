@@ -225,10 +225,11 @@
       typeof documentWithViewTransition.startViewTransition !== "function" || prefersReducedMotion;
   });
 
-  // Best-effort LRU cache for story assets; registration failures are
-  // swallowed inside the helper so rendering never depends on it.
+  // Best-effort LRU cache for story assets; the allowlist follows the
+  // server-resolved asset base so it always matches what the player fetches.
+  // Registration failures are swallowed inside the helper.
   onMount(() => {
-    void registerStoryAssetCache();
+    void registerStoryAssetCache(data.assetBase);
   });
 
   onMount(() => {

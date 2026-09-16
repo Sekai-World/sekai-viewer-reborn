@@ -319,3 +319,34 @@ before the consuming issues finalize the shapes.
   #268 and §Open questions 1 (associated-catalog/resource/CORS evidence is
   recorded; current JP-only scope is explicit; deployed-origin verification
   remains explicit).
+
+## Local asset cache (service worker LRU, 2026-09-14)
+
+Commit 7c94f3e adds a browser-side LRU cache for story assets
+(`apps/media-lab-site/static/sw.js`, registered by
+`$lib/story/asset-cache-client.ts` from the root layout).
+
+- Why a service worker: the player's loaders each own their network I/O —
+  pixi-live2d-display XHRs for model JSON/textures/motions, Howler Web Audio
+  fetches for voices/BGM/SE, `<img>`/`fetch` preloaders for scenario media.
+  A page-side fetch wrapper would only cover its own calls; the SW is the
+  single interception point for all of them and works in dev and prod.
+- Scope: GET requests to the asset base resolved server-side from
+  `PUBLIC_REMOTE_ASSET_BASE_URL` (`getStoryAssetBase()`, served to the page
+  through the root layout server load — the exact value the story pages
+  build asset URLs from; no client-side re-derivation or default). An
+  absolute base (production: the region and Live2D buckets share one host)
+  is matched by origin; a relative base (dev reverse proxy) is matched as a
+  same-origin path prefix. The same-origin `/live2d/assets/` relay is an app
+  route and stays allowlisted in every deployment. Ranged, query-bearing,
+  and non-200 responses pass through uncached.
+- Policy: cache-first without revalidation (asset object keys are
+  content-addressed), least-recently-used eviction past a 512 MiB cap; the
+  LRU index lives in a dedicated cache as JSON with write-serialized updates.
+  An unconfigured worker caches nothing, so first paint before the page
+  posts the allowlist is plain networking.
+- Verified on the worktree dev server (2026-09-14): one story load populates
+  275 entries (~33 MB); the next load is served 274/275 from the SW cache
+  (hit telemetry = `at` timestamps in the LRU index; the default resource
+  timing buffer overflows and undercounts), with sample voice fetches at
+  single-digit milliseconds.
