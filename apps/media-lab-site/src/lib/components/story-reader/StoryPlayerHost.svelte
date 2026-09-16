@@ -182,10 +182,23 @@
       ? Math.min(100, Math.round((progress.count / progress.total) * 100))
       : 0
   );
-  /* Only the pre-start affordance stays on the stage; once playback has
-     begun, the state row below the stage carries progress, per product
-     decision to keep the video area clean. */
-  const stageHint = $derived(playerState === "ready" ? labels.tapToPlay : "");
+  /* The start affordance only flashes briefly once the stage is ready, then
+     gets out of the way; the stage itself stays clickable afterwards, and the
+     state row below the stage carries progress once playback has begun. */
+  let startHintVisible = $state(false);
+  const stageHint = $derived(
+    playerState === "ready" && startHintVisible ? labels.tapToPlay : ""
+  );
+
+  $effect(() => {
+    if (playerState !== "ready") {
+      startHintVisible = false;
+      return;
+    }
+    startHintVisible = true;
+    const timer = setTimeout(() => (startHintVisible = false), 3000);
+    return () => clearTimeout(timer);
+  });
 </script>
 
 <div class="flex flex-col gap-3">
