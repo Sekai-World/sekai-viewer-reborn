@@ -24,8 +24,6 @@
     labels: {
       tapToPlay: string;
       previous: string;
-      playing: string;
-      finished: string;
       next: string;
       autoplay: string;
       textAnimation: string;
@@ -35,7 +33,6 @@
       loading: string;
       loadFailed: string;
       warnings: string;
-      stateReady: string;
       phaseAssets: string;
       phaseModels: string;
       phaseModelFiles: string;
@@ -178,15 +175,6 @@
     });
   };
 
-  const stateLabel = $derived(
-    playerState === "playing"
-      ? labels.playing
-      : playerState === "finished"
-        ? labels.finished
-        : playerState === "ready"
-          ? labels.stateReady
-          : labels.loading
-  );
   const loadSummary = $derived.by(() => {
     const entries = Object.entries(loadBuckets).filter(([, bucket]) => bucket.total > 0);
     const count = entries.reduce((sum, [, bucket]) => sum + bucket.count, 0);
@@ -210,20 +198,14 @@
       total > 0 ? ` · ${Math.min(100, Math.round((count / total) * 100))}%` : "";
     return { total, count, text: `${parts.join(" · ")}${percent}` };
   });
-  /* The start affordance only flashes briefly once the stage is ready, then
-     gets out of the way; the stage itself stays clickable afterwards, and the
-     state row below the stage carries progress once playback has begun. */
-  let startHintVisible = $state(false);
-  const stageHint = $derived(playerState === "ready" && startHintVisible ? labels.tapToPlay : "");
+  /* The start affordance sits centered on the still-black stage until the
+     user advances for the first time, then never comes back. Playback state
+     is not written out anywhere below the stage, matching the game. */
+  let hasStarted = $state(false);
+  const showStartHint = $derived(playerState === "ready" && !hasStarted);
 
   $effect(() => {
-    if (playerState !== "ready") {
-      startHintVisible = false;
-      return;
-    }
-    startHintVisible = true;
-    const timer = setTimeout(() => (startHintVisible = false), 3000);
-    return () => clearTimeout(timer);
+    if (playerState === "playing") hasStarted = true;
   });
 </script>
 
@@ -242,6 +224,48 @@
       }}
       tabindex="0"
     ></div>
+    {#if playerState !== "loading" && !loadFailed}
+      <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5">
+        <button
+          type="button"
+          class="grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 disabled:cursor-default disabled:opacity-40"
+          aria-label={labels.previous}
+          title={labels.previous}
+          onclick={() => void session?.prevStep()}
+          disabled={!session || !session.canGoBack || loadFailed}
+        >
+          <Icon icon="mdi:skip-previous" class="size-5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class={`grid size-9 place-items-center rounded-full text-[10px] font-bold tracking-wide backdrop-blur-sm transition-colors disabled:cursor-default disabled:opacity-40 ${
+            autoplay
+              ? "bg-green-600 text-white"
+              : "bg-black/45 text-white hover:bg-black/70"
+          }`}
+          aria-pressed={autoplay}
+          aria-label={labels.autoplay}
+          title={labels.autoplay}
+          onclick={() => {
+            autoplay = !autoplay;
+            session?.setAutoplay(autoplay);
+          }}
+          disabled={!session || loadFailed}
+        >
+          AUTO
+        </button>
+        <button
+          type="button"
+          class="grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 disabled:cursor-default disabled:opacity-40"
+          aria-label={labels.next}
+          title={labels.next}
+          onclick={() => (playerState === "playing" ? session?.abort() : session?.nextStep())}
+          disabled={!session || playerState === "finished" || loadFailed}
+        >
+          <Icon icon="mdi:skip-next" class="size-5" aria-hidden="true" />
+        </button>
+      </div>
+    {/if}
     {#if playerState === "loading" || loadFailed}
       <div class="absolute inset-0 grid place-items-center bg-black/70 text-base-100">
         {#if loadFailed}
@@ -269,13 +293,13 @@
           </div>
         {/if}
       </div>
-    {:else if stageHint}
-      <p
-        class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white/80"
-        role="status"
-      >
-        {stageHint}
-      </p>
+    {:else if showStartHint}
+      <div class="pointer-events-none absolute inset-0 grid place-items-center">
+        <div class="flex flex-col items-center gap-3 text-white/90">
+          <Icon icon="mdi:play-circle-outline" class="size-16" aria-hidden="true" />
+          <span class="text-sm">{labels.tapToPlay}</span>
+        </div>
+      </div>
     {/if}
     {#if autoplay && playerState !== "loading" && !loadFailed}
       <span
@@ -285,48 +309,6 @@
         AUTO
       </span>
     {/if}
-  </div>
-
-  <div class="flex flex-wrap items-center gap-2">
-    <button
-      type="button"
-      class="btn btn-outline btn-sm min-h-11! px-3"
-      aria-label={labels.previous}
-      title={labels.previous}
-      onclick={() => void session?.prevStep()}
-      disabled={!session || !session.canGoBack || playerState === "loading" || loadFailed}
-    >
-      <Icon icon="mdi:skip-previous" class="size-4" aria-hidden="true" />
-    </button>
-    <button
-      type="button"
-      class="btn btn-primary btn-sm min-h-11! px-4"
-      onclick={() => (playerState === "playing" ? session?.abort() : session?.nextStep())}
-      disabled={!session || playerState === "finished" || playerState === "loading" || loadFailed}
-    >
-      <Icon icon="mdi:skip-next" class="size-4" aria-hidden="true" />
-      {labels.next}
-      <span class="sr-only">({stateLabel})</span>
-    </button>
-    <button
-      type="button"
-      class={`btn btn-sm min-h-11! px-4 font-bold tracking-wide ${
-        autoplay
-          ? "border-green-600! bg-green-600! text-white hover:border-green-500! hover:bg-green-500!"
-          : "btn-outline"
-      }`}
-      aria-pressed={autoplay}
-      aria-label={labels.autoplay}
-      title={labels.autoplay}
-      onclick={() => {
-        autoplay = !autoplay;
-        session?.setAutoplay(autoplay);
-      }}
-      disabled={!session || loadFailed}
-    >
-      AUTO
-    </button>
-    <span class="text-sm text-base-content/60" role="status">{stateLabel}</span>
   </div>
 
   <div class="grid gap-4 rounded-xl border border-base-content/10 bg-base-100 p-4 sm:grid-cols-2">
