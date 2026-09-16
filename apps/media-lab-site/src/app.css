@@ -23,16 +23,26 @@
       view-transition-name: media-lab-site-main;
     }
 
+    /* The UA stylesheet animates the group box's width/height/position from
+       the old snapshot's geometry to the new one. With the very different
+       page heights here that reads as the old page squashing flat before the
+       new one expands downward — the exact animation this cross-fade is
+       meant to replace. Dropping the group animation snaps the box to the
+       incoming page's geometry immediately and leaves only the opacity
+       cross-fade of the snapshots. */
+    ::view-transition-group(media-lab-site-main) {
+      animation: none;
+    }
+
     ::view-transition-old(media-lab-site-main),
     ::view-transition-new(media-lab-site-main) {
       animation-duration: 220ms;
       animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-      /* Snapshots default to object-fit: fill, so they stretch with the
-         group's animated box: entering a page taller than the previous one
-         (e.g. Home into the story picker) renders the incoming snapshot
-         squashed flat before it expands. Cover keeps each snapshot at its
-         own aspect ratio, top-aligned, so only the opacity cross-fade
-         reads. */
+      /* The group now sits at the incoming page's size while the old
+         snapshot fades out; snapshots default to object-fit: fill, which
+         would stretch the outgoing page over the new box. Cover, top
+         aligned, keeps each snapshot at its own aspect ratio during the
+         fade. */
       object-fit: cover;
       object-position: top;
     }
