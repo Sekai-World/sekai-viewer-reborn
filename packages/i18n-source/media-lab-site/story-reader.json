@@ -18,6 +18,7 @@
   "storyReader.player.controls.autoplay": "Autoplay",
   "storyReader.player.controls.bgmVolume": "BGM",
   "storyReader.player.controls.next": "Next",
+  "storyReader.player.controls.previous": "Previous",
   "storyReader.player.controls.seVolume": "SE",
   "storyReader.player.controls.textAnimation": "Text animation",
   "storyReader.player.controls.voiceVolume": "Voice",

@@ -1,8 +1,6 @@
 import type { IScenarioData } from "./scenario-types";
-import type {
-  ILive2DControllerData,
-  ILive2DLoadProgressHandler
-} from "./player/player-types";
+import type { ILive2DControllerData, ILive2DLoadProgressHandler } from "./player/player-types";
+import { Live2DAssetType } from "./player/player-types";
 import { Live2DController } from "./player/Live2DController";
 import {
   discardMotion,
@@ -23,12 +21,7 @@ import type { StoryVoiceCharacter } from "./scenario-rows";
  */
 
 export type StoryPlayerSessionState =
-  | "loading"
-  | "ready"
-  | "playing"
-  | "finished"
-  | "error"
-  | "destroyed";
+  "loading" | "ready" | "playing" | "finished" | "error" | "destroyed";
 
 export interface StoryPlayerSettings {
   voiceVolume: number;
@@ -64,10 +57,16 @@ export interface StoryPlayerSession {
   readonly state: StoryPlayerSessionState;
   /** Advances playback to the next checkpoint. */
   nextStep(): Promise<void>;
+  /** Whether there is a previous checkpoint to go back to. */
+  readonly canGoBack: boolean;
+  /** Silently rewinds to the checkpoint before the current one. */
+  prevStep(): Promise<void>;
   /** Skips the currently running animations and sounds. */
   abort(): void;
   setAutoplay(enabled: boolean): void;
-  setVolume(volume: Partial<Pick<StoryPlayerSettings, "voiceVolume" | "bgmVolume" | "seVolume">>): void;
+  setVolume(
+    volume: Partial<Pick<StoryPlayerSettings, "voiceVolume" | "bgmVolume" | "seVolume">>
+  ): void;
   setTextAnimation(enabled: boolean): void;
   resize(width: number, height: number): void;
   destroy(): void;
@@ -79,7 +78,10 @@ interface PixiApplication {
   view: unknown;
   stage: unknown;
   renderer: { resize(width: number, height: number): void };
-  destroy(removeView: boolean, options: { children: boolean; texture: boolean; baseTexture: boolean }): void;
+  destroy(
+    removeView: boolean,
+    options: { children: boolean; texture: boolean; baseTexture: boolean }
+  ): void;
 }
 
 export const createStoryPlayerSession = async (
@@ -92,6 +94,8 @@ export const createStoryPlayerSession = async (
   let autoplayTimer: ReturnType<typeof setTimeout> | null = null;
   let destroyed = false;
   let autoplay = settings.autoplay;
+  /** Parked checkpoint indices; [0] is the pre-first-line position. */
+  const checkpointHistory: number[] = [0];
 
   const setState = (next: StoryPlayerSessionState): void => {
     if (destroyed && next !== "destroyed") return;
@@ -147,10 +151,7 @@ export const createStoryPlayerSession = async (
       callbacks.onWarning
     );
 
-    const [mediaUrls, modelData] = await Promise.all([
-      mediaUrlsPromise,
-      modelDataPromise
-    ]);
+    const [mediaUrls, modelData] = await Promise.all([mediaUrlsPromise, modelDataPromise]);
     discardMotion(scenarioData, modelData);
 
     const controllerData: ILive2DControllerData = await getLive2DControllerData(
@@ -177,9 +178,7 @@ export const createStoryPlayerSession = async (
       backgroundColor: 0x000000,
       backgroundAlpha: 1,
       resolution:
-        typeof window !== "undefined" && window.devicePixelRatio > 0
-          ? window.devicePixelRatio
-          : 1,
+        typeof window !== "undefined" && window.devicePixelRatio > 0 ? window.devicePixelRatio : 1,
       sharedTicker: false,
       autoStart: true
     });
@@ -213,6 +212,10 @@ export const createStoryPlayerSession = async (
         return "destroyed";
       },
       nextStep: async () => undefined,
+      get canGoBack(): boolean {
+        return false;
+      },
+      prevStep: async () => undefined,
       abort: () => undefined,
       setAutoplay: () => undefined,
       setVolume: () => undefined,
@@ -252,6 +255,41 @@ export const createStoryPlayerSession = async (
           return;
         }
         controller.step = next;
+        checkpointHistory.push(next);
+        setState("ready");
+        scheduleAutoplay();
+      } finally {
+        busy = false;
+      }
+    },
+    get canGoBack(): boolean {
+      // history[0] is the pre-first-line position, which cannot be restored.
+      return checkpointHistory.length >= 3;
+    },
+    prevStep: async (): Promise<void> => {
+      if (destroyed || busy || !controller) return;
+      if (!session.canGoBack) return;
+      busy = true;
+      if (autoplayTimer !== null) {
+        clearTimeout(autoplayTimer);
+        autoplayTimer = null;
+      }
+      setState("playing");
+      try {
+        const target = checkpointHistory[checkpointHistory.length - 2];
+        // Stop the current line's playback, then silently replay from the
+        // start so every visual layer converges on the earlier checkpoint.
+        controller.stop_sounds([Live2DAssetType.Talk]);
+        controller.animate.abort();
+        let index = 0;
+        while (index !== -1 && index !== target) {
+          index = await controller.step_until_checkpoint(index, {
+            silent: true
+          });
+        }
+        if (destroyed) return;
+        controller.step = target;
+        checkpointHistory.pop();
         setState("ready");
         scheduleAutoplay();
       } finally {

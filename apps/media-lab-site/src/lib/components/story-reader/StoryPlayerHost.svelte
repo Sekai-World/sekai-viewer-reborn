@@ -23,6 +23,7 @@
     isActionSet: boolean;
     labels: {
       tapToPlay: string;
+      previous: string;
       playing: string;
       finished: string;
       next: string;
@@ -57,7 +58,7 @@
   let loadFailed = $state(false);
   let progress = $state({ count: 0, total: 0, label: "" });
   let warnings = $state<string[]>([]);
-  let autoplay = $state(true);
+  let autoplay = $state(false);
   let textAnimation = $state(true);
   let voiceVolume = $state(0.8);
   let bgmVolume = $state(0.5);
@@ -92,11 +93,10 @@
         // evaluates; load the Cubism Core runtime before anything else.
         const { ensureCubismCore } = await import("$lib/live2d/cubism-core");
         await ensureCubismCore();
-        const [{ createStoryPlayerSession }, { createStoryRegionAssetUrls }] =
-          await Promise.all([
-            import("$lib/story/story-player-session"),
-            import("$lib/story/story-urls")
-          ]);
+        const [{ createStoryPlayerSession }, { createStoryRegionAssetUrls }] = await Promise.all([
+          import("$lib/story/story-player-session"),
+          import("$lib/story/story-urls")
+        ]);
         const urls = createStoryRegionAssetUrls(() => assetBase, region as "jp");
         const [width, height] = stageSizeFor(stageHost);
         instance = await createStoryPlayerSession({
@@ -178,17 +178,13 @@
           : labels.loading
   );
   const progressPercent = $derived(
-    progress.total > 0
-      ? Math.min(100, Math.round((progress.count / progress.total) * 100))
-      : 0
+    progress.total > 0 ? Math.min(100, Math.round((progress.count / progress.total) * 100)) : 0
   );
   /* The start affordance only flashes briefly once the stage is ready, then
      gets out of the way; the stage itself stays clickable afterwards, and the
      state row below the stage carries progress once playback has begun. */
   let startHintVisible = $state(false);
-  const stageHint = $derived(
-    playerState === "ready" && startHintVisible ? labels.tapToPlay : ""
-  );
+  const stageHint = $derived(playerState === "ready" && startHintVisible ? labels.tapToPlay : "");
 
   $effect(() => {
     if (playerState !== "ready") {
@@ -228,10 +224,7 @@
             <span class="loading loading-spinner loading-md" aria-hidden="true"></span>
             <span class="text-sm">{labels.loading}</span>
             {#if progress.total > 0}
-              <progress
-                class="progress progress-primary w-full"
-                value={progressPercent}
-                max="100"
+              <progress class="progress progress-primary w-full" value={progressPercent} max="100"
               ></progress>
             {/if}
           </div>
@@ -245,9 +238,27 @@
         {stageHint}
       </p>
     {/if}
+    {#if autoplay && playerState !== "loading" && !loadFailed}
+      <span
+        class="pointer-events-none absolute right-3 bottom-3 rounded bg-green-600 px-2 py-0.5 text-xs font-bold tracking-wide text-white"
+        aria-hidden="true"
+      >
+        AUTO
+      </span>
+    {/if}
   </div>
 
   <div class="flex flex-wrap items-center gap-2">
+    <button
+      type="button"
+      class="btn btn-outline btn-sm min-h-11! px-3"
+      aria-label={labels.previous}
+      title={labels.previous}
+      onclick={() => void session?.prevStep()}
+      disabled={!session || !session.canGoBack || playerState === "loading" || loadFailed}
+    >
+      <Icon icon="mdi:skip-previous" class="size-4" aria-hidden="true" />
+    </button>
     <button
       type="button"
       class="btn btn-primary btn-sm min-h-11! px-4"
@@ -258,19 +269,28 @@
       {labels.next}
       <span class="sr-only">({stateLabel})</span>
     </button>
+    <button
+      type="button"
+      class={`btn btn-sm min-h-11! px-4 font-bold tracking-wide ${
+        autoplay
+          ? "border-green-600! bg-green-600! text-white hover:border-green-500! hover:bg-green-500!"
+          : "btn-outline"
+      }`}
+      aria-pressed={autoplay}
+      aria-label={labels.autoplay}
+      title={labels.autoplay}
+      onclick={() => {
+        autoplay = !autoplay;
+        session?.setAutoplay(autoplay);
+      }}
+      disabled={!session || loadFailed}
+    >
+      AUTO
+    </button>
     <span class="text-sm text-base-content/60" role="status">{stateLabel}</span>
   </div>
 
   <div class="grid gap-4 rounded-xl border border-base-content/10 bg-base-100 p-4 sm:grid-cols-2">
-    <label class="flex items-center justify-between gap-3">
-      <span class="text-sm text-base-content/70">{labels.autoplay}</span>
-      <input
-        type="checkbox"
-        class="toggle toggle-primary"
-        bind:checked={autoplay}
-        onchange={() => session?.setAutoplay(autoplay)}
-      />
-    </label>
     <label class="flex items-center justify-between gap-3">
       <span class="text-sm text-base-content/70">{labels.textAnimation}</span>
       <input

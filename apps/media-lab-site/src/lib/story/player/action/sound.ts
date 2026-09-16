@@ -4,12 +4,8 @@ import { SoundPlayMode } from "../../scenario-types";
 import { Live2DAssetType } from "../player-types";
 import { log } from "../log";
 
-export default async function action_sound(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SoundData[action.ReferenceIndex];
+export default async function action_sound(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SoundData[action.ReferenceIndex];
   log.log("Live2DController", "Sound", action, action_detail);
   // find sound asset
   let sound: Howl | null = null;
@@ -19,18 +15,10 @@ export default async function action_sound(
     if (action_detail.Bgm === "bgm00000") {
       // if bgm name is bgm00000, stop all bgm
       controller.scenarioResource.audio
-        .filter(
-          (sound) =>
-            sound.type === Live2DAssetType.BackgroundMusic &&
-            sound.data.playing()
-        )
+        .filter((sound) => sound.type === Live2DAssetType.BackgroundMusic && sound.data.playing())
         .forEach((sound) => {
           const sound_instance = sound.data;
-          sound_instance.fade(
-            sound_instance.volume(),
-            0,
-            action_detail.Duration * 1000
-          );
+          sound_instance.fade(sound_instance.volume(), 0, action_detail.Duration * 1000);
           sound_instance.once("fade", () => {
             sound_instance.stop();
           });
@@ -38,28 +26,21 @@ export default async function action_sound(
     } else {
       // find bgm asset
       const sound_asset = controller.scenarioResource.audio.find(
-        (s) =>
-          s.identifier === action_detail.Bgm &&
-          s.type === Live2DAssetType.BackgroundMusic
+        (s) => s.identifier === action_detail.Bgm && s.type === Live2DAssetType.BackgroundMusic
       );
       if (sound_asset) {
         sound = sound_asset.data;
         sound_type = "bgm";
       } else {
         log.warn("Live2DController", `${action_detail.Bgm} not loaded, skip.`);
-        controller.events.emit(
-          "warn",
-          `${action_detail.Bgm} not loaded, skip.`
-        );
+        controller.events.emit("warn", `${action_detail.Bgm} not loaded, skip.`);
         return;
       }
     }
   } else if (action_detail.Se) {
     // find se asset
     const sound_asset = controller.scenarioResource.audio.find(
-      (s) =>
-        s.identifier === action_detail.Se &&
-        s.type === Live2DAssetType.SoundEffect
+      (s) => s.identifier === action_detail.Se && s.type === Live2DAssetType.SoundEffect
     );
     if (sound_asset) {
       sound = sound_asset.data;
@@ -71,6 +52,9 @@ export default async function action_sound(
     }
   }
   // different play mode
+  // Silent go-back replay: skip SEs (one-shot churn); BGM keeps playing so
+  // the scene converges on the correct music state.
+  if (controller.replay_silent && sound_type === "se") return;
   const bgm_volume = controller.settings.bgm_volume * action_detail.Volume;
   const se_volume = controller.settings.se_volume * action_detail.Volume;
   switch (action_detail.PlayMode) {
@@ -128,9 +112,7 @@ export default async function action_sound(
           // if no bgm asset, fade to new volume for all playing bgm
           controller.scenarioResource.audio
             .filter(
-              (sound) =>
-                sound.type === Live2DAssetType.BackgroundMusic &&
-                sound.data.playing()
+              (sound) => sound.type === Live2DAssetType.BackgroundMusic && sound.data.playing()
             )
             .forEach((sound) => {
               const sound_instance = sound.data;
