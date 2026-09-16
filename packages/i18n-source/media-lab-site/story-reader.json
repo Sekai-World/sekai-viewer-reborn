@@ -23,6 +23,7 @@
   "storyReader.player.controls.textAnimation": "Text animation",
   "storyReader.player.controls.voiceVolume": "Voice",
   "storyReader.player.description": "Plays the scenario on a Live2D stage with character models, voices, and effects. Click the stage or use Next to advance at checkpoints.",
+  "storyReader.player.hint.tapToLoad": "Click to load",
   "storyReader.player.hint.tapToPlay": "Click to start",
   "storyReader.player.kicker": "StoryReader · Live2D Player",
   "storyReader.player.loading.failed": "The story player failed to load. Please try again later.",

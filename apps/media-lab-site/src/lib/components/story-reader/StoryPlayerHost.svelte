@@ -22,6 +22,7 @@
     isCardStory: boolean;
     isActionSet: boolean;
     labels: {
+      tapToLoad: string;
       tapToPlay: string;
       previous: string;
       next: string;
@@ -58,9 +59,15 @@
   let session: StoryPlayerSession | null = $state.raw(null);
   let playerState = $state<StoryPlayerSessionState>("loading");
   let loadFailed = $state(false);
+  // Loading is opt-in: the stage shows "Click to load" until the user asks
+  // for it, so a story only downloads its assets when actually opened.
+  let loadStarted = $state(false);
+  let startLoading: () => void = () => {};
   /* Per-phase load progress (media / model data / model files / motions),
-     keyed by Live2DLoadProgressType; phases run in parallel, so a single
-     count/total pair would jump back and forth. */
+     keyed by Live2DLoadProgressType. Phases start at different times, so an
+     aggregate count/total would jump backwards whenever a new phase's total
+     joins the denominator; each phase gets its own monotonically filling
+     bar instead. */
   let loadBuckets = $state<Record<string, { count: number; total: number }>>({});
   let currentLoadItem = $state("");
   let warnings = $state<string[]>([]);
@@ -147,7 +154,11 @@
         playerState = "error";
       }
     };
-    void mount();
+    startLoading = (): void => {
+      if (loadStarted) return;
+      loadStarted = true;
+      void mount();
+    };
 
     return () => {
       observer?.disconnect();
@@ -157,6 +168,10 @@
   });
 
   const onStageClick = (): void => {
+    if (!loadStarted) {
+      startLoading();
+      return;
+    }
     if (!session) return;
     if (playerState === "playing") {
       session.abort();
@@ -175,28 +190,39 @@
     });
   };
 
-  const loadSummary = $derived.by(() => {
-    const entries = Object.entries(loadBuckets).filter(([, bucket]) => bucket.total > 0);
-    const count = entries.reduce((sum, [, bucket]) => sum + bucket.count, 0);
-    const total = entries.reduce((sum, [, bucket]) => sum + bucket.total, 0);
-    const phaseName = (type: string): string =>
-      type === "media"
-        ? labels.phaseAssets
-        : type === "model-data"
-          ? labels.phaseModels
-          : type === "model-assets"
-            ? labels.phaseModelFiles
-            : type === "model-motion"
-              ? labels.phaseMotions
-              : type === "render-model"
-                ? labels.phaseStage
-                : type;
-    const parts = entries.map(
-      ([type, bucket]) => `${phaseName(type)} ${bucket.count}/${bucket.total}`
-    );
-    const percent =
-      total > 0 ? ` · ${Math.min(100, Math.round((count / total) * 100))}%` : "";
-    return { total, count, text: `${parts.join(" · ")}${percent}` };
+  const phaseOrder = [
+    "media",
+    "model-data",
+    "model-assets",
+    "model-motion",
+    "render-model"
+  ];
+  const phaseName = (type: string): string =>
+    type === "media"
+      ? labels.phaseAssets
+      : type === "model-data"
+        ? labels.phaseModels
+        : type === "model-assets"
+          ? labels.phaseModelFiles
+          : type === "model-motion"
+            ? labels.phaseMotions
+            : type === "render-model"
+              ? labels.phaseStage
+              : type;
+  const loadPhases = $derived.by(() => {
+    return Object.entries(loadBuckets)
+      .filter(([, bucket]) => bucket.total > 0)
+      .sort((a, b) => {
+        const indexA = phaseOrder.indexOf(a[0]);
+        const indexB = phaseOrder.indexOf(b[0]);
+        return (indexA < 0 ? phaseOrder.length : indexA) - (indexB < 0 ? phaseOrder.length : indexB);
+      })
+      .map(([type, bucket]) => ({
+        type,
+        name: phaseName(type),
+        count: bucket.count,
+        total: bucket.total
+      }));
   });
   /* The start affordance sits centered on the still-black stage until the
      user advances for the first time, then never comes back. Playback state
@@ -217,7 +243,7 @@
       bind:this={stageHost}
       class="absolute inset-0"
       role="button"
-      aria-label={labels.next}
+      aria-label={!loadStarted ? labels.tapToLoad : labels.next}
       onclick={onStageClick}
       onkeydown={(event) => {
         if (event.key === "Enter" || event.key === " ") onStageClick();
@@ -266,32 +292,44 @@
         </button>
       </div>
     {/if}
-    {#if playerState === "loading" || loadFailed}
+    {#if loadFailed}
       <div class="absolute inset-0 grid place-items-center bg-black/70 text-base-100">
-        {#if loadFailed}
-          <p class="flex items-center gap-2 text-sm" role="alert">
-            <Icon icon="mdi:alert-circle-outline" class="size-5" aria-hidden="true" />
-            {labels.loadFailed}
-          </p>
-        {:else}
-          <div class="flex w-2/3 max-w-xs flex-col items-center gap-3">
-            <span class="loading loading-spinner loading-md" aria-hidden="true"></span>
-            <span class="text-sm">{labels.loading}</span>
-            {#if loadSummary.total > 0}
-              <progress
-                class="progress progress-primary w-full"
-                value={loadSummary.count}
-                max={loadSummary.total}
-              ></progress>
-              <p class="w-full truncate text-center text-xs text-base-100/70">
-                {currentLoadItem}
-              </p>
-              <p class="w-full truncate text-center text-xs text-base-100/70">
-                {loadSummary.text}
-              </p>
-            {/if}
-          </div>
-        {/if}
+        <p class="flex items-center gap-2 text-sm" role="alert">
+          <Icon icon="mdi:alert-circle-outline" class="size-5" aria-hidden="true" />
+          {labels.loadFailed}
+        </p>
+      </div>
+    {:else if !loadStarted}
+      <div class="pointer-events-none absolute inset-0 grid place-items-center">
+        <div class="flex flex-col items-center gap-3 text-white/90">
+          <Icon icon="mdi:download-circle-outline" class="size-16" aria-hidden="true" />
+          <span class="text-sm">{labels.tapToLoad}</span>
+        </div>
+      </div>
+    {:else if playerState === "loading"}
+      <div class="absolute inset-0 grid place-items-center bg-black/70 text-base-100">
+        <div class="flex w-2/3 max-w-xs flex-col items-center gap-3">
+          <span class="loading loading-spinner loading-md" aria-hidden="true"></span>
+          <span class="text-sm">{labels.loading}</span>
+          {#if loadPhases.length > 0}
+            <div class="flex w-full flex-col gap-1.5">
+              {#each loadPhases as phase (phase.type)}
+                <div class="flex items-center gap-2 text-xs text-base-100/80">
+                  <span class="w-20 shrink-0 truncate text-right">{phase.name}</span>
+                  <progress
+                    class="progress progress-primary h-2 grow"
+                    value={phase.count}
+                    max={phase.total}
+                  ></progress>
+                  <span class="w-14 shrink-0 tabular-nums">{phase.count}/{phase.total}</span>
+                </div>
+              {/each}
+            </div>
+            <p class="w-full truncate text-center text-xs text-base-100/70">
+              {currentLoadItem}
+            </p>
+          {/if}
+        </div>
       </div>
     {:else if showStartHint}
       <div class="pointer-events-none absolute inset-0 grid place-items-center">

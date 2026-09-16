@@ -79,6 +79,7 @@
       isCardStory={player.isCardStory}
       isActionSet={player.isActionSet}
       labels={{
+        tapToLoad: translate("storyReader.player.hint.tapToLoad"),
         tapToPlay: translate("storyReader.player.hint.tapToPlay"),
         previous: translate("storyReader.player.controls.previous"),
         next: translate("storyReader.player.controls.next"),
