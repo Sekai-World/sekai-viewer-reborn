@@ -26,7 +26,7 @@
           >
             <Icon icon="mdi:book-open-variant" class="size-6" aria-hidden="true" />
           </span>
-          <span class="badge badge-outline badge-primary">
+          <span class="badge badge-outline">
             {translate("home.tracks.storyReader.badge")}
           </span>
         </div>
@@ -49,7 +49,7 @@
       <div class="card-body gap-4 p-5 sm:p-6">
         <div class="flex items-start justify-between gap-3">
           <span
-            class="grid size-11 shrink-0 place-items-center rounded-xl border border-base-content/15 bg-base-content/5 text-base-content/70"
+            class="grid size-11 shrink-0 place-items-center rounded-xl border border-primary/20 bg-primary/10 text-primary"
           >
             <Icon icon="mdi:drama-masks" class="size-6" aria-hidden="true" />
           </span>
@@ -64,7 +64,7 @@
           </p>
         </div>
         <div class="card-actions mt-auto">
-          <a class="btn btn-outline btn-sm min-h-11! px-4" href="/live2d">
+          <a class="btn btn-primary btn-sm min-h-11! px-4" href="/live2d">
             {translate("home.tracks.live2d.action")}
             <Icon icon="mdi:arrow-right" class="size-4" aria-hidden="true" />
           </a>
