@@ -155,7 +155,6 @@ describe("virtual live detail page load", () => {
       });
     }
   );
-
   it("does not report an error when the detail API succeeds", async () => {
     getVirtualLivesByRegionById.mockResolvedValue({ data: {} });
 

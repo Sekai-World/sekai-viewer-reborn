@@ -102,7 +102,6 @@ describe("event detail page load", () => {
       });
     }
   );
-
   it("does not report an error when the detail API succeeds", async () => {
     getEventsByRegionByIdDetail.mockResolvedValue({ data: {} });
 

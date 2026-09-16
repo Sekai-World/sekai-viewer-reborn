@@ -99,7 +99,6 @@ describe("card detail page load", () => {
       });
     }
   );
-
   it("does not report an error when the detail API succeeds", async () => {
     getCardsByRegionByIdDetail.mockResolvedValue({ data: {} });
 
