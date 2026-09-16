@@ -8,6 +8,7 @@
   import { createPageTitle } from "$lib/page-title";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
+  import { openGameNewsTarget } from "$lib/game-news-navigation";
   import type { GameNewsItem, GameNewsTag } from "$lib/server/game-news";
   import { toTimestampMs } from "$lib/time/date-time";
   import { tick } from "svelte";
@@ -76,6 +77,9 @@
     void tick().then(() => {
       if (iframeUrl === url && iframeDialog && !iframeDialog.open) iframeDialog.showModal();
     });
+  };
+  const openNewsTarget = (target: GameNewsItem["target"]): void => {
+    openGameNewsTarget(target, openInternal);
   };
   const regionOptions = $derived(getNewsRegionOptions(supportedRegions, data.region));
 </script>
@@ -180,9 +184,13 @@
             <button
               type="button"
               class="mt-2 block w-full cursor-pointer rounded-lg border border-transparent p-2 text-left outline-none transition-[background-color,border-color,color] duration-180 ease-out motion-reduce:transition-none [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-              aria-label={`${t("gameNews.openInternal")}: ${item.title}`}
-              title={t("gameNews.openInternal")}
-              onclick={() => item.target.kind !== "none" && openInternal(item.target.url)}
+              aria-label={`${t(
+                item.target.kind === "internal" ? "gameNews.openInternal" : "gameNews.openExternal"
+              )}: ${item.title}`}
+              title={t(
+                item.target.kind === "internal" ? "gameNews.openInternal" : "gameNews.openExternal"
+              )}
+              onclick={() => openNewsTarget(item.target)}
             >
               <h2 class="text-lg font-semibold text-(--archive-text-strong)">{item.title}</h2>
               {#if isSpoiler(item) && !showSpoilers}<p

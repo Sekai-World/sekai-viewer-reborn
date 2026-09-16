@@ -19,6 +19,7 @@
   } from "$lib/assets";
   import { trackPromise } from "$lib/promise-cache";
   import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
+  import { openGameNewsTarget } from "$lib/game-news-navigation";
   import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
@@ -297,6 +298,10 @@
     void tick().then(() => {
       if (iframeUrl === url && iframeDialog && !iframeDialog.open) iframeDialog.showModal();
     });
+  };
+
+  const openNewsTarget = (target: GameNewsItem["target"]): void => {
+    openGameNewsTarget(target, openInternal);
   };
 
   // ── Derived data for selected region ───────────────────────────────
@@ -784,9 +789,17 @@
                     <button
                       type="button"
                       class="group flex min-w-0 flex-1 flex-col text-left"
-                      aria-label={`${currentTranslate("gameNews.openInternal")}: ${item.title}`}
-                      title={currentTranslate("gameNews.openInternal")}
-                      onclick={() => item.target.kind !== "none" && openInternal(item.target.url)}
+                      aria-label={`${currentTranslate(
+                        item.target.kind === "internal"
+                          ? "gameNews.openInternal"
+                          : "gameNews.openExternal"
+                      )}: ${item.title}`}
+                      title={currentTranslate(
+                        item.target.kind === "internal"
+                          ? "gameNews.openInternal"
+                          : "gameNews.openExternal"
+                      )}
+                      onclick={() => openNewsTarget(item.target)}
                     >
                       {@render newsCardContent(item)}
                     </button>
