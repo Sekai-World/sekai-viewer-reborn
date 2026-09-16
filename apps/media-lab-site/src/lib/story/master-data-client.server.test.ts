@@ -5,6 +5,7 @@ vi.mock("$env/dynamic/private", () => ({ env: {} }));
 const listEndpointMocks = vi.hoisted(() => ({
   getActionSetsByRegionList: vi.fn(),
   getCardEpisodesByRegionList: vi.fn(),
+  getCardsByRegionList: vi.fn(),
   getCharacter2DsByRegionList: vi.fn(),
   getCharacterProfilesByRegionList: vi.fn(),
   getEventStoriesByRegionList: vi.fn(),
@@ -157,6 +158,40 @@ describe("story master-data client", () => {
         scenarioId: "card_3_ep2",
         assetbundleName: undefined,
         releaseConditionId: undefined
+      }
+    ]);
+  });
+
+  it("parses card rows into picker summaries with the inlined character", async () => {
+    listEndpointMocks.getCardsByRegionList.mockResolvedValue(
+      okPage([
+        {
+          id: 1,
+          prefix: "クールだけど友達想い",
+          assetbundleName: "res001_no001",
+          character: { id: 1, firstName: "星乃", givenName: "一歌" }
+        },
+        { id: 2, prefix: null, character: null }
+      ])
+    );
+
+    const result = await fetchStoryCollection("jp", "cards", {
+      baseUrl: "https://master.test/api/v1"
+    });
+    expect(result).toEqual([
+      {
+        id: 1,
+        name: "クールだけど友達想い",
+        assetBundleName: "res001_no001",
+        characterId: 1,
+        characterName: "星乃 一歌"
+      },
+      {
+        id: 2,
+        name: "#2",
+        assetBundleName: undefined,
+        characterId: undefined,
+        characterName: undefined
       }
     ]);
   });

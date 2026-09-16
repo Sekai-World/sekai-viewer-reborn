@@ -19,6 +19,7 @@ import {
   specialStoryScenarioPath,
   unitStoryScenarioPath
 } from "./story-urls";
+import { localCharacterAvatarUrl } from "./character-avatar";
 import type { StoryRouteStoryType } from "$lib/live2d/story-route";
 
 // ---------------------------------------------------------------------------
@@ -86,11 +87,23 @@ export interface StoryEventStory {
 export interface StoryEvent {
   id: number;
   name: string;
+  /** `marathon` | `cheerful_carnival` | `world_bloom` (filters in the picker). */
+  eventType?: string;
 }
 
 export interface StoryCharacterProfile {
   characterId: number;
   scenarioId: string;
+}
+
+/** Card master-data row, story-picker fields only. */
+export interface StoryCardSummary {
+  id: number;
+  /** In-game card title (`prefix`); `#id` when the row carries no name. */
+  name: string;
+  assetBundleName?: string;
+  characterId?: number;
+  characterName?: string;
 }
 
 export interface StoryCardEpisode {
@@ -149,6 +162,8 @@ export interface StoryMasterCollections {
   events?: StoryEvent[];
   characterProfiles: StoryCharacterProfile[];
   cardEpisodes: StoryCardEpisode[];
+  cards?: StoryCardSummary[];
+  gameCharacters?: StoryGameCharacter[];
   actionSets: StoryActionSet[];
   specialStories: StorySpecialStory[];
   unitProfiles?: StoryUnitProfile[];
@@ -389,6 +404,8 @@ export interface StoryCatalogGroup {
   key: string;
   label: string;
   items: StoryCatalogItem[];
+  /** Event type of the group's event (event groups only). */
+  eventType?: string | null;
 }
 
 /**
@@ -432,12 +449,11 @@ export const buildStoryCatalog = (
         .slice()
         .sort((a, b) => a.eventId - b.eventId)
         .map((eventStory) => {
-          const eventName =
-            collections.events?.find((e) => e.id === eventStory.eventId)?.name ??
-            `#${eventStory.eventId}`;
+          const event = collections.events?.find((e) => e.id === eventStory.eventId);
           return {
             key: String(eventStory.eventId),
-            label: eventName,
+            label: event?.name ?? `#${eventStory.eventId}`,
+            eventType: event?.eventType ?? null,
             items: eventStory.eventStoryEpisodes
               .slice()
               .sort((a, b) => a.episodeNo - b.episodeNo)
@@ -522,6 +538,114 @@ export const buildStoryCatalog = (
       return [];
   }
 };
+
+// ---------------------------------------------------------------------------
+// Card / character pickers (story picker)
+// ---------------------------------------------------------------------------
+
+/** One playable episode behind a card (side story 前/後編 or titled). */
+export interface StoryCardEpisodeLink {
+  storyId: string;
+  label: string;
+}
+
+/** A card entry in the card story picker: art, names, and its episodes. */
+export interface StoryCardPickerItem {
+  cardId: number;
+  cardName: string;
+  characterId?: number;
+  characterName?: string;
+  /** Bucket-relative normal-thumbnail path on the region bucket. */
+  thumbnailPath?: string;
+  episodes: StoryCardEpisodeLink[];
+}
+
+/**
+ * Builds the card picker list: one entry per card that has episodes, with
+ * card/character names from the `cards` collection when available (falls
+ * back to `#cardId`) and the normal card art derived from the episode's
+ * asset bundle (identical to the card's bundle).
+ */
+export const buildStoryCardPicker = (
+  collections: StoryMasterCollections
+): StoryCardPickerItem[] => {
+  const cardsById = new Map(
+    (collections.cards ?? []).map((card) => [card.id, card])
+  );
+  const episodesByCard = new Map<number, StoryCardEpisodeLink[]>();
+  const bundleByCard = new Map<number, string>();
+
+  for (const episode of collections.cardEpisodes) {
+    const links = episodesByCard.get(episode.cardId) ?? [];
+    links.push({
+      storyId: String(episode.id),
+      label: episode.title || `#${episode.id}`
+    });
+    episodesByCard.set(episode.cardId, links);
+    if (episode.assetbundleName && !bundleByCard.has(episode.cardId)) {
+      bundleByCard.set(episode.cardId, episode.assetbundleName);
+    }
+  }
+
+  return Array.from(episodesByCard.entries())
+    .sort(([a], [b]) => a - b)
+    .map(([cardId, episodes]) => {
+      const card = cardsById.get(cardId);
+      const assetBundleName = card?.assetBundleName ?? bundleByCard.get(cardId);
+      return {
+        cardId,
+        cardName: card?.name ?? `#${cardId}`,
+        ...(card?.characterId !== undefined
+          ? { characterId: card.characterId }
+          : {}),
+        ...(card?.characterName ? { characterName: card.characterName } : {}),
+        ...(assetBundleName
+          ? { thumbnailPath: `thumbnail/chara/${assetBundleName}_normal.webp` }
+          : {}),
+        episodes: episodes
+          .slice()
+          .sort((a, b) => Number(a.storyId) - Number(b.storyId))
+      };
+    });
+};
+
+/** A character entry in the character story picker: avatar, name, story. */
+export interface StoryCharacterPickerItem {
+  characterId: number;
+  storyId: string;
+  /** Resolved game character name; `null` when the id is unknown. */
+  name: string | null;
+  /** App-relative local bust URL; `null` shows a generic avatar. */
+  avatarUrl: string | null;
+}
+
+/**
+ * Builds the character picker list from the character profile stories,
+ * resolving names against `gameCharacters` and avatars against the local
+ * bust thumbnails.
+ */
+export const buildStoryCharacterPicker = (
+  collections: StoryMasterCollections
+): StoryCharacterPickerItem[] =>
+  collections.characterProfiles
+    .slice()
+    .sort((a, b) => a.characterId - b.characterId)
+    .map((profile) => {
+      const gameCharacter = collections.gameCharacters?.find(
+        (gc) => gc.id === profile.characterId
+      );
+      const name =
+        [gameCharacter?.firstName, gameCharacter?.givenName]
+          .filter(Boolean)
+          .join(" ")
+          .trim() || null;
+      return {
+        characterId: profile.characterId,
+        storyId: String(profile.characterId),
+        name,
+        avatarUrl: localCharacterAvatarUrl(profile.characterId)
+      };
+    });
 
 // ---------------------------------------------------------------------------
 // Unit story catalog (story picker)

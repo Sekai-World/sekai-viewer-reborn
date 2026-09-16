@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildStoryCardPicker,
   buildStoryCatalog,
+  buildStoryCharacterPicker,
   buildUnitStoryCatalog,
   parseStoryId,
   resolveStoryIdentity,
@@ -69,8 +71,11 @@ const collections: StoryMasterCollections = {
       ]
     }
   ],
-  events: [{ id: 34, name: "Bout for Blessing" }],
-  characterProfiles: [{ characterId: 1, scenarioId: "chr1_profile" }],
+  events: [{ id: 34, name: "Bout for Blessing", eventType: "marathon" }],
+  characterProfiles: [
+    { characterId: 1, scenarioId: "chr1_profile" },
+    { characterId: 27, scenarioId: "chr27_profile" }
+  ],
   cardEpisodes: [
     {
       id: 2121,
@@ -86,6 +91,16 @@ const collections: StoryMasterCollections = {
       scenarioId: "card_900"
     }
   ],
+  cards: [
+    {
+      id: 3001,
+      name: "Card Title",
+      assetBundleName: "0300101",
+      characterId: 1,
+      characterName: "Hoshino Ichika"
+    }
+  ],
+  gameCharacters: [{ id: 1, firstName: "Hoshino", givenName: "Ichika" }],
   actionSets: [
     { id: 1838, areaId: 3, scriptId: "areatalk03_266", scenarioId: "areatalk03_266" },
     { id: 1900, areaId: 4, scriptId: "broken", scenarioId: undefined }
@@ -276,11 +291,23 @@ describe("buildStoryCatalog", () => {
     expect(idol?.items[0].sublabel).toBe("1");
   });
 
-  it("groups event stories by event id with event names", () => {
+  it("groups event stories by event id with event names and event types", () => {
     const groups = buildStoryCatalog("event", collections);
     expect(groups).toHaveLength(1);
-    expect(groups[0]).toMatchObject({ key: "34", label: "Bout for Blessing" });
+    expect(groups[0]).toMatchObject({
+      key: "34",
+      label: "Bout for Blessing",
+      eventType: "marathon"
+    });
     expect(groups[0].items[0].storyId).toBe("34-1");
+  });
+
+  it("keeps event groups filterable with a null event type when the event is unknown", () => {
+    const groups = buildStoryCatalog("event", {
+      ...collections,
+      events: [{ id: 35, name: "Unrelated", eventType: "world_bloom" }]
+    });
+    expect(groups[0]).toMatchObject({ key: "34", eventType: null });
   });
 
   it("buckets card episodes by cardId / 100 and skips nothing", () => {
@@ -299,6 +326,85 @@ describe("buildStoryCatalog", () => {
     const groups = buildStoryCatalog("special", collections);
     expect(groups[0]).toMatchObject({ key: "2", label: "Connect Live" });
     expect(groups[0].items[0].storyId).toBe("2-1");
+  });
+});
+
+describe("buildStoryCardPicker", () => {
+  it("builds one tile per card with names, art path, and ordered episodes", () => {
+    const cards = buildStoryCardPicker({
+      ...collections,
+      cardEpisodes: [
+        {
+          id: 2122,
+          cardId: 3001,
+          title: "Card Story 2",
+          scenarioId: "card_3001_2",
+          assetbundleName: "0300101"
+        },
+        {
+          id: 2121,
+          cardId: 3001,
+          title: "Card Story",
+          scenarioId: "card_3001",
+          assetbundleName: "0300101"
+        },
+        {
+          id: 2050,
+          cardId: 900,
+          title: "",
+          scenarioId: "card_900"
+        }
+      ]
+    });
+    expect(cards.map((card) => card.cardId)).toEqual([900, 3001]);
+    const titled = cards.find((card) => card.cardId === 3001);
+    expect(titled).toMatchObject({
+      cardName: "Card Title",
+      characterId: 1,
+      characterName: "Hoshino Ichika",
+      thumbnailPath: "thumbnail/chara/0300101_normal.webp"
+    });
+    expect(titled?.episodes.map((episode) => episode.storyId)).toEqual([
+      "2121",
+      "2122"
+    ]);
+    const untitled = cards.find((card) => card.cardId === 900);
+    expect(untitled).toMatchObject({ cardName: "#900" });
+    expect(untitled?.thumbnailPath).toBeUndefined();
+    expect(untitled?.episodes[0].label).toBe("#2050");
+  });
+
+  it("derives names from the cards collection and falls back to #cardId", () => {
+    const cards = buildStoryCardPicker({ ...collections, cards: undefined });
+    expect(cards.find((card) => card.cardId === 3001)).toMatchObject({
+      cardName: "#3001",
+      thumbnailPath: "thumbnail/chara/0300101_normal.webp"
+    });
+  });
+});
+
+describe("buildStoryCharacterPicker", () => {
+  it("resolves names, avatars, and generic fallbacks per character", () => {
+    const characters = buildStoryCharacterPicker(collections);
+    expect(characters.map((character) => character.characterId)).toEqual([1, 27]);
+    expect(characters[0]).toMatchObject({
+      storyId: "1",
+      name: "Hoshino Ichika",
+      avatarUrl: "/chr_ts/chr_ts_1_g1.png"
+    });
+    expect(characters[1]).toMatchObject({
+      storyId: "27",
+      name: null,
+      avatarUrl: null
+    });
+  });
+
+  it("falls back to a null name without the gameCharacters collection", () => {
+    const characters = buildStoryCharacterPicker({
+      ...collections,
+      gameCharacters: undefined
+    });
+    expect(characters[0]).toMatchObject({ characterId: 1, name: null });
   });
 });
 

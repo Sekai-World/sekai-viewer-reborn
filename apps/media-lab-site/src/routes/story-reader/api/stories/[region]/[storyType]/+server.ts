@@ -1,7 +1,12 @@
 import { json, error } from "@sveltejs/kit";
 import { isStoryRouteRegion, storyRouteStoryTypes } from "$lib/live2d/story-route";
 import { fetchStoryCollections } from "$lib/story/master-data-client.server";
-import { buildStoryCatalog, buildUnitStoryCatalog } from "$lib/story/story-identity";
+import {
+  buildStoryCardPicker,
+  buildStoryCatalog,
+  buildStoryCharacterPicker,
+  buildUnitStoryCatalog
+} from "$lib/story/story-identity";
 import { createStoryRegionAssetUrls } from "$lib/story/story-urls";
 import { getStoryAssetBase } from "$lib/story/story-resolver.server";
 import type { RequestHandler } from "./$types";
@@ -9,7 +14,9 @@ import type { RequestHandler } from "./$types";
 /**
  * Story catalog for the reader's story picker. Lazy-loaded per region and
  * story type. Unit stories return a two-level shape (units → story lines →
- * episode cards with banner URLs); the other types return grouped lists —
+ * episode cards with banner URLs); card/character stories return dedicated
+ * picker payloads (card art tiles / character busts) next to the generic
+ * grouped list as fallback; the other types return grouped lists —
  * card/area-talk lists run into the thousands of rows, so they are never
  * bundled into the landing page data.
  */
@@ -34,6 +41,8 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
           "events",
           "characterProfiles",
           "cardEpisodes",
+          ...(storyType === "card" ? (["cards"] as const) : []),
+          ...(storyType === "character" ? (["gameCharacters"] as const) : []),
           "actionSets",
           "specialStories"
         ],
@@ -59,5 +68,25 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
     storyType as (typeof storyRouteStoryTypes)[number],
     collections
   );
+
+  if (storyType === "character") {
+    return json({
+      storyType,
+      groups,
+      characters: buildStoryCharacterPicker(collections)
+    });
+  }
+
+  if (storyType === "card") {
+    const assetUrls = createStoryRegionAssetUrls(getStoryAssetBase, region);
+    const cards = buildStoryCardPicker(collections).map((card) => ({
+      ...card,
+      thumbnailUrl: card.thumbnailPath
+        ? assetUrls.region(card.thumbnailPath)
+        : null
+    }));
+    return json({ storyType, groups, cards });
+  }
+
   return json({ storyType, groups });
 };

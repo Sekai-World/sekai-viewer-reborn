@@ -2,6 +2,7 @@ import { env } from "$env/dynamic/private";
 import {
   getActionSetsByRegionList,
   getCardEpisodesByRegionList,
+  getCardsByRegionList,
   getCharacter2DsByRegionList,
   getCharacterProfilesByRegionList,
   getEventStoriesByRegionList,
@@ -18,9 +19,11 @@ import type { StoryRouteRegion } from "$lib/live2d/story-route";
 import type {
   StoryActionSet,
   StoryCardEpisode,
+  StoryCardSummary,
   StoryCharacterProfile,
   StoryEvent,
   StoryEventStory,
+  StoryGameCharacter,
   StoryMasterCollections,
   StorySpecialStory,
   StoryUnitEpisodeGroup,
@@ -44,6 +47,7 @@ export type StoryCollectionName =
   | "events"
   | "characterProfiles"
   | "cardEpisodes"
+  | "cards"
   | "actionSets"
   | "specialStories"
   | "character2ds"
@@ -171,7 +175,11 @@ const collectionParsers: Record<
   events: (raw) =>
     asArray(raw).map((row) => {
       const r = row as Record<string, unknown>;
-      const event: StoryEvent = { id: asNumber(r.id), name: asString(r.name) };
+      const event: StoryEvent = {
+        id: asNumber(r.id),
+        name: asString(r.name),
+        eventType: asOptionalString(r.eventType)
+      };
       return event;
     }),
   characterProfiles: (raw) =>
@@ -201,6 +209,26 @@ const collectionParsers: Record<
         releaseConditionId: asOptionalNumber(releaseCondition?.id)
       };
       return episode;
+    }),
+  cards: (raw) =>
+    asArray(raw).map((row) => {
+      const r = row as Record<string, unknown>;
+      // The list endpoint inlines the card's game character as a flat
+      // object (`character.id` / `firstName` / `givenName`).
+      const character = (r.character ?? null) as Record<string, unknown> | null;
+      const id = asNumber(r.id);
+      const card: StoryCardSummary = {
+        id,
+        name: asString(r.prefix) || `#${id}`,
+        assetBundleName: asOptionalString(r.assetbundleName),
+        characterId: character ? asOptionalNumber(character.id) : undefined,
+        characterName: character
+          ? [asString(character.firstName), asString(character.givenName)]
+              .filter(Boolean)
+              .join(" ") || undefined
+          : undefined
+      };
+      return card;
     }),
   actionSets: (raw) =>
     asArray(raw).map((row) => {
@@ -234,7 +262,16 @@ const collectionParsers: Record<
       return story;
     }),
   character2ds: (raw) => raw,
-  gameCharacters: (raw) => raw,
+  gameCharacters: (raw) =>
+    asArray(raw).map((row) => {
+      const r = row as Record<string, unknown>;
+      const gameCharacter: StoryGameCharacter = {
+        id: asNumber(r.id),
+        firstName: asString(r.firstName),
+        givenName: asString(r.givenName)
+      };
+      return gameCharacter;
+    }),
   mobCharacters: (raw) => raw,
   subGameCharacters: (raw) => raw
 };
@@ -281,6 +318,7 @@ const storyListEndpoints: Record<
   events: (request) => getEventsByRegionList(request),
   characterProfiles: (request) => getCharacterProfilesByRegionList(request),
   cardEpisodes: (request) => getCardEpisodesByRegionList(request),
+  cards: (request) => getCardsByRegionList(request),
   actionSets: (request) => getActionSetsByRegionList(request),
   specialStories: (request) => getSpecialStoriesByRegionList(request),
   character2ds: (request) => getCharacter2DsByRegionList(request),
@@ -394,6 +432,8 @@ export const fetchStoryCollections = async (
     events,
     characterProfiles,
     cardEpisodes,
+    cards,
+    gameCharacters,
     actionSets,
     specialStories
   ] = await Promise.all([
@@ -418,6 +458,12 @@ export const fetchStoryCollections = async (
     names.includes("cardEpisodes")
       ? fetchStoryCollection<StoryCardEpisode[]>(region, "cardEpisodes", options)
       : Promise.resolve([]),
+    names.includes("cards")
+      ? fetchStoryCollection<StoryCardSummary[]>(region, "cards", options)
+      : Promise.resolve([]),
+    names.includes("gameCharacters")
+      ? fetchStoryCollection<StoryGameCharacter[]>(region, "gameCharacters", options)
+      : Promise.resolve([]),
     names.includes("actionSets")
       ? fetchStoryCollection<StoryActionSet[]>(region, "actionSets", options)
       : Promise.resolve([]),
@@ -433,6 +479,8 @@ export const fetchStoryCollections = async (
     events,
     characterProfiles,
     cardEpisodes,
+    cards,
+    gameCharacters,
     actionSets,
     specialStories
   };
