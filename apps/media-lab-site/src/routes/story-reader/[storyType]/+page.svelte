@@ -41,6 +41,7 @@
       eventTypeWorldBloom: translate("storyReader.picker.eventTypeWorldBloom"),
       filterCharacter: translate("storyReader.picker.filterCharacter"),
       characterAll: translate("storyReader.picker.characterAll"),
+      backToAreas: translate("storyReader.picker.backToAreas"),
       modeDialogTitle: translate("storyReader.modeDialog.title"),
       textMode: translate("storyReader.modes.textOnly.title"),
       playerMode: translate("storyReader.modes.live2dPlayer.title"),

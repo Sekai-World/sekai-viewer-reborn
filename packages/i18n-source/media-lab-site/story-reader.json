@@ -9,6 +9,7 @@
   "storyReader.modeDialog.title": "How do you want to open this story?",
   "storyReader.modes.live2dPlayer.title": "Live2D Player",
   "storyReader.modes.textOnly.title": "Text-Only",
+  "storyReader.picker.backToAreas": "All areas",
   "storyReader.picker.characterAll": "All characters",
   "storyReader.picker.empty": "No stories are available for this region and story type yet.",
   "storyReader.picker.eventTypeAll": "All event types",

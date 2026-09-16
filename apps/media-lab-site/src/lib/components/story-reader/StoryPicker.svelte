@@ -3,6 +3,7 @@
   import { resolveUnitLogoUrl } from "@platform/ui-shell";
   import { goto } from "$app/navigation";
   import { useRegionSelection } from "$lib/region-selection.svelte";
+  import { localCharacterAvatarUrl } from "$lib/story/character-avatar";
   import {
     readRememberedStoryReaderMode,
     rememberStoryReaderMode,
@@ -15,8 +16,10 @@
    * stories use a two-level picker (unit blocks → story lines of episode
    * cards); event stories filter by event type; character stories list
    * avatar tiles; card stories list card-art tiles with a character filter;
-   * the remaining types keep a grouped searchable list. Opening a story asks
-   * for the reader mode in a dialog unless the user chose to remember one.
+   * area talks list area cards with a drill-down into the talks of one area;
+   * special stories link single-episode entries directly and keep expandable
+   * groups only where a story has several episodes. Opening a story asks for
+   * the reader mode in a dialog unless the user chose to remember one.
    */
   interface StoryCatalogItem {
     storyId: string;
@@ -50,6 +53,21 @@
     characterName?: string;
     thumbnailUrl: string | null;
     episodes: StoryCardEpisodeLink[];
+  }
+
+  interface StoryAreaTalkView {
+    storyId: string;
+    scenarioId?: string;
+    scriptId?: string;
+    characterIds: number[];
+  }
+
+  interface StoryAreaEntry {
+    areaId: number;
+    name: string | null;
+    subName?: string;
+    thumbnailUrl: string | null;
+    talks: StoryAreaTalkView[];
   }
 
   interface StoryUnitEpisodeCardView {
@@ -89,6 +107,7 @@
       eventTypeWorldBloom: string;
       filterCharacter: string;
       characterAll: string;
+      backToAreas: string;
       modeDialogTitle: string;
       textMode: string;
       playerMode: string;
@@ -111,8 +130,10 @@
   let groups = $state<StoryCatalogGroup[]>([]);
   let characters = $state<StoryCharacterEntry[]>([]);
   let cards = $state<StoryCardEntry[]>([]);
+  let areas = $state<StoryAreaEntry[]>([]);
   let units = $state<StoryUnitCatalogView[]>([]);
   let selectedUnit = $state<string | null>(null);
+  let selectedAreaId = $state<number | null>(null);
   let eventTypeFilter = $state("all");
   let cardCharacterFilter = $state("all");
   let loading = $state(false);
@@ -130,18 +151,21 @@
         groups?: StoryCatalogGroup[];
         characters?: StoryCharacterEntry[];
         cards?: StoryCardEntry[];
+        areas?: StoryAreaEntry[];
         units?: StoryUnitCatalogView[];
       };
       if (seq !== loadSeq) return;
       groups = payload.groups ?? [];
       characters = payload.characters ?? [];
       cards = payload.cards ?? [];
+      areas = payload.areas ?? [];
       units = payload.units ?? [];
     } catch {
       if (seq !== loadSeq) return;
       groups = [];
       characters = [];
       cards = [];
+      areas = [];
       units = [];
       loadFailed = true;
     } finally {
@@ -154,10 +178,11 @@
   });
 
   $effect(() => {
-    // A region or story-type change drops the unit drill-down and filters.
+    // A region or story-type change drops the unit/area drill-downs and filters.
     void regionSelection.primary;
     void storyType;
     selectedUnit = null;
+    selectedAreaId = null;
     eventTypeFilter = "all";
     cardCharacterFilter = "all";
   });
@@ -197,6 +222,36 @@
             queryMatches(character.storyId)
         )
       : characters
+  );
+
+  const filteredAreas = $derived.by(() => {
+    let list = areas;
+    if (normalizedQuery) {
+      list = list
+        .map((area) => ({
+          ...area,
+          talks: area.talks.filter(
+            (talk) =>
+              queryMatches(talk.scriptId ?? "") ||
+              queryMatches(talk.scenarioId ?? "") ||
+              queryMatches(talk.storyId)
+          )
+        }))
+        .filter(
+          (area) =>
+            area.talks.length > 0 ||
+            queryMatches(area.name ?? "") ||
+            queryMatches(area.subName ?? "") ||
+            queryMatches(String(area.areaId))
+        );
+    }
+    return list;
+  });
+
+  const selectedAreaEntry = $derived(
+    storyType === "area-talk" && selectedAreaId !== null
+      ? (filteredAreas.find((area) => area.areaId === selectedAreaId) ?? null)
+      : null
   );
 
   const cardCharacterOptions = $derived.by(() => {
@@ -531,6 +586,150 @@
         <p class="text-sm text-base-content/60" role="status">
           {cards.length > 0 ? labels.noMatch : labels.empty}
         </p>
+      {/if}
+    {:else if storyType === "special"}
+      {#if filteredGroups.length === 0}
+        <p class="text-sm text-base-content/60" role="status">
+          {totalMatches === 0 && groups.length > 0 ? labels.noMatch : labels.empty}
+        </p>
+      {:else}
+        <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[60vh]">
+          {#each filteredGroups as group (group.key)}
+            {@const singleEpisode =
+              group.items.length === 1 ? group.items[0] : null}
+            {#if singleEpisode}
+              <a
+                class="flex items-center justify-between gap-2 rounded-xl border border-base-content/10 bg-base-200/40 px-3 py-2.5 text-sm outline-none hover:bg-base-200 focus-visible:ring-2 focus-visible:ring-primary/60"
+                href={storyHref(singleEpisode.storyId, "text")}
+                onclick={(event) => openStory(event, singleEpisode.storyId)}
+              >
+                <span class="min-w-0 truncate font-semibold">{group.label}</span>
+                {#if singleEpisode.sublabel}
+                  <span class="shrink-0 font-mono text-xs text-base-content/50">{singleEpisode.sublabel}</span>
+                {/if}
+              </a>
+            {:else}
+              <details class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40">
+                <summary class="collapse-title text-sm font-semibold">
+                  {group.label}
+                  <span class="text-base-content/50">({group.items.length})</span>
+                </summary>
+                <div class="collapse-content flex flex-col gap-1 pl-0">
+                  {#each group.items as item (item.storyId)}
+                    <a
+                      class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-base-200"
+                      href={storyHref(item.storyId, "text")}
+                      onclick={(event) => openStory(event, item.storyId)}
+                    >
+                      <span class="min-w-0 truncate">{item.label}</span>
+                      {#if item.sublabel}
+                        <span class="shrink-0 font-mono text-xs text-base-content/50">{item.sublabel}</span>
+                      {/if}
+                    </a>
+                  {/each}
+                </div>
+              </details>
+            {/if}
+          {/each}
+        </div>
+      {/if}
+    {:else if storyType === "area-talk" && areas.length > 0}
+      {#if selectedAreaEntry}
+        <div class="flex flex-col gap-4">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm -ml-2 self-start"
+            onclick={() => (selectedAreaId = null)}
+          >
+            <Icon icon="mdi:arrow-left" class="size-4" aria-hidden="true" />
+            {labels.backToAreas}
+          </button>
+          <div class="flex items-baseline gap-2">
+            <h3 class="text-base font-semibold">
+              {selectedAreaEntry.name ?? `#${selectedAreaEntry.areaId}`}
+            </h3>
+            {#if selectedAreaEntry.subName}
+              <span class="text-sm text-base-content/60">{selectedAreaEntry.subName}</span>
+            {/if}
+            <span class="text-sm text-base-content/50">({selectedAreaEntry.talks.length})</span>
+          </div>
+          <div class="flex flex-col gap-1">
+            {#each selectedAreaEntry.talks as talk, index (talk.storyId)}
+              <a
+                class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm outline-none hover:bg-base-200 focus-visible:ring-2 focus-visible:ring-primary/60"
+                href={storyHref(talk.storyId, "text")}
+                onclick={(event) => openStory(event, talk.storyId)}
+              >
+                <span class="flex shrink-0 items-center -space-x-2" aria-hidden="true">
+                  {#if talk.characterIds.length > 0}
+                    {#each talk.characterIds.slice(0, 6) as castId (castId)}
+                      <img
+                        src={localCharacterAvatarUrl(castId) ?? undefined}
+                        alt=""
+                        loading="lazy"
+                        class="size-8 rounded-full border-2 border-base-100 object-cover object-top"
+                      />
+                    {/each}
+                  {:else}
+                    <span
+                      class="flex size-8 items-center justify-center rounded-full bg-base-300 text-xs font-bold text-base-content/60"
+                    >
+                      {index + 1}
+                    </span>
+                  {/if}
+                </span>
+                <span class="min-w-0 truncate">
+                  {talk.scriptId ?? talk.scenarioId ?? `#${talk.storyId}`}
+                </span>
+                <span class="ml-auto shrink-0 font-mono text-xs text-base-content/50">{talk.storyId}</span>
+              </a>
+            {/each}
+          </div>
+        </div>
+      {:else}
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {#each filteredAreas as area (area.areaId)}
+            <button
+              type="button"
+              class="group flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-base-content/10 bg-base-200/40 p-3 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+              onclick={() => (selectedAreaId = area.areaId)}
+            >
+              <div
+                class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-lg bg-base-200/50"
+              >
+                <Icon
+                  icon="mdi:map-marker-outline"
+                  class="absolute size-8 text-base-content/30"
+                  aria-hidden="true"
+                />
+                {#if area.thumbnailUrl}
+                  <img
+                    src={area.thumbnailUrl}
+                    alt=""
+                    loading="lazy"
+                    class="absolute inset-0 size-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                    onerror={(event) => {
+                      (event.currentTarget as HTMLImageElement).style.display =
+                        "none";
+                    }}
+                  />
+                {/if}
+              </div>
+              <span
+                class="w-full truncate text-center text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
+                >{area.name ?? `#${area.areaId}`}</span
+              >
+              {#if area.subName}
+                <span class="-mt-1.5 w-full truncate text-center text-xs text-base-content/60">{area.subName}</span>
+              {/if}
+            </button>
+          {/each}
+        </div>
+        {#if filteredAreas.length === 0}
+          <p class="text-sm text-base-content/60" role="status">
+            {areas.length > 0 ? labels.noMatch : labels.empty}
+          </p>
+        {/if}
       {/if}
     {:else}
       {@render groupedList(filteredGroups, totalMatches, groups.length > 0)}
