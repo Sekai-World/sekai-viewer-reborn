@@ -367,7 +367,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("@media (prefers-reduced-motion: reduce)");
   });
 
-  it("keeps the goal calculator native, submitted, and keyboard accessible", async () => {
+  it("keeps the goal pace planner native, data-gated, and keyboard accessible", async () => {
     const source = await readFile(pagePath, "utf8");
     expect(source).toContain("<dialog");
     expect(source).toContain("bind:this={goalDialog}");
@@ -392,27 +392,47 @@ describe("tracker page UI contract", () => {
     expect(closeButton).toContain('<Icon icon="mdi:close" class="size-5" aria-hidden="true" />');
     expect(closeButton).toContain("size-11 min-h-11 shrink-0");
     expect(closeButton).not.toMatch(/>\s*\{translate\("tracker.goalClose"\)\}/);
-    expect(dialog?.match(/class="input input-sm min-h-11 w-full min-w-0"/g)).toHaveLength(2);
+    expect(dialog?.match(/class="input input-sm min-h-11 w-full min-w-0"/g)).toHaveLength(8);
+    expect(dialog).toContain('<select\n          bind:this={goalTargetRankControl}');
+    expect(dialog).toContain('id="tracker-goal-current-score"');
+    expect(dialog).toContain('for="tracker-goal-current-score"');
+    expect(dialog).toContain('id="tracker-goal-safety-margin"');
+    expect(dialog).toContain('id="tracker-goal-minimum-score"');
+    expect(dialog).toContain('id="tracker-goal-play-hours"');
+    expect(dialog).toContain('id="tracker-goal-deadline"');
+    expect(dialog).toContain("readonly");
+    expect(dialog).toContain('id="tracker-goal-rate-mode"');
+    expect(dialog).toContain('id="tracker-goal-manual-rate"');
+    expect(dialog).toContain('id="tracker-goal-points-per-run"');
+    expect(dialog).toContain('id="tracker-goal-cycle-minutes"');
+    expect(dialog).toContain('class="tracker-goal-result-grid"');
+    expect(dialog).toContain('class="tracker-goal-capacity"');
     expect(dialog).toContain('class="btn btn-primary min-h-11" type="submit"');
+    expect(dialog).toContain("disabled={!goalCanSubmit}");
     expect(source).toContain('aria-haspopup="dialog"');
     expect(source).toContain('aria-controls="tracker-goal-dialog"');
     expect(source).toContain("onclick={openGoalCalculator}");
     expect(source).toContain("goalDialog?.showModal()");
     expect(source).toContain('id="tracker-goal-rank"');
     expect(source).toContain('for="tracker-goal-rank"');
-    expect(source).toContain('id="tracker-goal-score"');
-    expect(source).toContain('for="tracker-goal-score"');
     expect(source).toContain("onsubmit={submitGoal}");
     expect(source).toContain('type="submit"');
     expect(source).toContain('translate("tracker.calculateGoal")');
     expect(source).toContain("event.preventDefault();");
-    expect(source).toContain("isGoalSubmitted = true;");
-
-    const resultStart = source.indexOf("{#if isGoalSubmitted}");
-    const resultEnd = source.indexOf("{/if}", resultStart);
-    expect(resultStart).toBeGreaterThan(-1);
-    expect(resultEnd).toBeGreaterThan(resultStart);
-    expect(source.slice(resultStart, resultEnd)).toContain('<output class="tracker-goal-output"');
+    expect(source).toContain("goalResult = calculateTrackerGoalPlan({");
+    expect(source).toContain("calculatedAt: Date.now(),");
+    expect(source).toContain("projectedLine");
+    expect(source).toContain("plannedTarget");
+    expect(source).toContain("requiredGain");
+    expect(source).toContain("calendarRate");
+    expect(source).toContain("activeRate");
+    expect(source).toContain("goalPlan.capacityStatus");
+    expect(source).toContain("goalPlan.runs");
+    expect(source).toContain("goalPlan.playHoursNeeded");
+    expect(source).toContain("goalPlan.maxAllowedCycleMinutes");
+    expect(source).not.toContain("goalScore");
+    expect(source).not.toContain("goalHours");
+    expect(source).not.toContain("goalReferenceRow");
 
     expect(source).toContain("onclick={closeGoalCalculator}");
     expect(source).toContain('translate("tracker.goalClose")');
@@ -428,8 +448,8 @@ describe("tracker page UI contract", () => {
       /const handleGoalDialogClose = \(\): void => \{\s*goalOpenButton\?\.focus\(\);\s*\}/
     );
     expect(source).toContain("goalOpenButton?.focus()");
-    expect(source).toContain("bind:this={goalRankInput}");
-    expect(source).toContain("void tick().then(() => goalRankInput?.focus())");
+    expect(source).toContain("bind:this={goalTargetRankControl}");
+    expect(source).toContain("void tick().then(() => goalTargetRankControl?.focus())");
     expect(source).toContain(":focus-visible");
     expect(source).toContain(".tracker-goal-dialog *");
     expect(source).toContain("transition-duration: 1ms !important;");
@@ -438,6 +458,19 @@ describe("tracker page UI contract", () => {
     expect(dialogBoxStyles).toContain("max-height: calc(100dvh - 2rem);");
     expect(dialogBoxStyles).toContain("overflow-y: auto;");
     expect(dialogBoxStyles).toContain("overflow-wrap: anywhere;");
+    expect(source).toContain("-webkit-backdrop-filter: blur(8px);");
+    expect(source).toContain("backdrop-filter: blur(8px);");
+    expect(source).toContain(":global(html.dark) .tracker-goal-dialog-box");
+    expect(source).toContain(
+      "background: color-mix(in srgb, var(--archive-surface-default) 86%, var(--archive-surface-canvas));"
+    );
+    expect(source).toContain(":global(html.dark) .tracker-goal-dialog::backdrop");
+    expect(source).toContain(
+      "background: color-mix(in srgb, var(--archive-surface-canvas) 78%, transparent);"
+    );
+    expect(source).toContain("@media (prefers-reduced-transparency: reduce)");
+    expect(source).toContain("-webkit-backdrop-filter: none;");
+    expect(source).toContain("backdrop-filter: none;");
     expect(source).not.toMatch(/\.tracker-goal-dialog\s*\{/);
     expect(source).toContain("@media (max-width: 48rem)");
     expect(source).toContain("grid-template-columns: 1fr;");
@@ -868,9 +901,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('id="tracker-goal-dialog"');
     expect(source).toContain("goalDialog?.showModal()");
     expect(source).toContain("goalDialog.close()");
-    expect(source).toContain("goalRankInput?.focus()");
+    expect(source).toContain("goalTargetRankControl?.focus()");
     expect(source).toContain("onsubmit={submitGoal}");
-    expect(source).toContain("isGoalSubmitted");
+    expect(source).toContain("goalResult = calculateTrackerGoalPlan({");
     expect(actions.match(/<button\b/g)).toHaveLength(7);
     for (const icon of [
       "mdi:history",
@@ -947,7 +980,11 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("createTrackerExportCsv(report)");
     expect(source).toContain('createTrackerExportWorkbookBlob(report, { sheetName: "tracker" })');
     expect(source).not.toContain('section: "event"');
-    expect(source).not.toContain("source:");
+    const exportSource = source.slice(
+      source.indexOf("const exportableRows"),
+      source.indexOf("const closeExportMenu")
+    );
+    expect(exportSource).not.toContain("source:");
     expect(source).toContain("else selectedChapterId = null;");
     expect(source).toContain("if (!canExportCsv) return;");
     expect(source).toContain('disabled={exportStatus === "loading"}');
