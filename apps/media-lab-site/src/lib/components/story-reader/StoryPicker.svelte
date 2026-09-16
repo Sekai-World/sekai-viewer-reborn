@@ -13,9 +13,10 @@
    * Story picker for one story type sub-page. The region follows the shared
    * primary-region setting; type navigation lives in the sidebar. Unit
    * stories use a two-level picker (unit blocks → story lines of episode
-   * cards); the other types keep a grouped searchable list. Opening a story
-   * asks for the reader mode in a dialog unless the user chose to remember
-   * one.
+   * cards); event stories filter by event type; character stories list
+   * avatar tiles; card stories list card-art tiles with a character filter;
+   * the remaining types keep a grouped searchable list. Opening a story asks
+   * for the reader mode in a dialog unless the user chose to remember one.
    */
   interface StoryCatalogItem {
     storyId: string;
@@ -27,6 +28,28 @@
     key: string;
     label: string;
     items: StoryCatalogItem[];
+    eventType?: string | null;
+  }
+
+  interface StoryCharacterEntry {
+    characterId: number;
+    storyId: string;
+    name: string | null;
+    avatarUrl: string | null;
+  }
+
+  interface StoryCardEpisodeLink {
+    storyId: string;
+    label: string;
+  }
+
+  interface StoryCardEntry {
+    cardId: number;
+    cardName: string;
+    characterId?: number;
+    characterName?: string;
+    thumbnailUrl: string | null;
+    episodes: StoryCardEpisodeLink[];
   }
 
   interface StoryUnitEpisodeCardView {
@@ -59,6 +82,13 @@
       noMatch: string;
       open: string;
       backToUnits: string;
+      filterEventType: string;
+      eventTypeAll: string;
+      eventTypeMarathon: string;
+      eventTypeCheerfulCarnival: string;
+      eventTypeWorldBloom: string;
+      filterCharacter: string;
+      characterAll: string;
       modeDialogTitle: string;
       textMode: string;
       playerMode: string;
@@ -79,8 +109,12 @@
 
   let query = $state("");
   let groups = $state<StoryCatalogGroup[]>([]);
+  let characters = $state<StoryCharacterEntry[]>([]);
+  let cards = $state<StoryCardEntry[]>([]);
   let units = $state<StoryUnitCatalogView[]>([]);
   let selectedUnit = $state<string | null>(null);
+  let eventTypeFilter = $state("all");
+  let cardCharacterFilter = $state("all");
   let loading = $state(false);
   let loadFailed = $state(false);
   let loadSeq = 0;
@@ -94,14 +128,20 @@
       if (!response.ok) throw new Error(String(response.status));
       const payload = (await response.json()) as {
         groups?: StoryCatalogGroup[];
+        characters?: StoryCharacterEntry[];
+        cards?: StoryCardEntry[];
         units?: StoryUnitCatalogView[];
       };
       if (seq !== loadSeq) return;
       groups = payload.groups ?? [];
+      characters = payload.characters ?? [];
+      cards = payload.cards ?? [];
       units = payload.units ?? [];
     } catch {
       if (seq !== loadSeq) return;
       groups = [];
+      characters = [];
+      cards = [];
       units = [];
       loadFailed = true;
     } finally {
@@ -114,31 +154,80 @@
   });
 
   $effect(() => {
-    // A region or story-type change drops the unit drill-down.
+    // A region or story-type change drops the unit drill-down and filters.
     void regionSelection.primary;
     void storyType;
     selectedUnit = null;
+    eventTypeFilter = "all";
+    cardCharacterFilter = "all";
   });
 
   const normalizedQuery = $derived(query.trim().toLowerCase());
 
-  const filteredGroups = $derived(
-    normalizedQuery
-      ? groups
-          .map((group) => ({
-            ...group,
-            items: group.items.filter(
-              (item) =>
-                item.label.toLowerCase().includes(normalizedQuery) ||
-                item.storyId.toLowerCase().includes(normalizedQuery)
-            )
-          }))
-          .filter((group) => group.items.length > 0)
-      : groups
-  );
+  const queryMatches = (text: string): boolean =>
+    text.toLowerCase().includes(normalizedQuery);
+
+  const filteredGroups = $derived.by(() => {
+    let list = groups;
+    if (storyType === "event" && eventTypeFilter !== "all") {
+      list = list.filter((group) => group.eventType === eventTypeFilter);
+    }
+    if (normalizedQuery) {
+      list = list
+        .map((group) => ({
+          ...group,
+          items: group.items.filter(
+            (item) =>
+              queryMatches(item.label) || queryMatches(item.storyId)
+          )
+        }))
+        .filter((group) => group.items.length > 0);
+    }
+    return list;
+  });
   const totalMatches = $derived(
     filteredGroups.reduce((sum, group) => sum + group.items.length, 0)
   );
+
+  const filteredCharacters = $derived(
+    normalizedQuery
+      ? characters.filter(
+          (character) =>
+            queryMatches(character.name ?? "") ||
+            queryMatches(character.storyId)
+        )
+      : characters
+  );
+
+  const cardCharacterOptions = $derived.by(() => {
+    const options: Array<{ id: number; name: string }> = [];
+    for (const card of cards) {
+      if (card.characterId === undefined) continue;
+      if (!options.some((option) => option.id === card.characterId)) {
+        options.push({
+          id: card.characterId,
+          name: card.characterName ?? `#${card.characterId}`
+        });
+      }
+    }
+    return options.sort((a, b) => a.id - b.id);
+  });
+
+  const filteredCards = $derived.by(() => {
+    let list = cards;
+    if (cardCharacterFilter !== "all") {
+      list = list.filter((card) => String(card.characterId) === cardCharacterFilter);
+    }
+    if (normalizedQuery) {
+      list = list.filter(
+        (card) =>
+          queryMatches(card.cardName) ||
+          queryMatches(card.characterName ?? "") ||
+          queryMatches(String(card.cardId))
+      );
+    }
+    return list;
+  });
 
   const filteredUnits = $derived(
     normalizedQuery
@@ -150,8 +239,8 @@
                 ...group,
                 episodes: group.episodes.filter(
                   (episode) =>
-                    episode.title.toLowerCase().includes(normalizedQuery) ||
-                    episode.storyId.toLowerCase().includes(normalizedQuery)
+                    queryMatches(episode.title) ||
+                    queryMatches(episode.storyId)
                 )
               }))
               .filter((group) => group.episodes.length > 0)
@@ -159,8 +248,8 @@
           .filter(
             (unit) =>
               unit.groups.length > 0 ||
-              unit.unitName.toLowerCase().includes(normalizedQuery) ||
-              unit.unit.toLowerCase().includes(normalizedQuery)
+              queryMatches(unit.unitName) ||
+              queryMatches(unit.unit)
           )
       : units
   );
@@ -212,6 +301,39 @@
     if (storyId) void goto(storyHref(storyId, mode));
   };
 </script>
+
+{#snippet groupedList(list: StoryCatalogGroup[], matchCount: number, known: boolean)}
+  {#if list.length === 0}
+    <p class="text-sm text-base-content/60" role="status">
+      {matchCount === 0 && known ? labels.noMatch : labels.empty}
+    </p>
+  {:else}
+    <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[60vh]">
+      {#each list as group (group.key)}
+        <details class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40">
+          <summary class="collapse-title text-sm font-semibold">
+            {group.label}
+            <span class="text-base-content/50">({group.items.length})</span>
+          </summary>
+          <div class="collapse-content flex flex-col gap-1 pl-0">
+            {#each group.items as item (item.storyId)}
+              <a
+                class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-base-200"
+                href={storyHref(item.storyId, "text")}
+                onclick={(event) => openStory(event, item.storyId)}
+              >
+                <span class="min-w-0 truncate">{item.label}</span>
+                {#if item.sublabel}
+                  <span class="shrink-0 font-mono text-xs text-base-content/50">{item.sublabel}</span>
+                {/if}
+              </a>
+            {/each}
+          </div>
+        </details>
+      {/each}
+    </div>
+  {/if}
+{/snippet}
 
 <section class="card bg-base-100 shadow-sm ring-1 ring-base-content/10" aria-label={labels.open}>
   <div class="card-body gap-4 p-5">
@@ -313,37 +435,105 @@
           </p>
         {/if}
       </div>
-    {:else}
-      {#if filteredGroups.length === 0}
+    {:else if storyType === "event"}
+      <label class="flex w-full max-w-64 items-center gap-2 text-sm text-base-content/70">
+        <span class="shrink-0">{labels.filterEventType}</span>
+        <select class="select select-bordered select-sm grow" bind:value={eventTypeFilter}>
+          <option value="all">{labels.eventTypeAll}</option>
+          <option value="marathon">{labels.eventTypeMarathon}</option>
+          <option value="cheerful_carnival">{labels.eventTypeCheerfulCarnival}</option>
+          <option value="world_bloom">{labels.eventTypeWorldBloom}</option>
+        </select>
+      </label>
+      {@render groupedList(filteredGroups, totalMatches, groups.length > 0)}
+    {:else if storyType === "character" && characters.length > 0}
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        {#each filteredCharacters as character (character.characterId)}
+          <a
+            class="group flex flex-col items-center gap-2 rounded-xl border border-base-content/10 bg-base-200/40 px-3 py-4 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+            href={storyHref(character.storyId, "text")}
+            onclick={(event) => openStory(event, character.storyId)}
+          >
+            {#if character.avatarUrl}
+              <img
+                src={character.avatarUrl}
+                alt=""
+                loading="lazy"
+                class="size-16 rounded-full object-cover object-top transition-[filter] duration-180 ease-out group-hover:brightness-105"
+              />
+            {:else}
+              <span
+                class="flex size-16 items-center justify-center rounded-full bg-base-300 text-base-content/50"
+                aria-hidden="true"
+              >
+                <Icon icon="mdi:account" class="size-8" />
+              </span>
+            {/if}
+            <span
+              class="w-full truncate text-center text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
+              >{character.name ?? `#${character.characterId}`}</span
+            >
+          </a>
+        {/each}
+      </div>
+      {#if filteredCharacters.length === 0}
         <p class="text-sm text-base-content/60" role="status">
-          {totalMatches === 0 && groups.length > 0 ? labels.noMatch : labels.empty}
+          {characters.length > 0 ? labels.noMatch : labels.empty}
         </p>
-      {:else}
-        <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[60vh]">
-          {#each filteredGroups as group (group.key)}
-            <details class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40">
-              <summary class="collapse-title text-sm font-semibold">
-                {group.label}
-                <span class="text-base-content/50">({group.items.length})</span>
-              </summary>
-              <div class="collapse-content flex flex-col gap-1 pl-0">
-                {#each group.items as item (item.storyId)}
-                  <a
-                    class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-base-200"
-                    href={storyHref(item.storyId, "text")}
-                    onclick={(event) => openStory(event, item.storyId)}
-                  >
-                    <span class="min-w-0 truncate">{item.label}</span>
-                    {#if item.sublabel}
-                      <span class="shrink-0 font-mono text-xs text-base-content/50">{item.sublabel}</span>
-                    {/if}
-                  </a>
-                {/each}
-              </div>
-            </details>
-          {/each}
-        </div>
       {/if}
+    {:else if storyType === "card" && cards.length > 0}
+      <label class="flex w-full max-w-64 items-center gap-2 text-sm text-base-content/70">
+        <span class="shrink-0">{labels.filterCharacter}</span>
+        <select class="select select-bordered select-sm grow" bind:value={cardCharacterFilter}>
+          <option value="all">{labels.characterAll}</option>
+          {#each cardCharacterOptions as option (option.id)}
+            <option value={String(option.id)}>{option.name}</option>
+          {/each}
+        </select>
+      </label>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        {#each filteredCards as card (card.cardId)}
+          <article class="flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3">
+            <div class="flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-base-200/50">
+              {#if card.thumbnailUrl}
+                <img
+                  src={card.thumbnailUrl}
+                  alt=""
+                  loading="lazy"
+                  class="size-full object-contain"
+                />
+              {:else}
+                <Icon icon="mdi:image-outline" class="size-8 text-base-content/30" aria-hidden="true" />
+              {/if}
+            </div>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold" title={card.cardName}>{card.cardName}</p>
+              <p class="truncate text-xs text-base-content/60">
+                {card.characterName ?? `#${card.cardId}`}
+              </p>
+            </div>
+            <div class="mt-auto flex flex-col gap-1">
+              {#each card.episodes as episode (episode.storyId)}
+                <a
+                  class="max-w-full truncate rounded-md border border-base-content/15 px-2 py-1 text-center text-xs outline-none hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60"
+                  href={storyHref(episode.storyId, "text")}
+                  onclick={(event) => openStory(event, episode.storyId)}
+                  title={episode.label}
+                >
+                  {episode.label}
+                </a>
+              {/each}
+            </div>
+          </article>
+        {/each}
+      </div>
+      {#if filteredCards.length === 0}
+        <p class="text-sm text-base-content/60" role="status">
+          {cards.length > 0 ? labels.noMatch : labels.empty}
+        </p>
+      {/if}
+    {:else}
+      {@render groupedList(filteredGroups, totalMatches, groups.length > 0)}
     {/if}
   </div>
 </section>
