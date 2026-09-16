@@ -4,7 +4,7 @@ interface ITask<T> {
 }
 /**
  * Simple promise quene for parallel execution for parallel download in sekai.best.
- * @default maxQueueLength=5, globally
+ * @default maxQueueLength=20, globally
  * @author K_bai
  */
 export class PreloadQueue<T> {
@@ -15,7 +15,7 @@ export class PreloadQueue<T> {
   private running: number;
   private results: (T | null)[] = [];
 
-  constructor(tasks: ITask<T>[] = [], maxQueueLength = 10, timeout = 60) {
+  constructor(tasks: ITask<T>[] = [], maxQueueLength = 20, timeout = 60) {
     this.tasks = tasks;
     this.maxQueueLength = maxQueueLength;
     this.timeout = timeout;

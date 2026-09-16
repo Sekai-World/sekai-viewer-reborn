@@ -1,14 +1,14 @@
 /**
  * Shared rate-limited fetch pipeline for Live2D asset downloads.
  *
- * Ported from the legacy viewer's Live2D request scheduler: at most four
- * requests in flight, at most twelve starts per second, and bounded retries
+ * Ported from the legacy viewer's Live2D request scheduler: at most twenty
+ * requests in flight, at most twenty starts per second, and bounded retries
  * (up to four) for HTTP 429 responses honoring `Retry-After` with exponential
  * backoff plus deterministic jitter as fallback.
  */
 
-const MAX_IN_FLIGHT = 4;
-const MAX_STARTS_PER_SECOND = 12;
+const MAX_IN_FLIGHT = 20;
+const MAX_STARTS_PER_SECOND = 20;
 const MAX_RETRIES = 4;
 
 interface QueuedWork {

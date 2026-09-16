@@ -1,8 +1,33 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { preloadModels } from "./load";
-import { Live2DLoadProgressType } from "./player-types";
-import type { ILive2DControllerData, ILive2DModelDataCollection } from "./player-types";
+vi.mock("howler", () => ({
+  Howl: class {
+    constructor(options: { onload?: () => void }) {
+      queueMicrotask(() => options.onload?.());
+    }
+  }
+}));
+
+const rateLimiterCalls = vi.hoisted(() => ({ count: 0 }));
+
+vi.mock("./rate-limited-fetch", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./rate-limited-fetch")>();
+  return {
+    ...actual,
+    live2dRequest: async <T>(request: () => Promise<T>): Promise<T> => {
+      rateLimiterCalls.count++;
+      return actual.live2dRequest(request);
+    }
+  };
+});
+
+import { preloadMedia, preloadModels } from "./load";
+import { Live2DAssetType, Live2DLoadProgressType } from "./player-types";
+import type {
+  ILive2DAssetUrl,
+  ILive2DControllerData,
+  ILive2DModelDataCollection
+} from "./player-types";
 
 const modelData = (costume: string): ILive2DModelDataCollection =>
   ({
@@ -57,5 +82,46 @@ describe("preloadModels progress", () => {
       count: 6,
       total: 6
     });
+  });
+});
+
+describe("preloadMedia progress", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it("routes image and sound loads through the shared rate limiter", async () => {
+    class FakeImage {
+      onload: () => void = () => {};
+      onerror: () => void = () => {};
+      crossOrigin = "";
+      set src(_value: string) {
+        queueMicrotask(() => this.onload());
+      }
+    }
+    vi.stubGlobal("Image", FakeImage);
+
+    const urls: ILive2DAssetUrl[] = [
+      {
+        type: Live2DAssetType.UI,
+        identifier: "ui-image",
+        url: "https://assets.example.com/ui.png"
+      },
+      {
+        type: Live2DAssetType.BackgroundMusic,
+        identifier: "bgm",
+        url: "https://assets.example.com/bgm.mp3"
+      }
+    ];
+    rateLimiterCalls.count = 0;
+
+    const resource = await preloadMedia(urls, () => {}, vi.fn());
+
+    expect(rateLimiterCalls.count).toBe(2);
+    expect(resource.image).toHaveLength(1);
+    expect(resource.image[0]?.identifier).toBe("ui-image");
+    expect(resource.audio).toHaveLength(1);
+    expect(resource.audio[0]?.identifier).toBe("bgm");
   });
 });

@@ -225,15 +225,15 @@ export async function preloadMedia(
       task: async (): Promise<ILive2DCachedAsset> => {
         try {
           if (isLive2DImageAsset(url)) {
-            const data = await preloadImage(url.url);
+            const data = await live2dRequest(() => preloadImage(url.url));
             log.log("Live2DPlayerLoader", `${url.url} loaded.`);
             return { ...url, data };
           } else if (isLive2DVideoAsset(url)) {
-            const data = await preloadVideo(url.url);
+            const data = await live2dRequest(() => preloadVideo(url.url));
             log.log("Live2DPlayerLoader", `${url.url} loaded.`);
             return { ...url, data };
           } else if (isLive2DAudioAsset(url)) {
-            const data = await preloadSound(url.url);
+            const data = await live2dRequest(() => preloadSound(url.url));
             log.log("Live2DPlayerLoader", `${url.url} loaded.`);
             return { ...url, data };
           } else {
