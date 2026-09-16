@@ -48,7 +48,20 @@ describe("createStoryRegionAssetUrls", () => {
     const urls = createStoryRegionAssetUrls(() => undefined, "jp");
     expect(() => urls.region("../secret")).toThrow(/Unsafe story asset path/);
     expect(() => urls.region("")).toThrow(/Unsafe story asset path/);
-    expect(() => urls.region("a b")).toThrow(/Unsafe story asset path/);
+    expect(() => urls.region(" model/file.moc3")).toThrow(/Unsafe story asset path/);
+    expect(() => urls.region("model/file.moc3 ")).toThrow(/Unsafe story asset path/);
+    expect(() => urls.region("model/file\tname.moc3")).toThrow(/Unsafe story asset path/);
+  });
+
+  it("percent-encodes interior spaces, which real motion data contains", () => {
+    const urls = createStoryRegionAssetUrls(() => undefined, "jp");
+    expect(
+      urls.live2d(
+        "motion/v1/main/02_saki/02saki_motion_base/facial/face_ worry_01.motion3.json"
+      )
+    ).toBe(
+      "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/02_saki/02saki_motion_base/facial/face_%20worry_01.motion3.json"
+    );
   });
 });
 

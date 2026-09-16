@@ -28,14 +28,26 @@ export const storyRegionBuckets: Record<StoryAssetRegion, string> = {
 
 export const LIVE2D_BUCKET = "sekai-live2d-assets";
 
-const SAFE_PATH_PATTERN = /^[A-Za-z0-9_\-./()[\]]+$/;
+const SAFE_PATH_PATTERN = /^[A-Za-z0-9_\-./()[\] ]+$/;
 
-/** Guards hand-built object paths before they are combined with a base URL. */
-const assertSafePath = (path: string): string => {
-  if (!path || !SAFE_PATH_PATTERN.test(path) || path.includes("..")) {
+/**
+ * Guards hand-built object paths before they are combined with a base URL,
+ * returning the URL-ready path. Interior spaces are legal: real game data
+ * carries motion files with spaces in their names (e.g.
+ * `face_ worry_01.motion3.json`) mirrored verbatim on the bucket; they are
+ * percent-encoded here so the built URL is valid everywhere. Leading or
+ * trailing whitespace stays rejected, matching the relay-side validation.
+ */
+const toSafeEncodedPath = (path: string): string => {
+  if (
+    !path ||
+    path !== path.trim() ||
+    !SAFE_PATH_PATTERN.test(path) ||
+    path.includes("..")
+  ) {
     throw new Error(`Unsafe story asset path: ${path}`);
   }
-  return path;
+  return path.replaceAll(" ", "%20");
 };
 
 export interface StoryAssetUrls {
@@ -66,8 +78,8 @@ export const createStoryRegionAssetUrls = (
 ): StoryAssetUrls => {
   const origin = resolveAssetOrigin(getRemoteAssetBase);
   return {
-    region: (path) => `${origin}/${storyRegionBuckets[region]}/${assertSafePath(path)}`,
-    live2d: (path) => `${origin}/${LIVE2D_BUCKET}/${assertSafePath(path)}`
+    region: (path) => `${origin}/${storyRegionBuckets[region]}/${toSafeEncodedPath(path)}`,
+    live2d: (path) => `${origin}/${LIVE2D_BUCKET}/${toSafeEncodedPath(path)}`
   };
 };
 
