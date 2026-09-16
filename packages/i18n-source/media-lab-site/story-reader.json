@@ -23,7 +23,6 @@
   "storyReader.player.controls.seVolume": "SE",
   "storyReader.player.controls.textAnimation": "Text animation",
   "storyReader.player.controls.voiceVolume": "Voice",
-  "storyReader.player.description": "Plays the scenario on a Live2D stage with character models, voices, and effects. Click the stage or use Next to advance at checkpoints.",
   "storyReader.player.hint.rotateToPlay": "Rotate your screen or tap fullscreen to play",
   "storyReader.player.hint.tapToContinue": "Click to continue",
   "storyReader.player.hint.tapToLoad": "Click to load",

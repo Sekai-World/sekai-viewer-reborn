@@ -55,7 +55,6 @@
     backLabel={translate("storyReader.backToModes")}
     kicker={translate("storyReader.player.kicker")}
     title={translate("storyReader.player.title")}
-    description={translate("storyReader.player.description")}
     metaLabels={{
       region: translate("storyReader.meta.region"),
       storyType: translate("storyReader.meta.storyType"),

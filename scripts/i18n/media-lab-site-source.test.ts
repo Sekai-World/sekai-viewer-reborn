@@ -41,7 +41,6 @@ describe("media-lab-site i18n source collection", () => {
       "storyReader.modeDialog.remember": expect.any(String),
       "storyReader.modeDialog.cancel": expect.any(String),
       "storyReader.player.title": expect.any(String),
-      "storyReader.player.description": expect.any(String),
       "storyReader.player.controls.next": expect.any(String),
       "storyReader.player.controls.fullscreen": expect.any(String),
       "storyReader.player.hint.tapToContinue": expect.any(String),
