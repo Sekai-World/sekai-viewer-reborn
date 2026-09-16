@@ -9,7 +9,7 @@
 </script>
 
 <svelte:head>
-  <title>Sekai Viewer</title>
+  <title>Sekai Viewer Media Lab</title>
 </svelte:head>
 
 <section class="flex flex-col gap-6">
