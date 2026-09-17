@@ -3,7 +3,7 @@
   import { browser } from "$app/environment";
   import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
   import { goto } from "$app/navigation";
-  import { resolveUnitLogoUrl } from "@platform/ui-shell";
+  import { resolveUnitIconUrl, resolveUnitLogoUrl } from "@platform/ui-shell";
   import { useRegionSelection } from "$lib/region-selection.svelte";
   import { localCharacterAvatarUrl } from "$lib/story/character-avatar";
   import {
@@ -723,30 +723,34 @@
         <div class="join">
           <button
             type="button"
-            class={`btn btn-sm join-item ${eventSortBy === "startAt" ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            title={labels.sortByStartAt}
+            aria-label={labels.sortByStartAt}
+            aria-pressed={eventSortBy === "startAt"}
+            class={`btn btn-sm join-item size-9 p-0 ${eventSortBy === "startAt" ? "btn-primary" : "btn-outline border-base-content/20"}`}
             onclick={() => toggleEventSort("startAt")}
           >
             <Icon icon="mdi:clock-start" class="size-4" aria-hidden="true" />
-            {labels.sortByStartAt}
             {#if eventSortBy === "startAt"}
               <Icon
                 icon={eventSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
-                class="size-4"
+                class="size-3.5"
                 aria-hidden="true"
               />
             {/if}
           </button>
           <button
             type="button"
-            class={`btn btn-sm join-item ${eventSortBy === "id" ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            title={labels.sortById}
+            aria-label={labels.sortById}
+            aria-pressed={eventSortBy === "id"}
+            class={`btn btn-sm join-item size-9 p-0 ${eventSortBy === "id" ? "btn-primary" : "btn-outline border-base-content/20"}`}
             onclick={() => toggleEventSort("id")}
           >
             <Icon icon="mdi:numeric" class="size-4" aria-hidden="true" />
-            {labels.sortById}
             {#if eventSortBy === "id"}
               <Icon
                 icon={eventSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
-                class="size-4"
+                class="size-3.5"
                 aria-hidden="true"
               />
             {/if}
@@ -773,9 +777,9 @@
               onclick={() => toggleEventUnitFilter(option.value)}
             >
               <img
-                src={resolveUnitLogoUrl(option.value) ?? undefined}
+                src={resolveUnitIconUrl(option.value) ?? undefined}
                 alt={option.label}
-                class="h-4 w-auto max-w-10 object-contain"
+                class="size-6 object-contain"
               />
             </button>
           {/each}
