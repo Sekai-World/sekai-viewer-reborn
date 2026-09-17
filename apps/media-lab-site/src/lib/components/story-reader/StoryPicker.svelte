@@ -3,7 +3,7 @@
   import { browser } from "$app/environment";
   import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
   import { goto } from "$app/navigation";
-  import { resolveUnitIconUrl, resolveUnitLogoUrl } from "@platform/ui-shell";
+  import { UnitIconBadge, resolveUnitIconUrl, resolveUnitLogoUrl } from "@platform/ui-shell";
   import { useRegionSelection } from "$lib/region-selection.svelte";
   import { localCharacterAvatarUrl } from "$lib/story/character-avatar";
   import {
@@ -689,7 +689,7 @@
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {#each selectedEventEpisodes as episode (episode.storyId)}
               <a
-                class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                class="group overflow-hidden rounded-lg border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                 href={storyHref(episode.storyId, "text")}
                 onclick={(event) => openStory(event, episode.storyId)}
               >
@@ -698,18 +698,18 @@
                     src={episode.bannerUrl}
                     alt=""
                     loading="lazy"
-                    class="aspect-video w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                    class="aspect-280/144 w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
                   />
                 {:else if selectedEventEntry?.bannerUrl}
                   <img
                     src={selectedEventEntry.bannerUrl}
                     alt=""
                     loading="lazy"
-                    class="aspect-video w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                    class="aspect-280/144 w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
                   />
                 {:else}
                   <div
-                    class="flex aspect-video w-full items-center justify-center bg-base-200/60 text-base-content/40"
+                    class="flex aspect-280/144 w-full items-center justify-center bg-base-200/60 text-base-content/40"
                   >
                     <Icon icon="mdi:image-outline" class="size-8" aria-hidden="true" />
                   </div>
@@ -734,16 +734,20 @@
             title={labels.sortByStartAt}
             aria-label={labels.sortByStartAt}
             aria-pressed={eventSortBy === "startAt"}
-            class={`btn btn-sm join-item size-9 p-0 ${eventSortBy === "startAt" ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            class={`relative btn btn-sm join-item size-9 p-0 ${eventSortBy === "startAt" ? "btn-primary" : "btn-outline border-base-content/20"}`}
             onclick={() => toggleEventSort("startAt")}
           >
-            <Icon icon="mdi:clock-start" class="size-4" aria-hidden="true" />
+            <Icon icon="mdi:clock-start" class="size-4.5" aria-hidden="true" />
             {#if eventSortBy === "startAt"}
-              <Icon
-                icon={eventSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
-                class="size-3.5"
+              <span
+                class="absolute right-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
                 aria-hidden="true"
-              />
+              >
+                <Icon
+                  icon={eventSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
+                  class="size-2.5"
+                />
+              </span>
             {/if}
           </button>
           <button
@@ -751,16 +755,20 @@
             title={labels.sortById}
             aria-label={labels.sortById}
             aria-pressed={eventSortBy === "id"}
-            class={`btn btn-sm join-item size-9 p-0 ${eventSortBy === "id" ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            class={`relative btn btn-sm join-item size-9 p-0 ${eventSortBy === "id" ? "btn-primary" : "btn-outline border-base-content/20"}`}
             onclick={() => toggleEventSort("id")}
           >
-            <Icon icon="mdi:numeric" class="size-4" aria-hidden="true" />
+            <Icon icon="mdi:numeric" class="size-4.5" aria-hidden="true" />
             {#if eventSortBy === "id"}
-              <Icon
-                icon={eventSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
-                class="size-3.5"
+              <span
+                class="absolute right-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
                 aria-hidden="true"
-              />
+              >
+                <Icon
+                  icon={eventSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
+                  class="size-2.5"
+                />
+              </span>
             {/if}
           </button>
         </div>
@@ -809,7 +817,7 @@
             {#each events as event (event.eventId)}
               <button
                 type="button"
-                class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                class="group overflow-hidden rounded-lg border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                 onclick={() => openEvent(event)}
               >
                 {#if event.bannerUrl}
@@ -817,33 +825,33 @@
                     src={event.bannerUrl}
                     alt=""
                     loading="lazy"
-                    class="aspect-video w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                    class="aspect-61/26 w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
                   />
                 {:else}
                   <div
-                    class="flex aspect-video w-full items-center justify-center bg-base-200/60 text-base-content/40"
+                    class="flex aspect-61/26 w-full items-center justify-center bg-base-200/60 text-base-content/40"
                   >
                     <Icon icon="mdi:image-outline" class="size-8" aria-hidden="true" />
                   </div>
                 {/if}
-                <div class="flex flex-col gap-1.5 px-3 py-2">
-                  <span
-                    class="truncate text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
-                    >{event.name}</span
-                  >
-                  <div class="flex items-center gap-1.5 text-xs text-base-content/60">
-                    <span class="font-mono">#{event.eventId}</span>
-                    {#if event.eventType}
-                      <span class="badge badge-ghost badge-sm">{eventTypeLabel(event.eventType)}</span>
-                    {/if}
-                    {#if event.unit && event.unit !== "none"}
-                      <img
-                        src={resolveUnitLogoUrl(event.unit) ?? undefined}
-                        alt=""
-                        class="ml-auto h-4 w-auto object-contain"
-                      />
-                    {/if}
+                <div class="flex items-center gap-2 px-3 py-2">
+                  <div class="flex min-w-0 flex-1 flex-col gap-1">
+                    <span
+                      class="truncate text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
+                      >{event.name}</span
+                    >
+                    <div class="flex items-center gap-1.5 text-xs text-base-content/60">
+                      <span class="font-mono">#{event.eventId}</span>
+                      {#if event.eventType}
+                        <span class="badge badge-ghost badge-sm"
+                          >{eventTypeLabel(event.eventType)}</span
+                        >
+                      {/if}
+                    </div>
                   </div>
+                  {#if event.unit && event.unit !== "none"}
+                    <UnitIconBadge unit={event.unit} variant="sm" class="shrink-0" />
+                  {/if}
                 </div>
               </button>
             {/each}
