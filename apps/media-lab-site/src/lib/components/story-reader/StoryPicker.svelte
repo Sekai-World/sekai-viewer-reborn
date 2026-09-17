@@ -1,7 +1,9 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { resolveUnitLogoUrl } from "@platform/ui-shell";
+  import { browser } from "$app/environment";
+  import { SvelteURLSearchParams } from "svelte/reactivity";
   import { goto } from "$app/navigation";
+  import { resolveUnitLogoUrl } from "@platform/ui-shell";
   import { useRegionSelection } from "$lib/region-selection.svelte";
   import { localCharacterAvatarUrl } from "$lib/story/character-avatar";
   import {
@@ -14,12 +16,15 @@
    * Story picker for one story type sub-page. The region follows the shared
    * primary-region setting; type navigation lives in the sidebar. Unit
    * stories use a two-level picker (unit blocks → story lines of episode
-   * cards); event stories filter by event type; character stories list
-   * avatar tiles; card stories list card-art tiles with a character filter;
-   * area talks list area cards with a drill-down into the talks of one area;
-   * special stories link single-episode entries directly and keep expandable
-   * groups only where a story has several episodes. Opening a story asks for
-   * the reader mode in a dialog unless the user chose to remember one.
+   * cards); event stories use a two-level picker too — a paginated event
+   * card list (server-side sort/name/type/unit filters, wheel or swipe
+   * loads the next page) that drills down into the event's episode cards;
+   * character stories list avatar tiles; card stories list card-art tiles
+   * with a character filter; area talks list area cards with a drill-down
+   * into the talks of one area; special stories link single-episode entries
+   * directly and keep expandable groups only where a story has several
+   * episodes. Opening a story asks for the reader mode in a dialog unless
+   * the user chose to remember one.
    */
   interface StoryCatalogItem {
     storyId: string;
@@ -90,6 +95,27 @@
     groups: StoryUnitEpisodeGroupView[];
   }
 
+  interface StoryEventCardView {
+    eventId: number;
+    name: string;
+    eventType: string | null;
+    unit: string | null;
+    startAt: number | null;
+    endAt: number | null;
+    bannerUrl: string | null;
+  }
+
+  interface StoryEventEpisodeView {
+    storyId: string;
+    label: string;
+    sublabel: string;
+  }
+
+  interface StoryUnitOption {
+    value: string;
+    label: string;
+  }
+
   interface Props {
     storyType: string;
     labels: {
@@ -101,13 +127,21 @@
       open: string;
       backToUnits: string;
       filterEventType: string;
-      eventTypeAll: string;
       eventTypeMarathon: string;
       eventTypeCheerfulCarnival: string;
       eventTypeWorldBloom: string;
       filterCharacter: string;
       characterAll: string;
       backToAreas: string;
+      backToEvents: string;
+      sortByStartAt: string;
+      sortById: string;
+      filterUnit: string;
+      mixedUnit: string;
+      loadMoreHint: string;
+      loadingMore: string;
+      listEnd: string;
+      retry: string;
       modeDialogTitle: string;
       textMode: string;
       playerMode: string;
@@ -134,11 +168,30 @@
   let units = $state<StoryUnitCatalogView[]>([]);
   let selectedUnit = $state<string | null>(null);
   let selectedAreaId = $state<number | null>(null);
-  let eventTypeFilter = $state("all");
   let cardCharacterFilter = $state("all");
   let loading = $state(false);
   let loadFailed = $state(false);
   let loadSeq = 0;
+
+  // Event picker: paginated list + server-side filters, mirroring the
+  // content-site event list (sort toggles, type/unit chips, wheel loading).
+  const EVENT_PAGE_DEBOUNCE_MS = 300;
+  let events = $state<StoryEventCardView[]>([]);
+  let eventStoriesIndex = $state<Record<string, StoryEventEpisodeView[]>>({});
+  let eventUnitOptions = $state<StoryUnitOption[]>([]);
+  let eventPage = $state(1);
+  let eventHasNext = $state(false);
+  let eventListLoadingMore = $state(false);
+  let eventListFailed = $state(false);
+  let selectedEventId = $state<number | null>(null);
+  let eventSortBy = $state<"startAt" | "id">("startAt");
+  let eventSortOrder = $state<"desc" | "asc">("desc");
+  let eventTypeFilters = $state<string[]>([]);
+  let eventUnitFilters = $state<string[]>([]);
+  let eventLoadSeq = 0;
+  let eventSentinel: HTMLDivElement | null = $state(null);
+  let eventLoadMoreHintVisible = $state(false);
+  let eventLastTouchY: number | null = null;
 
   const fetchGroups = async (region: string, nextType: string): Promise<void> => {
     const seq = ++loadSeq;
@@ -174,17 +227,134 @@
   };
 
   $effect(() => {
+    if (storyType === "event") return; // events use their own paginated fetch below
     void fetchGroups(regionSelection.primary, storyType);
   });
 
   $effect(() => {
-    // A region or story-type change drops the unit/area drill-downs and filters.
+    // A region or story-type change drops the unit/area/event drill-downs and filters.
     void regionSelection.primary;
     void storyType;
     selectedUnit = null;
     selectedAreaId = null;
-    eventTypeFilter = "all";
+    selectedEventId = null;
     cardCharacterFilter = "all";
+    eventTypeFilters = [];
+    eventUnitFilters = [];
+    eventSortBy = "startAt";
+    eventSortOrder = "desc";
+  });
+
+  const fetchEventList = async (page: number, append: boolean): Promise<void> => {
+    const seq = ++eventLoadSeq;
+    if (append) {
+      eventListLoadingMore = true;
+    } else {
+      loading = true;
+      eventListFailed = false;
+    }
+    try {
+      const params = new SvelteURLSearchParams({
+        page: String(page),
+        sort_by: eventSortBy,
+        sort_order: eventSortOrder
+      });
+      if (normalizedQuery) params.set("name", normalizedQuery);
+      if (eventTypeFilters.length > 0) params.set("event_type", eventTypeFilters.join(","));
+      if (eventUnitFilters.length > 0) params.set("unit", eventUnitFilters.join(","));
+      const response = await fetch(
+        `/story-reader/api/stories/${regionSelection.primary}/event?${params.toString()}`
+      );
+      if (!response.ok) throw new Error(String(response.status));
+      const payload = (await response.json()) as {
+        events?: StoryEventCardView[];
+        storiesByEvent?: Record<string, StoryEventEpisodeView[]>;
+        unitOptions?: StoryUnitOption[];
+        pagination?: { page?: number; hasNext?: boolean };
+      };
+      if (seq !== eventLoadSeq) return;
+      events = append ? [...events, ...(payload.events ?? [])] : (payload.events ?? []);
+      eventStoriesIndex = { ...eventStoriesIndex, ...(payload.storiesByEvent ?? {}) };
+      eventUnitOptions = payload.unitOptions ?? [];
+      eventPage = payload.pagination?.page ?? page;
+      eventHasNext = payload.pagination?.hasNext === true;
+      eventListFailed = false;
+    } catch {
+      if (seq !== eventLoadSeq) return;
+      eventListFailed = true;
+      if (!append) events = [];
+    } finally {
+      if (seq === eventLoadSeq) {
+        loading = false;
+        eventListLoadingMore = false;
+      }
+    }
+  };
+
+  $effect(() => {
+    // Debounced first page: any region / filter / sort / name change reloads
+    // the paginated event list from scratch.
+    if (storyType !== "event") return;
+    void regionSelection.primary;
+    void normalizedQuery;
+    void eventSortBy;
+    void eventSortOrder;
+    void eventTypeFilters;
+    void eventUnitFilters;
+    const timer = setTimeout(() => {
+      void fetchEventList(1, false);
+    }, EVENT_PAGE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  });
+
+  $effect(() => {
+    if (!browser || storyType !== "event" || !eventSentinel || !eventHasNext) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        eventLoadMoreHintVisible = entries.some((entry) => entry.isIntersecting);
+      },
+      { threshold: 0.96 }
+    );
+    observer.observe(eventSentinel);
+    return () => observer.disconnect();
+  });
+
+  $effect(() => {
+    // Wheel down or an upward swipe past the sentinel loads the next page,
+    // matching the content-site event list behavior.
+    if (!browser || storyType !== "event" || !eventHasNext) return;
+    const triggerLoadMore = (): void => {
+      if (!eventLoadMoreHintVisible || eventListLoadingMore || loading || !eventHasNext) return;
+      void fetchEventList(eventPage + 1, true);
+    };
+    const handleWheel = (event: WheelEvent): void => {
+      if (event.deltaY > 0) triggerLoadMore();
+    };
+    const handleTouchStart = (event: TouchEvent): void => {
+      eventLastTouchY = event.touches[0]?.clientY ?? null;
+    };
+    const handleTouchMove = (event: TouchEvent): void => {
+      const nextY = event.touches[0]?.clientY ?? null;
+      if (eventLastTouchY === null || nextY === null) {
+        eventLastTouchY = nextY;
+        return;
+      }
+      if (eventLastTouchY - nextY > 12) triggerLoadMore();
+      eventLastTouchY = nextY;
+    };
+    const handleTouchEnd = (): void => {
+      eventLastTouchY = null;
+    };
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   });
 
   const normalizedQuery = $derived(query.trim().toLowerCase());
@@ -194,9 +364,6 @@
 
   const filteredGroups = $derived.by(() => {
     let list = groups;
-    if (storyType === "event" && eventTypeFilter !== "all") {
-      list = list.filter((group) => group.eventType === eventTypeFilter);
-    }
     if (normalizedQuery) {
       list = list
         .map((group) => ({
@@ -253,6 +420,47 @@
       ? (filteredAreas.find((area) => area.areaId === selectedAreaId) ?? null)
       : null
   );
+
+  const selectedEventEntry = $derived(
+    storyType === "event" && selectedEventId !== null
+      ? (events.find((event) => event.eventId === selectedEventId) ?? null)
+      : null
+  );
+  const selectedEventEpisodes = $derived(
+    storyType === "event" && selectedEventId !== null
+      ? (eventStoriesIndex[String(selectedEventId)] ?? [])
+      : []
+  );
+
+  const eventTypeLabel = (value: string): string =>
+    value === "marathon"
+      ? labels.eventTypeMarathon
+      : value === "cheerful_carnival"
+        ? labels.eventTypeCheerfulCarnival
+        : value === "world_bloom"
+          ? labels.eventTypeWorldBloom
+          : value;
+
+  const toggleEventTypeFilter = (value: string): void => {
+    eventTypeFilters = eventTypeFilters.includes(value)
+      ? eventTypeFilters.filter((entry) => entry !== value)
+      : [...eventTypeFilters, value];
+  };
+
+  const toggleEventUnitFilter = (value: string): void => {
+    eventUnitFilters = eventUnitFilters.includes(value)
+      ? eventUnitFilters.filter((entry) => entry !== value)
+      : [...eventUnitFilters, value];
+  };
+
+  const toggleEventSort = (target: "startAt" | "id"): void => {
+    if (eventSortBy !== target) {
+      eventSortBy = target;
+      eventSortOrder = "desc";
+    } else {
+      eventSortOrder = eventSortOrder === "desc" ? "asc" : "desc";
+    }
+  };
 
   const cardCharacterOptions = $derived.by(() => {
     const options: Array<{ id: number; name: string }> = [];
@@ -399,7 +607,219 @@
       <input type="search" class="grow" placeholder={labels.search} bind:value={query} />
     </label>
 
-    {#if loading}
+    {#if storyType === "event" && selectedEventId !== null}
+      <div class="flex flex-col gap-4">
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm -ml-2 self-start"
+          onclick={() => (selectedEventId = null)}
+        >
+          <Icon icon="mdi:arrow-left" class="size-4" aria-hidden="true" />
+          {labels.backToEvents}
+        </button>
+        <div class="flex items-center gap-3">
+          {#if selectedEventEntry?.bannerUrl}
+            <img
+              src={selectedEventEntry.bannerUrl}
+              alt=""
+              class="h-10 w-auto rounded-lg object-cover"
+            />
+          {/if}
+          <h3 class="text-base font-semibold">
+            {selectedEventEntry?.name ?? `#${selectedEventId}`}
+          </h3>
+        </div>
+        {#if selectedEventEpisodes.length === 0}
+          <p class="text-sm text-base-content/60" role="status">{labels.empty}</p>
+        {:else}
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {#each selectedEventEpisodes as episode (episode.storyId)}
+              <a
+                class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                href={storyHref(episode.storyId, "text")}
+                onclick={(event) => openStory(event, episode.storyId)}
+              >
+                {#if selectedEventEntry?.bannerUrl}
+                  <img
+                    src={selectedEventEntry.bannerUrl}
+                    alt=""
+                    loading="lazy"
+                    class="aspect-video w-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                  />
+                {:else}
+                  <div
+                    class="flex aspect-video w-full items-center justify-center bg-base-200/60 text-base-content/40"
+                  >
+                    <Icon icon="mdi:image-outline" class="size-8" aria-hidden="true" />
+                  </div>
+                {/if}
+                <div class="flex items-center justify-between gap-2 px-3 py-2">
+                  <span
+                    class="min-w-0 truncate text-sm transition-colors duration-180 group-hover:text-primary"
+                    >{episode.label}</span
+                  >
+                  <span class="shrink-0 text-xs text-base-content/50">{episode.sublabel}</span>
+                </div>
+              </a>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {:else if storyType === "event"}
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="join">
+          <button
+            type="button"
+            class={`btn btn-sm join-item ${eventSortBy === "startAt" ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            onclick={() => toggleEventSort("startAt")}
+          >
+            <Icon icon="mdi:clock-start" class="size-4" aria-hidden="true" />
+            {labels.sortByStartAt}
+            {#if eventSortBy === "startAt"}
+              <Icon
+                icon={eventSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
+                class="size-4"
+                aria-hidden="true"
+              />
+            {/if}
+          </button>
+          <button
+            type="button"
+            class={`btn btn-sm join-item ${eventSortBy === "id" ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            onclick={() => toggleEventSort("id")}
+          >
+            <Icon icon="mdi:numeric" class="size-4" aria-hidden="true" />
+            {labels.sortById}
+            {#if eventSortBy === "id"}
+              <Icon
+                icon={eventSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
+                class="size-4"
+                aria-hidden="true"
+              />
+            {/if}
+          </button>
+        </div>
+        <div class="join" role="group" aria-label={labels.filterEventType}>
+          {#each ["marathon", "cheerful_carnival", "world_bloom"] as type (type)}
+            <button
+              type="button"
+              title={eventTypeLabel(type)}
+              class={`btn btn-sm join-item ${eventTypeFilters.includes(type) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+              onclick={() => toggleEventTypeFilter(type)}
+            >
+              {eventTypeLabel(type)}
+            </button>
+          {/each}
+        </div>
+        <div class="join" role="group" aria-label={labels.filterUnit}>
+          {#each eventUnitOptions as option (`unit:${option.value}`)}
+            <button
+              type="button"
+              title={option.label}
+              class={`btn btn-sm join-item size-9 p-0 ${eventUnitFilters.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+              onclick={() => toggleEventUnitFilter(option.value)}
+            >
+              <img
+                src={resolveUnitLogoUrl(option.value) ?? undefined}
+                alt={option.label}
+                class="h-4 w-auto max-w-10 object-contain"
+              />
+            </button>
+          {/each}
+          <button
+            type="button"
+            title={labels.mixedUnit}
+            aria-label={labels.mixedUnit}
+            class={`btn btn-sm join-item size-9 p-0 ${eventUnitFilters.includes("mixed") ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            onclick={() => toggleEventUnitFilter("mixed")}
+          >
+            <Icon icon="mdi:puzzle" class="size-5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      {#if events.length > 0}
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {#each events as event (event.eventId)}
+            <button
+              type="button"
+              class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+              onclick={() => (selectedEventId = event.eventId)}
+            >
+              {#if event.bannerUrl}
+                <img
+                  src={event.bannerUrl}
+                  alt=""
+                  loading="lazy"
+                  class="aspect-video w-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                />
+              {:else}
+                <div
+                  class="flex aspect-video w-full items-center justify-center bg-base-200/60 text-base-content/40"
+                >
+                  <Icon icon="mdi:image-outline" class="size-8" aria-hidden="true" />
+                </div>
+              {/if}
+              <div class="flex flex-col gap-1.5 px-3 py-2">
+                <span
+                  class="truncate text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
+                  >{event.name}</span
+                >
+                <div class="flex items-center gap-1.5 text-xs text-base-content/60">
+                  <span class="font-mono">#{event.eventId}</span>
+                  {#if event.eventType}
+                    <span class="badge badge-ghost badge-sm">{eventTypeLabel(event.eventType)}</span>
+                  {/if}
+                  {#if event.unit && event.unit !== "none"}
+                    <img
+                      src={resolveUnitLogoUrl(event.unit) ?? undefined}
+                      alt=""
+                      class="ml-auto h-4 w-auto object-contain"
+                    />
+                  {/if}
+                </div>
+              </div>
+            </button>
+          {/each}
+        </div>
+      {:else if loading}
+        <p class="flex items-center gap-2 text-sm text-base-content/60" role="status">
+          <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+          {labels.loading}
+        </p>
+      {:else if eventListFailed}
+        <div class="alert alert-soft alert-warning" role="alert">
+          <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
+          <span>{labels.loadFailed}</span>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm self-start" onclick={() => void fetchEventList(1, false)}>
+          {labels.retry}
+        </button>
+      {:else}
+        <p class="text-sm text-base-content/60" role="status">
+          {normalizedQuery || eventTypeFilters.length > 0 || eventUnitFilters.length > 0
+            ? labels.noMatch
+            : labels.empty}
+        </p>
+      {/if}
+
+      {#if eventHasNext}
+        <div
+          bind:this={eventSentinel}
+          class="flex min-h-20 items-center justify-center rounded-xl py-3"
+        >
+          {#if eventListLoadingMore}
+            <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+            <span class="ml-2 text-sm text-base-content/60">{labels.loadingMore}</span>
+          {:else}
+            <span class="text-sm text-base-content/50">{labels.loadMoreHint}</span>
+          {/if}
+        </div>
+      {:else if events.length > 0}
+        <p class="py-2 text-center text-sm text-base-content/50">{labels.listEnd}</p>
+      {/if}
+
+    {:else if loading}
       <p class="flex items-center gap-2 text-sm text-base-content/60" role="status">
         <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
         {labels.loading}
@@ -490,17 +910,6 @@
           </p>
         {/if}
       </div>
-    {:else if storyType === "event"}
-      <label class="flex w-full max-w-64 items-center gap-2 text-sm text-base-content/70">
-        <span class="shrink-0">{labels.filterEventType}</span>
-        <select class="select select-bordered select-sm grow" bind:value={eventTypeFilter}>
-          <option value="all">{labels.eventTypeAll}</option>
-          <option value="marathon">{labels.eventTypeMarathon}</option>
-          <option value="cheerful_carnival">{labels.eventTypeCheerfulCarnival}</option>
-          <option value="world_bloom">{labels.eventTypeWorldBloom}</option>
-        </select>
-      </label>
-      {@render groupedList(filteredGroups, totalMatches, groups.length > 0)}
     {:else if storyType === "character" && characters.length > 0}
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {#each filteredCharacters as character (character.characterId)}
