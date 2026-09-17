@@ -2,7 +2,6 @@
   import "../app.css";
   import "$lib/icons/mdi";
   import { asset } from "$app/paths";
-  import { onNavigate } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
@@ -113,23 +112,6 @@
     themeName = nextName;
     themeMode = nextMode;
   };
-
-  // `onNavigate` must be registered during component initialisation; calling it
-  // inside `onMount` throws at runtime. Browser APIs are guarded inside the
-  // callback instead, which only ever runs on the client.
-  onNavigate((navigation) => {
-    const viewTransitionDocument = document as Document & {
-      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-    };
-    if (!viewTransitionDocument.startViewTransition) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    return new Promise<void>((resolve) => {
-      viewTransitionDocument.startViewTransition(async () => {
-        resolve();
-        await navigation.complete;
-      });
-    });
-  });
 
   onMount(() => {
     themeName = normalizeThemeName(localStorage.getItem(THEME_NAME_STORAGE_KEY));

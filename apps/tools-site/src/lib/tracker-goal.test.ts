@@ -4,132 +4,128 @@ import { calculateTrackerGoalPlan, type TrackerGoalInput } from "./tracker-goal"
 const HOUR_MS = 3_600_000;
 
 const baseInput = (): TrackerGoalInput => ({
-  calculatedAt: 0,
+  latestDataAt: 5 * HOUR_MS,
   deadlineAt: 10 * HOUR_MS,
   player: { currentScore: 500 },
-  line: {
-    score: 1_000,
-    capturedAt: 0,
-    rate: { source: "recent", pointsPerHour: 100 }
-  },
-  target: { safetyMarginPoints: 200 }
+  target: { score: 1_500, rate: 200 },
+  safetyMarginPoints: 200
 });
 
-describe("tracker goal pace planner", () => {
-  it("projects the ranking line and calculates calendar and active pace", () => {
+describe("tracker goal calculator", () => {
+  it("uses the selected row average speed and projects both lines to the deadline", () => {
     const result = calculateTrackerGoalPlan({
       ...baseInput(),
-      availablePlayHours: 20
+      availablePlayHours: 2
     });
 
     expect(result).toMatchObject({
       status: "ready",
-      lineHorizon: 10,
-      projectedLine: 2_000,
-      plannedTarget: 2_200,
-      requiredGain: 1_700,
-      calendarRate: 170,
-      activeRate: 85,
-      rate: 100,
-      rateSource: "recent",
-      capacityStatus: "unknown"
+      remainingActivityHours: 5,
+      targetRate: 200,
+      targetProjectedFinalScore: 2_500,
+      safetyMarginPoints: 200,
+      requiredFinalScore: 2_700,
+      requiredGain: 2_200,
+      requiredRate: 440,
+      availablePlayHours: 2,
+      dailyRequiredScore: 880,
+      target: { startScore: 1_500, rate: 200, finalScore: 2_500 },
+      user: { startScore: 500, rate: 440, finalScore: 2_700 }
     });
   });
 
-  it("uses the minimum score without interpolating a missing rank", () => {
+  it("uses the supplied average speed directly", () => {
     const result = calculateTrackerGoalPlan({
       ...baseInput(),
-      minimumScore: 3_000
-    });
-
-    expect(result.status).toBe("ready");
-    if (result.status === "ready") {
-      expect(result.plannedTarget).toBe(3_000);
-      expect(result.requiredGain).toBe(2_500);
-    }
-  });
-
-  it("reports an already-covered target instead of a negative gain", () => {
-    const result = calculateTrackerGoalPlan({
-      ...baseInput(),
-      player: { currentScore: 3_000 },
-      availablePlayHours: 5
+      target: { score: 1_500, rate: 80 }
     });
 
     expect(result).toMatchObject({
-      status: "already-covered",
-      requiredGain: 0,
-      calendarRate: 0,
-      activeRate: 0
-    });
-  });
-
-  it("calculates loop demand and classifies capacity", () => {
-    const loop = { pointsPerRun: 100, cycleMinutes: 30 };
-    const comfortable = calculateTrackerGoalPlan({
-      ...baseInput(),
-      availablePlayHours: 20,
-      loop
-    });
-    const highRisk = calculateTrackerGoalPlan({
-      ...baseInput(),
-      availablePlayHours: 10,
-      loop
-    });
-    const impossible = calculateTrackerGoalPlan({
-      ...baseInput(),
-      availablePlayHours: 8,
-      loop
-    });
-
-    expect(comfortable).toMatchObject({
-      capacity: 200,
-      capacityStatus: "comfortable",
-      runs: 17,
-      playHoursNeeded: 8.5,
-      runsPerHour: 0.85
-    });
-    expect(highRisk.status).toBe("ready");
-    if (highRisk.status === "ready") expect(highRisk.capacityStatus).toBe("high-risk");
-    expect(impossible.status).toBe("ready");
-    if (impossible.status === "ready") expect(impossible.capacityStatus).toBe("impossible");
-  });
-
-  it("keeps capacity unknown when either activity input is absent", () => {
-    const withoutHours = calculateTrackerGoalPlan({
-      ...baseInput(),
-      loop: { pointsPerRun: 100, cycleMinutes: 30 }
-    });
-    const withoutLoop = calculateTrackerGoalPlan({
-      ...baseInput(),
-      availablePlayHours: 5
-    });
-
-    expect(withoutHours).toMatchObject({
       status: "ready",
-      runs: 17,
-      capacityStatus: "unknown"
+      targetRate: 80,
+      targetProjectedFinalScore: 1_900,
+      requiredFinalScore: 2_100,
+      requiredRate: 320
     });
-    expect(withoutLoop).toMatchObject({ status: "ready", activeRate: 340, capacityStatus: "unknown" });
+  });
+
+  it("accepts a zero average speed", () => {
+    const result = calculateTrackerGoalPlan({
+      ...baseInput(),
+      target: { score: 1_500, rate: 0 }
+    });
+
+    expect(result).toMatchObject({
+      status: "ready",
+      targetProjectedFinalScore: 1_500,
+      requiredFinalScore: 1_700,
+      requiredRate: 240
+    });
+  });
+
+  it("clamps the required speed to zero when the current score already covers the goal", () => {
+    const result = calculateTrackerGoalPlan({
+      ...baseInput(),
+      player: { currentScore: 4_000 }
+    });
+
+    expect(result).toMatchObject({
+      status: "ready",
+      requiredRate: 0,
+      user: { rate: 0, finalScore: 4_000 }
+    });
+  });
+
+  it("omits the daily target when daily play time is empty or zero", () => {
+    const withoutHours = calculateTrackerGoalPlan(baseInput());
+    const withZeroHours = calculateTrackerGoalPlan({ ...baseInput(), availablePlayHours: 0 });
+
+    expect(withoutHours.status).toBe("ready");
+    if (withoutHours.status === "ready") expect(withoutHours.dailyRequiredScore).toBeUndefined();
+    expect(withZeroHours.status).toBe("ready");
+    if (withZeroHours.status === "ready") expect(withZeroHours.dailyRequiredScore).toBeUndefined();
+  });
+
+  it("returns unavailable when the target score or average speed is missing", () => {
+    expect(
+      calculateTrackerGoalPlan({
+        ...baseInput(),
+        target: { score: null, rate: 200 }
+      })
+    ).toEqual({ status: "unavailable", reason: "missing-data" });
+    expect(
+      calculateTrackerGoalPlan({
+        ...baseInput(),
+        target: { score: 1_500, rate: null }
+      })
+    ).toEqual({ status: "unavailable", reason: "missing-data" });
+  });
+
+  it("rejects an ended or invalid time window", () => {
+    expect(
+      calculateTrackerGoalPlan({ ...baseInput(), deadlineAt: 5 * HOUR_MS })
+    ).toEqual({ status: "invalid", reason: "invalid-time-window" });
+    expect(
+      calculateTrackerGoalPlan({ ...baseInput(), latestDataAt: -1 })
+    ).toEqual({ status: "invalid", reason: "invalid-input" });
   });
 
   it.each([
-    ["deadline", { deadlineAt: 0 }],
-    ["captured line", { line: { ...baseInput().line, capturedAt: 10 * HOUR_MS } }],
-    ["negative score", { player: { currentScore: -1 } }],
-    ["negative rate", { line: { ...baseInput().line, rate: { source: "manual", pointsPerHour: -1 } } }],
-    ["invalid loop", { loop: { pointsPerRun: 0, cycleMinutes: 30 } }]
-  ] as const)("rejects %s as invalid", (_label, overrides) => {
+    ["current score", { player: { currentScore: null } }],
+    ["target score", { target: { score: null, rate: 200 } }],
+    ["target average speed", { target: { score: 1_500, rate: null } }],
+    ["safety margin", { safetyMarginPoints: null }],
+    ["daily play time", { availablePlayHours: -1 }]
+  ] as const)("returns the appropriate result for missing or invalid %s", (_label, overrides) => {
     const result = calculateTrackerGoalPlan({ ...baseInput(), ...overrides });
-    expect(result.status).toBe("invalid");
+    expect(result.status).toBe(_label === "daily play time" ? "invalid" : "unavailable");
   });
 
-  it("returns unavailable when required live data has not arrived", () => {
+  it("rejects a negative target average speed as an invalid rate", () => {
     const result = calculateTrackerGoalPlan({
       ...baseInput(),
-      line: { ...baseInput().line, rate: null }
+      target: { score: 1_500, rate: -1 }
     });
-
-    expect(result).toEqual({ status: "unavailable", reason: "missing-data" });
+    expect(result).toEqual({ status: "invalid", reason: "invalid-rate" });
   });
 });

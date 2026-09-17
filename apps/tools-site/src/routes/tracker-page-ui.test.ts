@@ -12,6 +12,7 @@ const trackerMessagesPath = resolve(
   "../../packages/i18n-source/tools-site/tracker.json"
 );
 const chartPath = resolve(process.cwd(), "src/lib/components/RankingHistoryChart.svelte");
+const goalChartPath = resolve(process.cwd(), "src/lib/components/GoalProjectionChart.svelte");
 
 describe("tracker page UI contract", () => {
   it("renders accessible player-change markers without motion-dependent behavior", async () => {
@@ -42,20 +43,6 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("onpointermove={captureHoveredPoint}");
     expect(source).toContain("prefers-reduced-motion: reduce");
   });
-  it("checks reduced motion at navigation time inside the top-level onNavigate callback", async () => {
-    const source = await readFile(layoutPath, "utf8");
-    // onNavigate must be registered during component initialisation (top level),
-    // never inside onMount; reduced motion is evaluated at navigation time.
-    expect(source).toContain("onNavigate((navigation) => {");
-    expect(source).toContain('window.matchMedia("(prefers-reduced-motion: reduce)").matches');
-    const onMountStart = source.indexOf("onMount(() => {");
-    const onNavigateCall = source.indexOf("onNavigate((navigation) => {");
-    expect(onNavigateCall).toBeGreaterThan(-1);
-    if (onMountStart !== -1) {
-      expect(onNavigateCall).toBeLessThan(onMountStart);
-    }
-  });
-
   it("keeps Home ungrouped while preserving the Live Data sidebar group", async () => {
     const source = await readFile(layoutPath, "utf8");
     const sidebarStart = source.indexOf("const sidebarItems: SidebarItem[]");
@@ -367,8 +354,11 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("@media (prefers-reduced-motion: reduce)");
   });
 
-  it("keeps the goal pace planner native, data-gated, and keyboard accessible", async () => {
-    const source = await readFile(pagePath, "utf8");
+  it("uses the selected table row average speed without a goal-history request", async () => {
+    const [source, goalChartSource] = await Promise.all([
+      readFile(pagePath, "utf8"),
+      readFile(goalChartPath, "utf8")
+    ]);
     expect(source).toContain("<dialog");
     expect(source).toContain("bind:this={goalDialog}");
     expect(source).toContain('id="tracker-goal-dialog"');
@@ -392,23 +382,35 @@ describe("tracker page UI contract", () => {
     expect(closeButton).toContain('<Icon icon="mdi:close" class="size-5" aria-hidden="true" />');
     expect(closeButton).toContain("size-11 min-h-11 shrink-0");
     expect(closeButton).not.toMatch(/>\s*\{translate\("tracker.goalClose"\)\}/);
-    expect(dialog?.match(/class="input input-sm min-h-11 w-full min-w-0"/g)).toHaveLength(8);
+    expect(dialog?.match(/class="input input-sm min-h-11 w-full min-w-0"/g)).toHaveLength(4);
     expect(dialog).toContain('<select\n          bind:this={goalTargetRankControl}');
     expect(dialog).toContain('id="tracker-goal-current-score"');
     expect(dialog).toContain('for="tracker-goal-current-score"');
     expect(dialog).toContain('id="tracker-goal-safety-margin"');
-    expect(dialog).toContain('id="tracker-goal-minimum-score"');
     expect(dialog).toContain('id="tracker-goal-play-hours"');
     expect(dialog).toContain('id="tracker-goal-deadline"');
     expect(dialog).toContain("readonly");
-    expect(dialog).toContain('id="tracker-goal-rate-mode"');
-    expect(dialog).toContain('id="tracker-goal-manual-rate"');
-    expect(dialog).toContain('id="tracker-goal-points-per-run"');
-    expect(dialog).toContain('id="tracker-goal-cycle-minutes"');
     expect(dialog).toContain('class="tracker-goal-result-grid"');
-    expect(dialog).toContain('class="tracker-goal-capacity"');
     expect(dialog).toContain('class="btn btn-primary min-h-11" type="submit"');
     expect(dialog).toContain("disabled={!goalCanSubmit}");
+    expect(source).toContain("const goalTargetRate = $derived(goalLineRow?.speedPerHour ?? null);");
+    expect(source).toContain("target: {\n        score: goalLineRow?.score ?? null,\n        rate: goalLineRow?.speedPerHour ?? null");
+    expect(source).not.toContain("loadGoalLinePoints");
+    expect(source).not.toContain("requestGoalLinePoints");
+    expect(source).not.toContain("goalLineHistory");
+    expect(source).not.toContain("goalLineStatus");
+    expect(source).toContain("safetyMarginPoints: goalSafetyMarginPoints");
+    expect(source).toContain("availablePlayHours: goalAvailablePlayHours");
+    expect(source).toContain("goalPlan.targetRate");
+    expect(source).toContain("goalPlan.targetProjectedFinalScore");
+    expect(source).toContain("goalPlan.requiredFinalScore");
+    expect(source).toContain("goalPlan.requiredRate");
+    expect(source).toContain("goalPlan.dailyRequiredScore");
+    expect(source).toContain("<GoalProjectionChart");
+    expect(source).toContain("user={goalPlan.user}");
+    expect(goalChartSource).toContain("user: Projection");
+    expect(goalChartSource).toContain('class="goal-line goal-line-user"');
+    expect(goalChartSource).toContain('class="goal-line goal-line-target"');
     expect(source).toContain('aria-haspopup="dialog"');
     expect(source).toContain('aria-controls="tracker-goal-dialog"');
     expect(source).toContain("onclick={openGoalCalculator}");
@@ -420,19 +422,31 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('translate("tracker.calculateGoal")');
     expect(source).toContain("event.preventDefault();");
     expect(source).toContain("goalResult = calculateTrackerGoalPlan({");
-    expect(source).toContain("calculatedAt: Date.now(),");
-    expect(source).toContain("projectedLine");
-    expect(source).toContain("plannedTarget");
-    expect(source).toContain("requiredGain");
-    expect(source).toContain("calendarRate");
-    expect(source).toContain("activeRate");
-    expect(source).toContain("goalPlan.capacityStatus");
-    expect(source).toContain("goalPlan.runs");
-    expect(source).toContain("goalPlan.playHoursNeeded");
-    expect(source).toContain("goalPlan.maxAllowedCycleMinutes");
-    expect(source).not.toContain("goalScore");
-    expect(source).not.toContain("goalHours");
-    expect(source).not.toContain("goalReferenceRow");
+    expect(source).toContain("latestDataAt: goalLineCapturedAt,");
+    expect(source).toContain("goalLineRow?.score");
+    expect(source).toContain("goalCurrentScoreValid");
+    expect(source).toContain("goalSafetyMarginValid");
+    expect(source).toContain("goalAvailablePlayHoursValid");
+    expect(source).toContain("goalHasTargetRate");
+    expect(source).toContain('class="tracker-goal-rate-note"');
+
+    for (const label of [
+      'translate("tracker.goalCurrentScore")',
+      'translate("tracker.goalTargetRate")',
+      'translate("tracker.goalTargetFinal")',
+      'translate("tracker.goalRequiredFinal")',
+      'translate("tracker.goalRequiredRate")',
+      'translate("tracker.goalDailyTarget")'
+    ]) {
+      expect(dialog).toContain(label);
+    }
+    expect(dialog).toContain('translate("tracker.goalDisclaimer")');
+    expect(dialog).not.toContain("tracker-goal-line-summary");
+    expect(dialog).not.toContain("tracker.goalCurrentFinal");
+    expect(dialog).not.toContain("tracker.goalYourRate");
+    expect(dialog).not.toContain("tracker.goalOutcome");
+    expect(dialog).not.toContain("tracker.goalDifference");
+    expect(dialog).not.toContain("tracker.goalRateMode");
 
     expect(source).toContain("onclick={closeGoalCalculator}");
     expect(source).toContain('translate("tracker.goalClose")');
@@ -499,6 +513,36 @@ describe("tracker page UI contract", () => {
     expect(source).toContain(".tracker-tool-actions .btn {");
     expect(source).not.toContain(".tracker-tool-actions .btn,");
     expect(source).not.toContain(".tracker-goal-dialog .btn {");
+  });
+
+  it("keeps the goal disclaimer and labels concise", async () => {
+    const messages = JSON.parse(await readFile(trackerMessagesPath, "utf8")) as Record<string, unknown>;
+
+    expect(messages).toMatchObject({
+      "tracker.goalDisclaimer": expect.any(String),
+      "tracker.goalCurrentScore": "Current score",
+      "tracker.openGoalCalculator": "Goal calculator",
+      "tracker.goalSafetyMargin": "Safety margin (P)",
+      "tracker.goalAvailablePlayHours": "Daily play time (hours, optional)",
+      "tracker.goalTargetRate": "Target line speed",
+      "tracker.goalTargetFinal": "Projected target score",
+      "tracker.goalRequiredFinal": "Required final score",
+      "tracker.goalRequiredRate": "Required average speed",
+      "tracker.goalDailyTarget": "Daily target",
+      "tracker.goalApproxRate": "{value} P/h",
+      "tracker.goalApproxDaily": "{value} P/day",
+      "tracker.goalRateUnavailable": "Average speed is unavailable for this rank."
+    });
+    expect(messages["tracker.goalDisclaimer"]).toContain("selected rank's average speed");
+    expect(messages["tracker.goalDisclaimer"]).toContain("time left");
+    expect(messages["tracker.goalDisclaimer"]).toContain("vary widely");
+    expect(messages["tracker.goalDisclaimer"]).toContain("for reference only");
+    expect(messages["tracker.goalRateUnavailable"]).not.toContain("recent target history");
+    expect(messages).not.toHaveProperty("tracker.goalRateLoading");
+    expect(messages).not.toHaveProperty("tracker.goalCurrentFinal");
+    expect(messages).not.toHaveProperty("tracker.goalYourRate");
+    expect(messages).not.toHaveProperty("tracker.goalOutcome");
+    expect(messages).not.toHaveProperty("tracker.goalDifference");
   });
 
   it("uses explicit or current metadata with an ID-only fallback", async () => {
@@ -731,7 +775,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('translate("tracker.viewPastRankings")');
     expect(source).toContain('translate("tracker.backToLatestRankings")');
     expect(JSON.parse(trackerMessagesSource)).toMatchObject({
-      "tracker.viewPastRankings": "View past rankings",
+      "tracker.viewPastRankings": "Past rankings",
       "tracker.backToLatestRankings": "Back to latest rankings",
       "tracker.pastRankings": "Past rankings"
     });

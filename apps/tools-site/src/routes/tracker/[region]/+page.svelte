@@ -7,6 +7,7 @@
   import { SvelteMap } from "svelte/reactivity";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import RankingHistoryChart from "$lib/components/RankingHistoryChart.svelte";
+  import GoalProjectionChart from "$lib/components/GoalProjectionChart.svelte";
   import { getTrackerChapterCountdown, getTrackerCountdown } from "$lib/tracker-countdown";
   import { getTrackerRankLadder, type TrackerRankLadder } from "$lib/tracker-ladders";
   import {
@@ -27,7 +28,6 @@
   } from "$lib/tracker-math";
   import {
     calculateTrackerGoalPlan,
-    type TrackerGoalRateSource,
     type TrackerGoalPlan,
     type TrackerGoalResult
   } from "$lib/tracker-goal";
@@ -147,15 +147,8 @@
   let graphStatus = $state<"idle" | "loading" | "available" | "empty" | "error">("idle");
   let goalTargetRank = $state<number | null>(null);
   let goalCurrentScore = $state<number | null>(null);
-  let goalSafetyMarginPoints = $state<number | null>(0);
-  let goalMinimumScore = $state<number | null>(null);
-  let goalAvailablePlayHours = $state<number | null>(null);
-  let goalPointsPerRun = $state<number | null>(null);
-  let goalCycleMinutes = $state<number | null>(null);
-  let goalRateMode = $state<TrackerGoalRateSource>("recent");
-  let goalManualRate = $state<number | null>(null);
-  let goalLinePoints = $state<GraphPoint[]>([]);
-  let goalLineStatus = $state<"idle" | "loading" | "available" | "unavailable" | "error">("idle");
+  let goalSafetyMarginPoints = $state<number | null>(1_000);
+  let goalAvailablePlayHours = $state<number | null | undefined>(null);
   let goalResult = $state<TrackerGoalResult | null>(null);
   let shareMessage = $state("");
   let isRefreshing = $state(false);
@@ -187,7 +180,6 @@
   let snapshotRequestToken = 0;
   let graphRequestToken = 0;
   let graphIdentity: { eventId: number; rank: number } | null = null;
-  let goalLineRequestToken = 0;
   let observedEventKey: number | null = null;
   let chapterRequestToken = 0;
   let isDetailsDialogClosing = $state(false);
@@ -388,22 +380,23 @@
   const goalLineRow = $derived(
     goalRankOptions.find((row) => row.ladderRank === goalTargetRank) ?? null
   );
-  const goalLineCapturedAt = $derived(
+  const goalLineRowCapturedAt = $derived(
     parseTrackerTimestamp(goalLineRow?.ranking?.timestamp)
   );
-  const goalRecentRate = $derived.by(() => {
-    const target = sortTrackerRatePoints(goalLinePoints).at(-1) ?? null;
-    const rates = calculateRecentRates(goalLinePoints, target);
-    const rate = rates.oneHour ?? rates.threeHours;
-    return rate !== null && Number.isFinite(rate) && rate >= 0 ? rate : null;
-  });
-  const goalRate = $derived(
-    goalRateMode === "manual" ? goalManualRate : goalRecentRate
+  const goalLineCapturedAt = $derived(goalLineRowCapturedAt);
+  const goalTargetRate = $derived(goalLineRow?.speedPerHour ?? null);
+  const goalCurrentScoreValid = $derived(
+    goalCurrentScore !== null && Number.isSafeInteger(goalCurrentScore) && goalCurrentScore >= 0
   );
-  const goalPlan = $derived<TrackerGoalPlan | null>(
-    goalResult?.status === "ready" || goalResult?.status === "already-covered"
-      ? goalResult
-      : null
+  const goalSafetyMarginValid = $derived(
+    goalSafetyMarginPoints !== null &&
+      Number.isSafeInteger(goalSafetyMarginPoints) &&
+      goalSafetyMarginPoints >= 0
+  );
+  const goalAvailablePlayHoursValid = $derived(
+    goalAvailablePlayHours === null ||
+      goalAvailablePlayHours === undefined ||
+      (Number.isFinite(goalAvailablePlayHours) && goalAvailablePlayHours >= 0)
   );
   const goalChapterIsLive = $derived.by(() => {
     if (selectedRankingTab === "event") return true;
@@ -430,26 +423,31 @@
     const deadlineAt = parseTrackerTimestamp(deadline);
     return deadlineAt !== null && deadlineAt > now ? deadlineAt : null;
   });
-  const GOAL_MAX_DATA_AGE_MS = 15 * 60_000;
-  const goalLineIsFresh = $derived.by(() => {
-    if (goalLineCapturedAt === null || !Number.isFinite(now)) return false;
-    const age = now - goalLineCapturedAt;
-    return age >= 0 && age <= GOAL_MAX_DATA_AGE_MS;
-  });
   const goalCanUseLiveData = $derived(
     trackerStatus === "available" &&
       goalDeadlineAt !== null &&
       goalLineRow !== null &&
-      goalLineCapturedAt !== null &&
-      goalLineIsFresh
+      goalLineCapturedAt !== null
+  );
+  const goalHasTargetRate = $derived(
+    goalTargetRate !== null && Number.isFinite(goalTargetRate)
+  );
+  const goalPlan = $derived<TrackerGoalPlan | null>(
+    goalCanUseLiveData &&
+      goalCurrentScoreValid &&
+      goalSafetyMarginValid &&
+      goalAvailablePlayHoursValid &&
+      goalHasTargetRate &&
+      goalResult?.status === "ready"
+      ? goalResult
+      : null
   );
   const goalCanSubmit = $derived(
     goalCanUseLiveData &&
-      (goalRateMode === "recent"
-        ? goalRecentRate !== null
-        : goalManualRate !== null &&
-          Number.isFinite(goalManualRate) &&
-          goalManualRate >= 0)
+      goalHasTargetRate &&
+      goalCurrentScoreValid &&
+      goalSafetyMarginValid &&
+      goalAvailablePlayHoursValid
   );
   const activeRankingContext = $derived<RankingContext>(
     selectedRankingTab === "event" || !selectedChapter
@@ -499,6 +497,8 @@
     selectedRankingTab = tab;
     if (typeof tab === "number") selectedChapterId = tab;
     else selectedChapterId = null;
+    goalResult = null;
+    goalTargetRank = goalRankOptions[0]?.ladderRank ?? null;
   };
   const nextRefreshAt = $derived(
     isCurrentEvent && phase !== "upcoming"
@@ -553,12 +553,8 @@
     });
   const formatGoalRate = (value: number): string =>
     interpolate("tracker.goalApproxRate", { value: formatGoalNumber(value) });
-  const formatGoalHours = (value: number): string =>
-    interpolate("tracker.goalApproxHours", { value: formatGoalNumber(value) });
-  const formatGoalRuns = (value: number): string =>
-    interpolate("tracker.goalApproxRuns", { value: formatGoalNumber(value, 0) });
-  const formatGoalMinutes = (value: number): string =>
-    interpolate("tracker.goalApproxMinutes", { value: formatGoalNumber(value) });
+  const formatGoalDaily = (value: number): string =>
+    interpolate("tracker.goalApproxDaily", { value: formatGoalNumber(value) });
   const formatTimestamp = (value: string | number | null | undefined): string => {
     if (value === null || value === undefined) return translate("tracker.unavailable");
     const date = new Date(value);
@@ -1050,46 +1046,6 @@
       graphStatus = "error";
     }
   };
-  const loadGoalLinePoints = async (rank: number | null): Promise<void> => {
-    const requestToken = ++goalLineRequestToken;
-    const requestEventKey = eventKey;
-    const requestChapterId = activeRankingContext?.chapterId ?? null;
-    if (!goalCanUseLiveData || rank === null || requestEventKey === null) {
-      goalLinePoints = [];
-      goalLineStatus = "unavailable";
-      return;
-    }
-
-    goalLinePoints = [];
-    goalLineStatus = "loading";
-    try {
-      const points = await fetchGraphPoints(
-        requestEventKey,
-        rank,
-        undefined,
-        activeRankingContext
-      );
-      if (
-        requestToken !== goalLineRequestToken ||
-        eventKey !== requestEventKey ||
-        (activeRankingContext?.chapterId ?? null) !== requestChapterId ||
-        goalTargetRank !== rank
-      )
-        return;
-      goalLinePoints = points;
-      goalLineStatus = points.length >= 2 ? "available" : "unavailable";
-    } catch {
-      if (
-        requestToken !== goalLineRequestToken ||
-        eventKey !== requestEventKey ||
-        (activeRankingContext?.chapterId ?? null) !== requestChapterId ||
-        goalTargetRank !== rank
-      )
-        return;
-      goalLinePoints = [];
-      goalLineStatus = "error";
-    }
-  };
   const returnToLatest = (): void => {
     snapshotRequestToken += 1;
     if (snapshotTimer) clearTimeout(snapshotTimer);
@@ -1188,9 +1144,6 @@
       snapshotRankings = payload.rankings;
       snapshotTimestamp = timestamp;
       snapshotStatus = "idle";
-      goalLineRequestToken += 1;
-      goalLinePoints = [];
-      goalLineStatus = "idle";
       goalResult = null;
     } catch {
       if (
@@ -1481,13 +1434,9 @@
     if (!goalRankOptions.some((row) => row.ladderRank === goalTargetRank)) {
       goalTargetRank = goalRankOptions[0]?.ladderRank ?? null;
     }
-    goalLineRequestToken += 1;
-    goalLinePoints = [];
-    goalLineStatus = "idle";
     if (!goalDialog?.open) {
       goalDialog?.showModal();
       void tick().then(() => goalTargetRankControl?.focus());
-      if (goalRateMode === "recent") void loadGoalLinePoints(goalTargetRank);
     }
   };
   const closeGoalCalculator = (): void => {
@@ -1499,41 +1448,19 @@
     const rank = Number(control.value);
     goalTargetRank = Number.isSafeInteger(rank) && rank > 0 ? rank : null;
     resetGoalResult();
-    goalLineRequestToken += 1;
-    goalLinePoints = [];
-    goalLineStatus = "idle";
-    if (goalRateMode === "recent") void loadGoalLinePoints(goalTargetRank);
-  };
-  const handleGoalRateModeChange = (): void => {
-    resetGoalResult();
-    goalLineRequestToken += 1;
-    goalLinePoints = [];
-    goalLineStatus = "idle";
-    if (goalRateMode === "recent") void loadGoalLinePoints(goalTargetRank);
   };
   const submitGoal = (event: SubmitEvent): void => {
     event.preventDefault();
-    const pointsPerRun = goalPointsPerRun;
-    const cycleMinutes = goalCycleMinutes;
     goalResult = calculateTrackerGoalPlan({
-      calculatedAt: Date.now(),
+      latestDataAt: goalLineCapturedAt,
       deadlineAt: goalDeadlineAt,
       player: { currentScore: goalCurrentScore },
-      line: {
+      target: {
         score: goalLineRow?.score ?? null,
-        capturedAt: goalLineCapturedAt,
-        rate:
-          goalRate === null
-            ? null
-            : { source: goalRateMode, pointsPerHour: goalRate }
+        rate: goalLineRow?.speedPerHour ?? null
       },
-      target: { safetyMarginPoints: goalSafetyMarginPoints },
-      minimumScore: goalMinimumScore,
-      availablePlayHours: goalAvailablePlayHours,
-      loop:
-        pointsPerRun === null && cycleMinutes === null
-          ? undefined
-          : { pointsPerRun, cycleMinutes }
+      safetyMarginPoints: goalSafetyMarginPoints,
+      availablePlayHours: goalAvailablePlayHours
     });
   };
   const handleGoalDialogCancel = (event: Event): void => {
@@ -1582,9 +1509,6 @@
       if (snapshotTimer) clearTimeout(snapshotTimer);
       timePoints = [];
       timePointIndex = 0;
-      goalLineRequestToken += 1;
-      goalLinePoints = [];
-      goalLineStatus = "idle";
       goalResult = null;
       if (urlSnapshot) {
         isTimeTravelActive = true;
@@ -1636,9 +1560,6 @@
       selectedChapterRows = [];
       selectedExportChapterIds = [];
       exportChapterSelectionInitialized = false;
-      goalLineRequestToken += 1;
-      goalLinePoints = [];
-      goalLineStatus = "idle";
       goalResult = null;
     }
     trackerRequestIdentity = requestIdentity;
@@ -2520,7 +2441,7 @@
     <div class="tracker-goal-dialog-heading">
       <div>
         <h2 id="tracker-goal-dialog-title">{translate("tracker.goalCalculator")}</h2>
-        <p id="tracker-goal-dialog-description">{translate("tracker.goalDescription")}</p>
+        <p id="tracker-goal-dialog-description">{translate("tracker.goalDisclaimer")}</p>
       </div>
       <button
         class="btn btn-square btn-sm btn-ghost size-11 min-h-11 shrink-0"
@@ -2579,26 +2500,14 @@
           oninput={resetGoalResult}
         />
       </label>
-      <label class="tracker-goal-field" for="tracker-goal-minimum-score">
-        <span>{translate("tracker.goalMinimumScore")}</span>
-        <input
-          id="tracker-goal-minimum-score"
-          class="input input-sm min-h-11 w-full min-w-0"
-          type="number"
-          min="0"
-          step="1"
-          bind:value={goalMinimumScore}
-          oninput={resetGoalResult}
-        />
-      </label>
       <label class="tracker-goal-field" for="tracker-goal-play-hours">
         <span>{translate("tracker.goalAvailablePlayHours")}</span>
         <input
           id="tracker-goal-play-hours"
           class="input input-sm min-h-11 w-full min-w-0"
           type="number"
-          min="0.01"
-          step="0.01"
+          min="0"
+          step="0.25"
           bind:value={goalAvailablePlayHours}
           oninput={resetGoalResult}
         />
@@ -2614,94 +2523,13 @@
         />
       </label>
     </div>
-    <div class="tracker-goal-line-summary" aria-live="polite">
-      {#if goalLineRow && goalLineCapturedAt !== null}
-        <span
-          >{interpolate("tracker.goalLineSummary", {
-            rank: goalLineRow.ladderRank,
-            score: formatNumber(goalLineRow.score),
-            time: formatTimestamp(goalLineCapturedAt)
-          })}</span
-        >
-      {:else}
-        <span>{translate("tracker.goalLineUnavailable")}</span>
-      {/if}
-    </div>
-    <fieldset class="tracker-goal-rate-fields">
-      <legend>{translate("tracker.goalRateAssumption")}</legend>
-      <label class="tracker-goal-field" for="tracker-goal-rate-mode">
-        <span>{translate("tracker.goalRateSource")}</span>
-        <select
-          id="tracker-goal-rate-mode"
-          class="select select-sm min-h-11 w-full min-w-0"
-          bind:value={goalRateMode}
-          onchange={handleGoalRateModeChange}
-        >
-          <option value="recent">{translate("tracker.goalRateRecent")}</option>
-          <option value="manual">{translate("tracker.goalRateManual")}</option>
-        </select>
-      </label>
-      {#if goalRateMode === "recent"}
-        <p
-          class="tracker-goal-rate-note"
-          role={goalLineStatus === "loading" ? "status" : goalRecentRate === null ? "alert" : undefined}
-        >
-          {#if goalLineStatus === "loading"}
-            {translate("tracker.goalRateLoading")}
-          {:else if goalRecentRate !== null}
-            {interpolate("tracker.goalRateObserved", { rate: formatGoalRate(goalRecentRate) })}
-          {:else}
-            {translate("tracker.goalRateUnavailable")}
-          {/if}
-        </p>
-      {:else}
-        <label class="tracker-goal-field" for="tracker-goal-manual-rate">
-          <span>{translate("tracker.goalManualRate")}</span>
-          <input
-            id="tracker-goal-manual-rate"
-            class="input input-sm min-h-11 w-full min-w-0"
-            type="number"
-            min="0"
-            step="0.1"
-            required
-            bind:value={goalManualRate}
-            oninput={resetGoalResult}
-          />
-        </label>
-      {/if}
-    </fieldset>
-    <fieldset class="tracker-goal-loop-fields">
-      <legend>{translate("tracker.goalLoop")}</legend>
-      <div class="tracker-goal-loop-grid">
-        <label class="tracker-goal-field" for="tracker-goal-points-per-run">
-          <span>{translate("tracker.goalPointsPerRun")}</span>
-          <input
-            id="tracker-goal-points-per-run"
-            class="input input-sm min-h-11 w-full min-w-0"
-            type="number"
-            min="1"
-            step="1"
-            bind:value={goalPointsPerRun}
-            oninput={resetGoalResult}
-          />
-        </label>
-        <label class="tracker-goal-field" for="tracker-goal-cycle-minutes">
-          <span>{translate("tracker.goalCycleMinutes")}</span>
-          <input
-            id="tracker-goal-cycle-minutes"
-            class="input input-sm min-h-11 w-full min-w-0"
-            type="number"
-            min="0.1"
-            step="0.1"
-            bind:value={goalCycleMinutes}
-            oninput={resetGoalResult}
-          />
-        </label>
-      </div>
-    </fieldset>
     {#if !goalCanUseLiveData}
       <p class="alert alert-warning alert-soft" role="alert">
         {translate("tracker.goalLiveDataUnavailable")}
+      </p>
+    {:else if !goalHasTargetRate}
+      <p class="tracker-goal-rate-note" role="alert">
+        {translate("tracker.goalRateUnavailable")}
       </p>
     {/if}
     {#if goalResult}
@@ -2718,72 +2546,37 @@
           <output class="tracker-goal-output">
             <dl class="tracker-goal-result-grid">
               <div>
-                <dt>{translate("tracker.goalProjectedLine")}</dt>
-                <dd>{formatGoalApproxNumber(goalPlan.projectedLine, 0)}</dd>
+                <dt>{translate("tracker.goalTargetRate")}</dt>
+                <dd>{formatGoalRate(goalPlan.targetRate)}</dd>
               </div>
               <div>
-                <dt>{translate("tracker.goalPlannedTarget")}</dt>
-                <dd>{formatGoalApproxNumber(goalPlan.plannedTarget, 0)}</dd>
+                <dt>{translate("tracker.goalTargetFinal")}</dt>
+                <dd>{formatGoalApproxNumber(goalPlan.targetProjectedFinalScore, 0)}</dd>
               </div>
               <div>
-                <dt>{translate("tracker.goalRequiredGain")}</dt>
-                <dd>{formatGoalApproxNumber(goalPlan.requiredGain, 0)}</dd>
+                <dt>{translate("tracker.goalRequiredFinal")}</dt>
+                <dd>{formatGoalApproxNumber(goalPlan.requiredFinalScore, 0)}</dd>
               </div>
               <div>
-                <dt>{translate("tracker.goalCalendarRate")}</dt>
-                <dd>{formatGoalRate(goalPlan.calendarRate)}</dd>
+                <dt>{translate("tracker.goalRequiredRate")}</dt>
+                <dd>{formatGoalRate(goalPlan.requiredRate)}</dd>
               </div>
-              <div>
-                <dt>{translate("tracker.goalActiveRate")}</dt>
-                <dd
-                  >{goalPlan.activeRate === undefined
-                    ? translate("tracker.goalActiveRateUnavailable")
-                    : formatGoalRate(goalPlan.activeRate)}</dd
-                >
-              </div>
-              {#if goalPlan.runs !== undefined}
+              {#if goalPlan.dailyRequiredScore !== undefined}
                 <div>
-                  <dt>{translate("tracker.goalRuns")}</dt>
-                  <dd>{formatGoalRuns(goalPlan.runs)}</dd>
-                </div>
-              {/if}
-              {#if goalPlan.playHoursNeeded !== undefined}
-                <div>
-                  <dt>{translate("tracker.goalPlayHours")}</dt>
-                  <dd>{formatGoalHours(goalPlan.playHoursNeeded)}</dd>
-                </div>
-              {/if}
-              {#if goalPlan.capacity !== undefined}
-                <div>
-                  <dt>{translate("tracker.goalCapacity")}</dt>
-                  <dd>{formatGoalRate(goalPlan.capacity)}</dd>
-                </div>
-              {/if}
-              {#if goalPlan.runsPerHour !== undefined}
-                <div>
-                  <dt>{translate("tracker.goalRunsPerHour")}</dt>
-                  <dd>{formatGoalApproxNumber(goalPlan.runsPerHour)}</dd>
-                </div>
-              {/if}
-              {#if goalPlan.maxAllowedCycleMinutes !== undefined}
-                <div>
-                  <dt>{translate("tracker.goalMaxAllowedCycle")}</dt>
-                  <dd>{formatGoalMinutes(goalPlan.maxAllowedCycleMinutes)}</dd>
+                  <dt>{translate("tracker.goalDailyTarget")}</dt>
+                  <dd>{formatGoalDaily(goalPlan.dailyRequiredScore)}</dd>
                 </div>
               {/if}
             </dl>
-            <div class="tracker-goal-capacity">
-              <strong>{translate("tracker.goalCapacityStatus")}</strong>
-              {#if goalPlan.capacityStatus === "unknown"}
-                <span class="badge badge-outline">{translate("tracker.goalCapacityUnknown")}</span>
-              {:else if goalPlan.capacityStatus === "comfortable"}
-                <span class="badge badge-success">{translate("tracker.goalCapacityComfortable")}</span>
-              {:else if goalPlan.capacityStatus === "high-risk"}
-                <span class="badge badge-warning">{translate("tracker.goalCapacityHighRisk")}</span>
-              {:else}
-                <span class="badge badge-error">{translate("tracker.goalCapacityImpossible")}</span>
-              {/if}
-            </div>
+            <GoalProjectionChart
+              user={goalPlan.user}
+              target={goalPlan.target}
+              deadlineAt={goalPlan.deadlineAt}
+              locale={data.uiLocale}
+              userLabel={translate("tracker.goalUserLine")}
+              targetLabel={translate("tracker.goalTargetLine")}
+              ariaLabel={translate("tracker.goalProjectionChart")}
+            />
           </output>
         {/if}
       </section>
@@ -3190,36 +2983,11 @@
   .tracker-goal-field input[readonly] {
     color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
   }
-  .tracker-goal-line-summary,
   .tracker-goal-rate-note {
     margin: 0;
     color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
     font-size: 0.78rem;
     line-height: 1.4;
-  }
-  .tracker-goal-line-summary {
-    border-block: 1px solid var(--archive-border-subtle);
-    padding-block: 0.75rem;
-  }
-  .tracker-goal-rate-fields,
-  .tracker-goal-loop-fields {
-    display: grid;
-    min-width: 0;
-    gap: 0.75rem;
-    border: 1px solid var(--archive-border-subtle);
-    border-radius: var(--radius-field);
-    padding: 0.75rem;
-  }
-  .tracker-goal-rate-fields legend,
-  .tracker-goal-loop-fields legend {
-    padding-inline: 0.25rem;
-    font-size: 0.78rem;
-    font-weight: 800;
-  }
-  .tracker-goal-loop-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
   }
   .tracker-goal-result {
     display: grid;
@@ -3251,15 +3019,6 @@
   .tracker-goal-result-grid dd {
     margin: 0.15rem 0 0;
     overflow-wrap: anywhere;
-  }
-  .tracker-goal-capacity {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    border-top: 1px solid var(--archive-border-subtle);
-    padding-top: 0.75rem;
   }
   .tracker-tool-actions .btn {
     display: inline-flex;
@@ -3370,14 +3129,12 @@
   .tracker-goal-dialog-actions {
     flex-wrap: wrap;
     justify-content: flex-end;
-    border-top: 1px solid var(--archive-border-subtle);
     padding-top: 1rem;
   }
   @media (max-width: 48rem) {
     .tracker-goal-fields {
       grid-template-columns: 1fr;
     }
-    .tracker-goal-loop-grid,
     .tracker-goal-result-grid {
       grid-template-columns: 1fr;
     }
