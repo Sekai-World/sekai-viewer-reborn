@@ -24,6 +24,7 @@ vi.mock("@platform/sekai-master-api-sdk", () => listEndpointMocks);
 
 import {
   clearStoryMasterDataCacheForTests,
+  fetchEventListPage,
   fetchStoryCharacterTables,
   fetchStoryCollection,
   fetchStoryCollections
@@ -409,5 +410,80 @@ describe("story master-data client", () => {
       }
     ]);
     expect(result.unitStories[0].chapters[0].episodes[0].unitStoryEpisodeGroupId).toBe(7);
+  });
+});
+
+describe("fetchEventListPage", () => {
+  beforeEach(() => {
+    listEndpointMocks.getEventsByRegionList.mockReset();
+  });
+
+  it("sends the content-site filter set and parses one page", async () => {
+    listEndpointMocks.getEventsByRegionList.mockResolvedValue(
+      okPage(
+        [
+          {
+            id: 217,
+            name: "Drive to Dream！",
+            eventType: "marathon",
+            unit: "theme_park",
+            assetbundleName: "event_drive_2026",
+            startAt: 1789365600000,
+            endAt: 1790056799000
+          }
+        ],
+        true
+      )
+    );
+
+    const result = await fetchEventListPage(
+      "jp",
+      {
+        page: 2,
+        pageSize: 12,
+        sortBy: "startAt",
+        sortOrder: "desc",
+        name: "dream",
+        eventTypes: ["marathon"],
+        units: ["mixed", "idol"]
+      },
+      { baseUrl: "https://master.test/api/v1" }
+    );
+
+    expect(listEndpointMocks.getEventsByRegionList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { region: "jp" },
+        query: {
+          page: 2,
+          page_size: 12,
+          spoiler: true,
+          sort_by: "startAt",
+          sort_order: "desc",
+          name: "dream",
+          event_type: "marathon",
+          unit: "none,idol"
+        }
+      })
+    );
+    expect(result.pagination).toEqual({ page: 2, hasNext: true, total: null });
+    const event = result.items[0] as Record<string, unknown>;
+    expect(event.id).toBe(217);
+    expect(event.unit).toBe("theme_park");
+  });
+
+  it("treats a 503 region as an empty page", async () => {
+    listEndpointMocks.getEventsByRegionList.mockResolvedValue({
+      error: { body: { code: "REGION_DATA_NOT_READY" } },
+      response: new Response(null, { status: 503 })
+    });
+    const result = await fetchEventListPage(
+      "tw",
+      { page: 1, pageSize: 12, sortBy: "startAt", sortOrder: "desc" },
+      { baseUrl: "https://master.test/api/v1" }
+    );
+    expect(result).toEqual({
+      items: [],
+      pagination: { page: 1, hasNext: false, total: null }
+    });
   });
 });

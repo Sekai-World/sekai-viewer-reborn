@@ -96,6 +96,11 @@ export interface StoryEvent {
   name: string;
   /** `marathon` | `cheerful_carnival` | `world_bloom` (filters in the picker). */
   eventType?: string;
+  /** Unit affiliation slug; `"none"` rows are unit-less ("mixed") events. */
+  unit?: string;
+  assetBundleName?: string;
+  startAt?: number;
+  endAt?: number;
 }
 
 export interface StoryCharacterProfile {
@@ -581,6 +586,38 @@ export interface StoryCardPickerItem {
   thumbnailPath?: string;
   episodes: StoryCardEpisodeLink[];
 }
+
+/** One clickable episode of an event story (second picker level). */
+export interface StoryEventEpisodeLink {
+  storyId: string;
+  label: string;
+  sublabel: string;
+}
+
+/**
+ * Event story episodes indexed by event id (`String(eventId)` keys). The
+ * event list itself is paginated server-side; this index lets the picker
+ * open any listed event's story level without another request.
+ */
+export type StoryEventStoriesIndex = Record<string, StoryEventEpisodeLink[]>;
+
+/** Builds the event-id → episodes index from the eventStories collection. */
+export const buildStoryEventStories = (
+  collections: StoryMasterCollections
+): StoryEventStoriesIndex => {
+  const index: StoryEventStoriesIndex = {};
+  for (const story of collections.eventStories) {
+    index[String(story.eventId)] = story.eventStoryEpisodes
+      .slice()
+      .sort((a, b) => a.episodeNo - b.episodeNo)
+      .map((episode) => ({
+        storyId: `${story.eventId}-${episode.episodeNo}`,
+        label: episode.title,
+        sublabel: String(episode.episodeNo)
+      }));
+  }
+  return index;
+};
 
 /**
  * Builds the card picker list: one entry per card that has episodes, with

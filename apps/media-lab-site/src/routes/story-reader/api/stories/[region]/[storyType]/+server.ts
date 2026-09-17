@@ -1,6 +1,7 @@
 import { json, error } from "@sveltejs/kit";
 import { isStoryRouteRegion, storyRouteStoryTypes } from "$lib/live2d/story-route";
 import {
+  fetchEventListPage,
   fetchStoryCollection,
   fetchStoryCollections
 } from "$lib/story/master-data-client.server";
@@ -9,11 +10,21 @@ import {
   buildStoryCardPicker,
   buildStoryCatalog,
   buildStoryCharacterPicker,
+  buildStoryEventStories,
   buildUnitStoryCatalog
 } from "$lib/story/story-identity";
-import { createStoryRegionAssetUrls } from "$lib/story/story-urls";
+import { createStoryRegionAssetUrls, eventBannerImagePath } from "$lib/story/story-urls";
 import { getStoryAssetBase } from "$lib/story/story-resolver.server";
 import type { RequestHandler } from "./$types";
+
+/** Event cards per page in the picker's first level (mirrors content-site). */
+const EVENT_PAGE_SIZE = 12;
+
+const splitParam = (value: string | null): string[] =>
+  (value ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
 
 /**
  * Story catalog for the reader's story picker. Lazy-loaded per region and
@@ -24,7 +35,7 @@ import type { RequestHandler } from "./$types";
  * the other types return grouped lists — card/area-talk lists run into the
  * thousands of rows, so they are never bundled into the landing page data.
  */
-export const GET: RequestHandler = async ({ params, fetch }) => {
+export const GET: RequestHandler = async ({ params, fetch, url }) => {
   const region = params.region?.trim().toLowerCase() ?? "";
   if (!isStoryRouteRegion(region)) {
     error(404, "Unsupported region");
@@ -32,6 +43,62 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
   const storyType = params.storyType?.trim() ?? "";
   if (!(storyRouteStoryTypes as readonly string[]).includes(storyType)) {
     error(404, "Unsupported story type");
+  }
+
+  if (storyType === "event") {
+    // Two-level event picker: the event list is served paginated with the
+    // content-site filter set (sort, name, event type, unit) applied
+    // server-side; the full episode index rides along so opening any listed
+    // event's story level needs no extra request.
+    const searchParams = url.searchParams;
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const sortBy = searchParams.get("sort_by") === "id" ? "id" : "startAt";
+    const sortOrder = searchParams.get("sort_order") === "asc" ? "asc" : "desc";
+    const name = searchParams.get("name")?.trim() ?? "";
+    const eventTypes = splitParam(searchParams.get("event_type"));
+    const units = splitParam(searchParams.get("unit"));
+
+    const [collections, eventPage] = await Promise.all([
+      fetchStoryCollections(region, ["eventStories", "unitProfiles"], { fetch }),
+      fetchEventListPage(
+        region,
+        { page, pageSize: EVENT_PAGE_SIZE, sortBy, sortOrder, name, eventTypes, units },
+        { fetch }
+      )
+    ]);
+
+    const assetUrls = createStoryRegionAssetUrls(getStoryAssetBase, region);
+    const events = eventPage.items.map((row) => {
+      const r = row as Record<string, unknown>;
+      const assetBundleName =
+        typeof r.assetbundleName === "string" && r.assetbundleName.length > 0
+          ? r.assetbundleName
+          : null;
+      return {
+        eventId: Number(r.id),
+        name: typeof r.name === "string" ? r.name : `#${String(r.id)}`,
+        eventType:
+          typeof r.eventType === "string" && r.eventType.length > 0 ? r.eventType : null,
+        unit: typeof r.unit === "string" && r.unit.length > 0 ? r.unit : null,
+        startAt: typeof r.startAt === "number" ? r.startAt : null,
+        endAt: typeof r.endAt === "number" ? r.endAt : null,
+        bannerUrl: assetBundleName
+          ? assetUrls.region(eventBannerImagePath(assetBundleName))
+          : null
+      };
+    });
+    const unitOptions = (collections.unitProfiles ?? [])
+      .slice()
+      .sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))
+      .map((profile) => ({ value: profile.unit, label: profile.unitName }));
+
+    return json({
+      storyType,
+      events,
+      pagination: eventPage.pagination,
+      storiesByEvent: buildStoryEventStories(collections),
+      unitOptions
+    });
   }
 
   const collections = await fetchStoryCollections(

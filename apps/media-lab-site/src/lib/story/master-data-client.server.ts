@@ -181,7 +181,11 @@ const collectionParsers: Record<
       const event: StoryEvent = {
         id: asNumber(r.id),
         name: asString(r.name),
-        eventType: asOptionalString(r.eventType)
+        eventType: asOptionalString(r.eventType),
+        unit: asOptionalString(r.unit),
+        assetBundleName: asOptionalString(r.assetbundleName),
+        startAt: asOptionalNumber(r.startAt),
+        endAt: asOptionalNumber(r.endAt)
       };
       return event;
     }),
@@ -508,6 +512,81 @@ export const fetchStoryCollections = async (
     areas,
     actionSets,
     specialStories
+  };
+};
+
+/** Server-side event-list query mirroring the content-site filter set. */
+export interface StoryEventListQuery {
+  page: number;
+  pageSize: number;
+  sortBy: "startAt" | "id";
+  sortOrder: "desc" | "asc";
+  name?: string;
+  eventTypes?: string[];
+  /** Unit slugs; `"mixed"` is sent as the backend value `"none"`. */
+  units?: string[];
+}
+
+export interface StoryEventListPagination {
+  page: number;
+  hasNext: boolean;
+  total: number | null;
+}
+
+export interface StoryEventListPage {
+  items: unknown[];
+  pagination: StoryEventListPagination;
+}
+
+/**
+ * Fetches one page of the events collection with the picker's server-side
+ * filters applied (sort, name, event types, unit affiliations). Unlike the
+ * other story collections this is not cached: the paginated list must reflect
+ * filter changes immediately.
+ */
+export const fetchEventListPage = async (
+  region: StoryRouteRegion,
+  query: StoryEventListQuery,
+  options: StoryMasterDataClientOptions = {}
+): Promise<StoryEventListPage> => {
+  const fetcher = options.fetch ?? fetch;
+  const baseUrl = resolveApiBaseUrl(options);
+  const requestQuery: Record<string, string | number | boolean> = {
+    page: query.page,
+    page_size: query.pageSize,
+    spoiler: true,
+    sort_by: query.sortBy,
+    sort_order: query.sortOrder
+  };
+  if (query.name) requestQuery.name = query.name;
+  if (query.eventTypes?.length) requestQuery.event_type = query.eventTypes.join(",");
+  if (query.units?.length) {
+    requestQuery.unit = query.units.map((unit) => (unit === "mixed" ? "none" : unit)).join(",");
+  }
+
+  const response = await getEventsByRegionList({
+    baseUrl,
+    fetch: fetcher,
+    path: { region },
+    query: requestQuery
+  });
+  if (response.error || !response.data) {
+    const status = response.response?.status ?? 0;
+    // Region not synced yet — same tolerance as the other story collections.
+    if (status === 503) {
+      return { items: [], pagination: { page: query.page, hasNext: false, total: null } };
+    }
+    throw new Error(`Failed to fetch event list (${status || "unknown error"})`);
+  }
+  const rows = Array.isArray(response.data.items) ? response.data.items : [];
+  const pagination = (response.data as { pagination?: Record<string, unknown> }).pagination ?? {};
+  return {
+    items: rows,
+    pagination: {
+      page: query.page,
+      hasNext: pagination.has_next === true,
+      total: typeof pagination.total === "number" ? pagination.total : null
+    }
   };
 };
 

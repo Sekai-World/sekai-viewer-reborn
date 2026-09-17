@@ -4,6 +4,7 @@ import {
   buildStoryCardPicker,
   buildStoryCatalog,
   buildStoryCharacterPicker,
+  buildStoryEventStories,
   buildUnitStoryCatalog,
   parseStoryId,
   resolveStoryIdentity,
@@ -630,5 +631,65 @@ describe("buildUnitStoryCatalog", () => {
     expect(idol?.groups).toHaveLength(1);
     expect(idol?.groups[0]).toMatchObject({ groupId: 0, categoryUnit: "none" });
     expect(idol?.groups[0].episodes[0].storyId).toBe("idol-1-1");
+  });
+});
+
+describe("buildStoryEventStories", () => {
+  const eventCollections: StoryMasterCollections = {
+    ...collections,
+    eventStories: [
+      {
+        id: 2,
+        eventId: 35,
+        assetbundleName: "event_35",
+        eventStoryEpisodes: [
+          {
+            id: 9002,
+            eventStoryId: 2,
+            episodeNo: 2,
+            title: "Second EP",
+            assetbundleName: "event_35_ep2",
+            scenarioId: "event_35_2"
+          },
+          {
+            id: 9001,
+            eventStoryId: 2,
+            episodeNo: 1,
+            title: "First EP",
+            assetbundleName: "event_35_ep1",
+            scenarioId: "event_35_1"
+          }
+        ]
+      },
+      {
+        id: 1,
+        eventId: 34,
+        assetbundleName: "event_34",
+        eventStoryEpisodes: [
+          {
+            id: 1,
+            eventStoryId: 1,
+            episodeNo: 1,
+            title: "Event EP1",
+            assetbundleName: "event_34_ep1",
+            scenarioId: "event_34_1"
+          }
+        ]
+      }
+    ]
+  };
+
+  it("indexes episodes by event id ordered by episode number", () => {
+    const index = buildStoryEventStories(eventCollections);
+    expect(Object.keys(index).sort()).toEqual(["34", "35"]);
+    expect(index["35"]).toEqual([
+      { storyId: "35-1", label: "First EP", sublabel: "1" },
+      { storyId: "35-2", label: "Second EP", sublabel: "2" }
+    ]);
+    expect(index["34"][0].storyId).toBe("34-1");
+  });
+
+  it("returns an empty index without event stories", () => {
+    expect(buildStoryEventStories({ ...collections, eventStories: [] })).toEqual({});
   });
 });

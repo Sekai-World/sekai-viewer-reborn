@@ -132,6 +132,10 @@ export const specialStoryScenarioPath = (
 export const backgroundImagePath = (name: string): string =>
   `scenario/background/${name}/${name}.webp`;
 
+/** Event banner on the region bucket (`home/banner/{bundle}/{bundle}.webp`). */
+export const eventBannerImagePath = (assetBundleName: string): string =>
+  `home/banner/${assetBundleName}/${assetBundleName}.webp`;
+
 /**
  * World-map area thumbnails used by the area-talk picker. Path rules ported
  * from the legacy sekai-viewer `AreaTalk` selector and re-verified against
