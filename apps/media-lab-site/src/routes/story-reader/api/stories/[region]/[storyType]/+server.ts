@@ -99,24 +99,20 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
     });
   }
 
+  // Each type fetches only the collections its picker actually reads —
+  // cardEpisodes/actionSets run into thousands of rows, so sharing one
+  // superset list made every picker pay for collections it never uses.
   const collections = await fetchStoryCollections(
     region,
     storyType === "unit"
       ? ["unitStories", "unitProfiles", "unitStoryEpisodeGroups"]
-      : [
-          "unitStories",
-          "unitProfiles",
-          "events",
-          "characterProfiles",
-          "cardEpisodes",
-          ...(storyType === "card" ? (["cards"] as const) : []),
-          ...(storyType === "character" ? (["gameCharacters"] as const) : []),
-          ...(storyType === "area-talk"
-            ? (["areas"] as const)
-            : []),
-          "actionSets",
-          "specialStories"
-        ],
+      : storyType === "character"
+        ? ["characterProfiles", "gameCharacters"]
+        : storyType === "card"
+          ? ["cardEpisodes", "cards"]
+          : storyType === "area-talk"
+            ? ["actionSets", "areas"]
+            : ["specialStories"],
     { fetch }
   );
 
