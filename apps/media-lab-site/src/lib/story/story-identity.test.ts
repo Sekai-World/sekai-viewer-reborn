@@ -678,9 +678,24 @@ describe("buildEventStoryEpisodeLinks", () => {
 
   it("links episodes across the event's story rows ordered by episode number", () => {
     expect(buildEventStoryEpisodeLinks(eventStories)).toEqual([
-      { storyId: "35-1", label: "First EP", sublabel: "1" },
-      { storyId: "35-2", label: "Second EP", sublabel: "2" },
-      { storyId: "34-1", label: "Event EP1", sublabel: "1" }
+      {
+        storyId: "35-1",
+        label: "First EP",
+        sublabel: "1",
+        bannerPath: "event_story/event_35/episode_image/event_35_01.webp"
+      },
+      {
+        storyId: "35-2",
+        label: "Second EP",
+        sublabel: "2",
+        bannerPath: "event_story/event_35/episode_image/event_35_02.webp"
+      },
+      {
+        storyId: "34-1",
+        label: "Event EP1",
+        sublabel: "1",
+        bannerPath: "event_story/event_34/episode_image/event_34_01.webp"
+      }
     ]);
   });
 

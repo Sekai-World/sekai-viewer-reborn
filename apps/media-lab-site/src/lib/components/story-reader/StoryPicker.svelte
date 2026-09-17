@@ -109,6 +109,7 @@
     storyId: string;
     label: string;
     sublabel: string;
+    bannerUrl: string | null;
   }
 
   interface StoryUnitOption {
@@ -692,12 +693,19 @@
                 href={storyHref(episode.storyId, "text")}
                 onclick={(event) => openStory(event, episode.storyId)}
               >
-                {#if selectedEventEntry?.bannerUrl}
+                {#if episode.bannerUrl}
+                  <img
+                    src={episode.bannerUrl}
+                    alt=""
+                    loading="lazy"
+                    class="aspect-video w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                  />
+                {:else if selectedEventEntry?.bannerUrl}
                   <img
                     src={selectedEventEntry.bannerUrl}
                     alt=""
                     loading="lazy"
-                    class="aspect-video w-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                    class="aspect-video w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
                   />
                 {:else}
                   <div
@@ -796,48 +804,58 @@
       </div>
 
       {#if events.length > 0}
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {#each events as event (event.eventId)}
-            <button
-              type="button"
-              class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
-              onclick={() => openEvent(event)}
+        <div class="relative">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {#each events as event (event.eventId)}
+              <button
+                type="button"
+                class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                onclick={() => openEvent(event)}
+              >
+                {#if event.bannerUrl}
+                  <img
+                    src={event.bannerUrl}
+                    alt=""
+                    loading="lazy"
+                    class="aspect-video w-full bg-base-200/60 object-contain transition-[filter] duration-180 ease-out group-hover:brightness-105"
+                  />
+                {:else}
+                  <div
+                    class="flex aspect-video w-full items-center justify-center bg-base-200/60 text-base-content/40"
+                  >
+                    <Icon icon="mdi:image-outline" class="size-8" aria-hidden="true" />
+                  </div>
+                {/if}
+                <div class="flex flex-col gap-1.5 px-3 py-2">
+                  <span
+                    class="truncate text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
+                    >{event.name}</span
+                  >
+                  <div class="flex items-center gap-1.5 text-xs text-base-content/60">
+                    <span class="font-mono">#{event.eventId}</span>
+                    {#if event.eventType}
+                      <span class="badge badge-ghost badge-sm">{eventTypeLabel(event.eventType)}</span>
+                    {/if}
+                    {#if event.unit && event.unit !== "none"}
+                      <img
+                        src={resolveUnitLogoUrl(event.unit) ?? undefined}
+                        alt=""
+                        class="ml-auto h-4 w-auto object-contain"
+                      />
+                    {/if}
+                  </div>
+                </div>
+              </button>
+            {/each}
+          </div>
+          {#if loading}
+            <div
+              class="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-base-100/70"
+              role="status"
             >
-              {#if event.bannerUrl}
-                <img
-                  src={event.bannerUrl}
-                  alt=""
-                  loading="lazy"
-                  class="aspect-video w-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
-                />
-              {:else}
-                <div
-                  class="flex aspect-video w-full items-center justify-center bg-base-200/60 text-base-content/40"
-                >
-                  <Icon icon="mdi:image-outline" class="size-8" aria-hidden="true" />
-                </div>
-              {/if}
-              <div class="flex flex-col gap-1.5 px-3 py-2">
-                <span
-                  class="truncate text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
-                  >{event.name}</span
-                >
-                <div class="flex items-center gap-1.5 text-xs text-base-content/60">
-                  <span class="font-mono">#{event.eventId}</span>
-                  {#if event.eventType}
-                    <span class="badge badge-ghost badge-sm">{eventTypeLabel(event.eventType)}</span>
-                  {/if}
-                  {#if event.unit && event.unit !== "none"}
-                    <img
-                      src={resolveUnitLogoUrl(event.unit) ?? undefined}
-                      alt=""
-                      class="ml-auto h-4 w-auto object-contain"
-                    />
-                  {/if}
-                </div>
-              </div>
-            </button>
-          {/each}
+              <span class="loading loading-spinner loading-md" aria-hidden="true"></span>
+            </div>
+          {/if}
         </div>
       {:else if loading}
         <p class="flex items-center gap-2 text-sm text-base-content/60" role="status">

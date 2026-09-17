@@ -2,6 +2,8 @@ import { error, json } from "@sveltejs/kit";
 import { isStoryRouteRegion } from "$lib/live2d/story-route";
 import { fetchEventStoriesByEvent } from "$lib/story/master-data-client.server";
 import { buildEventStoryEpisodeLinks } from "$lib/story/story-identity";
+import { createStoryRegionAssetUrls } from "$lib/story/story-urls";
+import { getStoryAssetBase } from "$lib/story/story-resolver.server";
 import type { RequestHandler } from "./$types";
 
 /**
@@ -22,10 +24,14 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
 
   try {
     const stories = await fetchEventStoriesByEvent(region, eventId, { fetch });
+    const assetUrls = createStoryRegionAssetUrls(getStoryAssetBase, region);
     return json({
       storyType: "event",
       eventId,
-      episodes: buildEventStoryEpisodeLinks(stories)
+      episodes: buildEventStoryEpisodeLinks(stories).map((episode) => ({
+        ...episode,
+        bannerUrl: assetUrls.region(episode.bannerPath)
+      }))
     });
   } catch (cause) {
     console.error("Failed to load event story episodes:", cause);

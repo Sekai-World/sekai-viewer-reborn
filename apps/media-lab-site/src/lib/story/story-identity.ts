@@ -592,6 +592,13 @@ export interface StoryEventEpisodeLink {
   storyId: string;
   label: string;
   sublabel: string;
+  /**
+   * Episode image path on the region bucket. The asset file name derives
+   * from the story bundle plus the zero-padded episode number
+   * (`event_story/{story}/episode_image/{story}_{NN}.webp`), not from the
+   * episode's own assetbundleName.
+   */
+  bannerPath: string;
 }
 
 /**
@@ -611,7 +618,8 @@ export const buildEventStoryEpisodeLinks = (
         .map((episode) => ({
           storyId: `${story.eventId}-${episode.episodeNo}`,
           label: episode.title,
-          sublabel: String(episode.episodeNo)
+          sublabel: String(episode.episodeNo),
+          bannerPath: `event_story/${story.assetbundleName}/episode_image/${story.assetbundleName}_${String(episode.episodeNo).padStart(2, "0")}.webp`
         }))
     );
   }
