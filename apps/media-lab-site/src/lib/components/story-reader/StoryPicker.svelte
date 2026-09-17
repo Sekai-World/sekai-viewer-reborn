@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { browser } from "$app/environment";
-  import { SvelteURLSearchParams } from "svelte/reactivity";
+  import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
   import { goto } from "$app/navigation";
   import { resolveUnitLogoUrl } from "@platform/ui-shell";
   import { useRegionSelection } from "$lib/region-selection.svelte";
@@ -177,7 +177,12 @@
   // content-site event list (sort toggles, type/unit chips, wheel loading).
   const EVENT_PAGE_DEBOUNCE_MS = 300;
   let events = $state<StoryEventCardView[]>([]);
-  let eventStoriesIndex = $state<Record<string, StoryEventEpisodeView[]>>({});
+  // Second drill-down level: an event's episodes load from the dedicated
+  // event-stories sub-route on open; null means "not loaded yet".
+  let selectedEventEpisodes = $state<StoryEventEpisodeView[] | null>(null);
+  let episodeLoadFailed = $state(false);
+  let episodeLoadSeq = 0;
+  const eventEpisodesCache = new SvelteMap<number, StoryEventEpisodeView[]>();
   let eventUnitOptions = $state<StoryUnitOption[]>([]);
   let eventPage = $state(1);
   let eventHasNext = $state(false);
@@ -238,6 +243,9 @@
     selectedUnit = null;
     selectedAreaId = null;
     selectedEventId = null;
+    selectedEventEpisodes = null;
+    episodeLoadFailed = false;
+    eventEpisodesCache.clear();
     cardCharacterFilter = "all";
     eventTypeFilters = [];
     eventUnitFilters = [];
@@ -268,13 +276,11 @@
       if (!response.ok) throw new Error(String(response.status));
       const payload = (await response.json()) as {
         events?: StoryEventCardView[];
-        storiesByEvent?: Record<string, StoryEventEpisodeView[]>;
         unitOptions?: StoryUnitOption[];
         pagination?: { page?: number; hasNext?: boolean };
       };
       if (seq !== eventLoadSeq) return;
       events = append ? [...events, ...(payload.events ?? [])] : (payload.events ?? []);
-      eventStoriesIndex = { ...eventStoriesIndex, ...(payload.storiesByEvent ?? {}) };
       eventUnitOptions = payload.unitOptions ?? [];
       eventPage = payload.pagination?.page ?? page;
       eventHasNext = payload.pagination?.hasNext === true;
@@ -426,11 +432,41 @@
       ? (events.find((event) => event.eventId === selectedEventId) ?? null)
       : null
   );
-  const selectedEventEpisodes = $derived(
-    storyType === "event" && selectedEventId !== null
-      ? (eventStoriesIndex[String(selectedEventId)] ?? [])
-      : []
-  );
+
+  const fetchEventEpisodes = async (region: string, eventId: number): Promise<void> => {
+    const seq = ++episodeLoadSeq;
+    selectedEventEpisodes = null;
+    episodeLoadFailed = false;
+    try {
+      const response = await fetch(
+        `/story-reader/api/stories/${region}/event-stories/${eventId}`
+      );
+      if (!response.ok) throw new Error(String(response.status));
+      const payload = (await response.json()) as { episodes?: StoryEventEpisodeView[] };
+      if (seq !== episodeLoadSeq) return;
+      selectedEventEpisodes = payload.episodes ?? [];
+      eventEpisodesCache.set(eventId, selectedEventEpisodes);
+    } catch {
+      if (seq !== episodeLoadSeq) return;
+      episodeLoadFailed = true;
+    }
+  };
+
+  const openEvent = (event: StoryEventCardView): void => {
+    selectedEventId = event.eventId;
+    const cached = eventEpisodesCache.get(event.eventId);
+    if (cached) {
+      selectedEventEpisodes = cached;
+      episodeLoadFailed = false;
+      return;
+    }
+    void fetchEventEpisodes(regionSelection.primary, event.eventId);
+  };
+
+  const retryEventEpisodes = (): void => {
+    if (selectedEventId === null) return;
+    void fetchEventEpisodes(regionSelection.primary, selectedEventId);
+  };
 
   const eventTypeLabel = (value: string): string =>
     value === "marathon"
@@ -629,7 +665,24 @@
             {selectedEventEntry?.name ?? `#${selectedEventId}`}
           </h3>
         </div>
-        {#if selectedEventEpisodes.length === 0}
+        {#if episodeLoadFailed}
+          <div class="alert alert-soft alert-warning" role="alert">
+            <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
+            <span>{labels.loadFailed}</span>
+          </div>
+          <button
+            type="button"
+            class="btn btn-outline btn-sm self-start"
+            onclick={retryEventEpisodes}
+          >
+            {labels.retry}
+          </button>
+        {:else if selectedEventEpisodes === null}
+          <p class="flex items-center gap-2 text-sm text-base-content/60" role="status">
+            <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+            {labels.loading}
+          </p>
+        {:else if selectedEventEpisodes.length === 0}
           <p class="text-sm text-base-content/60" role="status">{labels.empty}</p>
         {:else}
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -744,7 +797,7 @@
             <button
               type="button"
               class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
-              onclick={() => (selectedEventId = event.eventId)}
+              onclick={() => openEvent(event)}
             >
               {#if event.bannerUrl}
                 <img

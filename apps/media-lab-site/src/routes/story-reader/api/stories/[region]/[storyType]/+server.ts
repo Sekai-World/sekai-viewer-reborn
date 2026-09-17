@@ -10,7 +10,6 @@ import {
   buildStoryCardPicker,
   buildStoryCatalog,
   buildStoryCharacterPicker,
-  buildStoryEventStories,
   buildUnitStoryCatalog
 } from "$lib/story/story-identity";
 import { createStoryRegionAssetUrls, eventBannerImagePath } from "$lib/story/story-urls";
@@ -46,10 +45,10 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
   }
 
   if (storyType === "event") {
-    // Two-level event picker: the event list is served paginated with the
-    // content-site filter set (sort, name, event type, unit) applied
-    // server-side; the full episode index rides along so opening any listed
-    // event's story level needs no extra request.
+    // Two-level event picker, first level: the event list is served
+    // paginated with the content-site filter set (sort, name, event type,
+    // unit) applied server-side. Episode links are loaded per event from
+    // the dedicated event-stories sub-route on drill-down.
     const searchParams = url.searchParams;
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const sortBy = searchParams.get("sort_by") === "id" ? "id" : "startAt";
@@ -59,7 +58,7 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
     const units = splitParam(searchParams.get("unit"));
 
     const [collections, eventPage] = await Promise.all([
-      fetchStoryCollections(region, ["eventStories", "unitProfiles"], { fetch }),
+      fetchStoryCollections(region, ["unitProfiles"], { fetch }),
       fetchEventListPage(
         region,
         { page, pageSize: EVENT_PAGE_SIZE, sortBy, sortOrder, name, eventTypes, units },
@@ -96,7 +95,6 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
       storyType,
       events,
       pagination: eventPage.pagination,
-      storiesByEvent: buildStoryEventStories(collections),
       unitOptions
     });
   }
@@ -108,7 +106,6 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
       : [
           "unitStories",
           "unitProfiles",
-          "eventStories",
           "events",
           "characterProfiles",
           "cardEpisodes",

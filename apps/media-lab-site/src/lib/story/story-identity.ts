@@ -595,28 +595,27 @@ export interface StoryEventEpisodeLink {
 }
 
 /**
- * Event story episodes indexed by event id (`String(eventId)` keys). The
- * event list itself is paginated server-side; this index lets the picker
- * open any listed event's story level without another request.
+ * Builds the playable episode links of one event's eventStories rows,
+ * ordered by episode number. The rows come from a filtered
+ * sekai-master-api query, so only the requested event is present.
  */
-export type StoryEventStoriesIndex = Record<string, StoryEventEpisodeLink[]>;
-
-/** Builds the event-id → episodes index from the eventStories collection. */
-export const buildStoryEventStories = (
-  collections: StoryMasterCollections
-): StoryEventStoriesIndex => {
-  const index: StoryEventStoriesIndex = {};
-  for (const story of collections.eventStories) {
-    index[String(story.eventId)] = story.eventStoryEpisodes
-      .slice()
-      .sort((a, b) => a.episodeNo - b.episodeNo)
-      .map((episode) => ({
-        storyId: `${story.eventId}-${episode.episodeNo}`,
-        label: episode.title,
-        sublabel: String(episode.episodeNo)
-      }));
+export const buildEventStoryEpisodeLinks = (
+  stories: StoryEventStory[]
+): StoryEventEpisodeLink[] => {
+  const links: StoryEventEpisodeLink[] = [];
+  for (const story of stories) {
+    links.push(
+      ...story.eventStoryEpisodes
+        .slice()
+        .sort((a, b) => a.episodeNo - b.episodeNo)
+        .map((episode) => ({
+          storyId: `${story.eventId}-${episode.episodeNo}`,
+          label: episode.title,
+          sublabel: String(episode.episodeNo)
+        }))
+    );
   }
-  return index;
+  return links;
 };
 
 /**

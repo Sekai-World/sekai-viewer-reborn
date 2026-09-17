@@ -590,6 +590,36 @@ export const fetchEventListPage = async (
   };
 };
 
+/**
+ * Fetches the eventStories rows of one event through the lookup list
+ * endpoint's `event_id` filter, avoiding a full collection download. One
+ * event has only a handful of story rows, so a single large page always
+ * covers it. Not cached: a drill-down should reflect the current master
+ * data.
+ */
+export const fetchEventStoriesByEvent = async (
+  region: StoryRouteRegion,
+  eventId: number,
+  options: StoryMasterDataClientOptions = {}
+): Promise<StoryEventStory[]> => {
+  const fetcher = options.fetch ?? fetch;
+  const baseUrl = resolveApiBaseUrl(options);
+  const response = await getEventStoriesByRegionList({
+    baseUrl,
+    fetch: fetcher,
+    path: { region },
+    query: { page: 1, page_size: 100, spoiler: true, event_id: String(eventId) }
+  });
+  if (response.error || !response.data) {
+    const status = response.response?.status ?? 0;
+    // Region not synced yet — same tolerance as the other story collections.
+    if (status === 503) return [];
+    throw new Error(`Failed to fetch event stories (${status || "unknown error"})`);
+  }
+  const rows = Array.isArray(response.data.items) ? response.data.items : [];
+  return collectionParsers.eventStories(rows) as StoryEventStory[];
+};
+
 /** Fetches the character identity tables used for names and part voices. */
 export const fetchStoryCharacterTables = async (
   region: StoryRouteRegion,

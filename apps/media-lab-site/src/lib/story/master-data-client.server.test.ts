@@ -25,6 +25,7 @@ vi.mock("@platform/sekai-master-api-sdk", () => listEndpointMocks);
 import {
   clearStoryMasterDataCacheForTests,
   fetchEventListPage,
+  fetchEventStoriesByEvent,
   fetchStoryCharacterTables,
   fetchStoryCollection,
   fetchStoryCollections
@@ -485,5 +486,68 @@ describe("fetchEventListPage", () => {
       items: [],
       pagination: { page: 1, hasNext: false, total: null }
     });
+  });
+});
+
+describe("fetchEventStoriesByEvent", () => {
+  beforeEach(() => {
+    listEndpointMocks.getEventStoriesByRegionList.mockReset();
+  });
+
+  it("requests one filtered page and returns the parsed stories", async () => {
+    listEndpointMocks.getEventStoriesByRegionList.mockResolvedValue(
+      okPage([
+        {
+          id: 1,
+          eventId: 34,
+          assetbundleName: "event_34",
+          eventStoryEpisodes: [
+            {
+              id: 1,
+              eventStoryId: 1,
+              episodeNo: 1,
+              title: "Event EP1",
+              assetbundleName: "event_34_ep1",
+              scenarioId: "event_34_1"
+            }
+          ]
+        }
+      ])
+    );
+
+    const stories = await fetchEventStoriesByEvent("jp", 34, {
+      baseUrl: "https://master.test/api/v1"
+    });
+
+    expect(listEndpointMocks.getEventStoriesByRegionList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { region: "jp" },
+        query: { page: 1, page_size: 100, spoiler: true, event_id: "34" }
+      })
+    );
+    expect(stories).toHaveLength(1);
+    expect(stories[0].eventId).toBe(34);
+    expect(stories[0].eventStoryEpisodes[0].title).toBe("Event EP1");
+  });
+
+  it("treats a 503 region as no stories", async () => {
+    listEndpointMocks.getEventStoriesByRegionList.mockResolvedValue({
+      error: { body: { code: "REGION_DATA_NOT_READY" } },
+      response: new Response(null, { status: 503 })
+    });
+    const stories = await fetchEventStoriesByEvent("tw", 34, {
+      baseUrl: "https://master.test/api/v1"
+    });
+    expect(stories).toEqual([]);
+  });
+
+  it("throws with the endpoint status on other errors", async () => {
+    listEndpointMocks.getEventStoriesByRegionList.mockResolvedValue({
+      error: { body: { code: "EVENT_STORY_QUERY_ERROR" } },
+      response: new Response(null, { status: 500 })
+    });
+    await expect(
+      fetchEventStoriesByEvent("jp", 34, { baseUrl: "https://master.test/api/v1" })
+    ).rejects.toThrow("Failed to fetch event stories (500)");
   });
 });

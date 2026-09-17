@@ -2180,6 +2180,10 @@ export type GetEventStoriesByRegionListData = {
          * Sort order (asc|desc)
          */
         sort_order?: string;
+        /**
+         * Comma-separated event ids to keep
+         */
+        event_id?: string;
     };
     url: '/eventStories/{region}/list';
 };
