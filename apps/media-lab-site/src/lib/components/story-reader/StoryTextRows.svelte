@@ -124,6 +124,10 @@
         </article>
       {:else if row.kind === "background"}
         <figure class="overflow-hidden rounded-xl border border-base-content/10">
+          <figcaption class="flex items-center gap-1 bg-base-200/60 px-3 py-2 text-xs text-base-content/60">
+            <Icon icon="mdi:image-outline" class="size-4" aria-hidden="true" />
+            {labels.backgroundLabel}
+          </figcaption>
           {#if row.imageUrl && revealedBackgrounds.has(index)}
             <ImagePreviewTrigger
               src={row.imageUrl}
@@ -142,10 +146,6 @@
               {labels.showBackground}
             </button>
           {/if}
-          <figcaption class="flex items-center gap-1 bg-base-200/60 px-3 py-2 text-xs text-base-content/60">
-            <Icon icon="mdi:image-outline" class="size-4" aria-hidden="true" />
-            {labels.backgroundLabel}
-          </figcaption>
         </figure>
       {:else if row.kind === "bgm"}
         <div class="rounded-xl border border-base-content/10 bg-base-100 px-3 py-2">
