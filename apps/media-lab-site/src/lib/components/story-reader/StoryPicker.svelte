@@ -28,7 +28,8 @@
    * with a character filter; area talks list area cards with a drill-down
    * into the talks of one area; special stories link single-episode entries
    * directly and keep expandable groups only where a story has several
-   * episodes. Opening a story asks for the reader mode in a dialog unless
+   * episodes. Card tiles open a dialog listing the card's episodes in
+   * full. Opening a story asks for the reader mode in a dialog unless
    * the user chose to remember one.
    */
   interface StoryCatalogItem {
@@ -846,6 +847,19 @@
   let pendingStoryId = $state<string | null>(null);
   let rememberChoice = $state(false);
 
+  /** Shared tail of story opening: remembered mode navigates directly,
+   * otherwise the mode dialog asks. */
+  const requestStory = (storyId: string): void => {
+    const remembered = readRememberedStoryReaderMode();
+    if (remembered) {
+      void goto(storyHref(storyId, remembered));
+      return;
+    }
+    pendingStoryId = storyId;
+    rememberChoice = false;
+    modeDialog?.showModal();
+  };
+
   const openStory = (event: MouseEvent, storyId: string): void => {
     // Modified or middle clicks keep the browser's own link behavior.
     if (
@@ -857,16 +871,9 @@
     ) {
       return;
     }
-    const remembered = readRememberedStoryReaderMode();
-    if (!remembered && !modeDialog) return;
+    if (!readRememberedStoryReaderMode() && !modeDialog) return;
     event.preventDefault();
-    if (remembered) {
-      void goto(storyHref(storyId, remembered));
-      return;
-    }
-    pendingStoryId = storyId;
-    rememberChoice = false;
-    modeDialog?.showModal();
+    requestStory(storyId);
   };
 
   const chooseMode = (mode: StoryReaderMode): void => {
@@ -875,6 +882,21 @@
     const storyId = pendingStoryId;
     pendingStoryId = null;
     if (storyId) void goto(storyHref(storyId, mode));
+  };
+
+  // Card picker: tiles open a dialog that lists the card's episodes in
+  // full instead of truncating story links on the tile itself.
+  let episodeDialog = $state<HTMLDialogElement | null>(null);
+  let episodePickerCard = $state<StoryCardEntry | null>(null);
+
+  const openCardEpisodes = (card: StoryCardEntry): void => {
+    episodePickerCard = card;
+    episodeDialog?.showModal();
+  };
+
+  const chooseCardEpisode = (storyId: string): void => {
+    episodeDialog?.close();
+    requestStory(storyId);
   };
 </script>
 
@@ -1245,8 +1267,10 @@
             class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
           >
             {#each cards as card (card.cardId)}
-              <article
-                class="flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3"
+              <button
+                type="button"
+                class="group flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                onclick={() => openCardEpisodes(card)}
               >
                 <!-- The picker pages 12 tiles at a time, so eager loading is
                      cheap and keeps thumbnails independent of visibility
@@ -1264,26 +1288,16 @@
                   imageClass="size-full object-cover"
                 />
                 <div class="min-w-0">
-                  <p class="truncate text-sm font-semibold" title={card.cardName}
+                  <p
+                    class="truncate text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
+                    title={card.cardName}
                     >{card.cardName}</p
                   >
                   <p class="truncate text-xs text-base-content/60">
                     {card.characterName ?? `#${card.cardId}`}
                   </p>
                 </div>
-                <div class="mt-auto flex flex-col gap-1">
-                  {#each card.episodes as episode (episode.storyId)}
-                    <a
-                      class="max-w-full truncate rounded-md border border-base-content/15 px-2 py-1 text-center text-xs outline-none hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60"
-                      href={storyHref(episode.storyId, "text")}
-                      onclick={(event) => openStory(event, episode.storyId)}
-                      title={episode.label}
-                    >
-                      {episode.label}
-                    </a>
-                  {/each}
-                </div>
-              </article>
+              </button>
             {/each}
           </div>
           {#if loading}
@@ -1801,6 +1815,35 @@
       <input type="checkbox" class="checkbox checkbox-sm checkbox-primary" bind:checked={rememberChoice} />
       {labels.rememberChoice}
     </label>
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn btn-ghost btn-sm">{labels.cancel}</button>
+      </form>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button aria-label={labels.cancel}></button>
+  </form>
+</dialog>
+
+<dialog bind:this={episodeDialog} class="modal" onclose={() => (episodePickerCard = null)}>
+  <div class="modal-box max-w-sm">
+    <h3 class="text-base font-bold">{episodePickerCard?.cardName ?? ""}</h3>
+    {#if episodePickerCard?.characterName}
+      <p class="mt-1 text-sm text-base-content/60">{episodePickerCard.characterName}</p>
+    {/if}
+    <div class="mt-4 grid gap-2">
+      {#each episodePickerCard?.episodes ?? [] as episode (episode.storyId)}
+        <button
+          type="button"
+          class="btn h-auto min-h-11 justify-start gap-3 border-base-content/10 bg-base-100 py-2 hover:border-primary/40 hover:bg-primary/5"
+          onclick={() => chooseCardEpisode(episode.storyId)}
+        >
+          <Icon icon="mdi:script-text-outline" class="size-5 shrink-0 text-primary" aria-hidden="true" />
+          <span class="whitespace-normal text-left text-sm font-normal">{episode.label}</span>
+        </button>
+      {/each}
+    </div>
     <div class="modal-action">
       <form method="dialog">
         <button class="btn btn-ghost btn-sm">{labels.cancel}</button>
