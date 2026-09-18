@@ -85,10 +85,11 @@ apps:
       repository: docker.dnaroma.eu/sekai-viewer-reborn/tools-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
-    # tools-site reads SEKAI_API_BASE_URL for server-side dynamic
-    # notifications. Set this empty value before deploying.
+    # tools-site reads both API URLs for the server-side event tracker and
+    # dynamic notifications. Set these empty values before deploying.
     env:
       SEKAI_API_BASE_URL: ""
+      SEKAI_MASTER_API_BASE_URL: ""
     envFrom: []
     extraEnv: []
     ingress:

@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
-import { createChapterRows } from "./tracker-chapter-rows";
+import { describe, expect, it, vi } from "vitest";
+import { calculateChapterRowSpeed, createChapterRows } from "./tracker-chapter-rows";
 
 const ranking = (rank: number, score = rank * 100) => ({
   rank, score, userId: `user-${rank}`, userName: `Player ${rank}`, eventId: 1, timestamp: null
 });
+
+const chapterStartAt = "2026-01-01T00:00:00.000Z";
 
 describe("tracker chapter rows", () => {
   it("uses critical ranks and keeps missing ranks unavailable", () => {
@@ -19,5 +21,30 @@ describe("tracker chapter rows", () => {
     expect(rows.find((row) => row.rank === 1)?.score).toBe(10);
     expect(rows.find((row) => row.rank === 2)?.status).toBe("unavailable");
     expect(rows.find((row) => row.rank === 999)).toBeUndefined();
+  });
+
+  it("uses each World Link row timestamp, returns null without one, and ignores clock advances", () => {
+    vi.useFakeTimers();
+    try {
+      const rows = [
+        { score: 600, timestamp: "2026-01-01T01:00:00.000Z" },
+        { score: 600, timestamp: "2026-01-01T02:00:00.000Z" },
+        { score: 600, timestamp: null }
+      ];
+      vi.setSystemTime(new Date("2026-01-01T02:00:00.000Z"));
+
+      const before = rows.map((row) =>
+        calculateChapterRowSpeed({ ...row, startAt: chapterStartAt })
+      );
+      vi.advanceTimersByTime(60 * 60_000);
+      const after = rows.map((row) =>
+        calculateChapterRowSpeed({ ...row, startAt: chapterStartAt })
+      );
+
+      expect(before).toEqual([600, 300, null]);
+      expect(after).toEqual(before);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

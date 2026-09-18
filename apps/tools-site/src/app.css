@@ -158,40 +158,6 @@ body {
   outline-offset: 2px;
 }
 
-.page-switch-shell-fallback {
-  animation: archive-page-fade 150ms ease-out;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  @supports (view-transition-name: tools-site-main) {
-    .page-switch-shell {
-      isolation: isolate;
-      view-transition-name: tools-site-main;
-    }
-
-    ::view-transition-old(tools-site-main),
-    ::view-transition-new(tools-site-main) {
-      animation-duration: 220ms;
-      animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-    }
-  }
-}
-
-@keyframes archive-page-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .page-switch-shell-fallback {
-    animation: none;
-  }
-}
-
 @media (min-width: 48rem) {
   .event-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -51,7 +51,7 @@ describe("tools-site i18n source collection", () => {
     expect(source).not.toHaveProperty("tracker.viewRankingHistory");
 
     expect(source).toMatchObject({
-      "tracker.viewPastRankings": "View past rankings",
+      "tracker.viewPastRankings": "Past rankings",
       "tracker.backToLatestRankings": "Back to latest rankings",
       "tracker.pastRankings": "Past rankings"
     });

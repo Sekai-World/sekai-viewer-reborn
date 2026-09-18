@@ -34,8 +34,8 @@ In `viewer-values.yaml`, replace every placeholder image repository and tag,
 Ingress host, and TLS Secret name with values for the target environment. Use
 versioned immutable image tags rather than `latest`. All four applications need
 `SEKAI_API_BASE_URL` set for server-side dynamic notifications. `content-site`
-additionally requires `SEKAI_MASTER_API_BASE_URL` and
-`PUBLIC_REMOTE_ASSET_BASE_URL`; review the default i18n URL and all other
+and `tools-site` additionally require `SEKAI_MASTER_API_BASE_URL`; `content-site`
+also requires `PUBLIC_REMOTE_ASSET_BASE_URL`. Review the default i18n URL and all other
 application settings as well. Keep this operator-owned file outside the chart
 if it contains environment-specific or sensitive configuration.
 
@@ -88,6 +88,7 @@ helm template viewer deploy/helm/sekai-viewer-reborn \
   --set-string apps.content-site.env.SEKAI_API_BASE_URL=https://api.example.com \
   --set-string apps.content-site.env.PUBLIC_REMOTE_ASSET_BASE_URL=https://assets.example.com \
   --set-string apps.tools-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.tools-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
   --set-string apps.media-lab-site.env.SEKAI_API_BASE_URL=https://api.example.com \
   --set-string apps.account-site.env.SEKAI_API_BASE_URL=https://api.example.com
 ```
@@ -148,9 +149,11 @@ empty and must be set by the operator; `PUBLIC_SEKAI_I18N_BASE_URL` defaults to
 `https://sekai-world.github.io/sekai-i18n-reborn`. Values are quoted when
 rendered, so an intentionally empty value remains an empty string. Every app
 declares an empty `SEKAI_API_BASE_URL` default for server-side dynamic
-notifications; `tools-site`, `media-lab-site`, and `account-site` provide only
-that key by default. `envFrom` and `extraEnv` are available per application for
-straightforward Secret/ConfigMap references and additional environment entries.
+notifications. `tools-site` also declares an empty
+`SEKAI_MASTER_API_BASE_URL` for the server-side event tracker; `media-lab-site`
+and `account-site` provide only the notification URL by default. `envFrom` and
+`extraEnv` are available per application for straightforward Secret/ConfigMap
+references and additional environment entries.
 
 Ingress hosts, ingress class, annotations, paths, and TLS settings are
 configured independently under each application's `ingress` values. Set
