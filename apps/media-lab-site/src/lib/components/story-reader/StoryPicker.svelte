@@ -51,6 +51,7 @@
     label: string;
   }
 
+  /** One card row of the paginated card picker. */
   interface StoryCardEntry {
     cardId: number;
     cardName: string;
@@ -131,14 +132,24 @@
       eventTypeMarathon: string;
       eventTypeCheerfulCarnival: string;
       eventTypeWorldBloom: string;
-      filterCharacter: string;
-      characterAll: string;
       backToAreas: string;
       backToEvents: string;
       sortByStartAt: string;
       sortById: string;
+      cardSortByReleaseAt: string;
       filterUnit: string;
       mixedUnit: string;
+      filterOpen: string;
+      filterApply: string;
+      filterClear: string;
+      filterSkill: string;
+      filterCardType: string;
+      filterAttr: string;
+      filterRarity: string;
+      filterSupportUnit: string;
+      filter3dmvCutIn: string;
+      showUnreleased: string;
+      filterCharacter: string;
       loadMoreHint: string;
       loadingMore: string;
       listEnd: string;
@@ -164,12 +175,10 @@
   let query = $state("");
   let groups = $state<StoryCatalogGroup[]>([]);
   let characters = $state<StoryCharacterEntry[]>([]);
-  let cards = $state<StoryCardEntry[]>([]);
   let areas = $state<StoryAreaEntry[]>([]);
   let units = $state<StoryUnitCatalogView[]>([]);
   let selectedUnit = $state<string | null>(null);
   let selectedAreaId = $state<number | null>(null);
-  let cardCharacterFilter = $state("all");
   let loading = $state(false);
   let loadFailed = $state(false);
   let loadSeq = 0;
@@ -199,6 +208,64 @@
   let eventLoadMoreHintVisible = $state(false);
   let eventLastTouchY: number | null = null;
 
+  // Card picker: paginated list + the content-site card filter dialog
+  // (sort toggles, multi-select units/characters/skills/types/attributes/
+  // rarities/support units, 3dmv cut-in, spoiler), wheel/swipe loading.
+  let cards = $state<StoryCardEntry[]>([]);
+  let cardUnitOptions = $state<StoryUnitOption[]>([]);
+  let cardCharacterOptions = $state<StoryUnitOption[]>([]);
+  let cardPage = $state(1);
+  let cardHasNext = $state(false);
+  let cardListLoadingMore = $state(false);
+  let cardListFailed = $state(false);
+  let cardSortBy = $state<"releaseAt" | "id">("releaseAt");
+  let cardSortOrder = $state<"desc" | "asc">("desc");
+  let cardUnitFilters = $state<string[]>([]);
+  let cardCharacterFilters = $state<string[]>([]);
+  let cardSkillFilters = $state<string[]>([]);
+  let cardTypeFilters = $state<string[]>([]);
+  let cardAttrFilters = $state<string[]>([]);
+  let cardRarityFilters = $state<string[]>([]);
+  let cardSupportUnitFilters = $state<string[]>([]);
+  let cardHas3dmvCutIn = $state(false);
+  let cardShowUnreleased = $state(true);
+  let cardLoadSeq = 0;
+  let cardSentinel: HTMLDivElement | null = $state(null);
+  let cardLoadMoreHintVisible = $state(false);
+  let cardLastTouchY: number | null = null;
+  let cardFilterDialog: HTMLDialogElement | null = $state(null);
+  let cardFilterDraft = $state({
+    units: [] as string[],
+    characters: [] as string[],
+    skills: [] as string[],
+    types: [] as string[],
+    attrs: [] as string[],
+    rarities: [] as string[],
+    supportUnits: [] as string[],
+    has3dmvCutIn: false,
+    showUnreleased: true
+  });
+
+  const CARD_SKILL_OPTIONS = [
+    "score_up",
+    "judgment_up",
+    "life_recovery",
+    "perfect_score_up",
+    "life_score_up"
+  ];
+  const CARD_TYPE_OPTIONS = [
+    "normal",
+    "birthday",
+    "term_limited",
+    "colorful_festival_limited",
+    "bloom_festival_limited",
+    "unit_event_limited",
+    "collaboration_limited"
+  ];
+  const CARD_ATTR_OPTIONS = ["cute", "mysterious", "cool", "happy", "pure"];
+  const CARD_RARITY_OPTIONS = ["rarity_1", "rarity_2", "rarity_3", "rarity_4", "rarity_birthday"];
+  const CARD_SUPPORT_UNIT_OPTIONS = ["none", "idol", "light_sound", "street", "theme_park", "school_refusal"];
+
   const fetchGroups = async (region: string, nextType: string): Promise<void> => {
     const seq = ++loadSeq;
     loading = true;
@@ -209,21 +276,18 @@
       const payload = (await response.json()) as {
         groups?: StoryCatalogGroup[];
         characters?: StoryCharacterEntry[];
-        cards?: StoryCardEntry[];
         areas?: StoryAreaEntry[];
         units?: StoryUnitCatalogView[];
       };
       if (seq !== loadSeq) return;
       groups = payload.groups ?? [];
       characters = payload.characters ?? [];
-      cards = payload.cards ?? [];
       areas = payload.areas ?? [];
       units = payload.units ?? [];
     } catch {
       if (seq !== loadSeq) return;
       groups = [];
       characters = [];
-      cards = [];
       areas = [];
       units = [];
       loadFailed = true;
@@ -233,7 +297,7 @@
   };
 
   $effect(() => {
-    if (storyType === "event") return; // events use their own paginated fetch below
+    if (storyType === "event" || storyType === "card") return; // paginated fetches below
     void fetchGroups(regionSelection.primary, storyType);
   });
 
@@ -247,11 +311,22 @@
     selectedEventEpisodes = null;
     episodeLoadFailed = false;
     eventEpisodesCache.clear();
-    cardCharacterFilter = "all";
     eventTypeFilters = [];
     eventUnitFilters = [];
     eventSortBy = "startAt";
     eventSortOrder = "desc";
+    cards = [];
+    cardUnitFilters = [];
+    cardCharacterFilters = [];
+    cardSkillFilters = [];
+    cardTypeFilters = [];
+    cardAttrFilters = [];
+    cardRarityFilters = [];
+    cardSupportUnitFilters = [];
+    cardHas3dmvCutIn = false;
+    cardShowUnreleased = true;
+    cardSortBy = "releaseAt";
+    cardSortOrder = "desc";
   });
 
   const fetchEventList = async (page: number, append: boolean): Promise<void> => {
@@ -363,6 +438,211 @@
       window.removeEventListener("touchend", handleTouchEnd);
     };
   });
+
+  const fetchCardList = async (page: number, append: boolean): Promise<void> => {
+    const seq = ++cardLoadSeq;
+    if (append) {
+      cardListLoadingMore = true;
+    } else {
+      loading = true;
+      cardListFailed = false;
+    }
+    try {
+      const params = new SvelteURLSearchParams({
+        page: String(page),
+        sort_by: cardSortBy,
+        sort_order: cardSortOrder,
+        spoiler: String(cardShowUnreleased)
+      });
+      if (normalizedQuery) params.set("name", normalizedQuery);
+      if (cardUnitFilters.length > 0) params.set("unit", cardUnitFilters.join(","));
+      if (cardCharacterFilters.length > 0)
+        params.set("character", cardCharacterFilters.join(","));
+      if (cardSkillFilters.length > 0) params.set("skill", cardSkillFilters.join(","));
+      if (cardTypeFilters.length > 0) params.set("type", cardTypeFilters.join(","));
+      if (cardAttrFilters.length > 0) params.set("attr", cardAttrFilters.join(","));
+      if (cardRarityFilters.length > 0) params.set("rarity", cardRarityFilters.join(","));
+      if (cardSupportUnitFilters.length > 0)
+        params.set("support_unit", cardSupportUnitFilters.join(","));
+      if (cardHas3dmvCutIn) params.set("has_3dmv_cut_in", "true");
+      const response = await fetch(
+        `/story-reader/api/stories/${regionSelection.primary}/card?${params.toString()}`
+      );
+      if (!response.ok) throw new Error(String(response.status));
+      const payload = (await response.json()) as {
+        cards?: StoryCardEntry[];
+        unitOptions?: StoryUnitOption[];
+        characterOptions?: StoryUnitOption[];
+        pagination?: { page?: number; hasNext?: boolean };
+      };
+      if (seq !== cardLoadSeq) return;
+      cards = append ? [...cards, ...(payload.cards ?? [])] : (payload.cards ?? []);
+      cardUnitOptions = payload.unitOptions ?? [];
+      cardCharacterOptions = payload.characterOptions ?? [];
+      cardPage = payload.pagination?.page ?? page;
+      cardHasNext = payload.pagination?.hasNext === true;
+      cardListFailed = false;
+    } catch {
+      if (seq !== cardLoadSeq) return;
+      cardListFailed = true;
+      if (!append) cards = [];
+    } finally {
+      if (seq === cardLoadSeq) {
+        loading = false;
+        cardListLoadingMore = false;
+      }
+    }
+  };
+
+  $effect(() => {
+    // Debounced first page: any region / filter / sort / name change reloads
+    // the paginated card list from scratch.
+    if (storyType !== "card") return;
+    void regionSelection.primary;
+    void normalizedQuery;
+    void cardSortBy;
+    void cardSortOrder;
+    void cardUnitFilters;
+    void cardCharacterFilters;
+    void cardSkillFilters;
+    void cardTypeFilters;
+    void cardAttrFilters;
+    void cardRarityFilters;
+    void cardSupportUnitFilters;
+    void cardHas3dmvCutIn;
+    void cardShowUnreleased;
+    const timer = setTimeout(() => {
+      void fetchCardList(1, false);
+    }, EVENT_PAGE_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  });
+
+  $effect(() => {
+    if (!browser || storyType !== "card" || !cardSentinel || !cardHasNext) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        cardLoadMoreHintVisible = entries.some((entry) => entry.isIntersecting);
+      },
+      { threshold: 0.96 }
+    );
+    observer.observe(cardSentinel);
+    return () => observer.disconnect();
+  });
+
+  $effect(() => {
+    // Wheel down or an upward swipe past the sentinel loads the next page,
+    // matching the content-site card list behavior.
+    if (!browser || storyType !== "card" || !cardHasNext) return;
+    const triggerLoadMore = (): void => {
+      if (!cardLoadMoreHintVisible || cardListLoadingMore || loading || !cardHasNext) return;
+      void fetchCardList(cardPage + 1, true);
+    };
+    const handleWheel = (event: WheelEvent): void => {
+      if (event.deltaY > 0) triggerLoadMore();
+    };
+    const handleTouchStart = (event: TouchEvent): void => {
+      cardLastTouchY = event.touches[0]?.clientY ?? null;
+    };
+    const handleTouchMove = (event: TouchEvent): void => {
+      const nextY = event.touches[0]?.clientY ?? null;
+      if (cardLastTouchY === null || nextY === null) {
+        cardLastTouchY = nextY;
+        return;
+      }
+      if (cardLastTouchY - nextY > 12) triggerLoadMore();
+      cardLastTouchY = nextY;
+    };
+    const handleTouchEnd = (): void => {
+      cardLastTouchY = null;
+    };
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
+  });
+
+  const toggleCardSort = (target: "releaseAt" | "id"): void => {
+    if (cardSortBy !== target) {
+      cardSortBy = target;
+      cardSortOrder = "desc";
+    } else {
+      cardSortOrder = cardSortOrder === "desc" ? "asc" : "desc";
+    }
+  };
+
+  const cardFiltersApplied = $derived(
+    cardUnitFilters.length > 0 ||
+      cardCharacterFilters.length > 0 ||
+      cardSkillFilters.length > 0 ||
+      cardTypeFilters.length > 0 ||
+      cardAttrFilters.length > 0 ||
+      cardRarityFilters.length > 0 ||
+      cardSupportUnitFilters.length > 0 ||
+      cardHas3dmvCutIn ||
+      !cardShowUnreleased
+  );
+
+  const toggleDraftValue = (values: string[], value: string): string[] =>
+    values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value];
+
+  const openCardFilterDialog = (): void => {
+    cardFilterDraft = {
+      units: [...cardUnitFilters],
+      characters: [...cardCharacterFilters],
+      skills: [...cardSkillFilters],
+      types: [...cardTypeFilters],
+      attrs: [...cardAttrFilters],
+      rarities: [...cardRarityFilters],
+      supportUnits: [...cardSupportUnitFilters],
+      has3dmvCutIn: cardHas3dmvCutIn,
+      showUnreleased: cardShowUnreleased
+    };
+    cardFilterDialog?.showModal();
+  };
+
+  const applyCardFilters = (): void => {
+    cardUnitFilters = [...cardFilterDraft.units];
+    cardCharacterFilters = [...cardFilterDraft.characters];
+    cardSkillFilters = [...cardFilterDraft.skills];
+    cardTypeFilters = [...cardFilterDraft.types];
+    cardAttrFilters = [...cardFilterDraft.attrs];
+    cardRarityFilters = [...cardFilterDraft.rarities];
+    cardSupportUnitFilters = [...cardFilterDraft.supportUnits];
+    cardHas3dmvCutIn = cardFilterDraft.has3dmvCutIn;
+    cardShowUnreleased = cardFilterDraft.showUnreleased;
+    cardFilterDialog?.close();
+  };
+
+  const clearCardFilters = (): void => {
+    cardFilterDraft = {
+      units: [],
+      characters: [],
+      skills: [],
+      types: [],
+      attrs: [],
+      rarities: [],
+      supportUnits: [],
+      has3dmvCutIn: false,
+      showUnreleased: true
+    };
+  };
+
+  const formatCardOptionLabel = (value: string): string =>
+    value
+      .replaceAll("_", " ")
+      .split(" ")
+      .filter((segment) => segment.length > 0)
+      .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
+      .join(" ");
+
+  const cardRarityLabel = (value: string): string =>
+    value === "rarity_birthday" ? "BD" : `${value.replace("rarity_", "")}*`;
 
   const normalizedQuery = $derived(query.trim().toLowerCase());
 
@@ -498,36 +778,6 @@
       eventSortOrder = eventSortOrder === "desc" ? "asc" : "desc";
     }
   };
-
-  const cardCharacterOptions = $derived.by(() => {
-    const options: Array<{ id: number; name: string }> = [];
-    for (const card of cards) {
-      if (card.characterId === undefined) continue;
-      if (!options.some((option) => option.id === card.characterId)) {
-        options.push({
-          id: card.characterId,
-          name: card.characterName ?? `#${card.characterId}`
-        });
-      }
-    }
-    return options.sort((a, b) => a.id - b.id);
-  });
-
-  const filteredCards = $derived.by(() => {
-    let list = cards;
-    if (cardCharacterFilter !== "all") {
-      list = list.filter((card) => String(card.characterId) === cardCharacterFilter);
-    }
-    if (normalizedQuery) {
-      list = list.filter(
-        (card) =>
-          queryMatches(card.cardName) ||
-          queryMatches(card.characterName ?? "") ||
-          queryMatches(String(card.cardId))
-      );
-    }
-    return list;
-  });
 
   const filteredUnits = $derived(
     normalizedQuery
@@ -902,6 +1152,321 @@
         <p class="py-2 text-center text-sm text-base-content/50">{labels.listEnd}</p>
       {/if}
 
+    {:else if storyType === "card"}
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="join">
+          <button
+            type="button"
+            title={labels.cardSortByReleaseAt}
+            aria-label={labels.cardSortByReleaseAt}
+            aria-pressed={cardSortBy === "releaseAt"}
+            class={`relative btn btn-sm join-item size-9 p-0 ${cardSortBy === "releaseAt" ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            onclick={() => toggleCardSort("releaseAt")}
+          >
+            <Icon icon="mdi:clock-start" class="size-4.5" aria-hidden="true" />
+            {#if cardSortBy === "releaseAt"}
+              <span
+                class="absolute right-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
+                aria-hidden="true"
+              >
+                <Icon
+                  icon={cardSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
+                  class="size-2.5"
+                />
+              </span>
+            {/if}
+          </button>
+          <button
+            type="button"
+            title={labels.sortById}
+            aria-label={labels.sortById}
+            aria-pressed={cardSortBy === "id"}
+            class={`relative btn btn-sm join-item size-9 p-0 ${cardSortBy === "id" ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            onclick={() => toggleCardSort("id")}
+          >
+            <Icon icon="mdi:numeric" class="size-4.5" aria-hidden="true" />
+            {#if cardSortBy === "id"}
+              <span
+                class="absolute right-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
+                aria-hidden="true"
+              >
+                <Icon
+                  icon={cardSortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down"}
+                  class="size-2.5"
+                />
+              </span>
+            {/if}
+          </button>
+        </div>
+        <button
+          type="button"
+          class={`btn btn-sm ${cardFiltersApplied ? "btn-primary" : "btn-outline border-base-content/20"}`}
+          onclick={openCardFilterDialog}
+        >
+          <Icon icon="mdi:funnel" class="size-4" aria-hidden="true" />
+          {labels.filterOpen}
+        </button>
+      </div>
+
+      {#if cards.length > 0}
+        <div class="relative">
+          <div
+            class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+          >
+            {#each cards as card (card.cardId)}
+              <article
+                class="flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3"
+              >
+                <div
+                  class="flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-base-200/50"
+                >
+                  {#if card.thumbnailUrl}
+                    <img
+                      src={card.thumbnailUrl}
+                      alt=""
+                      loading="lazy"
+                      class="size-full object-contain"
+                    />
+                  {:else}
+                    <Icon
+                      icon="mdi:image-outline"
+                      class="size-8 text-base-content/30"
+                      aria-hidden="true"
+                    />
+                  {/if}
+                </div>
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold" title={card.cardName}
+                    >{card.cardName}</p
+                  >
+                  <p class="truncate text-xs text-base-content/60">
+                    {card.characterName ?? `#${card.cardId}`}
+                  </p>
+                </div>
+                <div class="mt-auto flex flex-col gap-1">
+                  {#each card.episodes as episode (episode.storyId)}
+                    <a
+                      class="max-w-full truncate rounded-md border border-base-content/15 px-2 py-1 text-center text-xs outline-none hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60"
+                      href={storyHref(episode.storyId, "text")}
+                      onclick={(event) => openStory(event, episode.storyId)}
+                      title={episode.label}
+                    >
+                      {episode.label}
+                    </a>
+                  {/each}
+                </div>
+              </article>
+            {/each}
+          </div>
+          {#if loading}
+            <div
+              class="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-base-100/70"
+              role="status"
+            >
+              <span class="loading loading-spinner loading-md" aria-hidden="true"></span>
+            </div>
+          {/if}
+        </div>
+      {:else if loading}
+        <p class="flex items-center gap-2 text-sm text-base-content/60" role="status">
+          <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+          {labels.loading}
+        </p>
+      {:else if cardListFailed}
+        <div class="alert alert-soft alert-warning" role="alert">
+          <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
+          <span>{labels.loadFailed}</span>
+        </div>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm self-start"
+          onclick={() => void fetchCardList(1, false)}
+        >
+          {labels.retry}
+        </button>
+      {:else}
+        <p class="text-sm text-base-content/60" role="status">
+          {cardFiltersApplied || normalizedQuery ? labels.noMatch : labels.empty}
+        </p>
+      {/if}
+
+      {#if cardHasNext}
+        <div
+          bind:this={cardSentinel}
+          class="flex min-h-20 items-center justify-center rounded-xl py-3"
+        >
+          {#if cardListLoadingMore}
+            <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+            <span class="ml-2 text-sm text-base-content/60">{labels.loadingMore}</span>
+          {:else}
+            <span class="text-sm text-base-content/50">{labels.loadMoreHint}</span>
+          {/if}
+        </div>
+      {:else if cards.length > 0}
+        <p class="py-2 text-center text-sm text-base-content/50">{labels.listEnd}</p>
+      {/if}
+
+      <dialog class="modal" bind:this={cardFilterDialog}>
+        <div class="modal-box max-w-xl border border-base-content/10">
+          <h3 class="text-base font-semibold">{labels.filterOpen}</h3>
+          <div class="mt-3 flex flex-col gap-4">
+            {#if cardUnitOptions.length > 0}
+              <section class="flex flex-col gap-1.5">
+                <h4 class="text-sm font-semibold text-base-content/80">{labels.filterUnit}</h4>
+                <div class="flex flex-wrap gap-1.5">
+                  {#each cardUnitOptions as option (`unit:${option.value}`)}
+                    <button
+                      type="button"
+                      title={option.label}
+                      class={`btn btn-sm ${cardFilterDraft.units.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+                      onclick={() =>
+                        (cardFilterDraft.units = toggleDraftValue(cardFilterDraft.units, option.value))}
+                    >
+                      <img
+                        src={resolveUnitIconUrl(option.value) ?? undefined}
+                        alt={option.label}
+                        class="size-5 object-contain"
+                      />
+                    </button>
+                  {/each}
+                </div>
+              </section>
+            {/if}
+            <section class="flex flex-col gap-1.5">
+              <h4 class="text-sm font-semibold text-base-content/80">{labels.filterCardType}</h4>
+              <div class="flex flex-wrap gap-1.5">
+                {#each CARD_TYPE_OPTIONS as option (option)}
+                  <button
+                    type="button"
+                    class={`btn btn-sm ${cardFilterDraft.types.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+                    onclick={() =>
+                      (cardFilterDraft.types = toggleDraftValue(cardFilterDraft.types, option))}
+                  >
+                    {formatCardOptionLabel(option)}
+                  </button>
+                {/each}
+              </div>
+            </section>
+            <section class="flex flex-col gap-1.5">
+              <h4 class="text-sm font-semibold text-base-content/80">{labels.filterRarity}</h4>
+              <div class="flex flex-wrap gap-1.5">
+                {#each CARD_RARITY_OPTIONS as option (option)}
+                  <button
+                    type="button"
+                    class={`btn btn-sm ${cardFilterDraft.rarities.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+                    onclick={() =>
+                      (cardFilterDraft.rarities = toggleDraftValue(cardFilterDraft.rarities, option))}
+                  >
+                    {cardRarityLabel(option)}
+                  </button>
+                {/each}
+              </div>
+            </section>
+            <section class="flex flex-col gap-1.5">
+              <h4 class="text-sm font-semibold text-base-content/80">{labels.filterAttr}</h4>
+              <div class="flex flex-wrap gap-1.5">
+                {#each CARD_ATTR_OPTIONS as option (option)}
+                  <button
+                    type="button"
+                    class={`btn btn-sm capitalize ${cardFilterDraft.attrs.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+                    onclick={() =>
+                      (cardFilterDraft.attrs = toggleDraftValue(cardFilterDraft.attrs, option))}
+                  >
+                    {option}
+                  </button>
+                {/each}
+              </div>
+            </section>
+            <section class="flex flex-col gap-1.5">
+              <h4 class="text-sm font-semibold text-base-content/80">{labels.filterCharacter}</h4>
+              <div class="flex flex-wrap gap-1.5">
+                {#each cardCharacterOptions as option (`char:${option.value}`)}
+                  <button
+                    type="button"
+                    class={`btn btn-sm ${cardFilterDraft.characters.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+                    onclick={() =>
+                      (cardFilterDraft.characters = toggleDraftValue(
+                        cardFilterDraft.characters,
+                        option.value
+                      ))}
+                  >
+                    {option.label}
+                  </button>
+                {/each}
+              </div>
+            </section>
+            <section class="flex flex-col gap-1.5">
+              <h4 class="text-sm font-semibold text-base-content/80">{labels.filterSkill}</h4>
+              <div class="flex flex-wrap gap-1.5">
+                {#each CARD_SKILL_OPTIONS as option (option)}
+                  <button
+                    type="button"
+                    class={`btn btn-sm ${cardFilterDraft.skills.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+                    onclick={() =>
+                      (cardFilterDraft.skills = toggleDraftValue(cardFilterDraft.skills, option))}
+                  >
+                    {formatCardOptionLabel(option)}
+                  </button>
+                {/each}
+              </div>
+            </section>
+            {#if cardFilterDraft.units.includes("piapro")}
+              <section class="flex flex-col gap-1.5">
+                <h4 class="text-sm font-semibold text-base-content/80">
+                  {labels.filterSupportUnit}
+                </h4>
+                <div class="flex flex-wrap gap-1.5">
+                  {#each CARD_SUPPORT_UNIT_OPTIONS as option (option)}
+                    <button
+                      type="button"
+                      class={`btn btn-sm ${cardFilterDraft.supportUnits.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+                      onclick={() =>
+                        (cardFilterDraft.supportUnits = toggleDraftValue(
+                          cardFilterDraft.supportUnits,
+                          option
+                        ))}
+                    >
+                      {option === "none"
+                        ? formatCardOptionLabel("piapro")
+                        : formatCardOptionLabel(option)}
+                    </button>
+                  {/each}
+                </div>
+              </section>
+            {/if}
+            <section class="flex flex-col gap-1.5">
+              <label class="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm"
+                  bind:checked={cardFilterDraft.has3dmvCutIn}
+                />
+                {labels.filter3dmvCutIn}
+              </label>
+              <label class="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  class="checkbox checkbox-sm"
+                  bind:checked={cardFilterDraft.showUnreleased}
+                />
+                {labels.showUnreleased}
+              </label>
+            </section>
+          </div>
+          <div class="modal-action">
+            <button type="button" class="btn btn-ghost btn-sm" onclick={clearCardFilters}>
+              {labels.filterClear}
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick={applyCardFilters}>
+              {labels.filterApply}
+            </button>
+          </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+          <button aria-label={labels.cancel}></button>
+        </form>
+      </dialog>
+
     {:else if loading}
       <p class="flex items-center gap-2 text-sm text-base-content/60" role="status">
         <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
@@ -1026,57 +1591,6 @@
       {#if filteredCharacters.length === 0}
         <p class="text-sm text-base-content/60" role="status">
           {characters.length > 0 ? labels.noMatch : labels.empty}
-        </p>
-      {/if}
-    {:else if storyType === "card" && cards.length > 0}
-      <label class="flex w-full max-w-64 items-center gap-2 text-sm text-base-content/70">
-        <span class="shrink-0">{labels.filterCharacter}</span>
-        <select class="select select-bordered select-sm grow" bind:value={cardCharacterFilter}>
-          <option value="all">{labels.characterAll}</option>
-          {#each cardCharacterOptions as option (option.id)}
-            <option value={String(option.id)}>{option.name}</option>
-          {/each}
-        </select>
-      </label>
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-        {#each filteredCards as card (card.cardId)}
-          <article class="flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3">
-            <div class="flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-base-200/50">
-              {#if card.thumbnailUrl}
-                <img
-                  src={card.thumbnailUrl}
-                  alt=""
-                  loading="lazy"
-                  class="size-full object-contain"
-                />
-              {:else}
-                <Icon icon="mdi:image-outline" class="size-8 text-base-content/30" aria-hidden="true" />
-              {/if}
-            </div>
-            <div class="min-w-0">
-              <p class="truncate text-sm font-semibold" title={card.cardName}>{card.cardName}</p>
-              <p class="truncate text-xs text-base-content/60">
-                {card.characterName ?? `#${card.cardId}`}
-              </p>
-            </div>
-            <div class="mt-auto flex flex-col gap-1">
-              {#each card.episodes as episode (episode.storyId)}
-                <a
-                  class="max-w-full truncate rounded-md border border-base-content/15 px-2 py-1 text-center text-xs outline-none hover:border-primary/40 hover:bg-primary/5 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60"
-                  href={storyHref(episode.storyId, "text")}
-                  onclick={(event) => openStory(event, episode.storyId)}
-                  title={episode.label}
-                >
-                  {episode.label}
-                </a>
-              {/each}
-            </div>
-          </article>
-        {/each}
-      </div>
-      {#if filteredCards.length === 0}
-        <p class="text-sm text-base-content/60" role="status">
-          {cards.length > 0 ? labels.noMatch : labels.empty}
         </p>
       {/if}
     {:else if storyType === "special"}

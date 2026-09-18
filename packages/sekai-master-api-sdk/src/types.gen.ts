@@ -1469,6 +1469,10 @@ export type GetCardEpisodesByRegionListData = {
          * Sort order (asc|desc)
          */
         sort_order?: string;
+        /**
+         * Comma-separated card ids to keep
+         */
+        card_id?: string;
     };
     url: '/cardEpisodes/{region}/list';
 };

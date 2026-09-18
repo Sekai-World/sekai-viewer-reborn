@@ -627,52 +627,39 @@ export const buildEventStoryEpisodeLinks = (
 };
 
 /**
- * Builds the card picker list: one entry per card that has episodes, with
- * card/character names from the `cards` collection when available (falls
- * back to `#cardId`) and the normal card art derived from the episode's
- * asset bundle (identical to the card's bundle).
+ * Builds the card picker list for one page of cards: one entry per card,
+ * with card/character names from the `cards` rows (falls back to `#cardId`)
+ * and the normal card art derived from the card's asset bundle (identical
+ * to the episode's bundle). `episodes` holds the cardEpisodes rows of just
+ * these cards, fetched per page through the card_id filter.
  */
-export const buildStoryCardPicker = (
-  collections: StoryMasterCollections
+export const buildStoryCardPickerFromPage = (
+  cards: StoryCardSummary[],
+  episodes: StoryCardEpisode[]
 ): StoryCardPickerItem[] => {
-  const cardsById = new Map(
-    (collections.cards ?? []).map((card) => [card.id, card])
-  );
   const episodesByCard = new Map<number, StoryCardEpisodeLink[]>();
-  const bundleByCard = new Map<number, string>();
 
-  for (const episode of collections.cardEpisodes) {
+  for (const episode of episodes) {
     const links = episodesByCard.get(episode.cardId) ?? [];
     links.push({
       storyId: String(episode.id),
       label: episode.title || `#${episode.id}`
     });
     episodesByCard.set(episode.cardId, links);
-    if (episode.assetbundleName && !bundleByCard.has(episode.cardId)) {
-      bundleByCard.set(episode.cardId, episode.assetbundleName);
-    }
   }
 
-  return Array.from(episodesByCard.entries())
-    .sort(([a], [b]) => a - b)
-    .map(([cardId, episodes]) => {
-      const card = cardsById.get(cardId);
-      const assetBundleName = card?.assetBundleName ?? bundleByCard.get(cardId);
-      return {
-        cardId,
-        cardName: card?.name ?? `#${cardId}`,
-        ...(card?.characterId !== undefined
-          ? { characterId: card.characterId }
-          : {}),
-        ...(card?.characterName ? { characterName: card.characterName } : {}),
-        ...(assetBundleName
-          ? { thumbnailPath: `thumbnail/chara/${assetBundleName}_normal.webp` }
-          : {}),
-        episodes: episodes
-          .slice()
-          .sort((a, b) => Number(a.storyId) - Number(b.storyId))
-      };
-    });
+  return cards.map((card) => ({
+    cardId: card.id,
+    cardName: card.name,
+    ...(card.characterId !== undefined ? { characterId: card.characterId } : {}),
+    ...(card.characterName ? { characterName: card.characterName } : {}),
+    ...(card.assetBundleName
+      ? { thumbnailPath: `thumbnail/chara/${card.assetBundleName}_normal.webp` }
+      : {}),
+    episodes: (episodesByCard.get(card.id) ?? [])
+      .slice()
+      .sort((a, b) => Number(a.storyId) - Number(b.storyId))
+  }));
 };
 
 /** A character entry in the character story picker: avatar, name, story. */

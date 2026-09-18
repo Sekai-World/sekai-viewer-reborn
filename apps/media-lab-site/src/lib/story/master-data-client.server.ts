@@ -620,6 +620,121 @@ export const fetchEventStoriesByEvent = async (
   return collectionParsers.eventStories(rows) as StoryEventStory[];
 };
 
+/** Server-side card-list query mirroring the content-site filter set. */
+export interface StoryCardListQuery {
+  page: number;
+  pageSize: number;
+  sortBy: "releaseAt" | "id";
+  sortOrder: "desc" | "asc";
+  name?: string;
+  units?: string[];
+  characters?: string[];
+  skills?: string[];
+  types?: string[];
+  attrs?: string[];
+  rarities?: string[];
+  supportUnits?: string[];
+  has3dmvCutIn?: boolean;
+  /** Show cards that are not released yet; defaults to true. */
+  spoiler?: boolean;
+}
+
+export interface StoryCardListPage {
+  items: StoryCardSummary[];
+  pagination: StoryEventListPagination;
+}
+
+/**
+ * Fetches one page of the cards collection with the content-site filter set
+ * applied server-side (sort, name, unit/character/skill/type/attr/rarity/
+ * support unit, 3dmv cut-in, spoiler). Not cached: the paginated list must
+ * reflect filter changes immediately.
+ */
+export const fetchCardListPage = async (
+  region: StoryRouteRegion,
+  query: StoryCardListQuery,
+  options: StoryMasterDataClientOptions = {}
+): Promise<StoryCardListPage> => {
+  const fetcher = options.fetch ?? fetch;
+  const baseUrl = resolveApiBaseUrl(options);
+  const requestQuery: Record<string, string | number | boolean> = {
+    page: query.page,
+    page_size: query.pageSize,
+    spoiler: query.spoiler ?? true,
+    sort_by: query.sortBy,
+    sort_order: query.sortOrder
+  };
+  if (query.name) requestQuery.name = query.name;
+  if (query.units?.length) requestQuery.unit = query.units.join(",");
+  if (query.characters?.length) requestQuery.character = query.characters.join(",");
+  if (query.skills?.length) requestQuery.skill = query.skills.join(",");
+  if (query.types?.length) requestQuery.type = query.types.join(",");
+  if (query.attrs?.length) requestQuery.attr = query.attrs.join(",");
+  if (query.rarities?.length) requestQuery.rarity = query.rarities.join(",");
+  if (query.supportUnits?.length) requestQuery.support_unit = query.supportUnits.join(",");
+  if (query.has3dmvCutIn) requestQuery.has_3dmv_cut_in = true;
+
+  const response = await getCardsByRegionList({
+    baseUrl,
+    fetch: fetcher,
+    path: { region },
+    query: requestQuery
+  });
+  if (response.error || !response.data) {
+    const status = response.response?.status ?? 0;
+    // Region not synced yet — same tolerance as the other story collections.
+    if (status === 503) {
+      return { items: [], pagination: { page: query.page, hasNext: false, total: null } };
+    }
+    throw new Error(`Failed to fetch card list (${status || "unknown error"})`);
+  }
+  const rows = Array.isArray(response.data.items) ? response.data.items : [];
+  const pagination = (response.data as { pagination?: Record<string, unknown> }).pagination ?? {};
+  return {
+    items: collectionParsers.cards(rows) as StoryCardSummary[],
+    pagination: {
+      page: query.page,
+      hasNext: pagination.has_next === true,
+      total: typeof pagination.total === "number" ? pagination.total : null
+    }
+  };
+};
+
+/**
+ * Fetches the cardEpisodes rows of the given cards through the lookup list
+ * endpoint's `card_id` filter, avoiding a full collection download. A
+ * picker page holds a few dozen cards with at most a handful of episodes
+ * each, so one large page always covers them. Not cached.
+ */
+export const fetchCardEpisodesByCardIds = async (
+  region: StoryRouteRegion,
+  cardIds: number[],
+  options: StoryMasterDataClientOptions = {}
+): Promise<StoryCardEpisode[]> => {
+  if (cardIds.length === 0) return [];
+  const fetcher = options.fetch ?? fetch;
+  const baseUrl = resolveApiBaseUrl(options);
+  const response = await getCardEpisodesByRegionList({
+    baseUrl,
+    fetch: fetcher,
+    path: { region },
+    query: {
+      page: 1,
+      page_size: 200,
+      spoiler: true,
+      card_id: cardIds.join(",")
+    }
+  });
+  if (response.error || !response.data) {
+    const status = response.response?.status ?? 0;
+    // Region not synced yet — same tolerance as the other story collections.
+    if (status === 503) return [];
+    throw new Error(`Failed to fetch card episodes (${status || "unknown error"})`);
+  }
+  const rows = Array.isArray(response.data.items) ? response.data.items : [];
+  return collectionParsers.cardEpisodes(rows) as StoryCardEpisode[];
+};
+
 /** Fetches the character identity tables used for names and part voices. */
 export const fetchStoryCharacterTables = async (
   region: StoryRouteRegion,

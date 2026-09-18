@@ -24,6 +24,8 @@ vi.mock("@platform/sekai-master-api-sdk", () => listEndpointMocks);
 
 import {
   clearStoryMasterDataCacheForTests,
+  fetchCardEpisodesByCardIds,
+  fetchCardListPage,
   fetchEventListPage,
   fetchEventStoriesByEvent,
   fetchStoryCharacterTables,
@@ -549,5 +551,189 @@ describe("fetchEventStoriesByEvent", () => {
     await expect(
       fetchEventStoriesByEvent("jp", 34, { baseUrl: "https://master.test/api/v1" })
     ).rejects.toThrow("Failed to fetch event stories (500)");
+  });
+});
+
+describe("fetchCardListPage", () => {
+  beforeEach(() => {
+    listEndpointMocks.getCardsByRegionList.mockReset();
+  });
+
+  it("sends the content-site filter set and parses one page", async () => {
+    listEndpointMocks.getCardsByRegionList.mockResolvedValue(
+      okPage(
+        [
+          {
+            id: 13,
+            prefix: "クールだけど友達想い",
+            assetbundleName: "res001_no001",
+            character: { id: 1, firstName: "星乃", givenName: "一歌" }
+          },
+          { id: 14, prefix: null, character: null }
+        ],
+        true
+      )
+    );
+
+    const result = await fetchCardListPage(
+      "jp",
+      {
+        page: 2,
+        pageSize: 12,
+        sortBy: "releaseAt",
+        sortOrder: "desc",
+        name: "一歌",
+        units: ["idol", "piapro"],
+        characters: ["1", "10"],
+        skills: ["score_up"],
+        types: ["term_limited"],
+        attrs: ["cute"],
+        rarities: ["rarity_4"],
+        supportUnits: ["none"],
+        has3dmvCutIn: true,
+        spoiler: false
+      },
+      { baseUrl: "https://master.test/api/v1" }
+    );
+
+    expect(listEndpointMocks.getCardsByRegionList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { region: "jp" },
+        query: {
+          page: 2,
+          page_size: 12,
+          spoiler: false,
+          sort_by: "releaseAt",
+          sort_order: "desc",
+          name: "一歌",
+          unit: "idol,piapro",
+          character: "1,10",
+          skill: "score_up",
+          type: "term_limited",
+          attr: "cute",
+          rarity: "rarity_4",
+          support_unit: "none",
+          has_3dmv_cut_in: true
+        }
+      })
+    );
+    expect(result.items).toEqual([
+      {
+        id: 13,
+        name: "クールだけど友達想い",
+        assetBundleName: "res001_no001",
+        characterId: 1,
+        characterName: "星乃 一歌"
+      },
+      {
+        id: 14,
+        name: "#14",
+        assetBundleName: undefined,
+        characterId: undefined,
+        characterName: undefined
+      }
+    ]);
+    expect(result.pagination).toEqual({ page: 2, hasNext: true, total: null });
+  });
+
+  it("treats a 503 region as an empty page", async () => {
+    listEndpointMocks.getCardsByRegionList.mockResolvedValue({
+      error: { body: { code: "REGION_DATA_NOT_READY" } },
+      response: new Response(null, { status: 503 })
+    });
+    const result = await fetchCardListPage(
+      "tw",
+      { page: 3, pageSize: 12, sortBy: "id", sortOrder: "asc" },
+      { baseUrl: "https://master.test/api/v1" }
+    );
+    expect(result).toEqual({
+      items: [],
+      pagination: { page: 3, hasNext: false, total: null }
+    });
+  });
+
+  it("throws with the endpoint status on other errors", async () => {
+    listEndpointMocks.getCardsByRegionList.mockResolvedValue({
+      error: { body: { code: "CARD_QUERY_ERROR" } },
+      response: new Response(null, { status: 500 })
+    });
+    await expect(
+      fetchCardListPage(
+        "jp",
+        { page: 1, pageSize: 12, sortBy: "releaseAt", sortOrder: "desc" },
+        { baseUrl: "https://master.test/api/v1" }
+      )
+    ).rejects.toThrow("Failed to fetch card list (500)");
+  });
+});
+
+describe("fetchCardEpisodesByCardIds", () => {
+  beforeEach(() => {
+    listEndpointMocks.getCardEpisodesByRegionList.mockReset();
+  });
+
+  it("requests one batched page keyed by card_id and parses the rows", async () => {
+    listEndpointMocks.getCardEpisodesByRegionList.mockResolvedValue(
+      okPage([
+        {
+          id: 10,
+          cardId: 3,
+          seq: 1,
+          title: "EP1",
+          scenarioId: "card_3_ep1",
+          releaseCondition: { id: 5, releaseConditionType: "none" }
+        },
+        { id: 11, cardId: 4, seq: 1, title: "", scenarioId: "card_4_ep1" }
+      ])
+    );
+
+    const episodes = await fetchCardEpisodesByCardIds("jp", [3, 4], {
+      baseUrl: "https://master.test/api/v1"
+    });
+
+    expect(listEndpointMocks.getCardEpisodesByRegionList).toHaveBeenCalledTimes(1);
+    expect(listEndpointMocks.getCardEpisodesByRegionList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: { region: "jp" },
+        query: { page: 1, page_size: 200, spoiler: true, card_id: "3,4" }
+      })
+    );
+    expect(episodes).toEqual([
+      {
+        id: 10,
+        cardId: 3,
+        title: "EP1",
+        scenarioId: "card_3_ep1",
+        assetbundleName: undefined,
+        releaseConditionId: 5
+      },
+      {
+        id: 11,
+        cardId: 4,
+        title: "",
+        scenarioId: "card_4_ep1",
+        assetbundleName: undefined,
+        releaseConditionId: undefined
+      }
+    ]);
+  });
+
+  it("short-circuits empty card id lists", async () => {
+    const episodes = await fetchCardEpisodesByCardIds("jp", [], {
+      baseUrl: "https://master.test/api/v1"
+    });
+    expect(episodes).toEqual([]);
+    expect(listEndpointMocks.getCardEpisodesByRegionList).not.toHaveBeenCalled();
+  });
+
+  it("treats a 503 region as no episodes", async () => {
+    listEndpointMocks.getCardEpisodesByRegionList.mockResolvedValue({
+      error: { body: { code: "REGION_DATA_NOT_READY" } },
+      response: new Response(null, { status: 503 })
+    });
+    const episodes = await fetchCardEpisodesByCardIds("kr", [3, 4], {
+      baseUrl: "https://master.test/api/v1"
+    });
+    expect(episodes).toEqual([]);
   });
 });

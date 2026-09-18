@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   buildEventStoryEpisodeLinks,
   buildStoryAreaTalkPicker,
-  buildStoryCardPicker,
+  buildStoryCardPickerFromPage,
   buildStoryCatalog,
   buildStoryCharacterPicker,
   buildUnitStoryCatalog,
   parseStoryId,
   resolveStoryIdentity,
+  type StoryCardSummary,
   type StoryMasterCollections
 } from "./story-identity";
 
@@ -337,34 +338,42 @@ describe("buildStoryCatalog", () => {
   });
 });
 
-describe("buildStoryCardPicker", () => {
+describe("buildStoryCardPickerFromPage", () => {
+  const pageCards: StoryCardSummary[] = [
+    {
+      id: 3001,
+      name: "Card Title",
+      assetBundleName: "0300101",
+      characterId: 1,
+      characterName: "Hoshino Ichika"
+    },
+    { id: 900, name: "#900" }
+  ];
+
   it("builds one tile per card with names, art path, and ordered episodes", () => {
-    const cards = buildStoryCardPicker({
-      ...collections,
-      cardEpisodes: [
-        {
-          id: 2122,
-          cardId: 3001,
-          title: "Card Story 2",
-          scenarioId: "card_3001_2",
-          assetbundleName: "0300101"
-        },
-        {
-          id: 2121,
-          cardId: 3001,
-          title: "Card Story",
-          scenarioId: "card_3001",
-          assetbundleName: "0300101"
-        },
-        {
-          id: 2050,
-          cardId: 900,
-          title: "",
-          scenarioId: "card_900"
-        }
-      ]
-    });
-    expect(cards.map((card) => card.cardId)).toEqual([900, 3001]);
+    const cards = buildStoryCardPickerFromPage(pageCards, [
+      {
+        id: 2122,
+        cardId: 3001,
+        title: "Card Story 2",
+        scenarioId: "card_3001_2",
+        assetbundleName: "0300101"
+      },
+      {
+        id: 2121,
+        cardId: 3001,
+        title: "Card Story",
+        scenarioId: "card_3001",
+        assetbundleName: "0300101"
+      },
+      {
+        id: 2050,
+        cardId: 900,
+        title: "",
+        scenarioId: "card_900"
+      }
+    ]);
+    expect(cards.map((card) => card.cardId)).toEqual([3001, 900]);
     const titled = cards.find((card) => card.cardId === 3001);
     expect(titled).toMatchObject({
       cardName: "Card Title",
@@ -382,12 +391,13 @@ describe("buildStoryCardPicker", () => {
     expect(untitled?.episodes[0].label).toBe("#2050");
   });
 
-  it("derives names from the cards collection and falls back to #cardId", () => {
-    const cards = buildStoryCardPicker({ ...collections, cards: undefined });
-    expect(cards.find((card) => card.cardId === 3001)).toMatchObject({
-      cardName: "#3001",
-      thumbnailPath: "thumbnail/chara/0300101_normal.webp"
-    });
+  it("keeps cards without episode rows and skips foreign episodes", () => {
+    const cards = buildStoryCardPickerFromPage(pageCards, [
+      { id: 9999, cardId: 4242, title: "Foreign", scenarioId: "card_4242" }
+    ]);
+    expect(cards.map((card) => card.cardId)).toEqual([3001, 900]);
+    expect(cards[0].episodes).toEqual([]);
+    expect(cards[1].episodes).toEqual([]);
   });
 });
 

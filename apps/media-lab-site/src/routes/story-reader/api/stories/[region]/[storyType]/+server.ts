@@ -1,13 +1,15 @@
 import { json, error } from "@sveltejs/kit";
 import { isStoryRouteRegion, storyRouteStoryTypes } from "$lib/live2d/story-route";
 import {
+  fetchCardEpisodesByCardIds,
+  fetchCardListPage,
   fetchEventListPage,
   fetchStoryCollection,
   fetchStoryCollections
 } from "$lib/story/master-data-client.server";
 import {
   buildStoryAreaTalkPicker,
-  buildStoryCardPicker,
+  buildStoryCardPickerFromPage,
   buildStoryCatalog,
   buildStoryCharacterPicker,
   buildUnitStoryCatalog
@@ -16,8 +18,9 @@ import { createStoryRegionAssetUrls, eventBannerImagePath } from "$lib/story/sto
 import { getStoryAssetBase } from "$lib/story/story-resolver.server";
 import type { RequestHandler } from "./$types";
 
-/** Event cards per page in the picker's first level (mirrors content-site). */
+/** Event / card rows per page in the picker's first level (mirrors content-site). */
 const EVENT_PAGE_SIZE = 12;
+const CARD_PAGE_SIZE = 12;
 
 const splitParam = (value: string | null): string[] =>
   (value ?? "")
@@ -99,6 +102,78 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
     });
   }
 
+  if (storyType === "card") {
+    // Two-level paginated card picker, first level: the card list is served
+    // paginated with the content-site filter set (sort, name, unit/
+    // character/skill/type/attr/rarity/support unit, 3dmv cut-in, spoiler)
+    // applied server-side. The episode links of just the returned cards
+    // ride along via the cardEpisodes card_id filter.
+    const searchParams = url.searchParams;
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const sortBy = searchParams.get("sort_by") === "id" ? "id" : "releaseAt";
+    const sortOrder = searchParams.get("sort_order") === "asc" ? "asc" : "desc";
+    const name = searchParams.get("name")?.trim() ?? "";
+    const spoiler = searchParams.get("spoiler") !== "false";
+
+    const [metaCollections, cardPage] = await Promise.all([
+      fetchStoryCollections(region, ["unitProfiles", "gameCharacters"], { fetch }),
+      fetchCardListPage(
+        region,
+        {
+          page,
+          pageSize: CARD_PAGE_SIZE,
+          sortBy,
+          sortOrder,
+          name,
+          units: splitParam(searchParams.get("unit")),
+          characters: splitParam(searchParams.get("character")),
+          skills: splitParam(searchParams.get("skill")),
+          types: splitParam(searchParams.get("type")),
+          attrs: splitParam(searchParams.get("attr")),
+          rarities: splitParam(searchParams.get("rarity")),
+          supportUnits: splitParam(searchParams.get("support_unit")),
+          has3dmvCutIn: searchParams.get("has_3dmv_cut_in") === "true",
+          spoiler
+        },
+        { fetch }
+      )
+    ]);
+
+    const episodes = await fetchCardEpisodesByCardIds(
+      region,
+      cardPage.items.map((card) => card.id),
+      { fetch }
+    );
+    const assetUrls = createStoryRegionAssetUrls(getStoryAssetBase, region);
+    const cards = buildStoryCardPickerFromPage(cardPage.items, episodes).map((card) => ({
+      ...card,
+      thumbnailUrl: card.thumbnailPath
+        ? assetUrls.region(card.thumbnailPath)
+        : null
+    }));
+    const unitOptions = (metaCollections.unitProfiles ?? [])
+      .slice()
+      .sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))
+      .map((profile) => ({ value: profile.unit, label: profile.unitName }));
+    const characterOptions = (metaCollections.gameCharacters ?? [])
+      .slice()
+      .sort((a, b) => a.id - b.id)
+      .map((character) => ({
+        value: String(character.id),
+        label:
+          [character.firstName, character.givenName].filter(Boolean).join(" ").trim() ||
+          `#${character.id}`
+      }));
+
+    return json({
+      storyType,
+      cards,
+      pagination: cardPage.pagination,
+      unitOptions,
+      characterOptions
+    });
+  }
+
   // Each type fetches only the collections its picker actually reads —
   // cardEpisodes/actionSets run into thousands of rows, so sharing one
   // superset list made every picker pay for collections it never uses.
@@ -108,11 +183,9 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
       ? ["unitStories", "unitProfiles", "unitStoryEpisodeGroups"]
       : storyType === "character"
         ? ["characterProfiles", "gameCharacters"]
-        : storyType === "card"
-          ? ["cardEpisodes", "cards"]
-          : storyType === "area-talk"
-            ? ["actionSets", "areas"]
-            : ["specialStories"],
+        : storyType === "area-talk"
+          ? ["actionSets", "areas"]
+          : ["specialStories"],
     { fetch }
   );
 
@@ -142,17 +215,6 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
       groups,
       characters: buildStoryCharacterPicker(collections)
     });
-  }
-
-  if (storyType === "card") {
-    const assetUrls = createStoryRegionAssetUrls(getStoryAssetBase, region);
-    const cards = buildStoryCardPicker(collections).map((card) => ({
-      ...card,
-      thumbnailUrl: card.thumbnailPath
-        ? assetUrls.region(card.thumbnailPath)
-        : null
-    }));
-    return json({ storyType, groups, cards });
   }
 
   if (storyType === "area-talk") {
