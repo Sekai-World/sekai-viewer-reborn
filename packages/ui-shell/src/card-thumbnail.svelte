@@ -1,12 +1,24 @@
 <script lang="ts">
-  import { asset } from "$app/paths";
   import Icon from "@iconify/svelte";
   import { onDestroy } from "svelte";
+  import attrCoolUrl from "./assets/card-icons/icon_attribute_cool_88.png";
+  import attrCuteUrl from "./assets/card-icons/icon_attribute_cute_88.png";
+  import attrHappyUrl from "./assets/card-icons/icon_attribute_happy_88.png";
+  import attrMysteriousUrl from "./assets/card-icons/icon_attribute_mysterious_88.png";
+  import attrPureUrl from "./assets/card-icons/icon_attribute_pure_88.png";
+  import rarityBirthdayUrl from "./assets/card-icons/rarity_birthday.png";
+  import rarityStarAfterTrainingUrl from "./assets/card-icons/rarity_star_afterTraining.png";
+  import rarityStarNormalUrl from "./assets/card-icons/rarity_star_normal.png";
+  import frame1Url from "./assets/card-frames/cardFrame_S_1.png";
+  import frame2Url from "./assets/card-frames/cardFrame_S_2.png";
+  import frame3Url from "./assets/card-frames/cardFrame_S_3.png";
+  import frame4Url from "./assets/card-frames/cardFrame_S_4.png";
+  import frameBirthdayUrl from "./assets/card-frames/cardFrame_S_bd.png";
   import {
     ImageRetryController,
     STATIC_ASSET_RETRY_POLICY,
     type ImageRetryPolicy
-  } from "@platform/ui-shell/image-retry";
+  } from "./image-retry";
 
   let {
     src,
@@ -105,21 +117,33 @@
     };
   });
 
-  const getAttrIconUrl = (size: 64 | 88 = 88): string | null =>
-    attr ? asset(`/card_attr/icon_attribute_${attr}_${size}.png`) : null;
+  const attrIconUrlByAttr: Record<string, string> = {
+    cool: attrCoolUrl,
+    cute: attrCuteUrl,
+    happy: attrHappyUrl,
+    mysterious: attrMysteriousUrl,
+    pure: attrPureUrl
+  };
+  const frameUrlByLevel: Record<string, string> = {
+    "1": frame1Url,
+    "2": frame2Url,
+    "3": frame3Url,
+    "4": frame4Url,
+    bd: frameBirthdayUrl
+  };
+
+  const getAttrIconUrl = (): string | null => (attr ? (attrIconUrlByAttr[attr] ?? null) : null);
 
   const getRarityIconUrl = (): string | null => {
     if (rarityType === "rarity_birthday") {
-      return asset("/card_rarity/rarity_birthday.png");
+      return rarityBirthdayUrl;
     }
 
     if (resolvedRarityCount <= 0) {
       return null;
     }
 
-    return asset(
-      trained ? "/card_rarity/rarity_star_afterTraining.png" : "/card_rarity/rarity_star_normal.png"
-    );
+    return trained ? rarityStarAfterTrainingUrl : rarityStarNormalUrl;
   };
 
   const getFrameUrl = (): string | null => {
@@ -128,11 +152,7 @@
     }
 
     const frameLevel = rarityType === "rarity_birthday" ? "bd" : String(resolvedRarityCount);
-    if (frameLevel === "0") {
-      return null;
-    }
-
-    return asset(`/card_frame/cardFrame_S_${frameLevel}.png`);
+    return frameUrlByLevel[frameLevel] ?? null;
   };
 </script>
 

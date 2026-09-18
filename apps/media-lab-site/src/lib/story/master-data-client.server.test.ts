@@ -174,7 +174,10 @@ describe("story master-data client", () => {
           id: 1,
           prefix: "クールだけど友達想い",
           assetbundleName: "res001_no001",
-          character: { id: 1, firstName: "星乃", givenName: "一歌" }
+          character: { id: 1, firstName: "星乃", givenName: "一歌" },
+          attr: "cool",
+          cardRarity: { cardRarityType: "rarity_3", maxLevel: 40 },
+          initialSpecialTrainingStatus: "not_doing"
         },
         { id: 2, prefix: null, character: null }
       ])
@@ -189,14 +192,20 @@ describe("story master-data client", () => {
         name: "クールだけど友達想い",
         assetBundleName: "res001_no001",
         characterId: 1,
-        characterName: "星乃 一歌"
+        characterName: "星乃 一歌",
+        attr: "cool",
+        rarityType: "rarity_3",
+        initialSpecialTrainingStatus: "not_doing"
       },
       {
         id: 2,
         name: "#2",
         assetBundleName: undefined,
         characterId: undefined,
-        characterName: undefined
+        characterName: undefined,
+        attr: undefined,
+        rarityType: undefined,
+        initialSpecialTrainingStatus: undefined
       }
     ]);
   });

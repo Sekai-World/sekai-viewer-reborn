@@ -221,8 +221,10 @@ const collectionParsers: Record<
     asArray(raw).map((row) => {
       const r = row as Record<string, unknown>;
       // The list endpoint inlines the card's game character as a flat
-      // object (`character.id` / `firstName` / `givenName`).
+      // object (`character.id` / `firstName` / `givenName`) and expands
+      // `cardRarityType` into a nested `cardRarity` record.
       const character = (r.character ?? null) as Record<string, unknown> | null;
+      const cardRarity = (r.cardRarity ?? null) as Record<string, unknown> | null;
       const id = asNumber(r.id);
       const card: StoryCardSummary = {
         id,
@@ -233,7 +235,10 @@ const collectionParsers: Record<
           ? [asString(character.firstName), asString(character.givenName)]
               .filter(Boolean)
               .join(" ") || undefined
-          : undefined
+          : undefined,
+        attr: asOptionalString(r.attr),
+        rarityType: asOptionalString(cardRarity?.cardRarityType),
+        initialSpecialTrainingStatus: asOptionalString(r.initialSpecialTrainingStatus)
       };
       return card;
     }),

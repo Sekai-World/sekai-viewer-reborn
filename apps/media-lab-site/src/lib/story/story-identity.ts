@@ -27,6 +27,10 @@ import {
   LOCAL_AVATAR_CHARACTER_ID_MAX,
   LOCAL_AVATAR_CHARACTER_ID_MIN
 } from "./character-avatar";
+import {
+  resolveCardRarityCount,
+  resolveCardTrained
+} from "@platform/ui-shell/card-thumbnail";
 import type { StoryRouteStoryType } from "$lib/live2d/story-route";
 
 // ---------------------------------------------------------------------------
@@ -116,6 +120,12 @@ export interface StoryCardSummary {
   assetBundleName?: string;
   characterId?: number;
   characterName?: string;
+  /** Card attribute (`cool`/`cute`/`happy`/`mysterious`/`pure`). */
+  attr?: string;
+  /** The API expands `cardRarityType` into a nested `cardRarity` record. */
+  rarityType?: string;
+  /** `"done"` when the card's only artwork is the trained variant. */
+  initialSpecialTrainingStatus?: string;
 }
 
 export interface StoryCardEpisode {
@@ -582,8 +592,13 @@ export interface StoryCardPickerItem {
   cardName: string;
   characterId?: number;
   characterName?: string;
-  /** Bucket-relative normal-thumbnail path on the region bucket. */
+  /** Bucket-relative thumbnail path on the region bucket. */
   thumbnailPath?: string;
+  /** Resolved artwork variant shown by the picker tile. */
+  trained?: boolean;
+  attr?: string;
+  rarityType?: string;
+  rarityCount?: number;
   episodes: StoryCardEpisodeLink[];
 }
 
@@ -627,11 +642,13 @@ export const buildEventStoryEpisodeLinks = (
 };
 
 /**
- * Builds the card picker list for one page of cards: one entry per card,
- * with card/character names from the `cards` rows (falls back to `#cardId`)
- * and the normal card art derived from the card's asset bundle (identical
- * to the episode's bundle). `episodes` holds the cardEpisodes rows of just
- * these cards, fetched per page through the card_id filter.
+ * Builds the card picker list for one page of cards: one entry per card
+ * that has at least one card episode (story-less cards are skipped), with
+ * card/character names from the `cards` rows (falls back to `#cardId`) and
+ * the card art derived from the card's asset bundle (identical to the
+ * episode's bundle) — trained-only cards resolve to their trained variant.
+ * `episodes` holds the cardEpisodes rows of just these cards, fetched per
+ * page through the card_id filter.
  */
 export const buildStoryCardPickerFromPage = (
   cards: StoryCardSummary[],
@@ -648,18 +665,32 @@ export const buildStoryCardPickerFromPage = (
     episodesByCard.set(episode.cardId, links);
   }
 
-  return cards.map((card) => ({
-    cardId: card.id,
-    cardName: card.name,
-    ...(card.characterId !== undefined ? { characterId: card.characterId } : {}),
-    ...(card.characterName ? { characterName: card.characterName } : {}),
-    ...(card.assetBundleName
-      ? { thumbnailPath: `thumbnail/chara/${card.assetBundleName}_normal.webp` }
-      : {}),
-    episodes: (episodesByCard.get(card.id) ?? [])
-      .slice()
-      .sort((a, b) => Number(a.storyId) - Number(b.storyId))
-  }));
+  return cards
+    .filter((card) => (episodesByCard.get(card.id) ?? []).length > 0)
+    .map((card) => {
+      const trained = resolveCardTrained({
+        rarityType: card.rarityType ?? null,
+        initialSpecialTrainingStatus: card.initialSpecialTrainingStatus
+      });
+      return {
+        cardId: card.id,
+        cardName: card.name,
+        ...(card.characterId !== undefined ? { characterId: card.characterId } : {}),
+        ...(card.characterName ? { characterName: card.characterName } : {}),
+        ...(card.assetBundleName
+          ? {
+              thumbnailPath: `thumbnail/chara/${card.assetBundleName}_${trained ? "after_training" : "normal"}.webp`
+            }
+          : {}),
+        ...(trained ? { trained } : {}),
+        ...(card.attr ? { attr: card.attr } : {}),
+        ...(card.rarityType ? { rarityType: card.rarityType } : {}),
+        ...(card.rarityType ? { rarityCount: resolveCardRarityCount(card.rarityType) } : {}),
+        episodes: (episodesByCard.get(card.id) ?? [])
+          .slice()
+          .sort((a, b) => Number(a.storyId) - Number(b.storyId))
+      };
+    });
 };
 
 /** A character entry in the character story picker: avatar, name, story. */

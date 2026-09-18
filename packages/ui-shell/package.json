@@ -26,6 +26,10 @@
       "svelte": "./src/asset-image.svelte",
       "default": "./src/asset-image.svelte"
     },
+    "./card-thumbnail": {
+      "types": "./src/card-thumbnail-data.ts",
+      "default": "./src/card-thumbnail-data.ts"
+    },
     "./theme-controls": {
       "types": "./src/theme-controls.types.ts",
       "default": "./src/theme-controls.types.ts"

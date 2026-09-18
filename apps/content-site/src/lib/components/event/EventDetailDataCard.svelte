@@ -10,11 +10,10 @@
     type AssetServer
   } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
-  import { resolveCardTrained } from "$lib/components/card/card-presentation";
+    import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import { UnitIconBadge } from "@platform/ui-shell";
+  import { CardThumbnail, UnitIconBadge } from "@platform/ui-shell";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import type {

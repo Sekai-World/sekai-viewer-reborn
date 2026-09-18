@@ -381,6 +381,8 @@ describe("buildStoryCardPickerFromPage", () => {
       characterName: "Hoshino Ichika",
       thumbnailPath: "thumbnail/chara/0300101_normal.webp"
     });
+    expect(titled).not.toHaveProperty("trained");
+    expect(titled).not.toHaveProperty("rarityType");
     expect(titled?.episodes.map((episode) => episode.storyId)).toEqual([
       "2121",
       "2122"
@@ -391,13 +393,50 @@ describe("buildStoryCardPickerFromPage", () => {
     expect(untitled?.episodes[0].label).toBe("#2050");
   });
 
-  it("keeps cards without episode rows and skips foreign episodes", () => {
+  it("carries attr, rarity, and trained-only artwork resolution", () => {
+    const trainedOnly: StoryCardSummary = {
+      id: 3101,
+      name: "Trained Only",
+      assetBundleName: "0310101",
+      rarityType: "rarity_4",
+      initialSpecialTrainingStatus: "done",
+      attr: "cool"
+    };
+    const birthday: StoryCardSummary = {
+      id: 3201,
+      name: "Birthday",
+      assetBundleName: "0320101",
+      rarityType: "rarity_birthday",
+      attr: "happy"
+    };
+    const cards = buildStoryCardPickerFromPage(
+      [trainedOnly, birthday],
+      [
+        { id: 2201, cardId: 3101, title: "T", scenarioId: "card_3101" },
+        { id: 2202, cardId: 3201, title: "B", scenarioId: "card_3201" }
+      ]
+    );
+    expect(cards[0]).toMatchObject({
+      cardId: 3101,
+      thumbnailPath: "thumbnail/chara/0310101_after_training.webp",
+      trained: true,
+      attr: "cool",
+      rarityType: "rarity_4",
+      rarityCount: 4
+    });
+    expect(cards[1]).toMatchObject({
+      thumbnailPath: "thumbnail/chara/0320101_normal.webp",
+      attr: "happy",
+      rarityType: "rarity_birthday",
+      rarityCount: 1
+    });
+  });
+
+  it("drops cards without episode rows and skips foreign episodes", () => {
     const cards = buildStoryCardPickerFromPage(pageCards, [
       { id: 9999, cardId: 4242, title: "Foreign", scenarioId: "card_4242" }
     ]);
-    expect(cards.map((card) => card.cardId)).toEqual([3001, 900]);
-    expect(cards[0].episodes).toEqual([]);
-    expect(cards[1].episodes).toEqual([]);
+    expect(cards).toEqual([]);
   });
 });
 

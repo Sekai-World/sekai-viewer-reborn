@@ -3,7 +3,12 @@
   import { browser } from "$app/environment";
   import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
   import { goto } from "$app/navigation";
-  import { UnitIconBadge, resolveUnitIconUrl, resolveUnitLogoUrl } from "@platform/ui-shell";
+  import {
+    CardThumbnail,
+    UnitIconBadge,
+    resolveUnitIconUrl,
+    resolveUnitLogoUrl
+  } from "@platform/ui-shell";
   import { useRegionSelection } from "$lib/region-selection.svelte";
   import { localCharacterAvatarUrl } from "$lib/story/character-avatar";
   import {
@@ -58,6 +63,10 @@
     characterId?: number;
     characterName?: string;
     thumbnailUrl: string | null;
+    trained?: boolean;
+    attr?: string;
+    rarityType?: string;
+    rarityCount?: number;
     episodes: StoryCardEpisodeLink[];
   }
 
@@ -1239,24 +1248,21 @@
               <article
                 class="flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3"
               >
-                <div
-                  class="flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-base-200/50"
-                >
-                  {#if card.thumbnailUrl}
-                    <img
-                      src={card.thumbnailUrl}
-                      alt=""
-                      loading="lazy"
-                      class="size-full object-contain"
-                    />
-                  {:else}
-                    <Icon
-                      icon="mdi:image-outline"
-                      class="size-8 text-base-content/30"
-                      aria-hidden="true"
-                    />
-                  {/if}
-                </div>
+                <!-- The picker pages 12 tiles at a time, so eager loading is
+                     cheap and keeps thumbnails independent of visibility
+                     observers. -->
+                <CardThumbnail
+                  src={card.thumbnailUrl}
+                  alt={card.cardName}
+                  trained={card.trained ?? false}
+                  attr={card.attr ?? null}
+                  rarityType={card.rarityType ?? null}
+                  rarityCount={card.rarityCount ?? 0}
+                  loadMode="immediate"
+                  maxSize={null}
+                  containerClass="relative overflow-hidden rounded-lg bg-base-200/50 aspect-square"
+                  imageClass="size-full object-cover"
+                />
                 <div class="min-w-0">
                   <p class="truncate text-sm font-semibold" title={card.cardName}
                     >{card.cardName}</p

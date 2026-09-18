@@ -1,18 +1,12 @@
 import { getCardThumbnailAssetURL } from "$lib/assets/index";
 import type { SupportedRegion } from "$lib/domain/regions";
+import {
+  resolveCardTrained,
+  type CardTrainingMetadata
+} from "@platform/ui-shell/card-thumbnail";
 
-type CardTrainingMetadata = {
-  rarityType: string | null;
-  initialSpecialTrainingStatus?: string | null;
-};
-
-export const isTrainedOnlyCard = (card: CardTrainingMetadata): boolean =>
-  (card.rarityType === "rarity_3" || card.rarityType === "rarity_4") &&
-  card.initialSpecialTrainingStatus === "done";
-
-// Only trained-only cards override the caller's selected artwork state.
-export const resolveCardTrained = (card: CardTrainingMetadata, trained = false): boolean =>
-  isTrainedOnlyCard(card) || trained;
+export type { CardTrainingMetadata } from "@platform/ui-shell/card-thumbnail";
+export { isTrainedOnlyCard, resolveCardTrained } from "@platform/ui-shell/card-thumbnail";
 
 export const getCardThumbnailPresentation = (
   card: CardTrainingMetadata & { assetBundleName: string | null },

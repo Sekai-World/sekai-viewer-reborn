@@ -21,7 +21,7 @@
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { swipeRegion } from "$lib/actions/swipe-region";
-  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import { CardThumbnail } from "@platform/ui-shell";
   import {
     EVENT_CARD_BANNER_BODY_CLASS,
     EVENT_CARD_EMPTY_BODY_CLASS,
