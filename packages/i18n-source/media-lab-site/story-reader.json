@@ -29,7 +29,6 @@
   "storyReader.picker.loadFailed": "The story list could not be loaded. Please try again later.",
   "storyReader.picker.loading": "Loading story list…",
   "storyReader.picker.noMatch": "No stories match your search.",
-  "storyReader.picker.open": "Pick a story",
   "storyReader.picker.search": "Search by title or ID…",
   "storyReader.player.controls.autoplay": "Autoplay",
   "storyReader.player.controls.bgmVolume": "BGM",
