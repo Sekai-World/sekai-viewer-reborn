@@ -79,8 +79,16 @@
       {#if row.kind === "talk"}
         <article class="card bg-base-100 shadow-sm ring-1 ring-base-content/10">
           <div class="card-body gap-2 p-4">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <span class="badge badge-outline badge-primary">{row.name}</span>
+            <!-- Name + body form their own column so the tall voice button
+                 centers against the whole block instead of stretching the
+                 name row. -->
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex min-w-0 flex-col items-start gap-2">
+                <span class="badge badge-outline badge-primary">{row.name}</span>
+                <p class="text-base/7 whitespace-pre-wrap" class:italic={row.monologue}>
+                  {row.body}
+                </p>
+              </div>
               {#if row.voiceUrls && row.voiceUrls.length > 0}
                 <VoicePlayButton
                   sources={row.voiceUrls}
@@ -90,9 +98,6 @@
                 />
               {/if}
             </div>
-            <p class="text-base/7 whitespace-pre-wrap" class:italic={row.monologue}>
-              {row.body}
-            </p>
           </div>
         </article>
       {:else if row.kind === "background"}
