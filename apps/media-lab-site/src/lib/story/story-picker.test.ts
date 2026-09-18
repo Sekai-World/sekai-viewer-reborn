@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   isActivePickerStoryTypePath,
   isPickerStoryType,
-  pickerStoryTypes
+  pickerStoryTypes,
+  readerBackPath
 } from "./story-picker";
 
 describe("story picker types", () => {
@@ -12,6 +13,19 @@ describe("story picker types", () => {
     expect(isPickerStoryType("area-talk")).toBe(true);
     expect(isPickerStoryType("profile")).toBe(false);
     expect(isPickerStoryType("unknown")).toBe(false);
+  });
+
+  it("returns the picker list page of the story type as the reader back path", () => {
+    expect(readerBackPath("card")).toBe("/story-reader/card");
+    expect(readerBackPath("area-talk")).toBe("/story-reader/area-talk");
+    pickerStoryTypes.forEach((storyType) => {
+      expect(readerBackPath(storyType)).toBe(`/story-reader/${storyType}`);
+    });
+  });
+
+  it("falls back to the unit list for types without a picker surface", () => {
+    expect(readerBackPath("profile")).toBe("/story-reader/unit");
+    expect(readerBackPath("unknown")).toBe("/story-reader/unit");
   });
 
   it("marks the matching picker sub-page active", () => {

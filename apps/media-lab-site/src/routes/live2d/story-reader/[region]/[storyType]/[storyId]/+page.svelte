@@ -4,6 +4,7 @@
   import StoryPlayerHost from "$lib/components/story-reader/StoryPlayerHost.svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
   import type { StoryRouteStoryType } from "$lib/live2d/story-route";
+  import { readerBackPath } from "$lib/story/story-picker";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -18,6 +19,18 @@
     "area-talk": translate("storyReader.storyType.area-talk"),
     special: translate("storyReader.storyType.special"),
     profile: translate("storyReader.storyType.profile")
+  }) satisfies Record<StoryRouteStoryType, string>;
+
+  // The back link returns to the picker list page this story was opened
+  // from; profile has no picker surface and falls back to the unit list.
+  const backLabels = $derived({
+    unit: translate("storyReader.picker.backToUnits"),
+    event: translate("storyReader.picker.backToEvents"),
+    character: translate("storyReader.picker.backToCharacters"),
+    card: translate("storyReader.picker.backToCards"),
+    "area-talk": translate("storyReader.picker.backToAreas"),
+    special: translate("storyReader.picker.backToSpecials"),
+    profile: translate("storyReader.picker.backToUnits")
   }) satisfies Record<StoryRouteStoryType, string>;
 
   const subtitle = $derived(
@@ -51,8 +64,8 @@
 <section aria-labelledby="story-reader-player-title" class="flex flex-col gap-6">
   <StoryReaderHeader
     identity={data.identity}
-    backHref="/story-reader"
-    backLabel={translate("storyReader.backToModes")}
+    backHref={readerBackPath(data.identity.storyType)}
+    backLabel={backLabels[data.identity.storyType]}
     kicker={translate("storyReader.player.kicker")}
     title={translate("storyReader.player.title")}
     metaLabels={{

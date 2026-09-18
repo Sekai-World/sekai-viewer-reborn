@@ -1,5 +1,4 @@
 {
-  "storyReader.backToModes": "All StoryReader modes",
   "storyReader.landing.title": "Story Reader",
   "storyReader.meta.region": "Region",
   "storyReader.meta.storyId": "Story ID",
@@ -10,7 +9,10 @@
   "storyReader.modes.live2dPlayer.title": "Live2D Player",
   "storyReader.modes.textOnly.title": "Text-Only",
   "storyReader.picker.backToAreas": "All areas",
+  "storyReader.picker.backToCards": "All cards",
+  "storyReader.picker.backToCharacters": "All characters",
   "storyReader.picker.backToEvents": "All events",
+  "storyReader.picker.backToSpecials": "All special stories",
   "storyReader.picker.sortByStartAt": "Start date",
   "storyReader.picker.sortById": "Event ID",
   "storyReader.picker.filterUnit": "Unit",

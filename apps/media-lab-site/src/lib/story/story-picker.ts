@@ -18,6 +18,14 @@ export type PickerStoryType = (typeof pickerStoryTypes)[number];
 export const isPickerStoryType = (value: string): value is PickerStoryType =>
   (pickerStoryTypes as readonly string[]).includes(value);
 
+/**
+ * The picker list page a reader route returns to: `/story-reader/{type}`
+ * for the picker-backed types, the unit list as the fallback for types
+ * without a picker surface (deep-linked `profile` reads).
+ */
+export const readerBackPath = (storyType: string): string =>
+  isPickerStoryType(storyType) ? `/story-reader/${storyType}` : "/story-reader/unit";
+
 /** Sidebar icon for each picker story type sub-page. */
 export const pickerStoryTypeIcons: Record<PickerStoryType, string> = {
   unit: "mdi:account-group-outline",
