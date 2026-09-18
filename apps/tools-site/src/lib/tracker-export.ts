@@ -1,3 +1,5 @@
+import writeExcelFile, { type SheetData } from "write-excel-file/browser";
+
 export const TRACKER_EXPORT_SECTIONS = {
   event: "event",
   chapter: "chapter"
@@ -239,26 +241,13 @@ const getWorkbookGroups = (
   return [{ sheetName: options.sheetName ?? DEFAULT_SHEET_NAME, rows: input }];
 };
 
-const toArrayBuffer = (value: unknown): ArrayBuffer => {
-  if (value instanceof ArrayBuffer) return value;
-  if (ArrayBuffer.isView(value)) {
-    const bytes = new Uint8Array(new ArrayBuffer(value.byteLength));
-    bytes.set(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
-    return bytes.buffer;
-  }
-  throw new TypeError("The XLSX writer did not return an array buffer");
-};
-
-/** Builds an XLSX report with one friendly worksheet per non-empty logical group. */
-export const createTrackerExportWorkbookBuffer = async (
+const createTrackerExportWorkbookSheets = (
   input: TrackerExportTableInput,
-  options: TrackerExportWorkbookOptions = {}
-): Promise<ArrayBuffer> => {
-  const xlsx = await import("xlsx");
-  const workbook = xlsx.utils.book_new();
+  options: TrackerExportWorkbookOptions
+): Array<{ data: SheetData; sheet: string }> => {
+  const sheets: Array<{ data: SheetData; sheet: string }> = [];
   const columns = options.columns ?? TRACKER_EXPORT_COLUMNS;
   const usedNames = new Set<string>();
-  let hasWorksheet = false;
 
   for (const group of getWorkbookGroups(input, options)) {
     const rows = createTrackerExportRows(group.rows);
@@ -267,27 +256,30 @@ export const createTrackerExportWorkbookBuffer = async (
     const requestedName = group.sheetName?.trim() || group.label?.trim() || DEFAULT_SHEET_NAME;
     const sheetName = createUniqueSheetName(requestedName, usedNames);
     usedNames.add(sheetName.toLocaleLowerCase());
-    const worksheet = xlsx.utils.aoa_to_sheet(createTrackerExportSheetRows(rows, columns));
-    xlsx.utils.book_append_sheet(workbook, worksheet, sheetName);
-    hasWorksheet = true;
+    sheets.push({
+      data: createTrackerExportSheetRows(rows, columns),
+      sheet: sheetName
+    });
   }
 
-  // XLSX requires at least one worksheet. Keep an empty report valid without
-  // inventing a worksheet for any empty logical group.
-  if (!hasWorksheet) {
-    const sheetName = createUniqueSheetName(options.sheetName ?? DEFAULT_SHEET_NAME, usedNames);
-    const worksheet = xlsx.utils.aoa_to_sheet([columns.map(({ label }) => label)]);
-    xlsx.utils.book_append_sheet(workbook, worksheet, sheetName);
-  }
-
-  return toArrayBuffer(xlsx.write(workbook, { bookType: "xlsx", type: "array" }));
+  return sheets;
 };
 
-/** Creates a browser-downloadable XLSX Blob from the same report data. */
+/** Builds an XLSX report, or null when no logical group contains rows. */
+export const createTrackerExportWorkbookBuffer = async (
+  input: TrackerExportTableInput,
+  options: TrackerExportWorkbookOptions = {}
+): Promise<ArrayBuffer | null> => {
+  const blob = await createTrackerExportWorkbookBlob(input, options);
+  return blob?.arrayBuffer() ?? null;
+};
+
+/** Creates a browser-downloadable XLSX Blob, or null when the report has no rows. */
 export const createTrackerExportWorkbookBlob = async (
   input: TrackerExportTableInput,
   options: TrackerExportWorkbookOptions = {}
-): Promise<Blob> => {
-  const buffer = await createTrackerExportWorkbookBuffer(input, options);
-  return new Blob([buffer], { type: TRACKER_EXPORT_XLSX_MIME_TYPE });
+): Promise<Blob | null> => {
+  const sheets = createTrackerExportWorkbookSheets(input, options);
+  if (sheets.length === 0) return null;
+  return writeExcelFile(sheets).toBlob();
 };

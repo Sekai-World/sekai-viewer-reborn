@@ -167,6 +167,7 @@
   let exportChapterSelectionInitialized = $state(false);
   let exportStatus = $state<"idle" | "loading" | "error">("idle");
   let exportError = $state("");
+  let exportWarning = $state("");
   let exportRequestToken = 0;
   const eventSearchCache = new SvelteMap<string, EventSearchResponse>();
   const eventSearchInFlight = new SvelteMap<string, Promise<EventSearchResponse>>();
@@ -511,13 +512,13 @@
   const selectedTimePoint = $derived(timePoints[timePointIndex] ?? null);
   const rankingLoading = $derived(isRefreshing || snapshotStatus === "loading");
   const exportableRows = $derived(rows.filter((row) => row.status === "available"));
-  const canExportCsv = $derived(
+  const canOpenExport = $derived(
     trackerStatus === "available" &&
       !rankingLoading &&
       snapshotStatus === "idle" &&
-      (!snapshotTimestamp || snapshotRankings !== null) &&
-      exportableRows.length > 0
+      (!snapshotTimestamp || snapshotRankings !== null)
   );
+  const canExportCsv = $derived(canOpenExport && exportableRows.length > 0);
   const sortedGraphPoints = $derived(sortTrackerRatePoints(graphPoints));
   const recentRateTarget = $derived(activeGraphPoint ?? sortedGraphPoints.at(-1) ?? null);
   const recentRates = $derived(calculateRecentRates(graphPoints, recentRateTarget));
@@ -1257,7 +1258,7 @@
     isExportMenuOpen = false;
   };
   const toggleExportMenu = (): void => {
-    if (!canExportCsv) return;
+    if (!canOpenExport) return;
     isExportMenuOpen = !isExportMenuOpen;
   };
   const handleExportTriggerKeydown = (event: KeyboardEvent): void => {
@@ -1269,7 +1270,9 @@
     if (event.key === "ArrowDown" && !isExportMenuOpen) {
       event.preventDefault();
       toggleExportMenu();
-      void tick().then(() => exportMenu?.querySelector<HTMLButtonElement>("button")?.focus());
+      void tick().then(() =>
+        exportMenu?.querySelector<HTMLButtonElement>("button:not(:disabled)")?.focus()
+      );
     }
   };
   const initializeExportChapterSelection = (): void => {
@@ -1283,21 +1286,24 @@
     exportChapterSelectionInitialized = true;
   };
   const openExport = (format: "copy" | "csv" | "xlsx"): void => {
-    if (!canExportCsv) return;
+    if (!canOpenExport) return;
     closeExportMenu();
     exportFormat = format;
     exportError = "";
+    exportWarning = "";
     initializeExportChapterSelection();
     exportDialog?.showModal();
   };
   const closeExport = (): void => {
     exportRequestToken += 1;
     exportStatus = "idle";
+    exportWarning = "";
     if (exportDialog?.open) exportDialog.close();
   };
   const handleExportDialogClose = (): void => {
     exportRequestToken += 1;
     exportStatus = "idle";
+    exportWarning = "";
     exportOpenButton?.focus();
   };
   const downloadBlob = (blob: Blob, extension: string): void => {
@@ -1356,10 +1362,11 @@
     return [...new Set(points)];
   };
   const performExport = async (): Promise<void> => {
-    if (!canExportCsv) return;
+    if (!canOpenExport) return;
     const token = ++exportRequestToken;
     exportStatus = "loading";
     exportError = "";
+    exportWarning = "";
     try {
       const report = await buildExportReport(token);
       if (exportFormat === "copy") {
@@ -1373,10 +1380,15 @@
           "csv"
         );
       } else {
-        downloadBlob(
-          await createTrackerExportWorkbookBlob(report, { sheetName: "tracker" }),
-          "xlsx"
-        );
+        const blob = await createTrackerExportWorkbookBlob(report, { sheetName: "tracker" });
+        if (!blob) {
+          if (token === exportRequestToken) {
+            exportStatus = "idle";
+            exportWarning = translate("tracker.exportNoRows");
+          }
+          return;
+        }
+        downloadBlob(blob, "xlsx");
       }
       closeExport();
     } catch (error) {
@@ -1895,7 +1907,7 @@
             aria-controls="tracker-export-menu"
             onclick={toggleExportMenu}
             onkeydown={handleExportTriggerKeydown}
-            disabled={!canExportCsv}
+            disabled={!canOpenExport}
           >
             <Icon icon="mdi:download" class="size-4 shrink-0" aria-hidden="true" />{translate(
               "tracker.export"
@@ -1911,12 +1923,22 @@
               onkeydown={handleExportMenuKeydown}
             >
               <li>
-                <button type="button" role="menuitem" onclick={() => openExport("copy")}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onclick={() => openExport("copy")}
+                  disabled={!canExportCsv}
+                >
                   <Icon icon="mdi:content-copy" aria-hidden="true" />{translate("tracker.copyCsv")}
                 </button>
               </li>
               <li>
-                <button type="button" role="menuitem" onclick={() => openExport("csv")}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onclick={() => openExport("csv")}
+                  disabled={!canExportCsv}
+                >
                   <Icon icon="mdi:file-delimited" aria-hidden="true" />{translate(
                     "tracker.downloadCsv"
                   )}
@@ -2405,6 +2427,9 @@
       <p class="tracker-export-status" role="status" aria-live="polite">
         {translate("tracker.preparingExport")}
       </p>
+    {/if}
+    {#if exportWarning}
+      <p class="alert alert-warning" role="status" aria-live="polite">{exportWarning}</p>
     {/if}
     {#if exportError}
       <p class="alert alert-error" role="alert">{exportError}</p>

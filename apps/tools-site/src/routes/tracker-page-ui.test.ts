@@ -1030,7 +1030,9 @@ describe("tracker page UI contract", () => {
     );
     expect(exportSource).not.toContain("source:");
     expect(source).toContain("else selectedChapterId = null;");
-    expect(source).toContain("if (!canExportCsv) return;");
+    expect(source).toContain("if (!canOpenExport) return;");
+    expect(source).toContain('exportWarning = translate("tracker.exportNoRows");');
+    expect(source).toContain('class="alert alert-warning"');
     expect(source).toContain('disabled={exportStatus === "loading"}');
   });
 

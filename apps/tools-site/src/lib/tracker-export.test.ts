@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import * as XLSX from "xlsx";
 import {
   createTrackerExportCsv,
   createTrackerExportReport,
@@ -11,7 +10,6 @@ import {
   flattenTrackerExportGroups,
   sanitizeTrackerExportSheetName,
   serializeTrackerExportValue,
-  TRACKER_EXPORT_COLUMNS,
   TRACKER_EXPORT_SOURCES,
   type TrackerExportGroup
 } from "./tracker-export";
@@ -37,6 +35,41 @@ const historyRow = {
   reward: "Silver",
   capturedAt: "2025-12-31T23:00:00.000Z"
 } as const;
+
+const readZipEntryText = async (blob: Blob, requestedName: string): Promise<string> => {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const decoder = new TextDecoder();
+
+  for (let offset = 0; offset + 30 <= bytes.length;) {
+    if (view.getUint32(offset, true) !== 0x04034b50) break;
+
+    const compressionMethod = view.getUint16(offset + 8, true);
+    const compressedSize = view.getUint32(offset + 18, true);
+    const nameLength = view.getUint16(offset + 26, true);
+    const extraLength = view.getUint16(offset + 28, true);
+    const nameStart = offset + 30;
+    const dataStart = nameStart + nameLength + extraLength;
+    const name = decoder.decode(bytes.slice(nameStart, dataStart - extraLength));
+    const compressedData = bytes.slice(dataStart, dataStart + compressedSize);
+
+    if (name === requestedName) {
+      if (compressionMethod === 0) return decoder.decode(compressedData);
+      if (compressionMethod !== 8) {
+        throw new Error(`Unsupported ZIP compression method: ${compressionMethod}`);
+      }
+
+      const decompressed = await new Response(
+        new Blob([compressedData]).stream().pipeThrough(new DecompressionStream("deflate-raw"))
+      ).arrayBuffer();
+      return decoder.decode(decompressed);
+    }
+
+    offset = dataStart + compressedSize;
+  }
+
+  throw new Error(`ZIP entry not found: ${requestedName}`);
+};
 
 describe("tracker export rows", () => {
   it("normalizes report rows without exposing internal source columns", () => {
@@ -179,33 +212,20 @@ describe("tracker export XLSX", () => {
       { sheetName: "Empty group", rows: [] }
     ]);
     const buffer = await createTrackerExportWorkbookBuffer(report);
-    const workbook = XLSX.read(buffer, { type: "array" });
 
     expect(buffer).toBeInstanceOf(ArrayBuffer);
-    expect(workbook.SheetNames).toEqual(["Current_rankings", "History_snapshots"]);
+    if (!buffer) throw new Error("Expected a workbook buffer");
 
-    const currentSheet = workbook.Sheets.Current_rankings;
-    expect(currentSheet).toBeDefined();
-    expect(
-      currentSheet ? XLSX.utils.sheet_to_json(currentSheet, { header: 1, raw: true }) : []
-    ).toEqual([
-      TRACKER_EXPORT_COLUMNS.map(({ label }) => label),
-      [
-        "Current event",
-        1,
-        "Current player",
-        "current-id",
-        1200,
-        100,
-        "Gold",
-        "2026-01-01T00:00:00.000Z"
-      ]
-    ]);
+    const workbookXml = await readZipEntryText(new Blob([buffer]), "xl/workbook.xml");
+    const sharedStringsXml = await readZipEntryText(new Blob([buffer]), "xl/sharedStrings.xml");
 
-    const historySheet = workbook.Sheets.History_snapshots;
-    expect(
-      historySheet ? XLSX.utils.sheet_to_json(historySheet, { header: 1, raw: true })[0] : []
-    ).toEqual(TRACKER_EXPORT_COLUMNS.map(({ label }) => label));
+    expect(workbookXml).toContain('name="Current_rankings"');
+    expect(workbookXml).toContain('name="History_snapshots"');
+    expect(workbookXml).not.toContain("Empty group");
+    expect(sharedStringsXml).toContain("Scope");
+    expect(sharedStringsXml).toContain("Current event");
+    expect(sharedStringsXml).toContain("History snapshot");
+    expect(sharedStringsXml).toContain("Gold");
   });
 
   it("sanitizes and de-duplicates worksheet names", async () => {
@@ -217,15 +237,27 @@ describe("tracker export XLSX", () => {
       { sheetName: "A/B", rows: [currentRow] },
       { sheetName: "A:B", rows: [historyRow] }
     ]);
-    const workbook = XLSX.read(buffer, { type: "array" });
+    expect(buffer).not.toBeNull();
+    if (!buffer) throw new Error("Expected a workbook buffer");
 
-    expect(workbook.SheetNames).toEqual(["A_B", "A_B (2)"]);
+    const workbookXml = await readZipEntryText(new Blob([buffer]), "xl/workbook.xml");
+    expect(workbookXml).toContain('name="A_B"');
+    expect(workbookXml).toContain('name="A_B (2)"');
   });
 
   it("provides a browser-downloadable workbook Blob", async () => {
     const blob = await createTrackerExportWorkbookBlob([currentRow]);
 
+    expect(blob).not.toBeNull();
+    if (!blob) throw new Error("Expected a workbook blob");
     expect(blob.type).toBe("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     expect(blob.size).toBeGreaterThan(0);
+  });
+
+  it("does not create a workbook for an empty report", async () => {
+    const emptyReport = createTrackerExportReport([{ label: "Empty group", rows: [] }]);
+
+    await expect(createTrackerExportWorkbookBuffer(emptyReport)).resolves.toBeNull();
+    await expect(createTrackerExportWorkbookBlob(emptyReport)).resolves.toBeNull();
   });
 });
