@@ -93,7 +93,7 @@
                  name row. -->
             <div class="flex items-center justify-between gap-2">
               <div class="flex min-w-0 flex-col items-start gap-2">
-                <span class="badge badge-outline badge-primary gap-1.5">
+                <div class="flex items-center gap-1.5">
                   {#if row.characterId}
                     {@const avatarUrl = localCharacterAvatarUrl(row.characterId)}
                     {#if avatarUrl}
@@ -101,12 +101,12 @@
                         src={avatarUrl}
                         alt=""
                         loading="lazy"
-                        class="size-5 rounded-full object-cover object-top"
+                        class="size-6 shrink-0 rounded-full object-cover object-top"
                       />
                     {/if}
                   {/if}
-                  {row.name}
-                </span>
+                  <span class="badge badge-outline badge-primary">{row.name}</span>
+                </div>
                 <p class="text-base/7 whitespace-pre-wrap" class:italic={row.monologue}>
                   {row.body}
                 </p>

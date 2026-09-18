@@ -73,8 +73,9 @@ describe("StoryTextRows", () => {
   it("renders the talk line with a ring voice toggle that plays the first source", async () => {
     const { container } = render(StoryTextRows, { rows: [rows[2]], labels });
 
-    const badge = container.querySelector("span.badge");
-    expect(badge?.querySelector("img")?.getAttribute("src")).toBe("/chr_ts/chr_ts_5_g1.png");
+    const avatar = container.querySelector("article img");
+    expect(avatar?.getAttribute("src")).toBe("/chr_ts/chr_ts_5_g1.png");
+    expect(avatar?.nextElementSibling?.classList.contains("badge")).toBe(true);
 
     await fireEvent.click(screen.getByRole("button", { name: "Play voice" }));
 
@@ -90,7 +91,7 @@ describe("StoryTextRows", () => {
       StoryTextRows,
       { rows: [{ ...rows[2], characterId: 50 }], labels }
     );
-    expect(container.querySelector("span.badge img")).toBeNull();
+    expect(container.querySelector("article img")).toBeNull();
   });
 
   it("falls through to the part-voice fallback and then reports unavailable", async () => {
