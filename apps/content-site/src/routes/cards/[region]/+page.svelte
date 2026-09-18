@@ -2,12 +2,19 @@
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
+  import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { untrack } from "svelte";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { swipeRegion } from "$lib/actions/swipe-region";
   import { toTimestampMs } from "$lib/time/date-time";
+  import {
+    DEFAULT_CARD_LIST_VIEW_MODE,
+    getCardListViewFromSearchParams,
+    type CardListViewMode,
+    withCardListView
+  } from "$lib/card-list-view";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
@@ -48,7 +55,6 @@
   };
   type CardListSortBy = "releaseAt" | "id";
   type CardListSortOrder = "asc" | "desc";
-  type CardListViewMode = "grid" | "agenda" | "comfy";
 
   type CardListPageData = Omit<PageData, "initialQuery" | "filterMeta"> & {
     initialQuery: CardListQueryState;
@@ -103,8 +109,10 @@
   let filterSupportUnitDraft = $state<string[]>([]);
   let has3dmvCutInDraft = $state(false);
   let filterDialog: HTMLDialogElement | null = $state(null);
-  let viewMode = $state<CardListViewMode>("grid");
-  let hasTriedRestoreViewMode = $state(false);
+  const getUrlViewMode = (): CardListViewMode | null =>
+    getCardListViewFromSearchParams(page.url.searchParams);
+  let viewMode = $state<CardListViewMode>(getUrlViewMode() ?? DEFAULT_CARD_LIST_VIEW_MODE);
+  let viewModeNavigationKey = $state<string | null>(null);
   let spoilerContentAppliedState = $state<boolean | null>(null);
   let homeLabel = $state(getInitialI18nText("home"));
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -537,12 +545,21 @@
   });
 
   $effect(() => {
-    if (!browser || hasTriedRestoreViewMode) {
+    if (!browser) {
       return;
     }
 
-    hasTriedRestoreViewMode = true;
-    restorePersistedViewMode();
+    const urlViewMode = getUrlViewMode();
+    const navigationKey = `${page.url.pathname}:${urlViewMode ?? "none"}`;
+    if (viewModeNavigationKey === navigationKey) {
+      return;
+    }
+
+    viewModeNavigationKey = navigationKey;
+    viewMode = urlViewMode ?? DEFAULT_CARD_LIST_VIEW_MODE;
+    if (urlViewMode === null) {
+      restorePersistedViewMode();
+    }
   });
 
   $effect(() => {
@@ -761,6 +778,9 @@
     return `${resolve("/cards/[region]/data", { region: data.region })}?${searchParams.toString()}`;
   };
 
+  const getViewModeForNavigation = (): CardListViewMode | null =>
+    getUrlViewMode() ?? (viewMode === DEFAULT_CARD_LIST_VIEW_MODE ? null : viewMode);
+
   const syncPageUrl = (): void => {
     if (!browser) {
       return;
@@ -771,7 +791,16 @@
     const pathname = resolve("/cards/[region]", { region: data.region });
     const query = searchParams.toString();
     const nextUrl = query.length > 0 ? `${pathname}?${query}` : pathname;
-    replaceState(nextUrl, {});
+    replaceState(withCardListView(nextUrl, getViewModeForNavigation()), {});
+  };
+
+  const syncViewUrl = (nextViewMode: CardListViewMode): void => {
+    if (!browser) {
+      return;
+    }
+
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    replaceState(withCardListView(currentUrl, nextViewMode), {});
   };
 
   const getBreadcrumbItems = () => [
@@ -789,11 +818,15 @@
     searchParams.delete("page");
     const query = searchParams.toString();
     const pathname = resolve("/cards/[region]", { region });
-    return query.length > 0 ? `${pathname}?${query}` : pathname;
+    const href = query.length > 0 ? `${pathname}?${query}` : pathname;
+    return withCardListView(href, getViewModeForNavigation());
   };
 
   const getCardDetailHref = (item: CardListItem): string =>
-    resolve("/card/[region]/[id]", { region: data.region, id: item.id });
+    withCardListView(
+      resolve("/card/[region]/[id]", { region: data.region, id: item.id }),
+      getViewModeForNavigation()
+    );
 
   const getRegionBadgeOptions = (): RegionBadgeOption[] =>
     supportedRegions.map((regionOption) =>
@@ -906,6 +939,7 @@
   const setViewMode = (nextViewMode: CardListViewMode): void => {
     viewMode = nextViewMode;
     persistViewMode();
+    syncViewUrl(nextViewMode);
   };
 
   const openFilterDialog = (): void => {

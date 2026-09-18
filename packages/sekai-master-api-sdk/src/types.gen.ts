@@ -2386,6 +2386,10 @@ export type GetGachasByRegionListData = {
          */
         spoiler?: boolean;
         /**
+         * Only include gachas active now (startAt <= now <= endAt)
+         */
+        ongoing?: boolean;
+        /**
          * Sort field (id|startAt)
          */
         sort_by?: string;
