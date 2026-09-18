@@ -881,7 +881,7 @@ describe("tracker page UI contract", () => {
       "selectedChapterRows = createChapterRows(chapter.result.rankings, selectedLadder);"
     );
     expect(source).toContain("reward: getReward(row.rank)");
-    expect(source).toContain("calculateRankingElapsedMs");
+    expect(source).toContain("speedPerHour: calculateChapterRowSpeed({");
     expect(source).not.toContain("speedPerHour: null");
     expect(source).not.toContain("reward: null");
     expect(source).toContain('class="table tracker-table"');
@@ -948,23 +948,19 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("goalTargetRankControl?.focus()");
     expect(source).toContain("onsubmit={submitGoal}");
     expect(source).toContain("goalResult = calculateTrackerGoalPlan({");
-    expect(actions.match(/<button\b/g)).toHaveLength(7);
+    expect(actions.match(/<button\b/g)).toHaveLength(3);
     for (const icon of [
       "mdi:history",
       "mdi:calculator-variant",
-      "mdi:download",
       "mdi:share-variant-outline"
     ]) {
       expect(actions).toMatch(
         new RegExp(`<Icon\\s+icon="${icon}"\\s+class="size-4 shrink-0"\\s+aria-hidden="true"\\s*/>`)
       );
     }
-    expect(actions).toContain('onclick={() => openExport("csv")}');
-    expect(actions).toContain('aria-haspopup="dialog"');
-    expect(actions).toContain('role="menuitem"');
-    expect(actions).toContain('openExport("copy")');
-    expect(actions).toContain('openExport("xlsx")');
-    expect(actions).toContain("disabled={!canExportCsv}");
+    expect(actions).not.toContain("tracker-export");
+    expect(actions).not.toContain("openExport");
+    expect(actions).not.toContain("mdi:download");
     expect(actions).toContain("onclick={shareTracker}");
     expect(actions).toContain("aria-expanded={isTimeTravelActive}");
     expect(actions).toContain('aria-controls="tracker-time-travel-controls"');
@@ -985,55 +981,18 @@ describe("tracker page UI contract", () => {
     expect(buttonStyles).toContain("line-height: 1.25;");
   });
 
-  it("keeps export rows faithful to snapshots and optional World Link chapters", async () => {
+  it("hides tracker export controls and keeps the export library out of the page", async () => {
     const source = await readFile(pagePath, "utf8");
 
-    expect(source).toContain(
-      'const exportableRows = $derived(rows.filter((row) => row.status === "available"));'
-    );
-    expect(source).toContain("snapshotRankings !== null && snapshotTimestamp !== null");
-    expect(source).toContain("speedPerHour: row.speedPerHour");
-    expect(source).toContain("reward: formatRewardRange(row.reward)");
-    expect(source).toContain("capturedAt: capturedAt ?? row.ranking?.timestamp ?? null");
-    expect(source).toContain("startAt: selectedEvent?.startAt");
-    expect(source).toContain(
-      "const rows = createEventSnapshotExportRows(payload.rankings, timestamp);"
-    );
-    expect(source).toContain("timestamp !== snapshotTimestamp");
-    expect(source).toContain("const EXPORT_HISTORY_CONCURRENCY = 4;");
-    expect(source).toContain(
-      "return mapWithConcurrency(timestamps, EXPORT_HISTORY_CONCURRENCY, async (timestamp) => {"
-    );
-    expect(source).toContain("results[index] = await mapper(items[index]!, index);");
-    expect(source).not.toContain("Promise.all(\n      historyTimePoints.map");
-    expect(source).toContain("createChapterRows(result.rankings, ladder)");
-    expect(source).toContain("calculateScorePerElapsedHour({");
-    expect(source).toContain("reward: formatRewardRange(getReward(row.rank))");
-    expect(source).toContain(
-      'const currentScope = isSelectedSnapshot ? "History snapshot" : "Current event";'
-    );
-    expect(source).toContain("scope,");
-    expect(source).toContain("scope: chapterLabel");
-    expect(source).toContain('const chapterLabel = interpolate("tracker.chapter"');
-    expect(source).toContain("const chapterExportGroups = (): TrackerExportGroup[] =>");
-    expect(source).toContain(
-      "createTrackerExportReport([currentGroup, ...history, ...chapterExportGroups()])"
-    );
-    expect(source).toContain("sheetName: `History ${timestamp}`");
-    expect(source).toContain("player: row.userName ?? row.userId ?? null");
-    expect(source).toContain("createTrackerExportCsv(report)");
-    expect(source).toContain('createTrackerExportWorkbookBlob(report, { sheetName: "tracker" })');
-    expect(source).not.toContain('section: "event"');
-    const exportSource = source.slice(
-      source.indexOf("const exportableRows"),
-      source.indexOf("const closeExportMenu")
-    );
-    expect(exportSource).not.toContain("source:");
-    expect(source).toContain("else selectedChapterId = null;");
-    expect(source).toContain("if (!canOpenExport) return;");
-    expect(source).toContain('exportWarning = translate("tracker.exportNoRows");');
-    expect(source).toContain('class="alert alert-warning"');
-    expect(source).toContain('disabled={exportStatus === "loading"}');
+    expect(source).not.toContain("$lib/tracker-export");
+    expect(source).not.toContain("tracker-export");
+    expect(source).not.toContain("exportOpenButton");
+    expect(source).not.toContain("exportMenu");
+    expect(source).not.toContain("openExport");
+    expect(source).not.toContain("performExport");
+    expect(source).toContain("onclick={toggleTimeTravel}");
+    expect(source).toContain("onclick={openGoalCalculator}");
+    expect(source).toContain("onclick={shareTracker}");
   });
 
   it("gates tracker content until streamed metadata settles for live and history", async () => {

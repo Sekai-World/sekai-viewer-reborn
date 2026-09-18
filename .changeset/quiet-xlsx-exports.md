@@ -2,4 +2,4 @@
 "@apps/tools-site": minor
 ---
 
-Replace tracker XLSX exports with `write-excel-file` and warn instead of downloading an empty report.
+Hide the tracker data export controls while the export format is being reconsidered.
