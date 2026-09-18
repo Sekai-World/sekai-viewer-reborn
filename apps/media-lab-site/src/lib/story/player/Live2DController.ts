@@ -14,6 +14,7 @@ import type {
 } from "./player-types";
 
 import single_action from "./action";
+import { parseSimpleSelectableChoices } from "./action/special_effect/SimpleSelectable";
 
 export class Live2DController extends Live2DPlayer {
   scenarioData: IScenarioData;
@@ -35,6 +36,17 @@ export class Live2DController extends Live2DPlayer {
   }[] = [];
 
   step = 0;
+  /**
+   * Choice labels when playback is parked on a SimpleSelectable effect (the
+   * snippet at the current step); null at any other position.
+   */
+  get pending_selectable(): string[] | null {
+    const action = this.scenarioData.Snippets[this.step];
+    if (!action || action.Action !== SnippetAction.SpecialEffect) return null;
+    const detail = this.scenarioData.SpecialEffectData[action.ReferenceIndex];
+    if (!detail || detail.EffectType !== SpecialEffectType.SimpleSelectable) return null;
+    return parseSimpleSelectableChoices(detail.StringVal);
+  }
   /**
    * Set by step_until_checkpoint while silently replaying to a previous
    * checkpoint (go-back): skips delays, voices, and SEs so the visual state
@@ -168,6 +180,9 @@ export class Live2DController extends Live2DPlayer {
           if (action_detail.EffectType === SpecialEffectType.Telop) {
             return true;
           } else if (action_detail.EffectType === SpecialEffectType.FullScreenText) {
+            return true;
+          } else if (action_detail.EffectType === SpecialEffectType.SimpleSelectable) {
+            // Park until the viewer picks a choice in the host UI.
             return true;
           }
         }

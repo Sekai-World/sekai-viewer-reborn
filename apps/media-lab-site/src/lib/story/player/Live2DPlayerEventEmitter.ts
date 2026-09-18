@@ -1,5 +1,7 @@
 export interface Live2DPlayerEvents {
   warn: (msg: string) => void;
+  /** A SimpleSelectable effect parked playback with these choice labels. */
+  selectable: (choices: string[]) => void;
 }
 
 export class Live2DPlayerEventEmitter {
@@ -22,10 +24,11 @@ export class Live2DPlayerEventEmitter {
     event: E,
     listener: Live2DPlayerEvents[E]
   ): this {
-    if (this.listeners[event]) {
-      this.listeners[event] = this.listeners[event].filter(
+    const current = this.listeners[event];
+    if (current) {
+      this.listeners[event] = current.filter(
         (l) => l !== listener
-      ) as Live2DPlayerEvents[E][];
+      ) as typeof current;
     }
     return this;
   }

@@ -84,6 +84,12 @@
   let voiceVolume = $state(0.8);
   let bgmVolume = $state(0.5);
   let seVolume = $state(0.8);
+  // SimpleSelectable overlay: the parked effect's choice labels; the picked
+  // one highlights briefly before playback resumes. The choice is purely
+  // cosmetic — the scenario carries no branch data behind it.
+  let selectableChoices = $state<string[] | null>(null);
+  let chosenChoice = $state<number | null>(null);
+  let selectableTimer: ReturnType<typeof setTimeout> | null = null;
 
   const voiceCharacterLookup = new Map(
     voiceCharacters.map((entry) => [
@@ -100,6 +106,25 @@
 
   const pushWarning = (reason: string): void => {
     warnings = [...warnings.slice(-9), reason];
+  };
+
+  const dismissSelectable = (): void => {
+    if (selectableTimer !== null) {
+      clearTimeout(selectableTimer);
+      selectableTimer = null;
+    }
+    selectableChoices = null;
+    chosenChoice = null;
+  };
+
+  const chooseSelectable = (index: number): void => {
+    if (!selectableChoices || chosenChoice !== null) return;
+    chosenChoice = index;
+    selectableTimer = setTimeout(() => {
+      selectableTimer = null;
+      dismissSelectable();
+      void session?.nextStep();
+    }, 600);
   };
 
   /* Fullscreen playback on the stage container; locking the orientation to
@@ -195,6 +220,10 @@
             onWarning: pushWarning,
             onStateChange: (state) => {
               playerState = state;
+            },
+            onSelectable: (choices) => {
+              selectableChoices = choices;
+              chosenChoice = null;
             }
           }
         });
@@ -231,6 +260,10 @@
     return () => {
       portraitQuery.removeEventListener("change", syncPortrait);
       document.removeEventListener("fullscreenchange", syncFullscreen);
+      if (selectableTimer !== null) {
+        clearTimeout(selectableTimer);
+        selectableTimer = null;
+      }
       observer?.disconnect();
       instance?.destroy();
       session = null;
@@ -341,7 +374,10 @@
           class="grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 disabled:cursor-default disabled:opacity-40"
           aria-label={labels.previous}
           title={labels.previous}
-          onclick={() => void session?.prevStep()}
+          onclick={() => {
+            dismissSelectable();
+            void session?.prevStep();
+          }}
           disabled={!session || !session.canGoBack || loadFailed}
         >
           <Icon icon="mdi:skip-previous" class="size-5" aria-hidden="true" />
@@ -369,7 +405,11 @@
           class="grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 disabled:cursor-default disabled:opacity-40"
           aria-label={labels.next}
           title={labels.next}
-          onclick={() => (playerState === "playing" ? session?.abort() : session?.nextStep())}
+          onclick={() => {
+            dismissSelectable();
+            if (playerState === "playing") session?.abort();
+            else void session?.nextStep();
+          }}
           disabled={!session || playerState === "finished" || loadFailed}
         >
           <Icon icon="mdi:skip-next" class="size-5" aria-hidden="true" />
@@ -384,6 +424,28 @@
         >
           <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} class="size-5" aria-hidden="true" />
         </button>
+      </div>
+    {/if}
+    <!-- Choices surface only once the parked step fully settled (voices
+         included): picking while the engine is still busy would get the
+         follow-up nextStep dropped by its busy guard. -->
+    {#if selectableChoices && playerState === "ready"}
+      <div class="absolute inset-0 z-5 grid place-items-center bg-black/45 px-4">
+        <div class="flex max-w-full flex-col items-center gap-2">
+          {#each selectableChoices as choice, index (choice)}
+            <button
+              type="button"
+              class={`max-w-xs truncate rounded-full px-5 py-2 text-sm backdrop-blur-sm transition-colors ${
+                chosenChoice === index
+                  ? "bg-primary text-primary-content"
+                  : "bg-black/60 text-white hover:bg-black/80"
+              }`}
+              onclick={() => chooseSelectable(index)}
+            >
+              {choice}
+            </button>
+          {/each}
+        </div>
       </div>
     {/if}
     {#if loadFailed}
@@ -460,7 +522,7 @@
         >
           AUTO
         </span>
-      {:else if playerState === "ready"}
+      {:else if playerState === "ready" && !selectableChoices}
         <span
           class="pointer-events-none absolute right-3 bottom-3 rounded bg-black/45 px-2 py-0.5 text-xs text-white/80 backdrop-blur-sm"
           aria-hidden="true"

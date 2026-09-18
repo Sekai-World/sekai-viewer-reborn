@@ -35,6 +35,8 @@ export interface StoryPlayerSessionCallbacks {
   onProgress: ILive2DLoadProgressHandler;
   onWarning: (reason: string) => void;
   onStateChange: (state: StoryPlayerSessionState) => void;
+  /** SimpleSelectable choices parked playback; null once cleared. */
+  onSelectable: (choices: string[] | null) => void;
 }
 
 export interface StoryPlayerSessionOptions {
@@ -191,6 +193,9 @@ export const createStoryPlayerSession = async (
 
     controller = new Live2DController(created, stageSize, controllerData);
     controller.events.on("warn", callbacks.onWarning);
+    controller.events.on("selectable", (choices) => {
+      if (!destroyed) callbacks.onSelectable(choices);
+    });
     controller.set_volume({
       voice_volume: settings.voiceVolume,
       bgm_volume: settings.bgmVolume,
@@ -227,6 +232,8 @@ export const createStoryPlayerSession = async (
 
   const scheduleAutoplay = (): void => {
     if (!autoplay || destroyed || state === "finished") return;
+    // A parked SimpleSelectable waits for the viewer's pick.
+    if (controller?.pending_selectable) return;
     if (autoplayTimer !== null) clearTimeout(autoplayTimer);
     autoplayTimer = setTimeout(() => {
       autoplayTimer = null;
@@ -290,6 +297,10 @@ export const createStoryPlayerSession = async (
         if (destroyed) return;
         controller.step = target;
         checkpointHistory.pop();
+        // Landing back on a SimpleSelectable re-parks here; the silent
+        // replay suppressed the SE's own event, so re-expose the choices.
+        const parked = controller.pending_selectable;
+        if (parked) controller.events.emit("selectable", parked);
         setState("ready");
         scheduleAutoplay();
       } finally {

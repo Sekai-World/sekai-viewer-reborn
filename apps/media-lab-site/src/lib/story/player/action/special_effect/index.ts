@@ -32,6 +32,7 @@ import BlackWipeInBottom from "./BlackWipeInBottom";
 import BlackWipeOutBottom from "./BlackWipeOutBottom";
 import SekaiIn from "./SekaiIn";
 import SekaiOut from "./SekaiOut";
+import SimpleSelectable from "./SimpleSelectable";
 import FullScreenText from "./FullScreenText";
 import FullScreenTextShow from "./FullScreenTextShow";
 import FullScreenTextHide from "./FullScreenTextHide";
@@ -137,6 +138,9 @@ export default async function action_se(
       break;
     case SpecialEffectType.SekaiOut:
       await SekaiOut(controller, action);
+      break;
+    case SpecialEffectType.SimpleSelectable:
+      await SimpleSelectable(controller, action);
       break;
     case SpecialEffectType.FullScreenText:
       await FullScreenText(controller, action);
