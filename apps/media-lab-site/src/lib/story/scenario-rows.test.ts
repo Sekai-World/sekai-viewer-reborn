@@ -138,10 +138,31 @@ describe("flattenScenarioToRows", () => {
         kind: "talk",
         name: "星乃一歌",
         body: "こんにちは",
+        characterId: 1,
         voicePaths: ["sound/scenario/voice/mmj_01_00/voice_a_01.mp3"],
         monologue: false
       }
     ]);
+  });
+
+  it("resolves the speaker's game character id and leaves mob speakers without one", () => {
+    const scenario = buildScenario({
+      Snippets: [snippet(SnippetAction.Talk, 0), snippet(SnippetAction.Talk, 1)],
+      TalkData: [
+        buildTalkData({ Body: "いちか" }),
+        buildTalkData({
+          TalkCharacters: [{ Character2dId: 1 }],
+          WindowDisplayName: "モブ子",
+          Body: "モブ"
+        })
+      ]
+    });
+    const document_ = flattenScenarioToRows(scenario, names, voiceCharacters, {
+      isCardStory: false,
+      isActionSet: false
+    });
+    expect(document_.rows[0]).toMatchObject({ name: "星乃一歌", characterId: 1 });
+    expect(document_.rows[1]).toMatchObject({ name: "モブ子", characterId: undefined });
   });
 
   it("marks monologues and adds part-voice fallbacks for partvoice ids", () => {

@@ -43,6 +43,7 @@ const rows: StoryTextRowView[] = [
     kind: "talk",
     name: "花里みのり",
     body: "こんにちは！",
+    characterId: 5,
     voiceUrls: ["/storage/voice.mp3", "/storage/partvoice.mp3"]
   },
   { kind: "se", stop: true },
@@ -72,6 +73,9 @@ describe("StoryTextRows", () => {
   it("renders the talk line with a ring voice toggle that plays the first source", async () => {
     const { container } = render(StoryTextRows, { rows: [rows[2]], labels });
 
+    const badge = container.querySelector("span.badge");
+    expect(badge?.querySelector("img")?.getAttribute("src")).toBe("/chr_ts/chr_ts_5_g1.png");
+
     await fireEvent.click(screen.getByRole("button", { name: "Play voice" }));
 
     expect(getAudioElement(container).getAttribute("src")).toBe("/storage/voice.mp3");
@@ -79,6 +83,14 @@ describe("StoryTextRows", () => {
 
     await fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     expect(screen.getByRole("button", { name: "Play voice" })).toBeTruthy();
+  });
+
+  it("omits the avatar for ids without a local bust", () => {
+    const { container } = render(
+      StoryTextRows,
+      { rows: [{ ...rows[2], characterId: 50 }], labels }
+    );
+    expect(container.querySelector("span.badge img")).toBeNull();
   });
 
   it("falls through to the part-voice fallback and then reports unavailable", async () => {

@@ -50,6 +50,9 @@ export type StoryTextRow =
       kind: "talk";
       name: string;
       body: string;
+      /** Game character id (1-26) of the speaker when known, for the local
+       * bust thumbnail; undefined for mob/sub characters. */
+      characterId?: number;
       /** Ordered voice path candidates; empty when the talk has no voice. */
       voicePaths: string[];
       monologue: boolean;
@@ -100,6 +103,17 @@ export const buildVoiceCharacterLookup = (
     });
   }
   return lookup;
+};
+
+const gameCharacterIdOfTalk = (
+  character2dId: number | undefined,
+  names: StoryCastNameTables
+): number | undefined => {
+  if (character2dId === undefined) return undefined;
+  const character2d = names.character2ds.find((ch) => ch.id === character2dId);
+  return character2d?.characterType === "game_character"
+    ? character2d.characterId
+    : undefined;
 };
 
 const talkVoiceCandidates = (
@@ -165,10 +179,12 @@ export const flattenScenarioToRows = (
         const talk = TalkData[snippet.ReferenceIndex];
         if (!talk) break;
         const voice = talk.Voices[0];
+        const talkCharacter2dId = talk.TalkCharacters[0]?.Character2dId;
         rows.push({
           kind: "talk",
           name: talk.WindowDisplayName,
           body: talk.Body,
+          characterId: gameCharacterIdOfTalk(talkCharacter2dId, names),
           voicePaths:
             voice && voice.VoiceId
               ? talkVoiceCandidates(
@@ -177,7 +193,7 @@ export const flattenScenarioToRows = (
                   options.isCardStory,
                   options.isActionSet,
                   voiceCharacters,
-                  talk.TalkCharacters[0]?.Character2dId
+                  talkCharacter2dId
                 )
               : [],
           monologue: talk.LipSync === 2
