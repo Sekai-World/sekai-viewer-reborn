@@ -36,6 +36,7 @@
   "tracker.clearSelection": "Clear selection",
   "tracker.preparingExport": "Preparing export…",
   "tracker.exportFailed": "Export failed. Please try again.",
+  "tracker.exportNoRows": "No ranking data is available to export.",
   "tracker.exportHistoryError": "Saved history could not be loaded.",
   "tracker.exportCopied": "CSV copied",
   "tracker.share": "Share",
