@@ -151,6 +151,7 @@
       showUnreleased: string;
       filterCharacter: string;
       loadMoreHint: string;
+      loadMoreHintTouch: string;
       loadingMore: string;
       listEnd: string;
       retry: string;
@@ -204,7 +205,7 @@
   let eventTypeFilters = $state<string[]>([]);
   let eventUnitFilters = $state<string[]>([]);
   let eventLoadSeq = 0;
-  let eventSentinel: HTMLDivElement | null = $state(null);
+  let eventSentinel: HTMLButtonElement | null = $state(null);
   let eventLoadMoreHintVisible = $state(false);
   let eventLastTouchY: number | null = null;
 
@@ -230,7 +231,7 @@
   let cardHas3dmvCutIn = $state(false);
   let cardShowUnreleased = $state(true);
   let cardLoadSeq = 0;
-  let cardSentinel: HTMLDivElement | null = $state(null);
+  let cardSentinel: HTMLButtonElement | null = $state(null);
   let cardLoadMoreHintVisible = $state(false);
   let cardLastTouchY: number | null = null;
   let cardFilterDialog: HTMLDialogElement | null = $state(null);
@@ -401,13 +402,21 @@
     return () => observer.disconnect();
   });
 
+  /** Loads the next event page; used by the clickable sentinel row. */
+  const loadMoreEvents = (): void => {
+    if (eventListLoadingMore || loading || !eventHasNext) return;
+    void fetchEventList(eventPage + 1, true);
+  };
+
   $effect(() => {
     // Wheel down or an upward swipe past the sentinel loads the next page,
-    // matching the content-site event list behavior.
+    // matching the content-site event list behavior. Clicking the sentinel
+    // row loads explicitly (without the visibility hint, which lags behind
+    // fast scrolls).
     if (!browser || storyType !== "event" || !eventHasNext) return;
     const triggerLoadMore = (): void => {
-      if (!eventLoadMoreHintVisible || eventListLoadingMore || loading || !eventHasNext) return;
-      void fetchEventList(eventPage + 1, true);
+      if (!eventLoadMoreHintVisible) return;
+      loadMoreEvents();
     };
     const handleWheel = (event: WheelEvent): void => {
       if (event.deltaY > 0) triggerLoadMore();
@@ -529,13 +538,21 @@
     return () => observer.disconnect();
   });
 
+  /** Loads the next card page; used by the clickable sentinel row. */
+  const loadMoreCards = (): void => {
+    if (cardListLoadingMore || loading || !cardHasNext) return;
+    void fetchCardList(cardPage + 1, true);
+  };
+
   $effect(() => {
     // Wheel down or an upward swipe past the sentinel loads the next page,
-    // matching the content-site card list behavior.
+    // matching the content-site card list behavior. Clicking the sentinel
+    // row loads explicitly (without the visibility hint, which lags behind
+    // fast scrolls).
     if (!browser || storyType !== "card" || !cardHasNext) return;
     const triggerLoadMore = (): void => {
-      if (!cardLoadMoreHintVisible || cardListLoadingMore || loading || !cardHasNext) return;
-      void fetchCardList(cardPage + 1, true);
+      if (!cardLoadMoreHintVisible) return;
+      loadMoreCards();
     };
     const handleWheel = (event: WheelEvent): void => {
       if (event.deltaY > 0) triggerLoadMore();
@@ -1137,17 +1154,22 @@
       {/if}
 
       {#if eventHasNext}
-        <div
+        <button
+          type="button"
           bind:this={eventSentinel}
-          class="flex min-h-20 items-center justify-center rounded-xl py-3"
+          class="flex min-h-10 w-full items-center justify-center rounded-xl p-2 outline-none transition-colors hover:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary/60"
+          onclick={loadMoreEvents}
         >
           {#if eventListLoadingMore}
             <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
             <span class="ml-2 text-sm text-base-content/60">{labels.loadingMore}</span>
           {:else}
-            <span class="text-sm text-base-content/50">{labels.loadMoreHint}</span>
+            <span class="text-sm text-base-content/50">
+              <span class="hidden sm:inline">{labels.loadMoreHint}</span>
+              <span class="sm:hidden">{labels.loadMoreHintTouch}</span>
+            </span>
           {/if}
-        </div>
+        </button>
       {:else if events.length > 0}
         <p class="py-2 text-center text-sm text-base-content/50">{labels.listEnd}</p>
       {/if}
@@ -1291,17 +1313,22 @@
       {/if}
 
       {#if cardHasNext}
-        <div
+        <button
+          type="button"
           bind:this={cardSentinel}
-          class="flex min-h-20 items-center justify-center rounded-xl py-3"
+          class="flex min-h-10 w-full items-center justify-center rounded-xl p-2 outline-none transition-colors hover:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary/60"
+          onclick={loadMoreCards}
         >
           {#if cardListLoadingMore}
             <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
             <span class="ml-2 text-sm text-base-content/60">{labels.loadingMore}</span>
           {:else}
-            <span class="text-sm text-base-content/50">{labels.loadMoreHint}</span>
+            <span class="text-sm text-base-content/50">
+              <span class="hidden sm:inline">{labels.loadMoreHint}</span>
+              <span class="sm:hidden">{labels.loadMoreHintTouch}</span>
+            </span>
           {/if}
-        </div>
+        </button>
       {:else if cards.length > 0}
         <p class="py-2 text-center text-sm text-base-content/50">{labels.listEnd}</p>
       {/if}

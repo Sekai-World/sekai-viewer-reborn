@@ -61,6 +61,7 @@
       filter3dmvCutIn: translate("storyReader.picker.filter3dmvCutIn"),
       showUnreleased: translate("storyReader.picker.showUnreleased"),
       loadMoreHint: translate("storyReader.picker.loadMoreHint"),
+      loadMoreHintTouch: translate("storyReader.picker.loadMoreHintTouch"),
       loadingMore: translate("storyReader.picker.loadingMore"),
       listEnd: translate("storyReader.picker.listEnd"),
       retry: translate("storyReader.picker.retry"),
