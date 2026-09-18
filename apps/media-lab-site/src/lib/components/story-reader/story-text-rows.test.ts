@@ -10,6 +10,7 @@ const labels = {
   voiceStop: "Stop",
   voiceUnavailable: "Voice unavailable",
   backgroundLabel: "Background change",
+  showBackground: "Show background",
   bgmLabel: "BGM",
   seLabel: "Sound effect",
   seStopLabel: "Stop sound effect",
@@ -95,11 +96,19 @@ describe("StoryTextRows", () => {
     expect(button.disabled).toBe(true);
   });
 
-  it("exposes the background row as a preview trigger with the caption label", () => {
+  it("keeps background images unloaded until the row is revealed", async () => {
     render(StoryTextRows, { rows, labels });
+
+    // Hidden by default: a reveal button instead of the preview trigger.
+    expect(screen.queryByRole("button", { name: "Background change" })).toBeNull();
+    const reveal = screen.getByRole("button", { name: "Show background" });
+    expect(reveal.querySelector("img")).toBeNull();
+
+    await fireEvent.click(reveal);
 
     const trigger = screen.getByRole("button", { name: "Background change" });
     expect(trigger.querySelector("img")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Show background" })).toBeNull();
   });
 
   it("plays BGM rows through the shared audio player with a seek control", () => {

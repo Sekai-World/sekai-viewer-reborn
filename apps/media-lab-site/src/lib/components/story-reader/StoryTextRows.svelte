@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import { SvelteSet } from "svelte/reactivity";
   import {
     AudioPlayer,
     ImagePreviewDialog,
@@ -33,6 +34,7 @@
       voiceStop: string;
       voiceUnavailable: string;
       backgroundLabel: string;
+      showBackground: string;
       bgmLabel: string;
       seLabel: string;
       seStopLabel: string;
@@ -64,6 +66,10 @@
   let previewOpen = $state(false);
   let previewSrc = $state("");
   let previewAlt = $state("");
+
+  // Background images stay unloaded until revealed row by row; the set holds
+  // the indexes the user has explicitly expanded.
+  const revealedBackgrounds = new SvelteSet<number>();
 
   const openBackgroundPreview = (row: StoryTextRowView): void => {
     if (!row.imageUrl) return;
@@ -102,7 +108,7 @@
         </article>
       {:else if row.kind === "background"}
         <figure class="overflow-hidden rounded-xl border border-base-content/10">
-          {#if row.imageUrl}
+          {#if row.imageUrl && revealedBackgrounds.has(index)}
             <ImagePreviewTrigger
               src={row.imageUrl}
               alt={row.name ?? labels.backgroundLabel}
@@ -110,6 +116,15 @@
               imageClass="max-h-72 w-full bg-base-200/40 object-contain"
               onclick={() => openBackgroundPreview(row)}
             />
+          {:else if row.imageUrl}
+            <button
+              type="button"
+              class="flex w-full items-center justify-center gap-1.5 bg-base-200/40 p-3 text-xs font-semibold text-base-content/60 outline-none transition-colors hover:bg-base-200/70 hover:text-base-content focus-visible:ring-2 focus-visible:ring-primary/60"
+              onclick={() => revealedBackgrounds.add(index)}
+            >
+              <Icon icon="mdi:image-outline" class="size-4" aria-hidden="true" />
+              {labels.showBackground}
+            </button>
           {/if}
           <figcaption class="flex items-center gap-1 bg-base-200/60 px-3 py-2 text-xs text-base-content/60">
             <Icon icon="mdi:image-outline" class="size-4" aria-hidden="true" />

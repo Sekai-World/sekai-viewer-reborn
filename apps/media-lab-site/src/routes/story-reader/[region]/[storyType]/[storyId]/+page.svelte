@@ -75,6 +75,7 @@
         voiceStop: translate("storyReader.textOnly.voice.stop"),
         voiceUnavailable: translate("storyReader.textOnly.voice.unavailable"),
         backgroundLabel: translate("storyReader.textOnly.row.background"),
+        showBackground: translate("storyReader.textOnly.row.showBackground"),
         bgmLabel: translate("storyReader.textOnly.row.bgm"),
         seLabel: translate("storyReader.textOnly.row.se"),
         seStopLabel: translate("storyReader.textOnly.row.seStop"),
