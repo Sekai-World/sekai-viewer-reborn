@@ -1,11 +1,13 @@
 <script lang="ts">
   import { browser } from "$app/environment";
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { swipeRegion } from "$lib/actions/swipe-region";
   import { getCardThumbnailAssetURL } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-    import { resolveCardTrained } from "$lib/components/card/card-presentation";
+  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
+  import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
@@ -28,7 +30,10 @@
   const t = (key: string, fallback: string): string => translate(key, fallback);
   const listHref = (): string => resolve("/characters/[region]", { region: data.region });
   const cardsHref = (): string =>
-    `${resolve("/cards/[region]", { region: data.region })}?character=${encodeURIComponent(data.characterId)}`;
+    withCardListView(
+      `${resolve("/cards/[region]", { region: data.region })}?character=${encodeURIComponent(data.characterId)}`,
+      getCardListViewFromSearchParams(page.url.searchParams)
+    );
   const breadcrumbs = (name: string) => [
     { label: t("home", "Home"), href: resolve("/") },
     { label: t("navigation.characters", "Characters"), href: listHref() },

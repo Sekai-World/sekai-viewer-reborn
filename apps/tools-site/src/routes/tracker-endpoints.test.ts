@@ -4,20 +4,31 @@ const mocks = vi.hoisted(() => ({
   getEventRankingTimePoints: vi.fn(),
   getEventRankingsByEventId: vi.fn(),
   getEventChapterRankingLive: vi.fn(),
-  getEventChapterRankingsByEventIdAndCharaId: vi.fn()
+  getEventChapterRankingsByEventIdAndCharaId: vi.fn(),
+  getEventsByRegionList: vi.fn(),
+  getEventsByRegionById: vi.fn()
 }));
 
 const fetchMock = vi.fn();
 
 vi.mock("@platform/sekai-api-sdk", () => mocks);
+vi.mock("@platform/sekai-master-api-sdk", () => ({
+  getEventsByRegionList: mocks.getEventsByRegionList,
+  getEventsByRegionById: mocks.getEventsByRegionById
+}));
 vi.mock("$env/dynamic/private", () => ({
-  env: { SEKAI_API_BASE_URL: "https://api.example.test/" }
+  env: {
+    SEKAI_API_BASE_URL: "https://api.example.test/",
+    SEKAI_MASTER_API_BASE_URL: "https://master.example.test/"
+  }
 }));
 
 import { GET as graph } from "./tracker/[region]/graph/+server";
 import { GET as snapshot } from "./tracker/[region]/snapshot/+server";
 import { GET as time } from "./tracker/[region]/time/+server";
 import { GET as chapter } from "./tracker/[region]/chapter/+server";
+import { GET as eventSearch } from "./tracker/[region]/events/+server";
+import { clearMetadataCache } from "$lib/server/metadata-cache";
 
 const request = (path: string, region = "en") =>
   ({ params: { region }, url: new URL(`https://tools.example.test${path}`) }) as never;
@@ -25,6 +36,7 @@ const request = (path: string, region = "en") =>
 describe("tracker time-travel endpoints", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearMetadataCache();
     vi.stubGlobal("fetch", fetchMock);
   });
 
@@ -49,6 +61,59 @@ describe("tracker time-travel endpoints", () => {
       path: { id: 42 },
       query: { region: "en" }
     }));
+  });
+
+  it("searches event names through the bounded list query", async () => {
+    mocks.getEventsByRegionList.mockResolvedValue({
+      data: {
+        items: Array.from({ length: 12 }, (_, index) => ({
+          id: index + 1,
+          name: `Wonder event ${index + 1}`,
+          startAt: "2020-01-01T00:00:00Z"
+        }))
+      }
+    });
+
+    const response = await eventSearch(request("/tracker/en/events?query=Wonder%20event"));
+
+    const body = (await response.json()) as { status: string; events: Array<{ id: number }> };
+    expect(body.status).toBe("available");
+    expect(body.events).toHaveLength(10);
+    expect(body.events.map(({ id }) => id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(mocks.getEventsByRegionList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://master.example.test",
+        path: { region: "en" },
+        query: {
+          page: 1,
+          page_size: 10,
+          name: "Wonder event",
+          sort_by: "startAt",
+          sort_order: "desc"
+        }
+      })
+    );
+    expect(mocks.getEventsByRegionById).not.toHaveBeenCalled();
+  });
+
+  it("resolves numeric event picker queries through by-id instead of the list", async () => {
+    mocks.getEventsByRegionById.mockResolvedValue({
+      data: { id: 42, name: "Historical event", startAt: "2020-01-01T00:00:00Z" }
+    });
+
+    const response = await eventSearch(request("/tracker/jp/events?query=42", "jp"));
+
+    await expect(response.json()).resolves.toMatchObject({
+      status: "available",
+      events: [{ id: 42, name: "Historical event" }]
+    });
+    expect(mocks.getEventsByRegionById).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://master.example.test",
+        path: { region: "jp", id: "42" }
+      })
+    );
+    expect(mocks.getEventsByRegionList).not.toHaveBeenCalled();
   });
 
   it("returns typed empty responses for invalid route and query parameters", async () => {

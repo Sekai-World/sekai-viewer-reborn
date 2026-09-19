@@ -40,16 +40,14 @@
         />
         <span>{title}</span>
       </p>
-      <div class="content-card-inset border-primary/15 bg-(--archive-surface-raised) p-3 sm:p-4">
-        <EventCountdownCard
-          startAt={event.startAt}
-          endAt={event.endAt}
-          {uiLocale}
-          {messages}
-          forceShowSeconds={true}
-          showProgress={false}
-        />
-      </div>
+      <EventCountdownCard
+        startAt={event.startAt}
+        endAt={event.endAt}
+        {uiLocale}
+        {messages}
+        forceShowSeconds={true}
+        showProgress={false}
+      />
     </div>
   </article>
 {/if}

@@ -1,5 +1,7 @@
 <script lang="ts">
   import { asset, resolve } from "$app/paths";
+  import { page } from "$app/state";
+  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
   import { parseEventRewardRanges } from "$lib/domain/event-rewards";
   import {
     getCardThumbnailAssetURL,
@@ -369,7 +371,10 @@
       searchParams.append("attr", attr);
     }
 
-    return `${resolve("/cards/[region]", { region })}?${searchParams.toString()}`;
+    return withCardListView(
+      `${resolve("/cards/[region]", { region })}?${searchParams.toString()}`,
+      getCardListViewFromSearchParams(page.url.searchParams)
+    );
   };
 
   const getBonusCharacterItems = (data: EventRelatedData | null): BonusCharacterItem[] => {
@@ -1135,7 +1140,7 @@
     class={`grid gap-2 ${virtualLiveBannerSrc ? "@md:grid-cols-[minmax(8rem,12rem)_minmax(0,1fr)] @md:items-center" : ""}`}
   >
     {#if virtualLiveBannerSrc}
-      <div class="aspect-33/10 overflow-hidden rounded-lg bg-base-200 @md:aspect-33/14">
+      <div class="aspect-33/10 overflow-hidden rounded-lg bg-(--archive-surface-default)">
         <AssetImage
           src={virtualLiveBannerSrc}
           alt={virtualLive.name ?? virtualLiveTitle}

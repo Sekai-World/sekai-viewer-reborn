@@ -9,8 +9,16 @@ describe("tracker recent rates", () => {
     expect(calculateRecentRate([point("2026-01-01T03:00:00Z", 300)], target, 1)).toBe(100);
     expect(calculateRecentRate([point("2026-01-01T01:30:00Z", 100)], target, 1)).toBe(120);
   });
-  it("returns null without a baseline", () => {
-    expect(calculateRecentRate([point("2026-01-01T03:30:00Z", 300)], target, 1)).toBeNull();
+  it("uses the oldest prior point when the requested horizon is unavailable", () => {
+    expect(calculateRecentRate([point("2026-01-01T03:30:00Z", 300)], target, 1)).toBe(200);
+    expect(
+      calculateRecentRate(
+        [point("2026-01-01T02:00:00Z", 100), point("2026-01-01T03:30:00Z", 300)],
+        target,
+        3
+      )
+    ).toBe(150);
+    expect(calculateRecentRate([target], target, 1)).toBeNull();
   });
   it("sorts unsorted inputs", () => {
     const points = [point("2026-01-01T03:00:00Z", 300), point("2026-01-01T01:00:00Z", 100)];

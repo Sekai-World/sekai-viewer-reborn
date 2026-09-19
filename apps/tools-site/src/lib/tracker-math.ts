@@ -1,4 +1,4 @@
-import { parseTrackerTimestamp } from "$lib/tracker-phase";
+import { parseTrackerTimestamp, type TrackerDateValue } from "$lib/tracker-phase";
 
 export type ScorePerElapsedHourInput = Readonly<{
   score: number | null | undefined;
@@ -6,6 +6,22 @@ export type ScorePerElapsedHourInput = Readonly<{
 }>;
 
 export type ScorePerElapsedHour = number | null;
+
+export type RankingElapsedInput = Readonly<{
+  startAt: TrackerDateValue;
+  timestamp: TrackerDateValue;
+}>;
+
+/** Uses the ranking's captured timestamp instead of a moving wall-clock reference. */
+export const calculateRankingElapsedMs = ({
+  startAt,
+  timestamp
+}: RankingElapsedInput): number | null => {
+  const start = parseTrackerTimestamp(startAt);
+  const receivedAt = parseTrackerTimestamp(timestamp);
+  if (start === null || receivedAt === null || receivedAt <= start) return null;
+  return receivedAt - start;
+};
 
 export type ChapterElapsedInput = Readonly<{
   startAt: string | number | null | undefined;

@@ -17,6 +17,7 @@ Read with `AGENTS.md`; see [`instructions/README.md`](instructions/README.md).
 ## Top-level documents
 
 - [`DESIGN.md`](../DESIGN.md): highest-priority visual/component specification.
+- [`article-announcements-contract-decision.md`](article-announcements-contract-decision.md): Game News (`userInformations`) migration contract decision for issue #303.
 - [`content-site-ui-conventions.md`](content-site-ui-conventions.md):
   content-site UI architecture and styling rules.
 - [`roadmap.md`](roadmap.md): high-level platform direction.

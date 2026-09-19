@@ -139,7 +139,7 @@
           {@const source = bannerUrl(result)}
           <a
             class="event-card event-card-link has-event"
-            href={`/tracker/${result.region}?eventId=${result.event.id}`}
+            href={`/tracker/${result.region}`}
             aria-label={`${regionName(result.region)}: ${result.event.name} — ${translate("home.openRegionalTracker")}`}
           >
             <div class="card-topline">
