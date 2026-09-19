@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
+  import { pickerStoryTypeIcons, pickerStoryTypes } from "$lib/story/story-picker";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -35,6 +36,14 @@
           <p class="mt-2 text-sm/6 text-base-content/70">
             {translate("home.tracks.storyReader.description")}
           </p>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          {#each pickerStoryTypes as type (type)}
+            <a class="btn btn-outline btn-xs border-base-content/20" href={`/story-reader/${type}`}>
+              <Icon icon={pickerStoryTypeIcons[type]} class="size-3.5" aria-hidden="true" />
+              {translate(`storyReader.storyType.${type}`)}
+            </a>
+          {/each}
         </div>
         <div class="card-actions mt-auto">
           <a class="btn btn-primary btn-sm min-h-11! px-4" href="/story-reader/unit">
