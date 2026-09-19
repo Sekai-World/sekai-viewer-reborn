@@ -110,8 +110,7 @@ export function getUIMediaUrls(
   });
   category.forEach((c) => {
     condition[c]?.forEach((i) => {
-      const find = all.find((a) => a.identifier === i.identifier);
-      if (!find) all.push(i);
+      if (!all.some((a) => a.identifier === i.identifier)) all.push(i);
     });
   });
   return all;

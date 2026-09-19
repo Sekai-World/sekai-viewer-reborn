@@ -51,7 +51,7 @@ export default class Live2D extends BaseLayer {
     stage_size?: [number, number],
     model_list: Live2DModelWithInfo[] = []
   ): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     let models = model_list;
     if (model_list.length === 0) {
       models = this.get_model_list();
@@ -158,7 +158,7 @@ export default class Live2D extends BaseLayer {
 
   show_model = async (costume: string, time: number) => {
     const model = this.find(costume);
-    if (model && model.live2DInfo.hidden === true) {
+    if (model?.live2DInfo.hidden === true) {
       model.visible = true;
       model.live2DInfo.hidden = false;
       await this.animation_controller.progress_wrapper((p) => {
@@ -172,7 +172,7 @@ export default class Live2D extends BaseLayer {
 
   hide_model = async (costume: string, time: number) => {
     const model = this.find(costume);
-    if (model && model.live2DInfo.hidden === false) {
+    if (model?.live2DInfo.hidden === false) {
       model.live2DInfo.hidden = true;
       await this.animation_controller.progress_wrapper((p) => {
         (model.filters![0] as AlphaFilter).alpha = 1 - p;

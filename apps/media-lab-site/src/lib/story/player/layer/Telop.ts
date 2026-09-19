@@ -42,7 +42,7 @@ export default class Telop extends BaseLayer {
     return Promise.resolve();
   }
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     if (this.init) {
       // Style translated text (displayed above original text)
       if (this.structure.translated_text) {

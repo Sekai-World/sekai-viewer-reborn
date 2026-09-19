@@ -205,7 +205,7 @@ export async function preloadModels(
   }
   const queue = new PreloadQueue(taskList);
   const rst = await queue.run();
-  if (rst.filter((r) => r === null).length > 0)
+  if (rst.some((r) => r === null))
     throw new Error("Asset download failed.");
 }
 
@@ -325,7 +325,7 @@ export function discardMotion(
   const unique_motion: typeof motion_list = [];
   motion_list.forEach((m) => {
     if (
-      !unique_motion.find(
+      !unique_motion.some(
         (u) =>
           m.costume === u.costume && m.motion === u.motion && m.type === u.type
       )
@@ -390,7 +390,7 @@ export async function preloadModelMotion(
   // remove dupulicate
   const unique_motion: typeof motion_list = [];
   motion_list.forEach((m) => {
-    if (!unique_motion.find((u) => m.url === u.url)) {
+    if (!unique_motion.some((u) => m.url === u.url)) {
       unique_motion.push(m);
     }
   });

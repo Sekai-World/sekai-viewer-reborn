@@ -45,17 +45,19 @@ export default class Hologram extends BaseAnimation {
     light1_s.anchor.set(0.5, 1);
     light1_container.addChild(light1_s);
     // light1 animation
-    this.settings.push({
-      obj: light1_s,
-      y: () => this.stage_size[1] * 0.25,
-      scale: () => this.em(600) / 256, // 256: size of the texture
-    });
-    this.settings.push({
-      obj: light1_container,
-      scale_x_curve: new Curve().map_range(0.9, 1.2),
-      scale_y_curve: new Curve().map_range(1, 1.1),
-      alpha_curve: new Curve().bounce().map_range(0, 0.8),
-    });
+    this.settings.push(
+      {
+        obj: light1_s,
+        y: () => this.stage_size[1] * 0.25,
+        scale: () => this.em(600) / 256, // 256: size of the texture
+      },
+      {
+        obj: light1_container,
+        scale_x_curve: new Curve().map_range(0.9, 1.2),
+        scale_y_curve: new Curve().map_range(1, 1.1),
+        alpha_curve: new Curve().bounce().map_range(0, 0.8),
+      }
+    );
 
     // layer light2
     const light2_container = new Container();
@@ -66,17 +68,19 @@ export default class Hologram extends BaseAnimation {
     light2_s.anchor.set(0.5, 1);
     light2_container.addChild(light2_s);
     // light2 animation
-    this.settings.push({
-      obj: light2_s,
-      y: () => this.stage_size[1] * 0.25,
-      scale: () => this.em(600) / 256, // 256: size of the texture
-    });
-    this.settings.push({
-      obj: light2_container,
-      scale_x_curve: new Curve().offset(0.5).map_range(0.9, 1.2),
-      scale_y_curve: new Curve().offset(0.5).map_range(1, 1.1),
-      alpha_curve: new Curve().bounce().offset(0.5).map_range(0, 0.8),
-    });
+    this.settings.push(
+      {
+        obj: light2_s,
+        y: () => this.stage_size[1] * 0.25,
+        scale: () => this.em(600) / 256, // 256: size of the texture
+      },
+      {
+        obj: light2_container,
+        scale_x_curve: new Curve().offset(0.5).map_range(0.9, 1.2),
+        scale_y_curve: new Curve().offset(0.5).map_range(1, 1.1),
+        alpha_curve: new Curve().bounce().offset(0.5).map_range(0, 0.8),
+      }
+    );
 
     // layer tri
     const tri_container = new Container();

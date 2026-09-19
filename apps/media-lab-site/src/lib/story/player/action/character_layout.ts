@@ -1,10 +1,10 @@
 import type { Live2DController } from "../Live2DController";
 import type { Snippet } from "../../scenario-types";
-import { SnippetAction } from "../../scenario-types";
 import {
   CharacterLayoutType,
   CharacterLayoutPosition,
   CharacterLayoutMoveSpeedType,
+  SnippetAction
 } from "../../scenario-types";
 import { log } from "../log";
 

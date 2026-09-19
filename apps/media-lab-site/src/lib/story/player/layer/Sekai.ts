@@ -21,7 +21,7 @@ export default class Sekai extends BaseLayer {
     await sekai.start(this.animation_controller.abort_controller);
   }
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     if (this.sekai) this.sekai.set_style(this.stage_size);
   }
   destroy() {

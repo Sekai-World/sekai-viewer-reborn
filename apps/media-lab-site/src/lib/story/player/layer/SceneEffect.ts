@@ -129,7 +129,7 @@ export default class SceneEffect extends BaseLayer {
   }
 
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     this.scene_effects.forEach((e) => e.ani.set_style(this.stage_size));
   }
 

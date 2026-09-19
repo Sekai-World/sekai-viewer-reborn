@@ -1,7 +1,5 @@
 export type CurveFunction = (t: number) => number;
-interface ICurveFunctionMap {
-  (p: CurveFunction): CurveFunction;
-}
+type ICurveFunctionMap = (p: CurveFunction) => CurveFunction;
 
 export class Curve {
   p: CurveFunction;

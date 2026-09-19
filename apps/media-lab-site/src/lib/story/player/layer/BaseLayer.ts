@@ -20,13 +20,12 @@ export default abstract class BaseLayer {
   protected init: boolean;
 
   constructor(data: ILive2DLayerData) {
-    this.stage_size = data.stage_size ? data.stage_size : [1, 1];
-    this.screen_length = data.screen_length ? data.screen_length : 2000;
-    this.animation_controller = data.animation_controller
-      ? data.animation_controller
-      : new AnimationController();
+    this.stage_size = data.stage_size ?? [1, 1];
+    this.screen_length = data.screen_length ?? 2000;
+    this.animation_controller =
+      data.animation_controller ?? new AnimationController();
     this.shake_animation_controller = new AnimationController();
-    this.textures = data.textures ? data.textures : [];
+    this.textures = data.textures ?? [];
     this.init = false;
     this.root = new Container();
   }

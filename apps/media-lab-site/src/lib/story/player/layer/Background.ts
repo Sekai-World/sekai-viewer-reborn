@@ -23,7 +23,7 @@ export default class Background extends BaseLayer {
     return Promise.resolve();
   }
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     if (this.init) {
       const bg = this.structure.background!;
       let scale: number;

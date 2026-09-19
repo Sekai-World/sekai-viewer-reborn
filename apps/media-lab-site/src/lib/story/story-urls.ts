@@ -39,9 +39,10 @@ const SAFE_PATH_PATTERN = /^[A-Za-z0-9_\-./()[\] ]+$/;
  * trailing whitespace stays rejected, matching the relay-side validation.
  */
 const toSafeEncodedPath = (path: string): string => {
+  const trimmed = path.trim();
   if (
     !path ||
-    path !== path.trim() ||
+    path !== trimmed ||
     !SAFE_PATH_PATTERN.test(path) ||
     path.includes("..")
   ) {
@@ -233,7 +234,7 @@ export const soundEffectPaths = (se: string): string[] => {
     return [`event_story/${eventDir}/scenario_se/${se}.mp3`];
   }
   const seBundleName =
-    /^se\d{5}$/.test(se) && parseInt(se.substring(2)) <= 528
+    /^se\d{5}$/.test(se) && Number.parseInt(se.substring(2)) <= 528
       ? "se_pack00001"
       : "se_pack00001_b";
   return [`sound/scenario/se/${seBundleName}/${se}.mp3`];
@@ -258,9 +259,9 @@ export const scenarioIdToAssetbundleName = (scenarioId: string): string => {
 
   // Handle event number offset: if contains "event_" and number between 166
   // and 177, increment by 1
-  const eventMatch = result.match(/event_(\d+)/);
+  const eventMatch = /event_(\d+)/.exec(result);
   if (eventMatch) {
-    const eventNumber = parseInt(eventMatch[1]);
+    const eventNumber = Number.parseInt(eventMatch[1]);
     if (eventNumber > 166 && eventNumber < 177) {
       result = result.replace(/event_(\d+)/, `event_${eventNumber + 1}`);
     }

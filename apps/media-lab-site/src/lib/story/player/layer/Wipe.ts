@@ -36,7 +36,7 @@ export default class Wipe extends BaseLayer {
     return Promise.resolve();
   }
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     if (this.init) {
       const bg = this.structure.wipe!;
       bg.scale.set(this.stage_size[1] / 2000);

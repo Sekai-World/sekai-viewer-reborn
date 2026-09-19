@@ -10,7 +10,7 @@ export default class LineLegend extends BaseAnimation {
     super({});
     this.period_ms = 400;
     this.color = color;
-    this.color2 = color2 ? color2 : color;
+    this.color2 = color2 ?? color;
     const blur = new BlurFilter();
     blur.blur = 0.5;
     blur.resolution = 2;
@@ -27,40 +27,32 @@ export default class LineLegend extends BaseAnimation {
       };
       switch (direction) {
         case "up":
-          {
-            obj.angle = 0;
-            line.x = () => this.stage_size[0] * position;
-            line.y_curve = new Curve()
-              .offset(start_time)
-              .map_range(1, 1 - distance);
-          }
+          obj.angle = 0;
+          line.x = () => this.stage_size[0] * position;
+          line.y_curve = new Curve()
+            .offset(start_time)
+            .map_range(1, 1 - distance);
           break;
         case "down":
-          {
-            obj.angle = 180;
-            line.x = () => this.stage_size[0] * position;
-            line.y_curve = new Curve()
-              .offset(start_time)
-              .map_range(0, distance);
-          }
+          obj.angle = 180;
+          line.x = () => this.stage_size[0] * position;
+          line.y_curve = new Curve()
+            .offset(start_time)
+            .map_range(0, distance);
           break;
         case "left":
-          {
-            obj.angle = 270;
-            line.y = () => this.stage_size[1] * position;
-            line.x_curve = new Curve()
-              .offset(start_time)
-              .map_range(1, 1 - distance);
-          }
+          obj.angle = 270;
+          line.y = () => this.stage_size[1] * position;
+          line.x_curve = new Curve()
+            .offset(start_time)
+            .map_range(1, 1 - distance);
           break;
         case "right":
-          {
-            obj.angle = 90;
-            line.y = () => this.stage_size[1] * position;
-            line.x_curve = new Curve()
-              .offset(start_time)
-              .map_range(0, distance);
-          }
+          obj.angle = 90;
+          line.y = () => this.stage_size[1] * position;
+          line.x_curve = new Curve()
+            .offset(start_time)
+            .map_range(0, distance);
           break;
       }
       this.settings.push(line);

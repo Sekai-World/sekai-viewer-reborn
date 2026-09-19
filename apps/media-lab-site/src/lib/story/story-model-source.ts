@@ -2,8 +2,10 @@ import type {
   ILive2DModelData,
   ILive2dModelListElement
 } from "./scenario-types";
-import type { ILive2DModelDataCollection } from "./player/player-types";
-import type { ILive2DStoryModelSource } from "./player/player-types";
+import type {
+  ILive2DModelDataCollection,
+  ILive2DStoryModelSource
+} from "./player/player-types";
 import { live2dFetch } from "./player/rate-limited-fetch";
 
 /**
@@ -144,7 +146,7 @@ const matchBackBasePrefix = (name: string): string | null => {
   if (!matches) return null;
   let start = 0;
   for (let i = matches.index - 1; i >= 0; i -= 1) {
-    const code = name.charCodeAt(i);
+    const code = name.codePointAt(i);
     if (
       code === 0x0a /* \n */ ||
       code === 0x0d /* \r */ ||
@@ -185,9 +187,9 @@ const getBuildMotionDataUrl = async (
 ): Promise<[string, string] | null> => {
   let modelBaseName = modelItem.modelBase;
   let modelDir = modelItem.modelPath.split("/").slice(0, -1).join("/");
-  if (lowercasePath(modelDir).indexOf("v2/collabo/21_miku") !== -1) {
+  if (lowercasePath(modelDir).includes("v2/collabo/21_miku")) {
     modelDir = modelDir.replace("collabo", "main");
-  } else if (lowercasePath(modelDir).indexOf("v2/collabo/egg") !== -1) {
+  } else if (lowercasePath(modelDir).includes("v2/collabo/egg")) {
     modelDir = modelDir.split("/").slice(0, -1).join("/");
   }
 
@@ -272,7 +274,7 @@ export const createStoryModelSource = (
     }
     const raw: unknown = await response.json();
     if (!Array.isArray(raw)) {
-      throw new Error("Live2D model list is malformed");
+      throw new TypeError("Live2D model list is malformed");
     }
     return raw.filter(isRecord) as unknown as ILive2dModelListElement[];
   })();

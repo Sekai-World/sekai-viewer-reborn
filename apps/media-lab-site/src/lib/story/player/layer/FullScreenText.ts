@@ -54,7 +54,7 @@ export default class FullScreenText extends BaseLayer {
     }
   }
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     if (this.init) this.set_style_text();
   }
   set_style_text() {

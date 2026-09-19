@@ -88,7 +88,7 @@ export default class Dialog extends BaseLayer {
     }
   }
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     const margin_top =
       this.stage_size[0] > this.stage_size[1]
         ? this.stage_size[1] * 0.7
@@ -143,16 +143,13 @@ export default class Dialog extends BaseLayer {
     let originalLineCount = 0;
 
     // Count lines for translated text
-    if (
-      this.structure.translated_text_c &&
-      this.structure.translated_text_c.text
-    ) {
+    if (this.structure.translated_text_c?.text) {
       translatedLineCount =
         this.structure.translated_text_c.text.split("\n").length;
     }
 
     // Count lines for original text
-    if (this.structure.text_c && this.structure.text_c.text) {
+    if (this.structure.text_c?.text) {
       originalLineCount = this.structure.text_c.text.split("\n").length;
     }
 

@@ -16,8 +16,8 @@ export default async function ChangeCameraPosition(
   );
   const from = [...controller.camera.position];
   const to = [
-    parseFloat(action_detail.StringVal.split(",")[0]) / 1920,
-    parseFloat(action_detail.StringVal.split(",")[1]) / 1080,
+    Number.parseFloat(action_detail.StringVal.split(",")[0]) / 1920,
+    Number.parseFloat(action_detail.StringVal.split(",")[1]) / 1080,
   ];
 
   await controller.animate.progress_wrapper((progress) => {

@@ -1,6 +1,5 @@
 import type { ILive2DLayerData, ILive2DScenarioResource } from "./player-types";
-import { Texture } from "pixi.js";
-import { Container } from "pixi.js";
+import { Container, Texture } from "pixi.js";
 import type { Application } from "pixi.js";
 
 import { log } from "./log";

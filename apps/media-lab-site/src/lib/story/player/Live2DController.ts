@@ -202,7 +202,7 @@ export class Live2DController extends Live2DPlayer {
         // check if SnippetProgressBehavior = Now
         if (snippets[current].ProgressBehavior === SnippetProgressBehavior.Now) {
           // SnippetProgressBehavior = Now, push in the last list
-          action_list[action_list.length - 1].push(current);
+          action_list.at(-1)!.push(current);
         } else {
           // SnippetProgressBehavior != Now, push a new list
           action_list.push([current]);
@@ -216,7 +216,7 @@ export class Live2DController extends Live2DPlayer {
         snippets[current + 1].ProgressBehavior === SnippetProgressBehavior.Now
       ) {
         current++;
-        action_list[action_list.length - 1].push(current);
+        action_list.at(-1)!.push(current);
       }
       log.log("Live2DController", action_list);
 

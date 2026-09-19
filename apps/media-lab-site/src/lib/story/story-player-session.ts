@@ -283,7 +283,8 @@ export const createStoryPlayerSession = async (
       }
       setState("playing");
       try {
-        const target = checkpointHistory[checkpointHistory.length - 2];
+        // prevStep only runs past canGoBack (history >= 3), so -2 exists.
+        const target = checkpointHistory.at(-2)!;
         // Stop the current line's playback, then silently replay from the
         // start so every visual layer converges on the earlier checkpoint.
         controller.stop_sounds([Live2DAssetType.Talk]);

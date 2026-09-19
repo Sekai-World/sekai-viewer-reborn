@@ -37,41 +37,43 @@ export default class LightupLegend extends BaseAnimation {
 
     const fog_l = [];
 
-    fog_l.push({
-      obj: new Sprite(fog_t),
-      scale: 1,
-      position: [0.1, 1],
-      position_to: [0.2, 1],
-      start_time: 0,
-    });
-    fog_l.push({
-      obj: new Sprite(fog_t),
-      scale: 0.9,
-      position: [0.3, 1.1],
-      position_to: [0.35, 0.9],
-      start_time: 0.25,
-    });
-    fog_l.push({
-      obj: new Sprite(fog_t),
-      scale: 1,
-      position: [0.4, 1],
-      position_to: [0.49, 0.9],
-      start_time: 0.5,
-    });
-    fog_l.push({
-      obj: new Sprite(fog_t),
-      scale: 0.9,
-      position: [0.7, 1.2],
-      position_to: [0.75, 1.15],
-      start_time: 0.65,
-    });
-    fog_l.push({
-      obj: new Sprite(fog_t),
-      scale: 1,
-      position: [0.9, 0.9],
-      position_to: [0.82, 1],
-      start_time: 0.85,
-    });
+    fog_l.push(
+      {
+        obj: new Sprite(fog_t),
+        scale: 1,
+        position: [0.1, 1],
+        position_to: [0.2, 1],
+        start_time: 0,
+      },
+      {
+        obj: new Sprite(fog_t),
+        scale: 0.9,
+        position: [0.3, 1.1],
+        position_to: [0.35, 0.9],
+        start_time: 0.25,
+      },
+      {
+        obj: new Sprite(fog_t),
+        scale: 1,
+        position: [0.4, 1],
+        position_to: [0.49, 0.9],
+        start_time: 0.5,
+      },
+      {
+        obj: new Sprite(fog_t),
+        scale: 0.9,
+        position: [0.7, 1.2],
+        position_to: [0.75, 1.15],
+        start_time: 0.65,
+      },
+      {
+        obj: new Sprite(fog_t),
+        scale: 1,
+        position: [0.9, 0.9],
+        position_to: [0.82, 1],
+        start_time: 0.85,
+      }
+    );
     if (fog_type === "corner") {
       fog_l.forEach((s) => {
         const factor = 0.5;

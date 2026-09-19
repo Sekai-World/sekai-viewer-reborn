@@ -157,7 +157,7 @@ const talkRowOf = (talk: ScenarioTalk | undefined, context: RowEmitContext): Sto
     body: talk.Body,
     characterId: gameCharacterIdOfTalk(talkCharacter2dId, context.names),
     voicePaths:
-      voice && voice.VoiceId
+      voice?.VoiceId
         ? talkVoiceCandidates(
             context.scenarioId,
             voice.VoiceId,

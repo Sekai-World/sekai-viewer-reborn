@@ -209,18 +209,14 @@ export enum Live2DLoadProgressType {
   RenderModel = "render-model",
 }
 
-export interface ILive2DLoadProgressHandler {
-  (
-    type: Live2DLoadProgressType,
-    count: number,
-    total: number,
-    info?: string
-  ): void;
-}
+export type ILive2DLoadProgressHandler = (
+  type: Live2DLoadProgressType,
+  count: number,
+  total: number,
+  info?: string
+) => void;
 
-export interface ILive2DLoadWarningHandler {
-  (reason: string): void;
-}
+export type ILive2DLoadWarningHandler = (reason: string) => void;
 
 export interface ILive2DPlayerSettings {
   voiceVolume: number;

@@ -323,7 +323,8 @@ export interface ILive2dModelListElement {
 /** Minimal character2d identity needed to resolve talk names and part voices. */
 export interface StoryCharacter2D {
   id: number;
-  characterType: "game_character" | "mob" | "sub_game_character" | string;
+  /** Known values: "game_character" | "mob" | "sub_game_character"; raw mirror data may carry others. */
+  characterType: string;
   characterId: number;
   unit?: string;
   assetName?: string;

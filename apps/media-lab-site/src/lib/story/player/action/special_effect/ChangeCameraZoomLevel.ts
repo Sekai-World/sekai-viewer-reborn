@@ -16,8 +16,8 @@ export default async function ChangeCameraZoomLevel(
   );
   const from = [...controller.camera.scale];
   const to = [
-    parseFloat(action_detail.StringVal),
-    parseFloat(action_detail.StringVal),
+    Number.parseFloat(action_detail.StringVal),
+    Number.parseFloat(action_detail.StringVal),
   ];
   controller.animate.progress_wrapper((progress) => {
     controller.camera.scale[0] = from[0] + (to[0] - from[0]) * progress;

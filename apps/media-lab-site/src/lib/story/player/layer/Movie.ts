@@ -82,7 +82,7 @@ export default class Movie extends BaseLayer {
       }
 
       // Remove all children from container
-      if (container && container.removeChildren) {
+      if (container?.removeChildren) {
         container.removeChildren();
       }
 
@@ -94,7 +94,7 @@ export default class Movie extends BaseLayer {
   }
 
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     if (this.init && this.structure.movie && this.videoElement) {
       const movieSprite = this.structure.movie;
       const videoElement = this.videoElement;

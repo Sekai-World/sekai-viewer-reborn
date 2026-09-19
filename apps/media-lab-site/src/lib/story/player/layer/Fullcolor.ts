@@ -17,7 +17,7 @@ export default class Fullcolor extends BaseLayer {
     const bg_graphic = new Graphics();
     this.structure.color = bg_graphic;
     bg_graphic
-      .beginFill(color, alpha ? alpha : 1)
+      .beginFill(color, alpha ?? 1)
       .drawRect(0, 0, this.screen_length, this.screen_length)
       .endFill();
     container.addChild(bg_graphic);
@@ -26,7 +26,7 @@ export default class Fullcolor extends BaseLayer {
     return Promise.resolve();
   }
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     if (this.init) {
       const bg = this.structure.color!;
       bg.x = 0;

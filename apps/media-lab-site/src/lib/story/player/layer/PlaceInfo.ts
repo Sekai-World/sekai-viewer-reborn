@@ -33,7 +33,7 @@ export default class PlaceInfo extends BaseLayer {
   }
 
   set_style(stage_size?: [number, number]): void {
-    this.stage_size = stage_size ? stage_size : this.stage_size;
+    this.stage_size = stage_size ?? this.stage_size;
     if (this.init) {
       // Style text
       const text = this.structure.text!;
