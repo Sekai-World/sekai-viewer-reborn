@@ -1260,7 +1260,7 @@
       {#if cards.length > 0}
         <div class="relative">
           <div
-            class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+            class="grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 xl:grid-cols-12"
           >
             {#each cards as card (card.cardId)}
               <button
