@@ -205,7 +205,7 @@ export async function preloadModels(
   }
   const queue = new PreloadQueue(taskList);
   const rst = await queue.run();
-  if (rst.some((r) => r === null))
+  if (rst.includes(null))
     throw new Error("Asset download failed.");
 }
 
