@@ -45,6 +45,55 @@ import ChangeCameraZoomLevel from "./ChangeCameraZoomLevel";
 import Movie from "./Movie";
 import Blur from "./Blur";
 
+type SpecialEffectAction = (
+  controller: Live2DController,
+  action: Snippet
+) => Promise<void> | void;
+
+const actionsByEffectType: Partial<Record<SpecialEffectType, SpecialEffectAction>> = {
+  [SpecialEffectType.ChangeBackground]: ChangeBackground,
+  [SpecialEffectType.Telop]: Telop,
+  [SpecialEffectType.PlaceInfo]: PlaceInfo,
+  [SpecialEffectType.WhiteIn]: WhiteIn,
+  [SpecialEffectType.WhiteOut]: WhiteOut,
+  [SpecialEffectType.BlackIn]: BlackIn,
+  [SpecialEffectType.BlackOut]: BlackOut,
+  [SpecialEffectType.FlashbackIn]: FlashbackIn,
+  [SpecialEffectType.FlashbackOut]: FlashbackOut,
+  [SpecialEffectType.AttachCharacterShader]: AttachCharacterShader,
+  [SpecialEffectType.PlayScenarioEffect]: PlayScenarioEffect,
+  [SpecialEffectType.StopScenarioEffect]: StopScenarioEffect,
+  [SpecialEffectType.ShakeScreen]: ShakeScreen,
+  [SpecialEffectType.ShakeWindow]: ShakeWindow,
+  [SpecialEffectType.StopShakeScreen]: StopShakeScreen,
+  [SpecialEffectType.StopShakeWindow]: StopShakeWindow,
+  [SpecialEffectType.AmbientColorNormal]: AmbientColorNormal,
+  [SpecialEffectType.AmbientColorEvening]: AmbientColorEvening,
+  [SpecialEffectType.AmbientColorNight]: AmbientColorNight,
+  [SpecialEffectType.BlackWipeInLeft]: BlackWipeInLeft,
+  [SpecialEffectType.BlackWipeOutLeft]: BlackWipeOutLeft,
+  [SpecialEffectType.BlackWipeInRight]: BlackWipeInRight,
+  [SpecialEffectType.BlackWipeOutRight]: BlackWipeOutRight,
+  [SpecialEffectType.BlackWipeInTop]: BlackWipeInTop,
+  [SpecialEffectType.BlackWipeOutTop]: BlackWipeOutTop,
+  [SpecialEffectType.BlackWipeInBottom]: BlackWipeInBottom,
+  [SpecialEffectType.BlackWipeOutBottom]: BlackWipeOutBottom,
+  [SpecialEffectType.SekaiIn]: SekaiIn,
+  [SpecialEffectType.SekaiOut]: SekaiOut,
+  [SpecialEffectType.SimpleSelectable]: SimpleSelectable,
+  [SpecialEffectType.FullScreenText]: FullScreenText,
+  [SpecialEffectType.FullScreenTextShow]: FullScreenTextShow,
+  [SpecialEffectType.FullScreenTextHide]: FullScreenTextHide,
+  [SpecialEffectType.MemoryIn]: MemoryIn,
+  [SpecialEffectType.MemoryOut]: MemoryOut,
+  [SpecialEffectType.SekaiInCenter]: SekaiInCenter,
+  [SpecialEffectType.SekaiOutCenter]: SekaiOutCenter,
+  [SpecialEffectType.ChangeCameraPosition]: ChangeCameraPosition,
+  [SpecialEffectType.ChangeCameraZoomLevel]: ChangeCameraZoomLevel,
+  [SpecialEffectType.Movie]: Movie,
+  [SpecialEffectType.Blur]: Blur
+};
+
 export default async function action_se(
   controller: Live2DController,
   action: Snippet
@@ -54,140 +103,19 @@ export default async function action_se(
   //clear
   await controller.layers.telop.hide(200);
 
-  switch (action_detail.EffectType) {
-    case SpecialEffectType.ChangeBackground:
-      await ChangeBackground(controller, action);
-      break;
-    case SpecialEffectType.Telop:
-      await Telop(controller, action);
-      break;
-    case SpecialEffectType.WhiteIn:
-      await WhiteIn(controller, action);
-      break;
-    case SpecialEffectType.WhiteOut:
-      await WhiteOut(controller, action);
-      break;
-    case SpecialEffectType.BlackIn:
-      await BlackIn(controller, action);
-      break;
-    case SpecialEffectType.BlackOut:
-      await BlackOut(controller, action);
-      break;
-    case SpecialEffectType.FlashbackIn:
-      await FlashbackIn(controller, action);
-      break;
-    case SpecialEffectType.FlashbackOut:
-      await FlashbackOut(controller, action);
-      break;
-    case SpecialEffectType.AttachCharacterShader:
-      await AttachCharacterShader(controller, action);
-      break;
-    case SpecialEffectType.PlayScenarioEffect:
-      await PlayScenarioEffect(controller, action);
-      break;
-    case SpecialEffectType.StopScenarioEffect:
-      await StopScenarioEffect(controller, action);
-      break;
-    case SpecialEffectType.ShakeScreen:
-      await ShakeScreen(controller, action);
-      break;
-    case SpecialEffectType.ShakeWindow:
-      await ShakeWindow(controller, action);
-      break;
-    case SpecialEffectType.StopShakeScreen:
-      await StopShakeScreen(controller, action);
-      break;
-    case SpecialEffectType.StopShakeWindow:
-      await StopShakeWindow(controller, action);
-      break;
-    case SpecialEffectType.AmbientColorNormal:
-      await AmbientColorNormal(controller, action);
-      break;
-    case SpecialEffectType.AmbientColorEvening:
-      await AmbientColorEvening(controller, action);
-      break;
-    case SpecialEffectType.AmbientColorNight:
-      await AmbientColorNight(controller, action);
-      break;
-    case SpecialEffectType.BlackWipeInLeft:
-      await BlackWipeInLeft(controller, action);
-      break;
-    case SpecialEffectType.BlackWipeOutLeft:
-      await BlackWipeOutLeft(controller, action);
-      break;
-    case SpecialEffectType.BlackWipeInRight:
-      await BlackWipeInRight(controller, action);
-      break;
-    case SpecialEffectType.BlackWipeOutRight:
-      await BlackWipeOutRight(controller, action);
-      break;
-    case SpecialEffectType.BlackWipeInTop:
-      await BlackWipeInTop(controller, action);
-      break;
-    case SpecialEffectType.BlackWipeOutTop:
-      await BlackWipeOutTop(controller, action);
-      break;
-    case SpecialEffectType.BlackWipeInBottom:
-      await BlackWipeInBottom(controller, action);
-      break;
-    case SpecialEffectType.BlackWipeOutBottom:
-      await BlackWipeOutBottom(controller, action);
-      break;
-    case SpecialEffectType.SekaiIn:
-      await SekaiIn(controller, action);
-      break;
-    case SpecialEffectType.SekaiOut:
-      await SekaiOut(controller, action);
-      break;
-    case SpecialEffectType.SimpleSelectable:
-      await SimpleSelectable(controller, action);
-      break;
-    case SpecialEffectType.FullScreenText:
-      await FullScreenText(controller, action);
-      break;
-    case SpecialEffectType.FullScreenTextShow:
-      await FullScreenTextShow(controller, action);
-      break;
-    case SpecialEffectType.FullScreenTextHide:
-      await FullScreenTextHide(controller, action);
-      break;
-    case SpecialEffectType.MemoryIn:
-      await MemoryIn(controller, action);
-      break;
-    case SpecialEffectType.MemoryOut:
-      await MemoryOut(controller, action);
-      break;
-    case SpecialEffectType.SekaiInCenter:
-      await SekaiInCenter(controller, action);
-      break;
-    case SpecialEffectType.SekaiOutCenter:
-      await SekaiOutCenter(controller, action);
-      break;
-    case SpecialEffectType.ChangeCameraPosition:
-      await ChangeCameraPosition(controller, action);
-      break;
-    case SpecialEffectType.ChangeCameraZoomLevel:
-      await ChangeCameraZoomLevel(controller, action);
-      break;
-    case SpecialEffectType.Movie:
-      await Movie(controller, action);
-      break;
-    case SpecialEffectType.Blur:
-      await Blur(controller, action);
-      break;
-    case SpecialEffectType.PlaceInfo:
-      await PlaceInfo(controller, action);
-      break;
-    default:
-      log.warn(
-        "Live2DController",
-        `${SnippetAction[action.Action]}/${SpecialEffectType[action_detail.EffectType]} not implemented!`,
-        action,
-        action_detail
-      );
-      controller.events.emit(
-        "warn",
-        `${SnippetAction[action.Action]}/${SpecialEffectType[action_detail.EffectType]} not implemented!`
-      );
+  const effectAction = actionsByEffectType[action_detail.EffectType];
+  if (effectAction) {
+    await effectAction(controller, action);
+    return;
   }
+  log.warn(
+    "Live2DController",
+    `${SnippetAction[action.Action]}/${SpecialEffectType[action_detail.EffectType]} not implemented!`,
+    action,
+    action_detail
+  );
+  controller.events.emit(
+    "warn",
+    `${SnippetAction[action.Action]}/${SpecialEffectType[action_detail.EffectType]} not implemented!`
+  );
 }

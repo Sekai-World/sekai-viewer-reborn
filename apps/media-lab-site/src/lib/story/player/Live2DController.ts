@@ -25,6 +25,30 @@ interface CostumeState {
   animations: string[];
 }
 
+/**
+ * True when playback may stop at `step`: end of story, any talk, or a
+ * parking special effect (telop / full-screen text / choice prompt).
+ */
+const snippetIsCheckpoint = (
+  snippets: IScenarioData["Snippets"],
+  specialEffectData: IScenarioData["SpecialEffectData"],
+  step: number
+): boolean => {
+  if (step >= snippets.length - 1) return true;
+  const action = snippets[step];
+  if (action.ProgressBehavior === SnippetProgressBehavior.Now) return false;
+  if (action.Action === SnippetAction.Talk) return true;
+  if (action.Action === SnippetAction.SpecialEffect) {
+    const action_detail = specialEffectData[action.ReferenceIndex];
+    return (
+      action_detail.EffectType === SpecialEffectType.Telop ||
+      action_detail.EffectType === SpecialEffectType.FullScreenText ||
+      action_detail.EffectType === SpecialEffectType.SimpleSelectable
+    );
+  }
+  return false;
+};
+
 export class Live2DController extends Live2DPlayer {
   scenarioData: IScenarioData;
   scenarioResource: ILive2DScenarioResource;
@@ -166,33 +190,7 @@ export class Live2DController extends Live2DPlayer {
   step_until_checkpoint = async (step: number, opts?: { silent?: boolean }) => {
     this.replay_silent = opts?.silent ?? false;
     try {
-      // is end of the story
-      const is_end = (step: number) => {
-        return step >= this.scenarioData.Snippets.length - 1;
-      };
-      // find where to stop
-      const is_stop = (step: number) => {
-        if (is_end(step)) return true;
-        const action = this.scenarioData.Snippets[step];
-        if (action.ProgressBehavior === SnippetProgressBehavior.Now) {
-          return false;
-        }
-        if (action.Action === SnippetAction.Talk) {
-          return true;
-        }
-        if (action.Action === SnippetAction.SpecialEffect) {
-          const action_detail = this.scenarioData.SpecialEffectData[action.ReferenceIndex];
-          if (
-            action_detail.EffectType === SpecialEffectType.Telop ||
-            action_detail.EffectType === SpecialEffectType.FullScreenText ||
-            action_detail.EffectType === SpecialEffectType.SimpleSelectable
-          ) {
-            // SimpleSelectable parks until the viewer picks a choice in the host UI.
-            return true;
-          }
-        }
-        return false;
-      };
+      const snippets = this.scenarioData.Snippets;
 
       // create action list
       const action_list: number[][] = [];
@@ -202,7 +200,7 @@ export class Live2DController extends Live2DPlayer {
       do {
         current++;
         // check if SnippetProgressBehavior = Now
-        if (this.scenarioData.Snippets[current].ProgressBehavior === SnippetProgressBehavior.Now) {
+        if (snippets[current].ProgressBehavior === SnippetProgressBehavior.Now) {
           // SnippetProgressBehavior = Now, push in the last list
           action_list[action_list.length - 1].push(current);
         } else {
@@ -210,12 +208,12 @@ export class Live2DController extends Live2DPlayer {
           action_list.push([current]);
         }
         // sum delay time
-        total_delay += this.scenarioData.Snippets[current].Delay;
-      } while (!is_stop(current));
+        total_delay += snippets[current].Delay;
+      } while (!snippetIsCheckpoint(snippets, this.scenarioData.SpecialEffectData, current));
       // continue if the next steps SnippetProgressBehavior = Now
       while (
-        !is_end(current) &&
-        this.scenarioData.Snippets[current + 1].ProgressBehavior === SnippetProgressBehavior.Now
+        current < snippets.length - 1 &&
+        snippets[current + 1].ProgressBehavior === SnippetProgressBehavior.Now
       ) {
         current++;
         action_list[action_list.length - 1].push(current);
@@ -263,7 +261,7 @@ export class Live2DController extends Live2DPlayer {
       }
 
       // if reach end, return -1
-      return is_end(current) ? -1 : current;
+      return current >= snippets.length - 1 ? -1 : current;
     } finally {
       this.replay_silent = false;
     }
