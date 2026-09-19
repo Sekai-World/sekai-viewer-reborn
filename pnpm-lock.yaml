@@ -9,7 +9,7 @@ overrides:
   esbuild: 0.28.2
   brace-expansion: 5.0.12
   '@microsoft/api-extractor': 7.59.1
-  fast-uri: 4.1.5
+  fast-uri: 4.2.1
   postcss: 8.5.28
   nanoid: 6.0.1
   read-yaml-file@1: ^2.1.0
@@ -58,10 +58,10 @@ importers:
         version: 30.1.0
       prettier:
         specifier: ^3.8.3
-        version: 3.9.7
+        version: 3.9.8
       prettier-plugin-svelte:
         specifier: ^4.1.0
-        version: 4.1.1(prettier@3.9.7)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
+        version: 4.1.1(prettier@3.9.8)(svelte@5.57.0(@typescript-eslint/types@8.70.0))
       svelte-eslint-parser:
         specifier: ^1.8.0
         version: 1.8.1(svelte@5.57.0(@typescript-eslint/types@8.70.0))
@@ -116,7 +116,7 @@ importers:
         version: 5.0.1(vitest@5.0.1)
       daisyui:
         specifier: ^5.5.20
-        version: 5.7.39
+        version: 5.7.42
       svelte:
         specifier: ^5.56.2
         version: 5.57.0(@typescript-eslint/types@8.70.0)
@@ -158,7 +158,7 @@ importers:
         version: link:../../packages/ui-tokens
       taglib-wasm:
         specifier: ^2.0.0
-        version: 2.2.2(typescript@6.0.3)
+        version: 2.2.3(typescript@6.0.3)
     devDependencies:
       '@iconify-icons/mdi':
         specifier: ^2.0.0
@@ -180,7 +180,7 @@ importers:
         version: 25.9.7
       daisyui:
         specifier: ^5.5.20
-        version: 5.7.39
+        version: 5.7.42
       svelte:
         specifier: ^5.56.2
         version: 5.57.0(@typescript-eslint/types@8.70.0)
@@ -247,7 +247,7 @@ importers:
         version: 5.0.1(vitest@5.0.1)
       daisyui:
         specifier: ^5.5.20
-        version: 5.7.39
+        version: 5.7.42
       svelte:
         specifier: ^5.56.2
         version: 5.57.0(@typescript-eslint/types@8.70.0)
@@ -335,7 +335,7 @@ importers:
         version: 5.0.1(vitest@5.0.1)
       daisyui:
         specifier: ^5.5.20
-        version: 5.7.39
+        version: 5.7.42
       svelte:
         specifier: ^5.56.2
         version: 5.57.0(@typescript-eslint/types@8.70.0)
@@ -2291,8 +2291,8 @@ packages:
     resolution: {integrity: sha512-MOqHvMWF9/9MX6nza0KgvFH4HpMU0EF5uUDXqX/BtxtU8NfB0QzRtJ8Oe/6SuS4kbhyzVJwjd97EA4PKrzJ8bw==}
     engines: {node: '>=0.12'}
 
-  daisyui@5.7.39:
-    resolution: {integrity: sha512-+37UDZKyQPYH5TsZnTqxf38SYDpM4fr+DZGWHQF+Z2LH+hrBn8zuwB3qOJM142nuR1zhs+1/BBgSINfbfPaD1A==}
+  daisyui@5.7.42:
+    resolution: {integrity: sha512-1Enls+br/2ZJG+DHUlaVYMq/hQLTP2hyiTKt0kRBywJjoau0kHy1NDF1Oqo95cyVR1STzZK+7vyz1KxQroJU3w==}
 
   data-urls@7.0.0:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
@@ -3171,8 +3171,8 @@ packages:
       prettier: ^3.0.0
       svelte: ^5.0.0
 
-  prettier@3.9.7:
-    resolution: {integrity: sha512-T3mF5P7HFzZVLDQuCUNtJj6WK1pcpLMweMNUVwGb01bLNkH9AkKxtZvmInw8K6bnn2O3d6/5RHl6zSHiBAD0Og==}
+  prettier@3.9.8:
+    resolution: {integrity: sha512-WRFq3Wn3WId7LLROfMLdH7xaFr2jR62wU8nLO6rQUOLOxNZUviyJQs1M0iIhLexSFy+L+w0ch66wtoO2jRjG0A==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -3379,8 +3379,8 @@ packages:
     resolution: {integrity: sha512-eNRKgb3z66Yp3D2CixVujOUvXLFUTij/zVnV8KRyvFdQwpz7I5DS8UfRkTeLzb64u+dkzDSdelE24izu+zSSUg==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  taglib-wasm@2.2.2:
-    resolution: {integrity: sha512-u1aIsSFYPGeS2J99GY3Of+PZDF6cSPSN1A/vouQ4dl6zs2QQzVKbqBAcvwiirIjVq72Xg1i7Eg4yYf/LreJBsQ==}
+  taglib-wasm@2.2.3:
+    resolution: {integrity: sha512-FI+gLw7x++tMnvqgko2I7zWXeDMrU9HnP2vd9/WL32BaBv6gm480kKPsxrdDn/prDCF8ChO4MVVtVVCsDVIFBQ==}
     engines: {node: '>=24.0.0'}
     peerDependencies:
       typescript: '>=4.5.0'
@@ -5415,7 +5415,7 @@ snapshots:
       es5-ext: 0.10.64
       type: 2.7.3
 
-  daisyui@5.7.39: {}
+  daisyui@5.7.42: {}
 
   data-urls@7.0.0:
     dependencies:
@@ -6300,12 +6300,12 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-svelte@4.1.1(prettier@3.9.7)(svelte@5.57.0(@typescript-eslint/types@8.70.0)):
+  prettier-plugin-svelte@4.1.1(prettier@3.9.8)(svelte@5.57.0(@typescript-eslint/types@8.70.0)):
     dependencies:
-      prettier: 3.9.7
+      prettier: 3.9.8
       svelte: 5.57.0(@typescript-eslint/types@8.70.0)
 
-  prettier@3.9.7: {}
+  prettier@3.9.8: {}
 
   pretty-format@27.5.1:
     dependencies:
@@ -6562,7 +6562,7 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.3.6
 
-  taglib-wasm@2.2.2(typescript@6.0.3):
+  taglib-wasm@2.2.3(typescript@6.0.3):
     dependencies:
       '@msgpack/msgpack': 3.1.3
     optionalDependencies:
