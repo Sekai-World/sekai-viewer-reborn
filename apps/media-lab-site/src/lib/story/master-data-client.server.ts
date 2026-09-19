@@ -682,8 +682,9 @@ export const fetchCardListPage = async (
   if (query.types?.length) requestQuery.type = query.types.join(",");
   if (query.attrs?.length) requestQuery.attr = query.attrs.join(",");
   if (query.rarities?.length) requestQuery.rarity = query.rarities.join(",");
-  if (query.supportUnits?.length) requestQuery.support_unit = query.supportUnits.join(",");
-  if (query.has3dmvCutIn) requestQuery.has_3dmv_cut_in = true;
+  // sekai-master-api reads these filter keys in camelCase (same as content-site).
+  if (query.supportUnits?.length) requestQuery.supportUnit = query.supportUnits.join(",");
+  if (query.has3dmvCutIn) requestQuery.has3dmvCutIn = true;
 
   const response = await getCardsByRegionList({
     baseUrl,
@@ -715,7 +716,8 @@ export const fetchCardListPage = async (
  * Fetches the cardEpisodes rows of the given cards through the lookup list
  * endpoint's `card_id` filter, avoiding a full collection download. A
  * picker page holds a few dozen cards with at most a handful of episodes
- * each, so one large page always covers them. Not cached.
+ * each, so one maximum-size page (the API caps `page_size` at 100) always
+ * covers them. Not cached.
  */
 export const fetchCardEpisodesByCardIds = async (
   region: StoryRouteRegion,
@@ -731,7 +733,7 @@ export const fetchCardEpisodesByCardIds = async (
     path: { region },
     query: {
       page: 1,
-      page_size: 200,
+      page_size: 100,
       spoiler: true,
       card_id: cardIds.join(",")
     }

@@ -621,8 +621,8 @@ describe("fetchCardListPage", () => {
           type: "term_limited",
           attr: "cute",
           rarity: "rarity_4",
-          support_unit: "none",
-          has_3dmv_cut_in: true
+          supportUnit: "none",
+          has3dmvCutIn: true
         }
       })
     );
@@ -704,7 +704,7 @@ describe("fetchCardEpisodesByCardIds", () => {
     expect(listEndpointMocks.getCardEpisodesByRegionList).toHaveBeenCalledWith(
       expect.objectContaining({
         path: { region: "jp" },
-        query: { page: 1, page_size: 200, spoiler: true, card_id: "3,4" }
+        query: { page: 1, page_size: 100, spoiler: true, card_id: "3,4" }
       })
     );
     expect(episodes).toEqual([

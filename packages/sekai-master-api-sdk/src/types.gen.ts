@@ -1630,6 +1630,10 @@ export type GetCardsByRegionListData = {
          */
         rarity?: string;
         /**
+         * Comma-separated name queries substring-matched against the card prefix
+         */
+        name?: string;
+        /**
          * Comma-separated support units
          */
         supportUnit?: string;
