@@ -13,3 +13,14 @@
 :root {
   --radius-box: var(--radius-xl);
 }
+
+/* Tailwind v4 preflight dropped the pointer cursor v3 put on <button>, and
+   daisyUI 5 no longer adds one to .btn either — every button and details
+   summary in this app is a click target, so restore the affordance.
+   Disabled buttons keep the default arrow. */
+@layer base {
+  button:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+}
