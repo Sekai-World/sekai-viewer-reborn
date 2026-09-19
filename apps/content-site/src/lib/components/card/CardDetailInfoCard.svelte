@@ -7,9 +7,8 @@
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import { UnitIconBadge } from "@platform/ui-shell";
+  import { UnitIconBadge, VoicePlayButton } from "@platform/ui-shell";
   import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
-  import VoicePlayButton from "$lib/components/shared/VoicePlayButton.svelte";
   import Icon from "@iconify/svelte";
 
   let {
@@ -222,7 +221,7 @@
       <div class="flex shrink-0 items-center gap-3">
         {#if gachaPhraseAudioUrl}
           <VoicePlayButton
-            src={gachaPhraseAudioUrl}
+            sources={[gachaPhraseAudioUrl]}
             playLabel={audioPlayLabel}
             errorLabel={audioUnavailableLabel}
           />

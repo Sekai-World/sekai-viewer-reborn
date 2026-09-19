@@ -1,14 +1,19 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
-  import { goto, invalidateAll, onNavigate } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
-  import { fade } from "svelte/transition";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
+  import { registerStoryAssetCache } from "$lib/story/asset-cache-client";
+  import {
+    isActivePickerStoryTypePath,
+    pickerStoryTypeIcons,
+    pickerStoryTypes
+  } from "$lib/story/story-picker";
   import {
     DEFAULT_UI_LOCALE,
     buildUiLocaleCookie,
@@ -38,7 +43,10 @@
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const regionSelection = provideRegionSelection();
   regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
-  const fallbackMessages = getLocalI18nMessages(["common"]);
+  // The shell (including the sidebar's story-type labels) translates keys
+  // from every namespace, so the SSR fallback must too; `data.i18nMessages`
+  // layers any remote overrides on top after hydration.
+  const fallbackMessages = getLocalI18nMessages(mediaLabI18nNamespaces);
   let messages = $state(fallbackMessages);
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
@@ -46,11 +54,6 @@
   let isDesktopThemeMenuOpen = $state(false);
   let isDesktopLanguageMenuOpen = $state(false);
   let isMobileSettingsMenuOpen = $state(false);
-
-  // Preserve the media-lab page-switch behavior: keyed fade transitions when
-  // native view transitions are unavailable or reduced motion is preferred.
-  let useFallbackRouteTransition = $state(true);
-  const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
 
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
 
@@ -126,19 +129,20 @@
   );
 
   const sidebarItems: SidebarItem[] = $derived([
-    { type: "section", label: translate("navigation.labTools") },
     {
       label: translate("navigation.home"),
       href: "/",
       icon: "mdi:home-variant-outline",
       active: pathname === "/"
     },
-    {
-      label: translate("navigation.storyReader"),
-      href: "/story-reader",
-      icon: "mdi:book-open-variant",
-      active: isStoryReaderRoute
-    },
+    { type: "section", label: translate("navigation.storyReader") },
+    ...pickerStoryTypes.map((storyType) => ({
+      label: translate(`storyReader.storyType.${storyType}`),
+      href: `/story-reader/${storyType}`,
+      icon: pickerStoryTypeIcons[storyType],
+      active: isActivePickerStoryTypePath(pathname, storyType)
+    })),
+    { type: "section", label: translate("navigation.studios") },
     {
       label: translate("navigation.live2d"),
       href: "/live2d",
@@ -180,33 +184,20 @@
   };
 
   $effect(() => {
-    regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
+    // Only an explicit `?region=` updates the shared selection. In-app links
+    // that omit the param (e.g. the sidebar picker sub-pages) keep the
+    // sticky selection instead of resetting it to the default.
+    const regionParam = page.url.searchParams.get("region");
+    if (regionParam !== null) {
+      regionSelection.primary = normalizePrimaryRegion(regionParam);
+    }
   });
 
-  // `onNavigate` must be registered during component initialisation; calling it
-  // inside `onMount` throws at runtime. Browser APIs are guarded inside the
-  // callback instead, which only ever runs on the client.
-  onNavigate((navigation) => {
-    const viewTransitionDocument = document as Document & {
-      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-    };
-    if (!viewTransitionDocument.startViewTransition) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    return new Promise<void>((resolve) => {
-      viewTransitionDocument.startViewTransition(async () => {
-        resolve();
-        await navigation.complete;
-      });
-    });
-  });
-
+  // Best-effort LRU cache for story assets; the allowlist follows the
+  // server-resolved asset base so it always matches what the player fetches.
+  // Registration failures are swallowed inside the helper.
   onMount(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const documentWithViewTransition = document as Document & {
-      startViewTransition?: (updateCallback: () => Promise<void> | void) => unknown;
-    };
-    useFallbackRouteTransition =
-      typeof documentWithViewTransition.startViewTransition !== "function" || prefersReducedMotion;
+    void registerStoryAssetCache(data.assetBase);
   });
 
   onMount(() => {
@@ -279,7 +270,8 @@
   sidebarLabel={translate("navigation.sidebar")}
   {sidebarItems}
   desktopRailOpen={true}
-  showTitle={false}
+  showTitle={page.url.pathname === "/"}
+  mainWidthClass="max-w-320"
 >
   {#snippet navActions()}
     <div class="relative z-120 hidden items-center gap-2 sm:flex">
@@ -415,21 +407,7 @@
       </div>
     </div>
   {/snippet}
-  {#if useFallbackRouteTransition}
-    {#key navigationTransitionKey}
-      <div
-        class="page-switch-shell"
-        in:fade|local={{ duration: 150 }}
-        out:fade|local={{ duration: 110 }}
-      >
-        {@render children()}
-      </div>
-    {/key}
-  {:else}
-    <div class="page-switch-shell">
-      {@render children()}
-    </div>
-  {/if}
+  {@render children()}
 </ViewerShell>
 
 {#snippet regionSelector()}

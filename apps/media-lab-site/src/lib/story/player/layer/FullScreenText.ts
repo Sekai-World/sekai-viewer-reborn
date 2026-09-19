@@ -1,0 +1,106 @@
+import { Text, TextStyle } from "pixi.js";
+import type { ILive2DLayerData } from "../player-types";
+import BaseLayer from "./BaseLayer";
+
+export default class FullScreenText extends BaseLayer {
+  structure: {
+    text_c?: Text;
+    translated_text_c?: Text;
+  };
+  constructor(data: ILive2DLayerData) {
+    super(data);
+    this.structure = {};
+  }
+
+  draw(text: string, translatedText?: string | null): Promise<void> {
+    this.root.removeChildren();
+
+    const text_c = new Text(text);
+    this.root.addChild(text_c);
+
+    // Create translated text element if translation is provided
+    let translated_text_c: Text | undefined;
+    if (translatedText) {
+      translated_text_c = new Text(translatedText);
+      this.root.addChild(translated_text_c);
+    }
+
+    this.structure = {
+      text_c,
+      translated_text_c,
+    };
+    this.init = true;
+    this.set_style();
+    return Promise.resolve();
+  }
+  draw_new_text(text: string, translatedText?: string | null) {
+    if (this.init) {
+      const new_text = new Text(text);
+      this.root.addChild(new_text);
+      this.structure.text_c?.destroy();
+      this.structure.text_c = new_text;
+
+      // Update translated text if provided
+      this.structure.translated_text_c?.destroy();
+      if (translatedText) {
+        const new_translated_text = new Text(translatedText);
+        this.root.addChild(new_translated_text);
+        this.structure.translated_text_c = new_translated_text;
+      } else {
+        this.structure.translated_text_c = undefined;
+      }
+
+      this.set_style_text();
+    }
+  }
+  set_style(stage_size?: [number, number]): void {
+    this.stage_size = stage_size ? stage_size : this.stage_size;
+    if (this.init) this.set_style_text();
+  }
+  set_style_text() {
+    // Style translated text
+    if (this.structure.translated_text_c) {
+      const translated_text = this.structure.translated_text_c;
+      translated_text.anchor.set(0.5);
+      translated_text.x = this.stage_size[0] * 0.5;
+      translated_text.y = this.em(30);
+      translated_text.alpha = 0.8;
+      translated_text.style = new TextStyle({
+        fill: ["#ffffff"],
+        fontSize: this.em(18),
+        lineHeight: this.em(18) * 1.3,
+        breakWords: true,
+        wordWrap: true,
+        wordWrapWidth: this.stage_size[0] * 0.9,
+        align: "left",
+      });
+    }
+
+    // Style original text
+    const text = this.structure.text_c!;
+    text.anchor.set(0.5);
+    text.x = this.stage_size[0] * 0.5;
+    text.y = this.stage_size[1] * 0.5;
+    text.style = new TextStyle({
+      fill: ["#ffffff"],
+      fontSize: this.em(28),
+      lineHeight: this.em(28) * 1.3,
+      breakWords: true,
+      wordWrap: true,
+      wordWrapWidth: this.stage_size[0],
+      align: "left",
+    });
+  }
+
+  async animate(text: string, translatedText?: string | null) {
+    this.draw("", translatedText);
+    for (let i = 1; i <= text.length; i++) {
+      // if aborted, jump to full text
+      const aborted = this.animation_controller.abort_controller.signal.aborted;
+      // new text
+      this.draw_new_text(aborted ? text : text.slice(0, i), translatedText);
+      await this.animation_controller.delay(50);
+      if (aborted) break;
+    }
+  }
+}

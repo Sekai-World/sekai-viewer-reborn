@@ -1,0 +1,41 @@
+import type { Live2DController } from "../../Live2DController";
+import type { Snippet } from "../../../scenario-types";
+import { Live2DAssetType } from "../../player-types";
+
+export default async function Movie(
+  controller: Live2DController,
+  action: Snippet
+) {
+  const action_detail =
+    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+
+  // Get the movie resource from loaded assets
+  const movieResource = controller.scenarioResource.video.find(
+    (s) =>
+      s.identifier === action_detail.StringVal &&
+      s.type === Live2DAssetType.Video
+  );
+
+  if (movieResource) {
+    const videoElement = movieResource.data;
+
+    try {
+      await controller.layers.movie.draw(videoElement);
+
+      await controller.layers.movie.waitForCompletion();
+    } catch (error) {
+      controller.events.emit(
+        "warn",
+        `Failed to play movie ${action_detail.StringVal}: ${String(error)}`
+      );
+    } finally {
+      // Always clear the movie layer, regardless of success or failure
+      controller.layers.movie.clear();
+    }
+  } else {
+    controller.events.emit(
+      "warn",
+      `${action_detail.StringVal} not loaded, skip.`
+    );
+  }
+}

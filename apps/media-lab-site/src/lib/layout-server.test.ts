@@ -5,12 +5,16 @@ vi.mock("$lib/server/notifications", () => ({
   fetchGlobalNotices: vi.fn().mockResolvedValue([])
 }));
 
+vi.mock("$lib/story/story-resolver.server", () => ({
+  getStoryAssetBase: () => "https://storage.example.test"
+}));
+
 import { getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
 import { DEFAULT_UI_LOCALE, UI_LOCALE_COOKIE_NAME, supportedUiLocales } from "$lib/i18n/region";
 import { load } from "../routes/+layout.server";
 
 describe("media-lab-site layout server load", () => {
-  it("passes localized messages, locale, notices, and the package version to the site layout", async () => {
+  it("passes localized messages, locale, notices, the package version, and the asset base to the site layout", async () => {
     const loadEvent = {
       cookies: { get: vi.fn().mockReturnValue(undefined) },
       fetch: vi.fn()
@@ -20,7 +24,8 @@ describe("media-lab-site layout server load", () => {
       globalNotices: [],
       i18nMessages: getLocalI18nMessages(mediaLabI18nNamespaces),
       uiLocale: DEFAULT_UI_LOCALE,
-      siteVersion: packageJson.version
+      siteVersion: packageJson.version,
+      assetBase: "https://storage.example.test"
     });
     expect(loadEvent.cookies.get).toHaveBeenCalledWith(UI_LOCALE_COOKIE_NAME);
   });

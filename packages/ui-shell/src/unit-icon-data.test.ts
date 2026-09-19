@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   getUnitIconBorderColor,
   normalizeUnitIconSlug,
-  resolveUnitIconUrl
+  resolveUnitIconUrl,
+  resolveUnitLogoUrl
 } from "./unit-icon-data";
 
 describe("unit icon data", () => {
@@ -20,5 +21,11 @@ describe("unit icon data", () => {
     expect(getUnitIconBorderColor("street")).toBe("#ee1166");
     expect(getUnitIconBorderColor("none", true)).toBe("#ffffff");
     expect(getUnitIconBorderColor("unknown")).toBeNull();
+  });
+
+  it("resolves package-owned logos", () => {
+    expect(resolveUnitLogoUrl("idol")).toBeTruthy();
+    expect(resolveUnitLogoUrl("none", true)).toBeTruthy();
+    expect(resolveUnitLogoUrl("unknown")).toBeNull();
   });
 });

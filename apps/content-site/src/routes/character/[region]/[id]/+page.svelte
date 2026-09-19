@@ -7,7 +7,6 @@
   import { getCardThumbnailAssetURL } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
-  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
@@ -15,7 +14,7 @@
   import RegionBadgeSwitch, {
     type RegionBadgeOption
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { UnitIconBadge } from "@platform/ui-shell";
+  import { CardThumbnail, UnitIconBadge } from "@platform/ui-shell";
   import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
   import type { CharacterDetail, CharacterRelatedCard } from "$lib/domain/character";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";

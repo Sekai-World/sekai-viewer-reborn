@@ -3,7 +3,7 @@
   import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
   import type { GachaProbabilityCard } from "$lib/domain/gacha-probability";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import { CardThumbnail } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
   import { tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";

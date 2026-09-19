@@ -1,6 +1,6 @@
 import { cleanup, render } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import CardThumbnail from "./CardThumbnail.svelte";
+import { CardThumbnail } from "@platform/ui-shell";
 import {
   getCardThumbnailPresentation,
   isTrainedOnlyCard,
