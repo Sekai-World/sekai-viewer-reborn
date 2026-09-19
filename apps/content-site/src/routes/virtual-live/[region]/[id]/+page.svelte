@@ -28,7 +28,8 @@
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { ImagePreviewDialog } from "@platform/ui-shell";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
   import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   let { data }: { data: PageData } = $props();
@@ -229,11 +230,14 @@
 
 <svelte:head>
   {#await data.virtualLivePayload}
-    <title>{initialText("pageTitle.virtualLivePrefix")} {data.virtualLiveId} - Sekai Viewer</title>
+    <title>
+      {createPageTitle(`${initialText("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)}
+    </title>
   {:then payload}
     <title
-      >{payload.virtualLive?.name ??
-        `${initialText("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`} - Sekai Viewer</title
+      >{payload.virtualLive?.name
+        ? createPageTitle(payload.virtualLive.name, translate("navigation.virtualLives"))
+        : createPageTitle(`${initialText("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)}</title
     >
   {/await}
 </svelte:head>

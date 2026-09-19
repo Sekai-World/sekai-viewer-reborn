@@ -88,7 +88,7 @@
   });
 </script>
 
-<svelte:head><title>Sekai Viewer Tools</title></svelte:head>
+<svelte:head><title>Sekai Tools</title></svelte:head>
 
 <div class="tools-home">
   <div class="tools-home-lockup"><BrandLockup /></div>

@@ -1,7 +1,8 @@
 <script lang="ts">
   import StoryPicker from "$lib/components/story-reader/StoryPicker.svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
@@ -18,7 +19,7 @@
 </script>
 
 <svelte:head>
-  <title>{storyTypeTitle}</title>
+  <title>{createPageTitle(storyTypeTitle)}</title>
 </svelte:head>
 
 <section aria-labelledby="story-reader-landing-title" class="flex flex-col gap-6">

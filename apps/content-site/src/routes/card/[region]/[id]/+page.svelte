@@ -21,7 +21,8 @@
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
@@ -338,15 +339,15 @@
 
 <svelte:head>
   {#await data.cardPayload}
-    <title>{pageTitlePrefix} {data.cardId} - Sekai Viewer</title>
+    <title>{createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}</title>
   {:then payload}
     <title>
       {payload.card
-        ? `${payload.card.title} - Sekai Viewer`
-        : `${pageTitlePrefix} ${data.cardId} - Sekai Viewer`}
+        ? createPageTitle(payload.card.title, currentTranslate("navigation.cards"))
+        : createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}
     </title>
   {:catch}
-    <title>{pageTitlePrefix} {data.cardId} - Sekai Viewer</title>
+    <title>{createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}</title>
   {/await}
 </svelte:head>
 

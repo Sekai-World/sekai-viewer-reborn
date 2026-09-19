@@ -10,7 +10,7 @@
 </script>
 
 <svelte:head>
-  <title>Sekai Viewer Media Lab</title>
+  <title>{translate("shell.title")}</title>
 </svelte:head>
 
 <section class="flex flex-col gap-6">

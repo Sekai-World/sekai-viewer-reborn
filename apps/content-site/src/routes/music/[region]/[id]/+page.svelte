@@ -15,7 +15,8 @@
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel, unitCodeByMusicTag } from "$lib/domain/unit-profile";
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
@@ -214,15 +215,15 @@
 
 <svelte:head>
   {#await data.musicPayload}
-    <title>{musicTitlePrefix} {data.musicId} - Sekai Viewer</title>
+    <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
   {:then payload}
     <title>
       {payload.music
-        ? `${payload.music.title} - Sekai Viewer`
-        : `${musicTitlePrefix} ${data.musicId} - Sekai Viewer`}
+        ? createPageTitle(payload.music.title, musicListTitle)
+        : createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}
     </title>
   {:catch}
-    <title>{musicTitlePrefix} {data.musicId} - Sekai Viewer</title>
+    <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
   {/await}
 </svelte:head>
 

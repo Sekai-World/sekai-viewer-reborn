@@ -17,7 +17,8 @@
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import { getEventTrackerHref } from "$lib/tools-site";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
@@ -292,12 +293,12 @@
 
 <svelte:head>
   {#await data.eventPayload}
-    <title>{eventTitlePrefix} {data.eventId} - Sekai Viewer</title>
+    <title>{createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title>
   {:then payload}
     <title
       >{payload.event
-        ? `${payload.event.title} - Sekai Viewer`
-        : `${eventTitlePrefix} ${data.eventId} - Sekai Viewer`}</title
+        ? createPageTitle(payload.event.title, currentTranslate("navigation.events"))
+        : createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title
     >
   {/await}
 </svelte:head>

@@ -21,7 +21,8 @@
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const fallbackMessages = $derived(
@@ -286,7 +287,7 @@
     sortBy === target && sortOrder === "asc" ? "mdi:arrow-up" : "mdi:arrow-down";
 </script>
 
-<svelte:head><title>{title} {regionLabels[data.region]} - Sekai Viewer</title></svelte:head>
+<svelte:head><title>{createPageTitle(`${title} ${regionLabels[data.region]}`)}</title></svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-5 px-2">
   <PageHeader

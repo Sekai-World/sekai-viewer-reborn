@@ -16,7 +16,8 @@
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   import type { GachaListPage, GachaListItem as GachaListItemType } from "$lib/server/gacha-list";
 
@@ -599,7 +600,7 @@
 </script>
 
 <svelte:head>
-  <title>{gachaListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
+  <title>{createPageTitle(`${gachaListTitle} ${regionLabels[data.region]}`)}</title>
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-5 px-2">

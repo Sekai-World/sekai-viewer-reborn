@@ -5,7 +5,8 @@
   import { createI18nTranslator } from "$lib/i18n/runtime";
   import type { StoryRouteStoryType } from "$lib/live2d/story-route";
   import { readerBackPath } from "$lib/story/story-picker";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
@@ -58,7 +59,14 @@
 </script>
 
 <svelte:head>
-  <title>{translate("storyReader.player.title")}</title>
+  <title>
+    {
+      createPageTitle(
+        subtitle ?? translate("storyReader.player.title"),
+        storyTypeLabels[data.identity.storyType]
+      )
+    }
+  </title>
 </svelte:head>
 
 <section aria-labelledby="story-reader-player-title" class="flex flex-col gap-6">

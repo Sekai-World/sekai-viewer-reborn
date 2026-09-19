@@ -28,7 +28,8 @@
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
   import type { CardListPage, CardListItem as CardListItemType } from "$lib/server/card-list";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   type CardListPagePayload = CardListPage;
   type CardListItem = CardListItemType;
@@ -1037,7 +1038,7 @@
 </script>
 
 <svelte:head>
-  <title>{cardListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
+  <title>{createPageTitle(`${cardListTitle} ${regionLabels[data.region]}`)}</title>
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-5 px-2">

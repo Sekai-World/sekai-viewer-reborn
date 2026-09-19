@@ -15,7 +15,8 @@
   import { formatUnitMemberName } from "$lib/domain/unit-detail";
   import type { UnitMember } from "$lib/server/unit-detail";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const initialMessages = (): Record<string, string> =>
@@ -51,9 +52,9 @@
 
 <svelte:head>
   {#await data.payload}
-    <title>{t("unitPageTitlePrefix", "Unit")} - Sekai Viewer</title>
+    <title>{createPageTitle(t("unitPageTitlePrefix", "Unit"))}</title>
   {:then result}
-    <title>{result.unit?.unitName ?? t("unitPageTitlePrefix", "Unit")} - Sekai Viewer</title>
+    <title>{createPageTitle(result.unit?.unitName ?? t("unitPageTitlePrefix", "Unit"))}</title>
   {/await}
 </svelte:head>
 
