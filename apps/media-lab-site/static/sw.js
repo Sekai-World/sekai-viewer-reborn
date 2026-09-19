@@ -59,8 +59,11 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("message", (event) => {
+  // Cache configuration is only accepted from the same origin that
+  // registered this service worker.
+  if (event.origin !== self.location.origin) return;
   const data = event.data;
-  if (!data || data.type !== "configure-story-asset-cache") return;
+  if (data?.type !== "configure-story-asset-cache") return;
   if (Array.isArray(data.origins)) {
     allowedOrigins = data.origins.filter(
       (origin) => typeof origin === "string" && origin.length > 0

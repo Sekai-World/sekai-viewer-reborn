@@ -14,7 +14,7 @@ export default class Wipe extends BaseLayer {
     this.structure = {};
   }
 
-  draw() {
+  draw(): Promise<void> {
     this.root.removeChildren();
     const wipe = new Sprite(
       this.textures.find((a) => a.identifier === "ui/black_wipe")!.texture
@@ -33,6 +33,7 @@ export default class Wipe extends BaseLayer {
 
     this.init = true;
     this.set_style();
+    return Promise.resolve();
   }
   set_style(stage_size?: [number, number]): void {
     this.stage_size = stage_size ? stage_size : this.stage_size;

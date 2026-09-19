@@ -136,6 +136,96 @@ const talkVoiceCandidates = (
       : undefined
   });
 
+type ScenarioTalk = IScenarioData["TalkData"][number];
+type ScenarioSpecialEffect = IScenarioData["SpecialEffectData"][number];
+type ScenarioSound = IScenarioData["SoundData"][number];
+
+interface RowEmitContext {
+  scenarioId: string;
+  names: StoryCastNameTables;
+  voiceCharacters: Map<number, StoryVoiceCharacter>;
+  options: { isCardStory: boolean; isActionSet: boolean };
+}
+
+const talkRowOf = (talk: ScenarioTalk | undefined, context: RowEmitContext): StoryTextRow | null => {
+  if (!talk) return null;
+  const voice = talk.Voices[0];
+  const talkCharacter2dId = talk.TalkCharacters[0]?.Character2dId;
+  return {
+    kind: "talk",
+    name: talk.WindowDisplayName,
+    body: talk.Body,
+    characterId: gameCharacterIdOfTalk(talkCharacter2dId, context.names),
+    voicePaths:
+      voice && voice.VoiceId
+        ? talkVoiceCandidates(
+            context.scenarioId,
+            voice.VoiceId,
+            context.options.isCardStory,
+            context.options.isActionSet,
+            context.voiceCharacters,
+            talkCharacter2dId
+          )
+        : [],
+    monologue: talk.LipSync === 2
+  };
+};
+
+const specialEffectRowOf = (
+  effect: ScenarioSpecialEffect,
+  scenarioId: string
+): StoryTextRow | null => {
+  switch (effect.EffectType) {
+    case SpecialEffectType.ChangeBackground:
+      if (!effect.StringValSub) return null;
+      return {
+        kind: "background",
+        name: effect.StringValSub,
+        imagePath: backgroundImagePath(effect.StringValSub)
+      };
+    case SpecialEffectType.Telop:
+      return { kind: "telop", text: effect.StringVal };
+    case SpecialEffectType.FullScreenText:
+      return {
+        kind: "fullscreen-text",
+        text: effect.StringVal,
+        voicePaths: effect.StringValSub
+          ? [scenarioVoicePath(scenarioIdToAssetbundleName(scenarioId), effect.StringValSub)]
+          : []
+      };
+    case SpecialEffectType.Movie:
+      return {
+        kind: "movie",
+        name: effect.StringVal,
+        dirPath: movieDirPath(effect.StringVal),
+        fallbackPath: movieFallbackPath(effect.StringVal)
+      };
+    default:
+      // Transitions, shakes, filters, and camera moves are visual-only;
+      // a script-style reader omits them.
+      return null;
+  }
+};
+
+const soundRowsOf = (sound: ScenarioSound | undefined): StoryTextRow[] => {
+  if (!sound) return [];
+  if (sound.Bgm) {
+    return [{ kind: "bgm", name: sound.Bgm, path: bgmPath(sound.Bgm) }];
+  }
+  if (sound.Se) {
+    return [
+      {
+        kind: "se",
+        name: sound.Se,
+        paths: soundEffectPaths(sound.Se),
+        loop: sound.PlayMode === SoundPlayMode.LoopSe,
+        stop: sound.PlayMode === SoundPlayMode.StopSe
+      }
+    ];
+  }
+  return [];
+};
+
 /**
  * Flattens a raw scenario payload into text-reader rows. `voiceCharacters`
  * provides the character2d → asset identity needed for part-voice fallback
@@ -173,94 +263,22 @@ export const flattenScenarioToRows = (
     rows.push({ kind: "bgm", name: FirstBgm, path: bgmPath(FirstBgm) });
   }
 
+  const context: RowEmitContext = { scenarioId: ScenarioId, names, voiceCharacters, options };
   for (const snippet of Snippets) {
     switch (snippet.Action) {
       case SnippetAction.Talk: {
-        const talk = TalkData[snippet.ReferenceIndex];
-        if (!talk) break;
-        const voice = talk.Voices[0];
-        const talkCharacter2dId = talk.TalkCharacters[0]?.Character2dId;
-        rows.push({
-          kind: "talk",
-          name: talk.WindowDisplayName,
-          body: talk.Body,
-          characterId: gameCharacterIdOfTalk(talkCharacter2dId, names),
-          voicePaths:
-            voice && voice.VoiceId
-              ? talkVoiceCandidates(
-                  ScenarioId,
-                  voice.VoiceId,
-                  options.isCardStory,
-                  options.isActionSet,
-                  voiceCharacters,
-                  talkCharacter2dId
-                )
-              : [],
-          monologue: talk.LipSync === 2
-        });
+        const row = talkRowOf(TalkData[snippet.ReferenceIndex], context);
+        if (row) rows.push(row);
         break;
       }
       case SnippetAction.SpecialEffect: {
-        const effect = SpecialEffectData[snippet.ReferenceIndex];
-        if (!effect) break;
-        switch (effect.EffectType) {
-          case SpecialEffectType.ChangeBackground:
-            if (effect.StringValSub) {
-              rows.push({
-                kind: "background",
-                name: effect.StringValSub,
-                imagePath: backgroundImagePath(effect.StringValSub)
-              });
-            }
-            break;
-          case SpecialEffectType.Telop:
-            rows.push({ kind: "telop", text: effect.StringVal });
-            break;
-          case SpecialEffectType.FullScreenText:
-            rows.push({
-              kind: "fullscreen-text",
-              text: effect.StringVal,
-              voicePaths: effect.StringValSub
-                ? [
-                    scenarioVoicePath(
-                      scenarioIdToAssetbundleName(ScenarioId),
-                      effect.StringValSub
-                    )
-                  ]
-                : []
-            });
-            break;
-          case SpecialEffectType.Movie:
-            rows.push({
-              kind: "movie",
-              name: effect.StringVal,
-              dirPath: movieDirPath(effect.StringVal),
-              fallbackPath: movieFallbackPath(effect.StringVal)
-            });
-            break;
-          default:
-            // Transitions, shakes, filters, and camera moves are visual-only;
-            // a script-style reader omits them.
-            break;
-        }
+        const row = specialEffectRowOf(SpecialEffectData[snippet.ReferenceIndex], ScenarioId);
+        if (row) rows.push(row);
         break;
       }
-      case SnippetAction.Sound: {
-        const sound = SoundData[snippet.ReferenceIndex];
-        if (!sound) break;
-        if (sound.Bgm) {
-          rows.push({ kind: "bgm", name: sound.Bgm, path: bgmPath(sound.Bgm) });
-        } else if (sound.Se) {
-          rows.push({
-            kind: "se",
-            name: sound.Se,
-            paths: soundEffectPaths(sound.Se),
-            loop: sound.PlayMode === SoundPlayMode.LoopSe,
-            stop: sound.PlayMode === SoundPlayMode.StopSe
-          });
-        }
+      case SnippetAction.Sound:
+        rows.push(...soundRowsOf(SoundData[snippet.ReferenceIndex]));
         break;
-      }
       default:
         // Character layout/motion and selection snippets are playback-only.
         break;

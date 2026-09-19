@@ -43,12 +43,21 @@ const COLLECTIONS_BY_STORY_TYPE: Record<
   profile: ["characterProfiles"]
 };
 
+/** Removes all trailing slashes. Equivalent to `.replace(/\/+$/, "")` but without regex backtracking. */
+const stripTrailingSlashes = (value: string): string => {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") {
+    end -= 1;
+  }
+  return value.slice(0, end);
+};
+
 /** The configured remote asset origin (or same-origin dev path), without trailing slash. */
 export const getStoryAssetBase = (): string =>
-  (
+  stripTrailingSlashes(
     publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL?.trim() ||
-    "https://storage.sekai.best"
-  ).replace(/\/+$/, "");
+      "https://storage.sekai.best"
+  );
 
 /**
  * The asset origin for server-side `fetch` calls. A relative public base

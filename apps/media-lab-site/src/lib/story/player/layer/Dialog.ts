@@ -23,7 +23,7 @@ export default class Dialog extends BaseLayer {
    * @param text Original text
    * @param translatedText Optional translated text
    */
-  draw(cn: string, text: string, translatedText?: string | null) {
+  draw(cn: string, text: string, translatedText?: string | null): Promise<void> {
     const container = this.root;
     container.removeChildren();
     const dialog_container = new Container();
@@ -65,6 +65,7 @@ export default class Dialog extends BaseLayer {
     };
     this.init = true;
     this.set_style();
+    return Promise.resolve();
   }
   draw_new_text(text: string, translatedText?: string | null) {
     if (this.init) {
@@ -216,12 +217,11 @@ export default class Dialog extends BaseLayer {
     this.draw(cn, "");
     for (let i = 1; i <= text.length; i++) {
       // if aborted, jump to full text
-      if (this.animation_controller.abort_controller.signal.aborted) {
-        i = text.length;
-      }
+      const aborted = this.animation_controller.abort_controller.signal.aborted;
       // new text
-      this.draw_new_text(text.slice(0, i), translatedText);
+      this.draw_new_text(aborted ? text : text.slice(0, i), translatedText);
       await this.animation_controller.delay(50);
+      if (aborted) break;
     }
   }
 }

@@ -225,48 +225,67 @@ const parseNumberPart = (value: string | undefined): number | null => {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
 };
 
+const parseUnitStoryId = (storyId: string): ParsedStoryId | null => {
+  const parts = storyId.split("-");
+  if (parts.length !== 3) return null;
+  const [unit, chapterNo, episodeNo] = parts;
+  if (!unit) return null;
+  const chapter = parseNumberPart(chapterNo);
+  const episode = parseNumberPart(episodeNo);
+  if (chapter === null || episode === null) return null;
+  return { kind: "unit", unit, chapterNo: chapter, episodeNo: episode };
+};
+
+/** `{first}-{episodeNo}` ids: event (`1-1`) and special (`2-1`). */
+const parseTwoPartStoryId = (
+  kind: "event" | "special",
+  storyId: string
+): ParsedStoryId | null => {
+  const parts = storyId.split("-");
+  if (parts.length !== 2) return null;
+  const first = parseNumberPart(parts[0]);
+  const episodeNo = parseNumberPart(parts[1]);
+  if (first === null || episodeNo === null) return null;
+  return kind === "event"
+    ? { kind: "event", eventId: first, episodeNo }
+    : { kind: "special", specialStoryId: first, episodeNo };
+};
+
+/** Whole-string numeric ids: character / card / area-talk. */
+const parseSingleNumberStoryId = (
+  kind: "character" | "card" | "area-talk",
+  storyId: string
+): ParsedStoryId | null => {
+  const id = parseNumberPart(storyId);
+  if (id === null) return null;
+  switch (kind) {
+    case "character":
+      return { kind: "character", characterId: id };
+    case "card":
+      return { kind: "card", cardEpisodeId: id };
+    case "area-talk":
+      return { kind: "area-talk", actionSetId: id };
+  }
+};
+
 /** Parses a storyId for the given story type; `null` when malformed. */
 export const parseStoryId = (
   storyType: StoryRouteStoryType,
   storyId: string
 ): ParsedStoryId | null => {
-  const parts = storyId.split("-");
   switch (storyType) {
-    case "unit": {
-      if (parts.length !== 3) return null;
-      const [unit, chapterNo, episodeNo] = parts;
-      if (!unit) return null;
-      const chapter = parseNumberPart(chapterNo);
-      const episode = parseNumberPart(episodeNo);
-      if (chapter === null || episode === null) return null;
-      return { kind: "unit", unit, chapterNo: chapter, episodeNo: episode };
-    }
-    case "event": {
-      if (parts.length !== 2) return null;
-      const eventId = parseNumberPart(parts[0]);
-      const episodeNo = parseNumberPart(parts[1]);
-      if (eventId === null || episodeNo === null) return null;
-      return { kind: "event", eventId, episodeNo };
-    }
-    case "character": {
-      const characterId = parseNumberPart(storyId);
-      return characterId === null ? null : { kind: "character", characterId };
-    }
-    case "card": {
-      const cardEpisodeId = parseNumberPart(storyId);
-      return cardEpisodeId === null ? null : { kind: "card", cardEpisodeId };
-    }
-    case "area-talk": {
-      const actionSetId = parseNumberPart(storyId);
-      return actionSetId === null ? null : { kind: "area-talk", actionSetId };
-    }
-    case "special": {
-      if (parts.length !== 2) return null;
-      const specialStoryId = parseNumberPart(parts[0]);
-      const episodeNo = parseNumberPart(parts[1]);
-      if (specialStoryId === null || episodeNo === null) return null;
-      return { kind: "special", specialStoryId, episodeNo };
-    }
+    case "unit":
+      return parseUnitStoryId(storyId);
+    case "event":
+      return parseTwoPartStoryId("event", storyId);
+    case "special":
+      return parseTwoPartStoryId("special", storyId);
+    case "character":
+      return parseSingleNumberStoryId("character", storyId);
+    case "card":
+      return parseSingleNumberStoryId("card", storyId);
+    case "area-talk":
+      return parseSingleNumberStoryId("area-talk", storyId);
     default:
       return null;
   }
@@ -300,6 +319,146 @@ export type StoryResolutionResult =
   | { status: "not-found" }
   | { status: "unsupported"; reason: string };
 
+type UnitParsedStoryId = Extract<ParsedStoryId, { kind: "unit" }>;
+type EventParsedStoryId = Extract<ParsedStoryId, { kind: "event" }>;
+type CharacterParsedStoryId = Extract<ParsedStoryId, { kind: "character" }>;
+type CardParsedStoryId = Extract<ParsedStoryId, { kind: "card" }>;
+type AreaTalkParsedStoryId = Extract<ParsedStoryId, { kind: "area-talk" }>;
+type SpecialParsedStoryId = Extract<ParsedStoryId, { kind: "special" }>;
+
+const resolveUnitIdentity = (
+  parsed: UnitParsedStoryId,
+  collections: StoryMasterCollections
+): StoryResolutionResult => {
+  const unit = collections.unitStories.find((us) => us.unit === parsed.unit);
+  const chapter = unit?.chapters.find((ch) => ch.chapterNo === parsed.chapterNo);
+  const episode = chapter?.episodes.find((ep) => ep.episodeNo === parsed.episodeNo);
+  if (!unit || !chapter || !episode) return { status: "not-found" };
+  return {
+    status: "ok",
+    resolution: {
+      scenarioPath: unitStoryScenarioPath(chapter.assetbundleName, episode.scenarioId),
+      isCardStory: false,
+      isActionSet: false,
+      bannerPath: unitEpisodeBannerPath(chapter.assetbundleName, episode.assetbundleName),
+      chapterTitle: chapter.title,
+      episodeTitle: episode.title,
+      scenarioId: episode.scenarioId
+    }
+  };
+};
+
+const resolveEventIdentity = (
+  parsed: EventParsedStoryId,
+  collections: StoryMasterCollections
+): StoryResolutionResult => {
+  const eventStory = collections.eventStories.find((es) => es.eventId === parsed.eventId);
+  const episode = eventStory?.eventStoryEpisodes.find(
+    (ep) => ep.episodeNo === parsed.episodeNo
+  );
+  if (!eventStory || !episode) return { status: "not-found" };
+  const eventName = collections.events?.find((e) => e.id === parsed.eventId)?.name;
+  return {
+    status: "ok",
+    resolution: {
+      scenarioPath: eventStoryScenarioPath(eventStory.assetbundleName, episode.scenarioId),
+      isCardStory: false,
+      isActionSet: false,
+      bannerPath: `event_story/${eventStory.assetbundleName}/episode_image/${episode.assetbundleName}.webp`,
+      chapterTitle: eventName ?? "",
+      episodeTitle: episode.title,
+      scenarioId: episode.scenarioId
+    }
+  };
+};
+
+const resolveCharacterIdentity = (
+  parsed: CharacterParsedStoryId,
+  collections: StoryMasterCollections
+): StoryResolutionResult => {
+  const profile = collections.characterProfiles.find(
+    (cp) => cp.characterId === parsed.characterId
+  );
+  if (!profile) return { status: "not-found" };
+  return {
+    status: "ok",
+    resolution: {
+      scenarioPath: characterProfileScenarioPath(profile.scenarioId),
+      isCardStory: false,
+      isActionSet: false,
+      episodeTitle: undefined,
+      scenarioId: profile.scenarioId
+    }
+  };
+};
+
+const resolveCardIdentity = (
+  parsed: CardParsedStoryId,
+  collections: StoryMasterCollections,
+  region: string
+): StoryResolutionResult => {
+  const episode = collections.cardEpisodes.find((ce) => ce.id === parsed.cardEpisodeId);
+  if (!episode) return { status: "not-found" };
+  if (!episode.assetbundleName) {
+    return { status: "unsupported", reason: "card episode has no asset bundle" };
+  }
+  return {
+    status: "ok",
+    resolution: {
+      scenarioPath: cardStoryScenarioPath(episode.assetbundleName, episode.scenarioId, region as "jp"),
+      isCardStory: true,
+      isActionSet: false,
+      bannerPath: `character/member_small/${episode.assetbundleName}/card_normal.webp`,
+      episodeTitle: episode.title,
+      scenarioId: episode.scenarioId
+    }
+  };
+};
+
+const resolveAreaTalkIdentity = (
+  parsed: AreaTalkParsedStoryId,
+  collections: StoryMasterCollections
+): StoryResolutionResult => {
+  const actionSet = collections.actionSets.find((as) => as.id === parsed.actionSetId);
+  if (!actionSet) return { status: "not-found" };
+  if (!actionSet.scenarioId) {
+    return { status: "unsupported", reason: "action set has no scenario" };
+  }
+  return {
+    status: "ok",
+    resolution: {
+      scenarioPath: areaTalkScenarioPath(actionSet.id, actionSet.scenarioId),
+      isCardStory: false,
+      isActionSet: true,
+      scenarioId: actionSet.scenarioId
+    }
+  };
+};
+
+const resolveSpecialIdentity = (
+  parsed: SpecialParsedStoryId,
+  collections: StoryMasterCollections
+): StoryResolutionResult => {
+  const story = collections.specialStories.find((sp) => sp.id === parsed.specialStoryId);
+  const episode = story?.episodes.find((ep) => ep.episodeNo === parsed.episodeNo);
+  if (!story || !episode) return { status: "not-found" };
+  return {
+    status: "ok",
+    resolution: {
+      scenarioPath: specialStoryScenarioPath(
+        story.assetbundleName,
+        episode.assetbundleName,
+        episode.scenarioId
+      ),
+      isCardStory: false,
+      isActionSet: false,
+      chapterTitle: story.title,
+      episodeTitle: episode.title,
+      scenarioId: episode.scenarioId
+    }
+  };
+};
+
 /**
  * Resolves a validated route identity against the story's master-data
  * collections. Pure: no network access.
@@ -314,116 +473,18 @@ export const resolveStoryIdentity = (
   if (!parsed) return { status: "unsupported", reason: "malformed story id" };
 
   switch (parsed.kind) {
-    case "unit": {
-      const unit = collections.unitStories.find((us) => us.unit === parsed.unit);
-      const chapter = unit?.chapters.find((ch) => ch.chapterNo === parsed.chapterNo);
-      const episode = chapter?.episodes.find((ep) => ep.episodeNo === parsed.episodeNo);
-      if (!unit || !chapter || !episode) return { status: "not-found" };
-      return {
-        status: "ok",
-        resolution: {
-          scenarioPath: unitStoryScenarioPath(chapter.assetbundleName, episode.scenarioId),
-          isCardStory: false,
-          isActionSet: false,
-          bannerPath: unitEpisodeBannerPath(chapter.assetbundleName, episode.assetbundleName),
-          chapterTitle: chapter.title,
-          episodeTitle: episode.title,
-          scenarioId: episode.scenarioId
-        }
-      };
-    }
-    case "event": {
-      const eventStory = collections.eventStories.find(
-        (es) => es.eventId === parsed.eventId
-      );
-      const episode = eventStory?.eventStoryEpisodes.find(
-        (ep) => ep.episodeNo === parsed.episodeNo
-      );
-      if (!eventStory || !episode) return { status: "not-found" };
-      const eventName = collections.events?.find((e) => e.id === parsed.eventId)?.name;
-      return {
-        status: "ok",
-        resolution: {
-          scenarioPath: eventStoryScenarioPath(eventStory.assetbundleName, episode.scenarioId),
-          isCardStory: false,
-          isActionSet: false,
-          bannerPath: `event_story/${eventStory.assetbundleName}/episode_image/${episode.assetbundleName}.webp`,
-          chapterTitle: eventName ?? "",
-          episodeTitle: episode.title,
-          scenarioId: episode.scenarioId
-        }
-      };
-    }
-    case "character": {
-      const profile = collections.characterProfiles.find(
-        (cp) => cp.characterId === parsed.characterId
-      );
-      if (!profile) return { status: "not-found" };
-      return {
-        status: "ok",
-        resolution: {
-          scenarioPath: characterProfileScenarioPath(profile.scenarioId),
-          isCardStory: false,
-          isActionSet: false,
-          episodeTitle: undefined,
-          scenarioId: profile.scenarioId
-        }
-      };
-    }
-    case "card": {
-      const episode = collections.cardEpisodes.find((ce) => ce.id === parsed.cardEpisodeId);
-      if (!episode) return { status: "not-found" };
-      if (!episode.assetbundleName) {
-        return { status: "unsupported", reason: "card episode has no asset bundle" };
-      }
-      return {
-        status: "ok",
-        resolution: {
-          scenarioPath: cardStoryScenarioPath(episode.assetbundleName, episode.scenarioId, region as "jp"),
-          isCardStory: true,
-          isActionSet: false,
-          bannerPath: `character/member_small/${episode.assetbundleName}/card_normal.webp`,
-          episodeTitle: episode.title,
-          scenarioId: episode.scenarioId
-        }
-      };
-    }
-    case "area-talk": {
-      const actionSet = collections.actionSets.find((as) => as.id === parsed.actionSetId);
-      if (!actionSet) return { status: "not-found" };
-      if (!actionSet.scenarioId) {
-        return { status: "unsupported", reason: "action set has no scenario" };
-      }
-      return {
-        status: "ok",
-        resolution: {
-          scenarioPath: areaTalkScenarioPath(actionSet.id, actionSet.scenarioId),
-          isCardStory: false,
-          isActionSet: true,
-          scenarioId: actionSet.scenarioId
-        }
-      };
-    }
-    case "special": {
-      const story = collections.specialStories.find((sp) => sp.id === parsed.specialStoryId);
-      const episode = story?.episodes.find((ep) => ep.episodeNo === parsed.episodeNo);
-      if (!story || !episode) return { status: "not-found" };
-      return {
-        status: "ok",
-        resolution: {
-          scenarioPath: specialStoryScenarioPath(
-            story.assetbundleName,
-            episode.assetbundleName,
-            episode.scenarioId
-          ),
-          isCardStory: false,
-          isActionSet: false,
-          chapterTitle: story.title,
-          episodeTitle: episode.title,
-          scenarioId: episode.scenarioId
-        }
-      };
-    }
+    case "unit":
+      return resolveUnitIdentity(parsed, collections);
+    case "event":
+      return resolveEventIdentity(parsed, collections);
+    case "character":
+      return resolveCharacterIdentity(parsed, collections);
+    case "card":
+      return resolveCardIdentity(parsed, collections, region);
+    case "area-talk":
+      return resolveAreaTalkIdentity(parsed, collections);
+    case "special":
+      return resolveSpecialIdentity(parsed, collections);
   }
 };
 
@@ -816,12 +877,13 @@ export const buildStoryAreaTalkPicker = (
       } else if (area) {
         thumbnailPath = spiritWorldmapAreaImagePath(areaId);
       }
+      const sortedTalks = talks.slice().sort((a, b) => Number(a.storyId) - Number(b.storyId));
       return {
         areaId,
         name: area?.name ?? null,
         ...(area?.subName ? { subName: area.subName } : {}),
         thumbnailPath,
-        talks: talks.sort((a, b) => Number(a.storyId) - Number(b.storyId))
+        talks: sortedTalks
       };
     });
 };

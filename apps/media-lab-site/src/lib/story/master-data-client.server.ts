@@ -359,7 +359,7 @@ const storyListEndpoints: Record<
 const cacheKey = (region: StoryRouteRegion, name: StoryCollectionName): string =>
   `${region}:${name}`;
 
-const evictIfNeeded = (now: number, ttlMs: number): void => {
+const evictIfNeeded = (now: number): void => {
   for (const [key, entry] of cache) {
     if (entry.expiresAt <= now) cache.delete(key);
   }
@@ -367,15 +367,21 @@ const evictIfNeeded = (now: number, ttlMs: number): void => {
     const oldest = cache.keys().next().value;
     if (oldest !== undefined) cache.delete(oldest);
   }
-  void ttlMs;
+};
+
+/** Removes all trailing slashes. Equivalent to `.replace(/\/+$/, "")` but without regex backtracking. */
+const stripTrailingSlashes = (value: string): string => {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") {
+    end -= 1;
+  }
+  return value.slice(0, end);
 };
 
 const resolveApiBaseUrl = (options: StoryMasterDataClientOptions): string => {
-  const base = (
-    options.baseUrl ??
-    env.SEKAI_MASTER_API_BASE_URL?.trim() ??
-    ""
-  ).replace(/\/+$/, "");
+  const base = stripTrailingSlashes(
+    options.baseUrl ?? env.SEKAI_MASTER_API_BASE_URL?.trim() ?? ""
+  );
   if (!base) {
     throw new Error(
       "Missing required environment variable: SEKAI_MASTER_API_BASE_URL"
@@ -442,7 +448,7 @@ export const fetchStoryCollection = async <T = unknown>(
   const baseUrl = resolveApiBaseUrl(options);
   const rows = await listCollection(region, name, fetcher, baseUrl);
   const parsed = collectionParsers[name](rows) as T;
-  evictIfNeeded(now(), ttlMs);
+  evictIfNeeded(now());
   cache.set(key, { value: parsed, expiresAt: now() + ttlMs });
   return parsed;
 };

@@ -13,7 +13,7 @@ export default class Telop extends BaseLayer {
     this.structure = {};
   }
 
-  draw(data: string, translatedText?: string | null) {
+  draw(data: string, translatedText?: string | null): Promise<void> {
     const container = this.root;
     container.removeChildren();
     const bg_graphic = new Graphics();
@@ -39,6 +39,7 @@ export default class Telop extends BaseLayer {
     };
     this.init = true;
     this.set_style();
+    return Promise.resolve();
   }
   set_style(stage_size?: [number, number]): void {
     this.stage_size = stage_size ? stage_size : this.stage_size;

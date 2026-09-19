@@ -8,12 +8,12 @@ interface ITask<T> {
  * @author K_bai
  */
 export class PreloadQueue<T> {
-  private maxQueueLength: number;
-  private timeout: number;
-  private tasks: ITask<T>[];
+  private readonly maxQueueLength: number;
+  private readonly timeout: number;
+  private readonly tasks: ITask<T>[];
   private currentIndex: number;
   private running: number;
-  private results: (T | null)[] = [];
+  private readonly results: (T | null)[] = [];
 
   constructor(tasks: ITask<T>[] = [], maxQueueLength = 20, timeout = 60) {
     this.tasks = tasks;

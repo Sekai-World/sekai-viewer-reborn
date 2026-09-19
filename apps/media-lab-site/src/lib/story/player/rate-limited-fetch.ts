@@ -18,7 +18,7 @@ interface QueuedWork {
 }
 
 class Live2dRequestScheduler {
-  private queue: QueuedWork[] = [];
+  private readonly queue: QueuedWork[] = [];
   private inFlight = 0;
   private startTimestamps: number[] = [];
 

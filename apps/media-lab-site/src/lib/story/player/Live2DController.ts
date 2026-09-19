@@ -16,6 +16,15 @@ import type {
 import single_action from "./action";
 import { parseSimpleSelectableChoices } from "./action/special_effect/SimpleSelectable";
 
+interface CostumeState {
+  cid: number;
+  costume: string;
+  motion: string;
+  expression: string;
+  appear_time: number;
+  animations: string[];
+}
+
 export class Live2DController extends Live2DPlayer {
   scenarioData: IScenarioData;
   scenarioResource: ILive2DScenarioResource;
@@ -26,14 +35,7 @@ export class Live2DController extends Live2DPlayer {
    */
   textResolver: ILive2DTextResolver | undefined;
   model_queue: string[][];
-  current_costume: {
-    cid: number;
-    costume: string;
-    motion: string;
-    expression: string;
-    appear_time: number;
-    animations: string[];
-  }[] = [];
+  current_costume: CostumeState[] = [];
 
   step = 0;
   /**
@@ -42,9 +44,9 @@ export class Live2DController extends Live2DPlayer {
    */
   get pending_selectable(): string[] | null {
     const action = this.scenarioData.Snippets[this.step];
-    if (!action || action.Action !== SnippetAction.SpecialEffect) return null;
+    if (action?.Action !== SnippetAction.SpecialEffect) return null;
     const detail = this.scenarioData.SpecialEffectData[action.ReferenceIndex];
-    if (!detail || detail.EffectType !== SpecialEffectType.SimpleSelectable) return null;
+    if (detail?.EffectType !== SpecialEffectType.SimpleSelectable) return null;
     return parseSimpleSelectableChoices(detail.StringVal);
   }
   /**
@@ -139,17 +141,18 @@ export class Live2DController extends Live2DPlayer {
     });
     // reduce a queue
     const model_queue: string[][] = [];
-    costumes_in_action.reduce((prev, costumes) => {
-      const queue = [...prev];
+    let carried_queue: string[] = [];
+    for (const costumes of costumes_in_action) {
+      const queue = [...carried_queue];
       costumes.forEach((m) => {
-        const q_idx = queue.findIndex((q) => q === m);
+        const q_idx = queue.indexOf(m);
         if (q_idx !== -1) queue.splice(q_idx, 1);
         if (queue.length >= queue_max) queue.splice(0, 1);
         queue.push(m);
       });
       model_queue.push(queue);
-      return queue;
-    }, []);
+      carried_queue = queue;
+    }
 
     // find first queue at max queue length
     let first_max_idx = model_queue.findIndex((q) => q.length === queue_max);
@@ -173,16 +176,18 @@ export class Live2DController extends Live2DPlayer {
         const action = this.scenarioData.Snippets[step];
         if (action.ProgressBehavior === SnippetProgressBehavior.Now) {
           return false;
-        } else if (action.Action === SnippetAction.Talk) {
+        }
+        if (action.Action === SnippetAction.Talk) {
           return true;
-        } else if (action.Action === SnippetAction.SpecialEffect) {
+        }
+        if (action.Action === SnippetAction.SpecialEffect) {
           const action_detail = this.scenarioData.SpecialEffectData[action.ReferenceIndex];
-          if (action_detail.EffectType === SpecialEffectType.Telop) {
-            return true;
-          } else if (action_detail.EffectType === SpecialEffectType.FullScreenText) {
-            return true;
-          } else if (action_detail.EffectType === SpecialEffectType.SimpleSelectable) {
-            // Park until the viewer picks a choice in the host UI.
+          if (
+            action_detail.EffectType === SpecialEffectType.Telop ||
+            action_detail.EffectType === SpecialEffectType.FullScreenText ||
+            action_detail.EffectType === SpecialEffectType.SimpleSelectable
+          ) {
+            // SimpleSelectable parks until the viewer picks a choice in the host UI.
             return true;
           }
         }
@@ -298,36 +303,54 @@ export class Live2DController extends Live2DPlayer {
         expression = expression === "" ? current_model.expression : expression;
         log.log("Live2DController", `actual applied motion: ${costume}|${motion}|${expression}`);
       }
-      if (expression !== "") {
-        const index = model_data.data.FileReferences.Motions.Expression.map((m) => m.Name).indexOf(
-          expression
-        );
-        if (index === -1) {
-          log.warn("Live2DController", `${expression} not found.`);
-          this.events.emit("warn", `${expression} not found.`);
-        }
-        wait_list.push(
-          this.layers.live2d
-            .update_motion("Expression", costume, index, to_last_frame)
-            .then(() => (current_model.expression = expression))
-        );
-      }
-      if (motion !== "") {
-        const index = model_data.data.FileReferences.Motions.Motion.map((m) => m.Name).indexOf(
-          motion
-        );
-        if (index === -1) {
-          log.warn("Live2DController", `${motion} not found.`);
-          this.events.emit("warn", `${motion} not found.`);
-        }
-        wait_list.push(
-          this.layers.live2d
-            .update_motion("Motion", costume, index, to_last_frame)
-            .then(() => (current_model.motion = motion))
-        );
-      }
+      wait_list.push(
+        ...this.queue_motion_updates(model_data, current_model, costume, motion, expression, to_last_frame)
+      );
     }
     await Promise.all(wait_list);
+  };
+  queue_motion_updates = (
+    model_data: ILive2DModelDataCollection,
+    current_model: CostumeState,
+    costume: string,
+    motion: string,
+    expression: string,
+    to_last_frame: boolean
+  ): Promise<void>[] => {
+    const wait_list: Promise<void>[] = [];
+    if (expression !== "") {
+      const index = model_data.data.FileReferences.Motions.Expression.map((m) => m.Name).indexOf(
+        expression
+      );
+      if (index === -1) {
+        log.warn("Live2DController", `${expression} not found.`);
+        this.events.emit("warn", `${expression} not found.`);
+      }
+      wait_list.push(
+        this.layers.live2d
+          .update_motion("Expression", costume, index, to_last_frame)
+          .then(() => {
+            current_model.expression = expression;
+          })
+      );
+    }
+    if (motion !== "") {
+      const index = model_data.data.FileReferences.Motions.Motion.map((m) => m.Name).indexOf(
+        motion
+      );
+      if (index === -1) {
+        log.warn("Live2DController", `${motion} not found.`);
+        this.events.emit("warn", `${motion} not found.`);
+      }
+      wait_list.push(
+        this.layers.live2d
+          .update_motion("Motion", costume, index, to_last_frame)
+          .then(() => {
+            current_model.motion = motion;
+          })
+      );
+    }
+    return wait_list;
   };
   live2d_load_model = async (step: number, onLoading?: ILive2DLoadProgressHandler) => {
     const queue = this.model_queue[step];
@@ -354,7 +377,7 @@ export class Live2DController extends Live2DPlayer {
       .filter((c) => {
         if (c.animations.length > 0) {
           const m = this.layers.live2d.find(c.costume);
-          return m && m.live2DInfo.animations.length === 0;
+          return m?.live2DInfo.animations.length === 0;
         }
         return false;
       })
@@ -418,9 +441,11 @@ export class Live2DController extends Live2DPlayer {
           sound.data.volume(this.settings.se_volume);
         });
   };
-  show_ui = (show = true) => {
-    if (show) this.UIRoot.alpha = 1;
-    else this.UIRoot.alpha = 0;
+  show_ui = () => {
+    this.UIRoot.alpha = 1;
+  };
+  hide_ui = () => {
+    this.UIRoot.alpha = 0;
   };
   stop_sounds = (sound_types: Live2DAssetType[], unload = false) => {
     if (sound_types.includes(Live2DAssetType.Talk)) {

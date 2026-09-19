@@ -11,7 +11,7 @@ export default class Background extends BaseLayer {
     this.structure = {};
   }
 
-  draw(data: HTMLImageElement) {
+  draw(data: HTMLImageElement): Promise<void> {
     const container = this.root;
     container.removeChildren();
     const texture = Texture.from(data);
@@ -20,6 +20,7 @@ export default class Background extends BaseLayer {
     container.addChild(bg);
     this.init = true;
     this.set_style();
+    return Promise.resolve();
   }
   set_style(stage_size?: [number, number]): void {
     this.stage_size = stage_size ? stage_size : this.stage_size;

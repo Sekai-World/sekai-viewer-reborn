@@ -12,7 +12,7 @@ export default class FullScreenText extends BaseLayer {
     this.structure = {};
   }
 
-  draw(text: string, translatedText?: string | null) {
+  draw(text: string, translatedText?: string | null): Promise<void> {
     this.root.removeChildren();
 
     const text_c = new Text(text);
@@ -31,6 +31,7 @@ export default class FullScreenText extends BaseLayer {
     };
     this.init = true;
     this.set_style();
+    return Promise.resolve();
   }
   draw_new_text(text: string, translatedText?: string | null) {
     if (this.init) {
@@ -95,12 +96,11 @@ export default class FullScreenText extends BaseLayer {
     this.draw("", translatedText);
     for (let i = 1; i <= text.length; i++) {
       // if aborted, jump to full text
-      if (this.animation_controller.abort_controller.signal.aborted) {
-        i = text.length;
-      }
+      const aborted = this.animation_controller.abort_controller.signal.aborted;
       // new text
-      this.draw_new_text(text.slice(0, i), translatedText);
+      this.draw_new_text(aborted ? text : text.slice(0, i), translatedText);
       await this.animation_controller.delay(50);
+      if (aborted) break;
     }
   }
 }

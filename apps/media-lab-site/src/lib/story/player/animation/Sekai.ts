@@ -6,7 +6,7 @@ import type { ILive2DTexture } from "../player-types";
 import { texture_slice } from "./utils";
 
 function circle_random(min: number, max: number) {
-  return Math.sqrt(Math.random()) * (max - min) + min;
+  return Math.sqrt(Math.random()) * (max - min) + min; // NOSONAR: visual effect randomness, not security-sensitive
 }
 
 export default class Sekai extends BaseAnimation {

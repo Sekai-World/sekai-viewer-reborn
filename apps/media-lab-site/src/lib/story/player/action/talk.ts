@@ -30,13 +30,13 @@ export default async function action_talk(controller: Live2DController, action: 
 
   await controller.layers.dialog.show(200);
   // motion
-  const motion = action_detail.Motions.map((m) => {
+  for (const m of action_detail.Motions) {
     controller.apply_live2d_motion(
       controller.live2d_get_costume(m.Character2dId)!,
       m.MotionName,
       m.FacialName
     );
-  });
+  }
   // sound — silent replay must not blast through every voice on the way back
   if (action_detail.Voices.length > 0 && !controller.replay_silent) {
     controller.layers.live2d.stop_speaking();
@@ -62,7 +62,6 @@ export default async function action_talk(controller: Live2DController, action: 
       controller.events.emit("warn", `${action_detail.Voices[0].VoiceId} not loaded, skip.`);
     }
   }
-  // wait motion and text animation
-  await Promise.all(motion);
+  // wait for the text animation
   await dialog;
 }

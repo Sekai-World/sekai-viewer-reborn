@@ -57,10 +57,20 @@ export interface StoryAssetUrls {
   live2d: (path: string) => string;
 }
 
+/** Removes all trailing slashes. Equivalent to `.replace(/\/+$/, "")` but without regex backtracking. */
+const stripTrailingSlashes = (value: string): string => {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") {
+    end -= 1;
+  }
+  return value.slice(0, end);
+};
+
 const resolveAssetOrigin = (
   getRemoteAssetBase: () => string | undefined
 ): string => {
-  const configured = getRemoteAssetBase()?.replace(/\/+$/, "");
+  const base = getRemoteAssetBase();
+  const configured = base === undefined ? undefined : stripTrailingSlashes(base);
   return configured && configured.length > 0
     ? configured
     : "https://storage.sekai.best";

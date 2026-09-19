@@ -17,10 +17,10 @@ export default class BaseAnimation extends BaseLayer {
     this.loop = true;
     this.settings = [];
   }
-  draw() {}
+  async draw(): Promise<void> {} // NOSONAR: intentional no-op override
 
   public async start(controller?: AbortController) {
-    if (!controller) controller = this.controller;
+    controller ??= this.controller;
 
     let progress = 0;
     const ani_ticker = new Ticker();
@@ -56,7 +56,7 @@ export default class BaseAnimation extends BaseLayer {
     });
   }
 
-  protected _set_style() {}
+  protected _set_style() {} // NOSONAR: intentional no-op override
 
   public set_style(stage_size: [number, number]): void {
     this.stage_size = stage_size;

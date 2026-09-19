@@ -4,8 +4,8 @@ import { Curve } from "./Curve";
 import type { AnimationObj } from "../player-types";
 
 export default class LineLegend extends BaseAnimation {
-  private color: number;
-  private color2: number;
+  private readonly color: number;
+  private readonly color2: number;
   constructor(direction: string, color: number, color2?: number) {
     super({});
     this.period_ms = 400;

@@ -15,6 +15,19 @@
 const LIVE2D_RELAY_PREFIX = "/live2d/assets/";
 const STORY_ASSET_CACHE_MAX_TOTAL_BYTES = 512 * 1024 * 1024;
 
+/**
+ * Removes all trailing slashes. Equivalent to `.replace(/\/+$/, "")` but
+ * without the super-linear backtracking the regex suffers on inputs whose
+ * slash runs are followed by a non-slash character.
+ */
+const stripTrailingSlashes = (value: string): string => {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") {
+    end -= 1;
+  }
+  return value.slice(0, end);
+};
+
 export const STORY_ASSET_CACHE_SW_PATH = "/sw.js";
 
 export const registerStoryAssetCache = async (
@@ -23,7 +36,7 @@ export const registerStoryAssetCache = async (
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
     return;
   }
-  const base = assetBase.trim().replace(/\/+$/, "");
+  const base = stripTrailingSlashes(assetBase.trim());
   if (!base) return;
   try {
     await navigator.serviceWorker.register(STORY_ASSET_CACHE_SW_PATH, {

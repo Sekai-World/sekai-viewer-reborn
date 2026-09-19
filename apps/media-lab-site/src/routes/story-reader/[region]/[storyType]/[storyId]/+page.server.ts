@@ -69,10 +69,6 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
         case "se":
           return { ...row, urls: row.paths.map((path) => pageUrls.region(path)) };
         case "talk":
-          return {
-            ...row,
-            voiceUrls: row.voicePaths.map((path) => pageUrls.region(path))
-          };
         case "fullscreen-text":
           return {
             ...row,

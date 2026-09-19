@@ -9,12 +9,15 @@ export class Curve {
     this.p = curve_func;
   }
   bounce(start = 0.5, end = 0.5) {
-    const f: ICurveFunctionMap = (p) => (t: number) =>
-      t < start ? p(t / start) : t < 1 - end ? 1 : p((1 - t) / end);
+    const f: ICurveFunctionMap = (p) => (t: number) => {
+      if (t < start) return p(t / start);
+      if (t < 1 - end) return 1;
+      return p((1 - t) / end);
+    };
     return new Curve(f(this.p));
   }
   wiggle(freq: number, start = 0.5, end = 0.5) {
-    let random_list = Array.from({ length: freq }, () => Math.random());
+    let random_list = Array.from({ length: freq }, () => Math.random()); // NOSONAR: visual effect randomness, not security-sensitive
     random_list = [start, ...random_list, end];
     return new Curve((t: number) => {
       if (t === 1) return 0;

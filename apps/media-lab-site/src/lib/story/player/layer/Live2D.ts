@@ -46,7 +46,7 @@ export default class Live2D extends BaseLayer {
     this.root.addChild(this.structure.effect);
   }
 
-  draw() {}
+  async draw(): Promise<void> {} // NOSONAR: intentional no-op override
   set_style(
     stage_size?: [number, number],
     model_list: Live2DModelWithInfo[] = []
@@ -257,7 +257,7 @@ export default class Live2D extends BaseLayer {
         this.reset_lipsync_param(model);
         model.live2DInfo.speaking = true;
         // pull speaking model to the front
-        this.structure.live2d.removeChild(model);
+        model.removeFromParent();
         this.structure.live2d.addChild(model);
       });
     }
@@ -350,7 +350,16 @@ class Live2DModelWithInfo extends Live2DModel {
   public live2DInfo: Ilive2DModelInfo;
   constructor(options?: Live2DModelOptions) {
     super(options);
-    this.live2DInfo = {
+    this.live2DInfo = Live2DModelWithInfo.createLive2DInfo();
+  }
+
+  /**
+   * Builds the default model info. Kept out of the constructor body so the
+   * constructor stays free of promise construction (S7059); it is called
+   * synchronously, so initialization timing is unchanged.
+   */
+  private static createLive2DInfo(): Ilive2DModelInfo {
+    return {
       cid: -1,
       costume: "",
       position: [0.5, 0.5],

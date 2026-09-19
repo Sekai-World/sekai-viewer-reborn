@@ -57,6 +57,90 @@ export interface CollectStoryMediaOptions {
   onWarning?: (reason: string) => void;
 }
 
+interface MediaCollectContext {
+  push: (asset: ILive2DAssetUrl) => void;
+  voiceBundleName: string;
+  regionUrl: (path: string) => string;
+  regionBase: string;
+  regionBucket: string;
+  onWarning?: (reason: string) => void;
+}
+
+const collectTalkVoices = (
+  talk: IScenarioData["TalkData"][number] | undefined,
+  voiceUrlFor: (voiceId: string, character2dId: number | undefined) => string,
+  context: MediaCollectContext
+): void => {
+  if (!talk) return;
+  for (const v of talk.Voices) {
+    context.push({
+      identifier: v.VoiceId,
+      type: Live2DAssetType.Talk,
+      url: voiceUrlFor(v.VoiceId, talk.TalkCharacters[0]?.Character2dId)
+    });
+  }
+};
+
+const collectSpecialEffectMedia = async (
+  effect: IScenarioData["SpecialEffectData"][number] | undefined,
+  context: MediaCollectContext
+): Promise<void> => {
+  if (!effect) return;
+  const { push, regionUrl } = context;
+  switch (effect.EffectType) {
+    case SpecialEffectType.ChangeBackground:
+      push({
+        identifier: effect.StringValSub,
+        type: Live2DAssetType.BackgroundImage,
+        url: regionUrl(backgroundImagePath(effect.StringValSub))
+      });
+      return;
+    case SpecialEffectType.FullScreenText: {
+      const url = regionUrl(scenarioVoicePath(context.voiceBundleName, effect.StringValSub));
+      push({ identifier: effect.StringValSub, type: Live2DAssetType.Talk, url });
+      return;
+    }
+    case SpecialEffectType.Movie: {
+      const dirPath = movieDirPath(effect.StringVal);
+      const found = await searchVideoFile(context.regionBase, context.regionBucket, dirPath);
+      const path = found ?? movieFallbackPath(effect.StringVal);
+      if (!found) {
+        context.onWarning?.(
+          `Movie file not listed for ${effect.StringVal}; using default file name.`
+        );
+      }
+      push({
+        identifier: effect.StringVal,
+        type: Live2DAssetType.Video,
+        url: regionUrl(path)
+      });
+      return;
+    }
+    default:
+      return;
+  }
+};
+
+const collectSoundMedia = (
+  sound: IScenarioData["SoundData"][number] | undefined,
+  context: MediaCollectContext
+): void => {
+  if (!sound) return;
+  if (sound.Bgm) {
+    context.push({
+      identifier: sound.Bgm,
+      type: Live2DAssetType.BackgroundMusic,
+      url: context.regionUrl(bgmPath(sound.Bgm))
+    });
+  } else if (sound.Se) {
+    context.push({
+      identifier: sound.Se,
+      type: Live2DAssetType.SoundEffect,
+      url: context.regionUrl(soundEffectPaths(sound.Se)[0])
+    });
+  }
+};
+
 /**
  * Walks the PROCESSED scenario snippets (call after
  * `processScenarioDataForPlayer`) and resolves every media URL the player
@@ -103,77 +187,33 @@ export const collectStoryMediaUrls = async (
     return regionUrl(candidates[0]);
   };
 
+  const context: MediaCollectContext = {
+    push,
+    voiceBundleName,
+    regionUrl,
+    regionBase,
+    regionBucket,
+    onWarning
+  };
+
   for (const snippet of scenarioData.Snippets) {
     switch (snippet.Action) {
-      case SnippetAction.Talk: {
-        const talk = scenarioData.TalkData[snippet.ReferenceIndex];
-        if (!talk) break;
-        for (const v of talk.Voices) {
-          push({
-            identifier: v.VoiceId,
-            type: Live2DAssetType.Talk,
-            url: voiceUrlFor(v.VoiceId, talk.TalkCharacters[0]?.Character2dId)
-          });
-        }
+      case SnippetAction.Talk:
+        collectTalkVoices(
+          scenarioData.TalkData[snippet.ReferenceIndex],
+          voiceUrlFor,
+          context
+        );
         break;
-      }
-      case SnippetAction.SpecialEffect: {
-        const effect = scenarioData.SpecialEffectData[snippet.ReferenceIndex];
-        if (!effect) break;
-        switch (effect.EffectType) {
-          case SpecialEffectType.ChangeBackground:
-            push({
-              identifier: effect.StringValSub,
-              type: Live2DAssetType.BackgroundImage,
-              url: regionUrl(backgroundImagePath(effect.StringValSub))
-            });
-            break;
-          case SpecialEffectType.FullScreenText: {
-            const url = regionUrl(
-              scenarioVoicePath(voiceBundleName, effect.StringValSub)
-            );
-            push({ identifier: effect.StringValSub, type: Live2DAssetType.Talk, url });
-            break;
-          }
-          case SpecialEffectType.Movie: {
-            const dirPath = movieDirPath(effect.StringVal);
-            const found = await searchVideoFile(regionBase, regionBucket, dirPath);
-            const path = found ?? movieFallbackPath(effect.StringVal);
-            if (!found) {
-              onWarning?.(
-                `Movie file not listed for ${effect.StringVal}; using default file name.`
-              );
-            }
-            push({
-              identifier: effect.StringVal,
-              type: Live2DAssetType.Video,
-              url: regionUrl(path)
-            });
-            break;
-          }
-          default:
-            break;
-        }
+      case SnippetAction.SpecialEffect:
+        await collectSpecialEffectMedia(
+          scenarioData.SpecialEffectData[snippet.ReferenceIndex],
+          context
+        );
         break;
-      }
-      case SnippetAction.Sound: {
-        const sound = scenarioData.SoundData[snippet.ReferenceIndex];
-        if (!sound) break;
-        if (sound.Bgm) {
-          push({
-            identifier: sound.Bgm,
-            type: Live2DAssetType.BackgroundMusic,
-            url: regionUrl(bgmPath(sound.Bgm))
-          });
-        } else if (sound.Se) {
-          push({
-            identifier: sound.Se,
-            type: Live2DAssetType.SoundEffect,
-            url: regionUrl(soundEffectPaths(sound.Se)[0])
-          });
-        }
+      case SnippetAction.Sound:
+        collectSoundMedia(scenarioData.SoundData[snippet.ReferenceIndex], context);
         break;
-      }
       default:
         break;
     }

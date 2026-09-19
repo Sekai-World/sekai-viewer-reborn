@@ -3,7 +3,7 @@ import { BlurFilter, Graphics } from "pixi.js";
 import { Curve } from "./Curve";
 
 export default class Line extends BaseAnimation {
-  private color: number;
+  private readonly color: number;
   constructor(color: number) {
     super({});
     this.color = color;

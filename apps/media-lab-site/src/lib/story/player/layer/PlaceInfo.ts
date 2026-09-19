@@ -13,7 +13,7 @@ export default class PlaceInfo extends BaseLayer {
     this.root.alpha = 0; // Start hidden
   }
 
-  draw(text: string) {
+  draw(text: string): Promise<void> {
     const container = this.root;
     container.removeChildren();
 
@@ -29,6 +29,7 @@ export default class PlaceInfo extends BaseLayer {
     };
     this.init = true;
     this.set_style();
+    return Promise.resolve();
   }
 
   set_style(stage_size?: [number, number]): void {

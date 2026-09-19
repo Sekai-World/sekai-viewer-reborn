@@ -123,17 +123,60 @@ const applyModelFileReferencesFallback = async (
   );
 };
 
+/**
+ * Matches the same `_back` / `_backNN` end-of-name suffix as the legacy
+ * leading-`(.*)` pattern (see `matchBackBasePrefix`) without its
+ * super-linear backtracking: the suffix is anchored at `$` and cannot
+ * overlap itself, so it can only start at one position.
+ */
+const BACK_SUFFIX_PATTERN = /_back(?:\d{2})?$/;
+
+/**
+ * Returns the prefix the legacy `/(.*)_back(\d{2})?$/` pattern captured with
+ * its greedy `.*`, or null when there is no match. Since a suffix anchored
+ * at `$` can only start at one position, matching the suffix alone locates
+ * the same match. The legacy `.` cannot cross line terminators, so when the
+ * prefix contains one the captured prefix starts after the last of them —
+ * replicated here to keep the behavior identical.
+ */
+const matchBackBasePrefix = (name: string): string | null => {
+  const matches = BACK_SUFFIX_PATTERN.exec(name);
+  if (!matches) return null;
+  let start = 0;
+  for (let i = matches.index - 1; i >= 0; i -= 1) {
+    const code = name.charCodeAt(i);
+    if (
+      code === 0x0a /* \n */ ||
+      code === 0x0d /* \r */ ||
+      code === 0x2028 ||
+      code === 0x2029
+    ) {
+      start = i + 1;
+      break;
+    }
+  }
+  return name.slice(start, matches.index);
+};
+
 /** Model base name reductions used to find the motion base metadata. */
 const modelNameToMotionBaseName: [RegExp, (name: string) => string][] = [
   // eg. v2_clb01_21miku to v2_21miku
   [/^v2_clb\d{2}_/, (name) => name.replace(/v2_clb\d{2}_/, "v2_")],
   // eg. v2_20mizuki_culture_back to v2_20mizuki_back
-  [/(.*)_back(\d{2})?$/, (name) => {
-    const matches = name.match(/(.*)_back(\d{2})?$/);
-    return matches ? `${matches[1].split("_").slice(0, 2).join("_")}_back` : name;
-  }],
+  [
+    BACK_SUFFIX_PATTERN,
+    (name) => {
+      const prefix = matchBackBasePrefix(name);
+      return prefix === null
+        ? name
+        : `${prefix.split("_").slice(0, 2).join("_")}_back`;
+    }
+  ],
   // eg. 21miku01 to 21miku
-  [/(.*)\d{2}$/, (name) => name.replace(/\d{2}$/, "")]
+  // The legacy leading `(.*)` never affected the test outcome (it also
+  // matches empty right before the digits), so test the anchored suffix
+  // directly to avoid the `.*` super-linear backtracking.
+  [/\d{2}$/, (name) => name.replace(/\d{2}$/, "")]
 ];
 
 const getBuildMotionDataUrl = async (
