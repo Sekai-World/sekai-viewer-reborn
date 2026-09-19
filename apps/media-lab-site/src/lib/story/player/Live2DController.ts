@@ -236,34 +236,39 @@ export class Live2DController extends Live2DPlayer {
       }
 
       // wait all talk sounds finished
-      if (!this.replay_silent) {
-        for (const s of this.scenarioResource.audio.filter(
-          (sound) => sound.type === Live2DAssetType.Talk
-        )) {
-          const sound = s.data;
-          if (sound.playing()) {
-            await new Promise<void>((resolve) => {
-              if (this.animate.abort_controller.signal.aborted) {
-                resolve();
-                return;
-              }
-              sound.once("end", () => {
-                resolve();
-              });
-              const abort_handler = () => {
-                resolve();
-                this.animate.abort_controller.signal.removeEventListener("abort", abort_handler);
-              };
-              this.animate.abort_controller.signal.addEventListener("abort", abort_handler);
-            });
-          }
-        }
-      }
+      await this.wait_talk_sounds_finished();
 
       // if reach end, return -1
       return current >= snippets.length - 1 ? -1 : current;
     } finally {
       this.replay_silent = false;
+    }
+  };
+  /**
+   * Resolves once every playing talk sound has finished; aborted playback
+   * resolves immediately. Silent replays skip the wait entirely.
+   */
+  wait_talk_sounds_finished = async () => {
+    if (this.replay_silent) return;
+    for (const s of this.scenarioResource.audio.filter(
+      (sound) => sound.type === Live2DAssetType.Talk
+    )) {
+      const sound = s.data;
+      if (!sound.playing()) continue;
+      await new Promise<void>((resolve) => {
+        if (this.animate.abort_controller.signal.aborted) {
+          resolve();
+          return;
+        }
+        sound.once("end", () => {
+          resolve();
+        });
+        const abort_handler = () => {
+          resolve();
+          this.animate.abort_controller.signal.removeEventListener("abort", abort_handler);
+        };
+        this.animate.abort_controller.signal.addEventListener("abort", abort_handler);
+      });
     }
   };
   apply_action = async (step: number, delay_offset_ms = 0) => {
