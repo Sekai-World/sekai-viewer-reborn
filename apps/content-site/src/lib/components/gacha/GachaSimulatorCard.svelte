@@ -2,7 +2,7 @@
   import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
   import type { GachaBehavior } from "$lib/domain/gacha-detail";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
+  import { CardThumbnail } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
   import { resolve, base } from "$app/paths";
   import { SvelteMap } from "svelte/reactivity";

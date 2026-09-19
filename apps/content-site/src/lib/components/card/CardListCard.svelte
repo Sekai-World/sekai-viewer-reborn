@@ -7,13 +7,12 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardGridImage from "$lib/components/card/CardGridImage.svelte";
-  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
-  import {
+    import {
     isTrainedOnlyCard as hasTrainedOnlyArtwork,
     resolveCardTrained
   } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import { UnitIconBadge } from "@platform/ui-shell";
+  import { CardThumbnail, UnitIconBadge } from "@platform/ui-shell";
 
   type CardListCardItem = {
     id: string;

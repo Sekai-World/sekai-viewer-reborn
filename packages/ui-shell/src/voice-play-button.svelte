@@ -1,14 +1,22 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
 
+  /**
+   * Circular voice playback button with a progress ring. Plays the given
+   * sources in order (canonical path first, fallbacks after; a load or
+   * decode error advances to the next candidate) and renders an unavailable
+   * state once every candidate has failed.
+   */
   let {
-    src,
+    sources,
+    loop = false,
     playLabel = "Play",
     stopLabel = "Stop",
     errorLabel = "Audio unavailable",
     class: className
   }: {
-    src: string;
+    sources: string[];
+    loop?: boolean;
     playLabel?: string;
     stopLabel?: string;
     errorLabel?: string;
@@ -17,9 +25,11 @@
 
   let audio: HTMLAudioElement | null = $state(null);
   let isPlaying = $state(false);
-  let loadError = $state(false);
-  let currentSrc = $state("");
+  let unavailable = $state(false);
   let progress = $state(0);
+  let sourceIndex = 0;
+  let sourcesKey = "";
+  let disposed = false;
 
   const ringCenter = 26;
   const ringRadius = 25;
@@ -49,76 +59,90 @@
     progress = clampProgress(currentTime / duration);
   };
 
-  const stopPlayback = (): void => {
-    if (!audio) {
-      isPlaying = false;
-      progress = 0;
-      return;
+  const resetPlayback = (): void => {
+    audio?.pause();
+    if (audio) {
+      audio.currentTime = 0;
     }
-    audio.pause();
-    audio.currentTime = 0;
     isPlaying = false;
     progress = 0;
   };
 
-  $effect(() => {
-    if (src === currentSrc) return;
+  const markUnavailable = (): void => {
+    resetPlayback();
+    unavailable = true;
+  };
 
-    currentSrc = src;
-    loadError = false;
-    stopPlayback();
+  function handleAudioError(): void {
+    if (disposed) return;
+    sourceIndex += 1;
+    if (sourceIndex >= sources.length) {
+      markUnavailable();
+      return;
+    }
+    attemptPlay();
+  }
+
+  function attemptPlay(): void {
+    const source = sources[sourceIndex];
+    if (!audio || !source) {
+      markUnavailable();
+      return;
+    }
+    audio.src = source;
+    isPlaying = true;
+    void audio.play().catch(() => {
+      if (disposed) return;
+      if (audio?.error) {
+        handleAudioError();
+        return;
+      }
+      resetPlayback();
+    });
+  }
+
+  const toggle = (): void => {
+    if (unavailable || sources.length === 0) return;
+    if (isPlaying) {
+      resetPlayback();
+      return;
+    }
+    attemptPlay();
+  };
+
+  $effect(() => {
+    const key = `${sources.join("\u0000")}\u0000${loop}`;
+    if (key === sourcesKey) return;
+    sourcesKey = key;
+    sourceIndex = 0;
+    unavailable = false;
+    resetPlayback();
   });
 
   $effect(() => {
     return () => {
+      disposed = true;
+      audio?.pause();
       if (audio) {
-        audio.pause();
         audio.removeAttribute("src");
         audio.load();
       }
     };
   });
 
-  const handleAudioError = (): void => {
-    loadError = true;
-    stopPlayback();
-  };
-
-  const toggle = async (): Promise<void> => {
-    if (!audio || loadError) return;
-
-    if (isPlaying) {
-      stopPlayback();
-      return;
-    }
-
-    if (audio.ended || audio.currentTime >= audio.duration) {
-      audio.currentTime = 0;
-    }
-
-    progress = 0;
-    isPlaying = true;
-    try {
-      await audio.play();
-    } catch {
-      if (audio.error) {
-        handleAudioError();
-        return;
-      }
-
-      stopPlayback();
-    }
-  };
-
-  let currentIcon = $derived(loadError ? "mdi:volume-off" : isPlaying ? "mdi:stop" : "mdi:play");
-  let currentLabel = $derived(loadError ? errorLabel : isPlaying ? stopLabel : playLabel);
+  let currentIcon = $derived(
+    unavailable ? "mdi:volume-off" : isPlaying ? "mdi:stop" : "mdi:play"
+  );
+  let currentLabel = $derived(
+    unavailable ? errorLabel : isPlaying ? stopLabel : playLabel
+  );
 </script>
 
 <div
-  class="relative inline-flex size-13 shrink-0 items-center justify-center {loadError
+  class="relative inline-flex size-13 shrink-0 items-center justify-center {unavailable
     ? 'tooltip tooltip-error tooltip-left'
     : ''} {className ?? ''}"
-  data-tip={loadError ? errorLabel : undefined}
+  data-tip={unavailable ? errorLabel : undefined}
 >
   <svg
     class="pointer-events-none absolute inset-0 z-0 size-full -rotate-90"
@@ -147,13 +171,13 @@
 
   <button
     type="button"
-    class="btn btn-circle btn-md relative z-10 shrink-0 shadow-sm {loadError
+    class="btn btn-circle btn-md relative z-10 shrink-0 shadow-sm {unavailable
       ? 'btn-ghost text-base-content/40 cursor-not-allowed'
       : 'btn-primary'}"
     aria-label={currentLabel}
     title={currentLabel}
     onclick={toggle}
-    disabled={loadError}
+    disabled={unavailable}
   >
     <Icon icon={currentIcon} class="size-5" aria-hidden="true" />
   </button>
@@ -161,7 +185,7 @@
 
 <audio
   bind:this={audio}
-  {src}
+  {loop}
   preload="none"
   ontimeupdate={updateProgressFromAudio}
   ondurationchange={updateProgressFromAudio}

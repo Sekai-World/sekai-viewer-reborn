@@ -1,8 +1,8 @@
 import type { PageServerLoad } from "./$types";
 
 /**
- * Mode-selection landing for StoryReader. No story data exists here; the page
- * only presents the two reading modes, and every mode keeps the validated
- * story address in its own route.
+ * Story Reader landing: presents both reading modes and the story picker.
+ * Story lists are lazy-loaded per region/type from the reader API so the
+ * landing page stays light.
  */
 export const load: PageServerLoad = async () => ({ track: "story-reader" as const });

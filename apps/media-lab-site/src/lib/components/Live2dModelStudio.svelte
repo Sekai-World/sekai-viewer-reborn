@@ -224,7 +224,7 @@
 
 <div class="flex flex-col gap-5">
   <div
-    class="relative aspect-4/5 min-h-88 w-full overflow-hidden rounded-2xl border border-base-content/10 bg-neutral text-neutral-content shadow-sm sm:aspect-4/3 sm:min-h-0 lg:aspect-16/10"
+    class="relative aspect-4/5 min-h-88 w-full overflow-hidden rounded-xl border border-base-content/10 bg-neutral text-neutral-content shadow-sm sm:aspect-4/3 sm:min-h-0 lg:aspect-16/10"
   >
     {#if stage}
       {@render stage()}
@@ -242,7 +242,7 @@
 
   <section
     aria-labelledby={`${uid}-controls-title`}
-    class="rounded-2xl border border-base-content/10 bg-base-100/80 p-4 sm:p-5"
+    class="rounded-xl border border-base-content/10 bg-base-100/80 p-4 sm:p-5"
   >
     <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
       <div class="flex min-w-0 items-center gap-3">

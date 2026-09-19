@@ -7,7 +7,10 @@ import {
   LIVE2D_ASSET_BUCKET_URL,
   LIVE2D_ASSET_RELAY_PREFIX
 } from "./associated-catalog";
+import { ensureCubismCore } from "./cubism-core";
 import type { Live2dModelDescriptor, Live2dModelLoader, Live2dModelResource } from "./model-viewer";
+
+export { ensureCubismCore } from "./cubism-core";
 
 type JsonObject = Record<string, unknown>;
 
@@ -16,7 +19,6 @@ const EXPRESSION_GROUP = "Expression";
 const PARALLEL_MANAGER_COUNT = 2;
 const BODY_MANAGER_INDEX = 0;
 const FACE_MANAGER_INDEX = 1;
-const CUBISM_CORE_SCRIPT_URL = "/live2d/cubism-core/live2dcubismcore.min.js";
 const MODEL_FILE_REFERENCE_KEYS = ["Moc", "Physics", "Pose", "DisplayInfo", "UserData"] as const;
 
 const DESTROY_OPTIONS = {
@@ -103,12 +105,6 @@ export interface Live2dRuntimeFacade {
 
 export interface Live2dModelLoaderOptions {
   runtime?: Live2dRuntimeFacade;
-}
-
-declare global {
-  interface Window {
-    Live2DCubismCore?: unknown;
-  }
 }
 
 const isRecord = (value: unknown): value is JsonObject =>
@@ -369,48 +365,7 @@ const waitForAbort = async <T>(operation: Promise<T>, signal: AbortSignal): Prom
         reject(error);
       }
     );
-  });
-};
-
-let cubismCoreLoadPromise: Promise<void> | null = null;
-
-export const ensureCubismCore = (): Promise<void> => {
-  if (typeof window === "undefined" || typeof document === "undefined") {
-    return Promise.reject(new Error("Live2D Cubism Core can only be loaded in a browser"));
-  }
-
-  if (window.Live2DCubismCore !== undefined) return Promise.resolve();
-  if (cubismCoreLoadPromise) return cubismCoreLoadPromise;
-
-  let script: HTMLScriptElement | null = null;
-  const loadPromise = new Promise<void>((resolve, reject) => {
-    script = document.createElement("script");
-    script.async = true;
-    script.src = CUBISM_CORE_SCRIPT_URL;
-    script.onload = () => {
-      if (window.Live2DCubismCore === undefined) {
-        reject(
-          new Error(
-            `Live2D Cubism Core script loaded but did not expose window.Live2DCubismCore: ${CUBISM_CORE_SCRIPT_URL}`
-          )
-        );
-        return;
-      }
-      resolve();
-    };
-    script.onerror = () => {
-      reject(new Error(`Failed to load Live2D Cubism Core from ${CUBISM_CORE_SCRIPT_URL}`));
-    };
-    document.head.appendChild(script);
-  });
-
-  cubismCoreLoadPromise = loadPromise.catch((error: unknown) => {
-    cubismCoreLoadPromise = null;
-    if (script?.parentNode) script.remove();
-    throw error;
-  });
-
-  return cubismCoreLoadPromise;
+    });
 };
 
 const getDevicePixelRatio = (): number => {

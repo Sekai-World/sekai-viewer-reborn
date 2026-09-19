@@ -242,6 +242,45 @@ mirror, or asset copy. If multiple consumers appear later, the adapter
 interfaces are shaped to move into `packages/*` without an architecture
 rewrite (roadmap line 277-281).
 
+## Story Reader data-source decisions (2026-09-14 story reader slice)
+
+Decisions made while implementing the functional story reader (text 台本 mode +
+Live2D player mode). Implementation lives under
+`apps/media-lab-site/src/lib/story/` and the ported player under
+`src/lib/story/player/`.
+
+- **Master data**: story route resolution reads whole collections from the
+  published `sekai-master-db[-en|-tc|-kr|-cn]-diff` GitHub Pages mirrors with a
+  30-minute in-memory TTL cache (`src/lib/story/master-data-client.server.ts`),
+  following the split approach: the SDK still has no story endpoints, and the
+  collections the reader needs (`unitStories`, `eventStories`, `events`,
+  `characterProfiles`, `cardEpisodes`, `actionSets`, `specialStories`, plus the
+  four character tables) are small compared with `cards`.
+- **Model source for story playback**: the player uses the **legacy**
+  `live2d/model_list.json` catalog on the live2d bucket, **not** the associated
+  catalog. The associated catalog (239 entries) does not cover story
+  `CostumeType` variants (`05minori_cloth002`, `22rin_idol` are absent); the
+  legacy catalog (826 entries / 668 modelBase directories) covers them. Model
+  data is assembled from `{modelPath}/{modelFile}` with lowercase-fallback
+  probes, and motion/expression metadata from
+  `live2d/motion/{modelDir}/{modelBase}_motion_base/BuildMotionData.json`
+  (`story-model-source.ts`). The associated catalog remains the source of truth
+  for the standalone model viewer routes.
+- **Direct bucket access instead of the Live2D relay**: story assets load
+  straight from the configured remote asset origin
+  (`PUBLIC_REMOTE_ASSET_BASE_URL`, default `https://storage.sekai.best`) with a
+  media-lab-local rate-limited fetch pipeline (4 in-flight / 12 starts-per-
+  second, bounded 429 retries). The `/live2d/assets` relay and its HEAD
+  verification exist for model-viewer traffic patterns and are not reused, so
+  the story player never depends on relay availability. CORS on
+  `storage.sekai.best` is fully open (verified 2026-09-14).
+- **Scenario assets**: documents are `.asset` JSON on the story region bucket;
+  full URL rules, the event-id `+1` shift (167–176), SE pack split, part-voice
+  fallback chains, and the per-story `CostumeType` patch map are recorded in
+  the workspace knowledge base
+  (`docs/game-data-knowledge/stories-virtual-live-mysekai.md`, "Story reader
+  URL and id facts").
+
 ## Draft contracts
 
 - `apps/media-lab-site/src/lib/live2d/story-document.ts` — draft
@@ -280,3 +319,34 @@ before the consuming issues finalize the shapes.
   #268 and §Open questions 1 (associated-catalog/resource/CORS evidence is
   recorded; current JP-only scope is explicit; deployed-origin verification
   remains explicit).
+
+## Local asset cache (service worker LRU, 2026-09-14)
+
+Commit 7c94f3e adds a browser-side LRU cache for story assets
+(`apps/media-lab-site/static/sw.js`, registered by
+`$lib/story/asset-cache-client.ts` from the root layout).
+
+- Why a service worker: the player's loaders each own their network I/O —
+  pixi-live2d-display XHRs for model JSON/textures/motions, Howler Web Audio
+  fetches for voices/BGM/SE, `<img>`/`fetch` preloaders for scenario media.
+  A page-side fetch wrapper would only cover its own calls; the SW is the
+  single interception point for all of them and works in dev and prod.
+- Scope: GET requests to the asset base resolved server-side from
+  `PUBLIC_REMOTE_ASSET_BASE_URL` (`getStoryAssetBase()`, served to the page
+  through the root layout server load — the exact value the story pages
+  build asset URLs from; no client-side re-derivation or default). An
+  absolute base (production: the region and Live2D buckets share one host)
+  is matched by origin; a relative base (dev reverse proxy) is matched as a
+  same-origin path prefix. The same-origin `/live2d/assets/` relay is an app
+  route and stays allowlisted in every deployment. Ranged, query-bearing,
+  and non-200 responses pass through uncached.
+- Policy: cache-first without revalidation (asset object keys are
+  content-addressed), least-recently-used eviction past a 512 MiB cap; the
+  LRU index lives in a dedicated cache as JSON with write-serialized updates.
+  An unconfigured worker caches nothing, so first paint before the page
+  posts the allowlist is plain networking.
+- Verified on the worktree dev server (2026-09-14): one story load populates
+  275 entries (~33 MB); the next load is served 274/275 from the SW cache
+  (hit telemetry = `at` timestamps in the LRU index; the default resource
+  timing buffer overflows and undercounts), with sample voice fetches at
+  single-digit milliseconds.

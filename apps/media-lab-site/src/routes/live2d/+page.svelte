@@ -240,7 +240,7 @@
 
 <section aria-labelledby="live2d-title" class="flex min-w-0 flex-col gap-6">
   <header>
-    <h1 id="live2d-title" class="text-3xl font-bold tracking-tight text-primary">
+    <h1 id="live2d-title" class="text-3xl font-bold tracking-tight text-base-content">
       {translate("live2d.kicker")}
     </h1>
   </header>

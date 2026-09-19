@@ -14,7 +14,7 @@ describe("media-lab-site local i18n runtime", () => {
   it("merges the requested local namespaces", () => {
     expect(getLocalI18nMessages(mediaLabI18nNamespaces)).toMatchObject({
       "shell.title": expect.any(String),
-      "home.title": expect.any(String),
+      "home.tagline": expect.any(String),
       "live2d.title": expect.any(String),
       "storyReader.landing.title": expect.any(String)
     });

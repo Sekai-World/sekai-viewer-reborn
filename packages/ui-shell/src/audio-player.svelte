@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount, untrack } from "svelte";
+  import CirclePlayButton from "./circle-play-button.svelte";
 
   type HowlInstance = import("howler").Howl;
   type DownloadOption = {
@@ -941,20 +942,14 @@
 {:else}
   <div class="w-full">
     <div class="flex items-center gap-4">
-      <button
-        type="button"
-        class="btn btn-primary btn-circle btn-lg shrink-0"
-        onclick={togglePlayback}
+      <CirclePlayButton
+        playing={isPlaying}
+        loading={isLoading}
         disabled={!hasSource || hasError || isLoading}
-        aria-label={isPlaying ? pauseLabel : playLabel}
-        title={isPlaying ? pauseLabel : playLabel}
-      >
-        {#if isLoading}
-          <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
-        {:else}
-          <Icon icon={isPlaying ? "mdi:pause" : "mdi:play"} class="size-6" />
-        {/if}
-      </button>
+        label={isPlaying ? pauseLabel : playLabel}
+        size="lg"
+        onclick={togglePlayback}
+      />
 
       <div class="min-w-0 flex-1">
         <p class="truncate text-base font-semibold">{title}</p>

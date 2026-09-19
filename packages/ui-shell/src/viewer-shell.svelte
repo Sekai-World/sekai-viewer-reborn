@@ -20,6 +20,8 @@
     showTitle?: boolean;
     title?: string;
     titleBadge?: string;
+    /** Width cap for the centered navbar row and main content column. */
+    mainWidthClass?: string;
     children?: Snippet;
   };
 
@@ -39,6 +41,7 @@
     showTitle = true,
     title = "Sekai Viewer",
     titleBadge = "reborn",
+    mainWidthClass = "max-w-384",
     children
   }: Props = $props();
 
@@ -67,7 +70,7 @@
     <header
       class="viewer-shell-nav sticky top-3 z-40 mx-3 mt-3 isolate overflow-visible rounded-full border px-2 lg:top-4 lg:mx-6 lg:mt-4"
     >
-      <div class="navbar relative z-10 mx-auto min-h-14 w-full max-w-384 px-2">
+      <div class={`navbar relative z-10 mx-auto min-h-14 w-full ${mainWidthClass} px-2`}>
         <div class="navbar-start">
           <button
             type="button"
@@ -116,7 +119,7 @@
       id={mainId}
       tabindex="-1"
       class:viewer-shell-main-with-bottom-navigation={bottomNavigation}
-      class="viewer-shell-main mx-auto w-full max-w-384 px-3 pb-8 pt-6 md:px-6 lg:px-8"
+      class={`viewer-shell-main mx-auto w-full ${mainWidthClass} px-3 pb-8 pt-6 md:px-6 lg:px-8`}
     >
       {#if showTitle}
         <section class="py-12 text-center">

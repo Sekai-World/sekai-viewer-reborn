@@ -24,10 +24,10 @@
   import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { swipeRegion } from "$lib/actions/swipe-region";
+  import { CardThumbnail } from "@platform/ui-shell";
   import { toTimestampMs } from "$lib/time/date-time";
   import type { GameNewsItem, GameNewsLoadResult } from "$lib/server/game-news";
   import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import CardThumbnail from "$lib/components/card/CardThumbnail.svelte";
   import type { HomeRegionData } from "$lib/server/home-page-data";
   import {
     EVENT_CARD_BANNER_BODY_CLASS,

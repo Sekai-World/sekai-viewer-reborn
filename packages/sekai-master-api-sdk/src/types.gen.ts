@@ -617,6 +617,13 @@ export type SharedGenericObjectResponse = {
     [key: string]: unknown;
 };
 
+export type SharedGenericRecordListResponse = {
+    items?: Array<{
+        [key: string]: unknown;
+    }>;
+    pagination?: SharedPaginationResponse;
+};
+
 export type SharedGitHubWebhookResponse = {
     reason?: string;
     region?: string;
@@ -1071,6 +1078,65 @@ export type SystemBuildInfoResponse = {
     version?: string;
 };
 
+export type GetActionSetsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/actionSets/{region}/list';
+};
+
+export type GetActionSetsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetActionSetsByRegionListError = GetActionSetsByRegionListErrors[keyof GetActionSetsByRegionListErrors];
+
+export type GetActionSetsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetActionSetsByRegionListResponse = GetActionSetsByRegionListResponses[keyof GetActionSetsByRegionListResponses];
+
 export type GetAdminLoginData = {
     body?: never;
     path?: never;
@@ -1299,6 +1365,65 @@ export type GetAdminProfileResponses = {
 
 export type GetAdminProfileResponse = GetAdminProfileResponses[keyof GetAdminProfileResponses];
 
+export type GetAreasByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/areas/{region}/list';
+};
+
+export type GetAreasByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetAreasByRegionListError = GetAreasByRegionListErrors[keyof GetAreasByRegionListErrors];
+
+export type GetAreasByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetAreasByRegionListResponse = GetAreasByRegionListResponses[keyof GetAreasByRegionListResponses];
+
 export type GetBuildInfoData = {
     body?: never;
     path?: never;
@@ -1314,6 +1439,69 @@ export type GetBuildInfoResponses = {
 };
 
 export type GetBuildInfoResponse = GetBuildInfoResponses[keyof GetBuildInfoResponses];
+
+export type GetCardEpisodesByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+        /**
+         * Comma-separated card ids to keep
+         */
+        card_id?: string;
+    };
+    url: '/cardEpisodes/{region}/list';
+};
+
+export type GetCardEpisodesByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCardEpisodesByRegionListError = GetCardEpisodesByRegionListErrors[keyof GetCardEpisodesByRegionListErrors];
+
+export type GetCardEpisodesByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetCardEpisodesByRegionListResponse = GetCardEpisodesByRegionListResponses[keyof GetCardEpisodesByRegionListResponses];
 
 export type GetCardsRegionsByIdAvailabilityData = {
     body?: never;
@@ -1441,6 +1629,10 @@ export type GetCardsByRegionListData = {
          * Comma-separated card rarity types
          */
         rarity?: string;
+        /**
+         * Comma-separated name queries substring-matched against the card prefix
+         */
+        name?: string;
         /**
          * Comma-separated support units
          */
@@ -1806,6 +1998,65 @@ export type GetCharacter2DsByRegionBatchResponses = {
 
 export type GetCharacter2DsByRegionBatchResponse = GetCharacter2DsByRegionBatchResponses[keyof GetCharacter2DsByRegionBatchResponses];
 
+export type GetCharacter2DsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/character2ds/{region}/list';
+};
+
+export type GetCharacter2DsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCharacter2DsByRegionListError = GetCharacter2DsByRegionListErrors[keyof GetCharacter2DsByRegionListErrors];
+
+export type GetCharacter2DsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetCharacter2DsByRegionListResponse = GetCharacter2DsByRegionListResponses[keyof GetCharacter2DsByRegionListResponses];
+
 export type GetCharacter3DsByRegionBatchData = {
     body?: never;
     path: {
@@ -1848,6 +2099,128 @@ export type GetCharacter3DsByRegionBatchResponses = {
 };
 
 export type GetCharacter3DsByRegionBatchResponse = GetCharacter3DsByRegionBatchResponses[keyof GetCharacter3DsByRegionBatchResponses];
+
+export type GetCharacterProfilesByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/characterProfiles/{region}/list';
+};
+
+export type GetCharacterProfilesByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCharacterProfilesByRegionListError = GetCharacterProfilesByRegionListErrors[keyof GetCharacterProfilesByRegionListErrors];
+
+export type GetCharacterProfilesByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetCharacterProfilesByRegionListResponse = GetCharacterProfilesByRegionListResponses[keyof GetCharacterProfilesByRegionListResponses];
+
+export type GetEventStoriesByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+        /**
+         * Comma-separated event ids to keep
+         */
+        event_id?: string;
+    };
+    url: '/eventStories/{region}/list';
+};
+
+export type GetEventStoriesByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetEventStoriesByRegionListError = GetEventStoriesByRegionListErrors[keyof GetEventStoriesByRegionListErrors];
+
+export type GetEventStoriesByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetEventStoriesByRegionListResponse = GetEventStoriesByRegionListResponses[keyof GetEventStoriesByRegionListResponses];
 
 export type GetEventsRegionsByIdAvailabilityData = {
     body?: never;
@@ -2962,6 +3335,65 @@ export type PostInternalGithubWebhooksMasterDataResponses = {
 
 export type PostInternalGithubWebhooksMasterDataResponse = PostInternalGithubWebhooksMasterDataResponses[keyof PostInternalGithubWebhooksMasterDataResponses];
 
+export type GetMobCharactersByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/mobCharacters/{region}/list';
+};
+
+export type GetMobCharactersByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMobCharactersByRegionListError = GetMobCharactersByRegionListErrors[keyof GetMobCharactersByRegionListErrors];
+
+export type GetMobCharactersByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetMobCharactersByRegionListResponse = GetMobCharactersByRegionListResponses[keyof GetMobCharactersByRegionListResponses];
+
 export type GetMusicsRegionsByIdAvailabilityData = {
     body?: never;
     path: {
@@ -3275,6 +3707,124 @@ export type GetMusicsByRegionByIdVocalsResponses = {
 
 export type GetMusicsByRegionByIdVocalsResponse = GetMusicsByRegionByIdVocalsResponses[keyof GetMusicsByRegionByIdVocalsResponses];
 
+export type GetSpecialStoriesByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/specialStories/{region}/list';
+};
+
+export type GetSpecialStoriesByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetSpecialStoriesByRegionListError = GetSpecialStoriesByRegionListErrors[keyof GetSpecialStoriesByRegionListErrors];
+
+export type GetSpecialStoriesByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetSpecialStoriesByRegionListResponse = GetSpecialStoriesByRegionListResponses[keyof GetSpecialStoriesByRegionListResponses];
+
+export type GetSubGameCharactersByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/subGameCharacters/{region}/list';
+};
+
+export type GetSubGameCharactersByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetSubGameCharactersByRegionListError = GetSubGameCharactersByRegionListErrors[keyof GetSubGameCharactersByRegionListErrors];
+
+export type GetSubGameCharactersByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetSubGameCharactersByRegionListResponse = GetSubGameCharactersByRegionListResponses[keyof GetSubGameCharactersByRegionListResponses];
+
 export type GetUnitProfilesRegionsByUnitAvailabilityData = {
     body?: never;
     path: {
@@ -3463,6 +4013,124 @@ export type GetUnitProfilesByRegionByUnitMembersResponses = {
 };
 
 export type GetUnitProfilesByRegionByUnitMembersResponse = GetUnitProfilesByRegionByUnitMembersResponses[keyof GetUnitProfilesByRegionByUnitMembersResponses];
+
+export type GetUnitStoriesByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/unitStories/{region}/list';
+};
+
+export type GetUnitStoriesByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetUnitStoriesByRegionListError = GetUnitStoriesByRegionListErrors[keyof GetUnitStoriesByRegionListErrors];
+
+export type GetUnitStoriesByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetUnitStoriesByRegionListResponse = GetUnitStoriesByRegionListResponses[keyof GetUnitStoriesByRegionListResponses];
+
+export type GetUnitStoryEpisodeGroupsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Include spoiler content
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/unitStoryEpisodeGroups/{region}/list';
+};
+
+export type GetUnitStoryEpisodeGroupsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetUnitStoryEpisodeGroupsByRegionListError = GetUnitStoryEpisodeGroupsByRegionListErrors[keyof GetUnitStoryEpisodeGroupsByRegionListErrors];
+
+export type GetUnitStoryEpisodeGroupsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedGenericRecordListResponse;
+};
+
+export type GetUnitStoryEpisodeGroupsByRegionListResponse = GetUnitStoryEpisodeGroupsByRegionListResponses[keyof GetUnitStoryEpisodeGroupsByRegionListResponses];
 
 export type GetVersionsData = {
     body?: never;
