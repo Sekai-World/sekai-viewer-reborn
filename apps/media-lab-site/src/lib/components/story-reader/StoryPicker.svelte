@@ -212,8 +212,8 @@
   let selectedEventId = $state<number | null>(null);
   let eventSortBy = $state<"startAt" | "id">("startAt");
   let eventSortOrder = $state<"desc" | "asc">("desc");
-  let eventTypeFilters = $state<string[]>([]);
-  let eventUnitFilters = $state<string[]>([]);
+  let eventTypeFilter = $state<string | null>(null);
+  let eventUnitFilter = $state<string | null>(null);
   let eventLoadSeq = 0;
   let eventSentinel: HTMLButtonElement | null = $state(null);
   let eventLoadMoreHintVisible = $state(false);
@@ -322,8 +322,8 @@
     selectedEventEpisodes = null;
     episodeLoadFailed = false;
     eventEpisodesCache.clear();
-    eventTypeFilters = [];
-    eventUnitFilters = [];
+    eventTypeFilter = null;
+    eventUnitFilter = null;
     eventSortBy = "startAt";
     eventSortOrder = "desc";
     cards = [];
@@ -355,8 +355,8 @@
         sort_order: eventSortOrder
       });
       if (normalizedQuery) params.set("name", normalizedQuery);
-      if (eventTypeFilters.length > 0) params.set("event_type", eventTypeFilters.join(","));
-      if (eventUnitFilters.length > 0) params.set("unit", eventUnitFilters.join(","));
+      if (eventTypeFilter) params.set("event_type", eventTypeFilter);
+      if (eventUnitFilter) params.set("unit", eventUnitFilter);
       const response = await fetch(
         `/story-reader/api/stories/${regionSelection.primary}/event?${params.toString()}`
       );
@@ -392,8 +392,8 @@
     void normalizedQuery;
     void eventSortBy;
     void eventSortOrder;
-    void eventTypeFilters;
-    void eventUnitFilters;
+    void eventTypeFilter;
+    void eventUnitFilter;
     const timer = setTimeout(() => {
       void fetchEventList(1, false);
     }, EVENT_PAGE_DEBOUNCE_MS);
@@ -786,15 +786,11 @@
           : value;
 
   const toggleEventTypeFilter = (value: string): void => {
-    eventTypeFilters = eventTypeFilters.includes(value)
-      ? eventTypeFilters.filter((entry) => entry !== value)
-      : [...eventTypeFilters, value];
+    eventTypeFilter = eventTypeFilter === value ? null : value;
   };
 
   const toggleEventUnitFilter = (value: string): void => {
-    eventUnitFilters = eventUnitFilters.includes(value)
-      ? eventUnitFilters.filter((entry) => entry !== value)
-      : [...eventUnitFilters, value];
+    eventUnitFilter = eventUnitFilter === value ? null : value;
   };
 
   const toggleEventSort = (target: "startAt" | "id"): void => {
@@ -1075,7 +1071,7 @@
             <button
               type="button"
               title={eventTypeLabel(type)}
-              class={`btn btn-sm join-item ${eventTypeFilters.includes(type) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+              class={`btn btn-sm join-item ${eventTypeFilter === type ? "btn-primary" : "btn-outline border-base-content/20"}`}
               onclick={() => toggleEventTypeFilter(type)}
             >
               {eventTypeLabel(type)}
@@ -1087,7 +1083,7 @@
             <button
               type="button"
               title={option.label}
-              class={`btn btn-sm join-item size-9 p-0 ${eventUnitFilters.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20"}`}
+              class={`btn btn-sm join-item size-9 p-0 ${eventUnitFilter === option.value ? "btn-primary" : "btn-outline border-base-content/20"}`}
               onclick={() => toggleEventUnitFilter(option.value)}
             >
               <img
@@ -1101,7 +1097,7 @@
             type="button"
             title={labels.mixedUnit}
             aria-label={labels.mixedUnit}
-            class={`btn btn-sm join-item size-9 p-0 ${eventUnitFilters.includes("mixed") ? "btn-primary" : "btn-outline border-base-content/20"}`}
+            class={`btn btn-sm join-item size-9 p-0 ${eventUnitFilter === "mixed" ? "btn-primary" : "btn-outline border-base-content/20"}`}
             onclick={() => toggleEventUnitFilter("mixed")}
           >
             <Icon icon="mdi:puzzle" class="size-5" aria-hidden="true" />
@@ -1178,7 +1174,7 @@
         </button>
       {:else}
         <p class="text-sm text-base-content/60" role="status">
-          {normalizedQuery || eventTypeFilters.length > 0 || eventUnitFilters.length > 0
+          {normalizedQuery || eventTypeFilter !== null || eventUnitFilter !== null
             ? labels.noMatch
             : labels.empty}
         </p>
