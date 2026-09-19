@@ -22,6 +22,12 @@ import type { StoryVoiceCharacter } from "./scenario-rows";
 
 const VIDEO_FILE_PATTERN = /\.(mp4|webm|mov|avi)$/i;
 
+/** Single-pass XML entity decode; nested entities stay escaped after one pass. */
+const decodeXmlEntities = (value: string): string =>
+  value.replace(/&(amp|lt|gt);/g, (_, entity: string) =>
+    entity === "amp" ? "&" : entity === "lt" ? "<" : ">"
+  );
+
 /** Finds the first video file under a bucket prefix via S3 listing. */
 const searchVideoFile = async (
   regionBase: string,
@@ -34,7 +40,7 @@ const searchVideoFile = async (
     if (!response.ok) return null;
     const xml = await response.text();
     const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) =>
-      m[1].replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+      decodeXmlEntities(m[1])
     );
     const videoFile = keys.find((key) => VIDEO_FILE_PATTERN.test(key));
     return videoFile ?? null;

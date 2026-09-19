@@ -239,6 +239,48 @@ describe("collectStoryMediaUrls", () => {
     expect(onWarning).not.toHaveBeenCalled();
   });
 
+  it("decodes XML entities in listed movie keys exactly once", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        text: async () =>
+          "<Key>scenario/movie/movie_01&amp;_alt.webm</Key>"
+      }))
+    );
+    const scenario = buildScenario({
+      Snippets: [snippet(SnippetAction.SpecialEffect, 0)],
+      SpecialEffectData: [
+        { EffectType: SpecialEffectType.Movie, StringVal: "movie_01", StringValSub: "", Duration: 0, IntVal: 0 }
+      ]
+    });
+    const assets = await collectStoryMediaUrls(buildOptions({ scenarioData: scenario }));
+    expect(assets[0].url).toBe(
+      "https://assets.example/scenario/movie/movie_01&_alt.webm"
+    );
+  });
+
+  it("keeps nested entities escaped after a single decode pass", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        text: async () =>
+          "<Key>scenario/movie/movie_01&amp;lt;_alt.webm</Key>"
+      }))
+    );
+    const scenario = buildScenario({
+      Snippets: [snippet(SnippetAction.SpecialEffect, 0)],
+      SpecialEffectData: [
+        { EffectType: SpecialEffectType.Movie, StringVal: "movie_01", StringValSub: "", Duration: 0, IntVal: 0 }
+      ]
+    });
+    const assets = await collectStoryMediaUrls(buildOptions({ scenarioData: scenario }));
+    expect(assets[0].url).toBe(
+      "https://assets.example/scenario/movie/movie_01&lt;_alt.webm"
+    );
+  });
+
   it("falls back to the default movie file name when the listing fails", async () => {
     vi.stubGlobal(
       "fetch",
