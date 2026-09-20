@@ -31,7 +31,11 @@
   ];
 </script>
 
-<ViewerShell
+<svelte:head>
+  <title>Sekai Account</title>
+</svelte:head>
+
+<ViewerShell>
   drawerId="account-site-drawer"
   navTitle="Sekai Account"
   navBadge="Profile"

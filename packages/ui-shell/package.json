@@ -38,6 +38,10 @@
       "types": "./src/global-notices.ts",
       "default": "./src/global-notices.ts"
     },
+    "./page-title": {
+      "types": "./src/page-title.ts",
+      "default": "./src/page-title.ts"
+    },
     "./inputs.css": "./src/inputs.css"
   },
   "dependencies": {

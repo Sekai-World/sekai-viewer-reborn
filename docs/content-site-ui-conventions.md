@@ -195,6 +195,26 @@ Rules:
 - Keep unit display names and other domain data from `/unitProfiles/{region}/list`; the package-owned color resolver is for visual border accents only and must not replace unit profile loading.
 - Exception: `routes/characters/[region]/+page.svelte` retains `resolveUnitLogoUrl` for the large unit logo above each roster; it is a page-level visual identifier, not a `UnitIconBadge` placement.
 
+## Page Titles
+
+All four sites share one browser-tab title convention, assembled by
+`createPageTitle` from `@platform/ui-shell` (`packages/ui-shell/src/page-title.ts`):
+
+- Home page: `Sekai Viewer`
+- List page: `Cards JP | Sekai Viewer` (the region stays glued to the catalog segment)
+- Detail page: `<content title> | Cards | Sekai Viewer`; while content is
+  loading or missing, degrade to the existing `<prefix> <id>` fallback
+  without the catalog segment
+
+Site names: content-site = Sekai Viewer, tools-site = Sekai Tools,
+media-lab-site = Sekai Media Lab, account-site = Sekai Account. content-site
+binds the site name in `apps/content-site/src/lib/page-title.ts`
+(`createPageTitle(pageTitle, ...context)`), media-lab-site in
+`apps/media-lab-site/src/lib/page-title.ts` (variadic segments); other pages
+should use these wrappers rather than concatenating separators by hand.
+List-page catalog segments reuse the same `common.navigation.*` key as the
+breadcrumb / sidebar (see Layout / Navigation Component Architecture).
+
 ## Sidebar Rules
 
 Sidebar rendering is owned by `packages/ui-shell/src/viewer-shell.svelte`.

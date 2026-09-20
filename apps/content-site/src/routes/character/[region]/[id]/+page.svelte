@@ -19,7 +19,8 @@
   import type { CharacterDetail, CharacterRelatedCard } from "$lib/domain/character";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
@@ -108,10 +109,11 @@
 
 <svelte:head>
   {#await data.payload}<title
-      >{t("characterPageTitlePrefix", "Character")} {data.characterId} - Sekai Viewer</title
+      >{createPageTitle(`${t("characterPageTitlePrefix", "Character")} ${data.characterId}`)}</title
     >{:then result}<title
-      >{result.character?.name ??
-        `${t("characterPageTitlePrefix", "Character")} ${data.characterId}`} - Sekai Viewer</title
+      >{result.character?.name
+        ? createPageTitle(result.character.name, t("navigation.characters", "Characters"))
+        : createPageTitle(`${t("characterPageTitlePrefix", "Character")} ${data.characterId}`)}</title
     >{/await}
 </svelte:head>
 

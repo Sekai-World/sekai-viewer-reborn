@@ -10,7 +10,8 @@
   } from "$lib/live2d/character-grouping";
   import { tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   type CharacterOption = {
     id: number | string | null;
@@ -235,7 +236,7 @@
 </script>
 
 <svelte:head>
-  <title>{translate("live2d.title")}</title>
+  <title>{createPageTitle(translate("live2d.title"))}</title>
 </svelte:head>
 
 <section aria-labelledby="live2d-title" class="flex min-w-0 flex-col gap-6">

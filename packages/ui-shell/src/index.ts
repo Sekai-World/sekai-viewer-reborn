@@ -43,6 +43,7 @@ export {
 } from "./card-thumbnail-data";
 export type { SidebarItem } from "./viewer-shell.types";
 export type { RegionOption } from "./region-switcher.types";
+export { createPageTitle } from "./page-title";
 export {
   fetchGlobalNotices,
   normalizeGlobalNotice,

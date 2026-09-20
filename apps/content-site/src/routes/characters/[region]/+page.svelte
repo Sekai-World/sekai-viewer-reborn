@@ -12,7 +12,8 @@
   import { resolveCanonicalUnitSlug, resolveUnitLogoUrl } from "$lib/domain/unit-icon";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
@@ -83,7 +84,7 @@
 </script>
 
 <svelte:head
-  ><title>{t("navigation.characters", "Characters")} {regionLabels[data.region]} - Sekai Viewer</title
+  ><title>{createPageTitle(`${t("navigation.characters", "Characters")} ${regionLabels[data.region]}`)}</title
   ></svelte:head
 >
 

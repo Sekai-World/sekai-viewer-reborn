@@ -13,7 +13,8 @@
     type Live2dModelViewerState
   } from "$lib/live2d/model-viewer";
   import type { Live2dRouteModelDescriptor } from "$lib/live2d/catalog-route-data";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
@@ -165,7 +166,9 @@
 </script>
 
 <svelte:head>
-  <title>{translate("live2d.modelViewer.title")}</title>
+  <title>
+    {createPageTitle(model?.modelName, translate("live2d.title"))}
+  </title>
 </svelte:head>
 
 <section

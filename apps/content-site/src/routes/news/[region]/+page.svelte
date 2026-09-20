@@ -84,7 +84,7 @@
   const regionOptions = $derived(getNewsRegionOptions(supportedRegions, data.region));
 </script>
 
-<svelte:head><title>{createPageTitle(t("gameNews.title"), regionLabels[data.region])}</title></svelte:head>
+<svelte:head><title>{createPageTitle(`${t("gameNews.title")} ${regionLabels[data.region]}`)}</title></svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-5 px-2">
   <PageHeader

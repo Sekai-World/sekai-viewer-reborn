@@ -19,7 +19,8 @@
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
@@ -315,12 +316,12 @@
 
 <svelte:head>
   {#await data.gachaPayload}
-    <title>{pageTitlePrefix} {data.gachaId} - Sekai Viewer</title>
+    <title>{createPageTitle(`${pageTitlePrefix} ${data.gachaId}`)}</title>
   {:then payload}
     <title>
-      {payload.gacha
-        ? `${payload.gacha.name ?? `${pageTitlePrefix} ${data.gachaId}`} - Sekai Viewer`
-        : `${pageTitlePrefix} ${data.gachaId} - Sekai Viewer`}
+      {payload.gacha?.name
+        ? createPageTitle(payload.gacha.name, gachaListTitle)
+        : createPageTitle(`${pageTitlePrefix} ${data.gachaId}`)}
     </title>
   {/await}
 </svelte:head>

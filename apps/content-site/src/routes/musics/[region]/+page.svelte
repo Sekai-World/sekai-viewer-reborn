@@ -29,7 +29,8 @@
   } from "$lib/server/music-list";
   import type { UnitProfileMap } from "$lib/server/unit-profiles";
   import Icon from "@iconify/svelte";
-  import type { PageData } from "./$types";
+  import { createPageTitle } from "$lib/page-title";
+import type { PageData } from "./$types";
 
   type MusicListPagePayload = MusicListPage;
   type MusicListItem = MusicListItemType;
@@ -930,7 +931,7 @@
 </script>
 
 <svelte:head>
-  <title>{musicListTitle} {regionLabels[data.region]} - Sekai Viewer</title>
+  <title>{createPageTitle(`${musicListTitle} ${regionLabels[data.region]}`)}</title>
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-5 px-2">
