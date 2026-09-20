@@ -2,9 +2,9 @@
   import StoryPicker from "$lib/components/story-reader/StoryPicker.svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageProps } from "./$types";
 
-  let { data }: { data: PageData } = $props();
+  let { data }: PageProps = $props();
 
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
 
