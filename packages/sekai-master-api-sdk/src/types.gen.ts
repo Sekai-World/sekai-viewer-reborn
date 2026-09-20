@@ -28,6 +28,47 @@ export type MasterdataSyncStatus = {
     updated_at?: string;
 };
 
+export type SharedBondsHonorCharacterUnitResponse = {
+    gameCharacterId?: number;
+    id?: number;
+    unit?: string;
+};
+
+export type SharedBondsHonorGroupResponse = {
+    characterId1?: number;
+    characterId2?: number;
+    groupId?: number;
+};
+
+export type SharedBondsHonorLevelResponse = {
+    bondsHonorId?: number;
+    description?: string;
+    id?: number;
+    level?: number;
+};
+
+export type SharedBondsHonorListResponse = {
+    items?: Array<SharedBondsHonorObjectResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedBondsHonorObjectResponse = {
+    bondsGroup?: SharedBondsHonorGroupResponse;
+    bondsGroupId?: number;
+    characterUnit1?: SharedBondsHonorCharacterUnitResponse;
+    characterUnit2?: SharedBondsHonorCharacterUnitResponse;
+    configurableUnitVirtualSinger?: boolean;
+    description?: string;
+    gameCharacterUnitId1?: number;
+    gameCharacterUnitId2?: number;
+    honorRarity?: string;
+    id?: number;
+    levels?: Array<SharedBondsHonorLevelResponse>;
+    name?: string;
+    pronunciation?: string;
+    seq?: number;
+};
+
 export type SharedCardBatchItemResponse = {
     assetbundleName?: unknown;
     attr?: unknown;
@@ -189,6 +230,26 @@ export type SharedCharacterResponse = {
     unit?: string;
 };
 
+export type SharedCostume3dListResponse = {
+    items?: Array<SharedCostume3dObjectResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedCostume3dObjectResponse = {
+    assetbundleName?: string;
+    characterId?: number;
+    colorId?: number;
+    designer?: string;
+    groupId?: number;
+    id?: number;
+    name?: string;
+    partType?: string;
+    publishedAt?: number;
+    rarity?: string;
+    seq?: number;
+    type?: string;
+};
+
 export type SharedCurrentEventResponse = {
     aggregateAt?: unknown;
     assetbundleName?: unknown;
@@ -295,6 +356,45 @@ export type SharedEventDetailRewardsSummaryResponse = {
     previewRangeCount?: number;
     totalRangeCount?: number;
     totalRewardCount?: number;
+};
+
+export type SharedEventHonorBonusHonorGroupResponse = {
+    backgroundAssetbundleName?: string;
+    frameName?: string;
+    honorType?: string;
+    id?: number;
+    name?: string;
+};
+
+export type SharedEventHonorBonusHonorResponse = {
+    assetbundleName?: string;
+    group?: SharedEventHonorBonusHonorGroupResponse;
+    groupId?: number;
+    honorMissionType?: string;
+    honorRarity?: string;
+    honorTypeId?: number;
+    id?: number;
+    name?: string;
+};
+
+export type SharedEventHonorBonusLeaderGameCharacterUnitResponse = {
+    gameCharacterId?: number;
+    id?: number;
+    unit?: string;
+};
+
+export type SharedEventHonorBonusListResponse = {
+    items?: Array<SharedEventHonorBonusObjectResponse>;
+};
+
+export type SharedEventHonorBonusObjectResponse = {
+    bonusRate?: number;
+    eventId?: number;
+    honor?: SharedEventHonorBonusHonorResponse;
+    honorId?: number;
+    id?: number;
+    leaderGameCharacterId?: number;
+    leaderGameCharacterUnit?: SharedEventHonorBonusLeaderGameCharacterUnitResponse;
 };
 
 export type SharedEventHonorBonusResponse = {
@@ -635,6 +735,41 @@ export type SharedHealthResponse = {
     status?: string;
 };
 
+export type SharedHonorGroupResponse = {
+    backgroundAssetbundleName?: string;
+    frameName?: string;
+    honorType?: string;
+    id?: number;
+    name?: string;
+};
+
+export type SharedHonorLevelResponse = {
+    assetbundleName?: string;
+    bonus?: number;
+    description?: string;
+    honorId?: number;
+    honorRarity?: string;
+    level?: number;
+};
+
+export type SharedHonorListResponse = {
+    items?: Array<SharedHonorObjectResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedHonorObjectResponse = {
+    assetbundleName?: string;
+    group?: SharedHonorGroupResponse;
+    groupId?: number;
+    honorMissionType?: string;
+    honorRarity?: string;
+    honorType?: string;
+    id?: number;
+    levels?: Array<SharedHonorLevelResponse>;
+    name?: string;
+    seq?: number;
+};
+
 export type SharedLiveStageResponse = {
     id?: unknown;
     name?: unknown;
@@ -680,6 +815,62 @@ export type SharedMasterDataVersionsResponse = {
     assetVersion?: string;
     cdnVersion?: number;
     dataVersion?: string;
+};
+
+export type SharedMissionListResponse = {
+    items?: Array<SharedMissionResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedMissionResourceBoxDetailResponse = {
+    resourceBoxId?: number;
+    resourceBoxPurpose?: string;
+    resourceId?: number;
+    resourceLevel?: number;
+    resourceQuantity?: number;
+    resourceType?: string;
+    seq?: number;
+};
+
+export type SharedMissionResourceBoxResponse = {
+    details?: Array<SharedMissionResourceBoxDetailResponse>;
+    id?: number;
+    resourceBoxPurpose?: string;
+    resourceBoxType?: string;
+};
+
+export type SharedMissionResponse = {
+    characterId?: number;
+    characterMissionType?: string;
+    eventId?: number;
+    family?: string;
+    id?: number;
+    isAchievementMission?: boolean;
+    normalMissionType?: string;
+    parameterGroupId?: number;
+    progressSentence?: string;
+    requirement?: number;
+    resourceBoxId?: number;
+    rewards?: Array<SharedMissionRewardResponse>;
+    sentence?: string;
+    seq?: number;
+    storyMissionType?: string;
+};
+
+export type SharedMissionRewardResponse = {
+    id?: number;
+    missionId?: number;
+    missionType?: string;
+    resourceBox?: SharedMissionResourceBoxResponse;
+    resourceBoxId?: number;
+    resourceBoxIds?: Array<number>;
+    resourceBoxPurpose?: string;
+    resourceId?: number;
+    resourceLevel?: number;
+    resourceQuantity?: number;
+    resourceType?: string;
+    seq?: number;
+    status?: string;
 };
 
 export type SharedMusicArtistResponse = {
@@ -778,6 +969,19 @@ export type SharedMusicVocalResponse = {
 
 export type SharedMusicVocalsResponse = {
     items?: Array<SharedMusicVocalResponse>;
+};
+
+export type SharedMysekaiPhotoDecorationListResponse = {
+    items?: Array<SharedMysekaiPhotoDecorationResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedMysekaiPhotoDecorationResponse = {
+    assetbundleName?: string;
+    description?: string;
+    id?: number;
+    name?: string;
+    seq?: number;
 };
 
 export type SharedPaginationResponse = {
@@ -1423,6 +1627,123 @@ export type GetAreasByRegionListResponses = {
 };
 
 export type GetAreasByRegionListResponse = GetAreasByRegionListResponses[keyof GetAreasByRegionListResponses];
+
+export type GetBondsHonorsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Sort field
+         */
+        sort_by?: 'id' | 'seq' | 'bondsGroupId' | 'gameCharacterUnitId1' | 'gameCharacterUnitId2' | 'honorRarity' | 'name';
+        /**
+         * Sort order
+         */
+        sort_order?: 'asc' | 'desc';
+        /**
+         * Exact bonds group ID
+         */
+        bonds_group_id?: number;
+        /**
+         * Exact first game character unit ID
+         */
+        game_character_unit_id1?: number;
+        /**
+         * Exact second game character unit ID
+         */
+        game_character_unit_id2?: number;
+        /**
+         * Exactly two distinct underlying game character IDs, comma-separated (for example: 1,2)
+         */
+        game_character_ids?: string;
+    };
+    url: '/bondsHonors/{region}/list';
+};
+
+export type GetBondsHonorsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetBondsHonorsByRegionListError = GetBondsHonorsByRegionListErrors[keyof GetBondsHonorsByRegionListErrors];
+
+export type GetBondsHonorsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedBondsHonorListResponse;
+};
+
+export type GetBondsHonorsByRegionListResponse = GetBondsHonorsByRegionListResponses[keyof GetBondsHonorsByRegionListResponses];
+
+export type GetBondsHonorsByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Bonds honor ID
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/bondsHonors/{region}/{id}';
+};
+
+export type GetBondsHonorsByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetBondsHonorsByRegionByIdError = GetBondsHonorsByRegionByIdErrors[keyof GetBondsHonorsByRegionByIdErrors];
+
+export type GetBondsHonorsByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedBondsHonorObjectResponse;
+};
+
+export type GetBondsHonorsByRegionByIdResponse = GetBondsHonorsByRegionByIdResponses[keyof GetBondsHonorsByRegionByIdResponses];
 
 export type GetBuildInfoData = {
     body?: never;
@@ -2159,6 +2480,123 @@ export type GetCharacterProfilesByRegionListResponses = {
 
 export type GetCharacterProfilesByRegionListResponse = GetCharacterProfilesByRegionListResponses[keyof GetCharacterProfilesByRegionListResponses];
 
+export type GetCostume3DsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Case-insensitive substring of the normalized costume name
+         */
+        name?: string;
+        /**
+         * Comma-separated group IDs
+         */
+        group_id?: string;
+        /**
+         * Comma-separated color IDs
+         */
+        color_id?: string;
+        /**
+         * Comma-separated character IDs
+         */
+        character_id?: string;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/costume3ds/{region}/list';
+};
+
+export type GetCostume3DsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCostume3DsByRegionListError = GetCostume3DsByRegionListErrors[keyof GetCostume3DsByRegionListErrors];
+
+export type GetCostume3DsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedCostume3dListResponse;
+};
+
+export type GetCostume3DsByRegionListResponse = GetCostume3DsByRegionListResponses[keyof GetCostume3DsByRegionListResponses];
+
+export type GetCostume3DsByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * 3D costume ID
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/costume3ds/{region}/{id}';
+};
+
+export type GetCostume3DsByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCostume3DsByRegionByIdError = GetCostume3DsByRegionByIdErrors[keyof GetCostume3DsByRegionByIdErrors];
+
+export type GetCostume3DsByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedCostume3dObjectResponse;
+};
+
+export type GetCostume3DsByRegionByIdResponse = GetCostume3DsByRegionByIdResponses[keyof GetCostume3DsByRegionByIdResponses];
+
 export type GetEventStoriesByRegionListData = {
     body?: never;
     path: {
@@ -2606,6 +3044,52 @@ export type GetEventsByRegionByIdDetailResponses = {
 };
 
 export type GetEventsByRegionByIdDetailResponse = GetEventsByRegionByIdDetailResponses[keyof GetEventsByRegionByIdDetailResponses];
+
+export type GetEventsByRegionByIdHonorBonusesData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Event ID
+         */
+        id: string;
+    };
+    query?: never;
+    url: '/events/{region}/{id}/honor-bonuses';
+};
+
+export type GetEventsByRegionByIdHonorBonusesErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetEventsByRegionByIdHonorBonusesError = GetEventsByRegionByIdHonorBonusesErrors[keyof GetEventsByRegionByIdHonorBonusesErrors];
+
+export type GetEventsByRegionByIdHonorBonusesResponses = {
+    /**
+     * OK
+     */
+    200: SharedEventHonorBonusListResponse;
+};
+
+export type GetEventsByRegionByIdHonorBonusesResponse = GetEventsByRegionByIdHonorBonusesResponses[keyof GetEventsByRegionByIdHonorBonusesResponses];
 
 export type GetEventsByRegionByIdMusicsData = {
     body?: never;
@@ -3283,6 +3767,99 @@ export type GetHealthResponses = {
 
 export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
 
+export type GetHonorsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+    };
+    url: '/honors/{region}/list';
+};
+
+export type GetHonorsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetHonorsByRegionListError = GetHonorsByRegionListErrors[keyof GetHonorsByRegionListErrors];
+
+export type GetHonorsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedHonorListResponse;
+};
+
+export type GetHonorsByRegionListResponse = GetHonorsByRegionListResponses[keyof GetHonorsByRegionListResponses];
+
+export type GetHonorsByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Honor ID
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/honors/{region}/{id}';
+};
+
+export type GetHonorsByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetHonorsByRegionByIdError = GetHonorsByRegionByIdErrors[keyof GetHonorsByRegionByIdErrors];
+
+export type GetHonorsByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedHonorObjectResponse;
+};
+
+export type GetHonorsByRegionByIdResponse = GetHonorsByRegionByIdResponses[keyof GetHonorsByRegionByIdResponses];
+
 export type PostInternalGithubWebhooksMasterDataData = {
     /**
      * GitHub webhook payload
@@ -3334,6 +3911,127 @@ export type PostInternalGithubWebhooksMasterDataResponses = {
 };
 
 export type PostInternalGithubWebhooksMasterDataResponse = PostInternalGithubWebhooksMasterDataResponses[keyof PostInternalGithubWebhooksMasterDataResponses];
+
+export type GetMissionsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query: {
+        /**
+         * Mission family
+         */
+        family: 'storyMissions' | 'characterMissionV2s' | 'normalMissions';
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Comma-separated positive mission IDs
+         */
+        id?: string;
+        /**
+         * Comma-separated positive character IDs (characterMissionV2s only)
+         */
+        character_id?: string;
+        /**
+         * Comma-separated positive event IDs
+         */
+        event_id?: string;
+        /**
+         * Sort field
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/missions/{region}/list';
+};
+
+export type GetMissionsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMissionsByRegionListError = GetMissionsByRegionListErrors[keyof GetMissionsByRegionListErrors];
+
+export type GetMissionsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedMissionListResponse;
+};
+
+export type GetMissionsByRegionListResponse = GetMissionsByRegionListResponses[keyof GetMissionsByRegionListResponses];
+
+export type GetMissionsByRegionByFamilyByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Mission family
+         */
+        family: 'storyMissions' | 'characterMissionV2s' | 'normalMissions';
+        /**
+         * Mission ID
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/missions/{region}/{family}/{id}';
+};
+
+export type GetMissionsByRegionByFamilyByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMissionsByRegionByFamilyByIdError = GetMissionsByRegionByFamilyByIdErrors[keyof GetMissionsByRegionByFamilyByIdErrors];
+
+export type GetMissionsByRegionByFamilyByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedMissionResponse;
+};
+
+export type GetMissionsByRegionByFamilyByIdResponse = GetMissionsByRegionByFamilyByIdResponses[keyof GetMissionsByRegionByFamilyByIdResponses];
 
 export type GetMobCharactersByRegionListData = {
     body?: never;
@@ -3706,6 +4404,99 @@ export type GetMusicsByRegionByIdVocalsResponses = {
 };
 
 export type GetMusicsByRegionByIdVocalsResponse = GetMusicsByRegionByIdVocalsResponses[keyof GetMusicsByRegionByIdVocalsResponses];
+
+export type GetMysekaiPhotoDecorationsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+    };
+    url: '/mysekaiPhotoDecorations/{region}/list';
+};
+
+export type GetMysekaiPhotoDecorationsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMysekaiPhotoDecorationsByRegionListError = GetMysekaiPhotoDecorationsByRegionListErrors[keyof GetMysekaiPhotoDecorationsByRegionListErrors];
+
+export type GetMysekaiPhotoDecorationsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedMysekaiPhotoDecorationListResponse;
+};
+
+export type GetMysekaiPhotoDecorationsByRegionListResponse = GetMysekaiPhotoDecorationsByRegionListResponses[keyof GetMysekaiPhotoDecorationsByRegionListResponses];
+
+export type GetMysekaiPhotoDecorationsByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Photo decoration ID
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/mysekaiPhotoDecorations/{region}/{id}';
+};
+
+export type GetMysekaiPhotoDecorationsByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetMysekaiPhotoDecorationsByRegionByIdError = GetMysekaiPhotoDecorationsByRegionByIdErrors[keyof GetMysekaiPhotoDecorationsByRegionByIdErrors];
+
+export type GetMysekaiPhotoDecorationsByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedMysekaiPhotoDecorationResponse;
+};
+
+export type GetMysekaiPhotoDecorationsByRegionByIdResponse = GetMysekaiPhotoDecorationsByRegionByIdResponses[keyof GetMysekaiPhotoDecorationsByRegionByIdResponses];
 
 export type GetSpecialStoriesByRegionListData = {
     body?: never;
