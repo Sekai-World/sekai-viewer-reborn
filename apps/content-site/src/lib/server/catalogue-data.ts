@@ -1,11 +1,5 @@
-import {
-  getNumber,
-  getObject as getResponseObject,
-  getPositiveInteger,
-  getString
-} from "./response-values";
-
-export { getNumber, getPositiveInteger, getString };
+import { getObject as getResponseObject } from "./response-values";
+export { getNumber, getPositiveInteger, getString } from "./response-values";
 
 export type CatalogueName = "Honor" | "Mission";
 
@@ -29,7 +23,7 @@ const MASTER_API_PATH_PREFIX = "/api/v1";
 
 export const getMasterApiV1BaseUrl = (baseUrl: string): string => {
   let end = baseUrl.length;
-  while (end > 0 && baseUrl.charCodeAt(end - 1) === 47) {
+  while (end > 0 && baseUrl.codePointAt(end - 1) === 47) {
     end -= 1;
   }
 
@@ -63,8 +57,8 @@ const isAsciiDigitString = (value: string): boolean => {
   }
 
   for (const character of value) {
-    const code = character.charCodeAt(0);
-    if (code < 48 || code > 57) {
+    const code = character.codePointAt(0);
+    if (code === undefined || code < 48 || code > 57) {
       return false;
     }
   }
@@ -266,7 +260,7 @@ export const validateCataloguePageContent = (
 
   const offset = (requestedPage - 1) * pageSize;
   if (!Number.isSafeInteger(offset)) {
-    throw new Error(`${label} page is outside the supported range.`);
+    throw new TypeError(`${label} page is outside the supported range.`);
   }
 
   if (total !== null) {
