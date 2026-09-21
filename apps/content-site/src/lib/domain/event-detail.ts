@@ -36,11 +36,31 @@ export type EventCardBonusLimit = {
   memberCountLimit: number | null;
 };
 
+export type EventHonorBonusGroup = {
+  name: string | null;
+  honorType: string | null;
+  backgroundAssetBundleName: string | null;
+};
+
+export type EventHonorBonusHonor = {
+  id: number;
+  name: string | null;
+  assetBundleName: string | null;
+  group: EventHonorBonusGroup | null;
+};
+
+export type EventHonorBonus = {
+  honorId: number;
+  bonusRate: number | null;
+  honor: EventHonorBonusHonor | null;
+};
+
 export type EventBonuses = {
   deckBonuses: EventDeckBonus[];
   rarityBonusRates: EventRarityBonusRate[];
   cardBonusLimits: EventCardBonusLimit[];
   honorBonusCount: number;
+  honorBonuses?: EventHonorBonus[];
   mySekaiFixtureBonusLimitCount: number;
 };
 
@@ -116,6 +136,7 @@ export type EventRankingRewardRange = {
 
 export type EventRelatedData = {
   bonuses: EventBonuses | null;
+  honorBonusesLoadFailed: boolean;
   cards: EventFeaturedCard[];
   musics: EventMusic[];
   rewardRanges: EventRankingRewardRange[];

@@ -1,0 +1,19 @@
+{
+  "honor.search": "Search honors",
+  "honor.searchAction": "Search",
+  "honor.loading": "Loading honors...",
+  "honor.empty": "No honors found. Try another region.",
+  "honor.error": "Honors could not be loaded. Please try again.",
+  "honor.retry": "Try again",
+  "honor.previous": "Previous",
+  "honor.next": "Next",
+  "honor.levels": "Honor levels",
+  "honor.memberCount": "Honors: {count}",
+  "honor.level": "Level {level}",
+  "honor.unnamed": "Honor",
+  "honor.rarity.low": "Low",
+  "honor.rarity.middle": "Middle",
+  "honor.rarity.high": "High",
+  "honor.rarity.highest": "Highest",
+  "honor.page": "Page {page} of {total}"
+}

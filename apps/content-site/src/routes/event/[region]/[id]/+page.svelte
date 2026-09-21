@@ -18,11 +18,11 @@
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import { getEventTrackerHref } from "$lib/tools-site";
   import { createPageTitle } from "$lib/page-title";
-  import type { PageData } from "./$types";
+  import type { PageProps } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
-  let { data }: { data: PageData } = $props();
+  let { data }: PageProps = $props();
   const getInitialMessages = (): Record<string, string> =>
     resolveStreamingMessages(data.i18nMessages, ["common", "event", "error"]);
   let translationRequestId = 0;
@@ -467,6 +467,12 @@
             bonusRateLabel={eventBonusRateLabel}
             {eventMusicsLabel}
             rankingRewardsTitle={eventRankingRewardsTitle}
+            honorBonusesTitle={currentTranslate("eventHonorBonusesTitle")}
+            honorBonusesLoadFailed={payload.relatedData?.honorBonusesLoadFailed ?? false}
+            honorBonusesUnavailableLabel={currentTranslate("eventHonorBonusesUnavailable")}
+            honorBonusHonorLabel={currentTranslate("eventHonorBonusHonorLabel")}
+            honorRewardLabel={currentTranslate("eventHonorRewardLabel")}
+            bondsHonorRewardLabel={currentTranslate("eventBondsHonorRewardLabel")}
             rankingRewardTopLabel={eventRankingRewardTopLabel}
             rankingRewardBorderLabel={eventRankingRewardBorderLabel}
             rankingRewardsShowMoreLabel={eventRankingRewardsShowMoreLabel}

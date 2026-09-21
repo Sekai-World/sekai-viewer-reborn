@@ -95,6 +95,8 @@
   let eventsLabel = $state(getInitialI18nText("navigation.events"));
   let gachasLabel = $state(getInitialI18nText("navigation.gachas"));
   let virtualLivesLabel = $state(getInitialI18nText("navigation.virtualLives"));
+  let missionsLabel = $state(getInitialI18nText("navigation.missions"));
+  let honorsLabel = $state(getInitialI18nText("navigation.honors"));
   let supportLabel = $state(getInitialI18nText("navigation.support"));
   let quickNavigationLabel = $state(getInitialI18nText("navigation.quickNavigation"));
   let settingsLabel = $state(getInitialI18nText("settings.title"));
@@ -149,6 +151,8 @@
         first === "gachas" ||
         first === "music" ||
         first === "musics" ||
+        first === "missions" ||
+        first === "honors" ||
         first === "virtual-live" ||
         first === "virtual-lives") &&
       second
@@ -245,6 +249,18 @@
       label: exploreLabel
     },
     ...navigationLinks.slice(2, -1),
+    {
+      label: missionsLabel,
+      href: `/missions/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/missions/"),
+      icon: "mdi:playlist-check"
+    },
+    {
+      label: honorsLabel,
+      href: `/honors/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/honors/"),
+      icon: "mdi:medal-outline"
+    },
     {
       type: "section",
       label: projectLabel
@@ -346,6 +362,8 @@
     eventsLabel = translate("navigation.events");
     gachasLabel = translate("navigation.gachas");
     virtualLivesLabel = translate("navigation.virtualLives");
+    missionsLabel = translate("navigation.missions");
+    honorsLabel = translate("navigation.honors");
     supportLabel = translate("navigation.support");
     quickNavigationLabel = translate("navigation.quickNavigation");
     settingsLabel = translate("settings.title");

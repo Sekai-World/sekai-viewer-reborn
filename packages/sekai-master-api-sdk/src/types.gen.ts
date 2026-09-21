@@ -735,6 +735,20 @@ export type SharedHealthResponse = {
     status?: string;
 };
 
+export type SharedHonorGroupListResponse = {
+    items?: Array<SharedHonorGroupObjectResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedHonorGroupObjectResponse = {
+    backgroundAssetbundleName?: string;
+    frameName?: string;
+    honorType?: string;
+    honors?: Array<SharedHonorObjectResponse>;
+    id: number;
+    name?: string;
+};
+
 export type SharedHonorGroupResponse = {
     backgroundAssetbundleName?: string;
     frameName?: string;
@@ -3766,6 +3780,53 @@ export type GetHealthResponses = {
 };
 
 export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
+
+export type GetHonorGroupsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+    };
+    url: '/honorGroups/{region}/list';
+};
+
+export type GetHonorGroupsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetHonorGroupsByRegionListError = GetHonorGroupsByRegionListErrors[keyof GetHonorGroupsByRegionListErrors];
+
+export type GetHonorGroupsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedHonorGroupListResponse;
+};
+
+export type GetHonorGroupsByRegionListResponse = GetHonorGroupsByRegionListResponses[keyof GetHonorGroupsByRegionListResponses];
 
 export type GetHonorsByRegionListData = {
     body?: never;

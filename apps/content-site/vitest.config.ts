@@ -25,6 +25,10 @@ export default defineConfig({
         replacement: new URL("./src/lib/test/app-navigation.ts", import.meta.url).pathname
       },
       {
+        find: "$app/state",
+        replacement: new URL("./src/lib/test/app-state.ts", import.meta.url).pathname
+      },
+      {
         find: "$env/dynamic/public",
         replacement: new URL("./src/lib/test/public-env.ts", import.meta.url).pathname
       },
