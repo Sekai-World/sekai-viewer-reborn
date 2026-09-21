@@ -177,7 +177,7 @@
   skipToMainLabel={translate("navigation.skipToMain")}
   openSidebarLabel={translate("navigation.openSidebar")}
   closeSidebarLabel={translate("navigation.closeSidebar")}
-  sidebarLabel={translate("navigation.tools")}
+  sidebarLabel={translate("navigation.sidebar")}
   {sidebarItems}
   desktopRailOpen={true}
   showTitle={false}
