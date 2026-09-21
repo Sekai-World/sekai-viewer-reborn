@@ -18,6 +18,7 @@ import type {
   EventRelatedData,
   EventVirtualLive
 } from "$lib/domain/event-detail";
+import { getPositiveInteger } from "./response-values";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -105,19 +106,6 @@ const pickFirstDateValue = (
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
-const getPositiveInteger = (value: unknown): number | null => {
-  const numberValue =
-    typeof value === "number"
-      ? value
-      : typeof value === "string" && value.trim().length > 0
-        ? Number(value)
-        : null;
-
-  return typeof numberValue === "number" && Number.isSafeInteger(numberValue) && numberValue > 0
-    ? numberValue
-    : null;
-};
-
 const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const getArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
@@ -200,6 +188,22 @@ const parseEventCardBonusLimit = (value: unknown): EventCardBonusLimit | null =>
   };
 };
 
+const parseEventHonorBonusGroup = (value: unknown) => {
+  const group = getObject(value);
+  if (!group) {
+    return null;
+  }
+
+  return {
+    name: getString(group["name"]),
+    honorType: getString(group["honorType"]),
+    backgroundAssetBundleName: pickFirstString(group, [
+      "backgroundAssetbundleName",
+      "backgroundAssetBundleName"
+    ])
+  };
+};
+
 const parseEventHonorBonusHonor = (value: unknown): EventHonorBonusHonor | null => {
   const node = getObject(value);
   const id = getPositiveInteger(node?.["id"]);
@@ -207,22 +211,11 @@ const parseEventHonorBonusHonor = (value: unknown): EventHonorBonusHonor | null 
     return null;
   }
 
-  const group = getObject(node["group"]);
-
   return {
     id,
     name: getString(node["name"]),
     assetBundleName: pickFirstString(node, ["assetbundleName", "assetBundleName"]),
-    group: group
-      ? {
-          name: getString(group["name"]),
-          honorType: getString(group["honorType"]),
-          backgroundAssetBundleName: pickFirstString(group, [
-            "backgroundAssetbundleName",
-            "backgroundAssetBundleName"
-          ])
-        }
-      : null
+    group: parseEventHonorBonusGroup(node["group"])
   };
 };
 
@@ -264,7 +257,9 @@ const getHonorBonusItems = (payload: unknown): { items: unknown[]; valid: boolea
   };
 };
 
-export const parseEventHonorBonusesResponse = (payload: unknown): {
+export const parseEventHonorBonusesResponse = (
+  payload: unknown
+): {
   bonuses: EventHonorBonus[];
   valid: boolean;
 } => {

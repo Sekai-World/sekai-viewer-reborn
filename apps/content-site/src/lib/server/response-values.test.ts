@@ -3,6 +3,7 @@ import {
   getDateValue,
   getDateValuePreservingWhitespace,
   getObject,
+  getPositiveInteger,
   getString,
   getStringLike,
   getStringLikePreservingWhitespace,
@@ -35,6 +36,18 @@ describe("response scalar values", () => {
     expect(getDateValuePreservingWhitespace(" 2026-01-01 ")).toBe(" 2026-01-01 ");
     expect(getObject({ value: 1 })).toEqual({ value: 1 });
     expect(getObject(null)).toBeNull();
+  });
+
+  it("parses positive safe integers from numbers and strings", () => {
+    expect(getPositiveInteger(7)).toBe(7);
+    expect(getPositiveInteger(" 7 ")).toBe(7);
+    expect(getPositiveInteger(Number.MAX_SAFE_INTEGER)).toBe(Number.MAX_SAFE_INTEGER);
+    expect(getPositiveInteger(0)).toBeNull();
+    expect(getPositiveInteger(-1)).toBeNull();
+    expect(getPositiveInteger(1.5)).toBeNull();
+    expect(getPositiveInteger("invalid")).toBeNull();
+    expect(getPositiveInteger(" ")).toBeNull();
+    expect(getPositiveInteger(Number.MAX_SAFE_INTEGER + 1)).toBeNull();
   });
 
   it("returns the first non-empty string alias", () => {

@@ -10,129 +10,82 @@ import type {
   MissionReward
 } from "$lib/domain/mission";
 import { missionFamilies } from "$lib/domain/mission";
+import type { CataloguePagination, CataloguePaginationMetadata } from "./catalogue-data";
+import {
+  getArray,
+  getBoolean,
+  getCatalogueHasNext,
+  getItems,
+  getMasterApiV1BaseUrl,
+  getNumber,
+  getObject,
+  getPositiveInteger,
+  getString,
+  parseCataloguePaginationMetadata,
+  validateCataloguePageContent,
+  validateCataloguePageRequest
+} from "./catalogue-data";
 
 const PAGE_SIZE = 24;
 const FAMILY_PAGE_SIZE = PAGE_SIZE / missionFamilies.length;
-const MASTER_API_PATH_PREFIX = "/api/v1";
-
-const getMasterApiV1BaseUrl = (baseUrl: string): string => {
-  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
-  return normalizedBaseUrl.endsWith(MASTER_API_PATH_PREFIX)
-    ? normalizedBaseUrl
-    : `${normalizedBaseUrl}${MASTER_API_PATH_PREFIX}`;
-};
-
-const getObject = (value: unknown): Record<string, unknown> | null =>
-  value !== null && typeof value === "object" && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-
-const getArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-
-const getString = (value: unknown): string | null => {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const getNumber = (value: unknown): number | null =>
-  typeof value === "number" && Number.isFinite(value) ? value : null;
-
-const getPositiveInteger = (value: unknown): number | null => {
-  const numberValue =
-    typeof value === "number"
-      ? value
-      : typeof value === "string" && value.trim().length > 0
-        ? Number(value)
-        : null;
-
-  return typeof numberValue === "number" && Number.isSafeInteger(numberValue) && numberValue > 0
-    ? numberValue
-    : null;
-};
-
-const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
-
-const getItems = (payload: unknown): unknown[] | null => {
-  const root = getObject(payload);
-  if (root && Array.isArray(root.items)) {
-    return root.items;
-  }
-
-  const data = getObject(root?.data);
-  return data && Array.isArray(data.items) ? data.items : null;
-};
-
-export type MissionListPagination = {
-  page: number;
-  pageSize: number;
-  hasNext: boolean;
-  total: number | null;
-  totalPages: number | null;
-};
+export type MissionListPagination = CataloguePagination;
 
 export type MissionListPage = {
   items: Mission[];
   pagination: MissionListPagination;
 };
 
-type ApiPagination = MissionListPagination;
+const getTotalPagesFromTotal = (total: number | null, pageSize: number): number | null =>
+  total === null ? null : Math.ceil(total / pageSize);
 
-const getPaginationObject = (payload: unknown): Record<string, unknown> | null => {
-  const root = getObject(payload);
-  const data = getObject(root?.data);
-  const value = root?.pagination ?? data?.pagination;
-
-  if (value === null || value === undefined) {
-    return null;
+const resolveMissionTotalPages = (
+  metadata: CataloguePaginationMetadata,
+  pageSize: number
+): number | null => {
+  const pagesFromTotal = getTotalPagesFromTotal(metadata.total, pageSize);
+  if (
+    metadata.totalPages !== null &&
+    pagesFromTotal !== null &&
+    metadata.totalPages !== pagesFromTotal &&
+    !(metadata.total === 0 && metadata.totalPages === 1)
+  ) {
+    throw new Error("Mission catalogue returned inconsistent total counts.");
   }
 
-  const pagination = getObject(value);
-  if (!pagination) {
-    throw new Error("Mission catalogue returned invalid pagination metadata.");
-  }
-
-  return pagination;
+  return metadata.totalPages ?? pagesFromTotal;
 };
 
-const getOptionalField = (source: Record<string, unknown> | null, keys: string[]): unknown => {
-  if (!source) {
-    return null;
+const validateMissionPageRange = (
+  requestedPage: number,
+  totalPages: number | null,
+  itemCount: number
+): void => {
+  if (totalPages !== null && requestedPage > totalPages && itemCount > 0) {
+    throw new Error("Mission catalogue returned items beyond its reported page count.");
   }
-
-  for (const key of keys) {
-    if (Object.prototype.hasOwnProperty.call(source, key)) {
-      const value = source[key];
-      if (value !== null && value !== undefined) {
-        return value;
-      }
-    }
-  }
-
-  return null;
 };
 
-const parseOptionalInteger = (value: unknown, name: string, allowZero: boolean): number | null => {
-  if (value === null || value === undefined) {
+const inferMissionTotal = (
+  total: number | null,
+  totalPages: number | null,
+  requestedPage: number,
+  pageSize: number,
+  itemCount: number,
+  hasNext: boolean
+): number | null => {
+  if (total !== null) {
+    return total;
+  }
+
+  if (totalPages === 0) {
+    return 0;
+  }
+
+  if (totalPages === null || requestedPage !== totalPages || hasNext) {
     return null;
   }
 
-  const parsed =
-    typeof value === "number"
-      ? value
-      : typeof value === "string" && value.trim().length > 0
-        ? Number(value)
-        : Number.NaN;
-  const minimum = allowZero ? 0 : 1;
-
-  if (!Number.isSafeInteger(parsed) || parsed < minimum) {
-    throw new Error(`Mission catalogue returned an invalid ${name}.`);
-  }
-
-  return parsed;
+  return (totalPages - 1) * pageSize + itemCount;
 };
 
 const parseApiPagination = (
@@ -140,109 +93,41 @@ const parseApiPagination = (
   requestedPage: number,
   pageSize: number,
   itemCount: number
-): ApiPagination => {
-  const pagination = getPaginationObject(payload);
-  const reportedPage = parseOptionalInteger(getOptionalField(pagination, ["page"]), "page", false);
-  const reportedPageSize = parseOptionalInteger(
-    getOptionalField(pagination, ["page_size", "pageSize"]),
-    "page size",
-    false
+): MissionListPagination => {
+  const metadata = parseCataloguePaginationMetadata(payload, "Mission");
+  validateCataloguePageRequest(metadata, requestedPage, pageSize, itemCount, "Mission");
+
+  const totalPages = resolveMissionTotalPages(metadata, pageSize);
+  const resolvedMetadata = { ...metadata, totalPages };
+  const hasNext = getCatalogueHasNext(
+    resolvedMetadata,
+    requestedPage,
+    pageSize,
+    itemCount,
+    "Mission"
   );
-  const total = parseOptionalInteger(getOptionalField(pagination, ["total"]), "total", true);
-  let totalPages = parseOptionalInteger(
-    getOptionalField(pagination, ["total_pages", "totalPages"]),
-    "total pages",
-    true
+  validateMissionPageRange(requestedPage, totalPages, itemCount);
+  validateCataloguePageContent(
+    metadata.total,
+    requestedPage,
+    pageSize,
+    itemCount,
+    hasNext,
+    "Mission"
   );
-  const hasNextValue = getOptionalField(pagination, ["has_next", "hasNext"]);
-
-  if (reportedPage !== null && reportedPage !== requestedPage) {
-    throw new Error(
-      `Mission catalogue returned page ${reportedPage} for requested page ${requestedPage}.`
-    );
-  }
-
-  if (reportedPageSize !== null && reportedPageSize !== pageSize) {
-    throw new Error("Mission catalogue returned a page with an unexpected page size.");
-  }
-
-  if (hasNextValue !== null && typeof hasNextValue !== "boolean") {
-    throw new Error("Mission catalogue returned an invalid has-next value.");
-  }
-
-  if (itemCount > pageSize) {
-    throw new Error("Mission catalogue returned more items than the requested page size.");
-  }
-
-  const pagesFromTotal = total === null ? null : Math.ceil(total / pageSize);
-  if (
-    totalPages !== null &&
-    pagesFromTotal !== null &&
-    totalPages !== pagesFromTotal &&
-    !(total === 0 && totalPages === 1)
-  ) {
-    throw new Error("Mission catalogue returned inconsistent total counts.");
-  }
-  totalPages ??= pagesFromTotal;
-
-  const hasNext =
-    typeof hasNextValue === "boolean"
-      ? hasNextValue
-      : totalPages !== null
-        ? requestedPage < totalPages
-        : itemCount >= pageSize;
-
-  if (
-    typeof hasNextValue === "boolean" &&
-    totalPages !== null &&
-    hasNext !== requestedPage < totalPages
-  ) {
-    throw new Error("Mission catalogue returned inconsistent pagination metadata.");
-  }
-
-  if (totalPages !== null && requestedPage > totalPages && itemCount > 0) {
-    throw new Error("Mission catalogue returned items beyond its reported page count.");
-  }
-
-  if (hasNext && itemCount !== pageSize) {
-    throw new Error("Mission catalogue returned an incomplete page while reporting another page.");
-  }
-
-  if (itemCount === 0 && hasNext) {
-    throw new Error("Mission catalogue returned an empty page while reporting another page.");
-  }
-
-  const offset = (requestedPage - 1) * pageSize;
-  if (!Number.isSafeInteger(offset)) {
-    throw new Error("Mission catalogue page is outside the supported range.");
-  }
-
-  if (total !== null) {
-    if (offset > total) {
-      if (itemCount > 0 || hasNext) {
-        throw new Error("Mission catalogue returned items beyond its reported total.");
-      }
-    } else {
-      const expectedItemCount = Math.min(pageSize, total - offset);
-      if (itemCount !== expectedItemCount) {
-        throw new Error("Mission catalogue returned an incomplete page for its reported total.");
-      }
-    }
-  }
-
-  const normalizedTotal =
-    total ??
-    (totalPages === 0
-      ? 0
-      : totalPages !== null && requestedPage === totalPages && !hasNext
-        ? (totalPages - 1) * pageSize + itemCount
-        : null);
 
   return {
     page: requestedPage,
     pageSize,
     hasNext,
-    total: normalizedTotal,
+    total: inferMissionTotal(
+      metadata.total,
+      totalPages,
+      requestedPage,
+      pageSize,
+      itemCount,
+      hasNext
+    ),
     totalPages
   };
 };
@@ -358,7 +243,7 @@ const createMissionListQuery = (
 
 type MissionFamilyPage = {
   items: Mission[];
-  pagination: ApiPagination;
+  pagination: MissionListPagination;
   sourceItemCount: number;
 };
 
@@ -380,7 +265,7 @@ const fetchMissionFamilyPage = async (
 
   const sourceItems = getItems(response.data);
   if (sourceItems === null) {
-    throw new Error(`Mission catalogue returned invalid ${family} items.`);
+    throw new TypeError(`Mission catalogue returned invalid ${family} items.`);
   }
 
   const seen = new Set<number>();
