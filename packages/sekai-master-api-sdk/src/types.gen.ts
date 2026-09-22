@@ -3810,9 +3810,21 @@ export type GetHonorGroupsByRegionListData = {
          */
         page_size?: number;
         /**
+         * Case-insensitive substring of the group or nested honor name
+         */
+        name?: string;
+        /**
          * Exact honor group type filter
          */
         honor_type?: string;
+        /**
+         * Sort field
+         */
+        sort_by?: 'id';
+        /**
+         * Sort order
+         */
+        sort_order?: 'asc' | 'desc';
     };
     url: '/honorGroups/{region}/list';
 };

@@ -31,6 +31,18 @@
     categoryLabel,
     getHonorTypeLabel,
     onHonorTypeChange,
+    sortOrder = "asc",
+    sortOrderLabel,
+    sortAscendingLabel,
+    sortDescendingLabel,
+    onSortOrderChange,
+    hasNext = false,
+    isLoadingMore = false,
+    loadingMoreLabel,
+    endLabel,
+    loadMoreError = null,
+    onLoadMore,
+    onRetryLoadMore,
     resolveAsset,
     ...frame
   }: Omit<ComponentProps<typeof CatalogueFrame>, "children" | "empty" | "loadingPlaceholder"> & {
@@ -44,6 +56,18 @@
     categoryLabel?: string;
     getHonorTypeLabel?: (honorType: string | null) => string;
     onHonorTypeChange?: (honorType: string | null) => void;
+    sortOrder?: "asc" | "desc";
+    sortOrderLabel?: string;
+    sortAscendingLabel?: string;
+    sortDescendingLabel?: string;
+    onSortOrderChange?: (sortOrder: "asc" | "desc") => void;
+    hasNext?: boolean;
+    isLoadingMore?: boolean;
+    loadingMoreLabel?: string;
+    endLabel?: string;
+    loadMoreError?: string | null;
+    onLoadMore?: () => void;
+    onRetryLoadMore?: () => void;
     resolveAsset: HonorDegreeAssetResolver;
   } = $props();
 
@@ -51,6 +75,7 @@
   let dialog: HTMLDialogElement | null = $state(null);
   let activeGroupKey = $state<string | null>(null);
   let lastTrigger: HTMLButtonElement | null = null;
+  let sentinel: HTMLDivElement | null = $state(null);
   let previousCatalogueKey = $state<string | null>(null);
   const activeGroup = $derived(items.find((group) => group.key === activeGroupKey) ?? null);
   const categoryTypes = $derived([
@@ -58,6 +83,7 @@
   ]);
   const dialogId = $derived(`honor-group-dialog-${catalogueKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`);
   const dialogTitleId = $derived(`${dialogId}-title`);
+  const resultsId = $derived(`${dialogId}-results`);
 
   const restoreFocus = (trigger: HTMLButtonElement | null): void => {
     void tick().then(() => {
@@ -122,6 +148,28 @@
     previousCatalogueKey = catalogueKey;
     closeDialog();
   });
+
+  $effect(() => {
+    if (
+      !sentinel ||
+      !hasNext ||
+      isLoadingMore ||
+      loadMoreError ||
+      !onLoadMore ||
+      typeof IntersectionObserver === "undefined"
+    ) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) onLoadMore?.();
+      },
+      { rootMargin: "240px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  });
 </script>
 
 {#snippet identity(group: HonorCatalogueGroup)}
@@ -174,155 +222,209 @@
   </ul>
 {/snippet}
 
-<CatalogueFrame {...frame} empty={false}>
-  {#snippet loadingPlaceholder()}
-    <div class="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-      {#each Array.from({ length: 12 }) as _, index (index)}
-        <div class="content-card-shell min-h-32 rounded-2xl p-4">
-          <div class="h-14 w-full max-w-67 rounded-lg bg-(--archive-surface-sunken)"></div>
-          <div class="mt-3 h-4 w-3/4 rounded bg-(--archive-surface-sunken)"></div>
-        </div>
+{#if categoryLabel && getHonorTypeLabel && onHonorTypeChange}
+  <div class="content-page-shell gap-3 pb-0" data-swipe-region-skip>
+    <div class="flex min-w-0 flex-wrap gap-2" role="tablist" aria-label={categoryLabel}>
+      <button
+        type="button"
+        class:btn-primary={selectedHonorType === null}
+        class:btn-ghost={selectedHonorType !== null}
+        class="btn min-h-11 max-w-full rounded-xl whitespace-normal wrap-break-word"
+        role="tab"
+        aria-selected={selectedHonorType === null}
+        aria-controls={resultsId}
+        onclick={() => onHonorTypeChange?.(null)}
+      >
+        {getHonorTypeLabel(null)}
+      </button>
+      {#each categoryTypes as honorType (honorType)}
+        <button
+          type="button"
+          class:btn-primary={selectedHonorType === honorType}
+          class:btn-ghost={selectedHonorType !== honorType}
+          class="btn min-h-11 max-w-full rounded-xl whitespace-normal wrap-break-word"
+          role="tab"
+          aria-selected={selectedHonorType === honorType}
+          aria-controls={resultsId}
+          onclick={() => onHonorTypeChange?.(honorType)}
+        >
+          {getHonorTypeLabel(honorType)}
+        </button>
       {/each}
     </div>
-  {/snippet}
-  {#key catalogueKey}
-    {#if categoryLabel && getHonorTypeLabel && onHonorTypeChange}
-      <div class="mb-4 border-b border-(--archive-border-subtle) pb-3">
-        <div class="flex min-w-0 flex-wrap gap-2" role="tablist" aria-label={categoryLabel}>
-          <button
-            type="button"
-            class:btn-primary={selectedHonorType === null}
-            class:btn-ghost={selectedHonorType !== null}
-            class="btn min-h-11 max-w-full rounded-xl whitespace-normal wrap-break-word"
-            role="tab"
-            aria-selected={selectedHonorType === null}
-            onclick={() => onHonorTypeChange?.(null)}
-          >
-            {getHonorTypeLabel(null)}
-          </button>
-          {#each categoryTypes as honorType (honorType)}
-            <button
-              type="button"
-              class:btn-primary={selectedHonorType === honorType}
-              class:btn-ghost={selectedHonorType !== honorType}
-              class="btn min-h-11 max-w-full rounded-xl whitespace-normal wrap-break-word"
-              role="tab"
-              aria-selected={selectedHonorType === honorType}
-              onclick={() => onHonorTypeChange?.(honorType)}
-            >
-              {getHonorTypeLabel(honorType)}
-            </button>
-          {/each}
-        </div>
-      </div>
-    {/if}
-    {#if items.length === 0}
-      <p
-        class="flex min-h-48 items-center justify-center p-4 text-center text-(--archive-text-muted)"
-        role="status"
+  </div>
+{/if}
+
+{#if onSortOrderChange && sortOrderLabel && sortAscendingLabel && sortDescendingLabel}
+  <div class="content-page-shell gap-3 pb-0" data-swipe-region-skip>
+    <label class="flex min-w-0 flex-col gap-2 text-sm font-semibold sm:max-w-xs">
+      <span>{sortOrderLabel}</span>
+      <select
+        class="select min-h-11 w-full bg-(--archive-surface-default)"
+        value={sortOrder}
+        onchange={(event) =>
+          onSortOrderChange?.((event.currentTarget as HTMLSelectElement).value as "asc" | "desc")}
       >
-        {frame.labels.empty}
-      </p>
-    {:else}
-      <div class="grid min-w-0 items-start gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {#each items as group (group.key)}
-          {#if group.members.length > 1}
-            {#if dialogViewport}
-              <button
-                type="button"
-                class="content-card-shell block min-w-0 cursor-pointer rounded-2xl p-4 text-left outline-none transition-[transform,border-color,background-color,box-shadow] duration-180 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-(--archive-surface-raised) hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none"
-                aria-haspopup="dialog"
-                aria-controls={dialogId}
-                aria-expanded={activeGroupKey === group.key}
-                onclick={(event) => void openDialog(event, group)}
-              >
-                {@render identity(group)}
-              </button>
-            {:else}
-              <details class="collapse collapse-arrow content-card-shell min-w-0 rounded-2xl">
-                <summary
-                  class="collapse-title min-h-11 p-4 pe-12 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
-                >
-                  {@render identity(group)}
-                </summary>
-                <div class="collapse-content min-w-0 px-4">
-                  <div class="border-t border-(--archive-border-subtle) pt-4">
-                    {@render members(group)}
-                  </div>
-                </div>
-              </details>
-            {/if}
-          {:else}
-            <article class="card content-card-shell min-w-0 gap-4 p-4">
-              <header>{@render identity(group)}</header>
-              <div class="min-w-0 border-t border-(--archive-border-subtle) pt-4">
-                {@render members(group)}
-              </div>
-            </article>
-          {/if}
+        <option value="asc">{sortAscendingLabel}</option>
+        <option value="desc">{sortDescendingLabel}</option>
+      </select>
+    </label>
+  </div>
+{/if}
+
+<div id={resultsId}>
+  <CatalogueFrame {...frame} empty={false}>
+    {#snippet loadingPlaceholder()}
+      <div class="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {#each Array.from({ length: 12 }) as _, index (index)}
+          <div class="content-card-shell min-h-32 rounded-2xl p-4">
+            <div class="h-14 w-full max-w-67 rounded-lg bg-(--archive-surface-sunken)"></div>
+            <div class="mt-3 h-4 w-3/4 rounded bg-(--archive-surface-sunken)"></div>
+          </div>
         {/each}
       </div>
-
-      {#if dialogViewport}
-        <dialog
-          bind:this={dialog}
-          id={dialogId}
-          class="modal"
-          aria-labelledby={dialogTitleId}
-          onclose={handleDialogClose}
-          onkeydown={(event) => {
-            if (event.key === "Escape") {
-              event.preventDefault();
-              closeDialog();
-            }
-          }}
-          onclick={(event) => {
-            if (event.target === event.currentTarget) closeDialog();
-          }}
+    {/snippet}
+    {#key catalogueKey}
+      {#if items.length === 0}
+        <p
+          class="flex min-h-48 items-center justify-center p-4 text-center text-(--archive-text-muted)"
+          role="status"
         >
-          <div
-            class="modal-box flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl flex-col overflow-hidden p-0 sm:w-[calc(100%-2rem)]"
-          >
-            {#if activeGroup}
-              <header
-                class="flex shrink-0 items-start justify-between gap-4 border-b border-(--archive-border-subtle) p-4 sm:p-5"
-              >
-                <div class="min-w-0">
-                  <h2
-                    id={dialogTitleId}
-                    class="wrap-anywhere text-xl font-bold text-(--archive-text-strong)"
-                  >
-                    {activeGroup.name}
-                  </h2>
-                  <p class="mt-1 text-sm text-(--archive-text-muted)">{activeGroup.countLabel}</p>
-                </div>
+          {frame.labels.empty}
+        </p>
+      {:else}
+        <div class="grid min-w-0 items-start gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          {#each items as group (group.key)}
+            {#if group.members.length > 1}
+              {#if dialogViewport}
                 <button
                   type="button"
-                  class="btn btn-circle btn-ghost btn-sm min-h-11 w-11 shrink-0"
-                  aria-label={closeLabel}
-                  title={closeLabel}
-                  onclick={closeDialog}
+                  class="content-card-shell block min-w-0 cursor-pointer rounded-2xl p-4 text-left outline-none transition-[transform,border-color,background-color,box-shadow] duration-180 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-(--archive-surface-raised) hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none"
+                  aria-haspopup="dialog"
+                  aria-controls={dialogId}
+                  aria-expanded={activeGroupKey === group.key}
+                  onclick={(event) => void openDialog(event, group)}
                 >
-                  <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+                  {@render identity(group)}
                 </button>
-              </header>
-              <div class="min-h-0 overflow-y-auto p-4 sm:p-5">
-                {@render members(activeGroup)}
-              </div>
+              {:else}
+                <details class="collapse collapse-arrow content-card-shell min-w-0 rounded-2xl">
+                  <summary
+                    class="collapse-title min-h-11 p-4 pe-12 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-primary"
+                  >
+                    {@render identity(group)}
+                  </summary>
+                  <div class="collapse-content min-w-0 px-4">
+                    <div class="border-t border-(--archive-border-subtle) pt-4">
+                      {@render members(group)}
+                    </div>
+                  </div>
+                </details>
+              {/if}
+            {:else}
+              <article class="card content-card-shell min-w-0 gap-4 p-4">
+                <header>{@render identity(group)}</header>
+                <div class="min-w-0 border-t border-(--archive-border-subtle) pt-4">
+                  {@render members(group)}
+                </div>
+              </article>
+            {/if}
+          {/each}
+        </div>
+
+        {#if loadMoreError}
+          <div
+            class="mt-5 flex flex-col items-center justify-center gap-3 p-4 text-center"
+            role="status"
+          >
+            <p class="text-sm text-error">{loadMoreError}</p>
+            {#if onRetryLoadMore}
+              <button type="button" class="btn min-h-11" onclick={onRetryLoadMore}>
+                {frame.labels.retry}
+              </button>
             {/if}
           </div>
-          <form
-            method="dialog"
-            class="modal-backdrop"
-            onsubmit={(event) => {
-              event.preventDefault();
-              closeDialog();
+        {:else if hasNext}
+          <div
+            bind:this={sentinel}
+            class="flex min-h-20 items-center justify-center gap-3 p-4 text-sm text-(--archive-text-muted)"
+            role="status"
+            aria-live="polite"
+          >
+            {#if isLoadingMore}
+              <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+              <span>{loadingMoreLabel}</span>
+            {:else}
+              <span>{loadingMoreLabel}</span>
+            {/if}
+          </div>
+        {:else}
+          <p class="p-4 text-center text-sm text-(--archive-text-muted)" role="status">
+            {endLabel}
+          </p>
+        {/if}
+
+        {#if dialogViewport}
+          <dialog
+            bind:this={dialog}
+            id={dialogId}
+            class="modal"
+            aria-labelledby={dialogTitleId}
+            onclose={handleDialogClose}
+            onkeydown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                closeDialog();
+              }
+            }}
+            onclick={(event) => {
+              if (event.target === event.currentTarget) closeDialog();
             }}
           >
-            <button type="submit" aria-label={closeLabel}></button>
-          </form>
-        </dialog>
+            <div
+              class="modal-box flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl flex-col overflow-hidden p-0 sm:w-[calc(100%-2rem)]"
+            >
+              {#if activeGroup}
+                <header
+                  class="flex shrink-0 items-start justify-between gap-4 border-b border-(--archive-border-subtle) p-4 sm:p-5"
+                >
+                  <div class="min-w-0">
+                    <h2
+                      id={dialogTitleId}
+                      class="wrap-anywhere text-xl font-bold text-(--archive-text-strong)"
+                    >
+                      {activeGroup.name}
+                    </h2>
+                    <p class="mt-1 text-sm text-(--archive-text-muted)">{activeGroup.countLabel}</p>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-circle btn-ghost btn-sm min-h-11 w-11 shrink-0"
+                    aria-label={closeLabel}
+                    title={closeLabel}
+                    onclick={closeDialog}
+                  >
+                    <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+                  </button>
+                </header>
+                <div class="min-h-0 overflow-y-auto p-4 sm:p-5">
+                  {@render members(activeGroup)}
+                </div>
+              {/if}
+            </div>
+            <form
+              method="dialog"
+              class="modal-backdrop"
+              onsubmit={(event) => {
+                event.preventDefault();
+                closeDialog();
+              }}
+            >
+              <button type="submit" aria-label={closeLabel}></button>
+            </form>
+          </dialog>
+        {/if}
       {/if}
-    {/if}
-  {/key}
-</CatalogueFrame>
+    {/key}
+  </CatalogueFrame>
+</div>

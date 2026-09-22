@@ -273,7 +273,12 @@ describe("HonorCatalogue", () => {
     });
 
     const tablist = screen.getByRole("tablist", { name: "Honor category" });
+    const resultsId = within(tablist)
+      .getByRole("tab", { name: "Events" })
+      .getAttribute("aria-controls");
     expect(screen.getByRole("status").textContent).toBe("No honors found. Try another region.");
+    expect(resultsId).toBeTruthy();
+    expect(document.getElementById(resultsId!)).toBeTruthy();
     expect(within(tablist).getByRole("tab", { name: "Events" }).getAttribute("aria-selected")).toBe(
       "true"
     );
@@ -282,5 +287,33 @@ describe("HonorCatalogue", () => {
 
     await fireEvent.click(within(tablist).getByRole("tab", { name: "All honors" }));
     expect(onHonorTypeChange).toHaveBeenCalledWith(null);
+  });
+
+  it("keeps the category target mounted while loading and after an error", async () => {
+    const { rerender } = render(HonorCatalogue, {
+      ...props,
+      items: [],
+      status: "loading",
+      honorTypes: ["event"],
+      categoryLabel: "Honor category",
+      getHonorTypeLabel: (honorType) => (honorType === null ? "All honors" : "Events"),
+      onHonorTypeChange: vi.fn()
+    });
+
+    const tab = screen.getByRole("tab", { name: "Events" });
+    const resultsId = tab.getAttribute("aria-controls");
+    expect(resultsId).toBeTruthy();
+    expect(document.getElementById(resultsId!)).toBeTruthy();
+
+    await rerender({
+      ...props,
+      items: [],
+      status: "error",
+      honorTypes: ["event"],
+      categoryLabel: "Honor category",
+      getHonorTypeLabel: (honorType) => (honorType === null ? "All honors" : "Events"),
+      onHonorTypeChange: vi.fn()
+    });
+    expect(document.getElementById(resultsId!)).toBeTruthy();
   });
 });

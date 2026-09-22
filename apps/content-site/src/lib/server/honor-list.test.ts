@@ -9,6 +9,7 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({ getHonorGroupsByRegionList })
 import {
   createEmptyHonorListPage,
   fetchHonorListPage,
+  parseHonorListQueryState,
   parseHonor,
   parseHonorGroupList
 } from "./honor-list";
@@ -16,7 +17,14 @@ import {
 type HonorRequest = {
   baseUrl: string;
   path: { region: string };
-  query: { page: number; page_size: number; honor_type?: string };
+  query: {
+    page: number;
+    page_size: number;
+    name?: string;
+    honor_type?: string;
+    sort_by: "id";
+    sort_order: "asc" | "desc";
+  };
 };
 
 const PAGE_SIZE = 12;
@@ -181,7 +189,7 @@ describe("honor catalogue adapter", () => {
     expect(getHonorGroupsByRegionList).toHaveBeenCalledWith({
       baseUrl: "https://master-api.test/api/v1",
       path: { region: "tw" },
-      query: { page: 2, page_size: PAGE_SIZE }
+      query: { page: 2, page_size: PAGE_SIZE, sort_by: "id", sort_order: "asc" }
     } satisfies HonorRequest);
   });
 
@@ -228,22 +236,48 @@ describe("honor catalogue adapter", () => {
   it("sends a normalized honor type filter and omits an empty filter", async () => {
     getHonorGroupsByRegionList.mockResolvedValue(createHonorResponse(1, 0));
 
-    await fetchHonorListPage("https://master-api.test", "jp", 1, "  character  ");
+    await fetchHonorListPage("https://master-api.test", "jp", 1, {
+      honorType: "  character  ",
+      name: "",
+      sortBy: "id",
+      sortOrder: "asc"
+    });
 
     expect(getHonorGroupsByRegionList.mock.calls[0]?.[0].query).toEqual({
       page: 1,
       page_size: PAGE_SIZE,
-      honor_type: "character"
+      honor_type: "character",
+      sort_by: "id",
+      sort_order: "asc"
     });
 
     getHonorGroupsByRegionList.mockReset();
     getHonorGroupsByRegionList.mockResolvedValue(createHonorResponse(1, 0));
 
-    await fetchHonorListPage("https://master-api.test", "jp", 1, "  ");
+    await fetchHonorListPage("https://master-api.test", "jp", 1, {
+      honorType: "  ",
+      name: "",
+      sortBy: "id",
+      sortOrder: "asc"
+    });
 
     expect(getHonorGroupsByRegionList.mock.calls[0]?.[0].query).toEqual({
       page: 1,
-      page_size: PAGE_SIZE
+      page_size: PAGE_SIZE,
+      sort_by: "id",
+      sort_order: "asc"
+    });
+  });
+
+  it("normalizes searchable, categorized, and ordered URL state", () => {
+    const query = parseHonorListQueryState(
+      new URLSearchParams("name=%20Stage%20&honor_type=%20event%20&sort_by=invalid&sort_order=desc")
+    );
+    expect(query).toEqual({
+      honorType: "event",
+      name: "Stage",
+      sortBy: "id",
+      sortOrder: "desc"
     });
   });
 

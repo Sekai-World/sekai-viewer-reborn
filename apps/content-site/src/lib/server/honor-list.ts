@@ -1,4 +1,7 @@
-import { getHonorGroupsByRegionList } from "@platform/sekai-master-api-sdk";
+import {
+  getHonorGroupsByRegionList,
+  type GetHonorGroupsByRegionListData
+} from "@platform/sekai-master-api-sdk";
 import type { Honor, HonorGroup, HonorGroupMetadata, HonorLevel } from "$lib/domain/honor";
 import type { CataloguePagination } from "./catalogue-data";
 import {
@@ -15,7 +18,17 @@ import {
   validateCataloguePageRequest
 } from "./catalogue-data";
 
-const PAGE_SIZE = 12;
+export const DEFAULT_HONOR_LIST_PAGE_SIZE = 12;
+export type HonorListSortBy = "id";
+export type HonorListSortOrder = "asc" | "desc";
+
+export type HonorListQueryState = {
+  honorType: string | null;
+  name: string;
+  sortBy: HonorListSortBy;
+  sortOrder: HonorListSortOrder;
+};
+
 export type HonorListPagination = CataloguePagination;
 
 export type HonorListPage = {
@@ -23,6 +36,41 @@ export type HonorListPage = {
   availableHonorTypes: string[];
   pagination: HonorListPagination;
 };
+
+const getTrimmedSearchParam = (value: string | null): string => {
+  const trimmed = value?.trim() ?? "";
+  return trimmed.length > 0 ? trimmed : "";
+};
+
+export const parseHonorListQueryState = (searchParams: URLSearchParams): HonorListQueryState => ({
+  honorType: (() => {
+    const value = getTrimmedSearchParam(searchParams.get("honor_type"));
+    return value.length > 0 ? value : null;
+  })(),
+  name: getTrimmedSearchParam(searchParams.get("name")),
+  sortBy: "id",
+  sortOrder: searchParams.get("sort_order") === "desc" ? "desc" : "asc"
+});
+
+export const getDefaultHonorListQueryState = (): HonorListQueryState => ({
+  honorType: null,
+  name: "",
+  sortBy: "id",
+  sortOrder: "asc"
+});
+
+export const createHonorListRequestQuery = (
+  queryState: HonorListQueryState,
+  page: number,
+  pageSize: number
+): NonNullable<GetHonorGroupsByRegionListData["query"]> => ({
+  page,
+  page_size: pageSize,
+  sort_by: queryState.sortBy,
+  sort_order: queryState.sortOrder,
+  ...(queryState.honorType?.trim() ? { honor_type: queryState.honorType.trim() } : {}),
+  ...(queryState.name.trim() ? { name: queryState.name.trim() } : {})
+});
 
 const parseApiPagination = (
   payload: unknown,
@@ -172,7 +220,7 @@ export const createEmptyHonorListPage = (page: number): HonorListPage => ({
   availableHonorTypes: [],
   pagination: {
     page,
-    pageSize: PAGE_SIZE,
+    pageSize: DEFAULT_HONOR_LIST_PAGE_SIZE,
     hasNext: false,
     total: null,
     totalPages: null
@@ -183,17 +231,12 @@ export const fetchHonorListPage = async (
   baseUrl: string,
   region: string,
   page = 1,
-  honorType?: string | null
+  queryState: HonorListQueryState = getDefaultHonorListQueryState()
 ): Promise<HonorListPage> => {
-  const normalizedHonorType = honorType?.trim();
   const response = await getHonorGroupsByRegionList({
     baseUrl: getMasterApiV1BaseUrl(baseUrl),
     path: { region },
-    query: {
-      page,
-      page_size: PAGE_SIZE,
-      ...(normalizedHonorType ? { honor_type: normalizedHonorType } : {})
-    }
+    query: createHonorListRequestQuery(queryState, page, DEFAULT_HONOR_LIST_PAGE_SIZE)
   });
 
   if (response.error || !response.data) {
@@ -210,6 +253,11 @@ export const fetchHonorListPage = async (
   return {
     items,
     availableHonorTypes: parseAvailableHonorTypes(response.data),
-    pagination: parseApiPagination(response.data, page, PAGE_SIZE, sourceGroups.length)
+    pagination: parseApiPagination(
+      response.data,
+      page,
+      DEFAULT_HONOR_LIST_PAGE_SIZE,
+      sourceGroups.length
+    )
   };
 };

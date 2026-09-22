@@ -58,16 +58,15 @@ const result: Awaited<PageData["catalogue"]> = {
   items: [group],
   availableHonorTypes: ["achievement", "event"],
   loadFailed: false,
-  pagination: { page: 2, totalPages: 3, hasNext: true, pageSize: 12, total: 30 }
+  pagination: { page: 1, totalPages: 3, hasNext: true, pageSize: 12, total: 30 }
 };
 const data = (
   catalogue: PageData["catalogue"] | Awaited<PageData["catalogue"]>,
   region: PageData["region"] = "jp",
-  page = 2,
   honorType: string | null = null
 ): PageData => ({
   region,
-  query: { page, honorType },
+  query: { honorType, name: "", sortBy: "id", sortOrder: "asc" },
   catalogue: Promise.resolve(catalogue),
   uiLocale: "en",
   preferredRegion: region,
@@ -176,7 +175,7 @@ describe("Honors page group contract", () => {
     expect(screen.getAllByRole("heading", { name: "一歌ファン" })).toHaveLength(1);
   });
 
-  it("streams full groups without filtering levels and preserves URL navigation", async () => {
+  it("streams full groups without filtering levels and preserves query controls", async () => {
     let complete!: (value: Awaited<PageData["catalogue"]>) => void;
     const pending = new Promise<Awaited<PageData["catalogue"]>>((resolve) => {
       complete = resolve;
@@ -198,15 +197,20 @@ describe("Honors page group contract", () => {
     expect(container.querySelectorAll("dt")).toHaveLength(4);
     expect(screen.getByText("Requirement 9")).toBeTruthy();
     expect(screen.getByText("Requirement 2")).toBeTruthy();
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(goto).toHaveBeenLastCalledWith("/honors/jp?page=3");
-    await fireEvent.click(screen.getByRole("button", { name: "Previous" }));
-    expect(goto).toHaveBeenLastCalledWith("/honors/jp?page=1");
-    expect(screen.getByRole("link", { name: "EN" }).getAttribute("href")).toBe("/honors/en");
-    await rerender({ data: data(result, "jp", 3) });
+    const search = screen.getByRole("search");
+    await fireEvent.input(within(search).getByRole("searchbox"), { target: { value: "stage" } });
+    await fireEvent.submit(search);
+    expect(goto).toHaveBeenLastCalledWith("/honors/jp?name=stage&sort_by=id&sort_order=asc", {
+      keepFocus: true,
+      noScroll: true
+    });
+    expect(screen.getByRole("link", { name: "EN" }).getAttribute("href")).toBe(
+      "/honors/en?sort_by=id&sort_order=asc"
+    );
+    await rerender({ data: data(result, "jp") });
     await waitFor(() => expect(container.querySelector("details")?.open).toBe(false));
     await fireEvent.click(container.querySelector("summary")!);
-    await rerender({ data: data(result, "en", 3) });
+    await rerender({ data: data(result, "en") });
     await waitFor(() => expect(container.querySelector("details")?.open).toBe(false));
   });
 
@@ -225,7 +229,6 @@ describe("Honors page group contract", () => {
           ]
         },
         "jp",
-        2,
         "event"
       ),
       params: { region: "jp" },
@@ -247,11 +250,21 @@ describe("Honors page group contract", () => {
     expect(within(tablist).queryByRole("tab", { name: "future_category" })).toBeNull();
 
     await fireEvent.click(within(tablist).getByRole("tab", { name: "All honors" }));
-    expect(goto).toHaveBeenLastCalledWith("/honors/jp?page=1");
+    expect(goto).toHaveBeenLastCalledWith("/honors/jp?sort_by=id&sort_order=asc", {
+      keepFocus: true,
+      noScroll: true
+    });
     await fireEvent.click(within(tablist).getByRole("tab", { name: "Achievements" }));
-    expect(goto).toHaveBeenLastCalledWith("/honors/jp?page=1&honor_type=achievement");
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(goto).toHaveBeenLastCalledWith("/honors/jp?page=3&honor_type=event");
+    expect(goto).toHaveBeenLastCalledWith(
+      "/honors/jp?honor_type=achievement&sort_by=id&sort_order=asc",
+      { keepFocus: true, noScroll: true }
+    );
+    const sortOrder = screen.getByRole("combobox", { name: "Honor ID order" });
+    await fireEvent.change(sortOrder, { target: { value: "desc" } });
+    expect(goto).toHaveBeenLastCalledWith(
+      "/honors/jp?honor_type=event&sort_by=id&sort_order=desc",
+      { keepFocus: true, noScroll: true }
+    );
   });
 
   it("keeps handled and rejected stream errors retryable and supports empty groups", async () => {

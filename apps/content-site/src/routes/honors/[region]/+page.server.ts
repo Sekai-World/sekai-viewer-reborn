@@ -1,24 +1,18 @@
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parsePositivePage } from "$lib/server/catalogue-data";
-import { createEmptyHonorListPage, fetchHonorListPage } from "$lib/server/honor-list";
+import {
+  createEmptyHonorListPage,
+  fetchHonorListPage,
+  parseHonorListQueryState
+} from "$lib/server/honor-list";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = ({ params, url }) => {
   const region = normalizeRegion(params.region);
-  const honorType = url.searchParams.get("honor_type")?.trim() ?? "";
-  const query = {
-    page: parsePositivePage(url.searchParams.get("page")),
-    honorType: honorType.length > 0 ? honorType : null
-  };
-  const catalogue = fetchHonorListPage(
-    getMasterApiBaseUrl(),
-    region,
-    query.page,
-    query.honorType
-  )
+  const query = parseHonorListQueryState(url.searchParams);
+  const catalogue = fetchHonorListPage(getMasterApiBaseUrl(), region, 1, query)
     .then((page) => ({ ...page, loadFailed: false as const }))
-    .catch(() => ({ ...createEmptyHonorListPage(query.page), loadFailed: true as const }));
+    .catch(() => ({ ...createEmptyHonorListPage(1), loadFailed: true as const }));
 
   catalogue.catch(() => {});
 

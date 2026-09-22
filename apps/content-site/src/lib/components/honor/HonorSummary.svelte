@@ -1,6 +1,5 @@
 <script lang="ts">
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import Icon from "@iconify/svelte";
   import HonorArtwork from "./HonorArtwork.svelte";
   import type { CatalogueHonorDegree } from "$lib/honor-degree";
   import type { HonorDegreeAssetResolver } from "@platform/ui-shell";
@@ -50,8 +49,7 @@
       </div>
     </div>
   {/if}
-  <div class="flex min-w-0 items-start gap-2">
-    <Icon icon="mdi:medal-outline" class="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+  <div class="flex min-w-0 items-start">
     <div class="min-w-0">
       <svelte:element
         this={compact ? "h2" : "h3"}
