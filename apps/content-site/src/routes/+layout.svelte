@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
-  import { asset } from "$app/paths";
+  import { asset, resolve } from "$app/paths";
   import { invalidateAll } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
@@ -94,6 +94,7 @@
   let eventsLabel = $state(getInitialI18nText("navigation.events"));
   let gachasLabel = $state(getInitialI18nText("navigation.gachas"));
   let virtualLivesLabel = $state(getInitialI18nText("navigation.virtualLives"));
+  let supportLabel = $state(getInitialI18nText("navigation.support"));
   let quickNavigationLabel = $state(getInitialI18nText("navigation.quickNavigation"));
   let settingsLabel = $state(getInitialI18nText("settings.title"));
   let themeControlLabel = $state(getInitialI18nText("settings.appearance"));
@@ -227,6 +228,12 @@
       active:
         page.url.pathname.startsWith("/virtual-lives/") ||
         page.url.pathname.startsWith("/virtual-live/")
+    },
+    {
+      label: supportLabel,
+      href: resolve("/support"),
+      active: page.url.pathname === resolve("/support"),
+      icon: "mdi:hand-heart"
     }
   ]);
   const sidebarItems = $derived<SidebarItem[]>([
@@ -332,6 +339,7 @@
     eventsLabel = translate("navigation.events");
     gachasLabel = translate("navigation.gachas");
     virtualLivesLabel = translate("navigation.virtualLives");
+    supportLabel = translate("navigation.support");
     quickNavigationLabel = translate("navigation.quickNavigation");
     settingsLabel = translate("settings.title");
     themeControlLabel = translate("settings.appearance");

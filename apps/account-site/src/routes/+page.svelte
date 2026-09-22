@@ -26,6 +26,7 @@
 
   const sidebarItems: SidebarItem[] = [
     { label: "Home", href: "/", active: true },
+    ...(supportPageUrl ? [{ label: "Support", href: supportPageUrl }] : []),
     ...supportedRegions.map((region) => ({
       label: `${regionLabels[region]} accounts`,
       href: `#region-${region}`

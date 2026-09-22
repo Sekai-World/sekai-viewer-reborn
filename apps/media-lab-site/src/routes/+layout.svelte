@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
+  import { env } from "$env/dynamic/public";
   import { goto, invalidateAll } from "$app/navigation";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
@@ -41,6 +42,7 @@
   } from "$lib/theme";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
   const regionSelection = provideRegionSelection();
   regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
   // The shell (including the sidebar's story-type labels) translates keys
@@ -153,7 +155,16 @@
       label: translate("navigation.assetViewer"),
       icon: "mdi:cube-outline",
       disabled: true
-    }
+    },
+    ...(supportPageUrl
+      ? [
+          {
+            label: translate("navigation.support"),
+            href: supportPageUrl,
+            icon: "mdi:hand-heart"
+          }
+        ]
+      : [])
   ]);
 
   const systemTheme = (): ResolvedTheme =>
