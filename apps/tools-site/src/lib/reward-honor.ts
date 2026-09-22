@@ -17,15 +17,70 @@ const rarity = (value: unknown): HonorDegreeRarity | null =>
 
 export type RewardHonorInput = Extract<HonorDegreeInput, { kind: "normal" | "rank-match" }>;
 
+type RewardHonorLevel = NonNullable<
+  NonNullable<SharedEventRewardResourceBoxDetail["honor"]>["levels"]
+>[number];
+
+const sortedPositiveLevels = (levels: RewardHonorLevel[] | undefined): RewardHonorLevel[] =>
+  (Array.isArray(levels) ? levels : [])
+    .filter((entry) => entry && positiveLevel(entry.level))
+    .toSorted((a, b) => (a.level ?? 0) - (b.level ?? 0));
+
+const normalHonorType = (type: string | null, isEvent: boolean): "event" | "birthday" | "regular" => {
+  if (isEvent) return "event";
+  if (type === "birthday") return "birthday";
+  return "regular";
+};
+
+const adaptRankMatchHonor = (
+  masterBundle: string | null,
+  background: string | null,
+  selectedRarity: HonorDegreeRarity | null
+): RewardHonorInput | null => {
+  if (!masterBundle && !background) return null;
+  return {
+    kind: "rank-match",
+    assetBundleName: masterBundle,
+    backgroundAssetBundleName: background ?? masterBundle,
+    rarity: selectedRarity,
+    frameBundlePath: "local/honor"
+  };
+};
+
+const adaptNormalHonor = (
+  type: string | null,
+  masterBundle: string | null,
+  selectedLevel: RewardHonorLevel | undefined,
+  level: number | undefined,
+  selectedRarity: HonorDegreeRarity | null,
+  frameName: string | null
+): RewardHonorInput | null => {
+  const isEvent = type === "event" || type === "event_point";
+  let body = masterBundle;
+  if (!body && !isEvent) body = bundleName(selectedLevel?.assetbundleName);
+  if (!body) return null;
+
+  return {
+    kind: "normal",
+    honorType: normalHonorType(type, isEvent),
+    assetBundleName: body,
+    group: { frameName },
+    rarity: selectedRarity,
+    level: level ?? null,
+    rankAsset:
+      isEvent && masterBundle
+        ? { bundlePath: `honor/${masterBundle}`, resourceName: "rank_main.png" }
+        : null
+  };
+};
+
 /** Use only reward enrichment; never infer an event's rank sprite from a level bundle. */
 export const adaptRewardHonor = (
   detail: SharedEventRewardResourceBoxDetail
 ): RewardHonorInput | null => {
   const honor = detail.honor;
   if (!honor || (detail.resourceType && detail.resourceType !== "honor")) return null;
-  const levels = (Array.isArray(honor.levels) ? honor.levels : [])
-    .filter((entry) => entry && positiveLevel(entry.level))
-    .toSorted((a, b) => (a.level ?? 0) - (b.level ?? 0));
+  const levels = sortedPositiveLevels(honor.levels);
   const level = positiveLevel(detail.resourceLevel) ? detail.resourceLevel : levels[0]?.level;
   const selectedLevel = levels.find((entry) => entry.level === level);
   const masterBundle = bundleName(honor.assetbundleName);
@@ -34,32 +89,18 @@ export const adaptRewardHonor = (
   const background = bundleName(honor.group?.backgroundAssetbundleName);
 
   if (type === "bonds_honor") return null;
-
   if (type === "rank_match") {
-    if (!masterBundle && !background) return null;
-    return {
-      kind: "rank-match",
-      assetBundleName: masterBundle,
-      backgroundAssetBundleName: background ?? masterBundle,
-      rarity: selectedRarity,
-      frameBundlePath: "local/honor"
-    };
+    return adaptRankMatchHonor(masterBundle, background, selectedRarity);
   }
-  const isEvent = type === "event" || type === "event_point";
-  const body = masterBundle ?? (!isEvent ? bundleName(selectedLevel?.assetbundleName) : null);
-  if (!body || (isEvent && !masterBundle)) return null;
-  return {
-    kind: "normal",
-    honorType: isEvent ? "event" : type === "birthday" ? "birthday" : "regular",
-    assetBundleName: body,
-    group: { frameName: bundleName(honor.group?.frameName) },
-    rarity: selectedRarity,
-    level: level ?? null,
-    rankAsset:
-      isEvent && masterBundle
-        ? { bundlePath: `honor/${masterBundle}`, resourceName: "rank_main.png" }
-        : null
-  };
+
+  return adaptNormalHonor(
+    type,
+    masterBundle,
+    selectedLevel,
+    level,
+    selectedRarity,
+    bundleName(honor.group?.frameName)
+  );
 };
 
 /** Select the first renderable reward honor, retaining a name-only fallback when art is absent. */

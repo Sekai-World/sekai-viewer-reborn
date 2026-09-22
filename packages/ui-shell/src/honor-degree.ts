@@ -66,6 +66,232 @@ function validLevel(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value > 0;
 }
 
+type HonorDegreeRect = Pick<HonorDegreePart, "x" | "y" | "width" | "height">;
+type HonorDegreeLayerAdder = (
+  name: string,
+  asset: HonorDegreeAsset | null | undefined,
+  rect?: HonorDegreeRect,
+  mask?: HonorDegreeMask | null
+) => void;
+type NormalHonorDegreeInput = Extract<HonorDegreeInput, { kind: "normal" }>;
+type RankMatchHonorDegreeInput = Extract<HonorDegreeInput, { kind: "rank-match" }>;
+type BondsHonorDegreeInput = Extract<HonorDegreeInput, { kind: "bonds" }>;
+
+function validRect(rect: HonorDegreeRect): boolean {
+  return (
+    [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) &&
+    rect.width > 0 &&
+    rect.height > 0
+  );
+}
+
+function addHonorDegreePart(
+  add: HonorDegreeLayerAdder,
+  name: string,
+  part: HonorDegreePart | null | undefined
+): void {
+  if (part) add(name, part, part);
+}
+
+function addBondsHonorDegreeCharacter(
+  add: HonorDegreeLayerAdder,
+  name: string,
+  part: BondsHonorDegreeCharacter | null | undefined
+): void {
+  if (part) add(name, part, part, part.mask);
+}
+
+function addBondsHonorDegreeLayers(
+  honor: BondsHonorDegreeInput,
+  add: HonorDegreeLayerAdder
+): void {
+  if (honor.backgrounds !== undefined && honor.backgrounds !== null) {
+    honor.backgrounds.forEach((background, index) => add(`background-${index}`, background));
+  } else {
+    add("body", honor.background);
+  }
+  add("pattern", honor.pattern);
+  honor.characters?.forEach((part, index) =>
+    addBondsHonorDegreeCharacter(add, `character-${index}`, part)
+  );
+  add("frame", honor.frame);
+  addHonorDegreePart(add, "word", honor.word);
+}
+
+function getRankMatchOverlayRect(main: boolean): HonorDegreeRect {
+  if (main) return { x: 200, y: 1, width: 180, height: 78 };
+  return { x: 11, y: 0, width: 158, height: 40 };
+}
+
+function getEventRankOverlayRect(main: boolean): HonorDegreeRect {
+  if (main) return { x: 190, y: 1, width: 150, height: 78 };
+  return { x: 60, y: 0, width: 120, height: 38 };
+}
+
+function getFrameResourceName(main: boolean, rarity: number): string {
+  return `frame_degree_${main ? "m" : "s"}_${rarity + 1}`;
+}
+
+function addRankMatchHonorDegreeLayers(
+  honor: RankMatchHonorDegreeInput,
+  main: boolean,
+  variant: "main" | "sub",
+  add: HonorDegreeLayerAdder
+): void {
+  const background = honor.backgroundAssetBundleName ?? honor.assetBundleName;
+  if (hasName(background)) {
+    add("body", {
+      bundlePath: `rank_live/honor/${background}`,
+      resourceName: `degree_${variant}.png`
+    });
+  }
+
+  const rarity = normalizeHonorDegreeRarity(honor.rarity);
+  if (hasName(honor.frameBundlePath) && rarity !== null) {
+    add("frame", {
+      bundlePath: honor.frameBundlePath,
+      resourceName: getFrameResourceName(main, rarity)
+    });
+  }
+
+  if (hasName(honor.assetBundleName)) {
+    add(
+      "rank",
+      {
+        bundlePath: `rank_live/honor/${honor.assetBundleName}`,
+        resourceName: `${variant}.png`
+      },
+      getRankMatchOverlayRect(main)
+    );
+  }
+}
+
+function getNormalHonorFrameBundlePath(honor: NormalHonorDegreeInput): string | null {
+  if (hasName(honor.frameBundlePath)) return honor.frameBundlePath;
+
+  const frameName = honor.group?.frameName;
+  if (hasName(frameName)) return `honor_frame/${frameName}`;
+
+  return null;
+}
+
+function addBirthdayHonorDegreeLevelLayers(
+  level: number,
+  rarity: number | null,
+  frameBundlePath: string | null,
+  main: boolean,
+  add: HonorDegreeLayerAdder
+): void {
+  if (rarity === null || !frameBundlePath) return;
+
+  for (let index = 0; index < Math.min(5, level); index++) {
+    add(
+      `birthday-level-${index}`,
+      {
+        bundlePath: frameBundlePath,
+        resourceName: `frame_degree_level_${rarity + 1}`
+      },
+      { x: (main ? 150 : 50) + 16 * index, y: 64, width: 16, height: 16 }
+    );
+  }
+}
+
+function addHonorDegreeLevelIcons(
+  name: string,
+  resourceName: string,
+  count: number,
+  x: number,
+  add: HonorDegreeLayerAdder
+): void {
+  for (let index = 0; index < count; index++) {
+    add(
+      `${name}-${index}`,
+      { bundlePath: honorDegreeLevelIconResources.bundlePath, resourceName },
+      { x: x + 16 * index, y: 64, width: 16, height: 16 }
+    );
+  }
+}
+
+function addRegularHonorDegreeLevelLayers(
+  level: number,
+  main: boolean,
+  add: HonorDegreeLayerAdder
+): void {
+  const iconCounts = getHonorDegreeLevelIconCounts(level);
+  if (!iconCounts) return;
+
+  const x = main ? 59 : 10;
+  addHonorDegreeLevelIcons("level", honorDegreeLevelIconResources.regular, iconCounts.regular, x, add);
+  addHonorDegreeLevelIcons(
+    "level-upgraded",
+    honorDegreeLevelIconResources.upgraded,
+    iconCounts.upgraded,
+    x,
+    add
+  );
+}
+
+function addNormalHonorLevelLayers(
+  honor: NormalHonorDegreeInput,
+  main: boolean,
+  rarity: number | null,
+  frameBundlePath: string | null,
+  add: HonorDegreeLayerAdder
+): void {
+  if (!validLevel(honor.level)) return;
+
+  if (honor.honorType === "birthday") {
+    addBirthdayHonorDegreeLevelLayers(honor.level, rarity, frameBundlePath, main, add);
+  } else if (honor.honorType !== "live-master") {
+    addRegularHonorDegreeLevelLayers(honor.level, main, add);
+  }
+}
+
+function addNormalHonorDetailLayers(
+  honor: NormalHonorDegreeInput,
+  main: boolean,
+  rarity: number | null,
+  frameBundlePath: string | null,
+  add: HonorDegreeLayerAdder,
+  addPart: (name: string, part: HonorDegreePart | null | undefined) => void
+): void {
+  if (honor.honorType === "event") {
+    add("rank", honor.rankAsset, getEventRankOverlayRect(main));
+  } else {
+    addNormalHonorLevelLayers(honor, main, rarity, frameBundlePath, add);
+  }
+
+  if (honor.honorType === "live-master") {
+    honor.liveMasterParts?.forEach((part, index) => addPart(`live-master-${index}`, part));
+  }
+}
+
+function addNormalHonorDegreeLayers(
+  honor: NormalHonorDegreeInput,
+  main: boolean,
+  variant: "main" | "sub",
+  add: HonorDegreeLayerAdder,
+  addPart: (name: string, part: HonorDegreePart | null | undefined) => void
+): void {
+  if (hasName(honor.assetBundleName)) {
+    add("body", {
+      bundlePath: `honor/${honor.assetBundleName}`,
+      resourceName: `degree_${variant}.png`
+    });
+  }
+
+  const rarity = normalizeHonorDegreeRarity(honor.rarity);
+  const frameBundlePath = getNormalHonorFrameBundlePath(honor);
+  if (rarity !== null && frameBundlePath) {
+    add("frame", {
+      bundlePath: frameBundlePath,
+      resourceName: getFrameResourceName(main, rarity)
+    });
+  }
+
+  addNormalHonorDetailLayers(honor, main, rarity, frameBundlePath, add, addPart);
+}
+
 /**
  * Regular honors show up to five base icons. Levels 6–10 replace the first
  * slots with the upgraded icon, so the upgraded icons are emitted after the
@@ -97,16 +323,7 @@ export function buildHonorDegreeLayout(
   const width = main ? 380 : 180;
   const layers: HonorDegreeLayer[] = [];
   const root = { x: 0, y: 0, width, height: 80 };
-  const validRect = (rect: Pick<HonorDegreePart, "x" | "y" | "width" | "height">): boolean =>
-    [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) &&
-    rect.width > 0 &&
-    rect.height > 0;
-  const add = (
-    name: string,
-    asset: HonorDegreeAsset | null | undefined,
-    rect: Pick<HonorDegreePart, "x" | "y" | "width" | "height"> = root,
-    mask?: HonorDegreeMask | null
-  ): void => {
+  const add: HonorDegreeLayerAdder = (name, asset, rect = root, mask) => {
     if (!asset || !hasName(asset.bundlePath) || !hasName(asset.resourceName)) return;
     if (!validRect(rect)) return;
     const href = resolveAsset(asset.bundlePath, asset.resourceName);
@@ -141,114 +358,16 @@ export function buildHonorDegreeLayout(
       ...(resolvedMask ? { mask: resolvedMask } : {})
     });
   };
-  const addPart = (name: string, part: HonorDegreePart | null | undefined): void => {
-    if (part) add(name, part, part);
-  };
-  const addCharacter = (
-    name: string,
-    part: BondsHonorDegreeCharacter | null | undefined
-  ): void => {
-    if (part) add(name, part, part, part.mask);
-  };
+  const addPart = (name: string, part: HonorDegreePart | null | undefined): void =>
+    addHonorDegreePart(add, name, part);
   const variant = main ? "main" : "sub";
 
   if (honor?.kind === "bonds") {
-    if (honor.backgrounds !== undefined && honor.backgrounds !== null) {
-      honor.backgrounds.forEach((background, index) => add(`background-${index}`, background));
-    } else {
-      add("body", honor.background);
-    }
-    add("pattern", honor.pattern);
-    honor.characters?.forEach((part, index) => addCharacter(`character-${index}`, part));
-    add("frame", honor.frame);
-    addPart("word", honor.word);
+    addBondsHonorDegreeLayers(honor, add);
   } else if (honor?.kind === "rank-match") {
-    const background = honor.backgroundAssetBundleName ?? honor.assetBundleName;
-    if (hasName(background))
-      add("body", {
-        bundlePath: `rank_live/honor/${background}`,
-        resourceName: `degree_${variant}.png`
-      });
-    const rarity = normalizeHonorDegreeRarity(honor.rarity);
-    if (hasName(honor.frameBundlePath) && rarity !== null) {
-      add("frame", {
-        bundlePath: honor.frameBundlePath,
-        resourceName: `frame_degree_${main ? "m" : "s"}_${rarity + 1}`
-      });
-    }
-    if (hasName(honor.assetBundleName))
-      add(
-        "rank",
-        {
-          bundlePath: `rank_live/honor/${honor.assetBundleName}`,
-          resourceName: `${variant}.png`
-        },
-        main ? { x: 200, y: 1, width: 180, height: 78 } : { x: 11, y: 0, width: 158, height: 40 }
-      );
+    addRankMatchHonorDegreeLayers(honor, main, variant, add);
   } else if (honor?.kind === "normal") {
-    if (hasName(honor.assetBundleName))
-      add("body", {
-        bundlePath: `honor/${honor.assetBundleName}`,
-        resourceName: `degree_${variant}.png`
-      });
-    const rarity = normalizeHonorDegreeRarity(honor.rarity);
-    const frameName = honor.group?.frameName;
-    const frameBundle = hasName(honor.frameBundlePath)
-      ? honor.frameBundlePath
-      : hasName(frameName)
-        ? `honor_frame/${frameName}`
-        : null;
-    if (rarity !== null && frameBundle)
-      add("frame", {
-        bundlePath: frameBundle,
-        resourceName: `frame_degree_${main ? "m" : "s"}_${rarity + 1}`
-      });
-    if (honor.honorType === "event") {
-      add(
-        "rank",
-        honor.rankAsset,
-        main ? { x: 190, y: 1, width: 150, height: 78 } : { x: 60, y: 0, width: 120, height: 38 }
-      );
-    } else if (validLevel(honor.level)) {
-      if (honor.honorType === "birthday") {
-        if (rarity !== null && frameBundle) {
-          for (let i = 0; i < Math.min(5, honor.level); i++)
-            add(
-              `birthday-level-${i}`,
-              {
-                bundlePath: frameBundle,
-                resourceName: `frame_degree_level_${rarity + 1}`
-              },
-              { x: (main ? 150 : 50) + 16 * i, y: 64, width: 16, height: 16 }
-            );
-        }
-      } else if (honor.honorType !== "live-master") {
-        const iconCounts = getHonorDegreeLevelIconCounts(honor.level);
-        if (iconCounts) {
-          for (let i = 0; i < iconCounts.regular; i++)
-            add(
-              `level-${i}`,
-              {
-                bundlePath: honorDegreeLevelIconResources.bundlePath,
-                resourceName: honorDegreeLevelIconResources.regular
-              },
-              { x: (main ? 59 : 10) + 16 * i, y: 64, width: 16, height: 16 }
-            );
-          for (let i = 0; i < iconCounts.upgraded; i++)
-            add(
-              `level-upgraded-${i}`,
-              {
-                bundlePath: honorDegreeLevelIconResources.bundlePath,
-                resourceName: honorDegreeLevelIconResources.upgraded
-              },
-              { x: (main ? 59 : 10) + 16 * i, y: 64, width: 16, height: 16 }
-            );
-        }
-      }
-    }
-    if (honor.honorType === "live-master") {
-      honor.liveMasterParts?.forEach((part, index) => addPart(`live-master-${index}`, part));
-    }
+    addNormalHonorDegreeLayers(honor, main, variant, add, addPart);
   }
   return {
     width,

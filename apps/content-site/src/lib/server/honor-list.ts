@@ -180,7 +180,7 @@ export const parseHonor = (
 const parseHonorGroup = (payload: unknown): HonorGroup | null => {
   const root = getObject(payload);
   const metadata = parseHonorGroupMetadata(root);
-  if (!root || !metadata || metadata?.id === null) {
+  if (!root || !metadata || metadata.id === null) {
     return null;
   }
 
