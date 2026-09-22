@@ -1,8 +1,14 @@
 <script lang="ts">
+  import { env } from "$env/dynamic/public";
+  import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
   import { onMount, tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    getLocalI18nMessages,
+    resolveStreamingMessages
+  } from "$lib/i18n/runtime";
   import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import {
     DEFAULT_REGION,
@@ -37,9 +43,16 @@
   } from "$lib/styles/event-card";
   import type { PageData } from "./$types";
 
+  const HOME_I18N_NAMESPACES = ["common", "home", "event", "error"] as const;
+
   let { data }: { data: PageData } = $props();
+  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim() || resolve("/support");
+  const mergeHomeMessages = (messages: Record<string, string>): Record<string, string> => ({
+    ...getLocalI18nMessages(HOME_I18N_NAMESPACES),
+    ...messages
+  });
   const getInitialMessages = (): Record<string, string> =>
-    resolveStreamingMessages(data.i18nMessages, ["common", "home", "event", "error"]);
+    mergeHomeMessages(resolveStreamingMessages(data.i18nMessages, HOME_I18N_NAMESPACES));
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(data.uiLocale, getInitialMessages())(key);
   let idLabel = $state(getInitialI18nText("idLabel"));
@@ -270,8 +283,9 @@
     }
     if (requestId !== translationRequestId) return;
 
-    applyTranslations(createI18nTranslator(localeValue, messages));
-    currentMessages = messages;
+    const resolvedMessages = mergeHomeMessages(messages);
+    applyTranslations(createI18nTranslator(localeValue, resolvedMessages));
+    currentMessages = resolvedMessages;
   };
 
   // ── Helpers ────────────────────────────────────────────────────────
@@ -882,6 +896,11 @@
     </div>
   </section>
 </section>
+<div class="mx-auto mb-12 flex w-full justify-end">
+  <a class="btn btn-ghost btn-sm min-h-11" href={supportPageUrl}>
+    {currentTranslate("support.cta")}
+  </a>
+</div>
 
 <!-- ──── Version Info (standalone, below data area) ─────────────────── -->
 <section class="mx-auto mt-12" aria-labelledby="version-information-title">
