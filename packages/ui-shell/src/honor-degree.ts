@@ -323,9 +323,10 @@ export function buildHonorDegreeLayout(
   const width = main ? 380 : 180;
   const layers: HonorDegreeLayer[] = [];
   const root = { x: 0, y: 0, width, height: 80 };
-  const add: HonorDegreeLayerAdder = (name, asset, rect = root, mask) => {
+  const add: HonorDegreeLayerAdder = (name, asset, rect, mask) => {
     if (!asset || !hasName(asset.bundlePath) || !hasName(asset.resourceName)) return;
-    if (!validRect(rect)) return;
+    const targetRect = rect ?? root;
+    if (!validRect(targetRect)) return;
     const href = resolveAsset(asset.bundlePath, asset.resourceName);
     if (!hasName(href)) return;
 
@@ -351,10 +352,10 @@ export function buildHonorDegreeLayout(
     layers.push({
       name,
       href,
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
+      x: targetRect.x,
+      y: targetRect.y,
+      width: targetRect.width,
+      height: targetRect.height,
       ...(resolvedMask ? { mask: resolvedMask } : {})
     });
   };
