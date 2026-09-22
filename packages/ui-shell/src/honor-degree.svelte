@@ -44,7 +44,7 @@
                 id={`${componentId}-${layer.name}-mask`}
                 maskUnits="userSpaceOnUse"
                 maskContentUnits="userSpaceOnUse"
-                mask-type="alpha"
+                {...{ "mask-type": "alpha" }}
                 x={layer.mask.x}
                 y={layer.mask.y}
                 width={layer.mask.width}
