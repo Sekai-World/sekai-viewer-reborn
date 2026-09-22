@@ -15,9 +15,10 @@ import type { HonorGroup } from "$lib/domain/honor";
 
 type HonorPageLoadResult = {
   region: string;
-  query: { page: number };
+  query: { page: number; honorType: string | null };
   catalogue: Promise<{
     items: HonorGroup[];
+    availableHonorTypes: string[];
     loadFailed: boolean;
     pagination: {
       page: number;
@@ -77,7 +78,11 @@ const createHonorGroup = (id: number) => ({
   ]
 });
 
-const createHonorGroupResponse = (page: number, total: number) => {
+const createHonorGroupResponse = (
+  page: number,
+  total: number,
+  availableHonorTypes: unknown = []
+) => {
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const startIndex = (page - 1) * PAGE_SIZE;
   const itemCount = Math.max(0, Math.min(PAGE_SIZE, total - startIndex));
@@ -87,6 +92,7 @@ const createHonorGroupResponse = (page: number, total: number) => {
       items: Array.from({ length: itemCount }, (_, index) =>
         createHonorGroup(startIndex + index + 1)
       ),
+      availableHonorTypes,
       pagination: {
         page,
         page_size: PAGE_SIZE,
@@ -112,9 +118,10 @@ describe("honor catalogue page load", () => {
     const catalogue = await result.catalogue;
 
     expect(result.region).toBe("jp");
-    expect(result.query).toEqual({ page: 2 });
+    expect(result.query).toEqual({ page: 2, honorType: null });
     expect(catalogue).toMatchObject({
       loadFailed: false,
+      availableHonorTypes: [],
       pagination: {
         page: 2,
         pageSize: 12,
@@ -155,6 +162,51 @@ describe("honor catalogue page load", () => {
     });
   });
 
+  it("trims honor type queries and preserves pagination when fetching a filtered page", async () => {
+    getHonorGroupsByRegionList.mockResolvedValue(
+      createHonorGroupResponse(3, PAGE_SIZE * 3, ["character", "event"])
+    );
+
+    const result = (await runLoad(
+      "tw",
+      "?page=003&honor_type=%20character%20"
+    )) as unknown as HonorPageLoadResult;
+
+    expect(result.query).toEqual({ page: 3, honorType: "character" });
+    await expect(result.catalogue).resolves.toMatchObject({
+      loadFailed: false,
+      availableHonorTypes: ["character", "event"],
+      pagination: { page: 3, total: PAGE_SIZE * 3 }
+    });
+    expect(getHonorGroupsByRegionList).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test/api/v1",
+      path: { region: "tw" },
+      query: { page: 3, page_size: 12, honor_type: "character" }
+    });
+  });
+
+  it("keeps an unknown honor type query while accepting the API's empty filtered result", async () => {
+    getHonorGroupsByRegionList.mockResolvedValue(createHonorGroupResponse(1, 0, ["character"]));
+
+    const result = (await runLoad(
+      "jp",
+      "?honor_type=%20unknown%20"
+    )) as unknown as HonorPageLoadResult;
+
+    expect(result.query).toEqual({ page: 1, honorType: "unknown" });
+    await expect(result.catalogue).resolves.toEqual({
+      items: [],
+      availableHonorTypes: ["character"],
+      pagination: { page: 1, pageSize: 12, hasNext: false, total: 0, totalPages: 0 },
+      loadFailed: false
+    });
+    expect(getHonorGroupsByRegionList.mock.calls[0]?.[0].query).toEqual({
+      page: 1,
+      page_size: 12,
+      honor_type: "unknown"
+    });
+  });
+
   it("defaults invalid page values and accepts a positive integer", async () => {
     getHonorGroupsByRegionList.mockImplementation(({ query }: { query: { page?: number } }) =>
       Promise.resolve(createHonorGroupResponse(query.page ?? 1, 12))
@@ -187,6 +239,7 @@ describe("honor catalogue page load", () => {
 
     await expect(firstPageResult.catalogue).resolves.toEqual({
       items: [],
+      availableHonorTypes: [],
       pagination: { page: 1, pageSize: 12, hasNext: false, total: 0, totalPages: 0 },
       loadFailed: false
     });
@@ -197,6 +250,7 @@ describe("honor catalogue page load", () => {
 
     await expect(laterPageResult.catalogue).resolves.toEqual({
       items: [],
+      availableHonorTypes: [],
       pagination: { page: 2, pageSize: 12, hasNext: false, total: null, totalPages: null },
       loadFailed: true
     });
@@ -205,14 +259,24 @@ describe("honor catalogue page load", () => {
   it("returns a failed empty page when the API reports an error", async () => {
     getHonorGroupsByRegionList.mockResolvedValue({ error: new Error("master api unavailable") });
 
-    const result = (await runLoad("tw", "?page=4")) as unknown as HonorPageLoadResult;
+    const result = (await runLoad(
+      "tw",
+      "?page=4&honor_type=%20missing%20"
+    )) as unknown as HonorPageLoadResult;
 
+    expect(result.query).toEqual({ page: 4, honorType: "missing" });
     await expect(result.catalogue).resolves.toEqual({
       items: [],
+      availableHonorTypes: [],
       pagination: { page: 4, pageSize: 12, hasNext: false, total: null, totalPages: null },
       loadFailed: true
     });
     expect(getHonorGroupsByRegionList).toHaveBeenCalledTimes(1);
+    expect(getHonorGroupsByRegionList.mock.calls[0]?.[0].query).toEqual({
+      page: 4,
+      page_size: 12,
+      honor_type: "missing"
+    });
   });
 
   it("returns a failed empty page when the API request throws", async () => {
@@ -253,10 +317,15 @@ describe("honor catalogue page load", () => {
   it("fails safely for an out-of-range page without fetching a replacement page", async () => {
     getHonorGroupsByRegionList.mockResolvedValue(createHonorGroupResponse(56, 660));
 
-    const result = (await runLoad("jp", "?page=56")) as unknown as HonorPageLoadResult;
+    const result = (await runLoad(
+      "jp",
+      "?page=56&honor_type=event"
+    )) as unknown as HonorPageLoadResult;
 
+    expect(result.query).toEqual({ page: 56, honorType: "event" });
     await expect(result.catalogue).resolves.toEqual({
       items: [],
+      availableHonorTypes: [],
       pagination: { page: 56, pageSize: 12, hasNext: false, total: null, totalPages: null },
       loadFailed: true
     });
@@ -264,7 +333,7 @@ describe("honor catalogue page load", () => {
     expect(getHonorGroupsByRegionList).toHaveBeenCalledWith({
       baseUrl: "https://master-api.test/api/v1",
       path: { region: "jp" },
-      query: { page: 56, page_size: 12 }
+      query: { page: 56, page_size: 12, honor_type: "event" }
     });
   });
 });

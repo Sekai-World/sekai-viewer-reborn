@@ -16,7 +16,7 @@ import {
 type HonorRequest = {
   baseUrl: string;
   path: { region: string };
-  query: { page: number; page_size: number };
+  query: { page: number; page_size: number; honor_type?: string };
 };
 
 const PAGE_SIZE = 12;
@@ -160,6 +160,7 @@ describe("honor catalogue adapter", () => {
   it("creates an empty page with stable pagination defaults", () => {
     expect(createEmptyHonorListPage(4)).toEqual({
       items: [],
+      availableHonorTypes: [],
       pagination: {
         page: 4,
         pageSize: PAGE_SIZE,
@@ -182,6 +183,68 @@ describe("honor catalogue adapter", () => {
       path: { region: "tw" },
       query: { page: 2, page_size: PAGE_SIZE }
     } satisfies HonorRequest);
+  });
+
+  it("parses available honor types as trimmed unique strings in API order", async () => {
+    getHonorGroupsByRegionList.mockResolvedValue({
+      data: {
+        items: [],
+        availableHonorTypes: [" event ", "character", "event", "  ", null, 3, {}],
+        pagination: {
+          page: 1,
+          page_size: PAGE_SIZE,
+          total: 0,
+          total_pages: 0,
+          has_next: false
+        }
+      }
+    });
+
+    await expect(fetchHonorListPage("https://master-api.test", "jp")).resolves.toMatchObject({
+      items: [],
+      availableHonorTypes: ["event", "character"]
+    });
+  });
+
+  it("defaults malformed or absent available honor types to an empty list", async () => {
+    getHonorGroupsByRegionList.mockResolvedValue({
+      data: {
+        ...createHonorResponse(1, 0).data,
+        availableHonorTypes: "not an array"
+      }
+    });
+
+    await expect(fetchHonorListPage("https://master-api.test", "jp")).resolves.toMatchObject({
+      availableHonorTypes: []
+    });
+
+    getHonorGroupsByRegionList.mockResolvedValue(createHonorResponse(1, 0));
+
+    await expect(fetchHonorListPage("https://master-api.test", "jp")).resolves.toMatchObject({
+      availableHonorTypes: []
+    });
+  });
+
+  it("sends a normalized honor type filter and omits an empty filter", async () => {
+    getHonorGroupsByRegionList.mockResolvedValue(createHonorResponse(1, 0));
+
+    await fetchHonorListPage("https://master-api.test", "jp", 1, "  character  ");
+
+    expect(getHonorGroupsByRegionList.mock.calls[0]?.[0].query).toEqual({
+      page: 1,
+      page_size: PAGE_SIZE,
+      honor_type: "character"
+    });
+
+    getHonorGroupsByRegionList.mockReset();
+    getHonorGroupsByRegionList.mockResolvedValue(createHonorResponse(1, 0));
+
+    await fetchHonorListPage("https://master-api.test", "jp", 1, "  ");
+
+    expect(getHonorGroupsByRegionList.mock.calls[0]?.[0].query).toEqual({
+      page: 1,
+      page_size: PAGE_SIZE
+    });
   });
 
   it("does not duplicate the API prefix when the base URL already contains it", async () => {
@@ -217,6 +280,7 @@ describe("honor catalogue adapter", () => {
 
     await expect(fetchHonorListPage("https://master-api.test", "jp")).resolves.toEqual({
       items: [],
+      availableHonorTypes: [],
       pagination: { page: 1, pageSize: PAGE_SIZE, hasNext: false, total: 0, totalPages: 0 }
     });
 

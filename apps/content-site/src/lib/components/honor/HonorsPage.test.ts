@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import type { ComponentProps } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Honor, HonorGroup } from "$lib/domain/honor";
@@ -56,16 +56,18 @@ const group: HonorGroup = {
 type PageData = ComponentProps<typeof HonorsPage>["data"];
 const result: Awaited<PageData["catalogue"]> = {
   items: [group],
+  availableHonorTypes: ["achievement", "event"],
   loadFailed: false,
   pagination: { page: 2, totalPages: 3, hasNext: true, pageSize: 12, total: 30 }
 };
 const data = (
   catalogue: PageData["catalogue"] | Awaited<PageData["catalogue"]>,
   region: PageData["region"] = "jp",
-  page = 2
+  page = 2,
+  honorType: string | null = null
 ): PageData => ({
   region,
-  query: { page },
+  query: { page, honorType },
   catalogue: Promise.resolve(catalogue),
   uiLocale: "en",
   preferredRegion: region,
@@ -79,6 +81,40 @@ const data = (
 });
 
 describe("Honors page group contract", () => {
+  it("composes the first member in the summary and individual event ranks in expanded members", async () => {
+    const { container } = render(HonorsPage, {
+      data: data({
+        ...result,
+        items: [
+          {
+            ...group,
+            honorType: "event",
+            frameName: "event-frame",
+            honors: [
+              { ...honor(9), assetBundleName: "rank-nine", honorRarity: "high" },
+              { ...honor(2), assetBundleName: "rank-two", honorRarity: "middle" }
+            ]
+          }
+        ]
+      }),
+      params: { region: "jp" },
+      form: null
+    });
+    await screen.findByRole("heading", { name: "Group identity" });
+    const summary = container.querySelector("summary")!;
+    expect(summary.querySelector('[data-layer="rank"]')?.getAttribute("href")).toBe(
+      "https://assets.example.test/sekai-jp-assets/honor/rank-nine/rank_main.webp"
+    );
+    await fireEvent.click(summary);
+    const ranks = Array.from(container.querySelectorAll('li [data-layer="rank"]'), (node) =>
+      node.getAttribute("href")
+    );
+    expect(ranks).toEqual([
+      "https://assets.example.test/sekai-jp-assets/honor/rank-nine/rank_main.webp",
+      "https://assets.example.test/sekai-jp-assets/honor/rank-two/rank_main.webp"
+    ]);
+    expect(container.querySelector("img")).toBeNull();
+  });
   it("labels same-name members by localized rarity with name fallbacks", async () => {
     const rarities = ["low", "middle", "high", "highest", "future", null, ""];
     const variants = rarities.map((honorRarity, index) => ({
@@ -95,7 +131,7 @@ describe("Honors page group contract", () => {
       params: { region: "jp" },
       form: null
     });
-    await screen.findByText("一歌ファン");
+    await screen.findByRole("heading", { name: "一歌ファン", level: 2 });
     await fireEvent.click(container.querySelector("summary")!);
     expect(container.querySelector("details")?.open).toBe(true);
     const headings = () =>
@@ -109,7 +145,7 @@ describe("Honors page group contract", () => {
       "Fallback 5",
       "Fallback 6"
     ]);
-    expect(screen.getAllByText("一歌ファン")).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { name: "一歌ファン" })).toHaveLength(1);
     expect(container.querySelectorAll("dt")).toHaveLength(14);
     for (const member of variants) {
       expect(screen.getByText(`Requirement ${member.id}`)).toBeTruthy();
@@ -137,7 +173,7 @@ describe("Honors page group contract", () => {
         "Fallback 6"
       ])
     );
-    expect(screen.getAllByText("一歌ファン")).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { name: "一歌ファン" })).toHaveLength(1);
   });
 
   it("streams full groups without filtering levels and preserves URL navigation", async () => {
@@ -172,6 +208,50 @@ describe("Honors page group contract", () => {
     await fireEvent.click(container.querySelector("summary")!);
     await rerender({ data: data(result, "en", 3) });
     await waitFor(() => expect(container.querySelector("details")?.open).toBe(false));
+  });
+
+  it("renders localized server categories and preserves the selected category in URLs", async () => {
+    render(HonorsPage, {
+      data: data(
+        {
+          ...result,
+          availableHonorTypes: [
+            "achievement",
+            "birthday",
+            "character",
+            "event",
+            "rank_match",
+            "future_category"
+          ]
+        },
+        "jp",
+        2,
+        "event"
+      ),
+      params: { region: "jp" },
+      form: null
+    });
+
+    const tablist = await screen.findByRole("tablist", { name: "Honor category" });
+    expect(
+      within(tablist).getByRole("tab", { name: "All honors" }).getAttribute("aria-selected")
+    ).toBe("false");
+    expect(within(tablist).getByRole("tab", { name: "Events" }).getAttribute("aria-selected")).toBe(
+      "true"
+    );
+    expect(within(tablist).getByRole("tab", { name: "Achievements" })).toBeTruthy();
+    expect(within(tablist).getByRole("tab", { name: "Birthdays" })).toBeTruthy();
+    expect(within(tablist).getByRole("tab", { name: "Character" })).toBeTruthy();
+    expect(within(tablist).getByRole("tab", { name: "Rank Match" })).toBeTruthy();
+    expect(within(tablist).getByRole("tab", { name: "Other honors" })).toBeTruthy();
+    expect(within(tablist).queryByRole("tab", { name: "future_category" })).toBeNull();
+
+    await fireEvent.click(within(tablist).getByRole("tab", { name: "All honors" }));
+    expect(goto).toHaveBeenLastCalledWith("/honors/jp?page=1");
+    await fireEvent.click(within(tablist).getByRole("tab", { name: "Achievements" }));
+    expect(goto).toHaveBeenLastCalledWith("/honors/jp?page=1&honor_type=achievement");
+    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(goto).toHaveBeenLastCalledWith("/honors/jp?page=3&honor_type=event");
   });
 
   it("keeps handled and rejected stream errors retryable and supports empty groups", async () => {

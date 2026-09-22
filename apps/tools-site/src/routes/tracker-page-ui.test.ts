@@ -39,6 +39,20 @@ const getOpeningTagById = (source: string, id: string): string => {
 };
 
 describe("tracker page UI contract", () => {
+  it("adds compact decorative honor media without replacing reward labels", async () => {
+    const source = await readFile(pagePath, "utf8");
+    expect(source).toContain('import { HonorDegree } from "@platform/ui-shell";');
+    expect(source).toContain('resolveHonorAsset(bodyBundle, "degree_main.png")');
+    expect(source).toContain('class="block aspect-19/4 w-48 max-w-full overflow-hidden" aria-hidden="true"');
+    expect(source).toContain('class="block h-auto! w-full!"');
+    expect(source).toMatch(/<HonorDegree[\s\S]*?\sdecorative\s/);
+    expect(source.match(/\{@render rewardHonorMedia\(row.reward\)\}/g)).toHaveLength(2);
+    expect(source).toContain("{@render rewardHonorMedia(selectedRow.reward)}");
+    expect(source).toContain('{translate("tracker.degree")}: {formatRewardRange(row.reward)}');
+    expect(source).toContain("<span>{formatRewardRange(selectedRow.reward)}</span>");
+    expect(source).toContain('translate("tracker.degreeUnavailable")');
+  });
+
   it("renders accessible player-change markers without motion-dependent behavior", async () => {
     const source = await readFile(chartPath, "utf8");
     expect(source).toContain("findTrackerNameChanges");

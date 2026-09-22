@@ -67,6 +67,16 @@ export type SharedBondsHonorObjectResponse = {
     name?: string;
     pronunciation?: string;
     seq?: number;
+    words?: Array<SharedBondsHonorWordResponse>;
+};
+
+export type SharedBondsHonorWordResponse = {
+    assetbundleName?: string;
+    bondsGroupId?: number;
+    description?: string;
+    id?: number;
+    name?: string;
+    seq?: number;
 };
 
 export type SharedCardBatchItemResponse = {
@@ -736,6 +746,7 @@ export type SharedHealthResponse = {
 };
 
 export type SharedHonorGroupListResponse = {
+    availableHonorTypes?: Array<string>;
     items?: Array<SharedHonorGroupObjectResponse>;
     pagination?: SharedPaginationResponse;
 };
@@ -3798,6 +3809,10 @@ export type GetHonorGroupsByRegionListData = {
          * Page size
          */
         page_size?: number;
+        /**
+         * Exact honor group type filter
+         */
+        honor_type?: string;
     };
     url: '/honorGroups/{region}/list';
 };

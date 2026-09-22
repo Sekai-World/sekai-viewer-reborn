@@ -1,5 +1,6 @@
 ---
 "@platform/sekai-master-api-sdk": patch
+"@platform/ui-shell": patch
 "@platform/i18n-source": patch
 "@apps/account-site": patch
 "@apps/content-site": patch

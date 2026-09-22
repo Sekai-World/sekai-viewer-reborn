@@ -20,6 +20,7 @@ export type HonorListPagination = CataloguePagination;
 
 export type HonorListPage = {
   items: HonorGroup[];
+  availableHonorTypes: string[];
   pagination: HonorListPagination;
 };
 
@@ -151,8 +152,24 @@ export const parseHonorGroupList = (payload: unknown): HonorGroup[] =>
     return group ? [group] : [];
   });
 
+const parseAvailableHonorTypes = (payload: unknown): string[] => {
+  const root = getObject(payload);
+  const seen = new Set<string>();
+
+  return getArray(root?.availableHonorTypes).flatMap((value) => {
+    const honorType = getString(value);
+    if (honorType === null || seen.has(honorType)) {
+      return [];
+    }
+
+    seen.add(honorType);
+    return [honorType];
+  });
+};
+
 export const createEmptyHonorListPage = (page: number): HonorListPage => ({
   items: [],
+  availableHonorTypes: [],
   pagination: {
     page,
     pageSize: PAGE_SIZE,
@@ -165,12 +182,18 @@ export const createEmptyHonorListPage = (page: number): HonorListPage => ({
 export const fetchHonorListPage = async (
   baseUrl: string,
   region: string,
-  page = 1
+  page = 1,
+  honorType?: string | null
 ): Promise<HonorListPage> => {
+  const normalizedHonorType = honorType?.trim();
   const response = await getHonorGroupsByRegionList({
     baseUrl: getMasterApiV1BaseUrl(baseUrl),
     path: { region },
-    query: { page, page_size: PAGE_SIZE }
+    query: {
+      page,
+      page_size: PAGE_SIZE,
+      ...(normalizedHonorType ? { honor_type: normalizedHonorType } : {})
+    }
   });
 
   if (response.error || !response.data) {
@@ -186,6 +209,7 @@ export const fetchHonorListPage = async (
 
   return {
     items,
+    availableHonorTypes: parseAvailableHonorTypes(response.data),
     pagination: parseApiPagination(response.data, page, PAGE_SIZE, sourceGroups.length)
   };
 };

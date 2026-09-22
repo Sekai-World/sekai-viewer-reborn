@@ -1,10 +1,11 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { goto, invalidateAll } from "$app/navigation";
+  import { SvelteURLSearchParams } from "svelte/reactivity";
   import HonorCatalogue from "$lib/components/honor/HonorCatalogue.svelte";
   import type { HonorGroup } from "$lib/domain/honor";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { getRemoteAssetEndpointURL } from "$lib/assets/index";
+  import { createHonorDegreeAssetResolver, toCatalogueHonorDegree } from "$lib/honor-degree";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { createPageTitle } from "$lib/page-title";
   import sourceMessages from "@platform/i18n-source/content-site/honor.json";
@@ -51,8 +52,30 @@
       href: resolve("/honors/[region]", { region })
     }))
   );
-  const navigatePage = (page: number) =>
-    void goto(`${resolve("/honors/[region]", { region: data.region })}?page=${page}`);
+  const honorTypeLabelKeys: Record<string, string> = {
+    achievement: "honor.category.achievement",
+    birthday: "honor.category.birthday",
+    character: "honor.category.character",
+    event: "honor.category.event",
+    rank_match: "honor.category.rank_match"
+  };
+  const getHonorTypeLabel = (honorType: string | null): string =>
+    t(
+      honorType === null
+        ? "honor.category.all"
+        : (honorTypeLabelKeys[honorType] ?? "honor.category.unknown")
+    );
+  const navigateHonorList = (
+    page: number,
+    honorType: string | null = data.query.honorType
+  ): void => {
+    const searchParams = new SvelteURLSearchParams();
+    searchParams.set("page", String(page));
+    if (honorType) searchParams.set("honor_type", honorType);
+    void goto(`${resolve("/honors/[region]", { region: data.region })}?${searchParams.toString()}`);
+  };
+  const navigatePage = (page: number): void => navigateHonorList(page);
+  const navigateHonorType = (honorType: string | null): void => navigateHonorList(1, honorType);
   const formatNumber = (value: number) => new Intl.NumberFormat(data.uiLocale).format(value);
   const rarityLabel = (rarity: string | null): string | undefined => {
     switch (rarity) {
@@ -68,32 +91,18 @@
         return undefined;
     }
   };
-  const honorImage = (bundle: string | null, type: string | null) =>
-    bundle
-      ? getRemoteAssetEndpointURL(
-          `${type === "rank_match" ? "rank_live/honor" : "honor"}/${bundle}/degree_main.webp`,
-          data.region
-        )
-      : null;
+  const resolveAsset = $derived(createHonorDegreeAssetResolver(data.region));
   const toItem = (item: HonorGroup) => {
-    const bundle = item.backgroundAssetBundleName ?? item.honors[0]?.assetBundleName ?? null;
-    const type = item.honorType;
     return {
       key: String(item.id),
       name: item.name ?? item.honors[0]?.name ?? t("honor.unnamed"),
-      imageSrc: honorImage(bundle, type),
+      degree: item.honors[0] ? toCatalogueHonorDegree(item.honors[0], item) : undefined,
       countLabel: t("honor.memberCount").replace("{count}", formatNumber(item.honors.length)),
       members: item.honors.map((honor) => ({
         key: String(honor.id),
         name: honor.name ?? t("honor.unnamed"),
         variantLabel: rarityLabel(honor.honorRarity),
-        // Event/rank/mission bundles can be overlays, not standalone degree artwork.
-        imageSrc:
-          honor.assetBundleName !== bundle &&
-          !["event", "event_point", "rank_match"].includes(type ?? honor.honorType ?? "") &&
-          !honor.honorMissionType
-            ? honorImage(honor.assetBundleName, type ?? honor.honorType)
-            : null,
+        degree: toCatalogueHonorDegree(honor, item),
         levels: honor.levels.map((level) => ({
           label:
             level.level === null
@@ -113,26 +122,35 @@
 
 {#await data.catalogue}
   <HonorCatalogue
+    {resolveAsset}
     {labels}
     homeHref={resolve("/")}
     {regions}
     items={[]}
-    catalogueKey={`${data.region}:${data.query.page}`}
+    catalogueKey={`${data.region}:${data.query.page}:${data.query.honorType ?? "all"}`}
     status="loading"
     imageUnavailableLabel={t("imageUnavailable")}
     levelsLabel={t("honor.levels")}
+    closeLabel={t("closeLabel")}
   />
 {:then catalogue}
   {@const pagination = catalogue.pagination}
   <HonorCatalogue
+    {resolveAsset}
     {labels}
     homeHref={resolve("/")}
     {regions}
     items={catalogue.items.map(toItem)}
-    catalogueKey={`${data.region}:${data.query.page}`}
+    catalogueKey={`${data.region}:${data.query.page}:${data.query.honorType ?? "all"}`}
     status={catalogue.loadFailed ? "error" : "ready"}
     imageUnavailableLabel={t("imageUnavailable")}
     levelsLabel={t("honor.levels")}
+    closeLabel={t("closeLabel")}
+    honorTypes={catalogue.availableHonorTypes}
+    selectedHonorType={data.query.honorType}
+    categoryLabel={t("honor.categoryLabel")}
+    {getHonorTypeLabel}
+    onHonorTypeChange={navigateHonorType}
     onRetry={() => void invalidateAll()}
     onPrevious={!catalogue.loadFailed && pagination.page > 1
       ? () => navigatePage(pagination.page - 1)
@@ -150,14 +168,16 @@
   />
 {:catch}
   <HonorCatalogue
+    {resolveAsset}
     {labels}
     homeHref={resolve("/")}
     {regions}
     items={[]}
-    catalogueKey={`${data.region}:${data.query.page}`}
+    catalogueKey={`${data.region}:${data.query.page}:${data.query.honorType ?? "all"}`}
     status="error"
     imageUnavailableLabel={t("imageUnavailable")}
     levelsLabel={t("honor.levels")}
+    closeLabel={t("closeLabel")}
     onRetry={() => void invalidateAll()}
   />
 {/await}

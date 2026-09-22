@@ -1,24 +1,39 @@
 <script lang="ts">
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import Icon from "@iconify/svelte";
+  import HonorArtwork from "./HonorArtwork.svelte";
+  import type { CatalogueHonorDegree } from "$lib/honor-degree";
+  import type { HonorDegreeAssetResolver } from "@platform/ui-shell";
 
   let {
     name,
     groupName = null,
     compact = false,
     imageSrc = null,
+    degree,
+    resolveAsset,
     imageUnavailableLabel
   }: {
     name: string;
     groupName?: string | null;
     compact?: boolean;
     imageSrc?: string | null;
+    degree?: CatalogueHonorDegree;
+    resolveAsset?: HonorDegreeAssetResolver;
     imageUnavailableLabel: string;
   } = $props();
 </script>
 
 <div class="flex min-w-0 flex-col gap-3">
-  {#if imageSrc}
+  {#if degree && resolveAsset}
+    <HonorArtwork
+      {degree}
+      {resolveAsset}
+      label={name}
+      {imageUnavailableLabel}
+      decorative={compact}
+    />
+  {:else if imageSrc}
     <div
       class={compact
         ? ""

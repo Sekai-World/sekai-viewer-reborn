@@ -2,20 +2,47 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/sve
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "$lib/icons/mdi";
 import HonorCatalogue, { type HonorCatalogueGroup } from "./HonorCatalogue.svelte";
+import type { CatalogueHonorDegree } from "$lib/honor-degree";
+
+const degree = (bundle: string): CatalogueHonorDegree => ({
+  main: { kind: "normal", assetBundleName: bundle, rarity: "high", level: 3 },
+  sub: { kind: "normal", assetBundleName: bundle, rarity: "high", level: 3 }
+});
 
 afterEach(cleanup);
+
+const originalMatchMedia = window.matchMedia;
+
+const setDialogViewport = (matches: boolean): void => {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: vi.fn().mockReturnValue({
+      matches,
+      media: "(min-width: 768px)",
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    })
+  });
+};
+
+afterEach(() => {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: originalMatchMedia
+  });
+});
 
 const items: HonorCatalogueGroup[] = [
   {
     key: "10",
     name: "Together on stage",
-    imageSrc: "/honor/group/degree_main.webp",
+    degree: degree("group"),
     countLabel: "Honors: 2",
     members: [
       {
         key: "102",
         name: "Gold performer",
-        imageSrc: "/honor/group/degree_main.webp",
+        degree: degree("group"),
         levels: [
           { label: "Level 3", description: "Play 300 lives" },
           { label: "Level 1", description: "Play 100 lives" },
@@ -25,7 +52,7 @@ const items: HonorCatalogueGroup[] = [
       {
         key: "101",
         name: "Silver performer",
-        imageSrc: "/honor/silver/degree_main.webp",
+        degree: degree("silver"),
         levels: [{ label: "Level 2", description: "Play 200 lives" }]
       }
     ]
@@ -33,13 +60,13 @@ const items: HonorCatalogueGroup[] = [
   {
     key: "20",
     name: "First steps",
-    imageSrc: null,
+    degree: degree("first"),
     countLabel: "Honors: 1",
     members: [
       {
         key: "201",
         name: "First steps",
-        imageSrc: null,
+        degree: degree("first"),
         levels: [{ label: "Level 1", description: "Complete the tutorial" }]
       }
     ]
@@ -47,10 +74,12 @@ const items: HonorCatalogueGroup[] = [
 ];
 
 const props = {
+  resolveAsset: (bundle: string, resource: string) => `/${bundle}/${resource}`,
   items,
   catalogueKey: "jp:1",
   imageUnavailableLabel: "Image unavailable",
   levelsLabel: "Honor levels",
+  closeLabel: "Close",
   homeHref: "/",
   regions: [
     { key: "jp", label: "JP", active: true, href: "/honors/jp" },
@@ -89,9 +118,8 @@ describe("HonorCatalogue", () => {
       "High",
       "Middle"
     ]);
-    expect(screen.queryByText("Gold performer")).toBeNull();
-    expect(screen.queryByText("Silver performer")).toBeNull();
-    expect(container.querySelector('img[alt="Silver performer"]')).toBeTruthy();
+    expect(container.querySelector('svg[aria-label="Silver performer"]')).toBeTruthy();
+    expect(container.querySelector('image[href="/honor/silver/degree_main.png"]')).toBeTruthy();
     expect(container.querySelectorAll("dt")).toHaveLength(4);
     expect(screen.getByText("Play 200 lives")).toBeTruthy();
   });
@@ -104,7 +132,7 @@ describe("HonorCatalogue", () => {
     const summary = details.querySelector("summary")!;
     expect(details.open).toBe(false);
     expect(summary.querySelector("button, a, input")).toBeNull();
-    expect(summary.querySelectorAll("img")).toHaveLength(1);
+    expect(summary.querySelectorAll('svg[viewBox="0 0 380 80"]')).toHaveLength(1);
     await fireEvent.click(summary);
     expect(details.open).toBe(true);
     expect(
@@ -121,10 +149,57 @@ describe("HonorCatalogue", () => {
     for (const description of ["Play 300 lives", "Play 100 lives", "Play 200 lives"]) {
       expect(within(details).getByText(description).closest("details")?.open).toBe(true);
     }
-    expect(details.querySelectorAll("img")).toHaveLength(2);
+    expect(details.querySelectorAll('svg[viewBox="0 0 380 80"]')).toHaveLength(3);
     expect(details.querySelector("details")).toBeNull();
     await fireEvent.click(summary);
     expect(details.open).toBe(false);
+  });
+
+  it("uses an accessible native dialog on tablet and desktop and restores trigger focus", async () => {
+    setDialogViewport(true);
+    const { container } = render(HonorCatalogue, props);
+    const trigger = await screen.findByRole("button", { name: /Together on stage/ });
+
+    expect(container.querySelector("details")).toBeNull();
+    expect(trigger.classList).toContain("cursor-pointer");
+    expect(trigger.classList).toContain("hover:-translate-y-0.5");
+    expect(trigger.classList).toContain("motion-reduce:transform-none");
+    expect(trigger.parentElement?.classList).toContain("xl:grid-cols-3");
+    expect(trigger.parentElement?.classList).toContain("2xl:grid-cols-4");
+    expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
+    await fireEvent.click(trigger);
+
+    const dialog = screen.getByRole("dialog") as HTMLDialogElement;
+    expect(dialog.getAttribute("aria-labelledby")).toBeTruthy();
+    expect(within(dialog).getByRole("heading", { name: "Together on stage" })).toBeTruthy();
+    expect(
+      within(dialog)
+        .getAllByRole("heading", { level: 3 })
+        .map((node) => node.textContent)
+    ).toEqual(["Gold performer", "Silver performer"]);
+    expect(dialog.querySelector("button button")).toBeNull();
+
+    await fireEvent.keyDown(dialog, { key: "Escape" });
+    expect(dialog.open).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+
+    await fireEvent.click(trigger);
+    await fireEvent.click(within(dialog).getByTitle("Close"));
+    expect(dialog.open).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("keeps grouped honors as an inline disclosure on mobile", async () => {
+    setDialogViewport(false);
+    const { container } = render(HonorCatalogue, props);
+    const details = container.querySelector("details")!;
+
+    expect(details).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(details.querySelector("summary button, summary a, summary input")).toBeNull();
+    await fireEvent.click(details.querySelector("summary")!);
+    expect(details.open).toBe(true);
+    expect(within(details).getByRole("heading", { name: "Silver performer" })).toBeTruthy();
   });
 
   it("renders a singleton directly without repeated identity or a disclosure", () => {
@@ -182,5 +257,30 @@ describe("HonorCatalogue", () => {
       "No honors found. Try another region."
     );
     expect(screen.queryByRole("search")).toBeNull();
+  });
+
+  it("keeps category navigation visible for an empty filtered result", async () => {
+    const onHonorTypeChange = vi.fn();
+    const { container } = render(HonorCatalogue, {
+      ...props,
+      items: [],
+      honorTypes: ["event", "future_category"],
+      selectedHonorType: "event",
+      categoryLabel: "Honor category",
+      getHonorTypeLabel: (honorType) =>
+        honorType === null ? "All honors" : honorType === "event" ? "Events" : "Other honors",
+      onHonorTypeChange
+    });
+
+    const tablist = screen.getByRole("tablist", { name: "Honor category" });
+    expect(screen.getByRole("status").textContent).toBe("No honors found. Try another region.");
+    expect(within(tablist).getByRole("tab", { name: "Events" }).getAttribute("aria-selected")).toBe(
+      "true"
+    );
+    expect(within(tablist).getByRole("tab", { name: "Other honors" })).toBeTruthy();
+    expect(container.querySelector("details")).toBeNull();
+
+    await fireEvent.click(within(tablist).getByRole("tab", { name: "All honors" }));
+    expect(onHonorTypeChange).toHaveBeenCalledWith(null);
   });
 });

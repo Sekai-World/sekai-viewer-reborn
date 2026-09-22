@@ -6,8 +6,17 @@ import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = ({ params, url }) => {
   const region = normalizeRegion(params.region);
-  const query = { page: parsePositivePage(url.searchParams.get("page")) };
-  const catalogue = fetchHonorListPage(getMasterApiBaseUrl(), region, query.page)
+  const honorType = url.searchParams.get("honor_type")?.trim() ?? "";
+  const query = {
+    page: parsePositivePage(url.searchParams.get("page")),
+    honorType: honorType.length > 0 ? honorType : null
+  };
+  const catalogue = fetchHonorListPage(
+    getMasterApiBaseUrl(),
+    region,
+    query.page,
+    query.honorType
+  )
     .then((page) => ({ ...page, loadFailed: false as const }))
     .catch(() => ({ ...createEmptyHonorListPage(query.page), loadFailed: true as const }));
 
