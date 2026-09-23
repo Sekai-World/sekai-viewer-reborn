@@ -11,3 +11,5 @@
 Regenerate the master API SDK with Honors, Bonds Honors (including character-pair filtering), Missions, Event Honor Bonuses, MySekai photo decorations, Costume3D list/detail, and newly documented paginated list contracts. Add content-site Missions and Honors catalogues, and distinguish event honor bonus rules from ranking-reward honors on event detail pages.
 
 Render Live Master honors with the standard rarity-based local frame while keeping their custom level parts separate.
+
+Give the Honors catalogue a clear page identity, active-region context, and labelled results region.

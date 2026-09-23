@@ -18,7 +18,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const makeMission = (family: MissionFamily, id: number, sentence: string): Mission => ({
+const makeMission = (family: MissionFamily, id: number, sentence: string | null): Mission => ({
   id,
   family,
   characterId: null,
@@ -39,6 +39,7 @@ const makeMission = (family: MissionFamily, id: number, sentence: string): Missi
 
 type PageData = ComponentProps<typeof MissionsPage>["data"];
 type Catalogue = Awaited<PageData["catalogue"]>;
+type SuccessfulCatalogue = Extract<Catalogue, { loadFailed: false }>;
 
 const data = (
   catalogue: Catalogue,
@@ -60,6 +61,7 @@ const data = (
     "mission.family.storyMissions": "Story missions",
     "mission.family.characterMissionV2s": "Character missions",
     "mission.family.normalMissions": "Normal missions",
+    "mission.browseFamily": "See all {family}",
     "mission.loading": "Loading missions...",
     "mission.loadingMore": "Loading more missions...",
     "mission.loadMore": "Load more missions",
@@ -70,6 +72,7 @@ const data = (
     "mission.retry": "Try again",
     "mission.rewards": "Rewards",
     "mission.reward": "Reward",
+    "mission.storyUnnamed": "Story mission #{id}",
     "mission.targetUnavailable": "Target data unavailable for this region",
     "mission.unnamed": "Mission",
     "mission.requirement": "Target: {count}",
@@ -77,6 +80,9 @@ const data = (
     "mission.targetLevelSequence": "{levels}",
     "mission.targetLevelContinuation": "{levels} · … · {lastLevel} ({count} level goals)",
     "mission.shownCount": "{count} missions shown",
+    "mission.totalCount": "{count} missions",
+    "mission.totalCountOne": "1 mission",
+    "mission.totalUnavailable": "Total unavailable",
     "mission.resource.coin": "Coins",
     "mission.resource.jewel": "Crystals",
     "mission.resource.material": "Material",
@@ -95,17 +101,17 @@ const renderPage = (catalogue: Catalogue, family: MissionFamily | null = null) =
 
 const page = (
   items: Mission[],
-  pagination: { page: number; hasNext: boolean },
-  loadFailed = false
-): Catalogue => ({
+  pagination: { page: number; hasNext: boolean }
+): SuccessfulCatalogue => ({
   items,
+  familySummaries: [],
   pagination: {
     ...pagination,
     pageSize: 24,
     total: null,
     totalPages: null
   },
-  loadFailed
+  loadFailed: false
 });
 
 describe("Missions page", () => {
@@ -124,15 +130,13 @@ describe("Missions page", () => {
     expect(goto).toHaveBeenLastCalledWith("/missions/jp", { keepFocus: true, noScroll: true });
   });
 
-  it("appends and de-duplicates later pages, then shows the end state", async () => {
-    const firstStory = makeMission("storyMissions", 1, "First story");
+  it("appends and de-duplicates later pages for a selected family", async () => {
     const firstNormal = makeMission("normalMissions", 1, "First normal");
-    const secondStory = makeMission("storyMissions", 2, "Second story");
     const secondNormal = makeMission("normalMissions", 2, "Second normal");
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
-          items: [firstStory, firstNormal, secondStory, secondNormal],
+          items: [firstNormal, secondNormal, secondNormal],
           pagination: { page: 2, hasNext: false }
         }),
         { status: 200, headers: { "content-type": "application/json" } }
@@ -140,16 +144,37 @@ describe("Missions page", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    renderPage(page([firstStory, firstNormal], { page: 1, hasNext: true }));
-    await screen.findByText("First story");
+    renderPage(page([firstNormal], { page: 1, hasNext: true }), "normalMissions");
+    await screen.findByText("First normal");
     await fireEvent.click(screen.getByRole("button", { name: "Load more missions" }));
 
-    await screen.findByText("Second story");
-    expect(screen.getAllByText("First story")).toHaveLength(1);
     expect(screen.getAllByText("First normal")).toHaveLength(1);
-    expect(screen.getByText("Second normal")).toBeTruthy();
-    expect(fetchMock).toHaveBeenCalledWith("/missions/jp/data?page=2");
+    expect(await screen.findByText("Second normal")).toBeTruthy();
+    expect(screen.getAllByText("Second normal")).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledWith("/missions/jp/data?page=2&family=normalMissions");
     expect(screen.getByRole("status").textContent).toBe("You have reached the end.");
+  });
+
+  it("shows bounded, count-led previews in All mode without incremental loading", async () => {
+    const items = [1, 2, 3, 4].map((id) => makeMission("storyMissions", id, `Story ${id}`));
+    const catalogue = {
+      ...page(items, { page: 1, hasNext: true }),
+      familySummaries: [{ family: "storyMissions" as const, items, total: 120 }]
+    };
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderPage(catalogue);
+
+    expect(await screen.findByText("120 missions")).toBeTruthy();
+    expect(screen.getByText("Story 1")).toBeTruthy();
+    expect(screen.getByText("Story 2")).toBeTruthy();
+    expect(screen.getByText("Story 3")).toBeTruthy();
+    expect(screen.queryByText("Story 4")).toBeNull();
+    expect(screen.getByRole("button", { name: "See all Story missions" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
+    expect(screen.queryByText("You have reached the end.")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("renders one Character Mission V2 threshold with its level label", async () => {
@@ -266,6 +291,15 @@ describe("Missions page", () => {
     expect(screen.getByText("Target: 3")).toBeTruthy();
   });
 
+  it("uses the story mission ID when its sentence is missing and keeps its requirement", async () => {
+    const mission = makeMission("storyMissions", 42, null);
+    mission.requirement = 7;
+    renderPage(page([mission], { page: 1, hasNext: false }), "storyMissions");
+
+    expect(await screen.findByText("Story mission #42")).toBeTruthy();
+    expect(screen.getByText("Target: 7")).toBeTruthy();
+  });
+
   it("keeps the localized unavailable status when Character Mission V2 levels are missing", async () => {
     const mission = { ...makeMission("characterMissionV2s", 2, "Complete {requirement} tasks") };
     mission.parameterGroup = null;
@@ -284,11 +318,15 @@ describe("Missions page", () => {
       .mockImplementation(() => new Promise<Response>((resolve) => (resolveFetch = resolve)));
     vi.stubGlobal("fetch", fetchMock);
 
-    renderPage(page([makeMission("storyMissions", 1, "First story")], { page: 1, hasNext: true }));
+    renderPage(
+      page([makeMission("storyMissions", 1, "First story")], { page: 1, hasNext: true }),
+      "storyMissions"
+    );
     await screen.findByText("First story");
     await fireEvent.click(screen.getByRole("button", { name: "Load more missions" }));
 
     expect(screen.getByRole("status").textContent).toContain("Loading more missions...");
+    expect(fetchMock).toHaveBeenCalledWith("/missions/jp/data?page=2&family=storyMissions");
     resolveFetch(
       new Response(JSON.stringify({ items: [], pagination: { page: 2, hasNext: false } }), {
         status: 200,

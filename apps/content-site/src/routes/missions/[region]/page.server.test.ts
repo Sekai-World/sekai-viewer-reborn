@@ -18,6 +18,7 @@ type MissionPageLoadResult = {
   query: { family: MissionFamily | null };
   catalogue: Promise<{
     items: Mission[];
+    familySummaries?: { family: MissionFamily; items: Mission[]; total: number | null }[];
     loadFailed: boolean;
     pagination: {
       page: number;
@@ -104,6 +105,12 @@ describe("mission catalogue page load", () => {
       }
     });
     expect(catalogue.items).toHaveLength(24);
+    expect(catalogue.familySummaries).toEqual(
+      missionFamilies.map((family) => ({ family, items: expect.any(Array), total: totals[family] }))
+    );
+    expect(catalogue.familySummaries?.every(({ items }) => items.length <= FAMILY_PAGE_SIZE)).toBe(
+      true
+    );
     expect(catalogue.items.map((mission) => mission.family)).toEqual(
       missionFamilies.flatMap((family) => Array.from({ length: FAMILY_PAGE_SIZE }, () => family))
     );
@@ -204,6 +211,7 @@ describe("mission catalogue page load", () => {
       loadFailed: false,
       pagination: { page: 1, pageSize: 24, hasNext: true, total: 66, totalPages: 5 }
     });
+    expect(catalogue.familySummaries?.map(({ total }) => total)).toEqual([8, 40, 18]);
   });
 
   it("keeps the combined total nullable when a family total cannot be derived", async () => {
@@ -216,14 +224,17 @@ describe("mission catalogue page load", () => {
       })
     );
 
-    const result = (await runLoad(
-      "jp",
-      "?family=normalMissions"
-    )) as unknown as MissionPageLoadResult;
+    const result = (await runLoad("jp")) as unknown as MissionPageLoadResult;
 
     await expect(result.catalogue).resolves.toMatchObject({
       loadFailed: false,
       pagination: { page: 1, pageSize: 24, hasNext: true, total: null, totalPages: 4 }
+    });
+    await expect(result.catalogue).resolves.toMatchObject({
+      familySummaries: missionFamilies.map((family) => ({
+        family,
+        total: null
+      }))
     });
   });
 
@@ -239,6 +250,7 @@ describe("mission catalogue page load", () => {
     await expect(result.catalogue).resolves.toEqual({
       ...{
         items: [],
+        familySummaries: [],
         pagination: { page: 1, pageSize: 24, hasNext: false, total: null, totalPages: null }
       },
       loadFailed: true

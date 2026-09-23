@@ -80,6 +80,7 @@ const props = {
   imageUnavailableLabel: "Image unavailable",
   levelsLabel: "Honor levels",
   closeLabel: "Close",
+  resultsLabel: "Honor results",
   homeHref: "/",
   regions: [
     { key: "jp", label: "JP", active: true, href: "/honors/jp" },
@@ -100,6 +101,16 @@ const props = {
 };
 
 describe("HonorCatalogue", () => {
+  it("shows page identity and labels the results region", () => {
+    const { container } = render(HonorCatalogue, props);
+
+    const heading = screen.getByRole("heading", { name: "Honors", level: 1 });
+    expect(heading).toBeTruthy();
+    expect(within(heading.parentElement!).getByText("JP")).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Honor results" })).toBeTruthy();
+    expect(container.querySelector('[aria-label="Honor results"]')).toBeTruthy();
+  });
+
   it("shows one aggregate card summary and keeps full levels behind the dialog", async () => {
     const { container } = render(HonorCatalogue, {
       ...props,

@@ -40,12 +40,14 @@
     family: MissionFamily;
     label: string;
     countLabel: string;
+    browseLabel?: string;
     items: MissionCatalogueItem[];
   };
   let {
     groups,
     catalogueKey,
     loadingGroupCount = 3,
+    overview = false,
     rewardsLabel,
     familyLabel,
     selectedFamily = null,
@@ -67,6 +69,7 @@
     groups: MissionCatalogueGroup[];
     catalogueKey: string;
     loadingGroupCount?: number;
+    overview?: boolean;
     rewardsLabel: string;
     familyLabel: string;
     selectedFamily?: MissionFamily | null;
@@ -296,46 +299,69 @@
     {#key catalogueKey}
       <div class="flex min-w-0 flex-col gap-4">
         {#each groups as group (group.family)}
-          <section class="content-card-shell min-w-0 rounded-2xl p-4">
+          <section
+            class={overview
+              ? "min-w-0 border-b border-(--archive-border-subtle) py-4 first:pt-0 last:border-0 last:pb-0"
+              : "content-card-shell min-w-0 rounded-2xl p-4"}
+          >
             <div class="pb-4">{@render heading(group)}</div>
-            {@render members(group)}
+            {#if overview}
+              {#if group.items.length}
+                <ul class="space-y-2 border-t border-(--archive-border-subtle) py-3 text-sm">
+                  {#each group.items as item (item.key)}
+                    <li class="wrap-anywhere text-(--archive-text-muted)">{item.sentence}</li>
+                  {/each}
+                </ul>
+              {/if}
+              <button
+                type="button"
+                class="btn btn-link min-h-11 px-0"
+                onclick={() => onFamilyChange(group.family)}
+              >
+                {group.browseLabel}
+              </button>
+            {:else}
+              {@render members(group)}
+            {/if}
           </section>
         {/each}
 
-        {#if loadMoreError}
-          <div
-            class="flex flex-col items-center justify-center gap-3 p-4 text-center"
-            role="status"
-          >
-            <p class="text-sm text-error">{loadMoreError}</p>
-            {#if onRetryLoadMore}
-              <button type="button" class="btn min-h-11" onclick={onRetryLoadMore}>
-                {frame.labels.retry}
-              </button>
-            {/if}
-          </div>
-        {:else if hasNext}
-          <div
-            bind:this={sentinel}
-            class="flex min-h-20 items-center justify-center gap-3 p-4 text-sm text-(--archive-text-muted)"
-            role="status"
-            aria-live="polite"
-          >
-            {#if isLoadingMore}
-              <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
-              <span>{loadingMoreLabel}</span>
-            {:else if onLoadMore}
-              <button type="button" class="btn min-h-11" onclick={onLoadMore}>
-                {loadMoreLabel}
-              </button>
-            {:else}
-              <span>{loadMoreLabel}</span>
-            {/if}
-          </div>
-        {:else}
-          <p class="p-4 text-center text-sm text-(--archive-text-muted)" role="status">
-            {endLabel}
-          </p>
+        {#if !overview}
+          {#if loadMoreError}
+            <div
+              class="flex flex-col items-center justify-center gap-3 p-4 text-center"
+              role="status"
+            >
+              <p class="text-sm text-error">{loadMoreError}</p>
+              {#if onRetryLoadMore}
+                <button type="button" class="btn min-h-11" onclick={onRetryLoadMore}>
+                  {frame.labels.retry}
+                </button>
+              {/if}
+            </div>
+          {:else if hasNext}
+            <div
+              bind:this={sentinel}
+              class="flex min-h-20 items-center justify-center gap-3 p-4 text-sm text-(--archive-text-muted)"
+              role="status"
+              aria-live="polite"
+            >
+              {#if isLoadingMore}
+                <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                <span>{loadingMoreLabel}</span>
+              {:else if onLoadMore}
+                <button type="button" class="btn min-h-11" onclick={onLoadMore}>
+                  {loadMoreLabel}
+                </button>
+              {:else}
+                <span>{loadMoreLabel}</span>
+              {/if}
+            </div>
+          {:else}
+            <p class="p-4 text-center text-sm text-(--archive-text-muted)" role="status">
+              {endLabel}
+            </p>
+          {/if}
         {/if}
       </div>
     {/key}

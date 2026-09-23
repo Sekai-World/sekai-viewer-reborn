@@ -27,6 +27,8 @@
     status = "ready",
     empty = false,
     query = "",
+    pageIdentity,
+    resultsLabel,
     onSearch,
     onRetry,
     onPrevious,
@@ -42,6 +44,8 @@
     status?: "ready" | "loading" | "error";
     empty?: boolean;
     query?: string;
+    pageIdentity?: Snippet;
+    resultsLabel?: string;
     onSearch?: (query: string) => void;
     onRetry?: () => void;
     onPrevious?: () => void;
@@ -64,6 +68,7 @@
   <PageHeader breadcrumbs={[{ label: labels.home, href: homeHref }, { label: labels.title }]}>
     {#snippet actions()}<RegionBadgeSwitch options={regions} />{/snippet}
   </PageHeader>
+  {#if pageIdentity}{@render pageIdentity()}{/if}
 
   {#if controls}
     <div
@@ -120,9 +125,10 @@
     </form>
   {/if}
 
-  <div
+  <section
     class="content-card-inset rounded-2xl border border-(--archive-border-subtle) p-3 sm:p-4"
     aria-busy={status === "loading"}
+    aria-label={resultsLabel ?? labels.title}
   >
     {#if status === "loading"}
       <p role="status" class="mb-4 text-sm text-(--archive-text-muted)">{labels.loading}</p>
@@ -159,7 +165,7 @@
     {:else}
       {@render children()}
     {/if}
-  </div>
+  </section>
 
   {#if onPrevious || onNext || pageLabel}
     <nav class="flex flex-wrap items-center justify-center gap-3" aria-label={labels.title}>

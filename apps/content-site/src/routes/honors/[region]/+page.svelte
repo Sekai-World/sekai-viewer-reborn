@@ -238,6 +238,7 @@
   {isLoadingMore}
   loadingMoreLabel={isLoadingMore ? t("honor.loadingMore") : t("honor.loadMore")}
   endLabel={t("honor.end")}
+  resultsLabel={t("honor.results")}
   loadMoreError={loadMoreError ? t("honor.loadMoreError") : null}
   onLoadMore={() => void loadNextPage()}
   onRetryLoadMore={() => void loadNextPage()}

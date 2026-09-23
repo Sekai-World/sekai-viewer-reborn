@@ -87,6 +87,34 @@ describe("MissionCatalogue", () => {
     expect(screen.getByText("Play a live")).toBeTruthy();
   });
 
+  it("renders a compact overview with family totals, previews, and family actions", async () => {
+    const onFamilyChange = vi.fn();
+    const { container } = render(MissionCatalogue, {
+      ...props,
+      overview: true,
+      hasNext: true,
+      onLoadMore: vi.fn(),
+      onFamilyChange,
+      groups: [
+        {
+          ...groups[0],
+          countLabel: "40 missions",
+          browseLabel: "See all Story missions",
+          items: groups[0].items.slice(0, 1)
+        }
+      ]
+    });
+
+    expect(screen.getByText("40 missions")).toBeTruthy();
+    expect(screen.getByText("Read a story")).toBeTruthy();
+    expect(screen.queryByText("Target: 1")).toBeNull();
+    expect(container.querySelector(".content-card-shell")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
+    expect(screen.queryByText("You have reached the end.")).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: "See all Story missions" }));
+    expect(onFamilyChange).toHaveBeenCalledWith("storyMissions");
+  });
+
   it("renders character target levels in the mission metadata hierarchy", () => {
     render(MissionCatalogue, {
       ...props,

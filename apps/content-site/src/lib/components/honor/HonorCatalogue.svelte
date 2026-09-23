@@ -84,6 +84,7 @@
   const categoryTypes = $derived([
     ...new Set(honorTypes.filter((honorType) => honorType.trim().length > 0))
   ]);
+  const activeRegion = $derived(frame.regions.find((region) => region.active));
   const dialogId = $derived(`honor-group-dialog-${catalogueKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`);
   const dialogTitleId = $derived(`${dialogId}-title`);
   const resultsId = $derived(`${dialogId}-results`);
@@ -176,6 +177,17 @@
   {#if group.members.length > 1}
     <p class="mt-2 text-sm font-normal text-(--archive-text-muted)">{group.countLabel}</p>
   {/if}
+{/snippet}
+
+{#snippet pageIdentity()}
+  <div class="flex flex-wrap items-center gap-3">
+    <h1 class="text-2xl font-bold text-(--archive-text-strong)">{frame.labels.title}</h1>
+    {#if activeRegion}
+      <span class="badge badge-primary badge-outline min-h-8 px-3 font-semibold">
+        {activeRegion.label}
+      </span>
+    {/if}
+  </div>
 {/snippet}
 
 {#snippet levelSummary(group: HonorCatalogueGroup)}
@@ -277,7 +289,13 @@
 {/snippet}
 
 <div id={resultsId}>
-  <CatalogueFrame {...frame} empty={false} {controls}>
+  <CatalogueFrame
+    {...frame}
+    empty={false}
+    {controls}
+    {pageIdentity}
+    resultsLabel={frame.resultsLabel ?? frame.labels.title}
+  >
     {#snippet loadingPlaceholder()}
       <div class="grid items-start gap-4 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {#each Array.from({ length: 12 }) as _, index (index)}

@@ -42,6 +42,9 @@
   let { data }: PageProps = $props();
   let resolvedMessages = $state<Record<string, string> | null>(null);
   let items = $state<Mission[]>([]);
+  let familySummaries = $state<{ family: MissionFamily; items: Mission[]; total: number | null }[]>(
+    []
+  );
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isInitialLoading = $state(true);
@@ -176,6 +179,10 @@
   };
   const toItem = (item: Mission) => {
     const targetLevels = getTargetLevels(item);
+    const fallbackSentence =
+      item.family === "storyMissions"
+        ? t("mission.storyUnnamed").replace("{id}", formatNumber(item.id))
+        : t("mission.unnamed");
     const sentenceRequirement =
       item.family === "characterMissionV2s"
         ? targetLevels.length === 1
@@ -202,7 +209,7 @@
     const rankState = item.characterId === null ? null : ranksByCharacter[item.characterId];
     return {
       key: `${item.family}-${item.id}`,
-      sentence: formatMissionTemplate(item.sentence ?? t("mission.unnamed"), sentenceRequirement),
+      sentence: formatMissionTemplate(item.sentence ?? fallbackSentence, sentenceRequirement),
       requirementLabel:
         item.family === "characterMissionV2s" || item.requirement === null
           ? null
@@ -301,6 +308,23 @@
         })
     };
   };
+  const overviewGroups = $derived(
+    familySummaries.map((group) => ({
+      family: group.family,
+      label: t(`mission.family.${group.family}`),
+      countLabel:
+        group.total === null
+          ? t("mission.totalUnavailable")
+          : group.total === 1
+            ? t("mission.totalCountOne")
+            : t("mission.totalCount").replace("{count}", formatNumber(group.total)),
+      browseLabel: t("mission.browseFamily").replace(
+        "{family}",
+        t(`mission.family.${group.family}`)
+      ),
+      items: group.items.slice(0, 3).map(toItem)
+    }))
+  );
   const missionKey = (mission: Mission): string => `${mission.family}-${mission.id}`;
   const queryParams = (family: MissionFamily | null, page?: number): SvelteURLSearchParams => {
     const params = new SvelteURLSearchParams();
@@ -378,6 +402,7 @@
   $effect(() => {
     const requestId = ++listRequestId;
     items = [];
+    familySummaries = [];
     currentPage = 1;
     hasNext = false;
     isInitialLoading = true;
@@ -389,6 +414,7 @@
       .then((catalogue) => {
         if (requestId !== listRequestId) return;
         items = catalogue.items;
+        familySummaries = catalogue.familySummaries ?? [];
         currentPage = catalogue.pagination.page;
         hasNext = catalogue.pagination.hasNext;
         initialError = catalogue.loadFailed;
@@ -413,12 +439,15 @@
   {regions}
   groups={isInitialLoading || initialError
     ? []
-    : groupMissionsByFamily(items).map((group) => ({
-        family: group.family,
-        label: t(`mission.family.${group.family}`),
-        countLabel: t("mission.shownCount").replace("{count}", formatNumber(group.items.length)),
-        items: group.items.map(toItem)
-      }))}
+    : data.query.family
+      ? groupMissionsByFamily(items).map((group) => ({
+          family: group.family,
+          label: t(`mission.family.${group.family}`),
+          countLabel: t("mission.shownCount").replace("{count}", formatNumber(group.items.length)),
+          items: group.items.map(toItem)
+        }))
+      : overviewGroups}
+  overview={!data.query.family}
   loadingGroupCount={data.query.family ? 1 : missionFamilies.length}
   status={isInitialLoading ? "loading" : initialError ? "error" : "ready"}
   rewardsLabel={t("mission.rewards")}
@@ -428,7 +457,7 @@
   getFamilyLabel={(family) =>
     family === null ? t("mission.family.all") : t(`mission.family.${family}`)}
   onFamilyChange={navigateFamily}
-  hasNext={!initialError && hasNext}
+  hasNext={Boolean(data.query.family) && !initialError && hasNext}
   {isLoadingMore}
   loadMoreLabel={t("mission.loadMore")}
   loadingMoreLabel={t("mission.loadingMore")}
