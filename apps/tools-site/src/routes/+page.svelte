@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { env } from "$env/dynamic/public";
   import { BrandLockup } from "@platform/ui-shell";
   import { UnitIconBadge } from "@platform/ui-shell";
   import AssetImage from "@platform/ui-shell/asset-image";
@@ -11,6 +12,7 @@
   import { getTrackerCountdown } from "$lib/tracker-countdown";
 
   let { data }: { data: PageData } = $props();
+  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
   const fallbackMessages = getLocalI18nMessages(["common", "tracker"]);
   let messages = $state(fallbackMessages);
   let events = $state<RegionCurrentEvent[] | null>(null);
@@ -103,6 +105,11 @@
       <a class="hero-action" href="/tracker/jp">
         <span>{translate("home.openTracker")}</span><span aria-hidden="true">↗</span>
       </a>
+      {#if supportPageUrl}
+        <a class="btn btn-ghost btn-sm min-h-11" href={supportPageUrl}>
+          {translate("support.cta")}
+        </a>
+      {/if}
     </div>
   </section>
 

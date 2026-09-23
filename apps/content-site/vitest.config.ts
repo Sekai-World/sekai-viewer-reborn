@@ -72,9 +72,11 @@ export default defineConfig({
       include: [
         "src/lib/i18n/region.ts",
         "src/lib/i18n/runtime.ts",
+        "src/lib/icons/mdi.ts",
         "src/lib/promise-cache.ts",
         "src/lib/page-title.ts",
         "src/lib/tools-site.ts",
+        "src/lib/support-provider-url.ts",
         "src/lib/server/music-list.ts",
         "src/lib/server/music-detail.ts",
         "src/lib/server/gacha-detail.ts",

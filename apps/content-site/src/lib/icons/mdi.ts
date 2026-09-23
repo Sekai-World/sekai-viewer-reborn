@@ -28,6 +28,11 @@ import calendarStar from "@iconify-icons/mdi/calendar-star";
 import calendarStarOutline from "@iconify-icons/mdi/calendar-star-outline";
 import giftOutline from "@iconify-icons/mdi/gift-outline";
 import accountVoice from "@iconify-icons/mdi/account-voice";
+import handHeart from "@iconify-icons/mdi/hand-heart";
+import patreon from "@iconify-icons/mdi/patreon";
+import coffee from "@iconify-icons/mdi/coffee";
+import twitter from "@iconify-icons/mdi/twitter";
+import github from "@iconify-icons/mdi/github";
 
 // ── Toolbar: Sort / View / Filter ────────────────────────────────────
 import clockOutline from "@iconify-icons/mdi/clock-outline";
@@ -119,6 +124,11 @@ addIcon("mdi:calendar-star", calendarStar);
 addIcon("mdi:calendar-star-outline", calendarStarOutline);
 addIcon("mdi:gift-outline", giftOutline);
 addIcon("mdi:account-voice", accountVoice);
+addIcon("mdi:hand-heart", handHeart);
+addIcon("mdi:patreon", patreon);
+addIcon("mdi:coffee", coffee);
+addIcon("mdi:twitter", twitter);
+addIcon("mdi:github", github);
 
 addIcon("mdi:clock-outline", clockOutline);
 addIcon("mdi:clock-start", clockStart);

@@ -1,10 +1,14 @@
 import { defineConfig } from "vitest/config";
 
 const libPath = new URL("./src/lib", import.meta.url).pathname;
+const iconifyStubPath = new URL("./src/lib/test/iconify-stub.ts", import.meta.url).pathname;
 
 export default defineConfig({
   resolve: {
-    alias: [{ find: "$lib", replacement: libPath }]
+    alias: [
+      { find: "$lib", replacement: libPath },
+      { find: /^@iconify\/svelte$/, replacement: iconifyStubPath }
+    ]
   },
   test: {
     environment: "node",

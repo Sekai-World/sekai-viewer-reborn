@@ -66,6 +66,9 @@ apps:
       SEKAI_API_BASE_URL: ""
       PUBLIC_REMOTE_ASSET_BASE_URL: ""
       PUBLIC_SEKAI_I18N_BASE_URL: https://sekai-world.github.io/sekai-i18n-reborn
+      PUBLIC_SUPPORT_PAGE_URL: ""
+      PUBLIC_PATREON_URL: ""
+      PUBLIC_KOFI_URL: ""
     envFrom: []
     extraEnv: []
     ingress:
@@ -90,6 +93,7 @@ apps:
     env:
       SEKAI_API_BASE_URL: ""
       SEKAI_MASTER_API_BASE_URL: ""
+      PUBLIC_SUPPORT_PAGE_URL: ""
     envFrom: []
     extraEnv: []
     ingress:
@@ -113,6 +117,7 @@ apps:
     # notifications. Set this empty value before deploying.
     env:
       SEKAI_API_BASE_URL: ""
+      PUBLIC_SUPPORT_PAGE_URL: ""
     envFrom: []
     extraEnv: []
     ingress:
@@ -136,6 +141,7 @@ apps:
     # notifications. Set this empty value before deploying.
     env:
       SEKAI_API_BASE_URL: ""
+      PUBLIC_SUPPORT_PAGE_URL: ""
     envFrom: []
     extraEnv: []
     ingress:

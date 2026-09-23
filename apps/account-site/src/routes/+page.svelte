@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { env } from "$env/dynamic/public";
   import { RegionSwitcher, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
+  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
 
   const supportedRegions = ["jp", "en", "tw", "kr", "cn"] as const;
   type SupportedRegion = (typeof supportedRegions)[number];
@@ -24,6 +26,7 @@
 
   const sidebarItems: SidebarItem[] = [
     { label: "Home", href: "/", active: true },
+    ...(supportPageUrl ? [{ label: "Support", href: supportPageUrl }] : []),
     ...supportedRegions.map((region) => ({
       label: `${regionLabels[region]} accounts`,
       href: `#region-${region}`
@@ -55,6 +58,11 @@
       secondaryRegion = region as SupportedRegion;
     }}
   />
+  {#if supportPageUrl}
+    <div class="flex justify-end">
+      <a class="btn btn-ghost btn-sm min-h-11" href={supportPageUrl}>Support this project</a>
+    </div>
+  {/if}
 
   <section class="flex flex-col gap-4 md:flex-row md:flex-wrap md:justify-center">
     {#each supportedRegions as region (region)}

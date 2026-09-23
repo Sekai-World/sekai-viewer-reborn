@@ -47,6 +47,10 @@ const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {
     return ["common", "home", "error"];
   }
 
+  if (pathname === "/support") {
+    return ["common", "home", "error"];
+  }
+
   return pathname === "/" ? ["common", "home", "event", "error"] : ["common", "error"];
 };
 
