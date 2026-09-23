@@ -255,17 +255,48 @@ horizontal page overflow.
 
 - The stack is SvelteKit 2, Svelte 5, Tailwind CSS 4, and daisyUI. Use Tailwind
   v4 utilities and the existing local daisyUI proxy pattern in each app CSS.
-- Start with the existing components and templates in the official daisyUI
-  documentation whenever they can meet the need. Prefer their semantic
-  structure, interaction, and accessibility behavior; create a custom component
-  only when an available component or template cannot meet the product's
-  semantic, interaction, or visual contract.
-- If a daisyUI default needs a global change, use `@utility` in that app's
-  `src/app.css` (for example the content-site `card` radius override). If the
-  difference is local, use markup utilities. Keep custom classes for app-specific
-  surface language, not to fight daisyUI defaults.
-- Keep app CSS narrow. Avoid broad global transitions, expensive blur/filter
-  effects, large shadows, and global animations.
+- **Choose daisyUI first.** Start with the daisyUI component or official template
+  that matches the semantic role: button, card, menu, dropdown, modal, drawer,
+  tabs, tooltip, alert, input, or another established primitive. Keep its native
+  element structure, states, and interaction model unless the product contract
+  requires a documented change.
+- **Adapt it with the Archive language.** Prismatic Archive tokens and classes
+  are the visual and surface layer over daisyUI. They are responsible for canvas,
+  panel, inset, raised, and overlay tone; semantic text, border, focus, and
+  accent roles; and the restrained Archive treatment of radius, shadow, and
+  separation. They must not become a second implementation of daisyUI's
+  semantics, keyboard behavior, or component state. Use the existing
+  `content-card-shell`, `content-card-inset`, `content-card-elevated`, and
+  tools-site `archive-*` roles where they own that responsibility.
+- **Choose the narrowest styling scope.** If a daisyUI difference is global to
+  an app, express it with `@utility` in that app's `src/app.css` (for example,
+  the content-site `card` radius override). If it is specific to one instance,
+  use markup utilities. Keep app CSS narrow: custom classes should express
+  app-specific Archive surface language, not broadly fight or duplicate daisyUI
+  defaults; avoid broad global transitions, expensive blur/filter effects, large
+  shadows, and global animations.
+- **Preserve the foundation.** Do not replace semantic buttons, links, form
+  controls, dialogs, menus, or tabs with clickable generic elements. Preserve
+  daisyUI's keyboard behavior, focus-visible treatment, responsive behavior,
+  disabled and loading states, and accessible naming when adapting a component.
+  Any deliberate override must retain an equivalent accessible contract.
+- **Avoid parallel clones.** Do not create an Archive component that merely
+  mirrors a daisyUI component or a shared `@platform/ui-shell` primitive with a
+  different class list. Compose a daisyUI component with domain data instead.
+  Keep catalogue and tool compositions in their owning app; move a primitive to
+  `packages/` only when its markup, behavior, accessibility contract, and visual
+  responsibility are genuinely needed by multiple apps.
+- **Use custom components deliberately.** A custom component is justified when
+  no daisyUI foundation can meet the required semantic, interaction, or visual
+  contract, or when the component represents genuinely domain-specific structure
+  such as a catalogue card or media/retry flow. It still follows the same
+  Archive surface hierarchy and must provide the equivalent keyboard, focus,
+  responsive, reduced-motion, and feedback behavior.
+- **Keep the visual treatment restrained.** Reuse existing radius values and
+  surface classes; do not add new one-off radii. Prefer tonal separation and a
+  thin border before adding a shadow. Use shadows for local elevation or
+  interaction feedback, not as the primary page structure, and avoid stacking
+  multiple heavily rounded or floating containers without a clear hierarchy.
 - Add new visible copy to the matching i18n source namespace. In content-site,
   use the external `sekai-i18n-reborn` dictionaries and the existing runtime
   helpers; use `common` only for labels shared across scopes. Tools-site should
@@ -273,9 +304,12 @@ horizontal page overflow.
   target / gradual adoption** where a site is not yet fully aligned.
 - Keep shared behavior in `packages/` only when multiple apps need it; keep app
   boundaries explicit and do not hand-edit generated output.
-- When a page introduces a new surface or breakpoint, verify light/dark themes,
-  narrow and wide layouts, keyboard focus, reduced motion, loading, empty, and
-  error states before calling the pattern complete.
+- **Review every new surface or component.** Before calling it complete, verify
+  that it uses the right daisyUI semantic foundation; assigns one clear Archive
+  surface role; introduces no parallel clone or one-off visual token; preserves
+  semantics, keyboard access, focus, and responsive behavior; and works in light
+  and dark themes, all supported palettes, narrow and wide layouts, reduced
+  motion, loading, empty, error, disabled, and long-localized-content states.
 
 ## 9. References and adoption status
 
