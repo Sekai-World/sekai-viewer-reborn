@@ -270,8 +270,10 @@
       class="border-t border-(--archive-border-subtle) pt-4 lg:shrink-0 lg:border-t-0 lg:pt-0"
       data-swipe-region-skip
     >
-      <fieldset class="flex min-w-0 flex-row flex-wrap items-center gap-2 text-sm font-semibold">
-        <legend>{sortOrderLabel}</legend>
+      <fieldset
+        aria-label={sortOrderLabel}
+        class="flex min-w-0 flex-row flex-wrap items-center gap-2 text-sm font-semibold"
+      >
         <div class="join shrink-0" role="group" aria-label={sortOrderLabel}>
           <ListToolbarButton
             icon="mdi:numeric"

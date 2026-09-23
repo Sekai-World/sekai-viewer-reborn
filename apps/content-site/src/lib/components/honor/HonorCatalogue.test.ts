@@ -367,7 +367,9 @@ describe("HonorCatalogue", () => {
     expect(deck?.querySelector('[role="group"]')).toBeTruthy();
     const sortGroup = deck?.querySelector('[role="group"]');
     expect(sortGroup?.closest("fieldset")?.classList).toContain("flex-row");
+    expect(sortGroup?.closest("fieldset")?.getAttribute("aria-label")).toBe("Honor ID order");
     expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByText("Honor ID order", { exact: true })).toBeNull();
     expect(screen.getAllByRole("button", { name: /Honor ID order:/ })).toHaveLength(1);
     const descending = screen.getByRole("button", { name: "Honor ID order: Descending" });
     expect(descending.title).toBe("Honor ID order: Descending");
