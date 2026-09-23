@@ -35,6 +35,29 @@ export type MissionReward = {
   status: string | null;
 };
 
+export type MissionParameterGroupLevel = {
+  exp: number | null;
+  quantity: number | null;
+  requirement: number | null;
+  reward?: {
+    resourceQuantity: number | null;
+    resourceType: string | null;
+  } | null;
+  seq: number | null;
+};
+
+export type MissionParameterGroup = {
+  id: number | null;
+  levels: MissionParameterGroupLevel[];
+  lastLevel?: MissionParameterGroupLevel | null;
+  totalLevels?: number | null;
+};
+
+export type CharacterRankReference = {
+  characterRank: number | null;
+  rewards: MissionResourceBox[];
+};
+
 export type Mission = {
   id: number;
   family: MissionFamily;
@@ -43,6 +66,7 @@ export type Mission = {
   eventId: number | null;
   isAchievementMission: boolean | null;
   normalMissionType: string | null;
+  parameterGroup: MissionParameterGroup | null;
   parameterGroupId: number | null;
   progressSentence: string | null;
   requirement: number | null;

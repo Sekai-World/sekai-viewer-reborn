@@ -1,10 +1,15 @@
 import {
+  getCharacterMissionV2ParameterGroupsByRegionByIdLevels,
+  getCharacterRanksByRegionList,
   getMissionsByRegionList,
   type GetMissionsByRegionListData
 } from "@platform/sekai-master-api-sdk";
 import type {
+  CharacterRankReference,
   Mission,
   MissionFamily,
+  MissionParameterGroup,
+  MissionParameterGroupLevel,
   MissionResourceBox,
   MissionResourceBoxDetail,
   MissionReward
@@ -195,6 +200,124 @@ const parseMissionReward = (payload: unknown): MissionReward | null => {
   };
 };
 
+const parseMissionParameterGroupLevel = (payload: unknown): MissionParameterGroupLevel | null => {
+  const root = getObject(payload);
+  if (!root) {
+    return null;
+  }
+
+  return {
+    exp: getNumber(root.exp),
+    quantity: getNumber(root.quantity),
+    requirement: getNumber(root.requirement),
+    reward: getObject(root.reward)
+      ? {
+          resourceQuantity: getNumber(getObject(root.reward)?.resourceQuantity),
+          resourceType: getString(getObject(root.reward)?.resourceType)
+        }
+      : null,
+    seq: getNumber(root.seq)
+  };
+};
+
+const parseMissionParameterGroup = (payload: unknown): MissionParameterGroup | null => {
+  const root = getObject(payload);
+  if (!root) {
+    return null;
+  }
+
+  const levels = getArray(root.previewLevels ?? root.levels)
+    .flatMap((item) => {
+      const level = parseMissionParameterGroupLevel(item);
+      return level ? [level] : [];
+    })
+    .sort((left, right) => {
+      if (left.seq === null) return right.seq === null ? 0 : 1;
+      if (right.seq === null) return -1;
+      return left.seq - right.seq;
+    });
+
+  return {
+    id: getPositiveInteger(root.id),
+    levels,
+    lastLevel: parseMissionParameterGroupLevel(root.lastLevel),
+    totalLevels: getPositiveInteger(root.totalLevels) ?? (levels.length > 0 ? levels.length : null)
+  };
+};
+
+const parseMissionParameterGroupLevels = (payload: unknown): MissionParameterGroupLevel[] =>
+  (getItems(payload) ?? [])
+    .flatMap((item) => {
+      const level = parseMissionParameterGroupLevel(item);
+      return level ? [level] : [];
+    })
+    .sort(
+      (left, right) =>
+        (left.seq ?? Number.MAX_SAFE_INTEGER) - (right.seq ?? Number.MAX_SAFE_INTEGER)
+    );
+
+export type MissionParameterGroupLevelsPage = {
+  items: MissionParameterGroupLevel[];
+  pagination: { page: number; hasNext: boolean };
+};
+
+export const fetchMissionParameterGroupLevels = async (
+  baseUrl: string,
+  region: string,
+  parameterGroupId: number,
+  page: number
+): Promise<MissionParameterGroupLevelsPage> => {
+  const response = await getCharacterMissionV2ParameterGroupsByRegionByIdLevels({
+    baseUrl: getMasterApiV1BaseUrl(baseUrl),
+    path: { region, id: parameterGroupId },
+    query: { page, page_size: 20 }
+  });
+  if (response.error || !response.data) {
+    throw new Error("Failed to load Character Mission V2 levels.");
+  }
+  const items = parseMissionParameterGroupLevels(response.data);
+  const pagination = parseCataloguePaginationMetadata(response.data, "Mission");
+  return {
+    items,
+    pagination: {
+      page,
+      hasNext: getCatalogueHasNext(pagination, page, 20, items.length, "Mission")
+    }
+  };
+};
+
+export const fetchCharacterRankReferences = async (
+  baseUrl: string,
+  region: string,
+  characterId: number
+): Promise<CharacterRankReference[]> => {
+  const response = await getCharacterRanksByRegionList({
+    baseUrl: getMasterApiV1BaseUrl(baseUrl),
+    path: { region },
+    query: { character_id: characterId, page: 1, page_size: 100 }
+  });
+  if (response.error || !response.data) {
+    throw new Error("Failed to load Character Rank references.");
+  }
+  return (getItems(response.data) ?? [])
+    .flatMap((item) => {
+      const root = getObject(item);
+      if (!root) return [];
+      const rank = getPositiveInteger(root.characterRank);
+      if (rank === null) return [];
+      return [
+        {
+          characterRank: rank,
+          rewards: getArray(root.rewardResourceBoxes).flatMap((reward) => {
+            const parsed = parseResourceBox(reward);
+            return parsed ? [parsed] : [];
+          })
+        }
+      ];
+    })
+    .sort((left, right) => (left.characterRank ?? 0) - (right.characterRank ?? 0));
+};
+
 export const parseMission = (payload: unknown, family: MissionFamily): Mission | null => {
   const root = getObject(payload);
   const id = getPositiveInteger(root?.id);
@@ -210,6 +333,7 @@ export const parseMission = (payload: unknown, family: MissionFamily): Mission |
     eventId: getPositiveInteger(root.eventId),
     isAchievementMission: getBoolean(root.isAchievementMission),
     normalMissionType: getString(root.normalMissionType),
+    parameterGroup: parseMissionParameterGroup(root.parameterGroup),
     parameterGroupId: getPositiveInteger(root.parameterGroupId),
     progressSentence: getString(root.progressSentence),
     requirement: getNumber(root.requirement),
@@ -297,6 +421,17 @@ export const parseMissionFamilies = (searchParams: URLSearchParams): MissionFami
   return requestedFamilies.size > 0
     ? missionFamilies.filter((family) => requestedFamilies.has(family))
     : [...missionFamilies];
+};
+
+export const parseMissionFamily = (searchParams: URLSearchParams): MissionFamily | null => {
+  for (const value of searchParams.getAll("family").flatMap((item) => item.split(","))) {
+    const family = value.trim();
+    if (missionFamilies.includes(family as MissionFamily)) {
+      return family as MissionFamily;
+    }
+  }
+
+  return null;
 };
 
 export const createEmptyMissionListPage = (page: number): MissionListPage => ({

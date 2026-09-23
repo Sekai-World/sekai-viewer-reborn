@@ -11,6 +11,7 @@ import {
   createEmptyMissionListPage,
   fetchMissionListPage,
   parseMission,
+  parseMissionFamily,
   parseMissionFamilies,
   parseMissionList
 } from "./mission-list";
@@ -68,6 +69,15 @@ describe("mission catalogue adapter", () => {
       eventId: "42",
       isAchievementMission: true,
       normalMissionType: "normal",
+      parameterGroup: {
+        id: 9,
+        lastLevel: null,
+        totalLevels: 2,
+        levels: [
+          { exp: 100, quantity: null, requirement: 10, reward: null, seq: 1 },
+          { exp: null, quantity: 3, requirement: 20, reward: null, seq: 2 }
+        ]
+      },
       parameterGroupId: "9",
       progressSentence: "Progress",
       requirement: 10,
@@ -119,6 +129,15 @@ describe("mission catalogue adapter", () => {
       eventId: 42,
       isAchievementMission: true,
       normalMissionType: "normal",
+      parameterGroup: {
+        id: 9,
+        lastLevel: null,
+        totalLevels: 2,
+        levels: [
+          { exp: 100, quantity: null, requirement: 10, reward: null, seq: 1 },
+          { exp: null, quantity: 3, requirement: 20, reward: null, seq: 2 }
+        ]
+      },
       parameterGroupId: 9,
       progressSentence: "Progress",
       requirement: 10,
@@ -170,6 +189,47 @@ describe("mission catalogue adapter", () => {
     ).toHaveLength(1);
   });
 
+  it("parses parameter-group levels defensively and orders them by sequence", () => {
+    expect(
+      parseMission(
+        {
+          id: 102,
+          parameterGroup: {
+            id: "not a number",
+            levels: [
+              { seq: 3, requirement: 40 },
+              { seq: 1, requirement: 10, exp: 100 },
+              "malformed level",
+              { seq: "not a number", requirement: "not a number", quantity: null },
+              { seq: 2, requirement: 20, quantity: 2 }
+            ]
+          }
+        },
+        "characterMissionV2s"
+      )
+    ).toMatchObject({
+      parameterGroup: {
+        id: null,
+        levels: [
+          { seq: 1, requirement: 10, exp: 100, quantity: null },
+          { seq: 2, requirement: 20, exp: null, quantity: 2 },
+          { seq: 3, requirement: 40, exp: null, quantity: null },
+          { seq: null, requirement: null, exp: null, quantity: null }
+        ]
+      }
+    });
+
+    expect(
+      parseMission({ id: 103, parameterGroup: "malformed" }, "characterMissionV2s")
+    ).toMatchObject({ parameterGroup: null });
+    expect(
+      parseMission(
+        { id: 104, parameterGroup: { id: 8, levels: "malformed" } },
+        "characterMissionV2s"
+      )
+    ).toMatchObject({ parameterGroup: { id: 8, levels: [] } });
+  });
+
   it("filters requested families in canonical order and defaults to all families", () => {
     expect(
       parseMissionFamilies(
@@ -181,6 +241,17 @@ describe("mission catalogue adapter", () => {
     expect(parseMissionFamilies(new URLSearchParams("family=invalid"))).toEqual([
       ...missionFamilies
     ]);
+  });
+
+  it("resolves one selected family from new and legacy family query values", () => {
+    expect(parseMissionFamily(new URLSearchParams("family=normalMissions"))).toBe("normalMissions");
+    expect(
+      parseMissionFamily(
+        new URLSearchParams("family=invalid,characterMissionV2s&family=storyMissions")
+      )
+    ).toBe("characterMissionV2s");
+    expect(parseMissionFamily(new URLSearchParams("family=invalid"))).toBeNull();
+    expect(parseMissionFamily(new URLSearchParams())).toBeNull();
   });
 
   it("creates an empty page with stable pagination defaults", () => {
