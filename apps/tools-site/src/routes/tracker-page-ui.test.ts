@@ -35,7 +35,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("context.tooltip.show(event, snappedMarker.point)");
     expect(source).toContain("history-chart-legend");
     expect(source).toContain("onkeydown={(event) => handleMarkerKeydown(event, marker.point)}");
-    expect(source).toContain("title>{`${marker.change.previousName} → ${marker.change.nextName}");
+    expect(source).toMatch(
+      /<title\s*>\{`\$\{marker\.change\.previousName\} → \$\{marker\.change\.nextName\}/
+    );
     const plotStyleStart = source.indexOf(".history-chart-plot {");
     const plotStyleEnd = source.indexOf(".history-chart :global(.chart-container)", plotStyleStart);
     expect(plotStyleStart).toBeGreaterThan(-1);
@@ -105,8 +107,8 @@ describe("tracker page UI contract", () => {
     expect(homeSource).toContain("aria-busy={isEventsLoading}");
     expect(homeSource).toContain('aria-hidden="true"');
     expect(homeSource).toContain('translate("home.eventsLoading")');
-    expect(homeSource).toContain(
-      'events = trackerSupportedRegions.map((region) => ({ region, status: "failed", event: null }));'
+    expect(homeSource).toMatch(
+      /events = trackerSupportedRegions\.map\(\(region\) => \(\{\s*region,\s*status: "failed",\s*event: null\s*\}\)\);/
     );
     expect(homeSource).toContain('import { getEventBannerAssetURL } from "$lib/event-assets";');
     expect(homeSource).toContain('import { getTrackerCountdown } from "$lib/tracker-countdown";');
@@ -121,7 +123,7 @@ describe("tracker page UI contract", () => {
     );
     expect(homeSource).toContain('class="event-banner"');
     expect(homeSource).toContain('import AssetImage from "@platform/ui-shell/asset-image";');
-    expect(homeSource).toContain("<AssetImage src={source}");
+    expect(homeSource).toMatch(/<AssetImage\s+src=\{source\}/);
     expect(homeSource).toContain('class="tracker-link-arrow"');
     expect(appCssSource).toContain(".event-banner {");
     expect(appCssSource).toContain("min-height: 6rem;");
@@ -259,8 +261,8 @@ describe("tracker page UI contract", () => {
     );
     expect(countdownBlock).toContain('selectedRankingTab !== "event"');
     expect(countdownBlock).toContain("selectedChapter.chapter.chapterEndAt");
-    expect(countdownBlock).toContain(
-      "selectedChapter.chapter.aggregateAt ?? selectedChapter.chapter.chapterEndAt"
+    expect(countdownBlock).toMatch(
+      /selectedChapter\.chapter\.aggregateAt \?\?\s+selectedChapter\.chapter\.chapterEndAt/
     );
     expect(countdownBlock).not.toContain("selectedChapter.chapter.startAt");
     expect(countdownBlock).not.toContain("selectedChapter.chapter.endAt");
@@ -476,8 +478,8 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("-webkit-backdrop-filter: blur(8px);");
     expect(source).toContain("backdrop-filter: blur(8px);");
     expect(source).toContain(":global(html.dark) .tracker-goal-dialog-box");
-    expect(source).toContain(
-      "background: color-mix(in srgb, var(--archive-surface-default) 86%, var(--archive-surface-canvas));"
+    expect(source).toMatch(
+      /background: color-mix\(\s*in srgb,\s*var\(--archive-surface-default\) 86%,\s*var\(--archive-surface-canvas\)\s*\);/
     );
     expect(source).toContain(":global(html.dark) .tracker-goal-dialog::backdrop");
     expect(source).toContain(
