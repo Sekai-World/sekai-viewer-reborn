@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { applyDocumentTheme, normalizeThemeMode, normalizeThemeName, resolveThemeMode } from "./theme";
+import {
+  applyDocumentTheme,
+  normalizeThemeMode,
+  normalizeThemeName,
+  resolveThemeMode
+} from "./theme";
 
 describe("tools-site theme preferences", () => {
   it("normalizes only supported persisted values", () => {
@@ -15,7 +20,10 @@ describe("tools-site theme preferences", () => {
     const classes = new Set<string>();
     const element = {
       dataset: {} as DOMStringMap,
-      classList: { toggle: (name: string, enabled: boolean) => enabled ? classes.add(name) : classes.delete(name) }
+      classList: {
+        toggle: (name: string, enabled: boolean) =>
+          enabled ? classes.add(name) : classes.delete(name)
+      }
     } as unknown as HTMLElement;
     expect(resolveThemeMode("auto", "dark")).toBe("dark");
     expect(applyDocumentTheme(element, "sakura", "auto", "dark")).toBe("dark");

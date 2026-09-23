@@ -91,7 +91,8 @@ const getNamespaceForFile = (filePath) => {
   ) {
     return "common";
   }
-  return relativePath.startsWith("src/routes/tracker/") || relativePath.startsWith("src/routes/tracker-")
+  return relativePath.startsWith("src/routes/tracker/") ||
+    relativePath.startsWith("src/routes/tracker-")
     ? "tracker"
     : "common";
 };

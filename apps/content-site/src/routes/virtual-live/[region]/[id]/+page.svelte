@@ -29,7 +29,7 @@
   import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
   import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
 
   let { data }: { data: PageData } = $props();
@@ -237,7 +237,9 @@ import type { PageData } from "./$types";
     <title
       >{payload.virtualLive?.name
         ? createPageTitle(payload.virtualLive.name, translate("navigation.virtualLives"))
-        : createPageTitle(`${initialText("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`)}</title
+        : createPageTitle(
+            `${initialText("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`
+          )}</title
     >
   {/await}
 </svelte:head>

@@ -30,13 +30,19 @@ describe("score per elapsed hour", () => {
     expect(calculateScorePerElapsedHour({ score: 900, elapsedMs: 30 * 60_000 })).toBe(1800);
   });
 
-  it.each([null, undefined, -1, Number.NaN, Number.POSITIVE_INFINITY])("rejects unavailable score %s", (score) => {
-    expect(calculateScorePerElapsedHour({ score, elapsedMs: 1 })).toBeNull();
-  });
+  it.each([null, undefined, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects unavailable score %s",
+    (score) => {
+      expect(calculateScorePerElapsedHour({ score, elapsedMs: 1 })).toBeNull();
+    }
+  );
 
-  it.each([null, undefined, 0, -1, Number.NaN, Number.POSITIVE_INFINITY])("rejects unusable elapsed time %s", (elapsedMs) => {
-    expect(calculateScorePerElapsedHour({ score: 1, elapsedMs })).toBeNull();
-  });
+  it.each([null, undefined, 0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    "rejects unusable elapsed time %s",
+    (elapsedMs) => {
+      expect(calculateScorePerElapsedHour({ score: 1, elapsedMs })).toBeNull();
+    }
+  );
 });
 
 describe("chapter elapsed time", () => {
@@ -64,9 +70,9 @@ describe("chapter elapsed time", () => {
         snapshotAt: "2026-01-01T12:00:00.000Z"
       })
     ).toBe(12 * 60 * 60_000);
-    expect(
-      calculateChapterElapsedMs({ startAt, endAt, now: Date.now(), isCurrent: false })
-    ).toBe(24 * 60 * 60_000);
+    expect(calculateChapterElapsedMs({ startAt, endAt, now: Date.now(), isCurrent: false })).toBe(
+      24 * 60 * 60_000
+    );
   });
 
   it("accepts numeric Unix-second chapter timestamps", () => {

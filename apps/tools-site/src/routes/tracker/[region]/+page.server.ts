@@ -87,8 +87,8 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
   }
 
   depends?.("tools-site:tracker:metadata");
-  const catalog = getEventMetadata(masterBaseUrl, region, eventId ?? undefined).then((catalogResult) =>
-    resolveCatalogSelection(catalogResult, eventId)
+  const catalog = getEventMetadata(masterBaseUrl, region, eventId ?? undefined).then(
+    (catalogResult) => resolveCatalogSelection(catalogResult, eventId)
   );
   const trackerResult =
     eventId === null
@@ -128,7 +128,12 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
   } | null> => {
     const [catalogResult, bloomResult] = await Promise.all([catalog, worldBloom]);
     const resolvedEventId = eventId ?? catalogResult.currentEvent?.id;
-    if (resolvedEventId === undefined || resolvedEventId === null || bloomResult.status !== "available") return null;
+    if (
+      resolvedEventId === undefined ||
+      resolvedEventId === null ||
+      bloomResult.status !== "available"
+    )
+      return null;
     const metadata = bloomResult.items.find((item) => item.eventId === resolvedEventId) ?? null;
     if (!metadata) return null;
     const currentEventId = catalogResult.currentEvent?.id ?? null;

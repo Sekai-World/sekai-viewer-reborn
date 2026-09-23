@@ -147,7 +147,10 @@ describe("pull card metadata", () => {
     ];
     const fetchBatch = vi.fn(async ({ query }: { query: { ids: string } }) => ({
       data: {
-        items: [createBatchResponse(query.ids).data.items[0]!, createBatchResponse("2").data.items[0]!]
+        items: [
+          createBatchResponse(query.ids).data.items[0]!,
+          createBatchResponse("2").data.items[0]!
+        ]
       }
     }));
 

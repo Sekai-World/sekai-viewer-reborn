@@ -2,7 +2,7 @@ export enum LOG_LEVEL {
   VERBOSE = 0,
   WARNING = 1,
   ERROR = 2,
-  NONE = 999,
+  NONE = 999
 }
 
 export const log = {
@@ -24,5 +24,5 @@ export const log = {
     if (log.level <= LOG_LEVEL.ERROR) {
       console.error(`[${tag}]`, ...messages);
     }
-  },
+  }
 };

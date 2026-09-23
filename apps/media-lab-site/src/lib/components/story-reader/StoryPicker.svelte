@@ -275,7 +275,14 @@
   ];
   const CARD_ATTR_OPTIONS = ["cute", "mysterious", "cool", "happy", "pure"];
   const CARD_RARITY_OPTIONS = ["rarity_1", "rarity_2", "rarity_3", "rarity_4", "rarity_birthday"];
-  const CARD_SUPPORT_UNIT_OPTIONS = ["none", "idol", "light_sound", "street", "theme_park", "school_refusal"];
+  const CARD_SUPPORT_UNIT_OPTIONS = [
+    "none",
+    "idol",
+    "light_sound",
+    "street",
+    "theme_park",
+    "school_refusal"
+  ];
 
   const fetchGroups = async (region: string, nextType: string): Promise<void> => {
     const seq = ++loadSeq;
@@ -475,8 +482,7 @@
       });
       if (normalizedQuery) params.set("name", normalizedQuery);
       if (cardUnitFilters.length > 0) params.set("unit", cardUnitFilters.join(","));
-      if (cardCharacterFilters.length > 0)
-        params.set("character", cardCharacterFilters.join(","));
+      if (cardCharacterFilters.length > 0) params.set("character", cardCharacterFilters.join(","));
       if (cardSkillFilters.length > 0) params.set("skill", cardSkillFilters.join(","));
       if (cardTypeFilters.length > 0) params.set("type", cardTypeFilters.join(","));
       if (cardAttrFilters.length > 0) params.set("attr", cardAttrFilters.join(","));
@@ -673,8 +679,7 @@
 
   const normalizedQuery = $derived(query.trim().toLowerCase());
 
-  const queryMatches = (text: string): boolean =>
-    text.toLowerCase().includes(normalizedQuery);
+  const queryMatches = (text: string): boolean => text.toLowerCase().includes(normalizedQuery);
 
   const filteredGroups = $derived.by(() => {
     let list = groups;
@@ -683,24 +688,19 @@
         .map((group) => ({
           ...group,
           items: group.items.filter(
-            (item) =>
-              queryMatches(item.label) || queryMatches(item.storyId)
+            (item) => queryMatches(item.label) || queryMatches(item.storyId)
           )
         }))
         .filter((group) => group.items.length > 0);
     }
     return list;
   });
-  const totalMatches = $derived(
-    filteredGroups.reduce((sum, group) => sum + group.items.length, 0)
-  );
+  const totalMatches = $derived(filteredGroups.reduce((sum, group) => sum + group.items.length, 0));
 
   const filteredCharacters = $derived(
     normalizedQuery
       ? characters.filter(
-          (character) =>
-            queryMatches(character.name ?? "") ||
-            queryMatches(character.storyId)
+          (character) => queryMatches(character.name ?? "") || queryMatches(character.storyId)
         )
       : characters
   );
@@ -746,9 +746,7 @@
     selectedEventEpisodes = null;
     episodeLoadFailed = false;
     try {
-      const response = await fetch(
-        `/story-reader/api/stories/${region}/event-stories/${eventId}`
-      );
+      const response = await fetch(`/story-reader/api/stories/${region}/event-stories/${eventId}`);
       if (!response.ok) throw new Error(String(response.status));
       const payload = (await response.json()) as { episodes?: StoryEventEpisodeView[] };
       if (seq !== episodeLoadSeq) return;
@@ -811,18 +809,14 @@
               .map((group) => ({
                 ...group,
                 episodes: group.episodes.filter(
-                  (episode) =>
-                    queryMatches(episode.title) ||
-                    queryMatches(episode.storyId)
+                  (episode) => queryMatches(episode.title) || queryMatches(episode.storyId)
                 )
               }))
               .filter((group) => group.episodes.length > 0)
           }))
           .filter(
             (unit) =>
-              unit.groups.length > 0 ||
-              queryMatches(unit.unitName) ||
-              queryMatches(unit.unit)
+              unit.groups.length > 0 || queryMatches(unit.unitName) || queryMatches(unit.unit)
           )
       : units
   );
@@ -858,13 +852,7 @@
 
   const openStory = (event: MouseEvent, storyId: string): void => {
     // Modified or middle clicks keep the browser's own link behavior.
-    if (
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey
-    ) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
       return;
     }
     if (!readRememberedStoryReaderMode() && !modeDialog) return;
@@ -904,7 +892,9 @@
   {:else}
     <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[60vh]">
       {#each list as group (group.key)}
-        <details class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40">
+        <details
+          class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40"
+        >
           <summary class="collapse-title text-sm font-semibold">
             {group.label}
             <span class="text-base-content/50">({group.items.length})</span>
@@ -918,7 +908,9 @@
               >
                 <span class="min-w-0 truncate">{item.label}</span>
                 {#if item.sublabel}
-                  <span class="shrink-0 font-mono text-xs text-base-content/50">{item.sublabel}</span>
+                  <span class="shrink-0 font-mono text-xs text-base-content/50"
+                    >{item.sublabel}</span
+                  >
                 {/if}
               </a>
             {/each}
@@ -1169,7 +1161,11 @@
           <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
           <span>{labels.loadFailed}</span>
         </div>
-        <button type="button" class="btn btn-outline btn-sm self-start" onclick={() => void fetchEventList(1, false)}>
+        <button
+          type="button"
+          class="btn btn-outline btn-sm self-start"
+          onclick={() => void fetchEventList(1, false)}
+        >
           {labels.retry}
         </button>
       {:else}
@@ -1200,7 +1196,6 @@
       {:else if events.length > 0}
         <p class="py-2 text-center text-sm text-base-content/50">{labels.listEnd}</p>
       {/if}
-
     {:else if storyType === "card"}
       <div class="flex flex-wrap items-center gap-2">
         <div class="join">
@@ -1259,9 +1254,7 @@
 
       {#if cards.length > 0}
         <div class="relative">
-          <div
-            class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6"
-          >
+          <div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
             {#each cards as card (card.cardId)}
               <button
                 type="button"
@@ -1287,8 +1280,9 @@
                   <p
                     class="truncate text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
                     title={card.cardName}
-                    >{card.cardName}</p
                   >
+                    {card.cardName}
+                  </p>
                   <p class="truncate text-xs text-base-content/60">
                     {card.characterName ?? `#${card.cardId}`}
                   </p>
@@ -1363,7 +1357,10 @@
                       title={option.label}
                       class={`btn btn-sm ${cardFilterDraft.units.includes(option.value) ? "btn-primary" : "btn-outline border-base-content/20"}`}
                       onclick={() =>
-                        (cardFilterDraft.units = toggleDraftValue(cardFilterDraft.units, option.value))}
+                        (cardFilterDraft.units = toggleDraftValue(
+                          cardFilterDraft.units,
+                          option.value
+                        ))}
                     >
                       <img
                         src={resolveUnitIconUrl(option.value) ?? undefined}
@@ -1398,7 +1395,10 @@
                     type="button"
                     class={`btn btn-sm ${cardFilterDraft.rarities.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
                     onclick={() =>
-                      (cardFilterDraft.rarities = toggleDraftValue(cardFilterDraft.rarities, option))}
+                      (cardFilterDraft.rarities = toggleDraftValue(
+                        cardFilterDraft.rarities,
+                        option
+                      ))}
                   >
                     {cardRarityLabel(option)}
                   </button>
@@ -1509,7 +1509,6 @@
           <button aria-label={labels.cancel}></button>
         </form>
       </dialog>
-
     {:else if loading}
       <p class="flex items-center gap-2 text-sm text-base-content/60" role="status">
         <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
@@ -1644,8 +1643,7 @@
       {:else}
         <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[60vh]">
           {#each filteredGroups as group (group.key)}
-            {@const singleEpisode =
-              group.items.length === 1 ? group.items[0] : null}
+            {@const singleEpisode = group.items.length === 1 ? group.items[0] : null}
             {#if singleEpisode}
               <a
                 class="flex items-center justify-between gap-2 rounded-xl border border-base-content/10 bg-base-200/40 px-3 py-2.5 text-sm outline-none hover:bg-base-200 focus-visible:ring-2 focus-visible:ring-primary/60"
@@ -1654,11 +1652,15 @@
               >
                 <span class="min-w-0 truncate font-semibold">{group.label}</span>
                 {#if singleEpisode.sublabel}
-                  <span class="shrink-0 font-mono text-xs text-base-content/50">{singleEpisode.sublabel}</span>
+                  <span class="shrink-0 font-mono text-xs text-base-content/50"
+                    >{singleEpisode.sublabel}</span
+                  >
                 {/if}
               </a>
             {:else}
-              <details class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40">
+              <details
+                class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40"
+              >
                 <summary class="collapse-title text-sm font-semibold">
                   {group.label}
                   <span class="text-base-content/50">({group.items.length})</span>
@@ -1672,7 +1674,9 @@
                     >
                       <span class="min-w-0 truncate">{item.label}</span>
                       {#if item.sublabel}
-                        <span class="shrink-0 font-mono text-xs text-base-content/50">{item.sublabel}</span>
+                        <span class="shrink-0 font-mono text-xs text-base-content/50"
+                          >{item.sublabel}</span
+                        >
                       {/if}
                     </a>
                   {/each}
@@ -1730,13 +1734,17 @@
                 <span class="min-w-0 truncate">
                   {talk.scriptId ?? talk.scenarioId ?? `#${talk.storyId}`}
                 </span>
-                <span class="ml-auto shrink-0 font-mono text-xs text-base-content/50">{talk.storyId}</span>
+                <span class="ml-auto shrink-0 font-mono text-xs text-base-content/50"
+                  >{talk.storyId}</span
+                >
               </a>
             {/each}
           </div>
         </div>
       {:else}
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div
+          class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
+        >
           {#each filteredAreas as area (area.areaId)}
             <button
               type="button"
@@ -1758,8 +1766,7 @@
                     loading="lazy"
                     class="absolute inset-0 size-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
                     onerror={(event) => {
-                      (event.currentTarget as HTMLImageElement).style.display =
-                        "none";
+                      (event.currentTarget as HTMLImageElement).style.display = "none";
                     }}
                   />
                 {/if}
@@ -1769,7 +1776,9 @@
                 >{area.name ?? `#${area.areaId}`}</span
               >
               {#if area.subName}
-                <span class="-mt-1.5 w-full truncate text-center text-xs text-base-content/60">{area.subName}</span>
+                <span class="-mt-1.5 w-full truncate text-center text-xs text-base-content/60"
+                  >{area.subName}</span
+                >
               {/if}
             </button>
           {/each}
@@ -1808,7 +1817,11 @@
       </button>
     </div>
     <label class="mt-4 flex cursor-pointer items-center gap-2 text-sm text-base-content/80">
-      <input type="checkbox" class="checkbox checkbox-sm checkbox-primary" bind:checked={rememberChoice} />
+      <input
+        type="checkbox"
+        class="checkbox checkbox-sm checkbox-primary"
+        bind:checked={rememberChoice}
+      />
       {labels.rememberChoice}
     </label>
     <div class="modal-action">
@@ -1835,7 +1848,11 @@
           class="btn h-auto min-h-11 justify-start gap-3 border-base-content/10 bg-base-100 py-2 hover:border-primary/40 hover:bg-primary/5"
           onclick={() => chooseCardEpisode(episode.storyId)}
         >
-          <Icon icon="mdi:script-text-outline" class="size-5 shrink-0 text-primary" aria-hidden="true" />
+          <Icon
+            icon="mdi:script-text-outline"
+            class="size-5 shrink-0 text-primary"
+            aria-hidden="true"
+          />
           <span class="whitespace-normal text-left text-sm font-normal">{episode.label}</span>
         </button>
       {/each}

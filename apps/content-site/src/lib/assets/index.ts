@@ -12,7 +12,9 @@ const trimTrailingSlash = (value: string): string => {
 };
 
 export const getRemoteAssetBaseURL = (baseUrlOverride?: string | null): string => {
-  const configuredBaseUrl = trimTrailingSlash(baseUrlOverride ?? env.PUBLIC_REMOTE_ASSET_BASE_URL ?? "");
+  const configuredBaseUrl = trimTrailingSlash(
+    baseUrlOverride ?? env.PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
+  );
   if (!configuredBaseUrl) {
     throw new Error("Missing required environment variable: PUBLIC_REMOTE_ASSET_BASE_URL");
   }

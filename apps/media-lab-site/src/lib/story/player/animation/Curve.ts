@@ -31,8 +31,7 @@ export class Curve {
    * @see https://easings.net/#easeInOutSine
    */
   ease() {
-    const f: ICurveFunctionMap = (p) => (t: number) =>
-      p(-(Math.cos(Math.PI * t) - 1) / 2);
+    const f: ICurveFunctionMap = (p) => (t: number) => p(-(Math.cos(Math.PI * t) - 1) / 2);
     return new Curve(f(this.p));
   }
   /**
@@ -40,8 +39,7 @@ export class Curve {
     );ee https://easings.net/#easeOutExpo
    */
   easeOutExpo() {
-    const f: ICurveFunctionMap = (p) => (t: number) =>
-      p(t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
+    const f: ICurveFunctionMap = (p) => (t: number) => p(t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
     return new Curve(f(this.p));
   }
   /**
@@ -56,8 +54,7 @@ export class Curve {
    * @see https://easings.net/#easeInExpo
    */
   easeInExpo() {
-    const f: ICurveFunctionMap = (p) => (t: number) =>
-      p(t === 0 ? 0 : Math.pow(2, 10 * t - 10));
+    const f: ICurveFunctionMap = (p) => (t: number) => p(t === 0 ? 0 : Math.pow(2, 10 * t - 10));
     return new Curve(f(this.p));
   }
   loop(period: number) {
@@ -69,8 +66,7 @@ export class Curve {
     return new Curve(f(this.p));
   }
   shrink(length: number, to = 0) {
-    const f: ICurveFunctionMap = (p) => (t: number) =>
-      t < length ? p(t / length) : to;
+    const f: ICurveFunctionMap = (p) => (t: number) => (t < length ? p(t / length) : to);
     return new Curve(f(this.p));
   }
   reverse() {

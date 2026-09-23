@@ -56,11 +56,13 @@ describe("tracker time-travel endpoints", () => {
       status: "available",
       timePoints: ["2026-01-01T00:00:00Z"]
     });
-    expect(mocks.getEventRankingTimePoints).toHaveBeenCalledWith(expect.objectContaining({
-      baseUrl: "https://api.example.test",
-      path: { id: 42 },
-      query: { region: "en" }
-    }));
+    expect(mocks.getEventRankingTimePoints).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://api.example.test",
+        path: { id: 42 },
+        query: { region: "en" }
+      })
+    );
   });
 
   it("searches event names through the bounded list query", async () => {
@@ -149,7 +151,9 @@ describe("tracker time-travel endpoints", () => {
     fetchMock.mockResolvedValueOnce(Response.json({ eventRankings: [] }));
 
     await expect(
-      (await snapshot(request("/tracker/en/snapshot?eventId=42&timestamp=2026-01-01T00:00:00Z"))).json()
+      (
+        await snapshot(request("/tracker/en/snapshot?eventId=42&timestamp=2026-01-01T00:00:00Z"))
+      ).json()
     ).resolves.toEqual({ status: "available", rankings: [] });
     await expect(
       (await graph(request("/tracker/en/graph?eventId=42&rank=1&timestamp=1767225600"))).json()
@@ -158,19 +162,26 @@ describe("tracker time-travel endpoints", () => {
 
   it("loads a validated chapter ranking by character id", async () => {
     mocks.getEventChapterRankingLive.mockResolvedValueOnce({
-      data: { status: "success", data: { eventRankings: [{ rank: 1, score: 321, userId: "7", userName: "Bloom" }] } }
+      data: {
+        status: "success",
+        data: { eventRankings: [{ rank: 1, score: 321, userId: "7", userName: "Bloom" }] }
+      }
     });
 
     await expect(
       (await chapter(request("/tracker/en/chapter?charaId=12&mode=live"))).json()
     ).resolves.toEqual({
       status: "available",
-      rankings: [{ rank: 1, score: 321, userId: "7", userName: "Bloom", eventId: null, timestamp: null }]
+      rankings: [
+        { rank: 1, score: 321, userId: "7", userName: "Bloom", eventId: null, timestamp: null }
+      ]
     });
-    expect(mocks.getEventChapterRankingLive).toHaveBeenCalledWith(expect.objectContaining({
-      baseUrl: "https://api.example.test",
-      query: { charaId: 12, region: "en" }
-    }));
+    expect(mocks.getEventChapterRankingLive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://api.example.test",
+        query: { charaId: 12, region: "en" }
+      })
+    );
   });
 
   it("rejects a historical event request routed through live mode", async () => {
@@ -215,10 +226,12 @@ describe("tracker time-travel endpoints", () => {
         data: { totalCount: 1, limit: 1, page: 1, eventRankings: [{ rank: 1, score: 100 }] }
       }
     });
-    fetchMock.mockResolvedValueOnce(Response.json({
-      status: "success",
-      data: { eventRankings: [{ rank: 1, score: 100, timestamp: "2026-01-01T00:00:00Z" }] }
-    }));
+    fetchMock.mockResolvedValueOnce(
+      Response.json({
+        status: "success",
+        data: { eventRankings: [{ rank: 1, score: 100, timestamp: "2026-01-01T00:00:00Z" }] }
+      })
+    );
 
     await expect(
       (await snapshot(request("/tracker/en/snapshot?eventId=42&timestamp=2026-01-01"))).json()
@@ -234,7 +247,9 @@ describe("tracker time-travel endpoints", () => {
   it("uses the legacy graph URL without a timestamp when no snapshot is selected", async () => {
     fetchMock.mockResolvedValueOnce(Response.json({ eventRankings: [] }));
 
-    await expect((await graph(request("/tracker/tw/graph?eventId=176&rank=1", "tw"))).json()).resolves.toEqual({
+    await expect(
+      (await graph(request("/tracker/tw/graph?eventId=176&rank=1", "tw"))).json()
+    ).resolves.toEqual({
       status: "available",
       points: []
     });

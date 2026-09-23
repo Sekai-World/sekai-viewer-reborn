@@ -55,7 +55,7 @@ All detail pages share the same responsive grid:
 ## 2. PageHeader + RegionBadgeSwitch
 
 ```svelte
-<PageHeader breadcrumbs={breadcrumbs} breadcrumbClass="md:max-w-[68%]">
+<PageHeader {breadcrumbs} breadcrumbClass="md:max-w-[68%]">
   {#snippet actions()}
     {#if dev && debugJson}
       <button class="btn btn-outline btn-sm" onclick={openDebug}>{t("debugJsonButton")}</button>
@@ -107,29 +107,39 @@ Usage:
 
 **Hover effects must not activate on touch devices.** This applies to all detail page components:
 
-| Component | Hover Effect | Touch Behavior |
-|-----------|--------------|----------------|
-| `EventCardFrame` / `hover-3d` cards | 3D lift + shadow | No lift; static elevation only |
-| `EventListCard` / `CardListCard` | translation + brightness | No translation; image stays sharp |
-| `ImagePreviewDialog` trigger | cursor change, subtle scale | Tap opens dialog (no preview hover) |
-| Tab buttons (`AssetCard` tabs) | background color shift | Tap switches tab (no hover state) |
-| Links in music/card lists | `hover:underline` | Tap navigates (no underline on touch) |
-| Badge/buttons with `hover:*` | color/scale changes | Active/tap state only via `:active` |
+| Component                           | Hover Effect                | Touch Behavior                        |
+| ----------------------------------- | --------------------------- | ------------------------------------- |
+| `EventCardFrame` / `hover-3d` cards | 3D lift + shadow            | No lift; static elevation only        |
+| `EventListCard` / `CardListCard`    | translation + brightness    | No translation; image stays sharp     |
+| `ImagePreviewDialog` trigger        | cursor change, subtle scale | Tap opens dialog (no preview hover)   |
+| Tab buttons (`AssetCard` tabs)      | background color shift      | Tap switches tab (no hover state)     |
+| Links in music/card lists           | `hover:underline`           | Tap navigates (no underline on touch) |
+| Badge/buttons with `hover:*`        | color/scale changes         | Active/tap state only via `:active`   |
 
 **Implementation patterns:**
 
 ```css
 /* In app.css or component styles — wrap hover effects in media query */
 @media (hover: hover) and (pointer: fine) {
-  .hover-3d:hover { transform: translateY(-4px) rotateX(2deg); }
-  .card-link:hover .card-image { filter: brightness(1.05); }
-  .tab-button:hover { background: var(--p); }
+  .hover-3d:hover {
+    transform: translateY(-4px) rotateX(2deg);
+  }
+  .card-link:hover .card-image {
+    filter: brightness(1.05);
+  }
+  .tab-button:hover {
+    background: var(--p);
+  }
 }
 
 /* Touch devices get :active for immediate feedback */
 @media (hover: none) and (pointer: coarse) {
-  .card:active { transform: scale(0.99); }
-  .tab-button:active { background: var(--p); }
+  .card:active {
+    transform: scale(0.99);
+  }
+  .tab-button:active {
+    background: var(--p);
+  }
 }
 ```
 
@@ -168,19 +178,20 @@ Any menu, dialog, dropdown, or popover that closes on outside click **must rende
 ```
 
 **Existing components that follow this:**
+
 - `ImagePreviewDialog` (`@platform/ui-shell`) — full-screen backdrop, click outside closes, `Escape` closes
 - `EventDebugDialog` — same pattern
 - Region badge popover in `RegionBadgeSwitch.svelte` — backdrop captures outside taps
 
 **Anti-patterns to avoid:**
 
-| ❌ Don't | ✅ Do |
-|---------|-------|
-| No backdrop; click passes through to page links | Full-viewport backdrop at correct z-index |
-| `pointer-events: none` on backdrop | Backdrop has `onclick={close}` |
-| Only `Escape` closes; no click-outside | Both click-outside + `Escape` |
-| Backdrop behind dialog but above content, so clicks still hit content | Backdrop covers entire viewport, dialog sits above it |
-| z-index wars between multiple overlays | Single overlay stack: backdrop (z-40) → dialog (z-50) → tooltip (z-60) |
+| ❌ Don't                                                              | ✅ Do                                                                  |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| No backdrop; click passes through to page links                       | Full-viewport backdrop at correct z-index                              |
+| `pointer-events: none` on backdrop                                    | Backdrop has `onclick={close}`                                         |
+| Only `Escape` closes; no click-outside                                | Both click-outside + `Escape`                                          |
+| Backdrop behind dialog but above content, so clicks still hit content | Backdrop covers entire viewport, dialog sits above it                  |
+| z-index wars between multiple overlays                                | Single overlay stack: backdrop (z-40) → dialog (z-50) → tooltip (z-60) |
 
 ## 4. Visual Asset Card (Left Column, First)
 
@@ -193,8 +204,7 @@ All primary detail-page media previews use the shared constants from
 
 ```ts
 export const DETAIL_MEDIA_RADIUS_CLASS = "rounded-2xl";
-export const DETAIL_MEDIA_BUTTON_CLASS =
-  "block h-full w-full overflow-hidden rounded-2xl";
+export const DETAIL_MEDIA_BUTTON_CLASS = "block h-full w-full overflow-hidden rounded-2xl";
 ```
 
 Apply the canonical radius to every visible layer of the preview:
@@ -213,24 +223,26 @@ Dialog images may keep their own modal radius, but currently also use
 <article class="card content-card-shell overflow-hidden shadow-sm">
   <div class="card-body gap-3 p-3 sm:p-5 text-center">
     <div class="tabs tabs-box content-card-inset w-full p-1">
-      <button class={getTabClass("banner")} onclick={() => activeTab = "banner"}>
+      <button class={getTabClass("banner")} onclick={() => (activeTab = "banner")}>
         {bannerLabel}
       </button>
-      <button class={getTabClass("title")} onclick={() => activeTab = "title"}>
+      <button class={getTabClass("title")} onclick={() => (activeTab = "title")}>
         {titleLabel}
       </button>
-      <button class={getTabClass("background")} onclick={() => activeTab = "background"}>
+      <button class={getTabClass("background")} onclick={() => (activeTab = "background")}>
         {backgroundLabel}
       </button>
       {#if shouldShowCharacterTab}
-        <button class={getTabClass("characters")} onclick={() => activeTab = "characters"}>
+        <button class={getTabClass("characters")} onclick={() => (activeTab = "characters")}>
           {charactersLabel}
         </button>
       {/if}
     </div>
 
-    <div class="content-card-inset w-full overflow-hidden rounded-2xl transition-[aspect-ratio] duration-300 ease-out
-         {isCompactTab(activeTab) ? 'aspect-16/7' : 'aspect-16/10'}">
+    <div
+      class="content-card-inset w-full overflow-hidden rounded-2xl transition-[aspect-ratio] duration-300 ease-out
+         {isCompactTab(activeTab) ? 'aspect-16/7' : 'aspect-16/10'}"
+    >
       {#if activeTab === "banner"}
         {@render previewImage(bannerUrl, alt, "h-full w-full object-contain p-4 md:p-6")}
       {:else if activeTab === "title"}
@@ -256,14 +268,14 @@ Dialog images may keep their own modal radius, but currently also use
     buttonClass="block h-full w-full overflow-hidden"
     interactive={true}
     {imageClass}
-    onclick={() => previewOpen = true}
+    onclick={() => (previewOpen = true)}
   />
   <ImagePreviewDialog
     bind:open={previewOpen}
     {src}
     {alt}
     {fallbackLabel}
-    closeLabel={closeLabel}
+    {closeLabel}
     formatOptions={["webp", "png"]}
     dialogImageClass="h-auto max-h-[88vh] w-auto max-w-full object-contain rounded-2xl"
   />
@@ -284,7 +296,9 @@ This card is **the canonical info card** used by **every detail page** (Event, C
   <div class="card-body gap-4 p-3 sm:p-5">
     <!-- Section header: icon + label + right-aligned ID badge -->
     <div class="flex items-start justify-between gap-3">
-      <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+      <p
+        class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+      >
         <Icon icon="mdi:information-outline" class="size-4 shrink-0" aria-hidden="true" />
         <span>{detailTitleLabel}</span>
       </p>
@@ -302,7 +316,9 @@ This card is **the canonical info card** used by **every detail page** (Event, C
 
       {#if status}
         <div class="content-card-inset rounded-xl p-3 sm:px-4">
-          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">{statusLabel}</dt>
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            {statusLabel}
+          </dt>
           <dd class="mt-1 wrap-break-word text-sm font-medium">{displayValue(status)}</dd>
         </div>
       {/if}
@@ -314,13 +330,7 @@ This card is **the canonical info card** used by **every detail page** (Event, C
         </div>
       {/if}
 
-      {#each [
-        [startAtLabel, formatDate(startAt)],
-        [endAtLabel, formatDate(endAt)],
-        [platformLabel, displayValue(platform)],
-        [seqLabel, displayValue(seq)],
-        [resourceCodeLabel, displayValue(assetBundleName)]
-      ] as row (row[0])}
+      {#each [[startAtLabel, formatDate(startAt)], [endAtLabel, formatDate(endAt)], [platformLabel, displayValue(platform)], [seqLabel, displayValue(seq)], [resourceCodeLabel, displayValue(assetBundleName)]] as row (row[0])}
         <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
             {row[0]}
@@ -335,27 +345,27 @@ This card is **the canonical info card** used by **every detail page** (Event, C
 
 ### Mandatory Structure (never deviate)
 
-| Part | Required | Style Tokens |
-|------|----------|--------------|
-| **Header** | ✅ Yes | `flex items-start justify-between gap-3` |
-| Header icon | ✅ Yes | `mdi:information-outline`, `size-4 shrink-0` |
-| Header label | ✅ Yes | `flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60` |
-| ID badge | ✅ Yes | `badge badge-outline border-base-content/20 font-semibold` → `#{id}` |
-| **Metadata rows** | ✅ Yes | `dl class="space-y-2"` → each row `content-card-inset rounded-xl p-3 sm:px-4` |
-| Row label (`dt`) | ✅ Yes | `text-xs font-semibold uppercase tracking-[0.16em] opacity-60` |
-| Row value (`dd`) | ✅ Yes | `mt-1 wrap-break-word text-sm font-medium` |
+| Part              | Required | Style Tokens                                                                             |
+| ----------------- | -------- | ---------------------------------------------------------------------------------------- |
+| **Header**        | ✅ Yes   | `flex items-start justify-between gap-3`                                                 |
+| Header icon       | ✅ Yes   | `mdi:information-outline`, `size-4 shrink-0`                                             |
+| Header label      | ✅ Yes   | `flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60` |
+| ID badge          | ✅ Yes   | `badge badge-outline border-base-content/20 font-semibold` → `#{id}`                     |
+| **Metadata rows** | ✅ Yes   | `dl class="space-y-2"` → each row `content-card-inset rounded-xl p-3 sm:px-4`            |
+| Row label (`dt`)  | ✅ Yes   | `text-xs font-semibold uppercase tracking-[0.16em] opacity-60`                           |
+| Row value (`dd`)  | ✅ Yes   | `mt-1 wrap-break-word text-sm font-medium`                                               |
 
 **First row is always the name/title** (e.g., `event.title`, `card.title`, `music.title`, `virtualLive.name`). **Rows are omitted, never placeholder-filled**: render a row only when its value exists, guarded by `{#if}` — this matches `MusicDetailInfoCard.svelte`, which defines neither a status nor a type row, and Event/Card/Gacha, which render the type row only when a value exists. Status and type are subsequent rows, **not badges**. This matches `EventDetailInfoCard.svelte` exactly.
 
 ### Page-Specific Variations (only these)
 
-| Page | `detailTitleLabel` i18n key | Status values | Type values | Extra rows |
-|------|----------------------------|---------------|-------------|------------|
-| Event | `eventDetailTitle` | upcoming/ongoing/ended | `eventType` | `unit`, `bannerCharacter` |
-| Card | `cardDetailTitle` | — | `cardRarityType` | `unit`, `character` |
-| Music | `musicDetailTitle` | — | `musicType` | `jacketAttr`, `bpm` |
-| Gacha | `gachaDetailTitle` | open/closed | `gachaType` | `pickupCount`, `ceiling` |
-| Virtual Live | `virtualLiveDetailTitle` | upcoming/ongoing/ended | `virtualLiveType` | — |
+| Page         | `detailTitleLabel` i18n key | Status values          | Type values       | Extra rows                |
+| ------------ | --------------------------- | ---------------------- | ----------------- | ------------------------- |
+| Event        | `eventDetailTitle`          | upcoming/ongoing/ended | `eventType`       | `unit`, `bannerCharacter` |
+| Card         | `cardDetailTitle`           | —                      | `cardRarityType`  | `unit`, `character`       |
+| Music        | `musicDetailTitle`          | —                      | `musicType`       | `jacketAttr`, `bpm`       |
+| Gacha        | `gachaDetailTitle`          | open/closed            | `gachaType`       | `pickupCount`, `ceiling`  |
+| Virtual Live | `virtualLiveDetailTitle`    | upcoming/ongoing/ended | `virtualLiveType` | —                         |
 
 **Only** the i18n key, status/type enum values, and optional extra rows (unit, character, etc.) may differ. The **structure, spacing, typography, and inset rows must be identical**.
 
@@ -364,7 +374,9 @@ This card is **the canonical info card** used by **every detail page** (Event, C
   <div class="card-body gap-4 p-3 sm:p-5">
     <!-- Section header: icon + label + right-aligned ID badge -->
     <div class="flex items-start justify-between gap-3">
-      <p class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+      <p
+        class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+      >
         <Icon icon="mdi:information-outline" class="size-4 shrink-0" aria-hidden="true" />
         <span>{detailTitleLabel}</span>
       </p>
@@ -375,16 +387,7 @@ This card is **the canonical info card** used by **every detail page** (Event, C
 
     <!-- Metadata rows: each in content-card-inset -->
     <dl class="space-y-2">
-      {#each [
-        [nameLabel, title ?? id],
-        [statusLabel, statusLabel(status)],
-        [typeLabel, typeLabel(type)],
-        [startAtLabel, formatDate(startAt)],
-        [endAtLabel, formatDate(endAt)],
-        [platformLabel, displayValue(platform)],
-        [seqLabel, displayValue(seq)],
-        [resourceCodeLabel, displayValue(assetBundleName)]
-      ] as row (row[0])}
+      {#each [[nameLabel, title ?? id], [statusLabel, statusLabel(status)], [typeLabel, typeLabel(type)], [startAtLabel, formatDate(startAt)], [endAtLabel, formatDate(endAt)], [platformLabel, displayValue(platform)], [seqLabel, displayValue(seq)], [resourceCodeLabel, displayValue(assetBundleName)]] as row (row[0])}
         <div class="content-card-inset rounded-xl p-3 sm:px-4">
           <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
             {row[0]}
@@ -399,17 +402,17 @@ This card is **the canonical info card** used by **every detail page** (Event, C
 
 ### Key Style Tokens (must match exactly)
 
-| Element | Classes |
-|---------|---------|
-| Section label | `flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60` |
-| Icon in label | `size-4 shrink-0` + `aria-hidden="true"` |
-| ID badge | `badge badge-outline border-base-content/20 font-semibold` |
-| Main title | `wrap-break-word text-2xl/tight font-bold sm:text-3xl` |
-| Status badge | `badge badge-primary font-semibold` |
-| Type badge | `badge badge-outline font-semibold` |
-| Metadata row | `content-card-inset rounded-xl p-3 sm:px-4` |
-| Row label (dt) | `text-xs font-semibold uppercase tracking-[0.16em] opacity-60` |
-| Row value (dd) | `mt-1 wrap-break-word text-sm font-medium` |
+| Element        | Classes                                                                                  |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| Section label  | `flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60` |
+| Icon in label  | `size-4 shrink-0` + `aria-hidden="true"`                                                 |
+| ID badge       | `badge badge-outline border-base-content/20 font-semibold`                               |
+| Main title     | `wrap-break-word text-2xl/tight font-bold sm:text-3xl`                                   |
+| Status badge   | `badge badge-primary font-semibold`                                                      |
+| Type badge     | `badge badge-outline font-semibold`                                                      |
+| Metadata row   | `content-card-inset rounded-xl p-3 sm:px-4`                                              |
+| Row label (dt) | `text-xs font-semibold uppercase tracking-[0.16em] opacity-60`                           |
+| Row value (dd) | `mt-1 wrap-break-word text-sm font-medium`                                               |
 
 ## 6. Secondary Cards (Left Column, Optional)
 
@@ -418,7 +421,9 @@ Waiting room, additional data, etc. follow the same card shell but with simpler 
 ```svelte
 <article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-5">
-    <h2 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+    <h2
+      class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+    >
       <Icon icon="mdi:door-open" class="size-4 shrink-0" aria-hidden="true" />
       <span>{waitingRoomTitle}</span>
     </h2>
@@ -449,11 +454,7 @@ All small section titles on detail pages use one canonical style. The reference 
   id={sectionTitleId}
   class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
 >
-  <Icon
-    icon={sectionIcon}
-    class="size-4 shrink-0 translate-y-[0.5px]"
-    aria-hidden="true"
-  />
+  <Icon icon={sectionIcon} class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
   <span>{sectionTitle}</span>
 </h2>
 ```
@@ -471,16 +472,16 @@ path is confirmed. Do not expose the bundle filename or guess an image URL.
 
 Locked visual tokens:
 
-| Property | Required token |
-|----------|----------------|
-| Font size | `text-xs` |
-| Font weight | `font-semibold` |
-| Case | `uppercase` |
-| Letter spacing | `tracking-[0.18em]` |
+| Property             | Required token                    |
+| -------------------- | --------------------------------- |
+| Font size            | `text-xs`                         |
+| Font weight          | `font-semibold`                   |
+| Case                 | `uppercase`                       |
+| Letter spacing       | `tracking-[0.18em]`               |
 | Text color/intensity | inherit text color + `opacity-60` |
-| Text/icon gap | `gap-1.5` |
-| Icon size | `size-4 shrink-0` |
-| Icon baseline | `translate-y-[0.5px]` |
+| Text/icon gap        | `gap-1.5`                         |
+| Icon size            | `size-4 shrink-0`                 |
+| Icon baseline        | `translate-y-[0.5px]`             |
 
 Do not use `text-sm`, `gap-2`, `tracking-normal`, or icon-only `opacity-70` for detail-section titles. Those values create a visibly different hierarchy and were the source of the previous inconsistency in `EventDetailDataCard.svelte`.
 
@@ -488,9 +489,7 @@ Do not use `text-sm`, `gap-2`, `tracking-normal`, or icon-only `opacity-70` for 
 {#if hasInformation}
   <article class="card content-card-shell shadow-sm">
     <div class="card-body gap-4 p-3 sm:p-5">
-      <section class="space-y-2" aria-labelledby="detail-information-title">
-        ...
-      </section>
+      <section class="space-y-2" aria-labelledby="detail-information-title">...</section>
     </div>
   </article>
 {/if}
@@ -503,7 +502,11 @@ Do not use `text-sm`, `gap-2`, `tracking-normal`, or icon-only `opacity-70` for 
           id="detail-schedules-title"
           class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
         >
-          <Icon icon="mdi:calendar-clock" class="size-4 shrink-0 translate-y-[0.5px]" aria-hidden="true" />
+          <Icon
+            icon="mdi:calendar-clock"
+            class="size-4 shrink-0 translate-y-[0.5px]"
+            aria-hidden="true"
+          />
           <span>{schedulesTitle}</span>
         </h2>
 
@@ -520,20 +523,31 @@ Do not use `text-sm`, `gap-2`, `tracking-normal`, or icon-only `opacity-70` for 
   </article>
 {/if}
 
-Virtual Live schedules are **not** rendered as a flat list of cards. The canonical component is `VirtualLiveScheduleSwitcher.svelte`, which groups schedules by **local calendar date** and exposes one date group at a time behind accessible date tabs.
-
-**Schedule switcher behavior (canonical):**
-
-- **Date grouping + tabs**: schedules are bucketed by their calendar day using `Intl.DateTimeFormat` with the browser/UI locale (so grouping and labels are locale-consistent). Each date becomes a horizontal `role="tablist"` tab showing the short `weekday month day` label and a count badge. Tabs scroll horizontally (`overflow-x-auto`, marked `data-swipe-region-skip` so region swipe does not hijack the tab strip).
-- **One group at a time**: only the active date group's schedules render in a `role="tabpanel"` below the tabs.
-- **Active/next/final default selection**: `defaultGroupKey` chooses the active group on load — first a group with a schedule currently in progress (start ≤ now ≤ end); else the next future date; else the last dated group; else the final group (e.g. an "unavailable" group).
-- **Keyboard navigation**: Arrow Left/Right wrap between tabs, Home/End jump to first/last; `tabindex` roving (active tab `0`, others `-1`); selecting via keyboard focuses the new tab.
-- **Swipe exclusion**: the tab strip is marked `data-swipe-region-skip`, so horizontal swipe over the tabs performs tab scroll, not region switching.
-- **Chronological ranges**: within a day, schedules are sorted by start time. Each row shows a compact `start time – end time` range using the locale time formatter (`hour: "2-digit", minute: "2-digit"`).
-- **No seq / Order labels**: internal `seq` / `Order` values are never shown to users. The `virtualLiveScheduleSeqLabel` i18n key was removed.
-- **Cross-midnight clarity**: when a schedule's end time falls on a different calendar day than its start, the end is formatted with the full `weekday month day hour:minute` formatter so the date is explicit; same-day ends show time only.
-- **After Event is secondary**: a schedule with `isAfterEvent` renders a small `badge-outline badge-sm` `After Event` (`virtualLiveScheduleIsAfterEventLabel`) on the right; it is not a primary sort key or heading.
- - **Unavailable times**: schedules with unparseable start/end times fall into an "unavailable" group (`virtualLiveValueUnavailable`) rendered last.
+Virtual Live schedules are **not** rendered as a flat list of cards. The canonical component is
+`VirtualLiveScheduleSwitcher.svelte`, which groups schedules by **local calendar date** and exposes
+one date group at a time behind accessible date tabs. **Schedule switcher behavior (canonical):** -
+**Date grouping + tabs**: schedules are bucketed by their calendar day using `Intl.DateTimeFormat`
+with the browser/UI locale (so grouping and labels are locale-consistent). Each date becomes a
+horizontal `role="tablist"` tab showing the short `weekday month day` label and a count badge. Tabs
+scroll horizontally (`overflow-x-auto`, marked `data-swipe-region-skip` so region swipe does not
+hijack the tab strip). - **One group at a time**: only the active date group's schedules render in a
+`role="tabpanel"` below the tabs. - **Active/next/final default selection**: `defaultGroupKey`
+chooses the active group on load — first a group with a schedule currently in progress (start ≤ now
+≤ end); else the next future date; else the last dated group; else the final group (e.g. an
+"unavailable" group). - **Keyboard navigation**: Arrow Left/Right wrap between tabs, Home/End jump
+to first/last; `tabindex` roving (active tab `0`, others `-1`); selecting via keyboard focuses the
+new tab. - **Swipe exclusion**: the tab strip is marked `data-swipe-region-skip`, so horizontal
+swipe over the tabs performs tab scroll, not region switching. - **Chronological ranges**: within a
+day, schedules are sorted by start time. Each row shows a compact `start time – end time` range
+using the locale time formatter (`hour: "2-digit", minute: "2-digit"`). - **No seq / Order labels**:
+internal `seq` / `Order` values are never shown to users. The `virtualLiveScheduleSeqLabel` i18n key
+was removed. - **Cross-midnight clarity**: when a schedule's end time falls on a different calendar
+day than its start, the end is formatted with the full `weekday month day hour:minute` formatter so
+the date is explicit; same-day ends show time only. - **After Event is secondary**: a schedule with
+`isAfterEvent` renders a small `badge-outline badge-sm` `After Event`
+(`virtualLiveScheduleIsAfterEventLabel`) on the right; it is not a primary sort key or heading. -
+**Unavailable times**: schedules with unparseable start/end times fall into an "unavailable" group
+(`virtualLiveValueUnavailable`) rendered last.
 ```
 
 **§7.7 Virtual Live Characters (canonical):**
@@ -596,16 +610,16 @@ Information, Schedules, Characters, Setlists, and Rewards should remain separate
 
 ### Right Column Card Variants
 
-| Section | Icon | Inner Layout |
-|---------|------|--------------|
-| Information | `mdi:text-box-outline` | one `content-card-inset space-y-2 rounded-xl p-3` containing summary + description |
-| Schedules | `mdi:calendar-clock` | `VirtualLiveScheduleSwitcher` — date-grouped accessible tabbed switcher (see §7 canonical behavior); not a flat grid |
-| Characters | `mdi:account-group` | avatar grid via `gameCharacterUnitId`→`gameCharacterId` enrichment (see §7.7); graceful placeholders when unmapped |
-| Setlists | `mdi:playlist-check` | summary on the page + full ordered list in `VirtualLiveSetlistSummary` accessible scrollable dialog (see §7.8); not a flat inline grid |
-| Rewards | `mdi:gift-outline` | `grid gap-2 sm:grid-cols-2`; each row `rounded-xl p-3` |
-| Event Bonus | `mdi:cards-outline` | grouped character cards |
-| Event Music | `mdi:music-note-outline` | list with thumbnails |
-| Ranking Rewards | `mdi:gift-outline` | range cards with reward chips |
+| Section         | Icon                     | Inner Layout                                                                                                                           |
+| --------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Information     | `mdi:text-box-outline`   | one `content-card-inset space-y-2 rounded-xl p-3` containing summary + description                                                     |
+| Schedules       | `mdi:calendar-clock`     | `VirtualLiveScheduleSwitcher` — date-grouped accessible tabbed switcher (see §7 canonical behavior); not a flat grid                   |
+| Characters      | `mdi:account-group`      | avatar grid via `gameCharacterUnitId`→`gameCharacterId` enrichment (see §7.7); graceful placeholders when unmapped                     |
+| Setlists        | `mdi:playlist-check`     | summary on the page + full ordered list in `VirtualLiveSetlistSummary` accessible scrollable dialog (see §7.8); not a flat inline grid |
+| Rewards         | `mdi:gift-outline`       | `grid gap-2 sm:grid-cols-2`; each row `rounded-xl p-3`                                                                                 |
+| Event Bonus     | `mdi:cards-outline`      | grouped character cards                                                                                                                |
+| Event Music     | `mdi:music-note-outline` | list with thumbnails                                                                                                                   |
+| Ranking Rewards | `mdi:gift-outline`       | range cards with reward chips                                                                                                          |
 
 ## 9. Related Items Display Patterns
 
@@ -615,15 +629,16 @@ When a detail page shows related entities (cards, musics, events, gachas, virtua
 
 Event detail right column uses focused card shells (see `EventDetailDataCard.svelte`):
 
-| Related Type | Component | Display Pattern |
-|-------------|-----------|-----------------|
-| Bonus Rules | — | grouped by bonus character; show attribute icons, counts, rates |
-| Featured Cards | `CardThumbnail` | grid `gap-3 sm:grid-cols-2`; each shows artwork, name, rarity, attribute, bonus badge |
-| Event Musics | `EventAssetImage` (jacket) | list `space-y-3`; thumbnail + title + link to `/music/:region/:id` |
-| Ranking Rewards | — | range cards (`content-card-inset`) with reward chips (quantity, type, thumbnail) |
-| Virtual Live | `EventAssetImage` (banner) | single `content-card-inset` with banner (`aspect-[33/10]`) + time range chip |
+| Related Type    | Component                  | Display Pattern                                                                       |
+| --------------- | -------------------------- | ------------------------------------------------------------------------------------- |
+| Bonus Rules     | —                          | grouped by bonus character; show attribute icons, counts, rates                       |
+| Featured Cards  | `CardThumbnail`            | grid `gap-3 sm:grid-cols-2`; each shows artwork, name, rarity, attribute, bonus badge |
+| Event Musics    | `EventAssetImage` (jacket) | list `space-y-3`; thumbnail + title + link to `/music/:region/:id`                    |
+| Ranking Rewards | —                          | range cards (`content-card-inset`) with reward chips (quantity, type, thumbnail)      |
+| Virtual Live    | `EventAssetImage` (banner) | single `content-card-inset` with banner (`aspect-[33/10]`) + time range chip          |
 
 **Rules:**
+
 - Use enriched `/events/{region}/{id}/cards` and `/musics` relation rows for display fields (don't re-fetch per-item detail).
 - Render card thumbnails via `CardThumbnail.svelte`; music jackets via `EventAssetImage.svelte`.
 - Keep IDs as secondary metadata + links, not primary content.
@@ -634,12 +649,13 @@ Event detail right column uses focused card shells (see `EventDetailDataCard.sve
 
 Card detail right column (`CardDetailGachaCard.svelte`, `CardDetailEventsCard.svelte`):
 
-| Related Type | Pattern |
-|-------------|---------|
+| Related Type  | Pattern                                                                                                                                                                    |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Gacha banners | "Latest + first + expand": show most recent and earliest gacha only by default; `btn btn-ghost btn-sm` expand button reveals full descending list. Sort by `startAt` desc. |
-| Events | Same "latest + first + expand" pattern for event cards (`EventListCard` inside). |
+| Events        | Same "latest + first + expand" pattern for event cards (`EventListCard` inside).                                                                                           |
 
 **Implementation:**
+
 - `CardDetailGachaCard.svelte` — takes `gacha[]`, sorts desc, computes `hiddenCount`, renders first/last + expand toggle.
 - `CardDetailEventsCard.svelte` — wraps `EventListCard` in same pattern.
 
@@ -647,38 +663,38 @@ Card detail right column (`CardDetailGachaCard.svelte`, `CardDetailEventsCard.sv
 
 Music detail uses inline related sections:
 
-| Related Type | Pattern |
-|-------------|---------|
+| Related Type                | Pattern                                                             |
+| --------------------------- | ------------------------------------------------------------------- |
 | Events featuring this music | `EventListCard` in `grid gap-3 sm:grid-cols-2` (max 6, then expand) |
-| Cards with this music | `CardThumbnail` grid `gap-2 sm:grid-cols-3` (inventory density) |
+| Cards with this music       | `CardThumbnail` grid `gap-2 sm:grid-cols-3` (inventory density)     |
 
 ### 9.4 Gacha Detail → Related Cards / Events
 
 Gacha detail right column:
 
-| Related Type | Pattern |
-|-------------|---------|
-| Pickup cards | `CardThumbnail` grid `gap-2 sm:grid-cols-3` (inventory density) |
-| Related events | `EventListCard` grid `gap-3 sm:grid-cols-2` |
+| Related Type   | Pattern                                                         |
+| -------------- | --------------------------------------------------------------- |
+| Pickup cards   | `CardThumbnail` grid `gap-2 sm:grid-cols-3` (inventory density) |
+| Related events | `EventListCard` grid `gap-3 sm:grid-cols-2`                     |
 
 ### 9.5 Virtual Live Detail → Related Items (Extrapolated from Event Detail)
 
 Following Event detail's approach, Virtual Live detail should surface related entities in the right column using focused card shells. Each section gets its own card with icon+label header.
 
-| Related Type | Source Endpoint | Display Pattern | Component |
-|-------------|----------------|-----------------|-----------|
-| **Events featuring this virtual live** | `/events/{region}/list?virtualLiveId={id}` (or enriched from event detail aggregate) | `EventListCard` grid `gap-3 sm:grid-cols-2` | `EventListCard.svelte` |
-| **Cards from setlists** | `/virtual-lives/{region}/{id}/setlists` → `musicId` → `/cards/{region}/{id}` (or enriched setlist rows with card refs) | `CardThumbnail` grid `gap-2 sm:grid-cols-3 md:grid-cols-4` (inventory density) | `CardThumbnail.svelte` |
-| **Musics from setlists** | `/virtual-lives/{region}/{id}/setlists` (enriched with music metadata) | Event-style music list: jacket left (`size-16`), title + `#id` + attribute right, `space-y-2` | inline with `EventAssetImage` |
-| **Characters appearing** | `/virtual-lives/{region}/{id}` (already in `characters[]`) | Already shown in right column "Characters" section — no separate cross-ref needed | `CharacterAvatar.svelte` (`variant="lg"`) |
-| **Rewards / resource boxes** | `/virtual-lives/{region}/{id}` (already in `rewards[]`) | Already shown in right column "Rewards" section | inline chips |
+| Related Type                           | Source Endpoint                                                                                                        | Display Pattern                                                                               | Component                                 |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Events featuring this virtual live** | `/events/{region}/list?virtualLiveId={id}` (or enriched from event detail aggregate)                                   | `EventListCard` grid `gap-3 sm:grid-cols-2`                                                   | `EventListCard.svelte`                    |
+| **Cards from setlists**                | `/virtual-lives/{region}/{id}/setlists` → `musicId` → `/cards/{region}/{id}` (or enriched setlist rows with card refs) | `CardThumbnail` grid `gap-2 sm:grid-cols-3 md:grid-cols-4` (inventory density)                | `CardThumbnail.svelte`                    |
+| **Musics from setlists**               | `/virtual-lives/{region}/{id}/setlists` (enriched with music metadata)                                                 | Event-style music list: jacket left (`size-16`), title + `#id` + attribute right, `space-y-2` | inline with `EventAssetImage`             |
+| **Characters appearing**               | `/virtual-lives/{region}/{id}` (already in `characters[]`)                                                             | Already shown in right column "Characters" section — no separate cross-ref needed             | `CharacterAvatar.svelte` (`variant="lg"`) |
+| **Rewards / resource boxes**           | `/virtual-lives/{region}/{id}` (already in `rewards[]`)                                                                | Already shown in right column "Rewards" section                                               | inline chips                              |
 
 **Implementation notes:**
 
 - **Events grid**: same as Event detail related events — use `EventListCard` with `hover-3d` frame, banner `aspect-[33/10]`, status/type badges, unit icon (`variant="sm"`), spoiler overlay if `startAt > now`.
 - **Cards grid**: inventory density (`aspect-square`, `gap-1.5`, `ring-2` rarity border). Each card links to `/card/:region/:id`. Use `loadMode="visible"`.
 - **Musics list**: follow Event detail music pattern exactly — `EventAssetImage` jacket (`size-16 rounded-lg object-cover`), right side: title (semibold), `#id · attr` (text-xs opacity-60), view-detail link. Wrap each in `content-card-inset rounded-xl p-3`.
-- **Setlists already shown**: the main "Setlists" section in right column is intrinsic data. Cross-ref cards/musics are *additional* discovery paths.
+- **Setlists already shown**: the main "Setlists" section in right column is intrinsic data. Cross-ref cards/musics are _additional_ discovery paths.
 - **Skeleton**: mirror the final card shells (event skeleton = banner + badges + title; card skeleton = square with ring; music skeleton = jacket + 2 text lines).
 
 **Right column order (with cross-refs added):**
@@ -697,23 +713,23 @@ Related Musics from Setlists (cross-ref)
 
 ### 9.6 Shared Density Rules
 
-| Density Level | Use Case | Grid |
-|--------------|----------|------|
-| Content card | Event musics, related events | `gap-3 sm:grid-cols-2` |
+| Density Level       | Use Case                                   | Grid                                                                                                                         |
+| ------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| Content card        | Event musics, related events               | `gap-3 sm:grid-cols-2`                                                                                                       |
 | Inventory thumbnail | Pickup cards, gacha cards, card thumbnails | `gap-1.5`, `grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-4 xl:grid-cols-6`, square `aspect-square`, minimal chrome |
-| Compact chip | Rewards, ranking ranges | `flex flex-wrap gap-2` with `content-card-inset min-w-36` |
+| Compact chip        | Rewards, ranking ranges                    | `flex flex-wrap gap-2` with `content-card-inset min-w-36`                                                                    |
 
 ### 9.7 Asset Helpers
 
-| Asset Type | Helper | Fallback |
-|-----------|--------|----------|
-| Card normal/after-training | `getCardNormalAssetURL` / `getCardAfterTrainingAssetURL` | `EventAssetImage` with `fallbackSrc` = logo |
-| Card transparent/cutout | `getCardCutoutAssetURL` | same |
-| Event banner/logo/background | `getEventBannerAssetURL` / `getEventLogoAssetURL` / `getEventBackgroundAssetURL` | — |
-| Music jacket | `getMusicJacketAssetURL` | — |
-| Gacha banner/logo | `getGachaBannerAssetURL` / `getGachaLogoAssetURL` | logo as fallback for banner |
-| Virtual Live banner | `getVirtualLiveBannerAssetURL` | — |
-| Character thumbnail | `getLocalCharacterThumbnailAssetURL` | `CharacterAvatar` default |
+| Asset Type                   | Helper                                                                           | Fallback                                    |
+| ---------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------- |
+| Card normal/after-training   | `getCardNormalAssetURL` / `getCardAfterTrainingAssetURL`                         | `EventAssetImage` with `fallbackSrc` = logo |
+| Card transparent/cutout      | `getCardCutoutAssetURL`                                                          | same                                        |
+| Event banner/logo/background | `getEventBannerAssetURL` / `getEventLogoAssetURL` / `getEventBackgroundAssetURL` | —                                           |
+| Music jacket                 | `getMusicJacketAssetURL`                                                         | —                                           |
+| Gacha banner/logo            | `getGachaBannerAssetURL` / `getGachaLogoAssetURL`                                | logo as fallback for banner                 |
+| Virtual Live banner          | `getVirtualLiveBannerAssetURL`                                                   | —                                           |
+| Character thumbnail          | `getLocalCharacterThumbnailAssetURL`                                             | `CharacterAvatar` default                   |
 
 Always use `EventAssetImage.svelte` (or `AssetImage.svelte` for non-event) with appropriate `loadMode="visible"` for lists.
 
@@ -761,26 +777,26 @@ addIcon("mdi:music-note-outline", musicNoteOutline);
 
 ## 11. Shared Components Reused
 
-| Pattern | Component |
-|---------|-----------|
-| Page header + breadcrumbs | `PageHeader` + `RegionBadgeSwitch` |
+| Pattern                       | Component                                                       |
+| ----------------------------- | --------------------------------------------------------------- |
+| Page header + breadcrumbs     | `PageHeader` + `RegionBadgeSwitch`                              |
 | Visual asset with tabs + zoom | `EventDetailAssetCard.svelte` (Event) / inline pattern (others) |
-| Metadata rows | `dl` + `content-card-inset` (no separate component) |
-| Character avatar | `CharacterAvatar.svelte` (`variant="lg"`) |
-| Unit icon | `UnitIconBadge.svelte` (`variant="lg"`) |
-| Audio player | `AudioPlayer` from `@platform/ui-shell` (`EventDetailBgmCard`) |
-| Voice play button | `VoicePlayButton.svelte` |
-| Debug dialog | `EventDebugDialog.svelte` |
-| Image preview | `ImagePreviewDialog` from `@platform/ui-shell` |
+| Metadata rows                 | `dl` + `content-card-inset` (no separate component)             |
+| Character avatar              | `CharacterAvatar.svelte` (`variant="lg"`)                       |
+| Unit icon                     | `UnitIconBadge.svelte` (`variant="lg"`)                         |
+| Audio player                  | `AudioPlayer` from `@platform/ui-shell` (`EventDetailBgmCard`)  |
+| Voice play button             | `VoicePlayButton.svelte`                                        |
+| Debug dialog                  | `EventDebugDialog.svelte`                                       |
+| Image preview                 | `ImagePreviewDialog` from `@platform/ui-shell`                  |
 
 ## 12. i18n Namespace Mapping
 
-| Page | i18n Namespace |
-|------|----------------|
-| Event detail | `event.json` |
-| Card detail | `card.json` |
-| Music detail | `music.json` |
-| Gacha detail | `gacha.json` |
+| Page                | i18n Namespace      |
+| ------------------- | ------------------- |
+| Event detail        | `event.json`        |
+| Card detail         | `card.json`         |
+| Music detail        | `music.json`        |
+| Gacha detail        | `gacha.json`        |
 | Virtual Live detail | `virtual-live.json` |
 
 Use `t("key")` with keys scoped to the namespace. Common labels (home, close, etc.) from `common.json`.
@@ -803,14 +819,14 @@ Use `t("key")` with keys scoped to the namespace. Common labels (home, close, et
 
 ## 14. Anti-Patterns to Avoid
 
-| ❌ Don't | ✅ Do |
-|---------|-------|
-| Inline `<h2 class="text-lg font-bold">` without icon | Use icon+label header pattern |
-| Skip `content-card-inset` for metadata rows | Wrap every row in inset |
-| Put all content in one giant card | Split into focused cards per section |
-| Hardcode Tailwind values that differ from tokens | Use the exact tokens in §5/§7 |
-| Register mdi icons in page component | Register once in `mdi.ts` |
-| Custom CSS for card hover/lift | Use shared `hover-3d` / utility classes from `src/lib/styles` |
+| ❌ Don't                                             | ✅ Do                                                         |
+| ---------------------------------------------------- | ------------------------------------------------------------- |
+| Inline `<h2 class="text-lg font-bold">` without icon | Use icon+label header pattern                                 |
+| Skip `content-card-inset` for metadata rows          | Wrap every row in inset                                       |
+| Put all content in one giant card                    | Split into focused cards per section                          |
+| Hardcode Tailwind values that differ from tokens     | Use the exact tokens in §5/§7                                 |
+| Register mdi icons in page component                 | Register once in `mdi.ts`                                     |
+| Custom CSS for card hover/lift                       | Use shared `hover-3d` / utility classes from `src/lib/styles` |
 
 ## 15. Related Items Display Conventions
 
@@ -864,7 +880,10 @@ Reference: `EventDetailDataCard.svelte` → event musics section.
   <div class="min-w-0 flex-1">
     <p class="font-semibold truncate">{music.title}</p>
     <p class="text-xs opacity-60">#{music.id} · {music.jacketAttr}</p>
-    <a class="mt-1 text-xs text-primary hover:underline" href={resolve("/music/[region]/[id]", { region, id: music.id })}>
+    <a
+      class="mt-1 text-xs text-primary hover:underline"
+      href={resolve("/music/[region]/[id]", { region, id: music.id })}
+    >
       {t("viewDetail")}
     </a>
   </div>
@@ -925,6 +944,7 @@ Same frame as Events (`EventCardFrame` + `EventAssetImage`), but:
 ## 16. Virtual Live Detail Page Compliance
 
 As of the latest alignment, Virtual Live detail page follows this pattern exactly:
+
 - Asset card: banner tab with zoom preview
 - Info card: `#id` badge and useful core metadata. Do not render `rankingAnnounceAt`; it has no meaningful user-facing value.
 - Waiting room card (icon: `door-open`)

@@ -10,10 +10,7 @@ import action_layout from "./character_layout";
 import action_se from "./special_effect";
 import action_layout_mode from "./action_layout_mode";
 
-export default async function single_action(
-  controller: Live2DController,
-  action: Snippet
-) {
+export default async function single_action(controller: Live2DController, action: Snippet) {
   switch (action.Action) {
     case SnippetAction.SpecialEffect:
       await action_se(controller, action);
@@ -34,14 +31,7 @@ export default async function single_action(
       await action_layout_mode(controller, action);
       break;
     default:
-      log.warn(
-        "Live2DController",
-        `${SnippetAction[action.Action]} not implemented!`,
-        action
-      );
-      controller.events.emit(
-        "warn",
-        `${SnippetAction[action.Action]} not implemented!`
-      );
+      log.warn("Live2DController", `${SnippetAction[action.Action]} not implemented!`, action);
+      controller.events.emit("warn", `${SnippetAction[action.Action]} not implemented!`);
   }
 }

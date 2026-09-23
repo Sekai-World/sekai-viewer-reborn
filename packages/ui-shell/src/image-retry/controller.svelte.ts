@@ -306,7 +306,11 @@ export class ImageRetryController {
 
     this.clearRetryWork();
 
-    if (this.phase === "primary" && this.fallbackSource && this.fallbackSource !== snapshot.source) {
+    if (
+      this.phase === "primary" &&
+      this.fallbackSource &&
+      this.fallbackSource !== snapshot.source
+    ) {
       this.phase = "fallback";
       this.attempt = 0;
       this.imageLoaded = false;

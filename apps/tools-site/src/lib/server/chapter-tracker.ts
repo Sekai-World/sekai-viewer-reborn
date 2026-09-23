@@ -19,9 +19,10 @@ export type ChapterTrackerResult = {
 const getRows = (payload: unknown): unknown[] | null => {
   const unwrapped = unwrapSekaiApiEnvelope(payload);
   if (Array.isArray(unwrapped)) return unwrapped;
-  const source = unwrapped !== null && typeof unwrapped === "object" && !Array.isArray(unwrapped)
-    ? (unwrapped as Record<string, unknown>)
-    : null;
+  const source =
+    unwrapped !== null && typeof unwrapped === "object" && !Array.isArray(unwrapped)
+      ? (unwrapped as Record<string, unknown>)
+      : null;
   return Array.isArray(source?.eventRankings) ? source.eventRankings : null;
 };
 
@@ -50,7 +51,9 @@ export const getChapterTrackerRankings = async (
 ): Promise<ChapterTrackerResult> => {
   try {
     if (eventId === undefined) {
-      const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventChapterRankingLive>>>((signal) =>
+      const response = await withRequestTimeout<
+        Awaited<ReturnType<typeof getEventChapterRankingLive>>
+      >((signal) =>
         getEventChapterRankingLive({ baseUrl, query: { charaId: gameCharacterId, region }, signal })
       );
       if ("error" in response && response.error) return { status: "sdk-error", rankings: [] };
@@ -60,7 +63,9 @@ export const getChapterTrackerRankings = async (
       return resultFromPayload(response.data);
     }
 
-    const latest = await withRequestTimeout<Awaited<ReturnType<typeof getEventChapterRankingsByEventIdAndCharaId>>>((signal) =>
+    const latest = await withRequestTimeout<
+      Awaited<ReturnType<typeof getEventChapterRankingsByEventIdAndCharaId>>
+    >((signal) =>
       getEventChapterRankingsByEventIdAndCharaId({
         baseUrl,
         path: { id: eventId },
@@ -69,8 +74,10 @@ export const getChapterTrackerRankings = async (
           const values = query as Record<string, unknown>;
           const sort = values.sort as Record<string, unknown> | undefined;
           return new URLSearchParams({
-            charaId: String(values.charaId), limit: String(values.limit),
-            "sort[timestamp]": String(sort?.timestamp), region: String(values.region)
+            charaId: String(values.charaId),
+            limit: String(values.limit),
+            "sort[timestamp]": String(sort?.timestamp),
+            region: String(values.region)
           }).toString();
         },
         signal
@@ -84,9 +91,14 @@ export const getChapterTrackerRankings = async (
     const snapshot = first.timestamp;
     if (typeof snapshot !== "string" || !snapshot) return { status: "invalid-data", rankings: [] };
 
-    const response = await withRequestTimeout<Awaited<ReturnType<typeof getEventChapterRankingsByEventIdAndCharaId>>>((signal) =>
+    const response = await withRequestTimeout<
+      Awaited<ReturnType<typeof getEventChapterRankingsByEventIdAndCharaId>>
+    >((signal) =>
       getEventChapterRankingsByEventIdAndCharaId({
-        baseUrl, path: { id: eventId }, query: { charaId: gameCharacterId, timestamp: snapshot, region }, signal
+        baseUrl,
+        path: { id: eventId },
+        query: { charaId: gameCharacterId, timestamp: snapshot, region },
+        signal
       } as Parameters<typeof getEventChapterRankingsByEventIdAndCharaId>[0])
     );
     if ("error" in response && response.error) return { status: "sdk-error", rankings: [] };

@@ -2,20 +2,8 @@ import type { Live2DController } from "../../Live2DController";
 import type { Snippet } from "../../../scenario-types";
 import { log } from "../../log";
 
-export default async function PlayScenarioEffect(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
-  log.log(
-    "Live2DController",
-    "SpecialEffect/PlayScenarioEffect",
-    action,
-    action_detail
-  );
-  controller.layers.scene_effect.draw(
-    action_detail.StringVal,
-    controller.events
-  );
+export default async function PlayScenarioEffect(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+  log.log("Live2DController", "SpecialEffect/PlayScenarioEffect", action, action_detail);
+  controller.layers.scene_effect.draw(action_detail.StringVal, controller.events);
 }

@@ -177,9 +177,7 @@
 
   const activePullCounts = $derived(selectedBehaviorGroup?.pullCounts ?? [1, 10]);
 
-  const simulatorId = $derived(
-    `gacha-simulator-${gachaId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`
-  );
+  const simulatorId = $derived(`gacha-simulator-${gachaId.replaceAll(/[^a-zA-Z0-9_-]/g, "-")}`);
   const behaviorTabId = (index: number): string => `${simulatorId}-behavior-tab-${index}`;
   const behaviorPanelId = (index: number): string => `${simulatorId}-behavior-panel-${index}`;
   const activeBehaviorIndex = $derived(

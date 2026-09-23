@@ -118,7 +118,8 @@
                 <a
                   href={resolve("/unit/[region]/[unit]", { region, unit: unitSlug })}
                   class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content outline-none transition-colors duration-150 hover:border-primary/50 hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60"
-                >{getTagLabel(tag)}</a>
+                  >{getTagLabel(tag)}</a
+                >
               {:else}
                 <span
                   class="badge badge-sm border-base-content/25 bg-base-100/80 font-semibold text-base-content"

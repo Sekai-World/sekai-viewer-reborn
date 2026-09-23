@@ -16,8 +16,7 @@ import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 type InitialPageResult =
-  | { page: MusicListPage; loadFailed: false }
-  | { page: MusicListPage; loadFailed: true };
+  { page: MusicListPage; loadFailed: false } | { page: MusicListPage; loadFailed: true };
 
 export const load: PageServerLoad = async ({ params, url }) => {
   const region = normalizeRegion(params.region);
@@ -43,17 +42,19 @@ export const load: PageServerLoad = async ({ params, url }) => {
     });
 
   const usePaginatedInitialPage = canUsePaginatedMusicList(queryState);
-  const initialPage: Promise<InitialPageResult> = (usePaginatedInitialPage
-    ? fetchMusicListPage(baseUrl, region, queryState, 1, DEFAULT_MUSIC_LIST_PAGE_SIZE)
-    : fetchMusicCatalog(
-        baseUrl,
-        region,
-        queryState.spoiler,
-        queryState.hasAppend,
-        queryState.categories,
-        queryState.tags,
-        queryState.level
-      ).then((catalog) => createMusicListPage(catalog, queryState, 1)))
+  const initialPage: Promise<InitialPageResult> = (
+    usePaginatedInitialPage
+      ? fetchMusicListPage(baseUrl, region, queryState, 1, DEFAULT_MUSIC_LIST_PAGE_SIZE)
+      : fetchMusicCatalog(
+          baseUrl,
+          region,
+          queryState.spoiler,
+          queryState.hasAppend,
+          queryState.categories,
+          queryState.tags,
+          queryState.level
+        ).then((catalog) => createMusicListPage(catalog, queryState, 1))
+  )
     .then((page) => {
       logMusicListFilterDebug("initial response", {
         region,

@@ -95,7 +95,8 @@ export const getTrackerChapterCountdown = ({
     };
   }
 
-  const targetTimestamp = nextTimestamp !== null && nextTimestamp > nowTimestamp ? nextTimestamp : endTimestamp;
+  const targetTimestamp =
+    nextTimestamp !== null && nextTimestamp > nowTimestamp ? nextTimestamp : endTimestamp;
   if (targetTimestamp === null || targetTimestamp <= nowTimestamp) return null;
   const totalSeconds = Math.floor((targetTimestamp - nowTimestamp) / SECOND_MS);
   return {

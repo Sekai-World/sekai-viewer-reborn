@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  ImageRetryController,
-  SIGNED_GET_RETRY_POLICY
-} from "./index";
+import { ImageRetryController, SIGNED_GET_RETRY_POLICY } from "./index";
 
 const flushPromises = async (): Promise<void> => {
   await Promise.resolve();
@@ -53,12 +50,9 @@ describe("ImageRetryController", () => {
   );
 
   it("cancels a jittered retry timer when the source cycle resets", async () => {
-    const controller = new ImageRetryController(
-      "/old.png",
-      undefined,
-      SIGNED_GET_RETRY_POLICY,
-      { random: () => 1 }
-    );
+    const controller = new ImageRetryController("/old.png", undefined, SIGNED_GET_RETRY_POLICY, {
+      random: () => 1
+    });
     const oldSnapshot = controller.requestSnapshot;
 
     controller.handleImageError(oldSnapshot!);

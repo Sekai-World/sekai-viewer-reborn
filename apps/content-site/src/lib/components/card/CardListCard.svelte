@@ -7,7 +7,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import type { SupportedRegion } from "$lib/domain/regions";
   import CardGridImage from "$lib/components/card/CardGridImage.svelte";
-    import {
+  import {
     isTrainedOnlyCard as hasTrainedOnlyArtwork,
     resolveCardTrained
   } from "$lib/components/card/card-presentation";
@@ -230,7 +230,11 @@
     assetRegion = getPrimaryCardAssetRegion()
   ): string | null =>
     item.assetBundleName
-      ? getCardThumbnailAssetURL(item.assetBundleName, resolveCardTrained(item, trained), assetRegion)
+      ? getCardThumbnailAssetURL(
+          item.assetBundleName,
+          resolveCardTrained(item, trained),
+          assetRegion
+        )
       : null;
 
   const getFallbackImageUrl = (kind: CardImageKind, trained: boolean): string | null => {

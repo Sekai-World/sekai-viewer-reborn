@@ -25,9 +25,7 @@ class Live2dRequestScheduler {
   private mayStart(): boolean {
     if (this.inFlight >= MAX_IN_FLIGHT) return false;
     const now = Date.now();
-    this.startTimestamps = this.startTimestamps.filter(
-      (timestamp) => now - timestamp < 1000
-    );
+    this.startTimestamps = this.startTimestamps.filter((timestamp) => now - timestamp < 1000);
     return this.startTimestamps.length < MAX_STARTS_PER_SECOND;
   }
 
@@ -46,9 +44,7 @@ class Live2dRequestScheduler {
     }
     if (this.queue.length > 0) {
       const now = Date.now();
-      this.startTimestamps = this.startTimestamps.filter(
-        (timestamp) => now - timestamp < 1000
-      );
+      this.startTimestamps = this.startTimestamps.filter((timestamp) => now - timestamp < 1000);
       const waitMs =
         this.startTimestamps.length >= MAX_STARTS_PER_SECOND
           ? 1000 - (now - this.startTimestamps[0]) + 1
@@ -81,18 +77,14 @@ const getRetryAfterMs = (error: unknown): number | undefined => {
     return Math.min(30000, Math.max(0, seconds * 1000));
   }
   const date = Date.parse(raw);
-  return Number.isNaN(date)
-    ? undefined
-    : Math.min(30000, Math.max(0, date - Date.now()));
+  return Number.isNaN(date) ? undefined : Math.min(30000, Math.max(0, date - Date.now()));
 };
 
 /**
  * Runs a Live2D asset request through the shared scheduler with bounded
  * retries for rate-limited (429) responses.
  */
-export async function live2dRequest<T>(
-  request: () => Promise<T>
-): Promise<T> {
+export async function live2dRequest<T>(request: () => Promise<T>): Promise<T> {
   for (let retry = 0; ; retry++) {
     try {
       return await scheduler.schedule(request);
@@ -116,10 +108,7 @@ export async function live2dRequest<T>(
  * @param init - Optional fetch options
  * @returns The HTTP response
  */
-export async function live2dFetch(
-  url: string,
-  init?: RequestInit
-): Promise<Response> {
+export async function live2dFetch(url: string, init?: RequestInit): Promise<Response> {
   return live2dRequest(async () => {
     const response = await fetch(url, init);
     if (response.status === 429) throw response;

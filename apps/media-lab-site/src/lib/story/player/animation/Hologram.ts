@@ -1,9 +1,4 @@
-import {
-  Container,
-  Sprite,
-  BlurFilter,
-  ColorMatrixFilter,
-} from "pixi.js";
+import { Container, Sprite, BlurFilter, ColorMatrixFilter } from "pixi.js";
 import type { ColorMatrix } from "pixi.js";
 import BaseAnimation from "./BaseAnimation";
 import { Curve } from "./Curve";
@@ -39,8 +34,7 @@ export default class Hologram extends BaseAnimation {
     // layer light1
     const light1_container = new Container();
     const light1_s = new Sprite(
-      this.textures.find((a) => a.identifier === "ui/tex_scenario_light")!
-        .texture
+      this.textures.find((a) => a.identifier === "ui/tex_scenario_light")!.texture
     );
     light1_s.anchor.set(0.5, 1);
     light1_container.addChild(light1_s);
@@ -49,21 +43,20 @@ export default class Hologram extends BaseAnimation {
       {
         obj: light1_s,
         y: () => this.stage_size[1] * 0.25,
-        scale: () => this.em(600) / 256, // 256: size of the texture
+        scale: () => this.em(600) / 256 // 256: size of the texture
       },
       {
         obj: light1_container,
         scale_x_curve: new Curve().map_range(0.9, 1.2),
         scale_y_curve: new Curve().map_range(1, 1.1),
-        alpha_curve: new Curve().bounce().map_range(0, 0.8),
+        alpha_curve: new Curve().bounce().map_range(0, 0.8)
       }
     );
 
     // layer light2
     const light2_container = new Container();
     const light2_s = new Sprite(
-      this.textures.find((a) => a.identifier === "ui/tex_scenario_light")!
-        .texture
+      this.textures.find((a) => a.identifier === "ui/tex_scenario_light")!.texture
     );
     light2_s.anchor.set(0.5, 1);
     light2_container.addChild(light2_s);
@@ -72,21 +65,20 @@ export default class Hologram extends BaseAnimation {
       {
         obj: light2_s,
         y: () => this.stage_size[1] * 0.25,
-        scale: () => this.em(600) / 256, // 256: size of the texture
+        scale: () => this.em(600) / 256 // 256: size of the texture
       },
       {
         obj: light2_container,
         scale_x_curve: new Curve().offset(0.5).map_range(0.9, 1.2),
         scale_y_curve: new Curve().offset(0.5).map_range(1, 1.1),
-        alpha_curve: new Curve().bounce().offset(0.5).map_range(0, 0.8),
+        alpha_curve: new Curve().bounce().offset(0.5).map_range(0, 0.8)
       }
     );
 
     // layer tri
     const tri_container = new Container();
     const tri_s = texture_slice(
-      this.textures.find((a) => a.identifier === "ui/tex_scenario_tri_01")!
-        .texture.baseTexture,
+      this.textures.find((a) => a.identifier === "ui/tex_scenario_tri_01")!.texture.baseTexture,
       [4, 4],
       10
     )
@@ -106,77 +98,70 @@ export default class Hologram extends BaseAnimation {
       y_func: (t) => new Curve().map_range(0, -this.em(200)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().map_range(0, 180),
-      alpha_curve: new Curve().bounce(0.2, 0.2).map_range(0, 0.4),
+      alpha_curve: new Curve().bounce(0.2, 0.2).map_range(0, 0.4)
     });
     scale = this.random(35, 60);
     this.settings.push({
       obj: tri_s[1],
-      x_func: (t) =>
-        new Curve().offset(0.6).map_range(-this.em(50), -this.em(200)).p(t),
+      x_func: (t) => new Curve().offset(0.6).map_range(-this.em(50), -this.em(200)).p(t),
       y_func: (t) => new Curve().offset(0.6).map_range(0, -this.em(180)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.6).map_range(43, 210),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.6).map_range(0, 0.4),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.6).map_range(0, 0.4)
     });
     scale = this.random(35, 60);
     this.settings.push({
       obj: tri_s[2],
-      x_func: (t) =>
-        new Curve().offset(0.4).map_range(-this.em(50), -this.em(230)).p(t),
+      x_func: (t) => new Curve().offset(0.4).map_range(-this.em(50), -this.em(230)).p(t),
       y_func: (t) => new Curve().offset(0.4).map_range(0, -this.em(160)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.4).map_range(0, 250),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.4).map_range(0, 0.4),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.4).map_range(0, 0.4)
     });
     scale = this.random(35, 60);
     this.settings.push({
       obj: tri_s[3],
-      x_func: (t) =>
-        new Curve().offset(0.2).map_range(this.em(50), this.em(170)).p(t),
+      x_func: (t) => new Curve().offset(0.2).map_range(this.em(50), this.em(170)).p(t),
       y_func: (t) => new Curve().offset(0.2).map_range(0, -this.em(200)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.2).map_range(100, 280),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.2).map_range(0, 0.4),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.2).map_range(0, 0.4)
     });
     scale = this.random(35, 60);
     this.settings.push({
       obj: tri_s[4],
-      x_func: (t) =>
-        new Curve().offset(0.8).map_range(this.em(50), this.em(200)).p(t),
+      x_func: (t) => new Curve().offset(0.8).map_range(this.em(50), this.em(200)).p(t),
       y_func: (t) => new Curve().offset(0.8).map_range(0, -this.em(180)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.8).map_range(50, 290),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.8).map_range(0, 0.4),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.8).map_range(0, 0.4)
     });
     scale = this.random(35, 60);
     this.settings.push({
       obj: tri_s[5],
-      x_func: (t) =>
-        new Curve().offset(0.3).map_range(this.em(50), this.em(230)).p(t),
+      x_func: (t) => new Curve().offset(0.3).map_range(this.em(50), this.em(230)).p(t),
       y_func: (t) => new Curve().offset(0.3).map_range(0, -this.em(160)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.3).map_range(200, 300),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.3).map_range(0, 0.4),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.3).map_range(0, 0.4)
     });
     scale = this.random(35, 60);
     this.settings.push({
       obj: tri_s[6],
-      x_func: (t) =>
-        new Curve().offset(0.3).map_range(-this.em(50), -this.em(150)).p(t),
+      x_func: (t) => new Curve().offset(0.3).map_range(-this.em(50), -this.em(150)).p(t),
       y_func: (t) => new Curve().offset(0.3).map_range(0, -this.em(140)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.3).map_range(170, 290),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.3).map_range(0, 0.4),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.3).map_range(0, 0.4)
     });
     scale = this.random(35, 60);
     this.settings.push({
       obj: tri_s[7],
-      x_func: (t) =>
-        new Curve().offset(0.7).map_range(this.em(50), this.em(150)).p(t),
+      x_func: (t) => new Curve().offset(0.7).map_range(this.em(50), this.em(150)).p(t),
       y_func: (t) => new Curve().offset(0.7).map_range(0, -this.em(140)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.7).map_range(0, 120),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.7).map_range(0, 0.4),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.7).map_range(0, 0.4)
     });
 
     // layer sparkle
@@ -198,7 +183,7 @@ export default class Hologram extends BaseAnimation {
       y_func: (t) => new Curve().offset(0).map_range(0, -this.em(140)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0).map_range(0, 120),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0).map_range(0, 1),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0).map_range(0, 1)
     });
     scale = this.random(35, 60);
     this.settings.push({
@@ -207,7 +192,7 @@ export default class Hologram extends BaseAnimation {
       y_func: (t) => new Curve().offset(0.3).map_range(0, -this.em(140)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.3).map_range(120, 240),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.3).map_range(0, 1),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.3).map_range(0, 1)
     });
     scale = this.random(35, 60);
     this.settings.push({
@@ -216,7 +201,7 @@ export default class Hologram extends BaseAnimation {
       y_func: (t) => new Curve().offset(0.7).map_range(0, -this.em(140)).p(t),
       scale: () => this.em(scale) / 128, // 128: size of the texture
       angle_curve: new Curve().offset(0.7).map_range(240, 360),
-      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.7).map_range(0, 1),
+      alpha_curve: new Curve().bounce(0.2, 0.2).offset(0.7).map_range(0, 1)
     });
 
     // layer root

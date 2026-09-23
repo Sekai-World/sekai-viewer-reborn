@@ -165,7 +165,9 @@
   aria-label={`${item.title} ${idLabel}${item.id}`}
   onclick={handleCardClick}
 >
-  <article class="card-hover-lift card content-card-shell relative h-full overflow-hidden shadow-sm">
+  <article
+    class="card-hover-lift card content-card-shell relative h-full overflow-hidden shadow-sm"
+  >
     {#if isSpoilerPlaceholderVisible()}
       {@render spoilerOverlay()}
     {/if}

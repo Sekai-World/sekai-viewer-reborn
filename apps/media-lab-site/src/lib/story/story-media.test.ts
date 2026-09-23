@@ -29,14 +29,22 @@ const buildScenario = (overrides: Partial<IScenarioData> = {}): IScenarioData =>
   ...overrides
 });
 
-const snippet = (
-  action: SnippetAction,
-  referenceIndex: number
-) => ({ Action: action, ProgressBehavior: SnippetProgressBehavior.WaitUnitilFinished, ReferenceIndex: referenceIndex, Delay: 0 });
+const snippet = (action: SnippetAction, referenceIndex: number) => ({
+  Action: action,
+  ProgressBehavior: SnippetProgressBehavior.WaitUnitilFinished,
+  ReferenceIndex: referenceIndex,
+  Delay: 0
+});
 
 const names: StoryCastNameTables = {
   character2ds: [
-    { id: 0, characterType: "game_character", characterId: 1, unit: "light_sound", assetName: "cls_01ichika" }
+    {
+      id: 0,
+      characterType: "game_character",
+      characterId: 1,
+      unit: "light_sound",
+      assetName: "cls_01ichika"
+    }
   ],
   gameCharacterNames: new Map([[1, "星乃一歌"]]),
   mobCharacterNames: new Map(),
@@ -45,9 +53,7 @@ const names: StoryCastNameTables = {
 
 const voiceCharacters = buildVoiceCharacterLookup(names);
 
-const buildOptions = (
-  overrides: Partial<Parameters<typeof collectStoryMediaUrls>[0]> = {}
-) => ({
+const buildOptions = (overrides: Partial<Parameters<typeof collectStoryMediaUrls>[0]> = {}) => ({
   scenarioData: buildScenario(),
   isCardStory: false,
   isActionSet: false,
@@ -193,7 +199,13 @@ describe("collectStoryMediaUrls", () => {
           Duration: 3,
           IntVal: 0
         },
-        { EffectType: SpecialEffectType.BlackIn, StringVal: "", StringValSub: "", Duration: 1, IntVal: 0 }
+        {
+          EffectType: SpecialEffectType.BlackIn,
+          StringVal: "",
+          StringValSub: "",
+          Duration: 1,
+          IntVal: 0
+        }
       ]
     });
     const assets = await collectStoryMediaUrls(buildOptions({ scenarioData: scenario }));
@@ -223,12 +235,16 @@ describe("collectStoryMediaUrls", () => {
     const scenario = buildScenario({
       Snippets: [snippet(SnippetAction.SpecialEffect, 0)],
       SpecialEffectData: [
-        { EffectType: SpecialEffectType.Movie, StringVal: "movie_01", StringValSub: "", Duration: 0, IntVal: 0 }
+        {
+          EffectType: SpecialEffectType.Movie,
+          StringVal: "movie_01",
+          StringValSub: "",
+          Duration: 0,
+          IntVal: 0
+        }
       ]
     });
-    const assets = await collectStoryMediaUrls(
-      buildOptions({ scenarioData: scenario, onWarning })
-    );
+    const assets = await collectStoryMediaUrls(buildOptions({ scenarioData: scenario, onWarning }));
     expect(assets).toEqual([
       {
         identifier: "movie_01",
@@ -244,20 +260,23 @@ describe("collectStoryMediaUrls", () => {
       "fetch",
       vi.fn(async () => ({
         ok: true,
-        text: async () =>
-          "<Key>scenario/movie/movie_01&amp;_alt.webm</Key>"
+        text: async () => "<Key>scenario/movie/movie_01&amp;_alt.webm</Key>"
       }))
     );
     const scenario = buildScenario({
       Snippets: [snippet(SnippetAction.SpecialEffect, 0)],
       SpecialEffectData: [
-        { EffectType: SpecialEffectType.Movie, StringVal: "movie_01", StringValSub: "", Duration: 0, IntVal: 0 }
+        {
+          EffectType: SpecialEffectType.Movie,
+          StringVal: "movie_01",
+          StringValSub: "",
+          Duration: 0,
+          IntVal: 0
+        }
       ]
     });
     const assets = await collectStoryMediaUrls(buildOptions({ scenarioData: scenario }));
-    expect(assets[0].url).toBe(
-      "https://assets.example/scenario/movie/movie_01&_alt.webm"
-    );
+    expect(assets[0].url).toBe("https://assets.example/scenario/movie/movie_01&_alt.webm");
   });
 
   it("keeps nested entities escaped after a single decode pass", async () => {
@@ -265,20 +284,23 @@ describe("collectStoryMediaUrls", () => {
       "fetch",
       vi.fn(async () => ({
         ok: true,
-        text: async () =>
-          "<Key>scenario/movie/movie_01&amp;lt;_alt.webm</Key>"
+        text: async () => "<Key>scenario/movie/movie_01&amp;lt;_alt.webm</Key>"
       }))
     );
     const scenario = buildScenario({
       Snippets: [snippet(SnippetAction.SpecialEffect, 0)],
       SpecialEffectData: [
-        { EffectType: SpecialEffectType.Movie, StringVal: "movie_01", StringValSub: "", Duration: 0, IntVal: 0 }
+        {
+          EffectType: SpecialEffectType.Movie,
+          StringVal: "movie_01",
+          StringValSub: "",
+          Duration: 0,
+          IntVal: 0
+        }
       ]
     });
     const assets = await collectStoryMediaUrls(buildOptions({ scenarioData: scenario }));
-    expect(assets[0].url).toBe(
-      "https://assets.example/scenario/movie/movie_01&lt;_alt.webm"
-    );
+    expect(assets[0].url).toBe("https://assets.example/scenario/movie/movie_01&lt;_alt.webm");
   });
 
   it("falls back to the default movie file name when the listing fails", async () => {
@@ -290,15 +312,17 @@ describe("collectStoryMediaUrls", () => {
     const scenario = buildScenario({
       Snippets: [snippet(SnippetAction.SpecialEffect, 0)],
       SpecialEffectData: [
-        { EffectType: SpecialEffectType.Movie, StringVal: "movie_01", StringValSub: "", Duration: 0, IntVal: 0 }
+        {
+          EffectType: SpecialEffectType.Movie,
+          StringVal: "movie_01",
+          StringValSub: "",
+          Duration: 0,
+          IntVal: 0
+        }
       ]
     });
-    const assets = await collectStoryMediaUrls(
-      buildOptions({ scenarioData: scenario, onWarning })
-    );
-    expect(assets[0].url).toBe(
-      "https://assets.example/scenario/movie/movie_01/movie_01.mp4"
-    );
+    const assets = await collectStoryMediaUrls(buildOptions({ scenarioData: scenario, onWarning }));
+    expect(assets[0].url).toBe("https://assets.example/scenario/movie/movie_01/movie_01.mp4");
     expect(onWarning).toHaveBeenCalledWith(
       "Movie file not listed for movie_01; using default file name."
     );
@@ -312,9 +336,30 @@ describe("collectStoryMediaUrls", () => {
         snippet(SnippetAction.Sound, 2)
       ],
       SoundData: [
-        { PlayMode: SoundPlayMode.CrossFade, Bgm: "bgm00001", Se: "", Volume: 1, SeBundleName: "", Duration: 2 },
-        { PlayMode: SoundPlayMode.LoopSe, Bgm: "", Se: "se00001", Volume: 1, SeBundleName: "", Duration: 0 },
-        { PlayMode: SoundPlayMode.StopSe, Bgm: "", Se: "", Volume: 1, SeBundleName: "", Duration: 0 }
+        {
+          PlayMode: SoundPlayMode.CrossFade,
+          Bgm: "bgm00001",
+          Se: "",
+          Volume: 1,
+          SeBundleName: "",
+          Duration: 2
+        },
+        {
+          PlayMode: SoundPlayMode.LoopSe,
+          Bgm: "",
+          Se: "se00001",
+          Volume: 1,
+          SeBundleName: "",
+          Duration: 0
+        },
+        {
+          PlayMode: SoundPlayMode.StopSe,
+          Bgm: "",
+          Se: "",
+          Volume: 1,
+          SeBundleName: "",
+          Duration: 0
+        }
       ]
     });
     const assets = await collectStoryMediaUrls(buildOptions({ scenarioData: scenario }));

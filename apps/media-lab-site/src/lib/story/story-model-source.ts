@@ -1,11 +1,5 @@
-import type {
-  ILive2DModelData,
-  ILive2dModelListElement
-} from "./scenario-types";
-import type {
-  ILive2DModelDataCollection,
-  ILive2DStoryModelSource
-} from "./player/player-types";
+import type { ILive2DModelData, ILive2dModelListElement } from "./scenario-types";
+import type { ILive2DModelDataCollection, ILive2DStoryModelSource } from "./player/player-types";
 import { live2dFetch } from "./player/rate-limited-fetch";
 
 /**
@@ -147,12 +141,7 @@ const matchBackBasePrefix = (name: string): string | null => {
   let start = 0;
   for (let i = matches.index - 1; i >= 0; i -= 1) {
     const code = name.codePointAt(i);
-    if (
-      code === 0x0a /* \n */ ||
-      code === 0x0d /* \r */ ||
-      code === 0x2028 ||
-      code === 0x2029
-    ) {
+    if (code === 0x0a /* \n */ || code === 0x0d /* \r */ || code === 0x2028 || code === 0x2029) {
       start = i + 1;
       break;
     }
@@ -169,9 +158,7 @@ const modelNameToMotionBaseName: [RegExp, (name: string) => string][] = [
     BACK_SUFFIX_PATTERN,
     (name) => {
       const prefix = matchBackBasePrefix(name);
-      return prefix === null
-        ? name
-        : `${prefix.split("_").slice(0, 2).join("_")}_back`;
+      return prefix === null ? name : `${prefix.split("_").slice(0, 2).join("_")}_back`;
     }
   ],
   // eg. 21miku01 to 21miku
@@ -279,22 +266,14 @@ export const createStoryModelSource = (
     return raw.filter(isRecord) as unknown as ILive2dModelListElement[];
   })();
 
-  const findModelItem = async (
-    costume: string
-  ): Promise<ILive2dModelListElement | null> => {
+  const findModelItem = async (costume: string): Promise<ILive2dModelListElement | null> => {
     const modelList = await modelListPromise;
     const exact = modelList.find((m) => m.modelBase === costume);
     if (exact) return exact;
-    return (
-      modelList.find(
-        (m) => m.modelBase.toLowerCase() === costume.toLowerCase()
-      ) ?? null
-    );
+    return modelList.find((m) => m.modelBase.toLowerCase() === costume.toLowerCase()) ?? null;
   };
 
-  const getModelData = async (
-    modelItem: ILive2dModelListElement
-  ): Promise<ILive2DModelData> => {
+  const getModelData = async (modelItem: ILive2dModelListElement): Promise<ILive2DModelData> => {
     const motionFade: [number, number] = [0.5, 0.1];
     const expressionFade: [number, number] = [0.1, 0.1];
 
@@ -302,16 +281,12 @@ export const createStoryModelSource = (
       `live2d/model/${modelItem.modelPath}/${modelItem.modelFile}`,
       live2dUrl
     );
-    const buildModelDataPromise =
-      fetchJsonWithLowercaseFallback<Live2DBuildModelData>(
-        `live2d/model/${modelItem.modelPath}/buildmodeldata.asset`,
-        live2dUrl
-      );
+    const buildModelDataPromise = fetchJsonWithLowercaseFallback<Live2DBuildModelData>(
+      `live2d/model/${modelItem.modelPath}/buildmodeldata.asset`,
+      live2dUrl
+    );
     const [motionBaseName, motionData] = await getMotionData(modelItem, live2dUrl);
-    const [model3, modelBuildData] = await Promise.all([
-      model3Promise,
-      buildModelDataPromise
-    ]);
+    const [model3, modelBuildData] = await Promise.all([model3Promise, buildModelDataPromise]);
 
     await applyModelFileReferencesFallback(
       modelItem,
@@ -334,9 +309,7 @@ export const createStoryModelSource = (
     const motions = await Promise.all(
       motionData.motions.map(async (elem) => ({
         Name: elem,
-        File: live2dUrl(
-          `live2d/motion/${motionBaseName}/motion/${elem}.motion3.json`
-        ),
+        File: live2dUrl(`live2d/motion/${motionBaseName}/motion/${elem}.motion3.json`),
         FadeInTime: motionFade[0],
         FadeOutTime: motionFade[1]
       }))
@@ -356,9 +329,7 @@ export const createStoryModelSource = (
     const expressions = await Promise.all(
       motionData.expressions.map(async (elem) => ({
         Name: elem,
-        File: live2dUrl(
-          `live2d/motion/${motionBaseName}/facial/${elem}.motion3.json`
-        ),
+        File: live2dUrl(`live2d/motion/${motionBaseName}/facial/${elem}.motion3.json`),
         FadeInTime: expressionFade[0],
         FadeOutTime: expressionFade[1]
       }))

@@ -61,7 +61,7 @@ export default class Dialog extends BaseLayer {
       cn_c,
       text_container,
       text_c,
-      translated_text_c,
+      translated_text_c
     };
     this.init = true;
     this.set_style();
@@ -90,9 +90,7 @@ export default class Dialog extends BaseLayer {
   set_style(stage_size?: [number, number]): void {
     this.stage_size = stage_size ?? this.stage_size;
     const margin_top =
-      this.stage_size[0] > this.stage_size[1]
-        ? this.stage_size[1] * 0.7
-        : this.stage_size[1] * 0.8;
+      this.stage_size[0] > this.stage_size[1] ? this.stage_size[1] * 0.7 : this.stage_size[1] * 0.8;
     const margin_left =
       this.stage_size[0] > this.stage_size[1]
         ? this.stage_size[0] * 0.15
@@ -124,7 +122,7 @@ export default class Dialog extends BaseLayer {
         wordWrapWidth: this.stage_size[0] - margin_left * 2,
         stroke: "#4a496899",
         strokeThickness: this.em(4),
-        lineJoin: "round",
+        lineJoin: "round"
       });
       this.set_style_dialog_text();
     }
@@ -144,8 +142,7 @@ export default class Dialog extends BaseLayer {
 
     // Count lines for translated text
     if (this.structure.translated_text_c?.text) {
-      translatedLineCount =
-        this.structure.translated_text_c.text.split("\n").length;
+      translatedLineCount = this.structure.translated_text_c.text.split("\n").length;
     }
 
     // Count lines for original text
@@ -168,7 +165,7 @@ export default class Dialog extends BaseLayer {
         wordWrapWidth: this.stage_size[0] - margin_left * 2,
         stroke: "#4a4968aa",
         strokeThickness: this.em(2),
-        lineJoin: "round",
+        lineJoin: "round"
       });
 
       // Dynamically calculate position for original text based on translated text height
@@ -187,10 +184,8 @@ export default class Dialog extends BaseLayer {
       wordWrap: true,
       wordWrapWidth: this.stage_size[0] - margin_left * 2,
       stroke: "#4a4968aa",
-      strokeThickness: this.structure.translated_text_c
-        ? this.em(3)
-        : this.em(4),
-      lineJoin: "round",
+      strokeThickness: this.structure.translated_text_c ? this.em(3) : this.em(4),
+      lineJoin: "round"
     });
     // If total lines >= 6, make text smaller
     if (translatedLineCount + originalLineCount >= 6) {
@@ -205,7 +200,7 @@ export default class Dialog extends BaseLayer {
         wordWrapWidth: this.stage_size[0] - margin_left * 2,
         stroke: "#4a4968aa",
         strokeThickness: this.em(2.5), // Reduced stroke
-        lineJoin: "round",
+        lineJoin: "round"
       });
     }
   }

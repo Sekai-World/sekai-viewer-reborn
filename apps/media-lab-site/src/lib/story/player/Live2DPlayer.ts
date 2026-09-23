@@ -62,7 +62,7 @@ export class Live2DPlayer {
     // create texture
     const textures = ui_assets.image.map((asset) => ({
       identifier: asset.identifier,
-      texture: Texture.from(asset.data),
+      texture: Texture.from(asset.data)
     }));
 
     //initilize stage
@@ -73,7 +73,7 @@ export class Live2DPlayer {
       stage_size: this.stage_size,
       screen_length: screen_length,
       animation_controller: this.animate,
-      textures: textures,
+      textures: textures
     };
     this.layers = {
       background: new Background(layer_data),
@@ -88,7 +88,7 @@ export class Live2DPlayer {
       live2d: new Live2D(layer_data),
       wipe: new Wipe(layer_data),
       sekai: new Sekai(layer_data),
-      movie: new Movie(layer_data),
+      movie: new Movie(layer_data)
     };
     const root = new Container();
     this.root = root;
@@ -119,7 +119,7 @@ export class Live2DPlayer {
       pivot: [0.5, 0.5],
       position: [0, 0],
       scale: [1, 1],
-      rotation: 0,
+      rotation: 0
     };
     this.set_stage_size(stage_size);
     log.log("Live2DPlayer", `player init.`);
@@ -131,10 +131,8 @@ export class Live2DPlayer {
       this.stage_size[1] * this.camera.pivot[1]
     );
     this.root.position.set(
-      this.stage_size[0] *
-        (this.camera.pivot[0] - this.camera.position[0] / this.camera.scale[0]),
-      this.stage_size[1] *
-        (this.camera.pivot[1] + this.camera.position[1] / this.camera.scale[1])
+      this.stage_size[0] * (this.camera.pivot[0] - this.camera.position[0] / this.camera.scale[0]),
+      this.stage_size[1] * (this.camera.pivot[1] + this.camera.position[1] / this.camera.scale[1])
     );
     this.root.scale.set(this.camera.scale[0], this.camera.scale[1]);
     this.root.rotation = this.camera.rotation;

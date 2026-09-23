@@ -74,10 +74,7 @@ const MODEL_NAME_FIX_MAP: {
   }
 ];
 
-const applyModelNameFix = (
-  identity: StoryIdentityLike,
-  data: IScenarioData
-): void => {
+const applyModelNameFix = (identity: StoryIdentityLike, data: IScenarioData): void => {
   const fix = MODEL_NAME_FIX_MAP.find(
     (m) => m.story === `${identity.storyType}:${identity.storyId}`
   );
@@ -86,18 +83,12 @@ const applyModelNameFix = (
     data.AppearCharacters.filter((c) => c.CostumeType === m.from).forEach(
       (c) => (c.CostumeType = m.to)
     );
-    data.LayoutData.filter((l) => l.CostumeType === m.from).forEach(
-      (l) => (l.CostumeType = m.to)
-    );
-    data.FirstLayout.filter((l) => l.CostumeType === m.from).forEach(
-      (l) => (l.CostumeType = m.to)
-    );
+    data.LayoutData.filter((l) => l.CostumeType === m.from).forEach((l) => (l.CostumeType = m.to));
+    data.FirstLayout.filter((l) => l.CostumeType === m.from).forEach((l) => (l.CostumeType = m.to));
     // remove duplicate
-    const uniqueCharacters = [
-      ...new Set(data.AppearCharacters.map((c) => c.CostumeType))
-    ];
-    data.AppearCharacters = uniqueCharacters.map(
-      (c) => data.AppearCharacters.find((ap) => ap.CostumeType === c)!
+    const uniqueCharacters = [...new Set(data.AppearCharacters.map((c) => c.CostumeType))];
+    data.AppearCharacters = uniqueCharacters.map((c) =>
+      data.AppearCharacters.find((ap) => ap.CostumeType === c)!
     );
   });
 };
@@ -114,8 +105,15 @@ export const processScenarioDataForPlayer = (
   const cloned: IScenarioData = structuredClone(data);
   applyModelNameFix(identity, cloned);
 
-  const { Snippets, SpecialEffectData, SoundData, FirstBgm, FirstBackground, FirstLayout, LayoutData } =
-    cloned;
+  const {
+    Snippets,
+    SpecialEffectData,
+    SoundData,
+    FirstBgm,
+    FirstBackground,
+    FirstLayout,
+    LayoutData
+  } = cloned;
 
   if (FirstBackground) {
     const bgSnippet: Snippet = {

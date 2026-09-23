@@ -21,7 +21,10 @@ const HOUR_MS = 60 * 60_000;
 
 export const parseTrackerTimestamp = (value: TrackerDateValue): number | null => {
   if (value instanceof Date) return Number.isFinite(value.getTime()) ? value.getTime() : null;
-  if (typeof value === "number" || (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value)))) {
+  if (
+    typeof value === "number" ||
+    (typeof value === "string" && value.trim() !== "" && Number.isFinite(Number(value)))
+  ) {
     const numeric = typeof value === "number" ? value : Number(value);
     if (!Number.isFinite(numeric)) return null;
     return Math.abs(numeric) < 100_000_000_000 ? numeric * 1_000 : numeric;

@@ -30,7 +30,7 @@
   import type { UnitProfileMap } from "$lib/server/unit-profiles";
   import Icon from "@iconify/svelte";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   type MusicListPagePayload = MusicListPage;
   type MusicListItem = MusicListItemType;
@@ -1104,19 +1104,19 @@ import type { PageData } from "./$types";
           {:else if metadataState === "error"}
             <div class="alert alert-error py-2 text-sm">{musicListLoadFailed}</div>
           {:else}
-          {#each filterMeta.categories as category (category)}
-            <label
-              class={`btn btn-sm min-h-12! ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
-            >
-              <input
-                class="sr-only"
-                type="checkbox"
-                checked={categoryDraft.includes(category)}
-                onchange={(event) => toggleCategory(category, event.currentTarget.checked)}
-              />
-              {getCategoryLabel(category)}
-            </label>
-          {/each}
+            {#each filterMeta.categories as category (category)}
+              <label
+                class={`btn btn-sm min-h-12! ${categoryDraft.includes(category) ? "btn-primary" : "btn-outline border-primary text-primary"}`}
+              >
+                <input
+                  class="sr-only"
+                  type="checkbox"
+                  checked={categoryDraft.includes(category)}
+                  onchange={(event) => toggleCategory(category, event.currentTarget.checked)}
+                />
+                {getCategoryLabel(category)}
+              </label>
+            {/each}
           {/if}
         </div>
       </fieldset>

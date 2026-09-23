@@ -3,14 +3,9 @@ import type { Snippet } from "../../scenario-types";
 import { CharacterLayoutMode } from "../../scenario-types";
 import { log } from "../log";
 
-export default async function action_layout_mode(
-  controller: Live2DController,
-  action: Snippet
-) {
+export default async function action_layout_mode(controller: Live2DController, action: Snippet) {
   const action_detail =
-    controller.scenarioData.ScenarioSnippetCharacterLayoutModes[
-      action.ReferenceIndex
-    ];
+    controller.scenarioData.ScenarioSnippetCharacterLayoutModes[action.ReferenceIndex];
   log.log("Live2DController", "CharacterLayoutMode", action, action_detail);
   switch (action_detail.CharacterLayoutMode) {
     case CharacterLayoutMode.Normal:

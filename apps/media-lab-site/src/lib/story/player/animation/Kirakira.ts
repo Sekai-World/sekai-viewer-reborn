@@ -10,25 +10,12 @@ export default class Kirakira extends BaseAnimation {
     this.period_ms = 10000;
     this.moving_type = moving_type;
 
-    const base_texture = this.textures.find(
-      (a) => a.identifier === "ui/tex_kirakira_01"
-    )!.texture.baseTexture;
-    const texture_big_circle = new Texture(
-      base_texture,
-      new Rectangle(0, 256, 256, 256)
-    );
-    const texture_big_sparkle = new Texture(
-      base_texture,
-      new Rectangle(256, 0, 256, 256)
-    );
-    const texture_small_circle = new Texture(
-      base_texture,
-      new Rectangle(128, 0, 128, 128)
-    );
-    const texture_small_sparkle = new Texture(
-      base_texture,
-      new Rectangle(0, 0, 128, 128)
-    );
+    const base_texture = this.textures.find((a) => a.identifier === "ui/tex_kirakira_01")!.texture
+      .baseTexture;
+    const texture_big_circle = new Texture(base_texture, new Rectangle(0, 256, 256, 256));
+    const texture_big_sparkle = new Texture(base_texture, new Rectangle(256, 0, 256, 256));
+    const texture_small_circle = new Texture(base_texture, new Rectangle(128, 0, 128, 128));
+    const texture_small_sparkle = new Texture(base_texture, new Rectangle(0, 0, 128, 128));
 
     // background not move sparkle
     this.add_scattered_sprites(texture_small_sparkle, 15, [0.5, 1], [0.05, 0.1]);
@@ -37,12 +24,8 @@ export default class Kirakira extends BaseAnimation {
     // background not move big circle
     this.add_scattered_sprites(texture_big_circle, 10, [0.4, 1.2], [0.05, 0.1]);
     // background moving sparkle
-    this.add_scattered_sprites(
-      texture_big_sparkle,
-      20,
-      [0.6, 1],
-      [0.05, 0.2],
-      () => new Curve().bounce().loop(5).map_range(0.2, 0.9)
+    this.add_scattered_sprites(texture_big_sparkle, 20, [0.6, 1], [0.05, 0.2], () =>
+      new Curve().bounce().loop(5).map_range(0.2, 0.9)
     );
     if (this.moving_type !== "still") {
       let curve = new Curve();
@@ -90,14 +73,14 @@ export default class Kirakira extends BaseAnimation {
       const rotation = this.random(0, 2 * Math.PI);
       const position_to: [number, number] = [
         position[0] + Math.cos(rotation) * distance,
-        position[1] + Math.sin(rotation) * distance,
+        position[1] + Math.sin(rotation) * distance
       ];
       this.settings.push({
         obj,
         scale: () => (scale * this.em(150)) / 256,
         x_curve: new Curve().map_range(position[0], position_to[0]),
         y_curve: new Curve().map_range(position[1], position_to[1]),
-        ...(alpha_curve ? { alpha_curve: alpha_curve() } : {}),
+        ...(alpha_curve ? { alpha_curve: alpha_curve() } : {})
       });
       this.root.addChild(obj);
     }
@@ -124,7 +107,7 @@ export default class Kirakira extends BaseAnimation {
       let position: [number, number] = [0.5, 0.5];
       let position_to: [number, number] = [
         0.5 + Math.cos(rotation) * distance,
-        0.5 + Math.sin(rotation) * distance,
+        0.5 + Math.sin(rotation) * distance
       ];
       let curve_alpha = new Curve(() => 1);
       if (this.moving_type === "inward") {
@@ -143,15 +126,10 @@ export default class Kirakira extends BaseAnimation {
       this.settings.push({
         obj,
         scale_func: (t) =>
-          curve
-            .map_range(
-              (this.em(150) * 0.1) / 256,
-              (this.em(150) * scale) / 256
-            )
-            .p(t),
+          curve.map_range((this.em(150) * 0.1) / 256, (this.em(150) * scale) / 256).p(t),
         x_curve: curve.map_range(position[0], position_to[0]),
         y_curve: curve.map_range(position[1], position_to[1]),
-        ...(with_alpha_curve ? { alpha_curve: curve_alpha } : {}),
+        ...(with_alpha_curve ? { alpha_curve: curve_alpha } : {})
       });
       this.root.addChild(obj);
     }

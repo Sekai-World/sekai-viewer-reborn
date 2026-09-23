@@ -43,9 +43,7 @@ const searchVideoFile = async (
     const response = await fetch(url);
     if (!response.ok) return null;
     const xml = await response.text();
-    const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) =>
-      decodeXmlEntities(m[1])
-    );
+    const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) => decodeXmlEntities(m[1]));
     const videoFile = keys.find((key) => VIDEO_FILE_PATTERN.test(key));
     return videoFile ?? null;
   } catch {
@@ -178,19 +176,13 @@ export const collectStoryMediaUrls = async (
 
   const voiceBundleName = scenarioIdToAssetbundleName(scenarioData.ScenarioId);
 
-  const voiceUrlFor = (
-    voiceId: string,
-    character2dId: number | undefined
-  ): string => {
+  const voiceUrlFor = (voiceId: string, character2dId: number | undefined): string => {
     const candidates = talkVoicePathCandidates({
       scenarioId: voiceBundleName,
       voiceId,
       isCardStory,
       isActionSet,
-      character:
-        character2dId !== undefined
-          ? voiceCharacters.get(character2dId)
-          : undefined
+      character: character2dId !== undefined ? voiceCharacters.get(character2dId) : undefined
     });
     // The canonical path is what the mirror serves for normal voices;
     // part-voice candidates are only useful at playback time, not preload.
@@ -209,11 +201,7 @@ export const collectStoryMediaUrls = async (
   for (const snippet of scenarioData.Snippets) {
     switch (snippet.Action) {
       case SnippetAction.Talk:
-        collectTalkVoices(
-          scenarioData.TalkData[snippet.ReferenceIndex],
-          voiceUrlFor,
-          context
-        );
+        collectTalkVoices(scenarioData.TalkData[snippet.ReferenceIndex], voiceUrlFor, context);
         break;
       case SnippetAction.SpecialEffect:
         await collectSpecialEffectMedia(

@@ -1,9 +1,4 @@
-import {
-  BlurFilter,
-  ColorMatrixFilter,
-  Container,
-  DisplayObject,
-} from "pixi.js";
+import { BlurFilter, ColorMatrixFilter, Container, DisplayObject } from "pixi.js";
 import type { ColorMatrix } from "pixi.js";
 import type { ILive2DLayerData, ILive2DTexture } from "../player-types";
 import AnimationController from "../animation/AnimationController";
@@ -22,8 +17,7 @@ export default abstract class BaseLayer {
   constructor(data: ILive2DLayerData) {
     this.stage_size = data.stage_size ?? [1, 1];
     this.screen_length = data.screen_length ?? 2000;
-    this.animation_controller =
-      data.animation_controller ?? new AnimationController();
+    this.animation_controller = data.animation_controller ?? new AnimationController();
     this.shake_animation_controller = new AnimationController();
     this.textures = data.textures ?? [];
     this.init = false;
@@ -74,12 +68,7 @@ export default abstract class BaseLayer {
     this.shake_animation_controller.abort();
   };
 
-  public add_color_filter = (
-    R: number[],
-    G: number[],
-    B: number[],
-    A: number[]
-  ) => {
+  public add_color_filter = (R: number[], G: number[], B: number[], A: number[]) => {
     // add filter
     const filter = new ColorMatrixFilter();
     /*
@@ -131,9 +120,7 @@ export default abstract class BaseLayer {
     if (this.root.filters) {
       let idx: number;
       do {
-        idx = this.root.filters.findIndex(
-          (f) => f instanceof ColorMatrixFilter
-        );
+        idx = this.root.filters.findIndex((f) => f instanceof ColorMatrixFilter);
         if (idx !== -1) {
           this.root.filters?.splice(idx, 1);
         }

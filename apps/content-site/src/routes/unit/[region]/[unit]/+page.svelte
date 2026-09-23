@@ -16,7 +16,7 @@
   import type { UnitMember } from "$lib/server/unit-detail";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const initialMessages = (): Record<string, string> =>
@@ -37,7 +37,10 @@ import type { PageData } from "./$types";
     { label }
   ];
   const memberHref = (member: UnitMember): string =>
-    resolve("/character/[region]/[id]", { region: data.region, id: String(member.gameCharacterId) });
+    resolve("/character/[region]/[id]", {
+      region: data.region,
+      id: String(member.gameCharacterId)
+    });
 
   $effect(() => {
     const id = ++requestId;
@@ -63,31 +66,61 @@ import type { PageData } from "./$types";
     <PageHeader breadcrumbs={breadcrumbs(t("unitPageTitlePrefix", "Unit"))}>
       {#snippet actions()}<RegionBadgeSwitch options={currentRegionOption()} />{/snippet}
     </PageHeader>
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)]" aria-busy="true">
-      <div class="card content-card-shell animate-pulse"><div class="card-body min-h-64"></div></div>
-      <div class="card content-card-shell animate-pulse"><div class="card-body min-h-64"></div></div>
+    <div
+      class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)]"
+      aria-busy="true"
+    >
+      <div class="card content-card-shell animate-pulse">
+        <div class="card-body min-h-64"></div>
+      </div>
+      <div class="card content-card-shell animate-pulse">
+        <div class="card-body min-h-64"></div>
+      </div>
     </div>
   {:then result}
-    <PageHeader breadcrumbs={breadcrumbs(result.unit?.unitName ?? t("unitPageTitlePrefix", "Unit"))}>
+    <PageHeader
+      breadcrumbs={breadcrumbs(result.unit?.unitName ?? t("unitPageTitlePrefix", "Unit"))}
+    >
       {#snippet actions()}<RegionBadgeSwitch options={currentRegionOption()} />{/snippet}
     </PageHeader>
 
     {#if result.loadFailed}
-      <div class="alert alert-error" role="alert">{t("unitLoadFailed", "Unit data could not be loaded.")}</div>
+      <div class="alert alert-error" role="alert">
+        {t("unitLoadFailed", "Unit data could not be loaded.")}
+      </div>
     {:else if !result.unit}
-      <div class="alert alert-error" role="alert">{t("unitUnavailable", "This unit is not available in the selected region.")}</div>
+      <div class="alert alert-error" role="alert">
+        {t("unitUnavailable", "This unit is not available in the selected region.")}
+      </div>
     {:else}
       {@const unit = result.unit}
       {@const logoUrl = resolveUnitLogoUrl(unit.unit)}
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)] md:items-start">
+      <div
+        class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)] md:items-start"
+      >
         <aside class="flex flex-col gap-4">
-          <article class="card content-card-shell overflow-hidden" style:--unit-accent={unit.colorCode ?? "var(--color-primary)"}>
-            <div class="card-body relative items-center gap-4 overflow-hidden p-5 text-center sm:p-8">
+          <article
+            class="card content-card-shell overflow-hidden"
+            style:--unit-accent={unit.colorCode ?? "var(--color-primary)"}
+          >
+            <div
+              class="card-body relative items-center gap-4 overflow-hidden p-5 text-center sm:p-8"
+            >
               <div class="absolute inset-x-0 top-0 h-1 bg-(--unit-accent)" aria-hidden="true"></div>
               {#if logoUrl}
-                <img src={logoUrl} alt={unit.unitName} class="h-28 max-w-full object-contain sm:h-32" loading="eager" decoding="async" />
+                <img
+                  src={logoUrl}
+                  alt={unit.unitName}
+                  class="h-28 max-w-full object-contain sm:h-32"
+                  loading="eager"
+                  decoding="async"
+                />
               {:else}
-                <UnitIconBadge unit={unit.unit} fallbackLabel={unit.unitName.slice(0, 2)} variant="lg" />
+                <UnitIconBadge
+                  unit={unit.unit}
+                  fallbackLabel={unit.unitName.slice(0, 2)}
+                  variant="lg"
+                />
               {/if}
               <h1 class="wrap-break-word text-3xl/tight font-bold sm:text-4xl">{unit.unitName}</h1>
             </div>
@@ -95,7 +128,14 @@ import type { PageData } from "./$types";
           {#if unit.profileSentence}
             <article class="card content-card-shell">
               <div class="card-body gap-4 p-3 sm:p-5">
-                <h2 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"><Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />{t("unitProfileTitle", "Profile")}</h2>
+                <h2
+                  class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+                >
+                  <Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />{t(
+                    "unitProfileTitle",
+                    "Profile"
+                  )}
+                </h2>
                 <p class="whitespace-pre-line wrap-break-word text-sm/6">{unit.profileSentence}</p>
               </div>
             </article>
@@ -103,7 +143,14 @@ import type { PageData } from "./$types";
         </aside>
         <article class="card content-card-shell">
           <div class="card-body gap-4 p-3 sm:p-5">
-            <h2 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"><Icon icon="mdi:account-group-outline" class="size-4" aria-hidden="true" />{t("unitRosterTitle", "Members")}</h2>
+            <h2
+              class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+            >
+              <Icon icon="mdi:account-group-outline" class="size-4" aria-hidden="true" />{t(
+                "unitRosterTitle",
+                "Members"
+              )}
+            </h2>
             {#if result.members.length > 0}
               {@const isPiaproUnit = unit.unit === "piapro"}
               {@const mainMembers = isPiaproUnit
@@ -164,7 +211,9 @@ import type { PageData } from "./$types";
                 </div>
               {/if}
             {:else}
-              <p class="content-card-inset rounded-xl p-6 text-center text-sm opacity-65">{t("unitMembersEmpty", "No members are available for this unit.")}</p>
+              <p class="content-card-inset rounded-xl p-6 text-center text-sm opacity-65">
+                {t("unitMembersEmpty", "No members are available for this unit.")}
+              </p>
             {/if}
           </div>
         </article>

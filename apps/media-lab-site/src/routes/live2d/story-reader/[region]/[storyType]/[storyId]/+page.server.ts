@@ -60,9 +60,7 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
         chapterTitle: resolution.chapterTitle ?? "",
         episodeTitle: resolution.episodeTitle ?? "",
         scenarioId: resolution.scenarioId,
-        bannerUrl: resolution.bannerPath
-          ? pageUrls.region(resolution.bannerPath)
-          : undefined
+        bannerUrl: resolution.bannerPath ? pageUrls.region(resolution.bannerPath) : undefined
       },
       isCardStory: resolution.isCardStory,
       isActionSet: resolution.isActionSet,

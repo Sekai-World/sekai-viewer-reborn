@@ -137,7 +137,9 @@ describe("normalizeGlobalNotice", () => {
   });
 
   it("returns null when a required field is missing or invalid", () => {
-    expect(normalizeGlobalNotice({ version: 1, severity: "info", title: "T", message: "M" })).toBeNull();
+    expect(
+      normalizeGlobalNotice({ version: 1, severity: "info", title: "T", message: "M" })
+    ).toBeNull();
     expect(
       normalizeGlobalNotice({ id: 42, version: 1, severity: "info", title: "T", message: "M" })
     ).toBeNull();

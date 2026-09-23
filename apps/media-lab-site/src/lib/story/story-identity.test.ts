@@ -111,8 +111,20 @@ const collections: StoryMasterCollections = {
   areas: [
     { id: 1, assetBundleName: "area1", areaType: "reality_world", name: "Area One" },
     { id: 2, assetBundleName: "area2", areaType: "reality_world", name: "Area Two" },
-    { id: 5, assetBundleName: "area5", areaType: "spirit_world", name: "Area Five", subName: "School" },
-    { id: 14, assetBundleName: "area14", areaType: "spirit_world", name: "Collab", label: "コラボ中！" }
+    {
+      id: 5,
+      assetBundleName: "area5",
+      areaType: "spirit_world",
+      name: "Area Five",
+      subName: "School"
+    },
+    {
+      id: 14,
+      assetBundleName: "area14",
+      areaType: "spirit_world",
+      name: "Collab",
+      label: "コラボ中！"
+    }
   ],
   specialStories: [
     {
@@ -254,12 +266,8 @@ describe("resolveStoryIdentity", () => {
   });
 
   it("reports unknown stories as not-found", () => {
-    expect(resolveStoryIdentity("unit", "idol-9-9", collections, "jp").status).toBe(
-      "not-found"
-    );
-    expect(resolveStoryIdentity("event", "99-1", collections, "jp").status).toBe(
-      "not-found"
-    );
+    expect(resolveStoryIdentity("unit", "idol-9-9", collections, "jp").status).toBe("not-found");
+    expect(resolveStoryIdentity("event", "99-1", collections, "jp").status).toBe("not-found");
   });
 
   it("reports malformed ids as unsupported", () => {
@@ -383,10 +391,7 @@ describe("buildStoryCardPickerFromPage", () => {
     });
     expect(titled).not.toHaveProperty("trained");
     expect(titled).not.toHaveProperty("rarityType");
-    expect(titled?.episodes.map((episode) => episode.storyId)).toEqual([
-      "2121",
-      "2122"
-    ]);
+    expect(titled?.episodes.map((episode) => episode.storyId)).toEqual(["2121", "2122"]);
     const untitled = cards.find((card) => card.cardId === 900);
     expect(untitled).toMatchObject({ cardName: "#900" });
     expect(untitled?.thumbnailPath).toBeUndefined();
@@ -524,9 +529,7 @@ describe("buildStoryAreaTalkPicker", () => {
       ...collections,
       actionSets: [{ id: 20, areaId: 2, scenarioId: "as_two", characterIds: [] }]
     });
-    expect(areas[0].thumbnailPath).toBe(
-      "worldmap/contents/normal/worldmap_area01.webp"
-    );
+    expect(areas[0].thumbnailPath).toBe("worldmap/contents/normal/worldmap_area01.webp");
   });
 
   it("falls back to null thumbnails and names for unknown areas", () => {
@@ -642,13 +645,8 @@ describe("buildUnitStoryCatalog", () => {
   });
 
   it("splits virtual singer stories into per-sekai story lines", () => {
-    const piapro = buildUnitStoryCatalog(unitCollections).find(
-      (unit) => unit.unit === "piapro"
-    );
-    expect(piapro?.groups.map((group) => group.categoryUnit)).toEqual([
-      "light_sound",
-      "idol"
-    ]);
+    const piapro = buildUnitStoryCatalog(unitCollections).find((unit) => unit.unit === "piapro");
+    expect(piapro?.groups.map((group) => group.categoryUnit)).toEqual(["light_sound", "idol"]);
     expect(piapro?.groups[0].outline).toBe("Leo/need sekai arc");
     expect(piapro?.groups[0].episodes).toHaveLength(2);
     expect(piapro?.groups[0].episodes[0]).toEqual({
@@ -661,9 +659,7 @@ describe("buildUnitStoryCatalog", () => {
   });
 
   it("keeps regular units on a single main story line", () => {
-    const idol = buildUnitStoryCatalog(unitCollections).find(
-      (unit) => unit.unit === "idol"
-    );
+    const idol = buildUnitStoryCatalog(unitCollections).find((unit) => unit.unit === "idol");
     expect(idol?.groups).toHaveLength(1);
     expect(idol?.groups[0]).toMatchObject({
       groupId: 7,

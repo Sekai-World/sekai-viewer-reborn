@@ -59,9 +59,7 @@ describe("createStoryRegionAssetUrls", () => {
   it("percent-encodes interior spaces, which real motion data contains", () => {
     const urls = createStoryRegionAssetUrls(() => undefined, "jp");
     expect(
-      urls.live2d(
-        "motion/v1/main/02_saki/02saki_motion_base/facial/face_ worry_01.motion3.json"
-      )
+      urls.live2d("motion/v1/main/02_saki/02saki_motion_base/facial/face_ worry_01.motion3.json")
     ).toBe(
       "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/02_saki/02saki_motion_base/facial/face_%20worry_01.motion3.json"
     );
@@ -119,9 +117,7 @@ describe("media path builders", () => {
     expect(movieDirPath("opening_01")).toBe("movie/opening_01/");
     expect(movieDirPath("movie_01")).toBe("scenario/movie/movie_01/");
     expect(movieFallbackPath("opening_01")).toBe("movie/opening_01/opening_01.mp4");
-    expect(movieFallbackPath("movie_01")).toBe(
-      "scenario/movie/movie_01/movie_01.mp4"
-    );
+    expect(movieFallbackPath("movie_01")).toBe("scenario/movie/movie_01/movie_01.mp4");
   });
 });
 
@@ -148,21 +144,13 @@ describe("partVoicePathVariants", () => {
 
 describe("soundEffectPaths", () => {
   it("uses the base pack for default SEs up to 528", () => {
-    expect(soundEffectPaths("se00001")).toEqual([
-      "sound/scenario/se/se_pack00001/se00001.mp3"
-    ]);
-    expect(soundEffectPaths("se00528")).toEqual([
-      "sound/scenario/se/se_pack00001/se00528.mp3"
-    ]);
+    expect(soundEffectPaths("se00001")).toEqual(["sound/scenario/se/se_pack00001/se00001.mp3"]);
+    expect(soundEffectPaths("se00528")).toEqual(["sound/scenario/se/se_pack00001/se00528.mp3"]);
   });
 
   it("uses the b pack for later default SEs", () => {
-    expect(soundEffectPaths("se00529")).toEqual([
-      "sound/scenario/se/se_pack00001_b/se00529.mp3"
-    ]);
-    expect(soundEffectPaths("se90001")).toEqual([
-      "sound/scenario/se/se_pack00001_b/se90001.mp3"
-    ]);
+    expect(soundEffectPaths("se00529")).toEqual(["sound/scenario/se/se_pack00001_b/se00529.mp3"]);
+    expect(soundEffectPaths("se90001")).toEqual(["sound/scenario/se/se_pack00001_b/se90001.mp3"]);
   });
 
   it("puts event SEs next to the event story", () => {
@@ -174,28 +162,16 @@ describe("soundEffectPaths", () => {
 
 describe("scenarioIdToAssetbundleName", () => {
   it("shifts event ids in the 167..176 window by one", () => {
-    expect(scenarioIdToAssetbundleName("story_event_167_1")).toBe(
-      "story_event_168_1"
-    );
-    expect(scenarioIdToAssetbundleName("story_event_176_1")).toBe(
-      "story_event_177_1"
-    );
-    expect(scenarioIdToAssetbundleName("story_event_166_1")).toBe(
-      "story_event_166_1"
-    );
-    expect(scenarioIdToAssetbundleName("story_event_177_1")).toBe(
-      "story_event_177_1"
-    );
+    expect(scenarioIdToAssetbundleName("story_event_167_1")).toBe("story_event_168_1");
+    expect(scenarioIdToAssetbundleName("story_event_176_1")).toBe("story_event_177_1");
+    expect(scenarioIdToAssetbundleName("story_event_166_1")).toBe("story_event_166_1");
+    expect(scenarioIdToAssetbundleName("story_event_177_1")).toBe("story_event_177_1");
   });
 
   it("applies the known broken-id fixes verbatim", () => {
-    expect(scenarioIdToAssetbundleName("areatalk03_266(20230607修正)")).toBe(
-      "areatalk03_266"
-    );
+    expect(scenarioIdToAssetbundleName("areatalk03_266(20230607修正)")).toBe("areatalk03_266");
     expect(scenarioIdToAssetbundleName("★4冬弥・泉_前半")).toBe("012043_touya01");
-    expect(scenarioIdToAssetbundleName("connect_live_01_band")).toBe(
-      "connect_live_01_lon_01"
-    );
+    expect(scenarioIdToAssetbundleName("connect_live_01_band")).toBe("connect_live_01_lon_01");
   });
 
   it("leaves ordinary ids untouched", () => {
@@ -268,15 +244,9 @@ describe("talkVoicePathCandidates", () => {
 
 describe("worldmap area thumbnails", () => {
   it("maps the first seven reality areas onto shared world-map sheets", () => {
-    expect(realityWorldmapAreaImagePath(1)).toBe(
-      "worldmap/contents/normal/worldmap_area03.webp"
-    );
-    expect(realityWorldmapAreaImagePath(2)).toBe(
-      "worldmap/contents/normal/worldmap_area01.webp"
-    );
-    expect(realityWorldmapAreaImagePath(7)).toBe(
-      "worldmap/contents/normal/worldmap_area06.webp"
-    );
+    expect(realityWorldmapAreaImagePath(1)).toBe("worldmap/contents/normal/worldmap_area03.webp");
+    expect(realityWorldmapAreaImagePath(2)).toBe("worldmap/contents/normal/worldmap_area01.webp");
+    expect(realityWorldmapAreaImagePath(7)).toBe("worldmap/contents/normal/worldmap_area06.webp");
   });
 
   it("returns null for reality areas without a sheet", () => {
@@ -288,8 +258,8 @@ describe("worldmap area thumbnails", () => {
     expect(spiritWorldmapAreaImagePath(5)).toBe(
       "worldmap/contents/normal/img_worldmap_areas05.webp"
     );
-    expect(
-      collaborationWorldmapAreaImagePath("area14", 14)
-    ).toBe("worldmap/contents/collaboration/area14/img_worldmap_areas14.webp");
+    expect(collaborationWorldmapAreaImagePath("area14", 14)).toBe(
+      "worldmap/contents/collaboration/area14/img_worldmap_areas14.webp"
+    );
   });
 });

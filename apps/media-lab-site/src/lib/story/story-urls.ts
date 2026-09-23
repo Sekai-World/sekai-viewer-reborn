@@ -40,12 +40,7 @@ const SAFE_PATH_PATTERN = /^[A-Za-z0-9_\-./()[\] ]+$/;
  */
 const toSafeEncodedPath = (path: string): string => {
   const trimmed = path.trim();
-  if (
-    !path ||
-    path !== trimmed ||
-    !SAFE_PATH_PATTERN.test(path) ||
-    path.includes("..")
-  ) {
+  if (!path || path !== trimmed || !SAFE_PATH_PATTERN.test(path) || path.includes("..")) {
     throw new Error(`Unsafe story asset path: ${path}`);
   }
   return path.replaceAll(" ", "%20");
@@ -67,14 +62,10 @@ const stripTrailingSlashes = (value: string): string => {
   return value.slice(0, end);
 };
 
-const resolveAssetOrigin = (
-  getRemoteAssetBase: () => string | undefined
-): string => {
+const resolveAssetOrigin = (getRemoteAssetBase: () => string | undefined): string => {
   const base = getRemoteAssetBase();
   const configured = base === undefined ? undefined : stripTrailingSlashes(base);
-  return configured && configured.length > 0
-    ? configured
-    : "https://storage.sekai.best";
+  return configured && configured.length > 0 ? configured : "https://storage.sekai.best";
 };
 
 /**
@@ -99,16 +90,12 @@ export const createStoryRegionAssetUrls = (
 // ---------------------------------------------------------------------------
 
 /** Scenario JSON document path for a unit story episode. */
-export const unitStoryScenarioPath = (
-  chapterAssetbundleName: string,
-  scenarioId: string
-): string => `scenario/unitstory/${chapterAssetbundleName}/${scenarioId}.asset`;
+export const unitStoryScenarioPath = (chapterAssetbundleName: string, scenarioId: string): string =>
+  `scenario/unitstory/${chapterAssetbundleName}/${scenarioId}.asset`;
 
 /** Scenario JSON document path for an event story episode. */
-export const eventStoryScenarioPath = (
-  eventAssetbundleName: string,
-  scenarioId: string
-): string => `event_story/${eventAssetbundleName}/scenario/${scenarioId}.asset`;
+export const eventStoryScenarioPath = (eventAssetbundleName: string, scenarioId: string): string =>
+  `event_story/${eventAssetbundleName}/scenario/${scenarioId}.asset`;
 
 /** Scenario JSON document path for a character profile story. */
 export const characterProfileScenarioPath = (scenarioId: string): string =>
@@ -125,10 +112,8 @@ export const cardStoryScenarioPath = (
     : `character/member/${assetbundleName}/${scenarioId}.asset`;
 
 /** Scenario JSON document path for an action-set (area talk). */
-export const areaTalkScenarioPath = (
-  actionSetId: number,
-  scenarioId: string
-): string => `scenario/actionset/group${Math.floor(actionSetId / 100)}/${scenarioId}.asset`;
+export const areaTalkScenarioPath = (actionSetId: number, scenarioId: string): string =>
+  `scenario/actionset/group${Math.floor(actionSetId / 100)}/${scenarioId}.asset`;
 
 /** Scenario JSON document path for a special story episode. */
 export const specialStoryScenarioPath = (
@@ -191,23 +176,16 @@ export const collaborationWorldmapAreaImagePath = (
 ): string =>
   `worldmap/contents/collaboration/${assetBundleName}/img_worldmap_areas${String(areaId).padStart(2, "0")}.webp`;
 
-export const bgmPath = (name: string): string =>
-  `sound/scenario/bgm/${name}/${name}.mp3`;
+export const bgmPath = (name: string): string => `sound/scenario/bgm/${name}/${name}.mp3`;
 
-export const scenarioVoicePath = (
-  voiceBundleName: string,
-  voiceId: string
-): string => `sound/scenario/voice/${voiceBundleName}/${voiceId}.mp3`;
+export const scenarioVoicePath = (voiceBundleName: string, voiceId: string): string =>
+  `sound/scenario/voice/${voiceBundleName}/${voiceId}.mp3`;
 
-export const cardScenarioVoicePath = (
-  voiceBundleName: string,
-  voiceId: string
-): string => `sound/card_scenario/voice/${voiceBundleName}/${voiceId}.mp3`;
+export const cardScenarioVoicePath = (voiceBundleName: string, voiceId: string): string =>
+  `sound/card_scenario/voice/${voiceBundleName}/${voiceId}.mp3`;
 
-export const actionSetVoicePath = (
-  voiceBundleName: string,
-  voiceId: string
-): string => `sound/actionset/voice/${voiceBundleName}/${voiceId}.mp3`;
+export const actionSetVoicePath = (voiceBundleName: string, voiceId: string): string =>
+  `sound/actionset/voice/${voiceBundleName}/${voiceId}.mp3`;
 
 export const partVoicePathVariants = (
   characterAssetName: string,
@@ -278,8 +256,7 @@ export const scenarioIdToAssetbundleName = (scenarioId: string): string => {
     connect_live_01_band: "connect_live_01_lon_01",
     connect_live_01_idol: "connect_live_01_mmj_01",
     connect_live_01_night: "connect_live_01_nig_01",
-    story_connect_live_thanksgiving_4th_anv:
-      "story_connect_live_4th_anniversary_01"
+    story_connect_live_thanksgiving_4th_anv: "story_connect_live_4th_anniversary_01"
   };
 
   return map[result] || result;
@@ -309,9 +286,7 @@ export const talkVoicePathCandidates = ({
   }/voice/${bundleName}/${voiceId}.mp3`;
   const candidates = [canonical];
   if (voiceId.startsWith("partvoice") && !isActionSet && character?.assetName) {
-    candidates.push(
-      ...partVoicePathVariants(character.assetName, character.unit, voiceId)
-    );
+    candidates.push(...partVoicePathVariants(character.assetName, character.unit, voiceId));
   }
   return candidates;
 };

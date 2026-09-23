@@ -26,10 +26,7 @@ const buildEvent = (over: Record<string, unknown> = {}) => ({
   ...over
 });
 
-const callGet = (
-  params: Record<string, string>,
-  query = ""
-) =>
+const callGet = (params: Record<string, string>, query = "") =>
   GET({
     params,
     fetch: vi.fn(),
@@ -80,9 +77,7 @@ describe("story picker catalog API", () => {
       unit: "light_sound"
     });
     expect(body.events[0].bannerUrl).toContain("event_34");
-    expect(body.unitOptions).toEqual([
-      { value: "light_sound", label: "Leo/need" }
-    ]);
+    expect(body.unitOptions).toEqual([{ value: "light_sound", label: "Leo/need" }]);
   });
 
   it("returns the paginated card picker payload with episode links", async () => {
@@ -112,19 +107,11 @@ describe("story picker catalog API", () => {
     ]);
     const response = await callGet({ region: "jp", storyType: "card" });
     const body = await response.json();
-    expect(mocks.fetchCardEpisodesByCardIds).toHaveBeenCalledWith(
-      "jp",
-      [3001],
-      expect.anything()
-    );
+    expect(mocks.fetchCardEpisodesByCardIds).toHaveBeenCalledWith("jp", [3001], expect.anything());
     expect(body.storyType).toBe("card");
     expect(body.cards[0].thumbnailUrl).toContain("0300101");
-    expect(body.unitOptions).toEqual([
-      { value: "light_sound", label: "Leo/need" }
-    ]);
-    expect(body.characterOptions).toEqual([
-      { value: "1", label: "Hoshino Ichika" }
-    ]);
+    expect(body.unitOptions).toEqual([{ value: "light_sound", label: "Leo/need" }]);
+    expect(body.characterOptions).toEqual([{ value: "1", label: "Hoshino Ichika" }]);
   });
 
   it("returns the unit catalog with banner URLs", async () => {
@@ -161,9 +148,7 @@ describe("story picker catalog API", () => {
     const body = await response.json();
     expect(body.storyType).toBe("unit");
     expect(body.units[0].unitName).toBe("MORE MORE JUMP！");
-    expect(body.units[0].groups[0].episodes[0].bannerUrl).toContain(
-      "story/episode_image/"
-    );
+    expect(body.units[0].groups[0].episodes[0].bannerUrl).toContain("story/episode_image/");
   });
 
   it("returns the character picker payload next to the grouped list", async () => {

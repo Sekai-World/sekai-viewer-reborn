@@ -1,9 +1,6 @@
 import { getCardThumbnailAssetURL } from "$lib/assets/index";
 import type { SupportedRegion } from "$lib/domain/regions";
-import {
-  resolveCardTrained,
-  type CardTrainingMetadata
-} from "@platform/ui-shell/card-thumbnail";
+import { resolveCardTrained, type CardTrainingMetadata } from "@platform/ui-shell/card-thumbnail";
 
 export type { CardTrainingMetadata } from "@platform/ui-shell/card-thumbnail";
 export { isTrainedOnlyCard, resolveCardTrained } from "@platform/ui-shell/card-thumbnail";

@@ -13,9 +13,7 @@ const getAudioElement = (container: HTMLElement): HTMLAudioElement => {
 };
 
 const getProgressCircle = (container: HTMLElement): SVGCircleElement => {
-  const element = container.querySelector<SVGCircleElement>(
-    "svg circle[stroke-dasharray]"
-  );
+  const element = container.querySelector<SVGCircleElement>("svg circle[stroke-dasharray]");
   if (!element) {
     throw new Error("Expected the component to render a progress ring.");
   }
@@ -97,9 +95,7 @@ describe("VoicePlayButton", () => {
 
     await fireEvent.click(getByRole("button", { name: "Play" }));
     await fireEvent(getAudioElement(container), new Event("error"));
-    expect(getByRole("button", { name: "Voice unavailable" }).hasAttribute("disabled")).toBe(
-      true
-    );
+    expect(getByRole("button", { name: "Voice unavailable" }).hasAttribute("disabled")).toBe(true);
 
     await rerender({ sources: ["/fixed.mp3"], playLabel: "Play", errorLabel: "Voice unavailable" });
     expect(getByRole("button", { name: "Play" }).hasAttribute("disabled")).toBe(false);

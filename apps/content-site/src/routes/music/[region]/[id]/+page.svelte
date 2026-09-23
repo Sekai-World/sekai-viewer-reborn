@@ -16,7 +16,7 @@
   import { formatUnitFallbackLabel, unitCodeByMusicTag } from "$lib/domain/unit-profile";
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>

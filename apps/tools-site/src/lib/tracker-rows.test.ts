@@ -15,9 +15,33 @@ describe("tracker row models", () => {
     });
 
     expect(rows).toEqual([
-      { ladderRank: 1, status: "unavailable", ranking: null, score: null, speedPerHour: null, reward: null, graphPoint: null },
-      { ladderRank: 10, status: "available", ranking: { rank: 10, score: 600, userName: "Ten", timestamp: "2026-01-01T00:00:00.000Z" }, score: 600, speedPerHour: 1200, reward: { type: "gem" }, graphPoint: { rank: 10, score: 600, timestamp: "2026-01-01T00:00:00.000Z" } },
-      { ladderRank: 100, status: "unavailable", ranking: null, score: null, speedPerHour: null, reward: null, graphPoint: null }
+      {
+        ladderRank: 1,
+        status: "unavailable",
+        ranking: null,
+        score: null,
+        speedPerHour: null,
+        reward: null,
+        graphPoint: null
+      },
+      {
+        ladderRank: 10,
+        status: "available",
+        ranking: { rank: 10, score: 600, userName: "Ten", timestamp: "2026-01-01T00:00:00.000Z" },
+        score: 600,
+        speedPerHour: 1200,
+        reward: { type: "gem" },
+        graphPoint: { rank: 10, score: 600, timestamp: "2026-01-01T00:00:00.000Z" }
+      },
+      {
+        ladderRank: 100,
+        status: "unavailable",
+        ranking: null,
+        score: null,
+        speedPerHour: null,
+        reward: null,
+        graphPoint: null
+      }
     ]);
   });
 
@@ -27,7 +51,12 @@ describe("tracker row models", () => {
       rankings: [{ rank: 1, score: Number.NaN }],
       startAt: "2026-01-01T00:00:00.000Z"
     });
-    expect(row).toMatchObject({ status: "available", score: null, speedPerHour: null, graphPoint: null });
+    expect(row).toMatchObject({
+      status: "available",
+      score: null,
+      speedPerHour: null,
+      graphPoint: null
+    });
   });
 
   it("uses each ranking timestamp and rejects missing or invalid timestamps", () => {

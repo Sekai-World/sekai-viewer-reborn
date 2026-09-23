@@ -14,7 +14,7 @@ export default class Blackout extends BaseAnimation {
     this.settings.push({
       obj: bg_graphic,
       scale_x: () => (1 / this.screen_length) * this.stage_size[0],
-      scale_y: () => (1 / this.screen_length) * this.stage_size[1],
+      scale_y: () => (1 / this.screen_length) * this.stage_size[1]
     });
   }
 }

@@ -7,10 +7,7 @@ import {
   resolveStoryRoute
 } from "$lib/story/story-resolver.server";
 import { createStoryRegionAssetUrls } from "$lib/story/story-urls";
-import {
-  buildVoiceCharacterLookup,
-  flattenScenarioToRows
-} from "$lib/story/scenario-rows";
+import { buildVoiceCharacterLookup, flattenScenarioToRows } from "$lib/story/scenario-rows";
 import type { PageServerLoad } from "./$types";
 
 /**
@@ -88,9 +85,7 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
         chapterTitle: resolution.chapterTitle ?? "",
         episodeTitle: resolution.episodeTitle ?? "",
         scenarioId: resolution.scenarioId,
-        bannerUrl: resolution.bannerPath
-          ? pageUrls.region(resolution.bannerPath)
-          : undefined
+        bannerUrl: resolution.bannerPath ? pageUrls.region(resolution.bannerPath) : undefined
       },
       assetBase: getStoryAssetBase(),
       cast: document_.cast,

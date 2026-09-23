@@ -23,7 +23,7 @@ function side_to_position(
       [CharacterLayoutPosition.RightEdge]: [1.5, 0.5],
       [CharacterLayoutPosition.BottomEdge]: [0.5, 1.5],
       [CharacterLayoutPosition.BottomLeftEdge]: [0.3, 1.5],
-      [CharacterLayoutPosition.BottomRightEdge]: [0.7, 1.5],
+      [CharacterLayoutPosition.BottomRightEdge]: [0.7, 1.5]
     },
     three_models: {
       [CharacterLayoutPosition.Unspecified]: [0.5, 0.5],
@@ -34,13 +34,10 @@ function side_to_position(
       [CharacterLayoutPosition.RightEdge]: [1.5, 0.5],
       [CharacterLayoutPosition.BottomEdge]: [0.5, 1.5],
       [CharacterLayoutPosition.BottomLeftEdge]: [0.25, 1.5],
-      [CharacterLayoutPosition.BottomRightEdge]: [0.75, 1.5],
-    },
+      [CharacterLayoutPosition.BottomRightEdge]: [0.75, 1.5]
+    }
   };
-  const position = [...(position_maps[layout_mode][side] || [0.5, 0.5])] as [
-    number,
-    number,
-  ];
+  const position = [...(position_maps[layout_mode][side] || [0.5, 0.5])] as [number, number];
   position[0] += offset / 1920;
   return position;
 }
@@ -58,26 +55,15 @@ function move_speed(t: CharacterLayoutMoveSpeedType) {
   }
 }
 
-export default async function action_layout(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.LayoutData[action.ReferenceIndex];
+export default async function action_layout(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.LayoutData[action.ReferenceIndex];
   controller.layers.telop.hide(500);
   const layout_mode = controller.layers.live2d.layout_mode;
   switch (action_detail.Type) {
     case CharacterLayoutType.Motion:
       {
-        log.log(
-          "Live2DController",
-          "CharacterLayout/Motion",
-          action,
-          action_detail
-        );
-        const costume = controller.live2d_get_costume(
-          action_detail.Character2dId
-        )!;
+        log.log("Live2DController", "CharacterLayout/Motion", action, action_detail);
+        const costume = controller.live2d_get_costume(action_detail.Character2dId)!;
         // Step 1: Apply motions and expressions.
         const motion = controller.apply_live2d_motion(
           costume,
@@ -85,11 +71,7 @@ export default async function action_layout(
           action_detail.FacialName
         );
         // (Same time) Move from current position to SideTo position or not move.
-        const to = side_to_position(
-          action_detail.SideTo,
-          action_detail.SideToOffsetX,
-          layout_mode
-        );
+        const to = side_to_position(action_detail.SideTo, action_detail.SideToOffsetX, layout_mode);
         const move = controller.layers.live2d.move(
           costume,
           undefined,
@@ -103,12 +85,7 @@ export default async function action_layout(
       break;
     case CharacterLayoutType.Appear:
       {
-        log.log(
-          "Live2DController",
-          "CharacterLayout/Appear",
-          action,
-          action_detail
-        );
+        log.log("Live2DController", "CharacterLayout/Appear", action, action_detail);
         // update CostumeType
         let costume = "";
         if (action_detail.CostumeType !== "") {
@@ -134,11 +111,7 @@ export default async function action_layout(
           action_detail.SideFromOffsetX,
           layout_mode
         );
-        const to = side_to_position(
-          action_detail.SideTo,
-          action_detail.SideToOffsetX,
-          layout_mode
-        );
+        const to = side_to_position(action_detail.SideTo, action_detail.SideToOffsetX, layout_mode);
         let move;
         if (from[0] === to[0] && from[1] === to[1]) {
           controller.layers.live2d.set_position(costume, from);
@@ -168,26 +141,15 @@ export default async function action_layout(
       break;
     case CharacterLayoutType.Clear:
       {
-        log.log(
-          "Live2DController",
-          "CharacterLayout/Clear",
-          action,
-          action_detail
-        );
-        const costume = controller.live2d_get_costume(
-          action_detail.Character2dId
-        )!;
+        log.log("Live2DController", "CharacterLayout/Clear", action, action_detail);
+        const costume = controller.live2d_get_costume(action_detail.Character2dId)!;
         // Step 1: Move from SideFrom position to SideTo position or not move.
         const from = side_to_position(
           action_detail.SideFrom,
           action_detail.SideFromOffsetX,
           layout_mode
         );
-        const to = side_to_position(
-          action_detail.SideTo,
-          action_detail.SideToOffsetX,
-          layout_mode
-        );
+        const to = side_to_position(action_detail.SideTo, action_detail.SideToOffsetX, layout_mode);
         if (!(from[0] === to[0] && from[1] === to[1])) {
           await controller.layers.live2d.move(
             costume,

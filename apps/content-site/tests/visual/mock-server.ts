@@ -16,7 +16,10 @@ const event = {
   assetbundleName: "visual-regression-event"
 };
 
-const json = (response: Parameters<Server["emit"]>[1] & { end: (body?: string) => void }, body: unknown): void => {
+const json = (
+  response: Parameters<Server["emit"]>[1] & { end: (body?: string) => void },
+  body: unknown
+): void => {
   response.setHeader("content-type", "application/json; charset=utf-8");
   response.end(JSON.stringify(body));
 };
@@ -49,7 +52,9 @@ const createMockServer = (): Server =>
 
     if (pathname.startsWith("/sekai-") || pathname.endsWith(".webp")) {
       response.setHeader("content-type", "image/svg+xml");
-      response.end('<svg xmlns="http://www.w3.org/2000/svg" width="640" height="256"><rect width="100%" height="100%" fill="#dbeafe"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#1e3a8a" font-size="24">Visual Event</text></svg>');
+      response.end(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="256"><rect width="100%" height="100%" fill="#dbeafe"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#1e3a8a" font-size="24">Visual Event</text></svg>'
+      );
       return;
     }
 
@@ -69,12 +74,30 @@ const createMockServer = (): Server =>
     }
 
     if (pathname === "/versions") {
-      json(response, Object.fromEntries(["jp", "en", "tw", "kr", "cn"].map((region) => [region, { appVersion: "1.0.0", dataVersion: "visual", assetVersion: "visual", cdnVersion: "visual" }])));
+      json(
+        response,
+        Object.fromEntries(
+          ["jp", "en", "tw", "kr", "cn"].map((region) => [
+            region,
+            {
+              appVersion: "1.0.0",
+              dataVersion: "visual",
+              assetVersion: "visual",
+              cdnVersion: "visual"
+            }
+          ])
+        )
+      );
       return;
     }
 
     if (/^\/versions\/[a-z]+$/.test(pathname)) {
-      json(response, { appVersion: "1.0.0", dataVersion: "visual", assetVersion: "visual", cdnVersion: "visual" });
+      json(response, {
+        appVersion: "1.0.0",
+        dataVersion: "visual",
+        assetVersion: "visual",
+        cdnVersion: "visual"
+      });
       return;
     }
 
@@ -106,6 +129,8 @@ export default async function globalSetup(_config: FullConfig): Promise<() => Pr
 
   return async () => {
     releasePendingCurrentEvent();
-    await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve()))
+    );
   };
 }

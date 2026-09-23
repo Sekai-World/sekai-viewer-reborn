@@ -1,9 +1,4 @@
-import {
-  Container,
-  Ticker,
-  AlphaFilter,
-  ColorMatrixFilter,
-} from "pixi.js";
+import { Container, Ticker, AlphaFilter, ColorMatrixFilter } from "pixi.js";
 import type { ColorMatrix } from "pixi.js";
 import BaseLayer from "./BaseLayer";
 
@@ -12,14 +7,14 @@ import { log } from "../log";
 import type {
   ILive2DLayerData,
   ILive2DModelDataCollection,
-  Ilive2DModelInfo,
+  Ilive2DModelInfo
 } from "../player-types";
 
 import {
   Live2DModel,
   MotionPriority,
   MotionPreloadStrategy,
-  Cubism4InternalModel,
+  Cubism4InternalModel
 } from "@sekai-world/pixi-live2d-display-mulmotion/cubism4";
 import type { Live2DModelOptions } from "@sekai-world/pixi-live2d-display-mulmotion/cubism4";
 
@@ -40,17 +35,14 @@ export default class Live2D extends BaseLayer {
     super(data);
     this.structure = {
       live2d: new Container<Live2DModelWithInfo>(),
-      effect: new Container(),
+      effect: new Container()
     };
     this.root.addChild(this.structure.live2d);
     this.root.addChild(this.structure.effect);
   }
 
   async draw(): Promise<void> {} // NOSONAR: intentional no-op override
-  set_style(
-    stage_size?: [number, number],
-    model_list: Live2DModelWithInfo[] = []
-  ): void {
+  set_style(stage_size?: [number, number], model_list: Live2DModelWithInfo[] = []): void {
     this.stage_size = stage_size ?? this.stage_size;
     let models = model_list;
     if (model_list.length === 0) {
@@ -84,7 +76,7 @@ export default class Live2D extends BaseLayer {
       autoHitTest: false,
       breathDepth: 0.2,
       ticker: Ticker.shared,
-      motionPreload: motionPreload,
+      motionPreload: motionPreload
     });
     model.visible = false;
     const internalModel = model.internalModel;
@@ -133,12 +125,7 @@ export default class Live2D extends BaseLayer {
         // reset lipsync param to 0
         this.reset_lipsync_param(model);
       }
-      await manager.startMotion(
-        motion_type,
-        motion_index,
-        MotionPriority.FORCE,
-        to_last_frame
-      );
+      await manager.startMotion(motion_type, motion_index, MotionPriority.FORCE, to_last_frame);
       model.live2DInfo.wait_motion = this.animation_controller.wrapper(
         () => {},
         () => manager.destroyed || manager.isFinished()
@@ -208,10 +195,8 @@ export default class Live2D extends BaseLayer {
       }
       if (n_from[0] === to[0] && n_from[1] === to[1]) return;
       await this.animation_controller.progress_wrapper((progress) => {
-        model.live2DInfo.position[0] =
-          (to[0] - n_from[0]) * progress + n_from[0];
-        model.live2DInfo.position[1] =
-          (to[1] - n_from[1]) * progress + n_from[1];
+        model.live2DInfo.position[0] = (to[0] - n_from[0]) * progress + n_from[0];
+        model.live2DInfo.position[1] = (to[1] - n_from[1]) * progress + n_from[1];
         this.set_style(this.stage_size, [model]);
       }, time);
     }
@@ -233,8 +218,7 @@ export default class Live2D extends BaseLayer {
     this.init_analyzer();
     if (models.length > 0 && this.audio_analyzer) {
       // get sound gain node by Howler internal method
-      const gain = (sound as unknown as { _sounds: { _node: GainNode }[] })
-        ._sounds[0]._node;
+      const gain = (sound as unknown as { _sounds: { _node: GainNode }[] })._sounds[0]._node;
       gain.disconnect();
       this.audio_analyzer.disconnect();
       gain.connect(this.audio_analyzer);
@@ -269,9 +253,8 @@ export default class Live2D extends BaseLayer {
       // clear all listeners or will fire end event
       this.current_sound.off("end");
       // disconnect from analyzer
-      const gain = (
-        this.current_sound as unknown as { _sounds: { _node: GainNode }[] }
-      )._sounds[0]._node;
+      const gain = (this.current_sound as unknown as { _sounds: { _node: GainNode }[] })._sounds[0]
+        ._node;
       gain.disconnect();
       // stop current talk
       this.current_sound.stop();
@@ -322,16 +305,12 @@ export default class Live2D extends BaseLayer {
     if (model) {
       if (ani_type === "hologram") {
         // remove filter
-        let idx = model.filters!.findIndex(
-          (f) => f instanceof ColorMatrixFilter
-        );
+        let idx = model.filters!.findIndex((f) => f instanceof ColorMatrixFilter);
         if (idx !== -1) {
           model.filters?.splice(idx, 1);
         }
         // remove animation
-        idx = model.live2DInfo.animations.findIndex(
-          (a) => a instanceof Hologram
-        );
+        idx = model.live2DInfo.animations.findIndex((a) => a instanceof Hologram);
         if (idx !== -1) {
           model.live2DInfo.animations[idx].destroy();
           model.live2DInfo.animations.splice(idx, 1);
@@ -367,7 +346,7 @@ class Live2DModelWithInfo extends Live2DModel {
       hidden: true,
       speaking: false,
       wait_motion: Promise.resolve(),
-      animations: [],
+      animations: []
     };
   }
   destroy() {

@@ -20,7 +20,7 @@
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
@@ -113,7 +113,9 @@ import type { PageData } from "./$types";
     >{:then result}<title
       >{result.character?.name
         ? createPageTitle(result.character.name, t("navigation.characters", "Characters"))
-        : createPageTitle(`${t("characterPageTitlePrefix", "Character")} ${data.characterId}`)}</title
+        : createPageTitle(
+            `${t("characterPageTitlePrefix", "Character")} ${data.characterId}`
+          )}</title
     >{/await}
 </svelte:head>
 
