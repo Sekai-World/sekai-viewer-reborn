@@ -85,6 +85,11 @@ describe("MissionCatalogue", () => {
     expect(screen.getByText("Coins ×100")).toBeTruthy();
     expect(screen.getByText("Coins ×200")).toBeTruthy();
     expect(screen.getByText("Play a live")).toBeTruthy();
+    expect(
+      Array.from(container.querySelectorAll("ul")).some((element) =>
+        element.classList.contains("lg:grid-cols-2")
+      )
+    ).toBe(true);
   });
 
   it("renders a compact overview with family totals, previews, and family actions", async () => {
@@ -111,6 +116,11 @@ describe("MissionCatalogue", () => {
     expect(container.querySelector(".content-card-shell")).toBeNull();
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
     expect(screen.queryByText("You have reached the end.")).toBeNull();
+    expect(
+      Array.from(container.querySelectorAll("div")).some((element) =>
+        element.classList.contains("lg:grid-cols-3")
+      )
+    ).toBe(true);
     await fireEvent.click(screen.getByRole("button", { name: "See all Story missions" }));
     expect(onFamilyChange).toHaveBeenCalledWith("storyMissions");
   });

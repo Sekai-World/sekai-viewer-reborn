@@ -125,9 +125,13 @@
 {/snippet}
 
 {#snippet members(group: MissionCatalogueGroup)}
-  <ul class="divide-y divide-(--archive-border-subtle) border-t border-(--archive-border-subtle)">
+  <ul
+    class="divide-y divide-(--archive-border-subtle) border-t border-(--archive-border-subtle) lg:grid lg:grid-cols-2 lg:gap-x-8 lg:divide-y-0"
+  >
     {#each group.items as item (item.key)}
-      <li class="grid min-w-0 gap-3 py-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:gap-4">
+      <li
+        class="grid min-w-0 gap-3 py-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(12rem,1fr)] lg:border-b lg:border-(--archive-border-subtle) lg:py-4"
+      >
         <div class="min-w-0 space-y-2">
           <h3 class="text-base font-medium wrap-anywhere text-(--archive-text-strong)">
             {item.sentence}
@@ -297,11 +301,11 @@
       </div>
     {/snippet}
     {#key catalogueKey}
-      <div class="flex min-w-0 flex-col gap-4">
+      <div class={overview ? "grid min-w-0 gap-4 lg:grid-cols-3" : "flex min-w-0 flex-col gap-4"}>
         {#each groups as group (group.family)}
           <section
             class={overview
-              ? "min-w-0 border-b border-(--archive-border-subtle) py-4 first:pt-0 last:border-0 last:pb-0"
+              ? "min-w-0 border-b border-(--archive-border-subtle) py-4 first:pt-0 last:border-0 last:pb-0 lg:rounded-2xl lg:border lg:border-(--archive-border-subtle) lg:p-4 lg:first:pt-4 lg:last:border lg:last:pb-4"
               : "content-card-shell min-w-0 rounded-2xl p-4"}
           >
             <div class="pb-4">{@render heading(group)}</div>
