@@ -7,6 +7,7 @@ const pagePath = resolve(process.cwd(), "src/routes/tracker/[region]/+page.svelt
 const homePagePath = resolve(process.cwd(), "src/routes/+page.svelte");
 const layoutPath = resolve(process.cwd(), "src/routes/+layout.svelte");
 const appCssPath = resolve(process.cwd(), "src/app.css");
+const palettesCssPath = resolve(process.cwd(), "../../packages/ui-tokens/src/palettes.css");
 const trackerMessagesPath = resolve(
   process.cwd(),
   "../../packages/i18n-source/tools-site/tracker.json"
@@ -1028,5 +1029,38 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("width: auto;");
     expect(source).not.toContain(".tracker-primary-status > .badge {");
     expect(source).not.toContain("margin-left: auto;");
+  });
+
+  it("resolves tracker archive tokens and keeps ranking cards on the panel surface", async () => {
+    const [source, appCss, palettesCss] = await Promise.all([
+      readFile(pagePath, "utf8"),
+      readFile(appCssPath, "utf8"),
+      readFile(palettesCssPath, "utf8")
+    ]);
+    const declaredTokens = new Set(
+      [...`${appCss}\n${palettesCss}`.matchAll(/(--archive-[a-z-]+)\s*:/g)].map(([, name]) => name)
+    );
+    const referencedTokens = [
+      ...new Set([...source.matchAll(/var\((--archive-[a-z-]+)/g)].map(([, name]) => name))
+    ];
+    expect(referencedTokens.length).toBeGreaterThan(0);
+    expect(referencedTokens.filter((name) => !declaredTokens.has(name))).toEqual([]);
+
+    const skeletonCardStyles = source.match(/\.tracker-skeleton-card\s*\{([^}]+)\}/)?.[1];
+    const rankingCardStyles = source.match(/\.tracker-ranking-card\s*\{([^}]+)\}/)?.[1];
+    const rankingCardActiveStyles = source.match(
+      /\.tracker-ranking-card:focus-visible\s*\{([^}]+)\}/
+    )?.[1];
+    const currentTabStyles = source.match(
+      /\.tracker-current-tab:not\(\.btn-primary\)\s*\{([^}]+)\}/
+    )?.[1];
+    expect(skeletonCardStyles).toContain("background: var(--archive-surface-default);");
+    expect(rankingCardStyles).toContain("background: var(--archive-surface-default);");
+    expect(rankingCardActiveStyles).toContain(
+      "background: color-mix(in srgb, var(--color-primary) 7%, var(--archive-surface-default));"
+    );
+    expect(currentTabStyles).toContain(
+      "background: color-mix(in srgb, var(--color-accent) 12%, var(--archive-surface-default));"
+    );
   });
 });
