@@ -28,13 +28,6 @@
       onToggle: () => void;
       onLoadMore: () => void;
     } | null;
-    rankReference?: {
-      title: string;
-      items: { label: string; rewardLabels: string[] }[];
-      loading: boolean;
-      error: string | null;
-      emptyLabel: string;
-    } | null;
   };
   export type MissionCatalogueGroup = {
     family: MissionFamily;
@@ -166,31 +159,8 @@
               <p class="text-sm font-medium text-(--archive-text-strong)">
                 {item.milestones.totalLabel}
               </p>
-              <ul class="space-y-2 text-sm">
-                {#each item.milestones.summary as level (level.label)}
-                  <li
-                    class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 tabular-nums"
-                  >
-                    <span class="text-(--archive-text-muted)">{level.label}</span>
-                    {#if level.rewardLabel}<span class="text-(--archive-text-muted)"
-                        >{level.rewardLabel}</span
-                      >{/if}
-                  </li>
-                {/each}
-              </ul>
-              <button
-                type="button"
-                class="btn btn-ghost min-h-10 px-3"
-                onclick={item.milestones.onToggle}
-                aria-expanded={item.milestones.expanded}
-              >
-                {item.milestones.toggleLabel}
-              </button>
               {#if item.milestones.expanded}
-                <div
-                  class="space-y-3 border-t border-(--archive-border-subtle) pt-3"
-                  aria-live="polite"
-                >
+                <div class="space-y-3" aria-live="polite">
                   {#if item.milestones.loading}
                     <p class="text-sm text-(--archive-text-muted)">
                       {item.milestones.loadMoreLabel}
@@ -221,34 +191,28 @@
                     {/if}
                   {/if}
                 </div>
-              {/if}
-            </section>
-          {/if}
-          {#if item.rankReference}
-            <section
-              class="space-y-2 border-t border-(--archive-border-subtle) pt-3"
-              aria-label={item.rankReference.title}
-            >
-              <h4 class="text-sm font-medium text-(--archive-text-strong)">
-                {item.rankReference.title}
-              </h4>
-              {#if item.rankReference.loading}
-                <p class="text-sm text-(--archive-text-muted)">{item.rankReference.emptyLabel}</p>
-              {:else if item.rankReference.error}
-                <p class="text-sm text-error">{item.rankReference.error}</p>
-              {:else if item.rankReference.items.length}
+              {:else}
                 <ul class="space-y-2 text-sm">
-                  {#each item.rankReference.items as rank (rank.label)}
-                    <li class="flex flex-wrap gap-x-3 gap-y-1">
-                      <span class="font-medium">{rank.label}</span><span
-                        class="text-(--archive-text-muted)">{rank.rewardLabels.join(" · ")}</span
-                      >
+                  {#each item.milestones.summary as level (level.label)}
+                    <li
+                      class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 tabular-nums"
+                    >
+                      <span class="text-(--archive-text-muted)">{level.label}</span>
+                      {#if level.rewardLabel}<span class="text-(--archive-text-muted)"
+                          >{level.rewardLabel}</span
+                        >{/if}
                     </li>
                   {/each}
                 </ul>
-              {:else}
-                <p class="text-sm text-(--archive-text-muted)">{item.rankReference.emptyLabel}</p>
               {/if}
+              <button
+                type="button"
+                class="btn btn-ghost min-h-10 px-3"
+                onclick={item.milestones.onToggle}
+                aria-expanded={item.milestones.expanded}
+              >
+                {item.milestones.toggleLabel}
+              </button>
             </section>
           {/if}
         </div>

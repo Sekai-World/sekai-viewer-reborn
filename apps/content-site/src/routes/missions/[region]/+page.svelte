@@ -7,7 +7,6 @@
   import { groupMissionsByFamily } from "$lib/components/mission/catalogue-groups";
   import {
     missionFamilies,
-    type CharacterRankReference,
     type Mission,
     type MissionFamily,
     type MissionParameterGroupLevel
@@ -37,7 +36,6 @@
     loading: boolean;
     error: boolean;
   };
-  type RankState = { items: CharacterRankReference[]; loading: boolean; error: boolean };
 
   let { data }: PageProps = $props();
   let resolvedMessages = $state<Record<string, string> | null>(null);
@@ -53,7 +51,6 @@
   let loadMoreError = $state(false);
   let listRequestId = 0;
   let levelsByGroup = $state<Record<number, LevelState>>({});
-  let ranksByCharacter = $state<Record<number, RankState>>({});
 
   const messages = $derived({
     ...sourceMessages,
@@ -132,32 +129,6 @@
       setLevelState(id, { ...state, expanded: true, loading: false, error: true });
     }
   };
-  const loadRanks = async (characterId: number): Promise<void> => {
-    if (ranksByCharacter[characterId]?.loading || ranksByCharacter[characterId]?.items) return;
-    ranksByCharacter = {
-      ...ranksByCharacter,
-      [characterId]: { items: [], loading: true, error: false }
-    };
-    try {
-      const response = await fetch(
-        resolve("/missions/[region]/character-ranks/[characterId]", {
-          region: data.region,
-          characterId: String(characterId)
-        })
-      );
-      if (!response.ok) throw new Error("Character Rank request failed.");
-      const payload = (await response.json()) as { items: CharacterRankReference[] };
-      ranksByCharacter = {
-        ...ranksByCharacter,
-        [characterId]: { items: payload.items, loading: false, error: false }
-      };
-    } catch {
-      ranksByCharacter = {
-        ...ranksByCharacter,
-        [characterId]: { items: [], loading: false, error: true }
-      };
-    }
-  };
   const toggleLevels = (item: Mission): void => {
     const id = item.parameterGroup?.id ?? item.parameterGroupId;
     if (id === null) return;
@@ -171,7 +142,6 @@
       return;
     }
     void loadLevels(id);
-    if (item.characterId !== null) void loadRanks(item.characterId);
   };
   const formatMissionTemplate = (value: string, requirement: number | null): string => {
     const replacement = requirement === null ? "…" : formatNumber(requirement);
@@ -206,7 +176,6 @@
               : [])
         ]
       : [];
-    const rankState = item.characterId === null ? null : ranksByCharacter[item.characterId];
     return {
       key: `${item.family}-${item.id}`,
       sentence: formatMissionTemplate(item.sentence ?? fallbackSentence, sentenceRequirement),
@@ -262,29 +231,6 @@
               endLabel: t("mission.levelsEnd"),
               onToggle: () => toggleLevels(item),
               onLoadMore: () => void loadLevels(groupId)
-            }
-          : null,
-      rankReference:
-        item.family === "characterMissionV2s" &&
-        item.characterId !== null &&
-        (state?.expanded ?? false)
-          ? {
-              title: t("mission.characterRankReference"),
-              items: (rankState?.items ?? []).map((rank) => ({
-                label: t("mission.characterRank").replace(
-                  "{rank}",
-                  formatNumber(rank.characterRank ?? 0)
-                ),
-                rewardLabels: rank.rewards
-                  .flatMap((box) => box.details)
-                  .map(
-                    (reward) =>
-                      `${reward.resourceType === "material" ? t("mission.resource.material") : t("mission.reward")} ×${formatNumber(reward.resourceQuantity ?? 0)}`
-                  )
-              })),
-              loading: rankState?.loading ?? false,
-              error: rankState?.error ? t("mission.rankError") : null,
-              emptyLabel: rankState?.loading ? t("mission.rankLoading") : t("mission.rankEmpty")
             }
           : null,
       rewardLabels: item.rewards
