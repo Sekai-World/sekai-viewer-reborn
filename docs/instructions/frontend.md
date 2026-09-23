@@ -56,13 +56,19 @@ patterns in `docs/content-site-ui-conventions.md` for content-site work.
 ## Testing
 
 - Use the repository's targeted workspace checks first.
-- In a fresh checkout or `.slim/worktrees/*` worktree, generate SvelteKit
-  runtime artifacts before running Vitest: run `svelte-kit sync` for every
-  SvelteKit app (`account-site`, `content-site`, `media-lab-site`,
-  `tools-site`) or one `vite build`. The root `tsconfig.json` references all
-  apps, so missing generated `.svelte-kit/tsconfig.json` files make Vitest fail
-  at startup with a Rolldown `Could not resolve 'node:module'` /
-  `Tsconfig not found` error.
+- Every app's `test` and `test:coverage` scripts, and the `@platform/ui-shell`
+  `pretest` script, run `svelte-kit sync` for every SvelteKit app
+  (`account-site`, `content-site`, `media-lab-site`, `tools-site`) before
+  Vitest, so `pnpm --filter <app> test` works in a fresh checkout or
+  `.slim/worktrees/*` worktree. When invoking Vitest or a Vite dev server
+  directly, run `pnpm --filter '@apps/*' exec svelte-kit sync` first.
+  Rolldown's tsconfig discovery resolves an inherited `include` relative to
+  the extending config instead of the config that defines it, so an app's
+  `tsconfig.json` does not match its own files. Discovery then falls through
+  to the root solution `tsconfig.json`, which references all apps, and any
+  missing generated `.svelte-kit/tsconfig.json` makes Vitest fail at startup
+  with a Rolldown `Could not resolve 'node:module'` / `Tsconfig not found`
+  error. Observed with rolldown 1.2.8–1.2.10.
 - Test component behavior with Vitest and Svelte Testing Library. Use Playwright
   for end-to-end user flows and visual regression coverage where applicable.
 - Prefer accessible queries and user-observable outcomes over implementation
