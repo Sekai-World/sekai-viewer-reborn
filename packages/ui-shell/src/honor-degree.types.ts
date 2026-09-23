@@ -56,6 +56,7 @@ export interface RankMatchHonorDegree {
 
 export interface BondsHonorDegree {
   readonly kind: "bonds";
+  readonly rarity?: HonorDegreeRarity | null;
   /** Bonds use the selected main/sub root; reverse mirrors that root. */
   readonly reverse?: boolean;
   /**
@@ -66,13 +67,12 @@ export interface BondsHonorDegree {
   /** Legacy single background, used when `backgrounds` is omitted. */
   readonly background?: HonorDegreeAsset | null;
   readonly pattern?: HonorDegreeAsset | null;
-  readonly frame?: HonorDegreeAsset | null;
   readonly characters?: readonly [
     BondsHonorDegreeCharacter | null,
     BondsHonorDegreeCharacter | null
   ];
   readonly word?: HonorDegreePart | null;
-  /** Paint order: backgrounds, pattern, characters, frame, word. No inferred assets. */
+  /** Paint order: backgrounds, pattern, characters, local rarity frame, word. */
 }
 
 export type HonorDegreeInput =
