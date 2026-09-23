@@ -91,11 +91,15 @@
   let chosenChoice = $state<number | null>(null);
   let selectableTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const voiceCharacterLookup = new Map(
-    voiceCharacters.map((entry) => [
-      entry.character2dId,
-      { assetName: entry.assetName, unit: entry.unit }
-    ])
+  // Derived so a layout-triggered reload (locale or region switch) that
+  // refreshes `voiceCharacters` is seen by a session created afterwards.
+  const voiceCharacterLookup = $derived(
+    new Map(
+      voiceCharacters.map((entry) => [
+        entry.character2dId,
+        { assetName: entry.assetName, unit: entry.unit }
+      ])
+    )
   );
 
   const stageSizeFor = (element: HTMLElement): [number, number] => {
