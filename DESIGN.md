@@ -229,9 +229,8 @@ durations) with the existing standard or emphasized easing where available.
 - Content-site card hover is for fine pointers and is disabled or reduced through
   its low-motion setting. Do not make essential information depend on hover.
 - Use view transitions only when the browser supports them and motion is allowed.
-  `tools-site` already guards native view transitions with feature detection and
-  `prefers-reduced-motion`; its 150ms fallback is also disabled for reduced
-  motion.
+  `account-site` guards native view transitions with feature detection and
+  `prefers-reduced-motion`; otherwise it uses a 150ms fade.
 - Respect both the site low-motion setting (`data-low-motion` where implemented)
   and `prefers-reduced-motion: reduce`. Remove non-essential animation,
   transition, blur, and hover lift in that mode. A static or simple pulse is
@@ -338,8 +337,7 @@ principles into a second local convention:
   surfaces, palettes, card classes, focus roles, low-motion behavior, and the
   daisyUI override.
 - `apps/tools-site/src/app.css` — current tools surfaces on the shared
-  `--archive-surface-*` roles, 44px controls, responsive result grid, and guarded
-  page transition.
+  `--archive-surface-*` roles, 44px controls, and responsive result grid.
 - `apps/content-site/src/routes/+layout.svelte` and
   `apps/tools-site/src/routes/+layout.svelte` — current shell composition,
   localization, theme/settings behavior, and motion guards.
