@@ -6,7 +6,8 @@ boundaries between independently deployable sites.
 
 ## Getting started
 
-Use Node.js 24 and pnpm 11.13.0.
+Use Node.js 24 and pnpm 12. The exact pnpm version is pinned by
+`packageManager` in `package.json`.
 
 ```bash
 pnpm install

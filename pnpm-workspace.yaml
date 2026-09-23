@@ -1,6 +1,8 @@
 packages:
   - "apps/*"
   - "packages/*"
+# Keep in sync with minimumReleaseAge in renovate.json.
+minimumReleaseAge: 1440
 allowBuilds:
   es5-ext: true
   esbuild: true

@@ -14,9 +14,10 @@ Source: `sekai-viewer-reborn/.github/workflows/changeset.yml`.
 
 ## pnpm Security Overrides
 
-With the repository's pnpm 11.13.0 toolchain, place workspace-wide dependency
-security overrides under `overrides` in `pnpm-workspace.yaml`. The legacy
-`pnpm.overrides` field in the root `package.json` is ignored by pnpm 11.
+With the repository's pnpm toolchain, place workspace-wide dependency security
+overrides under `overrides` in `pnpm-workspace.yaml`. The legacy
+`pnpm.overrides` field in the root `package.json` is ignored by pnpm 11 and
+later (re-checked under pnpm 12.6.0).
 
 Use parent-child selectors when different compatible major versions are needed
 for separate consumers (for example, `@changesets/parse>js-yaml` and
