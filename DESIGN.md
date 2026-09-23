@@ -22,9 +22,8 @@ The sites have distinct jobs:
   localized labels, stable media, and readable evidence sections come first.
 - **`@apps/tools-site`** is a tool and comparison workbench. It prioritizes
   explicit controls, compact form layouts, comparable result groups, and clear
-  loading or failure feedback. Its current `archive-canvas`, `archive-panel`,
-  `archive-control`, and `archive-result` classes are the site-specific starting
-  point for this role.
+  loading or failure feedback. Its surfaces use the shared `--archive-surface-*`
+  roles from `@platform/ui-tokens/palettes.css`.
 - **`@platform/ui-shell`** supplies the cross-site frame and reusable primitives.
   `ViewerShell` owns the skip link, sticky navigation, drawer/rail navigation,
   main content track, and responsive shell geometry. Other exports include the
@@ -70,11 +69,12 @@ tokens as CSS variables.
 `--archive-text-*`, `--archive-border-*`, and `--archive-focus-*`, with
 `default`, `sakura`, and `mint` palettes plus light/dark variants. Use those
 semantic roles and the existing `content-card-shell`, `content-card-inset`, and
-`content-card-elevated` classes for content-site surfaces. `tools-site` currently
-maps its smaller vocabulary (`--archive-canvas`, `--archive-panel`,
-`--archive-control`, and `--archive-result`) to daisyUI base tokens. Extending
-that mapping toward the shared ladder is a **cross-site target / gradual adoption**,
-not a claim that all sites are already token-aligned.
+`content-card-elevated` classes for content-site surfaces. `tools-site` takes the
+same `--archive-surface-*`, `--archive-text-*`, `--archive-border-*`, and
+`--archive-focus-*` roles and palettes from `@platform/ui-tokens/palettes.css`,
+but has no `content-card-*` equivalents yet. Adding shared surface classes there
+is a **cross-site target / gradual adoption**, not a claim that all sites are
+already token-aligned.
 
 Themes are user-facing product state, not page decoration. Preserve the active
 theme and color scheme, use accent tokens for interactive emphasis and active
@@ -155,9 +155,10 @@ duplicating their structure.
 ### Tool page layer: `tools-site`
 
 Keep tool-specific comparison layouts and result presentation at the page level.
-The current `archive-control` form grid and `archive-results` two-column layout
-are tools-site conventions. Their shared surface intent should follow this
-document, while their fields and result semantics remain specific to each tool.
+Tool pages such as the tracker define page-scoped layout classes on top of the
+shared `--archive-surface-*` roles. Their shared surface intent should follow
+this document, while their fields and result semantics remain specific to each
+tool.
 
 Extract a component to `@platform/ui-shell` only when its markup, interaction,
 accessibility contract, and visual responsibility are genuinely cross-site. Keep
@@ -257,59 +258,74 @@ horizontal page overflow.
   v4 utilities and the existing local daisyUI proxy pattern in each app CSS.
 - **Choose daisyUI first.** Start with the daisyUI component or official template
   that matches the semantic role: button, card, menu, dropdown, modal, drawer,
-  tabs, tooltip, alert, input, or another established primitive. Keep its native
-  element structure, states, and interaction model unless the product contract
-  requires a documented change.
+  tabs, tooltip, alert, input, or another established primitive. daisyUI supplies
+  classes and visual states only: semantics come from the native element, and
+  composite widgets such as tabs need the WAI-ARIA pattern and keyboard handling
+  in the component (the existing tablists put `role="tab"` on `btn` with roving
+  tabindex and Arrow/Home/End keys). A `tooltip` only supplements a control that
+  already has its own accessible name. Keep the native element structure and
+  states unless the product contract requires a change; record that deviation in
+  `docs/content-site-ui-conventions.md` for content-site, or in this file for
+  cross-site and tools-site patterns.
 - **Adapt it with the Archive language.** Prismatic Archive tokens and classes
   are the visual and surface layer over daisyUI. They are responsible for canvas,
   panel, inset, raised, and overlay tone; semantic text, border, focus, and
-  accent roles; and the restrained Archive treatment of radius, shadow, and
-  separation. They must not become a second implementation of daisyUI's
-  semantics, keyboard behavior, or component state. Use the existing
-  `content-card-shell`, `content-card-inset`, `content-card-elevated`, and
-  tools-site `archive-*` roles where they own that responsibility.
+  accent roles; and the restrained Archive treatment of shadow and separation.
+  Radius and other defaults that daisyUI owns (`card`, `btn`, `badge`, `tab`)
+  change through `@utility`, not Archive classes (see the daisyUI override rules
+  in `docs/content-site-ui-conventions.md`). Archive classes style the semantics
+  and state that native elements, ARIA attributes, and component code provide;
+  they must not replace them. Use the surface roles and classes listed in §2
+  where they own that responsibility.
 - **Choose the narrowest styling scope.** If a daisyUI difference is global to
   an app, express it with `@utility` in that app's `src/app.css` (for example,
   the content-site `card` radius override). If it is specific to one instance,
   use markup utilities. Keep app CSS narrow: custom classes should express
-  app-specific Archive surface language, not broadly fight or duplicate daisyUI
+  app-specific Archive surface language, not fight or duplicate daisyUI
   defaults; avoid broad global transitions, expensive blur/filter effects, large
   shadows, and global animations.
 - **Preserve the foundation.** Do not replace semantic buttons, links, form
-  controls, dialogs, menus, or tabs with clickable generic elements. Preserve
-  daisyUI's keyboard behavior, focus-visible treatment, responsive behavior,
-  disabled and loading states, and accessible naming when adapting a component.
-  Any deliberate override must retain an equivalent accessible contract.
+  controls, dialogs, menus, or tabs with clickable generic elements. When
+  adapting a component, preserve the native element's keyboard behavior and
+  accessible name, any ARIA keyboard pattern the component implements, and
+  daisyUI's focus-visible, responsive, disabled, and loading styles. Any
+  deliberate override must retain an equivalent accessible contract.
 - **Avoid parallel clones.** Do not create an Archive component that merely
   mirrors a daisyUI component or a shared `@platform/ui-shell` primitive with a
   different class list. Compose a daisyUI component with domain data instead.
-  Keep catalogue and tool compositions in their owning app; move a primitive to
-  `packages/` only when its markup, behavior, accessibility contract, and visual
-  responsibility are genuinely needed by multiple apps.
-- **Use custom components deliberately.** A custom component is justified when
-  no daisyUI foundation can meet the required semantic, interaction, or visual
-  contract, or when the component represents genuinely domain-specific structure
-  such as a catalogue card or media/retry flow. It still follows the same
-  Archive surface hierarchy and must provide the equivalent keyboard, focus,
-  responsive, reduced-motion, and feedback behavior.
-- **Keep the visual treatment restrained.** Reuse existing radius values and
-  surface classes; do not add new one-off radii. Prefer tonal separation and a
-  thin border before adding a shadow. Use shadows for local elevation or
-  interaction feedback, not as the primary page structure, and avoid stacking
-  multiple heavily rounded or floating containers without a clear hierarchy.
+  Keep catalogue and tool compositions in their owning app; §4 decides when a
+  primitive moves to `packages/`.
+- **Use custom components deliberately.** A custom component is justified only
+  when no daisyUI foundation can meet the required semantic, interaction, or
+  visual contract. A domain composition such as a catalogue card may have custom
+  structure, but its interactive parts still use daisyUI foundations, and media
+  retry or fallback stays in the shared `image-retry/` controller (§7). A custom
+  component still follows the same Archive surface hierarchy and must provide
+  the equivalent keyboard, focus, responsive, reduced-motion, and feedback
+  behavior.
+- **Keep the visual treatment restrained.** Take radii from the portable
+  `radius` tokens or the daisyUI and `@utility` defaults, and reuse existing
+  surface classes. A per-instance radius belongs in markup utilities for that
+  instance only; do not add new radius values to shared or global classes.
+  Prefer tonal separation and a thin border before adding a shadow. Use shadows
+  for local elevation or interaction feedback, not as the primary page
+  structure, and avoid stacking multiple heavily rounded or floating containers
+  without a clear hierarchy.
 - Add new visible copy to the matching i18n source namespace. In content-site,
   use the external `sekai-i18n-reborn` dictionaries and the existing runtime
   helpers; use `common` only for labels shared across scopes. Tools-site should
   follow the same direction as its localization expands. This is a **cross-site
   target / gradual adoption** where a site is not yet fully aligned.
-- Keep shared behavior in `packages/` only when multiple apps need it; keep app
-  boundaries explicit and do not hand-edit generated output.
-- **Review every new surface or component.** Before calling it complete, verify
-  that it uses the right daisyUI semantic foundation; assigns one clear Archive
-  surface role; introduces no parallel clone or one-off visual token; preserves
-  semantics, keyboard access, focus, and responsive behavior; and works in light
-  and dark themes, all supported palettes, narrow and wide layouts, reduced
-  motion, loading, empty, error, disabled, and long-localized-content states.
+- Keep app boundaries explicit (see §4) and do not hand-edit generated output.
+- **Review every new surface, component, or breakpoint.** Before calling it
+  complete, verify that it uses the right daisyUI semantic foundation; assigns
+  one clear Archive surface role; introduces no parallel clone or one-off visual
+  token; and preserves semantics, keyboard access, focus, and responsive
+  behavior. Check a new surface or breakpoint in light and dark themes, all
+  supported palettes, narrow and wide layouts, reduced motion, and its loading,
+  empty, error, disabled, and long-localized-content states. For a smaller
+  component inside an existing surface, dark mode, one non-default palette, a
+  narrow layout, and the states the component actually has are enough.
 
 ## 9. References and adoption status
 
@@ -321,8 +337,9 @@ principles into a second local convention:
 - `apps/content-site/src/app.css` — implemented Prismatic Archive semantic
   surfaces, palettes, card classes, focus roles, low-motion behavior, and the
   daisyUI override.
-- `apps/tools-site/src/app.css` — current tools canvas/panel/control/result
-  layout, 44px controls, responsive result grid, and guarded page transition.
+- `apps/tools-site/src/app.css` — current tools surfaces on the shared
+  `--archive-surface-*` roles, 44px controls, responsive result grid, and guarded
+  page transition.
 - `apps/content-site/src/routes/+layout.svelte` and
   `apps/tools-site/src/routes/+layout.svelte` — current shell composition,
   localization, theme/settings behavior, and motion guards.
