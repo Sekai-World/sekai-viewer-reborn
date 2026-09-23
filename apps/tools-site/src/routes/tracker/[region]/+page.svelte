@@ -2907,7 +2907,7 @@
     padding: 1rem;
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
-    background: var(--archive-panel);
+    background: var(--archive-surface-default);
   }
   .tracker-skeleton-card-heading {
     display: flex;
@@ -3043,7 +3043,7 @@
   }
   .tracker-current-tab:not(.btn-primary) {
     border-color: color-mix(in srgb, var(--color-accent) 58%, var(--archive-border-subtle));
-    background: color-mix(in srgb, var(--color-accent) 12%, var(--archive-panel));
+    background: color-mix(in srgb, var(--color-accent) 12%, var(--archive-surface-default));
     box-shadow:
       0 0 0 2px color-mix(in srgb, var(--color-accent) 24%, transparent),
       inset 0 -2px var(--color-accent);
@@ -3077,14 +3077,14 @@
     padding: 1rem;
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
-    background: var(--archive-panel);
+    background: var(--archive-surface-default);
     color: inherit;
     text-align: left;
   }
   .tracker-ranking-card:hover,
   .tracker-ranking-card:focus-visible {
     border-color: color-mix(in srgb, var(--color-primary) 45%, var(--archive-border-subtle));
-    background: color-mix(in srgb, var(--color-primary) 7%, var(--archive-panel));
+    background: color-mix(in srgb, var(--color-primary) 7%, var(--archive-surface-default));
   }
   .tracker-card-heading {
     display: flex;
