@@ -4,6 +4,7 @@ WORKDIR /repo
 RUN corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY patches ./patches
 COPY apps/account-site/package.json apps/account-site/package.json
 COPY packages/sekai-master-api-sdk/package.json packages/sekai-master-api-sdk/package.json
 COPY packages/auth-client/package.json packages/auth-client/package.json
