@@ -117,11 +117,12 @@ pull`), not on single-file checkouts.
 
 When installed:
 
-- `pre-commit` runs fast ESLint validation on staged JavaScript, TypeScript, and
-  Svelte source files under `apps/*/src`, `packages/*/src`, and `scripts`.
+- `pre-commit` runs a Prettier check on all staged files and fast ESLint
+  validation on staged JavaScript, TypeScript, and Svelte source files under
+  `apps/*/src`, `packages/*/src`, and `scripts`.
 - `pre-push` requires a clean worktree, including ordinary untracked files, and
-  runs the local quality gate: `pnpm test`, `pnpm lint`, `pnpm check`, and
-  `pnpm i18n:check`. It intentionally skips the full production build so that
+  runs the local quality gate: `pnpm format:check`, `pnpm test`, `pnpm lint`,
+  `pnpm check`, and `pnpm i18n:check`. It intentionally skips the full production build so that
   pushes get fast local feedback; CI continues to run the unchanged
   `pnpm verify:ci` sequence, including `pnpm build`.
 
