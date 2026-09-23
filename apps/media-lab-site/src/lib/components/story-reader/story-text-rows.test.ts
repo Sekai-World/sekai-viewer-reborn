@@ -87,10 +87,10 @@ describe("StoryTextRows", () => {
   });
 
   it("omits the avatar for ids without a local bust", () => {
-    const { container } = render(
-      StoryTextRows,
-      { rows: [{ ...rows[2], characterId: 50 }], labels }
-    );
+    const { container } = render(StoryTextRows, {
+      rows: [{ ...rows[2], characterId: 50 }],
+      labels
+    });
     expect(container.querySelector("article img")).toBeNull();
   });
 

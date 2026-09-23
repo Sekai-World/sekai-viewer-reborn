@@ -30,9 +30,7 @@ const stripTrailingSlashes = (value: string): string => {
 
 export const STORY_ASSET_CACHE_SW_PATH = "/sw.js";
 
-export const registerStoryAssetCache = async (
-  assetBase: string
-): Promise<void> => {
+export const registerStoryAssetCache = async (assetBase: string): Promise<void> => {
   if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
     return;
   }
@@ -52,9 +50,7 @@ export const registerStoryAssetCache = async (
       origins: isPathBase ? [] : [new URL(base).origin],
       // The Live2D relay is an app route, so it stays in the allowlist for
       // every deployment whatever the asset base is.
-      pathPrefixes: isPathBase
-        ? [base, LIVE2D_RELAY_PREFIX]
-        : [LIVE2D_RELAY_PREFIX],
+      pathPrefixes: isPathBase ? [base, LIVE2D_RELAY_PREFIX] : [LIVE2D_RELAY_PREFIX],
       maxTotalBytes: STORY_ASSET_CACHE_MAX_TOTAL_BYTES
     });
   } catch {

@@ -116,8 +116,9 @@
 )}
   {#if value}
     {@const canonicalUnit = unitSlug ? resolveCanonicalUnitSlug(unitSlug) : null}
-    {@const unitHref =
-      canonicalUnit ? resolve("/unit/[region]/[unit]", { region, unit: canonicalUnit }) : null}
+    {@const unitHref = canonicalUnit
+      ? resolve("/unit/[region]/[unit]", { region, unit: canonicalUnit })
+      : null}
     <svelte:element
       this={unitHref ? "a" : "div"}
       href={unitHref ?? undefined}
@@ -201,7 +202,7 @@
     <CharacterAvatar
       src={getCharacterThumbnailUrl()}
       label={value}
-      characterId={characterId}
+      {characterId}
       variant="lg"
       decorative
     />

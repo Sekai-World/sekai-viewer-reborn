@@ -10,10 +10,7 @@ export default class Sekai extends BaseLayer {
     this.structure = {};
   }
 
-  async draw(
-    condition: "out_corner" | "in_corner" | "out_center" | "in_center",
-    time_ms: number
-  ) {
+  async draw(condition: "out_corner" | "in_corner" | "out_center" | "in_center", time_ms: number) {
     const sekai = new SekaiEffect(this.textures, time_ms, condition);
     this.root.addChild(sekai.root);
     this.sekai = sekai;

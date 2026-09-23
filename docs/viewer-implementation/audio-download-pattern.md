@@ -13,11 +13,11 @@ content-site におけるサーバーサイド音声ダウンロード＆メタ�
 
 各ダウンロード機能には 2 つの URL パス・3 つのオペレーションが必要:
 
-| オペレーション | 役割 |
-|---|---|
-| `GET .../download` | 音声取得 → タグ付け → レスポンス（taskId は省略可 — 指定なしでも進捗トラッキングなしでダウンロードできる） |
-| `GET .../download/progress` | SSE で進捗をストリーミング（taskId 必須） |
-| `POST .../download/progress` | ダウンロードをキャンセル（taskId 必須） |
+| オペレーション               | 役割                                                                                                       |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `GET .../download`           | 音声取得 → タグ付け → レスポンス（taskId は省略可 — 指定なしでも進捗トラッキングなしでダウンロードできる） |
+| `GET .../download/progress`  | SSE で進捗をストリーミング（taskId 必須）                                                                  |
+| `POST .../download/progress` | ダウンロードをキャンセル（taskId 必須）                                                                    |
 
 ### 実装例
 
@@ -36,15 +36,15 @@ content-site におけるサーバーサイド音声ダウンロード＆メタ�
 
 ### 進捗ステージ
 
-| ステージ | 説明 |
-|---|---|
-| `preparing` | 準備中 |
-| `fetching-audio` | リモート音声を取得中 |
-| `fetching-cover` | カバー画像を取得中 |
+| ステージ           | 説明                   |
+| ------------------ | ---------------------- |
+| `preparing`        | 準備中                 |
+| `fetching-audio`   | リモート音声を取得中   |
+| `fetching-cover`   | カバー画像を取得中     |
 | `writing-metadata` | メタデータを書き込み中 |
-| `finalizing` | ファイルを仕上げ中 |
-| `done` | 完了 |
-| `error` | エラー |
+| `finalizing`       | ファイルを仕上げ中     |
+| `done`             | 完了                   |
+| `error`            | エラー                 |
 
 ## taglib-wasm によるメタデータ埋め込み
 
@@ -127,10 +127,10 @@ const taggedAudio = await TagLib.edit(audioBytes, async (file) => {
 
 ```typescript
 type DownloadOption = {
-  label: string;          // UI表示ラベル ("MP3", "FLAC" 等)
-  href: string;           // ダウンロードURL
-  progressHref?: string;  // SSE進捗URL
-  downloadName?: string;  // 保存ファイル名
+  label: string; // UI表示ラベル ("MP3", "FLAC" 等)
+  href: string; // ダウンロードURL
+  progressHref?: string; // SSE進捗URL
+  downloadName?: string; // 保存ファイル名
 };
 ```
 
@@ -139,6 +139,7 @@ type DownloadOption = {
 `AudioPlayer` accepts an `offset` prop (default `0`) to skip silence at the start of an audio file. This is used for full (long) music previews where `MusicDetail.fillerSec` records the filler duration. Note: `fillerSec` is a music-level field in the master data API (`musics` record), not a per-vocal field — the API response places it on the music object, not on individual vocal objects.
 
 Behavior when `offset > 0`:
+
 - On load: Howl seeks to `offset` position after the audio is ready.
 - Display time: `displayTime = rawTime - offset` (user sees 0:00 as content start).
 - Display duration: `displayDuration = rawDuration - offset`.
@@ -211,10 +212,12 @@ MusicPreviewCard
 `AudioPlayer` integrates `navigator.mediaSession` so OS-level controls (iOS Control Center, Android notification, Windows media overlay) show the now-playing track:
 
 **New props on AudioPlayer:**
+
 - `artworkUrl?: string` — image URL for lock screen / notification artwork (e.g. music jacket, event banner)
 - `artist?: string` — artist name for OS now-playing display (fallback: `subtitle`)
 
 **How it works:**
+
 - `setupMediaSessionActions()` — called when the Howl instance is created; registers action handlers for `play`, `pause`, `stop`, `seekto` (delegates to existing player methods)
 - `updateMediaSessionMetadata()` — sets `navigator.mediaSession.metadata = new MediaMetadata({title, artist, artwork})` from the props
 - `updateMediaSessionPlaybackState()` — sets `navigator.mediaSession.playbackState` to `"playing"` or `"paused"`
@@ -223,6 +226,7 @@ MusicPreviewCard
 - A reactive `$effect` updates metadata when `title`, `artist`, or `artworkUrl` change during playback
 
 **Consumer wiring:**
+
 - `MusicPreviewCard` → `AudioPlayer artworkUrl={jacketUrl} artist={composer}` — jacket from `getMusicJacketAssetURL()`, composer from `MusicDetail.composer`
 - `EventDetailBgmCard` → `AudioPlayer artworkUrl={eventBannerUrl} artist={unitName}` — banner from `getEventBannerAssetURL()`, artist is the event's unit name
 
@@ -245,12 +249,12 @@ export function getMusicAssetServer(
 
 ### Consumers
 
-| Consumer | How it gets `availableRegions` | What it uses `assetServer` for |
-|---|---|---|
-| `MusicPreviewCard` | Prop from `+page.svelte` | Preview audio URL (short/long) |
-| `MusicJacketHero` | Prop from `+page.svelte` | Jacket image URL |
-| `+page.svelte` | `{#await data.availableRegions}` from `+page.server.ts` | Passes to children; also uses for inline jacket URL |
-| `download/+server.ts` | Fetches `getMusicsRegionsByIdAvailability` directly at request time | Audio + cover fetch URLs |
+| Consumer              | How it gets `availableRegions`                                      | What it uses `assetServer` for                      |
+| --------------------- | ------------------------------------------------------------------- | --------------------------------------------------- |
+| `MusicPreviewCard`    | Prop from `+page.svelte`                                            | Preview audio URL (short/long)                      |
+| `MusicJacketHero`     | Prop from `+page.svelte`                                            | Jacket image URL                                    |
+| `+page.svelte`        | `{#await data.availableRegions}` from `+page.server.ts`             | Passes to children; also uses for inline jacket URL |
+| `download/+server.ts` | Fetches `getMusicsRegionsByIdAvailability` directly at request time | Audio + cover fetch URLs                            |
 
 ### Graceful degradation
 

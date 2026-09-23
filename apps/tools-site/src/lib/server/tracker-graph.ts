@@ -1,4 +1,8 @@
-import { parseEventTrackerRankings, type EventTrackerRanking, type TrackerRegion } from "./event-tracker";
+import {
+  parseEventTrackerRankings,
+  type EventTrackerRanking,
+  type TrackerRegion
+} from "./event-tracker";
 import type { TrackerTimeTravelStatus } from "./tracker-time-travel";
 import { isRestoreResponse, unwrapSekaiApiEnvelope, withRequestTimeout } from "./network";
 

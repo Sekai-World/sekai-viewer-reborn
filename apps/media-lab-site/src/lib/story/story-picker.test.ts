@@ -8,7 +8,14 @@ import {
 
 describe("story picker types", () => {
   it("exposes the picker story type vocabulary without profile", () => {
-    expect(pickerStoryTypes).toEqual(["unit", "event", "character", "card", "area-talk", "special"]);
+    expect(pickerStoryTypes).toEqual([
+      "unit",
+      "event",
+      "character",
+      "card",
+      "area-talk",
+      "special"
+    ]);
     expect(isPickerStoryType("unit")).toBe(true);
     expect(isPickerStoryType("area-talk")).toBe(true);
     expect(isPickerStoryType("profile")).toBe(false);

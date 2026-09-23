@@ -40,13 +40,19 @@ export const calculateChapterElapsedMs = ({
   snapshotAt
 }: ChapterElapsedInput): number | null => {
   const start = parseTrackerTimestamp(startAt);
-  const reference = isCurrent ? now : parseTrackerTimestamp(snapshotAt) ?? parseTrackerTimestamp(endAt);
-  if (start === null || reference === null || !Number.isFinite(now) || reference <= start) return null;
+  const reference = isCurrent
+    ? now
+    : (parseTrackerTimestamp(snapshotAt) ?? parseTrackerTimestamp(endAt));
+  if (start === null || reference === null || !Number.isFinite(now) || reference <= start)
+    return null;
   return reference - start;
 };
 
 /** Returns a score rate per elapsed hour, or null when either input is unusable. */
-export const calculateScorePerElapsedHour = ({ score, elapsedMs }: ScorePerElapsedHourInput): ScorePerElapsedHour => {
+export const calculateScorePerElapsedHour = ({
+  score,
+  elapsedMs
+}: ScorePerElapsedHourInput): ScorePerElapsedHour => {
   if (
     typeof score !== "number" ||
     !Number.isFinite(score) ||

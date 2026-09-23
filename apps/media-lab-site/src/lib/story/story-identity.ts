@@ -27,10 +27,7 @@ import {
   LOCAL_AVATAR_CHARACTER_ID_MAX,
   LOCAL_AVATAR_CHARACTER_ID_MIN
 } from "./character-avatar";
-import {
-  resolveCardRarityCount,
-  resolveCardTrained
-} from "@platform/ui-shell/card-thumbnail";
+import { resolveCardRarityCount, resolveCardTrained } from "@platform/ui-shell/card-thumbnail";
 import type { StoryRouteStoryType } from "$lib/live2d/story-route";
 
 // ---------------------------------------------------------------------------
@@ -237,10 +234,7 @@ const parseUnitStoryId = (storyId: string): ParsedStoryId | null => {
 };
 
 /** `{first}-{episodeNo}` ids: event (`1-1`) and special (`2-1`). */
-const parseTwoPartStoryId = (
-  kind: "event" | "special",
-  storyId: string
-): ParsedStoryId | null => {
+const parseTwoPartStoryId = (kind: "event" | "special", storyId: string): ParsedStoryId | null => {
   const parts = storyId.split("-");
   if (parts.length !== 2) return null;
   const first = parseNumberPart(parts[0]);
@@ -353,9 +347,7 @@ const resolveEventIdentity = (
   collections: StoryMasterCollections
 ): StoryResolutionResult => {
   const eventStory = collections.eventStories.find((es) => es.eventId === parsed.eventId);
-  const episode = eventStory?.eventStoryEpisodes.find(
-    (ep) => ep.episodeNo === parsed.episodeNo
-  );
+  const episode = eventStory?.eventStoryEpisodes.find((ep) => ep.episodeNo === parsed.episodeNo);
   if (!eventStory || !episode) return { status: "not-found" };
   const eventName = collections.events?.find((e) => e.id === parsed.eventId)?.name;
   return {
@@ -376,9 +368,7 @@ const resolveCharacterIdentity = (
   parsed: CharacterParsedStoryId,
   collections: StoryMasterCollections
 ): StoryResolutionResult => {
-  const profile = collections.characterProfiles.find(
-    (cp) => cp.characterId === parsed.characterId
-  );
+  const profile = collections.characterProfiles.find((cp) => cp.characterId === parsed.characterId);
   if (!profile) return { status: "not-found" };
   return {
     status: "ok",
@@ -405,7 +395,11 @@ const resolveCardIdentity = (
   return {
     status: "ok",
     resolution: {
-      scenarioPath: cardStoryScenarioPath(episode.assetbundleName, episode.scenarioId, region as "jp"),
+      scenarioPath: cardStoryScenarioPath(
+        episode.assetbundleName,
+        episode.scenarioId,
+        region as "jp"
+      ),
       isCardStory: true,
       isActionSet: false,
       bannerPath: `character/member_small/${episode.assetbundleName}/card_normal.webp`,
@@ -776,14 +770,10 @@ export const buildStoryCharacterPicker = (
     .slice()
     .sort((a, b) => a.characterId - b.characterId)
     .map((profile) => {
-      const gameCharacter = collections.gameCharacters?.find(
-        (gc) => gc.id === profile.characterId
-      );
+      const gameCharacter = collections.gameCharacters?.find((gc) => gc.id === profile.characterId);
       const name =
-        [gameCharacter?.firstName, gameCharacter?.givenName]
-          .filter(Boolean)
-          .join(" ")
-          .trim() || null;
+        [gameCharacter?.firstName, gameCharacter?.givenName].filter(Boolean).join(" ").trim() ||
+        null;
       return {
         characterId: profile.characterId,
         storyId: String(profile.characterId),
@@ -866,14 +856,9 @@ export const buildStoryAreaTalkPicker = (
       const area = areasById.get(areaId);
       let thumbnailPath: string | null = null;
       if (area?.label && area.assetBundleName) {
-        thumbnailPath = collaborationWorldmapAreaImagePath(
-          area.assetBundleName,
-          areaId
-        );
+        thumbnailPath = collaborationWorldmapAreaImagePath(area.assetBundleName, areaId);
       } else if (area && realitySeqById.has(areaId)) {
-        thumbnailPath = realityWorldmapAreaImagePath(
-          realitySeqById.get(areaId) as number
-        );
+        thumbnailPath = realityWorldmapAreaImagePath(realitySeqById.get(areaId) as number);
       } else if (area) {
         thumbnailPath = spiritWorldmapAreaImagePath(areaId);
       }

@@ -19,7 +19,7 @@ export enum Live2DAssetType {
   UISheet = "ui-sheet",
   UIVideo = "ui-video",
   BackgroundImage = "background-image",
-  Video = "video",
+  Video = "video"
 }
 
 interface ILive2DAssetTypeToDataMap {
@@ -49,10 +49,7 @@ export type ILive2DAssetUrl = {
 type ILive2DAssetUrlImage = Extract<
   ILive2DAssetUrl,
   {
-    type:
-      | Live2DAssetType.BackgroundImage
-      | Live2DAssetType.UISheet
-      | Live2DAssetType.UI;
+    type: Live2DAssetType.BackgroundImage | Live2DAssetType.UISheet | Live2DAssetType.UI;
   }
 >;
 type ILive2DAssetUrlVideo = Extract<
@@ -64,32 +61,20 @@ type ILive2DAssetUrlVideo = Extract<
 type ILive2DAssetUrlAudio = Extract<
   ILive2DAssetUrl,
   {
-    type:
-      | Live2DAssetType.SoundEffect
-      | Live2DAssetType.BackgroundMusic
-      | Live2DAssetType.Talk;
+    type: Live2DAssetType.SoundEffect | Live2DAssetType.BackgroundMusic | Live2DAssetType.Talk;
   }
 >;
-export function isLive2DImageAsset(
-  asset: ILive2DAssetUrl
-): asset is ILive2DAssetUrlImage {
+export function isLive2DImageAsset(asset: ILive2DAssetUrl): asset is ILive2DAssetUrlImage {
   return (
     asset.type === Live2DAssetType.BackgroundImage ||
     asset.type === Live2DAssetType.UISheet ||
     asset.type === Live2DAssetType.UI
   );
 }
-export function isLive2DVideoAsset(
-  asset: ILive2DAssetUrl
-): asset is ILive2DAssetUrlVideo {
-  return (
-    asset.type === Live2DAssetType.Video ||
-    asset.type === Live2DAssetType.UIVideo
-  );
+export function isLive2DVideoAsset(asset: ILive2DAssetUrl): asset is ILive2DAssetUrlVideo {
+  return asset.type === Live2DAssetType.Video || asset.type === Live2DAssetType.UIVideo;
 }
-export function isLive2DAudioAsset(
-  asset: ILive2DAssetUrl
-): asset is ILive2DAssetUrlAudio {
+export function isLive2DAudioAsset(asset: ILive2DAssetUrl): asset is ILive2DAssetUrlAudio {
   return (
     asset.type === Live2DAssetType.SoundEffect ||
     asset.type === Live2DAssetType.BackgroundMusic ||
@@ -206,7 +191,7 @@ export enum Live2DLoadProgressType {
   ModelPhysics = "model-physics",
   ModelAssets = "model-assets",
   ModelMotion = "model-motion",
-  RenderModel = "render-model",
+  RenderModel = "render-model"
 }
 
 export type ILive2DLoadProgressHandler = (
@@ -231,5 +216,5 @@ export interface ILive2DPlayerSettings {
 export enum LoadStatus {
   Ready,
   Loading,
-  Loaded,
+  Loaded
 }

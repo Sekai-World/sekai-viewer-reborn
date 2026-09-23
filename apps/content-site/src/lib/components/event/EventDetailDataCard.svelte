@@ -12,7 +12,7 @@
     type AssetServer
   } from "$lib/assets/index";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-    import { resolveCardTrained } from "$lib/components/card/card-presentation";
+  import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { CardThumbnail, UnitIconBadge } from "@platform/ui-shell";
@@ -985,7 +985,9 @@
         <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {formatHashId(content.cardId)}
         </p>
-        <p class="mt-1 line-clamp-2 text-sm font-semibold [@media(hover:hover)]:group-hover:text-primary">
+        <p
+          class="mt-1 line-clamp-2 text-sm font-semibold [@media(hover:hover)]:group-hover:text-primary"
+        >
           {getCardTitle(content)}
         </p>
       </div>
@@ -1051,7 +1053,9 @@
         <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {formatHashId(content.musicId)}
         </p>
-        <p class="mt-1 line-clamp-2 text-sm font-semibold [@media(hover:hover)]:group-hover:text-primary">
+        <p
+          class="mt-1 line-clamp-2 text-sm font-semibold [@media(hover:hover)]:group-hover:text-primary"
+        >
           {getMusicTitle(content)}
         </p>
       </div>
@@ -1151,7 +1155,9 @@
       </div>
     {/if}
     <div class="min-w-0">
-      <p class="line-clamp-2 text-sm/5 font-semibold [@media(hover:hover)]:group-hover:text-primary">
+      <p
+        class="line-clamp-2 text-sm/5 font-semibold [@media(hover:hover)]:group-hover:text-primary"
+      >
         {virtualLive.name ?? virtualLiveTitle}
       </p>
       <div class="mt-1.5 grid gap-1.5">

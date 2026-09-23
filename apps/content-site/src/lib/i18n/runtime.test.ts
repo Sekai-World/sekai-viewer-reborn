@@ -39,7 +39,10 @@ describe("resolveI18nMessageBundle", () => {
 
   it("uses local source messages when remote loading fails", async () => {
     await expect(
-      resolveI18nMessageBundle(async () => Promise.reject(new Error("dictionary unavailable")), namespaces)
+      resolveI18nMessageBundle(
+        async () => Promise.reject(new Error("dictionary unavailable")),
+        namespaces
+      )
     ).resolves.toEqual(getLocalI18nMessages(namespaces));
   });
 
@@ -73,7 +76,9 @@ describe("remote message cache deadlines", () => {
       calls += 1;
       if (calls === 1) {
         return new Promise<Response>((_resolve, reject) => {
-          init?.signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")));
+          init?.signal?.addEventListener("abort", () =>
+            reject(new DOMException("Aborted", "AbortError"))
+          );
         });
       }
       return Promise.resolve(new Response(JSON.stringify({ home: "Accueil" }), { status: 200 }));
@@ -82,7 +87,9 @@ describe("remote message cache deadlines", () => {
     const first = runtime.loadMessages("fr", "common", fetcher);
     await vi.advanceTimersByTimeAsync(25);
     await expect(first).resolves.toEqual({});
-    await expect(runtime.loadMessages("fr", "common", fetcher)).resolves.toEqual({ home: "Accueil" });
+    await expect(runtime.loadMessages("fr", "common", fetcher)).resolves.toEqual({
+      home: "Accueil"
+    });
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
@@ -115,8 +122,8 @@ describe("character loader i18n contract", () => {
   it("lets both character loaders inherit the resolved root layout messages", async () => {
     const routesDirectory = resolve(process.cwd(), "src/routes");
     const loaders = await Promise.all(
-      ["characters/[region]/+page.server.ts", "character/[region]/[id]/+page.server.ts"].map((path) =>
-        readFile(resolve(routesDirectory, path), "utf8")
+      ["characters/[region]/+page.server.ts", "character/[region]/[id]/+page.server.ts"].map(
+        (path) => readFile(resolve(routesDirectory, path), "utf8")
       )
     );
 

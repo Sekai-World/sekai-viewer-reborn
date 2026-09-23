@@ -2,18 +2,12 @@ import type { Live2DController } from "../../Live2DController";
 import type { Snippet } from "../../../scenario-types";
 import { Live2DAssetType } from "../../player-types";
 
-export default async function Movie(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+export default async function Movie(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
 
   // Get the movie resource from loaded assets
   const movieResource = controller.scenarioResource.video.find(
-    (s) =>
-      s.identifier === action_detail.StringVal &&
-      s.type === Live2DAssetType.Video
+    (s) => s.identifier === action_detail.StringVal && s.type === Live2DAssetType.Video
   );
 
   if (movieResource) {
@@ -33,9 +27,6 @@ export default async function Movie(
       controller.layers.movie.clear();
     }
   } else {
-    controller.events.emit(
-      "warn",
-      `${action_detail.StringVal} not loaded, skip.`
-    );
+    controller.events.emit("warn", `${action_detail.StringVal} not loaded, skip.`);
   }
 }

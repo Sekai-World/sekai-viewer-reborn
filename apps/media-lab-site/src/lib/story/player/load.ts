@@ -10,14 +10,14 @@ import type {
   ILive2DModelDataCollection,
   ILive2DLoadProgressHandler,
   ILive2DLoadWarningHandler,
-  ILive2DStoryModelSource,
+  ILive2DStoryModelSource
 } from "./player-types";
 
 import {
   isLive2DImageAsset,
   isLive2DAudioAsset,
   isLive2DVideoAsset,
-  Live2DLoadProgressType,
+  Live2DLoadProgressType
 } from "./player-types";
 
 import { getUIMediaUrls } from "./ui_assets";
@@ -49,12 +49,7 @@ function getAssetFilename(url: string) {
  * @param error - The error encountered while loading the asset
  * @returns A formatted asset-load failure warning, including an HTTP status when available
  */
-function getAssetLoadWarning(
-  kind: string,
-  label: string,
-  url: string,
-  error: unknown
-) {
+function getAssetLoadWarning(kind: string, label: string, url: string, error: unknown) {
   const status =
     error instanceof Response || (error as { status?: number })?.status
       ? `: ${(error as { status: number }).status}`
@@ -92,12 +87,12 @@ export async function getLive2DControllerData(
   // step 3.2 - preload sound/image
   const [scenarioResource, modelData] = await Promise.all([
     preloadMedia(mediaUrlForLive2D, onProgress, onWarning),
-    modelDataPromise,
+    modelDataPromise
   ]);
   return {
     scenarioData: snData,
     scenarioResource,
-    modelData,
+    modelData
   };
 }
 
@@ -126,10 +121,7 @@ export async function getLive2DModelData(
       continue;
     }
     seenCostumes.add(c.CostumeType);
-    const md = await modelSource.getModelDataForCostume(
-      c.CostumeType,
-      c.Character2dId
-    );
+    const md = await modelSource.getModelDataForCostume(c.CostumeType, c.Character2dId);
     count++;
     if (!md) {
       onWarning(`Model not found for ${c.CostumeType} (${c.Character2dId})`);
@@ -161,16 +153,16 @@ export async function preloadModels(
     const modelAssets = [
       {
         kind: "texture",
-        path: model.data.FileReferences.Textures[0],
+        path: model.data.FileReferences.Textures[0]
       },
       {
         kind: "moc",
-        path: model.data.FileReferences.Moc,
+        path: model.data.FileReferences.Moc
       },
       {
         kind: "physics",
-        path: model.data.FileReferences.Physics,
-      },
+        path: model.data.FileReferences.Physics
+      }
     ];
     for (const asset of modelAssets) {
       const url = model.data.url + asset.path;
@@ -182,12 +174,7 @@ export async function preloadModels(
             return response;
           }).catch((err: unknown) => {
             onWarning?.(
-              getAssetLoadWarning(
-                asset.kind,
-                `${model.costume}/${asset.kind}`,
-                url,
-                err
-              )
+              getAssetLoadWarning(asset.kind, `${model.costume}/${asset.kind}`, url, err)
             );
             throw err;
           }),
@@ -199,14 +186,13 @@ export async function preloadModels(
             total,
             `${model.costume}/${asset.kind}`
           );
-        },
+        }
       });
     }
   }
   const queue = new PreloadQueue(taskList);
   const rst = await queue.run();
-  if (rst.includes(null))
-    throw new Error("Asset download failed.");
+  if (rst.includes(null)) throw new Error("Asset download failed.");
 }
 
 // step 3.2 - preload sound/image/video
@@ -247,7 +233,7 @@ export async function preloadMedia(
       callback: function () {
         count++;
         onProgress(Live2DLoadProgressType.Media, count, total, url.identifier);
-      },
+      }
     });
   }
   const queue = new PreloadQueue<ILive2DCachedAsset>(taskList);
@@ -255,7 +241,7 @@ export async function preloadMedia(
   const scenario_resource: ILive2DScenarioResource = {
     image: assetList.filter((a) => isLive2DImageAsset(a)),
     video: assetList.filter((a) => isLive2DVideoAsset(a)),
-    audio: assetList.filter((a) => isLive2DAudioAsset(a)),
+    audio: assetList.filter((a) => isLive2DAudioAsset(a))
   };
   return scenario_resource;
 }
@@ -287,7 +273,7 @@ function preloadSound(url: string): Promise<Howl> {
       onload: () => resolve(sound),
       onloaderror: () => reject(new Error(`Failed to load sound: ${url}`)),
       loop: false,
-      html5: false,
+      html5: false
     });
   });
 }
@@ -326,8 +312,7 @@ export function discardMotion(
   motion_list.forEach((m) => {
     if (
       !unique_motion.some(
-        (u) =>
-          m.costume === u.costume && m.motion === u.motion && m.type === u.type
+        (u) => m.costume === u.costume && m.motion === u.motion && m.type === u.type
       )
     ) {
       unique_motion.push(m);
@@ -335,23 +320,15 @@ export function discardMotion(
   });
   // prune
   modelData.forEach((md) => {
-    const motion_for_this_model = unique_motion.filter(
-      (m) => m.costume === md.costume
-    );
+    const motion_for_this_model = unique_motion.filter((m) => m.costume === md.costume);
     md.data.FileReferences.Motions.Motion = motion_for_this_model
       .filter((m) => m.type === "motion")
-      .map((m) =>
-        md.data.FileReferences.Motions.Motion.find(
-          (all_m) => all_m.Name === m.motion
-        )
-      )
+      .map((m) => md.data.FileReferences.Motions.Motion.find((all_m) => all_m.Name === m.motion))
       .filter((m) => !!m); // skip motions that not in model defination
     md.data.FileReferences.Motions.Expression = motion_for_this_model
       .filter((m) => m.type === "expression")
       .map((m) =>
-        md.data.FileReferences.Motions.Expression.find(
-          (all_m) => all_m.Name === m.motion
-        )
+        md.data.FileReferences.Motions.Expression.find((all_m) => all_m.Name === m.motion)
       )
       .filter((m) => !!m); // skip motions that not in model defination
   });
@@ -379,11 +356,11 @@ export async function preloadModelMotion(
     motion_list.push(
       ...model.data.FileReferences.Motions.Motion.map((motion) => ({
         origin: `${model.costume}/${motion.Name}`,
-        url: motion.File,
+        url: motion.File
       })),
       ...model.data.FileReferences.Motions.Expression.map((motion) => ({
         origin: `${model.costume}/${motion.Name}`,
-        url: motion.File,
+        url: motion.File
       }))
     );
   }
@@ -406,20 +383,13 @@ export async function preloadModelMotion(
           if (!response.ok) throw response;
           return response;
         }).catch((err: unknown) => {
-          onWarning(
-            getAssetLoadWarning("motion", motion.origin, motion.url, err)
-          );
+          onWarning(getAssetLoadWarning("motion", motion.origin, motion.url, err));
           throw err;
         }),
       callback: function () {
         count++;
-        onProgress(
-          Live2DLoadProgressType.ModelMotion,
-          count,
-          total,
-          motion.origin
-        );
-      },
+        onProgress(Live2DLoadProgressType.ModelMotion, count, total, motion.origin);
+      }
     });
   }
   const queue = new PreloadQueue(taskList);

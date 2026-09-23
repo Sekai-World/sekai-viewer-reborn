@@ -140,7 +140,14 @@ describe("story master-data client", () => {
           scenarioId: "card_3_ep1",
           releaseCondition: { id: 5, releaseConditionType: "none" }
         },
-        { id: 11, cardId: 3, seq: 2, title: "EP2", scenarioId: "card_3_ep2", releaseCondition: null }
+        {
+          id: 11,
+          cardId: 3,
+          seq: 2,
+          title: "EP2",
+          scenarioId: "card_3_ep2",
+          releaseCondition: null
+        }
       ])
     );
 
@@ -290,9 +297,7 @@ describe("story master-data client", () => {
 
   it("caches collections until the TTL expires", async () => {
     let now = 1_000_000;
-    listEndpointMocks.getUnitStoriesByRegionList.mockResolvedValue(
-      okPage([unitStoryRow])
-    );
+    listEndpointMocks.getUnitStoriesByRegionList.mockResolvedValue(okPage([unitStoryRow]));
     const options = {
       baseUrl: "https://master.test/api/v1",
       now: () => now,
@@ -400,11 +405,9 @@ describe("story master-data client", () => {
       okPage([{ id: 7, unit: "idol", unitEpisodeCategory: "none", outline: "Main" }])
     );
 
-    const result = await fetchStoryCollections(
-      "jp",
-      ["unitStories", "unitStoryEpisodeGroups"],
-      { baseUrl: "https://master.test/api/v1" }
-    );
+    const result = await fetchStoryCollections("jp", ["unitStories", "unitStoryEpisodeGroups"], {
+      baseUrl: "https://master.test/api/v1"
+    });
 
     expect(listEndpointMocks.getUnitStoryEpisodeGroupsByRegionList).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -25,12 +25,12 @@ export enum SnippetAction {
   SpecialEffect = 6,
   Sound = 7,
   /** Control model display mode. */
-  CharacterLayoutMode = 8,
+  CharacterLayoutMode = 8
 }
 
 export enum SnippetProgressBehavior {
   Now = 0,
-  WaitUnitilFinished = 1,
+  WaitUnitilFinished = 1
 }
 
 export interface Snippet {
@@ -90,7 +90,7 @@ export enum CharacterLayoutType {
   /** Model disappear in the scene, apply motion with position change. */
   Clear = 3,
   /** Ignored by the player (matches legacy behavior). */
-  ChangeDepth = 6,
+  ChangeDepth = 6
 }
 
 export enum CharacterLayoutPosition {
@@ -102,20 +102,20 @@ export enum CharacterLayoutPosition {
   Right = 7,
   BottomLeftEdge = 9,
   BottomEdge = 10,
-  BottomRightEdge = 12,
+  BottomRightEdge = 12
 }
 
 export enum CharacterLayoutDepthType {
   Top = 0,
   MidTop = 1,
   MidBack = 2,
-  Back = 3,
+  Back = 3
 }
 
 export enum CharacterLayoutMoveSpeedType {
   Slow = 0,
   Normal = 1,
-  Fast = 2,
+  Fast = 2
 }
 
 export interface LayoutData {
@@ -185,7 +185,7 @@ export enum SpecialEffectType {
   SekaiOutCenter = 41,
   ChangeCameraPosition = 42,
   ChangeCameraZoomLevel = 43,
-  Blur = 44,
+  Blur = 44
 }
 
 export interface SpecialEffectData {
@@ -201,7 +201,7 @@ export enum SeAttachCharacterShaderType {
   Empty = "",
   Hologram = "hologram",
   Monitor = "monitor",
-  Blur = "blur",
+  Blur = "blur"
 }
 
 /**
@@ -221,7 +221,7 @@ export const SeScenarioEffectType = {
     "line_legend_03_a_white",
     "line_legend_03_b",
     "line_legend_04",
-    "line_legend_04_white",
+    "line_legend_04_white"
   ],
   kirakira: [
     "kirakira_01",
@@ -232,16 +232,12 @@ export const SeScenarioEffectType = {
     "kirakira_05",
     "kirakira_06_sanrio_c",
     "kirakira_07_toya",
-    "kirakira_08_mrmrhouse",
+    "kirakira_08_mrmrhouse"
   ],
   black_out: ["black_out", "black_out_02", "black_out_03", "black_out_04"],
   light_up: ["light_up", "light_up_fireworks_01", "light_up_fireworks_02"],
-  light_up_legend: [
-    "light_up_legend_01",
-    "light_up_legend_02",
-    "light_up_legend_03",
-  ],
-  dash_line: ["dash_line_down", "dash_line_l", "dash_line_r", "dash_line_up"],
+  light_up_legend: ["light_up_legend_01", "light_up_legend_02", "light_up_legend_03"],
+  dash_line: ["dash_line_down", "dash_line_l", "dash_line_r", "dash_line_up"]
 };
 
 export enum SoundPlayMode {
@@ -249,7 +245,7 @@ export enum SoundPlayMode {
   Stack = 1,
   LoopSe = 2,
   StopSe = 3,
-  SetBgmVolume = 4,
+  SetBgmVolume = 4
 }
 
 export interface SoundData {
@@ -263,7 +259,7 @@ export interface SoundData {
 
 export enum CharacterLayoutMode {
   Normal = 0,
-  ThreeModels = 3,
+  ThreeModels = 3
 }
 
 export interface ScenarioSnippetCharacterLayoutMode {

@@ -11,7 +11,7 @@
   import { tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   type CharacterOption = {
     id: number | string | null;

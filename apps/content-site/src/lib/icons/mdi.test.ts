@@ -17,9 +17,7 @@ describe("content-site support icon registration", () => {
     ];
 
     expect(
-      addIcon.mock.calls
-        .map(([name]) => name)
-        .filter((name) => supportIconNames.includes(name))
+      addIcon.mock.calls.map(([name]) => name).filter((name) => supportIconNames.includes(name))
     ).toEqual(supportIconNames);
   });
 });

@@ -35,7 +35,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("context.tooltip.show(event, snappedMarker.point)");
     expect(source).toContain("history-chart-legend");
     expect(source).toContain("onkeydown={(event) => handleMarkerKeydown(event, marker.point)}");
-    expect(source).toContain("title>{`${marker.change.previousName} → ${marker.change.nextName}");
+    expect(source).toMatch(
+      /<title\s*>\{`\$\{marker\.change\.previousName\} → \$\{marker\.change\.nextName\}/
+    );
     const plotStyleStart = source.indexOf(".history-chart-plot {");
     const plotStyleEnd = source.indexOf(".history-chart :global(.chart-container)", plotStyleStart);
     expect(plotStyleStart).toBeGreaterThan(-1);
@@ -105,8 +107,8 @@ describe("tracker page UI contract", () => {
     expect(homeSource).toContain("aria-busy={isEventsLoading}");
     expect(homeSource).toContain('aria-hidden="true"');
     expect(homeSource).toContain('translate("home.eventsLoading")');
-    expect(homeSource).toContain(
-      'events = trackerSupportedRegions.map((region) => ({ region, status: "failed", event: null }));'
+    expect(homeSource).toMatch(
+      /events = trackerSupportedRegions\.map\(\(region\) => \(\{\s*region,\s*status: "failed",\s*event: null\s*\}\)\);/
     );
     expect(homeSource).toContain('import { getEventBannerAssetURL } from "$lib/event-assets";');
     expect(homeSource).toContain('import { getTrackerCountdown } from "$lib/tracker-countdown";');
@@ -114,14 +116,14 @@ describe("tracker page UI contract", () => {
       "const clock = window.setInterval(() => (now = Date.now()), 1_000);"
     );
     expect(homeSource).toContain('class="event-card event-card-link has-event"');
-    expect(homeSource).toContain('href={`/tracker/${result.region}`}');
+    expect(homeSource).toContain("href={`/tracker/${result.region}`}");
     expect(homeSource).not.toContain("?eventId=");
     expect(homeSource).toContain(
       'aria-label={`${regionName(result.region)}: ${result.event.name} — ${translate("home.openRegionalTracker")}`}'
     );
     expect(homeSource).toContain('class="event-banner"');
     expect(homeSource).toContain('import AssetImage from "@platform/ui-shell/asset-image";');
-    expect(homeSource).toContain("<AssetImage src={source}");
+    expect(homeSource).toMatch(/<AssetImage\s+src=\{source\}/);
     expect(homeSource).toContain('class="tracker-link-arrow"');
     expect(appCssSource).toContain(".event-banner {");
     expect(appCssSource).toContain("min-height: 6rem;");
@@ -132,9 +134,7 @@ describe("tracker page UI contract", () => {
     expect(appCssSource).toContain("background: transparent");
     expect(appCssSource).not.toContain("aspect-ratio: 5 / 2;");
     expect(appCssSource).not.toContain("object-fit: cover;");
-    expect(trackerSource).toContain(
-      '<title>{translate("tracker.title")} | Sekai Tools</title>'
-    );
+    expect(trackerSource).toContain('<title>{translate("tracker.title")} | Sekai Tools</title>');
     expect(JSON.parse(trackerMessagesSource)).toMatchObject({ "tracker.title": "Event Tracker" });
     expect(trackerSource).toContain('<h1 id="tracker-title">{translate("tracker.title")}</h1>');
   });
@@ -259,8 +259,8 @@ describe("tracker page UI contract", () => {
     );
     expect(countdownBlock).toContain('selectedRankingTab !== "event"');
     expect(countdownBlock).toContain("selectedChapter.chapter.chapterEndAt");
-    expect(countdownBlock).toContain(
-      "selectedChapter.chapter.aggregateAt ?? selectedChapter.chapter.chapterEndAt"
+    expect(countdownBlock).toMatch(
+      /selectedChapter\.chapter\.aggregateAt \?\?\s+selectedChapter\.chapter\.chapterEndAt/
     );
     expect(countdownBlock).not.toContain("selectedChapter.chapter.startAt");
     expect(countdownBlock).not.toContain("selectedChapter.chapter.endAt");
@@ -306,7 +306,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("const requestEventSearch = (query: string)");
     expect(source).toContain('endpoint("events", { query })');
     expect(source).toContain("eventSearchStatus = result.status;");
-    expect(source).toContain('translate(`tracker.metadataError.${eventSearchStatus}`)');
+    expect(source).toContain("translate(`tracker.metadataError.${eventSearchStatus}`)");
     expect(source).toContain("`${event.name} ${event.id}`.toLocaleLowerCase().includes(query)");
     expect(source).toContain(
       "const visibleMatchingEvents = $derived(matchingEvents.slice(0, 10));"
@@ -322,7 +322,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("new URLSearchParams({ eventId: String(eventId) })");
     expect(source).toContain("isPositiveEventIdQuery(query) ? 0 : 220");
     expect(source).toContain("scheduleEventSearch(value);");
-    expect(source).toContain("eventSearchStatus === \"available\" && eventQuery.trim().length > 0");
+    expect(source).toContain('eventSearchStatus === "available" && eventQuery.trim().length > 0');
     expect(source).not.toContain("tracker-event-browser");
     expect(source).not.toContain("tracker-event-id-form");
     expect(source).not.toContain("tracker.currentEvent");
@@ -384,7 +384,7 @@ describe("tracker page UI contract", () => {
     expect(closeButton).toContain("size-11 min-h-11 shrink-0");
     expect(closeButton).not.toMatch(/>\s*\{translate\("tracker.goalClose"\)\}/);
     expect(dialog?.match(/class="input input-sm min-h-11 w-full min-w-0"/g)).toHaveLength(4);
-    expect(dialog).toContain('<select\n          bind:this={goalTargetRankControl}');
+    expect(dialog).toContain("<select\n          bind:this={goalTargetRankControl}");
     expect(dialog).toContain('id="tracker-goal-current-score"');
     expect(dialog).toContain('for="tracker-goal-current-score"');
     expect(dialog).toContain('id="tracker-goal-safety-margin"');
@@ -395,7 +395,9 @@ describe("tracker page UI contract", () => {
     expect(dialog).toContain('class="btn btn-primary min-h-11" type="submit"');
     expect(dialog).toContain("disabled={!goalCanSubmit}");
     expect(source).toContain("const goalTargetRate = $derived(goalLineRow?.speedPerHour ?? null);");
-    expect(source).toContain("target: {\n        score: goalLineRow?.score ?? null,\n        rate: goalLineRow?.speedPerHour ?? null");
+    expect(source).toContain(
+      "target: {\n        score: goalLineRow?.score ?? null,\n        rate: goalLineRow?.speedPerHour ?? null"
+    );
     expect(source).not.toContain("loadGoalLinePoints");
     expect(source).not.toContain("requestGoalLinePoints");
     expect(source).not.toContain("goalLineHistory");
@@ -476,8 +478,8 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("-webkit-backdrop-filter: blur(8px);");
     expect(source).toContain("backdrop-filter: blur(8px);");
     expect(source).toContain(":global(html.dark) .tracker-goal-dialog-box");
-    expect(source).toContain(
-      "background: color-mix(in srgb, var(--archive-surface-default) 86%, var(--archive-surface-canvas));"
+    expect(source).toMatch(
+      /background: color-mix\(\s*in srgb,\s*var\(--archive-surface-default\) 86%,\s*var\(--archive-surface-canvas\)\s*\);/
     );
     expect(source).toContain(":global(html.dark) .tracker-goal-dialog::backdrop");
     expect(source).toContain(
@@ -517,7 +519,10 @@ describe("tracker page UI contract", () => {
   });
 
   it("keeps the goal disclaimer and labels concise", async () => {
-    const messages = JSON.parse(await readFile(trackerMessagesPath, "utf8")) as Record<string, unknown>;
+    const messages = JSON.parse(await readFile(trackerMessagesPath, "utf8")) as Record<
+      string,
+      unknown
+    >;
 
     expect(messages).toMatchObject({
       "tracker.goalDisclaimer": expect.any(String),
@@ -598,7 +603,9 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain("resolvedCurrentEventId");
     expect(source).not.toContain("rankingEventIds");
     expect(source).toContain("catalogCurrentEventId: trackerPageReady?.resolvedEventId ?? null");
-    expect(source).toContain("const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;");
+    expect(source).toContain(
+      "const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;"
+    );
     expect(source).toContain("eventName ? `#${eventId} — ${eventName}` : `#${eventId}`");
   });
 
@@ -617,7 +624,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain(
       "isCurrentEventKnown && eventKey !== null && currentEventId === eventKey"
     );
-    expect(source).toContain("class:badge-success={isCurrentEvent && phase === \"live\"}");
+    expect(source).toContain('class:badge-success={isCurrentEvent && phase === "live"}');
   });
 
   it("uses a deterministic SSR timestamp before switching to the browser local time", async () => {
@@ -631,7 +638,9 @@ describe("tracker page UI contract", () => {
     const source = await readFile(pagePath, "utf8");
     expect(source).not.toContain("tracker.context-event");
     expect(source).toContain('translate("tracker.eventPickerPlaceholder")');
-    expect(source).toContain("const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;");
+    expect(source).toContain(
+      "const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;"
+    );
     expect(source).toContain(
       'eventKey === null ? "" : formatEventLabel(eventKey, selectedEvent?.name)'
     );
@@ -875,8 +884,8 @@ describe("tracker page UI contract", () => {
       /interpolate\("tracker\.chapter",\s*\{\s*number:\s*chapter\.chapter\.chapterNo\s*\}\)/
     );
     expect(source).not.toContain("chapter.chapter.gameCharacterId}</span>");
-    expect(source).toContain('calculateChapterRowSpeed,');
-    expect(source).toContain('createChapterRows,');
+    expect(source).toContain("calculateChapterRowSpeed,");
+    expect(source).toContain("createChapterRows,");
     expect(source).toContain("const selectedLadder = ladder;");
     expect(source).toContain(
       "selectedChapterRows = createChapterRows(chapter.result.rankings, selectedLadder);"
@@ -950,11 +959,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("onsubmit={submitGoal}");
     expect(source).toContain("goalResult = calculateTrackerGoalPlan({");
     expect(actions.match(/<button\b/g)).toHaveLength(3);
-    for (const icon of [
-      "mdi:history",
-      "mdi:calculator-variant",
-      "mdi:share-variant-outline"
-    ]) {
+    for (const icon of ["mdi:history", "mdi:calculator-variant", "mdi:share-variant-outline"]) {
       expect(actions).toMatch(
         new RegExp(`<Icon\\s+icon="${icon}"\\s+class="size-4 shrink-0"\\s+aria-hidden="true"\\s*/>`)
       );
@@ -1013,9 +1018,7 @@ describe("tracker page UI contract", () => {
     expect(bodyGateStart).toBeGreaterThan(-1);
     expect(bodyGateElse).toBeGreaterThan(bodyGateStart);
     expect(bodyGateElse).toBeLessThan(controlDeck);
-    expect(source).not.toContain(
-      "{#if catalog === null && !isInvalidSelection}"
-    );
+    expect(source).not.toContain("{#if catalog === null && !isInvalidSelection}");
     expect(source).toContain("{#if trackerResult}");
     expect(source).toContain("trackerResult.loadedAt");
     expect(source).toContain('<span class="skeleton h-4 w-36" aria-hidden="true"></span>');

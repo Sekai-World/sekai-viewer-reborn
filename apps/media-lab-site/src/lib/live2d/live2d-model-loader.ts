@@ -365,7 +365,7 @@ const waitForAbort = async <T>(operation: Promise<T>, signal: AbortSignal): Prom
         reject(error);
       }
     );
-    });
+  });
 };
 
 const getDevicePixelRatio = (): number => {

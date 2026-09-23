@@ -48,7 +48,10 @@
         aria-labelledby="support-donations-title"
         class="content-card-shell flex flex-col gap-3 rounded-xl border p-5 sm:p-6"
       >
-        <h2 id="support-donations-title" class="text-base font-semibold text-(--archive-text-strong)">
+        <h2
+          id="support-donations-title"
+          class="text-base font-semibold text-(--archive-text-strong)"
+        >
           {translate("support.donations")}
         </h2>
         {#if patreonUrl || kofiUrl}
@@ -62,11 +65,7 @@
               >
                 <Icon icon="mdi:patreon" class="size-5 shrink-0" aria-hidden="true" />
                 Patreon
-                <Icon
-                  icon="mdi:open-in-new"
-                  class="ml-auto size-4 opacity-70"
-                  aria-hidden="true"
-                />
+                <Icon icon="mdi:open-in-new" class="ml-auto size-4 opacity-70" aria-hidden="true" />
               </a>
             {/if}
             {#if kofiUrl}
@@ -78,11 +77,7 @@
               >
                 <Icon icon="mdi:coffee" class="size-5 shrink-0" aria-hidden="true" />
                 Ko-fi
-                <Icon
-                  icon="mdi:open-in-new"
-                  class="ml-auto size-4 opacity-70"
-                  aria-hidden="true"
-                />
+                <Icon icon="mdi:open-in-new" class="ml-auto size-4 opacity-70" aria-hidden="true" />
               </a>
             {/if}
           </div>
@@ -97,7 +92,10 @@
         aria-labelledby="support-other-ways-title"
         class="content-card-shell flex flex-col gap-3 rounded-xl border p-5 sm:p-6"
       >
-        <h2 id="support-other-ways-title" class="text-base font-semibold text-(--archive-text-strong)">
+        <h2
+          id="support-other-ways-title"
+          class="text-base font-semibold text-(--archive-text-strong)"
+        >
           {translate("support.otherWays")}
         </h2>
 
@@ -110,11 +108,7 @@
           >
             <Icon icon="mdi:twitter" class="size-5 shrink-0" aria-hidden="true" />
             {translate("support.followX")}
-            <Icon
-              icon="mdi:open-in-new"
-              class="ml-auto size-4 opacity-70"
-              aria-hidden="true"
-            />
+            <Icon icon="mdi:open-in-new" class="ml-auto size-4 opacity-70" aria-hidden="true" />
           </a>
 
           <a
@@ -125,11 +119,7 @@
           >
             <Icon icon="mdi:github" class="size-5 shrink-0" aria-hidden="true" />
             {translate("support.contributeCode")}
-            <Icon
-              icon="mdi:open-in-new"
-              class="ml-auto size-4 opacity-70"
-              aria-hidden="true"
-            />
+            <Icon icon="mdi:open-in-new" class="ml-auto size-4 opacity-70" aria-hidden="true" />
           </a>
         </div>
       </section>

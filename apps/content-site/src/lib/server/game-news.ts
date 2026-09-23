@@ -372,9 +372,7 @@ const fetchGameNews = async (
   }
 };
 
-export const loadGameNews = async (
-  region: SupportedRegion
-): Promise<GameNewsLoadResult> => {
+export const loadGameNews = async (region: SupportedRegion): Promise<GameNewsLoadResult> => {
   if (!supportedRegions.includes(region)) {
     return { status: "unavailable" };
   }

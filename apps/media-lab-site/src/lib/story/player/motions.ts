@@ -13,9 +13,7 @@ export interface ILive2DStoryMotion {
  * @param scenarioData - The scenario containing snippets and character data
  * @returns The referenced motions and expressions with their associated costumes and types
  */
-export function gatherStoryMotion(
-  scenarioData: IScenarioData
-): ILive2DStoryMotion[] {
+export function gatherStoryMotion(scenarioData: IScenarioData): ILive2DStoryMotion[] {
   const motionList: ILive2DStoryMotion[] = [];
 
   scenarioData.Snippets.forEach((snippet) => {
@@ -28,14 +26,14 @@ export function gatherStoryMotion(
             motionList.push({
               costume: action.CostumeType,
               motion: action.MotionName,
-              type: "motion",
+              type: "motion"
             });
           }
           if (action.FacialName !== "") {
             motionList.push({
               costume: action.CostumeType,
               motion: action.FacialName,
-              type: "expression",
+              type: "expression"
             });
           }
         } else {
@@ -46,14 +44,14 @@ export function gatherStoryMotion(
               motionList.push({
                 costume: a.CostumeType,
                 motion: action.MotionName,
-                type: "motion",
+                type: "motion"
               });
             }
             if (action.FacialName !== "") {
               motionList.push({
                 costume: a.CostumeType,
                 motion: action.FacialName,
-                type: "expression",
+                type: "expression"
               });
             }
           });
@@ -70,14 +68,14 @@ export function gatherStoryMotion(
               motionList.push({
                 costume: a.CostumeType,
                 motion: motion.MotionName.replace(" ", ""),
-                type: "motion",
+                type: "motion"
               });
             }
             if (motion.FacialName !== "") {
               motionList.push({
                 costume: a.CostumeType,
                 motion: motion.FacialName.replace(" ", ""),
-                type: "expression",
+                type: "expression"
               });
             }
           });

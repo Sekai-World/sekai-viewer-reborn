@@ -463,8 +463,7 @@ export const fetchMusicCatalog = async (
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
-const getBoolean = (value: unknown): boolean | null =>
-  typeof value === "boolean" ? value : null;
+const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const parseMusicListPagination = (
   payload: unknown,
@@ -479,7 +478,8 @@ const parseMusicListPagination = (
   const totalPages =
     getNumber(pagination?.total_pages) ?? Math.max(1, Math.ceil(total / Math.max(1, pageSize)));
   const hasNext =
-    getBoolean(pagination?.has_next) ?? (totalPages > 0 ? page < totalPages : itemCount >= pageSize);
+    getBoolean(pagination?.has_next) ??
+    (totalPages > 0 ? page < totalPages : itemCount >= pageSize);
 
   return { page, pageSize, hasNext, total, totalPages };
 };

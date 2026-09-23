@@ -13,7 +13,7 @@
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
@@ -84,7 +84,10 @@ import type { PageData } from "./$types";
 </script>
 
 <svelte:head
-  ><title>{createPageTitle(`${t("navigation.characters", "Characters")} ${regionLabels[data.region]}`)}</title
+  ><title
+    >{createPageTitle(
+      `${t("navigation.characters", "Characters")} ${regionLabels[data.region]}`
+    )}</title
   ></svelte:head
 >
 
@@ -105,7 +108,9 @@ import type { PageData } from "./$types";
           class="content-card-shell flex w-fit max-w-full self-center flex-col items-center gap-2 rounded-2xl border border-base-content/8 px-5 py-3 sm:gap-2.5 sm:px-6 sm:py-4"
         >
           <div class="skeleton aspect-[2.4/1] w-52 max-w-full rounded-2xl sm:w-64"></div>
-          <div class="scrollbar-none flex max-w-full flex-nowrap items-center justify-center gap-2 overflow-x-auto p-2 sm:gap-6 sm:px-3 lg:gap-10">
+          <div
+            class="scrollbar-none flex max-w-full flex-nowrap items-center justify-center gap-2 overflow-x-auto p-2 sm:gap-6 sm:px-3 lg:gap-10"
+          >
             {#each Array(4) as _, avatarIndex (avatarIndex)}
               <div class="skeleton size-18 shrink-0 rounded-full sm:size-20"></div>
             {/each}

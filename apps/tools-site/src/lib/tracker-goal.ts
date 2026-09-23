@@ -20,10 +20,7 @@ export type TrackerGoalProjection = Readonly<{
 }>;
 
 export type TrackerGoalFailureReason =
-  | "missing-data"
-  | "invalid-input"
-  | "invalid-time-window"
-  | "invalid-rate";
+  "missing-data" | "invalid-input" | "invalid-time-window" | "invalid-rate";
 
 type TrackerGoalFailure = Readonly<{
   status: "invalid" | "unavailable";
@@ -69,9 +66,7 @@ const unavailable = (): TrackerGoalFailure => ({
   reason: "missing-data"
 });
 
-const invalid = (
-  reason: TrackerGoalFailureReason = "invalid-input"
-): TrackerGoalFailure => ({
+const invalid = (reason: TrackerGoalFailureReason = "invalid-input"): TrackerGoalFailure => ({
   status: "invalid",
   reason
 });
@@ -148,9 +143,7 @@ export const calculateTrackerGoalPlan = (input: TrackerGoalInput): TrackerGoalRe
   }
 
   const dailyRequiredScore =
-    availablePlayHours !== null &&
-    availablePlayHours !== undefined &&
-    availablePlayHours > 0
+    availablePlayHours !== null && availablePlayHours !== undefined && availablePlayHours > 0
       ? requiredRate * availablePlayHours
       : undefined;
   if (dailyRequiredScore !== undefined && !isDerivedNumber(dailyRequiredScore)) {

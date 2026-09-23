@@ -8,7 +8,11 @@
   import Icon from "@iconify/svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
-  import { createI18nTranslator, getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    getLocalI18nMessages,
+    mediaLabI18nNamespaces
+  } from "$lib/i18n/runtime";
   import { registerStoryAssetCache } from "$lib/story/asset-cache-client";
   import {
     isActivePickerStoryTypePath,

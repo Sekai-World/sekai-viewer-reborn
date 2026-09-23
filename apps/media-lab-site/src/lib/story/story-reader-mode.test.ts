@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  readRememberedStoryReaderMode,
-  rememberStoryReaderMode
-} from "./story-reader-mode";
+import { readRememberedStoryReaderMode, rememberStoryReaderMode } from "./story-reader-mode";
 
 const createStorageMock = (initial: Record<string, string> = {}): Storage => {
   const values = new Map(Object.entries(initial));

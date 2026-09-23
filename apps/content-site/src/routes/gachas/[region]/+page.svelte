@@ -17,7 +17,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   import type { GachaListPage, GachaListItem as GachaListItemType } from "$lib/server/gacha-list";
 
@@ -654,7 +654,9 @@ import type { PageData } from "./$types";
       <span class="ml-3 text-sm opacity-70">{gachaListLoading}</span>
     </div>
   {:else if isInitialLoading}
-    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div
+      class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    >
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
         <div class="archive-card-skeleton flex flex-col gap-3 rounded-2xl border p-4">
           <div class="skeleton h-32 rounded-xl"></div>
@@ -668,7 +670,9 @@ import type { PageData } from "./$types";
       <div class="alert alert-error">{errorMessage}</div>
     </div>
   {:else}
-    <div class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+    <div
+      class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+    >
       {#each visibleItems as item (item.id)}
         <GachaListCard
           region={data.region}
@@ -715,7 +719,9 @@ import type { PageData } from "./$types";
     {/if}
 
     {#if visibleItems.length === 0 && !errorMessage}
-      <div class="archive-list-empty rounded-2xl border py-12 text-center text-sm">{gachaListEmpty}</div>
+      <div class="archive-list-empty rounded-2xl border py-12 text-center text-sm">
+        {gachaListEmpty}
+      </div>
     {/if}
   {/if}
 </section>

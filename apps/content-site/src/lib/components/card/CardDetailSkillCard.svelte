@@ -75,53 +75,53 @@
 
     {#if skill}
       <div class="space-y-3">
-          <label class="content-card-inset block rounded-xl p-3 sm:px-4">
-            <span class="flex items-center justify-between gap-4 text-sm font-semibold">
-              <span>{skillLevelLabel}</span>
-              <span class="flex items-center gap-1">
-                <input
-                  type="number"
-                  min="1"
-                  max={maxSkillLevel}
-                  value={selectedLevel}
-                  class="input input-sm h-10 w-16 text-right tabular-nums"
-                  aria-label={skillLevelLabel}
-                  onchange={(event) => setSelectedLevel(event.currentTarget.value)}
-                />
-                <span class="opacity-60">/{maxSkillLevel}</span>
-              </span>
+        <label class="content-card-inset block rounded-xl p-3 sm:px-4">
+          <span class="flex items-center justify-between gap-4 text-sm font-semibold">
+            <span>{skillLevelLabel}</span>
+            <span class="flex items-center gap-1">
+              <input
+                type="number"
+                min="1"
+                max={maxSkillLevel}
+                value={selectedLevel}
+                class="input input-sm h-10 w-16 text-right tabular-nums"
+                aria-label={skillLevelLabel}
+                onchange={(event) => setSelectedLevel(event.currentTarget.value)}
+              />
+              <span class="opacity-60">/{maxSkillLevel}</span>
             </span>
-            <input
-              type="range"
-              min="1"
-              max={maxSkillLevel}
-              bind:value={selectedLevel}
-              class="range range-primary range-sm mt-3"
-            />
-          </label>
+          </span>
+          <input
+            type="range"
+            min="1"
+            max={maxSkillLevel}
+            bind:value={selectedLevel}
+            class="range range-primary range-sm mt-3"
+          />
+        </label>
 
-          {#if selectedEffectDetails.length > 0}
-            <div class="grid gap-2">
-              {#each selectedEffectDetails as item, index (`effect-${index}`)}
-                <div class="content-card-inset rounded-xl p-3 sm:px-4">
-                  <p class="text-sm font-semibold">{formatEffectType(item.effect.type)}</p>
-                  <div class="mt-2 space-y-1 text-xs opacity-75">
-                    {#if item.detail?.activateEffectDuration !== null}
-                      <p>{durationLabel}: {item.detail?.activateEffectDuration}</p>
-                    {/if}
-                    {#if item.detail?.activateEffectValue !== null}
-                      <p>
-                        {effectValueLabel}: {formatEffectValue(
-                          item.detail?.activateEffectValue ?? null,
-                          item.detail?.activateEffectValueType ?? null
-                        )}
-                      </p>
-                    {/if}
-                  </div>
+        {#if selectedEffectDetails.length > 0}
+          <div class="grid gap-2">
+            {#each selectedEffectDetails as item, index (`effect-${index}`)}
+              <div class="content-card-inset rounded-xl p-3 sm:px-4">
+                <p class="text-sm font-semibold">{formatEffectType(item.effect.type)}</p>
+                <div class="mt-2 space-y-1 text-xs opacity-75">
+                  {#if item.detail?.activateEffectDuration !== null}
+                    <p>{durationLabel}: {item.detail?.activateEffectDuration}</p>
+                  {/if}
+                  {#if item.detail?.activateEffectValue !== null}
+                    <p>
+                      {effectValueLabel}: {formatEffectValue(
+                        item.detail?.activateEffectValue ?? null,
+                        item.detail?.activateEffectValueType ?? null
+                      )}
+                    </p>
+                  {/if}
                 </div>
-              {/each}
-            </div>
-          {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
         <dl class="space-y-2">
           {#if skill.name || descriptionText}
             <div class="content-card-inset rounded-xl p-3 sm:px-4">

@@ -92,14 +92,11 @@ const eventPickerPayload = async (
     return {
       eventId: Number(r.id),
       name: typeof r.name === "string" ? r.name : `#${String(r.id)}`,
-      eventType:
-        typeof r.eventType === "string" && r.eventType.length > 0 ? r.eventType : null,
+      eventType: typeof r.eventType === "string" && r.eventType.length > 0 ? r.eventType : null,
       unit: typeof r.unit === "string" && r.unit.length > 0 ? r.unit : null,
       startAt: typeof r.startAt === "number" ? r.startAt : null,
       endAt: typeof r.endAt === "number" ? r.endAt : null,
-      bannerUrl: assetBundleName
-        ? assetUrls.region(eventBannerImagePath(assetBundleName))
-        : null
+      bannerUrl: assetBundleName ? assetUrls.region(eventBannerImagePath(assetBundleName)) : null
     };
   });
 
@@ -159,9 +156,7 @@ const cardPickerPayload = async (
   const assetUrls = regionAssetUrls(region);
   const cards = buildStoryCardPickerFromPage(cardPage.items, episodes).map((card) => ({
     ...card,
-    thumbnailUrl: card.thumbnailPath
-      ? assetUrls.region(card.thumbnailPath)
-      : null
+    thumbnailUrl: card.thumbnailPath ? assetUrls.region(card.thumbnailPath) : null
   }));
   const characterOptions = (metaCollections.gameCharacters ?? [])
     .slice()
@@ -217,14 +212,9 @@ const areaTalkPickerPayload = async (
       .map((row) => [row.id, row.characterId])
   );
   const assetUrls = regionAssetUrls(region);
-  const areas = buildStoryAreaTalkPicker(
-    collections,
-    gameCharacterIdBy2dId
-  ).map((area) => ({
+  const areas = buildStoryAreaTalkPicker(collections, gameCharacterIdBy2dId).map((area) => ({
     ...area,
-    thumbnailUrl: area.thumbnailPath
-      ? assetUrls.region(area.thumbnailPath)
-      : null
+    thumbnailUrl: area.thumbnailPath ? assetUrls.region(area.thumbnailPath) : null
   }));
   return json({ storyType: "area-talk", groups, areas });
 };
@@ -258,20 +248,15 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
   // Each type fetches only the collections its picker actually reads —
   // cardEpisodes/actionSets run into thousands of rows, so sharing one
   // superset list made every picker pay for collections it never uses.
-  const collections = await fetchStoryCollections(
-    region,
-    collectionsForPicker(storyType),
-    { fetch }
-  );
+  const collections = await fetchStoryCollections(region, collectionsForPicker(storyType), {
+    fetch
+  });
 
   if (storyType === "unit") {
     return unitCatalogPayload(collections, region);
   }
 
-  const groups = buildStoryCatalog(
-    storyType as (typeof storyRouteStoryTypes)[number],
-    collections
-  );
+  const groups = buildStoryCatalog(storyType as (typeof storyRouteStoryTypes)[number], collections);
 
   if (storyType === "character") {
     return json({

@@ -32,9 +32,9 @@ const runPageLoad = (event: ReturnType<typeof request>) =>
   );
 
 const runLayoutLoad = (event: ReturnType<typeof request>) =>
-  (loadLayout as unknown as (value: ReturnType<typeof request>) => Promise<Record<string, unknown>>)(
-    event
-  );
+  (
+    loadLayout as unknown as (value: ReturnType<typeof request>) => Promise<Record<string, unknown>>
+  )(event);
 
 describe("tools-site server loaders", () => {
   beforeEach(() => {
@@ -132,7 +132,11 @@ describe("tools-site server loaders", () => {
     await vi.advanceTimersByTimeAsync(5_000);
 
     const loaded = await result;
-    expect((await (loaded.events as Promise<{ status: string }[]>)).every((event) => event.status === "failed")).toBe(true);
+    expect(
+      (await (loaded.events as Promise<{ status: string }[]>)).every(
+        (event) => event.status === "failed"
+      )
+    ).toBe(true);
     vi.useRealTimers();
   });
 

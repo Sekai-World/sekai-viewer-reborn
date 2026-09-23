@@ -21,14 +21,11 @@ export default class Sekai extends BaseAnimation {
 
     // triangle
     const tri_textures = texture_slice(
-      this.textures.find((a) => a.identifier === "ui/tex_scenario_tri_01")!
-        .texture.baseTexture,
+      this.textures.find((a) => a.identifier === "ui/tex_scenario_tri_01")!.texture.baseTexture,
       [4, 4],
       10
     );
-    let tri_s_yellow = Array.from({ length: 5 }).map(
-      () => new Sprite(tri_textures[0])
-    );
+    let tri_s_yellow = Array.from({ length: 5 }).map(() => new Sprite(tri_textures[0]));
     tri_s_yellow = tri_s_yellow.concat(
       Array.from({ length: 5 }).map(() => new Sprite(tri_textures[4]))
     );
@@ -42,10 +39,7 @@ export default class Sekai extends BaseAnimation {
       t.filters = [filter];
     });
     let tri_s = Array.from({ length: 50 }).map(
-      () =>
-        new Sprite(
-          tri_textures[Math.floor(this.random(0, tri_textures.length))]
-        )
+      () => new Sprite(tri_textures[Math.floor(this.random(0, tri_textures.length))])
     );
     tri_s = tri_s.concat(tri_s_yellow);
     tri_s.forEach((t) => {
@@ -75,22 +69,20 @@ export default class Sekai extends BaseAnimation {
             curve
               .map_range(
                 this.stage_size[0] + this.em(scale),
-                this.stage_size[0] -
-                  this.stage_size[0] * radius * Math.cos(radian)
+                this.stage_size[0] - this.stage_size[0] * radius * Math.cos(radian)
               )
               .p(t),
           y_func: (t) =>
             curve
               .map_range(
                 this.stage_size[1] + this.em(scale),
-                this.stage_size[1] -
-                  this.stage_size[1] * radius * Math.sin(radian)
+                this.stage_size[1] - this.stage_size[1] * radius * Math.sin(radian)
               )
               .p(t),
           scale_x: () => this.em(scale) / 128, // 128: size of the texture
           scale_y: () => (this.em(scale) * ratio) / 128, // 128: size of the texture
           angle_curve: new Curve().map_range(angle_from, angle_to),
-          alpha_curve,
+          alpha_curve
         });
       });
     } else if (condition === "in_corner") {
@@ -111,29 +103,23 @@ export default class Sekai extends BaseAnimation {
           x_func: (t) =>
             curve
               .map_range(
+                this.stage_size[0] - this.stage_size[0] * radius * Math.cos(radian),
                 this.stage_size[0] -
-                  this.stage_size[0] * radius * Math.cos(radian),
-                this.stage_size[0] -
-                  this.stage_size[0] *
-                    (radius + radius_increase) *
-                    Math.cos(radian)
+                  this.stage_size[0] * (radius + radius_increase) * Math.cos(radian)
               )
               .p(t),
           y_func: (t) =>
             curve
               .map_range(
+                this.stage_size[1] - this.stage_size[1] * radius * Math.sin(radian),
                 this.stage_size[1] -
-                  this.stage_size[1] * radius * Math.sin(radian),
-                this.stage_size[1] -
-                  this.stage_size[1] *
-                    (radius + radius_increase) *
-                    Math.sin(radian)
+                  this.stage_size[1] * (radius + radius_increase) * Math.sin(radian)
               )
               .p(t),
           scale_x: () => this.em(scale) / 128, // 128: size of the texture
           scale_y: () => (this.em(scale) * ratio) / 128, // 128: size of the texture
           angle_curve: curve.map_range(init_angle, init_angle + 360),
-          alpha_curve,
+          alpha_curve
         });
       });
     } else if (condition === "out_center") {
@@ -155,22 +141,20 @@ export default class Sekai extends BaseAnimation {
             curve
               .map_range(
                 this.stage_size[0] * 0.5,
-                this.stage_size[0] * 0.5 -
-                  this.stage_size[0] * radius * Math.cos(radian)
+                this.stage_size[0] * 0.5 - this.stage_size[0] * radius * Math.cos(radian)
               )
               .p(t),
           y_func: (t) =>
             curve
               .map_range(
                 this.stage_size[1] * 0.5,
-                this.stage_size[1] * 0.5 -
-                  this.stage_size[1] * radius * Math.sin(radian)
+                this.stage_size[1] * 0.5 - this.stage_size[1] * radius * Math.sin(radian)
               )
               .p(t),
           scale_x: () => this.em(scale) / 128, // 128: size of the texture
           scale_y: () => (this.em(scale) * ratio) / 128, // 128: size of the texture
           angle_curve: new Curve().map_range(angle_from, angle_to),
-          alpha_curve,
+          alpha_curve
         });
       });
     } else if (condition === "in_center") {
@@ -192,29 +176,23 @@ export default class Sekai extends BaseAnimation {
           x_func: (t) =>
             curve
               .map_range(
+                this.stage_size[0] * 0.5 - this.stage_size[0] * radius * Math.cos(radian),
                 this.stage_size[0] * 0.5 -
-                  this.stage_size[0] * radius * Math.cos(radian),
-                this.stage_size[0] * 0.5 -
-                  this.stage_size[0] *
-                    (radius + radius_increase) *
-                    Math.cos(radian)
+                  this.stage_size[0] * (radius + radius_increase) * Math.cos(radian)
               )
               .p(t),
           y_func: (t) =>
             curve
               .map_range(
+                this.stage_size[1] * 0.5 - this.stage_size[1] * radius * Math.sin(radian),
                 this.stage_size[1] * 0.5 -
-                  this.stage_size[1] * radius * Math.sin(radian),
-                this.stage_size[1] * 0.5 -
-                  this.stage_size[1] *
-                    (radius + radius_increase) *
-                    Math.sin(radian)
+                  this.stage_size[1] * (radius + radius_increase) * Math.sin(radian)
               )
               .p(t),
           scale_x: () => this.em(scale) / 128, // 128: size of the texture
           scale_y: () => (this.em(scale) * ratio) / 128, // 128: size of the texture
           angle_curve: new Curve().map_range(angle_from, angle_to),
-          alpha_curve,
+          alpha_curve
         });
       });
     }

@@ -27,7 +27,7 @@ export default class FullScreenText extends BaseLayer {
 
     this.structure = {
       text_c,
-      translated_text_c,
+      translated_text_c
     };
     this.init = true;
     this.set_style();
@@ -72,7 +72,7 @@ export default class FullScreenText extends BaseLayer {
         breakWords: true,
         wordWrap: true,
         wordWrapWidth: this.stage_size[0] * 0.9,
-        align: "left",
+        align: "left"
       });
     }
 
@@ -88,7 +88,7 @@ export default class FullScreenText extends BaseLayer {
       breakWords: true,
       wordWrap: true,
       wordWrapWidth: this.stage_size[0],
-      align: "left",
+      align: "left"
     });
   }
 

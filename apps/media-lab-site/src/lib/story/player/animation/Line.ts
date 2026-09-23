@@ -23,7 +23,7 @@ export default class Line extends BaseAnimation {
           .bounce(0.1, 0.1)
           .shrink(0.9)
           .offset(this.random(0, 1))
-          .map_range(0, 0.8),
+          .map_range(0, 0.8)
       });
       this.root.addChild(obj);
     }
@@ -46,11 +46,9 @@ export default class Line extends BaseAnimation {
       const distance = this.random(0.3, 0.45);
       g.obj.rotation = rotation;
       g.obj.position.x =
-        Math.sin(-rotation) * this.stage_size[0] * distance +
-        0.5 * this.stage_size[0];
+        Math.sin(-rotation) * this.stage_size[0] * distance + 0.5 * this.stage_size[0];
       g.obj.position.y =
-        Math.cos(-rotation) * this.stage_size[1] * distance +
-        0.5 * this.stage_size[1];
+        Math.cos(-rotation) * this.stage_size[1] * distance + 0.5 * this.stage_size[1];
     });
   }
 }

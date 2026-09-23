@@ -1,10 +1,7 @@
 import { fireEvent, render } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  SIGNED_GET_RETRY_POLICY,
-  STATIC_ASSET_RETRY_POLICY
-} from "@platform/ui-shell/image-retry";
+import { SIGNED_GET_RETRY_POLICY, STATIC_ASSET_RETRY_POLICY } from "@platform/ui-shell/image-retry";
 import AssetImage from "./AssetImage.svelte";
 
 const flushEffects = async (): Promise<void> => {

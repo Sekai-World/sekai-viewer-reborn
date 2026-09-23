@@ -22,7 +22,7 @@
   import { getContentDisplaySettings } from "$lib/settings/content-display";
   import { toTimestampMs } from "$lib/time/date-time";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const fallbackMessages = $derived(

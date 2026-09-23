@@ -9,8 +9,10 @@ if ! command -v pnpm >/dev/null 2>&1; then
   exit 1
 fi
 
+format_files=()
 staged_files=()
 while IFS= read -r -d '' file; do
+  format_files+=("$file")
   case "$file" in
     apps/*/src/*|packages/*/src/*|packages/*/scripts/*|scripts/*)
       case "$file" in
@@ -22,6 +24,10 @@ while IFS= read -r -d '' file; do
       ;;
   esac
 done < <(git diff --cached --name-only --diff-filter=ACMR -z --)
+
+if ((${#format_files[@]} > 0)); then
+  pnpm exec prettier --check --ignore-unknown -- "${format_files[@]}"
+fi
 
 if ((${#staged_files[@]} > 0)); then
   pnpm exec eslint -- "${staged_files[@]}"

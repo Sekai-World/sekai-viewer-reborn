@@ -111,9 +111,7 @@ const gameCharacterIdOfTalk = (
 ): number | undefined => {
   if (character2dId === undefined) return undefined;
   const character2d = names.character2ds.find((ch) => ch.id === character2dId);
-  return character2d?.characterType === "game_character"
-    ? character2d.characterId
-    : undefined;
+  return character2d?.characterType === "game_character" ? character2d.characterId : undefined;
 };
 
 const talkVoiceCandidates = (
@@ -131,9 +129,7 @@ const talkVoiceCandidates = (
     voiceId,
     isCardStory,
     isActionSet,
-    character: character2dId !== undefined
-      ? voiceCharacters.get(character2dId)
-      : undefined
+    character: character2dId !== undefined ? voiceCharacters.get(character2dId) : undefined
   });
 
 type ScenarioTalk = IScenarioData["TalkData"][number];
@@ -147,7 +143,10 @@ interface RowEmitContext {
   options: { isCardStory: boolean; isActionSet: boolean };
 }
 
-const talkRowOf = (talk: ScenarioTalk | undefined, context: RowEmitContext): StoryTextRow | null => {
+const talkRowOf = (
+  talk: ScenarioTalk | undefined,
+  context: RowEmitContext
+): StoryTextRow | null => {
   if (!talk) return null;
   const voice = talk.Voices[0];
   const talkCharacter2dId = talk.TalkCharacters[0]?.Character2dId;
@@ -156,17 +155,16 @@ const talkRowOf = (talk: ScenarioTalk | undefined, context: RowEmitContext): Sto
     name: talk.WindowDisplayName,
     body: talk.Body,
     characterId: gameCharacterIdOfTalk(talkCharacter2dId, context.names),
-    voicePaths:
-      voice?.VoiceId
-        ? talkVoiceCandidates(
-            context.scenarioId,
-            voice.VoiceId,
-            context.options.isCardStory,
-            context.options.isActionSet,
-            context.voiceCharacters,
-            talkCharacter2dId
-          )
-        : [],
+    voicePaths: voice?.VoiceId
+      ? talkVoiceCandidates(
+          context.scenarioId,
+          voice.VoiceId,
+          context.options.isCardStory,
+          context.options.isActionSet,
+          context.voiceCharacters,
+          talkCharacter2dId
+        )
+      : [],
     monologue: talk.LipSync === 2
   };
 };
@@ -238,16 +236,22 @@ export const flattenScenarioToRows = (
   options: { isCardStory: boolean; isActionSet: boolean }
 ): StoryTextDocument => {
   const rows: StoryTextRow[] = [];
-  const { ScenarioId, AppearCharacters, Snippets, TalkData, SpecialEffectData, SoundData, FirstBgm, FirstBackground } =
-    scenarioData;
+  const {
+    ScenarioId,
+    AppearCharacters,
+    Snippets,
+    TalkData,
+    SpecialEffectData,
+    SoundData,
+    FirstBgm,
+    FirstBackground
+  } = scenarioData;
 
   const cast: StoryCastMember[] = AppearCharacters.map((ap) => {
     const character2d = names.character2ds.find((ch) => ch.id === ap.Character2dId);
     return {
       character2dId: ap.Character2dId,
-      name:
-        resolveCastName(character2d, names) ||
-        ap.CostumeType,
+      name: resolveCastName(character2d, names) || ap.CostumeType,
       costumeType: ap.CostumeType
     };
   });

@@ -6,7 +6,7 @@
   import type { StoryRouteStoryType } from "$lib/live2d/story-route";
   import { readerBackPath } from "$lib/story/story-picker";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
@@ -60,12 +60,10 @@ import type { PageData } from "./$types";
 
 <svelte:head>
   <title>
-    {
-      createPageTitle(
-        subtitle ?? translate("storyReader.player.title"),
-        storyTypeLabels[data.identity.storyType]
-      )
-    }
+    {createPageTitle(
+      subtitle ?? translate("storyReader.player.title"),
+      storyTypeLabels[data.identity.storyType]
+    )}
   </title>
 </svelte:head>
 
@@ -83,7 +81,7 @@ import type { PageData } from "./$types";
     }}
     regionLabel={translate(`region.${data.identity.region}`)}
     storyTypeLabel={storyTypeLabels[data.identity.storyType]}
-    subtitle={subtitle}
+    {subtitle}
     bannerUrl={data.story?.bannerUrl}
     switchModeHref={`/story-reader/${data.identity.region}/${data.identity.storyType}/${data.identity.storyId}`}
     switchModeLabel={translate("storyReader.player.switchToTextOnly")}

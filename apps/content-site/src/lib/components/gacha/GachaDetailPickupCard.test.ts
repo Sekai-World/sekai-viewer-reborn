@@ -41,9 +41,9 @@ describe("GachaDetailPickupCard training presentation", () => {
     expect(getByAltText("Pickup card artwork").getAttribute("src")).toContain(
       `/sekai-jp-assets/thumbnail/chara/pickup-card_${artworkState}.webp`
     );
-    expect(
-      container.querySelectorAll(`image[href$="/rarity_star_${starState}.png"]`)
-    ).toHaveLength(4);
+    expect(container.querySelectorAll(`image[href$="/rarity_star_${starState}.png"]`)).toHaveLength(
+      4
+    );
     const otherState = starState === "normal" ? "afterTraining" : "normal";
     expect(container.querySelector(`image[href$="/rarity_star_${otherState}.png"]`)).toBeNull();
   });

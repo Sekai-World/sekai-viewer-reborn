@@ -102,12 +102,14 @@ describe("tracker goal calculator", () => {
   });
 
   it("rejects an ended or invalid time window", () => {
-    expect(
-      calculateTrackerGoalPlan({ ...baseInput(), deadlineAt: 5 * HOUR_MS })
-    ).toEqual({ status: "invalid", reason: "invalid-time-window" });
-    expect(
-      calculateTrackerGoalPlan({ ...baseInput(), latestDataAt: -1 })
-    ).toEqual({ status: "invalid", reason: "invalid-input" });
+    expect(calculateTrackerGoalPlan({ ...baseInput(), deadlineAt: 5 * HOUR_MS })).toEqual({
+      status: "invalid",
+      reason: "invalid-time-window"
+    });
+    expect(calculateTrackerGoalPlan({ ...baseInput(), latestDataAt: -1 })).toEqual({
+      status: "invalid",
+      reason: "invalid-input"
+    });
   });
 
   it.each([

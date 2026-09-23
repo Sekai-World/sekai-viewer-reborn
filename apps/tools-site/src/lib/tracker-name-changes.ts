@@ -28,7 +28,8 @@ export const findSnappedNameChange = <TPoint extends { date: Date }>({
   thresholdMs: number;
 }>): HoverMarker<TPoint> | null => {
   const hoveredTime = hoveredDate.getTime();
-  if (!Number.isFinite(hoveredTime) || !Number.isFinite(thresholdMs) || thresholdMs < 0) return null;
+  if (!Number.isFinite(hoveredTime) || !Number.isFinite(thresholdMs) || thresholdMs < 0)
+    return null;
 
   let nearestMarker: HoverMarker<TPoint> | null = null;
   let nearestDistance = Number.POSITIVE_INFINITY;

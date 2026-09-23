@@ -16,12 +16,12 @@ The workspace is a monorepo of four deployable SvelteKit apps. Only
 `content-site` carries broad feature coverage today; the other three remain
 limited in scope and are **not** feature-complete.
 
-| App              | Status      | Notes                                   |
-| ---------------- | ----------- | --------------------------------------- |
-| `content-site`   | Available   | Primary game-data browser (see below).  |
+| App              | Status      | Notes                                                                                                                                                                                                                                               |
+| ---------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content-site`   | Available   | Primary game-data browser (see below).                                                                                                                                                                                                              |
 | `tools-site`     | In progress | Current-event comparison workflow: SSR-safe tools-local i18n, URL-restored GET selection for two validated regions, localized unavailable/request-failed states, and no fabricated cross-app links without a public content-site base-URL contract. |
-| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated. |
-| `account-site`   | Exploratory | Scaffold only; no feature work started. |
+| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated.                                                                                                                           |
+| `account-site`   | Exploratory | Scaffold only; no feature work started.                                                                                                                                                                                                             |
 
 ## media-lab-site — Media Lab
 

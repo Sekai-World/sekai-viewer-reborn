@@ -35,7 +35,13 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
   return json(
     charaId === null
-      ? await getTrackerGraph(getSekaiApiBaseUrl(), params.region, eventId, rank, timestamp ?? undefined)
+      ? await getTrackerGraph(
+          getSekaiApiBaseUrl(),
+          params.region,
+          eventId,
+          rank,
+          timestamp ?? undefined
+        )
       : await getTrackerChapterGraph(getSekaiApiBaseUrl(), params.region, eventId, charaId, rank)
   );
 };

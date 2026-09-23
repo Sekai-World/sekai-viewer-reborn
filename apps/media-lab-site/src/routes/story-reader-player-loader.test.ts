@@ -43,7 +43,13 @@ const rawScenario = { ScenarioId: "mmj_01_00" };
 const processedScenario = { ScenarioId: "mmj_01_00", Processed: true };
 const characterTables = {
   character2ds: [
-    { id: 0, characterType: "game_character", characterId: 1, unit: "light_sound", assetName: "cls_01ichika" },
+    {
+      id: 0,
+      characterType: "game_character",
+      characterId: 1,
+      unit: "light_sound",
+      assetName: "cls_01ichika"
+    },
     { id: 1, characterType: "mob", characterId: 50, assetName: "mob_01" }
   ],
   gameCharacterNames: new Map([[1, "星乃一歌"]]),

@@ -25,7 +25,7 @@ export default class PlaceInfo extends BaseLayer {
 
     this.structure = {
       bg_graphic,
-      text: text_c,
+      text: text_c
     };
     this.init = true;
     this.set_style();
@@ -51,7 +51,7 @@ export default class PlaceInfo extends BaseLayer {
         dropShadowBlur: this.em(1),
         dropShadowAngle: Math.PI / 6,
         dropShadowDistance: this.em(1),
-        lineJoin: "round",
+        lineJoin: "round"
       });
 
       // Style background to fit text
@@ -60,10 +60,7 @@ export default class PlaceInfo extends BaseLayer {
       bg.y = this.em(8); // Background margin from top of screen
 
       // Calculate background size based on text size
-      const textWidth = Math.min(
-        text.width + this.em(24),
-        this.stage_size[0] * 0.4
-      ); // At max 40% of screen width
+      const textWidth = Math.min(text.width + this.em(24), this.stage_size[0] * 0.4); // At max 40% of screen width
       const textHeight = text.height + this.em(8); // Text height + padding
 
       bg.clear();

@@ -27,7 +27,10 @@ describe("tools-site i18n source collection", () => {
 
   it("keeps distinct time-travel failure messages in the tracker source", async () => {
     const source = JSON.parse(
-      await readFile(resolve(process.cwd(), "../../packages/i18n-source/tools-site/tracker.json"), "utf8")
+      await readFile(
+        resolve(process.cwd(), "../../packages/i18n-source/tools-site/tracker.json"),
+        "utf8"
+      )
     );
 
     expect(source).toMatchObject({
@@ -44,7 +47,10 @@ describe("tools-site i18n source collection", () => {
 
   it("uses the approved past-rankings labels without obsolete snapshot controls", async () => {
     const source = JSON.parse(
-      await readFile(resolve(process.cwd(), "../../packages/i18n-source/tools-site/tracker.json"), "utf8")
+      await readFile(
+        resolve(process.cwd(), "../../packages/i18n-source/tools-site/tracker.json"),
+        "utf8"
+      )
     );
     expect(source).toMatchObject({ "tracker.goToCurrentEvent": "Go to current event" });
     expect(source).not.toHaveProperty("tracker.rankCount");

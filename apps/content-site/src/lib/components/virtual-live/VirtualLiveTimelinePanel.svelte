@@ -6,11 +6,11 @@
     VirtualLiveTimelineEvent
   } from "$lib/domain/virtual-live-timeline";
   import { resolve } from "$app/paths";
-import { VoicePlayButton } from "@platform/ui-shell";
+  import { VoicePlayButton } from "@platform/ui-shell";
   import { page } from "$app/state";
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  
+
   const categories: VirtualLiveTimelineCategory[] = [
     "dialogue",
     "annotation",

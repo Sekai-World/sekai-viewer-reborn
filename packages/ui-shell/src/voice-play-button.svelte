@@ -130,12 +130,8 @@
     };
   });
 
-  let currentIcon = $derived(
-    unavailable ? "mdi:volume-off" : isPlaying ? "mdi:stop" : "mdi:play"
-  );
-  let currentLabel = $derived(
-    unavailable ? errorLabel : isPlaying ? stopLabel : playLabel
-  );
+  let currentIcon = $derived(unavailable ? "mdi:volume-off" : isPlaying ? "mdi:stop" : "mdi:play");
+  let currentLabel = $derived(unavailable ? errorLabel : isPlaying ? stopLabel : playLabel);
 </script>
 
 <div

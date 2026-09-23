@@ -1,6 +1,8 @@
 export const SERVER_REQUEST_TIMEOUT_MS = 5_000;
 
-export const withRequestTimeout = async <T>(request: (signal: AbortSignal) => Promise<T>): Promise<T> => {
+export const withRequestTimeout = async <T>(
+  request: (signal: AbortSignal) => Promise<T>
+): Promise<T> => {
   const controller = new AbortController();
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -20,9 +22,12 @@ export const withRequestTimeout = async <T>(request: (signal: AbortSignal) => Pr
 
 type Envelope = { data?: unknown; restore?: unknown; status?: unknown };
 const asObject = (value: unknown): Envelope | null =>
-  value !== null && typeof value === "object" && !Array.isArray(value) ? value as Envelope : null;
+  value !== null && typeof value === "object" && !Array.isArray(value) ? (value as Envelope) : null;
 
-export const isRestoreResponse = (response: { data?: unknown; response?: { status?: number } }): boolean => {
+export const isRestoreResponse = (response: {
+  data?: unknown;
+  response?: { status?: number };
+}): boolean => {
   if (response.response?.status === 202) return true;
   const root = asObject(response.data);
   if (root?.restore === true) return true;

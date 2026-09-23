@@ -16,9 +16,7 @@ export default class Wipe extends BaseLayer {
 
   draw(): Promise<void> {
     this.root.removeChildren();
-    const wipe = new Sprite(
-      this.textures.find((a) => a.identifier === "ui/black_wipe")!.texture
-    );
+    const wipe = new Sprite(this.textures.find((a) => a.identifier === "ui/black_wipe")!.texture);
     this.structure.wipe = wipe;
 
     const bulk = new Graphics();

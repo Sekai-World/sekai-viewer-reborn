@@ -124,7 +124,9 @@
         </article>
       {:else if row.kind === "background"}
         <figure class="overflow-hidden rounded-xl border border-base-content/10">
-          <figcaption class="flex items-center gap-1 bg-base-200/60 px-3 py-2 text-xs text-base-content/60">
+          <figcaption
+            class="flex items-center gap-1 bg-base-200/60 px-3 py-2 text-xs text-base-content/60"
+          >
             <Icon icon="mdi:image-outline" class="size-4" aria-hidden="true" />
             {labels.backgroundLabel}
           </figcaption>
@@ -150,7 +152,11 @@
       {:else if row.kind === "bgm"}
         <div class="rounded-xl border border-base-content/10 bg-base-100 px-3 py-2">
           <div class="flex items-center gap-1.5">
-            <Icon icon="mdi:music-note-outline" class="size-4 text-base-content/60" aria-hidden="true" />
+            <Icon
+              icon="mdi:music-note-outline"
+              class="size-4 text-base-content/60"
+              aria-hidden="true"
+            />
             <span class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
               {labels.bgmLabel}
             </span>
@@ -182,8 +188,14 @@
           {/if}
         </div>
       {:else if row.kind === "se"}
-        <div class="flex items-center gap-2 rounded-xl border border-base-content/10 bg-base-100 px-3 py-2">
-          <Icon icon="mdi:music-note-outline" class="size-4 text-base-content/60" aria-hidden="true" />
+        <div
+          class="flex items-center gap-2 rounded-xl border border-base-content/10 bg-base-100 px-3 py-2"
+        >
+          <Icon
+            icon="mdi:music-note-outline"
+            class="size-4 text-base-content/60"
+            aria-hidden="true"
+          />
           <span class="text-sm text-base-content/70">
             {row.stop === true ? labels.seStopLabel : labels.seLabel}
           </span>
@@ -201,7 +213,9 @@
         <blockquote class="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
           <div class="flex items-start justify-between gap-2">
             <div class="flex flex-col gap-1">
-              <span class="text-[0.65rem] font-semibold tracking-wide text-base-content/50 uppercase">
+              <span
+                class="text-[0.65rem] font-semibold tracking-wide text-base-content/50 uppercase"
+              >
                 {labels.fullscreenLabel}
               </span>
               <p class="text-base/7 font-semibold whitespace-pre-wrap">{row.text}</p>
@@ -219,10 +233,21 @@
       {:else if row.kind === "telop"}
         <p class="text-center text-sm/6 font-semibold text-base-content/70">{row.text}</p>
       {:else if row.kind === "movie"}
-        <div class="flex items-center gap-2 rounded-xl border border-base-content/10 bg-base-100 px-3 py-2">
-          <Icon icon="mdi:movie-open-outline" class="size-4 text-base-content/60" aria-hidden="true" />
+        <div
+          class="flex items-center gap-2 rounded-xl border border-base-content/10 bg-base-100 px-3 py-2"
+        >
+          <Icon
+            icon="mdi:movie-open-outline"
+            class="size-4 text-base-content/60"
+            aria-hidden="true"
+          />
           {#if row.fallbackUrl}
-            <a class="link link-hover text-sm text-primary" href={row.fallbackUrl} target="_blank" rel="noreferrer">
+            <a
+              class="link link-hover text-sm text-primary"
+              href={row.fallbackUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
               {labels.movieLabel}
             </a>
           {:else}

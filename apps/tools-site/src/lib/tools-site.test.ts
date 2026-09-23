@@ -21,11 +21,7 @@ import {
   loadI18nMessageBundle,
   toolsSiteI18nNamespaces
 } from "$lib/i18n/runtime";
-import {
-  normalizeRegion,
-  supportedRegions,
-  trackerSupportedRegions
-} from "$lib/regions";
+import { normalizeRegion, supportedRegions, trackerSupportedRegions } from "$lib/regions";
 import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "$lib/server/config";
 
 describe("tools-site region and locale helpers", () => {

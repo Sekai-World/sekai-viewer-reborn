@@ -11,12 +11,7 @@ const NOTICE_SEVERITIES: ReadonlySet<GlobalNoticeSeverity> = new Set([
   "error"
 ]);
 
-const ACTION_TARGETS: ReadonlySet<string> = new Set([
-  "_blank",
-  "_self",
-  "_parent",
-  "_top"
-]);
+const ACTION_TARGETS: ReadonlySet<string> = new Set(["_blank", "_self", "_parent", "_top"]);
 
 /** Type guard: only plain objects (not arrays or null) pass. */
 export const isRecord = (value: unknown): value is Record<string, unknown> =>

@@ -83,11 +83,14 @@ describe("card training presentation", () => {
     }
   );
 
-  it.each([undefined, null, "not_done"])("does not force an absent/non-done marker %s", (status) => {
-    expect(
-      resolveCardTrained({ rarityType: "rarity_4", initialSpecialTrainingStatus: status })
-    ).toBe(false);
-  });
+  it.each([undefined, null, "not_done"])(
+    "does not force an absent/non-done marker %s",
+    (status) => {
+      expect(
+        resolveCardTrained({ rarityType: "rarity_4", initialSpecialTrainingStatus: status })
+      ).toBe(false);
+    }
+  );
 
   it("keeps missing artwork nullable while retaining the trained star state", () => {
     expect(
@@ -98,26 +101,29 @@ describe("card training presentation", () => {
     ).toEqual({ src: null, fallbackSrc: null, trained: true });
   });
 
-  it.each([false, true])("preserves the birthday icon with caller-selected trained=%s", (trained) => {
-    const presentation = getCardThumbnailPresentation(
-      {
+  it.each([false, true])(
+    "preserves the birthday icon with caller-selected trained=%s",
+    (trained) => {
+      const presentation = getCardThumbnailPresentation(
+        {
+          rarityType: "rarity_birthday",
+          initialSpecialTrainingStatus: "done",
+          assetBundleName: "birthday-card"
+        },
+        "jp",
+        trained
+      );
+      const { container } = render(CardThumbnail, {
+        ...presentation,
         rarityType: "rarity_birthday",
-        initialSpecialTrainingStatus: "done",
-        assetBundleName: "birthday-card"
-      },
-      "jp",
-      trained
-    );
-    const { container } = render(CardThumbnail, {
-      ...presentation,
-      rarityType: "rarity_birthday",
-      alt: "Birthday card",
-      loadMode: "immediate"
-    });
-    expect(presentation.src).toContain(
-      `birthday-card_${trained ? "after_training" : "normal"}.webp`
-    );
-    expect(container.querySelectorAll('image[href$="/rarity_birthday.png"]')).toHaveLength(1);
-    expect(container.querySelector('image[href*="/rarity_star_"]')).toBeNull();
-  });
+        alt: "Birthday card",
+        loadMode: "immediate"
+      });
+      expect(presentation.src).toContain(
+        `birthday-card_${trained ? "after_training" : "normal"}.webp`
+      );
+      expect(container.querySelectorAll('image[href$="/rarity_birthday.png"]')).toHaveLength(1);
+      expect(container.querySelector('image[href*="/rarity_star_"]')).toBeNull();
+    }
+  );
 });

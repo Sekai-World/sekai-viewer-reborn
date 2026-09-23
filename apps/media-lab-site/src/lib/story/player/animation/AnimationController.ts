@@ -12,14 +12,10 @@ export default class AnimationController {
   };
 
   reset_abort = () => {
-    if (this.abort_controller.signal.aborted)
-      this.abort_controller = new AbortController();
+    if (this.abort_controller.signal.aborted) this.abort_controller = new AbortController();
   };
 
-  wrapper = (
-    step: (ani_ticker: Ticker) => void,
-    finish: (ani_ticker: Ticker) => boolean
-  ) => {
+  wrapper = (step: (ani_ticker: Ticker) => void, finish: (ani_ticker: Ticker) => boolean) => {
     const wait_finish = new Promise<void>((resolve) => {
       let destroyed = false;
       if (this.abort_controller.signal.aborted) {
@@ -44,20 +40,14 @@ export default class AnimationController {
           destroyed = true;
         }
         resolve();
-        this.abort_controller.signal.removeEventListener(
-          "abort",
-          abort_handler
-        );
+        this.abort_controller.signal.removeEventListener("abort", abort_handler);
       };
       this.abort_controller.signal.addEventListener("abort", abort_handler);
     });
     return wait_finish;
   };
 
-  progress_wrapper = async (
-    apply: (progress: number) => void,
-    time_ms: number
-  ) => {
+  progress_wrapper = async (apply: (progress: number) => void, time_ms: number) => {
     let progress = 0;
     apply(0);
     if (time_ms >= 30) {
@@ -92,10 +82,7 @@ export default class AnimationController {
           destroyed = true;
         }
         resolve();
-        this.abort_controller.signal.removeEventListener(
-          "abort",
-          abort_handler
-        );
+        this.abort_controller.signal.removeEventListener("abort", abort_handler);
       };
       this.abort_controller.signal.addEventListener("abort", abort_handler);
     });

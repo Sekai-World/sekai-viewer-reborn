@@ -2,22 +2,13 @@ import type { Live2DController } from "../../Live2DController";
 import type { Snippet } from "../../../scenario-types";
 import { log } from "../../log";
 
-export default async function ChangeCameraZoomLevel(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
-  log.log(
-    "Live2DController",
-    "SpecialEffect/ChangeCameraZoomLevel",
-    action,
-    action_detail
-  );
+export default async function ChangeCameraZoomLevel(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+  log.log("Live2DController", "SpecialEffect/ChangeCameraZoomLevel", action, action_detail);
   const from = [...controller.camera.scale];
   const to = [
     Number.parseFloat(action_detail.StringVal),
-    Number.parseFloat(action_detail.StringVal),
+    Number.parseFloat(action_detail.StringVal)
   ];
   controller.animate.progress_wrapper((progress) => {
     controller.camera.scale[0] = from[0] + (to[0] - from[0]) * progress;

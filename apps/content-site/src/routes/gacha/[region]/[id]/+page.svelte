@@ -20,7 +20,7 @@
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>
