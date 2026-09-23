@@ -80,7 +80,7 @@ const data = (
 });
 
 describe("Honors page group contract", () => {
-  it("composes the first member in the summary and individual event ranks in expanded members", async () => {
+  it("composes the first member in the card and individual event ranks in the dialog", async () => {
     const { container } = render(HonorsPage, {
       data: data({
         ...result,
@@ -100,13 +100,14 @@ describe("Honors page group contract", () => {
       form: null
     });
     await screen.findByRole("heading", { name: "Group identity" });
-    const summary = container.querySelector("summary")!;
-    expect(summary.querySelector('[data-layer="rank"]')?.getAttribute("href")).toBe(
+    const trigger = screen.getByRole("button", { name: /Group identity/ });
+    expect(trigger.querySelector('[data-layer="rank"]')?.getAttribute("href")).toBe(
       "https://assets.example.test/sekai-jp-assets/honor/rank-nine/rank_main.webp"
     );
-    await fireEvent.click(summary);
-    const ranks = Array.from(container.querySelectorAll('li [data-layer="rank"]'), (node) =>
-      node.getAttribute("href")
+    await fireEvent.click(trigger);
+    const ranks = Array.from(
+      screen.getByRole("dialog").querySelectorAll('[data-layer="rank"]'),
+      (node) => node.getAttribute("href")
     );
     expect(ranks).toEqual([
       "https://assets.example.test/sekai-jp-assets/honor/rank-nine/rank_main.webp",
@@ -131,8 +132,8 @@ describe("Honors page group contract", () => {
       form: null
     });
     await screen.findByRole("heading", { name: "一歌ファン", level: 2 });
-    await fireEvent.click(container.querySelector("summary")!);
-    expect(container.querySelector("details")?.open).toBe(true);
+    await fireEvent.click(screen.getByRole("button", { name: /一歌ファン/ }));
+    expect((container.querySelector("dialog") as HTMLDialogElement).open).toBe(true);
     const headings = () =>
       screen.getAllByRole("heading", { level: 3 }).map((node) => node.textContent);
     expect(headings()).toEqual([
@@ -144,7 +145,7 @@ describe("Honors page group contract", () => {
       "Fallback 5",
       "Fallback 6"
     ]);
-    expect(screen.getAllByRole("heading", { name: "一歌ファン" })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { name: "一歌ファン" })).toHaveLength(2);
     expect(container.querySelectorAll("dt")).toHaveLength(14);
     for (const member of variants) {
       expect(screen.getByText(`Requirement ${member.id}`)).toBeTruthy();
@@ -161,6 +162,7 @@ describe("Honors page group contract", () => {
         }
       }
     });
+    await fireEvent.click(screen.getByRole("button", { name: /一歌ファン/ }));
     await waitFor(() =>
       expect(headings()).toEqual([
         "低",
@@ -172,7 +174,7 @@ describe("Honors page group contract", () => {
         "Fallback 6"
       ])
     );
-    expect(screen.getAllByRole("heading", { name: "一歌ファン" })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { name: "一歌ファン" })).toHaveLength(2);
   });
 
   it("streams full groups without filtering levels and preserves query controls", async () => {
@@ -189,14 +191,15 @@ describe("Honors page group contract", () => {
     complete(result);
     await screen.findByText("Group identity");
     expect(screen.getAllByText("Group identity")).toHaveLength(1);
-    await fireEvent.click(container.querySelector("summary")!);
-    expect(Array.from(container.querySelectorAll("h3"), (node) => node.textContent)).toEqual([
+    await fireEvent.click(screen.getByRole("button", { name: /Group identity/ }));
+    const dialog = screen.getByRole("dialog");
+    expect(Array.from(dialog.querySelectorAll("h3"), (node) => node.textContent)).toEqual([
       "Variant 9",
       "Variant 2"
     ]);
-    expect(container.querySelectorAll("dt")).toHaveLength(4);
-    expect(screen.getByText("Requirement 9")).toBeTruthy();
-    expect(screen.getByText("Requirement 2")).toBeTruthy();
+    expect(dialog.querySelectorAll("dt")).toHaveLength(4);
+    expect(within(dialog).getByText("Requirement 9")).toBeTruthy();
+    expect(within(dialog).getByText("Requirement 2")).toBeTruthy();
     const search = screen.getByRole("search");
     await fireEvent.input(within(search).getByRole("searchbox"), { target: { value: "stage" } });
     await fireEvent.submit(search);
@@ -208,10 +211,14 @@ describe("Honors page group contract", () => {
       "/honors/en?sort_by=id&sort_order=asc"
     );
     await rerender({ data: data(result, "jp") });
-    await waitFor(() => expect(container.querySelector("details")?.open).toBe(false));
-    await fireEvent.click(container.querySelector("summary")!);
+    await waitFor(() =>
+      expect((container.querySelector("dialog") as HTMLDialogElement).open).toBe(false)
+    );
+    await fireEvent.click(screen.getByRole("button", { name: /Group identity/ }));
     await rerender({ data: data(result, "en") });
-    await waitFor(() => expect(container.querySelector("details")?.open).toBe(false));
+    await waitFor(() =>
+      expect((container.querySelector("dialog") as HTMLDialogElement).open).toBe(false)
+    );
   });
 
   it("renders localized server categories and preserves the selected category in URLs", async () => {
@@ -259,8 +266,7 @@ describe("Honors page group contract", () => {
       "/honors/jp?honor_type=achievement&sort_by=id&sort_order=asc",
       { keepFocus: true, noScroll: true }
     );
-    const sortOrder = screen.getByRole("combobox", { name: "Honor ID order" });
-    await fireEvent.change(sortOrder, { target: { value: "desc" } });
+    await fireEvent.click(screen.getByRole("button", { name: "Honor ID order: Descending" }));
     expect(goto).toHaveBeenLastCalledWith(
       "/honors/jp?honor_type=event&sort_by=id&sort_order=desc",
       { keepFocus: true, noScroll: true }

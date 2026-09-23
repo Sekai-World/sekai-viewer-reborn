@@ -100,7 +100,7 @@ const props = {
 };
 
 describe("HonorCatalogue", () => {
-  it("shows only the variant label while retaining member artwork and levels", async () => {
+  it("shows one aggregate card summary and keeps full levels behind the dialog", async () => {
     const { container } = render(HonorCatalogue, {
       ...props,
       items: [
@@ -113,7 +113,15 @@ describe("HonorCatalogue", () => {
         }
       ]
     });
-    await fireEvent.click(container.querySelector("summary")!);
+    expect(container.querySelector("details")).toBeNull();
+    const trigger = screen.getByRole("button", { name: "Together on stage, Honor levels: 4" });
+    expect(within(trigger).getAllByText("Honor levels: 4")).toHaveLength(1);
+    expect(within(trigger).queryByText("High")).toBeNull();
+    expect(within(trigger).queryByText("Middle")).toBeNull();
+    expect(within(trigger).queryByText("Gold performer")).toBeNull();
+    expect(within(trigger).queryByText("Silver performer")).toBeNull();
+    expect(screen.queryByText("Play 300 lives")).toBeNull();
+    await fireEvent.click(trigger);
     expect(screen.getAllByRole("heading", { level: 3 }).map((node) => node.textContent)).toEqual([
       "High",
       "Middle"
@@ -124,43 +132,39 @@ describe("HonorCatalogue", () => {
     expect(screen.getByText("Play 200 lives")).toBeTruthy();
   });
 
-  it("renders group identity/artwork once and exposes all members and levels in source order", async () => {
+  it("renders group identity once and exposes all members and levels only in the dialog", async () => {
     const { container } = render(HonorCatalogue, props);
     expect(screen.getAllByText("Together on stage")).toHaveLength(1);
-    expect(container.querySelectorAll("details")).toHaveLength(1);
-    const details = container.querySelector("details")!;
-    const summary = details.querySelector("summary")!;
-    expect(details.open).toBe(false);
-    expect(summary.querySelector("button, a, input")).toBeNull();
-    expect(summary.querySelectorAll('svg[viewBox="0 0 380 80"]')).toHaveLength(1);
-    await fireEvent.click(summary);
-    expect(details.open).toBe(true);
+    expect(container.querySelectorAll("details")).toHaveLength(0);
+    const trigger = screen.getByRole("button", { name: "Together on stage, Honor levels: 4" });
+    expect(trigger.querySelectorAll('svg[viewBox="0 0 380 80"]')).toHaveLength(1);
+    expect(screen.queryByText("Play 300 lives")).toBeNull();
+    await fireEvent.click(trigger);
+    const dialog = screen.getByRole("dialog");
     expect(
-      within(details)
+      within(dialog)
         .getAllByRole("heading", { level: 3 })
         .map((node) => node.textContent)
     ).toEqual(["Gold performer", "Silver performer"]);
-    expect(Array.from(details.querySelectorAll("dt"), (node) => node.textContent)).toEqual([
+    expect(Array.from(dialog.querySelectorAll("dt"), (node) => node.textContent)).toEqual([
       "Level 3",
       "Level 1",
       "Honor levels",
       "Level 2"
     ]);
     for (const description of ["Play 300 lives", "Play 100 lives", "Play 200 lives"]) {
-      expect(within(details).getByText(description).closest("details")?.open).toBe(true);
+      expect(within(dialog).getByText(description)).toBeTruthy();
     }
-    expect(details.querySelectorAll('svg[viewBox="0 0 380 80"]')).toHaveLength(3);
-    expect(details.querySelector("details")).toBeNull();
-    await fireEvent.click(summary);
-    expect(details.open).toBe(false);
+    expect(dialog.querySelectorAll('svg[viewBox="0 0 380 80"]')).toHaveLength(2);
+    expect(dialog.querySelector(".overflow-y-auto")).toBeTruthy();
   });
 
-  it("uses an accessible native dialog on tablet and desktop and restores trigger focus", async () => {
+  it("uses an accessible native dialog on desktop and restores trigger focus", async () => {
     setDialogViewport(true);
-    const { container } = render(HonorCatalogue, props);
+    render(HonorCatalogue, props);
     const trigger = await screen.findByRole("button", { name: /Together on stage/ });
 
-    expect(container.querySelector("details")).toBeNull();
+    expect(document.querySelector("details")).toBeNull();
     expect(trigger.classList).toContain("cursor-pointer");
     expect(trigger.classList).toContain("hover:-translate-y-0.5");
     expect(trigger.classList).toContain("motion-reduce:transform-none");
@@ -189,36 +193,42 @@ describe("HonorCatalogue", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  it("keeps grouped honors as an inline disclosure on mobile", async () => {
+  it("keeps full honor levels out of the card and opens the same dialog on mobile", async () => {
     setDialogViewport(false);
-    const { container } = render(HonorCatalogue, props);
-    const details = container.querySelector("details")!;
-
-    expect(details).toBeTruthy();
-    expect(screen.queryByRole("dialog")).toBeNull();
-    expect(details.querySelector("summary button, summary a, summary input")).toBeNull();
-    await fireEvent.click(details.querySelector("summary")!);
-    expect(details.open).toBe(true);
-    expect(within(details).getByRole("heading", { name: "Silver performer" })).toBeTruthy();
-  });
-
-  it("renders a singleton directly without repeated identity or a disclosure", () => {
     render(HonorCatalogue, props);
-    expect(screen.getAllByText("First steps")).toHaveLength(1);
-    expect(screen.getByText("Complete the tutorial")).toBeTruthy();
-    expect(screen.getByText("Complete the tutorial").closest("details")).toBeNull();
+    const trigger = screen.getByRole("button", { name: /Together on stage/ });
+    expect(trigger).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByText("Play 300 lives")).toBeNull();
+    await fireEvent.click(trigger);
+    expect(
+      within(screen.getByRole("dialog")).getByRole("heading", { name: "Silver performer" })
+    ).toBeTruthy();
   });
 
-  it("resets native disclosure on page and region changes, not label updates", async () => {
+  it("shows singleton summaries in the card and full level details in the dialog", async () => {
+    const { container } = render(HonorCatalogue, props);
+    expect(screen.getAllByText("First steps")).toHaveLength(1);
+    const trigger = screen.getByRole("button", { name: "First steps, Honor levels: 1" });
+    expect(within(trigger).getAllByText("Honor levels: 1")).toHaveLength(1);
+    expect(screen.queryByText("Complete the tutorial")).toBeNull();
+    await fireEvent.click(trigger);
+    expect(within(screen.getByRole("dialog")).getByText("Complete the tutorial")).toBeTruthy();
+    expect(container.querySelector("details")).toBeNull();
+  });
+
+  it("closes the dialog on page and region changes, not label updates", async () => {
     const { container, rerender } = render(HonorCatalogue, props);
-    await fireEvent.click(container.querySelector("summary")!);
+    const trigger = screen.getByRole("button", { name: /Together on stage/ });
+    await fireEvent.click(trigger);
     await rerender({ ...props, levelsLabel: "Levels" });
-    expect(container.querySelector("details")?.open).toBe(true);
+    expect((screen.getByRole("dialog") as HTMLDialogElement).open).toBe(true);
     await rerender({ ...props, catalogueKey: "jp:2" });
-    expect(container.querySelector("details")?.open).toBe(false);
-    await fireEvent.click(container.querySelector("summary")!);
+    expect((container.querySelector("dialog") as HTMLDialogElement).open).toBe(false);
+    await fireEvent.click(screen.getByRole("button", { name: /Together on stage/ }));
     await rerender({ ...props, catalogueKey: "en:2" });
-    expect(container.querySelector("details")?.open).toBe(false);
+    expect((container.querySelector("dialog") as HTMLDialogElement).open).toBe(false);
+    expect(container.querySelector("details")).toBeNull();
   });
 
   it("preserves region links and page callbacks", async () => {
@@ -315,5 +325,66 @@ describe("HonorCatalogue", () => {
       onHonorTypeChange: vi.fn()
     });
     expect(document.getElementById(resultsId!)).toBeTruthy();
+  });
+
+  it("uses one toggle sort control in the shared deck without a combobox", async () => {
+    const onSortOrderChange = vi.fn();
+    const { container, rerender } = render(HonorCatalogue, {
+      ...props,
+      onSearch: vi.fn(),
+      honorTypes: ["event"],
+      categoryLabel: "Honor category",
+      getHonorTypeLabel: (honorType) => (honorType === null ? "All honors" : "Events"),
+      onHonorTypeChange: vi.fn(),
+      sortOrder: "asc",
+      sortOrderLabel: "Honor ID order",
+      sortAscendingLabel: "Ascending",
+      sortDescendingLabel: "Descending",
+      onSortOrderChange
+    });
+
+    const deck = container.querySelector(".content-card-elevated");
+    expect(deck).toBeTruthy();
+    expect(deck?.classList).toContain("lg:flex-row");
+    expect(deck?.querySelector('[role="search"]')).toBeTruthy();
+    expect(deck?.querySelector('[role="search"]')?.classList).toContain("lg:flex-1");
+    expect(deck?.querySelector('[role="search"]')?.classList).not.toContain(
+      "content-card-elevated"
+    );
+    expect(container.querySelectorAll(".content-card-elevated")).toHaveLength(1);
+    expect(deck?.querySelector('[role="tablist"]')).toBeTruthy();
+    expect(deck?.querySelector('[role="group"]')).toBeTruthy();
+    const sortGroup = deck?.querySelector('[role="group"]');
+    expect(sortGroup?.closest("fieldset")?.classList).toContain("flex-row");
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.getAllByRole("button", { name: /Honor ID order:/ })).toHaveLength(1);
+    const descending = screen.getByRole("button", { name: "Honor ID order: Descending" });
+    expect(descending.title).toBe("Honor ID order: Descending");
+    expect(descending.classList).toContain("btn-primary");
+
+    await fireEvent.click(descending);
+    expect(onSortOrderChange).toHaveBeenCalledWith("desc");
+
+    await rerender({
+      ...props,
+      onSearch: vi.fn(),
+      honorTypes: ["event"],
+      categoryLabel: "Honor category",
+      getHonorTypeLabel: (honorType) => (honorType === null ? "All honors" : "Events"),
+      onHonorTypeChange: vi.fn(),
+      sortOrder: "desc",
+      sortOrderLabel: "Honor ID order",
+      sortAscendingLabel: "Ascending",
+      sortDescendingLabel: "Descending",
+      onSortOrderChange
+    });
+
+    const ascending = screen.getByRole("button", { name: "Honor ID order: Ascending" });
+    expect(screen.getAllByRole("button", { name: /Honor ID order:/ })).toHaveLength(1);
+    expect(ascending.title).toBe("Honor ID order: Ascending");
+    expect(ascending.classList).toContain("btn-primary");
+
+    await fireEvent.click(ascending);
+    expect(onSortOrderChange).toHaveBeenLastCalledWith("asc");
   });
 });

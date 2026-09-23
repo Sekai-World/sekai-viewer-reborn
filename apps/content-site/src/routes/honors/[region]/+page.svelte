@@ -159,7 +159,6 @@
     isLoadingMore = false;
     initialError = false;
     loadMoreError = false;
-    availableHonorTypes = [];
     sortOrder = data.query.sortOrder;
 
     void Promise.resolve(data.catalogue)
