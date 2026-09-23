@@ -39,35 +39,100 @@
     <h1 id="support-title" class="mb-4 text-2xl font-semibold text-(--archive-text-strong)">
       {pageTitle}
     </h1>
-    <div class="content-card-shell flex flex-wrap gap-3 rounded-xl border p-4 sm:p-5">
-      {#if patreonUrl || kofiUrl}
-        {#if patreonUrl}
+    <p class="mb-5 max-w-3xl leading-7 text-(--archive-text-default)">
+      {translate("support.description")}
+    </p>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      <section
+        aria-labelledby="support-donations-title"
+        class="content-card-shell flex flex-col gap-3 rounded-xl border p-5 sm:p-6"
+      >
+        <h2 id="support-donations-title" class="text-base font-semibold text-(--archive-text-strong)">
+          {translate("support.donations")}
+        </h2>
+        {#if patreonUrl || kofiUrl}
+          <div class="flex flex-col gap-2">
+            {#if patreonUrl}
+              <a
+                class="btn btn-outline min-h-12 justify-start gap-3 px-4"
+                href={patreonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon icon="mdi:patreon" class="size-5 shrink-0" aria-hidden="true" />
+                Patreon
+                <Icon
+                  icon="mdi:open-in-new"
+                  class="ml-auto size-4 opacity-70"
+                  aria-hidden="true"
+                />
+              </a>
+            {/if}
+            {#if kofiUrl}
+              <a
+                class="btn btn-outline min-h-12 justify-start gap-3 px-4"
+                href={kofiUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon icon="mdi:coffee" class="size-5 shrink-0" aria-hidden="true" />
+                Ko-fi
+                <Icon
+                  icon="mdi:open-in-new"
+                  class="ml-auto size-4 opacity-70"
+                  aria-hidden="true"
+                />
+              </a>
+            {/if}
+          </div>
+        {:else}
+          <p role="status" class="text-sm text-(--archive-text-muted)">
+            {translate("support.empty")}
+          </p>
+        {/if}
+      </section>
+
+      <section
+        aria-labelledby="support-other-ways-title"
+        class="content-card-shell flex flex-col gap-3 rounded-xl border p-5 sm:p-6"
+      >
+        <h2 id="support-other-ways-title" class="text-base font-semibold text-(--archive-text-strong)">
+          {translate("support.otherWays")}
+        </h2>
+
+        <div class="flex flex-col gap-2">
           <a
-            class="btn btn-outline min-h-11 gap-2"
-            href={patreonUrl}
+            class="btn btn-outline min-h-12 w-full justify-start gap-3 px-4"
+            href="https://twitter.com/SekaiViewer"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Patreon
-            <Icon icon="mdi:open-in-new" class="size-4" aria-hidden="true" />
+            <Icon icon="mdi:twitter" class="size-5 shrink-0" aria-hidden="true" />
+            {translate("support.followX")}
+            <Icon
+              icon="mdi:open-in-new"
+              class="ml-auto size-4 opacity-70"
+              aria-hidden="true"
+            />
           </a>
-        {/if}
-        {#if kofiUrl}
+
           <a
-            class="btn btn-outline min-h-11 gap-2"
-            href={kofiUrl}
+            class="btn btn-outline min-h-12 w-full justify-start gap-3 px-4"
+            href="https://github.com/Sekai-World/sekai-viewer-reborn"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Ko-fi
-            <Icon icon="mdi:open-in-new" class="size-4" aria-hidden="true" />
+            <Icon icon="mdi:github" class="size-5 shrink-0" aria-hidden="true" />
+            {translate("support.contributeCode")}
+            <Icon
+              icon="mdi:open-in-new"
+              class="ml-auto size-4 opacity-70"
+              aria-hidden="true"
+            />
           </a>
-        {/if}
-      {:else}
-        <p role="status" class="text-sm text-(--archive-text-muted)">
-          {translate("support.empty")}
-        </p>
-      {/if}
+        </div>
+      </section>
     </div>
   </section>
 </section>

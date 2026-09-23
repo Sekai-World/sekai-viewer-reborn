@@ -87,6 +87,7 @@
   let skipToMainLabel = $state(getInitialI18nText("aria.skipToMainContent"));
   let sidebarLabel = $state(getInitialI18nText("navigation.sidebarTitle"));
   let exploreLabel = $state(getInitialI18nText("navigation.explore"));
+  let projectLabel = $state(getInitialI18nText("navigation.project"));
   let gameNewsLabel = $state(getInitialI18nText("navigation.gameNews"));
   let charactersLabel = $state(getInitialI18nText("navigation.characters"));
   let cardsLabel = $state(getInitialI18nText("navigation.cards"));
@@ -243,7 +244,12 @@
       type: "section",
       label: exploreLabel
     },
-    ...navigationLinks.slice(2)
+    ...navigationLinks.slice(2, -1),
+    {
+      type: "section",
+      label: projectLabel
+    },
+    navigationLinks[navigationLinks.length - 1]
   ]);
   const quickNavigationItems = $derived<ContentSiteNavigationItem[]>([
     navigationLinks[0],
@@ -332,6 +338,7 @@
     skipToMainLabel = translate("aria.skipToMainContent");
     sidebarLabel = translate("navigation.sidebarTitle");
     exploreLabel = translate("navigation.explore");
+    projectLabel = translate("navigation.project");
     gameNewsLabel = translate("navigation.gameNews");
     charactersLabel = translate("navigation.characters");
     cardsLabel = translate("navigation.cards");
