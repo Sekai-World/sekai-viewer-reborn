@@ -224,6 +224,21 @@ export type SharedCharacter3dBatchResponse = {
     missingIds: Array<number>;
 };
 
+export type SharedCharacterRankListResponse = {
+    items?: Array<SharedCharacterRankResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedCharacterRankResponse = {
+    characterId?: number;
+    characterRank?: number;
+    id?: number;
+    power1BonusRate?: number;
+    power2BonusRate?: number;
+    power3BonusRate?: number;
+    rewardResourceBoxes?: Array<SharedMissionResourceBoxResponse>;
+};
+
 export type SharedCharacterResponse = {
     firstName?: string;
     firstNameEnglish?: string;
@@ -847,6 +862,31 @@ export type SharedMissionListResponse = {
     pagination?: SharedPaginationResponse;
 };
 
+export type SharedMissionParameterGroupLevelResponse = {
+    exp?: number;
+    quantity?: number;
+    requirement?: number;
+    reward?: SharedMissionParameterGroupLevelRewardResponse;
+    seq?: number;
+};
+
+export type SharedMissionParameterGroupLevelRewardResponse = {
+    resourceQuantity?: number;
+    resourceType?: string;
+};
+
+export type SharedMissionParameterGroupLevelsResponse = {
+    items?: Array<SharedMissionParameterGroupLevelResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedMissionParameterGroupResponse = {
+    id?: number;
+    lastLevel?: SharedMissionParameterGroupLevelResponse;
+    previewLevels?: Array<SharedMissionParameterGroupLevelResponse>;
+    totalLevels?: number;
+};
+
 export type SharedMissionResourceBoxDetailResponse = {
     resourceBoxId?: number;
     resourceBoxPurpose?: string;
@@ -872,6 +912,7 @@ export type SharedMissionResponse = {
     id?: number;
     isAchievementMission?: boolean;
     normalMissionType?: string;
+    parameterGroup?: SharedMissionParameterGroupResponse;
     parameterGroupId?: number;
     progressSentence?: string;
     requirement?: number;
@@ -2446,6 +2487,61 @@ export type GetCharacter3DsByRegionBatchResponses = {
 
 export type GetCharacter3DsByRegionBatchResponse = GetCharacter3DsByRegionBatchResponses[keyof GetCharacter3DsByRegionBatchResponses];
 
+export type GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Parameter group ID
+         */
+        id: number;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+    };
+    url: '/characterMissionV2ParameterGroups/{region}/{id}/levels';
+};
+
+export type GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsError = GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsErrors[keyof GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsErrors];
+
+export type GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsResponses = {
+    /**
+     * OK
+     */
+    200: SharedMissionParameterGroupLevelsResponse;
+};
+
+export type GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsResponse = GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsResponses[keyof GetCharacterMissionV2ParameterGroupsByRegionByIdLevelsResponses];
+
 export type GetCharacterProfilesByRegionListData = {
     body?: never;
     path: {
@@ -2504,6 +2600,57 @@ export type GetCharacterProfilesByRegionListResponses = {
 };
 
 export type GetCharacterProfilesByRegionListResponse = GetCharacterProfilesByRegionListResponses[keyof GetCharacterProfilesByRegionListResponses];
+
+export type GetCharacterRanksByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query: {
+        /**
+         * Character ID
+         */
+        character_id: number;
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+    };
+    url: '/characterRanks/{region}/list';
+};
+
+export type GetCharacterRanksByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCharacterRanksByRegionListError = GetCharacterRanksByRegionListErrors[keyof GetCharacterRanksByRegionListErrors];
+
+export type GetCharacterRanksByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedCharacterRankListResponse;
+};
+
+export type GetCharacterRanksByRegionListResponse = GetCharacterRanksByRegionListResponses[keyof GetCharacterRanksByRegionListResponses];
 
 export type GetCostume3DsByRegionListData = {
     body?: never;
