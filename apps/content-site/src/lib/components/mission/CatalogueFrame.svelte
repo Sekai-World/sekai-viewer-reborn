@@ -33,6 +33,7 @@
     onNext,
     pageLabel,
     loadingPlaceholder,
+    controls,
     children
   }: {
     labels: CatalogueLabels;
@@ -47,6 +48,7 @@
     onNext?: () => void;
     pageLabel?: string;
     loadingPlaceholder?: Snippet;
+    controls?: Snippet;
     children: Snippet;
   } = $props();
 
@@ -63,7 +65,37 @@
     {#snippet actions()}<RegionBadgeSwitch options={regions} />{/snippet}
   </PageHeader>
 
-  {#if onSearch}
+  {#if controls}
+    <div
+      class="content-card-elevated flex flex-col gap-4 rounded-2xl border border-(--archive-border-subtle) p-4 lg:flex-row lg:items-end"
+    >
+      {#if onSearch}
+        <form
+          role="search"
+          class="min-w-0 lg:flex-1"
+          onsubmit={(event) => {
+            event.preventDefault();
+            onSearch?.(searchInput.value.trim());
+          }}
+        >
+          <label class="flex flex-col gap-2 text-sm font-semibold">
+            <span>{labels.search}</span>
+            <span class="flex flex-wrap gap-2">
+              <input
+                type="search"
+                class="input min-h-11 min-w-0 flex-1 basis-48 bg-(--archive-surface-default)"
+                bind:value={searchInput.value}
+              />
+              <button type="submit" class="btn min-h-11" disabled={status === "loading"}>
+                <Icon icon="mdi:magnify" class="size-5" aria-hidden="true" />{labels.searchAction}
+              </button>
+            </span>
+          </label>
+        </form>
+      {/if}
+      {@render controls()}
+    </div>
+  {:else if onSearch}
     <form
       role="search"
       class="content-card-elevated rounded-2xl border border-(--archive-border-subtle) p-4"

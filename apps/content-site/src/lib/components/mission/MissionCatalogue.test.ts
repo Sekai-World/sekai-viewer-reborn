@@ -9,7 +9,7 @@ const groups: MissionCatalogueGroup[] = [
   {
     family: "storyMissions",
     label: "Story missions",
-    countLabel: "On this page: 2",
+    countLabel: "2 missions shown",
     items: [
       {
         key: "story-1",
@@ -28,15 +28,31 @@ const groups: MissionCatalogueGroup[] = [
   {
     family: "normalMissions",
     label: "Normal missions",
-    countLabel: "On this page: 1",
+    countLabel: "1 mission shown",
     items: [{ key: "normal-1", sentence: "Play a live" }]
   }
 ];
 
+const familyLabel = (family: "storyMissions" | "characterMissionV2s" | "normalMissions" | null) =>
+  family === null
+    ? "All missions"
+    : family === "storyMissions"
+      ? "Story missions"
+      : family === "characterMissionV2s"
+        ? "Character missions"
+        : "Normal missions";
+
 const props = {
   groups,
-  catalogueKey: "jp?page=1",
+  catalogueKey: "jp:all",
   rewardsLabel: "Rewards",
+  familyLabel: "Mission family",
+  selectedFamily: null,
+  getFamilyLabel: familyLabel,
+  onFamilyChange: vi.fn(),
+  loadMoreLabel: "Load more missions",
+  loadingMoreLabel: "Loading more missions...",
+  endLabel: "You have reached the end.",
   homeHref: "/",
   regions: [
     { key: "jp", label: "JP", active: true, href: "/missions/jp" },
@@ -51,72 +67,124 @@ const props = {
     empty: "No missions found. Try another region.",
     error: "Missions could not be loaded.",
     retry: "Try again",
-    previous: "Previous",
-    next: "Next"
+    previous: "",
+    next: ""
   }
 };
 
 describe("MissionCatalogue", () => {
-  it("renders family identity once and exposes every member through a native disclosure", async () => {
+  it("renders every family section expanded with mission details visible", () => {
     const { container } = render(MissionCatalogue, props);
-    expect(screen.getAllByText("Story missions")).toHaveLength(1);
-    expect(screen.getAllByText("Normal missions")).toHaveLength(1);
-    expect(container.querySelectorAll("details")).toHaveLength(1);
-    const details = container.querySelector("details")!;
-    const summary = details.querySelector("summary")!;
-    expect(details.open).toBe(false);
-    expect(summary.querySelector("button, a, input")).toBeNull();
-    await fireEvent.click(summary);
-    expect(details.open).toBe(true);
+
+    expect(screen.getByRole("heading", { name: /^Story missions/ })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /^Normal missions/ })).toBeTruthy();
+    expect(container.querySelectorAll("details")).toHaveLength(0);
     expect(screen.getAllByText("Read a story")).toHaveLength(2);
     expect(screen.getByText("Target: 1")).toBeTruthy();
     expect(screen.getByText("Target: 2")).toBeTruthy();
     expect(screen.getByText("Coins ×100")).toBeTruthy();
     expect(screen.getByText("Coins ×200")).toBeTruthy();
-    expect(screen.getByText("Play a live").closest("details")).toBeNull();
-    await fireEvent.click(summary);
-    expect(details.open).toBe(false);
+    expect(screen.getByText("Play a live")).toBeTruthy();
   });
 
-  it("resets disclosure state on page or region changes", async () => {
-    const { container, rerender } = render(MissionCatalogue, props);
-    await fireEvent.click(container.querySelector("summary")!);
-    expect(container.querySelector("details")?.open).toBe(true);
-    await rerender({ ...props, catalogueKey: "jp?page=2" });
-    expect(container.querySelector("details")?.open).toBe(false);
-    await fireEvent.click(container.querySelector("summary")!);
-    await rerender({ ...props, catalogueKey: "en?page=2" });
-    expect(container.querySelector("details")?.open).toBe(false);
+  it("renders character target levels in the mission metadata hierarchy", () => {
+    render(MissionCatalogue, {
+      ...props,
+      groups: [
+        {
+          family: "characterMissionV2s",
+          label: "Character missions",
+          countLabel: "1 mission shown",
+          items: [
+            {
+              key: "character-1",
+              sentence: "Complete … character tasks",
+              targetLevelsLabel: "Targets: 10 · 20 · 40"
+            }
+          ]
+        }
+      ]
+    });
+
+    expect(screen.getByText("Targets: 10 · 20 · 40")).toBeTruthy();
   });
 
-  it("keeps region links and pagination callbacks", async () => {
-    const onPrevious = vi.fn();
-    const onNext = vi.fn();
-    render(MissionCatalogue, { ...props, onPrevious, onNext, pageLabel: "Page 2 of 3" });
+  it("renders the family tablist with one selected family", async () => {
+    const onFamilyChange = vi.fn();
+    render(MissionCatalogue, { ...props, onFamilyChange, selectedFamily: "storyMissions" });
+
+    const tablist = screen.getByRole("tablist", { name: "Mission family" });
+    expect(screen.getAllByRole("tab")).toHaveLength(4);
+    expect(screen.getByRole("tab", { name: "All missions" }).getAttribute("aria-selected")).toBe(
+      "false"
+    );
+    expect(screen.getByRole("tab", { name: "Story missions" }).getAttribute("aria-selected")).toBe(
+      "true"
+    );
+    expect(screen.getByRole("tab", { name: "Character missions" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Normal missions" })).toBeTruthy();
+    expect(tablist.querySelectorAll("button")).toHaveLength(4);
+
+    await fireEvent.click(screen.getByRole("tab", { name: "All missions" }));
+    expect(onFamilyChange).toHaveBeenCalledWith(null);
+  });
+
+  it("keeps region links and does not render page navigation", () => {
+    render(MissionCatalogue, props);
+
     expect(screen.getByRole("link", { name: "EN" }).getAttribute("href")).toBe("/missions/en");
-    await fireEvent.click(screen.getByRole("button", { name: "Previous" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect(onPrevious).toHaveBeenCalledOnce();
-    expect(onNext).toHaveBeenCalledOnce();
-    expect(screen.getByText("Page 2 of 3")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Previous" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Next" })).toBeNull();
+    expect(screen.queryByText(/Page \d+ of \d+/)).toBeNull();
   });
 
-  it("renders grouped loading placeholders and disables page navigation", () => {
+  it("renders grouped loading placeholders without page navigation", () => {
     const { container } = render(MissionCatalogue, {
       ...props,
       status: "loading",
       groups: [],
-      loadingGroupCount: 2,
-      onNext: vi.fn()
+      loadingGroupCount: 2
     });
+
     expect(screen.getByRole("status").textContent).toBe("Loading missions...");
     expect(container.querySelector('[aria-busy="true"]')).toBeTruthy();
     expect(container.querySelector('[aria-hidden="true"] > .flex')?.children).toHaveLength(2);
-    expect(screen.getByRole("button", { name: "Next" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByRole("button", { name: "Next" })).toBeNull();
     expect(container.querySelector("details")).toBeNull();
   });
 
-  it("preserves error retry and empty feedback", async () => {
+  it("renders load-more, loading, retry, and end states", async () => {
+    const onLoadMore = vi.fn();
+    const onRetryLoadMore = vi.fn();
+    const { rerender } = render(MissionCatalogue, {
+      ...props,
+      hasNext: true,
+      onLoadMore,
+      onRetryLoadMore
+    });
+
+    await fireEvent.click(screen.getByRole("button", { name: "Load more missions" }));
+    expect(onLoadMore).toHaveBeenCalledOnce();
+
+    await rerender({ ...props, hasNext: true, isLoadingMore: true, onLoadMore });
+    expect(screen.getByRole("status").textContent).toContain("Loading more missions...");
+    expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
+
+    await rerender({
+      ...props,
+      hasNext: true,
+      loadMoreError: "More missions could not be loaded.",
+      onRetryLoadMore
+    });
+    expect(screen.getByText("More missions could not be loaded.")).toBeTruthy();
+    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(onRetryLoadMore).toHaveBeenCalledOnce();
+
+    await rerender({ ...props, hasNext: false, loadMoreError: null });
+    expect(screen.getByRole("status").textContent).toBe("You have reached the end.");
+  });
+
+  it("preserves error retry and empty feedback without a search field", async () => {
     const onRetry = vi.fn();
     const { rerender } = render(MissionCatalogue, {
       ...props,
