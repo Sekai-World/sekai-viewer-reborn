@@ -81,6 +81,50 @@ describe("catalogue honor adapter", () => {
       );
     }
   });
+  it("adapts World Link chapter honors to full-root ranks while keeping standard tops ordinary", () => {
+    const chapterBundle = "honor_top_000123_event_456_cp2";
+    const chapter = toCatalogueHonorDegree(
+      { ...honor, assetBundleName: chapterBundle },
+      { ...group, honorType: "event", backgroundAssetBundleName: "chapter-body" }
+    );
+    for (const [slot, renderSlot] of [["main", "main"], ["sub", "sub1"]] as const) {
+      expect(chapter[slot]).toMatchObject({
+        honorType: "event",
+        rankAsset: {
+          bundlePath: `honor/${chapterBundle}`,
+          resourceName: `rank_${slot}.png`
+        }
+      });
+      expect(buildHonorDegreeLayout(chapter[slot], resolveAsset, renderSlot).layers.at(-1)).toMatchObject({
+        x: 0,
+        y: 0,
+        width: slot === "main" ? 380 : 180,
+        height: 80
+      });
+    }
+    const chapterWithoutBackground = toCatalogueHonorDegree(
+      { ...honor, assetBundleName: chapterBundle },
+      { ...group, honorType: "event", backgroundAssetBundleName: null }
+    );
+    expect(chapterWithoutBackground.main).toMatchObject({
+      honorType: "event",
+      assetBundleName: chapterBundle
+    });
+    expect(buildHonorDegreeLayout(chapterWithoutBackground.main, resolveAsset).layers.at(-1)).toMatchObject({
+      x: 0,
+      y: 0,
+      width: 380,
+      height: 80
+    });
+
+    const standard = toCatalogueHonorDegree(
+      { ...honor, assetBundleName: "honor_top_000001" },
+      { ...group, honorType: "event", backgroundAssetBundleName: "honor_top_000001" }
+    );
+    expect(buildHonorDegreeLayout(standard.sub, resolveAsset, "sub1").layers.at(-1)).toMatchObject(
+      { x: 60, y: 0, width: 120, height: 38 }
+    );
+  });
   it("treats event honors without a group background as regular honors", () => {
     const degree = toCatalogueHonorDegree(honor, {
       ...group,
@@ -282,13 +326,48 @@ describe("catalogue honor adapter", () => {
   });
   it("uses birthday frame levels, suppresses invalid levels and keeps unknown types regular", () => {
     const birthday = toCatalogueHonorDegree(honor, { ...group, honorType: "birthday" });
-    const birthdayLevels = buildHonorDegreeLayout(birthday.main, resolveAsset).layers.filter(
+    const birthdayLayout = buildHonorDegreeLayout(birthday.main, resolveAsset);
+    const birthdayLevels = birthdayLayout.layers.filter(
       (layer) => layer.name.startsWith("birthday-level-")
     );
     expect(birthdayLevels).toHaveLength(5);
-    expect(birthdayLevels.every((layer) => layer.href === "/degree/frame_degree_level_3.png")).toBe(
-      true
+    expect(birthday.main).toMatchObject({
+      frameBundlePath: "local/honor",
+      group: { frameName: "frame" }
+    });
+    expect(birthdayLayout.layers.find((layer) => layer.name === "frame")?.href).toBe(
+      "https://assets.test/sekai-tc-assets/honor_frame/frame/frame_degree_m_3.webp"
     );
+    expect(
+      birthdayLevels.every(
+        (layer) =>
+          layer.href ===
+          "https://assets.test/sekai-tc-assets/honor_frame/frame/frame_degree_level_3.webp"
+      )
+    ).toBe(true);
+
+    const birthdayLow = toCatalogueHonorDegree(
+      { ...honor, honorRarity: "low" },
+      { ...group, honorType: "birthday" }
+    );
+    expect(birthdayLow.main).toMatchObject({ frameBundlePath: "local/honor" });
+    expect(buildHonorDegreeLayout(birthdayLow.main, resolveAsset).layers[1]?.href).toBe(
+      "https://assets.test/sekai-tc-assets/honor_frame/frame/frame_degree_m_1.webp"
+    );
+
+    const birthdayWithoutGroupFrame = toCatalogueHonorDegree(honor, {
+      ...group,
+      honorType: "birthday",
+      frameName: null
+    });
+    const fallbackLayers = buildHonorDegreeLayout(
+      birthdayWithoutGroupFrame.main,
+      resolveAsset
+    ).layers;
+    expect(fallbackLayers.find((layer) => layer.name === "birthday-level-0")?.href).toBe(
+      "/degree/frame_degree_level_3.png"
+    );
+
     const invalid = toCatalogueHonorDegree(
       { ...honor, levels: honor.levels.map((level) => ({ ...level, level: 0 })) },
       { ...group, honorType: "future" }

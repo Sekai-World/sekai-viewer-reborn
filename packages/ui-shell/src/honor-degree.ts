@@ -103,6 +103,7 @@ function addBondsHonorDegreeCharacter(
 
 function addBondsHonorDegreeLayers(
   honor: BondsHonorDegreeInput,
+  main: boolean,
   add: HonorDegreeLayerAdder
 ): void {
   if (honor.backgrounds !== undefined && honor.backgrounds !== null) {
@@ -114,7 +115,13 @@ function addBondsHonorDegreeLayers(
   honor.characters?.forEach((part, index) =>
     addBondsHonorDegreeCharacter(add, `character-${index}`, part)
   );
-  add("frame", honor.frame);
+  const rarity = normalizeHonorDegreeRarity(honor.rarity);
+  if (rarity !== null) {
+    add("frame", {
+      bundlePath: "local/honor",
+      resourceName: getFrameResourceName(main, rarity)
+    });
+  }
   addHonorDegreePart(add, "word", honor.word);
 }
 
@@ -126,6 +133,15 @@ function getRankMatchOverlayRect(main: boolean): HonorDegreeRect {
 function getEventRankOverlayRect(main: boolean): HonorDegreeRect {
   if (main) return { x: 190, y: 1, width: 150, height: 78 };
   return { x: 60, y: 0, width: 120, height: 38 };
+}
+
+function getChapterRankAssetBundleName(honor: NormalHonorDegreeInput): string | null {
+  if (hasName(honor.assetBundleName) && /_cp\d+$/.test(honor.assetBundleName)) {
+    return honor.assetBundleName;
+  }
+
+  const rankBundleName = honor.rankAsset?.bundlePath.split("/").at(-1);
+  return hasName(rankBundleName) && /_cp\d+$/.test(rankBundleName) ? rankBundleName : null;
 }
 
 function getFrameResourceName(main: boolean, rarity: number): string {
@@ -167,12 +183,21 @@ function addRankMatchHonorDegreeLayers(
 }
 
 function getNormalHonorFrameBundlePath(honor: NormalHonorDegreeInput): string | null {
-  if (hasName(honor.frameBundlePath)) return honor.frameBundlePath;
+  const rarity = normalizeHonorDegreeRarity(honor.rarity);
+  const isChapterHonor = getChapterRankAssetBundleName(honor) !== null;
+
+  if (honor.honorType === "birthday") {
+    const frameName = honor.group?.frameName;
+    if (hasName(frameName)) return `honor_frame/${frameName}`;
+    return "local/honor";
+  }
 
   const frameName = honor.group?.frameName;
-  if (hasName(frameName)) return `honor_frame/${frameName}`;
+  if (isChapterHonor && (rarity === 2 || rarity === 3) && hasName(frameName)) {
+    return `honor_frame/${frameName}`;
+  }
 
-  return null;
+  return "local/honor";
 }
 
 function addBirthdayHonorDegreeLevelLayers(
@@ -194,6 +219,16 @@ function addBirthdayHonorDegreeLevelLayers(
       { x: (main ? 150 : 50) + 16 * index, y: 64, width: 16, height: 16 }
     );
   }
+}
+
+function getBirthdayHonorFrameBundlePath(
+  honor: NormalHonorDegreeInput,
+  frameBundlePath: string | null
+): string | null {
+  const frameName = honor.group?.frameName;
+  if (hasName(frameName)) return `honor_frame/${frameName}`;
+
+  return frameBundlePath;
 }
 
 function addHonorDegreeLevelIcons(
@@ -241,7 +276,13 @@ function addNormalHonorLevelLayers(
   if (!validLevel(honor.level)) return;
 
   if (honor.honorType === "birthday") {
-    addBirthdayHonorDegreeLevelLayers(honor.level, rarity, frameBundlePath, main, add);
+    addBirthdayHonorDegreeLevelLayers(
+      honor.level,
+      rarity,
+      getBirthdayHonorFrameBundlePath(honor, frameBundlePath),
+      main,
+      add
+    );
   } else if (honor.honorType !== "live-master") {
     addRegularHonorDegreeLevelLayers(honor.level, main, add);
   }
@@ -256,7 +297,18 @@ function addNormalHonorDetailLayers(
   addPart: (name: string, part: HonorDegreePart | null | undefined) => void
 ): void {
   if (honor.honorType === "event") {
-    add("rank", honor.rankAsset, getEventRankOverlayRect(main));
+    const chapterBundleName = getChapterRankAssetBundleName(honor);
+    if (chapterBundleName) {
+      add(
+        "rank",
+        honor.rankAsset ?? {
+          bundlePath: `honor/${chapterBundleName}`,
+          resourceName: `rank_${main ? "main" : "sub"}.png`
+        }
+      );
+    } else {
+      add("rank", honor.rankAsset, getEventRankOverlayRect(main));
+    }
   } else {
     addNormalHonorLevelLayers(honor, main, rarity, frameBundlePath, add);
   }
@@ -364,7 +416,7 @@ export function buildHonorDegreeLayout(
   const variant = main ? "main" : "sub";
 
   if (honor?.kind === "bonds") {
-    addBondsHonorDegreeLayers(honor, add);
+    addBondsHonorDegreeLayers(honor, main, add);
   } else if (honor?.kind === "rank-match") {
     addRankMatchHonorDegreeLayers(honor, main, variant, add);
   } else if (honor?.kind === "normal") {

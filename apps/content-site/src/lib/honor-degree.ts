@@ -34,6 +34,7 @@ type HonorDegreeAdapterContext = {
   background: string | null;
   masterBundle: string | null;
   bundle: string | null;
+  frameName: string | null;
   rarity: HonorDegreeRarity;
   level: number | null;
 };
@@ -116,8 +117,7 @@ function resolveHonorDegreeInput(
     kind: "normal",
     honorType: getNormalHonorType(context.type, context.liveMaster, context.event),
     assetBundleName: context.bundle,
-    // Remote custom SVG frames cannot recover failed loads through this resolver.
-    // Always use the generic local frame, even when the group supplies frameName.
+    group: { frameName: context.frameName },
     frameBundlePath: "local/honor",
     rarity: context.rarity ?? 0,
     level: context.level,
@@ -140,7 +140,10 @@ export function toCatalogueHonorDegree(
     normalizeAssetBundleName(honor.group?.backgroundAssetBundleName);
   const masterBundle = normalizeAssetBundleName(honor.assetBundleName);
   const selectedLevelBundle = normalizeAssetBundleName(effective?.assetBundleName);
-  const event = !liveMaster && type === "event" && background !== null;
+  const frameName =
+    normalizeAssetBundleName(group.frameName) ?? normalizeAssetBundleName(honor.group?.frameName);
+  const chapterRank = masterBundle !== null && /_cp\d+$/.test(masterBundle);
+  const event = !liveMaster && type === "event" && (background !== null || chapterRank);
   const context: HonorDegreeAdapterContext = {
     type,
     liveMaster,
@@ -148,6 +151,7 @@ export function toCatalogueHonorDegree(
     background,
     masterBundle,
     bundle: getHonorDegreeBundle(background, liveMaster, selectedLevelBundle, masterBundle),
+    frameName,
     rarity,
     level: effective?.level ?? null
   };

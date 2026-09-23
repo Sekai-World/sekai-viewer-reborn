@@ -51,11 +51,16 @@ describe("HonorDegree", () => {
       ]);
       expect(images.map((image) => image.getAttribute("href"))).toEqual([
         `/honor/achievement/degree_${main ? "main" : "sub"}.png`,
-        `/honor_frame/standard/frame_degree_${main ? "m" : "s"}_3`,
+        `/local/honor/frame_degree_${main ? "m" : "s"}_3`,
         ...Array.from({ length: 5 }, () => "/local/honor/icon_degreeLv"),
         ...Array.from({ length: 2 }, () => "/local/honor/icon_degreeLv6")
       ]);
-      expect(images[0]?.getAttribute("width")).toBe(main ? "380" : "180");
+      expect(images.slice(0, 2).map((image) => [
+        image.getAttribute("x"),
+        image.getAttribute("y"),
+        image.getAttribute("width"),
+        image.getAttribute("height")
+      ])).toEqual(Array.from({ length: 2 }, () => ["0", "0", main ? "380" : "180", "80"]));
       expect(images.slice(2, 7).map((image) => image.getAttribute("x"))).toEqual(
         Array.from({ length: 5 }, (_, i) => String((main ? 59 : 10) + 16 * i))
       );
@@ -77,13 +82,12 @@ describe("HonorDegree", () => {
   );
 
   it.each<HonorDegreeSlot>(["main", "sub1"])(
-    "uses the explicit generic frame bundle for %s without a group frameName",
+    "uses a local default frame for %s despite group frameName",
     (slot) => {
       const { container } = render(HonorDegree, {
         honor: {
           kind: "normal",
-          group: { frameName: null },
-          frameBundlePath: "local/honor",
+          group: { frameName: "remote-theme" },
           rarity: "high"
         },
         resolveAsset,
@@ -117,6 +121,80 @@ describe("HonorDegree", () => {
       );
     }
   );
+
+  it.each([
+    ["main", "rank_main.png"],
+    ["sub1", "rank_sub.png"]
+  ] as const)("renders World Link chapter ranks full-root in %s", (slot, resourceName) => {
+    const main = slot === "main";
+    const layout = buildHonorDegreeLayout(
+      {
+        ...normal,
+        honorType: "event",
+        assetBundleName: "honor_top_123456_event_123_cp2",
+        rankAsset: {
+          bundlePath: "honor/honor_top_123456_event_123_cp2",
+          resourceName
+        }
+      },
+      resolveAsset,
+      slot
+    );
+
+    expect(layout.layers.map((layer) => layer.name)).toEqual(["body", "frame", "rank"]);
+    expect(layout.layers.slice(0, 2).map(({ x, y, width, height }) => ({ x, y, width, height }))).toEqual(
+      Array.from({ length: 2 }, () => ({ x: 0, y: 0, width: main ? 380 : 180, height: 80 }))
+    );
+    expect(layout.layers[1]?.href).toBe(
+      `/honor_frame/standard/frame_degree_${main ? "m" : "s"}_3`
+    );
+    expect(layout.layers[2]).toMatchObject({
+      href: `/honor/honor_top_123456_event_123_cp2/${resourceName}`,
+      x: 0,
+      y: 0,
+      width: main ? 380 : 180,
+      height: 80
+    });
+  });
+
+  it("keeps standard World Link event honors on the ordinary rank template", () => {
+    const layout = buildHonorDegreeLayout(
+      {
+        ...normal,
+        honorType: "event",
+        assetBundleName: "honor_top_000001",
+        rankAsset: { bundlePath: "honor/honor_top_000001", resourceName: "rank_sub.png" }
+      },
+      resolveAsset,
+      "sub1"
+    );
+
+    expect(layout.layers[2]).toMatchObject({
+      x: 60,
+      y: 0,
+      width: 120,
+      height: 38
+    });
+  });
+
+  it.each([
+    ["low", 0, "local/honor"],
+    ["middle", 1, "local/honor"],
+    ["high", 2, "honor_frame/world-link"],
+    ["highest", 3, "honor_frame/world-link"]
+  ] as const)("selects chapter %s frame from its bundle", (rarity, suffix, bundle) => {
+    const layout = buildHonorDegreeLayout(
+      {
+        ...normal,
+        honorType: "regular",
+        assetBundleName: "honor_top_000001_event_123_cp2",
+        group: { frameName: "world-link" },
+        rarity
+      },
+      resolveAsset
+    );
+    expect(layout.layers[1]?.href).toBe(`/${bundle}/frame_degree_m_${suffix + 1}`);
+  });
 
   it("does not invent a missing event rank or show an event rank for regular honors", () => {
     expect(
@@ -152,6 +230,69 @@ describe("HonorDegree", () => {
       expect(container.querySelector('[data-layer="level-0"]')).toBeNull();
     }
   );
+
+  it("resolves birthday level sprites from the group frame", () => {
+    const layout = buildHonorDegreeLayout(
+      {
+        ...normal,
+        honorType: "birthday",
+        frameBundlePath: "local/honor"
+      },
+      resolveAsset
+    );
+
+    expect(layout.layers.find((layer) => layer.name === "frame")?.href).toBe(
+      "/honor_frame/standard/frame_degree_m_3"
+    );
+    expect(layout.layers.find((layer) => layer.name === "birthday-level-0")?.href).toBe(
+      "/honor_frame/standard/frame_degree_level_3"
+    );
+  });
+
+  it.each([
+    ["low", 0, "honor_frame/standard"],
+    ["middle", 1, "honor_frame/standard"],
+    ["high", 2, "honor_frame/standard"],
+    ["highest", 3, "honor_frame/standard"]
+  ] as const)("uses Birthday %s frame and level resources", (rarity, suffix, bundle) => {
+    const layout = buildHonorDegreeLayout(
+      {
+        ...normal,
+        honorType: "birthday",
+        rarity,
+        frameBundlePath: "local/honor"
+      },
+      resolveAsset
+    );
+
+    expect(layout.layers.find((layer) => layer.name === "frame")?.href).toBe(
+      `/${bundle}/frame_degree_m_${suffix + 1}`
+    );
+    expect(layout.layers.find((layer) => layer.name === "birthday-level-0")?.href).toBe(
+      `/honor_frame/standard/frame_degree_level_${suffix + 1}`
+    );
+    expect(layout.layers.some((layer) => layer.name === "rank")).toBe(false);
+  });
+
+  it("uses the effective frame bundle for birthday level sprites when no group frameName exists", () => {
+    const layout = buildHonorDegreeLayout(
+      {
+        kind: "normal",
+        honorType: "birthday",
+        frameBundlePath: "local/honor",
+        rarity: "low",
+        level: 1
+      },
+      resolveAsset
+    );
+
+    expect(layout.layers.find((layer) => layer.name === "frame")?.href).toBe(
+      "/local/honor/frame_degree_m_1"
+    );
+    expect(layout.layers.find((layer) => layer.name === "birthday-level-0")?.href).toBe(
+      "/local/honor/frame_degree_level_1"
+    );
+  });
 
   it.each<HonorDegreeSlot>(["main", "sub1"])(
     "renders rank-match body, frame, and tier for %s",
@@ -254,10 +395,10 @@ describe("HonorDegree", () => {
       honor: {
         kind: "bonds",
         reverse: true,
+        rarity: "high",
         background: asset("background"),
         pattern: asset("pattern"),
         characters: [part, null],
-        frame: asset("frame"),
         word: { ...part, resourceName: "word" }
       },
       resolveAsset,
@@ -270,9 +411,17 @@ describe("HonorDegree", () => {
     expect(
       [...container.querySelectorAll("image")].map((image) => image.getAttribute("data-layer"))
     ).toEqual(["body", "pattern", "character-0", "frame", "word"]);
-    expect(container.querySelector('[data-layer="body"]')?.getAttribute("href")).toBe(
-      "/bonds/background"
+    expect(container.querySelector('[data-layer="body"]')?.getAttribute("href")).toBe("/bonds/background");
+    expect(container.querySelector('[data-layer="frame"]')?.getAttribute("href")).toBe(
+      "/local/honor/frame_degree_s_3"
     );
+    const frame = container.querySelector('[data-layer="frame"]');
+    expect(["x", "y", "width", "height"].map((key) => frame?.getAttribute(key))).toEqual([
+      "0",
+      "0",
+      "180",
+      "80"
+    ]);
   });
 
   it("exports only the verified local Bonds and Live Master resource names", () => {
@@ -313,7 +462,7 @@ describe("HonorDegree", () => {
         ],
         pattern: asset("pattern"),
         characters: [part("character-main"), part("character-sub")],
-        frame: asset("frame"),
+        rarity: "middle",
         word: part("word")
       },
       resolveAsset
@@ -334,7 +483,7 @@ describe("HonorDegree", () => {
       "/bonds/pattern",
       "/bonds/character-main",
       "/bonds/character-sub",
-      "/bonds/frame",
+      "/local/honor/frame_degree_m_2",
       "/bonds/word"
     ]);
   });
@@ -425,9 +574,51 @@ describe("HonorDegree", () => {
         bundle.startsWith("honor_frame") ? null : resolveAsset(bundle, resource)
     );
     expect(layout.layers.at(-1)).toMatchObject({ name: "live-master-0", href: "/live/part" });
-    expect(layout.layers.some((layer) => layer.name === "frame")).toBe(false);
+    expect(layout.layers.find((layer) => layer.name === "frame")?.href).toBe(
+      "/local/honor/frame_degree_m_3"
+    );
     expect(layout.layers.some((layer) => layer.name === "live-master-1")).toBe(false);
   });
+
+  it.each<HonorDegreeSlot>(["main", "sub1"])(
+    "uses the local normalized frame before Live Master parts in %s despite group frameName",
+    (slot) => {
+      const layout = buildHonorDegreeLayout(
+        {
+          ...normal,
+          assetBundleName: "honor_top_000001",
+          group: { frameName: "remote-theme" },
+          honorType: "live-master",
+          rarity: "high",
+          liveMasterParts: [
+            {
+              bundlePath: liveMasterLocalAssetResources.bundlePath,
+              resourceName: liveMasterLocalAssetResources.star1,
+              x: 10,
+              y: 5,
+              width: 20,
+              height: 20
+            }
+          ]
+        },
+        resolveAsset,
+        slot
+      );
+      const main = slot === "main";
+
+      expect(layout.layers.map((layer) => layer.name)).toEqual([
+        "body",
+        "frame",
+        "live-master-0"
+      ]);
+      expect(layout.layers[1]?.href).toBe(
+        `/local/honor/frame_degree_${main ? "m" : "s"}_3`
+      );
+      expect(layout.layers[2]?.href).toBe(
+        `/local/live-master/${liveMasterLocalAssetResources.star1}`
+      );
+    }
+  );
 
   it("does not add generic level icons to Live Master honors", () => {
     const layers = buildHonorDegreeLayout(
