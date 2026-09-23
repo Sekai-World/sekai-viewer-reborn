@@ -8,9 +8,10 @@
   ],
   "packageRules": [
     {
+      "description": "Stay on pnpm 12 but let Renovate move within the major; an exact version here blocks every update. pnpm 12 also records the pinned version in pnpm-lock.yaml (packageManagerDependencies), so a pnpm bump must regenerate the lockfile.",
       "matchManagers": ["npm", "mise"],
       "matchDepNames": ["pnpm"],
-      "allowedVersions": "11.13.0"
+      "allowedVersions": ">=12 <13"
     },
     {
       "matchManagers": ["npm", "mise"],
@@ -18,6 +19,7 @@
       "allowedVersions": ">=24 <25"
     },
     {
+      "description": "Keep in sync with minimumReleaseAge in pnpm-workspace.yaml.",
       "matchManagers": ["npm"],
       "minimumReleaseAge": "1 day"
     },
