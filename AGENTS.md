@@ -45,7 +45,7 @@ Guidance for coding agents working in this workspace.
   - shared packages: `@platform/*`
 - Use ESM and strict TypeScript patterns already present in repo.
 - Assume the repo may already contain generated `dist/` output and `.turbo/` artifacts; do not hand-edit generated build output unless explicitly requested.
-- Match the CI/runtime toolchain already used in the repo: Node.js 24 and `pnpm@11.13.0`.
+- Match the CI/runtime toolchain already used in the repo: Node.js 24 and pnpm 12, at the exact version pinned by `packageManager` in the root `package.json` (mirrored in `mise.toml`).
 
 ## Root Commands
 
