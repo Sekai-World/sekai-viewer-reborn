@@ -1115,9 +1115,14 @@
       <span class="ml-3 text-sm opacity-70">{cardListLoading}</span>
     </div>
   {:else if isInitialLoading || data.region !== loadedRegion}
-    <div class={`archive-results-field ${getListGridClass()}`}>
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label={cardListLoading}
+      class={`archive-results-field ${getListGridClass()}`}
+    >
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
-        <div class="archive-card-skeleton rounded-2xl border p-4">
+        <div class="archive-card-skeleton rounded-2xl border p-4" aria-hidden="true">
           <div class="skeleton h-48 w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
           <div class="mt-2 skeleton h-3 w-1/2 rounded"></div>
@@ -1183,10 +1188,10 @@
   {/if}
 </section>
 
-<dialog bind:this={filterDialog} class="modal">
+<dialog bind:this={filterDialog} class="modal" aria-labelledby="list-filters-title">
   <div class="modal-box archive-filter-dialog max-w-xl border">
     <div class="flex items-center justify-between gap-3">
-      <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+      <h3 id="list-filters-title" class="text-lg font-semibold">{listFiltersTitle}</h3>
       <form method="dialog">
         <button
           type="submit"
@@ -1200,18 +1205,18 @@
     </div>
 
     <div class="mt-4 grid grid-cols-1 gap-3">
-      <label class="form-control w-full">
-        <span class="label-text mb-1 text-sm font-medium">{cardListFilterNameLabel}</span>
+      <label class="flex w-full flex-col">
+        <span class="mb-1 text-sm font-medium">{cardListFilterNameLabel}</span>
         <input
           type="text"
-          class="input input-bordered w-full"
+          class="input w-full"
           bind:value={filterNameDraft}
           placeholder={cardListFilterNamePlaceholder}
         />
       </label>
 
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{cardListFilterUnitLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{cardListFilterUnitLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.unit as option (option.value)}
             <label
@@ -1238,8 +1243,10 @@
       </fieldset>
 
       {#if isPiaproUnitSelected(filterUnitDraft)}
-        <fieldset class="form-control w-full gap-2">
-          <legend class="label-text text-sm font-medium">{cardListFilterSupportUnitLabel}</legend>
+        <fieldset class="fieldset w-full gap-2">
+          <legend class="fieldset-legend text-sm font-medium"
+            >{cardListFilterSupportUnitLabel}</legend
+          >
           <div class="flex flex-wrap gap-1.5">
             {#each supportUnitOptions as option (`support-unit:${option}`)}
               <label
@@ -1271,8 +1278,8 @@
         </fieldset>
       {/if}
 
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{cardListFilterCharacterLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{cardListFilterCharacterLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.character as option (option.value)}
             <label
@@ -1304,8 +1311,8 @@
         </div>
       </fieldset>
 
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{cardListFilterSkillLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{cardListFilterSkillLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.skill as option (option.value)}
             <label
@@ -1331,8 +1338,8 @@
         </div>
       </fieldset>
 
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{cardListFilterTypeLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{cardListFilterTypeLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.type as option (option.value)}
             <label
@@ -1358,8 +1365,8 @@
         </div>
       </fieldset>
 
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{cardListFilterAttrLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{cardListFilterAttrLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each attrOptions as option (option)}
             <label
@@ -1392,8 +1399,8 @@
         </div>
       </fieldset>
 
-      <fieldset class="form-control w-full gap-2">
-        <legend class="label-text text-sm font-medium">{cardListFilterRarityLabel}</legend>
+      <fieldset class="fieldset w-full gap-2">
+        <legend class="fieldset-legend text-sm font-medium">{cardListFilterRarityLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each rarityOptions as option (option)}
             <label

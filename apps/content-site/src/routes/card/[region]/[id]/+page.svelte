@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser, dev } from "$app/environment";
+  import { invalidateAll } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { swipeRegion } from "$lib/actions/swipe-region";
@@ -93,6 +94,8 @@
   let costsLabel = $state(getInitialI18nText("costsLabel"));
   let rewardsLabel = $state(getInitialI18nText("rewardsLabel"));
   let noEpisodesLabel = $state(getInitialI18nText("noEpisodesLabel"));
+  let sectionLoadFailedLabel = $state(getInitialI18nText("detailSectionLoadFailed"));
+  let retryLabel = $state(getInitialI18nText("listRetry"));
   let cardRelatedEventsTitle = $state(getInitialI18nText("cardRelatedEventsTitle"));
   let noRelatedEventsLabel = $state(getInitialI18nText("noRelatedEventsLabel"));
   let noRelatedGachaLabel = $state(getInitialI18nText("noRelatedGachaLabel"));
@@ -159,6 +162,8 @@
     costsLabel = translate("costsLabel");
     rewardsLabel = translate("rewardsLabel");
     noEpisodesLabel = translate("noEpisodesLabel");
+    sectionLoadFailedLabel = translate("detailSectionLoadFailed");
+    retryLabel = translate("listRetry");
     cardRelatedEventsTitle = translate("cardRelatedEventsTitle");
     noRelatedEventsLabel = translate("noRelatedEventsLabel");
     noRelatedGachaLabel = translate("noRelatedGachaLabel");
@@ -488,7 +493,16 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
                       {cardEpisodesTitle}
                     </p>
-                    <p class="text-sm opacity-60">{noEpisodesLabel}</p>
+                    <div class="alert alert-error alert-soft" role="alert">
+                      <span>{sectionLoadFailedLabel}</span>
+                      <button
+                        type="button"
+                        class="btn btn-outline btn-sm min-h-11"
+                        onclick={() => void invalidateAll()}
+                      >
+                        {retryLabel}
+                      </button>
+                    </div>
                   </div>
                 </article>
               {/await}
@@ -512,7 +526,16 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
                       {cardRelatedEventsTitle}
                     </p>
-                    <p class="text-sm opacity-60">{noRelatedEventsLabel}</p>
+                    <div class="alert alert-error alert-soft" role="alert">
+                      <span>{sectionLoadFailedLabel}</span>
+                      <button
+                        type="button"
+                        class="btn btn-outline btn-sm min-h-11"
+                        onclick={() => void invalidateAll()}
+                      >
+                        {retryLabel}
+                      </button>
+                    </div>
                   </div>
                 </article>
               {/await}
@@ -546,7 +569,16 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
                       {cardStatsTitle}
                     </p>
-                    <p class="text-sm opacity-60">{noStatsLabel}</p>
+                    <div class="alert alert-error alert-soft" role="alert">
+                      <span>{sectionLoadFailedLabel}</span>
+                      <button
+                        type="button"
+                        class="btn btn-outline btn-sm min-h-11"
+                        onclick={() => void invalidateAll()}
+                      >
+                        {retryLabel}
+                      </button>
+                    </div>
                   </div>
                 </article>
               {/await}
@@ -568,7 +600,16 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
                       {cardGachaBannersTitle}
                     </p>
-                    <p class="text-sm opacity-60">{noRelatedGachaLabel}</p>
+                    <div class="alert alert-error alert-soft" role="alert">
+                      <span>{sectionLoadFailedLabel}</span>
+                      <button
+                        type="button"
+                        class="btn btn-outline btn-sm min-h-11"
+                        onclick={() => void invalidateAll()}
+                      >
+                        {retryLabel}
+                      </button>
+                    </div>
                   </div>
                 </article>
               {/await}

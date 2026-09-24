@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { page } from "$app/state";
+  import { tCommon } from "$lib/i18n/runtime";
+
   export type BreadcrumbItem = {
     label: string;
     href?: string;
@@ -11,9 +14,13 @@
     items: BreadcrumbItem[];
     class?: string;
   } = $props();
+
+  const navLabel = $derived(
+    tCommon(String(page.data.uiLocale ?? ""), "breadcrumbLabel", "Breadcrumb")
+  );
 </script>
 
-<nav aria-label="Breadcrumb" class={`content-breadcrumbs ${className}`.trim()}>
+<nav aria-label={navLabel} class={`content-breadcrumbs ${className}`.trim()}>
   <ol class="flex flex-wrap items-center gap-1.5 sm:gap-2">
     {#each items as item, index (item.href ?? `${item.label}-${index}`)}
       {@const isCurrent = index === items.length - 1}

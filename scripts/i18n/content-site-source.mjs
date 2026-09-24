@@ -25,6 +25,10 @@ const commonKeyPatterns = [
 const serverKeyPatterns = [/getServerI18nText\(\s*[^,]+,\s*["']([^"'`]+)["']/g];
 const sharedCommonKeys = new Set([
   "audioDownloadCloseLabel",
+  "breadcrumbLabel",
+  "cardAltFallback",
+  "detailLoading",
+  "detailSectionLoadFailed",
   "audioDownloadLabel",
   "audioDownloadStages.cancelled",
   "audioDownloadStages.failed",
