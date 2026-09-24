@@ -493,7 +493,9 @@
       retry: t("mission.retry"),
       otherGroup: t("mission.characterPickerOtherGroup"),
       selected: t("mission.characterSelected"),
-      profile: t("mission.characterProfile")
+      profile: t("mission.characterProfile"),
+      change: t("mission.characterChange"),
+      collapse: t("mission.characterCollapse")
     }}
     profileHref={data.query.character === null
       ? null

@@ -58,5 +58,7 @@
   "mission.characterPickerOtherGroup": "Other characters",
   "mission.characterPrompt": "Choose a character to see their character missions.",
   "mission.characterSelected": "Showing {name}",
-  "mission.characterProfile": "View character profile"
+  "mission.characterProfile": "View character profile",
+  "mission.characterChange": "Change character",
+  "mission.characterCollapse": "Hide characters"
 }

@@ -235,6 +235,7 @@ describe("Missions page", () => {
     expect(within(leoNeed).getAllByRole("button")).toHaveLength(2);
     expect(screen.getByRole("list", { name: "VIRTUAL SINGER" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Change character" })).toBeNull();
     const saki = screen.getByRole("button", { name: "Saki Tenma" });
     expect(saki.getAttribute("aria-pressed")).toBe("false");
 
@@ -266,6 +267,18 @@ describe("Missions page", () => {
     expect(screen.getByRole("link", { name: "EN" }).getAttribute("href")).toBe(
       "/missions/en?family=characterMissionV2s&character=1"
     );
+
+    // Small screens collapse the grid behind a toggle once a character is chosen.
+    const toggle = screen.getByRole("button", { name: "Change character" });
+    const grid = document.getElementById(toggle.getAttribute("aria-controls")!)!;
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(grid.classList).toContain("hidden");
+    expect(grid.classList).toContain("sm:grid");
+    await fireEvent.click(toggle);
+    expect(
+      screen.getByRole("button", { name: "Hide characters" }).getAttribute("aria-expanded")
+    ).toBe("true");
+    expect(grid.classList).not.toContain("hidden");
   });
 
   it("offers a retry when the character picker fails to load", async () => {
@@ -318,6 +331,7 @@ describe("Missions page", () => {
       expect(screen.getByRole("button", { name: `See all ${family}` })).toBeTruthy();
     }
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Change character" })).toBeNull();
     expect(screen.queryByText("You have reached the end.")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -477,6 +491,7 @@ describe("Missions page", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Show all 4 targets" }));
     expect(screen.getByText("Target: 10")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Change character" })).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
