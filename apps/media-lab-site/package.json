@@ -9,7 +9,7 @@
     "preview": "vite preview --host localhost --port 5103",
     "test": "vitest run --config ./vitest.config.ts",
     "test:coverage": "pnpm --filter '@apps/*' exec svelte-kit sync && vitest run --config ./vitest.config.ts --coverage && node ../../scripts/lcov/normalize-lcov.mjs coverage/lcov.info apps/media-lab-site",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --tsgo",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint src --ext .ts,.svelte"
   },
   "dependencies": {
