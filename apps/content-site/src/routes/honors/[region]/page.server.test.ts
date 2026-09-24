@@ -30,7 +30,7 @@ type HonorPageLoadResult = {
   }>;
 };
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 24;
 const runLoad = (region: string, search = "") =>
   load({
     params: { region },

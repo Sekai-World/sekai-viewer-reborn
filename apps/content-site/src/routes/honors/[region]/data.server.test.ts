@@ -16,7 +16,7 @@ const response = {
   data: {
     items: [],
     availableHonorTypes: ["event"],
-    pagination: { page: 2, page_size: 12, total: 12, total_pages: 2, has_next: false }
+    pagination: { page: 2, page_size: 24, total: 24, total_pages: 2, has_next: false }
   }
 };
 
@@ -46,7 +46,7 @@ describe("honor catalogue data endpoint", () => {
       path: { region: "jp" },
       query: {
         page: 2,
-        page_size: 12,
+        page_size: 24,
         name: "Stage",
         honor_type: "event",
         sort_by: "id",

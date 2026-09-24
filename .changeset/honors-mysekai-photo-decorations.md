@@ -23,3 +23,5 @@ Group the content-site sidebar into Library, Activities, and Progression section
 Show each mission family in the Missions overview as soon as it loads instead of waiting for every family; a family that fails shows its own retry.
 
 Render Missions overview families as cards with a visible per-family loading skeleton.
+
+Load 24 Honors per page so the first page fills a desktop viewport before the next page loads.

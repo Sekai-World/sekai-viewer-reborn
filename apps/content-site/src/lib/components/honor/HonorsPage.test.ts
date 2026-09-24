@@ -58,7 +58,7 @@ const result: Awaited<PageData["catalogue"]> = {
   items: [group],
   availableHonorTypes: ["achievement", "event"],
   loadFailed: false,
-  pagination: { page: 1, totalPages: 3, hasNext: true, pageSize: 12, total: 30 }
+  pagination: { page: 1, totalPages: 3, hasNext: true, pageSize: 24, total: 30 }
 };
 const data = (
   catalogue: PageData["catalogue"] | Awaited<PageData["catalogue"]>,

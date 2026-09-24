@@ -27,7 +27,7 @@ type HonorRequest = {
   };
 };
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 24;
 
 const createHonorGroup = (id: number) => ({
   id,
@@ -180,11 +180,17 @@ describe("honor catalogue adapter", () => {
   });
 
   it("constructs the versioned request and maps the paginated response", async () => {
-    getHonorGroupsByRegionList.mockResolvedValue(createHonorResponse(2, 13));
+    getHonorGroupsByRegionList.mockResolvedValue(createHonorResponse(2, PAGE_SIZE + 1));
 
     await expect(fetchHonorListPage("https://master-api.test///", "tw", 2)).resolves.toMatchObject({
-      items: [{ id: 13, honors: [{ id: 1301 }] }],
-      pagination: { page: 2, pageSize: PAGE_SIZE, hasNext: false, total: 13, totalPages: 2 }
+      items: [{ id: PAGE_SIZE + 1, honors: [{ id: (PAGE_SIZE + 1) * 100 + 1 }] }],
+      pagination: {
+        page: 2,
+        pageSize: PAGE_SIZE,
+        hasNext: false,
+        total: PAGE_SIZE + 1,
+        totalPages: 2
+      }
     });
     expect(getHonorGroupsByRegionList).toHaveBeenCalledWith({
       baseUrl: "https://master-api.test/api/v1",

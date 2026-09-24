@@ -18,7 +18,9 @@ import {
   validateCataloguePageRequest
 } from "./catalogue-data";
 
-export const DEFAULT_HONOR_LIST_PAGE_SIZE = 12;
+// 24 fills whole rows at every catalogue grid width (2, 3, and 4 columns) and keeps the
+// first page taller than a desktop viewport, so the next page loads only after scrolling.
+export const DEFAULT_HONOR_LIST_PAGE_SIZE = 24;
 export type HonorListSortBy = "id";
 export type HonorListSortOrder = "asc" | "desc";
 
