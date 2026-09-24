@@ -44,23 +44,24 @@
 <ViewerShell
   drawerId="account-site-drawer"
   navTitle="Sekai Account"
-  navBadge="Profile"
   siteVersion={data.siteVersion}
   {sidebarItems}
 >
-  <RegionSwitcher
-    options={regionOptions}
-    primaryValue={primaryRegion}
-    secondaryValue={secondaryRegion}
-    {primaryTitle}
-    {secondaryTitle}
-    onSelectPrimary={(region: string) => {
-      primaryRegion = region as SupportedRegion;
-    }}
-    onSelectSecondary={(region: string) => {
-      secondaryRegion = region as SupportedRegion;
-    }}
-  />
+  {#snippet navActions()}
+    <RegionSwitcher
+      options={regionOptions}
+      primaryValue={primaryRegion}
+      secondaryValue={secondaryRegion}
+      {primaryTitle}
+      {secondaryTitle}
+      onSelectPrimary={(region: string) => {
+        primaryRegion = region as SupportedRegion;
+      }}
+      onSelectSecondary={(region: string) => {
+        secondaryRegion = region as SupportedRegion;
+      }}
+    />
+  {/snippet}
   {#if supportPageUrl}
     <div class="flex justify-end">
       <a class="btn btn-ghost btn-sm min-h-11" href={supportPageUrl}>Support this project</a>
