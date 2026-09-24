@@ -203,7 +203,7 @@
         <button
           bind:this={desktopSettingsButton}
           type="button"
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
+          class="btn btn-circle size-11! min-h-11! btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={translate("settings.title")}
           aria-haspopup="dialog"
           aria-expanded={isDesktopSettingsMenuOpen}
@@ -220,7 +220,7 @@
             id={DESKTOP_SETTINGS_MENU_ID}
             role="dialog"
             aria-label={translate("settings.title")}
-            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-3 shadow-xl"
+            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-3 shadow-md"
           >
             {@render regionSelector()}
           </div>
@@ -234,9 +234,9 @@
         <button
           bind:this={desktopThemeButton}
           type="button"
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
+          class="btn btn-circle size-11! min-h-11! btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={translate("theme.palette")}
-          aria-haspopup="true"
+          aria-haspopup="dialog"
           aria-expanded={isDesktopThemeMenuOpen}
           aria-controls={DESKTOP_THEME_MENU_ID}
           title={translate("theme.palette")}
@@ -249,7 +249,9 @@
         {#if isDesktopThemeMenuOpen}
           <div
             id={DESKTOP_THEME_MENU_ID}
-            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+            role="dialog"
+            aria-label={translate("theme.palette")}
+            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
           >
             {@render themeSelector(() => {
               isDesktopThemeMenuOpen = false;
@@ -284,7 +286,7 @@
             id={MOBILE_SETTINGS_MENU_ID}
             role="dialog"
             aria-label={translate("settings.title")}
-            class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-h-[70vh] max-w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+            class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-h-[70vh] max-w-[calc(100vw-1rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
           >
             {@render regionSelector()}
             <div class="my-3 h-px bg-base-content/12"></div>
@@ -330,7 +332,8 @@
               close();
             }}
             ><span
-              class={`size-3 rounded-full border border-base-content/20 ${option === "default" ? "bg-indigo-500" : option === "sakura" ? "bg-pink-400" : "bg-teal-400"}`}
+              class="theme-palette-preview size-3 rounded-full border border-base-content/20 bg-primary"
+              data-theme={option}
               aria-hidden="true"
             ></span>{translate(`theme.${option}`)}{#if themeName === option}<Icon
                 icon="mdi:check"

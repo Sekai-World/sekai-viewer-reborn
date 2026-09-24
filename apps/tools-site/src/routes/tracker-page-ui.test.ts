@@ -168,7 +168,10 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('trackerStatus === "upstream-error"');
     expect(source).toContain('trackerStatus === "sdk-error"');
     expect(source).toContain('trackerStatus === "network-error"');
-    expect(source).toContain('trackerStatus === "invalid-data"');
+    expect(source).toContain('"tracker.error.invalidData"');
+    expect(source).toContain('{:else if trackerStatus !== "available"}');
+    expect(source).toContain('<p role="alert">{translate(rankingErrorKey)}</p>');
+    expect(source).toContain('{translate("tracker.retry")}');
     expect(source).toContain("const isCurrentEventKnown = $derived(");
     expect(source).toContain("const isCurrentEvent = $derived(");
     expect(source).toContain("const isHistoricalEvent = $derived(");
@@ -199,7 +202,10 @@ describe("tracker page UI contract", () => {
     expect(source).toContain(
       "const displayRankings = $derived(snapshotRankings ?? trackerResult?.rankings ?? []);"
     );
-    expect(source).toContain('class="tracker-row-detail-button"');
+    expect(source).not.toContain('class="tracker-row-detail-button"');
+    expect(source).toContain(
+      '<button\n                          class="btn btn-ghost btn-circle size-11! min-h-11!"'
+    );
     expect(source).not.toContain('tabindex="0" role="button"');
     expect(source).toContain("new AbortController()");
     expect(source).toContain("async function fetchJsonWithDeadline<Payload>");
@@ -217,10 +223,10 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("Promise.resolve(extendedData.isWorldBloom)");
     expect(source).toContain('translate("tracker.eventRankings")');
     expect(source).toContain('role="tablist"');
-    expect(source).toContain('class="tabs tabs-box tracker-ranking-tabs min-w-max flex-nowrap"');
-    expect(source).toContain('class="tab shrink-0 btn btn-sm tracker-ladder-option"');
-    expect(source).toContain('class:tab-active={selectedRankingTab === "event"}');
-    expect(source).toContain("class:tab-active={selectedRankingTab === chapter.chapter.id}");
+    expect(source).toContain('class="tracker-ranking-tabs min-w-max flex-nowrap"');
+    expect(source).toContain('class="btn min-h-11 shrink-0 rounded-full tracker-ladder-option"');
+    expect(source).not.toContain("tabs-box");
+    expect(source).not.toContain("tab-active");
     expect(source).toContain('class="tracker-ranking-tabs-scroll"');
     expect(source).toContain('class="tracker-kicker tracker-world-bloom-kicker"');
     expect(source).toContain(
@@ -234,11 +240,10 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("overscroll-behavior-x: contain;");
     expect(source).toContain("-webkit-overflow-scrolling: touch;");
     expect(source).toContain("mask-image: linear-gradient(");
-    expect(source).toContain(".tracker-ranking-tabs .tab.tab-active {");
-    expect(source).toContain("background: var(--color-primary);");
+    expect(source).not.toContain(".tracker-ranking-tabs .tab.tab-active {");
+    expect(source).not.toContain(".tracker-ranking-tabs .tab:focus-visible {");
+    expect(source).not.toContain("outline: 2px solid var(--color-primary);");
     expect(source).toContain("color: var(--color-primary-content);");
-    expect(source).toContain(".tracker-ranking-tabs .tab:focus-visible {");
-    expect(source).toContain("outline: 2px solid var(--color-primary);");
     expect(source).toContain('id="tracker-ranking-panel"');
     expect(source).toContain('class="table tracker-table"');
     expect(source).toContain('class="tracker-ranking-cards"');
@@ -335,7 +340,9 @@ describe("tracker page UI contract", () => {
       "const visibleMatchingEvents = $derived(matchingEvents.slice(0, 10));"
     );
     expect(source).toContain("isEventPickerFocused && eventQuery.length > 0");
-    expect(source).toContain('class="btn btn-ghost btn-xs btn-circle tracker-event-clear"');
+    expect(source).toContain(
+      'class="btn btn-ghost btn-circle size-11! min-h-11! tracker-event-clear"'
+    );
     expect(source).toContain('translate("tracker.clearEventSearch")');
     expect(source).toContain("onclick={clearEventSearch}");
     expect(source).toContain('eventQuery = "";');
@@ -363,7 +370,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class="tracker-freshness-action"');
     expect(source).toContain('class="tracker-freshness"');
     expect(source).toContain(
-      'class="btn btn-square btn-sm btn-outline rounded-full tracker-refresh-action"'
+      'class="btn btn-square btn-outline size-11! min-h-11! rounded-full tracker-refresh-action"'
     );
     expect(source).toContain("@media (min-width: 48rem) and (max-width: 63.999rem)");
     expect(source).toContain("@media (min-width: 64rem)");
@@ -498,21 +505,17 @@ describe("tracker page UI contract", () => {
     expect(dialogBoxStyles).toContain("max-height: calc(100dvh - 2rem);");
     expect(dialogBoxStyles).toContain("overflow-y: auto;");
     expect(dialogBoxStyles).toContain("overflow-wrap: anywhere;");
-    expect(source).toContain("-webkit-backdrop-filter: blur(8px);");
-    expect(source).toContain("backdrop-filter: blur(8px);");
-    expect(source).toContain(":global(html.dark) .tracker-goal-dialog-box");
-    expect(source).toMatch(
-      /background: color-mix\(\s*in srgb,\s*var\(--archive-surface-default\) 86%,\s*var\(--archive-surface-canvas\)\s*\);/
-    );
+    expect(source).not.toContain("backdrop-filter");
+    expect(dialogBoxStyles).toContain("background: var(--archive-surface-overlay);");
+    expect(dialogBoxStyles).not.toContain("box-shadow");
+    expect(source).not.toContain(":global(html.dark) .tracker-goal-dialog-box");
     expect(source).toContain(":global(html.dark) .tracker-goal-dialog::backdrop");
     expect(source).toContain(
       "background: color-mix(in srgb, var(--archive-surface-canvas) 78%, transparent);"
     );
-    expect(source).toContain("@media (prefers-reduced-transparency: reduce)");
-    expect(source).toContain("-webkit-backdrop-filter: none;");
-    expect(source).toContain("backdrop-filter: none;");
     expect(source).not.toMatch(/\.tracker-goal-dialog\s*\{/);
-    expect(source).toContain("@media (max-width: 48rem)");
+    expect(source).not.toContain("@media (max-width: 48rem)");
+    expect(source).toContain("@media (max-width: 47.999rem)");
     expect(source).toContain("grid-template-columns: 1fr;");
 
     const shareMessageStart = source.indexOf('<span class="tracker-share-message"');
@@ -524,8 +527,9 @@ describe("tracker page UI contract", () => {
     );
     expect(source.slice(shareMessageStart, shareMessageEnd)).toContain("{shareMessage}");
     expect(source).toMatch(
-      /\.tracker-share-message\s*\{[\s\S]*?width:\s*8\.5rem;[\s\S]*?min-width:\s*8\.5rem;[\s\S]*?min-height:\s*2\.75rem;/
+      /\.tracker-share-message\s*\{[\s\S]*?max-width:\s*100%;[\s\S]*?min-height:\s*2\.75rem;[\s\S]*?overflow-wrap:\s*anywhere;/
     );
+    expect(source).not.toContain("tracker-tool-action-region-has-message");
     const toolActionsStart = source.indexOf(".tracker-tool-actions {");
     const toolActionsEnd = source.indexOf("}", toolActionsStart);
     expect(source.slice(toolActionsStart, toolActionsEnd)).toContain("min-width: 0;");
@@ -536,7 +540,7 @@ describe("tracker page UI contract", () => {
       ".tracker-tool-action-region {\n      grid-column: 2;\n      justify-self: end;"
     );
     expect(source).toContain(".tracker-share-message {");
-    expect(source).toContain(".tracker-tool-actions .btn {");
+    expect(source).not.toContain(".tracker-tool-actions .btn {");
     expect(source).not.toContain(".tracker-tool-actions .btn,");
     expect(source).not.toContain(".tracker-goal-dialog .btn {");
   });
@@ -792,11 +796,12 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain('class="tracker-ranking-row" onkeydown=');
     expect(source).toContain("bind:this={detailsDialog}");
     expect(source).toContain("detailsDialog?.showModal()");
-    expect(source).toContain("let isDetailsDialogClosing = $state(false);");
-    expect(source).toContain("let isDetailsDialogOpening = $state(false);");
-    expect(source).toContain("data-opening={isDetailsDialogOpening || undefined}");
-    expect(source).toContain("data-closing={isDetailsDialogClosing || undefined}");
-    expect(source).toContain("requestAnimationFrame(() => {");
+    expect(source).not.toContain("isDetailsDialogClosing");
+    expect(source).not.toContain("isDetailsDialogOpening");
+    expect(source).not.toContain("data-opening=");
+    expect(source).not.toContain("data-closing=");
+    expect(source).not.toContain("requestAnimationFrame(");
+    expect(source).not.toContain("centerDetailsDialog");
     expect(source).toContain("{#if selectedRow}");
     expect(source).toContain('class="modal-box"');
     expect(source).toContain("let detailsIdentityObserver: IntersectionObserver | undefined;");
@@ -808,19 +813,19 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("detailsIdentityObserver?.disconnect();");
     expect(source).toContain("oncancel={(event) => {");
     expect(source).toContain("event.preventDefault();");
-    expect(source).toContain("setTimeout(() => detailsDialog?.close(), 180)");
+    expect(source).toContain("if (detailsDialog?.open) detailsDialog.close();");
     const closeHandler = source.slice(
       source.indexOf("const handleDetailsClosed"),
       source.indexOf("const openGraph", source.indexOf("const handleDetailsClosed"))
     );
     expect(closeHandler).not.toContain("resetDetails();");
-    expect(closeHandler).not.toContain("isDetailsDialogClosing = false;");
-    expect(source).toContain("isDetailsDialogClosing = false;");
-    expect(source).toContain("if (!detailsDialog?.open)");
+    expect(source).toContain("if (!detailsDialog?.open) detailsDialog?.showModal();");
     expect(source).toContain("selectedRow = row;");
-    expect(source).toContain(".tracker-dialog:not([data-opening]):not([data-closing]) .modal-box");
-    expect(source).toContain(".tracker-dialog[data-opening]::backdrop,");
-    expect(source).toContain("max-height 180ms ease-out");
+    expect(source).not.toContain("max-height 180ms ease-out");
+    expect(source).not.toContain("width: 100vw;");
+    const detailsBoxStyles = source.match(/\.tracker-dialog \.modal-box\s*\{([^}]+)\}/)?.[1];
+    expect(detailsBoxStyles).toContain("max-height: min(85vh, 64rem);");
+    expect(detailsBoxStyles).toContain("overflow-y: auto;");
     expect(source).not.toContain("tracker-inspector");
     expect(source).toContain('translate("tracker.degree")');
     expect(source).toContain('translate("tracker.speedUnavailable")');
@@ -930,7 +935,8 @@ describe("tracker page UI contract", () => {
     );
     expect(source).toContain('id="tracker-activity-day"');
     expect(source).toContain('id="tracker-saved-time"');
-    expect(source).toContain('class="select select-sm select-bordered"');
+    expect(source).toContain('class="select min-h-11"');
+    expect(source).not.toContain("select-bordered");
     expect(source).not.toContain('aria-haspopup="listbox"');
     expect(source).not.toContain('class="dropdown tracker-time-control"');
     expect(source).not.toContain("tracker-time-point-options");
@@ -978,8 +984,8 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('aria-pressed={ladder === "critical"}');
     expect(source).toContain('aria-pressed={ladder === "full"}');
     expect(source).toContain('translate("tracker.eventRankings")');
-    expect(source).toContain('class="tabs tabs-box tracker-ranking-tabs min-w-max flex-nowrap"');
-    expect(source).toContain('class="tab shrink-0 btn btn-sm tracker-ladder-option"');
+    expect(source).toContain('class="tracker-ranking-tabs min-w-max flex-nowrap"');
+    expect(source).toContain('class="btn min-h-11 shrink-0 rounded-full tracker-ladder-option"');
     expect(source).toContain("class:btn-primary={selectedRankingTab === chapter.chapter.id}");
     expect(source).toContain("class:btn-outline={selectedRankingTab !== chapter.chapter.id}");
     expect(source).not.toContain("tracker-chapter-tabs");
@@ -1077,21 +1083,10 @@ describe("tracker page UI contract", () => {
     expect(actions).toContain("onclick={shareTracker}");
     expect(actions).toContain("aria-expanded={isTimeTravelActive}");
     expect(actions).toContain('aria-controls="tracker-time-travel-controls"');
-    const buttonStyles = source.match(/\.tracker-tool-actions \.btn\s*\{([^}]+)\}/)?.[1];
-    expect(buttonStyles).toContain("min-height: 2.25rem;");
-    expect(buttonStyles).toContain("height: 2.25rem;");
-    expect(buttonStyles).toContain("display: inline-flex;");
-    expect(buttonStyles).toContain("align-items: center;");
-    expect(buttonStyles).toContain("justify-content: center;");
-    expect(buttonStyles).toContain("gap: 0.5rem;");
-    expect(buttonStyles).toContain("padding-block: 0.25rem;");
-    expect(buttonStyles).toContain("padding-inline: 0.75rem;");
+    expect(actions.match(/class="btn min-h-11[^"]*"/g)).toHaveLength(3);
+    expect(source).not.toContain(".tracker-tool-actions .btn");
     expect(source).toContain("@media (max-width: 47.999rem), (pointer: coarse)");
     expect(source).toContain("display: flex;");
-    expect(source).toMatch(
-      /@media \(max-width: 47\.999rem\), \(pointer: coarse\)[\s\S]*?\.tracker-tool-actions \.btn\s*\{[\s\S]*?min-height: 2\.75rem;[\s\S]*?height: auto;/
-    );
-    expect(buttonStyles).toContain("line-height: 1.25;");
   });
 
   it("hides tracker export controls and keeps the export library out of the page", async () => {
