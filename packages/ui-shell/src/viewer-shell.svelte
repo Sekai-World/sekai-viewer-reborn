@@ -100,7 +100,7 @@
         <div class="navbar-end gap-2">
           {#if siteVersion}
             <span
-              class="inline-flex items-center rounded-full border border-base-content/15 px-2.5 py-1 text-xs font-medium text-base-content/60"
+              class="badge badge-outline badge-sm font-medium text-base-content/60"
               title="Site version"
             >
               <span class="sr-only">Site version: </span>{siteVersionDisplay}
@@ -123,18 +123,7 @@
     >
       {#if showTitle}
         <section class="py-12 text-center">
-          {#if title === "Sekai Viewer" && titleBadge === "reborn"}
-            <BrandLockup heading={true} />
-          {:else}
-            <h1 class="relative inline-block text-4xl font-black tracking-tight md:text-5xl">
-              {title}
-              <span
-                class="badge badge-error absolute -right-11 -top-5 -rotate-12 border border-error-content/25 px-2.5 py-2 text-[0.62rem] leading-none font-black uppercase tracking-wide text-error-content shadow-sm"
-              >
-                {titleBadge}
-              </span>
-            </h1>
-          {/if}
+          <BrandLockup heading={true} {title} badge={titleBadge} />
         </section>
       {/if}
 
@@ -183,7 +172,7 @@
               <a
                 href={item.href}
                 aria-current={item.active ? "page" : undefined}
-                class={`grid grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 ${item.active ? "active" : ""}`}
+                class={`grid min-h-11 grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 ${item.active ? "active" : ""}`}
                 onclick={() => {
                   sidebarOpen = false;
                 }}
@@ -269,8 +258,21 @@
   }
 
   :global([data-low-motion]) .viewer-shell-nav {
+    background: color-mix(in oklab, var(--color-base-100) 92%, transparent);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .viewer-shell-nav {
+      background: color-mix(in oklab, var(--color-base-100) 92%, transparent);
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .viewer-shell-skip {
+      transition: none;
+    }
   }
 
   :global([data-low-motion]) .viewer-shell-skip {

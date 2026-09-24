@@ -26,21 +26,22 @@
   }: Props = $props();
 </script>
 
-<div class="flex items-center gap-1" aria-label={`${paletteLabel}. ${modeLabel}`}>
+<div class="flex items-center gap-1" role="group" aria-label={`${paletteLabel}. ${modeLabel}`}>
   <div class="join" role="group" aria-label={paletteLabel}>
     {#each themeNames as value (value)}<button
         type="button"
-        class={`btn btn-sm join-item border-base-content/20 ${themeName === value ? "btn-primary" : "btn-outline bg-base-100/65"}`}
+        class={`btn join-item min-h-11 border-base-content/20 ${themeName === value ? "btn-primary" : "btn-outline bg-base-100/65"}`}
         aria-pressed={themeName === value}
         onclick={() => onThemeNameChange(value)}
         ><span class="sr-only">{labels[value]}</span><span
-          class={`size-3 rounded-full border border-base-content/20 ${value === "default" ? "bg-indigo-500" : value === "sakura" ? "bg-pink-400" : "bg-teal-400"}`}
+          class="theme-palette-preview size-3 rounded-full border border-base-content/20 bg-primary"
+          data-theme={value}
           aria-hidden="true"
         ></span></button
       >{/each}
   </div>
   <select
-    class="select select-sm w-20 border-base-content/20 bg-base-100/65 text-xs"
+    class="select h-11 min-h-11 w-20 border-base-content/20 bg-base-100/65 text-xs"
     aria-label={modeLabel}
     value={themeMode}
     onchange={(event) => {
