@@ -51,18 +51,18 @@ body {
 
 /* Fine-pointer hover lift that is dropped under the site low-motion setting
    and prefers-reduced-motion (DESIGN.md §6). Pair with a transform transition. */
-@utility hover-lift {
+@layer utilities {
   @media (hover: hover) and (pointer: fine) {
-    &:hover {
+    .hover-lift:hover {
       transform: translateY(-0.125rem);
     }
   }
   @media (prefers-reduced-motion: reduce) {
-    &:hover {
+    .hover-lift:hover {
       transform: none;
     }
   }
-  :root[data-low-motion] &:hover {
+  :root[data-low-motion] .hover-lift:hover {
     transform: none;
   }
 }
