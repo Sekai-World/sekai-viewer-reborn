@@ -364,7 +364,7 @@
                     <li class="min-w-0">
                       <a
                         href={`/live2d/${encodeURIComponent(model.id)}`}
-                        class="group flex flex-col gap-4 rounded-xl border border-base-content/10 bg-base-200/65 p-4 shadow-sm transition-[border-color,background-color,transform] duration-150 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        class="group flex flex-col gap-4 rounded-xl border border-base-content/10 bg-base-200/65 p-4 shadow-sm transition-[border-color,background-color,transform] duration-150 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 hover:border-primary/50 hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                       >
                         <div class="flex items-start justify-between gap-3">
                           <div class="min-w-0">

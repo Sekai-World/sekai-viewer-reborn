@@ -16,6 +16,9 @@
     cn: "CN"
   };
 
+  const primaryTitle = "Primary";
+  const secondaryTitle = "Secondary";
+
   let primaryRegion = $state<SupportedRegion>(supportedRegions[0]);
   let secondaryRegion = $state<SupportedRegion>(supportedRegions[1] ?? supportedRegions[0]);
 
@@ -41,46 +44,51 @@
 <ViewerShell
   drawerId="account-site-drawer"
   navTitle="Sekai Account"
-  navBadge="Profile"
   siteVersion={data.siteVersion}
   {sidebarItems}
 >
-  <RegionSwitcher
-    options={regionOptions}
-    primaryValue={primaryRegion}
-    secondaryValue={secondaryRegion}
-    primaryTitle="Primary"
-    secondaryTitle="Secondary"
-    onSelectPrimary={(region: string) => {
-      primaryRegion = region as SupportedRegion;
-    }}
-    onSelectSecondary={(region: string) => {
-      secondaryRegion = region as SupportedRegion;
-    }}
-  />
+  {#snippet navActions()}
+    <RegionSwitcher
+      options={regionOptions}
+      primaryValue={primaryRegion}
+      secondaryValue={secondaryRegion}
+      {primaryTitle}
+      {secondaryTitle}
+      onSelectPrimary={(region: string) => {
+        primaryRegion = region as SupportedRegion;
+      }}
+      onSelectSecondary={(region: string) => {
+        secondaryRegion = region as SupportedRegion;
+      }}
+    />
+  {/snippet}
   {#if supportPageUrl}
     <div class="flex justify-end">
       <a class="btn btn-ghost btn-sm min-h-11" href={supportPageUrl}>Support this project</a>
     </div>
   {/if}
 
-  <section class="flex flex-col gap-4 md:flex-row md:flex-wrap md:justify-center">
+  <section class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
     {#each supportedRegions as region (region)}
       <article
         id={`region-${region}`}
-        class="card w-full bg-base-100 shadow-sm md:w-[calc(50%-0.5rem)] lg:w-[calc((100%-2rem)/3)]"
+        class="card w-full border border-(--archive-border-subtle) bg-(--archive-surface-default)"
       >
         <div class="card-body">
           <div class="flex items-center justify-between">
             <h2 class="card-title">{regionLabels[region]}</h2>
             <div class="flex gap-1">
-              <span class={`badge ${primaryRegion === region ? "badge-primary" : "badge-ghost"}`}>
-                P
+              <span
+                class={`badge ${primaryRegion === region ? "badge-primary" : "badge-ghost"}`}
+                title={primaryTitle}
+              >
+                <span class="sr-only">{primaryTitle}</span><span aria-hidden="true">P</span>
               </span>
               <span
                 class={`badge ${secondaryRegion === region ? "badge-secondary" : "badge-ghost"}`}
+                title={secondaryTitle}
               >
-                S
+                <span class="sr-only">{secondaryTitle}</span><span aria-hidden="true">S</span>
               </span>
             </div>
           </div>

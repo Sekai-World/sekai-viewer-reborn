@@ -36,6 +36,7 @@
       seVolume: string;
       loading: string;
       loadFailed: string;
+      retry: string;
       warnings: string;
       phaseAssets: string;
       phaseModels: string;
@@ -370,7 +371,7 @@
       <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5">
         <button
           type="button"
-          class="grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 disabled:cursor-default disabled:opacity-40"
+          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70 disabled:bg-black/45 disabled:text-white/40"
           aria-label={labels.previous}
           title={labels.previous}
           onclick={() => {
@@ -383,8 +384,8 @@
         </button>
         <button
           type="button"
-          class={`grid size-9 place-items-center rounded-full text-[10px] font-bold tracking-wide backdrop-blur-sm transition-colors disabled:cursor-default disabled:opacity-40 ${
-            autoplay ? "bg-green-600 text-white" : "bg-black/45 text-white hover:bg-black/70"
+          class={`btn btn-circle btn-sm touch-target border-0 text-[10px] font-bold tracking-wide shadow-none disabled:bg-black/45 disabled:text-white/40 ${
+            autoplay ? "btn-success" : "bg-black/45 text-white hover:bg-black/70"
           }`}
           aria-pressed={autoplay}
           aria-label={labels.autoplay}
@@ -399,7 +400,7 @@
         </button>
         <button
           type="button"
-          class="grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70 disabled:cursor-default disabled:opacity-40"
+          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70 disabled:bg-black/45 disabled:text-white/40"
           aria-label={labels.next}
           title={labels.next}
           onclick={() => {
@@ -413,7 +414,7 @@
         </button>
         <button
           type="button"
-          class="grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
+          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70"
           aria-label={labels.fullscreen}
           title={labels.fullscreen}
           aria-pressed={isFullscreen}
@@ -436,10 +437,8 @@
           {#each selectableChoices as choice, index (choice)}
             <button
               type="button"
-              class={`max-w-xs truncate rounded-full px-5 py-2 text-sm backdrop-blur-sm transition-colors ${
-                chosenChoice === index
-                  ? "bg-primary text-primary-content"
-                  : "bg-black/60 text-white hover:bg-black/80"
+              class={`btn btn-sm touch-target max-w-xs truncate rounded-full border-0 shadow-none ${
+                chosenChoice === index ? "btn-primary" : "bg-black/60 text-white hover:bg-black/80"
               }`}
               onclick={() => chooseSelectable(index)}
             >
@@ -451,10 +450,20 @@
     {/if}
     {#if loadFailed}
       <div class="absolute inset-0 grid place-items-center bg-black/70 text-base-100">
-        <p class="flex items-center gap-2 text-sm" role="alert">
-          <Icon icon="mdi:alert-circle-outline" class="size-5" aria-hidden="true" />
-          {labels.loadFailed}
-        </p>
+        <div class="flex flex-col items-center gap-3 px-6 text-center">
+          <p class="flex items-center gap-2 text-sm" role="alert">
+            <Icon icon="mdi:alert-circle-outline" class="size-5" aria-hidden="true" />
+            {labels.loadFailed}
+          </p>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline touch-target border-white/40 text-white hover:border-white hover:bg-white/10 hover:text-white"
+            onclick={() => startLoading()}
+          >
+            <Icon icon="mdi:reload" class="size-4" aria-hidden="true" />
+            {labels.retry}
+          </button>
+        </div>
       </div>
     {:else if portraitGate}
       <div class="absolute inset-0 z-20 grid place-items-center bg-black/80 text-base-100">
@@ -467,7 +476,7 @@
           <p class="text-sm text-white/90">{labels.rotateToPlay}</p>
           <button
             type="button"
-            class="grid size-12 place-items-center rounded-full bg-white/15 text-white backdrop-blur-sm transition-colors hover:bg-white/25"
+            class="btn btn-circle size-12! min-h-12! border-0 bg-white/15 text-white shadow-none hover:bg-white/25"
             aria-label={labels.fullscreen}
             title={labels.fullscreen}
             onclick={() => {
@@ -487,7 +496,12 @@
         </div>
       </div>
     {:else if playerState === "loading"}
-      <div class="absolute inset-0 grid place-items-center bg-black/70 text-base-100">
+      <div
+        class="absolute inset-0 grid place-items-center bg-black/70 text-base-100"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
         <div class="flex w-2/3 max-w-xs flex-col items-center gap-3">
           <span class="loading loading-spinner loading-md" aria-hidden="true"></span>
           <span class="text-sm">{labels.loading}</span>
@@ -522,14 +536,14 @@
     {#if playerState !== "loading" && !loadFailed && !portraitGate}
       {#if autoplay}
         <span
-          class="pointer-events-none absolute right-3 bottom-3 rounded bg-green-600 px-2 py-0.5 text-xs font-bold tracking-wide text-white"
+          class="badge badge-success pointer-events-none absolute right-3 bottom-3 font-bold tracking-wide"
           aria-hidden="true"
         >
           AUTO
         </span>
       {:else if playerState === "ready" && !selectableChoices}
         <span
-          class="pointer-events-none absolute right-3 bottom-3 rounded bg-black/45 px-2 py-0.5 text-xs text-white/80 backdrop-blur-sm"
+          class="pointer-events-none absolute right-3 bottom-3 rounded-field bg-black/45 px-2 py-0.5 text-xs text-white/80"
           aria-hidden="true"
         >
           {labels.tapToContinue}
