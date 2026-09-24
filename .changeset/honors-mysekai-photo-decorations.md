@@ -17,3 +17,5 @@ Give the Honors catalogue a clear page identity, active-region context, and labe
 Keep Character Missions in the Missions catalogue while expanding level goals in place with explicit target labels; remove repeated Character Rank reward references from mission rows.
 
 Move Character Rank rewards to Character detail pages with localized loading, empty, and failure states.
+
+Group the content-site sidebar into Library, Activities, and Progression sections instead of a single Explore section.

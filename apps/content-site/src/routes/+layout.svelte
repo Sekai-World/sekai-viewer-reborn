@@ -86,7 +86,9 @@
   let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
   let skipToMainLabel = $state(getInitialI18nText("aria.skipToMainContent"));
   let sidebarLabel = $state(getInitialI18nText("navigation.sidebarTitle"));
-  let exploreLabel = $state(getInitialI18nText("navigation.explore"));
+  let libraryLabel = $state(getInitialI18nText("navigation.library"));
+  let activitiesLabel = $state(getInitialI18nText("navigation.activities"));
+  let progressionLabel = $state(getInitialI18nText("navigation.progression"));
   let projectLabel = $state(getInitialI18nText("navigation.project"));
   let gameNewsLabel = $state(getInitialI18nText("navigation.gameNews"));
   let charactersLabel = $state(getInitialI18nText("navigation.characters"));
@@ -246,9 +248,22 @@
     navigationLinks[1],
     {
       type: "section",
-      label: exploreLabel
+      label: libraryLabel
     },
-    ...navigationLinks.slice(2, -1),
+    navigationLinks[2],
+    navigationLinks[3],
+    navigationLinks[4],
+    {
+      type: "section",
+      label: activitiesLabel
+    },
+    navigationLinks[5],
+    navigationLinks[6],
+    navigationLinks[7],
+    {
+      type: "section",
+      label: progressionLabel
+    },
     {
       label: missionsLabel,
       href: `/missions/${sidebarRegion}`,
@@ -353,7 +368,9 @@
     closeSidebarLabel = translate("aria.closeSidebar");
     skipToMainLabel = translate("aria.skipToMainContent");
     sidebarLabel = translate("navigation.sidebarTitle");
-    exploreLabel = translate("navigation.explore");
+    libraryLabel = translate("navigation.library");
+    activitiesLabel = translate("navigation.activities");
+    progressionLabel = translate("navigation.progression");
     projectLabel = translate("navigation.project");
     gameNewsLabel = translate("navigation.gameNews");
     charactersLabel = translate("navigation.characters");
