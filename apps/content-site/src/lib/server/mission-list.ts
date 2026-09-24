@@ -286,16 +286,16 @@ export const fetchMissionParameterGroupLevels = async (
   };
 };
 
-// The Master API caps lookup pages at 100 items; per-character lists span a few pages at most.
-const CHARACTER_LOOKUP_PAGE_SIZE = 100;
-const MAX_CHARACTER_LOOKUP_PAGES = 10;
+// The Master API caps lookup pages at 100 items; complete lists here span a few pages at most.
+const FULL_LIST_PAGE_SIZE = 100;
+const MAX_FULL_LIST_PAGES = 10;
 
-const fetchAllCharacterLookupPages = async (
+const fetchAllLookupPages = async (
   label: string,
   fetchPage: (page: number) => Promise<{ data?: unknown; error?: unknown }>
 ): Promise<unknown[]> => {
   const items: unknown[] = [];
-  for (let page = 1; page <= MAX_CHARACTER_LOOKUP_PAGES; page += 1) {
+  for (let page = 1; page <= MAX_FULL_LIST_PAGES; page += 1) {
     const response = await fetchPage(page);
     if (response.error || !response.data) {
       throw new Error(`Failed to load ${label}.`);
@@ -306,13 +306,11 @@ const fetchAllCharacterLookupPages = async (
     }
     items.push(...pageItems);
     const metadata = parseCataloguePaginationMetadata(response.data, "Mission");
-    if (
-      !getCatalogueHasNext(metadata, page, CHARACTER_LOOKUP_PAGE_SIZE, pageItems.length, "Mission")
-    ) {
+    if (!getCatalogueHasNext(metadata, page, FULL_LIST_PAGE_SIZE, pageItems.length, "Mission")) {
       return items;
     }
   }
-  throw new Error(`${label} exceeded ${MAX_CHARACTER_LOOKUP_PAGES} pages.`);
+  throw new Error(`${label} exceeded ${MAX_FULL_LIST_PAGES} pages.`);
 };
 
 const parseCharacterRankReference = (item: unknown): CharacterRankReference | null => {
@@ -340,11 +338,11 @@ export const fetchCharacterRankReferences = async (
   region: string,
   characterId: number
 ): Promise<CharacterRankReference[]> => {
-  const items = await fetchAllCharacterLookupPages("Character Rank references", (page) =>
+  const items = await fetchAllLookupPages("Character Rank references", (page) =>
     getCharacterRanksByRegionList({
       baseUrl: getMasterApiV1BaseUrl(baseUrl),
       path: { region },
-      query: { character_id: characterId, page, page_size: CHARACTER_LOOKUP_PAGE_SIZE }
+      query: { character_id: characterId, page, page_size: FULL_LIST_PAGE_SIZE }
     })
   );
   return items
@@ -355,33 +353,45 @@ export const fetchCharacterRankReferences = async (
     .sort((left, right) => (left.characterRank ?? 0) - (right.characterRank ?? 0));
 };
 
-export const fetchCharacterMissions = async (
+const fetchCompleteMissionFamily = async (
   baseUrl: string,
   region: string,
-  characterId: number
+  family: MissionFamily,
+  filters: { characterId?: number } = {}
 ): Promise<Mission[]> => {
-  const items = await fetchAllCharacterLookupPages("character missions", (page) =>
+  const items = await fetchAllLookupPages(`${family} missions`, (page) =>
     getMissionsByRegionList({
       baseUrl: getMasterApiV1BaseUrl(baseUrl),
       path: { region },
       query: {
-        family: "characterMissionV2s",
-        character_id: String(characterId),
+        family,
+        ...(filters.characterId === undefined ? {} : { character_id: String(filters.characterId) }),
         page,
-        page_size: CHARACTER_LOOKUP_PAGE_SIZE,
-        sort_by: "seq",
+        page_size: FULL_LIST_PAGE_SIZE,
+        // Story missions have no seq; their IDs follow the target order.
+        sort_by: family === "storyMissions" ? "id" : "seq",
         sort_order: "asc"
       }
     })
   );
   const seen = new Set<number>();
   return items.flatMap((item) => {
-    const mission = parseMission(item, "characterMissionV2s");
+    const mission = parseMission(item, family);
     if (!mission || seen.has(mission.id)) return [];
     seen.add(mission.id);
     return [mission];
   });
 };
+
+export const fetchCharacterMissions = (
+  baseUrl: string,
+  region: string,
+  characterId: number
+): Promise<Mission[]> =>
+  fetchCompleteMissionFamily(baseUrl, region, "characterMissionV2s", { characterId });
+
+export const fetchStoryMissions = (baseUrl: string, region: string): Promise<Mission[]> =>
+  fetchCompleteMissionFamily(baseUrl, region, "storyMissions");
 
 export const parseMission = (payload: unknown, family: MissionFamily): Mission | null => {
   const root = getObject(payload);

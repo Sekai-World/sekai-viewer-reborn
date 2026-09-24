@@ -1,13 +1,11 @@
 import type { CharacterRankReference, Mission, MissionResourceBoxDetail } from "./mission";
+import { summarizeRewardLadder, type RewardLadderSummary, type RewardTotal } from "./reward-ladder";
 
-export type CharacterRankRewardTotal = { resourceType: string; quantity: number };
+export type CharacterRankRewardTotal = RewardTotal;
 
-export type CharacterRankSummary = {
+export type CharacterRankSummary = RewardLadderSummary<CharacterRankReference> & {
   rankCount: number;
   maxPowerBonusRate: number | null;
-  totals: CharacterRankRewardTotal[];
-  /** Ranks whose rewards differ from the most common reward set; ranks without rewards are skipped. */
-  milestones: CharacterRankReference[];
 };
 
 export type CharacterMissionSummary = {
@@ -17,75 +15,18 @@ export type CharacterMissionSummary = {
   isExtra: boolean;
 };
 
-const TOTAL_ORDER = [
-  "jewel",
-  "honor",
-  "bonds_honor",
-  "material",
-  "stamp",
-  "avatar_costume",
-  "coin",
-  "virtual_coin"
-];
-
 export const getCharacterRankRewardDetails = (
   rank: CharacterRankReference
 ): MissionResourceBoxDetail[] => rank.rewards.flatMap((box) => box.details);
 
-const rewardSignature = (rank: CharacterRankReference): string =>
-  getCharacterRankRewardDetails(rank)
-    .map((detail) => `${detail.resourceType ?? ""}:${detail.resourceQuantity ?? ""}`)
-    .sort((left, right) => left.localeCompare(right))
-    .join("|");
-
-const totalOrder = (resourceType: string): number => {
-  const index = TOTAL_ORDER.indexOf(resourceType);
-  return index === -1 ? TOTAL_ORDER.length : index;
-};
-
 export const summarizeCharacterRanks = (ranks: CharacterRankReference[]): CharacterRankSummary => {
-  const signatureCounts = new Map<string, number>();
-  const totals = new Map<string, number>();
-  let maxPowerBonusRate: number | null = null;
-
-  for (const rank of ranks) {
-    const signature = rewardSignature(rank);
-    if (signature) signatureCounts.set(signature, (signatureCounts.get(signature) ?? 0) + 1);
-    for (const detail of getCharacterRankRewardDetails(rank)) {
-      if (!detail.resourceType) continue;
-      totals.set(
-        detail.resourceType,
-        (totals.get(detail.resourceType) ?? 0) + (detail.resourceQuantity ?? 1)
-      );
-    }
-    if (rank.powerBonusRate !== null) {
-      maxPowerBonusRate = Math.max(maxPowerBonusRate ?? rank.powerBonusRate, rank.powerBonusRate);
-    }
-  }
-
-  let standardSignature: string | null = null;
-  let standardCount = 0;
-  for (const [signature, count] of signatureCounts) {
-    if (count > standardCount) {
-      standardSignature = signature;
-      standardCount = count;
-    }
-  }
-
+  const bonusRates = ranks.flatMap((rank) =>
+    rank.powerBonusRate === null ? [] : [rank.powerBonusRate]
+  );
   return {
+    ...summarizeRewardLadder(ranks, getCharacterRankRewardDetails),
     rankCount: ranks.length,
-    maxPowerBonusRate,
-    totals: [...totals]
-      .map(([resourceType, quantity]) => ({ resourceType, quantity }))
-      .sort(
-        (left, right) =>
-          totalOrder(left.resourceType) - totalOrder(right.resourceType) ||
-          left.resourceType.localeCompare(right.resourceType)
-      ),
-    milestones: ranks.filter((rank) => {
-      const signature = rewardSignature(rank);
-      return signature !== "" && signature !== standardSignature;
-    })
+    maxPowerBonusRate: bonusRates.length > 0 ? Math.max(...bonusRates) : null
   };
 };
 

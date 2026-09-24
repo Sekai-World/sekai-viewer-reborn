@@ -4,6 +4,7 @@
   import { goto, invalidateAll } from "$app/navigation";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import MissionCatalogue from "$lib/components/mission/MissionCatalogue.svelte";
+  import StoryMissionsCard from "$lib/components/mission/StoryMissionsCard.svelte";
   import { groupMissionsByFamily } from "$lib/components/mission/catalogue-groups";
   import {
     missionFamilies,
@@ -151,12 +152,44 @@
     const replacement = requirement === null ? "…" : formatNumber(requirement);
     return value.replaceAll("{requirement}", replacement).replaceAll("{progress}", replacement);
   };
+  const knownRewardTypes = new Set([
+    "coin",
+    "jewel",
+    "gacha_ticket",
+    "material",
+    "honor",
+    "bonds_honor",
+    "virtual_coin"
+  ]);
+  const resourceLabel = (type: string | null): string =>
+    type && knownRewardTypes.has(type) ? t(`mission.resource.${type}`) : t("mission.reward");
+  const rewardLabelsOf = (item: Mission): string[] =>
+    item.rewards
+      .flatMap((reward) =>
+        reward.resourceBox?.details.length
+          ? reward.resourceBox.details
+          : reward.resourceType
+            ? [reward]
+            : []
+      )
+      .map((reward) =>
+        reward.resourceQuantity === null
+          ? resourceLabel(reward.resourceType)
+          : `${resourceLabel(reward.resourceType)} ×${formatNumber(reward.resourceQuantity)}`
+      );
+  // Story missions carry no text, so their target and rewards stand in for a sentence.
+  const storyMissionText = (item: Mission, rewardLabels: string[]): string =>
+    item.requirement === null
+      ? t("mission.storyUnnamed").replace("{id}", formatNumber(item.id))
+      : [
+          t("mission.requirement").replace("{count}", formatNumber(item.requirement)),
+          ...rewardLabels
+        ].join(" · ");
   const toItem = (item: Mission) => {
     const targetLevels = getTargetLevels(item);
+    const rewardLabels = rewardLabelsOf(item);
     const fallbackSentence =
-      item.family === "storyMissions"
-        ? t("mission.storyUnnamed").replace("{id}", formatNumber(item.id))
-        : t("mission.unnamed");
+      item.family === "storyMissions" ? storyMissionText(item, rewardLabels) : t("mission.unnamed");
     const sentenceRequirement =
       item.family === "characterMissionV2s"
         ? targetLevels.length === 1
@@ -183,10 +216,11 @@
     return {
       key: `${item.family}-${item.id}`,
       sentence: formatMissionTemplate(item.sentence ?? fallbackSentence, sentenceRequirement),
+      // Normal mission text already states its target; story text is built from it.
       requirementLabel:
-        item.family === "characterMissionV2s" || item.requirement === null
-          ? null
-          : t("mission.requirement").replace("{count}", formatNumber(item.requirement)),
+        item.family === "normalMissions" && !item.sentence && item.requirement !== null
+          ? t("mission.requirement").replace("{count}", formatNumber(item.requirement))
+          : null,
       targetLevelsLabel:
         !group && targetLevels.length > 0
           ? targetLevels.length <= 3
@@ -237,25 +271,7 @@
               onLoadMore: () => void loadLevels(groupId)
             }
           : null,
-      rewardLabels: item.rewards
-        .flatMap((reward) =>
-          reward.resourceBox?.details.length
-            ? reward.resourceBox.details
-            : reward.resourceType
-              ? [reward]
-              : []
-        )
-        .map((reward) => {
-          const type = reward.resourceType;
-          const label =
-            type &&
-            ["coin", "jewel", "material", "honor", "bonds_honor", "virtual_coin"].includes(type)
-              ? t(`mission.resource.${type}`)
-              : t("mission.reward");
-          return reward.resourceQuantity === null
-            ? label
-            : `${label} ×${formatNumber(reward.resourceQuantity)}`;
-        })
+      rewardLabels
     };
   };
   const familyCountLabel = (summary: FamilySummaryState): string => {
@@ -412,8 +428,21 @@
   ></svelte:head
 >
 
+{#snippet storyMissionsContent()}
+  {#if data.storyMissions}
+    <StoryMissionsCard
+      missions={data.storyMissions}
+      locale={data.uiLocale}
+      {t}
+      {resourceLabel}
+      onRetry={() => void invalidateAll()}
+    />
+  {/if}
+{/snippet}
+
 <MissionCatalogue
   {labels}
+  content={data.storyMissions ? storyMissionsContent : undefined}
   homeHref={resolve("/")}
   {regions}
   groups={!data.query.family

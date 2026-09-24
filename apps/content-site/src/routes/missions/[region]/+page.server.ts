@@ -3,6 +3,7 @@ import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   createEmptyMissionListPage,
   fetchMissionListPage,
+  fetchStoryMissions,
   parseMissionFamily
 } from "$lib/server/mission-list";
 import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
@@ -16,6 +17,8 @@ type MissionFamilyOverview = {
   family: MissionFamily;
   summary: Promise<{ items: Mission[]; total: number | null; loadFailed: boolean }>;
 };
+
+type StoryMissionLadder = Promise<{ items: Mission[]; loadFailed: boolean }>;
 
 export const load: PageServerLoad = ({ params, url }) => {
   const region = normalizeRegion(params.region);
@@ -37,12 +40,32 @@ export const load: PageServerLoad = ({ params, url }) => {
         .catch(() => ({ items: [], total: null, loadFailed: true }))
     }));
 
-    return { region, query, catalogue: null, familyOverviews };
+    return { region, query, catalogue: null, familyOverviews, storyMissions: null };
+  }
+
+  if (query.family === "storyMissions") {
+    // Story missions have no text; the page shows the whole target ladder instead of paging it.
+    const storyMissions: StoryMissionLadder = fetchStoryMissions(baseUrl, region)
+      .then((items) => ({ items, loadFailed: false }))
+      .catch(() => ({ items: [], loadFailed: true }));
+    return {
+      region,
+      query,
+      catalogue: null,
+      familyOverviews: [] as MissionFamilyOverview[],
+      storyMissions
+    };
   }
 
   const catalogue = fetchMissionListPage(baseUrl, region, [query.family], 1)
     .then((page) => ({ ...page, loadFailed: false as const }))
     .catch(() => ({ ...createEmptyMissionListPage(1), loadFailed: true as const }));
 
-  return { region, query, catalogue, familyOverviews: [] as MissionFamilyOverview[] };
+  return {
+    region,
+    query,
+    catalogue,
+    familyOverviews: [] as MissionFamilyOverview[],
+    storyMissions: null
+  };
 };

@@ -43,5 +43,13 @@
   "mission.onThisPage": "On this page: {count}",
   "mission.family.storyMissions": "Story missions",
   "mission.family.characterMissionV2s": "Character missions",
-  "mission.family.normalMissions": "Normal missions"
+  "mission.family.normalMissions": "Normal missions",
+  "mission.resource.gacha_ticket": "Gacha tickets",
+  "mission.noRewards": "No rewards are listed.",
+  "mission.storyGoalCount": "{count} goals",
+  "mission.storyRewardTotals": "Rewards across all targets",
+  "mission.storyMilestonesTitle": "Milestone targets",
+  "mission.storyAllTitle": "All targets",
+  "mission.storyShowAll": "Show all {count} targets",
+  "mission.storyShowMilestones": "Show milestone targets only"
 }

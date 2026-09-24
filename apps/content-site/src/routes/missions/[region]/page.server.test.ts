@@ -33,6 +33,7 @@ type MissionPageLoadResult = {
     family: MissionFamily;
     summary: Promise<{ items: Mission[]; total: number | null; loadFailed: boolean }>;
   }[];
+  storyMissions: Promise<{ items: Mission[]; loadFailed: boolean }> | null;
 };
 
 const resolveCatalogue = (result: MissionPageLoadResult): Promise<CatalogueResult> => {
@@ -152,6 +153,51 @@ describe("mission catalogue page load", () => {
 
     await expect(character?.summary).resolves.toMatchObject({ total: 8, loadFailed: false });
     await expect(normal?.summary).resolves.toMatchObject({ total: 8, loadFailed: false });
+  });
+
+  it("loads the complete story mission ladder instead of a catalogue page", async () => {
+    getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) => {
+      const page = query.page ?? 1;
+      const items = Array.from({ length: page === 1 ? 100 : 20 }, (_, index) => ({
+        id: (page - 1) * 100 + index + 1,
+        requirement: ((page - 1) * 100 + index + 1) * 10,
+        resourceBoxId: 1
+      }));
+      return Promise.resolve({
+        data: {
+          items,
+          pagination: { page, page_size: 100, total: 120, total_pages: 2, has_next: page === 1 }
+        }
+      });
+    });
+
+    const result = (await runLoad(
+      "jp",
+      "?family=storyMissions"
+    )) as unknown as MissionPageLoadResult;
+
+    expect(result.query).toEqual({ family: "storyMissions" });
+    expect(result.catalogue).toBeNull();
+    expect(result.familyOverviews).toEqual([]);
+    const story = await result.storyMissions;
+    expect(story?.loadFailed).toBe(false);
+    expect(story?.items).toHaveLength(120);
+    expect(story?.items.at(-1)).toMatchObject({ id: 120, requirement: 1200 });
+    expect(getMissionsByRegionList.mock.calls.map(([request]) => request.query)).toEqual([
+      { family: "storyMissions", page: 1, page_size: 100, sort_by: "id", sort_order: "asc" },
+      { family: "storyMissions", page: 2, page_size: 100, sort_by: "id", sort_order: "asc" }
+    ]);
+  });
+
+  it("keeps the story tab usable when the story ladder fails to load", async () => {
+    getMissionsByRegionList.mockRejectedValue(new Error("master api unavailable"));
+
+    const result = (await runLoad(
+      "jp",
+      "?family=storyMissions"
+    )) as unknown as MissionPageLoadResult;
+
+    await expect(result.storyMissions).resolves.toEqual({ items: [], loadFailed: true });
   });
 
   it("preserves one selected family from legacy query values and always starts at page one", async () => {

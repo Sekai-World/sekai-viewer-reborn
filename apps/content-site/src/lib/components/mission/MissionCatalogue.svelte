@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type ComponentProps } from "svelte";
+  import { type ComponentProps, type Snippet } from "svelte";
   import type { MissionFamily } from "$lib/domain/mission";
   import { missionFamilies } from "$lib/domain/mission";
   import CatalogueFrame from "./CatalogueFrame.svelte";
@@ -57,6 +57,7 @@
     loadMoreError = null,
     onLoadMore,
     onRetryLoadMore,
+    content,
     ...frame
   }: Omit<
     ComponentProps<typeof CatalogueFrame>,
@@ -79,6 +80,8 @@
     loadMoreError?: string | null;
     onLoadMore?: () => void;
     onRetryLoadMore?: () => void;
+    /** Replaces the group list, for families rendered as a single custom view. */
+    content?: Snippet;
   } = $props();
 
   let sentinel: HTMLDivElement | null = $state(null);
@@ -258,7 +261,7 @@
 {/snippet}
 
 <div id={resultsId}>
-  <CatalogueFrame {...frame} empty={groups.length === 0} {controls}>
+  <CatalogueFrame {...frame} empty={!content && groups.length === 0} {controls}>
     {#snippet loadingPlaceholder()}
       <div class="flex flex-col gap-4">
         {#each Array.from({ length: loadingGroupCount }) as _, index (index)}
@@ -272,97 +275,101 @@
       </div>
     {/snippet}
     {#key catalogueKey}
-      <div class={overview ? "grid min-w-0 gap-4 lg:grid-cols-3" : "flex min-w-0 flex-col gap-4"}>
-        {#each groups as group (group.family)}
-          <section
-            class="content-card-shell min-w-0 rounded-2xl p-4"
-            aria-busy={group.status === "loading" ? "true" : undefined}
-          >
-            <div class="pb-4">{@render heading(group)}</div>
-            {#if overview}
-              {#if group.status === "loading"}
-                <p role="status" class="sr-only">{group.statusLabel}</p>
-                <div
-                  class="space-y-3 border-t border-(--archive-border-subtle) py-3"
-                  aria-hidden="true"
-                >
-                  {#each ["w-4/5", "w-3/5", "w-2/3"] as width (width)}
-                    <div class="h-4 rounded bg-(--archive-surface-sunken) {width}"></div>
-                  {/each}
-                </div>
-              {:else if group.status === "error"}
-                <div
-                  class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--archive-border-subtle) py-3"
-                >
-                  <p role="alert" class="text-sm text-error">{group.statusLabel}</p>
-                  {#if frame.onRetry}
-                    <button
-                      type="button"
-                      class="btn btn-link min-h-11 px-0"
-                      onclick={frame.onRetry}
-                    >
-                      {frame.labels.retry}
-                    </button>
-                  {/if}
-                </div>
-              {:else if group.items.length}
-                <ul class="space-y-2 border-t border-(--archive-border-subtle) py-3 text-sm">
-                  {#each group.items as item (item.key)}
-                    <li class="wrap-anywhere text-(--archive-text-muted)">{item.sentence}</li>
-                  {/each}
-                </ul>
-              {/if}
-              <button
-                type="button"
-                class="btn btn-link min-h-11 px-0"
-                onclick={() => onFamilyChange(group.family)}
-              >
-                {group.browseLabel}
-              </button>
-            {:else}
-              {@render members(group)}
-            {/if}
-          </section>
-        {/each}
-
-        {#if !overview}
-          {#if loadMoreError}
-            <div
-              class="flex flex-col items-center justify-center gap-3 p-4 text-center"
-              role="status"
+      {#if content}
+        {@render content()}
+      {:else}
+        <div class={overview ? "grid min-w-0 gap-4 lg:grid-cols-3" : "flex min-w-0 flex-col gap-4"}>
+          {#each groups as group (group.family)}
+            <section
+              class="content-card-shell min-w-0 rounded-2xl p-4"
+              aria-busy={group.status === "loading" ? "true" : undefined}
             >
-              <p class="text-sm text-error">{loadMoreError}</p>
-              {#if onRetryLoadMore}
-                <button type="button" class="btn min-h-11" onclick={onRetryLoadMore}>
-                  {frame.labels.retry}
-                </button>
-              {/if}
-            </div>
-          {:else if hasNext}
-            <div
-              bind:this={sentinel}
-              class="flex min-h-20 items-center justify-center gap-3 p-4 text-sm text-(--archive-text-muted)"
-              role="status"
-              aria-live="polite"
-            >
-              {#if isLoadingMore}
-                <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
-                <span>{loadingMoreLabel}</span>
-              {:else if onLoadMore}
-                <button type="button" class="btn min-h-11" onclick={onLoadMore}>
-                  {loadMoreLabel}
+              <div class="pb-4">{@render heading(group)}</div>
+              {#if overview}
+                {#if group.status === "loading"}
+                  <p role="status" class="sr-only">{group.statusLabel}</p>
+                  <div
+                    class="space-y-3 border-t border-(--archive-border-subtle) py-3"
+                    aria-hidden="true"
+                  >
+                    {#each ["w-4/5", "w-3/5", "w-2/3"] as width (width)}
+                      <div class="h-4 rounded bg-(--archive-surface-sunken) {width}"></div>
+                    {/each}
+                  </div>
+                {:else if group.status === "error"}
+                  <div
+                    class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--archive-border-subtle) py-3"
+                  >
+                    <p role="alert" class="text-sm text-error">{group.statusLabel}</p>
+                    {#if frame.onRetry}
+                      <button
+                        type="button"
+                        class="btn btn-link min-h-11 px-0"
+                        onclick={frame.onRetry}
+                      >
+                        {frame.labels.retry}
+                      </button>
+                    {/if}
+                  </div>
+                {:else if group.items.length}
+                  <ul class="space-y-2 border-t border-(--archive-border-subtle) py-3 text-sm">
+                    {#each group.items as item (item.key)}
+                      <li class="wrap-anywhere text-(--archive-text-muted)">{item.sentence}</li>
+                    {/each}
+                  </ul>
+                {/if}
+                <button
+                  type="button"
+                  class="btn btn-link min-h-11 px-0"
+                  onclick={() => onFamilyChange(group.family)}
+                >
+                  {group.browseLabel}
                 </button>
               {:else}
-                <span>{loadMoreLabel}</span>
+                {@render members(group)}
               {/if}
-            </div>
-          {:else}
-            <p class="p-4 text-center text-sm text-(--archive-text-muted)" role="status">
-              {endLabel}
-            </p>
+            </section>
+          {/each}
+
+          {#if !overview}
+            {#if loadMoreError}
+              <div
+                class="flex flex-col items-center justify-center gap-3 p-4 text-center"
+                role="status"
+              >
+                <p class="text-sm text-error">{loadMoreError}</p>
+                {#if onRetryLoadMore}
+                  <button type="button" class="btn min-h-11" onclick={onRetryLoadMore}>
+                    {frame.labels.retry}
+                  </button>
+                {/if}
+              </div>
+            {:else if hasNext}
+              <div
+                bind:this={sentinel}
+                class="flex min-h-20 items-center justify-center gap-3 p-4 text-sm text-(--archive-text-muted)"
+                role="status"
+                aria-live="polite"
+              >
+                {#if isLoadingMore}
+                  <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                  <span>{loadingMoreLabel}</span>
+                {:else if onLoadMore}
+                  <button type="button" class="btn min-h-11" onclick={onLoadMore}>
+                    {loadMoreLabel}
+                  </button>
+                {:else}
+                  <span>{loadMoreLabel}</span>
+                {/if}
+              </div>
+            {:else}
+              <p class="p-4 text-center text-sm text-(--archive-text-muted)" role="status">
+                {endLabel}
+              </p>
+            {/if}
           {/if}
-        {/if}
-      </div>
+        </div>
+      {/if}
     {/key}
   </CatalogueFrame>
 </div>

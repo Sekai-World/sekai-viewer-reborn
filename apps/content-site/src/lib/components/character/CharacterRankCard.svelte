@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import RewardLadder from "$lib/components/shared/RewardLadder.svelte";
   import {
     getCharacterRankRewardDetails,
     summarizeCharacterRanks,
@@ -16,8 +17,6 @@
     locale: string;
     t: (key: string, fallback: string) => string;
   } = $props();
-
-  let showAll = $state(false);
 
   const formatNumber = (value: number): string =>
     new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value);
@@ -45,17 +44,6 @@
   };
   const rankLabel = (rank: number | null): string =>
     t("characterRankLabel", "Rank {rank}").replace("{rank}", formatNumber(rank ?? 0));
-  const rewardsLabel = (rank: CharacterRankReference): string => {
-    const details = getCharacterRankRewardDetails(rank);
-    if (details.length === 0) return t("characterRankNoRewards", "No rewards are listed.");
-    return details
-      .map((detail) =>
-        detail.resourceQuantity === null
-          ? resourceLabel(detail.resourceType)
-          : `${resourceLabel(detail.resourceType)} ×${formatNumber(detail.resourceQuantity)}`
-      )
-      .join(" · ");
-  };
   const headerLabel = (summary: CharacterRankSummary): string =>
     [
       t("characterRankSummary", "{count} ranks").replace(
@@ -72,19 +60,6 @@
       .filter(Boolean)
       .join(" · ");
 </script>
-
-{#snippet rankRow(rank: CharacterRankReference)}
-  <li
-    class="flex items-baseline justify-between gap-3 border-b border-(--archive-border-subtle) py-2 text-sm"
-  >
-    <span class="shrink-0 font-medium text-(--archive-text-strong) tabular-nums">
-      {rankLabel(rank.characterRank)}
-    </span>
-    <span class="min-w-0 text-right wrap-anywhere text-(--archive-text-muted) tabular-nums">
-      {rewardsLabel(rank)}
-    </span>
-  </li>
-{/snippet}
 
 <article class="card content-card-shell shadow-sm" aria-labelledby="character-rank-title">
   <div class="card-body gap-4 p-3 sm:p-5">
@@ -140,62 +115,27 @@
           {t("characterRankEmpty", "No Character Rank rewards were found.")}
         </p>
       {:else}
-        {#if summary.totals.length > 0}
-          <dl
-            class="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5"
-            aria-label={t("characterRankTotalsLabel", "Rewards across all ranks")}
-          >
-            {#each summary.totals as total (total.resourceType)}
-              <div
-                class="content-card-inset grid gap-1 rounded-xl border border-(--archive-border-subtle) p-3"
-              >
-                <dt class="text-xs text-(--archive-text-muted)">
-                  {resourceLabel(total.resourceType)}
-                </dt>
-                <dd class="text-lg font-semibold text-(--archive-text-strong) tabular-nums">
-                  {formatNumber(total.quantity)}
-                </dd>
-              </div>
-            {/each}
-          </dl>
-        {/if}
-
-        <section class="grid gap-2" aria-labelledby="character-rank-list-title">
-          <h3
-            id="character-rank-list-title"
-            class="text-sm font-semibold text-(--archive-text-strong)"
-          >
-            {showAll
-              ? t("characterRankAllTitle", "All ranks")
-              : t("characterRankMilestonesTitle", "Milestone ranks")}
-          </h3>
-          {#if showAll}
-            <ul class="max-h-96 overflow-y-auto pr-1">
-              {#each result.items as rank (rank.characterRank)}
-                {@render rankRow(rank)}
-              {/each}
-            </ul>
-          {:else if summary.milestones.length > 0}
-            <ul class="grid gap-x-8 sm:grid-cols-2">
-              {#each summary.milestones as rank (rank.characterRank)}
-                {@render rankRow(rank)}
-              {/each}
-            </ul>
-          {/if}
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm min-h-10 self-start"
-            aria-expanded={showAll}
-            onclick={() => (showAll = !showAll)}
-          >
-            {showAll
-              ? t("characterRankShowMilestones", "Show milestone ranks only")
-              : t("characterRankShowAll", "Show all {count} ranks").replace(
-                  "{count}",
-                  formatNumber(summary.rankCount)
-                )}
-          </button>
-        </section>
+        <RewardLadder
+          steps={result.items}
+          {summary}
+          idPrefix="character-rank"
+          {locale}
+          getKey={(rank) => rank.characterRank ?? 0}
+          getLabel={(rank) => rankLabel(rank.characterRank)}
+          getDetails={getCharacterRankRewardDetails}
+          {resourceLabel}
+          labels={{
+            totals: t("characterRankTotalsLabel", "Rewards across all ranks"),
+            milestones: t("characterRankMilestonesTitle", "Milestone ranks"),
+            all: t("characterRankAllTitle", "All ranks"),
+            showAll: t("characterRankShowAll", "Show all {count} ranks").replace(
+              "{count}",
+              formatNumber(summary.rankCount)
+            ),
+            showMilestones: t("characterRankShowMilestones", "Show milestone ranks only"),
+            noRewards: t("characterRankNoRewards", "No rewards are listed.")
+          }}
+        />
       {/if}
     {/await}
   </div>

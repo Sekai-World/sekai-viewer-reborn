@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import type { ComponentProps } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mission, MissionFamily } from "$lib/domain/mission";
@@ -37,21 +37,56 @@ const makeMission = (family: MissionFamily, id: number, sentence: string | null)
   storyMissionType: null
 });
 
+const rewardOf = (resourceType: string, resourceQuantity: number): Mission["rewards"][number] => ({
+  id: null,
+  missionId: null,
+  missionType: null,
+  resourceBox: {
+    id: 1,
+    resourceBoxPurpose: "mission_reward",
+    resourceBoxType: "expand",
+    details: [
+      {
+        resourceBoxId: 1,
+        resourceBoxPurpose: "mission_reward",
+        resourceId: null,
+        resourceLevel: null,
+        resourceQuantity,
+        resourceType,
+        seq: 1
+      }
+    ]
+  },
+  resourceBoxId: 1,
+  resourceBoxIds: [],
+  resourceBoxPurpose: "mission_reward",
+  resourceId: null,
+  resourceLevel: null,
+  resourceQuantity: null,
+  resourceType: null,
+  seq: 1,
+  status: "resolved"
+});
+
 type PageData = ComponentProps<typeof MissionsPage>["data"];
 type Catalogue = Awaited<NonNullable<PageData["catalogue"]>>;
 type SuccessfulCatalogue = Extract<Catalogue, { loadFailed: false }>;
 type FamilyOverview = PageData["familyOverviews"][number];
 
+type StoryLadder = { story: { items: Mission[]; loadFailed: boolean } };
+
 const data = (
-  catalogue: Catalogue | FamilyOverview[],
+  catalogue: Catalogue | FamilyOverview[] | StoryLadder,
   family: MissionFamily | null = null,
   region: PageData["region"] = "jp"
 ): PageData => ({
   region,
   query: { family },
   ...(Array.isArray(catalogue)
-    ? { catalogue: null, familyOverviews: catalogue }
-    : { catalogue: Promise.resolve(catalogue), familyOverviews: [] }),
+    ? { catalogue: null, familyOverviews: catalogue, storyMissions: null }
+    : "story" in catalogue
+      ? { catalogue: null, familyOverviews: [], storyMissions: Promise.resolve(catalogue.story) }
+      : { catalogue: Promise.resolve(catalogue), familyOverviews: [], storyMissions: null }),
   uiLocale: "en",
   preferredRegion: region,
   globalNotices: [],
@@ -95,7 +130,10 @@ const data = (
   }
 });
 
-const renderPage = (catalogue: Catalogue | FamilyOverview[], family: MissionFamily | null = null) =>
+const renderPage = (
+  catalogue: Catalogue | FamilyOverview[] | StoryLadder,
+  family: MissionFamily | null = null
+) =>
   render(MissionsPage, {
     data: data(catalogue, family),
     params: { region: "jp" },
@@ -324,21 +362,53 @@ describe("Missions page", () => {
     expect(screen.queryByText(/Character Rank rewards/)).toBeNull();
   });
 
-  it("keeps scalar requirements for story and normal missions", async () => {
-    const mission = makeMission("storyMissions", 3, "Complete {requirement} stories");
-    renderPage(page([mission], { page: 1, hasNext: false }), "storyMissions");
+  it("shows normal mission text with resolved rewards and no repeated target", async () => {
+    const mission = makeMission("normalMissions", 3, "Clear 3 lives");
+    mission.rewards = [rewardOf("jewel", 50)];
+    renderPage(page([mission], { page: 1, hasNext: false }), "normalMissions");
 
-    expect(await screen.findByText("Complete 3 stories")).toBeTruthy();
-    expect(screen.getByText("Target: 3")).toBeTruthy();
+    expect(await screen.findByText("Clear 3 lives")).toBeTruthy();
+    expect(screen.getByText("Crystals ×50")).toBeTruthy();
+    expect(screen.queryByText("Target: 3")).toBeNull();
   });
 
-  it("uses the story mission ID when its sentence is missing and keeps its requirement", async () => {
-    const mission = makeMission("storyMissions", 42, null);
-    mission.requirement = 7;
-    renderPage(page([mission], { page: 1, hasNext: false }), "storyMissions");
+  it("renders story missions as a target ladder with reward totals and milestones", async () => {
+    const story = [10, 20, 30, 40].map((requirement, index) => {
+      const mission = makeMission("storyMissions", index + 1, null);
+      mission.requirement = requirement;
+      mission.rewards = [requirement === 40 ? rewardOf("jewel", 100) : rewardOf("gacha_ticket", 1)];
+      return mission;
+    });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    renderPage({ story: { items: story, loadFailed: false } }, "storyMissions");
 
-    expect(await screen.findByText("Story mission #42")).toBeTruthy();
-    expect(screen.getByText("Target: 7")).toBeTruthy();
+    expect(await screen.findByText("4 goals · 10 → 40")).toBeTruthy();
+    const totals = screen.getByLabelText("Rewards across all targets");
+    expect(within(totals).getByText("Gacha tickets")).toBeTruthy();
+    expect(within(totals).getByText("Crystals")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Milestone targets" })).toBeTruthy();
+    expect(screen.getByText("Target: 40")).toBeTruthy();
+    expect(screen.queryByText("Target: 10")).toBeNull();
+    expect(screen.queryByText(/Story mission #/)).toBeNull();
+    await fireEvent.click(screen.getByRole("button", { name: "Show all 4 targets" }));
+    expect(screen.getByText("Target: 10")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("previews story missions in All mode by target and reward", async () => {
+    const mission = makeMission("storyMissions", 1, null);
+    mission.requirement = 10;
+    mission.rewards = [rewardOf("gacha_ticket", 1)];
+    renderPage([
+      {
+        family: "storyMissions",
+        summary: Promise.resolve({ items: [mission], total: 200, loadFailed: false })
+      }
+    ]);
+
+    expect(await screen.findByText("Target: 10 · Gacha tickets ×1")).toBeTruthy();
   });
 
   it("keeps the localized unavailable status when Character Mission V2 levels are missing", async () => {

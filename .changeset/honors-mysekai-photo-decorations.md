@@ -27,3 +27,5 @@ Render Missions overview families as cards with a visible per-family loading ske
 Load 24 Honors per page so the first page fills a desktop viewport before the next page loads.
 
 Add Character Missions to Character detail pages, load every Character Rank instead of the first 100, and summarize ranks with reward totals and milestone ranks.
+
+Show Story missions as a target ladder with reward totals and milestone targets, preview them by target and reward, and drop the duplicate target line from Normal missions.
