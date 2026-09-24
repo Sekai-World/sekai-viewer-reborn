@@ -15,3 +15,5 @@ Render Live Master honors with the standard rarity-based local frame while keepi
 Give the Honors catalogue a clear page identity, active-region context, and labelled results region.
 
 Keep Character Missions in the Missions catalogue while expanding level goals in place with explicit target labels; remove repeated Character Rank reward references from mission rows.
+
+Move Character Rank rewards to Character detail pages with localized loading, empty, and failure states.

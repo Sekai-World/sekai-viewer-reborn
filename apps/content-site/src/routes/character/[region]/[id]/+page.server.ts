@@ -5,8 +5,10 @@ import {
   getGameCharactersRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
 import { normalizeRegion } from "$lib/i18n/region";
+import type { CharacterRankReference } from "$lib/domain/mission";
 import type { SupportedRegion } from "$lib/domain/regions";
 import { supportedRegions } from "$lib/domain/regions";
+import { getPositiveInteger } from "$lib/server/catalogue-data";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   normalizeCharacterAvailability,
@@ -16,10 +18,12 @@ import {
 import { parseCharacter, parseCharacterUnits } from "$lib/server/character-list";
 import { parseCharacterProfile } from "$lib/server/character-profile";
 import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
+import { fetchCharacterRankReferences } from "$lib/server/mission-list";
 import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 type CharacterPayload = { character: unknown; loadFailed: boolean };
+export type CharacterRanksPayload = { items: CharacterRankReference[]; loadFailed: boolean };
 
 const supportedRegionSet = new Set<SupportedRegion>(supportedRegions);
 
@@ -145,6 +149,14 @@ export const load: PageServerLoad = async ({ params }) => {
         .catch(() => ({ character: null, loadFailed: true as const }))
     : Promise.resolve({ character: null, loadFailed: false as const });
 
+  const rankCharacterId = getPositiveInteger(characterId);
+  const characterRanks: Promise<CharacterRanksPayload> =
+    rankCharacterId === null
+      ? Promise.resolve({ items: [], loadFailed: false })
+      : fetchCharacterRankReferences(baseUrl, region, rankCharacterId)
+          .then((items) => ({ items, loadFailed: false }))
+          .catch(() => ({ items: [], loadFailed: true }));
+
   const availableRegions = characterId
     ? resolveAvailableRegions({
         baseUrl,
@@ -155,6 +167,7 @@ export const load: PageServerLoad = async ({ params }) => {
     : Promise.resolve([region]);
 
   payload.catch(() => {});
+  characterRanks.catch(() => {});
   availableRegions.catch(() => {});
-  return { region, characterId, payload, availableRegions };
+  return { region, characterId, payload, characterRanks, availableRegions };
 };

@@ -80,6 +80,30 @@
           "{count}",
           String(total)
         );
+  const rankLabel = (rank: number | null): string =>
+    t("characterRankLabel", "Rank {rank}").replace("{rank}", String(rank ?? 0));
+  const rankResourceLabel = (resourceType: string | null): string => {
+    switch (resourceType) {
+      case "coin":
+        return t("characterRankResource.coin", "Coins");
+      case "jewel":
+        return t("characterRankResource.jewel", "Crystals");
+      case "material":
+        return t("characterRankResource.material", "Material");
+      case "honor":
+        return t("characterRankResource.honor", "Honor");
+      case "bonds_honor":
+        return t("characterRankResource.bonds_honor", "Bonds honor");
+      case "virtual_coin":
+        return t("characterRankResource.virtual_coin", "Virtual coins");
+      default:
+        return t("characterRankReward", "Reward");
+    }
+  };
+  const rankRewardLabel = (resourceType: string | null, quantity: number | null): string =>
+    quantity === null
+      ? rankResourceLabel(resourceType)
+      : `${rankResourceLabel(resourceType)} ×${String(quantity)}`;
   const profileFactRows = (character: CharacterDetail): [string, string][] => {
     const profile = character.profile;
     if (!profile) return [];
@@ -302,6 +326,57 @@
               </div>
             </article>
           {/if}
+          <article class="card content-card-shell shadow-sm">
+            <div class="card-body gap-4 p-3 sm:p-5">
+              <h2
+                class="flex min-h-7 min-w-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"
+              >
+                <Icon icon="mdi:medal-outline" class="size-4 shrink-0" aria-hidden="true" />
+                <span>{t("characterRankTitle", "Character Rank")}</span>
+              </h2>
+              {#await data.characterRanks}
+                <p role="status" class="text-sm text-(--archive-text-muted)">
+                  {t("characterRankLoading", "Character Rank rewards are loading...")}
+                </p>
+              {:then rankResult}
+                {#if rankResult.loadFailed}
+                  <p class="text-sm text-error" role="alert">
+                    {t("characterRankLoadFailed", "Character Rank rewards could not be loaded.")}
+                  </p>
+                {:else if rankResult.items.length === 0}
+                  <p class="text-sm text-(--archive-text-muted)">
+                    {t("characterRankEmpty", "No Character Rank rewards were found.")}
+                  </p>
+                {:else}
+                  <ul
+                    class="divide-y divide-(--archive-border-subtle) border-t border-(--archive-border-subtle)"
+                  >
+                    {#each rankResult.items as rank, rankIndex (rank.characterRank ?? rankIndex)}
+                      {@const rewards = rank.rewards.flatMap((box) => box.details)}
+                      <li class="space-y-2 py-3 first:pt-3 last:pb-0">
+                        <h3 class="text-sm font-semibold text-(--archive-text-strong)">
+                          {rankLabel(rank.characterRank)}
+                        </h3>
+                        {#if rewards.length > 0}
+                          <ul class="space-y-1 text-sm text-(--archive-text-muted) tabular-nums">
+                            {#each rewards as reward, index (`${rank.characterRank ?? rankIndex}-${index}`)}
+                              <li>
+                                {rankRewardLabel(reward.resourceType, reward.resourceQuantity)}
+                              </li>
+                            {/each}
+                          </ul>
+                        {:else}
+                          <p class="text-sm text-(--archive-text-muted)">
+                            {t("characterRankNoRewards", "No rewards are listed.")}
+                          </p>
+                        {/if}
+                      </li>
+                    {/each}
+                  </ul>
+                {/if}
+              {/await}
+            </div>
+          </article>
           <article class="card content-card-shell shadow-sm">
             <div class="card-body gap-4 p-3 sm:p-5">
               <section class="space-y-3" aria-labelledby="character-related-cards-title">

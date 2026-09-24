@@ -22,5 +22,18 @@
   "characterLatestCardsTitle": "Latest cards",
   "characterViewAllCards": "View all",
   "characterViewAllCardsWithCount": "View all ({count})",
-  "characterCardsEmpty": "No related cards were found."
+  "characterCardsEmpty": "No related cards were found.",
+  "characterRankTitle": "Character Rank",
+  "characterRankLabel": "Rank {rank}",
+  "characterRankLoading": "Character Rank rewards are loading...",
+  "characterRankLoadFailed": "Character Rank rewards could not be loaded.",
+  "characterRankEmpty": "No Character Rank rewards were found.",
+  "characterRankNoRewards": "No rewards are listed.",
+  "characterRankResource.coin": "Coins",
+  "characterRankResource.jewel": "Crystals",
+  "characterRankResource.material": "Material",
+  "characterRankResource.honor": "Honor",
+  "characterRankResource.bonds_honor": "Bonds honor",
+  "characterRankResource.virtual_coin": "Virtual coins",
+  "characterRankReward": "Reward"
 }
