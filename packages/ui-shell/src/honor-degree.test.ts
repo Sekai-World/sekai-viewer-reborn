@@ -55,12 +55,16 @@ describe("HonorDegree", () => {
         ...Array.from({ length: 5 }, () => "/local/honor/icon_degreeLv"),
         ...Array.from({ length: 2 }, () => "/local/honor/icon_degreeLv6")
       ]);
-      expect(images.slice(0, 2).map((image) => [
-        image.getAttribute("x"),
-        image.getAttribute("y"),
-        image.getAttribute("width"),
-        image.getAttribute("height")
-      ])).toEqual(Array.from({ length: 2 }, () => ["0", "0", main ? "380" : "180", "80"]));
+      expect(
+        images
+          .slice(0, 2)
+          .map((image) => [
+            image.getAttribute("x"),
+            image.getAttribute("y"),
+            image.getAttribute("width"),
+            image.getAttribute("height")
+          ])
+      ).toEqual(Array.from({ length: 2 }, () => ["0", "0", main ? "380" : "180", "80"]));
       expect(images.slice(2, 7).map((image) => image.getAttribute("x"))).toEqual(
         Array.from({ length: 5 }, (_, i) => String((main ? 59 : 10) + 16 * i))
       );
@@ -142,12 +146,12 @@ describe("HonorDegree", () => {
     );
 
     expect(layout.layers.map((layer) => layer.name)).toEqual(["body", "frame", "rank"]);
-    expect(layout.layers.slice(0, 2).map(({ x, y, width, height }) => ({ x, y, width, height }))).toEqual(
+    expect(
+      layout.layers.slice(0, 2).map(({ x, y, width, height }) => ({ x, y, width, height }))
+    ).toEqual(
       Array.from({ length: 2 }, () => ({ x: 0, y: 0, width: main ? 380 : 180, height: 80 }))
     );
-    expect(layout.layers[1]?.href).toBe(
-      `/honor_frame/standard/frame_degree_${main ? "m" : "s"}_3`
-    );
+    expect(layout.layers[1]?.href).toBe(`/honor_frame/standard/frame_degree_${main ? "m" : "s"}_3`);
     expect(layout.layers[2]).toMatchObject({
       href: `/honor/honor_top_123456_event_123_cp2/${resourceName}`,
       x: 0,
@@ -411,7 +415,9 @@ describe("HonorDegree", () => {
     expect(
       [...container.querySelectorAll("image")].map((image) => image.getAttribute("data-layer"))
     ).toEqual(["body", "pattern", "character-0", "frame", "word"]);
-    expect(container.querySelector('[data-layer="body"]')?.getAttribute("href")).toBe("/bonds/background");
+    expect(container.querySelector('[data-layer="body"]')?.getAttribute("href")).toBe(
+      "/bonds/background"
+    );
     expect(container.querySelector('[data-layer="frame"]')?.getAttribute("href")).toBe(
       "/local/honor/frame_degree_s_3"
     );
@@ -457,8 +463,14 @@ describe("HonorDegree", () => {
       {
         kind: "bonds",
         backgrounds: [
-          asset(bondsHonorLocalAssetResources.backgroundBase, bondsHonorLocalAssetResources.bundlePath),
-          asset(bondsHonorLocalAssetResources.backgroundColor, bondsHonorLocalAssetResources.bundlePath)
+          asset(
+            bondsHonorLocalAssetResources.backgroundBase,
+            bondsHonorLocalAssetResources.bundlePath
+          ),
+          asset(
+            bondsHonorLocalAssetResources.backgroundColor,
+            bondsHonorLocalAssetResources.bundlePath
+          )
         ],
         pattern: asset("pattern"),
         characters: [part("character-main"), part("character-sub")],
@@ -606,14 +618,8 @@ describe("HonorDegree", () => {
       );
       const main = slot === "main";
 
-      expect(layout.layers.map((layer) => layer.name)).toEqual([
-        "body",
-        "frame",
-        "live-master-0"
-      ]);
-      expect(layout.layers[1]?.href).toBe(
-        `/local/honor/frame_degree_${main ? "m" : "s"}_3`
-      );
+      expect(layout.layers.map((layer) => layer.name)).toEqual(["body", "frame", "live-master-0"]);
+      expect(layout.layers[1]?.href).toBe(`/local/honor/frame_degree_${main ? "m" : "s"}_3`);
       expect(layout.layers[2]?.href).toBe(
         `/local/live-master/${liveMasterLocalAssetResources.star1}`
       );

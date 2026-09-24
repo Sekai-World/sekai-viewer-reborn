@@ -77,7 +77,10 @@ describe("HonorArtwork", () => {
       degree: catalogueDegree,
       resolveAsset: createHonorDegreeAssetResolver("jp")
     });
-    for (const [width, slot, frameSize] of [[268, "main", "m"], [200, "sub", "s"]] as const) {
+    for (const [width, slot, frameSize] of [
+      [268, "main", "m"],
+      [200, "sub", "s"]
+    ] as const) {
       resize([{ contentRect: { width } }]);
       await tick();
       const images = Array.from(container.querySelectorAll("svg image"));

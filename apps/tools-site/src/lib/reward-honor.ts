@@ -26,7 +26,10 @@ const sortedPositiveLevels = (levels: RewardHonorLevel[] | undefined): RewardHon
     .filter((entry) => entry && positiveLevel(entry.level))
     .toSorted((a, b) => (a.level ?? 0) - (b.level ?? 0));
 
-const normalHonorType = (type: string | null, isEvent: boolean): "event" | "birthday" | "regular" => {
+const normalHonorType = (
+  type: string | null,
+  isEvent: boolean
+): "event" | "birthday" | "regular" => {
   if (isEvent) return "event";
   if (type === "birthday") return "birthday";
   return "regular";

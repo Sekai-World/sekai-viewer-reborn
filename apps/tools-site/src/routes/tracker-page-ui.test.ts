@@ -43,7 +43,9 @@ describe("tracker page UI contract", () => {
     const source = await readFile(pagePath, "utf8");
     expect(source).toContain('import { HonorDegree } from "@platform/ui-shell";');
     expect(source).toContain('resolveHonorAsset(bodyBundle, "degree_main.png")');
-    expect(source).toContain('class="block aspect-19/4 w-48 max-w-full overflow-hidden" aria-hidden="true"');
+    expect(source).toContain(
+      'class="block aspect-19/4 w-48 max-w-full overflow-hidden" aria-hidden="true"'
+    );
     expect(source).toContain('class="block h-auto! w-full!"');
     expect(source).toMatch(/<HonorDegree[\s\S]*?\sdecorative\s/);
     expect(source.match(/\{@render rewardHonorMedia\(row.reward\)\}/g)).toHaveLength(2);

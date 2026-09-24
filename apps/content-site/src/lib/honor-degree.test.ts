@@ -87,7 +87,10 @@ describe("catalogue honor adapter", () => {
       { ...honor, assetBundleName: chapterBundle },
       { ...group, honorType: "event", backgroundAssetBundleName: "chapter-body" }
     );
-    for (const [slot, renderSlot] of [["main", "main"], ["sub", "sub1"]] as const) {
+    for (const [slot, renderSlot] of [
+      ["main", "main"],
+      ["sub", "sub1"]
+    ] as const) {
       expect(chapter[slot]).toMatchObject({
         honorType: "event",
         rankAsset: {
@@ -95,7 +98,9 @@ describe("catalogue honor adapter", () => {
           resourceName: `rank_${slot}.png`
         }
       });
-      expect(buildHonorDegreeLayout(chapter[slot], resolveAsset, renderSlot).layers.at(-1)).toMatchObject({
+      expect(
+        buildHonorDegreeLayout(chapter[slot], resolveAsset, renderSlot).layers.at(-1)
+      ).toMatchObject({
         x: 0,
         y: 0,
         width: slot === "main" ? 380 : 180,
@@ -110,7 +115,9 @@ describe("catalogue honor adapter", () => {
       honorType: "event",
       assetBundleName: chapterBundle
     });
-    expect(buildHonorDegreeLayout(chapterWithoutBackground.main, resolveAsset).layers.at(-1)).toMatchObject({
+    expect(
+      buildHonorDegreeLayout(chapterWithoutBackground.main, resolveAsset).layers.at(-1)
+    ).toMatchObject({
       x: 0,
       y: 0,
       width: 380,
@@ -121,9 +128,12 @@ describe("catalogue honor adapter", () => {
       { ...honor, assetBundleName: "honor_top_000001" },
       { ...group, honorType: "event", backgroundAssetBundleName: "honor_top_000001" }
     );
-    expect(buildHonorDegreeLayout(standard.sub, resolveAsset, "sub1").layers.at(-1)).toMatchObject(
-      { x: 60, y: 0, width: 120, height: 38 }
-    );
+    expect(buildHonorDegreeLayout(standard.sub, resolveAsset, "sub1").layers.at(-1)).toMatchObject({
+      x: 60,
+      y: 0,
+      width: 120,
+      height: 38
+    });
   });
   it("treats event honors without a group background as regular honors", () => {
     const degree = toCatalogueHonorDegree(honor, {
@@ -150,8 +160,7 @@ describe("catalogue honor adapter", () => {
       expect(layout.layers.some((layer) => layer.name === "rank")).toBe(false);
       expect(
         layout.layers.some(
-          (layer) =>
-            layer.name.startsWith("level-") || layer.name.startsWith("level-upgraded-")
+          (layer) => layer.name.startsWith("level-") || layer.name.startsWith("level-upgraded-")
         )
       ).toBe(true);
     }
@@ -327,8 +336,8 @@ describe("catalogue honor adapter", () => {
   it("uses birthday frame levels, suppresses invalid levels and keeps unknown types regular", () => {
     const birthday = toCatalogueHonorDegree(honor, { ...group, honorType: "birthday" });
     const birthdayLayout = buildHonorDegreeLayout(birthday.main, resolveAsset);
-    const birthdayLevels = birthdayLayout.layers.filter(
-      (layer) => layer.name.startsWith("birthday-level-")
+    const birthdayLevels = birthdayLayout.layers.filter((layer) =>
+      layer.name.startsWith("birthday-level-")
     );
     expect(birthdayLevels).toHaveLength(5);
     expect(birthday.main).toMatchObject({

@@ -256,7 +256,13 @@ function addRegularHonorDegreeLevelLayers(
   if (!iconCounts) return;
 
   const x = main ? 59 : 10;
-  addHonorDegreeLevelIcons("level", honorDegreeLevelIconResources.regular, iconCounts.regular, x, add);
+  addHonorDegreeLevelIcons(
+    "level",
+    honorDegreeLevelIconResources.regular,
+    iconCounts.regular,
+    x,
+    add
+  );
   addHonorDegreeLevelIcons(
     "level-upgraded",
     honorDegreeLevelIconResources.upgraded,
@@ -383,12 +389,7 @@ export function buildHonorDegreeLayout(
     if (!hasName(href)) return;
 
     let resolvedMask: HonorDegreeMaskLayer | null = null;
-    if (
-      mask &&
-      hasName(mask.bundlePath) &&
-      hasName(mask.resourceName) &&
-      validRect(mask)
-    ) {
+    if (mask && hasName(mask.bundlePath) && hasName(mask.resourceName) && validRect(mask)) {
       const maskHref = resolveAsset(mask.bundlePath, mask.resourceName);
       if (hasName(maskHref)) {
         resolvedMask = {

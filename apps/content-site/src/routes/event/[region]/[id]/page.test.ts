@@ -103,7 +103,9 @@ describe("event page honor bonuses", () => {
     expect(within(section).queryByText("25%")).toBeNull();
     expect(within(section).queryByText(eventMessages.eventHonorBonusHonorLabel)).toBeNull();
     expect(within(section).queryByRole("img")).toBeNull();
-    expect(screen.getByRole("heading", { name: eventMessages.eventBonusCharacterLabel })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: eventMessages.eventBonusCharacterLabel })
+    ).toBeTruthy();
   });
 
   it("does not show the honor section or failure feedback for an event with no bonuses", async () => {
