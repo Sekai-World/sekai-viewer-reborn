@@ -45,10 +45,7 @@ import ChangeCameraZoomLevel from "./ChangeCameraZoomLevel";
 import Movie from "./Movie";
 import Blur from "./Blur";
 
-type SpecialEffectAction = (
-  controller: Live2DController,
-  action: Snippet
-) => Promise<void> | void;
+type SpecialEffectAction = (controller: Live2DController, action: Snippet) => Promise<void> | void;
 
 const actionsByEffectType: Partial<Record<SpecialEffectType, SpecialEffectAction>> = {
   [SpecialEffectType.ChangeBackground]: ChangeBackground,
@@ -94,12 +91,8 @@ const actionsByEffectType: Partial<Record<SpecialEffectType, SpecialEffectAction
   [SpecialEffectType.Blur]: Blur
 };
 
-export default async function action_se(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+export default async function action_se(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
   //clear
   await controller.layers.telop.hide(200);
 

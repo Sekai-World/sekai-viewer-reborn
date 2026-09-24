@@ -91,11 +91,15 @@
   let chosenChoice = $state<number | null>(null);
   let selectableTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const voiceCharacterLookup = new Map(
-    voiceCharacters.map((entry) => [
-      entry.character2dId,
-      { assetName: entry.assetName, unit: entry.unit }
-    ])
+  // Derived so a layout-triggered reload (locale or region switch) that
+  // refreshes `voiceCharacters` is seen by a session created afterwards.
+  const voiceCharacterLookup = $derived(
+    new Map(
+      voiceCharacters.map((entry) => [
+        entry.character2dId,
+        { assetName: entry.assetName, unit: entry.unit }
+      ])
+    )
   );
 
   const stageSizeFor = (element: HTMLElement): [number, number] => {
@@ -151,8 +155,7 @@
 
   const enterStageFullscreen = async (): Promise<void> => {
     const element = stageContainer as
-      | (HTMLElement & { webkitRequestFullscreen?: () => Promise<void> })
-      | undefined;
+      (HTMLElement & { webkitRequestFullscreen?: () => Promise<void> }) | undefined;
     if (!element) return;
     try {
       if (element.requestFullscreen) await element.requestFullscreen();
@@ -293,13 +296,7 @@
     });
   };
 
-  const phaseOrder = [
-    "media",
-    "model-data",
-    "model-assets",
-    "model-motion",
-    "render-model"
-  ];
+  const phaseOrder = ["media", "model-data", "model-assets", "model-motion", "render-model"];
   const phaseName = (type: string): string =>
     type === "media"
       ? labels.phaseAssets
@@ -318,7 +315,9 @@
       .sort((a, b) => {
         const indexA = phaseOrder.indexOf(a[0]);
         const indexB = phaseOrder.indexOf(b[0]);
-        return (indexA < 0 ? phaseOrder.length : indexA) - (indexB < 0 ? phaseOrder.length : indexB);
+        return (
+          (indexA < 0 ? phaseOrder.length : indexA) - (indexB < 0 ? phaseOrder.length : indexB)
+        );
       })
       .map(([type, bucket]) => ({
         type,
@@ -385,9 +384,7 @@
         <button
           type="button"
           class={`grid size-9 place-items-center rounded-full text-[10px] font-bold tracking-wide backdrop-blur-sm transition-colors disabled:cursor-default disabled:opacity-40 ${
-            autoplay
-              ? "bg-green-600 text-white"
-              : "bg-black/45 text-white hover:bg-black/70"
+            autoplay ? "bg-green-600 text-white" : "bg-black/45 text-white hover:bg-black/70"
           }`}
           aria-pressed={autoplay}
           aria-label={labels.autoplay}
@@ -422,7 +419,11 @@
           aria-pressed={isFullscreen}
           onclick={() => void toggleFullscreen()}
         >
-          <Icon icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"} class="size-5" aria-hidden="true" />
+          <Icon
+            icon={isFullscreen ? "mdi:fullscreen-exit" : "mdi:fullscreen"}
+            class="size-5"
+            aria-hidden="true"
+          />
         </button>
       </div>
     {/if}
@@ -458,7 +459,11 @@
     {:else if portraitGate}
       <div class="absolute inset-0 z-20 grid place-items-center bg-black/80 text-base-100">
         <div class="flex flex-col items-center gap-4 px-6 text-center">
-          <Icon icon="mdi:phone-rotate-landscape" class="size-14 text-white/90" aria-hidden="true" />
+          <Icon
+            icon="mdi:phone-rotate-landscape"
+            class="size-14 text-white/90"
+            aria-hidden="true"
+          />
           <p class="text-sm text-white/90">{labels.rotateToPlay}</p>
           <button
             type="button"

@@ -125,9 +125,7 @@ describe("tracker event metadata requests", () => {
       data: { id: 12, name: "Historical event", startAt: "2026-07-01T00:00:00Z" }
     });
 
-    await expect(
-      getEventMetadata("https://master.example.test", "kr", 12)
-    ).resolves.toMatchObject({
+    await expect(getEventMetadata("https://master.example.test", "kr", 12)).resolves.toMatchObject({
       status: "available",
       currentStatus: "available",
       selectedStatus: "available",

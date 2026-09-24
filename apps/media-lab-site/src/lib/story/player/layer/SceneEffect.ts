@@ -70,9 +70,7 @@ export default class SceneEffect extends BaseLayer {
 
   draw(effect: string, emitter: Live2DPlayerEventEmitter): Promise<void> {
     const container = this.root;
-    const catagory = Object.entries(SeScenarioEffectType).find(([, list]) =>
-      list.includes(effect)
-    );
+    const catagory = Object.entries(SeScenarioEffectType).find(([, list]) => list.includes(effect));
     if (!catagory) {
       log.warn("SceneEffects", `${effect} not implemented!`);
       emitter.emit("warn", `${effect} not implemented!`);
@@ -83,7 +81,7 @@ export default class SceneEffect extends BaseLayer {
     container.addChild(ani.root);
     this.scene_effects.push({
       type: effect,
-      ani: ani,
+      ani: ani
     });
     ani.set_style(this.stage_size);
     ani.start();

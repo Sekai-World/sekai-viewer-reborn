@@ -14,7 +14,7 @@
   } from "$lib/live2d/model-viewer";
   import type { Live2dRouteModelDescriptor } from "$lib/live2d/catalog-route-data";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 

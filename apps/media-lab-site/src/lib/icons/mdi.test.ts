@@ -1,15 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
+import "./mdi";
 
 const { addIcon } = vi.hoisted(() => ({ addIcon: vi.fn() }));
 
 vi.mock("@iconify/svelte", () => ({ addIcon }));
 
-describe("media-lab-site mdi icon registration", () => {
-  it("registers all shell icons synchronously", async () => {
-    await import("./mdi");
+// Vitest clears mock calls before each test, so capture what importing `./mdi` registered.
+const registeredIconNames = addIcon.mock.calls.map(([name]) => name);
 
-    expect(addIcon).toHaveBeenCalledTimes(46);
-    expect(addIcon.mock.calls.map(([name]) => name)).toEqual([
+describe("media-lab-site mdi icon registration", () => {
+  it("registers all shell icons synchronously", () => {
+    expect(registeredIconNames).toHaveLength(47);
+    expect(registeredIconNames).toEqual([
       "mdi:menu",
       "mdi:close",
       "mdi:home-variant-outline",
@@ -55,7 +57,8 @@ describe("media-lab-site mdi icon registration", () => {
       "mdi:download-circle-outline",
       "mdi:fullscreen",
       "mdi:fullscreen-exit",
-      "mdi:phone-rotate-landscape"
+      "mdi:phone-rotate-landscape",
+      "mdi:hand-heart"
     ]);
   });
 });

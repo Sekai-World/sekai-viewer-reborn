@@ -29,7 +29,7 @@
   import { UnitIconBadge } from "@platform/ui-shell";
   import type { CardListPage, CardListItem as CardListItemType } from "$lib/server/card-list";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   type CardListPagePayload = CardListPage;
   type CardListItem = CardListItemType;

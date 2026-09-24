@@ -30,7 +30,10 @@ export default defineConfig({
           "svelte",
           "@iconify/svelte",
           "@testing-library/svelte",
-          "@testing-library/svelte-core"
+          "@testing-library/svelte-core",
+          // Node's native loader re-parses this package's 1.5 MB exports map for
+          // every icon file it imports; inlining keeps icon loads off that path.
+          "@iconify-icons/mdi"
         ]
       }
     },

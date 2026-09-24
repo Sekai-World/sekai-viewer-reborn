@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  parseScenarioData,
-  processScenarioDataForPlayer
-} from "./scenario-process";
+import { parseScenarioData, processScenarioDataForPlayer } from "./scenario-process";
 import {
   CharacterLayoutDepthType,
   CharacterLayoutMode,
@@ -69,9 +66,9 @@ describe("parseScenarioData", () => {
     expect(() => parseScenarioData(null)).toThrow(/malformed/);
     expect(() => parseScenarioData({})).toThrow(/malformed/);
     expect(() => parseScenarioData({ ScenarioId: 1 })).toThrow(/malformed/);
-    expect(() =>
-      parseScenarioData(buildScenario({ Snippets: undefined as never }))
-    ).toThrow(/malformed/);
+    expect(() => parseScenarioData(buildScenario({ Snippets: undefined as never }))).toThrow(
+      /malformed/
+    );
   });
 });
 
@@ -182,9 +179,7 @@ describe("processScenarioDataForPlayer", () => {
       scenario
     );
 
-    expect(
-      processed.AppearCharacters.map((c) => c.CostumeType)
-    ).toEqual(["v2_23len_idol"]);
+    expect(processed.AppearCharacters.map((c) => c.CostumeType)).toEqual(["v2_23len_idol"]);
     expect(processed.LayoutData[0].CostumeType).toBe("v2_23len_idol");
   });
 

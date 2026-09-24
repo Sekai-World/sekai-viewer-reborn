@@ -26,6 +26,11 @@ describe("tracker recent rates", () => {
     expect(calculateRecentRate(points, target, 3)).toBe(100);
   });
   it("calculates both horizons for the selected target", () => {
-    expect(calculateRecentRates([point("2026-01-01T00:00:00Z", 0), point("2026-01-01T01:00:00Z", 100)], target)).toEqual({ oneHour: 100, threeHours: 100 });
+    expect(
+      calculateRecentRates(
+        [point("2026-01-01T00:00:00Z", 0), point("2026-01-01T01:00:00Z", 100)],
+        target
+      )
+    ).toEqual({ oneHour: 100, threeHours: 100 });
   });
 });

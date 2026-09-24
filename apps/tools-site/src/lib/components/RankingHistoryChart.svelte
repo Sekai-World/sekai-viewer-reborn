@@ -49,7 +49,8 @@
     queueMicrotask(() => {
       const context = chartContext;
       const hovered = context?.tooltip.data;
-      if (!hovered || typeof hovered !== "object" || !("score" in hovered) || !("date" in hovered)) return;
+      if (!hovered || typeof hovered !== "object" || !("score" in hovered) || !("date" in hovered))
+        return;
       const point = hovered as ChartPoint;
       if (!(point.date instanceof Date) || !Number.isFinite(point.date.getTime())) return;
       if (context) {
@@ -59,7 +60,11 @@
           const pxPerMs = (range[1] - range[0]) / (Number(domain[1]) - Number(domain[0]));
           const thresholdMs = 14 / pxPerMs;
           if (Number.isFinite(pxPerMs) && pxPerMs > 0 && Number.isFinite(thresholdMs)) {
-            const snappedMarker = findSnappedNameChange({ hoveredDate: point.date, markers: markerPoints, thresholdMs });
+            const snappedMarker = findSnappedNameChange({
+              hoveredDate: point.date,
+              markers: markerPoints,
+              thresholdMs
+            });
             if (snappedMarker) {
               context.tooltip.show(event, snappedMarker.point);
               activateMarker(snappedMarker.point);
@@ -108,7 +113,13 @@
   );
   const scoreExtent = $derived(
     scores.length
-      ? [Math.max(0, Math.min(...scores) - Math.max(1, (Math.max(...scores) - Math.min(...scores)) * 0.12)), Math.max(...scores) + Math.max(1, (Math.max(...scores) - Math.min(...scores)) * 0.12)]
+      ? [
+          Math.max(
+            0,
+            Math.min(...scores) - Math.max(1, (Math.max(...scores) - Math.min(...scores)) * 0.12)
+          ),
+          Math.max(...scores) + Math.max(1, (Math.max(...scores) - Math.min(...scores)) * 0.12)
+        ]
       : undefined
   );
   const timeFormatter = $derived(
@@ -155,7 +166,9 @@
 </script>
 
 <div class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
-  <span class="sr-only">{scoreLabel} · {timeLabel}{selectedPoint ? ` · ${selectedPoint.score}` : ""}</span>
+  <span class="sr-only"
+    >{scoreLabel} · {timeLabel}{selectedPoint ? ` · ${selectedPoint.score}` : ""}</span
+  >
   <div class="history-chart-plot">
     {#if validPoints.length === 1}
       <div class="history-chart-single-point">
@@ -193,17 +206,36 @@
         highlight={{
           axis: "x",
           lines: { stroke: "var(--color-primary)", dashArray: "4 4", opacity: 0.55 },
-          points: { r: 5, fill: "var(--color-primary)", stroke: "var(--color-base-100)", strokeWidth: 2 }
+          points: {
+            r: 5,
+            fill: "var(--color-primary)",
+            stroke: "var(--color-base-100)",
+            strokeWidth: 2
+          }
         }}
       >
         {#snippet aboveMarks({ context })}
           {#each markerPoints as marker (marker.change.timestamp)}
             {@const cx = context.xGet(marker.point)}
             {@const cy = context.yGet(marker.point)}
-            {@const markerLabel = nameChangeLabel.replace("{previousName}", marker.change.previousName).replace("{nextName}", marker.change.nextName).replace("{time}", timeFormatter.format(marker.change.time))}
-            <g class="history-chart-name-change" tabindex="0" role="button" aria-label={markerLabel} onclick={() => activateMarker(marker.point)} onkeydown={(event) => handleMarkerKeydown(event, marker.point)}>
-              <title>{`${marker.change.previousName} → ${marker.change.nextName} · ${timeFormatter.format(marker.change.time)}`}</title>
-              <path d={`M ${cx} ${cy - 7} L ${cx + 7} ${cy} L ${cx} ${cy + 7} L ${cx - 7} ${cy} Z`} />
+            {@const markerLabel = nameChangeLabel
+              .replace("{previousName}", marker.change.previousName)
+              .replace("{nextName}", marker.change.nextName)
+              .replace("{time}", timeFormatter.format(marker.change.time))}
+            <g
+              class="history-chart-name-change"
+              tabindex="0"
+              role="button"
+              aria-label={markerLabel}
+              onclick={() => activateMarker(marker.point)}
+              onkeydown={(event) => handleMarkerKeydown(event, marker.point)}
+            >
+              <title
+                >{`${marker.change.previousName} → ${marker.change.nextName} · ${timeFormatter.format(marker.change.time)}`}</title
+              >
+              <path
+                d={`M ${cx} ${cy - 7} L ${cx + 7} ${cy} L ${cx} ${cy + 7} L ${cx - 7} ${cy} Z`}
+              />
             </g>
           {/each}
         {/snippet}

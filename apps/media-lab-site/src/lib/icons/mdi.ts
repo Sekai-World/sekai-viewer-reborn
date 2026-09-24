@@ -45,6 +45,7 @@ import downloadCircleOutline from "@iconify-icons/mdi/download-circle-outline";
 import fullscreen from "@iconify-icons/mdi/fullscreen";
 import fullscreenExit from "@iconify-icons/mdi/fullscreen-exit";
 import phoneRotateLandscape from "@iconify-icons/mdi/phone-rotate-landscape";
+import handHeart from "@iconify-icons/mdi/hand-heart";
 
 addIcon("mdi:menu", menu);
 addIcon("mdi:close", close);
@@ -92,3 +93,4 @@ addIcon("mdi:download-circle-outline", downloadCircleOutline);
 addIcon("mdi:fullscreen", fullscreen);
 addIcon("mdi:fullscreen-exit", fullscreenExit);
 addIcon("mdi:phone-rotate-landscape", phoneRotateLandscape);
+addIcon("mdi:hand-heart", handHeart);

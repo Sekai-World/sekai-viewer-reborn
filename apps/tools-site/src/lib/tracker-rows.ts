@@ -70,7 +70,10 @@ export const createTrackerRows = <TReward = never>({
         elapsedMs: calculateRankingElapsedMs({ startAt, timestamp: ranking?.timestamp })
       }),
       reward: getReward?.(ladderRank) ?? null,
-      graphPoint: ranking && score !== null ? { rank: ladderRank, score, timestamp: ranking.timestamp ?? null } : null
+      graphPoint:
+        ranking && score !== null
+          ? { rank: ladderRank, score, timestamp: ranking.timestamp ?? null }
+          : null
     };
   });
 };

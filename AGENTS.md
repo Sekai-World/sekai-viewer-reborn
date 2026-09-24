@@ -45,7 +45,7 @@ Guidance for coding agents working in this workspace.
   - shared packages: `@platform/*`
 - Use ESM and strict TypeScript patterns already present in repo.
 - Assume the repo may already contain generated `dist/` output and `.turbo/` artifacts; do not hand-edit generated build output unless explicitly requested.
-- Match the CI/runtime toolchain already used in the repo: Node.js 24 and `pnpm@11.13.0`.
+- Match the CI/runtime toolchain already used in the repo: Node.js 24 and pnpm 12, at the exact version pinned by `packageManager` in the root `package.json` (mirrored in `mise.toml`).
 
 ## Root Commands
 
@@ -232,7 +232,7 @@ mise run update-sekai-master-api-sdk-local
 ### Workflow notes
 
 1. After changing sekai-master-api, run `mise run swagger` there to regenerate the spec.
-2. Restart the sekai-master-api dev server with `mise run dev` and wait for it to be ready.
+2. Deploy the changed sekai-master-api to the remote dev cluster with `mise run dev-cluster-rebuild`, then run `mise run dev-cluster-forward` and wait until `http://localhost:18080/api/v1/health` returns 200. The local `mise run dev` path is deprecated.
 3. Then regenerate the SDK here with `mise run update-sekai-master-api-sdk-local`.
 4. Validate: `pnpm --filter @platform/sekai-master-api-sdk check`.
 

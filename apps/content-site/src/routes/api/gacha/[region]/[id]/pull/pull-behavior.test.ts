@@ -68,7 +68,9 @@ describe("resolveSelectedBehavior", () => {
   ] as const)("maps %s to guarantee level %s", (behaviorType, expectedLevel) => {
     const behavior = createBehavior(behaviorType, "any");
 
-    expect(getGuaranteeLevel(resolveSelectedBehavior([behavior], behaviorType))).toBe(expectedLevel);
+    expect(getGuaranteeLevel(resolveSelectedBehavior([behavior], behaviorType))).toBe(
+      expectedLevel
+    );
   });
 
   it("classifies birthday cards as four-star cards for guarantees", () => {
@@ -103,6 +105,8 @@ describe("resolveSelectedBehavior", () => {
   it("does not select a different spinnable behavior when the pair is unavailable", () => {
     const anyBehavior = createBehavior("over_rarity_4_once", "any");
 
-    expect(resolveSelectedBehavior([anyBehavior], "over_rarity_4_once", "colorful_pass")).toBeNull();
+    expect(
+      resolveSelectedBehavior([anyBehavior], "over_rarity_4_once", "colorful_pass")
+    ).toBeNull();
   });
 });

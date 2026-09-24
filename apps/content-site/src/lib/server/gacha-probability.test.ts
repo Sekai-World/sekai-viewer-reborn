@@ -14,10 +14,7 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getGachasByRegionByIdRateChoiceWishes
 }));
 
-import {
-  buildGachaProbabilityPayload,
-  loadGachaProbabilityPayload
-} from "./gacha-probability";
+import { buildGachaProbabilityPayload, loadGachaProbabilityPayload } from "./gacha-probability";
 
 const createGacha = (overrides: Partial<GachaDetail> = {}): GachaDetail => ({
   id: "gacha-default",
@@ -31,9 +28,7 @@ const createGacha = (overrides: Partial<GachaDetail> = {}): GachaDetail => ({
   costResourceId: null,
   costCount: null,
   gachaPickups: [],
-  gachaCardRarityRates: [
-    { cardRarityType: "rarity_4", rate: 100, lotteryType: "normal" }
-  ],
+  gachaCardRarityRates: [{ cardRarityType: "rarity_4", rate: 100, lotteryType: "normal" }],
   gachaBehaviors: [],
   gachaDetails: [{ cardId: "card-1", weight: 1, isWish: false }],
   gachaInformation: null,
@@ -296,7 +291,9 @@ describe("gacha probability server data", () => {
       path: { region: "jp", id: gacha.id }
     });
 
-    getGachasByRegionById.mockResolvedValueOnce({ data: createRawGacha({ ...gacha, id: "failed-rate-choice" }) });
+    getGachasByRegionById.mockResolvedValueOnce({
+      data: createRawGacha({ ...gacha, id: "failed-rate-choice" })
+    });
     getGachasByRegionByIdRateChoiceWishes.mockResolvedValueOnce({ error: { status: 503 } });
     await expect(
       loadGachaProbabilityPayload({

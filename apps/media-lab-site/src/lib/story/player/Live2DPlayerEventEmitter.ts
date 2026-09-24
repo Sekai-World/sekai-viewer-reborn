@@ -9,10 +9,7 @@ export class Live2DPlayerEventEmitter {
     [E in keyof Live2DPlayerEvents]?: Live2DPlayerEvents[E][];
   } = {};
 
-  on<E extends keyof Live2DPlayerEvents>(
-    event: E,
-    listener: Live2DPlayerEvents[E]
-  ): this {
+  on<E extends keyof Live2DPlayerEvents>(event: E, listener: Live2DPlayerEvents[E]): this {
     if (!this.listeners[event]) {
       this.listeners[event] = [];
     }
@@ -20,15 +17,10 @@ export class Live2DPlayerEventEmitter {
     return this;
   }
 
-  off<E extends keyof Live2DPlayerEvents>(
-    event: E,
-    listener: Live2DPlayerEvents[E]
-  ): this {
+  off<E extends keyof Live2DPlayerEvents>(event: E, listener: Live2DPlayerEvents[E]): this {
     const current = this.listeners[event];
     if (current) {
-      this.listeners[event] = current.filter(
-        (l) => l !== listener
-      ) as typeof current;
+      this.listeners[event] = current.filter((l) => l !== listener) as typeof current;
     }
     return this;
   }

@@ -1,13 +1,18 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
+  import { env } from "$env/dynamic/public";
   import { goto, invalidateAll } from "$app/navigation";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
-  import { createI18nTranslator, getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
+  import {
+    createI18nTranslator,
+    getLocalI18nMessages,
+    mediaLabI18nNamespaces
+  } from "$lib/i18n/runtime";
   import { registerStoryAssetCache } from "$lib/story/asset-cache-client";
   import {
     isActivePickerStoryTypePath,
@@ -41,6 +46,7 @@
   } from "$lib/theme";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
   const regionSelection = provideRegionSelection();
   regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
   // The shell (including the sidebar's story-type labels) translates keys
@@ -153,7 +159,16 @@
       label: translate("navigation.assetViewer"),
       icon: "mdi:cube-outline",
       disabled: true
-    }
+    },
+    ...(supportPageUrl
+      ? [
+          {
+            label: translate("navigation.support"),
+            href: supportPageUrl,
+            icon: "mdi:hand-heart"
+          }
+        ]
+      : [])
   ]);
 
   const systemTheme = (): ResolvedTheme =>

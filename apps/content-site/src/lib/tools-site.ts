@@ -8,10 +8,7 @@ const isTrackerSupportedRegion = (region: SupportedRegion): boolean =>
  * The tools site is an optional cross-site integration. If deployment wiring
  * is not present, hide the entry point instead of making content pages fail.
  */
-export const getEventTrackerHref = (
-  region: SupportedRegion,
-  eventId: string
-): string | null => {
+export const getEventTrackerHref = (region: SupportedRegion, eventId: string): string | null => {
   if (!isTrackerSupportedRegion(region)) {
     return null;
   }

@@ -100,9 +100,7 @@ describe("fetchWithTimeout", () => {
   });
 
   it("forwards the abort signal and accept header to the fetcher", async () => {
-    const fetcher = vi
-      .fn()
-      .mockResolvedValue(createResponse({ status: "success", data: [] }));
+    const fetcher = vi.fn().mockResolvedValue(createResponse({ status: "success", data: [] }));
     await fetchWithTimeout("https://api.example.test/x", fetcher as unknown as typeof fetch);
 
     expect(fetcher).toHaveBeenCalledWith(

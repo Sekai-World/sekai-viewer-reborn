@@ -16,12 +16,12 @@ The workspace is a monorepo of four deployable SvelteKit apps. Only
 `content-site` carries broad feature coverage today; the other three remain
 limited in scope and are **not** feature-complete.
 
-| App              | Status      | Notes                                   |
-| ---------------- | ----------- | --------------------------------------- |
-| `content-site`   | Available   | Primary game-data browser (see below).  |
+| App              | Status      | Notes                                                                                                                                                                                                                                                                                                                                 |
+| ---------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content-site`   | Available   | Primary game-data browser (see below).                                                                                                                                                                                                                                                                                                |
 | `tools-site`     | In progress | Regional current-event cards for JP/TW/EN/KR and per-region tracking with searchable current or historical event selection, ranking history and snapshots, World Bloom chapter rankings, shareable links, and a constant-pace goal calculator. CSV/XLSX export controls are currently hidden while the export format is reconsidered. |
-| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated. |
-| `account-site`   | Exploratory | Scaffold only; no feature work started. |
+| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated.                                                                                                                                                                                                             |
+| `account-site`   | Exploratory | Scaffold only; no feature work started.                                                                                                                                                                                                                                                                                               |
 
 ## media-lab-site — Media Lab
 
@@ -250,14 +250,17 @@ routes use the public `sekai-master-api` contracts and generated SDK:
 
 ### Planned — Next Content Priorities
 
-Requested by the user and **not yet viewer-ready**. Each requires the full
-cross-repo pipeline before frontend work can begin:
+Requested by the user and **not yet viewer-ready**: the corresponding
+content-site routes and pages have not been built. Their master API contracts
+are merged and the viewer SDK has been regenerated. For any new or extended API
+contract, follow this cross-repo pipeline:
 
 1. `sekai-master-api` must expose the relevant public contracts (or extend
    existing ones).
 2. Regenerate the Swagger/OpenAPI spec (`mise run swagger`).
-3. Deploy and expose the changed API with `mise run dev-cluster-rebuild`, then
-   `mise run dev-cluster-forward` (OpenAPI at `http://localhost:18080`).
+3. Deploy `sekai-master-api` to the remote dev cluster and forward it
+   (`mise run dev-cluster-rebuild`, then `mise run dev-cluster-forward`; OpenAPI
+   is available at `http://localhost:18080`).
 4. Regenerate the viewer SDK
    (`mise run update-sekai-master-api-sdk-local`) and validate
    (`pnpm --filter @platform/sekai-master-api-sdk check`).

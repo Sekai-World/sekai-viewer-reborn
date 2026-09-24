@@ -1,11 +1,7 @@
 import type { ILive2DAssetUrl } from "./player-types";
 import { Live2DAssetType } from "./player-types";
 import type { IScenarioData } from "../scenario-types";
-import {
-  SnippetAction,
-  SpecialEffectType,
-  SeScenarioEffectType,
-} from "../scenario-types";
+import { SnippetAction, SpecialEffectType, SeScenarioEffectType } from "../scenario-types";
 
 const text_underline = "/live2d/story-player-ui/text_underline.svg";
 const text_background = "/live2d/story-player-ui/text_background.svg";
@@ -24,18 +20,18 @@ export function getUIMediaUrls(
     {
       identifier: "ui/text_underline",
       type: Live2DAssetType.UI,
-      url: text_underline,
+      url: text_underline
     },
     {
       identifier: "ui/text_background",
       type: Live2DAssetType.UI,
-      url: text_background,
+      url: text_background
     },
     {
       identifier: "ui/black_wipe",
       type: Live2DAssetType.UI,
-      url: black_wipe,
-    },
+      url: black_wipe
+    }
   ];
 
   const condition: Record<string, ILive2DAssetUrl[]> = {
@@ -43,48 +39,40 @@ export function getUIMediaUrls(
       {
         identifier: "ui/tex_scenario_tri_01",
         type: Live2DAssetType.UISheet,
-        url: regionAssetUrl(
-          "scenario/effect/hologram/tex_scenario_tri_01.webp"
-        ),
-      },
+        url: regionAssetUrl("scenario/effect/hologram/tex_scenario_tri_01.webp")
+      }
     ],
     hologram: [
       {
         identifier: "ui/tex_scenario_tri_01",
         type: Live2DAssetType.UISheet,
-        url: regionAssetUrl(
-          "scenario/effect/hologram/tex_scenario_tri_01.webp"
-        ),
+        url: regionAssetUrl("scenario/effect/hologram/tex_scenario_tri_01.webp")
       },
       {
         identifier: "ui/tex_scenario_kira",
         type: Live2DAssetType.UI,
-        url: regionAssetUrl("scenario/effect/hologram/tex_scenario_kira.webp"),
+        url: regionAssetUrl("scenario/effect/hologram/tex_scenario_kira.webp")
       },
       {
         identifier: "ui/tex_scenario_light",
         type: Live2DAssetType.UI,
-        url: regionAssetUrl("scenario/effect/hologram/tex_scenario_light.webp"),
-      },
+        url: regionAssetUrl("scenario/effect/hologram/tex_scenario_light.webp")
+      }
     ],
     kirakira: [
       {
         identifier: "ui/tex_kirakira_01",
         type: Live2DAssetType.UISheet,
-        url: regionAssetUrl(
-          "scenario/effect/kirakira_01/tex_kirakira_01.webp"
-        ),
-      },
+        url: regionAssetUrl("scenario/effect/kirakira_01/tex_kirakira_01.webp")
+      }
     ],
     light_up_legend: [
       {
         identifier: "ui/tex_light_up_legend",
         type: Live2DAssetType.UISheet,
-        url: regionAssetUrl(
-          "scenario/effect/light_up_legend_01/tex_light_up_legend.webp"
-        ),
-      },
-    ],
+        url: regionAssetUrl("scenario/effect/light_up_legend_01/tex_light_up_legend.webp")
+      }
+    ]
   };
 
   const all = [...common];
@@ -98,11 +86,9 @@ export function getUIMediaUrls(
       else if (t === SpecialEffectType.SekaiOut) category.add("sekai");
       else if (t === SpecialEffectType.SekaiInCenter) category.add("sekai");
       else if (t === SpecialEffectType.SekaiOutCenter) category.add("sekai");
-      else if (t === SpecialEffectType.AttachCharacterShader)
-        category.add("hologram");
+      else if (t === SpecialEffectType.AttachCharacterShader) category.add("hologram");
       else if (t === SpecialEffectType.PlayScenarioEffect) {
-        if (SeScenarioEffectType.kirakira.includes(sp.StringVal))
-          category.add("kirakira");
+        if (SeScenarioEffectType.kirakira.includes(sp.StringVal)) category.add("kirakira");
         else if (SeScenarioEffectType.light_up_legend.includes(sp.StringVal))
           category.add("light_up_legend");
       }

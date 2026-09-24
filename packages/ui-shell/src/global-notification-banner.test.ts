@@ -59,7 +59,16 @@ describe("GlobalNotificationBanner", () => {
       }
     });
 
-    for (const label of ["Info", "Success", "Warning", "Error", "Information", "Completed", "Attention", "Problem"]) {
+    for (const label of [
+      "Info",
+      "Success",
+      "Warning",
+      "Error",
+      "Information",
+      "Completed",
+      "Attention",
+      "Problem"
+    ]) {
       expect(screen.queryByText(label, { exact: true })).toBeNull();
     }
 

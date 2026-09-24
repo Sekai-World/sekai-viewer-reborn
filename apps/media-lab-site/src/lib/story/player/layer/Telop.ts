@@ -35,7 +35,7 @@ export default class Telop extends BaseLayer {
     this.structure = {
       bg_graphic,
       text,
-      translated_text,
+      translated_text
     };
     this.init = true;
     this.set_style();
@@ -62,7 +62,7 @@ export default class Telop extends BaseLayer {
           dropShadowAngle: Math.PI / 6,
           dropShadowDistance: this.em(2),
           lineJoin: "round",
-          align: "center",
+          align: "center"
         });
       }
 
@@ -83,17 +83,14 @@ export default class Telop extends BaseLayer {
         dropShadowAngle: Math.PI / 6,
         dropShadowDistance: this.em(2),
         lineJoin: "round",
-        align: "center",
+        align: "center"
       });
 
       // Style background
       const bg = this.structure.bg_graphic!;
       bg.x = 0;
       bg.y = this.stage_size[1] / 2 - this.em(30);
-      bg.scale.set(
-        this.stage_size[0] / this.screen_length,
-        this.em(60) / this.screen_length
-      );
+      bg.scale.set(this.stage_size[0] / this.screen_length, this.em(60) / this.screen_length);
     }
   }
 }

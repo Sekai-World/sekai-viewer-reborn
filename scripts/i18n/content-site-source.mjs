@@ -87,6 +87,7 @@ const namespaceByRoutePattern = [
   { pattern: /src\/routes\/\+layout\.server\.ts$/, namespace: "common" },
   { pattern: /src\/routes\/\+error\.svelte$/, namespace: "error" },
   { pattern: /src\/routes\/\+page\.svelte$/, namespace: "home" },
+  { pattern: /src\/routes\/support\//, namespace: "home" },
   { pattern: /src\/routes\/card\//, namespace: "card" },
   { pattern: /src\/routes\/cards\//, namespace: "card" },
   { pattern: /src\/routes\/music\//, namespace: "music" },

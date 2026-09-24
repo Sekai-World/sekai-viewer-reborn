@@ -2,10 +2,7 @@ import { env as publicEnv } from "$env/dynamic/public";
 import type { StoryRouteIdentity } from "$lib/live2d/story-route";
 import { parseScenarioData } from "./scenario-process";
 import type { IScenarioData } from "./scenario-types";
-import {
-  createStoryRegionAssetUrls,
-  type StoryAssetUrls
-} from "./story-urls";
+import { createStoryRegionAssetUrls, type StoryAssetUrls } from "./story-urls";
 import {
   resolveStoryIdentity,
   type StoryResolution,
@@ -55,8 +52,7 @@ const stripTrailingSlashes = (value: string): string => {
 /** The configured remote asset origin (or same-origin dev path), without trailing slash. */
 export const getStoryAssetBase = (): string =>
   stripTrailingSlashes(
-    publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL?.trim() ||
-      "https://storage.sekai.best"
+    publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL?.trim() || "https://storage.sekai.best"
   );
 
 /**
@@ -117,10 +113,7 @@ export const resolveStoryRoute = async (
     value: {
       identity,
       resolution: result.resolution,
-      urls: createStoryRegionAssetUrls(
-        () => getStoryFetchBase(requestOrigin),
-        identity.region
-      )
+      urls: createStoryRegionAssetUrls(() => getStoryFetchBase(requestOrigin), identity.region)
     }
   };
 };

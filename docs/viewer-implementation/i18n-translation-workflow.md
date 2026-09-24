@@ -36,6 +36,7 @@ See the workspace-root `docs/game-data-knowledge/regions-and-locales.md` →
 ### Bulk replace workflow
 
 When a terminology error is discovered across many keys:
+
 1. `grep -rn` to find all affected occurrences across all locale files.
 2. Use `replaceAll` edits on each affected file.
 3. Verify no occurrences remain with a second `grep`.

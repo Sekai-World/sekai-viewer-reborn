@@ -14,16 +14,19 @@ describe("chapter tracker data layer", () => {
 
   it("uses the live endpoint only for the current event and filters malformed rows", async () => {
     mocks.getEventChapterRankingLive.mockResolvedValue({
-      data: { eventRankings: [
-        { rank: "2", score: "0", userId: "two" },
-        { rank: "1", score: "100", userId: "one" },
-        { rank: "1", score: "99", userId: "duplicate" },
-        { rank: "bad", score: "5" }
-      ] }
+      data: {
+        eventRankings: [
+          { rank: "2", score: "0", userId: "two" },
+          { rank: "1", score: "100", userId: "one" },
+          { rank: "1", score: "99", userId: "duplicate" },
+          { rank: "bad", score: "5" }
+        ]
+      }
     });
 
     await expect(getChapterTrackerRankings("https://api.example.test", "en", 3)).resolves.toEqual({
-      status: "invalid-data", rankings: []
+      status: "invalid-data",
+      rankings: []
     });
     expect(mocks.getEventChapterRankingLive).toHaveBeenCalledTimes(1);
   });
@@ -31,9 +34,18 @@ describe("chapter tracker data layer", () => {
   it("uses historical snapshots instead of the live endpoint", async () => {
     mocks.getEventChapterRankingsByEventIdAndCharaId
       .mockResolvedValueOnce({ data: [{ timestamp: "2026-01-01T00:00:00Z" }] })
-      .mockResolvedValueOnce({ data: { eventRankings: [{ rank: 2, score: 0, userId: "two" }, { rank: 1, score: 100, userId: "one" }] } });
+      .mockResolvedValueOnce({
+        data: {
+          eventRankings: [
+            { rank: 2, score: 0, userId: "two" },
+            { rank: 1, score: 100, userId: "one" }
+          ]
+        }
+      });
 
-    await expect(getChapterTrackerRankings("https://api.example.test", "en", 3, 42)).resolves.toEqual({
+    await expect(
+      getChapterTrackerRankings("https://api.example.test", "en", 3, 42)
+    ).resolves.toEqual({
       status: "available",
       rankings: [
         { rank: 1, score: 100, userId: "one", userName: null, timestamp: null, eventId: null },
@@ -41,8 +53,12 @@ describe("chapter tracker data layer", () => {
       ]
     });
     expect(mocks.getEventChapterRankingLive).not.toHaveBeenCalled();
-    expect(mocks.getEventChapterRankingsByEventIdAndCharaId).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      path: { id: 42 }, query: expect.objectContaining({ charaId: 3, limit: 1 })
-    }));
+    expect(mocks.getEventChapterRankingsByEventIdAndCharaId).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        path: { id: 42 },
+        query: expect.objectContaining({ charaId: 3, limit: 1 })
+      })
+    );
   });
 });

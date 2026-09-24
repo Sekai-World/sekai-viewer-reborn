@@ -3,22 +3,13 @@ import type { Snippet } from "../../../scenario-types";
 import {
   SpecialEffectType,
   SeAttachCharacterShaderType,
-  SnippetAction,
+  SnippetAction
 } from "../../../scenario-types";
 import { log } from "../../log";
 
-export default async function AttachCharacterShader(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
-  log.log(
-    "Live2DController",
-    "SpecialEffect/AttachCharacterShader",
-    action,
-    action_detail
-  );
+export default async function AttachCharacterShader(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+  log.log("Live2DController", "SpecialEffect/AttachCharacterShader", action, action_detail);
   switch (action_detail.StringVal) {
     case SeAttachCharacterShaderType.Hologram:
       {
@@ -26,9 +17,7 @@ export default async function AttachCharacterShader(
           controller.live2d_get_costume(action_detail.IntVal)!,
           "hologram"
         );
-        const costume = controller.current_costume.find(
-          (c) => c.cid === action_detail.IntVal
-        );
+        const costume = controller.current_costume.find((c) => c.cid === action_detail.IntVal);
         if (costume) {
           if (!costume.animations) {
             costume.animations = [];
@@ -44,9 +33,7 @@ export default async function AttachCharacterShader(
           controller.live2d_get_costume(action_detail.IntVal)!,
           "hologram"
         );
-        const costume = controller.current_costume.find(
-          (c) => c.cid === action_detail.IntVal
-        );
+        const costume = controller.current_costume.find((c) => c.cid === action_detail.IntVal);
         if (costume) {
           costume.animations = [];
         }
@@ -54,9 +41,8 @@ export default async function AttachCharacterShader(
       break;
     default: {
       const shaderName =
-        (SeAttachCharacterShaderType as Record<string, string>)[
-          action_detail.StringVal
-        ] ?? action_detail.StringVal;
+        (SeAttachCharacterShaderType as Record<string, string>)[action_detail.StringVal] ??
+        action_detail.StringVal;
       log.warn(
         "Live2DController",
         `${SnippetAction[action.Action]}/${SpecialEffectType[action_detail.EffectType]}/${shaderName} not implemented!`,

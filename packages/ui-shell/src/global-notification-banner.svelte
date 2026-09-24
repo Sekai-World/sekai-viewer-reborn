@@ -143,11 +143,7 @@
             >
               <span>{notice.action.label}</span>
               {#if notice.action.target === "_blank"}
-                <Icon
-                  icon={openInNewIcon}
-                  class="global-notice-action-icon"
-                  aria-hidden="true"
-                />
+                <Icon icon={openInNewIcon} class="global-notice-action-icon" aria-hidden="true" />
               {/if}
             </a>
           </div>

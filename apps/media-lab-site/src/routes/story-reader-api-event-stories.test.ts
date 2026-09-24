@@ -48,11 +48,7 @@ describe("event story episodes API", () => {
     ]);
     const response = await callGet({ region: "jp", eventId: "34" });
     const body = await response.json();
-    expect(mocks.fetchEventStoriesByEvent).toHaveBeenCalledWith(
-      "jp",
-      34,
-      expect.anything()
-    );
+    expect(mocks.fetchEventStoriesByEvent).toHaveBeenCalledWith("jp", 34, expect.anything());
     expect(body).toMatchObject({ storyType: "event", eventId: 34 });
     expect(body.episodes[0]).toMatchObject({ storyId: "34-1", label: "EP1" });
     expect(body.episodes[0].bannerUrl).toContain("event_34");

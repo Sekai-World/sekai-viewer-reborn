@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { env } from "$env/dynamic/public";
   import { BrandLockup } from "@platform/ui-shell";
   import { UnitIconBadge } from "@platform/ui-shell";
   import AssetImage from "@platform/ui-shell/asset-image";
@@ -11,6 +12,7 @@
   import { getTrackerCountdown } from "$lib/tracker-countdown";
 
   let { data }: { data: PageData } = $props();
+  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
   const fallbackMessages = getLocalI18nMessages(["common", "tracker"]);
   let messages = $state(fallbackMessages);
   let events = $state<RegionCurrentEvent[] | null>(null);
@@ -27,14 +29,16 @@
   const isEventsLoading = $derived(events === null);
   const unitLabel = (unit: string): string =>
     unit.replaceAll("_", " ").replace(/\b\w/g, (character) => character.toUpperCase());
-  const getCountdown = (event: Extract<RegionCurrentEvent, { status: "available" }>['event']) =>
+  const getCountdown = (event: Extract<RegionCurrentEvent, { status: "available" }>["event"]) =>
     getTrackerCountdown({
       startAt: event.startAt,
       aggregateAt: event.aggregateAt,
       closedAt: event.closedAt,
       now
     });
-  const formatCountdown = (event: Extract<RegionCurrentEvent, { status: "available" }>['event']): string => {
+  const formatCountdown = (
+    event: Extract<RegionCurrentEvent, { status: "available" }>["event"]
+  ): string => {
     const countdown = getCountdown(event);
     if (!countdown) return translate("home.countdownEnded");
     const values = countdown.values;
@@ -43,8 +47,12 @@
       ? `${translate("home.countdownEndsIn")} ${time}`
       : `${translate("home.countdownStartsIn")} ${time}`;
   };
-  const bannerUrl = (result: Extract<RegionCurrentEvent, { status: "available" }>): string | null =>
-    !result.event.assetBundleName ? null : getEventBannerAssetURL(result.event.assetBundleName, result.region);
+  const bannerUrl = (
+    result: Extract<RegionCurrentEvent, { status: "available" }>
+  ): string | null =>
+    !result.event.assetBundleName
+      ? null
+      : getEventBannerAssetURL(result.event.assetBundleName, result.region);
 
   const formatDate = (value: string | number | null): string => {
     if (value === null) return translate("home.dateUnavailable");
@@ -80,7 +88,11 @@
       },
       () => {
         if (!cancelled) {
-          events = trackerSupportedRegions.map((region) => ({ region, status: "failed", event: null }));
+          events = trackerSupportedRegions.map((region) => ({
+            region,
+            status: "failed",
+            event: null
+          }));
         }
       }
     );
@@ -103,6 +115,11 @@
       <a class="hero-action" href="/tracker/jp">
         <span>{translate("home.openTracker")}</span><span aria-hidden="true">↗</span>
       </a>
+      {#if supportPageUrl}
+        <a class="btn btn-ghost btn-sm min-h-11" href={supportPageUrl}>
+          {translate("support.cta")}
+        </a>
+      {/if}
     </div>
   </section>
 
@@ -124,68 +141,94 @@
         {#each trackerSupportedRegions as region (region)}
           <article class="event-card event-card-skeleton" aria-hidden="true">
             <div class="card-topline">
-              <span class="skeleton h-5 w-24"></span><span class="skeleton h-4 w-16 rounded-full"></span>
+              <span class="skeleton h-5 w-24"></span><span class="skeleton h-4 w-16 rounded-full"
+              ></span>
             </div>
             <div class="event-banner skeleton"></div>
             <div class="event-card-body gap-3">
-              <span class="skeleton h-6 w-4/5"></span><span class="skeleton h-4 w-3/5"></span><span class="skeleton h-4 w-full"></span><span class="skeleton mt-auto h-5 w-28"></span>
+              <span class="skeleton h-6 w-4/5"></span><span class="skeleton h-4 w-3/5"></span><span
+                class="skeleton h-4 w-full"
+              ></span><span class="skeleton mt-auto h-5 w-28"></span>
             </div>
           </article>
         {/each}
         <span class="sr-only">{translate("home.eventsLoading")}</span>
       {:else}
-      {#each events as result (result.region)}
-        {#if result.status === "available"}
-          {@const source = bannerUrl(result)}
-          <a
-            class="event-card event-card-link has-event"
-            href={`/tracker/${result.region}`}
-            aria-label={`${regionName(result.region)}: ${result.event.name} — ${translate("home.openRegionalTracker")}`}
-          >
-            <div class="card-topline">
-              <span class="region-tag">{regionName(result.region)}</span>
-              <span class="status-pill status-ready"><span aria-hidden="true"></span>{translate(statusKey(result))}</span>
-            </div>
-            <div class="event-banner">
-              {#if source}
-                <AssetImage src={source} alt={`${result.event.name} ${translate("home.bannerAltSuffix")}`} imageClass="h-full w-full object-contain" buttonClass="block size-full overflow-hidden" fallbackLabel={translate("home.bannerUnavailable")} />
-              {:else}
-                <div class="event-banner-fallback" aria-hidden="true"></div>
-              {/if}
-            </div>
-            <div class="event-card-body">
-              <h3 id={`result-${result.region}`}>{result.event.name}</h3>
-              <div class="event-meta">
-                {#if result.event.unit}
-                  <UnitIconBadge
-                    unit={result.event.unit}
-                    fallbackLabel={unitLabel(result.event.unit)}
-                    variant="sm"
+        {#each events as result (result.region)}
+          {#if result.status === "available"}
+            {@const source = bannerUrl(result)}
+            <a
+              class="event-card event-card-link has-event"
+              href={`/tracker/${result.region}`}
+              aria-label={`${regionName(result.region)}: ${result.event.name} — ${translate("home.openRegionalTracker")}`}
+            >
+              <div class="card-topline">
+                <span class="region-tag">{regionName(result.region)}</span>
+                <span class="status-pill status-ready"
+                  ><span aria-hidden="true"></span>{translate(statusKey(result))}</span
+                >
+              </div>
+              <div class="event-banner">
+                {#if source}
+                  <AssetImage
+                    src={source}
+                    alt={`${result.event.name} ${translate("home.bannerAltSuffix")}`}
+                    imageClass="h-full w-full object-contain"
+                    buttonClass="block size-full overflow-hidden"
+                    fallbackLabel={translate("home.bannerUnavailable")}
                   />
                 {:else}
-                  <span>{translate("home.unitUnknown")}</span>
+                  <div class="event-banner-fallback" aria-hidden="true"></div>
                 {/if}
-                <span>· {translate("home.eventId")} {result.event.id}</span>
               </div>
-              <p class="event-time">{formatDate(result.event.startAt)} — {formatDate(result.event.aggregateAt ?? result.event.closedAt)}</p>
-              <p class="event-countdown" aria-live="off">{formatCountdown(result.event)}</p>
-              <span class="tracker-link">{translate("home.openRegionalTracker")} <span class="tracker-link-arrow" aria-hidden="true">→</span></span>
-            </div>
-          </a>
-        {:else}
-        <article class="event-card" aria-labelledby={`result-${result.region}`}>
-          <div class="card-topline">
-            <span class="region-tag">{regionName(result.region)}</span>
-            <span class="status-pill"><span aria-hidden="true"></span>{translate(statusKey(result))}</span>
-          </div>
-        {#if result.status === "unavailable"}
-          <div class="empty-card"><h3 id={`result-${result.region}`}>{translate("home.noEvent")}</h3><p>{translate("home.noEventDescription")}</p></div>
-        {:else}
-          <div class="empty-card"><h3 id={`result-${result.region}`}>{translate("home.failed")}</h3><p>{translate("home.failedDescription")}</p></div>
-        {/if}
-        </article>
-        {/if}
-      {/each}
+              <div class="event-card-body">
+                <h3 id={`result-${result.region}`}>{result.event.name}</h3>
+                <div class="event-meta">
+                  {#if result.event.unit}
+                    <UnitIconBadge
+                      unit={result.event.unit}
+                      fallbackLabel={unitLabel(result.event.unit)}
+                      variant="sm"
+                    />
+                  {:else}
+                    <span>{translate("home.unitUnknown")}</span>
+                  {/if}
+                  <span>· {translate("home.eventId")} {result.event.id}</span>
+                </div>
+                <p class="event-time">
+                  {formatDate(result.event.startAt)} — {formatDate(
+                    result.event.aggregateAt ?? result.event.closedAt
+                  )}
+                </p>
+                <p class="event-countdown" aria-live="off">{formatCountdown(result.event)}</p>
+                <span class="tracker-link"
+                  >{translate("home.openRegionalTracker")}
+                  <span class="tracker-link-arrow" aria-hidden="true">→</span></span
+                >
+              </div>
+            </a>
+          {:else}
+            <article class="event-card" aria-labelledby={`result-${result.region}`}>
+              <div class="card-topline">
+                <span class="region-tag">{regionName(result.region)}</span>
+                <span class="status-pill"
+                  ><span aria-hidden="true"></span>{translate(statusKey(result))}</span
+                >
+              </div>
+              {#if result.status === "unavailable"}
+                <div class="empty-card">
+                  <h3 id={`result-${result.region}`}>{translate("home.noEvent")}</h3>
+                  <p>{translate("home.noEventDescription")}</p>
+                </div>
+              {:else}
+                <div class="empty-card">
+                  <h3 id={`result-${result.region}`}>{translate("home.failed")}</h3>
+                  <p>{translate("home.failedDescription")}</p>
+                </div>
+              {/if}
+            </article>
+          {/if}
+        {/each}
       {/if}
     </div>
   </section>

@@ -3,12 +3,8 @@ import type { Snippet } from "../../../scenario-types";
 import { log } from "../../log";
 import { ColorMatrixFilter } from "pixi.js";
 
-export default async function MemoryIn(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+export default async function MemoryIn(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
   log.log("Live2DController", "SpecialEffect/MemoryIn", action, action_detail);
   const filter = new ColorMatrixFilter();
   filter.saturate(-0.5);

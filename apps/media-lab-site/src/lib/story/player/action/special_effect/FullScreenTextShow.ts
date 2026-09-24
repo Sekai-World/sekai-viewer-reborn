@@ -2,18 +2,9 @@ import type { Live2DController } from "../../Live2DController";
 import type { Snippet } from "../../../scenario-types";
 import { log } from "../../log";
 
-export default async function FullScreenTextShow(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
-  log.log(
-    "Live2DController",
-    "SpecialEffect/FullScreenTextShow",
-    action,
-    action_detail
-  );
+export default async function FullScreenTextShow(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+  log.log("Live2DController", "SpecialEffect/FullScreenTextShow", action, action_detail);
   controller.layers.background.add_blur(6);
 
   // Add dark color filter to darken the background

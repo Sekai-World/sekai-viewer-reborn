@@ -16,10 +16,8 @@ export const isTrainedOnlyCard = (card: CardTrainingMetadata): boolean =>
   card.initialSpecialTrainingStatus === "done";
 
 /** Only trained-only cards override the caller's selected artwork state. */
-export const resolveCardTrained = (
-  card: CardTrainingMetadata,
-  trained = false
-): boolean => isTrainedOnlyCard(card) || trained;
+export const resolveCardTrained = (card: CardTrainingMetadata, trained = false): boolean =>
+  isTrainedOnlyCard(card) || trained;
 
 /**
  * Number of rarity stars a card shows: 1–4 for the regular rarities,

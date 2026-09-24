@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getMasterApiBaseUrl } = vi.hoisted(() => ({ getMasterApiBaseUrl: vi.fn(() => "https://master-api.test") }));
+const { getMasterApiBaseUrl } = vi.hoisted(() => ({
+  getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
+}));
 vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
 const { getUnitProfilesByRegionByUnit, getUnitProfilesByRegionByUnitMembers } = vi.hoisted(() => ({
   getUnitProfilesByRegionByUnit: vi.fn(),
@@ -32,7 +34,9 @@ describe("unit detail page load", () => {
       data: { items: [{ gameCharacterId: 2, firstName: "Minori", unit: "idol" }] }
     });
 
-    const result = (await load({ params: { region: "JP", unit: " IDOL " } } as Parameters<typeof load>[0])) as {
+    const result = (await load({ params: { region: "JP", unit: " IDOL " } } as Parameters<
+      typeof load
+    >[0])) as {
       region: string;
       unit: string | null;
       payload: Promise<unknown>;
@@ -51,7 +55,9 @@ describe("unit detail page load", () => {
   });
 
   it("normalizes route input and returns an unavailable state for an invalid unit", async () => {
-    const result = (await load({ params: { region: "invalid", unit: "unknown" } } as Parameters<typeof load>[0])) as {
+    const result = (await load({ params: { region: "invalid", unit: "unknown" } } as Parameters<
+      typeof load
+    >[0])) as {
       region: string;
       unit: string | null;
       payload: Promise<unknown>;
@@ -65,7 +71,9 @@ describe("unit detail page load", () => {
   it("reports a load failure when the profile request rejects", async () => {
     getUnitProfilesByRegionByUnit.mockRejectedValueOnce(new Error("master api unavailable"));
 
-    const result = (await load({ params: { region: "jp", unit: "idol" } } as Parameters<typeof load>[0])) as {
+    const result = (await load({ params: { region: "jp", unit: "idol" } } as Parameters<
+      typeof load
+    >[0])) as {
       payload: Promise<{ loadFailed: boolean }>;
     };
     await expect(result.payload).resolves.toEqual({

@@ -20,7 +20,7 @@
   import type { EventListPage, EventListItem as EventListItemType } from "$lib/server/event-list";
   import type { UnitProfileMap } from "$lib/server/unit-profiles";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   type EventListPagePayload = EventListPage;
   type EventListItem = EventListItemType;

@@ -1,6 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
+  import { env } from "$env/dynamic/public";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
@@ -26,6 +27,7 @@
   } from "$lib/regions";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
   const fallbackMessages = getLocalI18nMessages(["common", "tracker"]);
   let messages = $state(fallbackMessages);
   let themeName = $state<ThemeName>("default");
@@ -100,7 +102,16 @@
       href: "/tracker/jp",
       icon: "mdi:chart-line",
       active: page.url.pathname.startsWith("/tracker/")
-    }
+    },
+    ...(supportPageUrl
+      ? [
+          {
+            label: translate("navigation.support"),
+            href: supportPageUrl,
+            icon: "mdi:hand-heart"
+          }
+        ]
+      : [])
   ]);
 
   const systemTheme = (): ResolvedTheme =>

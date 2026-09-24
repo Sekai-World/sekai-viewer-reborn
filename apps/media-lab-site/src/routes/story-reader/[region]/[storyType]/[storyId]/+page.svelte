@@ -49,12 +49,10 @@
 
 <svelte:head>
   <title>
-    {
-      createPageTitle(
-        subtitle ?? translate("storyReader.textOnly.title"),
-        storyTypeLabels[data.identity.storyType]
-      )
-    }
+    {createPageTitle(
+      subtitle ?? translate("storyReader.textOnly.title"),
+      storyTypeLabels[data.identity.storyType]
+    )}
   </title>
 </svelte:head>
 
@@ -71,7 +69,7 @@
     }}
     regionLabel={translate(`region.${data.identity.region}`)}
     storyTypeLabel={storyTypeLabels[data.identity.storyType]}
-    subtitle={subtitle}
+    {subtitle}
     bannerUrl={data.story?.bannerUrl}
     switchModeHref={`/live2d/story-reader/${data.identity.region}/${data.identity.storyType}/${data.identity.storyId}`}
     switchModeLabel={translate("storyReader.textOnly.switchToPlayer")}
@@ -112,9 +110,7 @@
         audioVolume: translate("storyReader.textOnly.audio.volume"),
         audioSeek: translate("storyReader.textOnly.audio.seek"),
         audioUnavailable: translate("storyReader.textOnly.audio.unavailable"),
-        audioDownloadPreparing: translate(
-          "storyReader.textOnly.audio.downloadProgress.preparing"
-        ),
+        audioDownloadPreparing: translate("storyReader.textOnly.audio.downloadProgress.preparing"),
         audioDownloadFetchingAudio: translate(
           "storyReader.textOnly.audio.downloadProgress.fetchingAudio"
         ),
@@ -129,9 +125,7 @@
         ),
         audioDownloadReady: translate("storyReader.textOnly.audio.downloadProgress.ready"),
         audioDownloadFailed: translate("storyReader.textOnly.audio.downloadProgress.failed"),
-        audioDownloadCancelled: translate(
-          "storyReader.textOnly.audio.downloadProgress.cancelled"
-        )
+        audioDownloadCancelled: translate("storyReader.textOnly.audio.downloadProgress.cancelled")
       }}
     />
   {:else if data.readerStatus === "unavailable"}

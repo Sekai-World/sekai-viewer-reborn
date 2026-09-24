@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { env } from "$env/dynamic/public";
   import Icon from "@iconify/svelte";
   import { createI18nTranslator } from "$lib/i18n/runtime";
   import { pickerStoryTypeIcons, pickerStoryTypes } from "$lib/story/story-picker";
@@ -6,6 +7,7 @@
 
   let { data }: { data: PageData } = $props();
 
+  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
 </script>
 
@@ -17,6 +19,13 @@
   <p class="mx-auto max-w-xl text-center text-base/7 text-base-content/75">
     {translate("home.tagline")}
   </p>
+  {#if supportPageUrl}
+    <div class="flex justify-center">
+      <a class="btn btn-ghost btn-sm min-h-11" href={supportPageUrl}>
+        {translate("support.cta")}
+      </a>
+    </div>
+  {/if}
 
   <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
     <article class="card h-full bg-base-100 shadow-sm ring-1 ring-base-content/10">

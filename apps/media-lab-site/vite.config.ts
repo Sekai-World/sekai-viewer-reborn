@@ -9,8 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const proxyPath = env.VITE_REMOTE_ASSET_PROXY_PATH;
   const proxyTarget = env.VITE_REMOTE_ASSET_PROXY_TARGET;
-  const enableProxy =
-    mode === "development" && env.VITE_REMOTE_ASSET_PROXY_ENABLED === "true";
+  const enableProxy = mode === "development" && env.VITE_REMOTE_ASSET_PROXY_ENABLED === "true";
   const devHost = env.VITE_DEV_HOST || "localhost";
   const devAllowedHosts = (env.VITE_DEV_ALLOWED_HOSTS ?? "")
     .split(",")
@@ -35,8 +34,7 @@ export default defineConfig(({ mode }) => {
                 target: proxyTarget,
                 changeOrigin: true,
                 secure: true,
-                rewrite: (path) =>
-                  path.replace(new RegExp(`^${proxyPath as string}`), ""),
+                rewrite: (path) => path.replace(new RegExp(`^${proxyPath as string}`), ""),
                 configure: (proxy) => {
                   proxy.on("proxyReq", (proxyReq) => {
                     // Remove 'Origin' header to prevent CORS issues

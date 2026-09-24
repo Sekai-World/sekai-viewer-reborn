@@ -2,12 +2,8 @@ import type { Live2DController } from "../../Live2DController";
 import type { Snippet } from "../../../scenario-types";
 import { log } from "../../log";
 
-export default async function Telop(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+export default async function Telop(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
   log.log("Live2DController", "SpecialEffect/Telop", action, action_detail);
 
   // Host-provided text policy; falls back to the original scenario text.

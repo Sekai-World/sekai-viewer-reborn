@@ -58,7 +58,7 @@ The current API also preserves the master-data `displayOrder` and
 - The selected tag filters by `informationTag`.
 - The default order is `startAt` descending.
 - With `isShowSpoiler=false`, the legacy UI kept only items with `startAt <
-  now`; with spoilers enabled, it showed future items.
+now`; with spoilers enabled, it showed future items.
 - The legacy DataGrid performed local pagination and used `autoPageSize`; there
   was no server-side pagination.
 - A row displayed its start/end times, title, and an action.
@@ -189,15 +189,15 @@ of silently presenting malformed data.
 The API and consumer distinguish successful empty data from unavailable or
 invalid data:
 
-| Condition                                                | Current result                                                                         |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Successful response with `items: []`                    | Successful empty result; render the Game News empty state                              |
-| Invalid request, including a non-boolean `includeAll`   | `400` API error                                                                         |
-| Master data disabled or region data not ready            | `503` API error                                                                         |
-| Master-data query failure                                | `500` API error                                                                         |
-| Network/API/schema failure in content-site              | Error result; do not report a successful empty result                                  |
-| Missing consumer API configuration or unsupported region | Unavailable result                                                                      |
-| Unsafe or invalid item target                            | Keep the item non-openable; never open it as executable content                         |
+| Condition                                                | Current result                                                  |
+| -------------------------------------------------------- | --------------------------------------------------------------- |
+| Successful response with `items: []`                     | Successful empty result; render the Game News empty state       |
+| Invalid request, including a non-boolean `includeAll`    | `400` API error                                                 |
+| Master data disabled or region data not ready            | `503` API error                                                 |
+| Master-data query failure                                | `500` API error                                                 |
+| Network/API/schema failure in content-site               | Error result; do not report a successful empty result           |
+| Missing consumer API configuration or unsupported region | Unavailable result                                              |
+| Unsafe or invalid item target                            | Keep the item non-openable; never open it as executable content |
 
 ## Implementation slices
 

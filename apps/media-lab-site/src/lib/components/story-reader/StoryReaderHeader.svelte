@@ -48,10 +48,7 @@
       {backLabel}
     </a>
     {#if showSwitchMode}
-      <a
-        class="link link-hover inline-flex items-center gap-1 text-primary"
-        href={switchModeHref}
-      >
+      <a class="link link-hover inline-flex items-center gap-1 text-primary" href={switchModeHref}>
         <Icon icon="mdi:swap-horizontal" class="size-4" aria-hidden="true" />
         {switchModeLabel}
       </a>

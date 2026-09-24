@@ -47,9 +47,7 @@ self.addEventListener("activate", (event) => {
         names
           .filter(
             (name) =>
-              name.startsWith("story-assets") &&
-              name !== CACHE_NAME &&
-              name !== INDEX_CACHE_NAME
+              name.startsWith("story-assets") && name !== CACHE_NAME && name !== INDEX_CACHE_NAME
           )
           .map((name) => caches.delete(name))
       );
@@ -94,9 +92,7 @@ const isCacheableRequest = (request) => {
   if (allowedOrigins.includes(url.origin)) return true;
   return (
     url.origin === self.location.origin &&
-    allowedPathPrefixes.some(
-      (prefix) => prefix && url.pathname.startsWith(prefix)
-    )
+    allowedPathPrefixes.some((prefix) => prefix && url.pathname.startsWith(prefix))
   );
 };
 
@@ -191,10 +187,7 @@ const serveCacheFirst = async (request) => {
   }
   // Opaque responses hide their size and body, so only basic/cors ones are
   // cacheable; assets are content-addressed, so no revalidation is needed.
-  if (
-    response.ok &&
-    (response.type === "basic" || response.type === "cors")
-  ) {
+  if (response.ok && (response.type === "basic" || response.type === "cors")) {
     try {
       const copy = response.clone();
       const buffer = await copy.arrayBuffer();

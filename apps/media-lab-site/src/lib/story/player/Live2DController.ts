@@ -307,7 +307,14 @@ export class Live2DController extends Live2DPlayer {
         log.log("Live2DController", `actual applied motion: ${costume}|${motion}|${expression}`);
       }
       wait_list.push(
-        ...this.queue_motion_updates(model_data, current_model, costume, motion, expression, to_last_frame)
+        ...this.queue_motion_updates(
+          model_data,
+          current_model,
+          costume,
+          motion,
+          expression,
+          to_last_frame
+        )
       );
     }
     await Promise.all(wait_list);
@@ -330,11 +337,9 @@ export class Live2DController extends Live2DPlayer {
         this.events.emit("warn", `${expression} not found.`);
       }
       wait_list.push(
-        this.layers.live2d
-          .update_motion("Expression", costume, index, to_last_frame)
-          .then(() => {
-            current_model.expression = expression;
-          })
+        this.layers.live2d.update_motion("Expression", costume, index, to_last_frame).then(() => {
+          current_model.expression = expression;
+        })
       );
     }
     if (motion !== "") {
@@ -346,11 +351,9 @@ export class Live2DController extends Live2DPlayer {
         this.events.emit("warn", `${motion} not found.`);
       }
       wait_list.push(
-        this.layers.live2d
-          .update_motion("Motion", costume, index, to_last_frame)
-          .then(() => {
-            current_model.motion = motion;
-          })
+        this.layers.live2d.update_motion("Motion", costume, index, to_last_frame).then(() => {
+          current_model.motion = motion;
+        })
       );
     }
     return wait_list;

@@ -118,8 +118,9 @@
       {/if}
       {#if getDisplayUnitName(event.unit)}
         {@const canonicalUnit = event.unit ? resolveCanonicalUnitSlug(event.unit) : null}
-        {@const unitHref =
-          canonicalUnit ? resolve("/unit/[region]/[unit]", { region, unit: canonicalUnit }) : null}
+        {@const unitHref = canonicalUnit
+          ? resolve("/unit/[region]/[unit]", { region, unit: canonicalUnit })
+          : null}
         <svelte:element
           this={unitHref ? "a" : "div"}
           href={unitHref ?? undefined}

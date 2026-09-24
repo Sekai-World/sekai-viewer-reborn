@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../app.css";
   import "$lib/icons/mdi";
-  import { asset } from "$app/paths";
+  import { asset, resolve } from "$app/paths";
   import { invalidateAll } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
@@ -87,6 +87,7 @@
   let skipToMainLabel = $state(getInitialI18nText("aria.skipToMainContent"));
   let sidebarLabel = $state(getInitialI18nText("navigation.sidebarTitle"));
   let exploreLabel = $state(getInitialI18nText("navigation.explore"));
+  let projectLabel = $state(getInitialI18nText("navigation.project"));
   let gameNewsLabel = $state(getInitialI18nText("navigation.gameNews"));
   let charactersLabel = $state(getInitialI18nText("navigation.characters"));
   let cardsLabel = $state(getInitialI18nText("navigation.cards"));
@@ -94,6 +95,7 @@
   let eventsLabel = $state(getInitialI18nText("navigation.events"));
   let gachasLabel = $state(getInitialI18nText("navigation.gachas"));
   let virtualLivesLabel = $state(getInitialI18nText("navigation.virtualLives"));
+  let supportLabel = $state(getInitialI18nText("navigation.support"));
   let quickNavigationLabel = $state(getInitialI18nText("navigation.quickNavigation"));
   let settingsLabel = $state(getInitialI18nText("settings.title"));
   let themeControlLabel = $state(getInitialI18nText("settings.appearance"));
@@ -227,6 +229,12 @@
       active:
         page.url.pathname.startsWith("/virtual-lives/") ||
         page.url.pathname.startsWith("/virtual-live/")
+    },
+    {
+      label: supportLabel,
+      href: resolve("/support"),
+      active: page.url.pathname === resolve("/support"),
+      icon: "mdi:hand-heart"
     }
   ]);
   const sidebarItems = $derived<SidebarItem[]>([
@@ -236,7 +244,12 @@
       type: "section",
       label: exploreLabel
     },
-    ...navigationLinks.slice(2)
+    ...navigationLinks.slice(2, -1),
+    {
+      type: "section",
+      label: projectLabel
+    },
+    navigationLinks[navigationLinks.length - 1]
   ]);
   const quickNavigationItems = $derived<ContentSiteNavigationItem[]>([
     navigationLinks[0],
@@ -325,6 +338,7 @@
     skipToMainLabel = translate("aria.skipToMainContent");
     sidebarLabel = translate("navigation.sidebarTitle");
     exploreLabel = translate("navigation.explore");
+    projectLabel = translate("navigation.project");
     gameNewsLabel = translate("navigation.gameNews");
     charactersLabel = translate("navigation.characters");
     cardsLabel = translate("navigation.cards");
@@ -332,6 +346,7 @@
     eventsLabel = translate("navigation.events");
     gachasLabel = translate("navigation.gachas");
     virtualLivesLabel = translate("navigation.virtualLives");
+    supportLabel = translate("navigation.support");
     quickNavigationLabel = translate("navigation.quickNavigation");
     settingsLabel = translate("settings.title");
     themeControlLabel = translate("settings.appearance");

@@ -106,6 +106,24 @@ describe("content-site layout server load", () => {
     );
   });
 
+  it("loads the home namespace for support routes", async () => {
+    const messages = { supportTitle: "Support" };
+    loadI18nMessageBundle.mockResolvedValueOnce(messages);
+
+    await expect(load(createLoadEvent("/support"))).resolves.toEqual({
+      i18nMessages: messages,
+      uiLocale: "en",
+      preferredRegion: DEFAULT_REGION,
+      globalNotices: [],
+      siteVersion: packageJson.version
+    });
+    expect(loadI18nMessageBundle).toHaveBeenCalledWith(
+      "en",
+      ["common", "home", "error"],
+      expect.any(Function)
+    );
+  });
+
   it("returns the normalized preferred region from its cookie", async () => {
     loadI18nMessageBundle.mockResolvedValueOnce({});
 

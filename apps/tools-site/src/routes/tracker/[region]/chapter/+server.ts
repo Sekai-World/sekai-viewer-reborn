@@ -14,7 +14,11 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const charaId = positiveInteger(url.searchParams.get("charaId"));
   const eventId = positiveInteger(url.searchParams.get("eventId"));
   const mode = url.searchParams.get("mode");
-  if (!isTrackerRegion(params.region) || charaId === null || (mode !== "live" && mode !== "history")) {
+  if (
+    !isTrackerRegion(params.region) ||
+    charaId === null ||
+    (mode !== "live" && mode !== "history")
+  ) {
     return json({ status: "invalid-request", rankings: [] });
   }
   if ((mode === "history" && eventId === null) || (mode === "live" && eventId !== null)) {
@@ -23,5 +27,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
   if (mode === "live") {
     return json(await getChapterTrackerRankings(getSekaiApiBaseUrl(), params.region, charaId));
   }
-  return json(await getChapterTrackerRankings(getSekaiApiBaseUrl(), params.region, charaId, eventId!));
+  return json(
+    await getChapterTrackerRankings(getSekaiApiBaseUrl(), params.region, charaId, eventId!)
+  );
 };

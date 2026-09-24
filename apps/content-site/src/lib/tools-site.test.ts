@@ -39,6 +39,8 @@ describe("getEventTrackerHref", () => {
   it("trims trailing slashes from the base URL", () => {
     mockEnv.PUBLIC_TOOLS_SITE_BASE_URL = "https://tools.example.test//";
 
-    expect(getEventTrackerHref("en", "456")).toBe("https://tools.example.test/tracker/en?eventId=456");
+    expect(getEventTrackerHref("en", "456")).toBe(
+      "https://tools.example.test/tracker/en?eventId=456"
+    );
   });
 });

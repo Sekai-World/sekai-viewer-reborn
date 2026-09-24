@@ -31,10 +31,7 @@ export class PreloadQueue<T> {
           resolve(this.results);
           return;
         }
-        while (
-          this.running < this.maxQueueLength &&
-          this.currentIndex < this.tasks.length
-        ) {
+        while (this.running < this.maxQueueLength && this.currentIndex < this.tasks.length) {
           const taskIndex = this.currentIndex++;
           const task = this.tasks[taskIndex].task;
           const callback = this.tasks[taskIndex].callback;
@@ -79,10 +76,7 @@ export class PreloadQueue<T> {
     this.running++;
 
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`${taskIndex}: Promise timeout.`)),
-        this.timeout * 1000
-      )
+      setTimeout(() => reject(new Error(`${taskIndex}: Promise timeout.`)), this.timeout * 1000)
     );
     const promise = typeof task === "function" ? task() : task;
 

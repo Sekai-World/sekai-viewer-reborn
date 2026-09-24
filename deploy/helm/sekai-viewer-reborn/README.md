@@ -143,17 +143,22 @@ When using this targeted form for an existing release, include the complete
 operator-owned values file as well, or use `--reuse-values` deliberately after
 reviewing the resulting values.
 
-The content site has four default environment keys. The `SEKAI_API_BASE_URL`,
+The content site has seven default environment keys. The `SEKAI_API_BASE_URL`,
 `SEKAI_MASTER_API_BASE_URL`, and `PUBLIC_REMOTE_ASSET_BASE_URL` URL values are
 empty and must be set by the operator; `PUBLIC_SEKAI_I18N_BASE_URL` defaults to
-`https://sekai-world.github.io/sekai-i18n-reborn`. Values are quoted when
+`https://sekai-world.github.io/sekai-i18n-reborn`. The optional
+`PUBLIC_SUPPORT_PAGE_URL` is a public URL used by each app's homepage support
+link; an empty value hides that link. `content-site` also accepts the public
+`PUBLIC_PATREON_URL` and `PUBLIC_KOFI_URL` for the corresponding Patreon and
+Ko-fi buttons on its support page. Empty or invalid provider URLs hide their
+buttons. All three support URLs default to empty. Values are quoted when
 rendered, so an intentionally empty value remains an empty string. Every app
-declares an empty `SEKAI_API_BASE_URL` default for server-side dynamic
-notifications. `tools-site` also declares an empty
-`SEKAI_MASTER_API_BASE_URL` for the server-side event tracker; `media-lab-site`
-and `account-site` provide only the notification URL by default. `envFrom` and
-`extraEnv` are available per application for straightforward Secret/ConfigMap
-references and additional environment entries.
+declares an empty `SEKAI_API_BASE_URL`
+default for server-side dynamic notifications. `tools-site` also declares an
+empty `SEKAI_MASTER_API_BASE_URL` for the server-side event tracker;
+`media-lab-site` and `account-site` have no additional API URL defaults.
+`envFrom` and `extraEnv` are available per application for straightforward
+Secret/ConfigMap references and additional environment entries.
 
 Ingress hosts, ingress class, annotations, paths, and TLS settings are
 configured independently under each application's `ingress` values. Set

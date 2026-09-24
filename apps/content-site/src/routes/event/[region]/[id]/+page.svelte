@@ -18,7 +18,7 @@
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import { getEventTrackerHref } from "$lib/tools-site";
   import { createPageTitle } from "$lib/page-title";
-import type { PageData } from "./$types";
+  import type { PageData } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
@@ -385,8 +385,8 @@ import type { PageData } from "./$types";
               {startAtLabel}
               {endAtLabel}
               {bannerCharacterLabel}
-              eventTrackerHref={eventTrackerHref}
-              eventTrackerLabel={eventTrackerLabel}
+              {eventTrackerHref}
+              {eventTrackerLabel}
             />
           {/await}
 

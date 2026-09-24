@@ -8,7 +8,7 @@ import HomePage from "./+page.svelte";
 import type { PageData } from "./$types";
 
 const messages: I18nMessages = {
-  "idLabel": "#",
+  idLabel: "#",
   "latestData.loadingEvents": "Loading events...",
   "latestData.loadFailed": "Failed to load latest data.",
   "latestData.noData": "No data available.",
@@ -19,7 +19,7 @@ const messages: I18nMessages = {
   "homeNews.loading": "Loading news...",
   "homeNews.title": "News",
   "homeNews.viewAll": "View All",
-  "noCurrentEventData": "No current event data.",
+  noCurrentEventData: "No current event data.",
   "settings.gameContentRegion": "Preferred Content Region",
   "settings.gameContentRegionDescription": "Select a region."
 };

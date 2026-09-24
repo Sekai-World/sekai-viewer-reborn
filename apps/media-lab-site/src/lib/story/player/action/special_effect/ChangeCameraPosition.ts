@@ -2,22 +2,13 @@ import type { Live2DController } from "../../Live2DController";
 import type { Snippet } from "../../../scenario-types";
 import { log } from "../../log";
 
-export default async function ChangeCameraPosition(
-  controller: Live2DController,
-  action: Snippet
-) {
-  const action_detail =
-    controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
-  log.log(
-    "Live2DController",
-    "SpecialEffect/ChangeCameraPosition",
-    action,
-    action_detail
-  );
+export default async function ChangeCameraPosition(controller: Live2DController, action: Snippet) {
+  const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
+  log.log("Live2DController", "SpecialEffect/ChangeCameraPosition", action, action_detail);
   const from = [...controller.camera.position];
   const to = [
     Number.parseFloat(action_detail.StringVal.split(",")[0]) / 1920,
-    Number.parseFloat(action_detail.StringVal.split(",")[1]) / 1080,
+    Number.parseFloat(action_detail.StringVal.split(",")[1]) / 1080
   ];
 
   await controller.animate.progress_wrapper((progress) => {

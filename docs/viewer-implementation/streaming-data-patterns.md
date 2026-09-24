@@ -196,7 +196,12 @@ must first await the streamed bundle and register the resolved remote messages:
 
 ```typescript
 // Import
-import { createI18nTranslator, resolveStreamingMessages, setI18nLocale, tCommon } from "$lib/i18n/runtime";
+import {
+  createI18nTranslator,
+  resolveStreamingMessages,
+  setI18nLocale,
+  tCommon
+} from "$lib/i18n/runtime";
 
 // Initial translation (sync — uses local English sources if still streaming)
 const getInitialI18nText = (key: string): string =>
@@ -204,7 +209,10 @@ const getInitialI18nText = (key: string): string =>
 
 // $effect (re-runs with full translations once streaming promise resolves)
 $effect(() => {
-  const translate = createI18nTranslator(data.uiLocale, resolveStreamingMessages(data.i18nMessages));
+  const translate = createI18nTranslator(
+    data.uiLocale,
+    resolveStreamingMessages(data.i18nMessages)
+  );
   applyTranslations(translate);
 });
 
@@ -391,7 +399,7 @@ browser follows the link.
     }
 
     event.preventDefault(); // Block <a> navigation
-    revealSpoiler();       // Remove mosaic overlay
+    revealSpoiler(); // Remove mosaic overlay
   };
 </script>
 
@@ -558,6 +566,7 @@ uses a `$derived` to compute the array index from the user's region selection,
 then `{#await}` on that single Promise.
 
 Key design decisions:
+
 - All SDK list endpoints (`getCardsByRegionList`, `getMusicsByRegionList`,
   `getGachasByRegionList`) support `spoiler: false` to exclude spoiler content.
 - Sort by `releaseAt`/`publishedAt`/`startAt` descending, `page_size` small

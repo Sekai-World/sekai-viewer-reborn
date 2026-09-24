@@ -96,9 +96,7 @@ describe("gatherStoryMotion", () => {
         { Character2dId: 3, CostumeType: "v2_02saki_school01" },
         { Character2dId: 4, CostumeType: "v2_03honami_school01" }
       ],
-      LayoutData: [
-        layoutData({ Character2dId: 3, MotionName: "motion_02", FacialName: "" })
-      ]
+      LayoutData: [layoutData({ Character2dId: 3, MotionName: "motion_02", FacialName: "" })]
     });
     expect(gatherStoryMotion(scenario)).toEqual([
       { costume: "v2_02saki_school01", motion: "motion_02", type: "motion" }

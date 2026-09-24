@@ -28,10 +28,7 @@ export default class Background extends BaseLayer {
       const bg = this.structure.background!;
       let scale: number;
       const texture = bg.texture;
-      if (
-        texture.width / texture.height >
-        this.stage_size[0] / this.stage_size[1]
-      )
+      if (texture.width / texture.height > this.stage_size[0] / this.stage_size[1])
         scale = this.stage_size[1] / texture.height;
       else scale = this.stage_size[0] / texture.width;
       bg.x = this.stage_size[0] / 2;

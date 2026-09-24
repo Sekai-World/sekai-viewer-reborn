@@ -37,11 +37,22 @@ const snippet = (
   action: SnippetAction,
   referenceIndex: number,
   progressBehavior = SnippetProgressBehavior.WaitUnitilFinished
-) => ({ Action: action, ProgressBehavior: progressBehavior, ReferenceIndex: referenceIndex, Delay: 0 });
+) => ({
+  Action: action,
+  ProgressBehavior: progressBehavior,
+  ReferenceIndex: referenceIndex,
+  Delay: 0
+});
 
 const names: StoryCastNameTables = {
   character2ds: [
-    { id: 0, characterType: "game_character", characterId: 1, unit: "light_sound", assetName: "cls_01ichika" },
+    {
+      id: 0,
+      characterType: "game_character",
+      characterId: 1,
+      unit: "light_sound",
+      assetName: "cls_01ichika"
+    },
     { id: 1, characterType: "mob", characterId: 50, assetName: "cls_mob" }
   ],
   gameCharacterNames: new Map([[1, "星乃一歌"]]),
@@ -245,7 +256,13 @@ describe("flattenScenarioToRows", () => {
           Duration: 1,
           IntVal: 0
         },
-        { EffectType: SpecialEffectType.Telop, StringVal: "三年後", StringValSub: "", Duration: 2, IntVal: 0 },
+        {
+          EffectType: SpecialEffectType.Telop,
+          StringVal: "三年後",
+          StringValSub: "",
+          Duration: 2,
+          IntVal: 0
+        },
         {
           EffectType: SpecialEffectType.FullScreenText,
           StringVal: "字幕本文",
@@ -253,8 +270,20 @@ describe("flattenScenarioToRows", () => {
           Duration: 3,
           IntVal: 0
         },
-        { EffectType: SpecialEffectType.Movie, StringVal: "movie_01", StringValSub: "", Duration: 0, IntVal: 0 },
-        { EffectType: SpecialEffectType.BlackIn, StringVal: "", StringValSub: "", Duration: 1, IntVal: 0 }
+        {
+          EffectType: SpecialEffectType.Movie,
+          StringVal: "movie_01",
+          StringValSub: "",
+          Duration: 0,
+          IntVal: 0
+        },
+        {
+          EffectType: SpecialEffectType.BlackIn,
+          StringVal: "",
+          StringValSub: "",
+          Duration: 1,
+          IntVal: 0
+        }
       ]
     });
     const document_ = flattenScenarioToRows(scenario, names, voiceCharacters, {
@@ -290,9 +319,30 @@ describe("flattenScenarioToRows", () => {
         snippet(SnippetAction.Sound, 2)
       ],
       SoundData: [
-        { PlayMode: SoundPlayMode.CrossFade, Bgm: "bgm00001", Se: "", Volume: 1, SeBundleName: "", Duration: 2 },
-        { PlayMode: SoundPlayMode.LoopSe, Bgm: "", Se: "se00001", Volume: 1, SeBundleName: "", Duration: 0 },
-        { PlayMode: SoundPlayMode.StopSe, Bgm: "", Se: "se00002", Volume: 1, SeBundleName: "", Duration: 0 }
+        {
+          PlayMode: SoundPlayMode.CrossFade,
+          Bgm: "bgm00001",
+          Se: "",
+          Volume: 1,
+          SeBundleName: "",
+          Duration: 2
+        },
+        {
+          PlayMode: SoundPlayMode.LoopSe,
+          Bgm: "",
+          Se: "se00001",
+          Volume: 1,
+          SeBundleName: "",
+          Duration: 0
+        },
+        {
+          PlayMode: SoundPlayMode.StopSe,
+          Bgm: "",
+          Se: "se00002",
+          Volume: 1,
+          SeBundleName: "",
+          Duration: 0
+        }
       ]
     });
     const document_ = flattenScenarioToRows(scenario, names, voiceCharacters, {

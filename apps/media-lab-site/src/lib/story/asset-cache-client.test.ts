@@ -24,9 +24,7 @@ describe("story asset cache registration", () => {
   it("does nothing when service workers are unavailable", async () => {
     vi.stubGlobal("navigator", {});
 
-    await expect(
-      registerStoryAssetCache("https://storage.example.test")
-    ).resolves.toBeUndefined();
+    await expect(registerStoryAssetCache("https://storage.example.test")).resolves.toBeUndefined();
   });
 
   it("configures the worker with the remote asset origin and the relay prefix", async () => {

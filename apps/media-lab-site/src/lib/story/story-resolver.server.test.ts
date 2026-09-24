@@ -75,9 +75,7 @@ describe("getStoryAssetBase / getStoryFetchBase", () => {
 
   it("qualifies a relative base with the request origin", () => {
     publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL = "/storage";
-    expect(getStoryFetchBase("http://localhost:4103")).toBe(
-      "http://localhost:4103/storage"
-    );
+    expect(getStoryFetchBase("http://localhost:4103")).toBe("http://localhost:4103/storage");
     expect(getStoryFetchBase()).toBe("/storage");
   });
 });
@@ -94,10 +92,7 @@ describe("resolveStoryRoute", () => {
 
   it("reports not-found for a story missing from master data", async () => {
     mdMocks.fetchStoryCollections.mockResolvedValue(unitCollections);
-    const result = await resolveStoryRoute(
-      { ...identity, storyId: "idol-9-9" },
-      vi.fn()
-    );
+    const result = await resolveStoryRoute({ ...identity, storyId: "idol-9-9" }, vi.fn());
     expect(result).toEqual({ status: "not-found" });
   });
 
@@ -144,9 +139,9 @@ describe("fetchScenarioDocument", () => {
       live2d: (path: string) => `https://live2d.test/${path}`
     };
     const fetchFn = vi.fn().mockResolvedValue({ ok: false, status: 403 });
-    await expect(
-      fetchScenarioDocument(urls, "scenario/s1.asset", fetchFn)
-    ).rejects.toThrow(/Failed to fetch scenario document/);
+    await expect(fetchScenarioDocument(urls, "scenario/s1.asset", fetchFn)).rejects.toThrow(
+      /Failed to fetch scenario document/
+    );
   });
 });
 

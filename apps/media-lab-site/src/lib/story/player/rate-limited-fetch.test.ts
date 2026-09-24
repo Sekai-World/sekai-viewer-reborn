@@ -2,8 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { live2dRequest } from "./rate-limited-fetch";
 
-const wait = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 describe("live2dRequest scheduler", () => {
   // The scheduler is a module-level singleton; let any leftover rate-limit

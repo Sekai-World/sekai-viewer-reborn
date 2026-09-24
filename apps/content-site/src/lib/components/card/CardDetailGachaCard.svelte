@@ -89,9 +89,7 @@
                     #{gacha.id}
                   </span>
                   {#if gacha.startAt !== null || gacha.endAt !== null}
-                    <span class="text-[0.65rem] opacity-50"
-                      >{getGachaTimeRange(gacha)}</span
-                    >
+                    <span class="text-[0.65rem] opacity-50">{getGachaTimeRange(gacha)}</span>
                   {/if}
                 </div>
                 {#if gacha.name}
@@ -127,9 +125,7 @@
                     #{latest.id}
                   </span>
                   {#if latest.startAt !== null || latest.endAt !== null}
-                    <span class="text-[0.65rem] opacity-50"
-                      >{getGachaTimeRange(latest)}</span
-                    >
+                    <span class="text-[0.65rem] opacity-50">{getGachaTimeRange(latest)}</span>
                   {/if}
                 </div>
                 {#if latest.name}
@@ -165,9 +161,7 @@
                     #{first.id}
                   </span>
                   {#if first.startAt !== null || first.endAt !== null}
-                    <span class="text-[0.65rem] opacity-50"
-                      >{getGachaTimeRange(first)}</span
-                    >
+                    <span class="text-[0.65rem] opacity-50">{getGachaTimeRange(first)}</span>
                   {/if}
                 </div>
                 {#if first.name}

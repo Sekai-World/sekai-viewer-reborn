@@ -39,7 +39,8 @@ export const createChapterRows = (
       Number.isFinite(ranking.score) &&
       ranking.score >= 0 &&
       !byRank.has(ranking.rank)
-    ) byRank.set(ranking.rank, ranking);
+    )
+      byRank.set(ranking.rank, ranking);
   }
 
   return getTrackerRankLadder(ladder).map((rank) => {

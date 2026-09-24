@@ -56,13 +56,25 @@ patterns in `docs/content-site-ui-conventions.md` for content-site work.
 ## Testing
 
 - Use the repository's targeted workspace checks first.
-- In a fresh checkout or `.slim/worktrees/*` worktree, generate SvelteKit
-  runtime artifacts before running Vitest: run `svelte-kit sync` for every
-  SvelteKit app (`account-site`, `content-site`, `media-lab-site`,
-  `tools-site`) or one `vite build`. The root `tsconfig.json` references all
-  apps, so missing generated `.svelte-kit/tsconfig.json` files make Vitest fail
-  at startup with a Rolldown `Could not resolve 'node:module'` /
-  `Tsconfig not found` error.
+- Every Turbo `test` task depends on the root `//#sync:apps` task, which runs
+  `pnpm sync:apps` (`svelte-kit sync` for every SvelteKit app: `account-site`,
+  `content-site`, `media-lab-site`, `tools-site`) once before any Vitest run.
+  Use `pnpm test` or `pnpm test --filter=<workspace>` in a fresh checkout or
+  `.slim/worktrees/*` worktree. App `test` scripts do not sync on their own:
+  `svelte-kit sync` deletes and rewrites the root route's generated types on
+  every run, so concurrent syncs of the same app fail with `ENOENT` under
+  `.svelte-kit/types`. Keep sync in the single root task instead of adding it
+  back to per-workspace `test` or `pretest` scripts. Before running
+  `pnpm --filter <workspace> test`, Vitest, or a Vite dev server directly, run
+  `pnpm sync:apps` first. App `test:coverage` scripts still sync every app
+  because SonarCloud runs them one at a time.
+  Rolldown's tsconfig discovery resolves an inherited `include` relative to
+  the extending config instead of the config that defines it, so an app's
+  `tsconfig.json` does not match its own files. Discovery then falls through
+  to the root solution `tsconfig.json`, which references all apps, and any
+  missing generated `.svelte-kit/tsconfig.json` makes Vitest fail at startup
+  with a Rolldown `Could not resolve 'node:module'` / `Tsconfig not found`
+  error. Observed with rolldown 1.2.8–1.2.10.
 - Test component behavior with Vitest and Svelte Testing Library. Use Playwright
   for end-to-end user flows and visual regression coverage where applicable.
 - Prefer accessible queries and user-observable outcomes over implementation

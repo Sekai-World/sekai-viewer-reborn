@@ -78,11 +78,9 @@ export interface StoryMasterDataClientOptions {
   now?: () => number;
 }
 
-const asArray = (value: unknown): unknown[] =>
-  Array.isArray(value) ? value : [];
+const asArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
-const asString = (value: unknown): string =>
-  typeof value === "string" ? value : "";
+const asString = (value: unknown): string => (typeof value === "string" ? value : "");
 
 const asNumber = (value: unknown): number =>
   typeof value === "number" && Number.isFinite(value) ? value : 0;
@@ -94,10 +92,7 @@ const asOptionalNumber = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
 /** Parsers keep only the fields the story feature consumes. */
-const collectionParsers: Record<
-  StoryCollectionName,
-  (raw: unknown[]) => unknown
-> = {
+const collectionParsers: Record<StoryCollectionName, (raw: unknown[]) => unknown> = {
   unitStories: (raw) =>
     asArray(raw).map((row) => {
       const r = row as Record<string, unknown>;
@@ -201,10 +196,7 @@ const collectionParsers: Record<
   cardEpisodes: (raw) =>
     asArray(raw).map((row) => {
       const r = row as Record<string, unknown>;
-      const releaseCondition = (r.releaseCondition ?? null) as Record<
-        string,
-        unknown
-      > | null;
+      const releaseCondition = (r.releaseCondition ?? null) as Record<string, unknown> | null;
       const episode: StoryCardEpisode = {
         id: asNumber(r.id),
         cardId: asNumber(r.cardId),
@@ -379,13 +371,9 @@ const stripTrailingSlashes = (value: string): string => {
 };
 
 const resolveApiBaseUrl = (options: StoryMasterDataClientOptions): string => {
-  const base = stripTrailingSlashes(
-    options.baseUrl ?? env.SEKAI_MASTER_API_BASE_URL?.trim() ?? ""
-  );
+  const base = stripTrailingSlashes(options.baseUrl ?? env.SEKAI_MASTER_API_BASE_URL?.trim() ?? "");
   if (!base) {
-    throw new Error(
-      "Missing required environment variable: SEKAI_MASTER_API_BASE_URL"
-    );
+    throw new Error("Missing required environment variable: SEKAI_MASTER_API_BASE_URL");
   }
   return base;
 };
@@ -416,9 +404,7 @@ const listCollection = async (
       // Region data not synced for this entity — mirrors the previous
       // "collection missing on a regional mirror" tolerance.
       if (status === 503) return [];
-      throw new Error(
-        `Failed to fetch story master data ${name} (${status || "unknown error"})`
-      );
+      throw new Error(`Failed to fetch story master data ${name} (${status || "unknown error"})`);
     }
 
     const items = Array.isArray(response.data.items) ? response.data.items : [];
@@ -753,13 +739,12 @@ export const fetchStoryCharacterTables = async (
   region: StoryRouteRegion,
   options: StoryMasterDataClientOptions = {}
 ): Promise<StoryCharacterTables> => {
-  const [character2ds, gameCharacters, mobCharacters, subGameCharacters] =
-    await Promise.all([
-      fetchStoryCollection<unknown>(region, "character2ds", options),
-      fetchStoryCollection<unknown>(region, "gameCharacters", options),
-      fetchStoryCollection<unknown>(region, "mobCharacters", options),
-      fetchStoryCollection<unknown>(region, "subGameCharacters", options)
-    ]);
+  const [character2ds, gameCharacters, mobCharacters, subGameCharacters] = await Promise.all([
+    fetchStoryCollection<unknown>(region, "character2ds", options),
+    fetchStoryCollection<unknown>(region, "gameCharacters", options),
+    fetchStoryCollection<unknown>(region, "mobCharacters", options),
+    fetchStoryCollection<unknown>(region, "subGameCharacters", options)
+  ]);
 
   const gameCharacterNames = new Map<number, string>();
   for (const row of asArray(gameCharacters)) {
