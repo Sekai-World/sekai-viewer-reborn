@@ -149,7 +149,7 @@
             {#if unitSlug}
               <a
                 href={resolve("/unit/[region]/[unit]", { region: data.region, unit: unitSlug })}
-                class="rounded-lg outline-none transition-transform duration-180 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                class="rounded-lg outline-none transition-transform duration-180 ease-out hover-lift focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 aria-label={group}
               >
                 <img

@@ -372,7 +372,7 @@
           label={getCharacterLabel()}
           characterId={item.characterId}
           variant="xs"
-          class="bg-white"
+          class="bg-base-100"
           decorative
         />
       {/if}
@@ -599,7 +599,7 @@
     top: 0;
     height: 100%;
     overflow: hidden;
-    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 280ms ease-out;
   }
 
   :global(:root[data-low-motion]) .card-grid-split-wrapper,

@@ -89,7 +89,7 @@
                   loadMode="visible"
                   maxSize={96}
                   containerClass="relative mx-auto aspect-square overflow-hidden rounded-lg"
-                  imageClass="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                  imageClass="size-full object-cover transition-transform duration-200 group-hover:brightness-105"
                 />
                 {#if pickup.weight !== null && pickup.weight !== undefined}
                   <div

@@ -709,7 +709,7 @@
 {#snippet rewardDetailChip(detail: EventRewardResourceBoxDetail, _index: number)}
   {@const imageSrc = getRewardDetailImageSrc(detail)}
   <span
-    class="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-(--archive-border-default) bg-(--archive-surface-raised) px-2.5 py-1.5 text-xs font-semibold text-(--archive-text-default)"
+    class="badge badge-outline h-auto min-h-9 max-w-full gap-1.5 border-(--archive-border-default) bg-(--archive-surface-raised) px-2.5 py-1.5 text-xs font-semibold text-(--archive-text-default)"
     title={getRewardDetailLabel(detail)}
     aria-label={getRewardDetailLabel(detail)}
   >
@@ -752,7 +752,7 @@
     </span>
   {:else}
     <span
-      class="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border border-(--archive-border-default) bg-(--archive-surface-raised) px-2.5 py-1.5 text-xs font-semibold text-(--archive-text-default)"
+      class="badge badge-outline h-auto min-h-9 shrink-0 gap-1.5 border-(--archive-border-default) bg-(--archive-surface-raised) px-2.5 py-1.5 text-xs font-semibold text-(--archive-text-default)"
       title={getRewardDetailLabel(detail)}
       aria-label={getRewardDetailLabel(detail)}
     >
@@ -829,7 +829,7 @@
     href={bonusCharacterHref ?? undefined}
     class={`content-card-inset grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 ${
       bonusCharacterHref
-        ? "group/bonus-row outline-none transition-[background-color,border-color,transform] duration-180 ease-out motion-reduce:transition-none [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        ? "group/bonus-row outline-none transition-[background-color,border-color,transform] duration-180 ease-out motion-reduce:transition-none hover-lift [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         : ""
     }`}
     aria-label={bonusCharacterHref
@@ -875,7 +875,7 @@
       {#if item.baseBonusRate !== null}
         {@const highlightedAttr = item.attrBonuses[0]?.attr ?? null}
         <span
-          class="inline-flex max-w-full items-center gap-1 rounded-full border border-(--archive-border-default) bg-(--archive-surface-raised) px-2 py-1 text-xs/4 font-semibold text-(--archive-text-default)"
+          class="badge badge-outline h-auto max-w-full gap-1 border-(--archive-border-default) bg-(--archive-surface-raised) px-2 py-1 text-xs/4 font-semibold text-(--archive-text-default)"
           title={`${cardAttrAnyLabel} ${bonusRateLabel} ${formatPercent(item.baseBonusRate) ?? noDataLabel}`}
         >
           <span class="flex items-center -space-x-1" aria-label={cardAttrAnyLabel}>
@@ -896,7 +896,7 @@
       {#each item.attrBonuses as attrBonus (`${attrBonus.attr ?? "any"}-${attrBonus.bonusRate ?? "none"}`)}
         {@const attrIconUrl = getAttrIconUrl(attrBonus.attr)}
         <span
-          class="inline-flex max-w-full items-center gap-1 rounded-full border border-primary/25 bg-primary/10 px-2 py-1 text-xs/4 font-semibold text-primary"
+          class="badge badge-outline h-auto max-w-full gap-1 border-primary/25 bg-primary/10 px-2 py-1 text-xs/4 font-semibold text-primary"
           title={`${getAttrLabel(attrBonus.attr)} ${bonusRateLabel} ${formatPercent(attrBonus.bonusRate) ?? noDataLabel}`}
         >
           {#if attrIconUrl}
@@ -945,14 +945,14 @@
 
 {#snippet cardBonusBadges(card: EventFeaturedCard)}
   <span
-    class="inline-flex max-w-full items-center rounded-full border border-(--archive-border-default) bg-(--archive-surface-raised) px-1.5 py-0.5 text-[11px]/4 font-semibold text-(--archive-text-default) sm:px-2"
+    class="badge badge-outline badge-sm h-auto max-w-full border-(--archive-border-default) bg-(--archive-surface-raised) px-1.5 py-0.5 text-xs/4 font-semibold text-(--archive-text-default) sm:px-2"
     title={`${featuredCardBonusLabel}: +${formatPercent(card.bonusRate) ?? noDataLabel}`}
   >
     {featuredCardBonusShortLabel}: +{formatPercent(card.bonusRate) ?? noDataLabel}
   </span>
   {#if card.leaderBonusRate !== null}
     <span
-      class="inline-flex max-w-full items-center rounded-full border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[11px]/4 font-semibold text-primary sm:px-2"
+      class="badge badge-outline badge-sm h-auto max-w-full border-primary/25 bg-primary/10 px-1.5 py-0.5 text-xs/4 font-semibold text-primary sm:px-2"
       title={`${leaderBonusLabel}: +${formatPercent(card.leaderBonusRate) ?? noDataLabel}`}
     >
       {leaderBonusShortLabel}: +{formatPercent(card.leaderBonusRate) ?? noDataLabel}
@@ -966,7 +966,7 @@
   {#if href}
     <a
       {href}
-      class="content-card-inset group grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-180 ease-out motion-reduce:transition-none [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
+      class="content-card-inset group grid grid-cols-[4rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-180 ease-out motion-reduce:transition-none [@media(hover:hover)]:hover:border-primary/35 hover-lift [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:grid-cols-[4.5rem_minmax(0,1fr)_auto]"
     >
       <CardThumbnail
         src={getCardThumbnailSrc(content)}
@@ -1032,7 +1032,7 @@
     {@const jacketSrc = getMusicJacketSrc(content)}
     <a
       {href}
-      class="content-card-inset group grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+      class="content-card-inset group grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 rounded-xl border-(--archive-border-subtle) p-3 transition-[transform,background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 hover-lift [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
     >
       <div class="aspect-square overflow-hidden rounded-lg bg-base-200">
         {#if jacketSrc}
@@ -1171,9 +1171,7 @@
   </div>
 {/snippet}
 
-<article
-  class="card content-card-shell shadow-[0_10px_28px_color-mix(in_oklab,var(--color-base-content)_4%,transparent)]"
->
+<article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
     <section class="space-y-2" aria-labelledby="event-bonus-character-title">
       <h2
@@ -1246,9 +1244,7 @@
   </div>
 </article>
 
-<article
-  class="card content-card-shell shadow-[0_10px_28px_color-mix(in_oklab,var(--color-base-content)_4%,transparent)]"
->
+<article class="card content-card-shell shadow-sm">
   <section class="card-body gap-4 p-3 sm:p-5" aria-labelledby="event-featured-cards-title">
     <h2
       id="event-featured-cards-title"
@@ -1273,9 +1269,7 @@
   </section>
 </article>
 
-<article
-  class="card content-card-shell shadow-[0_10px_28px_color-mix(in_oklab,var(--color-base-content)_4%,transparent)]"
->
+<article class="card content-card-shell shadow-sm">
   <section class="card-body gap-4 p-3 sm:p-5" aria-labelledby="event-musics-title">
     <h2
       id="event-musics-title"
@@ -1300,9 +1294,7 @@
   </section>
 </article>
 
-<article
-  class="card content-card-shell shadow-[0_10px_28px_color-mix(in_oklab,var(--color-base-content)_4%,transparent)]"
->
+<article class="card content-card-shell shadow-sm">
   <section class="card-body gap-4 p-3 sm:p-5" aria-labelledby="event-ranking-rewards-title">
     <h2
       id="event-ranking-rewards-title"
@@ -1353,9 +1345,7 @@
 {#if event.virtualLive}
   {@const virtualLive = event.virtualLive}
   {@const virtualLiveBannerSrc = getVirtualLiveBannerSrc(virtualLive.assetBundleName)}
-  <article
-    class="card content-card-shell shadow-[0_10px_28px_color-mix(in_oklab,var(--color-base-content)_4%,transparent)]"
-  >
+  <article class="card content-card-shell shadow-sm">
     <section class="card-body gap-2 p-3 sm:p-4" aria-labelledby="event-virtual-live-title">
       <h2
         id="event-virtual-live-title"
@@ -1371,7 +1361,7 @@
       {#if virtualLive.id}
         <a
           href={resolve("/virtual-live/[region]/[id]", { region, id: virtualLive.id })}
-          class="content-card-inset group @container block rounded-xl border-(--archive-border-subtle) p-2.5 transition-[transform,background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:p-3"
+          class="content-card-inset group @container block rounded-xl border-(--archive-border-subtle) p-2.5 transition-[transform,background-color,border-color] duration-150 [@media(hover:hover)]:hover:border-primary/35 hover-lift [@media(hover:hover)]:hover:bg-(--archive-surface-raised) focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:p-3"
         >
           {@render virtualLiveContent(virtualLive, virtualLiveBannerSrc)}
         </a>

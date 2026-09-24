@@ -66,7 +66,7 @@
           {#each sorted as gacha (gacha.id)}
             <a
               href={resolve("/gacha/[region]/[id]", { region, id: gacha.id })}
-              class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover-lift hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {#if gacha.assetbundleName}
                 <div
@@ -102,7 +102,7 @@
           {#if latest}
             <a
               href={resolve("/gacha/[region]/[id]", { region, id: latest.id })}
-              class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover-lift hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {#if latest.assetbundleName}
                 <div
@@ -138,7 +138,7 @@
           {#if first && first.id !== latest?.id}
             <a
               href={resolve("/gacha/[region]/[id]", { region, id: first.id })}
-              class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="content-card-inset group grid gap-3 overflow-hidden rounded-xl p-3 transition-[border-color,background-color,transform] duration-180 ease-out hover-lift hover:border-primary/35 hover:bg-primary/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               {#if first.assetbundleName}
                 <div

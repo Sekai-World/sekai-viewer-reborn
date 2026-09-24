@@ -49,6 +49,24 @@ body {
   @apply mx-auto flex w-full flex-col px-2;
 }
 
+/* Fine-pointer hover lift that is dropped under the site low-motion setting
+   and prefers-reduced-motion (DESIGN.md §6). Pair with a transform transition. */
+@layer utilities {
+  @media (hover: hover) and (pointer: fine) {
+    .hover-lift:hover {
+      transform: translateY(-0.125rem);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hover-lift:hover {
+      transform: none;
+    }
+  }
+  :root[data-low-motion] .hover-lift:hover {
+    transform: none;
+  }
+}
+
 :root,
 :root[data-theme="default"],
 .theme-palette-preview[data-theme="default"] {
@@ -216,13 +234,13 @@ body {
   .content-card-inset {
     background-color: var(--archive-surface-sunken);
     border: 1px solid var(--archive-border-subtle);
-    border-radius: 1.25rem;
+    border-radius: var(--radius-xl);
   }
 
   .content-card-elevated {
     background-color: var(--archive-surface-raised);
     border: 1px solid var(--archive-border-subtle);
-    border-radius: 1rem;
+    border-radius: var(--radius-2xl);
   }
 
   @media (max-width: 639px) {
@@ -277,6 +295,70 @@ body {
   :root[data-low-motion] .image-preview-magnifier {
     animation: none !important;
     transition: none !important;
+  }
+
+  :root[data-low-motion] .skeleton,
+  :root[data-low-motion] .animate-pulse {
+    animation: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton,
+    .animate-pulse {
+      animation: none !important;
+    }
+  }
+
+  /* Shared catalogue list surfaces (cards, events, gachas, musics, virtual lives). */
+  .archive-card-controls,
+  .archive-list-status,
+  .archive-list-error,
+  .archive-list-empty,
+  .archive-filter-dialog {
+    background: var(--archive-surface-raised);
+    border-color: var(--archive-border-default);
+  }
+
+  .archive-control-group {
+    min-width: 0;
+  }
+
+  .archive-results-field {
+    position: relative;
+    isolation: isolate;
+    padding: 0.75rem;
+  }
+
+  .archive-results-field::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border: 1px solid var(--archive-border-subtle);
+    border-radius: var(--radius-3xl);
+    background: var(--archive-surface-sunken);
+    content: "";
+  }
+
+  .archive-card-skeleton {
+    background: var(--archive-surface-raised);
+    border-color: var(--archive-border-subtle);
+  }
+
+  .archive-list-sentinel,
+  .archive-list-end {
+    color: var(--archive-text-muted);
+  }
+
+  @media (max-width: 639px) {
+    .archive-results-field {
+      padding: 0.5rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .archive-results-field {
+      padding: 1rem;
+    }
   }
 
   .content-breadcrumbs {

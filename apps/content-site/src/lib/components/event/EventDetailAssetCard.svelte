@@ -123,9 +123,7 @@
   </div>
 {/snippet}
 
-<article
-  class="card content-card-shell overflow-hidden shadow-[0_10px_28px_color-mix(in_oklab,var(--color-base-content)_5%,transparent)]"
->
+<article class="card content-card-shell overflow-hidden shadow-sm">
   <div class="card-body items-center gap-4 p-3 sm:p-5 text-center">
     <div
       role="tablist"
