@@ -202,7 +202,7 @@
   {@const imageSrc = getRewardDetailImageSrc(detail)}
   {@const quantity = formatNumber(detail.resourceQuantity)}
   <span
-    class="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-base-content/20 bg-base-100/80 px-2.5 py-1.5 text-xs font-semibold text-base-content"
+    class="badge badge-outline h-auto min-h-9 max-w-full gap-1.5 border-(--archive-border-default) bg-(--archive-surface-raised) px-2.5 py-1.5 text-xs font-semibold text-(--archive-text-default)"
     title={getRewardDetailLabel(detail)}
     aria-label={getRewardDetailLabel(detail)}
   >

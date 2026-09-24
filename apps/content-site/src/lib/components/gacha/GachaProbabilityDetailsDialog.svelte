@@ -309,7 +309,7 @@
 <div class="mt-1 flex w-full items-center justify-between gap-2">
   <button
     type="button"
-    class="btn btn-outline btn-primary btn-sm gap-1.5 shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md"
+    class="btn btn-outline btn-primary btn-sm gap-1.5 shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover-lift hover:shadow-md"
     onclick={open}
   >
     <Icon icon="mdi:chart-box-outline" class="size-4" aria-hidden="true" />{openLabel}
@@ -325,7 +325,7 @@
     >
       <button
         type="button"
-        class="btn btn-circle btn-ghost btn-sm size-8 min-h-8 p-0 text-base-content/65 transition-colors hover:text-primary focus-visible:text-primary"
+        class="btn btn-circle btn-ghost size-11! min-h-11! p-0 text-base-content/65 transition-colors hover:text-primary focus-visible:text-primary"
         aria-label={infoLabel}
         aria-controls={getProbabilityInfoId()}
         aria-expanded={infoVisible}
@@ -471,7 +471,7 @@
                             showIcons={true}
                             loadMode="visible"
                             containerClass="relative aspect-square overflow-hidden rounded-lg"
-                            imageClass="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                            imageClass="size-full object-cover transition-transform duration-200 group-hover:brightness-105"
                           />
                         </a>
                       {:else}

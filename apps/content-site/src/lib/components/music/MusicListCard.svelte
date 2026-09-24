@@ -206,7 +206,7 @@
               <div class="flex flex-wrap gap-1">
                 {#each sortedDifficultyLevels as difficultyLevel (`agenda-difficulty:${difficultyLevel.difficulty}`)}
                   <span
-                    class={`music-difficulty-badge inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none ${getDifficultyClass(difficultyLevel.difficulty)}`}
+                    class={`music-difficulty-badge badge badge-sm h-5 min-w-5 border-0 px-1.5 text-xs font-bold ${getDifficultyClass(difficultyLevel.difficulty)}`}
                   >
                     {difficultyLevel.level}
                   </span>
@@ -266,7 +266,7 @@
             <div class="flex flex-wrap gap-1">
               {#each sortedDifficultyLevels as difficultyLevel (`grid-difficulty:${difficultyLevel.difficulty}`)}
                 <span
-                  class={`music-difficulty-badge inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold leading-none ${getDifficultyClass(difficultyLevel.difficulty)}`}
+                  class={`music-difficulty-badge badge badge-sm h-5 min-w-5 border-0 px-1.5 text-xs font-bold ${getDifficultyClass(difficultyLevel.difficulty)}`}
                 >
                   {difficultyLevel.level}
                 </span>

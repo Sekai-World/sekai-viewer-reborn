@@ -80,7 +80,7 @@
                     href={getMusicChartPreviewAssetURL(region, music.id, diff.difficulty)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="btn btn-ghost btn-xs"
+                    class="btn btn-ghost btn-circle size-11! min-h-11!"
                     aria-label={chartPreviewLabel}
                   >
                     <Icon icon="mdi:eye-outline" class="size-4" aria-hidden="true" />

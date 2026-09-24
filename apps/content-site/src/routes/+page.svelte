@@ -598,7 +598,7 @@
                   </span>
                   <a
                     href="/cards/{regionData.region}"
-                    class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
+                    class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/50 hover:text-primary"
                   >
                     {latestDataViewAll}
                     <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
@@ -643,7 +643,7 @@
                   </span>
                   <a
                     href="/musics/{regionData.region}"
-                    class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
+                    class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/50 hover:text-primary"
                   >
                     {latestDataViewAll}
                     <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
@@ -703,7 +703,7 @@
                 </span>
                 <a
                   href="/gachas/{regionData.region}"
-                  class="btn btn-xs btn-ghost gap-1 text-xs text-base-content/50 hover:text-primary"
+                  class="btn btn-sm btn-ghost min-h-11 gap-1 text-xs text-base-content/50 hover:text-primary"
                 >
                   {latestDataViewAll}
                   <Icon icon="mdi:arrow-right" class="size-3" aria-hidden="true" />
