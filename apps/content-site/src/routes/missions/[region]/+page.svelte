@@ -191,7 +191,7 @@
     item.requirement === null
       ? t("mission.storyUnnamed").replace("{id}", formatNumber(item.id))
       : [
-          t("mission.requirement").replace("{count}", formatNumber(item.requirement)),
+          t("mission.storyEpisodeGoal").replace("{count}", formatNumber(item.requirement)),
           ...rewardLabels
         ].join(" · ");
   const toItem = (item: Mission) => {

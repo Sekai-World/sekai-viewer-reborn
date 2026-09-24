@@ -480,16 +480,21 @@ describe("Missions page", () => {
     vi.stubGlobal("fetch", fetchMock);
     renderPage({ story: { items: story, loadFailed: false } }, "storyMissions");
 
-    expect(await screen.findByText("4 goals · 10 → 40")).toBeTruthy();
-    const totals = screen.getByLabelText("Rewards across all targets");
+    expect(await screen.findByText("4 goals · 10 → 40 episodes")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Read main and event story episodes to the end without skipping or fast-forwarding. Each goal is reached when your total number of fully read episodes gets there."
+      )
+    ).toBeTruthy();
+    const totals = screen.getByLabelText("Rewards across all goals");
     expect(within(totals).getByText("Gacha tickets")).toBeTruthy();
     expect(within(totals).getByText("Crystals")).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Milestone targets" })).toBeTruthy();
-    expect(screen.getByText("Target: 40")).toBeTruthy();
-    expect(screen.queryByText("Target: 10")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Milestone goals" })).toBeTruthy();
+    expect(screen.getByText("Read 40 episodes")).toBeTruthy();
+    expect(screen.queryByText("Read 10 episodes")).toBeNull();
     expect(screen.queryByText(/Story mission #/)).toBeNull();
-    await fireEvent.click(screen.getByRole("button", { name: "Show all 4 targets" }));
-    expect(screen.getByText("Target: 10")).toBeTruthy();
+    await fireEvent.click(screen.getByRole("button", { name: "Show all 4 goals" }));
+    expect(screen.getByText("Read 10 episodes")).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Change character" })).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
@@ -506,7 +511,7 @@ describe("Missions page", () => {
       }
     ]);
 
-    expect(await screen.findByText("Target: 10 · Gacha tickets ×1")).toBeTruthy();
+    expect(await screen.findByText("Read 10 episodes · Gacha tickets ×1")).toBeTruthy();
   });
 
   it("keeps the localized unavailable status when Character Mission V2 levels are missing", async () => {

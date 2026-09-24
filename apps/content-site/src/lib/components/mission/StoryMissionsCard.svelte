@@ -24,14 +24,17 @@
   const targetLabel = (mission: Mission): string =>
     mission.requirement === null
       ? t("mission.storyUnnamed").replace("{id}", formatNumber(mission.id))
-      : t("mission.requirement").replace("{count}", formatNumber(mission.requirement));
+      : t("mission.storyEpisodeGoal").replace("{count}", formatNumber(mission.requirement));
   const summaryLabel = (items: Mission[]): string => {
     const targets = items.flatMap((mission) =>
       mission.requirement === null ? [] : [mission.requirement]
     );
     const count = t("mission.storyGoalCount").replace("{count}", formatNumber(items.length));
     if (targets.length === 0) return count;
-    return `${count} · ${formatNumber(Math.min(...targets))} → ${formatNumber(Math.max(...targets))}`;
+    const range = t("mission.storyEpisodeRange")
+      .replace("{from}", formatNumber(Math.min(...targets)))
+      .replace("{to}", formatNumber(Math.max(...targets)));
+    return `${count} · ${range}`;
   };
 </script>
 
@@ -55,6 +58,8 @@
         {/await}
       </span>
     </h2>
+    <!-- The data has no mission text; this rule comes from the in-game 完読ミッション announcement. -->
+    <p class="text-sm text-(--archive-text-muted)">{t("mission.storyDescription")}</p>
 
     {#await missions}
       <p role="status" class="sr-only">{t("mission.loading")}</p>

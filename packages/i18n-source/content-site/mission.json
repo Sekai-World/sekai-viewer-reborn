@@ -47,11 +47,11 @@
   "mission.resource.gacha_ticket": "Gacha tickets",
   "mission.noRewards": "No rewards are listed.",
   "mission.storyGoalCount": "{count} goals",
-  "mission.storyRewardTotals": "Rewards across all targets",
-  "mission.storyMilestonesTitle": "Milestone targets",
-  "mission.storyAllTitle": "All targets",
-  "mission.storyShowAll": "Show all {count} targets",
-  "mission.storyShowMilestones": "Show milestone targets only",
+  "mission.storyRewardTotals": "Rewards across all goals",
+  "mission.storyMilestonesTitle": "Milestone goals",
+  "mission.storyAllTitle": "All goals",
+  "mission.storyShowAll": "Show all {count} goals",
+  "mission.storyShowMilestones": "Show milestone goals only",
   "mission.characterPickerTitle": "Character",
   "mission.characterPickerLoading": "Loading characters...",
   "mission.characterPickerError": "Characters could not be loaded.",
@@ -60,5 +60,8 @@
   "mission.characterSelected": "Showing {name}",
   "mission.characterProfile": "View character profile",
   "mission.characterChange": "Change character",
-  "mission.characterCollapse": "Hide characters"
+  "mission.characterCollapse": "Hide characters",
+  "mission.storyEpisodeGoal": "Read {count} episodes",
+  "mission.storyEpisodeRange": "{from} → {to} episodes",
+  "mission.storyDescription": "Read main and event story episodes to the end without skipping or fast-forwarding. Each goal is reached when your total number of fully read episodes gets there."
 }
