@@ -121,14 +121,6 @@ body {
   line-height: 1.6;
 }
 
-.tracker-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-weight: 700;
-}
-
 .region-grid {
   display: grid;
   gap: 1.25rem;
@@ -267,10 +259,14 @@ body {
 .tracker-link {
   display: inline-flex;
   min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   margin-top: auto;
   padding-top: 1rem;
   color: var(--color-primary);
   font-size: 0.86rem;
+  font-weight: 700;
   text-decoration: none;
 }
 .tracker-link-arrow {
