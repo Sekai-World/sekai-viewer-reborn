@@ -52,7 +52,7 @@
     .filter(Boolean);
 
   const getTabClass = (tab: GachaAssetTab): string =>
-    `tab min-h-11 flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
+    `tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
       activeTab === tab
         ? "tab-active border-primary/45 bg-primary text-primary-content shadow-sm"
         : "text-base-content/70 hover:bg-base-100/80"
