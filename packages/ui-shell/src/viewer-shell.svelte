@@ -172,7 +172,7 @@
               <a
                 href={item.href}
                 aria-current={item.active ? "page" : undefined}
-                class={`grid min-h-11 grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 ${item.active ? "active" : ""}`}
+                class={`grid grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 ${item.active ? "active" : ""}`}
                 onclick={() => {
                   sidebarOpen = false;
                 }}

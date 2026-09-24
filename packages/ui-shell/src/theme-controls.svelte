@@ -30,7 +30,7 @@
   <div class="join" role="group" aria-label={paletteLabel}>
     {#each themeNames as value (value)}<button
         type="button"
-        class={`btn join-item min-h-11 border-base-content/20 ${themeName === value ? "btn-primary" : "btn-outline bg-base-100/65"}`}
+        class={`btn btn-sm join-item touch-target border-base-content/20 ${themeName === value ? "btn-primary" : "btn-outline bg-base-100/65"}`}
         aria-pressed={themeName === value}
         onclick={() => onThemeNameChange(value)}
         ><span class="sr-only">{labels[value]}</span><span
@@ -41,7 +41,7 @@
       >{/each}
   </div>
   <select
-    class="select h-11 min-h-11 w-20 border-base-content/20 bg-base-100/65 text-xs"
+    class="select select-sm w-20 border-base-content/20 bg-base-100/65 text-xs"
     aria-label={modeLabel}
     value={themeMode}
     onchange={(event) => {

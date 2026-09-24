@@ -90,7 +90,7 @@
         {#if hasDownloadFormatOptions}
           <details class="dropdown dropdown-end">
             <summary
-              class="btn btn-circle size-11! min-h-11! border-base-content/10 bg-base-100/90 shadow-sm"
+              class="btn btn-circle btn-sm touch-target border-base-content/10 bg-base-100/90 shadow-sm"
               aria-label={downloadLabel}
               title={downloadLabel}
             >
@@ -116,7 +116,7 @@
           <a
             href={currentSrc}
             download
-            class="btn btn-circle size-11! min-h-11! border-base-content/10 bg-base-100/90 shadow-sm"
+            class="btn btn-circle btn-sm touch-target border-base-content/10 bg-base-100/90 shadow-sm"
             aria-label={downloadLabel}
             title={downloadLabel}
           >
@@ -127,7 +127,7 @@
           href={currentSrc}
           target="_blank"
           rel="noreferrer"
-          class="btn btn-circle size-11! min-h-11! border-base-content/10 bg-base-100/90 shadow-sm"
+          class="btn btn-circle btn-sm touch-target border-base-content/10 bg-base-100/90 shadow-sm"
           aria-label={openInNewWindowLabel}
           title={openInNewWindowLabel}
         >
@@ -137,7 +137,7 @@
       <form method="dialog">
         <button
           type="submit"
-          class="btn btn-circle size-11! min-h-11! border-base-content/10 bg-base-100/90 shadow-sm"
+          class="btn btn-circle btn-sm touch-target border-base-content/10 bg-base-100/90 shadow-sm"
           aria-label={closeLabel}
           title={closeLabel}
         >

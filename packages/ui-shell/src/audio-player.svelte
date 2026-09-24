@@ -962,7 +962,7 @@
         <button
           type="button"
           tabindex="0"
-          class={`btn btn-outline btn-square size-11! min-h-11! ${!hasDownloadOptions ? "pointer-events-none opacity-50" : ""}`}
+          class={`btn btn-outline btn-square btn-sm touch-target ${!hasDownloadOptions ? "pointer-events-none opacity-50" : ""}`}
           aria-label={downloadLabel}
           title={downloadLabel}
           disabled={!hasDownloadOptions || isDownloadLoading}
@@ -1070,7 +1070,7 @@
           >
           <button
             type="button"
-            class="btn btn-ghost btn-circle -mt-2 -mr-2 size-11! min-h-11!"
+            class="btn btn-ghost btn-circle btn-sm touch-target -mt-1 -mr-1"
             aria-label={downloadCloseLabel}
             title={downloadCloseLabel}
             onclick={closeDownloadDialog}

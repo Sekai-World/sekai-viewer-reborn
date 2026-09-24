@@ -145,7 +145,7 @@
             class="col-start-2 -col-end-1 row-start-2 flex min-w-0 lg:col-start-3 lg:col-end-auto lg:row-start-1 lg:justify-end"
           >
             <a
-              class="btn btn-outline btn-sm min-h-11 max-w-full rounded-full"
+              class="btn btn-outline btn-sm touch-target max-w-full rounded-full"
               href={notice.action.href}
               target={notice.action.target}
               aria-label={getActionAriaLabel(notice.action.label, notice.action.target)}
@@ -162,7 +162,7 @@
         {/if}
         {#if notice.dismissible !== false}
           <button
-            class="btn btn-ghost btn-circle col-start-3 row-start-1 -mt-1 -mr-1 size-11! min-h-11! lg:col-start-4"
+            class="btn btn-ghost btn-circle btn-sm touch-target col-start-3 row-start-1 lg:col-start-4"
             type="button"
             aria-label={`${dismissLabel}: ${notice.title}`}
             title={dismissLabel}

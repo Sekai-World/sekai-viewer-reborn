@@ -41,7 +41,7 @@
 
 <details class="dropdown dropdown-end" bind:open={isOpen} ontoggle={handleMenuToggle}>
   <summary
-    class="btn btn-outline min-h-11 rounded-full border-base-content/20 bg-base-100/65 px-2 text-xs sm:px-3 sm:text-sm hover:bg-base-100"
+    class="btn btn-sm btn-outline touch-target rounded-full border-base-content/20 bg-base-100/65 px-2 text-xs sm:px-3 sm:text-sm hover:bg-base-100"
     aria-label={`Switch data regions. ${primaryTitle}: ${primaryRegionLabel}. ${secondaryTitle}: ${secondaryRegionLabel}`}
     title={`${primaryTitle} | ${secondaryTitle}: ${primaryRegionLabel} | ${secondaryRegionLabel}`}
   >
