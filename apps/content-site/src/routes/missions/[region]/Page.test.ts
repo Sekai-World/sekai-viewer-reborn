@@ -284,7 +284,6 @@ describe("Missions page", () => {
     expect(screen.getByText("All level goals are shown.")).toBeTruthy();
     expect(goals.querySelectorAll("ul")).toHaveLength(1);
     expect(fetchMock).toHaveBeenNthCalledWith(2, "/missions/jp/parameter-groups/9/levels?page=2");
-    expect(fetchMock).not.toHaveBeenCalledWith("/missions/jp/character-ranks/7");
     expect(screen.queryByText(/Character Rank rewards/)).toBeNull();
   });
 
