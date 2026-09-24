@@ -232,7 +232,7 @@ mise run update-sekai-master-api-sdk-local
 ### Workflow notes
 
 1. After changing sekai-master-api, run `mise run swagger` there to regenerate the spec.
-2. Restart the sekai-master-api dev server with `mise run dev` and wait for it to be ready.
+2. Deploy the changed sekai-master-api to the remote dev cluster with `mise run dev-cluster-rebuild`, then run `mise run dev-cluster-forward` and wait until `http://localhost:18080/api/v1/health` returns 200. The local `mise run dev` path is deprecated.
 3. Then regenerate the SDK here with `mise run update-sekai-master-api-sdk-local`.
 4. Validate: `pnpm --filter @platform/sekai-master-api-sdk check`.
 

@@ -245,7 +245,8 @@ cross-repo pipeline before frontend work can begin:
 1. `sekai-master-api` must expose the relevant public contracts (or extend
    existing ones).
 2. Regenerate the Swagger/OpenAPI spec (`mise run swagger`).
-3. Restart the local `sekai-master-api` dev server (`mise run dev`).
+3. Deploy `sekai-master-api` to the remote dev cluster and forward it
+   (`mise run dev-cluster-rebuild`, then `mise run dev-cluster-forward`).
 4. Regenerate the viewer SDK
    (`mise run update-sekai-master-api-sdk-local`) and validate
    (`pnpm --filter @platform/sekai-master-api-sdk check`).

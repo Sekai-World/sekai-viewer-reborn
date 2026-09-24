@@ -230,7 +230,8 @@ For the first vertical slice, use a **split approach** (roadmap option 3):
    `character2ds` batch endpoints are precedents for adding lookups on demand.
    Activating this later follows the documented cross-repo workflow: change
    `sekai-master-api` →
-   `mise run swagger` → `mise run dev` →
+   `mise run swagger` → `mise run dev-cluster-rebuild` +
+   `mise run dev-cluster-forward` →
    `mise run update-sekai-master-api-sdk-local` →
    `pnpm --filter @platform/sekai-master-api-sdk check`.
 
