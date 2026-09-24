@@ -33,6 +33,9 @@
 
   let showAll = $state(false);
 
+  const milestoneKeys = $derived(new Set(summary.milestones.map((step) => getKey(step))));
+  const visibleSteps = $derived(showAll ? steps : summary.milestones);
+
   const formatNumber = (value: number): string =>
     new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value);
   const rewardsLabel = (step: T): string => {
@@ -48,14 +51,23 @@
   };
 </script>
 
-{#snippet stepRow(step: T)}
+{#snippet stepRow(step: T, milestone: boolean)}
   <li
-    class="flex items-baseline justify-between gap-3 border-b border-(--archive-border-subtle) py-2 text-sm"
+    class="flex break-inside-avoid items-baseline justify-between gap-3 border-b border-(--archive-border-subtle) py-2 text-sm"
+    data-milestone={milestone ? "true" : undefined}
   >
-    <span class="shrink-0 font-medium text-(--archive-text-strong) tabular-nums">
+    <span
+      class="shrink-0 tabular-nums {milestone
+        ? 'font-semibold text-(--archive-text-strong)'
+        : 'text-(--archive-text-muted)'}"
+    >
       {getLabel(step)}
     </span>
-    <span class="min-w-0 text-right wrap-anywhere text-(--archive-text-muted) tabular-nums">
+    <span
+      class="min-w-0 text-right wrap-anywhere tabular-nums {milestone
+        ? 'text-(--archive-text-strong)'
+        : 'text-(--archive-text-muted)'}"
+    >
       {rewardsLabel(step)}
     </span>
   </li>
@@ -80,16 +92,12 @@
   <h3 id={`${idPrefix}-list-title`} class="text-sm font-semibold text-(--archive-text-strong)">
     {showAll ? labels.all : labels.milestones}
   </h3>
-  {#if showAll}
-    <ul class="max-h-96 overflow-y-auto pr-1">
-      {#each steps as step (getKey(step))}
-        {@render stepRow(step)}
-      {/each}
-    </ul>
-  {:else if summary.milestones.length > 0}
-    <ul class="grid gap-x-8 sm:grid-cols-2">
-      {#each summary.milestones as step (getKey(step))}
-        {@render stepRow(step)}
+  <!-- One column flow for both states: the column count follows the card width, and
+       showing every step only fills in the rows between milestones. -->
+  {#if visibleSteps.length > 0}
+    <ul class="columns-[17rem] gap-x-8">
+      {#each visibleSteps as step (getKey(step))}
+        {@render stepRow(step, milestoneKeys.has(getKey(step)))}
       {/each}
     </ul>
   {/if}

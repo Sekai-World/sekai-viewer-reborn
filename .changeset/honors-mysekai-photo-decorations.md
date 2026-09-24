@@ -29,3 +29,5 @@ Load 24 Honors per page so the first page fills a desktop viewport before the ne
 Add Character Missions to Character detail pages, load every Character Rank instead of the first 100, and summarize ranks with reward totals and milestone ranks.
 
 Show Story missions as a target ladder with reward totals and milestone targets, preview them by target and reward, and drop the duplicate target line from Normal missions.
+
+Lay out milestone and full reward ladders in the same width-driven columns, keeping milestones emphasized when every step is shown.

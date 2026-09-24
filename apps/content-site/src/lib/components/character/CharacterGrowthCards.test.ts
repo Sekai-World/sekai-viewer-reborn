@@ -90,11 +90,16 @@ describe("CharacterRankCard", () => {
     expect(screen.getByText("Rank 8")).toBeTruthy();
     expect(screen.queryByText("Rank 1")).toBeNull();
 
+    const milestoneList = screen.getByText("Rank 5").closest("ul")!;
+    expect(milestoneList.classList).toContain("columns-[17rem]");
+
     const toggle = screen.getByRole("button", { name: "Show all 5 ranks" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     await fireEvent.click(toggle);
     expect(screen.getByRole("heading", { name: "All ranks" })).toBeTruthy();
-    expect(screen.getByText("Rank 1")).toBeTruthy();
+    expect(screen.getByText("Rank 1").closest("ul")!.classList).toContain("columns-[17rem]");
+    expect(screen.getByText("Rank 1").closest("li")!.hasAttribute("data-milestone")).toBe(false);
+    expect(screen.getByText("Rank 5").closest("li")!.getAttribute("data-milestone")).toBe("true");
     expect(
       screen
         .getByRole("button", { name: "Show milestone ranks only" })
