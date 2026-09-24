@@ -112,7 +112,7 @@
         <h1 id="home-title">{translate("home.title")}</h1>
         <p>{translate("home.description")}</p>
       </div>
-      <a class="btn btn-primary min-h-11 shrink-0 rounded-full max-sm:w-full" href="/tracker/jp">
+      <a class="btn btn-primary shrink-0 rounded-full max-sm:w-full" href="/tracker/jp">
         <span>{translate("home.openTracker")}</span><span aria-hidden="true">↗</span>
       </a>
       {#if supportPageUrl}

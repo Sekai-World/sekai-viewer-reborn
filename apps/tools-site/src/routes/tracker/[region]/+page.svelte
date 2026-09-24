@@ -1360,7 +1360,7 @@
             {/if}
           </div>
           <button
-            class="btn btn-square btn-outline size-11! min-h-11! rounded-full tracker-refresh-action"
+            class="btn btn-square btn-sm btn-outline touch-target rounded-full tracker-refresh-action"
             type="button"
             onclick={refresh}
             disabled={isRefreshing || isHistoricalEvent}
@@ -1406,7 +1406,7 @@
           <input
             bind:this={eventPickerInput}
             id="tracker-event-picker"
-            class="input min-h-11"
+            class="input input-sm"
             role="combobox"
             type="text"
             inputmode="search"
@@ -1433,7 +1433,7 @@
           />
           {#if isEventPickerFocused && eventQuery.length > 0}
             <button
-              class="btn btn-ghost btn-circle size-11! min-h-11! tracker-event-clear"
+              class="btn btn-ghost btn-xs btn-circle touch-target tracker-event-clear"
               type="button"
               aria-label={translate("tracker.clearEventSearch")}
               title={translate("tracker.clearEventSearch")}
@@ -1497,14 +1497,14 @@
             <button
               class:btn-primary={ladder === "critical"}
               class:btn-outline={ladder !== "critical"}
-              class="btn min-h-11 rounded-full border-0 tracker-ladder-option"
+              class="btn btn-sm rounded-full border-0 touch-target tracker-ladder-option"
               type="button"
               aria-pressed={ladder === "critical"}
               onclick={() => (ladder = "critical")}>{translate("tracker.ranks.critical")}</button
             ><button
               class:btn-primary={ladder === "full"}
               class:btn-outline={ladder !== "full"}
-              class="btn min-h-11 rounded-full border-0 tracker-ladder-option"
+              class="btn btn-sm rounded-full border-0 touch-target tracker-ladder-option"
               type="button"
               aria-pressed={ladder === "full"}
               onclick={() => (ladder = "full")}>{translate("tracker.ranks.all")}</button
@@ -1516,7 +1516,7 @@
             <button
               class:btn-primary={isTimeTravelActive}
               class:btn-outline={!isTimeTravelActive}
-              class="btn min-h-11 tracker-history-tool"
+              class="btn btn-sm touch-target tracker-history-tool"
               type="button"
               aria-expanded={isTimeTravelActive}
               aria-controls="tracker-time-travel-controls"
@@ -1530,7 +1530,7 @@
             <button
               bind:this={goalOpenButton}
               id="tracker-goal-open"
-              class="btn min-h-11 btn-outline"
+              class="btn btn-sm btn-outline touch-target"
               type="button"
               aria-haspopup="dialog"
               aria-controls="tracker-goal-dialog"
@@ -1539,7 +1539,11 @@
               <Icon icon="mdi:calculator-variant" class="size-4 shrink-0" aria-hidden="true" />
               {translate("tracker.openGoalCalculator")}
             </button>
-            <button class="btn min-h-11 btn-outline" type="button" onclick={shareTracker}>
+            <button
+              class="btn btn-sm btn-outline touch-target"
+              type="button"
+              onclick={shareTracker}
+            >
               <Icon
                 icon="mdi:share-variant-outline"
                 class="size-4 shrink-0"
@@ -1569,7 +1573,7 @@
                 <label class="tracker-time-control" for="tracker-activity-day"
                   ><span>{translate("tracker.activityDayLabel")}</span><select
                     id="tracker-activity-day"
-                    class="select min-h-11"
+                    class="select select-sm"
                     value={selectedTimePointGroup?.id ?? ""}
                     onchange={(event) => selectTimePointGroup(Number(event.currentTarget.value))}
                     >{#each timePointGroups as group (group.id)}<option value={group.id}
@@ -1580,7 +1584,7 @@
                 <label class="tracker-time-control" for="tracker-saved-time"
                   ><span>{translate("tracker.rankingSnapshotTime")}</span><select
                     id="tracker-saved-time"
-                    class="select min-h-11"
+                    class="select select-sm"
                     value={selectedTimePoint ?? ""}
                     onchange={(event) => {
                       const point = selectedTimePointGroup?.points.find(
@@ -1628,7 +1632,7 @@
     {#if snapshotTimestamp}<div class="tracker-snapshot-banner">
         <span
           >{interpolate("tracker.snapshotAt", { time: formatTimestamp(snapshotTimestamp) })}</span
-        ><button class="btn min-h-11 btn-outline" type="button" onclick={returnToLatest}
+        ><button class="btn btn-sm btn-outline touch-target" type="button" onclick={returnToLatest}
           >{translate("tracker.backToLatestRankings")}</button
         >
       </div>{/if}
@@ -1654,7 +1658,7 @@
             </p>{/if}
           <h2 id="tracker-results-title">{translate("tracker.rankings")}</h2>
         </div>
-        {#if isHistoricalEvent}<a class="btn min-h-11 btn-outline" href={trackerPath}
+        {#if isHistoricalEvent}<a class="btn btn-sm btn-outline touch-target" href={trackerPath}
             ><Icon icon="mdi:arrow-left" aria-hidden="true" />{translate(
               "tracker.goToCurrentEvent"
             )}</a
@@ -1678,7 +1682,7 @@
                   id="tracker-event-ranking-tab"
                   class:btn-primary={selectedRankingTab === "event"}
                   class:btn-outline={selectedRankingTab !== "event"}
-                  class="btn min-h-11 shrink-0 rounded-full tracker-ladder-option"
+                  class="btn btn-sm shrink-0 rounded-full touch-target tracker-ladder-option"
                   type="button"
                   role="tab"
                   aria-selected={selectedRankingTab === "event"}
@@ -1695,7 +1699,7 @@
                     class:btn-primary={selectedRankingTab === chapter.chapter.id}
                     class:btn-outline={selectedRankingTab !== chapter.chapter.id}
                     class:tracker-current-tab={isCurrent}
-                    class="btn min-h-11 shrink-0 rounded-full tracker-ladder-option"
+                    class="btn btn-sm shrink-0 rounded-full touch-target tracker-ladder-option"
                     type="button"
                     role="tab"
                     aria-selected={selectedRankingTab === chapter.chapter.id}
@@ -1798,7 +1802,7 @@
         {:else if isInvalidSelection}
           <div class="tracker-ranking-result-message">
             <p role="alert">{translate("tracker.eventIdInvalid")}</p>
-            <a class="btn btn-outline min-h-11" href={trackerPath}
+            <a class="btn btn-sm btn-outline touch-target" href={trackerPath}
               ><Icon icon="mdi:arrow-left" aria-hidden="true" />{translate(
                 "tracker.goToCurrentEvent"
               )}</a
@@ -1808,7 +1812,7 @@
           <div class="tracker-ranking-result-message">
             <p role="alert">{translate(rankingErrorKey)}</p>
             <button
-              class="btn btn-outline min-h-11"
+              class="btn btn-sm btn-outline touch-target"
               type="button"
               onclick={refresh}
               disabled={isRefreshing}
@@ -1875,7 +1879,7 @@
                       >
                       <td class="tracker-row-icon"
                         ><button
-                          class="btn btn-ghost btn-circle size-11! min-h-11!"
+                          class="btn btn-ghost btn-sm btn-circle touch-target"
                           type="button"
                           aria-label={interpolate("tracker.openRankDetailsAndTrend", {
                             rank: row.ladderRank
@@ -2112,7 +2116,7 @@
             : translate("tracker.playerDetails")}
         </h2>
         <button
-          class="btn btn-square btn-ghost size-11! min-h-11!"
+          class="btn btn-square btn-sm btn-ghost touch-target"
           type="button"
           onclick={closeDetails}
           aria-label={translate("tracker.detailsClose")}
@@ -2216,7 +2220,11 @@
         {:else if graphStatus === "error"}
           <div class="tracker-graph-message">
             <p role="alert">{translate("tracker.graphError")}</p>
-            <button class="btn btn-outline min-h-11" type="button" onclick={() => openGraph()}>
+            <button
+              class="btn btn-sm btn-outline touch-target"
+              type="button"
+              onclick={() => openGraph()}
+            >
               <Icon icon="mdi:refresh" class="size-4 shrink-0" aria-hidden="true" />
               {translate("tracker.retry")}
             </button>
@@ -2650,8 +2658,8 @@
   }
   .tracker-event-clear {
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 0.25rem;
+    right: 0.25rem;
   }
   .tracker-event-suggestions {
     position: absolute;
@@ -2976,7 +2984,7 @@
     outline: none;
   }
   .tracker-row-icon {
-    width: 3.5rem;
+    width: 2.5rem;
     color: var(--color-primary);
     text-align: center;
   }

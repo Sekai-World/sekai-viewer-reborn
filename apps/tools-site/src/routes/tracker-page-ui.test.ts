@@ -204,7 +204,7 @@ describe("tracker page UI contract", () => {
     );
     expect(source).not.toContain('class="tracker-row-detail-button"');
     expect(source).toContain(
-      '<button\n                          class="btn btn-ghost btn-circle size-11! min-h-11!"'
+      '<button\n                          class="btn btn-ghost btn-sm btn-circle touch-target"'
     );
     expect(source).not.toContain('tabindex="0" role="button"');
     expect(source).toContain("new AbortController()");
@@ -224,7 +224,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('translate("tracker.eventRankings")');
     expect(source).toContain('role="tablist"');
     expect(source).toContain('class="tracker-ranking-tabs min-w-max flex-nowrap"');
-    expect(source).toContain('class="btn min-h-11 shrink-0 rounded-full tracker-ladder-option"');
+    expect(source).toContain(
+      'class="btn btn-sm shrink-0 rounded-full touch-target tracker-ladder-option"'
+    );
     expect(source).not.toContain("tabs-box");
     expect(source).not.toContain("tab-active");
     expect(source).toContain('class="tracker-ranking-tabs-scroll"');
@@ -341,7 +343,7 @@ describe("tracker page UI contract", () => {
     );
     expect(source).toContain("isEventPickerFocused && eventQuery.length > 0");
     expect(source).toContain(
-      'class="btn btn-ghost btn-circle size-11! min-h-11! tracker-event-clear"'
+      'class="btn btn-ghost btn-xs btn-circle touch-target tracker-event-clear"'
     );
     expect(source).toContain('translate("tracker.clearEventSearch")');
     expect(source).toContain("onclick={clearEventSearch}");
@@ -370,7 +372,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('class="tracker-freshness-action"');
     expect(source).toContain('class="tracker-freshness"');
     expect(source).toContain(
-      'class="btn btn-square btn-outline size-11! min-h-11! rounded-full tracker-refresh-action"'
+      'class="btn btn-square btn-sm btn-outline touch-target rounded-full tracker-refresh-action"'
     );
     expect(source).toContain("@media (min-width: 48rem) and (max-width: 63.999rem)");
     expect(source).toContain("@media (min-width: 64rem)");
@@ -935,7 +937,7 @@ describe("tracker page UI contract", () => {
     );
     expect(source).toContain('id="tracker-activity-day"');
     expect(source).toContain('id="tracker-saved-time"');
-    expect(source).toContain('class="select min-h-11"');
+    expect(source).toContain('class="select select-sm"');
     expect(source).not.toContain("select-bordered");
     expect(source).not.toContain('aria-haspopup="listbox"');
     expect(source).not.toContain('class="dropdown tracker-time-control"');
@@ -985,7 +987,9 @@ describe("tracker page UI contract", () => {
     expect(source).toContain('aria-pressed={ladder === "full"}');
     expect(source).toContain('translate("tracker.eventRankings")');
     expect(source).toContain('class="tracker-ranking-tabs min-w-max flex-nowrap"');
-    expect(source).toContain('class="btn min-h-11 shrink-0 rounded-full tracker-ladder-option"');
+    expect(source).toContain(
+      'class="btn btn-sm shrink-0 rounded-full touch-target tracker-ladder-option"'
+    );
     expect(source).toContain("class:btn-primary={selectedRankingTab === chapter.chapter.id}");
     expect(source).toContain("class:btn-outline={selectedRankingTab !== chapter.chapter.id}");
     expect(source).not.toContain("tracker-chapter-tabs");
@@ -1083,7 +1087,7 @@ describe("tracker page UI contract", () => {
     expect(actions).toContain("onclick={shareTracker}");
     expect(actions).toContain("aria-expanded={isTimeTravelActive}");
     expect(actions).toContain('aria-controls="tracker-time-travel-controls"');
-    expect(actions.match(/class="btn min-h-11[^"]*"/g)).toHaveLength(3);
+    expect(actions.match(/class="btn btn-sm[^"]*touch-target[^"]*"/g)).toHaveLength(3);
     expect(source).not.toContain(".tracker-tool-actions .btn");
     expect(source).toContain("@media (max-width: 47.999rem), (pointer: coarse)");
     expect(source).toContain("display: flex;");

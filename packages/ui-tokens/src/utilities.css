@@ -1,0 +1,20 @@
+/* Shared Prismatic Archive utilities. Import after tailwindcss in each app's app.css. */
+
+/* Keep the visible control at its daisyUI size but give it a 44px hit area
+   (DESIGN.md §3 asks for a touch-safe interactive box, not a large control).
+   Only for elements that render pseudo-elements (button, a, summary), and
+   leave enough gap between neighbours so the hit areas do not overlap. */
+@utility touch-target {
+  &:not(.absolute):not(.fixed) {
+    position: relative;
+  }
+  &::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 2.75rem);
+    height: max(100%, 2.75rem);
+    transform: translate(-50%, -50%);
+    content: "";
+  }
+}
