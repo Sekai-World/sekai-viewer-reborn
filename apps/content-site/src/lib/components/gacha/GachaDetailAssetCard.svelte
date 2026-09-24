@@ -10,6 +10,7 @@
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
+  import { getTablistTargetIndex } from "$lib/a11y/tablist";
 
   export type GachaAssetTab = "logo" | "banner" | "background";
   type PreviewImageOptions = {
@@ -53,9 +54,23 @@
   const getTabClass = (tab: GachaAssetTab): string =>
     `tab flex-1 rounded-xl border border-transparent font-semibold transition-colors ${
       activeTab === tab
-        ? "border-primary/45 bg-primary text-primary-content shadow-sm"
+        ? "tab-active border-primary/45 bg-primary text-primary-content shadow-sm"
         : "text-base-content/70 hover:bg-base-100/80"
     }`;
+  const gachaTabs: GachaAssetTab[] = ["logo", "banner", "background"];
+  const getTabLabel = (tab: GachaAssetTab): string =>
+    tab === "logo" ? logoLabel : tab === "banner" ? bannerLabel : backgroundLabel;
+  const uid = $props.id();
+  const tabId = (tab: GachaAssetTab): string => `${uid}-tab-${tab}`;
+  const panelId = `${uid}-panel`;
+  const handleTabKeydown = (event: KeyboardEvent, index: number): void => {
+    const nextIndex = getTablistTargetIndex(event.key, index, gachaTabs.length);
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = gachaTabs[nextIndex]!;
+    activeTab = nextTab;
+    document.getElementById(tabId(nextTab))?.focus();
+  };
   const openPreview = (): void => {
     previewOpen = true;
   };
@@ -108,23 +123,28 @@
 
 <article class="card content-card-shell overflow-hidden shadow-sm">
   <div class="card-body items-center gap-3 p-3 sm:p-5 text-center">
-    <div class="tabs tabs-box content-card-inset w-full p-1">
-      <button type="button" class={getTabClass("logo")} onclick={() => (activeTab = "logo")}>
-        {logoLabel}
-      </button>
-      <button type="button" class={getTabClass("banner")} onclick={() => (activeTab = "banner")}>
-        {bannerLabel}
-      </button>
-      <button
-        type="button"
-        class={getTabClass("background")}
-        onclick={() => (activeTab = "background")}
-      >
-        {backgroundLabel}
-      </button>
+    <div class="tabs tabs-box content-card-inset w-full p-1" role="tablist">
+      {#each gachaTabs as tab, index (tab)}
+        <button
+          id={tabId(tab)}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === tab}
+          aria-controls={panelId}
+          tabindex={activeTab === tab ? 0 : -1}
+          class={getTabClass(tab)}
+          onclick={() => (activeTab = tab)}
+          onkeydown={(event) => handleTabKeydown(event, index)}
+        >
+          {getTabLabel(tab)}
+        </button>
+      {/each}
     </div>
 
     <div
+      id={panelId}
+      role="tabpanel"
+      aria-labelledby={tabId(activeTab)}
       class={`content-card-inset w-full overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS} transition-[aspect-ratio] duration-300 ease-out ${activeTab === "background" ? "aspect-video" : "aspect-16/7"}`}
     >
       {#if activeTab === "logo"}

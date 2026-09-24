@@ -163,7 +163,8 @@
 >
   {#if !shouldRenderImage || (!imageRetry.imageLoaded && !imageRetry.imageFailed && src)}
     <div
-      class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse"
+      class="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse motion-reduce:animate-none in-data-low-motion:animate-none"
+      aria-hidden="true"
     >
       <span class="loading loading-spinner loading-md text-base-content/60" aria-hidden="true"
       ></span>
@@ -189,7 +190,7 @@
         {alt}
         loading={loadMode === "visible" ? "lazy" : "eager"}
         decoding="async"
-        class={`${imageClass} transition-[opacity,transform] duration-300 ease-out ${imageRetry.imageLoaded && !imageRetry.imageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"} ${imageRetry.imageFailed ? "pointer-events-none sr-only" : ""}`}
+        class={`${imageClass} transition-[opacity,transform] duration-280 ease-out motion-reduce:transition-none in-data-low-motion:transition-none ${imageRetry.imageLoaded && !imageRetry.imageFailed ? "scale-100 opacity-100" : "scale-[1.02] opacity-0 motion-reduce:scale-100 in-data-low-motion:scale-100"} ${imageRetry.imageFailed ? "pointer-events-none sr-only" : ""}`}
         onload={() => requestSnapshot && imageRetry.handleImageLoad(requestSnapshot)}
         onerror={() => requestSnapshot && imageRetry.handleImageError(requestSnapshot)}
       />

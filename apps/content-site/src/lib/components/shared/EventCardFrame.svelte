@@ -11,6 +11,7 @@
     bodyClass = EVENT_CARD_BODY_CLASS,
     overlay,
     onclick,
+    stretchedLinkLabel,
     children
   }: {
     id?: string;
@@ -20,6 +21,12 @@
     bodyClass?: string;
     overlay?: Snippet;
     onclick?: (event: MouseEvent) => void;
+    /**
+     * When set, the frame renders as an <article> with an invisible link that
+     * covers the card, so the body can hold its own interactive controls
+     * (marked `pointer-events-auto`) without nesting them inside the link.
+     */
+    stretchedLinkLabel?: string;
     children?: Snippet;
   } = $props();
 
@@ -51,15 +58,23 @@
   });
 </script>
 
-<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-<a {id} {href} class={resolvedAnchorClass} {onclick}>
+{#snippet surface()}
   <div class={resolvedSurfaceClass}>
+    {#if stretchedLinkLabel !== undefined}
+      <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+      <a
+        {href}
+        class="absolute inset-0 z-0 rounded-[inherit] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        aria-label={stretchedLinkLabel}
+        {onclick}
+      ></a>
+    {/if}
     {#if useBody}
-      <div class={bodyClass}>
+      <div class={`${bodyClass} ${stretchedLinkLabel !== undefined ? "pointer-events-none" : ""}`}>
         {@render children?.()}
       </div>
     {:else}
-      <div class="relative z-10">
+      <div class={`relative z-10 ${stretchedLinkLabel !== undefined ? "pointer-events-none" : ""}`}>
         {@render children?.()}
       </div>
     {/if}
@@ -69,12 +84,15 @@
       </div>
     {/if}
   </div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-  <div></div>
-</a>
+{/snippet}
+
+{#if stretchedLinkLabel !== undefined}
+  <article {id} class={resolvedAnchorClass}>
+    {@render surface()}
+  </article>
+{:else}
+  <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+  <a {id} {href} class={resolvedAnchorClass} {onclick}>
+    {@render surface()}
+  </a>
+{/if}

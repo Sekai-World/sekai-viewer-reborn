@@ -66,6 +66,9 @@
   let gachaPickupWeight = $state(getInitialI18nText("gachaPickupWeight"));
   let gachaNoPickups = $state(getInitialI18nText("gachaNoPickups"));
   let cardImageAltSuffix = $state(getInitialI18nText("cardImageAltSuffix"));
+  let cardAltFallback = $state(getInitialI18nText("cardAltFallback"));
+  let simulatorPullFailed = $state(getInitialI18nText("simulatorPullFailed"));
+  let gachaProbabilityShowMore = $state(getInitialI18nText("gachaProbabilityShowMore"));
   let gachaSummaryLabel = $state(getInitialI18nText("gachaSummary"));
   let gachaRarityRateTitle = $state(getInitialI18nText("gachaRarityRateTitle"));
   let gachaNoRarityRates = $state(getInitialI18nText("gachaNoRarityRates"));
@@ -190,6 +193,9 @@
     gachaPickupWeight = translate("gachaPickupWeight");
     gachaNoPickups = translate("gachaNoPickups");
     cardImageAltSuffix = translate("cardImageAltSuffix");
+    cardAltFallback = translate("cardAltFallback");
+    simulatorPullFailed = translate("simulatorPullFailed");
+    gachaProbabilityShowMore = translate("gachaProbabilityShowMore");
     gachaSummaryLabel = translate("gachaSummary");
     gachaRarityRateTitle = translate("gachaRarityRateTitle");
     gachaNoRarityRates = translate("gachaNoRarityRates");
@@ -424,6 +430,7 @@
                 weightLabel={gachaPickupWeight}
                 noPickupsLabel={gachaNoPickups}
                 cardAltSuffix={cardImageAltSuffix}
+                cardAltFallbackLabel={cardAltFallback}
               />
             </div>
 
@@ -454,6 +461,7 @@
                   diagnosticLabels={probabilityDiagnosticLabels}
                   {rarityLabels}
                   cardAltSuffix={cardImageAltSuffix}
+                  probabilityShowMoreLabel={gachaProbabilityShowMore}
                 />
               </div>
             {/if}
@@ -494,7 +502,9 @@
             countStatsLabel={simulatorCountStats}
             rateStatsLabel={simulatorRateStats}
             disclaimerLabel={simulatorDisclaimer}
+            pullFailedLabel={simulatorPullFailed}
             cardAltSuffix={cardImageAltSuffix}
+            cardAltFallbackLabel={cardAltFallback}
           />
 
           {#if payload.gacha.gachaInformation?.description}

@@ -38,7 +38,9 @@
     countStatsLabel,
     rateStatsLabel,
     disclaimerLabel,
-    cardAltSuffix
+    pullFailedLabel,
+    cardAltSuffix,
+    cardAltFallbackLabel
   }: {
     gachaId: string;
     region: SupportedRegion;
@@ -59,7 +61,9 @@
     countStatsLabel: string;
     rateStatsLabel: string;
     disclaimerLabel: string;
+    pullFailedLabel: string;
     cardAltSuffix: string;
+    cardAltFallbackLabel: string;
   } = $props();
 
   const rarityValueByType: Record<string, number> = {
@@ -403,9 +407,7 @@
       {/if}
 
       {#if pullError}
-        <div class="content-card-inset rounded-xl p-3 sm:px-4 text-center text-sm text-error/80">
-          ⚠
-        </div>
+        <div class="alert alert-error alert-soft" role="alert">{pullFailedLabel}</div>
       {/if}
 
       {#if totalPulls > 0}
@@ -427,7 +429,9 @@
               <a href={getCardDetailHref(card.cardId)} class="group relative block w-full">
                 <CardThumbnail
                   {...getCardThumbnailPresentation(card, region)}
-                  alt={card.title ? `${card.title} ${cardAltSuffix}` : `Card ${card.cardId}`}
+                  alt={card.title
+                    ? `${card.title} ${cardAltSuffix}`
+                    : cardAltFallbackLabel.replace("{id}", String(card.cardId))}
                   fallbackLabel={card.cardId}
                   attr={card.attr}
                   rarityType={card.rarityType}

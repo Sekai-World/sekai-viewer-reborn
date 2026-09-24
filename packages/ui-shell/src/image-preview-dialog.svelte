@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import { closeIcon, downloadIcon, openInNewIcon } from "./icons";
   import { onDestroy, untrack } from "svelte";
   import {
     ImageRetryController,
@@ -32,7 +33,7 @@
     downloadLabel = "Download",
     openInNewWindowLabel = "Open in new window",
     formatOptions = [],
-    dialogBoxClass = "relative flex max-w-[min(96vw,1800px)] items-center justify-center overflow-hidden rounded-2xl bg-base-100/96 p-2 md:p-4",
+    dialogBoxClass = "relative flex max-w-[min(96vw,1800px)] items-center justify-center overflow-hidden rounded-box bg-base-100/96 p-2 md:p-4",
     dialogImageClass = "h-auto max-h-[88vh] w-auto max-w-full object-contain",
     retryPolicy = STATIC_ASSET_RETRY_POLICY
   }: Props = $props();
@@ -78,6 +79,7 @@
 <dialog
   bind:this={dialog}
   class="modal"
+  aria-label={alt || fallbackLabel || undefined}
   onclose={() => {
     open = false;
   }}
@@ -88,27 +90,14 @@
         {#if hasDownloadFormatOptions}
           <details class="dropdown dropdown-end">
             <summary
-              class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
+              class="btn btn-circle btn-sm touch-target border-base-content/10 bg-base-100/90 shadow-sm"
               aria-label={downloadLabel}
               title={downloadLabel}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                class="size-4"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1"
-                />
-              </svg>
+              <Icon icon={downloadIcon} class="size-5" aria-hidden="true" />
             </summary>
             <ul
-              class="menu dropdown-content z-20 mt-2 min-w-28 rounded-box border border-base-content/10 bg-base-100/95 p-1 text-sm shadow-lg"
+              class="menu dropdown-content z-20 mt-2 min-w-28 rounded-box border border-base-content/10 bg-base-100 p-1 text-sm shadow-md"
             >
               {#each normalizedFormatOptions as format (format)}
                 <li>
@@ -127,58 +116,32 @@
           <a
             href={currentSrc}
             download
-            class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
+            class="btn btn-circle btn-sm touch-target border-base-content/10 bg-base-100/90 shadow-sm"
             aria-label={downloadLabel}
             title={downloadLabel}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              class="size-4"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v1a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-1"
-              />
-            </svg>
+            <Icon icon={downloadIcon} class="size-5" aria-hidden="true" />
           </a>
         {/if}
         <a
           href={currentSrc}
           target="_blank"
           rel="noreferrer"
-          class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
+          class="btn btn-circle btn-sm touch-target border-base-content/10 bg-base-100/90 shadow-sm"
           aria-label={openInNewWindowLabel}
           title={openInNewWindowLabel}
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            class="size-4"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M14 5h5v5m0-5-7 7M10 7H7a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-3"
-            />
-          </svg>
+          <Icon icon={openInNewIcon} class="size-5" aria-hidden="true" />
         </a>
       {/if}
       <form method="dialog">
         <button
           type="submit"
-          class="btn btn-circle btn-sm border-base-content/10 bg-base-100/90 shadow-sm"
+          class="btn btn-circle btn-sm touch-target border-base-content/10 bg-base-100/90 shadow-sm"
           aria-label={closeLabel}
           title={closeLabel}
         >
-          ✕
+          <Icon icon={closeIcon} class="size-5" aria-hidden="true" />
         </button>
       </form>
     </div>
@@ -186,7 +149,8 @@
     <div class="relative flex items-center justify-center">
       {#if !imageRetry.imageLoaded && !imageRetry.imageFailed}
         <div
-          class="absolute inset-0 flex items-center justify-center rounded-2xl bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(0,0,0,0.18))]"
+          class="absolute inset-0 flex items-center justify-center rounded-box bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),rgba(0,0,0,0.18))]"
+          aria-hidden="true"
         >
           <span
             class="loading loading-spinner loading-lg text-base-100 drop-shadow-sm"
@@ -196,7 +160,7 @@
       {/if}
       {#if imageRetry.imageFailed}
         <div
-          class="flex min-h-[40vh] w-[min(70vw,32rem)] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-base-content/15 bg-base-200/40 px-8 py-10 text-center text-base text-base-content/70"
+          class="flex min-h-[40vh] w-[min(70vw,32rem)] flex-col items-center justify-center gap-4 rounded-box border border-dashed border-base-content/15 bg-base-200/40 px-8 py-10 text-center text-base text-base-content/70"
         >
           <Icon icon="mdi:file-remove-outline" class="size-12 opacity-75" aria-hidden="true" />
           {#if fallbackLabel}
@@ -209,7 +173,7 @@
         <img
           src={imageRetry.requestUrl}
           {alt}
-          class={`${dialogImageClass} transition-[opacity,transform] duration-300 ease-out ${imageRetry.imageLoaded && !imageRetry.imageFailed ? "scale-100 opacity-100" : "scale-[1.01] opacity-0"} ${imageRetry.imageFailed ? "pointer-events-none sr-only" : ""}`}
+          class={`${dialogImageClass} transition-[opacity,transform] duration-280 ease-out motion-reduce:transition-none in-data-low-motion:transition-none ${imageRetry.imageLoaded && !imageRetry.imageFailed ? "scale-100 opacity-100" : "scale-[1.01] opacity-0 motion-reduce:scale-100 in-data-low-motion:scale-100"} ${imageRetry.imageFailed ? "pointer-events-none sr-only" : ""}`}
           onload={() => requestSnapshot && imageRetry.handleImageLoad(requestSnapshot)}
           onerror={() => requestSnapshot && imageRetry.handleImageError(requestSnapshot)}
         />

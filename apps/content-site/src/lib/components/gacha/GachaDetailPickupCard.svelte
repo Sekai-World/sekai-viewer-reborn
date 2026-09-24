@@ -21,7 +21,8 @@
     title,
     weightLabel: _weightLabel,
     noPickupsLabel,
-    cardAltSuffix
+    cardAltSuffix,
+    cardAltFallbackLabel
   }: {
     pickupCards: GachaPickupCard[];
     region: SupportedRegion;
@@ -29,6 +30,7 @@
     weightLabel: string;
     noPickupsLabel: string;
     cardAltSuffix: string;
+    cardAltFallbackLabel: string;
   } = $props();
 
   const getCardDetailHref = (cardId: string): string =>
@@ -73,7 +75,9 @@
               >
                 <CardThumbnail
                   {...getCardThumbnailPresentation(pickup, region)}
-                  alt={pickup.title ? `${pickup.title} ${cardAltSuffix}` : `Card ${pickup.cardId}`}
+                  alt={pickup.title
+                    ? `${pickup.title} ${cardAltSuffix}`
+                    : cardAltFallbackLabel.replace("{id}", String(pickup.cardId))}
                   fallbackLabel={pickup.cardId ?? ""}
                   attr={pickup.attr}
                   rarityType={pickup.rarityType}

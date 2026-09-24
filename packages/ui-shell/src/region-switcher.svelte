@@ -41,7 +41,7 @@
 
 <details class="dropdown dropdown-end" bind:open={isOpen} ontoggle={handleMenuToggle}>
   <summary
-    class="btn btn-sm btn-outline rounded-full border-base-content/20 bg-base-100/65 px-2 text-xs sm:px-3 sm:text-sm hover:bg-base-100"
+    class="btn btn-sm btn-outline touch-target rounded-full border-base-content/20 bg-base-100/65 px-2 text-xs sm:px-3 sm:text-sm hover:bg-base-100"
     aria-label={`Switch data regions. ${primaryTitle}: ${primaryRegionLabel}. ${secondaryTitle}: ${secondaryRegionLabel}`}
     title={`${primaryTitle} | ${secondaryTitle}: ${primaryRegionLabel} | ${secondaryRegionLabel}`}
   >
@@ -51,7 +51,7 @@
     </span>
   </summary>
   <div
-    class="dropdown-content z-120 mt-3 w-66 rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl backdrop-blur-sm sm:w-[18rem]"
+    class="dropdown-content z-120 mt-3 w-66 rounded-box border border-base-content/15 bg-base-100 p-2 shadow-md sm:w-72"
   >
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto_1fr] sm:gap-2">
       <section>
@@ -64,6 +64,7 @@
               <button
                 type="button"
                 class={option.value === primaryValue ? "menu-active font-semibold" : ""}
+                aria-pressed={option.value === primaryValue}
                 onclick={() => {
                   onSelectPrimary(option.value);
                   isOpen = false;
@@ -92,6 +93,7 @@
               <button
                 type="button"
                 class={option.value === secondaryValue ? "menu-active font-semibold" : ""}
+                aria-pressed={option.value === secondaryValue}
                 onclick={() => {
                   onSelectSecondary(option.value);
                   isOpen = false;

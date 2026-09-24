@@ -24,6 +24,7 @@ describe("GachaDetailPickupCard training presentation", () => {
       title: "Pickups",
       weightLabel: "Weight",
       noPickupsLabel: "No pickups",
+      cardAltFallbackLabel: "Card {id}",
       cardAltSuffix: "artwork",
       pickupCards: [
         {

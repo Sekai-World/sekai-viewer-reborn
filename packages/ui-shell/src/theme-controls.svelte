@@ -26,15 +26,16 @@
   }: Props = $props();
 </script>
 
-<div class="flex items-center gap-1" aria-label={`${paletteLabel}. ${modeLabel}`}>
+<div class="flex items-center gap-1" role="group" aria-label={`${paletteLabel}. ${modeLabel}`}>
   <div class="join" role="group" aria-label={paletteLabel}>
     {#each themeNames as value (value)}<button
         type="button"
-        class={`btn btn-sm join-item border-base-content/20 ${themeName === value ? "btn-primary" : "btn-outline bg-base-100/65"}`}
+        class={`btn btn-sm join-item touch-target border-base-content/20 ${themeName === value ? "btn-primary" : "btn-outline bg-base-100/65"}`}
         aria-pressed={themeName === value}
         onclick={() => onThemeNameChange(value)}
         ><span class="sr-only">{labels[value]}</span><span
-          class={`size-3 rounded-full border border-base-content/20 ${value === "default" ? "bg-indigo-500" : value === "sakura" ? "bg-pink-400" : "bg-teal-400"}`}
+          class="theme-palette-preview size-3 rounded-full border border-base-content/20 bg-primary"
+          data-theme={value}
           aria-hidden="true"
         ></span></button
       >{/each}

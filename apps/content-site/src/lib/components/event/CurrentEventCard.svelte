@@ -69,16 +69,6 @@
   const displayUnit = $derived(getDisplayUnit(event.unit));
   const displayEventType = $derived(getEventTypeDisplay(event.eventType, translate));
   const eventTrackerHref = $derived(getEventTrackerHref(region, event.id));
-
-  const openEventTracker = (pointerEvent: MouseEvent): void => {
-    pointerEvent.preventDefault();
-    pointerEvent.stopPropagation();
-    if (!eventTrackerHref) {
-      return;
-    }
-
-    window.open(eventTrackerHref, "_blank", "noopener,noreferrer");
-  };
 </script>
 
 <EventCardFrame
@@ -86,6 +76,7 @@
   href={resolve("/event/[region]/[id]", { region, id: event.id })}
   frameClass={`${CURRENT_EVENT_CARD_FRAME_CLASS} archive-event-banner`}
   bodyClass={EVENT_CARD_BANNER_BODY_CLASS}
+  stretchedLinkLabel={event.title}
 >
   <div
     class={`${EVENT_CARD_MEDIA_CLASS} archive-event-banner-media mb-0 bg-(--archive-surface-sunken) p-[5%] lg:mb-0 lg:p-4`}
@@ -113,15 +104,15 @@
             <span class={EVENT_CARD_META_BADGE_CLASS}>{displayEventType}</span>
           {/if}
           {#if eventTrackerHref}
-            <button
-              type="button"
-              class="btn btn-sm min-h-11! gap-1 border border-(--archive-border-default) bg-(--archive-surface-raised) px-3 text-(--archive-text-default) shadow-sm transition-[background-color,border-color,box-shadow,color,transform] duration-180 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:hover)]:hover:border-primary/45 [@media(hover:hover)]:hover:bg-(--archive-surface-default) [@media(hover:hover)]:hover:text-(--archive-text-strong) [@media(hover:hover)]:hover:shadow-md"
-              aria-label={eventTrackerLabel}
-              onclick={openEventTracker}
+            <a
+              href={eventTrackerHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="btn btn-sm min-h-11! pointer-events-auto relative z-10 gap-1 border border-(--archive-border-default) bg-(--archive-surface-raised) px-3 text-(--archive-text-default) shadow-sm transition-[background-color,border-color,box-shadow,color] duration-180 ease-out [@media(hover:hover)]:hover:border-primary/45 [@media(hover:hover)]:hover:bg-(--archive-surface-default) [@media(hover:hover)]:hover:text-(--archive-text-strong)"
             >
               <Icon icon="mdi:open-in-new" class="size-4" aria-hidden="true" />
               {eventTrackerLabel}
-            </button>
+            </a>
           {/if}
         </div>
         <h3 class="text-lg/tight font-semibold text-(--archive-text-strong) sm:text-xl/tight">

@@ -58,6 +58,7 @@
   let idLabel = $state(getInitialI18nText("idLabel"));
   let bannerAltSuffix = $state(getInitialI18nText("bannerAltSuffix"));
   let latestDataLoadingEvents = $state(getInitialI18nText("latestData.loadingEvents"));
+  let latestDataLoading = $state(getInitialI18nText("latestData.loading"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
   let eventTrackerLabel = $state(getInitialI18nText("eventTrackerLink"));
   let disclaimerText = $state(getInitialI18nText("disclaimer"));
@@ -239,6 +240,7 @@
     idLabel = translate("idLabel");
     bannerAltSuffix = translate("bannerAltSuffix");
     latestDataLoadingEvents = translate("latestData.loadingEvents");
+    latestDataLoading = translate("latestData.loading");
     noEventLabel = translate("noCurrentEventData");
     eventTrackerLabel = translate("eventTrackerLink");
     disclaimerText = translate("disclaimer");
@@ -531,7 +533,12 @@
     </div>
     {#if latestDataPromise}
       {#await latestDataPromise}
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div
+          class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+          role="status"
+          aria-busy="true"
+          aria-label={latestDataLoading}
+        >
           <div class="space-y-3">
             <div class="h-5 w-24 animate-pulse rounded bg-base-300"></div>
             <div class="grid grid-cols-3 gap-2 sm:gap-3">

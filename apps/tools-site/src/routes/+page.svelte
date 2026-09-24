@@ -112,7 +112,7 @@
         <h1 id="home-title">{translate("home.title")}</h1>
         <p>{translate("home.description")}</p>
       </div>
-      <a class="hero-action" href="/tracker/jp">
+      <a class="btn btn-primary shrink-0 rounded-full max-sm:w-full" href="/tracker/jp">
         <span>{translate("home.openTracker")}</span><span aria-hidden="true">↗</span>
       </a>
       {#if supportPageUrl}
@@ -224,6 +224,10 @@
                 <div class="empty-card">
                   <h3 id={`result-${result.region}`}>{translate("home.failed")}</h3>
                   <p>{translate("home.failedDescription")}</p>
+                  <a class="tracker-link" href={`/tracker/${result.region}`}
+                    >{translate("home.openRegionalTracker")}
+                    <span class="tracker-link-arrow" aria-hidden="true">→</span></a
+                  >
                 </div>
               {/if}
             </article>
