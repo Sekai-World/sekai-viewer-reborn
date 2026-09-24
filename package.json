@@ -10,6 +10,7 @@
     "test": "turbo test",
     "lint": "turbo lint",
     "check": "turbo check",
+    "sync:apps": "pnpm --filter '@apps/*' exec svelte-kit sync",
     "verify:ci": "pnpm format:check && pnpm test && pnpm lint && pnpm check && pnpm i18n:check && pnpm build",
     "test:visual": "playwright test",
     "test:visual:update": "playwright test --update-snapshots",
