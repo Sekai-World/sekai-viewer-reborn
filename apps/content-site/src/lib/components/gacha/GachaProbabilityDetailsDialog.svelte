@@ -325,7 +325,7 @@
     >
       <button
         type="button"
-        class="btn btn-circle btn-ghost size-11! min-h-11! p-0 text-base-content/65 transition-colors hover:text-primary focus-visible:text-primary"
+        class="btn btn-circle btn-ghost btn-sm size-8 min-h-8 touch-target p-0 text-base-content/65 transition-colors hover:text-primary focus-visible:text-primary"
         aria-label={infoLabel}
         aria-controls={getProbabilityInfoId()}
         aria-expanded={infoVisible}

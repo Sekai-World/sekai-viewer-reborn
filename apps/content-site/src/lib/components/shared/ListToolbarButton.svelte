@@ -19,7 +19,7 @@
     onclick: (event: MouseEvent) => void;
   } = $props();
 
-  const baseClass = "btn btn-sm h-11! min-h-11! w-11! p-0";
+  const baseClass = "btn btn-sm btn-square touch-target p-0";
 
   const buttonClass = $derived(
     [baseClass, sortIndicatorIcon ? "relative overflow-visible" : "", className]

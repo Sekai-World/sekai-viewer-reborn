@@ -139,7 +139,7 @@
 {:else if status === "error"}
   <div class="alert alert-error alert-soft alert-vertical text-center text-sm" role="alert">
     <p>{t("virtualLiveTimelineLoadFailed")}</p>
-    <button type="button" class="btn btn-outline btn-sm min-h-11" onclick={retry}
+    <button type="button" class="btn btn-outline btn-sm touch-target" onclick={retry}
       >{t("listRetry")}</button
     >
   </div>
@@ -149,7 +149,7 @@
       {#each categories as category (category)}
         <button
           type="button"
-          class={`btn btn-sm min-h-11 ${selectedCategories.includes(category) ? "btn-primary" : "btn-ghost border border-base-content/15"}`}
+          class={`btn btn-sm touch-target ${selectedCategories.includes(category) ? "btn-primary" : "btn-ghost border border-base-content/15"}`}
           aria-pressed={selectedCategories.includes(category)}
           onclick={() => toggleCategory(category)}
         >
@@ -157,7 +157,7 @@
           <span class="opacity-65">{document.categoryCounts[category]}</span>
         </button>
       {/each}
-      <button type="button" class="btn btn-sm btn-outline min-h-11" onclick={selectAll}>
+      <button type="button" class="btn btn-sm btn-outline touch-target" onclick={selectAll}>
         {t("virtualLiveTimelineAllEvents")}
       </button>
     </div>

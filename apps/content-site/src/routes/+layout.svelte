@@ -913,7 +913,7 @@
         <button
           bind:this={desktopSettingsButton}
           type="button"
-          class="btn btn-circle size-11! min-h-11! btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
+          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={settingsLabel}
           aria-haspopup="dialog"
           aria-expanded={isDesktopSettingsMenuOpen}
@@ -949,7 +949,7 @@
         <button
           bind:this={desktopThemeButton}
           type="button"
-          class="btn btn-circle size-11! min-h-11! btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
+          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={switchThemeAriaLabel}
           aria-haspopup="true"
           aria-expanded={isDesktopThemeMenuOpen}
@@ -1025,7 +1025,7 @@
         <button
           bind:this={localeButton}
           type="button"
-          class="btn btn-circle size-11! min-h-11! btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100 disabled:opacity-75"
+          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100 disabled:opacity-75"
           aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
           aria-haspopup="true"
           aria-expanded={isLocaleMenuOpen}
