@@ -15,6 +15,29 @@ const trackerMessagesPath = resolve(
 const chartPath = resolve(process.cwd(), "src/lib/components/RankingHistoryChart.svelte");
 const goalChartPath = resolve(process.cwd(), "src/lib/components/GoalProjectionChart.svelte");
 
+const getSourceSection = (source: string, startMarker: string, endMarker: string): string => {
+  const start = source.indexOf(startMarker);
+  const end = source.indexOf(endMarker, start + startMarker.length);
+  if (start < 0 || end < 0) {
+    throw new Error(`Could not locate source section between ${startMarker} and ${endMarker}`);
+  }
+  return source.slice(start, end);
+};
+
+const getOpeningTagContaining = (source: string, marker: string): string => {
+  const markerIndex = source.indexOf(marker);
+  if (markerIndex < 0) throw new Error(`Could not locate element containing ${marker}`);
+
+  const tagStart = source.lastIndexOf("<", markerIndex);
+  const tagEnd = source.indexOf(">", markerIndex);
+  if (tagStart < 0 || tagEnd < 0) throw new Error(`Could not locate opening tag for ${marker}`);
+  return source.slice(tagStart, tagEnd + 1);
+};
+
+const getOpeningTagById = (source: string, id: string): string => {
+  return getOpeningTagContaining(source, `id="${id}"`);
+};
+
 describe("tracker page UI contract", () => {
   it("renders accessible player-change markers without motion-dependent behavior", async () => {
     const source = await readFile(chartPath, "utf8");
@@ -549,6 +572,90 @@ describe("tracker page UI contract", () => {
     expect(messages).not.toHaveProperty("tracker.goalYourRate");
     expect(messages).not.toHaveProperty("tracker.goalOutcome");
     expect(messages).not.toHaveProperty("tracker.goalDifference");
+  });
+
+  it("shares the selected event and snapshot as a portable link", async () => {
+    const source = await readFile(pagePath, "utf8");
+    const shareHandler = getSourceSection(
+      source,
+      "const shareTracker =",
+      "const resetGoalResult ="
+    );
+    const shareStatus = getSourceSection(source, "{#if shareMessage.trim()}", "</span>");
+
+    expect(shareHandler).toContain("new URL(window.location.href)");
+    expect(shareHandler).toMatch(
+      /if\s*\(snapshotTimestamp\)[\s\S]*?searchParams\.set\("snapshot",\s*snapshotTimestamp\)[\s\S]*?else[\s\S]*?searchParams\.delete\("snapshot"\)/
+    );
+    expect(shareHandler).toContain("navigator.clipboard.writeText(canonicalUrl)");
+    expect(shareHandler).toContain('shareMessage = translate("tracker.linkCopied")');
+    expect(shareHandler).toContain("shareMessage = canonicalUrl");
+    expect(shareStatus).toContain('role="status"');
+    expect(shareStatus).toContain('aria-live="polite"');
+    expect(shareStatus).toContain("{shareMessage}");
+  });
+
+  it("ties goal calculation to valid inputs and presents ready and failure outcomes", async () => {
+    const source = await readFile(pagePath, "utf8");
+    const canSubmit = getSourceSection(
+      source,
+      "const goalCanSubmit =",
+      "const activeRankingContext ="
+    );
+    const resultMarkup = getSourceSection(
+      source,
+      "{#if goalResult}",
+      '<div class="tracker-goal-dialog-actions">'
+    );
+    const submitButton = getOpeningTagContaining(source, 'translate("tracker.calculateGoal")');
+    const currentScoreInput = getOpeningTagById(source, "tracker-goal-current-score");
+    const targetRankSelect = getOpeningTagById(source, "tracker-goal-rank");
+    const safetyMarginInput = getOpeningTagById(source, "tracker-goal-safety-margin");
+    const playHoursInput = getOpeningTagById(source, "tracker-goal-play-hours");
+    const deadlineInput = getOpeningTagById(source, "tracker-goal-deadline");
+    const targetRankChangeHandler = getSourceSection(
+      source,
+      "const handleGoalTargetRankChange =",
+      "const submitGoal ="
+    );
+
+    for (const prerequisite of [
+      "goalCanUseLiveData",
+      "goalHasTargetRate",
+      "goalCurrentScoreValid",
+      "goalSafetyMarginValid",
+      "goalAvailablePlayHoursValid"
+    ]) {
+      expect(canSubmit).toContain(prerequisite);
+    }
+    expect(submitButton).toMatch(/type\s*=\s*"submit"/);
+    expect(submitButton).toMatch(/disabled\s*=\s*\{\s*!goalCanSubmit\s*\}/);
+
+    for (const input of [currentScoreInput, safetyMarginInput]) {
+      expect(input).toMatch(/type\s*=\s*"number"/);
+      expect(input).toMatch(/min\s*=\s*"0"/);
+      expect(input).toMatch(/step\s*=\s*"1"/);
+      expect(input).toMatch(/\brequired\b/);
+      expect(input).toMatch(/oninput\s*=\s*\{\s*resetGoalResult\s*\}/);
+    }
+    expect(currentScoreInput).toContain("bind:value={goalCurrentScore}");
+    expect(safetyMarginInput).toContain("bind:value={goalSafetyMarginPoints}");
+    expect(targetRankSelect).toMatch(/\brequired\b/);
+    expect(targetRankSelect).toContain('value={goalTargetRank ?? ""}');
+    expect(targetRankSelect).toContain("onchange={handleGoalTargetRankChange}");
+    expect(targetRankChangeHandler).toContain("resetGoalResult()");
+    expect(playHoursInput).toContain("bind:value={goalAvailablePlayHours}");
+    expect(playHoursInput).toMatch(/step\s*=\s*"0\.25"/);
+    expect(playHoursInput).not.toMatch(/\brequired\b/);
+    expect(playHoursInput).toMatch(/oninput\s*=\s*\{\s*resetGoalResult\s*\}/);
+    expect(deadlineInput).toMatch(/\breadonly\b/);
+
+    expect(resultMarkup).toMatch(/goalResult\.status\s*===\s*"unavailable"/);
+    expect(resultMarkup).toMatch(/goalResult\.status\s*===\s*"invalid"/);
+    expect(resultMarkup).toContain("<output");
+    expect(resultMarkup).toContain("goalPlan.targetProjectedFinalScore");
+    expect(resultMarkup).toContain("goalPlan.requiredFinalScore");
+    expect(resultMarkup).toContain("goalPlan.requiredRate");
   });
 
   it("uses explicit or current metadata with an ID-only fallback", async () => {
