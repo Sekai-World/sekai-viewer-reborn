@@ -10,11 +10,6 @@ const { getMasterApiBaseUrl } = vi.hoisted(() => ({
 }));
 vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
 
-const { fetchMissionCharacterOptions } = vi.hoisted(() => ({
-  fetchMissionCharacterOptions: vi.fn()
-}));
-vi.mock("$lib/server/mission-characters", () => ({ fetchMissionCharacterOptions }));
-
 import { load } from "./+page.server";
 import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
 
@@ -39,10 +34,6 @@ type MissionPageLoadResult = {
     summary: Promise<{ items: Mission[]; total: number | null; loadFailed: boolean }>;
   }[];
   storyMissions: Promise<{ items: Mission[]; loadFailed: boolean }> | null;
-  characterOptions: Promise<{
-    items: { id: number; name: string; unit: string | null; unitName: string | null }[];
-    loadFailed: boolean;
-  }> | null;
 };
 
 const resolveCatalogue = (result: MissionPageLoadResult): Promise<CatalogueResult> => {
@@ -103,10 +94,6 @@ describe("mission catalogue page load", () => {
     getMissionsByRegionList.mockReset();
     getMasterApiBaseUrl.mockReset();
     getMasterApiBaseUrl.mockReturnValue("https://master-api.test");
-    fetchMissionCharacterOptions.mockReset();
-    fetchMissionCharacterOptions.mockResolvedValue([
-      { id: 1, name: "Ichika Hoshino", unit: "light_sound", unitName: "Leo/need" }
-    ]);
   });
 
   it("streams one first page for every default family separately", async () => {
@@ -236,7 +223,6 @@ describe("mission catalogue page load", () => {
 
     expect(result.query).toEqual({ family: "normalMissions", character: null });
     expect(result.familyOverviews).toEqual([]);
-    expect(result.characterOptions).toBeNull();
     expect(catalogue).toMatchObject({ loadFailed: false, pagination: { hasNext: false } });
     expect(catalogue.items).toHaveLength(120);
     expect(getMissionsByRegionList.mock.calls.map(([request]) => request.query)).toEqual([
@@ -254,22 +240,8 @@ describe("mission catalogue page load", () => {
     expect(result.query).toEqual({ family: "characterMissionV2s", character: null });
     expect(result.catalogue).toBeNull();
     expect(getMissionsByRegionList).not.toHaveBeenCalled();
-    await expect(result.characterOptions).resolves.toEqual({
-      items: [{ id: 1, name: "Ichika Hoshino", unit: "light_sound", unitName: "Leo/need" }],
-      loadFailed: false
-    });
-    expect(fetchMissionCharacterOptions).toHaveBeenCalledWith("https://master-api.test", "jp");
-  });
-
-  it("keeps the picker retryable when characters fail to load", async () => {
-    fetchMissionCharacterOptions.mockRejectedValue(new Error("master api unavailable"));
-
-    const result = (await runLoad(
-      "jp",
-      "?family=characterMissionV2s"
-    )) as unknown as MissionPageLoadResult;
-
-    await expect(result.characterOptions).resolves.toEqual({ items: [], loadFailed: true });
+    // The picker fetches its character list separately, once per region.
+    expect(result).not.toHaveProperty("characterOptions");
   });
 
   it("pages the selected character's missions", async () => {

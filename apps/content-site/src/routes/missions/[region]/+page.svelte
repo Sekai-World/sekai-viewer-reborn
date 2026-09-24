@@ -56,6 +56,13 @@
 
   let items = $state<Mission[]>([]);
   let characterOptions = $state<CharacterOptionsState>({ status: "loading", items: [] });
+  // Character lists by region, fetched once each; picking another character reuses them.
+  // Deliberately not reactive: the load effect reads it, and a reactive map would rerun
+  // that effect on every cache write.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
+  const characterLists = new Map<string, Promise<MissionCharacterOption[]>>();
+  // Not reactive: the effect below must not rerun when this changes.
+  let characterListRegion: string | null = null;
   let familySummaries = $state<Partial<Record<MissionFamily, FamilySummaryState>>>({});
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -377,6 +384,41 @@
     }
   };
 
+  const fetchCharacterList = (region: string): Promise<MissionCharacterOption[]> => {
+    const cached = characterLists.get(region);
+    if (cached) return cached;
+    const request = fetch(resolve("/missions/[region]/characters", { region }))
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Mission character list request failed.");
+        return ((await response.json()) as { items: MissionCharacterOption[] }).items;
+      })
+      .catch((error: unknown) => {
+        // Forget failures so a retry fetches again.
+        characterLists.delete(region);
+        throw error;
+      });
+    characterLists.set(region, request);
+    return request;
+  };
+  const showCharacterList = (region: string): void => {
+    characterListRegion = region;
+    characterOptions = { status: "loading", items: [] };
+    fetchCharacterList(region)
+      .then((items) => {
+        if (characterListRegion === region) characterOptions = { status: "ready", items };
+      })
+      .catch(() => {
+        if (characterListRegion === region) characterOptions = { status: "error", items: [] };
+      });
+  };
+
+  $effect(() => {
+    // Tracks only the family and region, so choosing another character does not refetch.
+    if (!browser || data.query.family !== "characterMissionV2s") return;
+    const region = data.region;
+    if (characterListRegion !== region) showCharacterList(region);
+  });
+
   $effect(() => {
     const bundle = data.i18nMessages;
     let active = true;
@@ -400,7 +442,6 @@
         { status: "loading", items: [], total: null }
       ])
     );
-    characterOptions = { status: "loading", items: [] };
     currentPage = 1;
     hasNext = false;
     isInitialLoading = data.catalogue !== null;
@@ -423,20 +464,6 @@
           })
         )
         .catch(() => setSummary({ status: "error", items: [], total: null }));
-    }
-
-    if (data.characterOptions) {
-      void Promise.resolve(data.characterOptions)
-        .then((options) => {
-          if (requestId !== listRequestId) return;
-          characterOptions = {
-            status: options.loadFailed ? "error" : "ready",
-            items: options.items
-          };
-        })
-        .catch(() => {
-          if (requestId === listRequestId) characterOptions = { status: "error", items: [] };
-        });
     }
 
     if (data.catalogue === null) return;
@@ -504,7 +531,7 @@
           id: String(data.query.character)
         })}
     onSelect={selectCharacter}
-    onRetry={() => void invalidateAll()}
+    onRetry={() => showCharacterList(data.region)}
   />
 {/snippet}
 

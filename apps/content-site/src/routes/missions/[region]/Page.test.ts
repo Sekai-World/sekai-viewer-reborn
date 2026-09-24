@@ -96,14 +96,6 @@ const data = (
 ): PageData => ({
   region,
   query: { family, character },
-  characterOptions:
-    family === "characterMissionV2s"
-      ? Promise.resolve(
-          "characters" in catalogue
-            ? catalogue.characters
-            : { items: defaultCharacters, loadFailed: false }
-        )
-      : null,
   ...(Array.isArray(catalogue)
     ? { catalogue: null, familyOverviews: catalogue, storyMissions: null }
     : "story" in catalogue
@@ -154,16 +146,47 @@ const data = (
   }
 });
 
+const json = (body: unknown, status = 200): Response =>
+  new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+
+// Serves the picker's character list endpoint and passes every other request to the
+// fetch a test already stubbed.
+const stubCharacterList = (characters: CharacterPicker["characters"]) => {
+  const next = globalThis.fetch;
+  const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+    String(input) === "/missions/jp/characters"
+      ? Promise.resolve(
+          characters.loadFailed ? json({ error: true }, 500) : json({ items: characters.items })
+        )
+      : init === undefined
+        ? next(input)
+        : next(input, init)
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  return fetchMock;
+};
+
+const characterListCalls = (fetchMock: ReturnType<typeof stubCharacterList>): number =>
+  fetchMock.mock.calls.filter(([input]) => String(input) === "/missions/jp/characters").length;
+
 const renderPage = (
   catalogue: Catalogue | FamilyOverview[] | StoryLadder | CharacterPicker,
   family: MissionFamily | null = null,
   character?: number | null
-) =>
-  render(MissionsPage, {
+) => {
+  if (family === "characterMissionV2s") {
+    stubCharacterList(
+      "characters" in catalogue
+        ? catalogue.characters
+        : { items: defaultCharacters, loadFailed: false }
+    );
+  }
+  return render(MissionsPage, {
     data: data(catalogue, family, "jp", character),
     params: { region: "jp" },
     form: null
   });
+};
 
 const page = (
   items: Mission[],
@@ -231,7 +254,7 @@ describe("Missions page", () => {
     expect(
       await screen.findByText("Choose a character to see their character missions.")
     ).toBeTruthy();
-    const leoNeed = screen.getByRole("list", { name: "Leo/need" });
+    const leoNeed = await screen.findByRole("list", { name: "Leo/need" });
     expect(within(leoNeed).getAllByRole("button")).toHaveLength(2);
     expect(screen.getByRole("list", { name: "VIRTUAL SINGER" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
@@ -281,14 +304,51 @@ describe("Missions page", () => {
     expect(grid.classList).not.toContain("hidden");
   });
 
+  it("fetches the character list once per region while switching characters", async () => {
+    const view = renderPage(
+      page([makeMission("characterMissionV2s", 1, "Clear a live with Ichika")], {
+        page: 1,
+        hasNext: false
+      }),
+      "characterMissionV2s",
+      1
+    );
+    const fetchMock = vi.mocked(globalThis.fetch) as ReturnType<typeof stubCharacterList>;
+    await screen.findByRole("button", { name: "Saki Tenma" });
+
+    await view.rerender({
+      data: data(
+        page([makeMission("characterMissionV2s", 2, "Clear a live with Saki")], {
+          page: 1,
+          hasNext: false
+        }),
+        "characterMissionV2s",
+        "jp",
+        2
+      ),
+      params: { region: "jp" },
+      form: null
+    });
+
+    expect(await screen.findByText("Clear a live with Saki")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Saki Tenma" }).getAttribute("aria-pressed")).toBe(
+      "true"
+    );
+    expect(screen.queryByText("Loading characters...")).toBeNull();
+    expect(characterListCalls(fetchMock)).toBe(1);
+  });
+
   it("offers a retry when the character picker fails to load", async () => {
     renderPage({ characters: { items: [], loadFailed: true } }, "characterMissionV2s");
 
     expect((await screen.findByRole("alert")).textContent).toContain(
       "Characters could not be loaded."
     );
+    const fetchMock = stubCharacterList({ items: defaultCharacters, loadFailed: false });
     await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(invalidateAll).toHaveBeenCalled();
+    expect(await screen.findByRole("button", { name: "Saki Tenma" })).toBeTruthy();
+    expect(characterListCalls(fetchMock)).toBe(1);
+    expect(invalidateAll).not.toHaveBeenCalled();
   });
 
   it("shows bounded, count-led previews in All mode as each family arrives", async () => {

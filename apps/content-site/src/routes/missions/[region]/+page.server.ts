@@ -1,6 +1,5 @@
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
-import { fetchMissionCharacterOptions } from "$lib/server/mission-characters";
 import {
   createEmptyMissionListPage,
   fetchMissionListPage,
@@ -9,12 +8,7 @@ import {
   parseMissionCharacterId,
   parseMissionFamily
 } from "$lib/server/mission-list";
-import {
-  missionFamilies,
-  type Mission,
-  type MissionCharacterOption,
-  type MissionFamily
-} from "$lib/domain/mission";
+import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
 import type { PageServerLoad } from "./$types";
 
 type MissionCatalogueQuery = {
@@ -29,7 +23,6 @@ type MissionFamilyOverview = {
 };
 
 type StoryMissionLadder = Promise<{ items: Mission[]; loadFailed: boolean }>;
-type MissionCharacterOptions = Promise<{ items: MissionCharacterOption[]; loadFailed: boolean }>;
 
 export const load: PageServerLoad = ({ params, url }) => {
   const region = normalizeRegion(params.region);
@@ -59,8 +52,7 @@ export const load: PageServerLoad = ({ params, url }) => {
       query,
       catalogue: null,
       familyOverviews,
-      storyMissions: null,
-      characterOptions: null as MissionCharacterOptions | null
+      storyMissions: null
     };
   }
 
@@ -74,27 +66,19 @@ export const load: PageServerLoad = ({ params, url }) => {
       query,
       catalogue: null,
       familyOverviews: [] as MissionFamilyOverview[],
-      storyMissions,
-      characterOptions: null as MissionCharacterOptions | null
+      storyMissions
     };
   }
 
-  const characterOptions: MissionCharacterOptions | null =
-    query.family === "characterMissionV2s"
-      ? fetchMissionCharacterOptions(baseUrl, region)
-          .then((items) => ({ items, loadFailed: false }))
-          .catch(() => ({ items: [], loadFailed: true }))
-      : null;
-
-  // Character Missions list nothing until a character is picked.
+  // Character Missions list nothing until a character is picked; the page fetches the
+  // picker's character list itself, once per region.
   if (query.family === "characterMissionV2s" && query.character === null) {
     return {
       region,
       query,
       catalogue: null,
       familyOverviews: [] as MissionFamilyOverview[],
-      storyMissions: null,
-      characterOptions
+      storyMissions: null
     };
   }
 
@@ -117,7 +101,6 @@ export const load: PageServerLoad = ({ params, url }) => {
     query,
     catalogue,
     familyOverviews: [] as MissionFamilyOverview[],
-    storyMissions: null,
-    characterOptions
+    storyMissions: null
   };
 };
