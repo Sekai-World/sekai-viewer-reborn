@@ -39,10 +39,14 @@
 
   let { data }: PageProps = $props();
   let resolvedMessages = $state<Record<string, string> | null>(null);
+  type FamilySummaryState = {
+    status: "loading" | "ready" | "error";
+    items: Mission[];
+    total: number | null;
+  };
+
   let items = $state<Mission[]>([]);
-  let familySummaries = $state<{ family: MissionFamily; items: Mission[]; total: number | null }[]>(
-    []
-  );
+  let familySummaries = $state<Partial<Record<MissionFamily, FamilySummaryState>>>({});
   let currentPage = $state(1);
   let hasNext = $state(false);
   let isInitialLoading = $state(true);
@@ -254,22 +258,29 @@
         })
     };
   };
+  const familyCountLabel = (summary: FamilySummaryState): string => {
+    if (summary.status === "loading") return "";
+    if (summary.total === null) return t("mission.totalUnavailable");
+    return summary.total === 1
+      ? t("mission.totalCountOne")
+      : t("mission.totalCount").replace("{count}", formatNumber(summary.total));
+  };
   const overviewGroups = $derived(
-    familySummaries.map((group) => ({
-      family: group.family,
-      label: t(`mission.family.${group.family}`),
-      countLabel:
-        group.total === null
-          ? t("mission.totalUnavailable")
-          : group.total === 1
-            ? t("mission.totalCountOne")
-            : t("mission.totalCount").replace("{count}", formatNumber(group.total)),
-      browseLabel: t("mission.browseFamily").replace(
-        "{family}",
-        t(`mission.family.${group.family}`)
-      ),
-      items: group.items.slice(0, 3).map(toItem)
-    }))
+    missionFamilies.map((family) => {
+      const summary = familySummaries[family] ?? { status: "loading", items: [], total: null };
+      return {
+        family,
+        label: t(`mission.family.${family}`),
+        status: summary.status,
+        statusLabel: summary.status === "error" ? t("mission.error") : t("mission.loading"),
+        countLabel: familyCountLabel(summary),
+        browseLabel: t("mission.browseFamily").replace("{family}", t(`mission.family.${family}`)),
+        items: summary.items.slice(0, 3).map(toItem)
+      };
+    })
+  );
+  const overviewFailed = $derived(
+    missionFamilies.every((family) => familySummaries[family]?.status === "error")
   );
   const missionKey = (mission: Mission): string => `${mission.family}-${mission.id}`;
   const queryParams = (family: MissionFamily | null, page?: number): SvelteURLSearchParams => {
@@ -348,19 +359,41 @@
   $effect(() => {
     const requestId = ++listRequestId;
     items = [];
-    familySummaries = [];
+    familySummaries = Object.fromEntries(
+      data.familyOverviews.map(({ family }) => [
+        family,
+        { status: "loading", items: [], total: null }
+      ])
+    );
     currentPage = 1;
     hasNext = false;
-    isInitialLoading = true;
+    isInitialLoading = data.catalogue !== null;
     isLoadingMore = false;
     initialError = false;
     loadMoreError = false;
 
+    for (const overview of data.familyOverviews) {
+      // Runs only in promise callbacks, so reading familySummaries here is not tracked.
+      const setSummary = (summary: FamilySummaryState): void => {
+        if (requestId !== listRequestId) return;
+        familySummaries = { ...familySummaries, [overview.family]: summary };
+      };
+      void Promise.resolve(overview.summary)
+        .then((summary) =>
+          setSummary({
+            status: summary.loadFailed ? "error" : "ready",
+            items: summary.items,
+            total: summary.total
+          })
+        )
+        .catch(() => setSummary({ status: "error", items: [], total: null }));
+    }
+
+    if (data.catalogue === null) return;
     void Promise.resolve(data.catalogue)
       .then((catalogue) => {
         if (requestId !== listRequestId) return;
         items = catalogue.items;
-        familySummaries = catalogue.familySummaries ?? [];
         currentPage = catalogue.pagination.page;
         hasNext = catalogue.pagination.hasNext;
         initialError = catalogue.loadFailed;
@@ -383,19 +416,29 @@
   {labels}
   homeHref={resolve("/")}
   {regions}
-  groups={isInitialLoading || initialError
-    ? []
-    : data.query.family
-      ? groupMissionsByFamily(items).map((group) => ({
+  groups={!data.query.family
+    ? overviewFailed
+      ? []
+      : overviewGroups
+    : isInitialLoading || initialError
+      ? []
+      : groupMissionsByFamily(items).map((group) => ({
           family: group.family,
           label: t(`mission.family.${group.family}`),
           countLabel: t("mission.shownCount").replace("{count}", formatNumber(group.items.length)),
           items: group.items.map(toItem)
-        }))
-      : overviewGroups}
+        }))}
   overview={!data.query.family}
-  loadingGroupCount={data.query.family ? 1 : missionFamilies.length}
-  status={isInitialLoading ? "loading" : initialError ? "error" : "ready"}
+  loadingGroupCount={1}
+  status={!data.query.family
+    ? overviewFailed
+      ? "error"
+      : "ready"
+    : isInitialLoading
+      ? "loading"
+      : initialError
+        ? "error"
+        : "ready"}
   rewardsLabel={t("mission.rewards")}
   catalogueKey={`${data.region}:${data.query.family ?? "all"}`}
   familyLabel={t("mission.familyLabel")}

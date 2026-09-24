@@ -19,3 +19,5 @@ Keep Character Missions in the Missions catalogue while expanding level goals in
 Move Character Rank rewards to Character detail pages with localized loading, empty, and failure states.
 
 Group the content-site sidebar into Library, Activities, and Progression sections instead of a single Explore section.
+
+Show each mission family in the Missions overview as soon as it loads instead of waiting for every family; a family that fails shows its own retry.

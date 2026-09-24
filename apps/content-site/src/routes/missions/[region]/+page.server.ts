@@ -5,11 +5,16 @@ import {
   fetchMissionListPage,
   parseMissionFamily
 } from "$lib/server/mission-list";
-import { missionFamilies, type MissionFamily } from "$lib/domain/mission";
+import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
 import type { PageServerLoad } from "./$types";
 
 type MissionCatalogueQuery = {
   family: MissionFamily | null;
+};
+
+type MissionFamilyOverview = {
+  family: MissionFamily;
+  summary: Promise<{ items: Mission[]; total: number | null; loadFailed: boolean }>;
 };
 
 export const load: PageServerLoad = ({ params, url }) => {
@@ -18,54 +23,26 @@ export const load: PageServerLoad = ({ params, url }) => {
     family: parseMissionFamily(url.searchParams)
   };
   const baseUrl = getMasterApiBaseUrl();
-  const catalogue = (
-    query.family
-      ? fetchMissionListPage(baseUrl, region, [query.family], 1).then((page) => ({
-          ...page,
-          familySummaries: []
-        }))
-      : Promise.all(
-          missionFamilies.map(async (family) => ({
-            family,
-            page: await fetchMissionListPage(baseUrl, region, [family], 1)
-          }))
-        ).then((familyPages) => {
-          const totalValues = familyPages.map(({ page }) => page.pagination.total);
-          const total = totalValues.every((value): value is number => value !== null)
-            ? totalValues.reduce((sum, value) => sum + value, 0)
-            : null;
-          if (total !== null && !Number.isSafeInteger(total)) {
-            throw new Error("Mission catalogue returned an unsupported total count.");
-          }
-          const reportedTotalPages = familyPages.flatMap(({ page }) =>
-            page.pagination.totalPages === null ? [] : [page.pagination.totalPages]
-          );
 
-          return {
-            items: familyPages.flatMap(({ page }) => page.items),
-            pagination: {
-              page: 1,
-              pageSize: 24,
-              hasNext: familyPages.some(({ page }) => page.pagination.hasNext),
-              total,
-              totalPages: reportedTotalPages.length > 0 ? Math.max(...reportedTotalPages) : null
-            },
-            familySummaries: familyPages.map(({ family, page }) => ({
-              family,
-              items: page.items,
-              total: page.pagination.total
-            }))
-          };
-        })
-  )
-    .then((page) => ({ ...page, loadFailed: false as const }))
-    .catch(() => ({
-      ...createEmptyMissionListPage(1),
-      familySummaries: [],
-      loadFailed: true as const
+  if (query.family === null) {
+    // Stream each family separately so a slow family does not hold back the others.
+    const familyOverviews: MissionFamilyOverview[] = missionFamilies.map((family) => ({
+      family,
+      summary: fetchMissionListPage(baseUrl, region, [family], 1)
+        .then((page) => ({
+          items: page.items,
+          total: page.pagination.total,
+          loadFailed: false
+        }))
+        .catch(() => ({ items: [], total: null, loadFailed: true }))
     }));
 
-  catalogue.catch(() => {});
+    return { region, query, catalogue: null, familyOverviews };
+  }
 
-  return { region, query, catalogue };
+  const catalogue = fetchMissionListPage(baseUrl, region, [query.family], 1)
+    .then((page) => ({ ...page, loadFailed: false as const }))
+    .catch(() => ({ ...createEmptyMissionListPage(1), loadFailed: true as const }));
+
+  return { region, query, catalogue, familyOverviews: [] as MissionFamilyOverview[] };
 };

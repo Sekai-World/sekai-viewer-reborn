@@ -34,6 +34,9 @@
     label: string;
     countLabel: string;
     browseLabel?: string;
+    /** Overview groups load independently; omitted means ready. */
+    status?: "loading" | "ready" | "error";
+    statusLabel?: string;
     items: MissionCatalogueItem[];
   };
   let {
@@ -271,10 +274,36 @@
             class={overview
               ? "min-w-0 border-b border-(--archive-border-subtle) py-4 first:pt-0 last:border-0 last:pb-0 lg:rounded-2xl lg:border lg:border-(--archive-border-subtle) lg:p-4 lg:first:pt-4 lg:last:border lg:last:pb-4"
               : "content-card-shell min-w-0 rounded-2xl p-4"}
+            aria-busy={group.status === "loading" ? "true" : undefined}
           >
             <div class="pb-4">{@render heading(group)}</div>
             {#if overview}
-              {#if group.items.length}
+              {#if group.status === "loading"}
+                <p role="status" class="sr-only">{group.statusLabel}</p>
+                <div
+                  class="space-y-3 border-t border-(--archive-border-subtle) py-3"
+                  aria-hidden="true"
+                >
+                  {#each [0, 1, 2] as index (index)}
+                    <div class="h-4 w-4/5 rounded bg-(--archive-surface-sunken)"></div>
+                  {/each}
+                </div>
+              {:else if group.status === "error"}
+                <div
+                  class="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-(--archive-border-subtle) py-3"
+                >
+                  <p role="alert" class="text-sm text-error">{group.statusLabel}</p>
+                  {#if frame.onRetry}
+                    <button
+                      type="button"
+                      class="btn btn-link min-h-11 px-0"
+                      onclick={frame.onRetry}
+                    >
+                      {frame.labels.retry}
+                    </button>
+                  {/if}
+                </div>
+              {:else if group.items.length}
                 <ul class="space-y-2 border-t border-(--archive-border-subtle) py-3 text-sm">
                   {#each group.items as item (item.key)}
                     <li class="wrap-anywhere text-(--archive-text-muted)">{item.sentence}</li>

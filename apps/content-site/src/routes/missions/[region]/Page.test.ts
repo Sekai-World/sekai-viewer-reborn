@@ -38,17 +38,20 @@ const makeMission = (family: MissionFamily, id: number, sentence: string | null)
 });
 
 type PageData = ComponentProps<typeof MissionsPage>["data"];
-type Catalogue = Awaited<PageData["catalogue"]>;
+type Catalogue = Awaited<NonNullable<PageData["catalogue"]>>;
 type SuccessfulCatalogue = Extract<Catalogue, { loadFailed: false }>;
+type FamilyOverview = PageData["familyOverviews"][number];
 
 const data = (
-  catalogue: Catalogue,
+  catalogue: Catalogue | FamilyOverview[],
   family: MissionFamily | null = null,
   region: PageData["region"] = "jp"
 ): PageData => ({
   region,
   query: { family },
-  catalogue: Promise.resolve(catalogue),
+  ...(Array.isArray(catalogue)
+    ? { catalogue: null, familyOverviews: catalogue }
+    : { catalogue: Promise.resolve(catalogue), familyOverviews: [] }),
   uiLocale: "en",
   preferredRegion: region,
   globalNotices: [],
@@ -92,7 +95,7 @@ const data = (
   }
 });
 
-const renderPage = (catalogue: Catalogue, family: MissionFamily | null = null) =>
+const renderPage = (catalogue: Catalogue | FamilyOverview[], family: MissionFamily | null = null) =>
   render(MissionsPage, {
     data: data(catalogue, family),
     params: { region: "jp" },
@@ -104,7 +107,6 @@ const page = (
   pagination: { page: number; hasNext: boolean }
 ): SuccessfulCatalogue => ({
   items,
-  familySummaries: [],
   pagination: {
     ...pagination,
     pageSize: 24,
@@ -155,26 +157,61 @@ describe("Missions page", () => {
     expect(screen.getByRole("status").textContent).toBe("You have reached the end.");
   });
 
-  it("shows bounded, count-led previews in All mode without incremental loading", async () => {
+  it("shows bounded, count-led previews in All mode as each family arrives", async () => {
     const items = [1, 2, 3, 4].map((id) => makeMission("storyMissions", id, `Story ${id}`));
-    const catalogue = {
-      ...page(items, { page: 1, hasNext: true }),
-      familySummaries: [{ family: "storyMissions" as const, items, total: 120 }]
-    };
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
 
-    renderPage(catalogue);
+    renderPage([
+      {
+        family: "storyMissions",
+        summary: Promise.resolve({ items, total: 120, loadFailed: false })
+      },
+      { family: "characterMissionV2s", summary: new Promise(() => {}) },
+      {
+        family: "normalMissions",
+        summary: Promise.resolve({ items: [], total: null, loadFailed: true })
+      }
+    ]);
 
     expect(await screen.findByText("120 missions")).toBeTruthy();
     expect(screen.getByText("Story 1")).toBeTruthy();
     expect(screen.getByText("Story 2")).toBeTruthy();
     expect(screen.getByText("Story 3")).toBeTruthy();
     expect(screen.queryByText("Story 4")).toBeNull();
-    expect(screen.getByRole("button", { name: "See all Story missions" })).toBeTruthy();
+
+    const characterSection = screen
+      .getByRole("heading", { name: "Character missions" })
+      .closest("section")!;
+    expect(characterSection.getAttribute("aria-busy")).toBe("true");
+    expect(characterSection.textContent).toContain("Loading missions...");
+
+    const normalSection = screen
+      .getByRole("heading", { name: /Normal missions/ })
+      .closest("section")!;
+    expect(normalSection.textContent).toContain("Missions could not be loaded.");
+    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(invalidateAll).toHaveBeenCalledOnce();
+
+    for (const family of ["Story missions", "Character missions", "Normal missions"]) {
+      expect(screen.getByRole("button", { name: `See all ${family}` })).toBeTruthy();
+    }
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
     expect(screen.queryByText("You have reached the end.")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the page error in All mode only when every family fails", async () => {
+    renderPage(
+      (["storyMissions", "characterMissionV2s", "normalMissions"] as const).map((family) => ({
+        family,
+        summary: Promise.resolve({ items: [], total: null, loadFailed: true })
+      }))
+    );
+
+    expect(await screen.findByText("Missions could not be loaded.")).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /Story missions/ })).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Try again" })).toHaveLength(1);
   });
 
   it("renders one Character Mission V2 threshold with its level label", async () => {

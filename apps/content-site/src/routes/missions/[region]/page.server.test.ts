@@ -13,22 +13,37 @@ vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
 import { load } from "./+page.server";
 import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
 
+type CatalogueResult = {
+  items: Mission[];
+  loadFailed: boolean;
+  pagination: {
+    page: number;
+    pageSize: number;
+    hasNext: boolean;
+    total: number | null;
+    totalPages: number | null;
+  };
+};
+
 type MissionPageLoadResult = {
   region: string;
   query: { family: MissionFamily | null };
-  catalogue: Promise<{
-    items: Mission[];
-    familySummaries?: { family: MissionFamily; items: Mission[]; total: number | null }[];
-    loadFailed: boolean;
-    pagination: {
-      page: number;
-      pageSize: number;
-      hasNext: boolean;
-      total: number | null;
-      totalPages: number | null;
-    };
-  }>;
+  catalogue: Promise<CatalogueResult> | null;
+  familyOverviews: {
+    family: MissionFamily;
+    summary: Promise<{ items: Mission[]; total: number | null; loadFailed: boolean }>;
+  }[];
 };
+
+const resolveCatalogue = (result: MissionPageLoadResult): Promise<CatalogueResult> => {
+  if (result.catalogue === null) throw new Error("expected a selected-family catalogue");
+  return result.catalogue;
+};
+
+const resolveSummaries = (result: MissionPageLoadResult) =>
+  Promise.all(
+    result.familyOverviews.map(async ({ family, summary }) => ({ family, ...(await summary) }))
+  );
 
 type MissionRequest = {
   baseUrl: string;
@@ -79,7 +94,7 @@ describe("mission catalogue page load", () => {
     getMasterApiBaseUrl.mockReturnValue("https://master-api.test");
   });
 
-  it("loads one page for every default family and combines high-page metadata", async () => {
+  it("streams one first page for every default family separately", async () => {
     const totals: Record<MissionFamily, number> = {
       storyMissions: 1600,
       characterMissionV2s: 1200,
@@ -90,30 +105,24 @@ describe("mission catalogue page load", () => {
     );
 
     const result = (await runLoad("invalid")) as unknown as MissionPageLoadResult;
-    const catalogue = await result.catalogue;
 
     expect(result.region).toBe("jp");
     expect(result.query).toEqual({ family: null });
-    expect(catalogue).toMatchObject({
-      loadFailed: false,
-      pagination: {
-        page: 1,
-        pageSize: 24,
-        hasNext: true,
-        total: 3072,
-        totalPages: 200
-      }
-    });
-    expect(catalogue.items).toHaveLength(24);
-    expect(catalogue.familySummaries).toEqual(
-      missionFamilies.map((family) => ({ family, items: expect.any(Array), total: totals[family] }))
+    expect(result.catalogue).toBeNull();
+    expect(result.familyOverviews.map(({ family }) => family)).toEqual([...missionFamilies]);
+    const summaries = await resolveSummaries(result);
+    expect(summaries).toEqual(
+      missionFamilies.map((family) => ({
+        family,
+        items: expect.any(Array),
+        total: totals[family],
+        loadFailed: false
+      }))
     );
-    expect(catalogue.familySummaries?.every(({ items }) => items.length <= FAMILY_PAGE_SIZE)).toBe(
-      true
-    );
-    expect(catalogue.items.map((mission) => mission.family)).toEqual(
-      missionFamilies.flatMap((family) => Array.from({ length: FAMILY_PAGE_SIZE }, () => family))
-    );
+    for (const { family, items } of summaries) {
+      expect(items).toHaveLength(FAMILY_PAGE_SIZE);
+      expect(items.every((mission) => mission.family === family)).toBe(true);
+    }
 
     expect(getMissionsByRegionList).toHaveBeenCalledTimes(3);
     expect(getMissionsByRegionList.mock.calls.map(([request]) => request)).toEqual(
@@ -131,6 +140,20 @@ describe("mission catalogue page load", () => {
     );
   });
 
+  it("does not hold finished families behind a slow family", async () => {
+    getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) =>
+      query.family === "storyMissions"
+        ? new Promise(() => {})
+        : Promise.resolve(createMissionResponse(query.family, 1, 8))
+    );
+
+    const result = (await runLoad("jp")) as unknown as MissionPageLoadResult;
+    const [, character, normal] = result.familyOverviews;
+
+    await expect(character?.summary).resolves.toMatchObject({ total: 8, loadFailed: false });
+    await expect(normal?.summary).resolves.toMatchObject({ total: 8, loadFailed: false });
+  });
+
   it("preserves one selected family from legacy query values and always starts at page one", async () => {
     getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) =>
       Promise.resolve(createMissionResponse(query.family, query.page ?? 1, 20))
@@ -140,9 +163,10 @@ describe("mission catalogue page load", () => {
       "tw",
       "?family=normalMissions,invalid&family=storyMissions,normalMissions&page=2"
     )) as unknown as MissionPageLoadResult;
-    const catalogue = await result.catalogue;
+    const catalogue = await resolveCatalogue(result);
 
     expect(result.query).toEqual({ family: "normalMissions" });
+    expect(result.familyOverviews).toEqual([]);
     expect(catalogue).toMatchObject({
       loadFailed: false,
       pagination: { page: 1, pageSize: 24, hasNext: true, total: 20, totalPages: 3 }
@@ -171,7 +195,7 @@ describe("mission catalogue page load", () => {
     )) as unknown as MissionPageLoadResult;
 
     expect(result.query).toEqual({ family: "normalMissions" });
-    await expect(result.catalogue).resolves.toMatchObject({
+    await expect(resolveCatalogue(result)).resolves.toMatchObject({
       loadFailed: false,
       pagination: { page: 1 }
     });
@@ -187,34 +211,13 @@ describe("mission catalogue page load", () => {
       "jp",
       "?family=normalMissions"
     )) as unknown as MissionPageLoadResult;
-    const catalogue = await result.catalogue;
+    const catalogue = await resolveCatalogue(result);
 
     expect(catalogue.items).toHaveLength(7);
     expect(new Set(catalogue.items.map((mission) => mission.id)).size).toBe(7);
   });
 
-  it("combines has-next with any family and total-pages with the largest family", async () => {
-    const totals: Record<MissionFamily, number> = {
-      storyMissions: 8,
-      characterMissionV2s: 40,
-      normalMissions: 18
-    };
-    getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) =>
-      Promise.resolve(createMissionResponse(query.family, query.page ?? 1, totals[query.family]))
-    );
-
-    const result = (await runLoad("jp")) as unknown as MissionPageLoadResult;
-    const catalogue = await result.catalogue;
-
-    expect(catalogue.items).toHaveLength(24);
-    expect(catalogue).toMatchObject({
-      loadFailed: false,
-      pagination: { page: 1, pageSize: 24, hasNext: true, total: 66, totalPages: 5 }
-    });
-    expect(catalogue.familySummaries?.map(({ total }) => total)).toEqual([8, 40, 18]);
-  });
-
-  it("keeps the combined total nullable when a family total cannot be derived", async () => {
+  it("keeps a family total nullable when it cannot be derived", async () => {
     getMissionsByRegionList.mockImplementation(() =>
       Promise.resolve({
         data: {
@@ -226,19 +229,17 @@ describe("mission catalogue page load", () => {
 
     const result = (await runLoad("jp")) as unknown as MissionPageLoadResult;
 
-    await expect(result.catalogue).resolves.toMatchObject({
-      loadFailed: false,
-      pagination: { page: 1, pageSize: 24, hasNext: true, total: null, totalPages: 4 }
-    });
-    await expect(result.catalogue).resolves.toMatchObject({
-      familySummaries: missionFamilies.map((family) => ({
+    await expect(resolveSummaries(result)).resolves.toEqual(
+      missionFamilies.map((family) => ({
         family,
-        total: null
+        items: expect.any(Array),
+        total: null,
+        loadFailed: false
       }))
-    });
+    );
   });
 
-  it("fails the whole page when any selected family returns an API error", async () => {
+  it("marks only the failing family as unavailable in the overview", async () => {
     getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) =>
       query.family === "characterMissionV2s"
         ? Promise.resolve({ error: new Error("family unavailable") })
@@ -247,14 +248,11 @@ describe("mission catalogue page load", () => {
 
     const result = (await runLoad("jp")) as unknown as MissionPageLoadResult;
 
-    await expect(result.catalogue).resolves.toEqual({
-      ...{
-        items: [],
-        familySummaries: [],
-        pagination: { page: 1, pageSize: 24, hasNext: false, total: null, totalPages: null }
-      },
-      loadFailed: true
-    });
+    await expect(resolveSummaries(result)).resolves.toEqual([
+      { family: "storyMissions", items: expect.any(Array), total: 8, loadFailed: false },
+      { family: "characterMissionV2s", items: [], total: null, loadFailed: true },
+      { family: "normalMissions", items: expect.any(Array), total: 8, loadFailed: false }
+    ]);
     expect(getMissionsByRegionList).toHaveBeenCalledTimes(3);
   });
 
@@ -266,7 +264,7 @@ describe("mission catalogue page load", () => {
       "?family=normalMissions"
     )) as unknown as MissionPageLoadResult;
 
-    await expect(result.catalogue).resolves.toMatchObject({ items: [], loadFailed: true });
+    await expect(resolveCatalogue(result)).resolves.toMatchObject({ items: [], loadFailed: true });
     expect(getMissionsByRegionList).toHaveBeenCalledTimes(1);
   });
 
@@ -282,7 +280,7 @@ describe("mission catalogue page load", () => {
       "jp",
       "?family=normalMissions"
     )) as unknown as MissionPageLoadResult;
-    await expect(inconsistentResult.catalogue).resolves.toMatchObject({
+    await expect(resolveCatalogue(inconsistentResult)).resolves.toMatchObject({
       items: [],
       loadFailed: true
     });
