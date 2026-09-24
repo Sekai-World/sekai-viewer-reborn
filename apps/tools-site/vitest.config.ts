@@ -11,6 +11,13 @@ export default defineConfig({
     ]
   },
   test: {
+    server: {
+      deps: {
+        // Node's native loader re-parses this package's 1.5 MB exports map for
+        // every icon file it imports; inlining keeps icon loads off that path.
+        inline: ["@iconify-icons/mdi"]
+      }
+    },
     environment: "node",
     exclude: ["**/node_modules/**", "**/.svelte-kit/**", "**/dist/**", "**/build/**"],
     include: ["src/**/*.test.ts", "../../scripts/i18n/tools-site-source.test.ts"],
