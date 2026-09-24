@@ -25,3 +25,5 @@ Show each mission family in the Missions overview as soon as it loads instead of
 Render Missions overview families as cards with a visible per-family loading skeleton.
 
 Load 24 Honors per page so the first page fills a desktop viewport before the next page loads.
+
+Add Character Missions to Character detail pages, load every Character Rank instead of the first 100, and summarize ranks with reward totals and milestone ranks.

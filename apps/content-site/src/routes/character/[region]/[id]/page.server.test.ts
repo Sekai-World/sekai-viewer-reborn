@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   normalizeCharacterAvailability: vi.fn(),
   aggregateGameCharacterUnitsByRegion: vi.fn(),
   fetchCharacterRankReferences: vi.fn(),
+  fetchCharacterMissions: vi.fn(),
   fetchUnitProfiles: vi.fn(),
   getUnitName: vi.fn(),
   toUnitProfileMap: vi.fn()
@@ -42,7 +43,8 @@ vi.mock("$lib/server/character-pages", () => ({
   aggregateGameCharacterUnitsByRegion: mocks.aggregateGameCharacterUnitsByRegion
 }));
 vi.mock("$lib/server/mission-list", () => ({
-  fetchCharacterRankReferences: mocks.fetchCharacterRankReferences
+  fetchCharacterRankReferences: mocks.fetchCharacterRankReferences,
+  fetchCharacterMissions: mocks.fetchCharacterMissions
 }));
 vi.mock("$lib/server/unit-profiles", () => ({
   fetchUnitProfiles: mocks.fetchUnitProfiles,
@@ -57,6 +59,7 @@ type CharacterPageData = {
   characterId: string;
   payload: Promise<{ character: null; loadFailed: boolean }>;
   characterRanks: Promise<{ items: unknown[]; loadFailed: boolean }>;
+  characterMissions: Promise<{ items: unknown[]; loadFailed: boolean }>;
   availableRegions: Promise<string[]>;
 };
 
@@ -75,6 +78,7 @@ describe("character detail page load", () => {
     mocks.normalizeCharacterAvailability.mockReturnValue([]);
     mocks.aggregateGameCharacterUnitsByRegion.mockResolvedValue({ loadFailed: true, data: null });
     mocks.fetchCharacterRankReferences.mockResolvedValue([]);
+    mocks.fetchCharacterMissions.mockResolvedValue([]);
     mocks.fetchUnitProfiles.mockResolvedValue([]);
     mocks.toUnitProfileMap.mockReturnValue(new Map());
     mocks.getUnitName.mockReturnValue(null);
@@ -89,6 +93,8 @@ describe("character detail page load", () => {
     expect(result.characterId).toBe("");
     await expect(result.payload).resolves.toEqual({ character: null, loadFailed: false });
     await expect(result.characterRanks).resolves.toEqual({ items: [], loadFailed: false });
+    await expect(result.characterMissions).resolves.toEqual({ items: [], loadFailed: false });
+    expect(mocks.fetchCharacterMissions).not.toHaveBeenCalled();
     await expect(result.availableRegions).resolves.toEqual(["jp"]);
     expect(mocks.getMasterApiBaseUrl).toHaveBeenCalledOnce();
   });
@@ -148,5 +154,33 @@ describe("character detail page load", () => {
       loadFailed: false
     });
     await expect(result.characterRanks).resolves.toEqual({ items: [], loadFailed: true });
+  });
+
+  it("loads character missions independently from the character payload", async () => {
+    mocks.getGameCharactersByRegionById.mockResolvedValue({ data: { id: 7 } });
+    mocks.fetchCharacterMissions.mockResolvedValue([{ id: 1001, family: "characterMissionV2s" }]);
+
+    const result = (await load({
+      params: { region: "tw", id: "7" }
+    } as Parameters<typeof load>[0])) as CharacterPageData;
+
+    await expect(result.characterMissions).resolves.toEqual({
+      items: [{ id: 1001, family: "characterMissionV2s" }],
+      loadFailed: false
+    });
+    expect(mocks.fetchCharacterMissions).toHaveBeenCalledWith("https://master-api.test", "tw", 7);
+  });
+
+  it("keeps the character payload available when character mission loading fails", async () => {
+    mocks.getGameCharactersByRegionById.mockResolvedValue({ data: { id: 7 } });
+    mocks.fetchCharacterMissions.mockRejectedValue(new Error("mission request failed"));
+
+    const result = (await load({
+      params: { region: "jp", id: "7" }
+    } as Parameters<typeof load>[0])) as CharacterPageData;
+
+    await expect(result.payload).resolves.toMatchObject({ loadFailed: false });
+    await expect(result.characterRanks).resolves.toEqual({ items: [], loadFailed: false });
+    await expect(result.characterMissions).resolves.toEqual({ items: [], loadFailed: true });
   });
 });

@@ -55,6 +55,8 @@ export type MissionParameterGroup = {
 
 export type CharacterRankReference = {
   characterRank: number | null;
+  /** Largest of the rank's power bonus rates, in percent. */
+  powerBonusRate: number | null;
   rewards: MissionResourceBox[];
 };
 

@@ -286,36 +286,101 @@ export const fetchMissionParameterGroupLevels = async (
   };
 };
 
+// The Master API caps lookup pages at 100 items; per-character lists span a few pages at most.
+const CHARACTER_LOOKUP_PAGE_SIZE = 100;
+const MAX_CHARACTER_LOOKUP_PAGES = 10;
+
+const fetchAllCharacterLookupPages = async (
+  label: string,
+  fetchPage: (page: number) => Promise<{ data?: unknown; error?: unknown }>
+): Promise<unknown[]> => {
+  const items: unknown[] = [];
+  for (let page = 1; page <= MAX_CHARACTER_LOOKUP_PAGES; page += 1) {
+    const response = await fetchPage(page);
+    if (response.error || !response.data) {
+      throw new Error(`Failed to load ${label}.`);
+    }
+    const pageItems = getItems(response.data);
+    if (pageItems === null) {
+      throw new TypeError(`${label} returned invalid items.`);
+    }
+    items.push(...pageItems);
+    const metadata = parseCataloguePaginationMetadata(response.data, "Mission");
+    if (
+      !getCatalogueHasNext(metadata, page, CHARACTER_LOOKUP_PAGE_SIZE, pageItems.length, "Mission")
+    ) {
+      return items;
+    }
+  }
+  throw new Error(`${label} exceeded ${MAX_CHARACTER_LOOKUP_PAGES} pages.`);
+};
+
+const parseCharacterRankReference = (item: unknown): CharacterRankReference | null => {
+  const root = getObject(item);
+  const rank = getPositiveInteger(root?.characterRank);
+  if (!root || rank === null) return null;
+  const bonusRates = [root.power1BonusRate, root.power2BonusRate, root.power3BonusRate].flatMap(
+    (value) => {
+      const rate = getNumber(value);
+      return rate === null ? [] : [rate];
+    }
+  );
+  return {
+    characterRank: rank,
+    powerBonusRate: bonusRates.length > 0 ? Math.max(...bonusRates) : null,
+    rewards: getArray(root.rewardResourceBoxes).flatMap((reward) => {
+      const parsed = parseResourceBox(reward);
+      return parsed ? [parsed] : [];
+    })
+  };
+};
+
 export const fetchCharacterRankReferences = async (
   baseUrl: string,
   region: string,
   characterId: number
 ): Promise<CharacterRankReference[]> => {
-  const response = await getCharacterRanksByRegionList({
-    baseUrl: getMasterApiV1BaseUrl(baseUrl),
-    path: { region },
-    query: { character_id: characterId, page: 1, page_size: 100 }
-  });
-  if (response.error || !response.data) {
-    throw new Error("Failed to load Character Rank references.");
-  }
-  return (getItems(response.data) ?? [])
+  const items = await fetchAllCharacterLookupPages("Character Rank references", (page) =>
+    getCharacterRanksByRegionList({
+      baseUrl: getMasterApiV1BaseUrl(baseUrl),
+      path: { region },
+      query: { character_id: characterId, page, page_size: CHARACTER_LOOKUP_PAGE_SIZE }
+    })
+  );
+  return items
     .flatMap((item) => {
-      const root = getObject(item);
-      if (!root) return [];
-      const rank = getPositiveInteger(root.characterRank);
-      if (rank === null) return [];
-      return [
-        {
-          characterRank: rank,
-          rewards: getArray(root.rewardResourceBoxes).flatMap((reward) => {
-            const parsed = parseResourceBox(reward);
-            return parsed ? [parsed] : [];
-          })
-        }
-      ];
+      const rank = parseCharacterRankReference(item);
+      return rank ? [rank] : [];
     })
     .sort((left, right) => (left.characterRank ?? 0) - (right.characterRank ?? 0));
+};
+
+export const fetchCharacterMissions = async (
+  baseUrl: string,
+  region: string,
+  characterId: number
+): Promise<Mission[]> => {
+  const items = await fetchAllCharacterLookupPages("character missions", (page) =>
+    getMissionsByRegionList({
+      baseUrl: getMasterApiV1BaseUrl(baseUrl),
+      path: { region },
+      query: {
+        family: "characterMissionV2s",
+        character_id: String(characterId),
+        page,
+        page_size: CHARACTER_LOOKUP_PAGE_SIZE,
+        sort_by: "seq",
+        sort_order: "asc"
+      }
+    })
+  );
+  const seen = new Set<number>();
+  return items.flatMap((item) => {
+    const mission = parseMission(item, "characterMissionV2s");
+    if (!mission || seen.has(mission.id)) return [];
+    seen.add(mission.id);
+    return [mission];
+  });
 };
 
 export const parseMission = (payload: unknown, family: MissionFamily): Mission | null => {
