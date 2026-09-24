@@ -113,7 +113,9 @@ describe("MissionCatalogue", () => {
     expect(screen.getByText("40 missions")).toBeTruthy();
     expect(screen.getByText("Read a story")).toBeTruthy();
     expect(screen.queryByText("Target: 1")).toBeNull();
-    expect(container.querySelector(".content-card-shell")).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: /Story missions/ }).closest("section")?.classList
+    ).toContain("content-card-shell");
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
     expect(screen.queryByText("You have reached the end.")).toBeNull();
     expect(
@@ -123,6 +125,30 @@ describe("MissionCatalogue", () => {
     ).toBe(true);
     await fireEvent.click(screen.getByRole("button", { name: "See all Story missions" }));
     expect(onFamilyChange).toHaveBeenCalledWith("storyMissions");
+  });
+
+  it("renders a carded skeleton for an overview family that is still loading", () => {
+    render(MissionCatalogue, {
+      ...props,
+      overview: true,
+      groups: [
+        {
+          ...groups[0],
+          status: "loading",
+          statusLabel: "Loading missions...",
+          countLabel: "",
+          browseLabel: "See all Story missions",
+          items: []
+        }
+      ]
+    });
+
+    const section = screen.getByRole("heading", { name: /Story missions/ }).closest("section")!;
+    expect(section.classList).toContain("content-card-shell");
+    expect(section.getAttribute("aria-busy")).toBe("true");
+    expect(screen.getByRole("status").textContent).toBe("Loading missions...");
+    expect(section.querySelectorAll('[aria-hidden="true"] > div')).toHaveLength(3);
+    expect(screen.getByRole("button", { name: "See all Story missions" })).toBeTruthy();
   });
 
   it("renders character target levels in the mission metadata hierarchy", () => {
