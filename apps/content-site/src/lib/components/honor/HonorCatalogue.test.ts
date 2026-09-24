@@ -106,7 +106,11 @@ describe("HonorCatalogue", () => {
 
     const heading = screen.getByRole("heading", { name: "Honors", level: 1 });
     expect(heading).toBeTruthy();
-    expect(within(heading.parentElement!).getByText("JP")).toBeTruthy();
+    // The header region switch already marks the active region; the title does not repeat it.
+    expect(screen.getAllByText("JP")).toHaveLength(1);
+    expect(
+      screen.getByText("JP").closest("[data-region-active]")?.getAttribute("data-region-active")
+    ).toBe("true");
     expect(screen.getByRole("region", { name: "Honor results" })).toBeTruthy();
     expect(container.querySelector('[aria-label="Honor results"]')).toBeTruthy();
   });

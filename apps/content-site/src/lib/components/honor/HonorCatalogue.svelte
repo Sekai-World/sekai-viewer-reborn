@@ -84,7 +84,6 @@
   const categoryTypes = $derived([
     ...new Set(honorTypes.filter((honorType) => honorType.trim().length > 0))
   ]);
-  const activeRegion = $derived(frame.regions.find((region) => region.active));
   const dialogId = $derived(`honor-group-dialog-${catalogueKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`);
   const dialogTitleId = $derived(`${dialogId}-title`);
   const resultsId = $derived(`${dialogId}-results`);
@@ -180,14 +179,7 @@
 {/snippet}
 
 {#snippet pageIdentity()}
-  <div class="flex flex-wrap items-center gap-3">
-    <h1 class="text-2xl font-bold text-(--archive-text-strong)">{frame.labels.title}</h1>
-    {#if activeRegion}
-      <span class="badge badge-primary badge-outline min-h-8 px-3 font-semibold">
-        {activeRegion.label}
-      </span>
-    {/if}
-  </div>
+  <h1 class="text-2xl font-bold text-(--archive-text-strong)">{frame.labels.title}</h1>
 {/snippet}
 
 {#snippet levelSummary(group: HonorCatalogueGroup)}

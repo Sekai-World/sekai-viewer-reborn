@@ -12,7 +12,7 @@ Regenerate the master API SDK with Honors, Bonds Honors (including character-pai
 
 Render Live Master honors with the standard rarity-based local frame while keeping their custom level parts separate.
 
-Give the Honors catalogue a clear page identity, active-region context, and labelled results region.
+Give the Honors catalogue a clear page identity and a labelled results region.
 
 Keep Character Missions in the Missions catalogue while expanding level goals in place with explicit target labels; remove repeated Character Rank reward references from mission rows.
 
