@@ -73,6 +73,7 @@ export default defineConfig({
     setupFiles: ["../../test/setup.js"],
     coverage: {
       include: [
+        "src/lib/a11y/tablist.ts",
         "src/lib/i18n/region.ts",
         "src/lib/i18n/runtime.ts",
         "src/lib/icons/mdi.ts",
