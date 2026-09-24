@@ -32,7 +32,8 @@
     cardAltSuffix,
     rarityLabels,
     rarityUnknownLabel,
-    diagnosticLabels
+    diagnosticLabels,
+    showMoreLabel
   }: {
     region: SupportedRegion;
     gachaId: string;
@@ -55,6 +56,7 @@
     rarityLabels: Record<string, string>;
     rarityUnknownLabel: string;
     diagnosticLabels: Record<string, string>;
+    showMoreLabel: string;
   } = $props();
 
   let dialog: HTMLDialogElement | null = $state(null);
@@ -490,7 +492,7 @@
                       onclick={() => (expandedGroups = { ...expandedGroups, [group.key]: true })}
                     >
                       <Icon icon="mdi:chevron-down" class="size-3.5" aria-hidden="true" />
-                      {hiddenCount} more
+                      {showMoreLabel.replace("{count}", String(hiddenCount))}
                     </button>
                   {/if}
                 </div>

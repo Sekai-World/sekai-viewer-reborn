@@ -47,7 +47,8 @@
     cardAltSuffix,
     rarityLabels,
     rarityUnknownLabel,
-    rateChoiceExplanation
+    rateChoiceExplanation,
+    probabilityShowMoreLabel
   }: {
     rates: GachaCardRarityRate[];
     title: string;
@@ -73,6 +74,7 @@
     rarityLabels: Record<string, string>;
     rarityUnknownLabel: string;
     rateChoiceExplanation: string;
+    probabilityShowMoreLabel: string;
   } = $props();
 
   type GroupedRate = {
@@ -229,6 +231,7 @@
       {diagnosticLabels}
       {rarityLabels}
       {rarityUnknownLabel}
+      showMoreLabel={probabilityShowMoreLabel}
     />
   </div>
 </article>

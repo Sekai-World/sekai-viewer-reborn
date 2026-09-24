@@ -173,21 +173,36 @@
           {@const isSelected = vocal.id === selectedVocal?.id}
           {@const hasAsset = !!vocal.assetBundleName?.trim()}
           {@const chars = getCharacters(vocal)}
-          <button
-            class="content-card-inset flex w-full items-center gap-3 rounded-xl p-3 sm:px-4 text-left transition-colors {isSelected &&
+          <div
+            class="content-card-inset flex w-full flex-col gap-2 rounded-xl p-3 sm:px-4 text-left transition-colors {isSelected &&
             hasAsset
               ? 'ring-1 ring-primary bg-primary/5'
-              : 'hover:bg-base-content/5'}"
-            onclick={() => selectVocal(vocal.id)}
-            disabled={!hasAsset}
+              : ''}"
           >
-            <div class="min-w-0 flex-1">
-              {#if vocal.vocalType}
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            <button
+              type="button"
+              class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-default {hasAsset
+                ? 'hover:text-(--archive-text-strong)'
+                : ''}"
+              aria-expanded={hasAsset ? isSelected : undefined}
+              onclick={() => selectVocal(vocal.id)}
+              disabled={!hasAsset}
+            >
+              <span class="min-w-0 flex-1">
+                <span class="block text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                   {vocalTypeLabel}
-                </p>
-                <p class="mt-0.5 text-sm font-medium">{vocal.vocalType}</p>
+                </span>
+                <span class="mt-0.5 block text-sm font-medium">{vocal.vocalType ?? "—"}</span>
+              </span>
+              {#if hasAsset}
+                <Icon
+                  icon={isSelected ? "mdi:chevron-up" : "mdi:chevron-down"}
+                  class="size-5 shrink-0 opacity-40"
+                  aria-hidden="true"
+                />
               {/if}
+            </button>
+            <div class="min-w-0 flex-1">
               {#if chars.length > 0}
                 <p class="mt-1 text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
                   {vocalCharacterLabel}
@@ -222,14 +237,7 @@
                 </div>
               {/if}
             </div>
-            {#if hasAsset}
-              <Icon
-                icon={isSelected ? "mdi:chevron-up" : "mdi:chevron-down"}
-                class="size-5 shrink-0 opacity-40"
-                aria-hidden="true"
-              />
-            {/if}
-          </button>
+          </div>
 
           {#if isSelected && hasAsset}
             <div class="space-y-3 pl-1">

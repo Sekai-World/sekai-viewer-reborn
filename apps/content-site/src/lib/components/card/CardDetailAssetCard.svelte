@@ -7,6 +7,7 @@
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
   import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
+  import { getTablistTargetIndex } from "$lib/a11y/tablist";
 
   export type CardAssetTab = "normal" | "trained";
 
@@ -80,9 +81,21 @@
   const getTabClass = (tab: CardAssetTab): string =>
     `tab min-w-0 flex-1 whitespace-nowrap rounded-xl border border-transparent px-2 text-xs font-semibold transition-colors sm:text-sm ${
       resolvedTab === tab
-        ? "border-primary/45 bg-primary text-primary-content shadow-sm"
+        ? "tab-active border-primary/45 bg-primary text-primary-content shadow-sm"
         : "text-base-content/70 hover:bg-base-100/80"
     }`;
+  const uid = $props.id();
+  const tabId = (tab: CardAssetTab): string => `${uid}-tab-${tab}`;
+  const panelId = `${uid}-panel`;
+  const hasTablist = $derived(availableTabs.length > 1);
+  const handleTabKeydown = (event: KeyboardEvent, index: number): void => {
+    const nextIndex = getTablistTargetIndex(event.key, index, availableTabs.length);
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = availableTabs[nextIndex]!;
+    activeTab = nextTab;
+    document.getElementById(tabId(nextTab))?.focus();
+  };
   const getAssetUrl = (
     tab: CardAssetTab,
     assetRegion: SupportedRegion = "jp",
@@ -131,10 +144,20 @@
 
 <article class="card content-card-shell overflow-hidden shadow-sm">
   <div class="card-body items-center gap-3 p-3 sm:p-5 text-center">
-    {#if availableTabs.length > 1}
-      <div class="tabs tabs-box content-card-inset flex w-full gap-1 p-1">
-        {#each availableTabs as tab (tab)}
-          <button type="button" class={getTabClass(tab)} onclick={() => (activeTab = tab)}>
+    {#if hasTablist}
+      <div class="tabs tabs-box content-card-inset flex w-full gap-1 p-1" role="tablist">
+        {#each availableTabs as tab, index (tab)}
+          <button
+            id={tabId(tab)}
+            type="button"
+            role="tab"
+            aria-selected={resolvedTab === tab}
+            aria-controls={panelId}
+            tabindex={resolvedTab === tab ? 0 : -1}
+            class={getTabClass(tab)}
+            onclick={() => (activeTab = tab)}
+            onkeydown={(event) => handleTabKeydown(event, index)}
+          >
             {getTabLabel(tab)}
           </button>
         {/each}
@@ -142,6 +165,9 @@
     {/if}
 
     <div
+      id={hasTablist ? panelId : undefined}
+      role={hasTablist ? "tabpanel" : undefined}
+      aria-labelledby={hasTablist ? tabId(resolvedTab) : undefined}
       class={`content-card-inset flex w-full items-center justify-center overflow-hidden ${DETAIL_MEDIA_RADIUS_CLASS} aspect-16/10`}
     >
       {#if imageUrl}

@@ -989,10 +989,13 @@
 
   {#if isInitialLoading || isReloading}
     <div
+      role="status"
+      aria-busy="true"
+      aria-label={musicListLoading}
       class="archive-results-field grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
     >
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
-        <div class="archive-card-skeleton rounded-2xl border p-4">
+        <div class="archive-card-skeleton rounded-2xl border p-4" aria-hidden="true">
           <div class="skeleton aspect-square w-full rounded-xl"></div>
           <div class="mt-3 skeleton h-4 w-3/4 rounded"></div>
           <div class="mt-2 skeleton h-3 w-1/2 rounded"></div>
@@ -1056,10 +1059,10 @@
   {/if}
 </section>
 
-<dialog bind:this={filterDialog} class="modal">
+<dialog bind:this={filterDialog} class="modal" aria-labelledby="list-filters-title">
   <div class="modal-box archive-filter-dialog max-w-xl border">
     <div class="flex items-center justify-between gap-3">
-      <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+      <h3 id="list-filters-title" class="text-lg font-semibold">{listFiltersTitle}</h3>
       <form method="dialog">
         <button
           type="submit"

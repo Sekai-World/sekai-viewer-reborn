@@ -10,6 +10,7 @@
   "footer.brand": "Sekai Viewer Reborn",
   "footer.description": "Independent fan-made research database.",
   "latestData.loadFailed": "Failed to load latest data.",
+  "latestData.loading": "Loading latest data...",
   "latestData.loadingEvents": "Loading events...",
   "latestData.noData": "No data available.",
   "latestData.title": "Latest Data",
