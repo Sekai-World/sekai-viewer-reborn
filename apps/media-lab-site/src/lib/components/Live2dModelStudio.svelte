@@ -329,7 +329,7 @@
           {#if controlsEnabled && selectedMotion !== ""}
             <button
               type="button"
-              class="btn btn-circle absolute right-0 bottom-0 size-11! min-h-11! border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="btn btn-circle absolute right-0 bottom-0 size-8 min-h-8 touch-target border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               aria-label={`${labels.motion} ${labels.reset}`}
               title={`${labels.motion} ${labels.reset}`}
               onpointerdown={preventOptionFocus}
@@ -408,7 +408,7 @@
           {#if controlsEnabled && selectedExpression !== ""}
             <button
               type="button"
-              class="btn btn-circle absolute right-0 bottom-0 size-11! min-h-11! border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="btn btn-circle absolute right-0 bottom-0 size-8 min-h-8 touch-target border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               aria-label={`${labels.expression} ${labels.reset}`}
               title={`${labels.expression} ${labels.reset}`}
               onpointerdown={preventOptionFocus}

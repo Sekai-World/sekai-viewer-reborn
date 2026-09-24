@@ -371,7 +371,7 @@
       <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5">
         <button
           type="button"
-          class="btn btn-circle size-11! min-h-11! border-0 bg-black/45 text-white shadow-none hover:bg-black/70 disabled:bg-black/45 disabled:text-white/40"
+          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70 disabled:bg-black/45 disabled:text-white/40"
           aria-label={labels.previous}
           title={labels.previous}
           onclick={() => {
@@ -384,7 +384,7 @@
         </button>
         <button
           type="button"
-          class={`btn btn-circle size-11! min-h-11! border-0 text-xs font-bold tracking-wide shadow-none disabled:bg-black/45 disabled:text-white/40 ${
+          class={`btn btn-circle btn-sm touch-target border-0 text-[10px] font-bold tracking-wide shadow-none disabled:bg-black/45 disabled:text-white/40 ${
             autoplay ? "btn-success" : "bg-black/45 text-white hover:bg-black/70"
           }`}
           aria-pressed={autoplay}
@@ -400,7 +400,7 @@
         </button>
         <button
           type="button"
-          class="btn btn-circle size-11! min-h-11! border-0 bg-black/45 text-white shadow-none hover:bg-black/70 disabled:bg-black/45 disabled:text-white/40"
+          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70 disabled:bg-black/45 disabled:text-white/40"
           aria-label={labels.next}
           title={labels.next}
           onclick={() => {
@@ -414,7 +414,7 @@
         </button>
         <button
           type="button"
-          class="btn btn-circle size-11! min-h-11! border-0 bg-black/45 text-white shadow-none hover:bg-black/70"
+          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70"
           aria-label={labels.fullscreen}
           title={labels.fullscreen}
           aria-pressed={isFullscreen}
@@ -437,7 +437,7 @@
           {#each selectableChoices as choice, index (choice)}
             <button
               type="button"
-              class={`btn min-h-11 max-w-xs truncate rounded-full border-0 shadow-none ${
+              class={`btn btn-sm touch-target max-w-xs truncate rounded-full border-0 shadow-none ${
                 chosenChoice === index ? "btn-primary" : "bg-black/60 text-white hover:bg-black/80"
               }`}
               onclick={() => chooseSelectable(index)}
@@ -457,7 +457,7 @@
           </p>
           <button
             type="button"
-            class="btn btn-outline min-h-11 border-white/40 text-white hover:border-white hover:bg-white/10 hover:text-white"
+            class="btn btn-sm btn-outline touch-target border-white/40 text-white hover:border-white hover:bg-white/10 hover:text-white"
             onclick={() => startLoading()}
           >
             <Icon icon="mdi:reload" class="size-4" aria-hidden="true" />

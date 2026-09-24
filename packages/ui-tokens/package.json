@@ -11,7 +11,8 @@
       "default": "./src/index.ts"
     },
     "./design-tokens": "./src/design-tokens.json",
-    "./palettes.css": "./src/palettes.css"
+    "./palettes.css": "./src/palettes.css",
+    "./utilities.css": "./src/utilities.css"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
