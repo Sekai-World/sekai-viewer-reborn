@@ -6,8 +6,11 @@
       "dependsOn": ["^build"],
       "outputs": [".svelte-kit/**", "dist/**", "build/**"]
     },
+    "//#sync:apps": {
+      "cache": false
+    },
     "test": {
-      "dependsOn": ["^test"],
+      "dependsOn": ["^test", "//#sync:apps"],
       "outputs": []
     },
     "dev": {
