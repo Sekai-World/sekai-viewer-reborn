@@ -28,9 +28,9 @@
   const borderColor = $derived(getBorderColor(unit, mapNoneToPiapro) ?? undefined);
 
   const frameClass: Record<UnitIconBadgeVariant, string> = {
-    sm: "size-7 border border-base-content/15 bg-white",
-    default: "size-9 border border-base-content/15 bg-white",
-    lg: "size-11 border-2 border-base-content/15 bg-white"
+    sm: "size-7 border border-base-content/15 bg-base-100",
+    default: "size-9 border border-base-content/15 bg-base-100",
+    lg: "size-11 border-2 border-base-content/15 bg-base-100"
   };
   const imgClass: Record<UnitIconBadgeVariant, string> = {
     sm: "size-7",

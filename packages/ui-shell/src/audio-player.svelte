@@ -934,7 +934,7 @@
 
 {#if !hasSource || hasError}
   <div
-    class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-[1.25rem] border border-dashed border-base-content/15 px-6 text-center"
+    class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-box border border-dashed border-base-content/15 px-6 text-center"
   >
     <Icon icon="mdi:music-off" class="size-10 opacity-55" aria-hidden="true" />
     <p class="text-sm font-medium opacity-75">{unavailableLabel}</p>
@@ -962,7 +962,7 @@
         <button
           type="button"
           tabindex="0"
-          class={`btn btn-outline btn-square btn-sm ${!hasDownloadOptions ? "pointer-events-none opacity-50" : ""}`}
+          class={`btn btn-outline btn-square btn-sm touch-target ${!hasDownloadOptions ? "pointer-events-none opacity-50" : ""}`}
           aria-label={downloadLabel}
           title={downloadLabel}
           disabled={!hasDownloadOptions || isDownloadLoading}
@@ -974,7 +974,7 @@
           {/if}
         </button>
         <ul
-          class="dropdown-content menu z-10 mt-2 w-32 rounded-box border border-base-content/10 bg-base-100 p-2 shadow-lg"
+          class="dropdown-content menu z-10 mt-2 w-32 rounded-box border border-base-content/10 bg-base-100 p-2 shadow-md"
         >
           {#each normalizedDownloadOptions as option (`${option.label}:${option.href}:${option.progressHref ?? ""}:${option.downloadName ?? ""}`)}
             <li>
@@ -1042,7 +1042,7 @@
             title={volumeLabel}
             oninput={handleVolumeChange}
           />
-          <span class="w-9 text-right text-[0.7rem] font-medium tabular-nums opacity-70">
+          <span class="w-9 text-right text-xs font-medium tabular-nums opacity-70">
             {Math.round(volume * 100)}%
           </span>
         </div>
@@ -1052,15 +1052,11 @@
 {/if}
 
 {#if isDownloadLoading}
-  <div
-    class="pointer-events-none fixed inset-x-3 bottom-3 z-50 md:inset-x-auto md:right-4 md:bottom-4 md:w-88"
-  >
-    <div
-      class="pointer-events-auto rounded-3xl border border-base-content/10 bg-base-100/94 p-4 shadow-2xl backdrop-blur"
-    >
+  <div class="toast toast-end toast-bottom z-50 w-88" role="status" aria-live="polite">
+    <div class="alert alert-soft grid-cols-1 justify-items-stretch text-start">
       <div class="mb-3 flex items-start justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">
+          <p class="text-xs font-semibold tracking-widest uppercase opacity-60">
             {downloadLabel}
           </p>
           <p class="mt-1 truncate text-sm font-semibold">{activeDownloadName}</p>
@@ -1074,7 +1070,7 @@
           >
           <button
             type="button"
-            class="btn btn-ghost btn-square btn-xs"
+            class="btn btn-ghost btn-circle btn-sm touch-target -mt-1 -mr-1"
             aria-label={downloadCloseLabel}
             title={downloadCloseLabel}
             onclick={closeDownloadDialog}
