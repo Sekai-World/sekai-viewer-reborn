@@ -79,7 +79,7 @@
   const getTabLabel = (tab: CardAssetTab): string =>
     tab === "trained" ? trainedLabel : normalLabel;
   const getTabClass = (tab: CardAssetTab): string =>
-    `tab min-h-11 min-w-0 flex-1 whitespace-nowrap rounded-xl border border-transparent px-2 text-xs font-semibold transition-colors sm:text-sm ${
+    `tab min-w-0 flex-1 whitespace-nowrap rounded-xl border border-transparent px-2 text-xs font-semibold transition-colors sm:text-sm ${
       resolvedTab === tab
         ? "tab-active border-primary/45 bg-primary text-primary-content shadow-sm"
         : "text-base-content/70 hover:bg-base-100/80"

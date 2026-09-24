@@ -497,7 +497,7 @@
                       <span>{sectionLoadFailedLabel}</span>
                       <button
                         type="button"
-                        class="btn btn-outline btn-sm min-h-11"
+                        class="btn btn-outline btn-sm touch-target"
                         onclick={() => void invalidateAll()}
                       >
                         {retryLabel}
@@ -530,7 +530,7 @@
                       <span>{sectionLoadFailedLabel}</span>
                       <button
                         type="button"
-                        class="btn btn-outline btn-sm min-h-11"
+                        class="btn btn-outline btn-sm touch-target"
                         onclick={() => void invalidateAll()}
                       >
                         {retryLabel}
@@ -573,7 +573,7 @@
                       <span>{sectionLoadFailedLabel}</span>
                       <button
                         type="button"
-                        class="btn btn-outline btn-sm min-h-11"
+                        class="btn btn-outline btn-sm touch-target"
                         onclick={() => void invalidateAll()}
                       >
                         {retryLabel}
@@ -604,7 +604,7 @@
                       <span>{sectionLoadFailedLabel}</span>
                       <button
                         type="button"
-                        class="btn btn-outline btn-sm min-h-11"
+                        class="btn btn-outline btn-sm touch-target"
                         onclick={() => void invalidateAll()}
                       >
                         {retryLabel}
