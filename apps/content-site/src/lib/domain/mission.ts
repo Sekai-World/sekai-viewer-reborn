@@ -53,6 +53,14 @@ export type MissionParameterGroup = {
   totalLevels?: number | null;
 };
 
+/** A character offered by the Character Missions picker. */
+export type MissionCharacterOption = {
+  id: number;
+  name: string;
+  unit: string | null;
+  unitName: string | null;
+};
+
 export type CharacterRankReference = {
   characterRank: number | null;
   /** Largest of the rank's power bonus rates, in percent. */

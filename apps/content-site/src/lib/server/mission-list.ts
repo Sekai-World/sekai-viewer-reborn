@@ -393,6 +393,9 @@ export const fetchCharacterMissions = (
 export const fetchStoryMissions = (baseUrl: string, region: string): Promise<Mission[]> =>
   fetchCompleteMissionFamily(baseUrl, region, "storyMissions");
 
+export const fetchNormalMissions = (baseUrl: string, region: string): Promise<Mission[]> =>
+  fetchCompleteMissionFamily(baseUrl, region, "normalMissions");
+
 export const parseMission = (payload: unknown, family: MissionFamily): Mission | null => {
   const root = getObject(payload);
   const id = getPositiveInteger(root?.id);
@@ -429,11 +432,20 @@ export const parseMissionList = (payload: unknown, family: MissionFamily): Missi
     return mission ? [mission] : [];
   });
 
+export type MissionListFilters = {
+  /** Applies to Character Missions only. */
+  characterId?: number | null;
+};
+
 const createMissionListQuery = (
   family: MissionFamily,
-  page: number
+  page: number,
+  filters: MissionListFilters = {}
 ): NonNullable<GetMissionsByRegionListData["query"]> => ({
   family,
+  ...(family === "characterMissionV2s" && filters.characterId
+    ? { character_id: String(filters.characterId) }
+    : {}),
   page,
   page_size: FAMILY_PAGE_SIZE,
   sort_by: "seq",
@@ -450,12 +462,13 @@ const fetchMissionFamilyPage = async (
   baseUrl: string,
   region: string,
   family: MissionFamily,
-  page: number
+  page: number,
+  filters: MissionListFilters = {}
 ): Promise<MissionFamilyPage> => {
   const response = await getMissionsByRegionList({
     baseUrl: getMasterApiV1BaseUrl(baseUrl),
     path: { region },
-    query: createMissionListQuery(family, page)
+    query: createMissionListQuery(family, page, filters)
   });
 
   if (response.error || !response.data) {
@@ -509,6 +522,14 @@ export const parseMissionFamily = (searchParams: URLSearchParams): MissionFamily
   return null;
 };
 
+/** The `character` filter for Character Missions; anything but one positive integer is ignored. */
+export const parseMissionCharacterId = (searchParams: URLSearchParams): number | null => {
+  const value = searchParams.get("character")?.trim() ?? "";
+  if (!/^\d+$/.test(value)) return null;
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+};
+
 export const createEmptyMissionListPage = (page: number): MissionListPage => ({
   items: [],
   pagination: {
@@ -524,11 +545,12 @@ export const fetchMissionListPage = async (
   baseUrl: string,
   region: string,
   families: readonly MissionFamily[] = missionFamilies,
-  page = 1
+  page = 1,
+  filters: MissionListFilters = {}
 ): Promise<MissionListPage> => {
   const selectedFamilies = missionFamilies.filter((family) => families.includes(family));
   const familyPages = await Promise.all(
-    selectedFamilies.map((family) => fetchMissionFamilyPage(baseUrl, region, family, page))
+    selectedFamilies.map((family) => fetchMissionFamilyPage(baseUrl, region, family, page, filters))
   );
 
   const reportedTotalPages = familyPages.flatMap(({ pagination }) =>

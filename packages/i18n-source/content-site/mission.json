@@ -51,5 +51,12 @@
   "mission.storyMilestonesTitle": "Milestone targets",
   "mission.storyAllTitle": "All targets",
   "mission.storyShowAll": "Show all {count} targets",
-  "mission.storyShowMilestones": "Show milestone targets only"
+  "mission.storyShowMilestones": "Show milestone targets only",
+  "mission.characterPickerTitle": "Character",
+  "mission.characterPickerLoading": "Loading characters...",
+  "mission.characterPickerError": "Characters could not be loaded.",
+  "mission.characterPickerOtherGroup": "Other characters",
+  "mission.characterPrompt": "Choose a character to see their character missions.",
+  "mission.characterSelected": "Showing {name}",
+  "mission.characterProfile": "View character profile"
 }

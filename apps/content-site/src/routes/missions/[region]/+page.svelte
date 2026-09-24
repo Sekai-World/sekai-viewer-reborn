@@ -3,12 +3,15 @@
   import { resolve } from "$app/paths";
   import { goto, invalidateAll } from "$app/navigation";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
+  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import MissionCatalogue from "$lib/components/mission/MissionCatalogue.svelte";
+  import MissionCharacterPicker from "$lib/components/mission/MissionCharacterPicker.svelte";
   import StoryMissionsCard from "$lib/components/mission/StoryMissionsCard.svelte";
   import { groupMissionsByFamily } from "$lib/components/mission/catalogue-groups";
   import {
     missionFamilies,
     type Mission,
+    type MissionCharacterOption,
     type MissionFamily,
     type MissionParameterGroupLevel
   } from "$lib/domain/mission";
@@ -46,7 +49,13 @@
     total: number | null;
   };
 
+  type CharacterOptionsState = {
+    status: "loading" | "ready" | "error";
+    items: MissionCharacterOption[];
+  };
+
   let items = $state<Mission[]>([]);
+  let characterOptions = $state<CharacterOptionsState>({ status: "loading", items: [] });
   let familySummaries = $state<Partial<Record<MissionFamily, FamilySummaryState>>>({});
   let currentPage = $state(1);
   let hasNext = $state(false);
@@ -299,14 +308,21 @@
     missionFamilies.every((family) => familySummaries[family]?.status === "error")
   );
   const missionKey = (mission: Mission): string => `${mission.family}-${mission.id}`;
-  const queryParams = (family: MissionFamily | null, page?: number): SvelteURLSearchParams => {
+  const queryParams = (
+    family: MissionFamily | null,
+    page?: number,
+    character: number | null = null
+  ): SvelteURLSearchParams => {
     const params = new SvelteURLSearchParams();
     if (page !== undefined) params.set("page", String(page));
     if (family) params.set("family", family);
+    if (family === "characterMissionV2s" && character !== null) {
+      params.set("character", String(character));
+    }
     return params;
   };
   const listHref = (region: string): string => {
-    const query = queryParams(data.query.family).toString();
+    const query = queryParams(data.query.family, undefined, data.query.character).toString();
     return `${resolve("/missions/[region]", { region })}${query ? `?${query}` : ""}`;
   };
   const regions = $derived(
@@ -317,8 +333,8 @@
       href: listHref(region)
     }))
   );
-  const navigateFamily = (family: MissionFamily | null): void => {
-    const query = queryParams(family).toString();
+  const navigateFamily = (family: MissionFamily | null, character: number | null = null): void => {
+    const query = queryParams(family, undefined, character).toString();
     void goto(
       `${resolve("/missions/[region]", { region: data.region })}${query ? `?${query}` : ""}`,
       {
@@ -327,8 +343,11 @@
       }
     );
   };
+  const selectCharacter = (character: number): void =>
+    navigateFamily("characterMissionV2s", character);
+  const isCharacterFamily = $derived(data.query.family === "characterMissionV2s");
   const dataHref = (page: number): string => {
-    const query = queryParams(data.query.family, page).toString();
+    const query = queryParams(data.query.family, page, data.query.character).toString();
     return `${resolve("/missions/[region]/data", { region: data.region })}?${query}`;
   };
   const loadNextPage = async (): Promise<void> => {
@@ -381,6 +400,7 @@
         { status: "loading", items: [], total: null }
       ])
     );
+    characterOptions = { status: "loading", items: [] };
     currentPage = 1;
     hasNext = false;
     isInitialLoading = data.catalogue !== null;
@@ -403,6 +423,20 @@
           })
         )
         .catch(() => setSummary({ status: "error", items: [], total: null }));
+    }
+
+    if (data.characterOptions) {
+      void Promise.resolve(data.characterOptions)
+        .then((options) => {
+          if (requestId !== listRequestId) return;
+          characterOptions = {
+            status: options.loadFailed ? "error" : "ready",
+            items: options.items
+          };
+        })
+        .catch(() => {
+          if (requestId === listRequestId) characterOptions = { status: "error", items: [] };
+        });
     }
 
     if (data.catalogue === null) return;
@@ -440,9 +474,46 @@
   {/if}
 {/snippet}
 
+{#snippet characterPrompt()}
+  <p class="text-sm text-(--archive-text-muted)">
+    {t("mission.characterPrompt")}
+  </p>
+{/snippet}
+
+{#snippet characterPicker()}
+  <MissionCharacterPicker
+    characters={characterOptions.items}
+    status={characterOptions.status}
+    selectedId={data.query.character}
+    getImageSrc={getLocalCharacterThumbnailAssetURL}
+    labels={{
+      title: t("mission.characterPickerTitle"),
+      loading: t("mission.characterPickerLoading"),
+      error: t("mission.characterPickerError"),
+      retry: t("mission.retry"),
+      otherGroup: t("mission.characterPickerOtherGroup"),
+      selected: t("mission.characterSelected"),
+      profile: t("mission.characterProfile")
+    }}
+    profileHref={data.query.character === null
+      ? null
+      : resolve("/character/[region]/[id]", {
+          region: data.region,
+          id: String(data.query.character)
+        })}
+    onSelect={selectCharacter}
+    onRetry={() => void invalidateAll()}
+  />
+{/snippet}
+
 <MissionCatalogue
   {labels}
-  content={data.storyMissions ? storyMissionsContent : undefined}
+  content={data.storyMissions
+    ? storyMissionsContent
+    : isCharacterFamily && data.query.character === null
+      ? characterPrompt
+      : undefined}
+  filters={isCharacterFamily ? characterPicker : undefined}
   homeHref={resolve("/")}
   {regions}
   groups={!data.query.family
@@ -469,7 +540,7 @@
         ? "error"
         : "ready"}
   rewardsLabel={t("mission.rewards")}
-  catalogueKey={`${data.region}:${data.query.family ?? "all"}`}
+  catalogueKey={`${data.region}:${data.query.family ?? "all"}:${data.query.character ?? ""}`}
   familyLabel={t("mission.familyLabel")}
   selectedFamily={data.query.family}
   getFamilyLabel={(family) =>

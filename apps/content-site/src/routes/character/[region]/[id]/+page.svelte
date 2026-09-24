@@ -362,7 +362,7 @@
           <CharacterMissionsCard
             missions={data.characterMissions}
             locale={data.uiLocale}
-            viewAllHref={`${resolve("/missions/[region]", { region: data.region })}?family=characterMissionV2s`}
+            viewAllHref={`${resolve("/missions/[region]", { region: data.region })}?family=characterMissionV2s&character=${encodeURIComponent(character.id)}`}
             {t}
           />
           <CharacterRankCard ranks={data.characterRanks} locale={data.uiLocale} {t} />

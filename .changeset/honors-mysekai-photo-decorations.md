@@ -31,3 +31,5 @@ Add Character Missions to Character detail pages, load every Character Rank inst
 Show Story missions as a target ladder with reward totals and milestone targets, preview them by target and reward, and drop the duplicate target line from Normal missions.
 
 Lay out milestone and full reward ladders in the same width-driven columns, keeping milestones emphasized when every step is shown.
+
+Load every Normal mission at once, and pick a character before listing Character Missions; the Character detail page links to that character's missions.

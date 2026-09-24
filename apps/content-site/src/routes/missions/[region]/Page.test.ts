@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import type { ComponentProps } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Mission, MissionFamily } from "$lib/domain/mission";
+import type { Mission, MissionCharacterOption, MissionFamily } from "$lib/domain/mission";
 import "$lib/icons/mdi";
 import MissionsPage from "./+page.svelte";
 
@@ -75,18 +75,42 @@ type FamilyOverview = PageData["familyOverviews"][number];
 
 type StoryLadder = { story: { items: Mission[]; loadFailed: boolean } };
 
+type CharacterPicker = {
+  characters: { items: MissionCharacterOption[]; loadFailed: boolean };
+};
+
+const defaultCharacters: MissionCharacterOption[] = [
+  { id: 1, name: "Ichika Hoshino", unit: "light_sound", unitName: "Leo/need" },
+  { id: 2, name: "Saki Tenma", unit: "light_sound", unitName: "Leo/need" },
+  { id: 21, name: "Hatsune Miku", unit: "piapro", unitName: "VIRTUAL SINGER" }
+];
+
 const data = (
-  catalogue: Catalogue | FamilyOverview[] | StoryLadder,
+  catalogue: Catalogue | FamilyOverview[] | StoryLadder | CharacterPicker,
   family: MissionFamily | null = null,
-  region: PageData["region"] = "jp"
+  region: PageData["region"] = "jp",
+  // Character Missions list a catalogue only once a character is chosen.
+  character: number | null = family === "characterMissionV2s" && !("characters" in catalogue)
+    ? 1
+    : null
 ): PageData => ({
   region,
-  query: { family },
+  query: { family, character },
+  characterOptions:
+    family === "characterMissionV2s"
+      ? Promise.resolve(
+          "characters" in catalogue
+            ? catalogue.characters
+            : { items: defaultCharacters, loadFailed: false }
+        )
+      : null,
   ...(Array.isArray(catalogue)
     ? { catalogue: null, familyOverviews: catalogue, storyMissions: null }
     : "story" in catalogue
       ? { catalogue: null, familyOverviews: [], storyMissions: Promise.resolve(catalogue.story) }
-      : { catalogue: Promise.resolve(catalogue), familyOverviews: [], storyMissions: null }),
+      : "characters" in catalogue
+        ? { catalogue: null, familyOverviews: [], storyMissions: null }
+        : { catalogue: Promise.resolve(catalogue), familyOverviews: [], storyMissions: null }),
   uiLocale: "en",
   preferredRegion: region,
   globalNotices: [],
@@ -131,11 +155,12 @@ const data = (
 });
 
 const renderPage = (
-  catalogue: Catalogue | FamilyOverview[] | StoryLadder,
-  family: MissionFamily | null = null
+  catalogue: Catalogue | FamilyOverview[] | StoryLadder | CharacterPicker,
+  family: MissionFamily | null = null,
+  character?: number | null
 ) =>
   render(MissionsPage, {
-    data: data(catalogue, family),
+    data: data(catalogue, family, "jp", character),
     params: { region: "jp" },
     form: null
   });
@@ -171,8 +196,8 @@ describe("Missions page", () => {
   });
 
   it("appends and de-duplicates later pages for a selected family", async () => {
-    const firstNormal = makeMission("normalMissions", 1, "First normal");
-    const secondNormal = makeMission("normalMissions", 2, "Second normal");
+    const firstNormal = makeMission("characterMissionV2s", 1, "First normal");
+    const secondNormal = makeMission("characterMissionV2s", 2, "Second normal");
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -184,15 +209,73 @@ describe("Missions page", () => {
     );
     vi.stubGlobal("fetch", fetchMock);
 
-    renderPage(page([firstNormal], { page: 1, hasNext: true }), "normalMissions");
+    renderPage(page([firstNormal], { page: 1, hasNext: true }), "characterMissionV2s");
     await screen.findByText("First normal");
     await fireEvent.click(screen.getByRole("button", { name: "Load more missions" }));
 
     expect(screen.getAllByText("First normal")).toHaveLength(1);
     expect(await screen.findByText("Second normal")).toBeTruthy();
     expect(screen.getAllByText("Second normal")).toHaveLength(1);
-    expect(fetchMock).toHaveBeenCalledWith("/missions/jp/data?page=2&family=normalMissions");
-    expect(screen.getByRole("status").textContent).toBe("You have reached the end.");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/missions/jp/data?page=2&family=characterMissionV2s&character=1"
+    );
+    expect(screen.getByText("You have reached the end.")).toBeTruthy();
+  });
+
+  it("shows only the character picker until a character is chosen", async () => {
+    renderPage(
+      { characters: { items: defaultCharacters, loadFailed: false } },
+      "characterMissionV2s"
+    );
+
+    expect(
+      await screen.findByText("Choose a character to see their character missions.")
+    ).toBeTruthy();
+    const leoNeed = screen.getByRole("list", { name: "Leo/need" });
+    expect(within(leoNeed).getAllByRole("button")).toHaveLength(2);
+    expect(screen.getByRole("list", { name: "VIRTUAL SINGER" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
+    const saki = screen.getByRole("button", { name: "Saki Tenma" });
+    expect(saki.getAttribute("aria-pressed")).toBe("false");
+
+    await fireEvent.click(saki);
+    expect(goto).toHaveBeenLastCalledWith("/missions/jp?family=characterMissionV2s&character=2", {
+      keepFocus: true,
+      noScroll: true
+    });
+  });
+
+  it("marks the chosen character and keeps it across regions", async () => {
+    renderPage(
+      page([makeMission("characterMissionV2s", 1, "Clear a live with Ichika")], {
+        page: 1,
+        hasNext: false
+      }),
+      "characterMissionV2s",
+      1
+    );
+
+    expect(await screen.findByText("Clear a live with Ichika")).toBeTruthy();
+    expect(
+      (await screen.findByRole("button", { name: "Ichika Hoshino" })).getAttribute("aria-pressed")
+    ).toBe("true");
+    expect(screen.getByText("Showing Ichika Hoshino")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "View character profile" }).getAttribute("href")).toBe(
+      "/character/jp/1"
+    );
+    expect(screen.getByRole("link", { name: "EN" }).getAttribute("href")).toBe(
+      "/missions/en?family=characterMissionV2s&character=1"
+    );
+  });
+
+  it("offers a retry when the character picker fails to load", async () => {
+    renderPage({ characters: { items: [], loadFailed: true } }, "characterMissionV2s");
+
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Characters could not be loaded."
+    );
+    await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(invalidateAll).toHaveBeenCalled();
   });
 
   it("shows bounded, count-led previews in All mode as each family arrives", async () => {

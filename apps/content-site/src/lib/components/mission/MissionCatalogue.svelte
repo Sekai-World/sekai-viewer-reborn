@@ -57,6 +57,7 @@
     loadMoreError = null,
     onLoadMore,
     onRetryLoadMore,
+    filters,
     content,
     ...frame
   }: Omit<
@@ -80,6 +81,8 @@
     loadMoreError?: string | null;
     onLoadMore?: () => void;
     onRetryLoadMore?: () => void;
+    /** Extra controls under the family tabs, such as the Character Missions picker. */
+    filters?: Snippet;
     /** Replaces the group list, for families rendered as a single custom view. */
     content?: Snippet;
   } = $props();
@@ -240,7 +243,7 @@
 {/snippet}
 
 {#snippet controls()}
-  <div data-swipe-region-skip>
+  <div class="flex min-w-0 flex-1 flex-col gap-4" data-swipe-region-skip>
     <div class="flex min-w-0 flex-wrap gap-2" role="tablist" aria-label={familyLabel}>
       {#each familyOptions as family (family ?? "all")}
         <button
@@ -257,6 +260,7 @@
         </button>
       {/each}
     </div>
+    {#if filters}{@render filters()}{/if}
   </div>
 {/snippet}
 

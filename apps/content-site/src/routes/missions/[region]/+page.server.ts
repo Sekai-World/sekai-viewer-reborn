@@ -1,16 +1,26 @@
 import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
+import { fetchMissionCharacterOptions } from "$lib/server/mission-characters";
 import {
   createEmptyMissionListPage,
   fetchMissionListPage,
+  fetchNormalMissions,
   fetchStoryMissions,
+  parseMissionCharacterId,
   parseMissionFamily
 } from "$lib/server/mission-list";
-import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
+import {
+  missionFamilies,
+  type Mission,
+  type MissionCharacterOption,
+  type MissionFamily
+} from "$lib/domain/mission";
 import type { PageServerLoad } from "./$types";
 
 type MissionCatalogueQuery = {
   family: MissionFamily | null;
+  /** Only set for Character Missions. */
+  character: number | null;
 };
 
 type MissionFamilyOverview = {
@@ -19,11 +29,15 @@ type MissionFamilyOverview = {
 };
 
 type StoryMissionLadder = Promise<{ items: Mission[]; loadFailed: boolean }>;
+type MissionCharacterOptions = Promise<{ items: MissionCharacterOption[]; loadFailed: boolean }>;
 
 export const load: PageServerLoad = ({ params, url }) => {
   const region = normalizeRegion(params.region);
+  const requestedFamily = parseMissionFamily(url.searchParams);
   const query: MissionCatalogueQuery = {
-    family: parseMissionFamily(url.searchParams)
+    family: requestedFamily,
+    character:
+      requestedFamily === "characterMissionV2s" ? parseMissionCharacterId(url.searchParams) : null
   };
   const baseUrl = getMasterApiBaseUrl();
 
@@ -40,7 +54,14 @@ export const load: PageServerLoad = ({ params, url }) => {
         .catch(() => ({ items: [], total: null, loadFailed: true }))
     }));
 
-    return { region, query, catalogue: null, familyOverviews, storyMissions: null };
+    return {
+      region,
+      query,
+      catalogue: null,
+      familyOverviews,
+      storyMissions: null,
+      characterOptions: null as MissionCharacterOptions | null
+    };
   }
 
   if (query.family === "storyMissions") {
@@ -53,11 +74,41 @@ export const load: PageServerLoad = ({ params, url }) => {
       query,
       catalogue: null,
       familyOverviews: [] as MissionFamilyOverview[],
-      storyMissions
+      storyMissions,
+      characterOptions: null as MissionCharacterOptions | null
     };
   }
 
-  const catalogue = fetchMissionListPage(baseUrl, region, [query.family], 1)
+  const characterOptions: MissionCharacterOptions | null =
+    query.family === "characterMissionV2s"
+      ? fetchMissionCharacterOptions(baseUrl, region)
+          .then((items) => ({ items, loadFailed: false }))
+          .catch(() => ({ items: [], loadFailed: true }))
+      : null;
+
+  // Character Missions list nothing until a character is picked.
+  if (query.family === "characterMissionV2s" && query.character === null) {
+    return {
+      region,
+      query,
+      catalogue: null,
+      familyOverviews: [] as MissionFamilyOverview[],
+      storyMissions: null,
+      characterOptions
+    };
+  }
+
+  // Normal missions are few, so they load whole instead of paging.
+  const firstPage =
+    query.family === "normalMissions"
+      ? fetchNormalMissions(baseUrl, region).then((items) => ({
+          ...createEmptyMissionListPage(1),
+          items
+        }))
+      : fetchMissionListPage(baseUrl, region, [query.family], 1, {
+          characterId: query.character
+        });
+  const catalogue = firstPage
     .then((page) => ({ ...page, loadFailed: false as const }))
     .catch(() => ({ ...createEmptyMissionListPage(1), loadFailed: true as const }));
 
@@ -66,6 +117,7 @@ export const load: PageServerLoad = ({ params, url }) => {
     query,
     catalogue,
     familyOverviews: [] as MissionFamilyOverview[],
-    storyMissions: null
+    storyMissions: null,
+    characterOptions
   };
 };

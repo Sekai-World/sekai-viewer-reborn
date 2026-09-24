@@ -10,7 +10,12 @@ const { fetchMissionListPage, parseMissionFamily } = vi.hoisted(() => ({
   fetchMissionListPage: vi.fn(),
   parseMissionFamily: vi.fn()
 }));
-vi.mock("$lib/server/mission-list", () => ({ fetchMissionListPage, parseMissionFamily }));
+vi.mock("$lib/server/mission-list", async (importOriginal) => ({
+  parseMissionCharacterId: (await importOriginal<typeof import("$lib/server/mission-list")>())
+    .parseMissionCharacterId,
+  fetchMissionListPage,
+  parseMissionFamily
+}));
 
 import { GET } from "./+server";
 
@@ -50,7 +55,8 @@ describe("mission list data endpoint", () => {
       "https://master-api.test",
       "jp",
       undefined,
-      2
+      2,
+      { characterId: null }
     );
   });
 
@@ -65,7 +71,24 @@ describe("mission list data endpoint", () => {
       "https://master-api.test",
       "tw",
       ["storyMissions"],
-      3
+      3,
+      { characterId: null }
+    );
+  });
+
+  it("passes the selected character only for Character Missions", async () => {
+    parseMissionFamily.mockReturnValue("characterMissionV2s");
+    fetchMissionListPage.mockResolvedValue(page);
+
+    const response = await runGet("jp", "?family=characterMissionV2s&character=3&page=2");
+
+    expect(response.status).toBe(200);
+    expect(fetchMissionListPage).toHaveBeenCalledWith(
+      "https://master-api.test",
+      "jp",
+      ["characterMissionV2s"],
+      2,
+      { characterId: 3 }
     );
   });
 
@@ -81,7 +104,8 @@ describe("mission list data endpoint", () => {
         "https://master-api.test",
         "jp",
         undefined,
-        1
+        1,
+        { characterId: null }
       );
     }
   );

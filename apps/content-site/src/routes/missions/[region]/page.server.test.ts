@@ -10,6 +10,11 @@ const { getMasterApiBaseUrl } = vi.hoisted(() => ({
 }));
 vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
 
+const { fetchMissionCharacterOptions } = vi.hoisted(() => ({
+  fetchMissionCharacterOptions: vi.fn()
+}));
+vi.mock("$lib/server/mission-characters", () => ({ fetchMissionCharacterOptions }));
+
 import { load } from "./+page.server";
 import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
 
@@ -27,13 +32,17 @@ type CatalogueResult = {
 
 type MissionPageLoadResult = {
   region: string;
-  query: { family: MissionFamily | null };
+  query: { family: MissionFamily | null; character: number | null };
   catalogue: Promise<CatalogueResult> | null;
   familyOverviews: {
     family: MissionFamily;
     summary: Promise<{ items: Mission[]; total: number | null; loadFailed: boolean }>;
   }[];
   storyMissions: Promise<{ items: Mission[]; loadFailed: boolean }> | null;
+  characterOptions: Promise<{
+    items: { id: number; name: string; unit: string | null; unitName: string | null }[];
+    loadFailed: boolean;
+  }> | null;
 };
 
 const resolveCatalogue = (result: MissionPageLoadResult): Promise<CatalogueResult> => {
@@ -51,6 +60,7 @@ type MissionRequest = {
   path: { region: string };
   query: {
     family: MissionFamily;
+    character_id?: string;
     page?: number;
     page_size?: number;
     sort_by?: string;
@@ -93,6 +103,10 @@ describe("mission catalogue page load", () => {
     getMissionsByRegionList.mockReset();
     getMasterApiBaseUrl.mockReset();
     getMasterApiBaseUrl.mockReturnValue("https://master-api.test");
+    fetchMissionCharacterOptions.mockReset();
+    fetchMissionCharacterOptions.mockResolvedValue([
+      { id: 1, name: "Ichika Hoshino", unit: "light_sound", unitName: "Leo/need" }
+    ]);
   });
 
   it("streams one first page for every default family separately", async () => {
@@ -108,7 +122,7 @@ describe("mission catalogue page load", () => {
     const result = (await runLoad("invalid")) as unknown as MissionPageLoadResult;
 
     expect(result.region).toBe("jp");
-    expect(result.query).toEqual({ family: null });
+    expect(result.query).toEqual({ family: null, character: null });
     expect(result.catalogue).toBeNull();
     expect(result.familyOverviews.map(({ family }) => family)).toEqual([...missionFamilies]);
     const summaries = await resolveSummaries(result);
@@ -176,7 +190,7 @@ describe("mission catalogue page load", () => {
       "?family=storyMissions"
     )) as unknown as MissionPageLoadResult;
 
-    expect(result.query).toEqual({ family: "storyMissions" });
+    expect(result.query).toEqual({ family: "storyMissions", character: null });
     expect(result.catalogue).toBeNull();
     expect(result.familyOverviews).toEqual([]);
     const story = await result.storyMissions;
@@ -200,10 +214,19 @@ describe("mission catalogue page load", () => {
     await expect(result.storyMissions).resolves.toEqual({ items: [], loadFailed: true });
   });
 
-  it("preserves one selected family from legacy query values and always starts at page one", async () => {
-    getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) =>
-      Promise.resolve(createMissionResponse(query.family, query.page ?? 1, 20))
-    );
+  it("loads every normal mission at once from legacy query values", async () => {
+    getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) => {
+      const page = query.page ?? 1;
+      const items = Array.from({ length: page === 1 ? 100 : 20 }, (_, index) => ({
+        id: (page - 1) * 100 + index + 1
+      }));
+      return Promise.resolve({
+        data: {
+          items,
+          pagination: { page, page_size: 100, total: 120, total_pages: 2, has_next: page === 1 }
+        }
+      });
+    });
 
     const result = (await runLoad(
       "tw",
@@ -211,23 +234,89 @@ describe("mission catalogue page load", () => {
     )) as unknown as MissionPageLoadResult;
     const catalogue = await resolveCatalogue(result);
 
-    expect(result.query).toEqual({ family: "normalMissions" });
+    expect(result.query).toEqual({ family: "normalMissions", character: null });
     expect(result.familyOverviews).toEqual([]);
+    expect(result.characterOptions).toBeNull();
+    expect(catalogue).toMatchObject({ loadFailed: false, pagination: { hasNext: false } });
+    expect(catalogue.items).toHaveLength(120);
+    expect(getMissionsByRegionList.mock.calls.map(([request]) => request.query)).toEqual([
+      { family: "normalMissions", page: 1, page_size: 100, sort_by: "seq", sort_order: "asc" },
+      { family: "normalMissions", page: 2, page_size: 100, sort_by: "seq", sort_order: "asc" }
+    ]);
+  });
+
+  it("shows only the character picker until a character is chosen", async () => {
+    const result = (await runLoad(
+      "jp",
+      "?family=characterMissionV2s&character=abc"
+    )) as unknown as MissionPageLoadResult;
+
+    expect(result.query).toEqual({ family: "characterMissionV2s", character: null });
+    expect(result.catalogue).toBeNull();
+    expect(getMissionsByRegionList).not.toHaveBeenCalled();
+    await expect(result.characterOptions).resolves.toEqual({
+      items: [{ id: 1, name: "Ichika Hoshino", unit: "light_sound", unitName: "Leo/need" }],
+      loadFailed: false
+    });
+    expect(fetchMissionCharacterOptions).toHaveBeenCalledWith("https://master-api.test", "jp");
+  });
+
+  it("keeps the picker retryable when characters fail to load", async () => {
+    fetchMissionCharacterOptions.mockRejectedValue(new Error("master api unavailable"));
+
+    const result = (await runLoad(
+      "jp",
+      "?family=characterMissionV2s"
+    )) as unknown as MissionPageLoadResult;
+
+    await expect(result.characterOptions).resolves.toEqual({ items: [], loadFailed: true });
+  });
+
+  it("pages the selected character's missions", async () => {
+    getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) =>
+      Promise.resolve(createMissionResponse(query.family, query.page ?? 1, 20))
+    );
+
+    const result = (await runLoad(
+      "jp",
+      "?family=characterMissionV2s&character=3"
+    )) as unknown as MissionPageLoadResult;
+    const catalogue = await resolveCatalogue(result);
+
+    expect(result.query).toEqual({ family: "characterMissionV2s", character: 3 });
     expect(catalogue).toMatchObject({
       loadFailed: false,
       pagination: { page: 1, pageSize: 24, hasNext: true, total: 20, totalPages: 3 }
     });
     expect(catalogue.items).toHaveLength(8);
-    expect(getMissionsByRegionList).toHaveBeenCalledTimes(1);
     expect(getMissionsByRegionList.mock.calls.map(([request]) => request.query)).toEqual([
       {
-        family: "normalMissions",
+        family: "characterMissionV2s",
+        character_id: "3",
         page: 1,
         page_size: 8,
         sort_by: "seq",
         sort_order: "asc"
       }
     ]);
+  });
+
+  it("ignores the character query outside Character Missions", async () => {
+    getMissionsByRegionList.mockResolvedValue({
+      data: {
+        items: [{ id: 1 }],
+        pagination: { page: 1, page_size: 100, total: 1, total_pages: 1, has_next: false }
+      }
+    });
+
+    const result = (await runLoad(
+      "jp",
+      "?family=normalMissions&character=3"
+    )) as unknown as MissionPageLoadResult;
+
+    expect(result.query).toEqual({ family: "normalMissions", character: null });
+    await resolveCatalogue(result);
+    expect(getMissionsByRegionList.mock.calls[0]?.[0].query).not.toHaveProperty("character_id");
   });
 
   it("ignores a legacy page query on the SSR route", async () => {
@@ -237,10 +326,10 @@ describe("mission catalogue page load", () => {
 
     const result = (await runLoad(
       "jp",
-      "?family=normalMissions&page=900"
+      "?family=characterMissionV2s&character=1&page=900"
     )) as unknown as MissionPageLoadResult;
 
-    expect(result.query).toEqual({ family: "normalMissions" });
+    expect(result.query).toEqual({ family: "characterMissionV2s", character: 1 });
     await expect(resolveCatalogue(result)).resolves.toMatchObject({
       loadFailed: false,
       pagination: { page: 1 }
@@ -249,13 +338,13 @@ describe("mission catalogue page load", () => {
   });
 
   it("deduplicates repeated missions within a selected family page", async () => {
-    const response = createMissionResponse("normalMissions", 1, 8);
+    const response = createMissionResponse("characterMissionV2s", 1, 8);
     response.data.items[1] = response.data.items[0];
     getMissionsByRegionList.mockResolvedValue(response);
 
     const result = (await runLoad(
       "jp",
-      "?family=normalMissions"
+      "?family=characterMissionV2s&character=1"
     )) as unknown as MissionPageLoadResult;
     const catalogue = await resolveCatalogue(result);
 
@@ -324,7 +413,7 @@ describe("mission catalogue page load", () => {
 
     const inconsistentResult = (await runLoad(
       "jp",
-      "?family=normalMissions"
+      "?family=characterMissionV2s&character=1"
     )) as unknown as MissionPageLoadResult;
     await expect(resolveCatalogue(inconsistentResult)).resolves.toMatchObject({
       items: [],
