@@ -182,7 +182,7 @@
                     <Icon icon={item.icon} class="size-4 shrink-0" aria-hidden="true" />
                   </span>
                 {/if}
-                <span>{item.label}</span>
+                <span class={item.icon ? "" : "col-span-2"}>{item.label}</span>
               </a>
             </li>
           {:else}
@@ -197,7 +197,7 @@
                     <Icon icon={item.icon} class="size-4 shrink-0" aria-hidden="true" />
                   </span>
                 {/if}
-                <span>{item.label}</span>
+                <span class={item.icon ? "" : "col-span-2"}>{item.label}</span>
               </button>
             </li>
           {/if}
