@@ -2449,6 +2449,7 @@
     .tracker-control-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
     }
     .tracker-ladder-control {
       grid-column: 1;
@@ -2456,6 +2457,7 @@
     .tracker-tool-action-region {
       grid-column: 2;
       justify-self: end;
+      align-self: center;
     }
   }
   .tracker-share-message {
@@ -3180,20 +3182,10 @@
       grid-template-columns: 1fr;
     }
   }
-  @media (min-width: 48rem) and (max-width: 63.999rem) {
-    .tracker-context {
-      align-items: start;
-    }
-    .tracker-status-panel {
-      justify-content: flex-start;
-      flex-wrap: wrap;
-      gap: 0.75rem 1.25rem;
-      min-height: 4.75rem;
-    }
-  }
-  @media (min-width: 64rem) {
+  @media (min-width: 48rem) {
     .tracker-context {
       grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
     }
     .tracker-status-panel {
       display: grid;

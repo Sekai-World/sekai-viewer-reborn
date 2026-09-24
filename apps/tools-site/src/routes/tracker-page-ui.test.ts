@@ -374,8 +374,8 @@ describe("tracker page UI contract", () => {
     expect(source).toContain(
       'class="btn btn-square btn-sm btn-outline touch-target rounded-full tracker-refresh-action"'
     );
-    expect(source).toContain("@media (min-width: 48rem) and (max-width: 63.999rem)");
-    expect(source).toContain("@media (min-width: 64rem)");
+    expect(source).not.toContain("@media (min-width: 48rem) and (max-width: 63.999rem)");
+    expect(source).toContain("@media (min-width: 48rem)");
     expect(source).toContain(".tracker-status-panel {");
     expect(source).toContain("min-height: 4.75rem;");
     expect(source).toContain("min-height: 6.25rem;");
