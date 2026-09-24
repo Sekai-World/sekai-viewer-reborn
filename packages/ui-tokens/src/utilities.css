@@ -4,11 +4,12 @@
    (DESIGN.md §3 asks for a touch-safe interactive box, not a large control).
    Only for elements that render pseudo-elements (button, a, summary), and
    leave enough gap between neighbours so the hit areas do not overlap. */
-@utility touch-target {
-  &:not(.absolute):not(.fixed) {
+@layer utilities {
+  .touch-target:not(.absolute):not(.fixed) {
     position: relative;
   }
-  &::after {
+
+  .touch-target::after {
     position: absolute;
     top: 50%;
     left: 50%;
