@@ -70,3 +70,17 @@ describe("ViewerShell", () => {
     ).toBe(true);
   });
 });
+
+it("lets icon-less sidebar labels span the icon column", () => {
+  renderShell({
+    sidebarItems: [
+      { label: "With icon", href: "/a", icon: "mdi:home" },
+      { label: "Without icon", href: "/b" }
+    ]
+  });
+
+  const withIcon = screen.getByRole("link", { name: "With icon" }).lastElementChild;
+  const withoutIcon = screen.getByRole("link", { name: "Without icon" }).lastElementChild;
+  expect(withIcon?.className).not.toContain("col-span-2");
+  expect(withoutIcon?.className).toContain("col-span-2");
+});

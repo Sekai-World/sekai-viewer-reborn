@@ -16,12 +16,12 @@ The workspace is a monorepo of four deployable SvelteKit apps. Only
 `content-site` carries broad feature coverage today; the other three remain
 limited in scope and are **not** feature-complete.
 
-| App              | Status      | Notes                                                                                                                                                                                                                                               |
-| ---------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content-site`   | Available   | Primary game-data browser (see below).                                                                                                                                                                                                              |
-| `tools-site`     | In progress | Current-event comparison workflow: SSR-safe tools-local i18n, URL-restored GET selection for two validated regions, localized unavailable/request-failed states, and no fabricated cross-app links without a public content-site base-URL contract. |
-| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated.                                                                                                                           |
-| `account-site`   | Exploratory | Scaffold only; no feature work started.                                                                                                                                                                                                             |
+| App              | Status      | Notes                                                                                                                                                                                                                                                                                                                                 |
+| ---------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content-site`   | Available   | Primary game-data browser (see below).                                                                                                                                                                                                                                                                                                |
+| `tools-site`     | In progress | Regional current-event cards for JP/TW/EN/KR and per-region tracking with searchable current or historical event selection, ranking history and snapshots, World Bloom chapter rankings, shareable links, and a constant-pace goal calculator. CSV/XLSX export controls are currently hidden while the export format is reconsidered. |
+| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated.                                                                                                                                                                                                             |
+| `account-site`   | Exploratory | Scaffold only; no feature work started.                                                                                                                                                                                                                                                                                               |
 
 ## media-lab-site — Media Lab
 
@@ -194,13 +194,20 @@ tooling if needed.
 Catalogue (list + detail) coverage already shipped for:
 
 - **Cards** — list (`/cards/[region]`), detail (`/card/[region]/[id]`).
+- **Characters** — catalogue (`/characters/[region]`), detail
+  (`/character/[region]/[id]`), and unit/member views
+  (`/unit/[region]/[unit]`).
 - **Musics** — list (`/musics/[region]`), detail (`/music/[region]/[id]`).
 - **Events** — list (`/events/[region]`), detail (`/event/[region]/[id]`).
 - **Gachas** — list (`/gachas/[region]`), detail (`/gacha/[region]/[id]`).
 - **Virtual Lives** — list (`/virtual-lives/[region]`), detail (`/virtual-live/[region]/[id]`).
+- **Game News** — regional news catalogue (`/news/[region]`) with tag, spoiler,
+  and pagination controls.
 
-These read from the public `sekai-master-api` contracts and serve all supported
-regions with localized labels.
+These use generated public `sekai-master-api` contracts, region-aware
+availability switching, and scoped localized UI bundles with remote dictionaries
+and local fallbacks. Content routes support JP, EN, TW, KR, and CN where regional
+data is available.
 
 ### Available — Content Center Phase One
 
@@ -233,20 +240,27 @@ routes use the public `sekai-master-api` contracts and generated SDK:
   concrete item quantities. Resource boxes are resolved in the current content
   region only; unavailable boxes remain absent rather than falling back across
   regions.
-- **Homepage database directory** — the homepage now exposes a database
-  directory entry that links to the character catalogue; the sidebar adds a
-  Characters entry for discovery.
+- **Homepage content hub** — region switching, current-event presentation,
+  latest cards, music, and gacha data, regional Game News, version information,
+  and directory links into the supported content areas.
+- **Detail experience extensions** — card galleries and related-content links;
+  event assets, rewards, bonus data, BGM, and optional tools-site tracker links;
+  music previews, downloads, difficulties, and vocals; and gacha probability,
+  behavior, and simulator views.
 
 ### Planned — Next Content Priorities
 
-Requested by the user and **not yet viewer-ready**. Each requires the full
-cross-repo pipeline before frontend work can begin:
+Requested by the user and **not yet viewer-ready**: the corresponding
+content-site routes and pages have not been built. Their master API contracts
+are merged and the viewer SDK has been regenerated. For any new or extended API
+contract, follow this cross-repo pipeline:
 
 1. `sekai-master-api` must expose the relevant public contracts (or extend
    existing ones).
 2. Regenerate the Swagger/OpenAPI spec (`mise run swagger`).
 3. Deploy `sekai-master-api` to the remote dev cluster and forward it
-   (`mise run dev-cluster-rebuild`, then `mise run dev-cluster-forward`).
+   (`mise run dev-cluster-rebuild`, then `mise run dev-cluster-forward`; OpenAPI
+   is available at `http://localhost:18080`).
 4. Regenerate the viewer SDK
    (`mise run update-sekai-master-api-sdk-local`) and validate
    (`pnpm --filter @platform/sekai-master-api-sdk check`).
@@ -257,8 +271,11 @@ Specific next priorities:
 - **Degrees / Titles**
 - **Missions / Rewards**
 
-Until the corresponding public API contracts exist and the SDK is regenerated,
-these remain **Planned** and should not be implemented on the frontend.
+The master API contracts for these domains are merged and the viewer SDK has
+been regenerated (`sekai-master-api` #118 added `honors`, `bondsHonors`,
+`missions`, `costume3ds`, and `mysekaiPhotoDecorations`; viewer SDK regen in
+#347), but no corresponding content-site routes or pages exist yet, so they
+remain **Planned** pending frontend work.
 
 ### Exploratory — Later Candidates
 

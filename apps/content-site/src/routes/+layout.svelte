@@ -964,9 +964,8 @@
           <div
             id={DESKTOP_SETTINGS_MENU_ID}
             role="dialog"
-            aria-modal="true"
             aria-label={settingsLabel}
-            class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-3 shadow-xl"
+            class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-3 shadow-md"
           >
             {@render regionSelectorSection()}
 
@@ -1000,7 +999,7 @@
         {#if isDesktopThemeMenuOpen}
           <ul
             id={DESKTOP_THEME_MENU_ID}
-            class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-base-100/96 p-1 shadow-xl"
+            class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-1 shadow-md"
           >
             <li class="menu-title px-2 py-1 text-xs font-semibold opacity-60">
               {themePaletteLabel}
@@ -1081,7 +1080,7 @@
         {#if isLocaleMenuOpen}
           <div
             id={LOCALE_MENU_ID}
-            class="dropdown-content z-120 mt-3 w-max min-w-44 max-w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+            class="dropdown-content z-120 mt-3 w-max min-w-44 max-w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
           >
             <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
               <p class="px-1 text-xs font-semibold opacity-60">
@@ -1144,9 +1143,8 @@
           <div
             id={MOBILE_SETTINGS_MENU_ID}
             role="dialog"
-            aria-modal="true"
             aria-label={settingsLabel}
-            class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-base-100/96 p-2 shadow-xl"
+            class="dropdown-content z-130 mt-3 w-[min(13rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] max-h-[70vh] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
           >
             {@render regionSelectorSection()}
 

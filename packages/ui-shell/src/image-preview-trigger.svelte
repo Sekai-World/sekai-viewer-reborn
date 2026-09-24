@@ -51,7 +51,8 @@
   type="button"
   class={`${buttonClass} ${disabled || imageRetry.imageFailed ? "cursor-default" : ""}`}
   {onclick}
-  aria-label={imageRetry.imageFailed && fallbackLabel ? fallbackLabel : ariaLabel || alt}
+  aria-label={(imageRetry.imageFailed && fallbackLabel ? fallbackLabel : ariaLabel || alt) ||
+    undefined}
   disabled={disabled || imageRetry.imageFailed}
 >
   {#if children}
@@ -60,7 +61,8 @@
     <div class="group relative size-full overflow-hidden">
       {#if !imageRetry.imageLoaded}
         <div
-          class="image-preview-loading absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse"
+          class="image-preview-loading absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.08),rgba(255,255,255,0.05))] animate-pulse motion-reduce:animate-none in-data-low-motion:animate-none"
+          aria-hidden="true"
         >
           <span class="loading loading-spinner loading-md text-base-content/60" aria-hidden="true"
           ></span>
@@ -71,7 +73,7 @@
         <img
           src={imageRetry.requestUrl}
           {alt}
-          class={`${imageClass} transition-[opacity,transform] duration-300 ease-out ${imageRetry.imageLoaded ? "scale-100 opacity-100" : "scale-[1.02] opacity-0"}`}
+          class={`${imageClass} transition-[opacity,transform] duration-280 ease-out motion-reduce:transition-none in-data-low-motion:transition-none ${imageRetry.imageLoaded ? "scale-100 opacity-100" : "scale-[1.02] opacity-0 motion-reduce:scale-100 in-data-low-motion:scale-100"}`}
           onload={() => requestSnapshot && imageRetry.handleImageLoad(requestSnapshot)}
           onerror={() => requestSnapshot && imageRetry.handleImageError(requestSnapshot)}
         />
@@ -79,7 +81,7 @@
       {#if imageRetry.imageLoaded}
         <!-- magnifying glass overlay — bottom-right -->
         <span
-          class="image-preview-magnifier pointer-events-none absolute right-3 bottom-3 flex size-10 items-center justify-center rounded-full bg-base-100/60 text-base-content/70 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 sm:opacity-0"
+          class="image-preview-magnifier pointer-events-none absolute right-3 bottom-3 flex size-10 items-center justify-center rounded-full bg-base-100/60 text-base-content/70 backdrop-blur-sm transition-opacity duration-180 group-hover:opacity-100 motion-reduce:transition-none in-data-low-motion:transition-none group-focus-visible:opacity-100 sm:opacity-0"
           aria-hidden="true"
         >
           <Icon icon="mdi:magnify-plus-outline" class="size-5" />

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "layerchart/daisyui-5.css";
 @import "@platform/ui-tokens/palettes.css";
+@import "@platform/ui-tokens/utilities.css";
 @import "@platform/ui-shell/inputs.css";
 /* Tailwind v4 in this workspace mis-resolves package-name plugins during build.
    Keep daisyUI behind a local proxy module so CSS does not depend on node_modules layout. */
@@ -24,6 +25,16 @@ body {
     ),
     var(--archive-surface-canvas);
   color: var(--archive-text-default);
+}
+
+:root.dark body {
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      color-mix(in oklab, var(--color-primary) 4%, transparent),
+      transparent 36rem
+    ),
+    var(--archive-surface-canvas);
 }
 
 .tools-home {
@@ -52,7 +63,6 @@ body {
       var(--archive-surface-raised) 58%
     ),
     var(--archive-surface-raised);
-  box-shadow: 0 16px 32px color-mix(in oklab, var(--color-primary) 10%, transparent);
 }
 
 .tools-hero::after {
@@ -107,38 +117,9 @@ body {
 .tools-hero p:not(.eyebrow) {
   max-width: 42rem;
   margin-top: 1rem;
-  color: color-mix(in oklab, var(--color-base-content) 72%, transparent);
+  color: var(--archive-text-default);
   font-size: 1rem;
   line-height: 1.6;
-}
-
-.hero-action,
-.tracker-link {
-  display: inline-flex;
-  min-height: 2.75rem;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  border-radius: 9999px;
-  font-weight: 700;
-  transition:
-    transform 180ms ease-out,
-    box-shadow 180ms ease-out,
-    background-color 180ms ease-out;
-}
-
-.hero-action {
-  flex: none;
-  padding: 0.7rem 1rem;
-  background: var(--color-primary);
-  color: var(--color-primary-content);
-  box-shadow: 0 8px 16px color-mix(in oklab, var(--color-primary) 25%, transparent);
-}
-
-.hero-action:hover,
-.hero-action:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 22px color-mix(in oklab, var(--color-primary) 32%, transparent);
 }
 
 .region-grid {
@@ -151,8 +132,8 @@ body {
 .live-mark {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  color: color-mix(in oklab, var(--color-base-content) 68%, transparent);
+  gap: 0.5rem;
+  color: var(--archive-text-muted);
   font-size: 0.78rem;
   font-weight: 700;
 }
@@ -180,7 +161,7 @@ body {
   border: 1px solid var(--archive-border-subtle);
   border-radius: var(--radius-box);
   background: var(--archive-surface-default);
-  padding: 0.9rem;
+  padding: 1rem;
   color: inherit;
   text-decoration: none;
 }
@@ -203,8 +184,8 @@ body {
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  color: color-mix(in oklab, var(--color-base-content) 56%, transparent);
+  gap: 0.25rem;
+  color: var(--archive-text-muted);
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -218,7 +199,7 @@ body {
   min-height: 6rem;
   margin-top: 1rem;
   overflow: hidden;
-  border-radius: calc(var(--radius-box) - 0.35rem);
+  border-radius: var(--radius-field);
   background: transparent;
 }
 .event-banner img {
@@ -255,8 +236,8 @@ body {
 .event-meta,
 .event-time,
 .empty-card p {
-  margin-top: 0.45rem;
-  color: color-mix(in oklab, var(--color-base-content) 62%, transparent);
+  margin-top: 0.5rem;
+  color: var(--archive-text-muted);
   font-size: 0.82rem;
   line-height: 1.5;
 }
@@ -264,13 +245,13 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 .event-time {
   font-variant-numeric: tabular-nums;
 }
 .event-countdown {
-  margin-top: 0.65rem;
+  margin-top: 0.75rem;
   color: color-mix(in oklab, var(--color-primary) 78%, var(--color-base-content));
   font-size: 0.78rem;
   font-weight: 750;
@@ -279,15 +260,19 @@ body {
 .tracker-link {
   display: inline-flex;
   min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   margin-top: auto;
   padding-top: 1rem;
   color: var(--color-primary);
   font-size: 0.86rem;
+  font-weight: 700;
   text-decoration: none;
 }
 .tracker-link-arrow {
   display: inline-block;
-  margin-left: 0.4rem;
+  margin-left: 0.5rem;
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .event-card-link {
@@ -328,7 +313,7 @@ body {
   }
 }
 
-@media (min-width: 75rem) {
+@media (min-width: 80rem) {
   .event-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -338,9 +323,6 @@ body {
   .hero-copy {
     align-items: flex-start;
     flex-direction: column;
-  }
-  .hero-action {
-    width: 100%;
   }
   .section-heading {
     align-items: flex-end;

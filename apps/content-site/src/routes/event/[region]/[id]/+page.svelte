@@ -84,6 +84,7 @@
   let debugEventJsonButtonLabel = $state(getInitialI18nText("debugJsonButton"));
   let debugEventJsonTitle = $state(getInitialI18nText("debugEventJsonTitle"));
   let closeLabel = $state(getInitialI18nText("closeLabel"));
+  let detailLoadingLabel = $state(getInitialI18nText("detailLoading"));
   let bannerCharacterLabel = $state(getInitialI18nText("bannerCharacterLabel"));
   let internalResourceCodeLabel = $state(getInitialI18nText("internalResourceCodeLabel"));
   let eventBonusCharacterLabel = $state(getInitialI18nText("eventBonusCharacterLabel"));
@@ -174,6 +175,7 @@
     debugEventJsonButtonLabel = translate("debugJsonButton");
     debugEventJsonTitle = translate("debugEventJsonTitle");
     closeLabel = translate("closeLabel");
+    detailLoadingLabel = translate("detailLoading");
     bannerCharacterLabel = translate("bannerCharacterLabel");
     internalResourceCodeLabel = translate("internalResourceCodeLabel");
     eventBonusCharacterLabel = translate("eventBonusCharacterLabel");
@@ -357,7 +359,12 @@
           />
 
           {#await data.unitProfiles}
-            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+            <div
+              class="card content-card-shell animate-pulse shadow-sm motion-reduce:animate-none"
+              role="status"
+              aria-busy="true"
+              aria-label={detailLoadingLabel}
+            >
               <div class="card-body gap-4 p-3 sm:p-5">
                 <div class="h-4 w-2/5 rounded bg-base-300"></div>
                 <div class="space-y-2">
@@ -391,7 +398,12 @@
           {/await}
 
           {#await data.isCurrentEvent}
-            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+            <div
+              class="card content-card-shell animate-pulse shadow-sm motion-reduce:animate-none"
+              role="status"
+              aria-busy="true"
+              aria-label={detailLoadingLabel}
+            >
               <div class="card-body gap-4 p-3 sm:p-5">
                 <div class="h-4 w-2/5 rounded bg-base-300"></div>
                 <div class="h-20 rounded-xl bg-base-300"></div>
@@ -410,7 +422,12 @@
 
         <div class="flex min-w-0 flex-col gap-5">
           {#await data.unitProfiles}
-            <div class="card content-card-shell animate-pulse shadow-sm" aria-hidden="true">
+            <div
+              class="card content-card-shell animate-pulse shadow-sm motion-reduce:animate-none"
+              role="status"
+              aria-busy="true"
+              aria-label={detailLoadingLabel}
+            >
               <div class="card-body gap-4 p-3 sm:p-5">
                 <div class="h-4 w-2/5 rounded bg-base-300"></div>
                 <div class="h-24 rounded-[1.75rem] bg-base-300 sm:h-28"></div>

@@ -38,10 +38,13 @@
   <title>Sekai Account</title>
 </svelte:head>
 
-<ViewerShell>
-  drawerId="account-site-drawer" navTitle="Sekai Account" navBadge="Profile" siteVersion={data.siteVersion}
+<ViewerShell
+  drawerId="account-site-drawer"
+  navTitle="Sekai Account"
+  navBadge="Profile"
+  siteVersion={data.siteVersion}
   {sidebarItems}
-  >
+>
   <RegionSwitcher
     options={regionOptions}
     primaryValue={primaryRegion}

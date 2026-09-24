@@ -162,20 +162,24 @@
   let graphIdentity: { eventId: number; rank: number } | null = null;
   let observedEventKey: number | null = null;
   let chapterRequestToken = 0;
-  let isDetailsDialogClosing = $state(false);
-  let isDetailsDialogOpening = $state(false);
   let isDetailsIdentityVisible = $state(false);
   let detailsModalBox = $state<HTMLDivElement>();
   let detailsPlayerEntry = $state<HTMLElement>();
   let detailsIdentityObserver: IntersectionObserver | undefined;
-  let detailsCloseTimer: ReturnType<typeof setTimeout> | undefined;
-  let detailsOpenFrame: number | undefined;
-  let removeDetailsDialogResizeListener: (() => void) | undefined;
 
   const extendedData = $derived(data as ExtendedData);
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const trackerPath = $derived(resolve("/tracker/[region]", { region: data.region }));
   const trackerStatus = $derived(trackerResult?.status ?? null);
+  const rankingErrorKey = $derived(
+    trackerStatus === "upstream-error"
+      ? "tracker.error.historyUpstream"
+      : trackerStatus === "sdk-error"
+        ? "tracker.error.sdk"
+        : trackerStatus === "network-error"
+          ? "tracker.error.network"
+          : "tracker.error.invalidData"
+  );
   const isTrackerLoading = $derived(trackerResult === null);
   const trackerIdentity = $derived(
     `${data.region}:${data.selectionStatus}:${data.selection.eventId ?? "live"}`
@@ -839,12 +843,6 @@
       .map((point) => normalizePoint(point, rank))
       .filter((point): point is GraphPoint => point !== null);
   };
-  const resetDetailsDialogCentering = (): void => {
-    removeDetailsDialogResizeListener?.();
-    removeDetailsDialogResizeListener = undefined;
-    detailsDialog?.style.removeProperty("margin-left");
-    detailsDialog?.style.removeProperty("margin-right");
-  };
   const disconnectDetailsIdentityObserver = (): void => {
     detailsIdentityObserver?.disconnect();
     detailsIdentityObserver = undefined;
@@ -861,35 +859,6 @@
     );
     detailsIdentityObserver.observe(detailsPlayerEntry);
   };
-  const centerDetailsDialog = (): void => {
-    if (typeof window === "undefined" || !detailsDialog) return;
-
-    try {
-      // Measure from the CSS baseline on every pass. Keeping the previous
-      // compensation in place would make resize measurements cumulative.
-      detailsDialog.style.removeProperty("margin-left");
-      detailsDialog.style.removeProperty("margin-right");
-
-      const rect = detailsDialog.getBoundingClientRect();
-      const targetLeft = (window.innerWidth - rect.width) / 2;
-      const shift = targetLeft - rect.left;
-      if (Math.abs(shift) < 0.5) {
-        detailsDialog.style.removeProperty("margin-left");
-        detailsDialog.style.removeProperty("margin-right");
-      } else {
-        detailsDialog.style.marginLeft = `${shift}px`;
-        detailsDialog.style.marginRight = "0px";
-      }
-      if (!removeDetailsDialogResizeListener) {
-        const handleResize = (): void => centerDetailsDialog();
-        window.addEventListener("resize", handleResize);
-        removeDetailsDialogResizeListener = () =>
-          window.removeEventListener("resize", handleResize);
-      }
-    } catch {
-      // Keep the CSS baseline usable if the browser blocks layout measurements.
-    }
-  };
   const openDetails = (
     row: TrackerRow<SharedEventRewardRangeResponse>,
     context: RankingContext = null
@@ -902,30 +871,9 @@
     graphPoints = [];
     activeGraphPoint = null;
     graphStatus = "idle";
-    if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
-    if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
-    detailsCloseTimer = undefined;
-    isDetailsDialogClosing = false;
     isDetailsIdentityVisible = false;
-    if (!detailsDialog?.open) {
-      isDetailsDialogOpening = true;
-      detailsDialog?.showModal();
-      detailsOpenFrame = requestAnimationFrame(() => {
-        centerDetailsDialog();
-        // The first frame can still expose the pre-top-layer 100vw geometry.
-        // Measure once more after that layout has settled.
-        detailsOpenFrame = requestAnimationFrame(() => {
-          detailsOpenFrame = undefined;
-          centerDetailsDialog();
-          isDetailsDialogOpening = false;
-          void tick().then(observeDetailsIdentity);
-        });
-      });
-    } else {
-      isDetailsDialogOpening = false;
-      centerDetailsDialog();
-      void tick().then(observeDetailsIdentity);
-    }
+    if (!detailsDialog?.open) detailsDialog?.showModal();
+    void tick().then(observeDetailsIdentity);
     void openGraph(row);
   };
   const handleRankingRowClick = (
@@ -937,21 +885,11 @@
     openDetails(row, context);
   };
   const closeDetails = (): void => {
-    if (!detailsDialog?.open || isDetailsDialogClosing) return;
-    isDetailsDialogClosing = true;
-    detailsCloseTimer = setTimeout(() => detailsDialog?.close(), 180);
+    if (detailsDialog?.open) detailsDialog.close();
   };
   const handleDetailsClosed = (): void => {
-    if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
-    if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
-    detailsCloseTimer = undefined;
-    detailsOpenFrame = undefined;
-    isDetailsDialogOpening = false;
     isDetailsIdentityVisible = false;
     disconnectDetailsIdentityObserver();
-    resetDetailsDialogCentering();
-    // Keep the collapsed state through native dialog reconciliation. The next
-    // open clears it immediately before showModal() starts a fresh entrance.
   };
   const openGraph = async (row = selectedRow): Promise<void> => {
     if (!row || eventKey === null) return;
@@ -1207,10 +1145,7 @@
       if (eventSearchTimer !== undefined) window.clearTimeout(eventSearchTimer);
       if (shareMessageTimer) clearTimeout(shareMessageTimer);
       if (refreshTimer) clearTimeout(refreshTimer);
-      if (detailsCloseTimer) clearTimeout(detailsCloseTimer);
-      if (detailsOpenFrame !== undefined) cancelAnimationFrame(detailsOpenFrame);
       disconnectDetailsIdentityObserver();
-      resetDetailsDialogCentering();
     };
   });
   $effect(() => {
@@ -1448,7 +1383,7 @@
             {/if}
           </div>
           <button
-            class="btn btn-square btn-sm btn-outline rounded-full tracker-refresh-action"
+            class="btn btn-square btn-sm btn-outline touch-target rounded-full tracker-refresh-action"
             type="button"
             onclick={refresh}
             disabled={isRefreshing || isHistoricalEvent}
@@ -1521,7 +1456,7 @@
           />
           {#if isEventPickerFocused && eventQuery.length > 0}
             <button
-              class="btn btn-ghost btn-xs btn-circle tracker-event-clear"
+              class="btn btn-ghost btn-xs btn-circle touch-target tracker-event-clear"
               type="button"
               aria-label={translate("tracker.clearEventSearch")}
               title={translate("tracker.clearEventSearch")}
@@ -1572,7 +1507,11 @@
       <div class="tracker-control-row">
         <div class="tracker-ladder-control">
           <span class="tracker-control-label">{translate("tracker.rankings")}</span>
-          <div class="tracker-ladder-switcher" aria-label={translate("tracker.rankRange")}>
+          <div
+            class="tracker-ladder-switcher"
+            role="group"
+            aria-label={translate("tracker.rankRange")}
+          >
             <span
               class:tracker-ladder-indicator-full={ladder === "full"}
               class="tracker-ladder-indicator"
@@ -1581,29 +1520,26 @@
             <button
               class:btn-primary={ladder === "critical"}
               class:btn-outline={ladder !== "critical"}
-              class="btn btn-sm tracker-ladder-option"
+              class="btn btn-sm rounded-full border-0 touch-target tracker-ladder-option"
               type="button"
               aria-pressed={ladder === "critical"}
               onclick={() => (ladder = "critical")}>{translate("tracker.ranks.critical")}</button
             ><button
               class:btn-primary={ladder === "full"}
               class:btn-outline={ladder !== "full"}
-              class="btn btn-sm tracker-ladder-option"
+              class="btn btn-sm rounded-full border-0 touch-target tracker-ladder-option"
               type="button"
               aria-pressed={ladder === "full"}
               onclick={() => (ladder = "full")}>{translate("tracker.ranks.all")}</button
             >
           </div>
         </div>
-        <div
-          class="tracker-tool-action-region"
-          class:tracker-tool-action-region-has-message={shareMessage.trim().length > 0}
-        >
+        <div class="tracker-tool-action-region">
           <div class="tracker-tool-actions">
             <button
               class:btn-primary={isTimeTravelActive}
               class:btn-outline={!isTimeTravelActive}
-              class="btn btn-sm tracker-history-tool"
+              class="btn btn-sm touch-target tracker-history-tool"
               type="button"
               aria-expanded={isTimeTravelActive}
               aria-controls="tracker-time-travel-controls"
@@ -1617,7 +1553,7 @@
             <button
               bind:this={goalOpenButton}
               id="tracker-goal-open"
-              class="btn btn-sm btn-outline"
+              class="btn btn-sm btn-outline touch-target"
               type="button"
               aria-haspopup="dialog"
               aria-controls="tracker-goal-dialog"
@@ -1626,7 +1562,11 @@
               <Icon icon="mdi:calculator-variant" class="size-4 shrink-0" aria-hidden="true" />
               {translate("tracker.openGoalCalculator")}
             </button>
-            <button class="btn btn-sm btn-outline" type="button" onclick={shareTracker}>
+            <button
+              class="btn btn-sm btn-outline touch-target"
+              type="button"
+              onclick={shareTracker}
+            >
               <Icon
                 icon="mdi:share-variant-outline"
                 class="size-4 shrink-0"
@@ -1656,7 +1596,7 @@
                 <label class="tracker-time-control" for="tracker-activity-day"
                   ><span>{translate("tracker.activityDayLabel")}</span><select
                     id="tracker-activity-day"
-                    class="select select-sm select-bordered"
+                    class="select select-sm"
                     value={selectedTimePointGroup?.id ?? ""}
                     onchange={(event) => selectTimePointGroup(Number(event.currentTarget.value))}
                     >{#each timePointGroups as group (group.id)}<option value={group.id}
@@ -1667,7 +1607,7 @@
                 <label class="tracker-time-control" for="tracker-saved-time"
                   ><span>{translate("tracker.rankingSnapshotTime")}</span><select
                     id="tracker-saved-time"
-                    class="select select-sm select-bordered"
+                    class="select select-sm"
                     value={selectedTimePoint ?? ""}
                     onchange={(event) => {
                       const point = selectedTimePointGroup?.points.find(
@@ -1694,10 +1634,10 @@
                 role="status"
                 aria-label={translate("tracker.snapshotLoading")}
               >
-                <span class="skeleton h-3 w-28"></span>
-                <span class="skeleton h-10 w-full rounded-field"></span>
-                <span class="skeleton h-3 w-32"></span>
-                <span class="skeleton h-10 w-full rounded-field"></span>
+                <span class="skeleton h-3 w-28" aria-hidden="true"></span>
+                <span class="skeleton h-11 w-full rounded-field" aria-hidden="true"></span>
+                <span class="skeleton h-3 w-32" aria-hidden="true"></span>
+                <span class="skeleton h-11 w-full rounded-field" aria-hidden="true"></span>
               </div>
             {:else}
               <p
@@ -1715,7 +1655,7 @@
     {#if snapshotTimestamp}<div class="tracker-snapshot-banner">
         <span
           >{interpolate("tracker.snapshotAt", { time: formatTimestamp(snapshotTimestamp) })}</span
-        ><button class="btn btn-sm btn-outline" type="button" onclick={returnToLatest}
+        ><button class="btn btn-sm btn-outline touch-target" type="button" onclick={returnToLatest}
           >{translate("tracker.backToLatestRankings")}</button
         >
       </div>{/if}
@@ -1741,7 +1681,7 @@
             </p>{/if}
           <h2 id="tracker-results-title">{translate("tracker.rankings")}</h2>
         </div>
-        {#if isHistoricalEvent}<a class="btn btn-sm btn-outline" href={trackerPath}
+        {#if isHistoricalEvent}<a class="btn btn-sm btn-outline touch-target" href={trackerPath}
             ><Icon icon="mdi:arrow-left" aria-hidden="true" />{translate(
               "tracker.goToCurrentEvent"
             )}</a
@@ -1750,7 +1690,7 @@
       {#if isWorldBloom}<div class="tracker-ranking-tabs-shell">
           <div class="tracker-ranking-tabs-scroll">
             <div
-              class="tabs tabs-box tracker-ranking-tabs min-w-max flex-nowrap"
+              class="tracker-ranking-tabs min-w-max flex-nowrap"
               role="tablist"
               aria-label={translate("tracker.rankingWorkspace")}
             >
@@ -1763,10 +1703,9 @@
               {:else}
                 <button
                   id="tracker-event-ranking-tab"
-                  class:tab-active={selectedRankingTab === "event"}
                   class:btn-primary={selectedRankingTab === "event"}
                   class:btn-outline={selectedRankingTab !== "event"}
-                  class="tab shrink-0 btn btn-sm tracker-ladder-option"
+                  class="btn btn-sm shrink-0 rounded-full touch-target tracker-ladder-option"
                   type="button"
                   role="tab"
                   aria-selected={selectedRankingTab === "event"}
@@ -1780,11 +1719,10 @@
                   {@const isCurrent = currentChapter?.chapter.id === chapter.chapter.id}
                   <button
                     id={`tracker-chapter-tab-${chapter.chapter.id}`}
-                    class:tab-active={selectedRankingTab === chapter.chapter.id}
                     class:btn-primary={selectedRankingTab === chapter.chapter.id}
                     class:btn-outline={selectedRankingTab !== chapter.chapter.id}
                     class:tracker-current-tab={isCurrent}
-                    class="tab shrink-0 btn btn-sm tracker-ladder-option"
+                    class="btn btn-sm shrink-0 rounded-full touch-target tracker-ladder-option"
                     type="button"
                     role="tab"
                     aria-selected={selectedRankingTab === chapter.chapter.id}
@@ -1884,39 +1822,28 @@
               {/each}
             </div>
           </div>
-        {:else if isInvalidSelection}<p class="tracker-ranking-result-message" role="alert">
-            {translate("tracker.eventIdInvalid")}
-          </p>
-        {:else if trackerStatus === "upstream-error"}<p
-            class="tracker-ranking-result-message"
-            role="alert"
-          >
-            {translate("tracker.error.historyUpstream")}
-          </p>
-        {:else if trackerStatus === "sdk-error"}<p
-            class="tracker-ranking-result-message"
-            role="alert"
-          >
-            {translate("tracker.error.sdk")}
-          </p>
-        {:else if trackerStatus === "network-error"}<p
-            class="tracker-ranking-result-message"
-            role="alert"
-          >
-            {translate("tracker.error.network")}
-          </p>
-        {:else if trackerStatus === "invalid-data"}<p
-            class="tracker-ranking-result-message"
-            role="alert"
-          >
-            {translate("tracker.error.invalidData")}
-          </p>
-        {:else if trackerStatus !== "available"}<p
-            class="tracker-ranking-result-message"
-            role="alert"
-          >
-            {translate("tracker.error.invalidData")}
-          </p>
+        {:else if isInvalidSelection}
+          <div class="tracker-ranking-result-message">
+            <p role="alert">{translate("tracker.eventIdInvalid")}</p>
+            <a class="btn btn-sm btn-outline touch-target" href={trackerPath}
+              ><Icon icon="mdi:arrow-left" aria-hidden="true" />{translate(
+                "tracker.goToCurrentEvent"
+              )}</a
+            >
+          </div>
+        {:else if trackerStatus !== "available"}
+          <div class="tracker-ranking-result-message">
+            <p role="alert">{translate(rankingErrorKey)}</p>
+            <button
+              class="btn btn-sm btn-outline touch-target"
+              type="button"
+              onclick={refresh}
+              disabled={isRefreshing}
+            >
+              <Icon icon="mdi:refresh" class="size-4 shrink-0" aria-hidden="true" />
+              {translate("tracker.retry")}
+            </button>
+          </div>
         {:else}
           <div class="tracker-table-wrap">
             {#if rankingLoading}<div class="tracker-ranking-loading" role="status">
@@ -1971,14 +1898,15 @@
                       ><td
                         ><div class="grid max-w-48 gap-1">
                           {@render rewardHonorMedia(row.reward)}
-                          <span class="tracker-reward-badge wrap-anywhere"
+                          <span
+                            class="badge badge-outline badge-sm max-w-48 whitespace-normal wrap-anywhere"
                             >{formatRewardRange(row.reward)}</span
                           >
                         </div></td
                       >
                       <td class="tracker-row-icon"
                         ><button
-                          class="tracker-row-detail-button"
+                          class="btn btn-ghost btn-sm btn-circle touch-target"
                           type="button"
                           aria-label={interpolate("tracker.openRankDetailsAndTrend", {
                             rank: row.ladderRank
@@ -2201,8 +2129,6 @@
   bind:this={detailsDialog}
   class="modal tracker-dialog"
   aria-labelledby="tracker-details-title"
-  data-opening={isDetailsDialogOpening || undefined}
-  data-closing={isDetailsDialogClosing || undefined}
   oncancel={(event) => {
     event.preventDefault();
     closeDetails();
@@ -2218,7 +2144,7 @@
             : translate("tracker.playerDetails")}
         </h2>
         <button
-          class="btn btn-square btn-sm btn-ghost"
+          class="btn btn-square btn-sm btn-ghost touch-target"
           type="button"
           onclick={closeDetails}
           aria-label={translate("tracker.detailsClose")}
@@ -2322,7 +2248,19 @@
               ariaLabel={interpolate("tracker.graphAriaLabel", { rank: selectedRow.ladderRank })}
             />
           </section>
-        {:else if graphStatus === "empty" || graphStatus === "error"}
+        {:else if graphStatus === "error"}
+          <div class="tracker-graph-message">
+            <p role="alert">{translate("tracker.graphError")}</p>
+            <button
+              class="btn btn-sm btn-outline touch-target"
+              type="button"
+              onclick={() => openGraph()}
+            >
+              <Icon icon="mdi:refresh" class="size-4 shrink-0" aria-hidden="true" />
+              {translate("tracker.retry")}
+            </button>
+          </div>
+        {:else if graphStatus === "empty"}
           <p class="tracker-graph-message">{translate("tracker.graphUnavailable")}</p>
         {/if}
       </div>
@@ -2377,7 +2315,7 @@
     text-transform: uppercase;
   }
   .tracker-time-note {
-    color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+    color: var(--archive-text-muted);
   }
   .tracker-time-travel-content {
     display: grid;
@@ -2390,7 +2328,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: end;
-    gap: 0.35rem 0.75rem;
+    gap: 0.25rem 0.75rem;
   }
   .tracker-time-status {
     display: grid;
@@ -2445,13 +2383,13 @@
   .tracker-status-skeleton {
     display: grid;
     justify-items: end;
-    gap: 0.45rem;
+    gap: 0.5rem;
   }
   .tracker-primary-status {
     flex: 1 1 100%;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 0.65rem;
+    gap: 0.75rem;
   }
   .tracker-freshness-action {
     gap: 0.75rem;
@@ -2459,8 +2397,8 @@
   .tracker-freshness {
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 0.2rem 0.75rem;
-    color: color-mix(in srgb, var(--color-base-content) 65%, transparent);
+    gap: 0.25rem 0.75rem;
+    color: var(--archive-text-muted);
     font-size: 0.78rem;
     text-align: right;
   }
@@ -2472,7 +2410,7 @@
     display: inline-flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.35rem;
+    gap: 0.25rem;
   }
   .tracker-countdown {
     color: var(--color-primary);
@@ -2484,11 +2422,10 @@
     text-transform: uppercase;
   }
   .tracker-countdown-values {
-    font-family: var(--font-mono, ui-monospace, monospace);
     font-variant-numeric: tabular-nums;
   }
   .tracker-countdown-values small {
-    margin-left: 0.08rem;
+    margin-left: 0;
     font-family: inherit;
     font-size: 0.65em;
   }
@@ -2498,9 +2435,8 @@
     gap: 0.75rem;
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
-    background: var(--archive-surface-raised);
+    background: var(--archive-surface-default);
     padding: 1rem;
-    box-shadow: 0 8px 18px color-mix(in srgb, var(--color-primary) 5%, transparent);
   }
   .tracker-event-picker,
   .tracker-control-row {
@@ -2517,7 +2453,7 @@
   .tracker-control-row {
     align-items: stretch;
     border-top: 1px solid var(--archive-border-subtle);
-    padding-top: 0.85rem;
+    padding-top: 0.75rem;
   }
   .tracker-ladder-control {
     display: flex;
@@ -2530,9 +2466,6 @@
     position: relative;
     min-width: 0;
     margin-inline-start: auto;
-  }
-  .tracker-tool-action-region-has-message {
-    padding-block-end: 3.25rem;
   }
   .tracker-tool-actions {
     display: flex;
@@ -2547,6 +2480,7 @@
     .tracker-control-row {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
     }
     .tracker-ladder-control {
       grid-column: 1;
@@ -2554,23 +2488,22 @@
     .tracker-tool-action-region {
       grid-column: 2;
       justify-self: end;
+      align-self: center;
     }
   }
   .tracker-share-message {
-    position: absolute;
-    inset-inline-end: 0;
-    inset-block-end: 0;
-    display: inline-flex;
-    width: 8.5rem;
-    min-width: 8.5rem;
+    display: flex;
+    max-width: 100%;
     min-height: 2.75rem;
     align-items: center;
-    overflow: hidden;
+    margin-block-start: 0.5rem;
+    margin-inline-start: auto;
+    justify-content: flex-end;
     color: color-mix(in srgb, var(--color-success) 78%, var(--color-base-content));
     font-size: 0.8rem;
     line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: anywhere;
+    text-align: right;
   }
   .tracker-goal-fields {
     display: grid;
@@ -2580,7 +2513,7 @@
   .tracker-goal-field {
     display: grid;
     min-width: 0;
-    gap: 0.35rem;
+    gap: 0.25rem;
     font-size: 0.78rem;
     font-weight: 700;
   }
@@ -2589,11 +2522,11 @@
     min-width: 0;
   }
   .tracker-goal-field input[readonly] {
-    color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
+    color: var(--archive-text-muted);
   }
   .tracker-goal-rate-note {
     margin: 0;
-    color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+    color: var(--archive-text-muted);
     font-size: 0.78rem;
     line-height: 1.4;
   }
@@ -2613,31 +2546,20 @@
   .tracker-goal-result-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem 1rem;
+    gap: 0.75rem 1rem;
     margin: 0;
   }
   .tracker-goal-result-grid div {
     min-width: 0;
   }
   .tracker-goal-result-grid dt {
-    color: color-mix(in srgb, var(--color-base-content) 65%, transparent);
+    color: var(--archive-text-muted);
     font-size: 0.72rem;
     font-weight: 700;
   }
   .tracker-goal-result-grid dd {
-    margin: 0.15rem 0 0;
+    margin: 0.25rem 0 0;
     overflow-wrap: anywhere;
-  }
-  .tracker-tool-actions .btn {
-    display: inline-flex;
-    min-height: 2.25rem;
-    height: 2.25rem;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding-block: 0.25rem;
-    padding-inline: 0.75rem;
-    line-height: 1.25;
   }
   @media (max-width: 47.999rem), (pointer: coarse) {
     .tracker-control-row {
@@ -2648,27 +2570,9 @@
       width: 100%;
       margin-inline-start: 0;
     }
-    .tracker-tool-action-region-has-message {
-      padding-block-end: 0;
-    }
     .tracker-tool-actions {
       width: 100%;
       margin-inline-start: 0;
-    }
-    .tracker-share-message {
-      position: static;
-      display: flex;
-      width: min(8.5rem, 100%);
-      min-width: min(8.5rem, 100%);
-      max-width: 100%;
-      margin-block-start: 0.5rem;
-      margin-inline-start: auto;
-      overflow-wrap: anywhere;
-      white-space: normal;
-    }
-    .tracker-tool-actions .btn {
-      min-height: 2.75rem;
-      height: auto;
     }
   }
   .tracker-goal-dialog-box {
@@ -2682,36 +2586,15 @@
     gap: 1.25rem;
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
-    background: var(--archive-surface-overlay, var(--archive-surface-raised));
-    color: var(--color-base-content);
+    background: var(--archive-surface-overlay);
+    color: var(--archive-text-strong);
     padding: 1.25rem;
-    box-shadow: 0 18px 48px color-mix(in srgb, var(--color-base-content) 22%, transparent);
   }
   .tracker-goal-dialog::backdrop {
     background: color-mix(in srgb, var(--color-base-content) 38%, transparent);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-  }
-  :global(html.dark) .tracker-goal-dialog-box {
-    background: color-mix(
-      in srgb,
-      var(--archive-surface-default) 86%,
-      var(--archive-surface-canvas)
-    );
-    box-shadow: 0 18px 48px color-mix(in srgb, var(--archive-surface-canvas) 72%, transparent);
   }
   :global(html.dark) .tracker-goal-dialog::backdrop {
     background: color-mix(in srgb, var(--archive-surface-canvas) 78%, transparent);
-  }
-  @media (prefers-reduced-transparency: reduce) {
-    .tracker-goal-dialog::backdrop {
-      background: color-mix(in srgb, var(--color-base-content) 52%, transparent);
-      -webkit-backdrop-filter: none;
-      backdrop-filter: none;
-    }
-    :global(html.dark) .tracker-goal-dialog::backdrop {
-      background: color-mix(in srgb, var(--archive-surface-canvas) 88%, transparent);
-    }
   }
   .tracker-goal-dialog-heading,
   .tracker-goal-dialog-actions {
@@ -2730,7 +2613,7 @@
   }
   .tracker-goal-dialog-heading p {
     margin-top: 0.25rem;
-    color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
+    color: var(--archive-text-muted);
     font-size: 0.8rem;
   }
   .tracker-goal-dialog-actions {
@@ -2738,7 +2621,7 @@
     justify-content: flex-end;
     padding-top: 1rem;
   }
-  @media (max-width: 48rem) {
+  @media (max-width: 47.999rem) {
     .tracker-goal-fields {
       grid-template-columns: 1fr;
     }
@@ -2755,15 +2638,11 @@
       transition-duration: 1ms !important;
     }
   }
-  .tracker-goal-dialog :is(button, input, select):focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
   .tracker-ladder-switcher {
     position: relative;
     display: inline-grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding: 0.2rem;
+    padding: 0.25rem;
     border: 1px solid var(--archive-border-subtle);
     border-radius: 9999px;
     background: var(--archive-surface-sunken);
@@ -2772,7 +2651,7 @@
   .tracker-ladder-indicator {
     position: absolute;
     z-index: -1;
-    inset: 0.2rem 50% 0.2rem 0.2rem;
+    inset: 0.25rem 50% 0.25rem 0.25rem;
     border-radius: 9999px;
     background: color-mix(in srgb, var(--color-primary) 16%, var(--archive-surface-raised));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 22%, transparent);
@@ -2792,13 +2671,9 @@
       transition-duration: 1ms;
     }
   }
-  .tracker-ladder-control .btn {
-    border: 0;
-    border-radius: 9999px;
-  }
   .tracker-control-label {
     display: block;
-    color: color-mix(in srgb, var(--color-base-content) 65%, transparent);
+    color: var(--archive-text-muted);
     font-size: 0.72rem;
     font-weight: 750;
     letter-spacing: 0.06em;
@@ -2828,12 +2703,12 @@
     width: 100%;
     max-height: 17rem;
     margin: 0;
-    padding: 0.35rem;
+    padding: 0.25rem;
     overflow-y: auto;
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
-    background: var(--archive-surface-raised);
-    box-shadow: 0 10px 24px color-mix(in srgb, var(--color-base-content) 14%, transparent);
+    background: var(--archive-surface-overlay);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-base-content) 10%, transparent);
     list-style: none;
   }
   .tracker-event-suggestions li {
@@ -2841,8 +2716,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    border-radius: calc(var(--radius-field) - 0.125rem);
-    padding: 0.6rem 0.75rem;
+    border-radius: var(--radius-field);
+    padding: 0.5rem 0.75rem;
     cursor: pointer;
     transition:
       background-color 160ms ease,
@@ -2870,7 +2745,7 @@
   .tracker-time-control {
     display: grid;
     min-width: 0;
-    gap: 0.35rem;
+    gap: 0.25rem;
   }
   .tracker-time-selects {
     display: grid;
@@ -2886,7 +2761,6 @@
     border-radius: var(--radius-box);
     background: var(--archive-surface-default);
     padding: clamp(1rem, 2.5vw, 1.5rem);
-    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-primary) 8%, transparent);
   }
   .tracker-ranking-skeleton {
     display: grid;
@@ -2901,10 +2775,15 @@
     display: grid;
     min-height: 28rem;
     place-items: center;
+    align-content: center;
+    gap: 1rem;
     margin: 0;
     padding: 2rem;
-    color: color-mix(in srgb, var(--color-base-content) 62%, transparent);
+    color: var(--archive-text-muted);
     text-align: center;
+  }
+  .tracker-ranking-result-message p {
+    margin: 0;
   }
   .tracker-skeleton-heading {
     display: grid;
@@ -2934,7 +2813,7 @@
   }
   .tracker-skeleton-card {
     display: grid;
-    gap: 0.55rem;
+    gap: 0.5rem;
     padding: 1rem;
     border: 1px solid var(--archive-border-subtle);
     border-radius: var(--radius-box);
@@ -2987,8 +2866,8 @@
   }
   .tracker-tier {
     display: block;
-    margin-top: 0.15rem;
-    color: color-mix(in srgb, var(--color-base-content) 52%, transparent);
+    margin-top: 0.25rem;
+    color: var(--archive-text-muted);
     font-size: 0.62rem;
     font-weight: 750;
     letter-spacing: 0.05em;
@@ -2998,32 +2877,21 @@
     overflow-wrap: anywhere;
   }
   .tracker-speed {
-    color: color-mix(in srgb, var(--color-base-content) 68%, transparent);
+    color: var(--archive-text-muted);
     font-variant-numeric: tabular-nums;
     font-size: 0.82rem;
-  }
-  .tracker-reward-badge {
-    display: inline-flex;
-    max-width: 12rem;
-    align-items: center;
-    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--archive-border-subtle));
-    border-radius: 9999px;
-    padding: 0.2rem 0.55rem;
-    color: color-mix(in srgb, var(--color-primary) 78%, var(--color-base-content));
-    font-size: 0.72rem;
-    line-height: 1.2;
   }
   .tracker-ranking-cards {
     display: none;
   }
   .tracker-ranking-tabs {
     display: flex;
-    gap: 0.35rem;
+    gap: 0.25rem;
     flex-wrap: nowrap;
   }
   .tracker-ranking-tabs-loading {
     display: flex;
-    gap: 0.35rem;
+    gap: 0.25rem;
   }
   .tracker-ranking-tabs-scroll {
     position: relative;
@@ -3051,24 +2919,6 @@
     min-width: 0;
     min-height: 0;
   }
-  .tracker-ranking-tabs .tracker-ladder-option {
-    min-height: 2.75rem;
-    border-radius: calc(var(--radius-box) - 0.2rem);
-  }
-  .tracker-ranking-tabs .tab.tab-active {
-    border-color: var(--color-primary);
-    background: var(--color-primary);
-    color: var(--color-primary-content);
-  }
-  .tracker-ranking-tabs .tab.tab-active:hover {
-    border-color: var(--color-primary);
-    background: var(--color-primary);
-    color: var(--color-primary-content);
-  }
-  .tracker-ranking-tabs .tab:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
   .tracker-current-tab {
     box-shadow: inset 0 -2px var(--color-secondary);
   }
@@ -3085,7 +2935,7 @@
       inset 0 -2px var(--color-primary-content);
   }
   .tracker-current-marker {
-    margin-inline-start: 0.35rem;
+    margin-inline-start: 0.25rem;
     color: var(--color-secondary);
     font-size: 0.65rem;
     font-weight: 800;
@@ -3098,7 +2948,7 @@
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.55rem;
+    gap: 0.5rem;
     color: var(--color-primary);
   }
   .tracker-ranking-card {
@@ -3121,7 +2971,7 @@
     display: flex;
     min-width: 0;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.5rem;
   }
   .tracker-ranking-loading {
     display: flex;
@@ -3132,7 +2982,7 @@
     top: 0.5rem;
     right: 0.75rem;
     min-height: 2rem;
-    padding: 0.65rem 0.85rem;
+    padding: 0.75rem 0.75rem;
     border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--archive-border-subtle));
     border-radius: 9999px;
     background: color-mix(in srgb, var(--archive-surface-sunken) 92%, transparent);
@@ -3167,7 +3017,7 @@
     outline: none;
   }
   .tracker-row-icon {
-    width: 1.25rem;
+    width: 2.5rem;
     color: var(--color-primary);
     text-align: center;
   }
@@ -3177,7 +3027,7 @@
     gap: 0.75rem;
   }
   dt {
-    color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
+    color: var(--archive-text-muted);
     font-size: 0.72rem;
     font-weight: 750;
   }
@@ -3203,7 +3053,7 @@
     width: 100%;
     height: 100%;
     grid-template-rows: 1.25rem minmax(0, 1fr) 0.75rem;
-    gap: 0.85rem;
+    gap: 0.75rem;
     padding: 0.25rem 0;
   }
   .tracker-graph-skeleton-heading,
@@ -3250,8 +3100,13 @@
     min-height: 0;
   }
   .tracker-graph-message {
-    color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
+    align-content: center;
+    gap: 1rem;
+    color: var(--archive-text-muted);
     text-align: center;
+  }
+  .tracker-graph-message p {
+    margin: 0;
   }
   @keyframes tracker-graph-fade-in {
     to {
@@ -3297,7 +3152,7 @@
       align-items: flex-start;
       flex-direction: column;
       flex-basis: auto;
-      gap: 0.55rem;
+      gap: 0.5rem;
       justify-content: flex-start;
       width: auto;
     }
@@ -3358,20 +3213,10 @@
       grid-template-columns: 1fr;
     }
   }
-  @media (min-width: 48rem) and (max-width: 63.999rem) {
-    .tracker-context {
-      align-items: start;
-    }
-    .tracker-status-panel {
-      justify-content: flex-start;
-      flex-wrap: wrap;
-      gap: 0.75rem 1.25rem;
-      min-height: 4.75rem;
-    }
-  }
-  @media (min-width: 64rem) {
+  @media (min-width: 48rem) {
     .tracker-context {
       grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
     }
     .tracker-status-panel {
       display: grid;
@@ -3405,15 +3250,8 @@
   .tracker-dialog .modal-box {
     width: min(92vw, 64rem);
     max-width: 64rem;
-    max-height: 0;
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(-0.5rem) scaleY(0.96);
-    transform-origin: top;
-    transition:
-      max-height 180ms ease-out,
-      opacity 140ms ease-out,
-      transform 180ms ease-out;
+    max-height: min(85vh, 64rem);
+    overflow-y: auto;
   }
   .tracker-identity-strip {
     position: sticky;
@@ -3425,9 +3263,9 @@
     min-height: 2.25rem;
     margin: 0 -0.75rem 0.75rem;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--color-base-content) 16%, transparent);
-    background: var(--color-base-100);
-    color: var(--color-base-content);
+    border-bottom: 1px solid var(--archive-border-default);
+    background: var(--archive-surface-overlay);
+    color: var(--archive-text-strong);
     font-size: 0.75rem;
     opacity: 0;
     pointer-events: none;
@@ -3450,28 +3288,7 @@
     opacity: 1;
     transform: translateY(0);
   }
-  .tracker-dialog {
-    inset: 0;
-    width: 100vw;
-    margin-inline: auto;
-    max-width: none;
-  }
-  .tracker-dialog:not([data-opening]):not([data-closing]) .modal-box {
-    max-height: min(85vh, 64rem);
-    overflow-y: auto;
-    opacity: 1;
-    transform: translateY(0) scaleY(1);
-  }
-  .tracker-dialog::backdrop {
-    transition: background-color 180ms ease-out;
-  }
-  .tracker-dialog[data-opening]::backdrop,
-  .tracker-dialog[data-closing]::backdrop {
-    background-color: transparent;
-  }
   @media (prefers-reduced-motion: reduce) {
-    .tracker-dialog .modal-box,
-    .tracker-dialog::backdrop,
     .tracker-identity-strip {
       transition-duration: 1ms;
     }

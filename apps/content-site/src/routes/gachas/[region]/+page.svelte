@@ -655,10 +655,16 @@
     </div>
   {:else if isInitialLoading}
     <div
+      role="status"
+      aria-busy="true"
+      aria-label={gachaListLoading}
       class="archive-results-field grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
     >
       {#each Array.from({ length: 12 }, (_, index) => index) as index (index)}
-        <div class="archive-card-skeleton flex flex-col gap-3 rounded-2xl border p-4">
+        <div
+          class="archive-card-skeleton flex flex-col gap-3 rounded-2xl border p-4"
+          aria-hidden="true"
+        >
           <div class="skeleton h-32 rounded-xl"></div>
           <div class="skeleton h-4 w-3/4 rounded"></div>
           <div class="skeleton h-4 w-1/2 rounded"></div>
@@ -726,10 +732,10 @@
   {/if}
 </section>
 
-<dialog bind:this={filterDialog} class="modal">
+<dialog bind:this={filterDialog} class="modal" aria-labelledby="list-filters-title">
   <div class="modal-box archive-filter-dialog max-w-xl border">
     <div class="flex items-center justify-between gap-3">
-      <h3 class="text-lg font-semibold">{listFiltersTitle}</h3>
+      <h3 id="list-filters-title" class="text-lg font-semibold">{listFiltersTitle}</h3>
       <form method="dialog">
         <button
           type="submit"

@@ -11,6 +11,7 @@
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
   import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
+  import { getTablistTargetIndex } from "$lib/a11y/tablist";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 
@@ -55,9 +56,33 @@
   const getTabClass = (tab: EventAssetTab): string =>
     `tab min-h-11 flex-1 rounded-xl border border-transparent font-semibold transition-[background-color,border-color,color] duration-150 ${
       resolvedTab === tab
-        ? "border-primary/45 bg-primary text-primary-content shadow-[0_4px_12px_color-mix(in_oklab,var(--color-primary)_22%,transparent)]"
-        : "text-[var(--archive-text-muted)] hover:border-(--archive-border-default) hover:bg-(--archive-surface-raised)"
+        ? "tab-active border-primary/45 bg-primary text-primary-content shadow-sm"
+        : "text-(--archive-text-muted) hover:border-(--archive-border-default) hover:bg-(--archive-surface-raised)"
     }`;
+  const visibleTabs = $derived<EventAssetTab[]>(
+    shouldShowCharacterTab(event.eventType)
+      ? ["banner", "title", "background", "characters"]
+      : ["banner", "title", "background"]
+  );
+  const getTabLabel = (tab: EventAssetTab): string =>
+    tab === "banner"
+      ? bannerLabel
+      : tab === "title"
+        ? titleLabel
+        : tab === "background"
+          ? backgroundLabel
+          : charactersLabel;
+  const uid = $props.id();
+  const tabId = (tab: EventAssetTab): string => `${uid}-tab-${tab}`;
+  const panelId = `${uid}-panel`;
+  const handleTabKeydown = (event: KeyboardEvent, index: number): void => {
+    const nextIndex = getTablistTargetIndex(event.key, index, visibleTabs.length);
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = visibleTabs[nextIndex]!;
+    activeTab = nextTab;
+    document.getElementById(tabId(nextTab))?.focus();
+  };
   const openPreview = (): void => {
     previewOpen = true;
   };
@@ -103,37 +128,36 @@
 >
   <div class="card-body items-center gap-4 p-3 sm:p-5 text-center">
     <div
+      role="tablist"
       class={`tabs tabs-box content-card-inset grid w-full grid-cols-2 border-(--archive-border-default) bg-(--archive-surface-sunken) p-1.5 ${
         shouldShowCharacterTab(event.eventType) ? "sm:grid-cols-4" : "sm:grid-cols-3"
       }`}
     >
-      <button type="button" class={getTabClass("banner")} onclick={() => (activeTab = "banner")}>
-        {bannerLabel}
-      </button>
-      <button type="button" class={getTabClass("title")} onclick={() => (activeTab = "title")}>
-        {titleLabel}
-      </button>
-      <button
-        type="button"
-        class={`${getTabClass("background")} ${
-          shouldShowCharacterTab(event.eventType) ? "" : "col-span-2 sm:col-span-1"
-        }`}
-        onclick={() => (activeTab = "background")}
-      >
-        {backgroundLabel}
-      </button>
-      {#if shouldShowCharacterTab(event.eventType)}
+      {#each visibleTabs as tab, index (tab)}
         <button
+          id={tabId(tab)}
           type="button"
-          class={getTabClass("characters")}
-          onclick={() => (activeTab = "characters")}
+          role="tab"
+          aria-selected={resolvedTab === tab}
+          aria-controls={panelId}
+          tabindex={resolvedTab === tab ? 0 : -1}
+          class={`${getTabClass(tab)} ${
+            tab === "background" && !shouldShowCharacterTab(event.eventType)
+              ? "col-span-2 sm:col-span-1"
+              : ""
+          }`}
+          onclick={() => (activeTab = tab)}
+          onkeydown={(event) => handleTabKeydown(event, index)}
         >
-          {charactersLabel}
+          {getTabLabel(tab)}
         </button>
-      {/if}
+      {/each}
     </div>
 
     <div
+      id={panelId}
+      role="tabpanel"
+      aria-labelledby={tabId(resolvedTab)}
       class={`content-card-inset w-full overflow-hidden border-(--archive-border-default) bg-(--archive-surface-overlay) ${DETAIL_MEDIA_RADIUS_CLASS} transition-[aspect-ratio] duration-300 ease-out ${
         isCompactTab(resolvedTab) ? "aspect-16/7" : "aspect-16/10"
       }`}
