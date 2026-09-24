@@ -165,7 +165,7 @@
   };
 </script>
 
-<div class="history-chart" role="img" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
+<div class="history-chart" role="group" aria-label={ariaLabel} onpointermove={captureHoveredPoint}>
   <span class="sr-only"
     >{scoreLabel} · {timeLabel}{selectedPoint ? ` · ${selectedPoint.score}` : ""}</span
   >
@@ -244,7 +244,7 @@
       <p class="history-chart-empty">{ariaLabel}</p>
     {/if}
   </div>
-  <div class="history-chart-legend" aria-label={nameChangeLegend}>
+  <div class="history-chart-legend">
     <span class="history-chart-legend-diamond" aria-hidden="true"></span>
     <span>{nameChangeLegend}</span>
   </div>
@@ -253,7 +253,7 @@
 <style>
   .history-chart {
     width: 100%;
-    color: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+    color: var(--archive-text-muted);
   }
 
   .history-chart-plot {
@@ -275,7 +275,7 @@
     height: 100%;
     place-content: center;
     justify-items: center;
-    gap: 0.45rem;
+    gap: 0.5rem;
     text-align: center;
   }
 
@@ -302,21 +302,21 @@
     display: grid;
     height: 100%;
     place-items: center;
-    color: color-mix(in srgb, var(--color-base-content) 58%, transparent);
+    color: var(--archive-text-muted);
   }
 
   .history-chart-legend {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.45rem;
+    gap: 0.5rem;
     width: 100%;
     margin-top: 0.5rem;
     padding: 0.25rem 0.5rem;
-    border: 1px solid color-mix(in srgb, var(--color-base-content) 14%, transparent);
-    border-radius: 0.5rem;
-    background: color-mix(in srgb, var(--color-base-100) 88%, transparent);
-    color: color-mix(in srgb, var(--color-base-content) 72%, transparent);
+    border: 1px solid var(--archive-border-default);
+    border-radius: var(--radius-field);
+    background: var(--archive-surface-default);
+    color: var(--archive-text-muted);
     font-size: 0.72rem;
     line-height: 1.2;
   }
@@ -349,7 +349,7 @@
   }
 
   .history-chart-name-change:focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--archive-focus-ring);
     outline-offset: 2px;
   }
 

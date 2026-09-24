@@ -103,7 +103,7 @@
     stroke-width: 1;
   }
   .goal-axis-label {
-    fill: color-mix(in srgb, var(--color-base-content) 62%, transparent);
+    fill: var(--archive-text-muted);
     font-size: 11px;
   }
   .goal-line {
@@ -138,12 +138,12 @@
   .goal-projection-legend span {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
   }
   .goal-legend-dot {
     width: 0.65rem;
     height: 0.65rem;
-    border-radius: 999px;
+    border-radius: 9999px;
     display: inline-block;
   }
   .goal-legend-user {
