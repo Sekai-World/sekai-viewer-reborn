@@ -1,9 +1,15 @@
 @import "tailwindcss";
+@import "@platform/ui-tokens/palettes.css";
 @import "@platform/ui-shell/inputs.css";
 /* Tailwind v4 in this workspace mis-resolves package-name plugins during build.
    Keep daisyUI behind a local proxy module so CSS does not depend on node_modules layout. */
 @source not "../daisyui.mjs";
 @plugin "../daisyui.mjs";
+
+body {
+  background: var(--archive-surface-canvas);
+  color: var(--archive-text-default);
+}
 
 .page-switch-shell {
   isolation: isolate;
@@ -18,7 +24,7 @@
 
     ::view-transition-old(account-site-main),
     ::view-transition-new(account-site-main) {
-      animation-duration: 220ms;
+      animation-duration: 180ms;
       animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
     }
 
