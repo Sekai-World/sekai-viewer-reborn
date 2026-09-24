@@ -35,7 +35,7 @@ export const getCharacterRankRewardDetails = (
 const rewardSignature = (rank: CharacterRankReference): string =>
   getCharacterRankRewardDetails(rank)
     .map((detail) => `${detail.resourceType ?? ""}:${detail.resourceQuantity ?? ""}`)
-    .sort()
+    .sort((left, right) => left.localeCompare(right))
     .join("|");
 
 const totalOrder = (resourceType: string): number => {
