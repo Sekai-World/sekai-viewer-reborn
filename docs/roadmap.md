@@ -16,12 +16,39 @@ The workspace is a monorepo of four deployable SvelteKit apps. Only
 `content-site` carries broad feature coverage today; the other three remain
 limited in scope and are **not** feature-complete.
 
-| App              | Status      | Notes                                                                                                                                                                                                                                               |
-| ---------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `content-site`   | Available   | Primary game-data browser (see below).                                                                                                                                                                                                              |
-| `tools-site`     | In progress | Current-event comparison workflow: SSR-safe tools-local i18n, URL-restored GET selection for two validated regions, localized unavailable/request-failed states, and no fabricated cross-app links without a public content-site base-URL contract. |
-| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated.                                                                                                                           |
-| `account-site`   | Exploratory | Scaffold only; no feature work started.                                                                                                                                                                                                             |
+| App              | Status      | Notes                                                                                                                                                                                                                                                                                                                           |
+| ---------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content-site`   | Available   | Primary game-data browser (see below).                                                                                                                                                                                                                                                                                          |
+| `tools-site`     | Available   | Event Tracker toolkit: event search, URL-backed selections and shareable links, rankings/history, World Link chapters, snapshot time travel, loading/error states, and a goal calculator. CSV/XLSX report generation remains in the codebase, but its UI controls are hidden while the export format is reconsidered (PR #334). |
+| `media-lab-site` | In progress | Media-lab shell and the first Live2D/StoryReader route slices are being built; real asset adapters remain contract-gated.                                                                                                                                                                                                       |
+| `account-site`   | Exploratory | Scaffold only; no feature work started.                                                                                                                                                                                                                                                                                         |
+
+## tools-site — Event Tracker
+
+### Available — Tracker Toolkit
+
+The Event Tracker toolkit delivered in [PR #324](https://github.com/Sekai-World/sekai-viewer-reborn/pull/324)
+includes searchable event selection, URL-backed event and snapshot state for
+shareable links, a constant-pace goal calculator, and CSV/XLSX report generation.
+The tracker also provides ranking and history views, World Link chapter rankings,
+opt-in snapshot time travel, and localized loading, unavailable, and request-failure
+states.
+
+The report-generation helpers remain available in
+`apps/tools-site/src/lib/tracker-export.ts`, with CSV generation covered by its
+library tests. However, the tracker page's export controls were removed in
+[PR #334](https://github.com/Sekai-World/sekai-viewer-reborn/pull/334) while the
+export format is reconsidered. CSV download/copy is therefore not currently
+available through the tracker UI.
+
+### Remaining Work
+
+The concrete outstanding tracker decision is whether and how to restore a
+user-facing export action after its output format is settled. No broader
+tools-site feature set is committed here; further follow-up remains scoped to
+[#307](https://github.com/Sekai-World/sekai-viewer-reborn/issues/307) and
+[#306](https://github.com/Sekai-World/sekai-viewer-reborn/issues/306), rather than
+being inferred as approved work.
 
 ## media-lab-site — Media Lab
 
