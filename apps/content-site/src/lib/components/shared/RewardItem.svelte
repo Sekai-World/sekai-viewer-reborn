@@ -8,6 +8,7 @@
     region,
     label,
     quantityLabel = null,
+    size = "md",
     class: className = ""
   }: {
     detail: Pick<
@@ -19,6 +20,8 @@
     label: string;
     /** Already formatted, for example "×100". */
     quantityLabel?: string | null;
+    /** `lg` suits standalone totals; `md` suits reward rows. */
+    size?: "md" | "lg";
     class?: string;
   } = $props();
 
@@ -53,12 +56,17 @@
     <img
       {src}
       alt=""
-      class="size-6 shrink-0 object-contain"
+      class="shrink-0 object-contain {size === 'lg' ? 'size-9' : 'size-6'}"
       loading="lazy"
       decoding="async"
       onerror={() => (failures += 1)}
     />
-    {#if quantityLabel}<span class="tabular-nums" aria-hidden="true">{quantityLabel}</span>{/if}
+    {#if quantityLabel}<span
+        class="tabular-nums {size === 'lg'
+          ? 'text-lg font-semibold text-(--archive-text-strong)'
+          : ''}"
+        aria-hidden="true">{quantityLabel}</span
+      >{/if}
   </span>
 {:else}
   <span class="inline-flex min-w-0 items-center gap-1.5 align-middle {className}">

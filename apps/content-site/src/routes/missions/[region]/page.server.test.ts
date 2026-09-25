@@ -244,10 +244,13 @@ describe("mission catalogue page load", () => {
     expect(result).not.toHaveProperty("characterOptions");
   });
 
-  it("pages the selected character's missions", async () => {
-    getMissionsByRegionList.mockImplementation(({ query }: MissionRequest) =>
-      Promise.resolve(createMissionResponse(query.family, query.page ?? 1, 20))
-    );
+  it("loads every mission of the selected character at once", async () => {
+    getMissionsByRegionList.mockResolvedValue({
+      data: {
+        items: Array.from({ length: 22 }, (_, index) => ({ id: 3000 + index + 1 })),
+        pagination: { page: 1, page_size: 100, total: 22, total_pages: 1, has_next: false }
+      }
+    });
 
     const result = (await runLoad(
       "jp",
@@ -256,17 +259,14 @@ describe("mission catalogue page load", () => {
     const catalogue = await resolveCatalogue(result);
 
     expect(result.query).toEqual({ family: "characterMissionV2s", character: 3 });
-    expect(catalogue).toMatchObject({
-      loadFailed: false,
-      pagination: { page: 1, pageSize: 24, hasNext: true, total: 20, totalPages: 3 }
-    });
-    expect(catalogue.items).toHaveLength(8);
+    expect(catalogue).toMatchObject({ loadFailed: false, pagination: { hasNext: false } });
+    expect(catalogue.items).toHaveLength(22);
     expect(getMissionsByRegionList.mock.calls.map(([request]) => request.query)).toEqual([
       {
         family: "characterMissionV2s",
         character_id: "3",
         page: 1,
-        page_size: 8,
+        page_size: 100,
         sort_by: "seq",
         sort_order: "asc"
       }

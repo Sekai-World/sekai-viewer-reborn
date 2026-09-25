@@ -86,10 +86,12 @@ describe("CharacterRankCard", () => {
 
     expect(await screen.findByText("5 ranks · Max power bonus +5%")).toBeTruthy();
     const totals = screen.getByLabelText("Rewards across all ranks");
-    expect(
-      within(totals).getByText("Crystals").closest("dt")?.nextElementSibling?.textContent?.trim()
-    ).toBe("600");
-    expect(within(totals).getByText("Stamps")).toBeTruthy();
+    const totalPairs = Array.from(totals.querySelectorAll("dt"), (term) => [
+      text(term),
+      text(term.nextElementSibling)
+    ]);
+    expect(totalPairs).toContainEqual(["Crystals", "Crystals ×600"]);
+    expect(totalPairs.map(([name]) => name)).toContain("Stamps");
 
     expect(screen.getByRole("heading", { name: "Milestone ranks" })).toBeTruthy();
     expect(screen.getByText("Rank 5")).toBeTruthy();

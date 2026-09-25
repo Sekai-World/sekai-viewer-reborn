@@ -2,6 +2,7 @@ import { normalizeRegion } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   createEmptyMissionListPage,
+  fetchCharacterMissions,
   fetchMissionListPage,
   fetchNormalMissions,
   fetchStoryMissions,
@@ -72,7 +73,8 @@ export const load: PageServerLoad = ({ params, url }) => {
 
   // Character Missions list nothing until a character is picked; the page fetches the
   // picker's character list itself, once per region.
-  if (query.family === "characterMissionV2s" && query.character === null) {
+  const character = query.character;
+  if (query.family === "characterMissionV2s" && character === null) {
     return {
       region,
       query,
@@ -82,16 +84,12 @@ export const load: PageServerLoad = ({ params, url }) => {
     };
   }
 
-  // Normal missions are few, so they load whole instead of paging.
-  const firstPage =
-    query.family === "normalMissions"
-      ? fetchNormalMissions(baseUrl, region).then((items) => ({
-          ...createEmptyMissionListPage(1),
-          items
-        }))
-      : fetchMissionListPage(baseUrl, region, [query.family], 1, {
-          characterId: query.character
-        });
+  // Normal missions and one character's missions are short, so they load whole instead of paging.
+  const firstPage = (
+    query.family === "characterMissionV2s" && character !== null
+      ? fetchCharacterMissions(baseUrl, region, character)
+      : fetchNormalMissions(baseUrl, region)
+  ).then((items) => ({ ...createEmptyMissionListPage(1), items }));
   const catalogue = firstPage
     .then((page) => ({ ...page, loadFailed: false as const }))
     .catch(() => ({ ...createEmptyMissionListPage(1), loadFailed: true as const }));

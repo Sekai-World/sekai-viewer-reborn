@@ -503,8 +503,15 @@ describe("Missions page", () => {
       )
     ).toBeTruthy();
     const totals = screen.getByLabelText("Rewards across all goals");
-    expect(within(totals).getByText("Gacha tickets")).toBeTruthy();
-    expect(within(totals).getByText("Crystals")).toBeTruthy();
+    expect(
+      Array.from(totals.querySelectorAll("dt"), (term) => [
+        term.textContent?.trim(),
+        term.nextElementSibling?.textContent?.replace(/\s+/g, " ").trim()
+      ])
+    ).toEqual([
+      ["Crystals", "Crystals ×100"],
+      ["Gacha tickets", "Gacha tickets ×3"]
+    ]);
     expect(screen.getByRole("heading", { name: "Milestone goals" })).toBeTruthy();
     expect(screen.getByText("Read 40 episodes")).toBeTruthy();
     expect(screen.queryByText("Read 10 episodes")).toBeNull();

@@ -43,3 +43,5 @@ Regenerate the sekai-master-api SDK for reward item names and gacha ticket asset
 Show reward items with their in-game icons and names in Story, Normal, and Character Rank rewards, and fix gacha ticket icons on event and virtual live pages. Open each Character mission as a card whose level goals and EXP or EX rewards appear in a dialog, on both the Missions page and Character pages. Keep the catalogue loading text for screen readers only.
 
 Show reward items as their game icon and quantity, naming each item in a tooltip and accessible label, with text when an icon is missing.
+
+Load every mission of the chosen character at once, and show ladder reward totals as icon and quantity.

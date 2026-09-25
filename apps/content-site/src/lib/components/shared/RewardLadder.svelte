@@ -86,11 +86,15 @@
       <div
         class="content-card-inset grid gap-1 rounded-xl border border-(--archive-border-subtle) p-3"
       >
-        <dt class="text-xs text-(--archive-text-muted)">
-          <RewardItem detail={total.detail} {region} label={itemLabel(total.detail)} />
-        </dt>
+        <dt class="sr-only">{itemLabel(total.detail)}</dt>
         <dd class="text-lg font-semibold text-(--archive-text-strong) tabular-nums">
-          {formatNumber(total.quantity)}
+          <RewardItem
+            detail={total.detail}
+            {region}
+            label={itemLabel(total.detail)}
+            quantityLabel={`×${formatNumber(total.quantity)}`}
+            size="lg"
+          />
         </dd>
       </div>
     {/each}
