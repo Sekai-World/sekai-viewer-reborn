@@ -25,6 +25,10 @@ export const summarizeCharacterRanks = (ranks: CharacterRankReference[]): Charac
   );
   return {
     ...summarizeRewardLadder(ranks, getCharacterRankRewardDetails),
+    // Honor ranks are the character's rank milestones; the other rewards repeat.
+    milestones: ranks.filter((rank) =>
+      getCharacterRankRewardDetails(rank).some((detail) => detail.resourceType === "honor")
+    ),
     rankCount: ranks.length,
     maxPowerBonusRate: bonusRates.length > 0 ? Math.max(...bonusRates) : null
   };

@@ -53,7 +53,7 @@ const mission = (overrides: Partial<Mission>): Mission => ({
 });
 
 describe("summarizeCharacterRanks", () => {
-  it("treats the most common reward set as standard and lists the other ranks as milestones", () => {
+  it("lists only the honor ranks as milestones and totals every reward", () => {
     const summary = summarizeCharacterRanks([
       rank(1, [], 0.1),
       rank(2, [["material", 2]], 0.2),
@@ -69,7 +69,7 @@ describe("summarizeCharacterRanks", () => {
 
     expect(summary.rankCount).toBe(7);
     expect(summary.maxPowerBonusRate).toBe(5);
-    expect(summary.milestones.map((item) => item.characterRank)).toEqual([2, 5, 7]);
+    expect(summary.milestones.map((item) => item.characterRank)).toEqual([5]);
     expect(
       summary.totals.map(({ resourceType, quantity }) => ({ resourceType, quantity }))
     ).toEqual([

@@ -69,6 +69,8 @@ export type CharacterRankReference = {
   characterRank: number | null;
   /** Largest of the rank's power bonus rates, in percent. */
   powerBonusRate: number | null;
+  /** Cumulative character rank EXP needed to reach this rank. */
+  totalExp?: number | null;
   rewards: MissionResourceBox[];
 };
 

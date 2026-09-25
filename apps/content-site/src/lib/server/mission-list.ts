@@ -328,6 +328,7 @@ const parseCharacterRankReference = (item: unknown): CharacterRankReference | nu
   return {
     characterRank: rank,
     powerBonusRate: bonusRates.length > 0 ? Math.max(...bonusRates) : null,
+    totalExp: getNumber(root.totalExp),
     rewards: getArray(root.rewardResourceBoxes).flatMap((reward) => {
       const parsed = parseResourceBox(reward);
       return parsed ? [parsed] : [];

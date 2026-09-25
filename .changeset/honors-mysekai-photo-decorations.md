@@ -53,3 +53,5 @@ Place regular honor level stars at their measured position (x 51 + 16i) in both 
 Enlarge reward item icons (48px in rows, 56px in totals) so detailed items stay legible beside small honor degrees.
 
 Centre trimmed honor frame textures instead of stretching them, and preview six Character missions on Character pages with an arrow on the See all link.
+
+List only honor ranks as Character Rank milestones and show the cumulative EXP each rank needs.

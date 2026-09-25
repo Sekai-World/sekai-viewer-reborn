@@ -17,6 +17,7 @@
     locale,
     getKey,
     getLabel,
+    getNote,
     getDetails,
     resourceLabel,
     honorDegree,
@@ -29,6 +30,8 @@
     locale: string;
     getKey: (step: T) => string | number;
     getLabel: (step: T) => string;
+    /** Optional second line under the label, such as the EXP a rank needs. */
+    getNote?: (step: T) => string | null;
     getDetails: (step: T) => MissionResourceBoxDetail[];
     resourceLabel: (resourceType: string | null) => string;
     /** Renders an honor reward as its small degree image when the honor is known. */
@@ -60,16 +63,20 @@
 </script>
 
 {#snippet stepRow(step: T, milestone: boolean)}
+  {@const note = getNote?.(step) ?? null}
   <li
     class="flex break-inside-avoid items-center justify-between gap-3 border-b border-(--archive-border-subtle) py-2 text-sm"
     data-milestone={milestone ? "true" : undefined}
   >
-    <span
-      class="shrink-0 tabular-nums {milestone
-        ? 'font-semibold text-(--archive-text-strong)'
-        : 'text-(--archive-text-muted)'}"
-    >
-      {getLabel(step)}
+    <span class="grid shrink-0 tabular-nums">
+      <span
+        class={milestone
+          ? "font-semibold text-(--archive-text-strong)"
+          : "text-(--archive-text-muted)"}
+      >
+        {getLabel(step)}
+      </span>
+      {#if note}<span class="text-xs text-(--archive-text-muted)">{note}</span>{/if}
     </span>
     <span
       class="flex min-w-0 flex-wrap justify-end gap-x-3 gap-y-1 text-right tabular-nums {milestone

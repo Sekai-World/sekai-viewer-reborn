@@ -164,6 +164,13 @@
           {locale}
           getKey={(rank) => rank.characterRank ?? 0}
           getLabel={(rank) => rankLabel(rank.characterRank)}
+          getNote={(rank) =>
+            rank.totalExp === null || rank.totalExp === undefined
+              ? null
+              : t("characterRankTotalExp", "{count} EXP total").replace(
+                  "{count}",
+                  formatNumber(rank.totalExp)
+                )}
           getDetails={getCharacterRankRewardDetails}
           {resourceLabel}
           honorDegree={honorDegreeOf(result.honors)}

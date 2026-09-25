@@ -74,7 +74,10 @@ describe("CharacterRankCard", () => {
       ["jewel", 300]
     ]),
     rank(8, [["stamp", 1]], 5)
-  ];
+  ].map((item) => ({
+    ...item,
+    totalExp: [0, 1, 2, 7, 18][[1, 2, 3, 5, 8].indexOf(item.characterRank!)]
+  }));
 
   it("summarizes totals and shows milestone ranks until every rank is requested", async () => {
     render(CharacterRankCard, {
@@ -100,7 +103,9 @@ describe("CharacterRankCard", () => {
       "Honor ×1",
       "Crystals ×300"
     ]);
-    expect(screen.getByText("Rank 8")).toBeTruthy();
+    // Only honor ranks are milestones; the EXP a rank needs sits under its label.
+    expect(text(screen.getByText("Rank 5").parentElement)).toBe("Rank 5 7 EXP total");
+    expect(screen.queryByText("Rank 8")).toBeNull();
     expect(screen.queryByText("Rank 1")).toBeNull();
 
     const milestoneList = screen.getByText("Rank 5").closest("ul")!;
@@ -112,6 +117,8 @@ describe("CharacterRankCard", () => {
     expect(screen.getByRole("heading", { name: "All ranks" })).toBeTruthy();
     expect(screen.getByText("Rank 1").closest("ul")!.classList).toContain("columns-[17rem]");
     expect(screen.getByText("Rank 1").closest("li")!.hasAttribute("data-milestone")).toBe(false);
+    expect(screen.getByText("Rank 8").closest("li")!.hasAttribute("data-milestone")).toBe(false);
+    expect(text(screen.getByText("Rank 8").parentElement)).toBe("Rank 8 18 EXP total");
     expect(screen.getByText("Rank 5").closest("li")!.getAttribute("data-milestone")).toBe("true");
     expect(
       screen
