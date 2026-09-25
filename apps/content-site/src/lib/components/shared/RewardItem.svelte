@@ -56,7 +56,7 @@
     <img
       {src}
       alt=""
-      class="shrink-0 object-contain {size === 'lg' ? 'size-9' : 'size-6'}"
+      class="shrink-0 object-contain {size === 'lg' ? 'size-14' : 'size-12'}"
       loading="lazy"
       decoding="async"
       onerror={() => (failures += 1)}

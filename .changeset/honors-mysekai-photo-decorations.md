@@ -49,3 +49,5 @@ Load every mission of the chosen character at once, and show ladder reward total
 Center reward ladder rows vertically, and show Character Rank honor rewards as their small honor degree at the granted level.
 
 Place regular honor level stars at their measured position (x 51 + 16i) in both main and sub degrees.
+
+Enlarge reward item icons (48px in rows, 56px in totals) so detailed items stay legible beside small honor degrees.
