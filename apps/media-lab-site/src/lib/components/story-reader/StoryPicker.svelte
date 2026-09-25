@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
+  import AssetImage from "@platform/ui-shell/asset-image";
   import { browser } from "$app/environment";
   import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
   import { goto } from "$app/navigation";
@@ -927,7 +928,13 @@
 
     <label class="input input-bordered flex min-h-11 items-center gap-2">
       <Icon icon="mdi:magnify" class="size-4 text-base-content/50" aria-hidden="true" />
-      <input type="search" class="grow" placeholder={labels.search} bind:value={query} />
+      <input
+        type="search"
+        class="grow"
+        placeholder={labels.search}
+        aria-label={labels.search}
+        bind:value={query}
+      />
     </label>
 
     {#if storyType === "event" && selectedEventId !== null}
@@ -972,10 +979,10 @@
         {:else if selectedEventEpisodes.length === 0}
           <p class="text-sm text-base-content/60" role="status">{labels.empty}</p>
         {:else}
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {#each selectedEventEpisodes as episode (episode.storyId)}
               <a
-                class="group overflow-hidden rounded-lg border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                class="group overflow-hidden rounded-lg border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                 href={storyHref(episode.storyId, "text")}
                 onclick={(event) => openStory(event, episode.storyId)}
               >
@@ -1099,11 +1106,11 @@
 
       {#if events.length > 0}
         <div class="relative">
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {#each events as event (event.eventId)}
               <button
                 type="button"
-                class="group overflow-hidden rounded-lg border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                class="group overflow-hidden rounded-lg border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                 onclick={() => openEvent(event)}
               >
                 {#if event.bannerUrl}
@@ -1258,7 +1265,7 @@
             {#each cards as card (card.cardId)}
               <button
                 type="button"
-                class="group flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                class="group flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                 onclick={() => openCardEpisodes(card)}
               >
                 <!-- The picker pages 12 tiles at a time, so eager loading is
@@ -1547,10 +1554,10 @@
             {#if group.outline}
               <p class="text-sm/6 text-base-content/70">{group.outline}</p>
             {/if}
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {#each group.episodes as episode (episode.storyId)}
                 <a
-                  class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                  class="group overflow-hidden rounded-xl border border-base-content/10 bg-base-100 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                   href={storyHref(episode.storyId, "text")}
                   onclick={(event) => openStory(event, episode.storyId)}
                 >
@@ -1580,7 +1587,7 @@
         {#each filteredUnits as unit (unit.unit)}
           <button
             type="button"
-            class="group flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-base-content/10 bg-base-200/40 px-4 py-6 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+            class="group flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-base-content/10 bg-base-200/40 px-4 py-6 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
             onclick={() => (selectedUnit = unit.unit)}
           >
             <img
@@ -1604,7 +1611,7 @@
       <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {#each filteredCharacters as character (character.characterId)}
           <a
-            class="group flex flex-col items-center gap-2 rounded-xl border border-base-content/10 bg-base-200/40 px-3 py-4 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+            class="group flex flex-col items-center gap-2 rounded-xl border border-base-content/10 bg-base-200/40 px-3 py-4 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
             href={storyHref(character.storyId, "text")}
             onclick={(event) => openStory(event, character.storyId)}
           >
@@ -1742,13 +1749,11 @@
           </div>
         </div>
       {:else}
-        <div
-          class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6"
-        >
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {#each filteredAreas as area (area.areaId)}
             <button
               type="button"
-              class="group flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-base-content/10 bg-base-200/40 p-3 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+              class="group flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-base-content/10 bg-base-200/40 p-3 outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
               onclick={() => (selectedAreaId = area.areaId)}
             >
               <div
@@ -1760,14 +1765,12 @@
                   aria-hidden="true"
                 />
                 {#if area.thumbnailUrl}
-                  <img
+                  <AssetImage
                     src={area.thumbnailUrl}
                     alt=""
-                    loading="lazy"
-                    class="absolute inset-0 size-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
-                    onerror={(event) => {
-                      (event.currentTarget as HTMLImageElement).style.display = "none";
-                    }}
+                    loadMode="visible"
+                    buttonClass="absolute inset-0"
+                    imageClass="absolute inset-0 size-full object-cover transition-[filter] duration-180 ease-out group-hover:brightness-105"
                   />
                 {/if}
               </div>

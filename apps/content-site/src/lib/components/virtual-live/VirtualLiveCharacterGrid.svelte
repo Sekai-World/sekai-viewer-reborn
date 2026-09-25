@@ -38,7 +38,7 @@
     {#if enriched && character.gameCharacterId}
       <a
         href={`/character/${region}/${character.gameCharacterId}`}
-        class="rounded-full transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        class="rounded-full transition-transform duration-200 hover-lift focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         aria-label={label}
         title={label}
       >

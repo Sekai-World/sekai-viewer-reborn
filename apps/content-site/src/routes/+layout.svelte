@@ -948,7 +948,7 @@
         <button
           bind:this={desktopSettingsButton}
           type="button"
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
+          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={settingsLabel}
           aria-haspopup="dialog"
           aria-expanded={isDesktopSettingsMenuOpen}
@@ -984,7 +984,7 @@
         <button
           bind:this={desktopThemeButton}
           type="button"
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100"
+          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={switchThemeAriaLabel}
           aria-haspopup="true"
           aria-expanded={isDesktopThemeMenuOpen}
@@ -1060,7 +1060,7 @@
         <button
           bind:this={localeButton}
           type="button"
-          class="btn btn-circle btn-sm btn-outline border-base-content/20 bg-base-100/65 shadow-sm hover:bg-base-100 disabled:opacity-75"
+          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100 disabled:opacity-75"
           aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
           aria-haspopup="true"
           aria-expanded={isLocaleMenuOpen}
@@ -1259,7 +1259,7 @@
 {#if showBackToTop}
   <button
     type="button"
-    class="content-site-back-to-top fixed right-5 z-30 inline-flex size-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer"
+    class="content-site-back-to-top fixed right-5 z-30 inline-flex size-12 items-center justify-center rounded-full bg-primary text-primary-content shadow-lg transition-[transform,opacity,box-shadow] duration-150 ease-out hover-lift hover:shadow-xl cursor-pointer"
     aria-label={backToTopLabel}
     title={backToTopLabel}
     onclick={scrollToTop}

@@ -111,6 +111,7 @@
         seVolume: translate("storyReader.player.controls.seVolume"),
         loading: translate("storyReader.player.loading.label"),
         loadFailed: translate("storyReader.player.loading.failed"),
+        retry: translate("storyReader.player.loading.retry"),
         warnings: translate("storyReader.player.warnings"),
         phaseAssets: translate("storyReader.player.loading.phase.assets"),
         phaseModels: translate("storyReader.player.loading.phase.models"),

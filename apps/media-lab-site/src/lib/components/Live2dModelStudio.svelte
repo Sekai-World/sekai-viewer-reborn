@@ -296,7 +296,7 @@
       </div>
     </div>
 
-    <div class="grid gap-4 xl:grid-cols-2 xl:items-end">
+    <div class="grid gap-4 lg:grid-cols-2 lg:items-end">
       <div class="flex min-w-0 items-end gap-2" onfocusout={handleMotionFocusOut}>
         <div class="relative min-w-0 flex-1">
           <label class="flex min-w-0 flex-col gap-1.5" for={`${uid}-motion`}>
@@ -329,7 +329,7 @@
           {#if controlsEnabled && selectedMotion !== ""}
             <button
               type="button"
-              class="btn btn-circle absolute right-0 bottom-0 size-8 min-h-8 border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="btn btn-circle absolute right-0 bottom-0 size-8 min-h-8 touch-target border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               aria-label={`${labels.motion} ${labels.reset}`}
               title={`${labels.motion} ${labels.reset}`}
               onpointerdown={preventOptionFocus}
@@ -341,7 +341,7 @@
           {#if motionOpen && filteredMotions.length > 0}
             <ul
               id={`${uid}-motion-options`}
-              class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-base-content/10 bg-base-100 p-1 shadow-lg"
+              class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-base-content/10 bg-(--archive-surface-overlay) p-1 shadow-md"
               role="listbox"
               aria-label={labels.motion}
             >
@@ -408,7 +408,7 @@
           {#if controlsEnabled && selectedExpression !== ""}
             <button
               type="button"
-              class="btn btn-circle absolute right-0 bottom-0 size-8 min-h-8 border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="btn btn-circle absolute right-0 bottom-0 size-8 min-h-8 touch-target border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               aria-label={`${labels.expression} ${labels.reset}`}
               title={`${labels.expression} ${labels.reset}`}
               onpointerdown={preventOptionFocus}
@@ -420,7 +420,7 @@
           {#if expressionOpen && filteredExpressions.length > 0}
             <ul
               id={`${uid}-expression-options`}
-              class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-base-content/10 bg-base-100 p-1 shadow-lg"
+              class="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-base-content/10 bg-(--archive-surface-overlay) p-1 shadow-md"
               role="listbox"
               aria-label={labels.expression}
             >

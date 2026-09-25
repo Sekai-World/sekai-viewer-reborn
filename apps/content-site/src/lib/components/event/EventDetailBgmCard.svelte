@@ -52,9 +52,7 @@
     `${event.id}-${region}-event-bgm.${format}`;
 </script>
 
-<article
-  class="card content-card-shell overflow-hidden shadow-[0_10px_28px_color-mix(in_oklab,var(--color-base-content)_5%,transparent)]"
->
+<article class="card content-card-shell overflow-hidden shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
     <p
       class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] opacity-60"

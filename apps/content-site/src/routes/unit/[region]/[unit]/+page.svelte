@@ -168,7 +168,7 @@
                   {@const name = formatUnitMemberName(member)}
                   <a
                     href={memberHref(member)}
-                    class="group content-card-inset flex flex-col items-center gap-2 rounded-xl p-2 text-center outline-none transition-[background-color,border-color,transform] duration-180 ease-out hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:p-3"
+                    class="group content-card-inset flex flex-col items-center gap-2 rounded-xl p-2 text-center outline-none transition-[background-color,border-color,transform] duration-180 ease-out hover-lift hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:p-3"
                   >
                     <CharacterAvatar
                       src={getLocalCharacterThumbnailAssetURL(member.gameCharacterId)}

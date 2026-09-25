@@ -191,7 +191,7 @@
                 accentColor={character.unitRecord?.colorCode}
                 decorative
                 variant="default"
-                class="size-28! border-4! bg-white shadow-lg sm:size-32!"
+                class="size-28! border-4! bg-base-100 shadow-lg sm:size-32!"
                 imageClass="size-full object-contain"
               />
               <div>
@@ -238,7 +238,7 @@
                     href={unitHref ?? undefined}
                     class={`content-card-inset block rounded-xl p-3 sm:px-4 outline-none transition-[background-color,border-color,transform] duration-180 ease-out ${
                       unitHref
-                        ? "group/character-unit-row hover:-translate-y-0.5 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        ? "group/character-unit-row hover-lift hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                         : ""
                     }`}
                     aria-label={unitHref ? row[1] : undefined}
@@ -329,7 +329,7 @@
                     {#each latestRelatedCards(character.relatedCards) as card (card.id)}
                       <a
                         href={resolve("/card/[region]/[id]", { region: data.region, id: card.id })}
-                        class="content-card-inset group flex h-full flex-col gap-2 rounded-xl p-2 outline-none transition-[transform,background-color] duration-150 hover:-translate-y-0.5 hover:bg-base-200/80 focus-visible:ring-2 focus-visible:ring-primary/60"
+                        class="content-card-inset group flex h-full flex-col gap-2 rounded-xl p-2 outline-none transition-[transform,background-color] duration-150 hover-lift hover:bg-base-200/80 focus-visible:ring-2 focus-visible:ring-primary/60"
                         aria-label={card.prefix ?? `#${card.id}`}
                       >
                         <CardThumbnail
