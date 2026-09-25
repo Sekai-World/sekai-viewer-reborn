@@ -63,5 +63,6 @@
   "characterMissionExp": "EXP +{count}",
   "characterMissionMaterial": "Material",
   "characterMissionReward": "Reward",
-  "characterMissionUnavailable": "Level goals are unavailable in this region."
+  "characterMissionUnavailable": "Level goals are unavailable in this region.",
+  "characterRankHonorLevel": "{name} Lv.{level}"
 }

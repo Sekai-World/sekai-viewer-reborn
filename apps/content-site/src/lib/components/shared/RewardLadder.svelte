@@ -1,4 +1,9 @@
 <script lang="ts" generics="T">
+  import {
+    HonorDegree,
+    type HonorDegreeAssetResolver,
+    type HonorDegreeInput
+  } from "@platform/ui-shell";
   import RewardItem from "$lib/components/shared/RewardItem.svelte";
   import type { MissionResourceBoxDetail } from "$lib/domain/mission";
   import type { SupportedRegion } from "$lib/domain/regions";
@@ -14,6 +19,7 @@
     getLabel,
     getDetails,
     resourceLabel,
+    honorDegree,
     labels
   }: {
     steps: T[];
@@ -25,6 +31,12 @@
     getLabel: (step: T) => string;
     getDetails: (step: T) => MissionResourceBoxDetail[];
     resourceLabel: (resourceType: string | null) => string;
+    /** Renders an honor reward as its small degree image when the honor is known. */
+    honorDegree?: (detail: MissionResourceBoxDetail) => {
+      honor: HonorDegreeInput;
+      resolveAsset: HonorDegreeAssetResolver;
+      label: string;
+    } | null;
     labels: {
       totals: string;
       milestones: string;
@@ -49,7 +61,7 @@
 
 {#snippet stepRow(step: T, milestone: boolean)}
   <li
-    class="flex break-inside-avoid items-baseline justify-between gap-3 border-b border-(--archive-border-subtle) py-2 text-sm"
+    class="flex break-inside-avoid items-center justify-between gap-3 border-b border-(--archive-border-subtle) py-2 text-sm"
     data-milestone={milestone ? "true" : undefined}
   >
     <span
@@ -65,14 +77,26 @@
         : 'text-(--archive-text-muted)'}"
     >
       {#each getDetails(step) as detail, index (index)}
-        <RewardItem
-          {detail}
-          {region}
-          label={itemLabel(detail)}
-          quantityLabel={detail.resourceQuantity === null
-            ? null
-            : `×${formatNumber(detail.resourceQuantity)}`}
-        />
+        {@const degree = honorDegree?.(detail) ?? null}
+        {#if degree}
+          <HonorDegree
+            honor={degree.honor}
+            resolveAsset={degree.resolveAsset}
+            slot="sub1"
+            size="S"
+            label={degree.label}
+            class="shrink-0"
+          />
+        {:else}
+          <RewardItem
+            {detail}
+            {region}
+            label={itemLabel(detail)}
+            quantityLabel={detail.resourceQuantity === null
+              ? null
+              : `×${formatNumber(detail.resourceQuantity)}`}
+          />
+        {/if}
       {:else}
         {labels.noRewards}
       {/each}

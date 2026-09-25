@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   aggregateGameCharacterUnitsByRegion: vi.fn(),
   fetchCharacterRankReferences: vi.fn(),
   fetchCharacterMissions: vi.fn(),
+  fetchHonorsByIds: vi.fn(),
   fetchUnitProfiles: vi.fn(),
   getUnitName: vi.fn(),
   toUnitProfileMap: vi.fn()
@@ -46,6 +47,7 @@ vi.mock("$lib/server/mission-list", () => ({
   fetchCharacterRankReferences: mocks.fetchCharacterRankReferences,
   fetchCharacterMissions: mocks.fetchCharacterMissions
 }));
+vi.mock("$lib/server/honor-list", () => ({ fetchHonorsByIds: mocks.fetchHonorsByIds }));
 vi.mock("$lib/server/unit-profiles", () => ({
   fetchUnitProfiles: mocks.fetchUnitProfiles,
   getUnitName: mocks.getUnitName,
@@ -58,7 +60,7 @@ type CharacterPageData = {
   region: string;
   characterId: string;
   payload: Promise<{ character: null; loadFailed: boolean }>;
-  characterRanks: Promise<{ items: unknown[]; loadFailed: boolean }>;
+  characterRanks: Promise<{ items: unknown[]; honors: unknown; loadFailed: boolean }>;
   characterMissions: Promise<{ items: unknown[]; loadFailed: boolean }>;
   availableRegions: Promise<string[]>;
 };
@@ -79,6 +81,9 @@ describe("character detail page load", () => {
     mocks.aggregateGameCharacterUnitsByRegion.mockResolvedValue({ loadFailed: true, data: null });
     mocks.fetchCharacterRankReferences.mockResolvedValue([]);
     mocks.fetchCharacterMissions.mockResolvedValue([]);
+    mocks.fetchHonorsByIds.mockImplementation((_baseUrl: string, _region: string, ids: number[]) =>
+      Promise.resolve(Object.fromEntries(ids.map((id) => [id, { id, name: "Ichika fan" }])))
+    );
     mocks.fetchUnitProfiles.mockResolvedValue([]);
     mocks.toUnitProfileMap.mockReturnValue(new Map());
     mocks.getUnitName.mockReturnValue(null);
@@ -92,7 +97,11 @@ describe("character detail page load", () => {
     expect(result.region).toBe("jp");
     expect(result.characterId).toBe("");
     await expect(result.payload).resolves.toEqual({ character: null, loadFailed: false });
-    await expect(result.characterRanks).resolves.toEqual({ items: [], loadFailed: false });
+    await expect(result.characterRanks).resolves.toEqual({
+      items: [],
+      honors: {},
+      loadFailed: false
+    });
     await expect(result.characterMissions).resolves.toEqual({ items: [], loadFailed: false });
     expect(mocks.fetchCharacterMissions).not.toHaveBeenCalled();
     await expect(result.availableRegions).resolves.toEqual(["jp"]);
@@ -118,6 +127,15 @@ describe("character detail page load", () => {
                 resourceQuantity: 100,
                 resourceType: "coin",
                 seq: 1
+              },
+              {
+                resourceBoxId: 10,
+                resourceBoxPurpose: null,
+                resourceId: 4,
+                resourceLevel: 2,
+                resourceQuantity: 1,
+                resourceType: "honor",
+                seq: 2
               }
             ]
           }
@@ -132,8 +150,10 @@ describe("character detail page load", () => {
     await expect(result.payload).resolves.toMatchObject({ loadFailed: false });
     await expect(result.characterRanks).resolves.toMatchObject({
       loadFailed: false,
-      items: [{ characterRank: 1 }]
+      items: [{ characterRank: 1 }],
+      honors: { 4: { id: 4, name: "Ichika fan" } }
     });
+    expect(mocks.fetchHonorsByIds).toHaveBeenCalledWith("https://master-api.test", "jp", [4]);
     expect(mocks.fetchCharacterRankReferences).toHaveBeenCalledWith(
       "https://master-api.test",
       "jp",
@@ -153,7 +173,11 @@ describe("character detail page load", () => {
       character: { id: 7 },
       loadFailed: false
     });
-    await expect(result.characterRanks).resolves.toEqual({ items: [], loadFailed: true });
+    await expect(result.characterRanks).resolves.toEqual({
+      items: [],
+      honors: {},
+      loadFailed: true
+    });
   });
 
   it("loads character missions independently from the character payload", async () => {
@@ -180,7 +204,7 @@ describe("character detail page load", () => {
     } as Parameters<typeof load>[0])) as CharacterPageData;
 
     await expect(result.payload).resolves.toMatchObject({ loadFailed: false });
-    await expect(result.characterRanks).resolves.toEqual({ items: [], loadFailed: false });
+    await expect(result.characterRanks).resolves.toMatchObject({ items: [], loadFailed: false });
     await expect(result.characterMissions).resolves.toEqual({ items: [], loadFailed: true });
   });
 });

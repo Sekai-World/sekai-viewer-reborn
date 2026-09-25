@@ -1,14 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { HonorGroup } from "$lib/domain/honor";
 
-const { getHonorGroupsByRegionList } = vi.hoisted(() => ({
-  getHonorGroupsByRegionList: vi.fn()
+const { getHonorGroupsByRegionList, getHonorsByRegionById } = vi.hoisted(() => ({
+  getHonorGroupsByRegionList: vi.fn(),
+  getHonorsByRegionById: vi.fn()
 }));
-vi.mock("@platform/sekai-master-api-sdk", () => ({ getHonorGroupsByRegionList }));
+vi.mock("@platform/sekai-master-api-sdk", () => ({
+  getHonorGroupsByRegionList,
+  getHonorsByRegionById
+}));
 
 import {
   createEmptyHonorListPage,
   fetchHonorListPage,
+  fetchHonorsByIds,
   parseHonorListQueryState,
   parseHonor,
   parseHonorGroupList
@@ -373,5 +378,41 @@ describe("honor catalogue adapter", () => {
     await expect(fetchHonorListPage("https://master-api.test", "jp", page)).rejects.toThrow(
       message
     );
+  });
+});
+
+describe("fetchHonorsByIds", () => {
+  it("loads each distinct honor once and leaves out the ones that fail", async () => {
+    getHonorsByRegionById.mockReset();
+    getHonorsByRegionById.mockImplementation(({ path }: { path: { id: number } }) =>
+      path.id === 9
+        ? Promise.resolve({ error: { status: 404 } })
+        : path.id === 8
+          ? Promise.reject(new Error("network down"))
+          : Promise.resolve({
+              data: {
+                id: path.id,
+                name: "一歌ファン",
+                honorRarity: "low",
+                assetbundleName: "honor_0001",
+                levels: [{ honorId: path.id, level: 1 }],
+                group: { id: 1, name: "一歌ファン", honorType: "character" }
+              }
+            })
+    );
+
+    const honors = await fetchHonorsByIds("https://master-api.test", "jp", [1, 1, 8, 9]);
+
+    expect(Object.keys(honors)).toEqual(["1"]);
+    expect(honors[1]).toMatchObject({
+      id: 1,
+      assetBundleName: "honor_0001",
+      group: { honorType: "character" }
+    });
+    expect(getHonorsByRegionById).toHaveBeenCalledTimes(3);
+    expect(getHonorsByRegionById).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test/api/v1",
+      path: { region: "jp", id: 1 }
+    });
   });
 });

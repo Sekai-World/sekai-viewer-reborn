@@ -45,3 +45,5 @@ Show reward items with their in-game icons and names in Story, Normal, and Chara
 Show reward items as their game icon and quantity, naming each item in a tooltip and accessible label, with text when an icon is missing.
 
 Load every mission of the chosen character at once, and show ladder reward totals as icon and quantity.
+
+Center reward ladder rows vertically, and show Character Rank honor rewards as their small honor degree at the granted level.
