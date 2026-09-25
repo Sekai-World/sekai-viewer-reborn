@@ -115,7 +115,7 @@ const data = (
     "mission.family.storyMissions": "Story missions",
     "mission.family.characterMissionV2s": "Character missions",
     "mission.family.normalMissions": "Normal missions",
-    "mission.browseFamily": "See all {family}",
+    "mission.browseFamily": "View all {family}",
     "mission.loading": "Loading missions...",
     "mission.loadingMore": "Loading more missions...",
     "mission.loadMore": "Load more missions",
@@ -365,7 +365,12 @@ describe("Missions page", () => {
       }
     ]);
 
-    expect(await screen.findByText("120 missions")).toBeTruthy();
+    expect(await screen.findByRole("button", { name: "View all Story missions" })).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "View all Story missions" }).textContent?.trim()
+      ).toBe("View all (120)")
+    );
     expect(screen.getByText("Story 1")).toBeTruthy();
     expect(screen.getByText("Story 2")).toBeTruthy();
     expect(screen.getByText("Story 3")).toBeTruthy();
@@ -385,7 +390,7 @@ describe("Missions page", () => {
     expect(invalidateAll).toHaveBeenCalledOnce();
 
     for (const family of ["Story missions", "Character missions", "Normal missions"]) {
-      expect(screen.getByRole("button", { name: `See all ${family}` })).toBeTruthy();
+      expect(screen.getByRole("button", { name: `View all ${family}` })).toBeTruthy();
     }
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Change character" })).toBeNull();

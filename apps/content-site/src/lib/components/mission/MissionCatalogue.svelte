@@ -3,6 +3,7 @@
   import type { MissionFamily, MissionResourceBoxDetail } from "$lib/domain/mission";
   import type { SupportedRegion } from "$lib/domain/regions";
   import RewardItem from "$lib/components/shared/RewardItem.svelte";
+  import ViewAllLink from "$lib/components/shared/ViewAllLink.svelte";
   import { missionFamilies } from "$lib/domain/mission";
   import CatalogueFrame from "./CatalogueFrame.svelte";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
@@ -27,7 +28,9 @@
     family: MissionFamily;
     label: string;
     countLabel: string;
+    /** Overview only: the header's "View all" control, and its accessible name. */
     browseLabel?: string;
+    browseAriaLabel?: string;
     /** Overview groups load independently; omitted means ready. */
     status?: "loading" | "ready" | "error";
     statusLabel?: string;
@@ -112,19 +115,29 @@
 </script>
 
 {#snippet heading(group: MissionCatalogueGroup)}
-  <h2 class="flex min-w-0 items-center gap-3 text-base font-semibold text-(--archive-text-strong)">
-    <Icon icon="mdi:playlist-check" class="size-5 shrink-0 text-primary" aria-hidden="true" />
-    <span class="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+  <div class="flex min-w-0 items-center justify-between gap-3">
+    <h2
+      class="flex min-w-0 items-center gap-3 text-base font-semibold text-(--archive-text-strong)"
+    >
+      <Icon icon="mdi:playlist-check" class="size-5 shrink-0 text-primary" aria-hidden="true" />
       <span class="wrap-anywhere">{group.label}</span>
-      {#if group.status === "loading"}
-        <span class="h-4 w-20 rounded bg-(--archive-surface-sunken)" aria-hidden="true"></span>
-      {:else}
-        <span class="text-sm font-normal wrap-anywhere text-(--archive-text-muted) tabular-nums">
-          {group.countLabel}
-        </span>
-      {/if}
-    </span>
-  </h2>
+    </h2>
+    {#if overview && group.browseLabel}
+      <!-- Stays usable while the family loads; the count appears once it is known. -->
+      <ViewAllLink
+        label={group.browseLabel}
+        ariaLabel={group.browseAriaLabel ?? null}
+        onclick={() => onFamilyChange(group.family)}
+      />
+    {:else if group.status === "loading"}
+      <span class="h-4 w-20 shrink-0 rounded bg-(--archive-surface-sunken)" aria-hidden="true"
+      ></span>
+    {:else}
+      <span class="shrink-0 text-sm wrap-anywhere text-(--archive-text-muted) tabular-nums">
+        {group.countLabel}
+      </span>
+    {/if}
+  </div>
 {/snippet}
 
 {#snippet members(group: MissionCatalogueGroup)}
@@ -260,13 +273,6 @@
                     {/each}
                   </ul>
                 {/if}
-                <button
-                  type="button"
-                  class="btn btn-link min-h-11 px-0"
-                  onclick={() => onFamilyChange(group.family)}
-                >
-                  {group.browseLabel}
-                </button>
               {:else if groupBody}
                 {@render groupBody(group)}
               {:else}

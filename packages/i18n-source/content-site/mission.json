@@ -29,7 +29,7 @@
   "mission.totalCountOne": "1 mission",
   "mission.totalCount": "{count} missions",
   "mission.totalUnavailable": "Total unavailable",
-  "mission.browseFamily": "See all {family}",
+  "mission.browseFamily": "View all {family}",
   "mission.storyUnnamed": "Story mission #{id}",
   "mission.unnamed": "Mission",
   "mission.requirement": "Target: {count}",
@@ -61,5 +61,7 @@
   "mission.levelCountOne": "1 level goal",
   "mission.levelExp": "EXP +{count}",
   "mission.characterExtra": "EX",
-  "mission.close": "Close"
+  "mission.close": "Close",
+  "mission.viewAll": "View all",
+  "mission.viewAllWithCount": "View all ({count})"
 }

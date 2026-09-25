@@ -118,13 +118,17 @@ describe("MissionCatalogue", () => {
         {
           ...groups[0],
           countLabel: "40 missions",
-          browseLabel: "See all Story missions",
+          browseLabel: "View all (40)",
+          browseAriaLabel: "View all Story missions",
           items: groups[0].items.slice(0, 1)
         }
       ]
     });
 
-    expect(screen.getByText("40 missions")).toBeTruthy();
+    const viewAll = screen.getByRole("button", { name: "View all Story missions" });
+    expect(viewAll.textContent?.trim()).toBe("View all (40)");
+    expect(viewAll.className).toContain("btn-ghost");
+    expect(screen.queryByText("40 missions")).toBeNull();
     expect(screen.getByText("Read a story")).toBeTruthy();
     expect(screen.queryByText("Target: 1")).toBeNull();
     expect(
@@ -137,7 +141,7 @@ describe("MissionCatalogue", () => {
         element.classList.contains("lg:grid-cols-3")
       )
     ).toBe(true);
-    await fireEvent.click(screen.getByRole("button", { name: "See all Story missions" }));
+    await fireEvent.click(viewAll);
     expect(onFamilyChange).toHaveBeenCalledWith("storyMissions");
   });
 
@@ -151,7 +155,8 @@ describe("MissionCatalogue", () => {
           status: "loading",
           statusLabel: "Loading missions...",
           countLabel: "",
-          browseLabel: "See all Story missions",
+          browseLabel: "View all",
+          browseAriaLabel: "View all Story missions",
           items: []
         }
       ]
@@ -162,7 +167,9 @@ describe("MissionCatalogue", () => {
     expect(section.getAttribute("aria-busy")).toBe("true");
     expect(screen.getByRole("status").textContent).toBe("Loading missions...");
     expect(section.querySelectorAll('[aria-hidden="true"] > div')).toHaveLength(3);
-    expect(screen.getByRole("button", { name: "See all Story missions" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "View all Story missions" }).textContent?.trim()
+    ).toBe("View all");
   });
 
   it("renders a family's custom body in place of the item list", () => {

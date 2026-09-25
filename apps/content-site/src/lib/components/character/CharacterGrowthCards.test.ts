@@ -200,9 +200,9 @@ describe("CharacterMissionsCard", () => {
     expect(cards).toHaveLength(2);
     expect(text(cards[1])).toBe("EX Clear … lives with Ichika");
     expect(screen.queryByText(/10 → 50,000/)).toBeNull();
-    expect(
-      screen.getByRole("link", { name: "See all character missions" }).getAttribute("href")
-    ).toBe("/missions/jp?family=characterMissionV2s&character=1");
+    expect(screen.getByRole("link", { name: "View all (2)" }).getAttribute("href")).toBe(
+      "/missions/jp?family=characterMissionV2s&character=1"
+    );
 
     await fireEvent.click(cards[1]!);
     const dialog = screen.getByRole("dialog", { hidden: true });
@@ -243,9 +243,11 @@ describe("CharacterMissionsCard", () => {
     expect(cards.map((card) => text(card))).toEqual(
       Array.from({ length: 6 }, (_, index) => `Mission ${index + 1} …`)
     );
-    const link = screen.getByRole("link", { name: "See all character missions" });
+    const link = screen.getByRole("link", { name: "View all (8)" });
     expect(link.getAttribute("href")).toBe("/missions/jp?family=characterMissionV2s&character=1");
-    expect(link.querySelector("svg")).toBeTruthy();
+    expect(link.className).toContain("btn-ghost");
+    // The link sits in the card header, like the Latest cards "View all".
+    expect(link.closest("div")?.querySelector("h2")).toBeTruthy();
   });
 
   it("shows a skeleton while loading and an error when loading fails", async () => {

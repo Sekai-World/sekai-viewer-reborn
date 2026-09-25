@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import CharacterMissionGrid from "$lib/components/mission/CharacterMissionGrid.svelte";
+  import ViewAllLink from "$lib/components/shared/ViewAllLink.svelte";
   import { countCharacterMissionGoals } from "$lib/domain/character-growth";
   import type { Mission } from "$lib/domain/mission";
   import type { SupportedRegion } from "$lib/domain/regions";
@@ -44,9 +45,13 @@
       </h2>
       {#await missions then result}
         {#if !result.loadFailed && result.items.length > 0}
-          <p class="text-xs text-(--archive-text-muted) tabular-nums">
-            {summaryLabel(result.items)}
-          </p>
+          <ViewAllLink
+            href={viewAllHref}
+            label={t("characterMissionsViewAll", "View all ({count})").replace(
+              "{count}",
+              formatNumber(result.items.length)
+            )}
+          />
         {/if}
       {/await}
     </div>
@@ -75,6 +80,9 @@
           {t("characterMissionsEmpty", "No character missions were found.")}
         </p>
       {:else}
+        <p class="-mt-2 text-xs text-(--archive-text-muted) tabular-nums">
+          {summaryLabel(result.items)}
+        </p>
         <CharacterMissionGrid
           missions={result.items.slice(0, PREVIEW_COUNT)}
           {region}
@@ -97,13 +105,6 @@
             resourceLabel
           }}
         />
-        <a
-          class="link inline-flex min-h-11 items-center gap-1 self-start text-sm link-primary"
-          href={viewAllHref}
-        >
-          {t("characterMissionsViewAll", "See all character missions")}
-          <Icon icon="mdi:arrow-right" class="size-4" aria-hidden="true" />
-        </a>
       {/if}
     {/await}
   </div>

@@ -9,6 +9,7 @@
   import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
   import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterMissionsCard from "$lib/components/character/CharacterMissionsCard.svelte";
+  import ViewAllLink from "$lib/components/shared/ViewAllLink.svelte";
   import CharacterRankCard from "$lib/components/character/CharacterRankCard.svelte";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
@@ -318,9 +319,10 @@
                       aria-hidden="true"
                     /><span>{t("characterLatestCardsTitle", "Latest cards")}</span>
                   </h2>
-                  <a class="btn btn-ghost btn-sm text-primary" href={cardsHref()}
-                    >{viewAllCardsLabel(character.relatedCardTotal)}</a
-                  >
+                  <ViewAllLink
+                    href={cardsHref()}
+                    label={viewAllCardsLabel(character.relatedCardTotal)}
+                  />
                 </div>
                 {#if latestRelatedCards(character.relatedCards).length > 0}
                   <div class="grid grid-cols-3 gap-2 md:grid-cols-4 xl:grid-cols-6">

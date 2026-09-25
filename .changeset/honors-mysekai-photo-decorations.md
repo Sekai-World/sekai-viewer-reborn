@@ -55,3 +55,5 @@ Enlarge reward item icons (48px in rows, 56px in totals) so detailed items stay 
 Centre trimmed honor frame textures instead of stretching them, and preview six Character missions on Character pages with an arrow on the See all link.
 
 List only honor ranks as Character Rank milestones and show the cumulative EXP each rank needs.
+
+Show "View all (N)" section-header links for Character missions and the Missions overview, matching the Character page Latest cards.

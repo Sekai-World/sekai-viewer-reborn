@@ -45,7 +45,7 @@
   "characterMissionGoalCountOne": "1 goal",
   "characterMissionExtra": "EX",
   "characterMissionUnnamed": "Mission",
-  "characterMissionsViewAll": "See all character missions",
+  "characterMissionsViewAll": "View all ({count})",
   "characterRankSummary": "{count} ranks",
   "characterRankMaxBonus": "Max power bonus +{bonus}%",
   "characterRankTotalsLabel": "Rewards across all ranks",

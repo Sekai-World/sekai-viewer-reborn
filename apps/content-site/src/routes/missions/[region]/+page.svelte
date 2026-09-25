@@ -174,7 +174,14 @@
         status: summary.status,
         statusLabel: summary.status === "error" ? t("mission.error") : t("mission.loading"),
         countLabel: familyCountLabel(summary),
-        browseLabel: t("mission.browseFamily").replace("{family}", t(`mission.family.${family}`)),
+        browseLabel:
+          summary.total === null
+            ? t("mission.viewAll")
+            : t("mission.viewAllWithCount").replace("{count}", formatNumber(summary.total)),
+        browseAriaLabel: t("mission.browseFamily").replace(
+          "{family}",
+          t(`mission.family.${family}`)
+        ),
         items: summary.items.slice(0, 3).map(toItem)
       };
     })
