@@ -1,11 +1,17 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import "$lib/icons/mdi";
 import type { CharacterRankReference, Mission } from "$lib/domain/mission";
 import CharacterMissionsCard from "./CharacterMissionsCard.svelte";
 import CharacterRankCard from "./CharacterRankCard.svelte";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
+
+const text = (element: Element | null | undefined): string =>
+  element?.textContent?.replace(/\s+/g, " ").trim() ?? "";
 
 const t = (_key: string, fallback: string): string => fallback;
 
@@ -73,20 +79,23 @@ describe("CharacterRankCard", () => {
   it("summarizes totals and shows milestone ranks until every rank is requested", async () => {
     render(CharacterRankCard, {
       ranks: Promise.resolve({ items: ranks, loadFailed: false }),
+      region: "jp",
       locale: "en",
       t
     });
 
     expect(await screen.findByText("5 ranks · Max power bonus +5%")).toBeTruthy();
     const totals = screen.getByLabelText("Rewards across all ranks");
-    expect(within(totals).getByText("Crystals").nextElementSibling?.textContent?.trim()).toBe(
-      "600"
-    );
+    expect(
+      within(totals).getByText("Crystals").closest("dt")?.nextElementSibling?.textContent?.trim()
+    ).toBe("600");
     expect(within(totals).getByText("Stamps")).toBeTruthy();
 
     expect(screen.getByRole("heading", { name: "Milestone ranks" })).toBeTruthy();
     expect(screen.getByText("Rank 5")).toBeTruthy();
-    expect(screen.getByText("Honor ×1 · Crystals ×300")).toBeTruthy();
+    expect(text(screen.getByText("Rank 5").closest("li")?.lastElementChild)).toBe(
+      "Honor ×1 Crystals ×300"
+    );
     expect(screen.getByText("Rank 8")).toBeTruthy();
     expect(screen.queryByText("Rank 1")).toBeNull();
 
@@ -110,6 +119,7 @@ describe("CharacterRankCard", () => {
   it("keeps the title while loading and reports failures", async () => {
     let resolveRanks!: (value: { items: CharacterRankReference[]; loadFailed: boolean }) => void;
     render(CharacterRankCard, {
+      region: "jp",
       ranks: new Promise<{ items: CharacterRankReference[]; loadFailed: boolean }>(
         (resolve) => (resolveRanks = resolve)
       ),
@@ -127,7 +137,39 @@ describe("CharacterRankCard", () => {
 });
 
 describe("CharacterMissionsCard", () => {
-  it("lists each mission with its target range, goal count, and EX marker", async () => {
+  it("shows each mission as a card and opens its level goals with rewards", async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const page = new URL(String(input), "http://localhost").searchParams.get("page");
+      return Promise.resolve(
+        new Response(
+          JSON.stringify(
+            page === "1"
+              ? {
+                  items: [
+                    { seq: 1, requirement: 10, exp: 1, quantity: 0 },
+                    { seq: 2, requirement: 20, exp: 2, quantity: 0 }
+                  ],
+                  pagination: { page: 1, hasNext: true }
+                }
+              : {
+                  items: [
+                    {
+                      seq: 3,
+                      requirement: 50,
+                      exp: 0,
+                      quantity: 100,
+                      reward: { resourceType: "material", resourceQuantity: 100 }
+                    }
+                  ],
+                  pagination: { page: 2, hasNext: false }
+                }
+          ),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
     render(CharacterMissionsCard, {
       missions: Promise.resolve({
         items: [
@@ -136,18 +178,39 @@ describe("CharacterMissionsCard", () => {
         ],
         loadFailed: false
       }),
+      region: "jp",
       locale: "en",
-      viewAllHref: "/missions/jp?family=characterMissionV2s",
+      viewAllHref: "/missions/jp?family=characterMissionV2s&character=1",
       t
     });
 
     expect(await screen.findByText("2 missions · 280 level goals")).toBeTruthy();
-    expect(screen.getAllByText("Clear … lives with Ichika")).toHaveLength(2);
-    expect(screen.getAllByText("10 → 50,000 · 140 goals")).toHaveLength(2);
-    expect(screen.getAllByText("EX")).toHaveLength(1);
+    const cards = screen.getAllByRole("button", { name: /Clear … lives with Ichika/ });
+    expect(cards).toHaveLength(2);
+    expect(text(cards[1])).toBe("EX Clear … lives with Ichika");
+    expect(screen.queryByText(/10 → 50,000/)).toBeNull();
     expect(
       screen.getByRole("link", { name: "See all character missions" }).getAttribute("href")
-    ).toBe("/missions/jp?family=characterMissionV2s");
+    ).toBe("/missions/jp?family=characterMissionV2s&character=1");
+
+    await fireEvent.click(cards[1]!);
+    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(within(dialog).getByRole("heading").textContent).toContain("Clear … lives with Ichika");
+    expect(within(dialog).getByText("140 goals")).toBeTruthy();
+    expect(await within(dialog).findByText("Level 3 · 50")).toBeTruthy();
+    expect(text(within(dialog).getByText("Level 1 · 10").closest("li"))).toBe(
+      "Level 1 · 10 EXP +1"
+    );
+    expect(text(within(dialog).getByText("Level 2 · 20").closest("li"))).toBe(
+      "Level 2 · 20 EXP +2"
+    );
+    expect(text(within(dialog).getByText("Level 3 · 50").closest("li"))).toBe(
+      "Level 3 · 50 Material ×100"
+    );
+    expect(fetchMock.mock.calls.map(([input]) => String(input))).toEqual([
+      "/missions/jp/parameter-groups/1101/levels?page=1",
+      "/missions/jp/parameter-groups/1101/levels?page=2"
+    ]);
   });
 
   it("shows a skeleton while loading and an error when loading fails", async () => {
@@ -156,8 +219,9 @@ describe("CharacterMissionsCard", () => {
       missions: new Promise<{ items: Mission[]; loadFailed: boolean }>(
         (resolve) => (resolveMissions = resolve)
       ),
+      region: "jp",
       locale: "en",
-      viewAllHref: "/missions/jp?family=characterMissionV2s",
+      viewAllHref: "/missions/jp?family=characterMissionV2s&character=1",
       t
     });
 

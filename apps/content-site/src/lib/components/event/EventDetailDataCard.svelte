@@ -6,6 +6,7 @@
   import {
     getCardThumbnailAssetURL,
     getCommonMaterialThumbnailURL,
+    getGachaTicketThumbnailURL,
     getMusicJacketAssetURL,
     getRemoteAssetEndpointURL,
     getVirtualLiveBannerAssetURL,
@@ -696,11 +697,11 @@
       );
     }
 
-    if (detail.resourceType === "gacha_ticket" && detail.resourceId) {
-      return getRemoteAssetEndpointURL(
-        `thumbnail/gacha_ticket/${detail.resourceId}.webp`,
-        region as AssetServer
-      );
+    // Ticket thumbnails are named by asset bundle, not by the numeric resourceId.
+    if (detail.resourceType === "gacha_ticket") {
+      return detail.resourceAssetbundleName
+        ? getGachaTicketThumbnailURL(detail.resourceAssetbundleName, region as AssetServer)
+        : null;
     }
 
     if (detail.resourceType === "boost_item" && detail.resourceId) {

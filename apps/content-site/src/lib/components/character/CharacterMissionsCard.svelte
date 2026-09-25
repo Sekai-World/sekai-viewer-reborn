@@ -1,20 +1,19 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import {
-    countCharacterMissionGoals,
-    formatCharacterMissionSentence,
-    summarizeCharacterMission,
-    type CharacterMissionSummary
-  } from "$lib/domain/character-growth";
+  import CharacterMissionGrid from "$lib/components/mission/CharacterMissionGrid.svelte";
+  import { countCharacterMissionGoals } from "$lib/domain/character-growth";
   import type { Mission } from "$lib/domain/mission";
+  import type { SupportedRegion } from "$lib/domain/regions";
 
   let {
     missions,
+    region,
     locale,
     viewAllHref,
     t
   }: {
     missions: Promise<{ items: Mission[]; loadFailed: boolean }>;
+    region: SupportedRegion;
     locale: string;
     viewAllHref: string;
     t: (key: string, fallback: string) => string;
@@ -25,26 +24,10 @@
     t("characterMissionsSummary", "{count} missions · {goals} level goals")
       .replace("{count}", formatNumber(items.length))
       .replace("{goals}", formatNumber(countCharacterMissionGoals(items)));
-  const targetLabel = (summary: CharacterMissionSummary): string | null => {
-    if (summary.lastTarget === null) return null;
-    if (summary.firstTarget === null || summary.firstTarget === summary.lastTarget) {
-      return formatNumber(summary.lastTarget);
-    }
-    return t("characterMissionTargetRange", "{first} → {last}")
-      .replace("{first}", formatNumber(summary.firstTarget))
-      .replace("{last}", formatNumber(summary.lastTarget));
-  };
-  const goalLabel = (summary: CharacterMissionSummary): string | null => {
-    if (summary.goalCount === null) return null;
-    return summary.goalCount === 1
-      ? t("characterMissionGoalCountOne", "1 goal")
-      : t("characterMissionGoalCount", "{count} goals").replace(
-          "{count}",
-          formatNumber(summary.goalCount)
-        );
-  };
-  const detailLabel = (summary: CharacterMissionSummary): string =>
-    [targetLabel(summary), goalLabel(summary)].filter(Boolean).join(" · ");
+  const resourceLabel = (resourceType: string | null): string =>
+    resourceType === "material"
+      ? t("characterMissionMaterial", "Material")
+      : t("characterMissionReward", "Reward");
 </script>
 
 <article class="card content-card-shell shadow-sm" aria-labelledby="character-missions-title">
@@ -90,30 +73,28 @@
           {t("characterMissionsEmpty", "No character missions were found.")}
         </p>
       {:else}
-        <ul class="grid gap-2 lg:grid-cols-2">
-          {#each result.items as mission (mission.id)}
-            {@const summary = summarizeCharacterMission(mission)}
-            <li
-              class="content-card-inset grid content-start gap-1 rounded-xl border border-(--archive-border-subtle) p-3"
-            >
-              <p class="text-sm wrap-anywhere text-(--archive-text-strong)">
-                {#if summary.isExtra}
-                  <span class="badge badge-outline badge-sm mr-1.5 align-middle">
-                    {t("characterMissionExtra", "EX")}
-                  </span>
-                {/if}
-                {formatCharacterMissionSentence(
-                  mission.sentence ?? t("characterMissionUnnamed", "Mission")
-                )}
-              </p>
-              {#if detailLabel(summary)}
-                <p class="text-xs text-(--archive-text-muted) tabular-nums">
-                  {detailLabel(summary)}
-                </p>
-              {/if}
-            </li>
-          {/each}
-        </ul>
+        <CharacterMissionGrid
+          missions={result.items}
+          {region}
+          {locale}
+          labels={{
+            extra: t("characterMissionExtra", "EX"),
+            unnamed: t("characterMissionUnnamed", "Mission"),
+            close: t("characterMissionClose", "Close"),
+            goalCount: t("characterMissionGoalCount", "{count} goals"),
+            goalCountOne: t("characterMissionGoalCountOne", "1 goal"),
+            loading: t("characterMissionLevelsLoading", "Loading level goals..."),
+            error: t("characterMissionLevelsError", "Level goals could not be loaded."),
+            unavailable: t(
+              "characterMissionUnavailable",
+              "Level goals are unavailable in this region."
+            ),
+            retry: t("characterMissionRetry", "Try again"),
+            level: t("characterMissionLevel", "Level {level} · {count}"),
+            exp: t("characterMissionExp", "EXP +{count}"),
+            resourceLabel
+          }}
+        />
         <a class="link link-primary self-start text-sm" href={viewAllHref}>
           {t("characterMissionsViewAll", "See all character missions")}
         </a>

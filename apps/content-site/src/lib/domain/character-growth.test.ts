@@ -70,7 +70,9 @@ describe("summarizeCharacterRanks", () => {
     expect(summary.rankCount).toBe(7);
     expect(summary.maxPowerBonusRate).toBe(5);
     expect(summary.milestones.map((item) => item.characterRank)).toEqual([2, 5, 7]);
-    expect(summary.totals).toEqual([
+    expect(
+      summary.totals.map(({ resourceType, quantity }) => ({ resourceType, quantity }))
+    ).toEqual([
       { resourceType: "jewel", quantity: 600 },
       { resourceType: "honor", quantity: 1 },
       { resourceType: "material", quantity: 2 },

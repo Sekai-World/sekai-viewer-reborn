@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { SupportedRegion } from "$lib/domain/regions";
   import Icon from "@iconify/svelte";
   import RewardLadder from "$lib/components/shared/RewardLadder.svelte";
   import {
@@ -10,10 +11,12 @@
 
   let {
     ranks,
+    region,
     locale,
     t
   }: {
     ranks: Promise<{ items: CharacterRankReference[]; loadFailed: boolean }>;
+    region: SupportedRegion;
     locale: string;
     t: (key: string, fallback: string) => string;
   } = $props();
@@ -119,6 +122,7 @@
           steps={result.items}
           {summary}
           idPrefix="character-rank"
+          {region}
           {locale}
           getKey={(rank) => rank.characterRank ?? 0}
           getLabel={(rank) => rankLabel(rank.characterRank)}

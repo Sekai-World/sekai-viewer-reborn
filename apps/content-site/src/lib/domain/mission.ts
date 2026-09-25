@@ -10,6 +10,10 @@ export type MissionResourceBoxDetail = {
   resourceQuantity: number | null;
   resourceType: string | null;
   seq: number | null;
+  /** Localized item name for gacha tickets, materials, skill practice tickets, and boost items. */
+  resourceName?: string | null;
+  /** Gacha tickets only; their icon path uses it. */
+  resourceAssetbundleName?: string | null;
 };
 
 export type MissionResourceBox = {

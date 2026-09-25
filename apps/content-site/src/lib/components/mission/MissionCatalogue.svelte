@@ -1,6 +1,8 @@
 <script lang="ts">
   import { type ComponentProps, type Snippet } from "svelte";
-  import type { MissionFamily } from "$lib/domain/mission";
+  import type { MissionFamily, MissionResourceBoxDetail } from "$lib/domain/mission";
+  import type { SupportedRegion } from "$lib/domain/regions";
+  import RewardItem from "$lib/components/shared/RewardItem.svelte";
   import { missionFamilies } from "$lib/domain/mission";
   import CatalogueFrame from "./CatalogueFrame.svelte";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
@@ -10,24 +12,16 @@
     key: string;
     sentence: string;
     requirementLabel?: string | null;
-    targetLevelsLabel?: string | null;
     targetUnavailableLabel?: string | null;
     character?: { id: number; name: string; imageSrc: string | null } | null;
-    rewardLabels?: string[];
-    milestones?: {
-      summary: { label: string; rewardLabel: string | null }[];
-      totalLabel: string;
-      expanded: boolean;
-      details: { label: string; rewardLabel: string | null }[];
-      loading: boolean;
-      error: string | null;
-      hasNext: boolean;
-      toggleLabel: string;
-      loadMoreLabel: string;
-      endLabel: string;
-      onToggle: () => void;
-      onLoadMore: () => void;
-    } | null;
+    rewards?: {
+      detail: Pick<
+        MissionResourceBoxDetail,
+        "resourceType" | "resourceId" | "resourceAssetbundleName"
+      >;
+      label: string;
+      quantityLabel: string | null;
+    }[];
   };
   export type MissionCatalogueGroup = {
     family: MissionFamily;
@@ -45,6 +39,7 @@
     loadingGroupCount = 3,
     overview = false,
     rewardsLabel,
+    region,
     familyLabel,
     selectedFamily = null,
     getFamilyLabel,
@@ -57,6 +52,7 @@
     onLoadMore,
     onRetryLoadMore,
     filters,
+    groupBody,
     content,
     ...frame
   }: Omit<
@@ -68,6 +64,7 @@
     loadingGroupCount?: number;
     overview?: boolean;
     rewardsLabel: string;
+    region: SupportedRegion;
     familyLabel: string;
     selectedFamily?: MissionFamily | null;
     getFamilyLabel: (family: MissionFamily | null) => string;
@@ -81,6 +78,8 @@
     onRetryLoadMore?: () => void;
     /** Extra controls under the family tabs, such as the Character Missions picker. */
     filters?: Snippet;
+    /** Replaces the default item list inside a family's section. */
+    groupBody?: Snippet<[MissionCatalogueGroup]>;
     /** Replaces the group list, for families rendered as a single custom view. */
     content?: Snippet;
   } = $props();
@@ -157,82 +156,23 @@
             >
               {item.requirementLabel}
             </p>{/if}
-          {#if item.targetLevelsLabel}<p
-              class="text-sm wrap-anywhere text-(--archive-text-muted) tabular-nums"
-            >
-              {item.targetLevelsLabel}
-            </p>{/if}
           {#if item.targetUnavailableLabel}<p class="text-sm wrap-anywhere text-warning">
               {item.targetUnavailableLabel}
             </p>{/if}
-          {#if item.milestones}
-            <section class="space-y-3 pt-1" aria-label={item.milestones.totalLabel}>
-              <p class="text-sm font-medium text-(--archive-text-strong)">
-                {item.milestones.totalLabel}
-              </p>
-              {#if item.milestones.expanded}
-                <div class="space-y-3" aria-live="polite">
-                  {#if item.milestones.loading}
-                    <p class="text-sm text-(--archive-text-muted)">
-                      {item.milestones.loadMoreLabel}
-                    </p>
-                  {:else if item.milestones.error}
-                    <p class="text-sm text-error">{item.milestones.error}</p>
-                  {:else}
-                    <ul class="space-y-2 text-sm">
-                      {#each item.milestones.details as level (level.label)}
-                        <li
-                          class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 tabular-nums"
-                        >
-                          <span class="text-(--archive-text-muted)">{level.label}</span>
-                          {#if level.rewardLabel}<span class="text-(--archive-text-muted)"
-                              >{level.rewardLabel}</span
-                            >{/if}
-                        </li>
-                      {/each}
-                    </ul>
-                    {#if item.milestones.hasNext}
-                      <button
-                        type="button"
-                        class="btn btn-ghost min-h-10 px-3"
-                        onclick={item.milestones.onLoadMore}>{item.milestones.loadMoreLabel}</button
-                      >
-                    {:else}
-                      <p class="text-sm text-(--archive-text-muted)">{item.milestones.endLabel}</p>
-                    {/if}
-                  {/if}
-                </div>
-              {:else}
-                <ul class="space-y-2 text-sm">
-                  {#each item.milestones.summary as level (level.label)}
-                    <li
-                      class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 tabular-nums"
-                    >
-                      <span class="text-(--archive-text-muted)">{level.label}</span>
-                      {#if level.rewardLabel}<span class="text-(--archive-text-muted)"
-                          >{level.rewardLabel}</span
-                        >{/if}
-                    </li>
-                  {/each}
-                </ul>
-              {/if}
-              <button
-                type="button"
-                class="btn btn-ghost min-h-10 px-3"
-                onclick={item.milestones.onToggle}
-                aria-expanded={item.milestones.expanded}
-              >
-                {item.milestones.toggleLabel}
-              </button>
-            </section>
-          {/if}
         </div>
-        {#if item.rewardLabels?.length}
+        {#if item.rewards?.length}
           <ul
             aria-label={rewardsLabel}
             class="min-w-0 space-y-1 text-sm wrap-anywhere text-(--archive-text-muted) tabular-nums"
           >
-            {#each item.rewardLabels as reward, index (index)}<li>{reward}</li>{/each}
+            {#each item.rewards as reward, index (index)}<li>
+                <RewardItem
+                  detail={reward.detail}
+                  {region}
+                  label={reward.label}
+                  quantityLabel={reward.quantityLabel}
+                />
+              </li>{/each}
           </ul>
         {/if}
       </li>
@@ -327,6 +267,8 @@
                 >
                   {group.browseLabel}
                 </button>
+              {:else if groupBody}
+                {@render groupBody(group)}
               {:else}
                 {@render members(group)}
               {/if}

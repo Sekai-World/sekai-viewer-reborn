@@ -1,4 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
+import { createRawSnippet } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import "$lib/icons/mdi";
 import MissionCatalogue, { type MissionCatalogueGroup } from "./MissionCatalogue.svelte";
@@ -15,13 +16,25 @@ const groups: MissionCatalogueGroup[] = [
         key: "story-1",
         sentence: "Read a story",
         requirementLabel: "Target: 1",
-        rewardLabels: ["Coins ×100"]
+        rewards: [
+          {
+            detail: { resourceType: "coin", resourceId: null },
+            label: "Coins",
+            quantityLabel: "×100"
+          }
+        ]
       },
       {
         key: "story-2",
         sentence: "Read a story",
         requirementLabel: "Target: 2",
-        rewardLabels: ["Coins ×200"]
+        rewards: [
+          {
+            detail: { resourceType: "coin", resourceId: null },
+            label: "Coins",
+            quantityLabel: "×200"
+          }
+        ]
       }
     ]
   },
@@ -46,6 +59,7 @@ const props = {
   groups,
   catalogueKey: "jp:all",
   rewardsLabel: "Rewards",
+  region: "jp" as const,
   familyLabel: "Mission family",
   selectedFamily: null,
   getFamilyLabel: familyLabel,
@@ -81,8 +95,9 @@ describe("MissionCatalogue", () => {
     expect(screen.getAllByText("Read a story")).toHaveLength(2);
     expect(screen.getByText("Target: 1")).toBeTruthy();
     expect(screen.getByText("Target: 2")).toBeTruthy();
-    expect(screen.getByText("Coins ×100")).toBeTruthy();
-    expect(screen.getByText("Coins ×200")).toBeTruthy();
+    const [firstRewards, secondRewards] = screen.getAllByRole("list", { name: "Rewards" });
+    expect(firstRewards?.textContent?.replace(/\s+/g, " ").trim()).toBe("Coins ×100");
+    expect(secondRewards?.textContent?.replace(/\s+/g, " ").trim()).toBe("Coins ×200");
     expect(screen.getByText("Play a live")).toBeTruthy();
     expect(
       Array.from(container.querySelectorAll("ul")).some((element) =>
@@ -150,26 +165,26 @@ describe("MissionCatalogue", () => {
     expect(screen.getByRole("button", { name: "See all Story missions" })).toBeTruthy();
   });
 
-  it("renders character target levels in the mission metadata hierarchy", () => {
+  it("renders a family's custom body in place of the item list", () => {
+    const groupBody = createRawSnippet((group: () => MissionCatalogueGroup) => ({
+      render: () => `<p>Custom ${group().label}</p>`
+    }));
     render(MissionCatalogue, {
       ...props,
+      groupBody,
       groups: [
         {
           family: "characterMissionV2s",
           label: "Character missions",
           countLabel: "1 mission shown",
-          items: [
-            {
-              key: "character-1",
-              sentence: "Complete … character tasks",
-              targetLevelsLabel: "Targets: 10 · 20 · 40"
-            }
-          ]
+          items: [{ key: "character-1", sentence: "Complete … character tasks" }]
         }
       ]
     });
 
-    expect(screen.getByText("Targets: 10 · 20 · 40")).toBeTruthy();
+    const section = screen.getByRole("heading", { name: /Character missions/ }).closest("section")!;
+    expect(within(section).getByText("Custom Character missions")).toBeTruthy();
+    expect(within(section).queryByText("Complete … character tasks")).toBeNull();
   });
 
   it("renders the family tablist with one selected family", async () => {

@@ -131,7 +131,8 @@
     aria-label={resultsLabel ?? labels.title}
   >
     {#if status === "loading"}
-      <p role="status" class="mb-4 text-sm text-(--archive-text-muted)">{labels.loading}</p>
+      <!-- The skeleton shows the loading state; the status stays for screen readers. -->
+      <p role="status" class="sr-only">{labels.loading}</p>
       {#if loadingPlaceholder}
         <div aria-hidden="true">{@render loadingPlaceholder()}</div>
       {:else}

@@ -156,7 +156,9 @@ const parseResourceBoxDetail = (payload: unknown): MissionResourceBoxDetail | nu
     resourceLevel: getNumber(root.resourceLevel),
     resourceQuantity: getNumber(root.resourceQuantity),
     resourceType: getString(root.resourceType),
-    seq: getNumber(root.seq)
+    seq: getNumber(root.seq),
+    resourceName: getString(root.resourceName),
+    resourceAssetbundleName: getString(root.resourceAssetbundleName)
   };
 };
 

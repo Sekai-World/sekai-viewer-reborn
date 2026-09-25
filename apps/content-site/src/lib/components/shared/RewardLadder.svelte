@@ -1,11 +1,14 @@
 <script lang="ts" generics="T">
+  import RewardItem from "$lib/components/shared/RewardItem.svelte";
   import type { MissionResourceBoxDetail } from "$lib/domain/mission";
+  import type { SupportedRegion } from "$lib/domain/regions";
   import type { RewardLadderSummary } from "$lib/domain/reward-ladder";
 
   let {
     steps,
     summary,
     idPrefix,
+    region,
     locale,
     getKey,
     getLabel,
@@ -16,6 +19,7 @@
     steps: T[];
     summary: RewardLadderSummary<T>;
     idPrefix: string;
+    region: SupportedRegion;
     locale: string;
     getKey: (step: T) => string | number;
     getLabel: (step: T) => string;
@@ -38,17 +42,9 @@
 
   const formatNumber = (value: number): string =>
     new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }).format(value);
-  const rewardsLabel = (step: T): string => {
-    const details = getDetails(step);
-    if (details.length === 0) return labels.noRewards;
-    return details
-      .map((detail) =>
-        detail.resourceQuantity === null
-          ? resourceLabel(detail.resourceType)
-          : `${resourceLabel(detail.resourceType)} ×${formatNumber(detail.resourceQuantity)}`
-      )
-      .join(" · ");
-  };
+  // Named items (tickets, materials) use their own name over the generic type label.
+  const itemLabel = (detail: MissionResourceBoxDetail): string =>
+    detail.resourceName ?? resourceLabel(detail.resourceType);
 </script>
 
 {#snippet stepRow(step: T, milestone: boolean)}
@@ -64,22 +60,35 @@
       {getLabel(step)}
     </span>
     <span
-      class="min-w-0 text-right wrap-anywhere tabular-nums {milestone
+      class="flex min-w-0 flex-wrap justify-end gap-x-3 gap-y-1 text-right tabular-nums {milestone
         ? 'text-(--archive-text-strong)'
         : 'text-(--archive-text-muted)'}"
     >
-      {rewardsLabel(step)}
+      {#each getDetails(step) as detail, index (index)}
+        <RewardItem
+          {detail}
+          {region}
+          label={itemLabel(detail)}
+          quantityLabel={detail.resourceQuantity === null
+            ? null
+            : `×${formatNumber(detail.resourceQuantity)}`}
+        />
+      {:else}
+        {labels.noRewards}
+      {/each}
     </span>
   </li>
 {/snippet}
 
 {#if summary.totals.length > 0}
   <dl class="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5" aria-label={labels.totals}>
-    {#each summary.totals as total (total.resourceType)}
+    {#each summary.totals as total (`${total.resourceType}:${total.detail.resourceId ?? ""}`)}
       <div
         class="content-card-inset grid gap-1 rounded-xl border border-(--archive-border-subtle) p-3"
       >
-        <dt class="text-xs text-(--archive-text-muted)">{resourceLabel(total.resourceType)}</dt>
+        <dt class="text-xs text-(--archive-text-muted)">
+          <RewardItem detail={total.detail} {region} label={itemLabel(total.detail)} />
+        </dt>
         <dd class="text-lg font-semibold text-(--archive-text-strong) tabular-nums">
           {formatNumber(total.quantity)}
         </dd>

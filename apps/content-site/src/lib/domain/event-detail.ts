@@ -89,6 +89,10 @@ export type EventRewardResourceBoxDetail = {
   resourceQuantity: number | null;
   seq: number | null;
   honor: EventRewardHonor | null;
+  /** Localized item name for gacha tickets, materials, skill practice tickets, and boost items. */
+  resourceName?: string | null;
+  /** Gacha tickets only; their icon path uses it. */
+  resourceAssetbundleName?: string | null;
 };
 
 export type EventRewardHonorLevel = {

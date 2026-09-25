@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { SupportedRegion } from "$lib/domain/regions";
   import Icon from "@iconify/svelte";
   import RewardLadder from "$lib/components/shared/RewardLadder.svelte";
   import type { Mission, MissionResourceBoxDetail } from "$lib/domain/mission";
@@ -6,12 +7,14 @@
 
   let {
     missions,
+    region,
     locale,
     t,
     resourceLabel,
     onRetry
   }: {
     missions: Promise<{ items: Mission[]; loadFailed: boolean }>;
+    region: SupportedRegion;
     locale: string;
     t: (key: string) => string;
     resourceLabel: (resourceType: string | null) => string;
@@ -98,6 +101,7 @@
           steps={result.items}
           {summary}
           idPrefix="story-missions"
+          {region}
           {locale}
           getKey={(mission) => mission.id}
           getLabel={targetLabel}

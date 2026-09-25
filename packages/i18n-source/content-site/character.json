@@ -41,7 +41,6 @@
   "characterMissionsLoading": "Character missions are loading...",
   "characterMissionsLoadFailed": "Character missions could not be loaded.",
   "characterMissionsEmpty": "No character missions were found.",
-  "characterMissionTargetRange": "{first} → {last}",
   "characterMissionGoalCount": "{count} goals",
   "characterMissionGoalCountOne": "1 goal",
   "characterMissionExtra": "EX",
@@ -55,5 +54,14 @@
   "characterRankShowAll": "Show all {count} ranks",
   "characterRankShowMilestones": "Show milestone ranks only",
   "characterRankResource.stamp": "Stamps",
-  "characterRankResource.avatar_costume": "Avatar costumes"
+  "characterRankResource.avatar_costume": "Avatar costumes",
+  "characterMissionClose": "Close",
+  "characterMissionLevelsLoading": "Loading level goals...",
+  "characterMissionLevelsError": "Level goals could not be loaded.",
+  "characterMissionRetry": "Try again",
+  "characterMissionLevel": "Level {level} · {count}",
+  "characterMissionExp": "EXP +{count}",
+  "characterMissionMaterial": "Material",
+  "characterMissionReward": "Reward",
+  "characterMissionUnavailable": "Level goals are unavailable in this region."
 }

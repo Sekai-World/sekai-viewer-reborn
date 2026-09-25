@@ -139,6 +139,10 @@ export type VirtualLiveRewardResourceBoxDetail = {
   resourceQuantity: number | null;
   seq: number | null;
   honor: VirtualLiveRewardHonor | null;
+  /** Localized item name for gacha tickets, materials, skill practice tickets, and boost items. */
+  resourceName?: string | null;
+  /** Gacha tickets only; their icon path uses it. */
+  resourceAssetbundleName?: string | null;
 };
 
 export type VirtualLiveRewardHonor = {

@@ -99,7 +99,9 @@ describe("mission catalogue adapter", () => {
                 resourceLevel: 2,
                 resourceQuantity: 3,
                 resourceType: "crystal",
-                seq: 1
+                seq: 1,
+                resourceName: "Mission Gacha Ticket",
+                resourceAssetbundleName: "mission_gacha_ticket"
               },
               "malformed detail"
             ]
@@ -159,7 +161,9 @@ describe("mission catalogue adapter", () => {
                 resourceLevel: 2,
                 resourceQuantity: 3,
                 resourceType: "crystal",
-                seq: 1
+                seq: 1,
+                resourceName: "Mission Gacha Ticket",
+                resourceAssetbundleName: "mission_gacha_ticket"
               }
             ]
           },

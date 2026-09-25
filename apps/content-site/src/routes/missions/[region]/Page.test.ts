@@ -129,9 +129,7 @@ const data = (
     "mission.targetUnavailable": "Target data unavailable for this region",
     "mission.unnamed": "Mission",
     "mission.requirement": "Target: {count}",
-    "mission.targetLevel": "Level {level} · Target {count}",
-    "mission.targetLevelSequence": "{levels}",
-    "mission.targetLevelContinuation": "{levels} · … · {lastLevel} ({count} level goals)",
+    "mission.targetLevel": "Level {level} · {count}",
     "mission.shownCount": "{count} missions shown",
     "mission.totalCount": "{count} missions",
     "mission.totalCountOne": "1 mission",
@@ -408,114 +406,71 @@ describe("Missions page", () => {
     expect(screen.getAllByRole("button", { name: "Try again" })).toHaveLength(1);
   });
 
-  it("renders one Character Mission V2 threshold with its level label", async () => {
-    const mission = makeMission("characterMissionV2s", 1, "Complete {requirement} task");
-    mission.parameterGroup = {
-      id: 9,
-      levels: [{ seq: 1, requirement: 10, exp: null, quantity: null }]
-    };
-    renderPage(page([mission], { page: 1, hasNext: false }), "characterMissionV2s");
-
-    expect(await screen.findByText("Complete 10 task")).toBeTruthy();
-    expect(screen.getByText("Level 1 · Target 10")).toBeTruthy();
-  });
-
-  it("renders three Character Mission V2 thresholds with explicit level labels", async () => {
-    const mission = makeMission(
-      "characterMissionV2s",
-      2,
-      "Complete {requirement} character tasks {progress}"
-    );
-    mission.requirement = 999;
-    mission.parameterGroup = {
-      id: 9,
-      levels: [
-        { seq: 1, requirement: 10, exp: null, quantity: null },
-        { seq: 2, requirement: 20, exp: null, quantity: null },
-        { seq: 3, requirement: 40, exp: null, quantity: null }
-      ]
-    };
-    renderPage(page([mission], { page: 1, hasNext: false }), "characterMissionV2s");
-
-    expect(await screen.findByText("Complete … character tasks …")).toBeTruthy();
-    expect(screen.getByText("Level 1 · Target 10")).toBeTruthy();
-    expect(screen.getByText("Level 2 · Target 20")).toBeTruthy();
-    expect(screen.getByText("Level 3 · Target 40")).toBeTruthy();
-    expect(screen.queryByText("Complete 999 character tasks 999")).toBeNull();
-    expect(screen.queryByText("{requirement}")).toBeNull();
-    expect(screen.queryByText("{progress}")).toBeNull();
-  });
-
-  it("summarizes longer Character Mission V2 sequences with labeled endpoints and a total", async () => {
-    const mission = makeMission("characterMissionV2s", 4, "Complete {requirement} tasks");
-    mission.parameterGroup = {
-      id: 9,
-      levels: [1, 2, 3, 4, 5].map((seq) => ({
-        seq,
-        requirement: seq * 10,
-        exp: null,
-        quantity: null
-      }))
-    };
-    const lastLevel = mission.parameterGroup!.levels.at(-1)!;
-    lastLevel.requirement = 50000;
-    renderPage(page([mission], { page: 1, hasNext: false }), "characterMissionV2s");
-
-    expect(await screen.findByText("Complete … tasks")).toBeTruthy();
-    expect(screen.getByText("5 level goals")).toBeTruthy();
-    expect(screen.getByText("Level 5 · Target 50,000")).toBeTruthy();
-    expect(screen.queryByText("Level 4 · Target 40")).toBeNull();
-  });
-
-  it("expands Character Mission V2 level goals in place without loading Character Rank rewards", async () => {
+  it("shows character missions as cards and opens level goals with rewards in a dialog", async () => {
     const mission = makeMission("characterMissionV2s", 5, "Complete {requirement} tasks");
-    mission.characterId = 7;
+    mission.characterMissionType = "play_live_ex";
     mission.parameterGroup = {
       id: 9,
-      totalLevels: 21,
-      levels: [1, 2, 3].map((seq) => ({ seq, requirement: seq * 10, exp: null, quantity: null })),
-      lastLevel: {
-        seq: 21,
-        requirement: 210,
-        exp: null,
+      totalLevels: 3,
+      levels: [1, 2].map((seq) => ({ seq, requirement: seq * 10, exp: 1, quantity: 0 })),
+      lastLevel: { seq: 3, requirement: 50, exp: 0, quantity: 100 }
+    };
+    const levels = [
+      { seq: 1, requirement: 10, exp: 1, quantity: 0 },
+      { seq: 2, requirement: 20, exp: 2, quantity: 0 },
+      {
+        seq: 3,
+        requirement: 50,
+        exp: 0,
         quantity: 100,
         reward: { resourceType: "material", resourceQuantity: 100 }
       }
-    };
-    const fetchMock = vi.fn((input: string) => {
-      const page = new URL(input, "http://localhost").searchParams.get("page");
-      const items = (page === "1" ? [1, 2, 3, 4] : [5, 6]).map((seq) => ({
-        seq,
-        requirement: seq * 10
-      }));
+    ];
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const requestPage = new URL(String(input), "http://localhost").searchParams.get("page");
       return Promise.resolve(
-        new Response(
-          JSON.stringify({ items, pagination: { page: Number(page), hasNext: page === "1" } }),
-          { status: 200, headers: { "content-type": "application/json" } }
-        )
+        json({
+          items: requestPage === "1" ? levels.slice(0, 2) : levels.slice(2),
+          pagination: { page: Number(requestPage), hasNext: requestPage === "1" }
+        })
       );
     });
     vi.stubGlobal("fetch", fetchMock);
-
     renderPage(page([mission], { page: 1, hasNext: false }), "characterMissionV2s");
-    await screen.findByText("21 level goals");
-    const goals = screen.getByRole("region", { name: "21 level goals" });
-    expect(screen.getByText("Level 21 · Target 210")).toBeTruthy();
-    expect(fetchMock).not.toHaveBeenCalled();
-    await fireEvent.click(screen.getByRole("button", { name: "Show all level goals" }));
 
-    expect(await screen.findByText("Level 4 · Target 40")).toBeTruthy();
-    expect(screen.queryByText("Level 21 · Target 210")).toBeNull();
-    expect(goals.querySelectorAll("ul")).toHaveLength(1);
-    expect(fetchMock).toHaveBeenCalledWith("/missions/jp/parameter-groups/9/levels?page=1");
-    expect(screen.queryByText(/Character Rank rewards/)).toBeNull();
+    const card = await screen.findByRole("button", { name: /Complete … tasks/ });
+    expect(card.textContent?.replace(/\s+/g, " ").trim()).toBe("EX Complete … tasks");
+    expect(screen.queryByText(/Level 1/)).toBeNull();
 
-    await fireEvent.click(screen.getByRole("button", { name: "Load more level goals" }));
-    expect(await screen.findByText("Level 6 · Target 60")).toBeTruthy();
-    expect(screen.getByText("All level goals are shown.")).toBeTruthy();
-    expect(goals.querySelectorAll("ul")).toHaveLength(1);
-    expect(fetchMock).toHaveBeenNthCalledWith(2, "/missions/jp/parameter-groups/9/levels?page=2");
-    expect(screen.queryByText(/Character Rank rewards/)).toBeNull();
+    await fireEvent.click(card);
+    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(within(dialog).getByText("3 level goals")).toBeTruthy();
+    expect(await within(dialog).findByText("Level 3 · 50")).toBeTruthy();
+    const row = (label: string) =>
+      within(dialog).getByText(label).closest("li")?.textContent?.replace(/\s+/g, " ").trim();
+    expect(row("Level 1 · 10")).toBe("Level 1 · 10 EXP +1");
+    expect(row("Level 2 · 20")).toBe("Level 2 · 20 EXP +2");
+    expect(row("Level 3 · 50")).toBe("Level 3 · 50 Material ×100");
+    expect(
+      fetchMock.mock.calls
+        .map(([input]) => String(input))
+        .filter((url) => url.includes("parameter-groups"))
+    ).toEqual([
+      "/missions/jp/parameter-groups/9/levels?page=1",
+      "/missions/jp/parameter-groups/9/levels?page=2"
+    ]);
+  });
+
+  it("explains missing level data instead of loading it", async () => {
+    const mission = makeMission("characterMissionV2s", 2, "Complete {requirement} tasks");
+    mission.parameterGroup = null;
+    mission.parameterGroupId = null;
+    renderPage(page([mission], { page: 1, hasNext: false }), "characterMissionV2s");
+
+    await fireEvent.click(await screen.findByRole("button", { name: /Complete … tasks/ }));
+    const dialog = screen.getByRole("dialog", { hidden: true });
+    expect(within(dialog).getByText("Target data unavailable for this region")).toBeTruthy();
+    expect(within(dialog).queryByRole("status")).toBeNull();
   });
 
   it("shows normal mission text with resolved rewards and no repeated target", async () => {
@@ -524,7 +479,9 @@ describe("Missions page", () => {
     renderPage(page([mission], { page: 1, hasNext: false }), "normalMissions");
 
     expect(await screen.findByText("Clear 3 lives")).toBeTruthy();
-    expect(screen.getByText("Crystals ×50")).toBeTruthy();
+    expect(
+      screen.getByRole("list", { name: "Rewards" }).textContent?.replace(/\s+/g, " ").trim()
+    ).toBe("Crystals ×50");
     expect(screen.queryByText("Target: 3")).toBeNull();
   });
 
@@ -571,17 +528,6 @@ describe("Missions page", () => {
     ]);
 
     expect(await screen.findByText("Read 10 episodes · Gacha tickets ×1")).toBeTruthy();
-  });
-
-  it("keeps the localized unavailable status when Character Mission V2 levels are missing", async () => {
-    const mission = { ...makeMission("characterMissionV2s", 2, "Complete {requirement} tasks") };
-    mission.parameterGroup = null;
-    mission.progressSentence = "{progress} tasks";
-    renderPage(page([mission], { page: 1, hasNext: false }), "characterMissionV2s");
-
-    expect(await screen.findByText("Complete … tasks")).toBeTruthy();
-    expect(screen.getByText("Target data unavailable for this region")).toBeTruthy();
-    expect(screen.queryByText("{progress} tasks")).toBeNull();
   });
 
   it("shows the localized loading state while fetching the next page", async () => {

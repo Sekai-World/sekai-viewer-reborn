@@ -1,6 +1,24 @@
 import type { MissionResourceBoxDetail } from "./mission";
 
-export type RewardTotal = { resourceType: string; quantity: number };
+export type RewardTotal = {
+  resourceType: string;
+  quantity: number;
+  /** One detail of this total, which carries the item's ID and name for its icon. */
+  detail: MissionResourceBoxDetail;
+};
+
+// Items whose ID names a distinct item, so each keeps its own total.
+const ITEM_TYPES_BY_ID = new Set([
+  "material",
+  "gacha_ticket",
+  "skill_practice_ticket",
+  "boost_item"
+]);
+
+const totalKey = (detail: MissionResourceBoxDetail): string =>
+  ITEM_TYPES_BY_ID.has(detail.resourceType ?? "") && detail.resourceId !== null
+    ? `${detail.resourceType}:${detail.resourceId}`
+    : (detail.resourceType ?? "");
 
 export type RewardLadderSummary<T> = {
   totals: RewardTotal[];
@@ -27,7 +45,7 @@ const totalOrder = (resourceType: string): number => {
 
 const rewardSignature = (details: MissionResourceBoxDetail[]): string =>
   details
-    .map((detail) => `${detail.resourceType ?? ""}:${detail.resourceQuantity ?? ""}`)
+    .map((detail) => `${totalKey(detail)}:${detail.resourceQuantity ?? ""}`)
     .sort((left, right) => left.localeCompare(right))
     .join("|");
 
@@ -41,7 +59,7 @@ export const summarizeRewardLadder = <T>(
   getDetails: (step: T) => MissionResourceBoxDetail[]
 ): RewardLadderSummary<T> => {
   const signatureCounts = new Map<string, number>();
-  const totals = new Map<string, number>();
+  const totals = new Map<string, RewardTotal>();
 
   for (const step of steps) {
     const details = getDetails(step);
@@ -49,10 +67,15 @@ export const summarizeRewardLadder = <T>(
     if (signature) signatureCounts.set(signature, (signatureCounts.get(signature) ?? 0) + 1);
     for (const detail of details) {
       if (!detail.resourceType) continue;
-      totals.set(
-        detail.resourceType,
-        (totals.get(detail.resourceType) ?? 0) + (detail.resourceQuantity ?? 1)
-      );
+      const key = totalKey(detail);
+      const total = totals.get(key);
+      if (total) total.quantity += detail.resourceQuantity ?? 1;
+      else
+        totals.set(key, {
+          resourceType: detail.resourceType,
+          quantity: detail.resourceQuantity ?? 1,
+          detail
+        });
     }
   }
 
@@ -66,13 +89,12 @@ export const summarizeRewardLadder = <T>(
   }
 
   return {
-    totals: [...totals]
-      .map(([resourceType, quantity]) => ({ resourceType, quantity }))
-      .sort(
-        (left, right) =>
-          totalOrder(left.resourceType) - totalOrder(right.resourceType) ||
-          left.resourceType.localeCompare(right.resourceType)
-      ),
+    totals: [...totals.values()].sort(
+      (left, right) =>
+        totalOrder(left.resourceType) - totalOrder(right.resourceType) ||
+        left.resourceType.localeCompare(right.resourceType) ||
+        (left.detail.resourceId ?? 0) - (right.detail.resourceId ?? 0)
+    ),
     milestones: steps.filter((step) => {
       const signature = rewardSignature(getDetails(step));
       return signature !== "" && signature !== standardSignature;

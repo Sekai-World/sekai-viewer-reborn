@@ -6,6 +6,7 @@
   import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
   import MissionCatalogue from "$lib/components/mission/MissionCatalogue.svelte";
   import MissionCharacterPicker from "$lib/components/mission/MissionCharacterPicker.svelte";
+  import CharacterMissionGrid from "$lib/components/mission/CharacterMissionGrid.svelte";
   import StoryMissionsCard from "$lib/components/mission/StoryMissionsCard.svelte";
   import { groupMissionsByFamily } from "$lib/components/mission/catalogue-groups";
   import {
@@ -13,8 +14,9 @@
     type Mission,
     type MissionCharacterOption,
     type MissionFamily,
-    type MissionParameterGroupLevel
+    type MissionResourceBoxDetail
   } from "$lib/domain/mission";
+  import { formatCharacterMissionSentence } from "$lib/domain/character-growth";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { createPageTitle } from "$lib/page-title";
@@ -28,19 +30,6 @@
       hasNext: boolean;
     };
   };
-  type LevelPageResponse = {
-    items: MissionParameterGroupLevel[];
-    pagination: { page: number; hasNext: boolean };
-  };
-  type LevelState = {
-    expanded: boolean;
-    items: MissionParameterGroupLevel[];
-    page: number;
-    hasNext: boolean;
-    loading: boolean;
-    error: boolean;
-  };
-
   let { data }: PageProps = $props();
   let resolvedMessages = $state<Record<string, string> | null>(null);
   type FamilySummaryState = {
@@ -71,7 +60,6 @@
   let initialError = $state(false);
   let loadMoreError = $state(false);
   let listRequestId = 0;
-  let levelsByGroup = $state<Record<number, LevelState>>({});
 
   const messages = $derived({
     ...sourceMessages,
@@ -93,77 +81,6 @@
   });
   const formatNumber = (value: number): string =>
     new Intl.NumberFormat(data.uiLocale).format(value);
-  const getTargetLevels = (item: Mission): { level: number; requirement: number }[] =>
-    item.family === "characterMissionV2s"
-      ? (item.parameterGroup?.levels.flatMap((level, index) =>
-          level.requirement === null
-            ? []
-            : [{ level: level.seq ?? index + 1, requirement: level.requirement }]
-        ) ?? [])
-      : [];
-  const formatTargetLevel = (target: { level: number; requirement: number }): string =>
-    t("mission.targetLevel")
-      .replace("{level}", formatNumber(target.level))
-      .replace("{count}", formatNumber(target.requirement));
-  const levelLabel = (level: MissionParameterGroupLevel, index: number): string =>
-    level.requirement === null
-      ? t("mission.levelUnavailable")
-      : formatTargetLevel({ level: level.seq ?? index + 1, requirement: level.requirement });
-  const levelRewardLabel = (level: MissionParameterGroupLevel): string | null => {
-    const reward = level.reward;
-    if (!reward?.resourceType || reward.resourceQuantity === null) return null;
-    const typeLabel =
-      reward.resourceType === "material" ? t("mission.resource.material") : t("mission.reward");
-    return `${typeLabel} ×${formatNumber(reward.resourceQuantity)}`;
-  };
-  const setLevelState = (id: number, state: LevelState): void => {
-    levelsByGroup = { ...levelsByGroup, [id]: state };
-  };
-  const loadLevels = async (id: number): Promise<void> => {
-    const state = levelsByGroup[id] ?? {
-      expanded: true,
-      items: [],
-      page: 0,
-      hasNext: true,
-      loading: false,
-      error: false
-    };
-    if (state.loading || !state.hasNext) return;
-    setLevelState(id, { ...state, expanded: true, loading: true, error: false });
-    try {
-      const response = await fetch(
-        `${resolve("/missions/[region]/parameter-groups/[id]/levels", { region: data.region, id: String(id) })}?page=${state.page + 1}`
-      );
-      if (!response.ok) throw new Error("Level goals request failed.");
-      const next = (await response.json()) as LevelPageResponse;
-      const seen = new Set(state.items.map((item) => item.seq));
-      const appended = next.items.filter((item) => !seen.has(item.seq));
-      setLevelState(id, {
-        expanded: true,
-        items: [...state.items, ...appended],
-        page: next.pagination.page,
-        hasNext: next.pagination.hasNext,
-        loading: false,
-        error: false
-      });
-    } catch {
-      setLevelState(id, { ...state, expanded: true, loading: false, error: true });
-    }
-  };
-  const toggleLevels = (item: Mission): void => {
-    const id = item.parameterGroup?.id ?? item.parameterGroupId;
-    if (id === null) return;
-    const state = levelsByGroup[id];
-    if (state?.expanded) {
-      setLevelState(id, { ...state, expanded: false });
-      return;
-    }
-    if (state?.items.length) {
-      setLevelState(id, { ...state, expanded: true });
-      return;
-    }
-    void loadLevels(id);
-  };
   const formatMissionTemplate = (value: string, requirement: number | null): string => {
     const replacement = requirement === null ? "…" : formatNumber(requirement);
     return value.replaceAll("{requirement}", replacement).replaceAll("{progress}", replacement);
@@ -179,20 +96,32 @@
   ]);
   const resourceLabel = (type: string | null): string =>
     type && knownRewardTypes.has(type) ? t(`mission.resource.${type}`) : t("mission.reward");
-  const rewardLabelsOf = (item: Mission): string[] =>
+  const rewardsOf = (item: Mission) =>
     item.rewards
-      .flatMap((reward) =>
-        reward.resourceBox?.details.length
-          ? reward.resourceBox.details
-          : reward.resourceType
-            ? [reward]
-            : []
+      .flatMap(
+        (
+          reward
+        ): Pick<
+          MissionResourceBoxDetail,
+          | "resourceType"
+          | "resourceId"
+          | "resourceQuantity"
+          | "resourceName"
+          | "resourceAssetbundleName"
+        >[] =>
+          reward.resourceBox?.details.length
+            ? reward.resourceBox.details
+            : reward.resourceType
+              ? [reward]
+              : []
       )
-      .map((reward) =>
-        reward.resourceQuantity === null
-          ? resourceLabel(reward.resourceType)
-          : `${resourceLabel(reward.resourceType)} ×${formatNumber(reward.resourceQuantity)}`
-      );
+      .map((detail) => ({
+        detail,
+        // Named items (tickets, materials) use their own name over the generic type label.
+        label: detail.resourceName ?? resourceLabel(detail.resourceType),
+        quantityLabel:
+          detail.resourceQuantity === null ? null : `×${formatNumber(detail.resourceQuantity)}`
+      }));
   // Story missions carry no text, so their target and rewards stand in for a sentence.
   const storyMissionText = (item: Mission, rewardLabels: string[]): string =>
     item.requirement === null
@@ -202,92 +131,31 @@
           ...rewardLabels
         ].join(" · ");
   const toItem = (item: Mission) => {
-    const targetLevels = getTargetLevels(item);
-    const rewardLabels = rewardLabelsOf(item);
+    const rewards = rewardsOf(item);
+    const rewardLabels = rewards.map(({ label, quantityLabel }) =>
+      quantityLabel ? `${label} ${quantityLabel}` : label
+    );
     const fallbackSentence =
       item.family === "storyMissions" ? storyMissionText(item, rewardLabels) : t("mission.unnamed");
-    const sentenceRequirement =
-      item.family === "characterMissionV2s"
-        ? targetLevels.length === 1
-          ? (targetLevels[0]?.requirement ?? null)
-          : null
-        : item.requirement;
     const hasTargetTemplate =
       item.sentence?.includes("{requirement}") || item.sentence?.includes("{progress}");
-
-    const group = item.parameterGroup;
-    const groupId = group?.id ?? item.parameterGroupId;
-    const state = groupId === null ? null : levelsByGroup[groupId];
-    const summaryLevels = group
-      ? [
-          ...group.levels.slice(0, 3),
-          ...(group.lastLevel &&
-          !group.levels.slice(0, 3).some((level) => level.seq === group.lastLevel?.seq)
-            ? [group.lastLevel]
-            : group.levels.length > 3
-              ? [group.levels.at(-1)!]
-              : [])
-        ]
-      : [];
     return {
       key: `${item.family}-${item.id}`,
-      sentence: formatMissionTemplate(item.sentence ?? fallbackSentence, sentenceRequirement),
+      // A character mission spans many targets, so its sentence keeps a placeholder.
+      sentence:
+        item.family === "characterMissionV2s"
+          ? formatCharacterMissionSentence(item.sentence ?? t("mission.unnamed"))
+          : formatMissionTemplate(item.sentence ?? fallbackSentence, item.requirement),
       // Normal mission text already states its target; story text is built from it.
       requirementLabel:
         item.family === "normalMissions" && !item.sentence && item.requirement !== null
           ? t("mission.requirement").replace("{count}", formatNumber(item.requirement))
           : null,
-      targetLevelsLabel:
-        !group && targetLevels.length > 0
-          ? targetLevels.length <= 3
-            ? t("mission.targetLevelSequence").replace(
-                "{levels}",
-                targetLevels.map(formatTargetLevel).join(" · ")
-              )
-            : t("mission.targetLevelContinuation")
-                .replace("{levels}", targetLevels.slice(0, 3).map(formatTargetLevel).join(" · "))
-                .replace("{lastLevel}", formatTargetLevel(targetLevels.at(-1)!))
-                .replace("{count}", formatNumber(targetLevels.length))
-          : null,
       targetUnavailableLabel:
-        item.family === "characterMissionV2s"
-          ? targetLevels.length === 0
-            ? t("mission.targetUnavailable")
-            : null
-          : item.requirement === null && hasTargetTemplate
-            ? t("mission.targetUnavailable")
-            : null,
-      milestones:
-        group && groupId !== null && summaryLevels.length > 0
-          ? {
-              summary: summaryLevels.map((level, index) => ({
-                label: levelLabel(level, index),
-                rewardLabel: levelRewardLabel(level)
-              })),
-              totalLabel: t("mission.levelCount").replace(
-                "{count}",
-                formatNumber(group.totalLevels ?? group.levels.length)
-              ),
-              expanded: state?.expanded ?? false,
-              details: (state?.items ?? []).map((level, index) => ({
-                label: levelLabel(level, index),
-                rewardLabel: levelRewardLabel(level)
-              })),
-              loading: state?.loading ?? false,
-              error: state?.error ? t("mission.levelsError") : null,
-              hasNext: state?.hasNext ?? true,
-              toggleLabel: state?.expanded
-                ? t("mission.hideLevelDetails")
-                : t("mission.levelDetails"),
-              loadMoreLabel: state?.loading
-                ? t("mission.levelsLoading")
-                : t("mission.loadMoreLevels"),
-              endLabel: t("mission.levelsEnd"),
-              onToggle: () => toggleLevels(item),
-              onLoadMore: () => void loadLevels(groupId)
-            }
+        item.family !== "characterMissionV2s" && item.requirement === null && hasTargetTemplate
+          ? t("mission.targetUnavailable")
           : null,
-      rewardLabels
+      rewards
     };
   };
   const familyCountLabel = (summary: FamilySummaryState): string => {
@@ -493,6 +361,7 @@
   {#if data.storyMissions}
     <StoryMissionsCard
       missions={data.storyMissions}
+      region={data.region}
       locale={data.uiLocale}
       {t}
       {resourceLabel}
@@ -535,8 +404,31 @@
   />
 {/snippet}
 
+{#snippet characterMissionGroup()}
+  <CharacterMissionGrid
+    missions={items.filter((mission) => mission.family === "characterMissionV2s")}
+    region={data.region}
+    locale={data.uiLocale}
+    labels={{
+      extra: t("mission.characterExtra"),
+      unnamed: t("mission.unnamed"),
+      close: t("mission.close"),
+      goalCount: t("mission.levelCount"),
+      goalCountOne: t("mission.levelCountOne"),
+      loading: t("mission.levelsLoading"),
+      error: t("mission.levelsError"),
+      unavailable: t("mission.targetUnavailable"),
+      retry: t("mission.retry"),
+      level: t("mission.targetLevel"),
+      exp: t("mission.levelExp"),
+      resourceLabel
+    }}
+  />
+{/snippet}
+
 <MissionCatalogue
   {labels}
+  groupBody={isCharacterFamily ? characterMissionGroup : undefined}
   content={data.storyMissions
     ? storyMissionsContent
     : isCharacterFamily && data.query.character === null
@@ -569,6 +461,7 @@
         ? "error"
         : "ready"}
   rewardsLabel={t("mission.rewards")}
+  region={data.region}
   catalogueKey={`${data.region}:${data.query.family ?? "all"}:${data.query.character ?? ""}`}
   familyLabel={t("mission.familyLabel")}
   selectedFamily={data.query.family}
