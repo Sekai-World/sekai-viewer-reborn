@@ -294,15 +294,33 @@
 </script>
 
 <svelte:head>
-  {#await data.eventPayload}
-    <title>{createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title>
-  {:then payload}
-    <title
-      >{payload.event
-        ? createPageTitle(payload.event.title, currentTranslate("navigation.events"))
-        : createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title
-    >
-  {/await}
+  {#if data.seo}
+    <title>{data.seo.pageTitle}</title>
+    <meta property="og:site_name" content="Sekai Viewer" />
+    <meta property="og:title" content={data.seo.title} />
+    {#if data.seo.description}
+      <meta property="og:description" content={data.seo.description} />
+    {/if}
+    {#if data.seo.imageUrl}
+      <meta property="og:image" content={data.seo.imageUrl} />
+    {/if}
+    <meta property="og:url" content={data.seo.canonicalUrl} />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Trusted server-built JSON (angle brackets escaped); renders Discord's component embed. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- input is server-built JSON, not user HTML -->
+    {@html data.seo.inlineScriptHtml}
+  {:else}
+    {#await data.eventPayload}
+      <title>{createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title>
+    {:then payload}
+      <title
+        >{payload.event
+          ? createPageTitle(payload.event.title, currentTranslate("navigation.events"))
+          : createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title
+      >
+    {/await}
+  {/if}
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-5 px-2 pb-6 sm:px-4">
