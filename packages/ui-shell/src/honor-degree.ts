@@ -408,7 +408,11 @@ export function buildHonorDegreeLayout(
       y: targetRect.y,
       width: targetRect.width,
       height: targetRect.height,
-      ...(resolvedMask ? { mask: resolvedMask } : {})
+      ...(resolvedMask ? { mask: resolvedMask } : {}),
+      // Trimmed frame textures (jp-6.7.0 incoming: frame_degree_m_1 364×80,
+      // s_1 164×80) belong centred in the full slot; stretching them pulls the
+      // ring outside the body's edge and leaves a gap.
+      ...(name === "frame" ? { fit: "contain" as const } : {})
     });
   };
   const addPart = (name: string, part: HonorDegreePart | null | undefined): void =>

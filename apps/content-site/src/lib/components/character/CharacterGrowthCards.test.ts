@@ -217,6 +217,30 @@ describe("CharacterMissionsCard", () => {
     ]);
   });
 
+  it("previews the first six missions and links to the rest", async () => {
+    render(CharacterMissionsCard, {
+      missions: Promise.resolve({
+        items: Array.from({ length: 8 }, (_, index) =>
+          mission(1001 + index, "play_live", `Mission ${index + 1} {requirement}`)
+        ),
+        loadFailed: false
+      }),
+      region: "jp",
+      locale: "en",
+      viewAllHref: "/missions/jp?family=characterMissionV2s&character=1",
+      t
+    });
+
+    expect(await screen.findByText("8 missions · 1,120 level goals")).toBeTruthy();
+    const cards = screen.getAllByRole("button", { name: /^Mission \d/ });
+    expect(cards.map((card) => text(card))).toEqual(
+      Array.from({ length: 6 }, (_, index) => `Mission ${index + 1} …`)
+    );
+    const link = screen.getByRole("link", { name: "See all character missions" });
+    expect(link.getAttribute("href")).toBe("/missions/jp?family=characterMissionV2s&character=1");
+    expect(link.querySelector("svg")).toBeTruthy();
+  });
+
   it("shows a skeleton while loading and an error when loading fails", async () => {
     let resolveMissions!: (value: { items: Mission[]; loadFailed: boolean }) => void;
     const { container } = render(CharacterMissionsCard, {

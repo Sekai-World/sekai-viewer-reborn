@@ -19,6 +19,8 @@
     t: (key: string, fallback: string) => string;
   } = $props();
 
+  // The profile previews a few missions; the Missions page lists the rest.
+  const PREVIEW_COUNT = 6;
   const formatNumber = (value: number): string => new Intl.NumberFormat(locale).format(value);
   const summaryLabel = (items: Mission[]): string =>
     t("characterMissionsSummary", "{count} missions · {goals} level goals")
@@ -74,7 +76,7 @@
         </p>
       {:else}
         <CharacterMissionGrid
-          missions={result.items}
+          missions={result.items.slice(0, PREVIEW_COUNT)}
           {region}
           {locale}
           labels={{
@@ -95,8 +97,12 @@
             resourceLabel
           }}
         />
-        <a class="link link-primary self-start text-sm" href={viewAllHref}>
+        <a
+          class="link inline-flex min-h-11 items-center gap-1 self-start text-sm link-primary"
+          href={viewAllHref}
+        >
           {t("characterMissionsViewAll", "See all character missions")}
+          <Icon icon="mdi:arrow-right" class="size-4" aria-hidden="true" />
         </a>
       {/if}
     {/await}

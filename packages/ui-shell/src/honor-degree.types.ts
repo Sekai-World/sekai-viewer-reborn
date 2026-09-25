@@ -99,6 +99,12 @@ export interface HonorDegreeLayer {
   readonly width: number;
   readonly height: number;
   readonly mask?: HonorDegreeMaskLayer;
+  /**
+   * `contain` keeps the texture's aspect ratio centred in the rect instead of
+   * stretching it. Frames use it: some frame textures ship with their
+   * transparent side margins trimmed (for example 164×80 for a 180×80 slot).
+   */
+  readonly fit?: "fill" | "contain";
 }
 
 export interface HonorDegreeMaskLayer {

@@ -65,6 +65,12 @@ describe("HonorDegree", () => {
             image.getAttribute("height")
           ])
       ).toEqual(Array.from({ length: 2 }, () => ["0", "0", main ? "380" : "180", "80"]));
+      // Frames keep their aspect ratio so trimmed textures (164×80, 364×80) sit centred.
+      expect(images.map((image) => image.getAttribute("preserveAspectRatio"))).toEqual([
+        "none",
+        "xMidYMid meet",
+        ...Array.from({ length: 7 }, () => "none")
+      ]);
       expect(images.slice(2, 7).map((image) => image.getAttribute("x"))).toEqual(
         Array.from({ length: 5 }, (_, i) => String(51 + 16 * i))
       );

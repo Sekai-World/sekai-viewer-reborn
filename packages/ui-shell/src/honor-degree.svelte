@@ -73,7 +73,7 @@
           width={layer.width}
           height={layer.height}
           mask={layer.mask ? `url(#${componentId}-${layer.name}-mask)` : undefined}
-          preserveAspectRatio="none"
+          preserveAspectRatio={layer.fit === "contain" ? "xMidYMid meet" : "none"}
         />
       {/each}
     </g>
