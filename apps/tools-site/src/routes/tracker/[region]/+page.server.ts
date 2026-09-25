@@ -3,7 +3,11 @@ import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "$lib/server/config";
 import { getEventMetadata, type EventMetadataResult } from "$lib/server/event-catalog";
 import { getEventRewards } from "$lib/server/event-rewards";
 import { getChapterTrackerRankings, type ChapterTrackerResult } from "$lib/server/chapter-tracker";
-import { getWorldBloomMetadata, type WorldBloomMetadata } from "$lib/server/world-bloom";
+import {
+  getWorldBloomMetadata,
+  type WorldBloomMetadata,
+  type WorldBloomRankableChapter
+} from "$lib/server/world-bloom";
 import {
   getEventTrackerRankings,
   isTrackerRegion,
@@ -122,7 +126,7 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
   const chapters = (async (): Promise<{
     metadata: WorldBloomMetadata | null;
     rankings: Array<{
-      chapter: WorldBloomMetadata["chapters"][number];
+      chapter: WorldBloomRankableChapter;
       result: ChapterTrackerResult;
     }>;
   } | null> => {
@@ -139,15 +143,17 @@ export const load: PageServerLoad = async ({ params, url, depends }) => {
     const currentEventId = catalogResult.currentEvent?.id ?? null;
     const isCurrentEvent = currentEventId === resolvedEventId;
     const rankings = await Promise.all(
-      metadata.chapters.map(async (chapter) => ({
-        chapter,
-        result: await getChapterTrackerRankings(
-          apiBaseUrl,
-          region,
-          chapter.gameCharacterId,
-          isCurrentEvent ? undefined : resolvedEventId
-        )
-      }))
+      metadata.chapters
+        .filter((chapter): chapter is WorldBloomRankableChapter => chapter.gameCharacterId !== null)
+        .map(async (chapter) => ({
+          chapter,
+          result: await getChapterTrackerRankings(
+            apiBaseUrl,
+            region,
+            chapter.gameCharacterId,
+            isCurrentEvent ? undefined : resolvedEventId
+          )
+        }))
     );
     return { metadata, rankings };
   })();

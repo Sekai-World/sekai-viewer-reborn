@@ -16,11 +16,13 @@ type WorldBloomResponse = {
 export type WorldBloomChapter = {
   id: number;
   chapterNo: number;
-  gameCharacterId: number;
+  gameCharacterId: number | null;
   chapterStartAt: string | number | null;
   chapterEndAt: string | number | null;
   aggregateAt: string | number | null;
 };
+
+export type WorldBloomRankableChapter = WorldBloomChapter & { gameCharacterId: number };
 
 export type WorldBloomMetadata = {
   eventId: number;
@@ -69,8 +71,14 @@ const parseChapter = (value: unknown): { eventId: number; chapter: WorldBloomCha
 
   const eventId = positiveInteger(source.eventId);
   const chapterNo = positiveInteger(source.chapterNo);
-  const gameCharacterId = positiveInteger(source.gameCharacterId);
-  if (eventId === null || chapterNo === null || gameCharacterId === null) return null;
+  const rawGameCharacterId = source.gameCharacterId;
+  const gameCharacterId = positiveInteger(rawGameCharacterId);
+  if (
+    eventId === null ||
+    chapterNo === null ||
+    (rawGameCharacterId !== undefined && rawGameCharacterId !== null && gameCharacterId === null)
+  )
+    return null;
 
   return {
     eventId,
@@ -116,7 +124,8 @@ export const parseWorldBloomItems = (items: unknown[]): WorldBloomMetadata[] => 
       eventId,
       chapters: [...chapters.values()].sort(
         (left, right) =>
-          left.chapterNo - right.chapterNo || left.gameCharacterId - right.gameCharacterId
+          left.chapterNo - right.chapterNo ||
+          (left.gameCharacterId ?? 0) - (right.gameCharacterId ?? 0)
       )
     }))
     .filter((item) => item.chapters.length > 0)
