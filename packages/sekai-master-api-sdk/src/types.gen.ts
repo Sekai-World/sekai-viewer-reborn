@@ -539,10 +539,20 @@ export type SharedEventRewardRangeResponse = {
 
 export type SharedEventRewardResourceBoxDetail = {
     honor?: SharedEventRewardHonorResponse;
+    /**
+     * ResourceAssetbundleName is the rewarded item's asset bundle name; only
+     * gacha tickets carry one, and their icon path depends on it.
+     */
+    resourceAssetbundleName?: string;
     resourceBoxId?: number;
     resourceBoxPurpose?: string;
     resourceId?: number;
     resourceLevel?: number;
+    /**
+     * ResourceName is the rewarded item's localized name for gacha tickets,
+     * materials, skill practice tickets, and boost items.
+     */
+    resourceName?: string;
     resourceQuantity?: number;
     resourceType?: string;
     seq?: number;
@@ -888,10 +898,20 @@ export type SharedMissionParameterGroupResponse = {
 };
 
 export type SharedMissionResourceBoxDetailResponse = {
+    /**
+     * ResourceAssetbundleName is the rewarded item's asset bundle name; only
+     * gacha tickets carry one, and their icon path depends on it.
+     */
+    resourceAssetbundleName?: string;
     resourceBoxId?: number;
     resourceBoxPurpose?: string;
     resourceId?: number;
     resourceLevel?: number;
+    /**
+     * ResourceName is the rewarded item's localized name for gacha tickets,
+     * materials, skill practice tickets, and boost items.
+     */
+    resourceName?: string;
     resourceQuantity?: number;
     resourceType?: string;
     seq?: number;
@@ -1284,8 +1304,18 @@ export type SharedVirtualLiveRewardResourceBox = {
 
 export type SharedVirtualLiveRewardResourceBoxDetail = {
     honor?: SharedEventRewardHonorResponse;
+    /**
+     * ResourceAssetbundleName is the rewarded item's asset bundle name; only
+     * gacha tickets carry one, and their icon path depends on it.
+     */
+    resourceAssetbundleName?: string;
     resourceId?: number;
     resourceLevel?: number;
+    /**
+     * ResourceName is the rewarded item's localized name for gacha tickets,
+     * materials, skill practice tickets, and boost items.
+     */
+    resourceName?: string;
     resourceQuantity?: number;
     resourceType?: string;
     seq?: number;
