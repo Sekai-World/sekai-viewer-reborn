@@ -237,6 +237,11 @@ export type SharedCharacterRankResponse = {
     power2BonusRate?: number;
     power3BonusRate?: number;
     rewardResourceBoxes?: Array<SharedMissionResourceBoxResponse>;
+    /**
+     * TotalExp is the cumulative character rank EXP needed to reach this rank,
+     * from the same-region `levels` record with levelType "character".
+     */
+    totalExp?: number;
 };
 
 export type SharedCharacterResponse = {
