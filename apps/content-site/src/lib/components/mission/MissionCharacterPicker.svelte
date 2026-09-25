@@ -74,7 +74,7 @@
   {:else if status === "error"}
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
       <p role="alert" class="text-sm text-error">{labels.error}</p>
-      <button type="button" class="btn btn-link min-h-11 px-0" onclick={onRetry}>
+      <button type="button" class="btn btn-link touch-target px-0" onclick={onRetry}>
         {labels.retry}
       </button>
     </div>
@@ -129,7 +129,7 @@
         </span>
         <button
           type="button"
-          class="btn btn-link min-h-11 px-0 sm:hidden"
+          class="btn btn-link touch-target px-0 sm:hidden"
           aria-controls={gridId}
           aria-expanded={!collapsed}
           onclick={() => (expanded = !expanded)}
@@ -138,9 +138,7 @@
         </button>
         {#if profileHref}
           <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-          <a class="link min-h-11 content-center link-primary" href={profileHref}
-            >{labels.profile}</a
-          >
+          <a class="link touch-target link-primary" href={profileHref}>{labels.profile}</a>
         {/if}
       </p>
     {/if}

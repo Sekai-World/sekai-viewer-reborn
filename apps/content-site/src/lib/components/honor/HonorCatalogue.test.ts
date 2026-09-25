@@ -181,8 +181,7 @@ describe("HonorCatalogue", () => {
 
     expect(document.querySelector("details")).toBeNull();
     expect(trigger.classList).toContain("cursor-pointer");
-    expect(trigger.classList).toContain("hover:-translate-y-0.5");
-    expect(trigger.classList).toContain("motion-reduce:transform-none");
+    expect(trigger.classList).toContain("hover-lift");
     expect(trigger.parentElement?.classList).toContain("xl:grid-cols-3");
     expect(trigger.parentElement?.classList).toContain("2xl:grid-cols-4");
     expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");

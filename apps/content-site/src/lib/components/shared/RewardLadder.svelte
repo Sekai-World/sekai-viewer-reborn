@@ -147,7 +147,7 @@
   {/if}
   <button
     type="button"
-    class="btn btn-ghost btn-sm min-h-10 self-start"
+    class="btn btn-ghost btn-sm touch-target self-start"
     aria-expanded={showAll}
     onclick={() => (showAll = !showAll)}
   >

@@ -201,7 +201,7 @@
           type="button"
           class:btn-primary={selectedFamily === family}
           class:btn-ghost={selectedFamily !== family}
-          class="btn min-h-11 max-w-full rounded-xl whitespace-normal wrap-break-word"
+          class="btn touch-target max-w-full rounded-xl whitespace-normal wrap-break-word"
           role="tab"
           aria-selected={selectedFamily === family}
           aria-controls={resultsId}
@@ -259,7 +259,7 @@
                     {#if frame.onRetry}
                       <button
                         type="button"
-                        class="btn btn-link min-h-11 px-0"
+                        class="btn btn-link touch-target px-0"
                         onclick={frame.onRetry}
                       >
                         {frame.labels.retry}
@@ -289,7 +289,7 @@
               >
                 <p class="text-sm text-error">{loadMoreError}</p>
                 {#if onRetryLoadMore}
-                  <button type="button" class="btn min-h-11" onclick={onRetryLoadMore}>
+                  <button type="button" class="btn touch-target" onclick={onRetryLoadMore}>
                     {frame.labels.retry}
                   </button>
                 {/if}
@@ -305,7 +305,7 @@
                   <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
                   <span>{loadingMoreLabel}</span>
                 {:else if onLoadMore}
-                  <button type="button" class="btn min-h-11" onclick={onLoadMore}>
+                  <button type="button" class="btn touch-target" onclick={onLoadMore}>
                     {loadMoreLabel}
                   </button>
                 {:else}

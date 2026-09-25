@@ -88,7 +88,7 @@
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
           <p role="alert" class="text-sm text-error">{t("mission.error")}</p>
           {#if onRetry}
-            <button type="button" class="btn btn-link min-h-11 px-0" onclick={onRetry}>
+            <button type="button" class="btn btn-link touch-target px-0" onclick={onRetry}>
               {t("mission.retry")}
             </button>
           {/if}

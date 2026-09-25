@@ -229,7 +229,7 @@
           type="button"
           class:btn-primary={selectedHonorType === null}
           class:btn-ghost={selectedHonorType !== null}
-          class="btn min-h-11 max-w-full rounded-xl whitespace-normal wrap-break-word"
+          class="btn touch-target max-w-full rounded-xl whitespace-normal wrap-break-word"
           role="tab"
           aria-selected={selectedHonorType === null}
           aria-controls={resultsId}
@@ -242,7 +242,7 @@
             type="button"
             class:btn-primary={selectedHonorType === honorType}
             class:btn-ghost={selectedHonorType !== honorType}
-            class="btn min-h-11 max-w-full rounded-xl whitespace-normal wrap-break-word"
+            class="btn touch-target max-w-full rounded-xl whitespace-normal wrap-break-word"
             role="tab"
             aria-selected={selectedHonorType === honorType}
             aria-controls={resultsId}
@@ -311,7 +311,7 @@
           {#each items as group (group.key)}
             <button
               type="button"
-              class="content-card-shell block min-w-0 cursor-pointer rounded-2xl p-4 text-left outline-none transition-[transform,border-color,background-color,box-shadow] duration-180 hover:-translate-y-0.5 hover:border-primary/35 hover:bg-(--archive-surface-raised) hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none"
+              class="content-card-shell block min-w-0 cursor-pointer rounded-2xl p-4 text-left outline-none transition-[transform,border-color,background-color,box-shadow] duration-180 hover-lift hover:border-primary/35 hover:bg-(--archive-surface-raised) hover:shadow-md focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none"
               aria-haspopup="dialog"
               aria-controls={dialogId}
               aria-expanded={activeGroupKey === group.key}
@@ -333,7 +333,7 @@
           >
             <p class="text-sm text-error">{loadMoreError}</p>
             {#if onRetryLoadMore}
-              <button type="button" class="btn min-h-11" onclick={onRetryLoadMore}>
+              <button type="button" class="btn touch-target" onclick={onRetryLoadMore}>
                 {frame.labels.retry}
               </button>
             {/if}
@@ -388,7 +388,7 @@
                 </div>
                 <button
                   type="button"
-                  class="btn btn-circle btn-ghost btn-sm min-h-11 w-11 shrink-0"
+                  class="btn btn-circle btn-ghost btn-sm touch-target shrink-0"
                   aria-label={closeLabel}
                   title={closeLabel}
                   onclick={closeDialog}

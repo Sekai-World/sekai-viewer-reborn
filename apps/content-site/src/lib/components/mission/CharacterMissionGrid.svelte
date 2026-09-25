@@ -180,7 +180,7 @@
         </div>
         <button
           type="button"
-          class="btn btn-circle btn-ghost btn-sm min-h-11 w-11 shrink-0"
+          class="btn btn-circle btn-ghost btn-sm touch-target shrink-0"
           aria-label={labels.close}
           title={labels.close}
           onclick={closeDialog}
@@ -207,7 +207,7 @@
             {#if groupId !== null}
               <button
                 type="button"
-                class="btn btn-link min-h-11 px-0"
+                class="btn btn-link touch-target px-0"
                 onclick={() => void loadLevels(groupId)}
               >
                 {labels.retry}

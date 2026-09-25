@@ -91,7 +91,7 @@
                 class="input min-h-11 min-w-0 flex-1 basis-48 bg-(--archive-surface-default)"
                 bind:value={searchInput.value}
               />
-              <button type="submit" class="btn min-h-11" disabled={status === "loading"}>
+              <button type="submit" class="btn touch-target" disabled={status === "loading"}>
                 <Icon icon="mdi:magnify" class="size-5" aria-hidden="true" />{labels.searchAction}
               </button>
             </span>
@@ -117,7 +117,7 @@
             class="input min-h-11 min-w-0 flex-1 basis-48 bg-(--archive-surface-default)"
             bind:value={searchInput.value}
           />
-          <button type="submit" class="btn min-h-11" disabled={status === "loading"}>
+          <button type="submit" class="btn touch-target" disabled={status === "loading"}>
             <Icon icon="mdi:magnify" class="size-5" aria-hidden="true" />{labels.searchAction}
           </button>
         </span>
@@ -152,7 +152,7 @@
       >
         <Icon icon="mdi:alert-circle-outline" class="size-8 text-error" aria-hidden="true" />
         <p>{labels.error}</p>
-        {#if onRetry}<button type="button" class="btn min-h-11" onclick={onRetry}
+        {#if onRetry}<button type="button" class="btn touch-target" onclick={onRetry}
             >{labels.retry}</button
           >{/if}
       </div>
@@ -172,7 +172,7 @@
     <nav class="flex flex-wrap items-center justify-center gap-3" aria-label={labels.title}>
       <button
         type="button"
-        class="btn min-h-11"
+        class="btn touch-target"
         disabled={!onPrevious || status === "loading"}
         onclick={onPrevious}
       >
@@ -184,7 +184,7 @@
         >{/if}
       <button
         type="button"
-        class="btn min-h-11"
+        class="btn touch-target"
         disabled={!onNext || status === "loading"}
         onclick={onNext}
       >
