@@ -57,6 +57,7 @@ const createPageData = (
     eventUnavailableInCurrentRegionMessage: "Event unavailable in this region.",
     failedToLoadEventDataMessage: "Failed to load event.",
     eventId: "1",
+    seo: null,
     eventPayload: Promise.resolve({ event, relatedData, error: null, debugEventJson: null }),
     availableRegions: Promise.resolve(["jp"]),
     unitProfiles: Promise.resolve({}),

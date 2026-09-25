@@ -214,17 +214,35 @@
 </script>
 
 <svelte:head>
-  {#await data.musicPayload}
-    <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
-  {:then payload}
-    <title>
-      {payload.music
-        ? createPageTitle(payload.music.title, musicListTitle)
-        : createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}
-    </title>
-  {:catch}
-    <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
-  {/await}
+  {#if data.seo}
+    <title>{data.seo.pageTitle}</title>
+    <meta property="og:site_name" content="Sekai Viewer" />
+    <meta property="og:title" content={data.seo.title} />
+    {#if data.seo.description}
+      <meta property="og:description" content={data.seo.description} />
+    {/if}
+    {#if data.seo.imageUrl}
+      <meta property="og:image" content={data.seo.imageUrl} />
+    {/if}
+    <meta property="og:url" content={data.seo.canonicalUrl} />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Trusted server-built JSON (angle brackets escaped); renders Discord's component embed. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- input is server-built JSON, not user HTML -->
+    {@html data.seo.inlineScriptHtml}
+  {:else}
+    {#await data.musicPayload}
+      <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
+    {:then payload}
+      <title>
+        {payload.music
+          ? createPageTitle(payload.music.title, musicListTitle)
+          : createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}
+      </title>
+    {:catch}
+      <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
+    {/await}
+  {/if}
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-4 px-2">
