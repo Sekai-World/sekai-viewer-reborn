@@ -247,15 +247,14 @@ function addHonorDegreeLevelIcons(
   }
 }
 
-function addRegularHonorDegreeLevelLayers(
-  level: number,
-  main: boolean,
-  add: HonorDegreeLayerAdder
-): void {
+function addRegularHonorDegreeLevelLayers(level: number, add: HonorDegreeLayerAdder): void {
   const iconCounts = getHonorDegreeLevelIconCounts(level);
   if (!iconCounts) return;
 
-  const x = main ? 59 : 10;
+  // The star row is anchored at (59, 8) from the bottom-left in both the 380-wide main
+  // and the independent 180-wide sub root; star i is centred at 59 + 16i, so its
+  // 16×16 rect starts at 51 + 16i (jp-6.7.0 honor SVG templates, §3.1).
+  const x = 51;
   addHonorDegreeLevelIcons(
     "level",
     honorDegreeLevelIconResources.regular,
@@ -290,7 +289,7 @@ function addNormalHonorLevelLayers(
       add
     );
   } else if (honor.honorType !== "live-master") {
-    addRegularHonorDegreeLevelLayers(honor.level, main, add);
+    addRegularHonorDegreeLevelLayers(honor.level, add);
   }
 }
 

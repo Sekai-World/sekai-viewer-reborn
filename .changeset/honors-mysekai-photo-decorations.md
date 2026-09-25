@@ -47,3 +47,5 @@ Show reward items as their game icon and quantity, naming each item in a tooltip
 Load every mission of the chosen character at once, and show ladder reward totals as icon and quantity.
 
 Center reward ladder rows vertically, and show Character Rank honor rewards as their small honor degree at the granted level.
+
+Place regular honor level stars at their measured position (x 51 + 16i) in both main and sub degrees.

@@ -66,12 +66,9 @@ describe("HonorDegree", () => {
           ])
       ).toEqual(Array.from({ length: 2 }, () => ["0", "0", main ? "380" : "180", "80"]));
       expect(images.slice(2, 7).map((image) => image.getAttribute("x"))).toEqual(
-        Array.from({ length: 5 }, (_, i) => String((main ? 59 : 10) + 16 * i))
+        Array.from({ length: 5 }, (_, i) => String(51 + 16 * i))
       );
-      expect(images.slice(7).map((image) => image.getAttribute("x"))).toEqual([
-        String(main ? 59 : 10),
-        String((main ? 59 : 10) + 16)
-      ]);
+      expect(images.slice(7).map((image) => image.getAttribute("x"))).toEqual(["51", "67"]);
       expect(
         images
           .slice(2)
