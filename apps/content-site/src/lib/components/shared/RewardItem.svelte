@@ -15,7 +15,7 @@
       "resourceType" | "resourceId" | "resourceAssetbundleName"
     >;
     region: SupportedRegion;
-    /** The item's name; shown beside the icon, which is decorative. */
+    /** The item's name: the icon's tooltip and accessible label, or the text without an icon. */
     label: string;
     /** Already formatted, for example "×100". */
     quantityLabel?: string | null;
@@ -41,8 +41,15 @@
   );
 </script>
 
-<span class="inline-flex min-w-0 items-center gap-1.5 align-middle {className}">
-  {#if src}
+{#if src}
+  <!-- A game-asset icon may stand alone (DESIGN.md, Focus and accessibility): the tooltip
+       and the accessible label carry the item's name. -->
+  <span
+    class="tooltip inline-flex shrink-0 items-center gap-1 align-middle {className}"
+    data-tip={label}
+    role="img"
+    aria-label={quantityLabel ? `${label} ${quantityLabel}` : label}
+  >
     <img
       {src}
       alt=""
@@ -51,7 +58,11 @@
       decoding="async"
       onerror={() => (failures += 1)}
     />
-  {/if}
-  <span class="min-w-0 wrap-anywhere">{label}</span>
-  {#if quantityLabel}<span class="shrink-0 tabular-nums">{quantityLabel}</span>{/if}
-</span>
+    {#if quantityLabel}<span class="tabular-nums" aria-hidden="true">{quantityLabel}</span>{/if}
+  </span>
+{:else}
+  <span class="inline-flex min-w-0 items-center gap-1.5 align-middle {className}">
+    <span class="min-w-0 wrap-anywhere">{label}</span>
+    {#if quantityLabel}<span class="shrink-0 tabular-nums">{quantityLabel}</span>{/if}
+  </span>
+{/if}

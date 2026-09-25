@@ -93,9 +93,11 @@ describe("CharacterRankCard", () => {
 
     expect(screen.getByRole("heading", { name: "Milestone ranks" })).toBeTruthy();
     expect(screen.getByText("Rank 5")).toBeTruthy();
-    expect(text(screen.getByText("Rank 5").closest("li")?.lastElementChild)).toBe(
-      "Honor ×1 Crystals ×300"
-    );
+    const rank5Rewards = screen.getByText("Rank 5").closest("li")!.lastElementChild as HTMLElement;
+    expect(Array.from(rank5Rewards.children, (reward) => text(reward))).toEqual([
+      "Honor ×1",
+      "Crystals ×300"
+    ]);
     expect(screen.getByText("Rank 8")).toBeTruthy();
     expect(screen.queryByText("Rank 1")).toBeNull();
 
