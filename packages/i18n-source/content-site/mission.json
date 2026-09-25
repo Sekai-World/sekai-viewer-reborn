@@ -28,7 +28,6 @@
   "mission.loadingMore": "Loading more missions...",
   "mission.loadMore": "Load more missions",
   "mission.loadMoreError": "More missions could not be loaded.",
-  "mission.end": "You have reached the end.",
   "mission.targetUnavailable": "Target data unavailable for this region",
   "mission.targetLevel": "Level {level} · Target {count}",
   "mission.shownCount": "{count} missions shown",

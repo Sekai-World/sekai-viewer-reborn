@@ -120,7 +120,6 @@ const data = (
     "mission.loadingMore": "Loading more missions...",
     "mission.loadMore": "Load more missions",
     "mission.loadMoreError": "More missions could not be loaded.",
-    "mission.end": "You have reached the end.",
     "mission.empty": "No missions found. Try another region.",
     "mission.error": "Missions could not be loaded.",
     "mission.retry": "Try again",
@@ -242,7 +241,7 @@ describe("Missions page", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/missions/jp/data?page=2&family=characterMissionV2s&character=1"
     );
-    expect(screen.getByText("You have reached the end.")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
   });
 
   it("shows only the character picker until a character is chosen", async () => {
@@ -607,9 +606,8 @@ describe("Missions page", () => {
         headers: { "content-type": "application/json" }
       })
     );
-    await waitFor(() =>
-      expect(screen.getByRole("status").textContent).toBe("You have reached the end.")
-    );
+    await waitFor(() => expect(screen.queryByText("Loading more missions...")).toBeNull());
+    expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
   });
 });
 

@@ -40,7 +40,6 @@
     hasNext = false,
     isLoadingMore = false,
     loadingMoreLabel,
-    endLabel,
     loadMoreError = null,
     onLoadMore,
     onRetryLoadMore,
@@ -68,7 +67,6 @@
     hasNext?: boolean;
     isLoadingMore?: boolean;
     loadingMoreLabel?: string;
-    endLabel?: string;
     loadMoreError?: string | null;
     onLoadMore?: () => void;
     onRetryLoadMore?: () => void;
@@ -354,10 +352,6 @@
               <span>{loadingMoreLabel}</span>
             {/if}
           </div>
-        {:else}
-          <p class="p-4 text-center text-sm text-(--archive-text-muted)" role="status">
-            {endLabel}
-          </p>
         {/if}
 
         <dialog

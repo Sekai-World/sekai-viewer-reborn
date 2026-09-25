@@ -52,7 +52,6 @@ const props = {
   onFamilyChange: vi.fn(),
   loadMoreLabel: "Load more missions",
   loadingMoreLabel: "Loading more missions...",
-  endLabel: "You have reached the end.",
   homeHref: "/",
   regions: [
     { key: "jp", label: "JP", active: true, href: "/missions/jp" },
@@ -245,7 +244,9 @@ describe("MissionCatalogue", () => {
     expect(onRetryLoadMore).toHaveBeenCalledOnce();
 
     await rerender({ ...props, hasNext: false, loadMoreError: null });
-    expect(screen.getByRole("status").textContent).toBe("You have reached the end.");
+    // A finished list ends without a footer.
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
   });
 
   it("preserves error retry and empty feedback without a search field", async () => {

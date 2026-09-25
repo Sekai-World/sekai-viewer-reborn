@@ -579,7 +579,6 @@
   {isLoadingMore}
   loadMoreLabel={t("mission.loadMore")}
   loadingMoreLabel={t("mission.loadingMore")}
-  endLabel={t("mission.end")}
   loadMoreError={loadMoreError ? t("mission.loadMoreError") : null}
   onLoadMore={() => void loadNextPage()}
   onRetryLoadMore={() => void loadNextPage()}

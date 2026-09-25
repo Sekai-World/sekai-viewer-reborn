@@ -35,3 +35,5 @@ Lay out milestone and full reward ladders in the same width-driven columns, keep
 Load every Normal mission at once, and pick a character before listing Character Missions; the Character detail page links to that character's missions.
 
 Describe Story missions as fully read episode goals, with the reading rule shown above the ladder.
+
+Drop the end-of-list note from Missions and Honors.
