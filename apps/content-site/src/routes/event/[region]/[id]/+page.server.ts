@@ -1,6 +1,7 @@
 import { dev } from "$app/environment";
 import {
   getEventsByRegionByIdDetail,
+  getEventsByRegionByIdHonorBonuses,
   getEventsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
 import { getServerI18nText } from "$lib/i18n/runtime";
@@ -10,9 +11,10 @@ import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   parseEventAggregateRelatedData,
   parseEventDetail,
+  parseEventHonorBonusesResponse,
   type EventDetail
 } from "$lib/server/event-detail";
-import type { EventRelatedData } from "$lib/domain/event-detail";
+import type { EventHonorBonus, EventRelatedData } from "$lib/domain/event-detail";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
@@ -105,6 +107,36 @@ type EventAggregateLookup = {
   rawPayloadJson: string | null;
 };
 
+type EventHonorBonusEnrichmentResult = {
+  bonuses: EventHonorBonus[];
+  honorBonusesLoadFailed: boolean;
+};
+
+const fetchEventHonorBonuses = async (
+  baseUrl: string,
+  region: SupportedRegion,
+  eventId: string
+): Promise<EventHonorBonusEnrichmentResult> => {
+  try {
+    const response = await getEventsByRegionByIdHonorBonuses({
+      baseUrl,
+      path: { region, id: eventId }
+    });
+
+    if (response.error) {
+      return { bonuses: [], honorBonusesLoadFailed: true };
+    }
+
+    const result = parseEventHonorBonusesResponse(response.data);
+    return {
+      bonuses: result.bonuses,
+      honorBonusesLoadFailed: !result.valid
+    };
+  } catch {
+    return { bonuses: [], honorBonusesLoadFailed: true };
+  }
+};
+
 const fetchEventAggregate = async (
   baseUrl: string,
   region: SupportedRegion,
@@ -130,10 +162,20 @@ const fetchEventAggregate = async (
     }
 
     const event = parseEventDetail(response.data);
+    let relatedData = event ? parseEventAggregateRelatedData(response.data) : null;
+
+    if ((relatedData?.bonuses?.honorBonusCount ?? 0) > 0) {
+      const enrichment = await fetchEventHonorBonuses(baseUrl, region, eventId);
+      relatedData = {
+        ...parseEventAggregateRelatedData(response.data, enrichment.bonuses),
+        honorBonusesLoadFailed: enrichment.honorBonusesLoadFailed
+      };
+    }
+
     return {
       region,
       event,
-      relatedData: event ? parseEventAggregateRelatedData(response.data) : null,
+      relatedData,
       loadFailed: false,
       availableRegions: normalizeAvailableRegions(response.data),
       isCurrentEvent: getObject(response.data)?.["isCurrentEvent"] === true,

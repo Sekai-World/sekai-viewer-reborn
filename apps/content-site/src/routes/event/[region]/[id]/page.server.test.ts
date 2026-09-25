@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { EventDetail, EventRelatedData } from "$lib/domain/event-detail";
 
-const { getEventsByRegionByIdDetail, getEventsRegionsByIdAvailability } = vi.hoisted(() => ({
+const {
+  getEventsByRegionByIdDetail,
+  getEventsByRegionByIdHonorBonuses,
+  getEventsRegionsByIdAvailability
+} = vi.hoisted(() => ({
   getEventsByRegionByIdDetail: vi.fn(),
+  getEventsByRegionByIdHonorBonuses: vi.fn(),
   getEventsRegionsByIdAvailability: vi.fn()
 }));
 vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionByIdDetail,
+  getEventsByRegionByIdHonorBonuses,
   getEventsRegionsByIdAvailability
 }));
 
@@ -34,9 +41,9 @@ const messages = {
 type EventPageLoadResult = {
   region: string;
   eventPayload: Promise<{
-    event: null;
-    relatedData: null;
-    debugEventJson: null;
+    event: EventDetail | null;
+    relatedData: EventRelatedData | null;
+    debugEventJson: string | null;
     error: string | null;
   }>;
 };
@@ -51,6 +58,7 @@ const runLoad = (region: string, id: string) =>
 describe("event detail page load", () => {
   beforeEach(() => {
     getEventsByRegionByIdDetail.mockReset();
+    getEventsByRegionByIdHonorBonuses.mockReset();
     getEventsRegionsByIdAvailability.mockReset();
     getEventsRegionsByIdAvailability.mockResolvedValue({ data: ["jp"] });
     getServerI18nText.mockReset();
@@ -112,6 +120,174 @@ describe("event detail page load", () => {
       relatedData: null,
       debugEventJson: null,
       error: null
+    });
+  });
+
+  it("replaces aggregate honor bonus stubs with the read-only enriched response", async () => {
+    getEventsByRegionByIdDetail.mockResolvedValue({
+      data: {
+        event: { id: 123, name: "Event" },
+        bonuses: {
+          eventHonorBonuses: [{ honorId: 42, bonusRate: 25 }]
+        }
+      }
+    });
+    getEventsByRegionByIdHonorBonuses.mockResolvedValue({
+      data: {
+        items: [
+          {
+            honorId: 42,
+            bonusRate: 25,
+            honor: {
+              id: 42,
+              name: "Event Honor",
+              assetbundleName: "honor_bundle",
+              group: {
+                name: "Event Group",
+                honorType: "rank_match",
+                backgroundAssetbundleName: "group_background"
+              }
+            }
+          }
+        ]
+      }
+    });
+
+    const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+
+    await expect(result.eventPayload).resolves.toMatchObject({
+      error: null,
+      event: { id: "123", title: "Event" },
+      relatedData: {
+        honorBonusesLoadFailed: false,
+        bonuses: {
+          honorBonusCount: 1,
+          honorBonuses: [
+            {
+              honorId: 42,
+              bonusRate: 25,
+              honor: {
+                id: 42,
+                name: "Event Honor",
+                assetBundleName: "honor_bundle",
+                group: {
+                  name: "Event Group",
+                  honorType: "rank_match",
+                  backgroundAssetBundleName: "group_background"
+                }
+              }
+            }
+          ]
+        }
+      }
+    });
+    expect(getEventsByRegionByIdHonorBonuses).toHaveBeenCalledWith({
+      baseUrl: "https://master-api.test",
+      path: { region: "tw", id: "event-123" }
+    });
+  });
+
+  it.each(["error response", "request rejection"] as const)(
+    "retains safe aggregate honor bonus data when enrichment has a %s",
+    async (failureMode) => {
+      getEventsByRegionByIdDetail.mockResolvedValue({
+        data: {
+          event: { id: 123, name: "Event" },
+          bonuses: {
+            eventHonorBonuses: [{ honorId: 42, bonusRate: 25 }]
+          }
+        }
+      });
+      if (failureMode === "error response") {
+        getEventsByRegionByIdHonorBonuses.mockResolvedValue({
+          error: new Error("upstream failure")
+        });
+      } else {
+        getEventsByRegionByIdHonorBonuses.mockRejectedValue(new Error("network failure"));
+      }
+
+      const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+
+      await expect(result.eventPayload).resolves.toMatchObject({
+        error: null,
+        relatedData: {
+          honorBonusesLoadFailed: true,
+          bonuses: {
+            honorBonusCount: 1,
+            honorBonuses: [{ honorId: 42, bonusRate: 25, honor: null }]
+          }
+        }
+      });
+    }
+  );
+
+  it("does not request honor bonus enrichment when the aggregate reports no bonuses", async () => {
+    getEventsByRegionByIdDetail.mockResolvedValue({
+      data: {
+        event: { id: 123, name: "Event" },
+        bonuses: { eventHonorBonuses: [] }
+      }
+    });
+
+    const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+
+    await expect(result.eventPayload).resolves.toMatchObject({
+      error: null,
+      relatedData: {
+        honorBonusesLoadFailed: false,
+        bonuses: { honorBonusCount: 0 }
+      }
+    });
+    expect(getEventsByRegionByIdHonorBonuses).not.toHaveBeenCalled();
+  });
+
+  it("keeps an empty successful enrichment response distinct from a failure", async () => {
+    getEventsByRegionByIdDetail.mockResolvedValue({
+      data: {
+        event: { id: 123, name: "Event" },
+        bonuses: {
+          eventHonorBonuses: [{ honorId: 42, bonusRate: 25 }]
+        }
+      }
+    });
+    getEventsByRegionByIdHonorBonuses.mockResolvedValue({ data: { items: [] } });
+
+    const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+
+    await expect(result.eventPayload).resolves.toMatchObject({
+      error: null,
+      relatedData: {
+        honorBonusesLoadFailed: false,
+        bonuses: {
+          honorBonusCount: 1,
+          honorBonuses: [{ honorId: 42, bonusRate: 25, honor: null }]
+        }
+      }
+    });
+  });
+
+  it("marks malformed successful enrichment data unavailable and preserves aggregate bonuses", async () => {
+    getEventsByRegionByIdDetail.mockResolvedValue({
+      data: {
+        event: { id: 123, name: "Event" },
+        bonuses: {
+          eventHonorBonuses: [{ honorId: 42, bonusRate: 25 }]
+        }
+      }
+    });
+    getEventsByRegionByIdHonorBonuses.mockResolvedValue({ data: "invalid response" });
+
+    const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+
+    await expect(result.eventPayload).resolves.toMatchObject({
+      error: null,
+      relatedData: {
+        honorBonusesLoadFailed: true,
+        bonuses: {
+          honorBonusCount: 1,
+          honorBonuses: [{ honorId: 42, bonusRate: 25, honor: null }]
+        }
+      }
     });
   });
 });

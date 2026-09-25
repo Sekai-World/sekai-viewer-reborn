@@ -11,6 +11,8 @@
     "./content-site/event.json": "./content-site/event.json",
     "./content-site/gacha.json": "./content-site/gacha.json",
     "./content-site/home.json": "./content-site/home.json",
+    "./content-site/honor.json": "./content-site/honor.json",
+    "./content-site/mission.json": "./content-site/mission.json",
     "./content-site/music.json": "./content-site/music.json",
     "./content-site/server.json": "./content-site/server.json",
     "./content-site/virtual-live.json": "./content-site/virtual-live.json",

@@ -6,6 +6,7 @@
   import {
     getCardThumbnailAssetURL,
     getCommonMaterialThumbnailURL,
+    getGachaTicketThumbnailURL,
     getMusicJacketAssetURL,
     getRemoteAssetEndpointURL,
     getVirtualLiveBannerAssetURL,
@@ -15,6 +16,7 @@
   import { resolveCardTrained } from "$lib/components/card/card-presentation";
   import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  import HonorSummary from "$lib/components/honor/HonorSummary.svelte";
   import { CardThumbnail, UnitIconBadge } from "@platform/ui-shell";
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
@@ -58,6 +60,12 @@
     bonusRateLabel,
     eventMusicsLabel,
     rankingRewardsTitle,
+    honorBonusesTitle = "",
+    honorBonusesLoadFailed = false,
+    honorBonusesUnavailableLabel = "",
+    honorBonusHonorLabel = "",
+    honorRewardLabel = "",
+    bondsHonorRewardLabel = "",
     rankingRewardTopLabel,
     rankingRewardBorderLabel,
     rankingRewardsShowMoreLabel,
@@ -89,6 +97,12 @@
     bonusRateLabel: string;
     eventMusicsLabel: string;
     rankingRewardsTitle: string;
+    honorBonusesTitle?: string;
+    honorBonusesLoadFailed?: boolean;
+    honorBonusesUnavailableLabel?: string;
+    honorBonusHonorLabel?: string;
+    honorRewardLabel?: string;
+    bondsHonorRewardLabel?: string;
     rankingRewardTopLabel: string;
     rankingRewardBorderLabel: string;
     rankingRewardsShowMoreLabel: string;
@@ -100,6 +114,12 @@
   } = $props();
 
   let areAllRankingRewardsVisible = $state(false);
+  const honorBonuses = $derived(
+    (relatedData?.bonuses?.honorBonuses ?? []).filter(
+      (bonus) =>
+        bonus.honor !== null && bonus.bonusRate !== null && Number.isFinite(bonus.bonusRate)
+    )
+  );
   let fullRewardRanges = $state<EventRankingRewardRange[] | null>(null);
   let rewardsLoading = $state(false);
   let rewardsLoadError = $state(false);
@@ -491,6 +511,17 @@
 
   const getRewardDetailKey = (detail: EventRewardResourceBoxDetail, index: number): string =>
     `${detail.resourceType ?? "resource"}-${detail.resourceId ?? "none"}-${detail.seq ?? index}`;
+  const getHonorBonusImageSrc = (bonus: (typeof honorBonuses)[number]): string | null => {
+    const honor = bonus.honor;
+    if (!honor) {
+      return null;
+    }
+    const bundle = honor.group?.backgroundAssetBundleName ?? honor.assetBundleName;
+    const assetPath = honor.group?.honorType === "rank_match" ? "rank_live/honor" : "honor";
+    return bundle
+      ? getRemoteAssetEndpointURL(`${assetPath}/${bundle}/degree_main.webp`, region as AssetServer)
+      : null;
+  };
   const getRewardKey = (reward: EventRankingReward, index: number): string =>
     reward.id ?? reward.resourceBoxId ?? `${reward.seq ?? "reward"}-${index}`;
   const getRewardRangeKey = (range: EventRankingRewardRange, index: number): string =>
@@ -508,6 +539,11 @@
   const getRewardDetailQuantity = (detail: EventRewardResourceBoxDetail): string | null =>
     formatNumber(detail.resourceQuantity);
   const getRewardDetailLabel = (detail: EventRewardResourceBoxDetail): string => {
+    if (isHonorRewardDetail(detail)) {
+      return detail.resourceType === "bonds_honor"
+        ? bondsHonorRewardLabel || rankingRewardsTitle
+        : honorRewardLabel || rankingRewardsTitle;
+    }
     const typeLabel = detail.resourceType?.replaceAll("_", " ") ?? noDataLabel;
     const idLabel = detail.resourceId ? ` #${detail.resourceId}` : "";
     const levelLabel =
@@ -661,11 +697,11 @@
       );
     }
 
-    if (detail.resourceType === "gacha_ticket" && detail.resourceId) {
-      return getRemoteAssetEndpointURL(
-        `thumbnail/gacha_ticket/${detail.resourceId}.webp`,
-        region as AssetServer
-      );
+    // Ticket thumbnails are named by asset bundle, not by the numeric resourceId.
+    if (detail.resourceType === "gacha_ticket") {
+      return detail.resourceAssetbundleName
+        ? getGachaTicketThumbnailURL(detail.resourceAssetbundleName, region as AssetServer)
+        : null;
     }
 
     if (detail.resourceType === "boost_item" && detail.resourceId) {
@@ -739,7 +775,7 @@
   {@const honorPreviews = getHonorAssetPreviews(detail)}
   {#if honorPreviews}
     <span
-      class="inline-flex shrink-0"
+      class="inline-flex max-w-full flex-col gap-1"
       title={getRewardDetailLabel(detail)}
       aria-label={getRewardDetailLabel(detail)}
     >
@@ -749,6 +785,7 @@
       <span class="hidden h-12 sm:block" aria-hidden="true">
         {@render honorAssetPreview(honorPreviews.main)}
       </span>
+      <span class="text-xs text-(--archive-text-muted)">{getRewardDetailLabel(detail)}</span>
     </span>
   {:else}
     <span
@@ -761,6 +798,7 @@
         class="size-4 shrink-0 opacity-70"
         aria-hidden="true"
       />
+      <span>{getRewardDetailLabel(detail)}</span>
     </span>
   {/if}
 {/snippet}
@@ -1173,6 +1211,48 @@
 
 <article class="card content-card-shell shadow-sm">
   <div class="card-body gap-4 p-3 sm:p-5">
+    {#if honorBonusesLoadFailed || honorBonuses.length > 0}
+      <section class="space-y-3" aria-labelledby="event-honor-bonuses-title">
+        <h2
+          id="event-honor-bonuses-title"
+          class="flex items-center gap-2 text-sm font-semibold text-(--archive-text-strong)"
+        >
+          <Icon icon="mdi:percent-outline" class="size-4 text-primary" aria-hidden="true" />
+          {honorBonusesTitle}
+        </h2>
+        {#if honorBonusesLoadFailed}
+          <p
+            role="status"
+            class="content-card-inset rounded-xl p-3 text-sm/6 text-(--archive-text-default)"
+          >
+            {honorBonusesUnavailableLabel}
+          </p>
+        {:else}
+          <div class="grid gap-3 sm:grid-cols-2">
+            {#each honorBonuses as bonus, index (`${bonus.honorId}-${index}`)}
+              <div
+                class="content-card-inset flex min-w-0 flex-col justify-between gap-3 rounded-xl p-3"
+              >
+                <HonorSummary
+                  name={bonus.honor?.name ?? honorBonusHonorLabel}
+                  groupName={bonus.honor?.group?.name}
+                  imageSrc={getHonorBonusImageSrc(bonus)}
+                  {imageUnavailableLabel}
+                />
+                <dl
+                  class="flex items-center justify-between gap-3 border-t border-(--archive-border-subtle) pt-3 text-sm"
+                >
+                  <dt class="text-(--archive-text-muted)">{bonusRateLabel}</dt>
+                  <dd class="font-semibold tabular-nums text-primary">
+                    {formatPercent(bonus.bonusRate)}
+                  </dd>
+                </dl>
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </section>
+    {/if}
     <section class="space-y-2" aria-labelledby="event-bonus-character-title">
       <h2
         id="event-bonus-character-title"

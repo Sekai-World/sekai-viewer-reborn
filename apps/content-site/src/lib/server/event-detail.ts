@@ -5,6 +5,8 @@ import type {
   EventDeckBonus,
   EventDetail,
   EventFeaturedCard,
+  EventHonorBonus,
+  EventHonorBonusHonor,
   EventRewardHonor,
   EventRewardHonorGroup,
   EventRewardHonorLevel,
@@ -16,6 +18,7 @@ import type {
   EventRelatedData,
   EventVirtualLive
 } from "$lib/domain/event-detail";
+import { getPositiveInteger } from "./response-values";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;
@@ -185,11 +188,116 @@ const parseEventCardBonusLimit = (value: unknown): EventCardBonusLimit | null =>
   };
 };
 
-const parseEventBonuses = (payload: unknown): EventBonuses | null => {
+const parseEventHonorBonusGroup = (value: unknown) => {
+  const group = getObject(value);
+  if (!group) {
+    return null;
+  }
+
+  return {
+    name: getString(group["name"]),
+    honorType: getString(group["honorType"]),
+    backgroundAssetBundleName: pickFirstString(group, [
+      "backgroundAssetbundleName",
+      "backgroundAssetBundleName"
+    ])
+  };
+};
+
+const parseEventHonorBonusHonor = (value: unknown): EventHonorBonusHonor | null => {
+  const node = getObject(value);
+  const id = getPositiveInteger(node?.["id"]);
+  if (!node || id === null) {
+    return null;
+  }
+
+  return {
+    id,
+    name: getString(node["name"]),
+    assetBundleName: pickFirstString(node, ["assetbundleName", "assetBundleName"]),
+    group: parseEventHonorBonusGroup(node["group"])
+  };
+};
+
+const parseEventHonorBonus = (value: unknown): EventHonorBonus | null => {
+  const node = getObject(value);
+  const honorId = getPositiveInteger(node?.["honorId"]);
+  if (!node || honorId === null) {
+    return null;
+  }
+
+  return {
+    honorId,
+    bonusRate: getNumber(node["bonusRate"]),
+    honor: parseEventHonorBonusHonor(node["honor"])
+  };
+};
+
+const getHonorBonusItems = (payload: unknown): { items: unknown[]; valid: boolean } => {
+  if (Array.isArray(payload)) {
+    return { items: payload, valid: true };
+  }
+
+  const root = getObject(payload);
+  if (!root) {
+    return { items: [], valid: false };
+  }
+
+  if (Array.isArray(root["items"])) {
+    return { items: root["items"], valid: true };
+  }
+
+  if (Array.isArray(root["eventHonorBonuses"])) {
+    return { items: root["eventHonorBonuses"], valid: true };
+  }
+
+  return {
+    items: [],
+    valid: root["items"] === undefined && root["eventHonorBonuses"] === undefined
+  };
+};
+
+export const parseEventHonorBonusesResponse = (
+  payload: unknown
+): {
+  bonuses: EventHonorBonus[];
+  valid: boolean;
+} => {
+  const { items, valid: hasValidShape } = getHonorBonusItems(payload);
+  let valid = hasValidShape;
+  const bonuses = items.flatMap((item) => {
+    const bonus = parseEventHonorBonus(item);
+    if (!bonus) {
+      valid = false;
+      return [];
+    }
+
+    return [bonus];
+  });
+
+  return { bonuses, valid };
+};
+
+export const parseEventHonorBonuses = (payload: unknown): EventHonorBonus[] =>
+  parseEventHonorBonusesResponse(payload).bonuses;
+
+const parseEventBonuses = (
+  payload: unknown,
+  honorBonusesOverride?: readonly EventHonorBonus[]
+): EventBonuses | null => {
   const root = getObject(payload);
   if (!root) {
     return null;
   }
+
+  const parsedHonorBonuses = parseEventHonorBonuses(root["eventHonorBonuses"]);
+  const honorBonuses = honorBonusesOverride
+    ? parsedHonorBonuses.map(
+        (bonus) =>
+          honorBonusesOverride.find((enrichedBonus) => enrichedBonus.honorId === bonus.honorId) ??
+          bonus
+      )
+    : parsedHonorBonuses;
 
   return {
     deckBonuses: getArray(root["eventDeckBonuses"]).flatMap((item) => {
@@ -205,6 +313,7 @@ const parseEventBonuses = (payload: unknown): EventBonuses | null => {
       return limit ? [limit] : [];
     }),
     honorBonusCount: getArray(root["eventHonorBonuses"]).length,
+    ...(honorBonuses.length > 0 ? { honorBonuses } : {}),
     mySekaiFixtureBonusLimitCount: getArray(
       root["eventMysekaiFixtureGameCharacterPerformanceBonusLimits"]
     ).length
@@ -310,7 +419,9 @@ const parseRewardResourceBoxDetail = (value: unknown): EventRewardResourceBoxDet
     resourceLevel: getNumber(node["resourceLevel"]),
     resourceQuantity: getNumber(node["resourceQuantity"]),
     seq: getNumber(node["seq"]),
-    honor: parseRewardHonor(node["honor"])
+    honor: parseRewardHonor(node["honor"]),
+    resourceName: getString(node["resourceName"]),
+    resourceAssetbundleName: getString(node["resourceAssetbundleName"])
   };
 };
 
@@ -376,13 +487,17 @@ const parseEventRelatedData = ({
   rewardsPayload: unknown;
 }): EventRelatedData => ({
   bonuses: parseEventBonuses(bonusesPayload),
+  honorBonusesLoadFailed: false,
   cards: parseItems(cardsPayload, parseFeaturedCard),
   musics: parseItems(musicsPayload, parseEventMusic),
   rewardRanges: parseItems(rewardsPayload, parseRewardRange),
   rewardRangesHasMore: null
 });
 
-const parseEventAggregateRelatedData = (payload: unknown): EventRelatedData => {
+const parseEventAggregateRelatedData = (
+  payload: unknown,
+  honorBonuses?: readonly EventHonorBonus[]
+): EventRelatedData => {
   const root = getObject(payload);
   if (!root) {
     return parseEventRelatedData({
@@ -397,7 +512,8 @@ const parseEventAggregateRelatedData = (payload: unknown): EventRelatedData => {
   const rewardsSummary = getObject(rewardsNode?.["summary"]);
 
   return {
-    bonuses: parseEventBonuses(root["bonuses"]),
+    bonuses: parseEventBonuses(root["bonuses"], honorBonuses),
+    honorBonusesLoadFailed: false,
     cards: parseItems(root["cards"], parseFeaturedCard),
     musics: parseItems(root["musics"], parseEventMusic),
     rewardRanges: getArray(rewardsNode?.["previewRanges"]).flatMap((item) => {

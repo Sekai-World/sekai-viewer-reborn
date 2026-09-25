@@ -35,6 +35,19 @@ export const getStringLikePreservingWhitespace = (value: unknown): string | null
 export const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
 
+export const getPositiveInteger = (value: unknown): number | null => {
+  let numberValue: number;
+  if (typeof value === "number") {
+    numberValue = value;
+  } else if (typeof value === "string" && value.trim().length > 0) {
+    numberValue = Number(value);
+  } else {
+    return null;
+  }
+
+  return Number.isSafeInteger(numberValue) && numberValue > 0 ? numberValue : null;
+};
+
 export const getDateValue = (value: unknown): string | number | null => {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;

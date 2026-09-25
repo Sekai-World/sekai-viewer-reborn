@@ -214,7 +214,11 @@ contrasts with the surface beneath it. Preserve keyboard access for links,
 buttons, dialogs, region switches, spoiler/reveal interactions, and media
 previews. Images need meaningful `alt` text; decorative overlays and avatars
 inside an already labeled control should be marked decorative. Do not rely on
-hover, color, motion, or an icon alone to convey meaning.
+hover, color, motion, or an icon alone to convey meaning. Exception: an icon
+taken from game assets (such as an item, currency, or reward thumbnail), or one
+whose meaning is self-evident, may stand alone when a tooltip, an accessible
+label, or both carry its exact meaning. If the icon cannot load, fall back to
+visible text.
 
 ## 6. Motion
 

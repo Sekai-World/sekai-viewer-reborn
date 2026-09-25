@@ -236,14 +236,25 @@ Rules:
 Current `content-site` sidebar groups:
 
 - Home
-- Database
+- Game News
+- Library (`navigation.library`): permanent reference data
+  - Characters & Units
   - Cards
-  - Characters
   - Songs
+- Activities (`navigation.activities`): scheduled, time-bound content
   - Events
+  - Gachas
   - Virtual Lives
+- Progression (`navigation.progression`): mission goals and the honors they award
+  - Missions
+  - Honors
+- Project (`navigation.project`)
+  - Support
 
-Cards, Characters, Songs, Events, Gachas, and Virtual Lives have real destinations.
+Place a new destination in the group that matches its content rather than adding
+a catch-all section.
+
+Every link above has a real destination.
 Character list/detail routes use `/characters/:region` and `/character/:region/:id`.
 Virtual Live list/detail routes use `/virtual-lives/:region` and
 `/virtual-live/:region/:id`.

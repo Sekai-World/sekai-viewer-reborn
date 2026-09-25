@@ -25,6 +25,10 @@ export default defineConfig({
         replacement: new URL("./src/lib/test/app-navigation.ts", import.meta.url).pathname
       },
       {
+        find: "$app/state",
+        replacement: new URL("./src/lib/test/app-state.ts", import.meta.url).pathname
+      },
+      {
         find: "$env/dynamic/public",
         replacement: new URL("./src/lib/test/public-env.ts", import.meta.url).pathname
       },
@@ -90,8 +94,14 @@ export default defineConfig({
         "src/lib/server/game-news.ts",
         "src/lib/server/home-latest-data.ts",
         "src/lib/server/home-page-data.ts",
+        "src/lib/server/honor-list.ts",
+        "src/lib/server/mission-list.ts",
+        "src/lib/server/catalogue-data.ts",
+        "src/lib/server/event-detail.ts",
         "src/lib/server/response-values.ts",
         "src/lib/server/secure-random.ts",
+        "src/lib/components/mission/catalogue-groups.ts",
+        "src/lib/domain/mission.ts",
         "src/lib/domain/unit-detail.ts",
         "src/lib/domain/unit-icon.ts",
         "src/lib/styles/event-card.ts",
@@ -104,6 +114,8 @@ export default defineConfig({
         "src/routes/+page.server.ts",
         "src/routes/news/[region]/+page.server.ts",
         "src/routes/news/[region]/region-options.ts",
+        "src/routes/honors/[region]/+page.server.ts",
+        "src/routes/missions/[region]/+page.server.ts",
         "src/routes/unit/[region]/[unit]/+page.server.ts",
         "src/routes/+layout.server.ts",
         "src/routes/musics/[region]/+page.server.ts",

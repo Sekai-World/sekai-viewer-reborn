@@ -5,8 +5,11 @@ import {
   getGameCharactersRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
 import { normalizeRegion } from "$lib/i18n/region";
+import type { Honor } from "$lib/domain/honor";
+import type { CharacterRankReference, Mission } from "$lib/domain/mission";
 import type { SupportedRegion } from "$lib/domain/regions";
 import { supportedRegions } from "$lib/domain/regions";
+import { getPositiveInteger } from "$lib/server/catalogue-data";
 import { getMasterApiBaseUrl } from "$lib/server/config";
 import {
   normalizeCharacterAvailability,
@@ -16,10 +19,19 @@ import {
 import { parseCharacter, parseCharacterUnits } from "$lib/server/character-list";
 import { parseCharacterProfile } from "$lib/server/character-profile";
 import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
+import { fetchHonorsByIds } from "$lib/server/honor-list";
+import { fetchCharacterMissions, fetchCharacterRankReferences } from "$lib/server/mission-list";
 import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "$lib/server/unit-profiles";
 import type { PageServerLoad } from "./$types";
 
 type CharacterPayload = { character: unknown; loadFailed: boolean };
+export type CharacterRanksPayload = {
+  items: CharacterRankReference[];
+  /** Honors that rank rewards grant, by ID, for rendering their degree images. */
+  honors: Record<number, Honor>;
+  loadFailed: boolean;
+};
+export type CharacterMissionsPayload = { items: Mission[]; loadFailed: boolean };
 
 const supportedRegionSet = new Set<SupportedRegion>(supportedRegions);
 
@@ -145,6 +157,36 @@ export const load: PageServerLoad = async ({ params }) => {
         .catch(() => ({ character: null, loadFailed: true as const }))
     : Promise.resolve({ character: null, loadFailed: false as const });
 
+  const numericCharacterId = getPositiveInteger(characterId);
+  const characterRanks: Promise<CharacterRanksPayload> =
+    numericCharacterId === null
+      ? Promise.resolve({ items: [], honors: {}, loadFailed: false })
+      : fetchCharacterRankReferences(baseUrl, region, numericCharacterId)
+          .then(async (items) => ({
+            items,
+            honors: await fetchHonorsByIds(
+              baseUrl,
+              region,
+              items.flatMap((rank) =>
+                rank.rewards.flatMap((box) =>
+                  box.details.flatMap((detail) =>
+                    detail.resourceType === "honor" && detail.resourceId !== null
+                      ? [detail.resourceId]
+                      : []
+                  )
+                )
+              )
+            ),
+            loadFailed: false
+          }))
+          .catch(() => ({ items: [], honors: {}, loadFailed: true }));
+  const characterMissions: Promise<CharacterMissionsPayload> =
+    numericCharacterId === null
+      ? Promise.resolve({ items: [], loadFailed: false })
+      : fetchCharacterMissions(baseUrl, region, numericCharacterId)
+          .then((items) => ({ items, loadFailed: false }))
+          .catch(() => ({ items: [], loadFailed: true }));
+
   const availableRegions = characterId
     ? resolveAvailableRegions({
         baseUrl,
@@ -155,6 +197,8 @@ export const load: PageServerLoad = async ({ params }) => {
     : Promise.resolve([region]);
 
   payload.catch(() => {});
+  characterRanks.catch(() => {});
+  characterMissions.catch(() => {});
   availableRegions.catch(() => {});
-  return { region, characterId, payload, availableRegions };
+  return { region, characterId, payload, characterRanks, characterMissions, availableRegions };
 };

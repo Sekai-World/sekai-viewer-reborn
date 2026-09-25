@@ -1,5 +1,5 @@
 import { env } from "$env/dynamic/public";
-import type { TrackerSupportedRegion } from "$lib/regions";
+import { isTrackerSupportedRegion, type TrackerSupportedRegion } from "$lib/regions";
 
 const assetBucketByRegion: Record<TrackerSupportedRegion, string> = {
   jp: "sekai-jp-assets",
@@ -35,4 +35,28 @@ export const getEventBannerAssetURL = (
   if (!bundle || !baseUrlValue) return null;
 
   return `${baseUrlValue}/${assetBucketByRegion[region]}/home/banner/${bundle}/${bundle}.webp`;
+};
+
+/** Resolve renderer sprite names without fetching or requiring remote configuration for local art. */
+export const getHonorAssetURL = (
+  bundlePath: string | null | undefined,
+  resourceName: string | null | undefined,
+  region: string,
+  baseUrl: string | null = env.PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
+): string | null => {
+  const bundle = trimBoundarySlashes(bundlePath ?? "");
+  const resource = trimBoundarySlashes(resourceName ?? "");
+  if (
+    !bundle ||
+    !resource ||
+    !bundle.split("/").every((part) => /^[\w-]+$/.test(part)) ||
+    !/^[\w-]+(?:\.png|\.webp)?$/.test(resource)
+  )
+    return null;
+
+  const sprite = resource.replace(/\.(?:png|webp)$/, "");
+  if (bundle === "local/honor") return `/degree/${sprite}.png`;
+  const base = trimTrailingSlashes(baseUrl ?? "");
+  if (!base || !isTrackerSupportedRegion(region)) return null;
+  return `${base}/${assetBucketByRegion[region]}/${bundle}/${sprite}.webp`;
 };

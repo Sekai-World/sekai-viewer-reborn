@@ -15,6 +15,8 @@ import errorSourceMessages from "@platform/i18n-source/content-site/error.json";
 import eventSourceMessages from "@platform/i18n-source/content-site/event.json";
 import gachaSourceMessages from "@platform/i18n-source/content-site/gacha.json";
 import homeSourceMessages from "@platform/i18n-source/content-site/home.json";
+import honorSourceMessages from "@platform/i18n-source/content-site/honor.json";
+import missionSourceMessages from "@platform/i18n-source/content-site/mission.json";
 import musicSourceMessages from "@platform/i18n-source/content-site/music.json";
 import serverSourceMessages from "@platform/i18n-source/content-site/server.json";
 import virtualLiveSourceMessages from "@platform/i18n-source/content-site/virtual-live.json";
@@ -33,6 +35,8 @@ export const contentSiteI18nNamespaces = [
   "event",
   "gacha",
   "music",
+  "honor",
+  "mission",
   "error",
   "server",
   "virtual-live",
@@ -81,6 +85,8 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
   event: eventSourceMessages,
   gacha: gachaSourceMessages,
   home: homeSourceMessages,
+  honor: honorSourceMessages,
+  mission: missionSourceMessages,
   music: musicSourceMessages,
   server: serverSourceMessages,
   unit: unitSourceMessages,

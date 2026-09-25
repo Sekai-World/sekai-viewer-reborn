@@ -242,7 +242,9 @@ const parseRewardResourceBoxDetail = (
     resourceLevel: getNumber(node["resourceLevel"]),
     resourceQuantity: getNumber(node["resourceQuantity"]),
     seq: getNumber(node["seq"]),
-    honor: parseRewardHonor(node["honor"])
+    honor: parseRewardHonor(node["honor"]),
+    resourceName: getString(node["resourceName"]),
+    resourceAssetbundleName: getString(node["resourceAssetbundleName"])
   };
 };
 

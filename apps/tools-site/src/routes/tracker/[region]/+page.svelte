@@ -2,6 +2,9 @@
   import { goto, invalidate, replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { SharedEventRewardRangeResponse } from "@platform/sekai-master-api-sdk";
+  import { HonorDegree } from "@platform/ui-shell";
+  import { getHonorAssetURL } from "$lib/event-assets";
+  import { selectRewardHonor } from "$lib/reward-honor";
   import Icon from "@iconify/svelte";
   import { onMount, tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
@@ -774,13 +777,10 @@
     if (isPositiveEventIdQuery(trimmedQuery)) navigateToEvent(Number(trimmedQuery));
   };
   const formatRewardRange = (reward: SharedEventRewardRangeResponse | null): string => {
-    if (reward === null) return translate("tracker.degreeUnavailable");
-    const honor = reward.eventRankingRewards
-      ?.flatMap((rankingReward) => rankingReward.resourceBox?.details ?? [])
-      .map((detail) => detail.honor?.name?.trim())
-      .find((name): name is string => Boolean(name));
-    return honor ?? translate("tracker.degreeUnavailable");
+    return selectRewardHonor(reward).label ?? translate("tracker.degreeUnavailable");
   };
+  const resolveHonorAsset = (bundlePath: string, resourceName: string): string | null =>
+    getHonorAssetURL(bundlePath, resourceName, data.region);
   const refresh = async (): Promise<void> => {
     isRefreshing = true;
     try {
@@ -1297,6 +1297,29 @@
 </script>
 
 <svelte:head><title>{translate("tracker.title")} | Sekai Tools</title></svelte:head>
+
+{#snippet rewardHonorMedia(reward: SharedEventRewardRangeResponse | null)}
+  {@const honor = selectRewardHonor(reward).honor}
+  {#if honor}
+    {@const bodyBundle =
+      honor.kind === "rank-match"
+        ? `rank_live/honor/${honor.backgroundAssetBundleName ?? honor.assetBundleName}`
+        : `honor/${honor.assetBundleName}`}
+    {#if resolveHonorAsset(bodyBundle, "degree_main.png")}
+      <span class="block aspect-19/4 w-48 max-w-full overflow-hidden" aria-hidden="true">
+        <HonorDegree
+          {honor}
+          resolveAsset={resolveHonorAsset}
+          slot="main"
+          size="S"
+          decorative
+          label={formatRewardRange(reward)}
+          class="block h-auto! w-full!"
+        />
+      </span>
+    {/if}
+  {/if}
+{/snippet}
 
 <main class="tracker-canvas" aria-labelledby="tracker-title">
   <header class="tracker-context">
@@ -1873,9 +1896,13 @@
                       <td class="tracker-score">{formatNumber(row.score)}</td><td
                         class="tracker-speed">{formatSpeed(row.speedPerHour)}</td
                       ><td
-                        ><span class="badge badge-outline badge-sm max-w-48 whitespace-normal"
-                          >{formatRewardRange(row.reward)}</span
-                        ></td
+                        ><div class="grid max-w-48 gap-1">
+                          {@render rewardHonorMedia(row.reward)}
+                          <span
+                            class="badge badge-outline badge-sm max-w-48 whitespace-normal wrap-anywhere"
+                            >{formatRewardRange(row.reward)}</span
+                          >
+                        </div></td
                       >
                       <td class="tracker-row-icon"
                         ><button
@@ -1918,7 +1945,8 @@
                     translate("tracker.unavailable")}</span
                 ><span>{translate("tracker.score")}: {formatNumber(row.score)}</span><span
                   >{translate("tracker.speed")}: {formatSpeed(row.speedPerHour)}</span
-                ><span>{translate("tracker.degree")}: {formatRewardRange(row.reward)}</span></button
+                ><span>{translate("tracker.degree")}: {formatRewardRange(row.reward)}</span>
+                {@render rewardHonorMedia(row.reward)}</button
               >{/each}
           </div>
         {/if}
@@ -2153,7 +2181,10 @@
         </div>
         <div>
           <dt>{translate("tracker.degree")}</dt>
-          <dd>{formatRewardRange(selectedRow.reward)}</dd>
+          <dd class="grid gap-1">
+            {@render rewardHonorMedia(selectedRow.reward)}
+            <span>{formatRewardRange(selectedRow.reward)}</span>
+          </dd>
         </div>
         <div>
           <dt>{translate("tracker.score")}</dt>

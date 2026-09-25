@@ -10,6 +10,34 @@ export { default as VoicePlayButton } from "./voice-play-button.svelte";
 export { default as ThemeControls } from "./theme-controls.svelte";
 export { default as UnitIconBadge } from "./unit-icon-badge.svelte";
 export { default as CardThumbnail } from "./card-thumbnail.svelte";
+export { default as HonorDegree } from "./honor-degree.svelte";
+export {
+  bondsHonorLocalAssetResources,
+  buildHonorDegreeLayout,
+  getHonorDegreeLevelIconCounts,
+  honorDegreeLevelIconResources,
+  honorDegreeScales,
+  liveMasterLocalAssetResources,
+  normalizeHonorDegreeRarity
+} from "./honor-degree";
+export type {
+  BondsHonorDegreeCharacter,
+  BondsHonorDegree,
+  HonorDegreeAsset,
+  HonorDegreeAssetResolver,
+  HonorDegreeInput,
+  HonorDegreeLayer,
+  HonorDegreeLayout,
+  HonorDegreeMask,
+  HonorDegreeMaskLayer,
+  HonorDegreePart,
+  HonorDegreeProps,
+  HonorDegreeRarity,
+  HonorDegreeSize,
+  HonorDegreeSlot,
+  NormalHonorDegree,
+  RankMatchHonorDegree
+} from "./honor-degree.types";
 export { default as GlobalNotificationBanner } from "./global-notification-banner.svelte";
 export {
   getUnitIconBorderColor,

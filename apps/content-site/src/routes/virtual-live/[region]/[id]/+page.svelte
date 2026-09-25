@@ -4,6 +4,7 @@
   import { swipeRegion } from "$lib/actions/swipe-region";
   import {
     getCommonMaterialThumbnailURL,
+    getGachaTicketThumbnailURL,
     getRemoteAssetEndpointURL,
     getVirtualLiveBannerAssetURL,
     type AssetServer
@@ -155,11 +156,11 @@
       );
     }
 
-    if (detail.resourceType === "gacha_ticket" && detail.resourceId !== null) {
-      return getRemoteAssetEndpointURL(
-        `thumbnail/gacha_ticket/${detail.resourceId}.webp`,
-        assetRegion
-      );
+    // Ticket thumbnails are named by asset bundle, not by the numeric resourceId.
+    if (detail.resourceType === "gacha_ticket") {
+      return detail.resourceAssetbundleName
+        ? getGachaTicketThumbnailURL(detail.resourceAssetbundleName, assetRegion)
+        : null;
     }
 
     if (detail.resourceType === "boost_item" && detail.resourceId !== null) {
