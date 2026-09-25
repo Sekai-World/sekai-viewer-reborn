@@ -25,6 +25,34 @@ The following modes are therefore **blocked / unverified**:
 This status is intentional. Difficulty, note count, tracker score, `eventPointIcon`,
 or an unverified duration field must not be presented as a calculated yield.
 
+## Approved Music Meta Input for #385
+
+The user has approved licensed, externally supplied `music_metas.json` as a
+coefficient input. The planned Music Recommender defaults to the self-hosted
+k3s/SeaweedFS URL
+`https://storage.sekai.best/sekai-best-assets/music_metas.json`; its future UI
+must offer an explicit switch to the external Moesekai URL
+`https://moe.exmeaning.com/data/music_meta/music_metas.json`. A failed source
+must not silently select the other one. Show the selected source and the
+revision/hash used with results, and recalculate when the user changes source.
+
+Both endpoints returned 3,727 records on 2026-09-25. Sorting by song and
+difficulty and hashing only the shared score-input fields yielded the same
+SHA-256, `7875548d5da4b1b5ee65f2671d61126dcc660ee32b371596f48214a7ed96e01e`.
+This is a point-in-time comparison, not a guarantee of future equivalence.
+Validate identifiers, coefficient types, all three six-element skill arrays,
+completeness, freshness, and revision on each selected source; ignore the
+external CDN's preset-team score/PT/ranking fields as yield evidence. The
+historical Moesekai fallback `metadata.pjsk.moe` returned 404 and is not an
+available source. Team Haruki consumes caller-supplied metas rather than
+specifying a CDN. See the workspace-root
+`docs/game-data-knowledge/calculations.md` for the provenance audit; this
+section records only the tools-site source choice.
+
+Neither CDN data nor the source selector validates a live score or event-point
+formula. All modes remain blocked until #380 has observed game-result vectors
+for each enabled region and mode. The selector belongs to #381, not Tracker.
+
 ## Current Contract Audit
 
 | Required input                              | Current evidence                                                                                                                                                                                                                      | Status                                                                                              |
