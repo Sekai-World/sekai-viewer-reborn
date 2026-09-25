@@ -11,7 +11,17 @@ glob = ["**/*.lock", "pnpm-lock.yaml", "**/dist/**", "**/.turbo/**"]
 
 [pr_reviewer]
 num_code_suggestions = 3
-extra_instructions = "Prioritize correctness, security, backward-compatible API contracts, data validation, and regression risks. Report only actionable findings; do not raise style-only or speculative nitpicks."
+# PR descriptions link sekai-master-api PRs as `Sekai-World/sekai-master-api#N`;
+# ticket analysis drops the repository and checks this repo's unrelated #N instead.
+require_ticket_analysis_review = false
+extra_instructions = """\
+Prioritize correctness, security, backward-compatible API contracts, data validation, and regression risks. \
+Report only actionable findings; do not raise style-only or speculative nitpicks. \
+Judge framework behavior by the versions this repository uses, not older ones: Svelte 5 runes \
+(`$props.id()` is a valid rune since Svelte 5.20) and SvelteKit 2, which streams promises nested \
+anywhere in a `load` result, not only top-level ones. If unsure whether an API exists in these \
+versions, do not report it.\
+"""
 
 [pr_code_suggestions]
 num_code_suggestions = 3
