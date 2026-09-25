@@ -31,7 +31,7 @@
   import type { EventRewardsResult } from "$lib/server/event-rewards";
   import type { EventTrackerResult } from "$lib/server/event-tracker";
   import type { ChapterTrackerResult } from "$lib/server/chapter-tracker";
-  import type { WorldBloomMetadata } from "$lib/server/world-bloom";
+  import type { WorldBloomMetadata, WorldBloomRankableChapter } from "$lib/server/world-bloom";
   import type { PageData } from "./$types";
 
   type EventMetadata = {
@@ -91,7 +91,7 @@
     chapters?: Promise<{
       metadata: WorldBloomMetadata | null;
       rankings: Array<{
-        chapter: WorldBloomMetadata["chapters"][number];
+        chapter: WorldBloomRankableChapter;
         result: ChapterTrackerResult;
       }>;
     } | null>;

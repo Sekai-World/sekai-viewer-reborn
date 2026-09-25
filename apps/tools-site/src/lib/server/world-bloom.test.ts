@@ -80,6 +80,24 @@ describe("World Bloom metadata", () => {
     });
   });
 
+  it("retains a chapter record that has no game character ID", () => {
+    expect(parseWorldBloomItems([{ id: 1, eventId: 42, chapterNo: 1 }])).toEqual([
+      {
+        eventId: 42,
+        chapters: [
+          {
+            id: 1,
+            chapterNo: 1,
+            gameCharacterId: null,
+            chapterStartAt: null,
+            chapterEndAt: null,
+            aggregateAt: null
+          }
+        ]
+      }
+    ]);
+  });
+
   it("loads all pages and deduplicates repeated flat chapter records", async () => {
     mocks.getWorldBloomsByRegionList
       .mockResolvedValueOnce({

@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getEventRankingLive: vi.fn(),
   getEventRankingsByEventId: vi.fn(),
+  getEventChapterRankingLive: vi.fn(),
+  getEventChapterRankingsByEventIdAndCharaId: vi.fn(),
   getEventsByRegionCurrent: vi.fn(),
   getEventsByRegionList: vi.fn(),
   getEventsByRegionById: vi.fn(),
@@ -13,7 +15,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@platform/sekai-api-sdk", () => ({
   getEventRankingLive: mocks.getEventRankingLive,
-  getEventRankingsByEventId: mocks.getEventRankingsByEventId
+  getEventRankingsByEventId: mocks.getEventRankingsByEventId,
+  getEventChapterRankingLive: mocks.getEventChapterRankingLive,
+  getEventChapterRankingsByEventIdAndCharaId: mocks.getEventChapterRankingsByEventIdAndCharaId
 }));
 vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionCurrent: mocks.getEventsByRegionCurrent,
@@ -52,6 +56,10 @@ describe("tracker route loader", () => {
     mocks.getEventsByRegionCurrent.mockResolvedValue({ data: {} });
     mocks.getEventsByRegionList.mockResolvedValue({ data: { items: [] } });
     mocks.getWorldBloomsByRegionList.mockResolvedValue({ data: { items: [] } });
+    mocks.getEventChapterRankingLive.mockResolvedValue({ data: { eventRankings: [] } });
+    mocks.getEventChapterRankingsByEventIdAndCharaId.mockResolvedValue({
+      data: { eventRankings: [] }
+    });
   });
 
   it.each(["jp", "en", "tw", "kr"])("loads tracker region %s", async (region) => {
@@ -269,13 +277,78 @@ describe("tracker route loader", () => {
   it("loads historical World Bloom chapters through historical chapter snapshots", async () => {
     mocks.getEventRankingsByEventId.mockResolvedValue({ data: [] });
     mocks.getEventsByRegionById.mockResolvedValue({ data: { id: 123, name: "Historical event" } });
+    mocks.getEventChapterRankingsByEventIdAndCharaId
+      .mockResolvedValueOnce({ data: [{ timestamp: "2026-08-01T00:00:00Z" }] })
+      .mockResolvedValueOnce({ data: { eventRankings: [] } });
     mocks.getWorldBloomsByRegionList.mockResolvedValue({
       data: { items: [{ id: 1, eventId: 123, chapterNo: 1, gameCharacterId: 2 }] }
     });
 
     const loaded = await runLoad("en", "123");
-    await expect(loaded.chapters).resolves.toMatchObject({ metadata: { eventId: 123 } });
+    await expect(loaded.chapters).resolves.toMatchObject({
+      metadata: { eventId: 123 },
+      rankings: [{ chapter: { gameCharacterId: 2 }, result: { status: "available" } }]
+    });
+    expect(mocks.getEventChapterRankingsByEventIdAndCharaId).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        path: { id: 123 },
+        query: expect.objectContaining({ charaId: 2, limit: 1 })
+      })
+    );
     expect(mocks.getEventRankingLive).not.toHaveBeenCalled();
+  });
+
+  it("keeps World Bloom event metadata without loading an unidentifiable single chapter", async () => {
+    mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 123, name: "World Bloom" } });
+    mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [] } });
+    mocks.getWorldBloomsByRegionList.mockResolvedValue({
+      data: { items: [{ id: 1, eventId: 123, chapterNo: 1 }] }
+    });
+
+    const loaded = await runLoad("en");
+
+    await expect(loaded.chapters).resolves.toMatchObject({
+      metadata: {
+        eventId: 123,
+        chapters: [{ chapterNo: 1, gameCharacterId: null }]
+      },
+      rankings: []
+    });
+    await expect(loaded.isWorldBloom).resolves.toBe(true);
+    expect(mocks.getEventChapterRankingLive).not.toHaveBeenCalled();
+    expect(mocks.getEventChapterRankingsByEventIdAndCharaId).not.toHaveBeenCalled();
+  });
+
+  it("continues loading rankings for every identified World Bloom chapter", async () => {
+    mocks.getEventsByRegionCurrent.mockResolvedValue({ data: { id: 123, name: "World Bloom" } });
+    mocks.getEventRankingLive.mockResolvedValue({ data: { eventRankings: [] } });
+    mocks.getWorldBloomsByRegionList.mockResolvedValue({
+      data: {
+        items: [
+          { id: 1, eventId: 123, chapterNo: 1, gameCharacterId: 2 },
+          { id: 2, eventId: 123, chapterNo: 2, gameCharacterId: 3 }
+        ]
+      }
+    });
+
+    const loaded = await runLoad("en");
+
+    await expect(loaded.chapters).resolves.toMatchObject({
+      metadata: { eventId: 123, chapters: [{ gameCharacterId: 2 }, { gameCharacterId: 3 }] },
+      rankings: [
+        { chapter: { gameCharacterId: 2 }, result: { status: "available" } },
+        { chapter: { gameCharacterId: 3 }, result: { status: "available" } }
+      ]
+    });
+    expect(mocks.getEventChapterRankingLive).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ query: { charaId: 2, region: "en" } })
+    );
+    expect(mocks.getEventChapterRankingLive).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ query: { charaId: 3, region: "en" } })
+    );
   });
 
   it("loads explicit historical metadata by ID when the event list is unavailable", async () => {
