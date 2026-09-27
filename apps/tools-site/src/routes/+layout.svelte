@@ -28,7 +28,7 @@
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
-  const fallbackMessages = getLocalI18nMessages(["common", "tracker"]);
+  const fallbackMessages = getLocalI18nMessages(["common", "tracker", "music-recommender"]);
   let messages = $state(fallbackMessages);
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
@@ -102,6 +102,12 @@
       href: "/tracker/jp",
       icon: "mdi:chart-line",
       active: page.url.pathname.startsWith("/tracker/")
+    },
+    {
+      label: translate("musicRecommender.navigation"),
+      href: "/music-recommender",
+      icon: "mdi:music-note-search",
+      active: page.url.pathname === "/music-recommender"
     },
     ...(supportPageUrl
       ? [
