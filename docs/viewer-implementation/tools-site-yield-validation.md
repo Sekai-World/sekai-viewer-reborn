@@ -72,9 +72,11 @@ Both endpoints returned 3,727 records on 2026-09-25. Sorting by song and
 difficulty and hashing only the shared score-input fields yielded the same
 SHA-256, `7875548d5da4b1b5ee65f2671d61126dcc660ee32b371596f48214a7ed96e01e`.
 This is a point-in-time comparison, not a guarantee of future equivalence.
-Validate identifiers, coefficient types, all three six-element skill arrays,
-completeness, freshness, and revision on each selected source; ignore the
-external CDN's preset-team score/PT/ranking fields as yield evidence. The
+For the bounded #381 JP Solo lane, validate identifiers, the six-element
+`skill_score_solo` coefficient array, completeness, freshness, and the
+normalized-content hash on each selected source. Do not use or infer Auto/Multi
+calculations from their skill arrays; ignore the external CDN's preset-team
+score/PT/ranking fields as yield evidence. The
 historical Moesekai fallback `metadata.pjsk.moe` returned 404 and is not an
 available source. Team Haruki consumes caller-supplied metas rather than
 specifying a CDN. See the workspace-root

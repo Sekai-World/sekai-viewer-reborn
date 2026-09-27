@@ -146,7 +146,14 @@ describe("tools-site server loaders", () => {
     const result = await runLayoutLoad(request("https://tools.test/"));
 
     expect(result.uiLocale).toBe("ja-JP");
-    expect(result.i18nMessages).toEqual({ namespaces: ["common", "tracker"] });
+    expect(result.i18nMessages).toEqual({
+      namespaces: ["common", "tracker", "music-recommender"]
+    });
+    expect(mocks.loadI18nMessageBundle).toHaveBeenCalledWith(
+      "ja-JP",
+      ["common", "tracker", "music-recommender"],
+      expect.any(Function)
+    );
     expect(result.siteVersion).toBe(packageJson.version);
   });
 });

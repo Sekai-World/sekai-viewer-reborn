@@ -59,7 +59,7 @@ describe("tools-site i18n runtime", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("loads local namespace messages and translates them", async () => {
-    expect(toolsSiteI18nNamespaces).toEqual(["common", "server", "tracker"]);
+    expect(toolsSiteI18nNamespaces).toEqual(["common", "server", "tracker", "music-recommender"]);
     const messages = getLocalI18nMessages(["common", "tracker"]);
 
     expect(messages).toMatchObject({
