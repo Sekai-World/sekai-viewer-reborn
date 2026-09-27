@@ -76,7 +76,7 @@ export interface HonorDegreeProps {
   readonly resolveAsset: HonorDegreeAssetResolver;
   readonly slot?: HonorDegreeSlot;
   readonly size?: HonorDegreeSize;
-  /** Localized accessible name and empty placeholder text; defaults to Honor. */
+  /** Localized accessible name and empty placeholder text; defaults to Title. */
   readonly label?: string;
   /** Optional SVG tooltip; defaults to label. Omitted in decorative mode. */
   readonly title?: string;

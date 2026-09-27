@@ -744,8 +744,8 @@ describe("HonorDegree", () => {
       slot: "sub2",
       size: "S"
     });
-    expect(getByRole("img", { name: "Honor" }).style.width).toBe("126px");
+    expect(getByRole("img", { name: "Title" }).style.width).toBe("126px");
     expect(getByRole("img").style.height).toBe("56px");
-    expect(container.querySelector("text")?.textContent).toBe("Honor");
+    expect(container.querySelector("text")?.textContent).toBe("Title");
   });
 });

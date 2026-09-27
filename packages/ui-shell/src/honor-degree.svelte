@@ -8,14 +8,14 @@
     resolveAsset,
     slot = "main",
     size = "L",
-    label = "Honor",
+    label = "Title",
     title,
     decorative = false,
     class: className = ""
   }: HonorDegreeProps = $props();
 
   const layout = $derived(buildHonorDegreeLayout(honor, resolveAsset, slot, size));
-  const accessibleLabel = $derived(label.trim() || "Honor");
+  const accessibleLabel = $derived(label.trim() || "Title");
   const maskId = (name: string): string => `${componentId}-${name}`;
   const rotation = (image: HonorDegreeSlicedImage): string | undefined => {
     if (!image.rotate) return undefined;
