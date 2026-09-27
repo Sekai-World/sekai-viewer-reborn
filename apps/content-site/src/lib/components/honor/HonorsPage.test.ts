@@ -56,6 +56,7 @@ const group: HonorGroup = {
 type PageData = ComponentProps<typeof HonorsPage>["data"];
 const result: Awaited<PageData["catalogue"]> = {
   items: [group],
+  bondsItems: [],
   availableHonorTypes: ["achievement", "event"],
   loadFailed: false,
   pagination: { page: 1, totalPages: 3, hasNext: true, pageSize: 24, total: 30 }
