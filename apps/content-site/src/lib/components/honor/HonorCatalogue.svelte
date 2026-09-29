@@ -491,7 +491,7 @@
           }}
         >
           <div
-            class="modal-box flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-3xl flex-col overflow-hidden p-0 sm:w-[calc(100%-2rem)]"
+            class="modal-box flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-xl flex-col overflow-hidden p-0 sm:w-[calc(100%-2rem)]"
           >
             {#if activeGroup}
               <header
