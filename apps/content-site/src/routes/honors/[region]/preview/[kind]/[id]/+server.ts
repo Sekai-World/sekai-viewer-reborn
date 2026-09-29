@@ -1,5 +1,5 @@
 import { json } from "@sveltejs/kit";
-import { titlePreviewKindOf } from "$lib/domain/title-preview";
+import type { TitlePreviewKind } from "$lib/domain/title-preview";
 import { normalizeRegion } from "$lib/i18n/region";
 import { getPositiveInteger } from "$lib/server/catalogue-data";
 import { getMasterApiBaseUrl } from "$lib/server/config";
@@ -8,7 +8,8 @@ import type { RequestHandler } from "./$types";
 
 /** One rewarded title for the title preview dialog: `/honors/{region}/preview/{honor|bonds}/{id}`. */
 export const GET: RequestHandler = async ({ params, url }) => {
-  const kind = titlePreviewKindOf(params.kind === "bonds" ? "bonds_honor" : params.kind);
+  const kind: TitlePreviewKind | null =
+    params.kind === "honor" || params.kind === "bonds" ? params.kind : null;
   const id = getPositiveInteger(params.id);
   if (kind === null || id === null) return json({ error: true }, { status: 400 });
   const level = getPositiveInteger(url.searchParams.get("level"));
