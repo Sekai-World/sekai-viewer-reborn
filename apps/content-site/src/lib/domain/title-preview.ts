@@ -5,8 +5,11 @@ export type TitlePreviewKind = "honor" | "bonds";
 
 export const titlePreviewKindOf = (
   resourceType: string | null | undefined
-): TitlePreviewKind | null =>
-  resourceType === "honor" ? "honor" : resourceType === "bonds_honor" ? "bonds" : null;
+): TitlePreviewKind | null => {
+  if (resourceType === "honor") return "honor";
+  if (resourceType === "bonds_honor") return "bonds";
+  return null;
+};
 
 /** What the title preview dialog shows: the rendered title and its details. */
 export type TitlePreview = {
