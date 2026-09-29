@@ -155,7 +155,7 @@
           <div class="flex items-center gap-1">
             <button
               type="button"
-              class="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 text-left outline-none transition-colors duration-180 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none"
+              class="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
               aria-pressed={playing}
               aria-label={t(
                 playing ? "mysekai.soundtrack.pause" : "mysekai.soundtrack.play"
