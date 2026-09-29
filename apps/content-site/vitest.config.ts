@@ -104,6 +104,7 @@ export default defineConfig({
         "src/lib/server/response-values.ts",
         "src/lib/server/secure-random.ts",
         "src/lib/server/mysekai.ts",
+        "src/lib/server/mysekai-soundtrack-download.ts",
         "src/lib/assets/index.ts",
         "src/lib/domain/mysekai.ts",
         "src/lib/paged-list.svelte.ts",
@@ -144,7 +145,8 @@ export default defineConfig({
         "src/routes/mysekai/materials/[region]/+page.server.ts",
         "src/routes/mysekai/material/[region]/[id]/+page.server.ts",
         "src/routes/mysekai/soundtracks/[region]/+page.server.ts",
-        "src/routes/mysekai/soundtracks/[region]/data/+server.ts"
+        "src/routes/mysekai/soundtracks/[region]/data/+server.ts",
+        "src/routes/mysekai/soundtracks/[region]/[id]/download/+server.ts"
       ],
       reporter: ["lcov"]
     }

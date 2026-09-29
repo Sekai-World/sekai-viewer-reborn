@@ -31,6 +31,23 @@
   const list = new PagedList<MysekaiMusicRecord>((record) => record.id);
   let categories = $state<MusicSoundTrackCategory[]>([]);
   const player = new SoundtrackPlayer();
+  let downloadingId = $state<number | null>(null);
+  // The server tags the MP3 with its title, category, and jacket before sending it.
+  const download = async (record: MysekaiMusicRecord, title: string): Promise<void> => {
+    if (downloadingId !== null) return;
+    downloadingId = record.id;
+    try {
+      await downloadFile(
+        resolve("/mysekai/soundtracks/[region]/[id]/download", {
+          region: data.region,
+          id: String(record.id)
+        }),
+        toDownloadFileName(title, "mp3")
+      );
+    } finally {
+      downloadingId = null;
+    }
+  };
 
   $effect(() => {
     list.reset(Promise.resolve(data.catalogue));
@@ -197,9 +214,15 @@
                 class="btn btn-square btn-ghost touch-target shrink-0"
                 aria-label={t("mysekai.soundtrack.download").replace("{title}", track.title)}
                 title={t("mysekai.soundtrack.download").replace("{title}", track.title)}
-                onclick={() => void downloadFile(src, toDownloadFileName(track.title, "mp3"))}
+                disabled={downloadingId !== null}
+                aria-busy={downloadingId === record.id}
+                onclick={() => void download(record, track.title)}
               >
-                <Icon icon="mdi:download" class="size-5" aria-hidden="true" />
+                {#if downloadingId === record.id}
+                  <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
+                {:else}
+                  <Icon icon="mdi:download" class="size-5" aria-hidden="true" />
+                {/if}
               </button>
             {/if}
           </div>
