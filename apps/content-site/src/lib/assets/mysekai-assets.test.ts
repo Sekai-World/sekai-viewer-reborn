@@ -33,6 +33,13 @@ describe("MySekai asset URLs", () => {
     ).toBe(`${jp}/mysekai/thumbnail/surface_appearance/mis0001/tex_mis0001_wall_appearance_1.webp`);
   });
 
+  it("trims surrounding slashes from bundle names", () => {
+    expect(getMysekaiMaterialIconURL("//item_wood_1/")).toBe(
+      `${jp}/mysekai/thumbnail/material/item_wood_1.webp`
+    );
+    expect(getMysekaiMaterialIconURL(" /// ")).toBeNull();
+  });
+
   it("returns null without a bundle name", () => {
     expect(getMysekaiFixtureThumbnailURL({ assetbundleName: " " })).toBeNull();
     expect(getMysekaiMaterialIconURL(undefined)).toBeNull();

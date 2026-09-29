@@ -572,8 +572,15 @@ export const getMusicChartPreviewAssetURL = (
  */
 const MYSEKAI_ASSET_SERVER: AssetServer = "jp";
 
-const normalizeBundleName = (value: string | null | undefined): string =>
-  value?.trim().replace(/^\/+|\/+$/g, "") ?? "";
+// Trims leading and trailing slashes with a scan, not a backtracking regex.
+const normalizeBundleName = (value: string | null | undefined): string => {
+  const trimmed = value?.trim() ?? "";
+  let start = 0;
+  let end = trimmed.length;
+  while (start < end && trimmed[start] === "/") start += 1;
+  while (end > start && trimmed[end - 1] === "/") end -= 1;
+  return trimmed.slice(start, end);
+};
 
 export type MysekaiFixtureAsset = {
   assetbundleName?: string | null;

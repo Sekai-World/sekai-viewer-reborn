@@ -14,7 +14,7 @@ export class PagedList<T> {
   loadMoreError = $state(false);
   #page = 1;
   #requestId = 0;
-  #keyOf: (item: T) => string | number;
+  readonly #keyOf: (item: T) => string | number;
 
   constructor(keyOf: (item: T) => string | number) {
     this.#keyOf = keyOf;
