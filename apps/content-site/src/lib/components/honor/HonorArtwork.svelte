@@ -52,7 +52,12 @@
   }
 </script>
 
-<div use:observe class="flex h-14 w-full max-w-67 items-center overflow-hidden">
+<!-- The main slot fills the available width up to its full 380px size; the sub slot, used
+     below 266px, keeps its small fixed size. -->
+<div
+  use:observe
+  class="flex w-full max-w-95 items-center overflow-hidden {narrow ? 'h-14' : 'aspect-19/4'}"
+>
   {#if honor.kind === "empty" || failedDegree === degree}
     <span class="text-sm text-(--archive-text-muted)">{imageUnavailableLabel}</span>
   {:else if visible}
@@ -65,6 +70,7 @@
           size="S"
           {label}
           {decorative}
+          class={narrow ? "" : "h-auto! w-full!"}
         />
         {#snippet failed()}
           <span class="text-sm text-(--archive-text-muted)">{imageUnavailableLabel}</span>

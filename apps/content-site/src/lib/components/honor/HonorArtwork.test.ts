@@ -38,6 +38,18 @@ const props = {
 };
 
 describe("HonorArtwork", () => {
+  it("scales the main slot to its container, up to the full 380px title", async () => {
+    const { container } = render(HonorArtwork, props);
+    await tick();
+
+    const frame = container.firstElementChild as HTMLElement;
+    expect(frame.classList).toContain("max-w-95");
+    expect(frame.classList).toContain("aspect-19/4");
+    const title = screen.getByRole("img", { name: "Event honor" });
+    expect(title.getAttribute("viewBox")).toBe("0 0 380 80");
+    expect(title.classList).toContain("w-full!");
+  });
+
   it("renders a no-frameName catalogue honor body then local frame in both responsive slots", async () => {
     let resize!: (entries: { contentRect: { width: number } }[]) => void;
     vi.stubGlobal(
