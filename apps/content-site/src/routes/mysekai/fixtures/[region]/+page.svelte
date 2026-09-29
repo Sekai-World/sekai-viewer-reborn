@@ -236,16 +236,16 @@
   onRetry={() => void invalidateAll()}
 >
   {#snippet loadingPlaceholder()}
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
+    <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-12">
       {#each Array.from({ length: 12 }) as _, index (index)}
-        <div class="content-card-shell rounded-2xl p-2 sm:p-3">
-          <div class="aspect-square w-full rounded-xl bg-(--archive-surface-sunken)"></div>
-          <div class="mt-2 h-4 w-3/4 rounded bg-(--archive-surface-sunken)"></div>
+        <div class="content-card-shell rounded-xl p-1.5 sm:p-2">
+          <div class="aspect-square w-full rounded-lg bg-(--archive-surface-sunken)"></div>
+          <div class="mt-1.5 h-3 w-3/4 rounded bg-(--archive-surface-sunken)"></div>
         </div>
       {/each}
     </div>
   {/snippet}
-  <ul class="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
+  <ul class="grid grid-cols-4 items-stretch gap-2 sm:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-12">
     {#each list.items as fixture (fixture.id)}
       <li class="min-w-0">
         <MysekaiFixtureTile

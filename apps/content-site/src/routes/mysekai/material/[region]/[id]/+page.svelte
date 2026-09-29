@@ -149,7 +149,7 @@
           <p class="text-sm text-(--archive-text-muted)">{t("mysekai.usedByEmpty")}</p>
         {:else}
           <ul
-            class="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"
+            class="grid grid-cols-4 items-stretch gap-2 sm:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10"
           >
             {#each material.usedBy as use (use.fixture.id)}
               <li class="min-w-0">

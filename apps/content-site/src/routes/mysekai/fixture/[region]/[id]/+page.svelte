@@ -109,9 +109,7 @@
     >
       <article class="card content-card-shell shadow-sm">
         <div class="card-body gap-4 p-3 sm:p-5">
-          <div
-            class="aspect-square w-full overflow-hidden rounded-xl bg-(--archive-surface-sunken)"
-          >
+          <div class="mx-auto aspect-square w-1/2 overflow-hidden rounded-xl">
             <AssetImage
               src={getMysekaiFixtureThumbnailURL(fixture) ?? ""}
               alt={fixture.name}

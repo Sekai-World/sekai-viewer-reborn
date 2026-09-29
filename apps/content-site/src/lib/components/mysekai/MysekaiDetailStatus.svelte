@@ -23,7 +23,7 @@
     >
       <div class="content-card-shell rounded-2xl p-3 sm:p-5">
         <div
-          class="aspect-square w-full animate-pulse rounded-xl bg-(--archive-surface-sunken) motion-reduce:animate-none"
+          class="mx-auto aspect-square w-1/2 animate-pulse rounded-xl bg-(--archive-surface-sunken) motion-reduce:animate-none"
         ></div>
         <div class="mt-4 h-7 w-2/3 rounded bg-(--archive-surface-sunken)"></div>
       </div>
