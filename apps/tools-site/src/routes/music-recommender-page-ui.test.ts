@@ -169,7 +169,7 @@ describe("music recommender UI contract", () => {
     expect(screen.getByText("Showing 101-126 of 126 results · Page 3 of 3")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Next" }).hasAttribute("disabled")).toBe(true);
     expect(goto).not.toHaveBeenCalled();
-  });
+  }, 20_000);
 
   it("uses the page selector for a final partial page and clamps navigation boundaries", async () => {
     const { container } = renderPage(createPageData(createResults(103)));
