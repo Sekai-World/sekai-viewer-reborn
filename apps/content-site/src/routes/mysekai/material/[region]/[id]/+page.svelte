@@ -94,9 +94,7 @@
         <article class="card content-card-shell shadow-sm">
           <div class="card-body items-start gap-4 p-3 sm:p-5">
             <div class="flex items-center gap-4">
-              <span
-                class="flex size-20 shrink-0 items-center justify-center rounded-2xl bg-(--archive-surface-sunken)"
-              >
+              <span class="flex size-20 shrink-0 items-center justify-center">
                 {#if iconSrc}
                   <img
                     src={iconSrc}

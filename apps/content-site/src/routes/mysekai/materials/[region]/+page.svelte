@@ -143,9 +143,7 @@
           })}
           class="content-card-shell flex h-full min-w-0 items-center gap-3 rounded-2xl p-3 outline-none transition-[transform,border-color,background-color] duration-180 hover-lift hover:border-primary/35 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none"
         >
-          <span
-            class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-(--archive-surface-sunken)"
-          >
+          <span class="flex size-14 shrink-0 items-center justify-center">
             {#if iconSrc}
               <img
                 src={iconSrc}
