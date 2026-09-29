@@ -306,7 +306,7 @@ describe("Missions page", () => {
     const grid = document.getElementById(toggle.getAttribute("aria-controls")!)!;
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(toggle.parentElement?.classList).toContain("sm:hidden");
-    expect(within(toggle.parentElement!).getByText("Leo/need")).toBeTruthy();
+    expect(within(toggle.parentElement!).getByRole("img", { name: "Leo/need" })).toBeTruthy();
     expect(grid.classList).toContain("hidden");
     expect(grid.classList).toContain("sm:grid");
     await fireEvent.click(toggle);

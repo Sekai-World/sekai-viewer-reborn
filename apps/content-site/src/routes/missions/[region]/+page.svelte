@@ -405,6 +405,7 @@
 {#snippet characterMissionGroup()}
   <CharacterMissionGrid
     missions={items.filter((mission) => mission.family === "characterMissionV2s")}
+    tileSurface="shell"
     region={data.region}
     locale={data.uiLocale}
     labels={{

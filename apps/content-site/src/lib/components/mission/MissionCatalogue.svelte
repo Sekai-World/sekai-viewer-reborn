@@ -235,8 +235,12 @@
       {:else}
         <div class={overview ? "grid min-w-0 gap-4 lg:grid-cols-3" : "flex min-w-0 flex-col gap-4"}>
           {#each groups as group (group.family)}
+            <!-- A group with its own body (the character missions tiles) sits straight in the
+                 results area; every other group keeps its card. -->
             <section
-              class="content-card-shell min-w-0 rounded-2xl p-4"
+              class={!overview && groupBody
+                ? "min-w-0"
+                : "content-card-shell min-w-0 rounded-2xl p-4"}
               aria-busy={group.status === "loading" ? "true" : undefined}
             >
               <div class="pb-4">{@render heading(group)}</div>
