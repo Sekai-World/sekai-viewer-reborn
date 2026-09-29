@@ -279,6 +279,27 @@ describe("Honors page group contract", () => {
     );
   });
 
+  it("searches with an icon button and drops the search when the field is emptied", async () => {
+    const searched = data(result);
+    render(HonorsPage, {
+      data: { ...searched, query: { ...searched.query, name: "Stage" } },
+      params: { region: "jp" },
+      form: null
+    });
+    const search = await screen.findByRole("search");
+    const button = within(search).getByRole("button", { name: "Search" });
+    expect(button.textContent?.trim()).toBe("");
+    const searchbox = within(search).getByRole("searchbox", { name: "Search titles" });
+
+    await fireEvent.input(searchbox, { target: { value: "Stag" } });
+    expect(goto).not.toHaveBeenCalled();
+    await fireEvent.input(searchbox, { target: { value: "" } });
+    expect(goto).toHaveBeenLastCalledWith("/honors/jp?sort_by=id&sort_order=asc", {
+      keepFocus: true,
+      noScroll: true
+    });
+  });
+
   it("clears the search when the category changes", async () => {
     const searched = data(result, "jp", "event");
     render(HonorsPage, {
