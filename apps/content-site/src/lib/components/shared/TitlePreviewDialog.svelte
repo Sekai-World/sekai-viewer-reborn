@@ -93,8 +93,9 @@
     if (event.target === event.currentTarget) close();
   }}
 >
+  <!-- The dialog renders inside its reward row, so reset the alignment that row sets. -->
   <div
-    class="modal-box flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-xl flex-col overflow-hidden p-0 sm:w-[calc(100%-2rem)]"
+    class="modal-box flex max-h-[92dvh] w-[calc(100%-1rem)] max-w-xl flex-col overflow-hidden p-0 text-start sm:w-[calc(100%-2rem)]"
   >
     <header
       class="flex shrink-0 items-start justify-between gap-4 border-b border-(--archive-border-subtle) p-4 sm:p-5"
@@ -152,24 +153,43 @@
             >
               {labels.levels}
             </h3>
-            <ol class="grid gap-1">
-              {#each preview.levels as entry, index (index)}
-                {@const rewarded = entry.level !== null && entry.level === level}
-                <li
-                  class="grid gap-0.5 rounded-lg px-3 py-2 text-sm {rewarded
-                    ? 'bg-(--archive-surface-raised) font-semibold text-(--archive-text-strong)'
-                    : 'text-(--archive-text-default)'}"
-                  aria-current={rewarded ? "true" : undefined}
-                >
-                  {#if entry.level !== null}
-                    <span class="tabular-nums">{labels.level} {entry.level}</span>
-                  {/if}
-                  {#if entry.description}
-                    <span class="font-normal text-(--archive-text-muted)">{entry.description}</span>
-                  {/if}
-                </li>
-              {/each}
-            </ol>
+            <div
+              class="content-card-inset overflow-x-auto rounded-xl border-(--archive-border-subtle)"
+            >
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th scope="col" class="w-px text-center whitespace-nowrap">{labels.level}</th>
+                    <th scope="col">{labels.condition}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {#each preview.levels as entry, index (index)}
+                    {@const rewarded = entry.level !== null && entry.level === level}
+                    <tr
+                      class={rewarded ? "bg-primary/10" : undefined}
+                      aria-current={rewarded ? "true" : undefined}
+                    >
+                      <th
+                        scope="row"
+                        class="text-center tabular-nums {rewarded
+                          ? 'font-semibold text-primary'
+                          : 'font-normal text-(--archive-text-default)'}"
+                      >
+                        {entry.level ?? "—"}
+                      </th>
+                      <td
+                        class={rewarded
+                          ? "text-(--archive-text-strong)"
+                          : "text-(--archive-text-default)"}
+                      >
+                        {entry.description ?? "—"}
+                      </td>
+                    </tr>
+                  {/each}
+                </tbody>
+              </table>
+            </div>
           </section>
         {/if}
       {:else if previewState.status === "error"}
