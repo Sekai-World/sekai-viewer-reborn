@@ -203,7 +203,11 @@ describe("Honors page group contract", () => {
     expect(within(dialog).getByText("Requirement 9")).toBeTruthy();
     expect(within(dialog).getByText("Requirement 2")).toBeTruthy();
     const search = screen.getByRole("search");
-    await fireEvent.input(within(search).getByRole("searchbox"), { target: { value: "stage" } });
+    // No visible heading: the field is named by aria-label and shows the same placeholder.
+    const searchbox = within(search).getByRole("searchbox", { name: "Search titles" });
+    expect(searchbox.getAttribute("placeholder")).toBe("Search titles");
+    expect(within(search).queryByText("Search titles")).toBeNull();
+    await fireEvent.input(searchbox, { target: { value: "stage" } });
     await fireEvent.submit(search);
     expect(goto).toHaveBeenLastCalledWith("/honors/jp?name=stage&sort_by=id&sort_order=asc", {
       keepFocus: true,
