@@ -55,6 +55,8 @@
   "mysekai.sortDescending": "Descending",
   "mysekai.sortOrder": "ID order",
   "mysekai.soundtrack.category": "Category",
+  "mysekai.soundtrack.download": "Download {title}",
+  "mysekai.soundtrack.pause": "Pause {title}",
   "mysekai.soundtrack.play": "Play {title}",
   "mysekai.soundtrack.search": "Search soundtracks",
   "mysekai.subGenre": "Sub-genre",

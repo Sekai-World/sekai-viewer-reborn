@@ -2,7 +2,6 @@
   import Icon from "@iconify/svelte";
   import { goto, invalidateAll } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { AudioPlayer } from "@platform/ui-shell";
   import CatalogueFrame from "$lib/components/mission/CatalogueFrame.svelte";
   import AssetImage from "$lib/components/shared/AssetImage.svelte";
   import MysekaiLoadMore from "$lib/components/mysekai/MysekaiLoadMore.svelte";
@@ -17,6 +16,12 @@
   import { createStreamedTranslator } from "$lib/i18n/streamed-translator.svelte";
   import { fetchPagedResult, PagedList } from "$lib/paged-list.svelte";
   import { createPageTitle } from "$lib/page-title";
+  import {
+    downloadFile,
+    formatPlaybackTime,
+    SoundtrackPlayer,
+    toDownloadFileName
+  } from "$lib/soundtrack-player.svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -25,12 +30,14 @@
 
   const list = new PagedList<MysekaiMusicRecord>((record) => record.id);
   let categories = $state<MusicSoundTrackCategory[]>([]);
-  let playingId = $state<number | null>(null);
+  const player = new SoundtrackPlayer();
 
   $effect(() => {
     list.reset(Promise.resolve(data.catalogue));
-    playingId = null;
+    player.stop();
   });
+  // Leaving the page stops the music.
+  $effect(() => () => player.stop());
   $effect(() => {
     let active = true;
     void Promise.resolve(data.filters).then((value) => {
@@ -82,22 +89,13 @@
   };
 
   const categoryById = $derived(new Map(categories.map((category) => [category.id, category])));
-  const playing = $derived(list.items.find((record) => record.id === playingId) ?? null);
-  const playingCategory = $derived(
-    playing?.soundTrack?.musicSoundTrackCategoryId === undefined
-      ? null
-      : (categoryById.get(playing.soundTrack.musicSoundTrackCategoryId) ?? null)
-  );
-  const audioStages = $derived({
-    preparing: t("audioDownloadStages.preparing"),
-    fetchingAudio: t("audioDownloadStages.fetchingAudio"),
-    fetchingCover: t("audioDownloadStages.fetchingCover"),
-    writingMetadata: t("audioDownloadStages.writingMetadata"),
-    finalizing: t("audioDownloadStages.finalizing"),
-    ready: t("audioDownloadStages.ready"),
-    failed: t("audioDownloadStages.failed"),
-    cancelled: t("audioDownloadStages.cancelled")
-  });
+  const audioUrl = (record: MysekaiMusicRecord): string | null =>
+    record.soundTrack
+      ? getMysekaiSoundTrackAudioURL(
+          record.soundTrack.assetbundleName,
+          record.soundTrack.assetbundleFileName
+        )
+      : null;
   const catalogueKey = $derived(`${data.region}:${toMysekaiSoundtrackSearchParams(data.query)}`);
 </script>
 
@@ -127,6 +125,7 @@
 {/snippet}
 
 <CatalogueFrame
+  inlineSearch
   {labels}
   homeHref={resolve("/")}
   {regions}
@@ -140,74 +139,95 @@
   onSearch={(name) => navigateQuery({ name })}
   onRetry={() => void invalidateAll()}
 >
-  {#if playing?.soundTrack}
-    <div class="content-card-shell mb-4 rounded-2xl p-3 sm:p-4">
-      <AudioPlayer
-        src={getMysekaiSoundTrackAudioURL(
-          playing.soundTrack.assetbundleName,
-          playing.soundTrack.assetbundleFileName
-        )}
-        title={playing.soundTrack.title}
-        subtitle={playingCategory?.name ?? ""}
-        artworkUrl={getMysekaiSoundTrackJacketURL(playingCategory?.assetbundleName) ?? ""}
-        downloadProgressMessages={audioStages}
-        playLabel={t("audioPlayLabel")}
-        pauseLabel={t("audioPauseLabel")}
-        downloadLabel={t("audioDownloadLabel")}
-        downloadCloseLabel={t("audioDownloadCloseLabel")}
-        volumeLabel={t("audioVolumeLabel")}
-        seekLabel={t("audioSeekLabel")}
-        unavailableLabel={t("mysekai.audioUnavailable")}
-      />
-    </div>
-  {/if}
-  <ul class="grid items-stretch gap-3 sm:grid-cols-2 xl:grid-cols-3">
+  <ul class="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-3">
     {#each list.items as record (record.id)}
       {#if record.soundTrack}
+        {@const track = record.soundTrack}
         {@const category =
-          record.soundTrack.musicSoundTrackCategoryId === undefined
+          track.musicSoundTrackCategoryId === undefined
             ? null
-            : (categoryById.get(record.soundTrack.musicSoundTrackCategoryId) ?? null)}
+            : (categoryById.get(track.musicSoundTrackCategoryId) ?? null)}
         {@const jacket = getMysekaiSoundTrackJacketURL(category?.assetbundleName)}
-        {@const selected = playingId === record.id}
-        <li class="min-w-0">
-          <button
-            type="button"
-            class="content-card-shell flex size-full min-w-0 items-center gap-3 rounded-2xl p-2 text-left outline-none transition-[transform,border-color,background-color] duration-180 hover-lift hover:border-primary/35 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 motion-reduce:transition-none {selected
-              ? 'border-primary/50'
-              : ''}"
-            aria-pressed={selected}
-            aria-label={t("mysekai.soundtrack.play").replace("{title}", record.soundTrack.title)}
-            onclick={() => (playingId = record.id)}
-          >
-            <span class="relative size-16 shrink-0 overflow-hidden rounded-xl">
-              {#if jacket}
-                <AssetImage
-                  buttonClass="block size-full overflow-hidden"
-                  src={jacket}
-                  alt=""
-                  fallbackLabel=""
-                  loadMode="visible"
-                  imageClass="size-full object-cover"
-                />
-              {/if}
-            </span>
-            <span class="min-w-0 flex-1">
-              <span class="line-clamp-2 font-semibold wrap-anywhere text-(--archive-text-strong)"
-                >{record.soundTrack.title}</span
-              >
-              {#if category}
-                <span class="mt-0.5 block truncate text-xs text-(--archive-text-muted)"
-                  >{category.name}</span
+        {@const current = player.currentId === record.id}
+        {@const playing = current && player.playing}
+        {@const src = audioUrl(record)}
+        <li class="content-card-shell min-w-0 rounded-2xl p-2 {current ? 'border-primary/50' : ''}">
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              class="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 text-left outline-none transition-colors duration-180 hover:bg-(--archive-surface-raised) focus-visible:ring-2 focus-visible:ring-primary motion-reduce:transition-none"
+              aria-pressed={playing}
+              aria-label={t(
+                playing ? "mysekai.soundtrack.pause" : "mysekai.soundtrack.play"
+              ).replace("{title}", track.title)}
+              onclick={() => player.toggle(record.id, src)}
+            >
+              <span class="relative size-14 shrink-0 overflow-hidden rounded-lg">
+                {#if jacket}
+                  <AssetImage
+                    buttonClass="block size-full overflow-hidden"
+                    src={jacket}
+                    alt=""
+                    fallbackLabel=""
+                    loadMode="visible"
+                    imageClass="size-full object-cover"
+                  />
+                {/if}
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="line-clamp-2 font-semibold wrap-anywhere text-(--archive-text-strong)"
+                  >{track.title}</span
                 >
-              {/if}
-            </span>
-            <Icon
-              icon={selected ? "mdi:music-note-eighth" : "mdi:play"}
-              class="size-6 shrink-0 text-primary"
-              aria-hidden="true"
-            />
-          </button>
+                {#if category}
+                  <span class="mt-0.5 block truncate text-xs text-(--archive-text-muted)"
+                    >{category.name}</span
+                  >
+                {/if}
+              </span>
+              <span
+                class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-content"
+                aria-hidden="true"
+              >
+                <Icon icon={playing ? "mdi:pause" : "mdi:play"} class="size-6" />
+              </span>
+            </button>
+            {#if src}
+              <button
+                type="button"
+                class="btn btn-square btn-ghost touch-target shrink-0"
+                aria-label={t("mysekai.soundtrack.download").replace("{title}", track.title)}
+                title={t("mysekai.soundtrack.download").replace("{title}", track.title)}
+                onclick={() => void downloadFile(src, toDownloadFileName(track.title, "mp3"))}
+              >
+                <Icon icon="mdi:download" class="size-5" aria-hidden="true" />
+              </button>
+            {/if}
+          </div>
+          {#if current}
+            {#if player.failed}
+              <p class="px-1 pt-2 text-sm text-error" role="status">
+                {t("mysekai.audioUnavailable")}
+              </p>
+            {:else}
+              <div
+                class="flex items-center gap-2 px-1 pt-2 text-xs tabular-nums text-(--archive-text-muted)"
+              >
+                <span>{formatPlaybackTime(player.currentTime)}</span>
+                <input
+                  type="range"
+                  class="range range-primary range-xs min-w-0 flex-1"
+                  min="0"
+                  max={player.duration || 0}
+                  step="0.1"
+                  value={player.currentTime}
+                  disabled={!player.duration}
+                  aria-label={`${t("audioSeekLabel")}: ${track.title}`}
+                  oninput={(event) => player.seek(Number(event.currentTarget.value))}
+                />
+                <span>{formatPlaybackTime(player.duration)}</span>
+              </div>
+            {/if}
+          {/if}
         </li>
       {/if}
     {/each}

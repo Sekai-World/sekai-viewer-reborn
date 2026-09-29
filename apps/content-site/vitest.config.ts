@@ -107,6 +107,7 @@ export default defineConfig({
         "src/lib/assets/index.ts",
         "src/lib/domain/mysekai.ts",
         "src/lib/paged-list.svelte.ts",
+        "src/lib/soundtrack-player.svelte.ts",
         "src/lib/i18n/streamed-translator.svelte.ts",
         "src/lib/components/mission/catalogue-groups.ts",
         "src/lib/components/shared/title-preview-labels.ts",
