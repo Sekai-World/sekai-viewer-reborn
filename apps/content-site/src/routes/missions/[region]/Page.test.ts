@@ -205,13 +205,13 @@ describe("Missions page", () => {
     renderPage(page([normal], { page: 1, hasNext: false }), "normalMissions");
 
     const tablist = await screen.findByRole("tablist", { name: "Mission family" });
-    expect(withinTab(tablist, "Normal missions").getAttribute("aria-selected")).toBe("true");
+    expect(withinTab(tablist, "Normal").getAttribute("aria-selected")).toBe("true");
     expect(screen.getByText("Play a live")).toBeTruthy();
     expect(screen.getByRole("link", { name: "EN" }).getAttribute("href")).toBe(
       "/missions/en?family=normalMissions"
     );
 
-    await fireEvent.click(withinTab(tablist, "All missions"));
+    await fireEvent.click(withinTab(tablist, "All"));
     expect(goto).toHaveBeenLastCalledWith("/missions/jp", { keepFocus: true, noScroll: true });
   });
 
@@ -253,6 +253,19 @@ describe("Missions page", () => {
     ).toBeTruthy();
     const leoNeed = await screen.findByRole("list", { name: "Leo/need" });
     expect(within(leoNeed).getAllByRole("button")).toHaveLength(2);
+    // The character filter has its own card, apart from the family tabs.
+    const tabsCard = screen
+      .getByRole("tablist", { name: "Mission family" })
+      .closest(".content-card-elevated");
+    const filterCard = leoNeed.closest(".content-card-elevated");
+    expect(filterCard).toBeTruthy();
+    expect(filterCard).not.toBe(tabsCard);
+    expect(
+      Array.from(
+        screen.getByRole("tablist", { name: "Mission family" }).querySelectorAll('[role="tab"]'),
+        (tab) => tab.textContent?.trim()
+      )
+    ).toEqual(["All", "Story", "Character", "Normal"]);
     expect(screen.getByRole("list", { name: "VIRTUAL SINGER" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Load more missions" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Change character" })).toBeNull();

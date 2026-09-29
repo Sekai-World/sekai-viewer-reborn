@@ -37,6 +37,7 @@
     pageLabel,
     loadingPlaceholder,
     controls,
+    filters,
     children
   }: {
     labels: CatalogueLabels;
@@ -56,6 +57,8 @@
     pageLabel?: string;
     loadingPlaceholder?: Snippet;
     controls?: Snippet;
+    /** Filters that narrow the chosen tab, in their own card below the tabs. */
+    filters?: Snippet;
     children: Snippet;
   } = $props();
 
@@ -134,6 +137,15 @@
         </span>
       </label>
     </form>
+  {/if}
+
+  {#if filters}
+    <div
+      class="content-card-elevated rounded-2xl border border-(--archive-border-subtle) p-4"
+      data-swipe-region-skip
+    >
+      {@render filters()}
+    </div>
   {/if}
 
   <section

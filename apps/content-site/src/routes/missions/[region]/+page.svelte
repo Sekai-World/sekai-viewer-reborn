@@ -463,8 +463,7 @@
   catalogueKey={`${data.region}:${data.query.family ?? "all"}:${data.query.character ?? ""}`}
   familyLabel={t("mission.familyLabel")}
   selectedFamily={data.query.family}
-  getFamilyLabel={(family) =>
-    family === null ? t("mission.family.all") : t(`mission.family.${family}`)}
+  getFamilyLabel={(family) => t(`mission.tab.${family ?? "all"}`)}
   onFamilyChange={navigateFamily}
   hasNext={Boolean(data.query.family) && !initialError && hasNext}
   {isLoadingMore}
