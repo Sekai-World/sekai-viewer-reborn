@@ -280,25 +280,46 @@ describe("Missions page", () => {
     expect(
       (await screen.findByRole("button", { name: "Ichika Hoshino" })).getAttribute("aria-pressed")
     ).toBe("true");
-    expect(screen.getByText("Showing Ichika Hoshino")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "View character profile" }).getAttribute("href")).toBe(
-      "/character/jp/1"
-    );
+    // No "Showing" line or profile link under the picker.
+    expect(screen.queryByText(/Showing/)).toBeNull();
+    expect(screen.queryByRole("link", { name: "View character profile" })).toBeNull();
     expect(screen.getByRole("link", { name: "EN" }).getAttribute("href")).toBe(
       "/missions/en?family=characterMissionV2s&character=1"
     );
 
-    // Small screens collapse the grid behind a toggle once a character is chosen.
-    const toggle = screen.getByRole("button", { name: "Change character" });
+    // Small screens collapse the grid to the chosen character's unit and avatar, which
+    // reopens it.
+    const toggle = screen.getByRole("button", { name: "Change character: Ichika Hoshino" });
     const grid = document.getElementById(toggle.getAttribute("aria-controls")!)!;
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle.parentElement?.classList).toContain("sm:hidden");
+    expect(within(toggle.parentElement!).getByText("Leo/need")).toBeTruthy();
     expect(grid.classList).toContain("hidden");
     expect(grid.classList).toContain("sm:grid");
     await fireEvent.click(toggle);
-    expect(
-      screen.getByRole("button", { name: "Hide characters" }).getAttribute("aria-expanded")
-    ).toBe("true");
     expect(grid.classList).not.toContain("hidden");
+    expect(screen.queryByRole("button", { name: /^Change character/ })).toBeNull();
+  });
+
+  it("shows avatars in grey until hovered, focused, or chosen", async () => {
+    renderPage(
+      page([makeMission("characterMissionV2s", 1, "Clear a live with Ichika")], {
+        page: 1,
+        hasNext: false
+      }),
+      "characterMissionV2s",
+      1
+    );
+
+    const avatarOf = async (name: string) =>
+      (await screen.findByRole("button", { name })).firstElementChild as HTMLElement;
+    const chosen = await avatarOf("Ichika Hoshino");
+    expect(chosen.classList).toContain("grayscale-0");
+    expect(chosen.classList).not.toContain("grayscale");
+    const other = await avatarOf("Saki Tenma");
+    expect(other.classList).toContain("grayscale");
+    expect(other.classList).toContain("group-hover:grayscale-0");
+    expect(other.classList).toContain("group-focus-visible:grayscale-0");
   });
 
   it("fetches the character list once per region while switching characters", async () => {

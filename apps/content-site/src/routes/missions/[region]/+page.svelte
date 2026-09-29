@@ -395,17 +395,8 @@
       error: t("mission.characterPickerError"),
       retry: t("mission.retry"),
       otherGroup: t("mission.characterPickerOtherGroup"),
-      selected: t("mission.characterSelected"),
-      profile: t("mission.characterProfile"),
-      change: t("mission.characterChange"),
-      collapse: t("mission.characterCollapse")
+      change: t("mission.characterChange")
     }}
-    profileHref={data.query.character === null
-      ? null
-      : resolve("/character/[region]/[id]", {
-          region: data.region,
-          id: String(data.query.character)
-        })}
     onSelect={selectCharacter}
     onRetry={() => showCharacterList(data.region)}
   />

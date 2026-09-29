@@ -8,7 +8,6 @@
     selectedId,
     getImageSrc,
     labels,
-    profileHref = null,
     onSelect,
     onRetry
   }: {
@@ -22,14 +21,9 @@
       error: string;
       retry: string;
       otherGroup: string;
-      /** Names the selected character; `{name}` is replaced. */
-      selected: string;
-      profile: string;
-      /** Small screens only: reopens the collapsed grid after a character is chosen. */
+      /** Small screens only: names the selected avatar that reopens the collapsed grid. */
       change: string;
-      collapse: string;
     };
-    profileHref?: string | null;
     onSelect: (id: number) => void;
     onRetry: () => void;
   } = $props();
@@ -60,7 +54,25 @@
     )
   );
   const selected = $derived(characters.find((character) => character.id === selectedId) ?? null);
+  const selectedGroup = $derived(
+    groups.find((group) => group.characters.some((character) => character.id === selectedId)) ??
+      null
+  );
 </script>
+
+<!-- Avatars stay grey until hovered, focused, or chosen; the chosen one also keeps its ring. -->
+{#snippet avatar(character: MissionCharacterOption, active: boolean)}
+  <CharacterAvatar
+    src={getImageSrc(character.id)}
+    characterId={character.id}
+    label={character.name}
+    variant="sm"
+    class="size-full! transition-[filter] duration-180 motion-reduce:transition-none in-data-low-motion:transition-none {active
+      ? 'grayscale-0'
+      : 'grayscale group-hover:grayscale-0 group-focus-visible:grayscale-0'}"
+    decorative
+  />
+{/snippet}
 
 <section class="grid min-w-0 gap-3" aria-labelledby={titleId}>
   <h2 id={titleId} class="text-sm font-semibold text-(--archive-text-strong)">{labels.title}</h2>
@@ -96,7 +108,7 @@
               <li class="last:mr-2 sm:last:mr-0">
                 <button
                   type="button"
-                  class="btn btn-circle btn-ghost size-11 p-0 sm:size-12"
+                  class="group btn btn-circle btn-ghost size-11 p-0 sm:size-12"
                   class:ring-2={character.id === selectedId}
                   class:ring-primary={character.id === selectedId}
                   aria-pressed={character.id === selectedId}
@@ -107,14 +119,7 @@
                     onSelect(character.id);
                   }}
                 >
-                  <CharacterAvatar
-                    src={getImageSrc(character.id)}
-                    characterId={character.id}
-                    label={character.name}
-                    variant="sm"
-                    class="size-full!"
-                    decorative
-                  />
+                  {@render avatar(character, character.id === selectedId)}
                 </button>
               </li>
             {/each}
@@ -122,25 +127,25 @@
         </div>
       {/each}
     </div>
-    {#if selected}
-      <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-        <span class="font-medium wrap-anywhere text-(--archive-text-strong)">
-          {labels.selected.replace("{name}", selected.name)}
-        </span>
+    {#if collapsed && selected}
+      <!-- Small screens: once a character is chosen, only their unit and avatar stay; the
+           avatar reopens the grid, and choosing a character collapses it again. -->
+      <div class="grid grid-cols-[8rem_auto] items-center gap-2 sm:hidden">
+        <p class="text-xs wrap-anywhere text-(--archive-text-muted)">
+          {selectedGroup?.label ?? labels.otherGroup}
+        </p>
         <button
           type="button"
-          class="btn btn-link touch-target px-0 sm:hidden"
+          class="group btn btn-circle btn-ghost size-11 p-0 ring-2 ring-primary"
+          aria-label={`${labels.change}: ${selected.name}`}
+          title={selected.name}
           aria-controls={gridId}
-          aria-expanded={!collapsed}
-          onclick={() => (expanded = !expanded)}
+          aria-expanded="false"
+          onclick={() => (expanded = true)}
         >
-          {collapsed ? labels.change : labels.collapse}
+          {@render avatar(selected, true)}
         </button>
-        {#if profileHref}
-          <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
-          <a class="link touch-target link-primary" href={profileHref}>{labels.profile}</a>
-        {/if}
-      </p>
+      </div>
     {/if}
   {/if}
 </section>
