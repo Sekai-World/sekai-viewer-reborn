@@ -94,7 +94,7 @@ export const formatPlaybackTime = (seconds: number): string => {
 export const toDownloadFileName = (title: string, extension: string): string => {
   const safe = Array.from(title.trim(), (character) => {
     const codePoint = character.codePointAt(0) ?? 0;
-    return codePoint <= 0x1f || codePoint === 0x7f || '<>:"/\\|?*'.includes(character)
+    return codePoint <= 0x1f || codePoint === 0x7f || String.raw`<>:"/\|?*`.includes(character)
       ? "-"
       : character;
   })

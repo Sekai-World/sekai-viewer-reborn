@@ -170,15 +170,7 @@
         {@const src = audioUrl(record)}
         <li class="content-card-shell min-w-0 rounded-2xl p-2 {current ? 'border-primary/50' : ''}">
           <div class="flex items-center gap-1">
-            <button
-              type="button"
-              class="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              aria-pressed={playing}
-              aria-label={t(
-                playing ? "mysekai.soundtrack.pause" : "mysekai.soundtrack.play"
-              ).replace("{title}", track.title)}
-              onclick={() => player.toggle(record.id, src)}
-            >
+            <div class="flex min-w-0 flex-1 items-center gap-3 p-1">
               <span class="relative size-14 shrink-0 overflow-hidden rounded-lg">
                 {#if jacket}
                   <AssetImage
@@ -201,12 +193,17 @@
                   >
                 {/if}
               </span>
-              <span
-                class="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-content"
-                aria-hidden="true"
-              >
-                <Icon icon={playing ? "mdi:pause" : "mdi:play"} class="size-6" />
-              </span>
+            </div>
+            <button
+              type="button"
+              class="btn btn-circle btn-primary touch-target shrink-0"
+              aria-pressed={playing}
+              aria-label={t(
+                playing ? "mysekai.soundtrack.pause" : "mysekai.soundtrack.play"
+              ).replace("{title}", track.title)}
+              onclick={() => player.toggle(record.id, src)}
+            >
+              <Icon icon={playing ? "mdi:pause" : "mdi:play"} class="size-6" aria-hidden="true" />
             </button>
             {#if src}
               <button
