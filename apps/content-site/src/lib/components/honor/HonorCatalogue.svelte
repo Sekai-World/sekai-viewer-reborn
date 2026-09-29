@@ -214,22 +214,36 @@
     <legend class="fieldset-legend text-sm font-medium">{bondsViewLabels.options}</legend>
     {#if options.words.length > 0}
       <div class="flex min-w-0 flex-col gap-1 sm:col-span-2">
-        <label for={`${dialogId}-word`} class="text-sm font-medium text-(--archive-text-default)">
+        <span id={`${dialogId}-word`} class="text-sm font-medium text-(--archive-text-default)">
           {bondsViewLabels.word}
-        </label>
-        <select
-          id={`${dialogId}-word`}
-          class="select w-full"
-          value={selectedWord?.id}
+        </span>
+        <!-- A pair has at most five words, so they fit as choices. -->
+        <div
+          class="flex flex-wrap gap-2"
+          role="radiogroup"
+          aria-labelledby={`${dialogId}-word`}
           aria-describedby={selectedWord?.description ? `${dialogId}-word-note` : undefined}
-          onchange={(event) => {
-            bondsView = { ...bondsView, wordId: Number(event.currentTarget.value) };
-          }}
         >
           {#each options.words as word (word.id)}
-            <option value={word.id}>{word.name}</option>
+            {@const checked = selectedWord?.id === word.id}
+            <label
+              class="btn touch-target h-auto min-h-11 whitespace-normal wrap-anywhere has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary {checked
+                ? 'btn-primary'
+                : 'btn-outline border-primary text-primary'}"
+            >
+              <input
+                type="radio"
+                class="sr-only"
+                name={`${dialogId}-word`}
+                {checked}
+                onchange={() => {
+                  bondsView = { ...bondsView, wordId: word.id };
+                }}
+              />
+              {word.name}
+            </label>
           {/each}
-        </select>
+        </div>
         {#if selectedWord?.description}
           <p id={`${dialogId}-word-note`} class="text-xs wrap-anywhere text-(--archive-text-muted)">
             {selectedWord.description}
@@ -251,7 +265,7 @@
           {#each [false, true] as unitVirtualSinger (unitVirtualSinger)}
             {@const checked = bondsView.unitVirtualSinger === unitVirtualSinger}
             <label
-              class="join-item btn touch-target h-auto min-h-11 whitespace-normal {checked
+              class="join-item btn touch-target h-auto min-h-11 whitespace-normal has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary {checked
                 ? 'btn-primary'
                 : 'btn-outline border-primary text-primary'}"
             >

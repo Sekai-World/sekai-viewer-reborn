@@ -483,9 +483,13 @@ describe("HonorCatalogue", () => {
       ]);
       expect(titleImages(dialog, "bonds-character")[0]).toEqual(["chr_sd_04_01", "chr_sd_21_01"]);
 
-      await fireEvent.change(within(options).getByRole("combobox", { name: "Word" }), {
-        target: { value: "2" }
-      });
+      const words = within(options).getByRole("radiogroup", { name: "Word" });
+      expect(
+        within(words)
+          .getAllByRole("radio")
+          .map((radio) => (radio as HTMLInputElement).checked)
+      ).toEqual([true, false]);
+      await fireEvent.click(within(words).getByRole("radio", { name: "Cool at times" }));
       expect(titleImages(dialog, "word")).toEqual([
         ["honorname_0421_01_01"],
         ["honorname_0421_01_02"]
@@ -508,17 +512,16 @@ describe("HonorCatalogue", () => {
     it("opens each pair with the default display", async () => {
       const dialog = await openBondsDialog();
       const options = within(dialog).getByRole("group", { name: "Display" });
-      await fireEvent.change(within(options).getByRole("combobox", { name: "Word" }), {
-        target: { value: "2" }
-      });
+      await fireEvent.click(within(options).getByRole("radio", { name: "Cool at times" }));
       await fireEvent.click(within(options).getByRole("checkbox", { name: "Swap sides" }));
       await fireEvent.keyDown(dialog, { key: "Escape" });
 
       await fireEvent.click(screen.getByRole("button", { name: /Shiho and Miku/ }));
 
       expect(
-        (within(dialog).getByRole("combobox", { name: "Word" }) as HTMLSelectElement).value
-      ).toBe("1");
+        (within(dialog).getByRole("radio", { name: "Shiho & Miku fan" }) as HTMLInputElement)
+          .checked
+      ).toBe(true);
       expect(
         (within(dialog).getByRole("checkbox", { name: "Swap sides" }) as HTMLInputElement).checked
       ).toBe(false);
@@ -528,7 +531,10 @@ describe("HonorCatalogue", () => {
     it("leaves out the outfit option when the pair has none", async () => {
       const dialog = await openBondsDialog(false);
 
-      expect(within(dialog).queryByRole("radiogroup")).toBeNull();
+      expect(
+        within(dialog).queryByRole("radiogroup", { name: "Virtual Singer outfit" })
+      ).toBeNull();
+      expect(within(dialog).getByRole("radiogroup", { name: "Word" })).toBeTruthy();
       expect(within(dialog).getByRole("checkbox", { name: "Swap sides" })).toBeTruthy();
     });
 
