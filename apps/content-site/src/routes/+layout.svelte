@@ -103,6 +103,10 @@
   let virtualLivesLabel = $state(getInitialI18nText("navigation.virtualLives"));
   let missionsLabel = $state(getInitialI18nText("navigation.missions"));
   let honorsLabel = $state(getInitialI18nText("navigation.honors"));
+  let mysekaiLabel = $state(getInitialI18nText("navigation.mysekai"));
+  let mysekaiFixturesLabel = $state(getInitialI18nText("navigation.mysekaiFixtures"));
+  let mysekaiMaterialsLabel = $state(getInitialI18nText("navigation.mysekaiMaterials"));
+  let mysekaiMusicRecordsLabel = $state(getInitialI18nText("navigation.mysekaiMusicRecords"));
   // Any reward list can open a title preview, so the layout provides its labels.
   const titlePreviewLabelsFrom = (text: (key: string) => string): TitlePreviewLabels => ({
     dialog: text("titlePreview.dialog"),
@@ -303,6 +307,32 @@
     },
     {
       type: "section",
+      label: mysekaiLabel
+    },
+    {
+      label: mysekaiFixturesLabel,
+      href: `/mysekai/fixtures/${sidebarRegion}`,
+      active:
+        page.url.pathname.startsWith("/mysekai/fixtures/") ||
+        page.url.pathname.startsWith("/mysekai/fixture/"),
+      icon: "mdi:sofa-outline"
+    },
+    {
+      label: mysekaiMaterialsLabel,
+      href: `/mysekai/materials/${sidebarRegion}`,
+      active:
+        page.url.pathname.startsWith("/mysekai/materials/") ||
+        page.url.pathname.startsWith("/mysekai/material/"),
+      icon: "mdi:pine-tree-variant-outline"
+    },
+    {
+      label: mysekaiMusicRecordsLabel,
+      href: `/mysekai/music-records/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/mysekai/music-records/"),
+      icon: "mdi:album"
+    },
+    {
+      type: "section",
       label: projectLabel
     },
     navigationLinks[navigationLinks.length - 1]
@@ -406,6 +436,10 @@
     virtualLivesLabel = translate("navigation.virtualLives");
     missionsLabel = translate("navigation.missions");
     honorsLabel = translate("navigation.honors");
+    mysekaiLabel = translate("navigation.mysekai");
+    mysekaiFixturesLabel = translate("navigation.mysekaiFixtures");
+    mysekaiMaterialsLabel = translate("navigation.mysekaiMaterials");
+    mysekaiMusicRecordsLabel = translate("navigation.mysekaiMusicRecords");
     titlePreviewLabels = titlePreviewLabelsFrom(translate);
     supportLabel = translate("navigation.support");
     quickNavigationLabel = translate("navigation.quickNavigation");

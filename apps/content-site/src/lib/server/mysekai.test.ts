@@ -1,0 +1,118 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const sdk = vi.hoisted(() => ({
+  getMysekaiFixturesByRegionById: vi.fn(),
+  getMysekaiFixturesByRegionFilters: vi.fn(),
+  getMysekaiFixturesByRegionList: vi.fn(),
+  getMysekaiMaterialsByRegionById: vi.fn(),
+  getMysekaiMaterialsByRegionList: vi.fn(),
+  getMysekaiMusicRecordsByRegionFilters: vi.fn(),
+  getMysekaiMusicRecordsByRegionList: vi.fn()
+}));
+vi.mock("@platform/sekai-master-api-sdk", () => sdk);
+
+import { parseMysekaiFixtureListQuery } from "$lib/domain/mysekai";
+import {
+  createMysekaiFixtureListRequestQuery,
+  createMysekaiMusicRecordListRequestQuery,
+  fetchMysekaiFixtureDetail,
+  fetchMysekaiFixtureListPage,
+  fetchMysekaiMaterials,
+  MYSEKAI_FIXTURE_PAGE_SIZE
+} from "./mysekai";
+
+beforeEach(() => {
+  vi.resetAllMocks();
+});
+
+describe("MySekai fixture requests", () => {
+  it("sends every selected tag as one AND filter and the genre pair", () => {
+    const query = parseMysekaiFixtureListQuery(
+      new URLSearchParams("name=desk&main_genre_id=2&sub_genre_id=3&series=61&character=5")
+    );
+
+    expect(createMysekaiFixtureListRequestQuery(query, 2)).toEqual({
+      page: 2,
+      page_size: MYSEKAI_FIXTURE_PAGE_SIZE,
+      sort_by: "id",
+      sort_order: "asc",
+      name: "desk",
+      main_genre_id: "2",
+      sub_genre_id: "3",
+      tag_id: "61,5"
+    });
+  });
+
+  it("maps the API pagination and targets the v1 base URL", async () => {
+    sdk.getMysekaiFixturesByRegionList.mockResolvedValue({
+      data: {
+        items: [{ id: 1, name: "Table", tagIds: [] }],
+        pagination: { page: 1, page_size: 48, total: 60, total_pages: 2, has_next: true }
+      }
+    });
+
+    const page = await fetchMysekaiFixtureListPage(
+      "https://api.example.test/",
+      "jp",
+      parseMysekaiFixtureListQuery(new URLSearchParams())
+    );
+
+    expect(page.pagination).toEqual({ page: 1, pageSize: 48, total: 60, hasNext: true });
+    expect(sdk.getMysekaiFixturesByRegionList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://api.example.test/api/v1",
+        path: { region: "jp" }
+      })
+    );
+  });
+
+  it("returns null for a missing fixture and throws on other failures", async () => {
+    sdk.getMysekaiFixturesByRegionById.mockResolvedValueOnce({
+      error: { error: { code: "MYSEKAI_FIXTURE_NOT_FOUND" } },
+      response: { status: 404 }
+    });
+    await expect(
+      fetchMysekaiFixtureDetail("https://api.example.test", "jp", 9)
+    ).resolves.toBeNull();
+
+    sdk.getMysekaiFixturesByRegionById.mockResolvedValueOnce({
+      error: { error: { code: "MYSEKAI_FIXTURE_QUERY_ERROR" } },
+      response: { status: 500 }
+    });
+    await expect(fetchMysekaiFixtureDetail("https://api.example.test", "jp", 9)).rejects.toThrow();
+  });
+});
+
+describe("MySekai materials", () => {
+  it("reads pages until the API reports no next page", async () => {
+    sdk.getMysekaiMaterialsByRegionList
+      .mockResolvedValueOnce({
+        data: { items: [{ id: 1 }], pagination: { has_next: true } }
+      })
+      .mockResolvedValueOnce({
+        data: { items: [{ id: 2 }], pagination: { has_next: false } }
+      });
+
+    const materials = await fetchMysekaiMaterials("https://api.example.test", "en");
+
+    expect(materials.map((material) => material.id)).toEqual([1, 2]);
+    expect(sdk.getMysekaiMaterialsByRegionList).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("MySekai music record requests", () => {
+  it("sends the category only when one is selected", () => {
+    expect(
+      createMysekaiMusicRecordListRequestQuery(
+        { trackType: "music_sound_track", name: "", soundTrackCategoryId: 3 },
+        1
+      )
+    ).toMatchObject({ track_type: "music_sound_track", sound_track_category_id: "3" });
+    expect(
+      createMysekaiMusicRecordListRequestQuery(
+        { trackType: "music", name: "sekai", soundTrackCategoryId: null },
+        1
+      )
+    ).not.toHaveProperty("sound_track_category_id");
+  });
+});
