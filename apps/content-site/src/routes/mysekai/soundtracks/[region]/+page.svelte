@@ -183,6 +183,7 @@
             <span class="relative size-16 shrink-0 overflow-hidden rounded-xl">
               {#if jacket}
                 <AssetImage
+                  buttonClass="block size-full overflow-hidden"
                   src={jacket}
                   alt=""
                   fallbackLabel=""

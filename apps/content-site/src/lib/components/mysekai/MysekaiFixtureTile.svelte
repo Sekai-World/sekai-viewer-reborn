@@ -27,6 +27,7 @@
   <div class="relative aspect-square w-full overflow-hidden rounded-lg">
     {#if imageSrc}
       <AssetImage
+        buttonClass="block size-full overflow-hidden"
         src={imageSrc}
         alt=""
         fallbackLabel={imageUnavailableLabel}
