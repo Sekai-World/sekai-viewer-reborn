@@ -16,8 +16,12 @@ import {
   createMysekaiFixtureListRequestQuery,
   createMysekaiMusicRecordListRequestQuery,
   fetchMysekaiFixtureDetail,
+  fetchMysekaiFixtureFilters,
   fetchMysekaiFixtureListPage,
+  fetchMysekaiMaterialDetail,
   fetchMysekaiMaterials,
+  fetchMysekaiMusicRecordFilters,
+  fetchMysekaiMusicRecordListPage,
   MYSEKAI_FIXTURE_PAGE_SIZE
 } from "./mysekai";
 
@@ -114,5 +118,66 @@ describe("MySekai music record requests", () => {
         1
       )
     ).not.toHaveProperty("sound_track_category_id");
+  });
+});
+
+describe("MySekai fetch failures and defaults", () => {
+  const baseUrl = "https://api.example.test";
+
+  it("throws when a list, filter, or page request fails", async () => {
+    const failure = { error: { error: { code: "QUERY_ERROR" } }, response: { status: 500 } };
+    sdk.getMysekaiFixturesByRegionList.mockResolvedValue(failure);
+    sdk.getMysekaiFixturesByRegionFilters.mockResolvedValue(failure);
+    sdk.getMysekaiMaterialsByRegionList.mockResolvedValue(failure);
+    sdk.getMysekaiMaterialsByRegionById.mockResolvedValue(failure);
+    sdk.getMysekaiMusicRecordsByRegionList.mockResolvedValue(failure);
+    sdk.getMysekaiMusicRecordsByRegionFilters.mockResolvedValue(failure);
+    const query = parseMysekaiFixtureListQuery(new URLSearchParams());
+    const recordQuery = { trackType: "music" as const, name: "", soundTrackCategoryId: null };
+
+    await expect(fetchMysekaiFixtureListPage(baseUrl, "jp", query)).rejects.toThrow();
+    await expect(fetchMysekaiFixtureFilters(baseUrl, "jp")).rejects.toThrow();
+    await expect(fetchMysekaiMaterials(baseUrl, "jp")).rejects.toThrow();
+    await expect(fetchMysekaiMaterialDetail(baseUrl, "jp", 1)).rejects.toThrow();
+    await expect(fetchMysekaiMusicRecordListPage(baseUrl, "jp", recordQuery)).rejects.toThrow();
+    await expect(fetchMysekaiMusicRecordFilters(baseUrl, "jp")).rejects.toThrow();
+  });
+
+  it("fills missing arrays and pagination with defaults", async () => {
+    sdk.getMysekaiFixturesByRegionFilters.mockResolvedValue({
+      data: { mainGenres: [{ id: 2, name: "General" }] }
+    });
+    sdk.getMysekaiMusicRecordsByRegionList.mockResolvedValue({ data: {} });
+    sdk.getMysekaiMusicRecordsByRegionFilters.mockResolvedValue({ data: {} });
+
+    await expect(fetchMysekaiFixtureFilters(baseUrl, "jp")).resolves.toEqual({
+      mainGenres: [{ id: 2, name: "General", subGenres: [] }],
+      tags: []
+    });
+    await expect(
+      fetchMysekaiMusicRecordListPage(
+        baseUrl,
+        "jp",
+        { trackType: "music_sound_track", name: "", soundTrackCategoryId: 1 },
+        3
+      )
+    ).resolves.toEqual({
+      items: [],
+      pagination: { page: 3, pageSize: 48, total: null, hasNext: false }
+    });
+    await expect(fetchMysekaiMusicRecordFilters(baseUrl, "jp")).resolves.toEqual({
+      soundTrackCategories: []
+    });
+  });
+
+  it("returns a material, or null when the region lacks it", async () => {
+    sdk.getMysekaiMaterialsByRegionById
+      .mockResolvedValueOnce({ data: { id: 1, name: "Wood" } })
+      .mockResolvedValueOnce({ error: {}, response: { status: 404 } });
+
+    await expect(fetchMysekaiMaterialDetail(baseUrl, "jp", 1)).resolves.toMatchObject({
+      name: "Wood"
+    });
+    await expect(fetchMysekaiMaterialDetail(baseUrl, "jp", 2)).resolves.toBeNull();
   });
 });

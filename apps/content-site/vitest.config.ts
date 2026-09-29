@@ -103,6 +103,11 @@ export default defineConfig({
         "src/lib/server/virtual-live-detail.ts",
         "src/lib/server/response-values.ts",
         "src/lib/server/secure-random.ts",
+        "src/lib/server/mysekai.ts",
+        "src/lib/assets/index.ts",
+        "src/lib/domain/mysekai.ts",
+        "src/lib/paged-list.svelte.ts",
+        "src/lib/i18n/streamed-translator.svelte.ts",
         "src/lib/components/mission/catalogue-groups.ts",
         "src/lib/components/shared/title-preview-labels.ts",
         "src/lib/domain/honor.ts",
@@ -131,7 +136,14 @@ export default defineConfig({
         "src/routes/musics/[region]/+page.server.ts",
         "src/routes/musics/[region]/data/+server.ts",
         "src/routes/musics/[region]/metadata/+server.ts",
-        "src/routes/virtual-live/[region]/[id]/+page.server.ts"
+        "src/routes/virtual-live/[region]/[id]/+page.server.ts",
+        "src/routes/mysekai/fixtures/[region]/+page.server.ts",
+        "src/routes/mysekai/fixtures/[region]/data/+server.ts",
+        "src/routes/mysekai/fixture/[region]/[id]/+page.server.ts",
+        "src/routes/mysekai/materials/[region]/+page.server.ts",
+        "src/routes/mysekai/material/[region]/[id]/+page.server.ts",
+        "src/routes/mysekai/music-records/[region]/+page.server.ts",
+        "src/routes/mysekai/music-records/[region]/data/+server.ts"
       ],
       reporter: ["lcov"]
     }
