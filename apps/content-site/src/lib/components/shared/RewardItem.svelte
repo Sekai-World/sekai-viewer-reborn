@@ -85,7 +85,7 @@
     type="button"
     class="tooltip align-middle {chip
       ? REWARD_CHIP_BUTTON_CLASS
-      : 'btn btn-ghost touch-target h-auto min-h-0 gap-1 p-0.5 font-normal'} {className}"
+      : 'btn btn-ghost h-auto min-h-0 gap-1 p-0.5 font-normal'} {className}"
     data-tip={label}
     aria-label={accessibleLabel}
     aria-haspopup="dialog"
