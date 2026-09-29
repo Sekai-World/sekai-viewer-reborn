@@ -6,8 +6,8 @@ const server = vi.hoisted(() => ({
   fetchMysekaiFixtureListPage: vi.fn(),
   fetchMysekaiMaterialDetail: vi.fn(),
   fetchMysekaiMaterials: vi.fn(),
-  fetchMysekaiMusicRecordFilters: vi.fn(),
-  fetchMysekaiMusicRecordListPage: vi.fn()
+  fetchMysekaiSoundtrackFilters: vi.fn(),
+  fetchMysekaiSoundtrackListPage: vi.fn()
 }));
 vi.mock("$lib/server/mysekai", () => server);
 vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl: () => "https://master-api.test" }));
@@ -17,8 +17,8 @@ import { GET as getFixturesPage } from "./fixtures/[region]/data/+server";
 import { load as loadFixture } from "./fixture/[region]/[id]/+page.server";
 import { load as loadMaterials } from "./materials/[region]/+page.server";
 import { load as loadMaterial } from "./material/[region]/[id]/+page.server";
-import { load as loadMusicRecords } from "./music-records/[region]/+page.server";
-import { GET as getMusicRecordsPage } from "./music-records/[region]/data/+server";
+import { load as loadSoundtracks } from "./soundtracks/[region]/+page.server";
+import { GET as getSoundtracksPage } from "./soundtracks/[region]/data/+server";
 
 type LoadEvent = { params: Record<string, string>; url: URL };
 const event = (params: Record<string, string>, path = "http://localhost/"): LoadEvent => ({
@@ -69,20 +69,13 @@ describe("MySekai list loaders", () => {
     await expect(data.materials).resolves.toBeNull();
   });
 
-  it("streams music records for the selected track type", async () => {
-    server.fetchMysekaiMusicRecordListPage.mockRejectedValue(new Error("offline"));
-    server.fetchMysekaiMusicRecordFilters.mockResolvedValue({ soundTrackCategories: [] });
+  it("streams the soundtracks of the selected category", async () => {
+    server.fetchMysekaiSoundtrackListPage.mockRejectedValue(new Error("offline"));
+    server.fetchMysekaiSoundtrackFilters.mockResolvedValue({ soundTrackCategories: [] });
 
-    const data = run(
-      loadMusicRecords,
-      event({ region: "tw" }, "http://localhost/?track_type=music_sound_track&category=3")
-    );
+    const data = run(loadSoundtracks, event({ region: "tw" }, "http://localhost/?category=3"));
 
-    expect(data.query).toEqual({
-      trackType: "music_sound_track",
-      name: "",
-      soundTrackCategoryId: 3
-    });
+    expect(data.query).toEqual({ name: "", categoryId: 3 });
     await expect(data.catalogue).resolves.toBeNull();
     await expect(data.filters).resolves.toEqual({ soundTrackCategories: [] });
   });
@@ -141,30 +134,30 @@ describe("MySekai data endpoints", () => {
 
   it("answers 500 when a page fails", async () => {
     server.fetchMysekaiFixtureListPage.mockRejectedValue(new Error("offline"));
-    server.fetchMysekaiMusicRecordListPage.mockRejectedValue(new Error("offline"));
+    server.fetchMysekaiSoundtrackListPage.mockRejectedValue(new Error("offline"));
 
     const fixtures = await getFixturesPage(
       event({ region: "jp" }, "http://localhost/data") as never
     );
-    const records = await getMusicRecordsPage(
+    const records = await getSoundtracksPage(
       event({ region: "jp" }, "http://localhost/data?page=3") as never
     );
 
     expect([fixtures.status, records.status]).toEqual([500, 500]);
   });
 
-  it("returns the requested music record page", async () => {
-    server.fetchMysekaiMusicRecordListPage.mockResolvedValue(page);
+  it("returns the requested soundtrack page", async () => {
+    server.fetchMysekaiSoundtrackListPage.mockResolvedValue(page);
 
-    const response = await getMusicRecordsPage(
+    const response = await getSoundtracksPage(
       event({ region: "cn" }, "http://localhost/data?page=2&name=bgm") as never
     );
 
     await expect(response.json()).resolves.toEqual(page);
-    expect(server.fetchMysekaiMusicRecordListPage).toHaveBeenCalledWith(
+    expect(server.fetchMysekaiSoundtrackListPage).toHaveBeenCalledWith(
       "https://master-api.test",
       "cn",
-      { trackType: "music", name: "bgm", soundTrackCategoryId: null },
+      { name: "bgm", categoryId: null },
       2
     );
   });

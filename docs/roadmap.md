@@ -205,8 +205,8 @@ Catalogue (list + detail) coverage already shipped for:
   and pagination controls.
 - **MySekai** — furniture list (`/mysekai/fixtures/[region]`) and detail
   (`/mysekai/fixture/[region]/[id]`), materials list and detail
-  (`/mysekai/materials/[region]`, `/mysekai/material/[region]/[id]`), and music
-  records (`/mysekai/music-records/[region]`), on the `mysekaiFixtures`,
+  (`/mysekai/materials/[region]`, `/mysekai/material/[region]/[id]`), and
+  soundtracks (`/mysekai/soundtracks/[region]`), on the `mysekaiFixtures`,
   `mysekaiMaterials`, and `mysekaiMusicRecords` master API contracts.
 
 These use generated public `sekai-master-api` contracts, region-aware

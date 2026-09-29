@@ -142,8 +142,8 @@ export default defineConfig({
         "src/routes/mysekai/fixture/[region]/[id]/+page.server.ts",
         "src/routes/mysekai/materials/[region]/+page.server.ts",
         "src/routes/mysekai/material/[region]/[id]/+page.server.ts",
-        "src/routes/mysekai/music-records/[region]/+page.server.ts",
-        "src/routes/mysekai/music-records/[region]/data/+server.ts"
+        "src/routes/mysekai/soundtracks/[region]/+page.server.ts",
+        "src/routes/mysekai/soundtracks/[region]/data/+server.ts"
       ],
       reporter: ["lcov"]
     }

@@ -4,9 +4,9 @@ import {
   getMysekaiMaterialTab,
   loadMysekaiDetail,
   parseMysekaiFixtureListQuery,
-  parseMysekaiMusicRecordListQuery,
+  parseMysekaiSoundtrackListQuery,
   toMysekaiFixtureSearchParams,
-  toMysekaiMusicRecordSearchParams
+  toMysekaiSoundtrackSearchParams
 } from "./mysekai";
 
 describe("MySekai fixture list query", () => {
@@ -48,25 +48,16 @@ describe("MySekai fixture list query", () => {
   });
 });
 
-describe("MySekai music record list query", () => {
-  it("keeps a sound-track category only for sound-track records", () => {
-    expect(parseMysekaiMusicRecordListQuery(new URLSearchParams("category=2&name=bgm"))).toEqual({
-      trackType: "music",
-      name: "bgm",
-      soundTrackCategoryId: null
-    });
-
-    const query = parseMysekaiMusicRecordListQuery(
-      new URLSearchParams("track_type=music_sound_track&category=2")
-    );
-    expect(query).toEqual({
-      trackType: "music_sound_track",
-      name: "",
-      soundTrackCategoryId: 2
-    });
-    expect(toMysekaiMusicRecordSearchParams(query).toString()).toBe(
-      "track_type=music_sound_track&category=2"
-    );
+describe("MySekai soundtrack list query", () => {
+  it("round-trips the name and category through the page URL", () => {
+    const query = parseMysekaiSoundtrackListQuery(new URLSearchParams("category=2&name=%20bgm"));
+    expect(query).toEqual({ name: "bgm", categoryId: 2 });
+    expect(toMysekaiSoundtrackSearchParams(query, 3).toString()).toBe("page=3&name=bgm&category=2");
+    expect(
+      toMysekaiSoundtrackSearchParams(
+        parseMysekaiSoundtrackListQuery(new URLSearchParams("category=x"))
+      ).toString()
+    ).toBe("");
   });
 });
 

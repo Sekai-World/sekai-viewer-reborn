@@ -18,7 +18,7 @@ import type {
   MysekaiMaterialDetail,
   MysekaiMusicRecordFilters,
   MysekaiMusicRecordListPage,
-  MysekaiMusicRecordListQuery,
+  MysekaiSoundtrackListQuery,
   MysekaiPagination
 } from "$lib/domain/mysekai";
 import { getMasterApiV1BaseUrl } from "./catalogue-data";
@@ -26,7 +26,7 @@ import { getMasterApiV1BaseUrl } from "./catalogue-data";
 // 48 fills whole rows at every fixture grid width (2, 3, 4, and 6 columns) and keeps the
 // first page taller than a desktop viewport.
 export const MYSEKAI_FIXTURE_PAGE_SIZE = 48;
-export const MYSEKAI_MUSIC_RECORD_PAGE_SIZE = 48;
+export const MYSEKAI_SOUNDTRACK_PAGE_SIZE = 48;
 // The master API's page size limit; every region has fewer materials than this.
 const MYSEKAI_MATERIAL_PAGE_SIZE = 100;
 const MAX_MATERIAL_PAGES = 5;
@@ -164,40 +164,39 @@ export const fetchMysekaiMaterialDetail = async (
   return response.data;
 };
 
-export const createMysekaiMusicRecordListRequestQuery = (
-  query: MysekaiMusicRecordListQuery,
+/** Soundtracks are the music records of the `music_sound_track` type. */
+export const createMysekaiSoundtrackListRequestQuery = (
+  query: MysekaiSoundtrackListQuery,
   page: number
 ): NonNullable<GetMysekaiMusicRecordsByRegionListData["query"]> => ({
   page,
-  page_size: MYSEKAI_MUSIC_RECORD_PAGE_SIZE,
-  track_type: query.trackType,
+  page_size: MYSEKAI_SOUNDTRACK_PAGE_SIZE,
+  track_type: "music_sound_track",
   ...(query.name ? { name: query.name } : {}),
-  ...(query.soundTrackCategoryId === null
-    ? {}
-    : { sound_track_category_id: String(query.soundTrackCategoryId) })
+  ...(query.categoryId === null ? {} : { sound_track_category_id: String(query.categoryId) })
 });
 
-export const fetchMysekaiMusicRecordListPage = async (
+export const fetchMysekaiSoundtrackListPage = async (
   baseUrl: string,
   region: string,
-  query: MysekaiMusicRecordListQuery,
+  query: MysekaiSoundtrackListQuery,
   page = 1
 ): Promise<MysekaiMusicRecordListPage> => {
   const response = await getMysekaiMusicRecordsByRegionList({
     baseUrl: getMasterApiV1BaseUrl(baseUrl),
     path: { region },
-    query: createMysekaiMusicRecordListRequestQuery(query, page)
+    query: createMysekaiSoundtrackListRequestQuery(query, page)
   });
   if (response.error || !response.data) {
-    throw new Error("Failed to load MySekai music records.");
+    throw new Error("Failed to load MySekai soundtracks.");
   }
   return {
     items: response.data.items ?? [],
-    pagination: toPagination(response.data.pagination, page, MYSEKAI_MUSIC_RECORD_PAGE_SIZE)
+    pagination: toPagination(response.data.pagination, page, MYSEKAI_SOUNDTRACK_PAGE_SIZE)
   };
 };
 
-export const fetchMysekaiMusicRecordFilters = async (
+export const fetchMysekaiSoundtrackFilters = async (
   baseUrl: string,
   region: string
 ): Promise<MysekaiMusicRecordFilters> => {
@@ -206,7 +205,7 @@ export const fetchMysekaiMusicRecordFilters = async (
     path: { region }
   });
   if (response.error || !response.data) {
-    throw new Error("Failed to load MySekai music record filters.");
+    throw new Error("Failed to load MySekai soundtrack categories.");
   }
   return { soundTrackCategories: response.data.soundTrackCategories ?? [] };
 };

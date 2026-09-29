@@ -14,14 +14,14 @@ vi.mock("@platform/sekai-master-api-sdk", () => sdk);
 import { parseMysekaiFixtureListQuery } from "$lib/domain/mysekai";
 import {
   createMysekaiFixtureListRequestQuery,
-  createMysekaiMusicRecordListRequestQuery,
+  createMysekaiSoundtrackListRequestQuery,
   fetchMysekaiFixtureDetail,
   fetchMysekaiFixtureFilters,
   fetchMysekaiFixtureListPage,
   fetchMysekaiMaterialDetail,
   fetchMysekaiMaterials,
-  fetchMysekaiMusicRecordFilters,
-  fetchMysekaiMusicRecordListPage,
+  fetchMysekaiSoundtrackFilters,
+  fetchMysekaiSoundtrackListPage,
   MYSEKAI_FIXTURE_PAGE_SIZE
 } from "./mysekai";
 
@@ -104,20 +104,15 @@ describe("MySekai materials", () => {
   });
 });
 
-describe("MySekai music record requests", () => {
-  it("sends the category only when one is selected", () => {
-    expect(
-      createMysekaiMusicRecordListRequestQuery(
-        { trackType: "music_sound_track", name: "", soundTrackCategoryId: 3 },
-        1
-      )
-    ).toMatchObject({ track_type: "music_sound_track", sound_track_category_id: "3" });
-    expect(
-      createMysekaiMusicRecordListRequestQuery(
-        { trackType: "music", name: "sekai", soundTrackCategoryId: null },
-        1
-      )
-    ).not.toHaveProperty("sound_track_category_id");
+describe("MySekai soundtrack requests", () => {
+  it("asks for sound-track records and the category only when one is selected", () => {
+    expect(createMysekaiSoundtrackListRequestQuery({ name: "", categoryId: 3 }, 1)).toMatchObject({
+      track_type: "music_sound_track",
+      sound_track_category_id: "3"
+    });
+    const query = createMysekaiSoundtrackListRequestQuery({ name: "sekai", categoryId: null }, 1);
+    expect(query).toMatchObject({ track_type: "music_sound_track", name: "sekai" });
+    expect(query).not.toHaveProperty("sound_track_category_id");
   });
 });
 
@@ -133,14 +128,14 @@ describe("MySekai fetch failures and defaults", () => {
     sdk.getMysekaiMusicRecordsByRegionList.mockResolvedValue(failure);
     sdk.getMysekaiMusicRecordsByRegionFilters.mockResolvedValue(failure);
     const query = parseMysekaiFixtureListQuery(new URLSearchParams());
-    const recordQuery = { trackType: "music" as const, name: "", soundTrackCategoryId: null };
+    const recordQuery = { name: "", categoryId: null };
 
     await expect(fetchMysekaiFixtureListPage(baseUrl, "jp", query)).rejects.toThrow();
     await expect(fetchMysekaiFixtureFilters(baseUrl, "jp")).rejects.toThrow();
     await expect(fetchMysekaiMaterials(baseUrl, "jp")).rejects.toThrow();
     await expect(fetchMysekaiMaterialDetail(baseUrl, "jp", 1)).rejects.toThrow();
-    await expect(fetchMysekaiMusicRecordListPage(baseUrl, "jp", recordQuery)).rejects.toThrow();
-    await expect(fetchMysekaiMusicRecordFilters(baseUrl, "jp")).rejects.toThrow();
+    await expect(fetchMysekaiSoundtrackListPage(baseUrl, "jp", recordQuery)).rejects.toThrow();
+    await expect(fetchMysekaiSoundtrackFilters(baseUrl, "jp")).rejects.toThrow();
   });
 
   it("fills missing arrays and pagination with defaults", async () => {
@@ -155,17 +150,12 @@ describe("MySekai fetch failures and defaults", () => {
       tags: []
     });
     await expect(
-      fetchMysekaiMusicRecordListPage(
-        baseUrl,
-        "jp",
-        { trackType: "music_sound_track", name: "", soundTrackCategoryId: 1 },
-        3
-      )
+      fetchMysekaiSoundtrackListPage(baseUrl, "jp", { name: "", categoryId: 1 }, 3)
     ).resolves.toEqual({
       items: [],
       pagination: { page: 3, pageSize: 48, total: null, hasNext: false }
     });
-    await expect(fetchMysekaiMusicRecordFilters(baseUrl, "jp")).resolves.toEqual({
+    await expect(fetchMysekaiSoundtrackFilters(baseUrl, "jp")).resolves.toEqual({
       soundTrackCategories: []
     });
   });

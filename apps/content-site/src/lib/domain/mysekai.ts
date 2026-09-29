@@ -49,12 +49,10 @@ export type MysekaiFixtureFilters = {
   tags: MysekaiFixtureTag[];
 };
 
-export type MysekaiMusicTrackType = "music" | "music_sound_track";
-
-export type MysekaiMusicRecordListQuery = {
-  trackType: MysekaiMusicTrackType;
+/** The MySekai soundtrack list: music records of the `music_sound_track` type. */
+export type MysekaiSoundtrackListQuery = {
   name: string;
-  soundTrackCategoryId: number | null;
+  categoryId: number | null;
 };
 
 export type MysekaiMusicRecordListPage = {
@@ -134,30 +132,21 @@ export const toMysekaiFixtureSearchParams = (
   return params;
 };
 
-export const parseMysekaiMusicRecordListQuery = (
+export const parseMysekaiSoundtrackListQuery = (
   searchParams: URLSearchParams
-): MysekaiMusicRecordListQuery => {
-  const trackType =
-    searchParams.get("track_type") === "music_sound_track" ? "music_sound_track" : "music";
-  return {
-    trackType,
-    name: trimmed(searchParams.get("name")),
-    soundTrackCategoryId:
-      trackType === "music_sound_track" ? parsePositiveId(searchParams.get("category")) : null
-  };
-};
+): MysekaiSoundtrackListQuery => ({
+  name: trimmed(searchParams.get("name")),
+  categoryId: parsePositiveId(searchParams.get("category"))
+});
 
-export const toMysekaiMusicRecordSearchParams = (
-  query: MysekaiMusicRecordListQuery,
+export const toMysekaiSoundtrackSearchParams = (
+  query: MysekaiSoundtrackListQuery,
   page?: number
 ): URLSearchParams => {
   const params = new URLSearchParams();
   if (page !== undefined) params.set("page", String(page));
-  if (query.trackType === "music_sound_track") params.set("track_type", query.trackType);
   if (query.name) params.set("name", query.name);
-  if (query.soundTrackCategoryId !== null) {
-    params.set("category", String(query.soundTrackCategoryId));
-  }
+  if (query.categoryId !== null) params.set("category", String(query.categoryId));
   return params;
 };
 
