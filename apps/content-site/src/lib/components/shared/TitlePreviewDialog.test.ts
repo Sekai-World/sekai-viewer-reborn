@@ -57,7 +57,9 @@ describe("TitlePreviewDialog", () => {
   it("lists the levels as a level and condition table and highlights the rewarded level", async () => {
     const dialog = await openDialog(2);
 
-    const table = within(dialog).getByRole("table");
+    // The table carries the "Levels" name; the dialog shows no separate heading for it.
+    const table = within(dialog).getByRole("table", { name: "Levels" });
+    expect(within(dialog).queryByRole("heading", { name: "Levels" })).toBeNull();
     expect(
       within(table)
         .getAllByRole("columnheader")

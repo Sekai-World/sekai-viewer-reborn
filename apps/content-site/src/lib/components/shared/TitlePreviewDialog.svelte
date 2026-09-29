@@ -146,51 +146,43 @@
           <p class="text-sm text-(--archive-text-default)">{preview.subtitle}</p>
         {/if}
         {#if preview.levels.length > 0}
-          <section class="grid gap-2" aria-labelledby={`${dialogId}-levels`}>
-            <h3
-              id={`${dialogId}-levels`}
-              class="text-sm font-semibold text-(--archive-text-strong)"
-            >
-              {labels.levels}
-            </h3>
-            <div
-              class="content-card-inset overflow-x-auto rounded-xl border-(--archive-border-subtle)"
-            >
-              <table class="table table-sm">
-                <thead>
-                  <tr>
-                    <th scope="col" class="w-px text-center whitespace-nowrap">{labels.level}</th>
-                    <th scope="col">{labels.condition}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {#each preview.levels as entry, index (index)}
-                    {@const rewarded = entry.level !== null && entry.level === level}
-                    <tr
-                      class={rewarded ? "bg-primary/10" : undefined}
-                      aria-current={rewarded ? "true" : undefined}
+          <div
+            class="content-card-inset overflow-x-auto rounded-xl border-(--archive-border-subtle)"
+          >
+            <table class="table table-sm" aria-label={labels.levels}>
+              <thead>
+                <tr>
+                  <th scope="col" class="w-px text-center whitespace-nowrap">{labels.level}</th>
+                  <th scope="col">{labels.condition}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each preview.levels as entry, index (index)}
+                  {@const rewarded = entry.level !== null && entry.level === level}
+                  <tr
+                    class={rewarded ? "bg-primary/10" : undefined}
+                    aria-current={rewarded ? "true" : undefined}
+                  >
+                    <th
+                      scope="row"
+                      class="text-center tabular-nums {rewarded
+                        ? 'font-semibold text-primary'
+                        : 'font-normal text-(--archive-text-default)'}"
                     >
-                      <th
-                        scope="row"
-                        class="text-center tabular-nums {rewarded
-                          ? 'font-semibold text-primary'
-                          : 'font-normal text-(--archive-text-default)'}"
-                      >
-                        {entry.level ?? "—"}
-                      </th>
-                      <td
-                        class={rewarded
-                          ? "text-(--archive-text-strong)"
-                          : "text-(--archive-text-default)"}
-                      >
-                        {entry.description ?? "—"}
-                      </td>
-                    </tr>
-                  {/each}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                      {entry.level ?? "—"}
+                    </th>
+                    <td
+                      class={rewarded
+                        ? "text-(--archive-text-strong)"
+                        : "text-(--archive-text-default)"}
+                    >
+                      {entry.description ?? "—"}
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
         {/if}
       {:else if previewState.status === "error"}
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
