@@ -11,7 +11,7 @@
   type MusicRecommendation = PageData["items"][number];
 
   const DEFAULT_INPUTS = {
-    deckPower: "1",
+    deckPower: "",
     deckBonus: "0",
     boostMultiplier: "1"
   };
@@ -30,7 +30,7 @@
     { id: "cheerful-carnival", labelKey: "musicRecommender.modeCheerfulCarnival", enabled: false },
     { id: "world-bloom", labelKey: "musicRecommender.modeWorldBloom", enabled: false }
   ] as const;
-  const PAGE_SIZE = 50;
+  const RECOMMENDATION_LIMIT = 10;
 
   let { data }: PageProps = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "music-recommender"]);
@@ -44,7 +44,7 @@
   let noSkill = $state(getInitialNoSkill());
   let isSubmitting = $state(false);
   let hasSubmittedInvalidForm = $state(false);
-  let currentPage = $state(1);
+  let hasTouchedDeckPower = $state(false);
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
 
   function translateInterpolated(
@@ -98,7 +98,8 @@
   ): string | null {
     const parsed = parseFinite(value);
     if (parsed === null) return "musicRecommender.inputRequired";
-    if (kind === "positive" && parsed <= 0) return "musicRecommender.deckPowerInvalid";
+    if (kind === "positive" && (!Number.isSafeInteger(parsed) || parsed <= 0))
+      return "musicRecommender.deckPowerInvalid";
     if (kind === "positiveInteger" && (!Number.isSafeInteger(parsed) || parsed <= 0))
       return "musicRecommender.boostInvalid";
     if (kind === "skill" && parsed < 0) return "musicRecommender.skillRateInvalid";
@@ -114,21 +115,29 @@
       ? skillRates.map(() => null)
       : skillRates.map((value) => validateInput(value, "skill"))
   });
+  const shouldShowInitialDeckPowerError = $derived(
+    data.inputs.deckPower !== null ||
+      data.invalidFields.includes("deckPower") ||
+      data.missingFields.some((field) => field !== "deckPower")
+  );
+  const deckPowerError = $derived(
+    deckPower === "" &&
+      !hasTouchedDeckPower &&
+      !hasSubmittedInvalidForm &&
+      !shouldShowInitialDeckPowerError
+      ? null
+      : inputErrors.deckPower
+  );
   const hasInvalidInputs = $derived(
     Boolean(
-      inputErrors.deckPower ||
+      deckPowerError ||
       inputErrors.deckBonus ||
       inputErrors.boostMultiplier ||
       inputErrors.skillRates.some(Boolean)
     )
   );
   const results = $derived(data.items);
-  const pageCount = $derived(Math.max(1, Math.ceil(results.length / PAGE_SIZE)));
-  const pageStart = $derived((currentPage - 1) * PAGE_SIZE);
-  const pageEnd = $derived(Math.min(pageStart + PAGE_SIZE, results.length));
-  const paginatedResults = $derived(results.slice(pageStart, pageEnd));
-  let previousItems: PageData["items"] | undefined;
-  let previousResultContext: string | undefined;
+  const recommendedResults = $derived(results.slice(0, RECOMMENDATION_LIMIT));
   const sourceLabel = $derived(
     data.source === null
       ? translate("musicRecommender.sourceUnavailable")
@@ -147,24 +156,6 @@
       FIELD_DETAIL_REASON_CODES.has(data.reasonCode) &&
       (data.missingFields.length > 0 || data.invalidFields.length > 0)
   );
-
-  $effect(() => {
-    const resultContext = JSON.stringify({
-      status: data.status,
-      source: data.source?.id ?? null,
-      metric: data.metric,
-      sourceHash: data.sourceHash,
-      inputs: data.inputs
-    });
-    if (previousItems === data.items && previousResultContext === resultContext) return;
-    previousItems = data.items;
-    previousResultContext = resultContext;
-    currentPage = 1;
-  });
-
-  $effect(() => {
-    if (currentPage > pageCount) currentPage = pageCount;
-  });
 
   function getUnavailableMessageKey(reasonCode: string | null): string {
     switch (reasonCode) {
@@ -216,7 +207,6 @@
   }
 
   async function reloadWithQuery(overrides: Record<string, string>): Promise<void> {
-    currentPage = 1;
     if (!browser) return;
     const url = new URL(window.location.href);
     Object.entries(overrides).forEach(([key, value]) => url.searchParams.set(key, value));
@@ -235,6 +225,7 @@
 
   function submitControls(event: SubmitEvent): void {
     event.preventDefault();
+    hasTouchedDeckPower = true;
     hasSubmittedInvalidForm = hasInvalidInputs;
     if (hasInvalidInputs) return;
     hasSubmittedInvalidForm = false;
@@ -256,6 +247,7 @@
     boostMultiplier = DEFAULT_INPUTS.boostMultiplier;
     skillRates = Array.from({ length: 6 }, () => "0");
     noSkill = false;
+    hasTouchedDeckPower = false;
     hasSubmittedInvalidForm = false;
   }
 
@@ -273,15 +265,6 @@
 
   function metricValue(result: MusicRecommendation): number {
     return metric === "score" ? result.score : result.eventPoints;
-  }
-
-  function setPage(page: number): void {
-    currentPage = Math.min(Math.max(Math.trunc(page), 1), pageCount);
-  }
-
-  function pageChanged(event: Event): void {
-    if (!(event.currentTarget instanceof HTMLSelectElement)) return;
-    setPage(Number(event.currentTarget.value));
   }
 </script>
 
@@ -352,15 +335,21 @@
             <span>{translate("musicRecommender.deckPower")}</span>
             <input
               class="input input-bordered min-h-11"
-              class:input-error={Boolean(inputErrors.deckPower)}
+              class:input-error={Boolean(deckPowerError)}
               type="text"
-              inputmode="decimal"
+              inputmode="numeric"
+              min="1"
+              step="1"
+              placeholder={translate("musicRecommender.deckPowerPlaceholder")}
               value={deckPower}
-              oninput={(event) => (deckPower = readText(event))}
-              aria-invalid={Boolean(inputErrors.deckPower)}
+              oninput={(event) => {
+                hasTouchedDeckPower = true;
+                deckPower = readText(event);
+              }}
+              aria-invalid={Boolean(deckPowerError)}
             />
-            {#if inputErrors.deckPower}<small class="field-error" role="alert"
-                >{translate(inputErrors.deckPower)}</small
+            {#if deckPowerError}<small class="field-error" role="alert"
+                >{translate(deckPowerError)}</small
               >{/if}
           </label>
           <label class="field">
@@ -538,7 +527,7 @@
               ></thead
             >
             <tbody>
-              {#each paginatedResults as result (`${result.musicId}-${result.difficulty}-${result.rank}`)}
+              {#each recommendedResults as result (`${result.musicId}-${result.difficulty}-${result.rank}`)}
                 <tr>
                   <td class="rank-cell">{result.rank}</td>
                   <th scope="row">
@@ -556,50 +545,6 @@
             </tbody>
           </table>
         </div>
-        <nav class="pagination" aria-label={translate("musicRecommender.pagination")}>
-          <p class="pagination-summary">
-            {translateInterpolated("musicRecommender.paginationSummary", {
-              start: pageStart + 1,
-              end: pageEnd,
-              total: results.length,
-              page: currentPage,
-              pages: pageCount
-            })}
-          </p>
-          <div class="pagination-controls">
-            <button
-              class="btn btn-ghost min-h-11"
-              type="button"
-              onclick={() => setPage(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <Icon icon="mdi:chevron-left" class="size-5" aria-hidden="true" />
-              <span>{translate("musicRecommender.previousPage")}</span>
-            </button>
-            <label class="page-select">
-              <span>{translate("musicRecommender.page")}</span>
-              <select
-                class="select select-bordered min-h-11"
-                value={currentPage}
-                onchange={pageChanged}
-                aria-label={translate("musicRecommender.page")}
-              >
-                {#each Array.from({ length: pageCount }, (_, index) => index + 1) as page (page)}
-                  <option value={page}>{page}</option>
-                {/each}
-              </select>
-            </label>
-            <button
-              class="btn btn-ghost min-h-11"
-              type="button"
-              onclick={() => setPage(currentPage + 1)}
-              disabled={currentPage === pageCount}
-            >
-              <span>{translate("musicRecommender.nextPage")}</span>
-              <Icon icon="mdi:chevron-right" class="size-5" aria-hidden="true" />
-            </button>
-          </div>
-        </nav>
         <p class="metadata-note">
           <Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />{translate(
             "musicRecommender.durationNotRanked"
@@ -933,36 +878,6 @@
     color: var(--archive-text-muted);
     font-size: 0.75rem;
   }
-  .pagination {
-    display: grid;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    border-top: 1px solid var(--archive-border-subtle);
-    padding-top: 1rem;
-  }
-  .pagination-summary {
-    margin: 0;
-    color: var(--archive-text-muted);
-    font-size: 0.75rem;
-    font-variant-numeric: tabular-nums;
-  }
-  .pagination-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
-  .page-select {
-    display: grid;
-    min-width: 7rem;
-    gap: 0.35rem;
-  }
-  .page-select span {
-    color: var(--archive-text-muted);
-    font-size: 0.72rem;
-    font-weight: 750;
-  }
   .provenance-panel {
     display: grid;
     gap: 1rem;
@@ -1049,21 +964,6 @@
       width: 100%;
     }
     .form-actions > * {
-      width: 100%;
-    }
-    .pagination-controls {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      min-width: 0;
-    }
-    .pagination-controls .page-select {
-      grid-column: 1 / -1;
-      grid-row: 1;
-      justify-self: center;
-      min-width: 0;
-    }
-    .pagination-controls button {
-      min-width: 0;
       width: 100%;
     }
   }

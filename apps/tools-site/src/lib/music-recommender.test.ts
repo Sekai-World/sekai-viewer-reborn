@@ -168,7 +168,7 @@ describe("JP Solo yield calculation", () => {
     ]);
     const result = calculateJpSoloYield(dataset, {
       ...makeInputs({
-        deckPower: 1_000,
+        deckPower: 200_000,
         deckBonus: 7.5,
         boostMultiplier: 3,
         cardLength: 2,
@@ -180,8 +180,8 @@ describe("JP Solo yield calculation", () => {
 
     expect(result).toMatchObject({
       status: "available",
-      score: 49_000,
-      eventPoints: 339,
+      score: 9_800_000,
+      eventPoints: 1_971,
       formulaVersion: JP_SOLO_FORMULA_VERSION,
       provenance: {
         sourceId: "sekai-best",
@@ -248,6 +248,23 @@ describe("JP Solo yield calculation", () => {
       missingFields: ["deckPower"]
     });
   });
+
+  it.each([0, -1, 2.5, Number.MAX_SAFE_INTEGER + 1])(
+    "rejects deckPower that is not a positive safe integer (%s)",
+    (deckPower) => {
+      const result = calculateJpSoloYield(makeDataset(), {
+        ...makeInputs({ deckPower }),
+        musicId: 5,
+        difficulty: "expert"
+      });
+
+      expect(result).toMatchObject({
+        status: "unavailable",
+        reasonCode: "invalid-inputs",
+        invalidFields: ["deckPower"]
+      });
+    }
+  );
 
   it.each([
     ["another region", { region: "en", mode: "solo" }, "unsupported-region"],

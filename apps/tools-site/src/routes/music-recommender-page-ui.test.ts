@@ -36,7 +36,7 @@ const createPageData = (items = createResults(126)): PageData => ({
     source: "sekai-best",
     metric: "score",
     mode: "jp-solo",
-    deckPower: 1,
+    deckPower: 200000,
     deckBonus: 0,
     boostMultiplier: 1,
     skillRates: Array.from({ length: 6 }, () => 0),
@@ -64,6 +64,16 @@ const getRank = (row: HTMLTableRowElement | undefined): string | undefined =>
 
 const renderPage = (data: PageData) =>
   render(MusicRecommenderPage, { params: {}, data, form: null });
+
+const createMissingInputPageData = (): PageData => ({
+  ...createPageData([]),
+  status: "unavailable",
+  inputs: { ...createPageData([]).inputs, deckPower: null },
+  reasonCode: "missing-inputs",
+  reason: "A raw JP Solo deck power total is required for this calculation.",
+  missingFields: ["deckPower"],
+  invalidFields: []
+});
 
 beforeEach(() => {
   goto.mockClear();
@@ -145,150 +155,118 @@ describe("music recommender UI contract", () => {
     expect(messages["musicRecommender.sourceRevision"]).toBeUndefined();
   });
 
-  it("paginates more than 100 ranked results locally and preserves their global ranks", async () => {
+  it("renders only the first ten recommendations and preserves their global ranks", async () => {
     const { container } = renderPage(createPageData());
 
-    expect(getRows(container)).toHaveLength(50);
+    expect(getRows(container)).toHaveLength(10);
     expect(getRank(getRows(container)[0])).toBe("1");
-    expect(getRank(getRows(container)[49])).toBe("50");
-    expect(screen.getByText("Showing 1-50 of 126 results · Page 1 of 3")).toBeTruthy();
-
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-
-    expect(getRows(container)).toHaveLength(50);
-    expect(getRank(getRows(container)[0])).toBe("51");
-    expect(getRank(getRows(container)[49])).toBe("100");
-    expect(screen.getByText("Showing 51-100 of 126 results · Page 2 of 3")).toBeTruthy();
-    expect(goto).not.toHaveBeenCalled();
-
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-
-    expect(getRows(container)).toHaveLength(26);
-    expect(getRank(getRows(container)[0])).toBe("101");
-    expect(getRank(getRows(container)[25])).toBe("126");
-    expect(screen.getByText("Showing 101-126 of 126 results · Page 3 of 3")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Next" }).hasAttribute("disabled")).toBe(true);
-    expect(goto).not.toHaveBeenCalled();
-  }, 20_000);
-
-  it("uses the page selector for a final partial page and clamps navigation boundaries", async () => {
-    const { container } = renderPage(createPageData(createResults(103)));
-    const pageSelect = screen.getByRole("combobox", { name: "Page" }) as HTMLSelectElement;
-
-    await fireEvent.change(pageSelect, { target: { value: "3" } });
-
-    expect(pageSelect.value).toBe("3");
-    expect(getRows(container)).toHaveLength(3);
-    expect(getRank(getRows(container)[0])).toBe("101");
-    expect(getRank(getRows(container)[2])).toBe("103");
-    expect(screen.getByRole("button", { name: "Next" }).hasAttribute("disabled")).toBe(true);
-
-    await fireEvent.click(screen.getByRole("button", { name: "Previous" }));
-
-    expect(pageSelect.value).toBe("2");
-    expect(getRows(container)).toHaveLength(50);
-    expect(getRank(getRows(container)[0])).toBe("51");
+    expect(getRank(getRows(container)[9])).toBe("10");
+    expect(screen.getByRole("heading", { level: 2, name: "Recommended songs" })).toBeTruthy();
+    expect(screen.queryByRole("navigation", { name: /recommendation pages/i })).toBeNull();
     expect(goto).not.toHaveBeenCalled();
   });
 
-  it("resets for same-size replacements and clamps when the result set shrinks", async () => {
-    const data = createPageData(createResults(103));
+  it("defers required feedback for blank power until submit and validates integers", async () => {
+    const { container } = renderPage(createMissingInputPageData());
+    const input = container.querySelector('input[placeholder="e.g. 200000"]') as HTMLInputElement;
+
+    expect(screen.getByText("Total team power")).toBeTruthy();
+    expect(input.value).toBe("");
+    expect(input.getAttribute("min")).toBe("1");
+    expect(input.getAttribute("step")).toBe("1");
+    expect(input.getAttribute("aria-invalid")).toBe("false");
+    expect(screen.queryByText("Enter a value.")).toBeNull();
+
+    await fireEvent.submit(input.closest("form")!);
+
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText("Enter a value.")).toBeTruthy();
+
+    await fireEvent.input(input, { target: { value: "1.5" } });
+    expect(input.getAttribute("aria-invalid")).toBe("true");
+    expect(screen.getByText("Enter a positive whole-number team power.")).toBeTruthy();
+
+    await fireEvent.input(input, { target: { value: "200000" } });
+    expect(input.getAttribute("aria-invalid")).toBe("false");
+    expect(screen.queryByText("Enter a positive whole-number team power.")).toBeNull();
+
+    const source = await readFile(pagePath, "utf8");
+    const messages = JSON.parse(await readFile(messagesPath, "utf8")) as Record<string, string>;
+    expect(source).toContain('translate("musicRecommender.score")');
+    expect(messages["musicRecommender.score"]).toBe("Estimated live score");
+    expect(messages["musicRecommender.scoreMetric"]).toBe("Estimated score per live");
+  });
+
+  it("updates the visible recommendations when the ranked result set changes", async () => {
+    const data = createPageData();
     const { container, rerender } = renderPage(data);
 
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    expect((screen.getByRole("combobox", { name: "Page" }) as HTMLSelectElement).value).toBe("2");
-
-    const replacementItems = data.items.map((item, index) =>
-      index === 75 ? { ...item, musicId: item.musicId + 10_000 } : item
-    );
+    const replacementItems = data.items.map((item, index) => ({
+      ...item,
+      musicId: item.musicId + 10_000 + index
+    }));
     const replacementData = { ...data, items: replacementItems };
     await rerender({ params: {}, data: replacementData, form: null });
 
-    await waitFor(() => {
-      expect((screen.getByRole("combobox", { name: "Page" }) as HTMLSelectElement).value).toBe("1");
-    });
-    expect(getRows(container)).toHaveLength(50);
+    await waitFor(() => expect(getRows(container)).toHaveLength(10));
     expect(getRank(getRows(container)[0])).toBe("1");
-    expect(screen.getByText("Showing 1-50 of 103 results · Page 1 of 3")).toBeTruthy();
-
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    await rerender({
-      params: {},
-      data: { ...replacementData, items: createResults(10) },
-      form: null
-    });
-
-    await waitFor(() => {
-      expect((screen.getByRole("combobox", { name: "Page" }) as HTMLSelectElement).value).toBe("1");
-    });
-    expect(getRows(container)).toHaveLength(10);
-    expect(screen.getByText("Showing 1-10 of 10 results · Page 1 of 1")).toBeTruthy();
+    expect(getRows(container)[0].textContent).toContain("Music 11000");
   });
 
-  it("keeps the selected page when the translation bundle updates", async () => {
-    const data = createPageData(createResults(103));
-    const { rerender } = renderPage(data);
+  it("keeps metric, source, and provenance output available", async () => {
+    const data = createPageData();
+    data.provenance = {
+      sourceId: "sekai-best",
+      sourceUrl: MUSIC_META_SOURCES["sekai-best"].url,
+      recordCount: data.items.length,
+      fetchedAt: "2026-01-01T00:00:00Z",
+      contentHash: `sha256:${"a".repeat(64)}`,
+      freshness: {
+        status: "fresh",
+        checkedAt: "2026-01-01T00:00:00Z",
+        responseDate: "2026-01-01T00:00:00Z",
+        responseAgeMs: 0,
+        lastModifiedAt: "2026-01-01T00:00:00Z"
+      }
+    };
+    const { container } = renderPage(data);
 
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await fireEvent.change(screen.getByRole("combobox", { name: "Rank by metric" }), {
+      target: { value: "eventPoints" }
+    });
+    await fireEvent.change(screen.getByRole("combobox", { name: "Music metadata source" }), {
+      target: { value: "moesekai" }
+    });
+
+    expect(getRows(container)).toHaveLength(10);
+    expect(screen.getByText("Source hash")).toBeTruthy();
+    expect(screen.getByText(`sha256:${"a".repeat(64)}`)).toBeTruthy();
+    expect(screen.getByText("Source last modified")).toBeTruthy();
+    expect(goto).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the recommendation heading localized", async () => {
+    const data = createPageData();
+    const { rerender } = renderPage(data);
     await rerender({
       params: {},
       data: {
         ...data,
-        i18nMessages: { "musicRecommender.title": "Translated recommender title" }
+        i18nMessages: { "musicRecommender.results": "Top picks" }
       },
       form: null
     });
 
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 1 }).textContent).toBe(
-        "Translated recommender title"
-      );
-    });
-    expect((screen.getByRole("combobox", { name: "Page" }) as HTMLSelectElement).value).toBe("2");
-    expect(screen.getByText("Showing 51-100 of 103 results · Page 2 of 3")).toBeTruthy();
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { level: 2, name: "Top picks" })).toBeTruthy()
+    );
   });
 
-  it("resets pagination when the metric, source, or submitted inputs change", async () => {
-    renderPage(createPageData());
-    const getPageSelect = (): HTMLSelectElement =>
-      screen.getByRole("combobox", { name: "Page" }) as HTMLSelectElement;
-
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    await fireEvent.change(screen.getByRole("combobox", { name: "Rank by metric" }), {
-      target: { value: "eventPoints" }
-    });
-    await waitFor(() => {
-      expect(getPageSelect().value).toBe("1");
-      expect(screen.getByRole("table")).toBeTruthy();
-    });
-    expect(goto).toHaveBeenCalledTimes(1);
-
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    await fireEvent.change(screen.getByRole("combobox", { name: "Music metadata source" }), {
-      target: { value: "moesekai" }
-    });
-    await waitFor(() => {
-      expect(getPageSelect().value).toBe("1");
-      expect(screen.getByRole("table")).toBeTruthy();
-    });
-    expect(goto).toHaveBeenCalledTimes(2);
-
-    await fireEvent.click(screen.getByRole("button", { name: "Next" }));
-    await fireEvent.click(screen.getByRole("button", { name: "Recalculate recommendations" }));
-    await waitFor(() => {
-      expect(getPageSelect().value).toBe("1");
-      expect(screen.getByRole("table")).toBeTruthy();
-    });
-    expect(goto).toHaveBeenCalledTimes(3);
-  });
-
-  it("keeps small result sets on one page and omits pagination for empty results", async () => {
+  it("renders small result sets and omits pagination for empty results", async () => {
     const smallResult = renderPage(createPageData(createResults(2)));
 
     expect(getRows(smallResult.container)).toHaveLength(2);
-    expect(screen.getByText("Showing 1-2 of 2 results · Page 1 of 1")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Previous" }).hasAttribute("disabled")).toBe(true);
-    expect(screen.getByRole("button", { name: "Next" }).hasAttribute("disabled")).toBe(true);
+    expect(screen.queryByRole("navigation")).toBeNull();
 
     cleanup();
     renderPage(createPageData([]));
@@ -297,18 +275,20 @@ describe("music recommender UI contract", () => {
     expect(screen.queryByRole("navigation", { name: "Recommendation pages" })).toBeNull();
   });
 
-  it("keeps pagination controls outside the horizontally scrolling table wrapper", async () => {
-    const source = await readFile(pagePath, "utf8");
-
-    expect(source.indexOf("</table>\n        </div>\n        <nav")).toBeGreaterThan(-1);
-  });
-
-  it("provides localized pagination labels and a compact page selector", async () => {
+  it("uses the localized recommendation heading and removes obsolete pagination keys", async () => {
     const messages = JSON.parse(await readFile(messagesPath, "utf8")) as Record<string, string>;
 
-    expect(messages["musicRecommender.pagination"]).toBe("Recommendation pages");
-    expect(messages["musicRecommender.paginationSummary"]).toContain("{total}");
-    expect(messages["musicRecommender.previousPage"]).toBe("Previous");
-    expect(messages["musicRecommender.nextPage"]).toBe("Next");
+    expect(messages["musicRecommender.results"]).toBe("Recommended songs");
+    expect(messages["musicRecommender.deckPower"]).toBe("Total team power");
+    expect(messages["musicRecommender.deckPowerPlaceholder"]).toBe("e.g. 200000");
+    expect(messages["musicRecommender.deckPowerInvalid"]).toBe(
+      "Enter a positive whole-number team power."
+    );
+    expect(messages["musicRecommender.scoreMetric"]).toBe("Estimated score per live");
+    expect(messages["musicRecommender.score"]).toBe("Estimated live score");
+    expect(messages["musicRecommender.pagination"]).toBeUndefined();
+    expect(messages["musicRecommender.paginationSummary"]).toBeUndefined();
+    expect(messages["musicRecommender.previousPage"]).toBeUndefined();
+    expect(messages["musicRecommender.nextPage"]).toBeUndefined();
   });
 });

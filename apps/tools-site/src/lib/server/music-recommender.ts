@@ -362,7 +362,7 @@ const makeDefaultPageInputs = (
   source,
   metric,
   mode: "jp-solo",
-  deckPower: 1,
+  deckPower: null,
   deckBonus: 0,
   boostMultiplier: 1,
   skillRates: Array.from({ length: 6 }, () => 0),
@@ -418,19 +418,14 @@ export const parseMusicRecommenderQuery = (
       };
     }
     return {
-      status: "available",
+      status: "unavailable",
       source,
       metric,
       inputs,
-      domainInputs: {
-        region: "jp",
-        mode: "solo",
-        deckPower: 1,
-        deckBonus: 0,
-        boostMultiplier: 1,
-        cardLength: 6,
-        skillAllocation: { strategy: "default", skillEffects: [0, 0, 0, 0, 0, 0] }
-      }
+      reasonCode: "missing-inputs",
+      reason: "A raw JP Solo deck power total is required for this calculation.",
+      missingFields: ["deckPower"],
+      invalidFields: []
     };
   }
 
@@ -454,7 +449,7 @@ export const parseMusicRecommenderQuery = (
     "deckPower",
     missingFields,
     invalidFields,
-    (value) => value > 0
+    (value) => Number.isSafeInteger(value) && value > 0
   );
   const deckBonus = parseFiniteQueryNumber(
     deckBonusValue,
