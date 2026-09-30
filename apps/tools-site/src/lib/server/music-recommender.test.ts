@@ -185,7 +185,9 @@ describe("music metadata source loader", () => {
   it("uses the route query parameter as the sole explicit source selection", async () => {
     const { fetcher, requests } = makeFetcher(responseFor("{}", {}, 503));
     const event = {
-      url: new URL("https://tools.example.test/music-recommender?source=moesekai"),
+      url: new URL(
+        "https://tools.example.test/music-recommender?source=moesekai&mode=jp-solo&deckPower=200000&deckBonus=0&boostMultiplier=1&skillRates=0,0,0,0,0,0&noSkill=false"
+      ),
       fetch: fetcher
     };
     const load = loadMusicRecommenderPage as unknown as (
@@ -218,41 +220,37 @@ describe("music metadata source loader", () => {
 });
 
 describe("music recommender query and page loader", () => {
-  it("uses neutral JP Solo defaults for an initial no-query load", async () => {
-    const { fetcher } = makeFetcher(responseFor(JSON.stringify(makePayload())));
+  it("keeps an initial no-query load unavailable until raw deck power is supplied", async () => {
+    const { fetcher, requests } = makeFetcher(responseFor(JSON.stringify(makePayload())));
 
     const result = await loadMusicRecommenderPageData(new URLSearchParams(), fetcher, () => NOW);
 
     expect(result).toMatchObject({
-      status: "available",
+      status: "unavailable",
       source: MUSIC_META_SOURCES["sekai-best"],
       metric: "score",
       inputs: {
         source: "sekai-best",
         metric: "score",
         mode: "jp-solo",
-        deckPower: 1,
+        deckPower: null,
         deckBonus: 0,
         boostMultiplier: 1,
         skillRates: [0, 0, 0, 0, 0, 0],
         noSkill: false
       },
+      reasonCode: "missing-inputs",
+      reason: "A raw JP Solo deck power total is required for this calculation.",
+      missingFields: ["deckPower"],
       formulaVersion: "jp-solo-community-v1"
     });
-    expect(result.items).toHaveLength(MUSIC_META_MINIMUM_RECORD_COUNT);
-    expect(result.items[0]).toMatchObject({
-      rank: 1,
-      musicId: 1,
-      difficulty: "expert",
-      musicTime: 120,
-      score: 400,
-      eventPoints: 100
-    });
+    expect(result.items).toEqual([]);
+    expect(requests).toEqual([]);
   });
 
   it("parses submitted controls into typed JP Solo inputs and preserves normalized state", () => {
     const query = new URLSearchParams(
-      "source=moesekai&metric=eventPoints&mode=jp-solo&deckPower=2.5&deckBonus=20&boostMultiplier=3&skillRates=10,20,30,40,50,60&noSkill=false&eventRate=1"
+      "source=moesekai&metric=eventPoints&mode=jp-solo&deckPower=200000&deckBonus=20&boostMultiplier=3&skillRates=10,20,30,40,50,60&noSkill=false&eventRate=1"
     );
 
     const result = parseMusicRecommenderQuery(query);
@@ -265,7 +263,7 @@ describe("music recommender query and page loader", () => {
         source: "moesekai",
         metric: "eventPoints",
         mode: "jp-solo",
-        deckPower: 2.5,
+        deckPower: 200_000,
         deckBonus: 20,
         boostMultiplier: 3,
         skillRates: [10, 20, 30, 40, 50, 60],
@@ -275,7 +273,7 @@ describe("music recommender query and page loader", () => {
         region: "jp",
         mode: "solo",
         cardLength: 6,
-        deckPower: 2.5,
+        deckPower: 200_000,
         deckBonus: 20,
         boostMultiplier: 3,
         skillAllocation: { strategy: "default", skillEffects: [10, 20, 30, 40, 50, 60] }
@@ -292,12 +290,30 @@ describe("music recommender query and page loader", () => {
 
     expect(result).toMatchObject({
       status: "available",
-      inputs: { skillRates: [125, 150, 175, 200, 225, 250] },
+      inputs: { deckPower: 1, skillRates: [125, 150, 175, 200, 225, 250] },
       domainInputs: {
+        deckPower: 1,
         skillAllocation: { strategy: "default", skillEffects: [125, 150, 175, 200, 225, 250] }
       }
     });
   });
+
+  it.each(["2.5", "9007199254740992"])(
+    "rejects a non-positive-safe-integer deck power query (%s)",
+    (deckPower) => {
+      const result = parseMusicRecommenderQuery(
+        new URLSearchParams(
+          `mode=jp-solo&deckPower=${deckPower}&deckBonus=0&boostMultiplier=1&skillRates=0,0,0,0,0,0&noSkill=false`
+        )
+      );
+
+      expect(result).toMatchObject({
+        status: "unavailable",
+        reasonCode: "invalid-inputs",
+        invalidFields: ["deckPower"]
+      });
+    }
+  );
 
   it("marks partial and malformed inputs unavailable without coercing values to zero", () => {
     const partial = parseMusicRecommenderQuery(new URLSearchParams("source=moesekai&deckPower=2"));
@@ -351,7 +367,7 @@ describe("music recommender query and page loader", () => {
     payload[1].event_rate = 250;
     const { fetcher, requests } = makeFetcher(responseFor(JSON.stringify(payload)));
     const query = new URLSearchParams(
-      "source=moesekai&metric=eventPoints&mode=jp-solo&deckPower=1&deckBonus=0&boostMultiplier=1&skillRates=0,0,0,0,0,0&noSkill=false&eventRate=1"
+      "source=moesekai&metric=eventPoints&mode=jp-solo&deckPower=200000&deckBonus=0&boostMultiplier=1&skillRates=0,0,0,0,0,0&noSkill=false&eventRate=1"
     );
 
     const result = await loadMusicRecommenderPageData(query, fetcher, () => NOW);
@@ -360,6 +376,7 @@ describe("music recommender query and page loader", () => {
       status: "available",
       source: MUSIC_META_SOURCES.moesekai,
       metric: "eventPoints",
+      inputs: { deckPower: 200_000 },
       provenance: {
         sourceId: "moesekai",
         sourceUrl: MUSIC_META_SOURCES.moesekai.url,
@@ -372,8 +389,8 @@ describe("music recommender query and page loader", () => {
       musicId: 2,
       difficulty: "expert",
       musicTime: 120,
-      score: 800,
-      eventPoints: 250
+      score: 160_000_000,
+      eventPoints: 20_250
     });
     expect(requests.map(({ input }) => input)).toEqual([MUSIC_META_SOURCES.moesekai.url]);
     expect(result.items[0]).not.toHaveProperty("baseScore");

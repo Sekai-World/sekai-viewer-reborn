@@ -21,6 +21,9 @@ score = floor((base_score + Σ(skill_score_solo[i] * effective_skill_rate[i] / 1
 event points = floor((100 + floor(live_score / 20000)) * (event_rate / 100) * (1 + deck_bonus / 100)) * boost_multiplier
 ```
 
+For this formula, `deck_power` is the raw displayed total deck-power value, not
+a multiplier; pass the positive integer total through unchanged.
+
 The formula basis is the Moesekai `re_sekai-calculator` community reference
 implementation (`live-calculator.ts`, `event-calculator.ts`) and its
 deterministic tests. Use `formulaVersion: "jp-solo-community-v1"` and record the

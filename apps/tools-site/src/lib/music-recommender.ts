@@ -517,7 +517,11 @@ const validateInputs = (
     return value;
   };
 
-  const deckPower = requireNumber("deckPower", inputs.deckPower, (value) => value > 0);
+  const deckPower = requireNumber(
+    "deckPower",
+    inputs.deckPower,
+    (value) => Number.isSafeInteger(value) && value > 0
+  );
   const deckBonus = requireNumber("deckBonus", inputs.deckBonus, (value) => value >= 0);
   const boostMultiplier = requireNumber(
     "boostMultiplier",
