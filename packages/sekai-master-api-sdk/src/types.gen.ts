@@ -551,8 +551,8 @@ export type SharedEventRewardResourceBoxDetail = {
     honor?: SharedEventRewardHonorResponse;
     /**
      * ResourceAssetbundleName is the asset bundle name the rewarded item's
-     * icon path depends on; only gacha tickets and MySekai materials and tools
-     * carry one.
+     * icon path depends on; only gacha tickets, MySekai materials and tools,
+     * stamps, and virtual live archive items carry one.
      */
     resourceAssetbundleName?: string;
     resourceBoxId?: number;
@@ -562,7 +562,8 @@ export type SharedEventRewardResourceBoxDetail = {
     /**
      * ResourceName is the rewarded item's localized name for gacha tickets,
      * materials, skill practice tickets, boost items, titles (honors and
-     * Kizuna titles), and MySekai materials and tools.
+     * Kizuna titles), MySekai materials and tools, stamps, and virtual live
+     * archive items.
      */
     resourceName?: string;
     resourceQuantity?: number;
@@ -917,8 +918,8 @@ export type SharedMissionParameterGroupResponse = {
 export type SharedMissionResourceBoxDetailResponse = {
     /**
      * ResourceAssetbundleName is the asset bundle name the rewarded item's
-     * icon path depends on; only gacha tickets and MySekai materials and tools
-     * carry one.
+     * icon path depends on; only gacha tickets, MySekai materials and tools,
+     * stamps, and virtual live archive items carry one.
      */
     resourceAssetbundleName?: string;
     resourceBoxId?: number;
@@ -928,7 +929,8 @@ export type SharedMissionResourceBoxDetailResponse = {
     /**
      * ResourceName is the rewarded item's localized name for gacha tickets,
      * materials, skill practice tickets, boost items, titles (honors and
-     * Kizuna titles), and MySekai materials and tools.
+     * Kizuna titles), MySekai materials and tools, stamps, and virtual live
+     * archive items.
      */
     resourceName?: string;
     resourceQuantity?: number;
@@ -1593,8 +1595,8 @@ export type SharedVirtualLiveRewardResourceBoxDetail = {
     honor?: SharedEventRewardHonorResponse;
     /**
      * ResourceAssetbundleName is the asset bundle name the rewarded item's
-     * icon path depends on; only gacha tickets and MySekai materials and tools
-     * carry one.
+     * icon path depends on; only gacha tickets, MySekai materials and tools,
+     * stamps, and virtual live archive items carry one.
      */
     resourceAssetbundleName?: string;
     resourceId?: number;
@@ -1602,7 +1604,8 @@ export type SharedVirtualLiveRewardResourceBoxDetail = {
     /**
      * ResourceName is the rewarded item's localized name for gacha tickets,
      * materials, skill practice tickets, boost items, titles (honors and
-     * Kizuna titles), and MySekai materials and tools.
+     * Kizuna titles), MySekai materials and tools, stamps, and virtual live
+     * archive items.
      */
     resourceName?: string;
     resourceQuantity?: number;
