@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getStampDisplayName, parseStampListQuery, toStampSearchParams } from "./stamp";
+import {
+  getStampCharacters,
+  getStampDisplayName,
+  parseStampListQuery,
+  toStampSearchParams
+} from "./stamp";
 
 const parse = (query: string) => parseStampListQuery(new URLSearchParams(query));
 
@@ -68,5 +73,23 @@ describe("getStampDisplayName", () => {
   it("keeps the whole name when nothing is left", () => {
     expect(getStampDisplayName("[スタンプ]")).toBe("[スタンプ]");
     expect(getStampDisplayName("plain")).toBe("plain");
+  });
+});
+
+describe("getStampCharacters", () => {
+  const characters = [
+    { id: 1, name: "Ichika" },
+    { id: 2, name: "Saki" },
+    { id: 5, name: "Minori" }
+  ];
+
+  it("returns the stamp's characters in the stamp's slot order", () => {
+    expect(getStampCharacters([5, 1], characters)).toEqual([characters[2], characters[0]]);
+  });
+
+  it("leaves out characters the list does not know, and handles an empty list", () => {
+    expect(getStampCharacters([9, 2], characters)).toEqual([characters[1]]);
+    expect(getStampCharacters([1], [])).toEqual([]);
+    expect(getStampCharacters([], characters)).toEqual([]);
   });
 });

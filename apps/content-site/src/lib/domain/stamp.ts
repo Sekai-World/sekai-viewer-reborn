@@ -50,6 +50,16 @@ export const toStampSearchParams = (query: StampListQuery, page?: number): URLSe
   return params;
 };
 
+/** The stamp's characters that the list knows, in the stamp's slot order. */
+export const getStampCharacters = <T extends { id: number }>(
+  characterIds: readonly number[],
+  characters: readonly T[]
+): T[] =>
+  characterIds.flatMap((id) => {
+    const character = characters.find((candidate) => candidate.id === id);
+    return character ? [character] : [];
+  });
+
 /**
  * The stamp's own text. Names read "[スタンプ]咲希：おつかれさま！" or "[テキストスタンプ]一歌！": the
  * bracketed kind and the "character：" prefix are dropped.

@@ -10,7 +10,9 @@
   import StampTile from "$lib/components/stamp/StampTile.svelte";
   import type { MissionCharacterOption } from "$lib/domain/mission";
   import { regionLabels, supportedRegions } from "$lib/domain/regions";
+  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
   import {
+    getStampCharacters,
     getStampDisplayName,
     stampCategories,
     toStampSearchParams,
@@ -22,6 +24,7 @@
   import { createPageTitle } from "$lib/page-title";
   import { STAMP_PREVIEW_BOX_CLASS } from "$lib/styles/stamp-preview";
   import { ImagePreviewDialog } from "@platform/ui-shell";
+  import type { Snippet } from "svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -275,13 +278,52 @@
   />
 </CatalogueFrame>
 
+{#snippet previewField(label: string, value: Snippet)}
+  <div class="grid gap-0.5">
+    <dt class="text-xs font-semibold tracking-[0.16em] uppercase opacity-60">{label}</dt>
+    <dd class="text-sm wrap-anywhere whitespace-pre-line">{@render value()}</dd>
+  </div>
+{/snippet}
+
 {#if previewStamp}
+  {@const stamp = previewStamp}
+  {@const characters = getStampCharacters(stamp.characterIds, characterOptions.items)}
   <ImagePreviewDialog
     bind:open={previewOpen}
-    src={getStampImageURL(previewStamp.assetbundleName, data.region) ?? ""}
-    alt={getStampDisplayName(previewStamp.name)}
+    src={getStampImageURL(stamp.assetbundleName, data.region) ?? ""}
+    alt={getStampDisplayName(stamp.name)}
     closeLabel={t("closeLabel")}
     formatOptions={["webp", "png"]}
     dialogBoxClass={STAMP_PREVIEW_BOX_CLASS}
-  />
+  >
+    <dl class="grid gap-3 border-t border-(--archive-border-subtle) pt-3 text-left">
+      {#snippet name()}
+        <span class="font-semibold">{getStampDisplayName(stamp.name)}</span>
+      {/snippet}
+      {@render previewField(t("stamp.previewName"), name)}
+      {#if characters.length > 0}
+        {#snippet characterList()}
+          <ul class="flex flex-wrap gap-x-3 gap-y-1.5">
+            {#each characters as character (character.id)}
+              <li class="flex items-center gap-1.5">
+                <CharacterAvatar
+                  src={getLocalCharacterThumbnailAssetURL(character.id)}
+                  label=""
+                  characterId={character.id}
+                  variant="xs"
+                  decorative
+                />
+                <span>{character.name}</span>
+              </li>
+            {/each}
+          </ul>
+        {/snippet}
+        {@render previewField(t("stamp.previewCharacters"), characterList)}
+      {/if}
+      {#if stamp.description}
+        {#snippet obtain()}{stamp.description}{/snippet}
+        {@render previewField(t("stamp.previewObtain"), obtain)}
+      {/if}
+    </dl>
+  </ImagePreviewDialog>
 {/if}
