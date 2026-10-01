@@ -86,7 +86,42 @@ const INPUT_PARAMETER_NAMES = [
   "noSkill"
 ] as const;
 
-const DECIMAL_NUMBER_PATTERN = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i;
+const isAsciiDigitAt = (value: string, index: number): boolean => {
+  const code = value.charCodeAt(index);
+  return code >= 48 && code <= 57;
+};
+
+const isDecimalNumberSyntax = (value: string): boolean => {
+  let index = 0;
+  if (value[index] === "+" || value[index] === "-") index += 1;
+
+  const integerStart = index;
+  while (isAsciiDigitAt(value, index)) index += 1;
+  const hasIntegerDigits = index > integerStart;
+
+  let hasFractionDigits = false;
+  if (value[index] === ".") {
+    index += 1;
+    const fractionStart = index;
+    while (isAsciiDigitAt(value, index)) index += 1;
+    hasFractionDigits = index > fractionStart;
+  }
+
+  if (!hasIntegerDigits && !hasFractionDigits) return false;
+
+  if (value[index] === "e" || value[index] === "E") {
+    index += 1;
+    if (value[index] === "+" || value[index] === "-") index += 1;
+
+    const exponentStart = index;
+    while (isAsciiDigitAt(value, index)) index += 1;
+    if (index === exponentStart) return false;
+  }
+
+  return index === value.length;
+};
+
+const compareStrings = (left: string, right: string): number => left.localeCompare(right, "en");
 
 const isMusicMetaSourceId = (value: string): value is MusicMetaSourceId =>
   Object.hasOwn(MUSIC_META_SOURCES, value);
@@ -347,7 +382,7 @@ const parseFiniteQueryNumber = (
   }
 
   const normalized = value.trim();
-  const parsed = DECIMAL_NUMBER_PATTERN.test(normalized) ? Number(normalized) : Number.NaN;
+  const parsed = isDecimalNumberSyntax(normalized) ? Number(normalized) : Number.NaN;
   if (!Number.isFinite(parsed) || !isValid(parsed)) {
     invalidFields.add(field);
     return null;
@@ -413,8 +448,8 @@ export const parseMusicRecommenderQuery = (
           source === null
             ? "The requested music metadata source is not supported."
             : "One or more recommender query parameters are invalid.",
-        missingFields: [...missingFields].sort(),
-        invalidFields: [...invalidFields].sort()
+        missingFields: [...missingFields].sort(compareStrings),
+        invalidFields: [...invalidFields].sort(compareStrings)
       };
     }
     return {
@@ -490,7 +525,7 @@ export const parseMusicRecommenderQuery = (
       const parsedRates: number[] = [];
       values.forEach((value, index) => {
         const normalized = value.trim();
-        const parsed = DECIMAL_NUMBER_PATTERN.test(normalized) ? Number(normalized) : Number.NaN;
+        const parsed = isDecimalNumberSyntax(normalized) ? Number(normalized) : Number.NaN;
         if (!Number.isFinite(parsed) || parsed < 0) {
           invalidFields.add(`skillRates[${index}]`);
         } else {
@@ -535,8 +570,8 @@ export const parseMusicRecommenderQuery = (
           : isInvalid
             ? "One or more recommender query parameters are invalid."
             : "One or more required recommender query parameters are missing.",
-      missingFields: [...missingFields].sort(),
-      invalidFields: [...invalidFields].sort()
+      missingFields: [...missingFields].sort(compareStrings),
+      invalidFields: [...invalidFields].sort(compareStrings)
     };
   }
 

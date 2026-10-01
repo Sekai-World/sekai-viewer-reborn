@@ -109,6 +109,28 @@ describe("music metadata normalization", () => {
     });
   });
 
+  it("orders invalid field diagnostics deterministically", () => {
+    const payload = makeRawCatalog();
+    Object.assign(payload[0], {
+      music_id: "1",
+      difficulty: "unknown",
+      event_rate: -1,
+      base_score: -1
+    });
+
+    const result = normalizeMusicMetaPayload(payload);
+
+    expect(result).toMatchObject({
+      status: "unavailable",
+      invalidFields: [
+        "music_metas[0].base_score",
+        "music_metas[0].difficulty",
+        "music_metas[0].event_rate",
+        "music_metas[0].music_id"
+      ]
+    });
+  });
+
   it.each([
     ["skill array with fewer than six values", { skill_score_solo: [1, 2, 3, 4, 5] }],
     ["non-finite numeric value", { event_rate: Number.POSITIVE_INFINITY }],
@@ -139,13 +161,20 @@ describe("music metadata normalization", () => {
   it("rejects conflicting duplicate song-difficulty records as mixed data", () => {
     const payload = makeRawCatalog();
     payload.push(makeRawMusicMeta(1, { base_score: 999 }));
+    payload.push(makeRawMusicMeta(2, { base_score: 999 }));
+    payload.push(makeRawMusicMeta(3, { base_score: 999 }));
 
     const result = normalizeMusicMetaPayload(payload);
 
-    expect(result).toMatchObject({ status: "unavailable", reasonCode: "mixed-data" });
-    if (result.status === "unavailable") {
-      expect(result.invalidFields).toContain("music_metas[3727].music_id/difficulty");
-    }
+    expect(result).toMatchObject({
+      status: "unavailable",
+      reasonCode: "mixed-data",
+      invalidFields: [
+        "music_metas[3727].music_id/difficulty",
+        "music_metas[3728].music_id/difficulty",
+        "music_metas[3729].music_id/difficulty"
+      ]
+    });
   });
 
   it.each([null, {}, "not-json-array"])("rejects a non-array payload: %s", (payload) => {
@@ -246,6 +275,51 @@ describe("JP Solo yield calculation", () => {
       status: "unavailable",
       reasonCode: "missing-inputs",
       missingFields: ["deckPower"]
+    });
+  });
+
+  it("orders missing and invalid input diagnostics deterministically", () => {
+    const result = calculateJpSoloYield(makeDataset(), {
+      ...makeInputs({
+        deckPower: null,
+        deckBonus: -1,
+        boostMultiplier: null,
+        cardLength: 7,
+        skillAllocation: null
+      }),
+      musicId: 5,
+      difficulty: "expert"
+    });
+
+    expect(result).toMatchObject({
+      status: "unavailable",
+      reasonCode: "missing-inputs",
+      missingFields: ["boostMultiplier", "deckPower", "skillAllocation"],
+      invalidFields: ["cardLength", "deckBonus"]
+    });
+  });
+
+  it("orders missing and invalid song diagnostics deterministically", () => {
+    const missing = calculateJpSoloYield(makeDataset(), {
+      ...makeInputs(),
+      musicId: null,
+      difficulty: ""
+    });
+    const invalid = calculateJpSoloYield(makeDataset(), {
+      ...makeInputs(),
+      musicId: 0,
+      difficulty: "unknown"
+    });
+
+    expect(missing).toMatchObject({
+      status: "unavailable",
+      reasonCode: "missing-inputs",
+      missingFields: ["difficulty", "musicId"]
+    });
+    expect(invalid).toMatchObject({
+      status: "unavailable",
+      reasonCode: "invalid-inputs",
+      invalidFields: ["difficulty", "musicId"]
     });
   });
 

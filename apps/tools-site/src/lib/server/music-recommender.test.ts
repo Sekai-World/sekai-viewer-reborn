@@ -298,6 +298,84 @@ describe("music recommender query and page loader", () => {
     });
   });
 
+  it("preserves the accepted decimal query syntax", () => {
+    const result = parseMusicRecommenderQuery(
+      new URLSearchParams({
+        mode: "jp-solo",
+        deckPower: "+2e2",
+        deckBonus: ".5",
+        boostMultiplier: "1.",
+        skillRates: "+1E0,2.,.3,4e-1,5,6",
+        noSkill: "false"
+      })
+    );
+
+    expect(result).toMatchObject({
+      status: "available",
+      inputs: {
+        deckPower: 200,
+        deckBonus: 0.5,
+        boostMultiplier: 1,
+        skillRates: [1, 2, 0.3, 0.4, 5, 6]
+      }
+    });
+  });
+
+  it("accepts long finite decimal inputs without imposing a length limit", () => {
+    const result = parseMusicRecommenderQuery(
+      new URLSearchParams({
+        mode: "jp-solo",
+        deckPower: "1",
+        deckBonus: "0".repeat(10_000),
+        boostMultiplier: "1",
+        skillRates: "0,0,0,0,0,0",
+        noSkill: "false"
+      })
+    );
+
+    expect(result).toMatchObject({ status: "available", inputs: { deckBonus: 0 } });
+  });
+
+  it("rejects long adversarial invalid decimal inputs", () => {
+    const adversarialNumber = `${"9".repeat(10_000)}e+`;
+    const result = parseMusicRecommenderQuery(
+      new URLSearchParams({
+        mode: "jp-solo",
+        deckPower: "1",
+        deckBonus: adversarialNumber,
+        boostMultiplier: "1",
+        skillRates: `${adversarialNumber},0,0,0,0,0`,
+        noSkill: "false"
+      })
+    );
+
+    expect(result).toMatchObject({
+      status: "unavailable",
+      reasonCode: "invalid-inputs",
+      invalidFields: ["deckBonus", "skillRates[0]"]
+    });
+  });
+
+  it("keeps missing and invalid diagnostics in deterministic order", () => {
+    const result = parseMusicRecommenderQuery(
+      new URLSearchParams(
+        "source=unknown&metric=invalid&deckPower=invalid&boostMultiplier=0&noSkill=maybe"
+      )
+    );
+    const reorderedResult = parseMusicRecommenderQuery(
+      new URLSearchParams(
+        "noSkill=maybe&boostMultiplier=0&deckPower=invalid&metric=invalid&source=unknown"
+      )
+    );
+
+    expect(result).toMatchObject({
+      status: "unavailable",
+      missingFields: ["deckBonus", "mode", "skillRates"],
+      invalidFields: ["boostMultiplier", "deckPower", "metric", "noSkill", "source"]
+    });
+    expect(reorderedResult).toEqual(result);
+  });
+
   it.each(["2.5", "9007199254740992"])(
     "rejects a non-positive-safe-integer deck power query (%s)",
     (deckPower) => {
