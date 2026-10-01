@@ -155,3 +155,84 @@ export const toProfileHonorDegrees = (
     const degrees = toCatalogueHonorDegree(honor, group, entry.level);
     return [{ seq: entry.seq, slot, name: honor.name, degree: main ? degrees.main : degrees.sub }];
   });
+
+export type ProfileCardLayer = {
+  name: string;
+  href: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+const PROFILE_CARD_HEIGHT = 530;
+const PROFILE_ATTRIBUTES = new Set(["cool", "cute", "happy", "mysterious", "pure"]);
+/** Bottom offsets of the four 55.76² `Rarity/Img1..4` slots inside their 58×208 column. */
+const PROFILE_RARITY_SLOT_BOTTOMS = [10.76, 58.82, 106.89, 154.96];
+const PROFILE_RARITY_SIZE = 55.76;
+
+const profileRarityCount = (rarityType: string | null): number => {
+  if (rarityType === "rarity_birthday") return 1;
+  const match = /^rarity_([1-4])$/.exec(rarityType ?? "");
+  return match ? Number(match[1]) : 0;
+};
+
+/**
+ * The game's profile leader card overlays (`UserProfileView` LeaderCard, jp-6.7.0 prefab
+ * `a64ee6e3ef9f92240b02d1ddb40fe112`) in its 940×530 frame, top-left SVG coordinates:
+ * the L rarity frame, the 88×92 attribute at the top right, rarity icons stacked
+ * bottom-up in the left column, and the 104×104 Master Rank diamond at the bottom right.
+ */
+export const getProfileCardLayers = (
+  art: Pick<TrackerCardArt, "attr" | "rarityType">,
+  leaderCard: Pick<TrackerLeaderCard, "trained" | "masterRank">
+): ProfileCardLayer[] => {
+  const layers: ProfileCardLayer[] = [];
+  const rarityCount = profileRarityCount(art.rarityType);
+  const birthday = art.rarityType === "rarity_birthday";
+  if (rarityCount > 0) {
+    layers.push({
+      name: "frame",
+      href: `/card/cardFrame_L_${birthday ? "bd" : rarityCount}.png`,
+      x: 0,
+      y: 0,
+      width: 940,
+      height: PROFILE_CARD_HEIGHT
+    });
+  }
+  if (art.attr && PROFILE_ATTRIBUTES.has(art.attr)) {
+    layers.push({
+      name: "attribute",
+      href: `/card/icon_attribute_${art.attr}_88.png`,
+      x: 940 - 40 - 88,
+      y: 0,
+      width: 88,
+      height: 92
+    });
+  }
+  const star = birthday
+    ? "rarity_birthday"
+    : `rarity_star_${leaderCard.trained ? "afterTraining" : "normal"}`;
+  // The column's bottom-left sits at (24.2, 17) from the card's bottom-left.
+  PROFILE_RARITY_SLOT_BOTTOMS.slice(0, rarityCount).forEach((bottom, index) => {
+    layers.push({
+      name: `rarity-${index + 1}`,
+      href: `/card/${star}.png`,
+      x: 24.2 + 0.37,
+      y: PROFILE_CARD_HEIGHT - 17 - bottom - PROFILE_RARITY_SIZE,
+      width: PROFILE_RARITY_SIZE,
+      height: PROFILE_RARITY_SIZE
+    });
+  });
+  if (leaderCard.masterRank > 0) {
+    layers.push({
+      name: "master-rank",
+      href: `/card/masterRank_L_${leaderCard.masterRank}.png`,
+      x: 940 - 24 - 104,
+      y: PROFILE_CARD_HEIGHT - 24 - 104,
+      width: 104,
+      height: 104
+    });
+  }
+  return layers;
+};

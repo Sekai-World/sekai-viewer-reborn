@@ -6,6 +6,7 @@
   import { getHonorAssetURL, getLeaderCardAssetURL } from "$lib/event-assets";
   import { selectRewardHonor } from "$lib/reward-honor";
   import {
+    getProfileCardLayers,
     toProfileHonorDegrees,
     type TrackerCardArt,
     type TrackerHonorLookup,
@@ -2318,90 +2319,87 @@
                     containerClass="tracker-profile-card"
                     imageClass="size-full object-cover"
                   />
-                  {#if stats.length > 0}
-                    <!-- The profile art's own 940×530 frame; the diamond is the game's 104×104 L sprite. -->
-                    <svg
-                      class="tracker-profile-stats"
-                      viewBox="0 0 940 530"
-                      role="img"
-                      aria-label={stats.join(", ")}
-                    >
-                      {#if leaderCard.level !== null}
-                        <rect
-                          x="0"
-                          y="446"
-                          width="940"
-                          height="84"
-                          fill="black"
-                          fill-opacity="0.6"
-                        />
-                        <text x="28" y="506" font-size="54" font-weight="600" fill="white"
-                          >{interpolate("tracker.cardLevel", { level: leaderCard.level })}</text
-                        >
-                      {/if}
-                      {#if leaderCard.masterRank > 0}
-                        <image
-                          href={`/card/masterRank_L_${leaderCard.masterRank}.png`}
-                          x="822"
-                          y="416"
-                          width="104"
-                          height="104"
-                        />
-                      {/if}
-                    </svg>
-                  {/if}
+                  <!-- The game's profile card overlays in the art's own 940×530 frame. -->
+                  <svg
+                    class="tracker-profile-stats"
+                    viewBox="0 0 940 530"
+                    role={stats.length > 0 ? "img" : undefined}
+                    aria-label={stats.length > 0 ? stats.join(", ") : undefined}
+                    aria-hidden={stats.length > 0 ? undefined : "true"}
+                  >
+                    {#if leaderCard.level !== null}
+                      <!-- Not part of the game's profile card: a level bar, drawn under the frame. -->
+                      <rect x="0" y="448" width="940" height="82" fill="black" fill-opacity="0.6" />
+                      <text x="100" y="506" font-size="50" font-weight="600" fill="white"
+                        >{interpolate("tracker.cardLevel", { level: leaderCard.level })}</text
+                      >
+                    {/if}
+                    {#each getProfileCardLayers(art, leaderCard) as layer (layer.name)}
+                      <image
+                        href={layer.href}
+                        x={layer.x}
+                        y={layer.y}
+                        width={layer.width}
+                        height={layer.height}
+                        preserveAspectRatio="none"
+                      />
+                    {/each}
+                  </svg>
                 {:else}
                   <span class="tracker-profile-card" aria-hidden="true"></span>
                 {/if}
               </span>
             {/if}
-            <span
-              >{activeGraphPoint?.userName ??
-                selectedRow.ranking?.userName ??
-                selectedRow.ranking?.userId ??
-                translate("tracker.unavailable")}</span
-            >
+            <span class="tracker-profile-identity">
+              <span class="tracker-profile-name"
+                >{activeGraphPoint?.userName ??
+                  selectedRow.ranking?.userName ??
+                  selectedRow.ranking?.userId ??
+                  translate("tracker.unavailable")}</span
+              >
+              {#if (selectedRow.ranking?.profileHonors?.length ?? 0) > 0}
+                <span
+                  class="tracker-profile-titles"
+                  role="group"
+                  aria-label={translate("tracker.playerTitles")}
+                >
+                  {#if profileHonorStatus === "error"}
+                    <span role="alert">{translate("tracker.playerTitlesError")}</span>
+                    <button
+                      class="btn btn-xs btn-outline touch-target"
+                      type="button"
+                      onclick={() => loadProfileHonors()}
+                    >
+                      <Icon icon="mdi:refresh" class="size-4 shrink-0" aria-hidden="true" />
+                      {translate("tracker.retry")}
+                    </button>
+                  {:else if profileHonorStatus === "available"}
+                    {#each profileHonorDegrees as title (title.seq)}
+                      <span class="tracker-profile-title" class:is-main={title.slot === "main"}>
+                        <HonorDegree
+                          honor={title.degree}
+                          resolveAsset={resolveHonorAsset}
+                          slot={title.slot}
+                          size="M"
+                          label={title.name ?? translate("tracker.playerTitle")}
+                          class="block h-auto! w-full!"
+                        />
+                      </span>
+                    {/each}
+                  {:else}
+                    {#each selectedRow.ranking?.profileHonors ?? [] as title (title.seq)}
+                      <span
+                        class="tracker-profile-title is-placeholder"
+                        class:is-main={title.seq === 1}
+                        aria-hidden="true"
+                      ></span>
+                    {/each}
+                  {/if}
+                </span>
+              {/if}
+            </span>
           </dd>
         </div>
-        {#if (selectedRow.ranking?.profileHonors?.length ?? 0) > 0}
-          <div class="tracker-detail-wide">
-            <dt>{translate("tracker.playerTitles")}</dt>
-            <dd class="tracker-profile-titles">
-              {#if profileHonorStatus === "error"}
-                <span role="alert">{translate("tracker.playerTitlesError")}</span>
-                <button
-                  class="btn btn-xs btn-outline touch-target"
-                  type="button"
-                  onclick={() => loadProfileHonors()}
-                >
-                  <Icon icon="mdi:refresh" class="size-4 shrink-0" aria-hidden="true" />
-                  {translate("tracker.retry")}
-                </button>
-              {:else if profileHonorStatus === "available"}
-                {#each profileHonorDegrees as title (title.seq)}
-                  <span class="tracker-profile-title" class:is-main={title.slot === "main"}>
-                    <HonorDegree
-                      honor={title.degree}
-                      resolveAsset={resolveHonorAsset}
-                      slot={title.slot}
-                      size="M"
-                      label={title.name ?? translate("tracker.playerTitle")}
-                      class="block h-auto! w-full!"
-                    />
-                  </span>
-                {/each}
-              {:else}
-                {#each selectedRow.ranking?.profileHonors ?? [] as title (title.seq)}
-                  <span
-                    class="tracker-profile-title is-placeholder"
-                    class:is-main={title.seq === 1}
-                    aria-hidden="true"
-                  ></span>
-                {/each}
-              {/if}
-            </dd>
-          </div>
-        {/if}
         <div>
           <dt>{translate("tracker.degree")}</dt>
           <dd class="grid gap-1">
@@ -3121,10 +3119,26 @@
     grid-column: 1 / -1;
   }
   .tracker-profile-player {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
+    display: grid;
     gap: 0.75rem;
+  }
+  .tracker-profile-identity {
+    display: grid;
+    min-width: 0;
+    align-content: center;
+    gap: 0.5rem;
+  }
+  .tracker-profile-name {
+    color: var(--archive-text-strong);
+    font-size: 1.05rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+  @media (min-width: 40rem) {
+    .tracker-profile-player {
+      grid-template-columns: 14rem minmax(0, 1fr);
+      align-items: center;
+    }
   }
   .tracker-profile-art {
     position: relative;

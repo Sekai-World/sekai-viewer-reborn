@@ -66,8 +66,10 @@ describe("tracker page UI contract", () => {
     expect(avatar).toContain('alt=""');
     expect(avatar).toContain('<span class="tracker-avatar" aria-hidden="true"></span>');
     expect(source).toContain('"member-small"');
-    expect(source).toContain("href={`/card/masterRank_L_${leaderCard.masterRank}.png`}");
-    expect(source).toContain("{#if leaderCard.masterRank > 0}");
+    expect(source).toContain("{#each getProfileCardLayers(art, leaderCard) as layer (layer.name)}");
+    expect(source).toMatch(
+      /class="tracker-profile-name"[\s\S]*?class="tracker-profile-titles"[\s\S]*?aria-label=\{translate\("tracker.playerTitles"\)\}/
+    );
     expect(source).toContain('interpolate("tracker.cardLevel", { level: leaderCard.level })');
     expect(source).toContain("void loadProfileHonors(row.ranking?.profileHonors ?? []);");
     expect(source).toContain('label={title.name ?? translate("tracker.playerTitle")}');

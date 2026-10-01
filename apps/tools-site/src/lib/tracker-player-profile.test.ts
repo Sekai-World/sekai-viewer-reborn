@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BondsHonor, Honor } from "@platform/ui-shell/honor-degree-adapter";
 import {
+  getProfileCardLayers,
   parseLeaderCard,
   parseProfileHonors,
   toProfileHonorDegrees,
@@ -113,5 +114,47 @@ describe("tracker player profile", () => {
     ]);
     expect(degrees[0].degree).toMatchObject({ kind: "bonds", level: 4, reverse: true });
     expect(degrees[1].degree).toMatchObject({ kind: "normal", rarity: 1, level: 3 });
+  });
+});
+
+describe("profile card layers", () => {
+  it("places the L frame, attribute, stars, and Master Rank as the game's prefab does", () => {
+    const layers = getProfileCardLayers(
+      { attr: "cool", rarityType: "rarity_4" },
+      { trained: true, masterRank: 5 }
+    );
+    expect(layers.map((layer) => layer.name)).toEqual([
+      "frame",
+      "attribute",
+      "rarity-1",
+      "rarity-2",
+      "rarity-3",
+      "rarity-4",
+      "master-rank"
+    ]);
+    expect(layers[0]).toMatchObject({ href: "/card/cardFrame_L_4.png", width: 940, height: 530 });
+    expect(layers[1]).toMatchObject({
+      href: "/card/icon_attribute_cool_88.png",
+      x: 812,
+      y: 0,
+      width: 88,
+      height: 92
+    });
+    expect(layers[2]).toMatchObject({ href: "/card/rarity_star_afterTraining.png" });
+    expect(layers[2].x).toBeCloseTo(24.57);
+    expect(layers[2].y).toBeCloseTo(446.48);
+    expect(layers[5].y).toBeCloseTo(302.28);
+    expect(layers[6]).toMatchObject({ href: "/card/masterRank_L_5.png", x: 812, y: 402 });
+  });
+
+  it("uses the birthday frame and icon, and hides Master Rank 0", () => {
+    const layers = getProfileCardLayers(
+      { attr: "unknown", rarityType: "rarity_birthday" },
+      { trained: false, masterRank: 0 }
+    );
+    expect(layers.map((layer) => layer.href)).toEqual([
+      "/card/cardFrame_L_bd.png",
+      "/card/rarity_birthday.png"
+    ]);
   });
 });
