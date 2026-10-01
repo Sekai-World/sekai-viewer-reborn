@@ -184,6 +184,8 @@ const addIssue = (issues: Set<string>, field: string): void => {
   issues.add(field);
 };
 
+const compareStrings = (left: string, right: string): number => left.localeCompare(right, "en");
+
 const normalizeDifficulty = (value: unknown): MusicMetaDifficulty | null => {
   if (typeof value !== "string") return null;
   const normalized = value.trim().toLowerCase();
@@ -305,8 +307,8 @@ export const normalizeMusicMetaPayload = (payload: unknown): MusicMetaNormalizat
       reasonCode: "invalid-schema",
       reason:
         "One or more music metadata records are missing required fields or contain invalid values.",
-      missingFields: [...missingFields].sort(),
-      invalidFields: [...invalidFields].sort()
+      missingFields: [...missingFields].sort(compareStrings),
+      invalidFields: [...invalidFields].sort(compareStrings)
     };
   }
 
@@ -333,7 +335,7 @@ export const normalizeMusicMetaPayload = (payload: unknown): MusicMetaNormalizat
         ? "The selected source contains conflicting records for the same song and difficulty."
         : "The selected source contains duplicate song and difficulty records.",
       missingFields: [],
-      invalidFields: [...invalidFields].sort()
+      invalidFields: [...invalidFields].sort(compareStrings)
     };
   }
 
@@ -627,8 +629,8 @@ const validateInputs = (
           ? "One or more required JP Solo inputs are missing."
           : "One or more JP Solo inputs are invalid.",
         provenance,
-        [...missingFields].sort(),
-        [...invalidFields].sort()
+        [...missingFields].sort(compareStrings),
+        [...invalidFields].sort(compareStrings)
       )
     };
   }
@@ -739,8 +741,8 @@ export const calculateJpSoloYield = (
         ? "A song and difficulty are required for this calculation."
         : "The selected song or difficulty is invalid.",
       provenance,
-      [...missingFields].sort(),
-      [...invalidFields].sort()
+      [...missingFields].sort(compareStrings),
+      [...invalidFields].sort(compareStrings)
     );
   }
 
