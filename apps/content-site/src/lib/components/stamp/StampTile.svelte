@@ -45,7 +45,7 @@
       >
     {/if}
   </div>
-  <div class="flex min-w-0 items-start gap-2">
+  <div class="flex min-w-0 items-center gap-2">
     {#if stamp.characterIds.length > 0}
       <span class="flex shrink-0 -space-x-2" aria-hidden="true">
         {#each stamp.characterIds as characterId (characterId)}
