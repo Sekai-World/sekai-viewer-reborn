@@ -97,9 +97,14 @@ function getRankMatchOverlayRect(main: boolean): HonorDegreeRect {
   return { x: 11, y: 0, width: 158, height: 40 };
 }
 
+/**
+ * `UpdateRankView` moves the centre-anchored `rank` node by sprite width: the 150×78
+ * `rank_main` to (75, 0) in the 380×80 root, the 120×38 `rank_sub` to (0, −21) in the
+ * 180×80 sub root (`GetSlotSize`), which puts it at the bottom centre.
+ */
 function getEventRankOverlayRect(main: boolean): HonorDegreeRect {
   if (main) return { x: 190, y: 1, width: 150, height: 78 };
-  return { x: 60, y: 0, width: 120, height: 38 };
+  return { x: 30, y: 42, width: 120, height: 38 };
 }
 
 function getChapterRankAssetBundleName(honor: NormalHonorDegreeInput): string | null {

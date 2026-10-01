@@ -124,7 +124,7 @@ describe("HonorDegree", () => {
       ).toEqual(["body", "frame", "rank"]);
       const rank = container.querySelector('[data-layer="rank"]');
       expect(["x", "y", "width", "height"].map((key) => rank?.getAttribute(key))).toEqual(
-        slot === "main" ? ["190", "1", "150", "78"] : ["60", "0", "120", "38"]
+        slot === "main" ? ["190", "1", "150", "78"] : ["30", "42", "120", "38"]
       );
     }
   );
@@ -177,8 +177,8 @@ describe("HonorDegree", () => {
     );
 
     expect(layout.layers[2]).toMatchObject({
-      x: 60,
-      y: 0,
+      x: 30,
+      y: 42,
       width: 120,
       height: 38
     });
