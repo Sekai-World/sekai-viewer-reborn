@@ -11,7 +11,8 @@ import {
 import type {
   HonorDegreeAssetResolver,
   HonorDegreeInput,
-  HonorDegreeSlot
+  HonorDegreeSlot,
+  NormalHonorDegree
 } from "./honor-degree.types";
 
 const resolveAsset: HonorDegreeAssetResolver = (bundle, resource) => `/${bundle}/${resource}`;
@@ -848,9 +849,11 @@ describe("HonorDegree loading placeholder", () => {
 
 describe("Live Master parts", () => {
   const resolve = (bundlePath: string, resourceName: string) => `${bundlePath}/${resourceName}`;
-  const honor = {
-    kind: "normal" as const,
-    honorType: "live-master" as const,
+  const honor: NormalHonorDegree & {
+    liveMaster: NonNullable<NormalHonorDegree["liveMaster"]>;
+  } = {
+    kind: "normal",
+    honorType: "live-master",
     assetBundleName: "honor_3009_100",
     rarity: 1,
     level: 13,
