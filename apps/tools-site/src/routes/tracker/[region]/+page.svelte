@@ -2,12 +2,20 @@
   import { goto, invalidate, replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { SharedEventRewardRangeResponse } from "@platform/sekai-master-api-sdk";
-  import { HonorDegree } from "@platform/ui-shell";
-  import { getHonorAssetURL } from "$lib/event-assets";
+  import { CardThumbnail, HonorDegree, resolveCardRarityCount } from "@platform/ui-shell";
+  import { getHonorAssetURL, getLeaderCardAssetURL } from "$lib/event-assets";
   import { selectRewardHonor } from "$lib/reward-honor";
+  import {
+    toProfileHonorDegrees,
+    type TrackerCardArt,
+    type TrackerHonorLookup,
+    type TrackerLeaderCard,
+    type TrackerProfileHonor,
+    type TrackerProfileHonorDegree
+  } from "$lib/tracker-player-profile";
   import Icon from "@iconify/svelte";
-  import { onMount, tick } from "svelte";
-  import { SvelteMap } from "svelte/reactivity";
+  import { onMount, tick, untrack } from "svelte";
+  import { SvelteMap, SvelteSet } from "svelte/reactivity";
   import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
   import RankingHistoryChart from "$lib/components/RankingHistoryChart.svelte";
   import GoalProjectionChart from "$lib/components/GoalProjectionChart.svelte";
@@ -781,6 +789,18 @@
   };
   const resolveHonorAsset = (bundlePath: string, resourceName: string): string | null =>
     getHonorAssetURL(bundlePath, resourceName, data.region);
+  const getRewardHonorMedia = (reward: SharedEventRewardRangeResponse | null) => {
+    const honor = selectRewardHonor(reward).honor;
+    if (!honor) return null;
+    const bodyBundle =
+      honor.kind === "rank-match"
+        ? `rank_live/honor/${honor.backgroundAssetBundleName ?? honor.assetBundleName}`
+        : `honor/${honor.assetBundleName}`;
+    return resolveHonorAsset(bodyBundle, "degree_main.png") ? honor : null;
+  };
+  /** The reward title's art replaces its text label; the text stays as a fallback. */
+  const hasRewardHonorMedia = (reward: SharedEventRewardRangeResponse | null): boolean =>
+    getRewardHonorMedia(reward) !== null;
   const refresh = async (): Promise<void> => {
     isRefreshing = true;
     try {
@@ -859,6 +879,80 @@
     );
     detailsIdentityObserver.observe(detailsPlayerEntry);
   };
+  // Leader card art for avatars by `{region}:{cardId}`; null once looked up and missing.
+  const cardArtByKey = new SvelteMap<string, TrackerCardArt | null>();
+  const requestedCardKeys = new SvelteSet<string>();
+  const cardArtKey = (cardId: number): string => `${data.region}:${cardId}`;
+  const getCardArt = (leaderCard: TrackerLeaderCard | null | undefined): TrackerCardArt | null =>
+    leaderCard ? (cardArtByKey.get(cardArtKey(leaderCard.cardId)) ?? null) : null;
+  const loadCardArt = async (ids: number[]): Promise<void> => {
+    const keys = ids.map(cardArtKey);
+    try {
+      const { response, payload } = await fetchJsonWithDeadline<{ cards?: unknown }>(
+        endpoint("cards", { ids: ids.join(",") })
+      );
+      if (!response.ok || !Array.isArray(payload.cards)) throw new Error("Card lookup failed");
+      const cards = payload.cards as TrackerCardArt[];
+      ids.forEach((id, index) =>
+        cardArtByKey.set(keys[index], cards.find((card) => card.id === id) ?? null)
+      );
+    } catch {
+      // Avatars keep their placeholder; the next ranking update retries these cards.
+      for (const key of keys) requestedCardKeys.delete(key);
+    }
+  };
+  $effect(() => {
+    const ids = [
+      ...new Set(
+        activeRankingRows.flatMap((row) =>
+          row.status === "available" && row.ranking?.leaderCard
+            ? [row.ranking.leaderCard.cardId]
+            : []
+        )
+      )
+    ].filter((id) => untrack(() => !requestedCardKeys.has(cardArtKey(id))));
+    if (ids.length === 0) return;
+    untrack(() => {
+      for (const id of ids) requestedCardKeys.add(cardArtKey(id));
+    });
+    void loadCardArt(ids);
+  });
+
+  let profileHonorStatus = $state<"idle" | "loading" | "available" | "error">("idle");
+  let profileHonorDegrees = $state<TrackerProfileHonorDegree[]>([]);
+  let profileHonorRequestToken = 0;
+  const loadProfileHonors = async (
+    profileHonors: readonly TrackerProfileHonor[] = selectedRow?.ranking?.profileHonors ?? []
+  ): Promise<void> => {
+    const requestToken = ++profileHonorRequestToken;
+    profileHonorDegrees = [];
+    if (profileHonors.length === 0) {
+      profileHonorStatus = "available";
+      return;
+    }
+    profileHonorStatus = "loading";
+    const idsOf = (kind: TrackerProfileHonor["kind"]): string =>
+      profileHonors
+        .filter((honor) => honor.kind === kind)
+        .map((honor) => honor.honorId)
+        .join(",");
+    try {
+      const { response, payload } = await fetchJsonWithDeadline<
+        Partial<TrackerHonorLookup> & { status?: unknown }
+      >(endpoint("honors", { honors: idsOf("normal"), bonds: idsOf("bonds") }));
+      if (requestToken !== profileHonorRequestToken) return;
+      if (!response.ok || payload.status !== "available") throw new Error("Title lookup failed");
+      profileHonorDegrees = toProfileHonorDegrees(profileHonors, {
+        honors: Array.isArray(payload.honors) ? payload.honors : [],
+        bondsHonors: Array.isArray(payload.bondsHonors) ? payload.bondsHonors : [],
+        bondsViewData: payload.bondsViewData ?? null
+      });
+      profileHonorStatus = "available";
+    } catch {
+      if (requestToken === profileHonorRequestToken) profileHonorStatus = "error";
+    }
+  };
+
   const openDetails = (
     row: TrackerRow<SharedEventRewardRangeResponse>,
     context: RankingContext = null
@@ -875,6 +969,7 @@
     if (!detailsDialog?.open) detailsDialog?.showModal();
     void tick().then(observeDetailsIdentity);
     void openGraph(row);
+    void loadProfileHonors(row.ranking?.profileHonors ?? []);
   };
   const handleRankingRowClick = (
     event: MouseEvent,
@@ -1299,25 +1394,37 @@
 <svelte:head><title>{translate("tracker.title")} | Sekai Tools</title></svelte:head>
 
 {#snippet rewardHonorMedia(reward: SharedEventRewardRangeResponse | null)}
-  {@const honor = selectRewardHonor(reward).honor}
+  {@const honor = getRewardHonorMedia(reward)}
   {#if honor}
-    {@const bodyBundle =
-      honor.kind === "rank-match"
-        ? `rank_live/honor/${honor.backgroundAssetBundleName ?? honor.assetBundleName}`
-        : `honor/${honor.assetBundleName}`}
-    {#if resolveHonorAsset(bodyBundle, "degree_main.png")}
-      <span class="block aspect-19/4 w-48 max-w-full overflow-hidden" aria-hidden="true">
-        <HonorDegree
-          {honor}
-          resolveAsset={resolveHonorAsset}
-          slot="main"
-          size="S"
-          decorative
-          label={formatRewardRange(reward)}
-          class="block h-auto! w-full!"
-        />
-      </span>
-    {/if}
+    <span class="block aspect-19/4 w-48 max-w-full overflow-hidden" aria-hidden="true">
+      <HonorDegree
+        {honor}
+        resolveAsset={resolveHonorAsset}
+        slot="main"
+        size="S"
+        decorative
+        label={formatRewardRange(reward)}
+        class="block h-auto! w-full!"
+      />
+    </span>
+  {/if}
+{/snippet}
+
+{#snippet leaderAvatar(leaderCard: TrackerLeaderCard | null | undefined)}
+  {@const art = getCardArt(leaderCard)}
+  {#if leaderCard && art}
+    <CardThumbnail
+      src={getLeaderCardAssetURL("thumbnail", art.assetBundleName, leaderCard.trained, data.region)}
+      alt=""
+      trained={leaderCard.trained}
+      attr={art.attr}
+      rarityType={art.rarityType}
+      rarityCount={resolveCardRarityCount(art.rarityType)}
+      maxSize={null}
+      containerClass="tracker-avatar"
+    />
+  {:else}
+    <span class="tracker-avatar" aria-hidden="true"></span>
   {/if}
 {/snippet}
 
@@ -1887,11 +1994,14 @@
                         ><span class="tracker-tier">{rankTierLabel(row.ladderRank)}</span></th
                       >
                       <td
-                        ><strong class="tracker-player-name"
-                          >{row.ranking?.userName ??
-                            row.ranking?.userId ??
-                            translate("tracker.unavailable")}</strong
-                        ></td
+                        ><div class="tracker-player-cell">
+                          {@render leaderAvatar(row.ranking?.leaderCard)}<strong
+                            class="tracker-player-name"
+                            >{row.ranking?.userName ??
+                              row.ranking?.userId ??
+                              translate("tracker.unavailable")}</strong
+                          >
+                        </div></td
                       >
                       <td class="tracker-score">{formatNumber(row.score)}</td><td
                         class="tracker-speed">{formatSpeed(row.speedPerHour)}</td
@@ -1899,7 +2009,9 @@
                         ><div class="grid max-w-48 gap-1">
                           {@render rewardHonorMedia(row.reward)}
                           <span
-                            class="badge badge-outline badge-sm max-w-48 whitespace-normal wrap-anywhere"
+                            class={hasRewardHonorMedia(row.reward)
+                              ? "sr-only"
+                              : "badge badge-outline badge-sm max-w-48 whitespace-normal wrap-anywhere"}
                             >{formatRewardRange(row.reward)}</span
                           >
                         </div></td
@@ -1939,13 +2051,17 @@
                     class="tracker-tier">{rankTierLabel(row.ladderRank)}</span
                   ><Icon class="tracker-row-icon" icon="mdi:chart-line" aria-hidden="true" />
                 </div>
-                <span
-                  >{row.ranking?.userName ??
-                    row.ranking?.userId ??
-                    translate("tracker.unavailable")}</span
+                <span class="tracker-player-cell"
+                  >{@render leaderAvatar(row.ranking?.leaderCard)}<span class="tracker-player-name"
+                    >{row.ranking?.userName ??
+                      row.ranking?.userId ??
+                      translate("tracker.unavailable")}</span
+                  ></span
                 ><span>{translate("tracker.score")}: {formatNumber(row.score)}</span><span
                   >{translate("tracker.speed")}: {formatSpeed(row.speedPerHour)}</span
-                ><span>{translate("tracker.degree")}: {formatRewardRange(row.reward)}</span>
+                >{#if !hasRewardHonorMedia(row.reward)}<span
+                    >{translate("tracker.degree")}: {formatRewardRange(row.reward)}</span
+                  >{/if}
                 {@render rewardHonorMedia(row.reward)}</button
               >{/each}
           </div>
@@ -2170,20 +2286,87 @@
         >
       </div>
       <dl class="tracker-detail-grid">
-        <div bind:this={detailsPlayerEntry}>
+        <div class="tracker-detail-wide" bind:this={detailsPlayerEntry}>
           <dt>{translate("tracker.player")}</dt>
-          <dd>
-            {activeGraphPoint?.userName ??
-              selectedRow.ranking?.userName ??
-              selectedRow.ranking?.userId ??
-              translate("tracker.unavailable")}
+          <dd class="tracker-profile-player">
+            {#if selectedRow.ranking?.leaderCard}
+              {@const leaderCard = selectedRow.ranking.leaderCard}
+              {@const art = getCardArt(leaderCard)}
+              {#if art}
+                <CardThumbnail
+                  src={getLeaderCardAssetURL(
+                    "member-small",
+                    art.assetBundleName,
+                    leaderCard.trained,
+                    data.region
+                  )}
+                  alt={art.prefix ?? ""}
+                  trained={leaderCard.trained}
+                  showFrame={false}
+                  showIcons={false}
+                  loadMode="immediate"
+                  maxSize={null}
+                  containerClass="tracker-profile-card"
+                  imageClass="size-full object-cover"
+                />
+              {:else}
+                <span class="tracker-profile-card" aria-hidden="true"></span>
+              {/if}
+            {/if}
+            <span
+              >{activeGraphPoint?.userName ??
+                selectedRow.ranking?.userName ??
+                selectedRow.ranking?.userId ??
+                translate("tracker.unavailable")}</span
+            >
           </dd>
         </div>
+        {#if (selectedRow.ranking?.profileHonors?.length ?? 0) > 0}
+          <div class="tracker-detail-wide">
+            <dt>{translate("tracker.playerTitles")}</dt>
+            <dd class="tracker-profile-titles">
+              {#if profileHonorStatus === "error"}
+                <span role="alert">{translate("tracker.playerTitlesError")}</span>
+                <button
+                  class="btn btn-xs btn-outline touch-target"
+                  type="button"
+                  onclick={() => loadProfileHonors()}
+                >
+                  <Icon icon="mdi:refresh" class="size-4 shrink-0" aria-hidden="true" />
+                  {translate("tracker.retry")}
+                </button>
+              {:else if profileHonorStatus === "available"}
+                {#each profileHonorDegrees as title (title.seq)}
+                  <span class="tracker-profile-title" class:is-main={title.slot === "main"}>
+                    <HonorDegree
+                      honor={title.degree}
+                      resolveAsset={resolveHonorAsset}
+                      slot={title.slot}
+                      size="M"
+                      label={title.name ?? translate("tracker.playerTitle")}
+                      class="block h-auto! w-full!"
+                    />
+                  </span>
+                {/each}
+              {:else}
+                {#each selectedRow.ranking?.profileHonors ?? [] as title (title.seq)}
+                  <span
+                    class="tracker-profile-title is-placeholder"
+                    class:is-main={title.seq === 1}
+                    aria-hidden="true"
+                  ></span>
+                {/each}
+              {/if}
+            </dd>
+          </div>
+        {/if}
         <div>
           <dt>{translate("tracker.degree")}</dt>
           <dd class="grid gap-1">
             {@render rewardHonorMedia(selectedRow.reward)}
-            <span>{formatRewardRange(selectedRow.reward)}</span>
+            <span class:sr-only={hasRewardHonorMedia(selectedRow.reward)}
+              >{formatRewardRange(selectedRow.reward)}</span
+            >
           </dd>
         </div>
         <div>
@@ -2875,6 +3058,59 @@
   }
   .tracker-player-name {
     overflow-wrap: anywhere;
+  }
+  .tracker-player-cell {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.625rem;
+  }
+  :global(.tracker-avatar) {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    width: 2.5rem;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background: var(--archive-surface-sunken);
+  }
+  .tracker-detail-wide {
+    grid-column: 1 / -1;
+  }
+  .tracker-profile-player {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  :global(.tracker-profile-card) {
+    position: relative;
+    display: block;
+    width: min(100%, 12rem);
+    aspect-ratio: 940 / 530;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    background: var(--archive-surface-sunken);
+  }
+  .tracker-profile-titles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .tracker-profile-title {
+    display: block;
+    width: min(9rem, calc(50% - 0.25rem));
+    aspect-ratio: 9 / 4;
+  }
+  .tracker-profile-title.is-main {
+    width: min(100%, 19rem);
+    aspect-ratio: 19 / 4;
+  }
+  .tracker-profile-title.is-placeholder {
+    border-radius: 0.5rem;
+    background: var(--archive-surface-sunken);
   }
   .tracker-speed {
     color: var(--archive-text-muted);

@@ -4,6 +4,7 @@ import {
   type ScorePerElapsedHour
 } from "./tracker-math";
 import type { TrackerDateValue } from "$lib/tracker-phase";
+import type { TrackerLeaderCard, TrackerProfileHonor } from "$lib/tracker-player-profile";
 
 export type TrackerRankingRecord = Readonly<{
   rank: number | null | undefined;
@@ -11,6 +12,8 @@ export type TrackerRankingRecord = Readonly<{
   userId?: string | null;
   userName?: string | null;
   timestamp?: string | null;
+  leaderCard?: TrackerLeaderCard | null;
+  profileHonors?: readonly TrackerProfileHonor[];
 }>;
 
 export type TrackerGraphPoint = Readonly<{
