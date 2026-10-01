@@ -84,6 +84,23 @@ export const getRewardItemIcon = (
       fallbackSrc: null
     };
   }
+  // Stamp bundles do not follow stamp IDs, so the icon needs the record's bundle.
+  if (type === "stamp" && detail.resourceAssetbundleName) {
+    const bundle = detail.resourceAssetbundleName;
+    return {
+      src: getRemoteAssetEndpointURL(`stamp/${bundle}/${bundle}.webp`, server),
+      fallbackSrc: null
+    };
+  }
+  if (type === "virtual_live_transition_item" && detail.resourceAssetbundleName) {
+    return {
+      src: getRemoteAssetEndpointURL(
+        `thumbnail/virtual_live_transition_item/${detail.resourceAssetbundleName}.webp`,
+        server
+      ),
+      fallbackSrc: null
+    };
+  }
   if (type === "mysekai_material" || type === "mysekai_tool") {
     // MySekai icons are named by the item's asset bundle and hosted on the JP server only.
     const src =
