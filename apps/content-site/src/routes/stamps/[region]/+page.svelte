@@ -240,16 +240,18 @@
   onRetry={() => void invalidateAll()}
 >
   {#snippet loadingPlaceholder()}
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
+    <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-6 2xl:grid-cols-8">
       {#each Array.from({ length: 12 }) as _, index (index)}
-        <div class="content-card-shell rounded-2xl p-3">
+        <div class="content-card-shell rounded-2xl p-2 sm:p-3">
           <div class="aspect-square w-full rounded-xl bg-(--archive-surface-sunken)"></div>
           <div class="mt-2 h-4 w-3/4 rounded bg-(--archive-surface-sunken)"></div>
         </div>
       {/each}
     </div>
   {/snippet}
-  <ul class="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-6">
+  <ul
+    class="grid grid-cols-3 items-stretch gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-6 2xl:grid-cols-8"
+  >
     {#each list.items as stamp (stamp.id)}
       <li class="min-w-0">
         <StampTile
