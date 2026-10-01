@@ -2292,26 +2292,68 @@
             {#if selectedRow.ranking?.leaderCard}
               {@const leaderCard = selectedRow.ranking.leaderCard}
               {@const art = getCardArt(leaderCard)}
-              {#if art}
-                <CardThumbnail
-                  src={getLeaderCardAssetURL(
-                    "member-small",
-                    art.assetBundleName,
-                    leaderCard.trained,
-                    data.region
-                  )}
-                  alt={art.prefix ?? ""}
-                  trained={leaderCard.trained}
-                  showFrame={false}
-                  showIcons={false}
-                  loadMode="immediate"
-                  maxSize={null}
-                  containerClass="tracker-profile-card"
-                  imageClass="size-full object-cover"
-                />
-              {:else}
-                <span class="tracker-profile-card" aria-hidden="true"></span>
-              {/if}
+              {@const stats = [
+                leaderCard.level === null
+                  ? null
+                  : interpolate("tracker.cardLevel", { level: leaderCard.level }),
+                leaderCard.masterRank > 0
+                  ? interpolate("tracker.masterRank", { rank: leaderCard.masterRank })
+                  : null
+              ].filter((label) => label !== null)}
+              <span class="tracker-profile-art">
+                {#if art}
+                  <CardThumbnail
+                    src={getLeaderCardAssetURL(
+                      "member-small",
+                      art.assetBundleName,
+                      leaderCard.trained,
+                      data.region
+                    )}
+                    alt={art.prefix ?? ""}
+                    trained={leaderCard.trained}
+                    showFrame={false}
+                    showIcons={false}
+                    loadMode="immediate"
+                    maxSize={null}
+                    containerClass="tracker-profile-card"
+                    imageClass="size-full object-cover"
+                  />
+                  {#if stats.length > 0}
+                    <!-- The profile art's own 940×530 frame; the diamond is the game's 104×104 L sprite. -->
+                    <svg
+                      class="tracker-profile-stats"
+                      viewBox="0 0 940 530"
+                      role="img"
+                      aria-label={stats.join(", ")}
+                    >
+                      {#if leaderCard.level !== null}
+                        <rect
+                          x="0"
+                          y="446"
+                          width="940"
+                          height="84"
+                          fill="black"
+                          fill-opacity="0.6"
+                        />
+                        <text x="28" y="506" font-size="54" font-weight="600" fill="white"
+                          >{interpolate("tracker.cardLevel", { level: leaderCard.level })}</text
+                        >
+                      {/if}
+                      {#if leaderCard.masterRank > 0}
+                        <image
+                          href={`/card/masterRank_L_${leaderCard.masterRank}.png`}
+                          x="822"
+                          y="416"
+                          width="104"
+                          height="104"
+                        />
+                      {/if}
+                    </svg>
+                  {/if}
+                {:else}
+                  <span class="tracker-profile-card" aria-hidden="true"></span>
+                {/if}
+              </span>
             {/if}
             <span
               >{activeGraphPoint?.userName ??
@@ -3084,10 +3126,25 @@
     align-items: center;
     gap: 0.75rem;
   }
+  .tracker-profile-art {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    width: min(100%, 14rem);
+  }
+  .tracker-profile-stats {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    pointer-events: none;
+  }
   :global(.tracker-profile-card) {
     position: relative;
     display: block;
-    width: min(100%, 12rem);
+    width: 100%;
     aspect-ratio: 940 / 530;
     overflow: hidden;
     border-radius: 0.75rem;

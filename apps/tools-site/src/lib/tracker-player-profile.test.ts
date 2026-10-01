@@ -12,13 +12,16 @@ describe("tracker player profile", () => {
     expect(
       parseLeaderCard({
         cardId: 670,
+        level: 60,
+        masterRank: 2,
         defaultImage: "special_training",
         specialTrainingStatus: "done"
       })
-    ).toEqual({ cardId: 670, trained: true });
+    ).toEqual({ cardId: 670, trained: true, level: 60, masterRank: 2 });
     expect(
       parseLeaderCard({ cardId: "12", defaultImage: "original", specialTrainingStatus: "done" })
-    ).toEqual({ cardId: 12, trained: false });
+    ).toEqual({ cardId: 12, trained: false, level: null, masterRank: 0 });
+    expect(parseLeaderCard({ cardId: 1, masterRank: 9 })?.masterRank).toBe(0);
     expect(parseLeaderCard({ defaultImage: "special_training" })).toBeNull();
     expect(parseLeaderCard(null)).toBeNull();
   });

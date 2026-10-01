@@ -58,7 +58,7 @@ describe("event tracker data layer", () => {
         userName: "Player",
         eventId: 42,
         timestamp: "2026-08-08T00:00:00Z",
-        leaderCard: { cardId: 670, trained: true },
+        leaderCard: { cardId: 670, trained: true, level: null, masterRank: 0 },
         profileHonors: [
           { kind: "normal", seq: 1, honorId: 59, level: 1 },
           {

@@ -13,7 +13,13 @@ import { asObject, asPositiveInteger } from "$lib/honor-master";
  * The game picks the trained art only when `defaultImage` is `special_training`
  * (jp-6.7.0 `CardUtility.IsDefaultImage`), regardless of `specialTrainingStatus`.
  */
-export type TrackerLeaderCard = { cardId: number; trained: boolean };
+export type TrackerLeaderCard = {
+  cardId: number;
+  trained: boolean;
+  level: number | null;
+  /** 0 hides the Master Rank diamond, as `UIPartsMasterLevel.Setup` does. */
+  masterRank: number;
+};
 
 export type TrackerBondsHonorView = "normal" | "reverse" | "reverse_unit_virtual_singer" | string;
 
@@ -46,11 +52,20 @@ export type TrackerHonorLookup = {
   bondsViewData: BondsHonorViewData | null;
 };
 
+const MAX_MASTER_RANK = 5;
+
 /** Malformed or missing card data only hides the avatar; it never rejects the ranking row. */
 export const parseLeaderCard = (value: unknown): TrackerLeaderCard | null => {
   const card = asObject(value);
   const cardId = asPositiveInteger(card?.cardId);
-  return cardId === null ? null : { cardId, trained: card?.defaultImage === "special_training" };
+  if (cardId === null) return null;
+  const masterRank = asPositiveInteger(card?.masterRank);
+  return {
+    cardId,
+    trained: card?.defaultImage === "special_training",
+    level: asPositiveInteger(card?.level),
+    masterRank: masterRank !== null && masterRank <= MAX_MASTER_RANK ? masterRank : 0
+  };
 };
 
 const PROFILE_HONOR_SLOTS = 3;
