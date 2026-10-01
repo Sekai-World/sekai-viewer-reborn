@@ -24,10 +24,6 @@ describe("tracker player profile", () => {
       parseLeaderCard({ cardId: "12", defaultImage: "original", specialTrainingStatus: "done" })
     ).toEqual({ cardId: 12, trained: false, level: null, masterRank: 0 });
     expect(parseLeaderCard({ cardId: 1, masterRank: 9 })?.masterRank).toBe(0);
-    // TW and KR send the msgpack UserCard as a positional array.
-    expect(
-      parseLeaderCard([1042, 50, null, null, null, null, null, 5, "done", "special_training"])
-    ).toEqual({ cardId: 1042, trained: true, level: 50, masterRank: 5 });
     expect(parseLeaderCard({ defaultImage: "special_training" })).toBeNull();
     expect(parseLeaderCard(null)).toBeNull();
   });

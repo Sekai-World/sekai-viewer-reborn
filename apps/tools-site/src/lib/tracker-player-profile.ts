@@ -68,23 +68,9 @@ export type TrackerHonorLookup = {
 
 const MAX_MASTER_RANK = 5;
 
-/**
- * TW and KR rankings pass the game's msgpack `UserCard` through as a positional array;
- * the indices are its `[Key(n)]` attributes (kr-6.4.0 dump.cs, UserCard): 0 cardId,
- * 1 level, 7 masterRank, 9 defaultImage. JP and EN send an object.
- */
-const USER_CARD_KEYS = { cardId: 0, level: 1, masterRank: 7, defaultImage: 9 } as const;
-
-const asUserCard = (value: unknown): Record<string, unknown> | null =>
-  Array.isArray(value)
-    ? Object.fromEntries(
-        Object.entries(USER_CARD_KEYS).map(([field, index]) => [field, value[index]])
-      )
-    : asObject(value);
-
 /** Malformed or missing card data only hides the avatar; it never rejects the ranking row. */
 export const parseLeaderCard = (value: unknown): TrackerLeaderCard | null => {
-  const card = asUserCard(value);
+  const card = asObject(value);
   const cardId = asPositiveInteger(card?.cardId);
   if (cardId === null) return null;
   const masterRank = asPositiveInteger(card?.masterRank);
