@@ -324,7 +324,7 @@ describe("HonorDegree", () => {
       expect(layout.layers[2]).toMatchObject(
         slot === "main"
           ? { x: 200, y: 1, width: 180, height: 78 }
-          : { x: 11, y: 0, width: 158, height: 40 }
+          : { x: 11, y: 40, width: 158, height: 40 }
       );
       expect(
         buildHonorDegreeLayout({ kind: "rank-match", assetBundleName: "tier" }, resolveAsset)

@@ -11,4 +11,4 @@ The tools-site event tracker shows each ranked player as the game does. Ranking 
 
 The title rules that map honor master data onto `HonorDegree` move from content-site into `@platform/ui-shell/honor-degree-adapter` so both sites share them; a player's held level can now select that level's rarity and Live Master art. Content-site behavior is unchanged.
 
-`HonorDegree` now draws an event title's sub-slot rank badge (`rank_sub`, 120×38) at the bottom centre of the 180×80 sub slot, where the game places it, instead of the top right. This also corrects the sub titles in content-site's Titles catalogue and title previews.
+`HonorDegree` now draws an event title's sub-slot rank badge (`rank_sub`, 120×38) at the bottom centre of the 180×80 sub slot, where the game places it, instead of the top right, and a rank match title's sub-slot tier badge (158×40) at the bottom centre instead of the top. This also corrects the sub titles in content-site's Titles catalogue and title previews.

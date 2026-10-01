@@ -92,9 +92,13 @@ function addHonorDegreePart(
   if (part) add(name, part, part);
 }
 
+/**
+ * `main_rank` (180×78) is anchored to the right edge's middle; `sub_rank` (158×40) to
+ * the bottom centre of the 180×80 sub root (jp-6.7.0 UIPartsRankLiveHonorImage).
+ */
 function getRankMatchOverlayRect(main: boolean): HonorDegreeRect {
   if (main) return { x: 200, y: 1, width: 180, height: 78 };
-  return { x: 11, y: 0, width: 158, height: 40 };
+  return { x: 11, y: 40, width: 158, height: 40 };
 }
 
 /**
