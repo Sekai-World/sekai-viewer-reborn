@@ -50,10 +50,14 @@ describe("honor degree adapter", () => {
   });
 
   it("uses a player's level for its rarity and Live Master art", () => {
-    expect(toCatalogueHonorDegree(liveMasterHonor, group, 3).main).toMatchObject({
+    expect(toCatalogueHonorDegree(liveMasterHonor, group, 3, 42).main).toMatchObject({
       assetBundleName: "fc_high",
       rarity: 2,
-      level: 3
+      level: 3,
+      liveMaster: {
+        scroll: { bundlePath: "honor/fc_high", resourceName: "scroll.png" },
+        clearCount: 42
+      }
     });
   });
 

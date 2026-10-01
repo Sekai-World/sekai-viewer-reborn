@@ -7,8 +7,10 @@ import {
 import { isRestoreResponse, withRequestTimeout } from "./network";
 import { CRITICAL_RANK_LADDER } from "$lib/tracker-ladders";
 import {
+  parseHonorMissions,
   parseLeaderCard,
   parseProfileHonors,
+  type TrackerHonorMission,
   type TrackerLeaderCard,
   type TrackerProfileHonor
 } from "$lib/tracker-player-profile";
@@ -28,6 +30,7 @@ export type EventTrackerRanking = {
   timestamp: string | null;
   leaderCard: TrackerLeaderCard | null;
   profileHonors: TrackerProfileHonor[];
+  honorMissions: TrackerHonorMission[];
 };
 
 export type EventTrackerSelection =
@@ -128,7 +131,8 @@ const parseRanking = (value: unknown): EventTrackerRanking | null => {
     eventId: asEventId(ranking.eventId),
     timestamp: asString(ranking.timestamp),
     leaderCard: parseLeaderCard(ranking.userCard),
-    profileHonors: parseProfileHonors(ranking.userProfileHonors)
+    profileHonors: parseProfileHonors(ranking.userProfileHonors),
+    honorMissions: parseHonorMissions(ranking.userHonorMissions)
   };
 };
 

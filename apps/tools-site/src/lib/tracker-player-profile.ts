@@ -35,6 +35,20 @@ export type TrackerProfileHonor =
       view: TrackerBondsHonorView;
     };
 
+/** A title mission's progress, such as a Live MASTER full-combo count. */
+export type TrackerHonorMission = { type: string; progress: number };
+
+/** Keeps well-formed `userHonorMissions` entries; anything else only hides a clear count. */
+export const parseHonorMissions = (value: unknown): TrackerHonorMission[] =>
+  (Array.isArray(value) ? value : []).flatMap((entry): TrackerHonorMission[] => {
+    const mission = asObject(entry);
+    const type = typeof mission?.honorMissionType === "string" ? mission.honorMissionType : null;
+    const progress = mission?.progress;
+    return type && typeof progress === "number" && Number.isSafeInteger(progress) && progress >= 0
+      ? [{ type, progress }]
+      : [];
+  });
+
 /** Card metadata needed to draw an avatar, keyed by card ID in lookup responses. */
 export type TrackerCardArt = {
   id: number;
@@ -54,9 +68,23 @@ export type TrackerHonorLookup = {
 
 const MAX_MASTER_RANK = 5;
 
+/**
+ * TW and KR rankings pass the game's msgpack `UserCard` through as a positional array;
+ * the indices are its `[Key(n)]` attributes (kr-6.4.0 dump.cs, UserCard): 0 cardId,
+ * 1 level, 7 masterRank, 9 defaultImage. JP and EN send an object.
+ */
+const USER_CARD_KEYS = { cardId: 0, level: 1, masterRank: 7, defaultImage: 9 } as const;
+
+const asUserCard = (value: unknown): Record<string, unknown> | null =>
+  Array.isArray(value)
+    ? Object.fromEntries(
+        Object.entries(USER_CARD_KEYS).map(([field, index]) => [field, value[index]])
+      )
+    : asObject(value);
+
 /** Malformed or missing card data only hides the avatar; it never rejects the ranking row. */
 export const parseLeaderCard = (value: unknown): TrackerLeaderCard | null => {
-  const card = asObject(value);
+  const card = asUserCard(value);
   const cardId = asPositiveInteger(card?.cardId);
   if (cardId === null) return null;
   const masterRank = asPositiveInteger(card?.masterRank);
@@ -118,7 +146,8 @@ const withLevel = <T extends { level?: number | null }>(degree: T, level: number
  */
 export const toProfileHonorDegrees = (
   profileHonors: readonly TrackerProfileHonor[],
-  lookup: TrackerHonorLookup
+  lookup: TrackerHonorLookup,
+  honorMissions: readonly TrackerHonorMission[] = []
 ): TrackerProfileHonorDegree[] =>
   profileHonors.flatMap((entry): TrackerProfileHonorDegree[] => {
     const slot = slotFor(entry.seq);
@@ -152,7 +181,10 @@ export const toProfileHonorDegrees = (
       backgroundAssetBundleName: null,
       frameName: null
     };
-    const degrees = toCatalogueHonorDegree(honor, group, entry.level);
+    // A Live MASTER title shows its mission's progress (HonorUtility.Instantiate's missionProgress).
+    const clearCount =
+      honorMissions.find((mission) => mission.type === honor.honorMissionType)?.progress ?? null;
+    const degrees = toCatalogueHonorDegree(honor, group, entry.level, clearCount);
     return [{ seq: entry.seq, slot, name: honor.name, degree: main ? degrees.main : degrees.sub }];
   });
 

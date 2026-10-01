@@ -69,7 +69,8 @@ describe("event tracker data layer", () => {
             wordId: 1192001,
             view: "reverse"
           }
-        ]
+        ],
+        honorMissions: []
       }
     ]);
   });
@@ -98,7 +99,8 @@ describe("event tracker data layer", () => {
         userName: null,
         timestamp: "2026-08-08T00:00:00Z",
         leaderCard: null,
-        profileHonors: []
+        profileHonors: [],
+        honorMissions: []
       },
       {
         rank: 1,
@@ -108,7 +110,8 @@ describe("event tracker data layer", () => {
         userName: null,
         timestamp: "2026-08-08T00:30:00Z",
         leaderCard: null,
-        profileHonors: []
+        profileHonors: [],
+        honorMissions: []
       }
     ]);
   });

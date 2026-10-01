@@ -56,7 +56,8 @@ describe("chapter tracker data layer", () => {
           timestamp: null,
           eventId: null,
           leaderCard: null,
-          profileHonors: []
+          profileHonors: [],
+          honorMissions: []
         },
         {
           rank: 2,
@@ -66,7 +67,8 @@ describe("chapter tracker data layer", () => {
           timestamp: null,
           eventId: null,
           leaderCard: null,
-          profileHonors: []
+          profileHonors: [],
+          honorMissions: []
         }
       ]
     });

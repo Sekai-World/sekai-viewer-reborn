@@ -122,6 +122,7 @@ type HonorDegreeAdapterContext = {
   frameName: string | null;
   rarity: HonorDegreeRarity;
   level: number | null;
+  clearCount: number | null;
 };
 
 const isPositiveLevel = (level: number | null | undefined): level is number =>
@@ -211,19 +212,32 @@ function resolveHonorDegreeInput(
     frameBundlePath: "local/honor",
     rarity: context.rarity ?? 0,
     level: context.level,
-    rankAsset: createEventRankAsset(context.event, context.masterBundle, main)
+    rankAsset: createEventRankAsset(context.event, context.masterBundle, main),
+    // The scroll ships in the same bundle as the Live MASTER body (GetAssetBundleName).
+    ...(context.liveMaster
+      ? {
+          liveMaster: {
+            scroll: context.bundle
+              ? { bundlePath: `honor/${context.bundle}`, resourceName: "scroll.png" }
+              : null,
+            clearCount: context.clearCount
+          }
+        }
+      : {})
   };
 }
 
 /**
  * A regular honor's main and sub degrees. Without `level`, the catalogue shows the level
  * whose rarity matches the honor (else the first); a player's honor passes the level they
- * hold, which also selects that level's rarity and Live Master art.
+ * hold, which also selects that level's rarity and Live Master art. `clearCount` is a Live
+ * Master honor's mission progress, shown on its scroll when known.
  */
 export function toCatalogueHonorDegree(
   honor: Honor,
   group: HonorGroupMetadata,
-  level: number | null = null
+  level: number | null = null,
+  clearCount: number | null = null
 ): CatalogueHonorDegree {
   const effective = getEffectiveHonorLevel(honor, isPositiveLevel(level) ? level : null);
   const rarity =
@@ -249,7 +263,8 @@ export function toCatalogueHonorDegree(
     bundle: getHonorDegreeBundle(background, liveMaster, selectedLevelBundle, masterBundle),
     frameName,
     rarity,
-    level: isPositiveLevel(level) ? level : (effective?.level ?? null)
+    level: isPositiveLevel(level) ? level : (effective?.level ?? null),
+    clearCount
   };
 
   return {

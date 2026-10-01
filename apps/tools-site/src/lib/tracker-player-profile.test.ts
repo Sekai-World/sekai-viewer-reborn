@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { BondsHonor, Honor } from "@platform/ui-shell/honor-degree-adapter";
 import {
   getProfileCardLayers,
+  parseHonorMissions,
   parseLeaderCard,
   parseProfileHonors,
   toProfileHonorDegrees,
@@ -23,6 +24,10 @@ describe("tracker player profile", () => {
       parseLeaderCard({ cardId: "12", defaultImage: "original", specialTrainingStatus: "done" })
     ).toEqual({ cardId: 12, trained: false, level: null, masterRank: 0 });
     expect(parseLeaderCard({ cardId: 1, masterRank: 9 })?.masterRank).toBe(0);
+    // TW and KR send the msgpack UserCard as a positional array.
+    expect(
+      parseLeaderCard([1042, 50, null, null, null, null, null, 5, "done", "special_training"])
+    ).toEqual({ cardId: 1042, trained: true, level: 50, masterRank: 5 });
     expect(parseLeaderCard({ defaultImage: "special_training" })).toBeNull();
     expect(parseLeaderCard(null)).toBeNull();
   });
@@ -156,5 +161,56 @@ describe("profile card layers", () => {
       "/card/cardFrame_L_bd.png",
       "/card/rarity_birthday.png"
     ]);
+  });
+});
+
+describe("Live MASTER clear counts", () => {
+  it("keeps well-formed honor missions", () => {
+    expect(
+      parseHonorMissions([
+        { progress: 499, honorMissionType: "expert_full_combo" },
+        { progress: -1, honorMissionType: "master_full_combo" },
+        { progress: 3 },
+        null
+      ])
+    ).toEqual([{ type: "expert_full_combo", progress: 499 }]);
+    expect(parseHonorMissions(null)).toEqual([]);
+  });
+
+  it("puts the matching mission's progress on a Live MASTER title", () => {
+    const honor: Honor = {
+      id: 3009,
+      name: "Live MASTER",
+      assetBundleName: "honor_3009",
+      group: null,
+      groupId: 30,
+      honorMissionType: "expert_full_combo",
+      honorRarity: null,
+      honorType: "achievement",
+      honorTypeId: null,
+      seq: null,
+      levels: [
+        {
+          level: 1,
+          honorRarity: "low",
+          assetBundleName: "honor_3009_100",
+          honorId: 3009,
+          bonus: null,
+          description: null
+        }
+      ]
+    };
+    const [title] = toProfileHonorDegrees(
+      [{ kind: "normal", seq: 1, honorId: 3009, level: 1 }],
+      { honors: [honor], bondsHonors: [], bondsViewData: null },
+      [{ type: "expert_full_combo", progress: 499 }]
+    );
+    expect(title.degree).toMatchObject({
+      honorType: "live-master",
+      liveMaster: {
+        scroll: { bundlePath: "honor/honor_3009_100", resourceName: "scroll.png" },
+        clearCount: 499
+      }
+    });
   });
 });

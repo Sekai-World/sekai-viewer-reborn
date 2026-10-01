@@ -10,6 +10,7 @@
     toProfileHonorDegrees,
     type TrackerCardArt,
     type TrackerHonorLookup,
+    type TrackerHonorMission,
     type TrackerLeaderCard,
     type TrackerProfileHonor,
     type TrackerProfileHonorDegree
@@ -884,6 +885,17 @@
   const cardArtByKey = new SvelteMap<string, TrackerCardArt | null>();
   const requestedCardKeys = new SvelteSet<string>();
   const cardArtKey = (cardId: number): string => `${data.region}:${cardId}`;
+  // Card art is shared across regions and the JP bucket is the most complete (TW and KR lack
+  // many thumbnails), so it loads first with the page's region as the fallback, as in
+  // content-site's card lists.
+  const getLeaderCardFallbackURL = (
+    variant: "thumbnail" | "member-small",
+    assetBundleName: string,
+    trained: boolean
+  ): string | null =>
+    data.region === "jp"
+      ? null
+      : getLeaderCardAssetURL(variant, assetBundleName, trained, data.region);
   const getCardArt = (leaderCard: TrackerLeaderCard | null | undefined): TrackerCardArt | null =>
     leaderCard ? (cardArtByKey.get(cardArtKey(leaderCard.cardId)) ?? null) : null;
   const loadCardArt = async (ids: number[]): Promise<void> => {
@@ -923,7 +935,8 @@
   let profileHonorDegrees = $state<TrackerProfileHonorDegree[]>([]);
   let profileHonorRequestToken = 0;
   const loadProfileHonors = async (
-    profileHonors: readonly TrackerProfileHonor[] = selectedRow?.ranking?.profileHonors ?? []
+    profileHonors: readonly TrackerProfileHonor[] = selectedRow?.ranking?.profileHonors ?? [],
+    honorMissions: readonly TrackerHonorMission[] = selectedRow?.ranking?.honorMissions ?? []
   ): Promise<void> => {
     const requestToken = ++profileHonorRequestToken;
     profileHonorDegrees = [];
@@ -943,11 +956,15 @@
       >(endpoint("honors", { honors: idsOf("normal"), bonds: idsOf("bonds") }));
       if (requestToken !== profileHonorRequestToken) return;
       if (!response.ok || payload.status !== "available") throw new Error("Title lookup failed");
-      profileHonorDegrees = toProfileHonorDegrees(profileHonors, {
-        honors: Array.isArray(payload.honors) ? payload.honors : [],
-        bondsHonors: Array.isArray(payload.bondsHonors) ? payload.bondsHonors : [],
-        bondsViewData: payload.bondsViewData ?? null
-      });
+      profileHonorDegrees = toProfileHonorDegrees(
+        profileHonors,
+        {
+          honors: Array.isArray(payload.honors) ? payload.honors : [],
+          bondsHonors: Array.isArray(payload.bondsHonors) ? payload.bondsHonors : [],
+          bondsViewData: payload.bondsViewData ?? null
+        },
+        honorMissions
+      );
       profileHonorStatus = "available";
     } catch {
       if (requestToken === profileHonorRequestToken) profileHonorStatus = "error";
@@ -970,7 +987,7 @@
     if (!detailsDialog?.open) detailsDialog?.showModal();
     void tick().then(observeDetailsIdentity);
     void openGraph(row);
-    void loadProfileHonors(row.ranking?.profileHonors ?? []);
+    void loadProfileHonors(row.ranking?.profileHonors ?? [], row.ranking?.honorMissions ?? []);
   };
   const handleRankingRowClick = (
     event: MouseEvent,
@@ -1415,7 +1432,8 @@
   {@const art = getCardArt(leaderCard)}
   {#if leaderCard && art}
     <CardThumbnail
-      src={getLeaderCardAssetURL("thumbnail", art.assetBundleName, leaderCard.trained, data.region)}
+      src={getLeaderCardAssetURL("thumbnail", art.assetBundleName, leaderCard.trained, "jp")}
+      fallbackSrc={getLeaderCardFallbackURL("thumbnail", art.assetBundleName, leaderCard.trained)}
       alt=""
       trained={leaderCard.trained}
       attr={art.attr}
@@ -2308,7 +2326,12 @@
                       "member-small",
                       art.assetBundleName,
                       leaderCard.trained,
-                      data.region
+                      "jp"
+                    )}
+                    fallbackSrc={getLeaderCardFallbackURL(
+                      "member-small",
+                      art.assetBundleName,
+                      leaderCard.trained
                     )}
                     alt={art.prefix ?? ""}
                     trained={leaderCard.trained}

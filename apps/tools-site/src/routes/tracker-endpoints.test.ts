@@ -181,7 +181,8 @@ describe("tracker time-travel endpoints", () => {
           eventId: null,
           timestamp: null,
           leaderCard: null,
-          profileHonors: []
+          profileHonors: [],
+          honorMissions: []
         }
       ]
     });

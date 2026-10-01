@@ -71,7 +71,9 @@ describe("tracker page UI contract", () => {
       /class="tracker-profile-name"[\s\S]*?class="tracker-profile-titles"[\s\S]*?aria-label=\{translate\("tracker.playerTitles"\)\}/
     );
     expect(source).toContain('interpolate("tracker.cardLevel", { level: leaderCard.level })');
-    expect(source).toContain("void loadProfileHonors(row.ranking?.profileHonors ?? []);");
+    expect(source).toContain(
+      "void loadProfileHonors(row.ranking?.profileHonors ?? [], row.ranking?.honorMissions ?? []);"
+    );
     expect(source).toContain('label={title.name ?? translate("tracker.playerTitle")}');
     expect(source).toContain('translate("tracker.playerTitlesError")');
   });
