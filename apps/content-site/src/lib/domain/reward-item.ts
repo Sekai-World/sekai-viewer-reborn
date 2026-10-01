@@ -1,6 +1,8 @@
 import {
   getCommonMaterialThumbnailURL,
   getGachaTicketThumbnailURL,
+  getMysekaiMaterialIconURL,
+  getMysekaiToolIconURL,
   getRemoteAssetEndpointURL,
   type AssetServer
 } from "$lib/assets";
@@ -81,6 +83,14 @@ export const getRewardItemIcon = (
       src: getRemoteAssetEndpointURL(`thumbnail/boost_item/boost_item${id}.webp`, server),
       fallbackSrc: null
     };
+  }
+  if (type === "mysekai_material" || type === "mysekai_tool") {
+    // MySekai icons are named by the item's asset bundle and hosted on the JP server only.
+    const src =
+      type === "mysekai_material"
+        ? getMysekaiMaterialIconURL(detail.resourceAssetbundleName)
+        : getMysekaiToolIconURL(detail.resourceAssetbundleName);
+    return src ? { src, fallbackSrc: null } : null;
   }
   return null;
 };

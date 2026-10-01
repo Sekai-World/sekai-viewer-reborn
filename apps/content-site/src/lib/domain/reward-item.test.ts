@@ -36,6 +36,16 @@ describe("getRewardItemIcon", () => {
     expect(getRewardItemIcon(item("gacha_ticket", 17), "jp")).toBeNull();
   });
 
+  it("reads MySekai material and tool icons from the JP server by asset bundle", () => {
+    expect(getRewardItemIcon(item("mysekai_material", 35, "item_memoria_1"), "tw")?.src).toMatch(
+      /sekai-jp-assets\/mysekai\/thumbnail\/material\/item_memoria_1\.webp$/
+    );
+    expect(getRewardItemIcon(item("mysekai_tool", 10, "ax0005"), "jp")?.src).toMatch(
+      /sekai-jp-assets\/mysekai\/thumbnail\/tool\/ax0005\.webp$/
+    );
+    expect(getRewardItemIcon(item("mysekai_material", 35), "jp")).toBeNull();
+  });
+
   it("falls back to the JP material icon outside JP", () => {
     const tw = getRewardItemIcon(item("material", 13), "tw");
     expect(tw?.src).toMatch(/sekai-tc-assets\/thumbnail\/material\/material13\.webp$/);

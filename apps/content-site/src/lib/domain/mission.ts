@@ -10,9 +10,12 @@ export type MissionResourceBoxDetail = {
   resourceQuantity: number | null;
   resourceType: string | null;
   seq: number | null;
-  /** Localized name of a gacha ticket, material, skill practice ticket, boost item, or title. */
+  /**
+   * Localized name of a gacha ticket, material, skill practice ticket, boost item, title, or
+   * MySekai material or tool.
+   */
   resourceName?: string | null;
-  /** Gacha tickets only; their icon path uses it. */
+  /** Gacha tickets and MySekai materials and tools only; their icon path uses it. */
   resourceAssetbundleName?: string | null;
   /** Titles only (low, middle, high, highest); it picks the title reward icon. */
   resourceRarity?: string | null;
