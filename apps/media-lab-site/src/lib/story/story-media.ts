@@ -1,7 +1,5 @@
-import type { IScenarioData } from "./scenario-types";
-import { SnippetAction, SpecialEffectType } from "./scenario-types";
-import type { ILive2DAssetUrl } from "./player/player-types";
-import { Live2DAssetType } from "./player/player-types";
+import type { ILive2DAssetUrl, IScenarioData } from "@platform/live2d-story-player";
+import { Live2DAssetType, SnippetAction, SpecialEffectType } from "@platform/live2d-story-player";
 import {
   backgroundImagePath,
   bgmPath,

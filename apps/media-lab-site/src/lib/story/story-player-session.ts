@@ -1,27 +1,26 @@
-import type { IScenarioData } from "./scenario-types";
-import type { ILive2DControllerData, ILive2DLoadProgressHandler } from "./player/player-types";
-import { Live2DAssetType } from "./player/player-types";
-import { Live2DController } from "./player/Live2DController";
-import {
-  discardMotion,
-  getLive2DControllerData,
-  getLive2DModelData,
-  preloadModelMotion,
-  preloadModels
-} from "./player/load";
+import { createStoryPlayer } from "@platform/live2d-story-player";
+import type {
+  IScenarioData,
+  StoryPlayerSnapshot,
+  StoryPlayerState
+} from "@platform/live2d-story-player";
+import type { ILive2DLoadProgressHandler } from "@platform/live2d-story-player/pixi";
 import { createStoryModelSource } from "./story-model-source";
 import { collectStoryMediaUrls } from "./story-media";
+import { getUIMediaUrls } from "./player/ui_assets";
 import type { StoryVoiceCharacter } from "./scenario-rows";
 
 /**
- * Browser-only story player session: loads scenario media and models, owns
- * the Pixi application and the ported Live2D controller, and exposes a small
- * imperative command surface for the Svelte host (play/abort/settings/
- * destroy). Deliberately framework-neutral per the extraction roadmap.
+ * Browser-only composition layer between the app's asset policies and the
+ * framework-neutral player lifecycle.
  */
 
 export type StoryPlayerSessionState =
   "loading" | "ready" | "playing" | "finished" | "error" | "destroyed";
+
+export type StoryPlayerSessionSnapshot = Omit<StoryPlayerSnapshot, "state"> & {
+  state: StoryPlayerSessionState;
+};
 
 export interface StoryPlayerSettings {
   voiceVolume: number;
@@ -34,9 +33,9 @@ export interface StoryPlayerSettings {
 export interface StoryPlayerSessionCallbacks {
   onProgress: ILive2DLoadProgressHandler;
   onWarning: (reason: string) => void;
-  onStateChange: (state: StoryPlayerSessionState) => void;
-  /** SimpleSelectable choices parked playback; null once cleared. */
-  onSelectable: (choices: string[] | null) => void;
+  onStateChange?: (state: StoryPlayerSessionState) => void;
+  /** SimpleSelectable choices parked playback; null once cleared by the host. */
+  onSelectable: (choices: string[]) => void;
 }
 
 export interface StoryPlayerSessionOptions {
@@ -57,6 +56,12 @@ export interface StoryPlayerSessionOptions {
 
 export interface StoryPlayerSession {
   readonly state: StoryPlayerSessionState;
+  readonly error: Error | null;
+  subscribe(listener: (snapshot: StoryPlayerSessionSnapshot) => void): () => void;
+  /** Loads the session once; concurrent calls share the same promise. */
+  load(): Promise<void>;
+  /** Starts a new load generation after a failed load. */
+  retry(): Promise<void>;
   /** Advances playback to the next checkpoint. */
   nextStep(): Promise<void>;
   /** Whether there is a previous checkpoint to go back to. */
@@ -74,277 +79,159 @@ export interface StoryPlayerSession {
   destroy(): void;
 }
 
-const AUTOPLAY_DELAY_MS = 1500;
+const toSessionState = (state: StoryPlayerState): StoryPlayerSessionState =>
+  state === "idle" ? "loading" : state;
 
-interface PixiApplication {
-  view: unknown;
-  stage: unknown;
-  renderer: { resize(width: number, height: number): void };
-  destroy(
-    removeView: boolean,
-    options: { children: boolean; texture: boolean; baseTexture: boolean }
-  ): void;
-}
+const getAbortError = (signal: AbortSignal): Error => {
+  if (signal.reason instanceof Error) return signal.reason;
+  const error = new Error(
+    typeof signal.reason === "string" ? signal.reason : "Story player load was aborted"
+  );
+  error.name = "AbortError";
+  return error;
+};
 
-export const createStoryPlayerSession = async (
-  options: StoryPlayerSessionOptions
-): Promise<StoryPlayerSession> => {
-  const { host, stageSize, scenarioData, settings, callbacks } = options;
+const throwIfAborted = (signal: AbortSignal): void => {
+  if (signal.aborted) throw getAbortError(signal);
+};
 
-  let state: StoryPlayerSessionState = "loading";
-  let busy = false;
-  let autoplayTimer: ReturnType<typeof setTimeout> | null = null;
-  let destroyed = false;
-  let autoplay = settings.autoplay;
-  /** Parked checkpoint indices; [0] is the pre-first-line position. */
-  const checkpointHistory: number[] = [0];
-
-  const setState = (next: StoryPlayerSessionState): void => {
-    if (destroyed && next !== "destroyed") return;
-    state = next;
-    callbacks.onStateChange(next);
-  };
-  setState("loading");
-
-  let controller: Live2DController | null = null;
-  let app: PixiApplication | null = null;
-  let canvas: HTMLCanvasElement | null;
-
-  const destroySession = (): void => {
-    if (destroyed) return;
-    destroyed = true;
-    if (autoplayTimer !== null) {
-      clearTimeout(autoplayTimer);
-      autoplayTimer = null;
-    }
-    try {
-      controller?.destroy();
-    } catch {
-      // keep teardown going
-    }
-    controller = null;
-    try {
-      app?.destroy(true, { children: true, texture: true, baseTexture: true });
-    } catch {
-      // keep teardown going
-    }
-    app = null;
-    canvas = null;
-    setState("destroyed");
-  };
-
-  try {
-    // 1. model data + media URL collection in parallel
-    const modelSource = createStoryModelSource({ live2dUrl: options.live2dUrl });
-    const mediaUrlsPromise = collectStoryMediaUrls({
-      scenarioData,
-      isCardStory: options.isCardStory,
-      isActionSet: options.isActionSet,
-      regionBucket: options.regionBucket,
-      regionBase: options.regionBase,
-      regionUrl: options.regionUrl,
-      voiceCharacters: options.voiceCharacters,
-      onWarning: callbacks.onWarning
-    });
-    const modelDataPromise = getLive2DModelData(
-      scenarioData,
-      modelSource,
-      callbacks.onProgress,
-      callbacks.onWarning
-    );
-
-    const [mediaUrls, modelData] = await Promise.all([mediaUrlsPromise, modelDataPromise]);
-    discardMotion(scenarioData, modelData);
-
-    const controllerData: ILive2DControllerData = await getLive2DControllerData(
-      scenarioData,
-      mediaUrls,
-      Promise.resolve(modelData),
-      callbacks.onProgress,
-      callbacks.onWarning,
-      { regionAssetUrl: options.regionUrl }
-    );
-    await preloadModels(controllerData, callbacks.onProgress, callbacks.onWarning);
-    await preloadModelMotion(modelData, callbacks.onProgress, callbacks.onWarning);
-
-    if (destroyed) return { ...createDestroyedSessionStub() };
-
-    // 2. Pixi application + controller
-    const pixi = await import("pixi.js");
-    pixi.extensions.add(pixi.TickerPlugin);
-    const created = new pixi.Application({
-      width: stageSize[0],
-      height: stageSize[1],
-      antialias: true,
-      autoDensity: true,
-      backgroundColor: 0x000000,
-      backgroundAlpha: 1,
-      resolution:
-        typeof window !== "undefined" && window.devicePixelRatio > 0 ? window.devicePixelRatio : 1,
-      sharedTicker: false,
-      autoStart: true
-    });
-    app = created as unknown as PixiApplication;
-    canvas = created.view as unknown as HTMLCanvasElement;
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
-    canvas.style.display = "block";
-    host.appendChild(canvas);
-
-    controller = new Live2DController(created, stageSize, controllerData);
-    controller.events.on("warn", callbacks.onWarning);
-    controller.events.on("selectable", (choices) => {
-      if (!destroyed) callbacks.onSelectable(choices);
-    });
-    controller.set_volume({
-      voice_volume: settings.voiceVolume,
-      bgm_volume: settings.bgmVolume,
-      se_volume: settings.seVolume
-    });
-    controller.settings.text_animation = settings.textAnimation;
-    await controller.live2d_load_model(0, callbacks.onProgress);
-
-    setState("ready");
-  } catch (error) {
-    destroySession();
-    setState("error");
-    throw error;
+const waitForSignal = <T>(
+  operation: Promise<T> | (() => Promise<T>),
+  signal: AbortSignal
+): Promise<T> => {
+  if (signal.aborted) {
+    if (typeof operation !== "function") void operation.catch(() => undefined);
+    return Promise.reject(getAbortError(signal));
   }
 
-  function createDestroyedSessionStub(): StoryPlayerSession {
-    return {
-      get state(): StoryPlayerSessionState {
-        return "destroyed";
-      },
-      nextStep: async () => undefined,
-      get canGoBack(): boolean {
-        return false;
-      },
-      prevStep: async () => undefined,
-      abort: () => undefined,
-      setAutoplay: () => undefined,
-      setVolume: () => undefined,
-      setTextAnimation: () => undefined,
-      resize: () => undefined,
-      destroy: () => undefined
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+    const cleanup = (): void => signal.removeEventListener("abort", onAbort);
+    const settle = (result: { value: T } | { error: unknown }): void => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if ("error" in result) reject(result.error);
+      else resolve(result.value);
     };
-  }
+    const onAbort = (): void => settle({ error: getAbortError(signal) });
 
-  const scheduleAutoplay = (): void => {
-    if (!autoplay || destroyed || state === "finished") return;
-    // A parked SimpleSelectable waits for the viewer's pick.
-    if (controller?.pending_selectable) return;
-    if (autoplayTimer !== null) clearTimeout(autoplayTimer);
-    autoplayTimer = setTimeout(() => {
-      autoplayTimer = null;
-      void session.nextStep();
-    }, AUTOPLAY_DELAY_MS);
-  };
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
 
-  const session: StoryPlayerSession = {
+    if (!settled) {
+      try {
+        const pendingOperation = typeof operation === "function" ? operation() : operation;
+        void pendingOperation.then(
+          (value) => settle({ value }),
+          (error: unknown) => settle({ error })
+        );
+      } catch (error) {
+        settle({ error });
+      }
+    } else if (typeof operation !== "function") {
+      void operation.catch(() => undefined);
+    }
+  });
+};
+
+/**
+ * Creates a synchronous command handle. Pixi is imported only after Cubism is
+ * ready, inside the cancellable initialization attempt.
+ */
+export const createStoryPlayerSession = (
+  options: StoryPlayerSessionOptions
+): StoryPlayerSession => {
+  const player = createStoryPlayer({
+    autoplay: options.settings.autoplay,
+    onStateChange: ({ state }) => options.callbacks.onStateChange?.(toSessionState(state)),
+    initialize: async (signal) => {
+      throwIfAborted(signal);
+      const { ensureCubismCore } = await waitForSignal(
+        () => import("$lib/live2d/cubism-core"),
+        signal
+      );
+      throwIfAborted(signal);
+      await waitForSignal(() => ensureCubismCore(), signal);
+      throwIfAborted(signal);
+
+      const { createPixiStoryRuntime } = await waitForSignal(
+        () => import("@platform/live2d-story-player/pixi"),
+        signal
+      );
+      throwIfAborted(signal);
+
+      const mediaAssets = await waitForSignal(
+        () =>
+          collectStoryMediaUrls({
+            scenarioData: options.scenarioData,
+            isCardStory: options.isCardStory,
+            isActionSet: options.isActionSet,
+            regionBucket: options.regionBucket,
+            regionBase: options.regionBase,
+            regionUrl: options.regionUrl,
+            voiceCharacters: options.voiceCharacters,
+            onWarning: (reason) => {
+              if (!signal.aborted) options.callbacks.onWarning(reason);
+            }
+          }),
+        signal
+      );
+      throwIfAborted(signal);
+
+      const modelSource = createStoryModelSource({ live2dUrl: options.live2dUrl });
+      const uiAssets = getUIMediaUrls(options.scenarioData, options.regionUrl);
+      throwIfAborted(signal);
+
+      return createPixiStoryRuntime(
+        {
+          host: options.host,
+          stageSize: options.stageSize,
+          scenarioData: options.scenarioData,
+          mediaAssets,
+          uiAssets,
+          modelSource,
+          settings: options.settings,
+          callbacks: {
+            onProgress: (type, count, total, info) => {
+              if (!signal.aborted) options.callbacks.onProgress(type, count, total, info);
+            },
+            onWarning: (reason) => {
+              if (!signal.aborted) options.callbacks.onWarning(reason);
+            },
+            onSelectable: (choices) => {
+              if (!signal.aborted) options.callbacks.onSelectable(choices);
+            }
+          }
+        },
+        signal
+      );
+    }
+  });
+
+  return {
     get state(): StoryPlayerSessionState {
-      return state;
+      return toSessionState(player.state);
     },
-    nextStep: async (): Promise<void> => {
-      if (destroyed || busy || !controller) return;
-      if (state === "finished") return;
-      busy = true;
-      if (autoplayTimer !== null) {
-        clearTimeout(autoplayTimer);
-        autoplayTimer = null;
-      }
-      setState("playing");
-      try {
-        const next = await controller.step_until_checkpoint(controller.step);
-        if (destroyed) return;
-        if (next === -1) {
-          setState("finished");
-          return;
-        }
-        controller.step = next;
-        checkpointHistory.push(next);
-        setState("ready");
-        scheduleAutoplay();
-      } finally {
-        busy = false;
-      }
+    get error(): Error | null {
+      return player.error;
     },
+    subscribe: (listener): (() => void) =>
+      player.subscribe((snapshot) =>
+        listener({ ...snapshot, state: toSessionState(snapshot.state) })
+      ),
+    load: (): Promise<void> => player.load(),
+    retry: (): Promise<void> => player.retry(),
+    nextStep: (): Promise<void> => player.nextStep(),
     get canGoBack(): boolean {
-      // history[0] is the pre-first-line position, which cannot be restored.
-      return checkpointHistory.length >= 3;
+      return player.canGoBack;
     },
-    prevStep: async (): Promise<void> => {
-      if (destroyed || busy || !controller) return;
-      if (!session.canGoBack) return;
-      busy = true;
-      if (autoplayTimer !== null) {
-        clearTimeout(autoplayTimer);
-        autoplayTimer = null;
-      }
-      setState("playing");
-      try {
-        // prevStep only runs past canGoBack (history >= 3), so -2 exists.
-        const target = checkpointHistory.at(-2)!;
-        // Stop the current line's playback, then silently replay from the
-        // start so every visual layer converges on the earlier checkpoint.
-        controller.stop_sounds([Live2DAssetType.Talk]);
-        controller.animate.abort();
-        let index = 0;
-        while (index !== -1 && index !== target) {
-          index = await controller.step_until_checkpoint(index, {
-            silent: true
-          });
-        }
-        if (destroyed) return;
-        controller.step = target;
-        checkpointHistory.pop();
-        // Landing back on a SimpleSelectable re-parks here; the silent
-        // replay suppressed the SE's own event, so re-expose the choices.
-        const parked = controller.pending_selectable;
-        if (parked) controller.events.emit("selectable", parked);
-        setState("ready");
-        scheduleAutoplay();
-      } finally {
-        busy = false;
-      }
-    },
-    abort: (): void => {
-      if (destroyed || !controller) return;
-      controller.animate.abort();
-      if (autoplayTimer !== null) {
-        clearTimeout(autoplayTimer);
-        autoplayTimer = null;
-      }
-    },
-    setAutoplay: (enabled: boolean): void => {
-      autoplay = enabled;
-      if (!enabled && autoplayTimer !== null) {
-        clearTimeout(autoplayTimer);
-        autoplayTimer = null;
-      } else if (enabled && state === "ready") {
-        scheduleAutoplay();
-      }
-    },
-    setVolume: (volume): void => {
-      controller?.set_volume({
-        voice_volume: volume.voiceVolume,
-        bgm_volume: volume.bgmVolume,
-        se_volume: volume.seVolume
-      });
-    },
-    setTextAnimation: (enabled: boolean): void => {
-      if (controller) controller.settings.text_animation = enabled;
-    },
-    resize: (width: number, height: number): void => {
-      if (destroyed || !controller || !app) return;
-      if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-        return;
-      }
-      app.renderer.resize(width, height);
-      controller.set_stage_size([width, height]);
-    },
-    destroy: destroySession
+    prevStep: (): Promise<void> => player.prevStep(),
+    abort: (): void => player.abort(),
+    setAutoplay: (enabled): void => player.setAutoplay(enabled),
+    setVolume: (volume): void => player.setVolume(volume),
+    setTextAnimation: (enabled): void => player.setTextAnimation(enabled),
+    resize: (width, height): void => player.resize(width, height),
+    destroy: (): void => player.destroy()
   };
-
-  return session;
 };

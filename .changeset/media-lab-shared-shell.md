@@ -1,5 +1,6 @@
 ---
 "@apps/media-lab-site": patch
+"@platform/live2d-story-player": patch
 "@platform/i18n-source": patch
 "@apps/content-site": patch
 "@apps/tools-site": patch
@@ -24,3 +25,5 @@ Implements the functional Story Reader in media-lab-site with two user-selectabl
 The text-only reader's media interactions now reuse shared shell surfaces: scenario background rows render through `ImagePreviewTrigger` + `ImagePreviewDialog` (click-to-zoom with download/open actions), BGM rows embed the shared `AudioPlayer` (seek, volume, MP3 download of the bucket asset), and story voice/SE playback uses a new shared `CirclePlayButton` (extracted from `AudioPlayer`'s play control, exported from `@platform/ui-shell`, and adopted by `AudioPlayer` itself). Reader banners render at their natural aspect ratio instead of a forced 16:9 crop, and the story-reader namespace gains the audio-player and image-preview labels backing these controls.
 
 The story voice/SE control is upgraded to the ring-style circular button: content-site's card-detail `VoicePlayButton` (SVG progress ring driven by playback position) moves into `@platform/ui-shell` as a shared component generalized with an ordered source-fallback chain, `loop` support, and a recovering unavailable state; content-site's card detail and virtual-live timeline now consume the shared component, and the text-only reader's voice and sound-effect rows use it in place of the plain circular button. The internal media-lab `StoryVoiceButton` is removed.
+
+Extracts the Live2D Story Player lifecycle into `@platform/live2d-story-player` with a synchronous `createStoryPlayer` handle, retryable loads, replayable state/error snapshots, and abort/destroy cleanup for late initialization results. The package exposes its browser Pixi runtime through `/pixi`; media-lab-site lazily composes Cubism and Pixi from its browser host while keeping Sekai asset/session orchestration app-owned. Optional audio/lip-sync, loader-logger, and text-resolver seams remain subject to final end-to-end parity confirmation, and the legacy truthiness-based volume behavior is preserved.

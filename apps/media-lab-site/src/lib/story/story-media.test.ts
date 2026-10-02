@@ -9,7 +9,7 @@ import {
   SpecialEffectType,
   type IScenarioData
 } from "./scenario-types";
-import { Live2DAssetType } from "./player/player-types";
+import { Live2DAssetType } from "@platform/live2d-story-player";
 
 const buildScenario = (overrides: Partial<IScenarioData> = {}): IScenarioData => ({
   ScenarioId: "mmj_01_00",

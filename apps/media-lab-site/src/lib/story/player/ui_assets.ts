@@ -1,7 +1,10 @@
-import type { ILive2DAssetUrl } from "./player-types";
-import { Live2DAssetType } from "./player-types";
-import type { IScenarioData } from "../scenario-types";
-import { SnippetAction, SpecialEffectType, SeScenarioEffectType } from "../scenario-types";
+import type { ILive2DAssetUrl, IScenarioData } from "@platform/live2d-story-player";
+import {
+  Live2DAssetType,
+  SeScenarioEffectType,
+  SnippetAction,
+  SpecialEffectType
+} from "@platform/live2d-story-player";
 
 const text_underline = "/live2d/story-player-ui/text_underline.svg";
 const text_background = "/live2d/story-player-ui/text_background.svg";
