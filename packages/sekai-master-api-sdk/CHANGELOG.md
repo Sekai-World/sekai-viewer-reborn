@@ -1,5 +1,99 @@
 # @platform/sekai-master-api-sdk
 
+## 1.1.0
+
+### Minor Changes
+
+- 5010c80: Route Live2D model and motion assets through a same-origin relay with canonical path validation, streaming responses, and loader-side URL rewriting. Refine the model studio controls with searchable motion and expression inputs, render the Live2D canvas at the device pixel ratio for a sharper model preview, and group the model catalog by character metadata.
+
+  Add viewport interactions to the Live2D preview: wheel zoom, primary-button mouse pan, and two-finger pan and pinch zoom while preserving the current view across stage resizes.
+
+- 99279a0: Add a MySekai group to the content-site sidebar with Furniture, Materials, and Soundtracks catalogues. Furniture can be searched and filtered by genre, sub-genre, series, unit, and character, and each piece has a detail page with its size, placement, tags, crafting materials, disassembly returns, and character bonus. Materials list where they are gathered and which furniture they craft. Soundtracks lists the MySekai music record soundtracks by category, and plays them in place. MySekai images and soundtrack audio are read from the JP asset server in every region, since the other servers do not host them.
+
+  Regenerate the master API SDK for the new `mysekaiFixtures`, `mysekaiMaterials`, and `mysekaiMusicRecords` operations.
+
+  Add a MySekai Secret Shop page (JP 7.0.0) listing the materials and tools the shop sells, with their crystal price and per-World-Pass purchase limit; materials link to their pages. Support JP 7.0.0 solo virtual lives: list and filter them as Solo Live, show their Cheer Coin rewards by coins spent, including the leftover-coin reward, and show the group banner for solo and virtual message lives, which have no banner of their own. Rewards of MySekai materials and tools, stamps, and virtual live archive items show their icons instead of a placeholder, and a stamp reward opens in the image preview with WebP and PNG downloads.
+
+  Regenerate the master API SDK for the `mysekaiShops` operation, the solo virtual live reward fields, and the virtual live list's `virtualLiveGroup`.
+
+  Add a Stamps page to the content-site sidebar, after Titles. Stamps can be searched by name, filtered by category (single character, bond, text, other) and by one character, with a switch that adds a second character so only stamps showing both appear. The list shows only the stamp images; selecting one opens the image preview with the stamp's name, its characters, and how it is obtained, and WebP and PNG downloads. The shared image preview accepts optional content below the image.
+
+  Regenerate the master API SDK for the new `stamps` list operation.
+
+  Add source tabs to the Stamps page (stamp shop, virtual live, character rank, exchange, crystal shop, other), which keep the stamps that come from that source, with the master API's new `source` filter. Regenerate the master API SDK for it.
+
+### Patch Changes
+
+- 87d1274: Add Bonds honors to the Honors catalogue as a category of character pairs, searchable by honor or word name. `HonorDegree` now lays out `kind: "bonds"` as the game does: tinted 9-slice halves, the pattern, both 160×136 character canvases under the degree mask (per-side windows in sub slots), the frame, the word, and level icons. Callers pass only the unit colours, character and word assets, rarity, and level; the reverse view swaps the units instead of mirroring. The caller-supplied Bonds geometry and the per-layer `mask` it needed are removed.
+
+  Call honors "titles" and Bonds honors "Kizuna titles" in user-facing English copy, as the game does outside its internal names.
+
+- aa09786: Expose region-scoped Game News through `sekai-master-api`, request the complete
+  dataset with `includeAll=true` for client-side spoiler filtering, and migrate
+  content-site to the generated SDK client. Add the content-site Game News
+  translation source entries used by the new route and navigation.
+- a70fcbe: Regenerate the master API SDK with Honors, Bonds Honors (including character-pair filtering), Missions, Event Honor Bonuses, MySekai photo decorations, Costume3D list/detail, and newly documented paginated list contracts. Add content-site Missions and Honors catalogues, and distinguish event honor bonus rules from ranking-reward honors on event detail pages.
+
+  Render Live Master honors with the standard rarity-based local frame while keeping their custom level parts separate.
+
+  Give the Honors catalogue a clear page identity and a labelled results region.
+
+  Keep Character Missions in the Missions catalogue while expanding level goals in place with explicit target labels; remove repeated Character Rank reward references from mission rows.
+
+  Move Character Rank rewards to Character detail pages with localized loading, empty, and failure states.
+
+  Group the content-site sidebar into Library, Activities, and Progression sections instead of a single Explore section.
+
+  Show each mission family in the Missions overview as soon as it loads instead of waiting for every family; a family that fails shows its own retry.
+
+  Render Missions overview families as cards with a visible per-family loading skeleton.
+
+  Load 24 Honors per page so the first page fills a desktop viewport before the next page loads.
+
+  Add Character Missions to Character detail pages, load every Character Rank instead of the first 100, and summarize ranks with reward totals and milestone ranks.
+
+  Show Story missions as a target ladder with reward totals and milestone targets, preview them by target and reward, and drop the duplicate target line from Normal missions.
+
+  Lay out milestone and full reward ladders in the same width-driven columns, keeping milestones emphasized when every step is shown.
+
+  Load every Normal mission at once, and pick a character before listing Character Missions; the Character detail page links to that character's missions.
+
+  Describe Story missions as fully read episode goals, with the reading rule shown above the ladder.
+
+  Drop the end-of-list note from Missions and Honors.
+
+  Regenerate the sekai-master-api SDK for reward item names and gacha ticket asset bundles.
+
+  Show reward items with their in-game icons and names in Story, Normal, and Character Rank rewards, and fix gacha ticket icons on event and virtual live pages. Open each Character mission as a card whose level goals and EXP or EX rewards appear in a dialog, on both the Missions page and Character pages. Keep the catalogue loading text for screen readers only.
+
+  Show reward items as their game icon and quantity, naming each item in a tooltip and accessible label, with text when an icon is missing.
+
+  Load every mission of the chosen character at once, and show ladder reward totals as icon and quantity.
+
+  Center reward ladder rows vertically, and show Character Rank honor rewards as their small honor degree at the granted level.
+
+  Place regular honor level stars at their measured position (x 51 + 16i) in both main and sub degrees.
+
+  Enlarge reward item icons (48px in rows, 56px in totals) so detailed items stay legible beside small honor degrees.
+
+  Centre trimmed honor frame textures instead of stretching them, and preview six Character missions on Character pages with an arrow on the See all link.
+
+  List only honor ranks as Character Rank milestones and show the cumulative EXP each rank needs.
+
+  Show "View all (N)" section-header links for Character missions and the Missions overview, matching the Character page Latest cards.
+
+- 316ff04: Show localized load-failure messages on card, event, and virtual-live detail pages.
+
+  Improve content-site banner loading geometry, homepage gacha selection, behavior-matched gacha simulator modes, complete gacha simulator pools, event bonus links preserving character and applicable attribute filters, consistent event-detail hover feedback, card gallery image previews, gacha simulator thumbnails, character detail layout, bounded homepage pagination, fail-closed invalid gacha weight handling, special-training card artwork presentation, locale-aware filter sorting, and cryptographically secure gacha randomness.
+
+  The homepage now prefetches only the initial region and loads other regions on demand when selected.
+
+  The Gacha list now supports a shareable ongoing-only filter while preserving sorting and pagination.
+
+- 1d2380f: Regenerate SDK from sekai-master-api OpenAPI spec: adds the public game news list endpoint `GET /api/v1/game-news/{region}/list` with `includeAll` query support (Sekai-World/sekai-master-api#112), and the admin master-data lease diagnostics `lease` field is now null when sync lease coordination is disabled (Sekai-World/sekai-master-api#111).
+- 22be097: Regenerate SDK from sekai-master-api OpenAPI spec: GitHub webhook master-data sync now returns 409 conflict with `Retry-After` while another pod holds the sync lease (#101), and adds the admin sync lease diagnostics endpoint `GET /api/v1/admin/master-data/lease` (#105).
+- 3fb486f: Show title and Kizuna title rewards as the game's title icon for their rarity (`thumbnail/common_material/honor_1..4`) in every reward list: missions, character ranks, event ranking rewards, and virtual live rewards. Clicking one opens a preview dialog that renders the title at the rewarded level with its rarity, group or word, and a table of level conditions that highlights the rewarded level. Reward totals keep the icon without a preview, since they sum several titles.
+
 ## 1.0.2
 
 ### Patch Changes
