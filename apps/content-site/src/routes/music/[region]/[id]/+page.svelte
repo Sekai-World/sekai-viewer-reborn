@@ -16,6 +16,7 @@
   import { formatUnitFallbackLabel, unitCodeByMusicTag } from "$lib/domain/unit-profile";
   import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
   import { createPageTitle } from "$lib/page-title";
+  import DiscordEmbedHead from "$lib/components/shared/DiscordEmbedHead.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -214,17 +215,21 @@
 </script>
 
 <svelte:head>
-  {#await data.musicPayload}
-    <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
-  {:then payload}
-    <title>
-      {payload.music
-        ? createPageTitle(payload.music.title, musicListTitle)
-        : createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}
-    </title>
-  {:catch}
-    <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
-  {/await}
+  {#if data.seo}
+    <DiscordEmbedHead seo={data.seo} />
+  {:else}
+    {#await data.musicPayload}
+      <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
+    {:then payload}
+      <title>
+        {payload.music
+          ? createPageTitle(payload.music.title, musicListTitle)
+          : createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}
+      </title>
+    {:catch}
+      <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
+    {/await}
+  {/if}
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-4 px-2">

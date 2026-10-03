@@ -21,7 +21,23 @@ import {
   parseCardRelatedEvents
 } from "$lib/server/card-detail";
 import { getMasterApiBaseUrl } from "$lib/server/config";
+import { loadDiscordEmbedLabels } from "$lib/server/discord-embed-labels";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
+import { getCardFullAssetURL } from "$lib/assets/index";
+import { createPageTitle } from "$lib/page-title";
+import {
+  buildCardDescription,
+  buildCardMetaLine,
+  buildCanonicalUrl,
+  buildDiscordEmbedSeo,
+  isDiscordCrawler,
+  isSEOCrawler,
+  parseTrainedParam,
+  resolveEmbedImageUrl,
+  resolveSeoWithBudget,
+  type DiscordEmbedSeo,
+  resolveEffectiveTrained
+} from "$lib/seo/discord-embed";
 import type { PageServerLoad } from "./$types";
 
 type CardPayload = {
@@ -200,7 +216,7 @@ const fetchCardPayload = async ({
   }
 };
 
-export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
+export const load: PageServerLoad = async ({ params, url, request, cookies, fetch }) => {
   const cardId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
   const [invalidCardIdMessage, cardUnavailableInCurrentRegionMessage, failedToLoadCardDataMessage] =
@@ -225,10 +241,61 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
         gachas: []
       } satisfies CardDetailFetchResult);
 
+  // Link-preview crawlers never execute JavaScript, so streaming `{#await}`
+  // titles are invisible to them. Resolve the SEO bundle server-side for crawlers only;
+  // browsers keep the fast streaming path. The budget guard keeps slow
+  // upstream responses from blowing Discord's 10s unfurl window.
+  const trained = parseTrainedParam(url?.searchParams.get("trained"));
+  let seo: DiscordEmbedSeo | null = null;
+  if (isSEOCrawler(request?.headers.get("user-agent")) && cardId && !invalidMessage) {
+    const labelsPromise = loadDiscordEmbedLabels(uiLocale, fetch);
+    seo = await resolveSeoWithBudget(async () => {
+      const [detail, labels] = await Promise.all([detailPromise, labelsPromise]);
+      if (!detail.card) {
+        return null;
+      }
+      const card = detail.card;
+      // sometimes what the user wants is not what the user can get so we have to check if card can be trained
+      const resolvedTrained = resolveEffectiveTrained(detail.card, trained);
+      return buildDiscordEmbedSeo({
+        pageTitle: createPageTitle(card.title, labels.titleCards),
+        title: card.title,
+        metaLine: buildCardMetaLine(
+          {
+            title: card.title,
+            attr: card.attr,
+            rarityType: card.rarityType,
+            characterFirstName: card.character?.firstName,
+            characterGivenName: card.character?.givenName,
+            flavorText: card.flavorText
+          },
+          resolvedTrained,
+          labels
+        ),
+        description: buildCardDescription({
+          title: card.title,
+          attr: card.attr,
+          rarityType: card.rarityType,
+          flavorText: card.flavorText
+        }),
+        imageUrl: resolveEmbedImageUrl(
+          card.assetBundleName,
+          (name) => getCardFullAssetURL(name, resolvedTrained, region),
+          url?.origin
+        ),
+        canonicalUrl: buildCanonicalUrl(url?.origin, url?.pathname, resolvedTrained),
+        openLabel: labels.open,
+        includeComponent: isDiscordCrawler(request?.headers.get("user-agent"))
+      });
+    });
+  }
+
   return {
     cardId,
     region,
     regionLabel: regionLabels[region],
+    trained,
+    seo,
     cardUnavailableInCurrentRegionMessage,
     failedToLoadCardDataMessage,
     availableRegions: cardId

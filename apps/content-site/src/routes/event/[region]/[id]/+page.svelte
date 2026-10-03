@@ -18,6 +18,7 @@
   import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
   import { getEventTrackerHref } from "$lib/tools-site";
   import { createPageTitle } from "$lib/page-title";
+  import DiscordEmbedHead from "$lib/components/shared/DiscordEmbedHead.svelte";
   import type { PageProps } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
@@ -294,15 +295,19 @@
 </script>
 
 <svelte:head>
-  {#await data.eventPayload}
-    <title>{createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title>
-  {:then payload}
-    <title
-      >{payload.event
-        ? createPageTitle(payload.event.title, currentTranslate("navigation.events"))
-        : createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title
-    >
-  {/await}
+  {#if data.seo}
+    <DiscordEmbedHead seo={data.seo} />
+  {:else}
+    {#await data.eventPayload}
+      <title>{createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title>
+    {:then payload}
+      <title
+        >{payload.event
+          ? createPageTitle(payload.event.title, currentTranslate("navigation.events"))
+          : createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title
+      >
+    {/await}
+  {/if}
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-5 px-2 pb-6 sm:px-4">
