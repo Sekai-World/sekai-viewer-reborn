@@ -1,12 +1,13 @@
 diff --git a/index.js b/index.js
-index 3d0c3753e35af211fa996b83bd5f6638d89c64df..f1e4ed55debeb6c25dcbd78c4a66e8d07637ac32 100644
+index 3d0c3753e35af211fa996b83bd5f6638d89c64df..175f9f9092ff60ba7d0636ec7a19d39800492baf 100644
 --- a/index.js
 +++ b/index.js
-@@ -121,6 +121,7 @@ export default function (opts = {}) {
- 				// see https://github.com/sveltejs/kit/issues/16092
- 				manualChunks(id) {
- 					if (id.startsWith(server)) {
-+						if (id === `${server}/chunks/env.js`) return;
- 						return id.slice(server_path_length);
- 					}
- 				}
+@@ -122,0 +123,8 @@ export default function (opts = {}) {
++					if (
++						id === `${server}/chunks/env.js` ||
++						id === `${server}/chunks/EventDebugDialog.js` ||
++						id === `${server}/chunks/howler.js`
++					) {
++						return undefined;
++					}
++

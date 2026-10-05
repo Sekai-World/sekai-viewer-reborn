@@ -554,14 +554,14 @@ Current status: the lifecycle package, Pixi runtime, and media-lab session/host
 composition are implemented. The package's 95 tests and build, and the
 media-lab app's 403 tests and check, passed. Automated parity checks cover the
 audio adapter, injected logger, and resolved talk/telop/fullscreen text events.
-The dynamic-import warning and the adapter-node empty `chunks/env.js` warning
-are fixed. Package and media-lab checks, lint, tests, and builds pass; Phase 3's
-package extraction exit criteria are met. Real-browser WebGL verification was
+The dynamic-import warning and all adapter-node empty server-chunk warnings are
+fixed. The adapter regression check covers all four app builds, SSR entry and
+route-node imports, unprefixed runtime environment variables, and content-site
+client retention for EventDebugDialog and Howler. Package and media-lab checks,
+lint, tests, and builds pass; Phase 3's package extraction exit criteria are
+met. Real-browser WebGL verification was
 outside issue #259's non-WebGL test scope and remains part of the later browser
-integration/parity work. The adapter regression check covers all four app
-builds, SSR entry imports, and unprefixed runtime environment variables;
-content-site's unrelated empty `EventDebugDialog.js` and `howler.js` build
-warnings remain outside this scoped adapter fix.
+integration/parity work.
 
 - Move the controller, layers, animations, actions, types, model-data
   normalization, checkpoint scheduler, and motion pruning into the package.
