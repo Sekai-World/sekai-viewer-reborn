@@ -3,10 +3,14 @@ import type { Live2DMediaAdapters, Live2DResourceAdapter } from "./adapter-types
 import { createHowlerStoryAudioAdapter } from "./audio-adapter.js";
 import type { PixiStoryAudioAdapter } from "./audio-adapter.js";
 
-const toError = (reason: unknown, message: string): Error =>
-  reason instanceof Error
-    ? reason
-    : new Error(typeof reason === "string" ? reason : message, { cause: reason });
+const toError = (reason: unknown, message: string): Error => {
+  if (reason instanceof Error) return reason;
+
+  let errorMessage = message;
+  if (typeof reason === "string") errorMessage = reason;
+
+  return new Error(errorMessage, { cause: reason });
+};
 
 const defaultAbortError = (): Error => {
   const error = new Error("The operation was aborted");

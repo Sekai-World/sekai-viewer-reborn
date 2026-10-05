@@ -885,6 +885,25 @@ describe("Live2D engine parity", () => {
     expect(image.remove).toHaveBeenCalledOnce();
   });
 
+  it("disposes scenario resources and destroys player layers only once", () => {
+    const scenarioResource = { ...createScenarioResource(), dispose: vi.fn() };
+    const controller = createController(createScenario(), scenarioResource);
+    const baseDestroy = vi.spyOn(Live2DPlayer.prototype, "destroy");
+
+    try {
+      expect(() => {
+        controller.destroy();
+        controller.destroy();
+      }).not.toThrow();
+
+      expect(baseDestroy).toHaveBeenCalledOnce();
+      expect(scenarioResource.dispose).toHaveBeenCalledOnce();
+      expect(controller.layers.background.destroy).toHaveBeenCalledOnce();
+    } finally {
+      baseDestroy.mockRestore();
+    }
+  });
+
   it("connects the speech analyzer, resets ParamMouthOpenY, and disconnects on stop", () => {
     const mouthParameter = vi.fn();
     const attachAnalyzer = vi.fn();
