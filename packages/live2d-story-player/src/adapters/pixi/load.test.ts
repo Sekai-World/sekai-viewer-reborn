@@ -62,7 +62,8 @@ import { Live2DAssetType, Live2DLoadProgressType } from "./player-types.js";
 import type {
   ILive2DAssetUrl,
   ILive2DControllerData,
-  ILive2DModelDataCollection
+  ILive2DModelDataCollection,
+  ILive2DStoryModelSource
 } from "./player-types.js";
 import type { Live2DLoadOptions, Live2DResourceAdapter } from "./adapter-types.js";
 
@@ -334,6 +335,66 @@ describe("abortable media loading", () => {
     expect(released).toEqual(["image"]);
   });
 
+  it("releases acquired resources in reverse order", async () => {
+    const created = {
+      image: deferred<HTMLImageElement>(),
+      video: deferred<HTMLVideoElement>(),
+      audio: deferred<import("howler").Howl>()
+    };
+    const loadStarted = {
+      image: deferred<void>(),
+      video: deferred<void>(),
+      audio: deferred<void>()
+    };
+    const acquired: string[] = [];
+    const released: string[] = [];
+    const media = {
+      image: createAdapter(
+        () => created.image.promise,
+        async () => {
+          acquired.push("image");
+          loadStarted.image.resolve();
+        },
+        () => released.push("image")
+      ),
+      video: createAdapter(
+        () => created.video.promise,
+        async () => {
+          acquired.push("video");
+          loadStarted.video.resolve();
+        },
+        () => released.push("video")
+      ),
+      audio: createAdapter(
+        () => created.audio.promise,
+        async () => {
+          acquired.push("audio");
+          loadStarted.audio.resolve();
+        },
+        () => released.push("audio")
+      )
+    };
+    const loading = preloadMedia(mediaUrls(), () => {}, vi.fn(), createLoadOptions(media));
+
+    await vi.waitFor(() => {
+      expect(media.image.create).toHaveBeenCalledOnce();
+      expect(media.video.create).toHaveBeenCalledOnce();
+      expect(media.audio.create).toHaveBeenCalledOnce();
+    });
+    created.audio.resolve({} as import("howler").Howl);
+    await loadStarted.audio.promise;
+    created.video.resolve({} as HTMLVideoElement);
+    await loadStarted.video.promise;
+    created.image.resolve({} as HTMLImageElement);
+    await loadStarted.image.promise;
+
+    const resource = await loading;
+    resource.dispose();
+
+    expect(acquired).toEqual(["audio", "video", "image"]);
+    expect(released).toEqual(["image", "video", "audio"]);
+  });
+
   it("preserves the cleanup handle on controller data for runtime ownership transfer", async () => {
     const image = { name: "image" } as unknown as HTMLImageElement;
     const released = vi.fn();
@@ -539,6 +600,35 @@ describe("abortable model loading", () => {
     expect(modelSignal).toBe(controller.signal);
     rejectLookup(lateFailure);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  });
+
+  it("loads unique costume metadata sequentially in scenario order", async () => {
+    const firstLookup = deferred<ILive2DModelDataCollection | null>();
+    const secondLookup = deferred<ILive2DModelDataCollection | null>();
+    const started: string[] = [];
+    const modelSource: ILive2DStoryModelSource = {
+      getModelDataForCostume: vi.fn((costume: string) => {
+        started.push(costume);
+        return costume === "costume_a" ? firstLookup.promise : secondLookup.promise;
+      })
+    };
+    const scenario = {
+      AppearCharacters: [
+        { Character2dId: 1, CostumeType: "costume_a" },
+        { Character2dId: 2, CostumeType: "costume_b" },
+        { Character2dId: 3, CostumeType: "costume_a" }
+      ]
+    } as unknown as Parameters<typeof getLive2DModelData>[0];
+    const loading = getLive2DModelData(scenario, modelSource, () => {}, vi.fn());
+
+    await vi.waitFor(() => expect(started).toEqual(["costume_a"]));
+    firstLookup.resolve(modelData("costume_a"));
+    await vi.waitFor(() => expect(started).toEqual(["costume_a", "costume_b"]));
+    secondLookup.resolve(modelData("costume_b"));
+
+    await expect(loading).resolves.toHaveLength(2);
+    expect(modelSource.getModelDataForCostume).toHaveBeenCalledTimes(2);
+    expect(started).toEqual(["costume_a", "costume_b"]);
   });
 });
 

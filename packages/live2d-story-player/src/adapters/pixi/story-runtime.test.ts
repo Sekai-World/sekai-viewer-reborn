@@ -121,10 +121,11 @@ const makeHost = () => {
   return { host, children };
 };
 
-const makeApplication = () => {
+const makeApplication = (removeCanvas: (canvas: HTMLCanvasElement) => void) => {
   const canvas = {
     style: { width: "", height: "", display: "" }
   } as HTMLCanvasElement;
+  canvas.remove = () => removeCanvas(canvas);
   const application = {
     view: canvas,
     renderer: { resize: vi.fn() },
@@ -195,7 +196,10 @@ const makeOptions = (
   loadModel?: () => Promise<void>
 ) => {
   const { host, children } = makeHost();
-  const application = makeApplication();
+  const application = makeApplication((canvas) => {
+    const index = children.indexOf(canvas);
+    if (index !== -1) children.splice(index, 1);
+  });
   const image = {} as HTMLImageElement;
   const releaseImage = vi.fn();
   const controllerFixture = makeController({

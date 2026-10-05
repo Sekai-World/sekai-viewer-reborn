@@ -263,4 +263,29 @@ describe("createStoryPlayerSession", () => {
     unsubscribe();
     session.destroy();
   });
+
+  it("normalizes synchronous factory throws and asynchronous rejections", async () => {
+    const synchronousFailure = { code: "synchronous-initialization-failure" };
+    sessionMocks.ensureCubismCore.mockImplementation(() => {
+      throw synchronousFailure;
+    });
+    const synchronousSession = createStoryPlayerSession(createOptions());
+
+    await expect(synchronousSession.load()).rejects.toMatchObject({
+      message: "Story player operation failed",
+      cause: synchronousFailure
+    });
+    expect(synchronousSession.state).toBe("error");
+    synchronousSession.destroy();
+
+    sessionMocks.ensureCubismCore.mockReset().mockRejectedValue("asynchronous failure");
+    const asynchronousSession = createStoryPlayerSession(createOptions());
+
+    await expect(asynchronousSession.load()).rejects.toMatchObject({
+      message: "asynchronous failure",
+      cause: "asynchronous failure"
+    });
+    expect(asynchronousSession.state).toBe("error");
+    asynchronousSession.destroy();
+  });
 });

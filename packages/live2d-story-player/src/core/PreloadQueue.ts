@@ -71,11 +71,11 @@ export class PreloadQueue<T> {
 
       let nextIndex = 0;
       const worker = async (): Promise<void> => {
-        while (!this.hasFailure && nextIndex < this.tasks.length) {
-          const taskIndex = nextIndex++;
-          const task = this.tasks[taskIndex]!;
-          await this.runTask(task, taskIndex);
-        }
+        if (this.hasFailure || nextIndex >= this.tasks.length) return;
+        const taskIndex = nextIndex++;
+        const task = this.tasks[taskIndex]!;
+        await this.runTask(task, taskIndex);
+        return worker();
       };
 
       await Promise.all(

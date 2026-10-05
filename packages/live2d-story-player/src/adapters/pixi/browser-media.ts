@@ -3,94 +3,122 @@ import type { Live2DMediaAdapters, Live2DResourceAdapter } from "./adapter-types
 import { createHowlerStoryAudioAdapter } from "./audio-adapter.js";
 import type { PixiStoryAudioAdapter } from "./audio-adapter.js";
 
-const abortReason = (signal: AbortSignal): unknown =>
-  signal.reason ?? new DOMException("The operation was aborted", "AbortError");
+const toError = (reason: unknown, message: string): Error =>
+  reason instanceof Error
+    ? reason
+    : new Error(typeof reason === "string" ? reason : message, { cause: reason });
+
+const defaultAbortError = (): Error => {
+  const error = new Error("The operation was aborted");
+  error.name = "AbortError";
+  return error;
+};
+
+const abortReason = (signal: AbortSignal): Error => {
+  if (signal.reason === undefined) return defaultAbortError();
+  const error = toError(signal.reason, "The operation was aborted");
+  if (signal.reason instanceof Error) return error;
+  error.name = "AbortError";
+  return error;
+};
+
+const createCompletion = (
+  resolve: () => void,
+  reject: (error: Error) => void,
+  cleanup: () => void,
+  fallbackMessage: string
+): { succeed: () => void; fail: (reason: unknown) => void } => {
+  let settled = false;
+  const settle = (result: { success: true } | { success: false; reason: unknown }): void => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    if (result.success) resolve();
+    else reject(toError(result.reason, fallbackMessage));
+  };
+
+  return {
+    succeed: () => settle({ success: true }),
+    fail: (reason) => settle({ success: false, reason })
+  };
+};
 
 const loadImage: Live2DResourceAdapter<HTMLImageElement>["load"] = (image, url, signal) =>
   new Promise<void>((resolve, reject) => {
-    let settled = false;
-    const cleanupListeners = () => {
-      image.onload = null;
-      image.onerror = null;
-      signal.removeEventListener("abort", onAbort);
-    };
-    const finish = (error?: unknown) => {
-      if (settled) return;
-      settled = true;
-      cleanupListeners();
-      if (error === undefined) resolve();
-      else reject(error);
-    };
-    const onAbort = () => finish(abortReason(signal));
+    const completion = createCompletion(
+      resolve,
+      reject,
+      () => {
+        image.onload = null;
+        image.onerror = null;
+        signal.removeEventListener("abort", onAbort);
+      },
+      `Failed to load image: ${url}`
+    );
+    const onAbort = () => completion.fail(abortReason(signal));
 
     if (signal.aborted) {
       onAbort();
       return;
     }
 
-    image.onload = () => finish();
-    image.onerror = () => finish(new Error(`Failed to load image: ${url}`));
+    image.onload = () => completion.succeed();
+    image.onerror = () => completion.fail(new Error(`Failed to load image: ${url}`));
     signal.addEventListener("abort", onAbort, { once: true });
     image.crossOrigin = "anonymous";
     try {
       image.src = url;
     } catch (error) {
-      finish(error);
+      completion.fail(error);
     }
   });
 
 const loadVideo: Live2DResourceAdapter<HTMLVideoElement>["load"] = (video, url, signal) =>
   new Promise<void>((resolve, reject) => {
-    let settled = false;
-    const cleanupListeners = () => {
-      video.onloadeddata = null;
-      video.onerror = null;
-      signal.removeEventListener("abort", onAbort);
-    };
-    const finish = (error?: unknown) => {
-      if (settled) return;
-      settled = true;
-      cleanupListeners();
-      if (error === undefined) resolve();
-      else reject(error);
-    };
-    const onAbort = () => finish(abortReason(signal));
+    const completion = createCompletion(
+      resolve,
+      reject,
+      () => {
+        video.onloadeddata = null;
+        video.onerror = null;
+        signal.removeEventListener("abort", onAbort);
+      },
+      `Failed to load video: ${url}`
+    );
+    const onAbort = () => completion.fail(abortReason(signal));
 
     if (signal.aborted) {
       onAbort();
       return;
     }
 
-    video.onloadeddata = () => finish();
-    video.onerror = () => finish(new Error(`Failed to load video: ${url}`));
+    video.onloadeddata = () => completion.succeed();
+    video.onerror = () => completion.fail(new Error(`Failed to load video: ${url}`));
     signal.addEventListener("abort", onAbort, { once: true });
     video.crossOrigin = "anonymous";
     video.preload = "metadata";
     try {
       video.src = url;
     } catch (error) {
-      finish(error);
+      completion.fail(error);
     }
   });
 
 const loadAudio: Live2DResourceAdapter<Howl>["load"] = (sound, url, signal) =>
   new Promise<void>((resolve, reject) => {
-    let settled = false;
-    const cleanupListeners = () => {
-      sound.off("load", onLoad);
-      sound.off("loaderror", onLoadError);
-      signal.removeEventListener("abort", onAbort);
-    };
-    const finish = (error?: unknown) => {
-      if (settled) return;
-      settled = true;
-      cleanupListeners();
-      if (error === undefined) resolve();
-      else reject(error);
-    };
-    const onLoad = () => finish();
-    const onLoadError = () => finish(new Error(`Failed to load sound: ${url}`));
-    const onAbort = () => finish(abortReason(signal));
+    const completion = createCompletion(
+      resolve,
+      reject,
+      () => {
+        sound.off("load", onLoad);
+        sound.off("loaderror", onLoadError);
+        signal.removeEventListener("abort", onAbort);
+      },
+      `Failed to load sound: ${url}`
+    );
+    const onLoad = () => completion.succeed();
+    const onLoadError = () => completion.fail(new Error(`Failed to load sound: ${url}`));
+    const onAbort = () => completion.fail(abortReason(signal));
 
     if (signal.aborted) {
       onAbort();
@@ -103,7 +131,7 @@ const loadAudio: Live2DResourceAdapter<Howl>["load"] = (sound, url, signal) =>
     try {
       sound.load();
     } catch (error) {
-      finish(error);
+      completion.fail(error);
     }
   });
 

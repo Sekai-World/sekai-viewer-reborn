@@ -164,11 +164,11 @@ const waitForRetry = (delayMs: number, signal?: AbortSignal): Promise<void> => {
 };
 
 /** Runs a Live2D asset request through the scheduler with abortable retries. */
-export async function live2dRequest<T>(
+export function live2dRequest<T>(
   request: (signal?: AbortSignal) => Promise<T>,
   signal?: AbortSignal
 ): Promise<T> {
-  for (let retry = 0; ; retry++) {
+  const runAttempt = async (retry: number): Promise<T> => {
     if (signal?.aborted) throw getAbortReason(signal);
     try {
       return await scheduler.schedule(
@@ -188,8 +188,11 @@ export async function live2dRequest<T>(
       const backoff = Math.min(1000 * 2 ** retry, 8000);
       const deterministicJitter = (retry * 997) % 251;
       await waitForRetry(retryAfter ?? backoff + deterministicJitter, signal);
+      return runAttempt(retry + 1);
     }
-  }
+  };
+
+  return runAttempt(0);
 }
 
 /** Fetches a Live2D asset while applying shared rate-limit handling. */

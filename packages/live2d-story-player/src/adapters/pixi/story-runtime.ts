@@ -16,11 +16,10 @@ import {
   preloadModels
 } from "./load.js";
 import type { ILive2DAssetUrl, ILive2DLoadWarningHandler } from "../../model/live2d-assets.js";
-import type { ILive2DTextResolver } from "../../model/live2d-model.js";
+import type { ILive2DTextResolvedEvent, ILive2DTextResolver } from "../../model/live2d-model.js";
 import type { IScenarioData } from "../../model/scenario-types.js";
 import type { StoryPlayerRuntime } from "../../core/story-player.js";
 import type { PixiStoryAudioAdapter } from "./audio-adapter.js";
-import type { ILive2DTextResolvedEvent } from "../../model/live2d-model.js";
 import type { StoryPlayerLogger } from "../../core/log.js";
 
 interface PixiApplicationLike {
@@ -159,13 +158,12 @@ const createPixiApplication = async (
   return application as unknown as PixiApplicationLike;
 };
 
-const createPixiController = async (
+const createPixiController = (
   application: PixiApplicationLike,
   stageSize: [number, number],
   data: ILive2DControllerData
-): Promise<PixiStoryRuntimeController> => {
-  return new Live2DController(application as unknown as PixiApplication, stageSize, data);
-};
+): Promise<PixiStoryRuntimeController> =>
+  Promise.resolve(new Live2DController(application as unknown as PixiApplication, stageSize, data));
 
 /**
  * Initializes the Pixi renderer and controller, then exposes the shared
@@ -261,7 +259,7 @@ export const createPixiStoryRuntime = async (
       }
       if (canvasAttached && application) {
         try {
-          options.host.removeChild(application.view);
+          application.view.remove();
         } catch {
           // Pixi may already have removed the view.
         }

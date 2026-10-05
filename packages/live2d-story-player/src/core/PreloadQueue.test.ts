@@ -2,6 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { PreloadQueue } from "./PreloadQueue.js";
 
+const deferred = <T>() => {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+};
+
 describe("PreloadQueue", () => {
   it("propagates a task failure, aborts active work, and skips queued tasks", async () => {
     const failure = new Error("asset failure");
@@ -37,6 +45,42 @@ describe("PreloadQueue", () => {
     await expect(queue.run()).rejects.toBe(failure);
     expect(started).toEqual([0, 1]);
     expect(activeSignal?.aborted).toBe(true);
+  });
+
+  it("preserves task order while respecting the configured worker limit", async () => {
+    const taskGates = Array.from({ length: 4 }, () => deferred<number>());
+    const startSignals = Array.from({ length: 4 }, () => deferred<void>());
+    const startOrder: number[] = [];
+    let active = 0;
+    let maxActive = 0;
+    const tasks = taskGates.map((gate, index) => ({
+      task: async () => {
+        active++;
+        maxActive = Math.max(maxActive, active);
+        startOrder.push(index);
+        startSignals[index]?.resolve();
+        try {
+          return await gate.promise;
+        } finally {
+          active--;
+        }
+      }
+    }));
+    const run = new PreloadQueue(tasks, 2).run();
+
+    await Promise.all([startSignals[0]?.promise, startSignals[1]?.promise]);
+    expect(startOrder).toEqual([0, 1]);
+
+    taskGates[1]?.resolve(1);
+    await startSignals[2]?.promise;
+    taskGates[2]?.resolve(2);
+    await startSignals[3]?.promise;
+    taskGates[3]?.resolve(3);
+    taskGates[0]?.resolve(0);
+
+    await expect(run).resolves.toEqual([0, 1, 2, 3]);
+    expect(startOrder).toEqual([0, 1, 2, 3]);
+    expect(maxActive).toBe(2);
   });
 
   it("cancels in-flight work when the caller aborts and handles its late rejection", async () => {

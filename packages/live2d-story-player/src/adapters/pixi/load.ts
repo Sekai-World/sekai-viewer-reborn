@@ -154,7 +154,10 @@ const createResourceRegistry = (logger: ReturnType<typeof resolveLoadOptions>["l
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
-    for (const release of releases.reverse()) release();
+    for (let index = releases.length - 1; index >= 0; index -= 1) {
+      const release = releases[index];
+      if (release) release();
+    }
     releases.length = 0;
   };
 
@@ -244,31 +247,36 @@ export async function getLive2DModelData(
   const collections: ILive2DModelDataCollection[] = [];
   const seenCostumes = new Set<string>();
   let count = 0;
-  for (const c of snData.AppearCharacters) {
-    if (options?.signal) throwIfAborted(options.signal);
-    if (seenCostumes.has(c.CostumeType)) {
-      count++;
-      continue;
-    }
-    seenCostumes.add(c.CostumeType);
-    const lookup = Promise.resolve().then(() => {
+  const loadCharacterAt = (index: number): Promise<void> =>
+    Promise.resolve().then(async () => {
+      if (index >= total) return;
+      const c = snData.AppearCharacters[index]!;
       if (options?.signal) throwIfAborted(options.signal);
-      return (modelSource as ILive2DAbortableStoryModelSource).getModelDataForCostume(
-        c.CostumeType,
-        c.Character2dId,
-        options?.signal
-      );
+      if (seenCostumes.has(c.CostumeType)) {
+        count++;
+      } else {
+        seenCostumes.add(c.CostumeType);
+        const lookup = Promise.resolve().then(() => {
+          if (options?.signal) throwIfAborted(options.signal);
+          return (modelSource as ILive2DAbortableStoryModelSource).getModelDataForCostume(
+            c.CostumeType,
+            c.Character2dId,
+            options?.signal
+          );
+        });
+        const md = await awaitWithSignal(lookup, options?.signal);
+        if (options?.signal) throwIfAborted(options.signal);
+        count++;
+        if (!md) {
+          onWarning(`Model not found for ${c.CostumeType} (${c.Character2dId})`);
+        } else {
+          collections.push(md);
+        }
+        onProgress(Live2DLoadProgressType.ModelData, count, total, c.CostumeType);
+      }
+      return loadCharacterAt(index + 1);
     });
-    const md = await awaitWithSignal(lookup, options?.signal);
-    if (options?.signal) throwIfAborted(options.signal);
-    count++;
-    if (!md) {
-      onWarning(`Model not found for ${c.CostumeType} (${c.Character2dId})`);
-    } else {
-      collections.push(md);
-    }
-    onProgress(Live2DLoadProgressType.ModelData, count, total, c.CostumeType);
-  }
+  await loadCharacterAt(0);
   return collections;
 }
 /**

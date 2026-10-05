@@ -551,9 +551,11 @@ Goal: move playback behavior, not page concerns, into
 `@platform/live2d-story-player`.
 
 Current status: the lifecycle package, Pixi runtime, and media-lab session/host
-composition are implemented. The package's 95 tests and build, and the
-media-lab app's 403 tests and check, passed. Automated parity checks cover the
-audio adapter, injected logger, and resolved talk/telop/fullscreen text events.
+composition are implemented. The package's 212 tests and build, and the
+media-lab app's 404 tests, check, lint, and build passed. The package's current
+full-source coverage report is 89.89% lines and 77.30% branches. Automated
+parity checks cover the audio adapter, injected logger, and resolved
+talk/telop/fullscreen text events.
 The dynamic-import warning and all adapter-node empty server-chunk warnings are
 fixed. The adapter regression check covers all four app builds, SSR entry and
 route-node imports, unprefixed runtime environment variables, and content-site

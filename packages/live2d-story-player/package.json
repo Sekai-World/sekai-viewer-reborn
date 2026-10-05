@@ -24,7 +24,8 @@
     "build": "tsc -p tsconfig.build.json",
     "check": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint src --ext .ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage && node ../../scripts/lcov/normalize-lcov.mjs coverage/lcov.info packages/live2d-story-player"
   },
   "dependencies": {
     "@sekai-world/pixi-live2d-display-mulmotion": "^0.5.1",

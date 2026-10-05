@@ -4,6 +4,8 @@ interface FakeSoundReference {
   emit(event: string): void;
   listenerCount(event: string): number;
   loadCalls: number;
+  shouldThrowOnLoad: boolean;
+  loadFailure: unknown;
   stopCalls: number;
   unloadCalls: number;
 }
@@ -14,6 +16,8 @@ vi.mock("howler", () => ({
   Howl: class {
     private readonly listeners = new Map<string, (() => void)[]>();
     loadCalls = 0;
+    shouldThrowOnLoad = false;
+    loadFailure: unknown;
     stopCalls = 0;
     unloadCalls = 0;
 
@@ -40,6 +44,7 @@ vi.mock("howler", () => ({
 
     load() {
       this.loadCalls++;
+      if (this.shouldThrowOnLoad) throw this.loadFailure;
       return this;
     }
 
@@ -72,9 +77,12 @@ class FakeImage {
   onerror: (() => void) | null = null;
   crossOrigin = "";
   source = "";
+  shouldThrowOnSource = false;
+  sourceFailure: unknown;
   removeCalls = 0;
 
   set src(value: string) {
+    if (this.shouldThrowOnSource) throw this.sourceFailure;
     this.source = value;
   }
 
@@ -184,6 +192,72 @@ describe("browser media adapters", () => {
     expect(image.removeCalls).toBe(1);
   });
 
+  it("rejects a pre-aborted image load with an Error for any abort reason", async () => {
+    const image = new FakeImage();
+    vi.stubGlobal(
+      "Image",
+      class extends FakeImage {
+        constructor() {
+          super();
+          return image;
+        }
+      }
+    );
+    const adapter = createBrowserMediaAdapters().image;
+    const errorReason = new Error("abort error");
+    const reasons = [
+      { reason: "cancelled", message: "cancelled", cause: "cancelled" },
+      { reason: { code: "cancelled" }, message: "The operation was aborted" },
+      { reason: errorReason, expectedError: errorReason }
+    ];
+
+    for (const { reason, message, cause, expectedError } of reasons) {
+      const controller = new AbortController();
+      controller.abort(reason);
+      const url = "https://assets.example.test/image.png";
+      const resource = await adapter.create(url, controller.signal);
+      const loading = adapter.load(resource, url, controller.signal);
+
+      if (expectedError) await expect(loading).rejects.toBe(expectedError);
+      else
+        await expect(loading).rejects.toMatchObject({
+          name: "AbortError",
+          message,
+          ...(cause === undefined ? {} : { cause })
+        });
+      expect(image.src).toBe("");
+      expect(image.onload).toBeNull();
+      expect(image.onerror).toBeNull();
+    }
+  });
+
+  it("converts a synchronous image source error to an Error with its cause", async () => {
+    const image = new FakeImage();
+    const sourceFailure = { code: "source-assignment-failed" };
+    image.shouldThrowOnSource = true;
+    image.sourceFailure = sourceFailure;
+    vi.stubGlobal(
+      "Image",
+      class extends FakeImage {
+        constructor() {
+          super();
+          return image;
+        }
+      }
+    );
+    const adapter = createBrowserMediaAdapters().image;
+    const url = "https://assets.example.test/image.png";
+    const signal = new AbortController().signal;
+    const resource = await adapter.create(url, signal);
+
+    await expect(adapter.load(resource, url, signal)).rejects.toMatchObject({
+      message: `Failed to load image: ${url}`,
+      cause: sourceFailure
+    });
+    expect(image.onload).toBeNull();
+    expect(image.onerror).toBeNull();
+  });
+
   it("clears video listeners and resets the element when loading is aborted", async () => {
     const video = new FakeVideo();
     vi.stubGlobal("document", {
@@ -275,6 +349,70 @@ describe("browser media adapters", () => {
     expect(fixture.listenerCount("loaderror")).toBe(0);
     adapters.audio.release(sound);
     expect(fixture.unloadCalls).toBe(1);
+  });
+
+  it("converts a synchronous audio load error to an Error with its cause", async () => {
+    const adapters = createBrowserMediaAdapters();
+    const signal = new AbortController().signal;
+    const url = "https://assets.example.test/voice.ogg";
+    const sound = await adapters.audio.create(url, signal);
+    const fixture = soundFixtures.sounds[0]!;
+    const loadFailure = "synchronous load failure";
+    fixture.shouldThrowOnLoad = true;
+    fixture.loadFailure = loadFailure;
+
+    await expect(adapters.audio.load(sound, url, signal)).rejects.toMatchObject({
+      message: loadFailure,
+      cause: loadFailure
+    });
+    expect(fixture.loadCalls).toBe(1);
+    expect(fixture.listenerCount("load")).toBe(0);
+    expect(fixture.listenerCount("loaderror")).toBe(0);
+  });
+
+  it("resolves successful image, video, and audio loads through the browser adapters", async () => {
+    const image = new FakeImage();
+    const video = new FakeVideo();
+    vi.stubGlobal(
+      "Image",
+      class extends FakeImage {
+        constructor() {
+          super();
+          return image;
+        }
+      }
+    );
+    vi.stubGlobal("document", {
+      createElement: vi.fn(() => video)
+    });
+    const adapters = createBrowserMediaAdapters();
+    const signal = new AbortController().signal;
+    const imageUrl = "https://assets.example.test/image.png";
+    const videoUrl = "https://assets.example.test/video.mp4";
+    const audioUrl = "https://assets.example.test/voice.ogg";
+    const imageResource = await adapters.image.create(imageUrl, signal);
+    const videoResource = await adapters.video.create(videoUrl, signal);
+    const audioResource = await adapters.audio.create(audioUrl, signal);
+    const sound = soundFixtures.sounds[0]!;
+    const imageLoad = adapters.image.load(imageResource, imageUrl, signal);
+    const videoLoad = adapters.video.load(videoResource, videoUrl, signal);
+    const audioLoad = adapters.audio.load(audioResource, audioUrl, signal);
+
+    image.onload?.();
+    video.onloadeddata?.();
+    sound.emit("load");
+
+    await expect(Promise.all([imageLoad, videoLoad, audioLoad])).resolves.toEqual([
+      undefined,
+      undefined,
+      undefined
+    ]);
+    expect(image.onload).toBeNull();
+    expect(image.onerror).toBeNull();
+    expect(video.onloadeddata).toBeNull();
+    expect(video.onerror).toBeNull();
+    expect(sound.listenerCount("load")).toBe(0);
+    expect(sound.listenerCount("loaderror")).toBe(0);
   });
 
   it("releases browser audio through the injected story audio adapter", async () => {

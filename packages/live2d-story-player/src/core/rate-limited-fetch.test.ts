@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { live2dRequest } from "./rate-limited-fetch.js";
 
@@ -9,6 +9,10 @@ describe("live2dRequest scheduler", () => {
   // timestamps from a previous test fall out of the one-second window.
   beforeEach(async () => {
     await wait(1100);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("keeps at most twenty requests in flight", async () => {
@@ -101,5 +105,87 @@ describe("live2dRequest scheduler", () => {
     await expect(request).rejects.toBe(abortReason);
     await wait(5);
     expect(receivedSignal).toBe(controller.signal);
+  });
+
+  it("honors Retry-After and retries requests sequentially", async () => {
+    const now = Date.now();
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    const attempts: number[] = [];
+    const request = live2dRequest(async () => {
+      attempts.push(attempts.length + 1);
+      if (attempts.length === 1) {
+        throw new Response(null, { status: 429, headers: { "retry-after": "2" } });
+      }
+      return "loaded";
+    });
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(attempts).toEqual([1]);
+    await vi.advanceTimersByTimeAsync(1999);
+    expect(attempts).toEqual([1]);
+    await vi.advanceTimersByTimeAsync(1);
+
+    await expect(request).resolves.toBe("loaded");
+    expect(attempts).toEqual([1, 2]);
+  });
+
+  it("does not retry failures other than HTTP 429", async () => {
+    const failure = new Response(null, { status: 503 });
+    const request = vi.fn(async () => {
+      throw failure;
+    });
+
+    await expect(live2dRequest(request)).rejects.toBe(failure);
+    expect(request).toHaveBeenCalledOnce();
+  });
+
+  it("uses bounded exponential backoff and stops after four retries", async () => {
+    const now = Date.now();
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    const failure = new Response(null, { status: 429 });
+    const attempts: number[] = [];
+    const request = live2dRequest(async () => {
+      attempts.push(attempts.length + 1);
+      throw failure;
+    });
+    const exhausted = expect(request).rejects.toBe(failure);
+    const backoffs = [1000, 2244, 4237, 8230];
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(attempts).toEqual([1]);
+    for (const [index, delay] of backoffs.entries()) {
+      expect(attempts).toHaveLength(index + 1);
+      await vi.advanceTimersByTimeAsync(delay - 1);
+      expect(attempts).toHaveLength(index + 1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(attempts).toHaveLength(index + 2);
+    }
+    await vi.advanceTimersByTimeAsync(0);
+
+    await exhausted;
+    expect(attempts).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it("cancels a pending retry delay when the caller aborts", async () => {
+    const now = Date.now();
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    const controller = new AbortController();
+    const abortReason = new Error("cancel retry delay");
+    const attempts: number[] = [];
+    const request = live2dRequest(async () => {
+      attempts.push(attempts.length + 1);
+      throw new Response(null, { status: 429, headers: { "retry-after": "30" } });
+    }, controller.signal);
+
+    await vi.advanceTimersByTimeAsync(0);
+    expect(attempts).toEqual([1]);
+    controller.abort(abortReason);
+
+    await expect(request).rejects.toBe(abortReason);
+    await vi.advanceTimersByTimeAsync(30000);
+    expect(attempts).toEqual([1]);
   });
 });

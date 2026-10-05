@@ -82,11 +82,21 @@ export interface StoryPlayerSession {
 const toSessionState = (state: StoryPlayerState): StoryPlayerSessionState =>
   state === "idle" ? "loading" : state;
 
+const toError = (reason: unknown, message: string): Error =>
+  reason instanceof Error
+    ? reason
+    : new Error(typeof reason === "string" ? reason : message, { cause: reason });
+
+const defaultAbortError = (): Error => {
+  const error = new Error("Story player load was aborted");
+  error.name = "AbortError";
+  return error;
+};
+
 const getAbortError = (signal: AbortSignal): Error => {
-  if (signal.reason instanceof Error) return signal.reason;
-  const error = new Error(
-    typeof signal.reason === "string" ? signal.reason : "Story player load was aborted"
-  );
+  if (signal.reason === undefined) return defaultAbortError();
+  const error = toError(signal.reason, "Story player load was aborted");
+  if (signal.reason instanceof Error) return error;
   error.name = "AbortError";
   return error;
 };
@@ -111,7 +121,7 @@ const waitForSignal = <T>(
       if (settled) return;
       settled = true;
       cleanup();
-      if ("error" in result) reject(result.error);
+      if ("error" in result) reject(toError(result.error, "Story player operation failed"));
       else resolve(result.value);
     };
     const onAbort = (): void => settle({ error: getAbortError(signal) });
@@ -120,15 +130,15 @@ const waitForSignal = <T>(
     if (signal.aborted) onAbort();
 
     if (!settled) {
-      try {
-        const pendingOperation = typeof operation === "function" ? operation() : operation;
-        void pendingOperation.then(
-          (value) => settle({ value }),
-          (error: unknown) => settle({ error })
-        );
-      } catch (error) {
-        settle({ error });
-      }
+      const runOperation = async (): Promise<void> => {
+        try {
+          const value = await (typeof operation === "function" ? operation() : operation);
+          settle({ value });
+        } catch (error) {
+          settle({ error });
+        }
+      };
+      void runOperation();
     } else if (typeof operation !== "function") {
       void operation.catch(() => undefined);
     }

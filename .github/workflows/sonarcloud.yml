@@ -41,6 +41,7 @@ jobs:
           pnpm --filter @apps/tools-site run test:coverage
           pnpm --filter @platform/i18n-runtime run test:coverage
           pnpm --filter @platform/ui-shell run test:coverage
+          pnpm --filter @platform/live2d-story-player run test:coverage
       - name: SonarCloud Scan
         if: >-
           github.event_name == 'push' ||
