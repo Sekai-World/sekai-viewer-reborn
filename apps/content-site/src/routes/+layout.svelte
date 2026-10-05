@@ -2,7 +2,7 @@
   import "../app.css";
   import "$lib/icons/mdi";
   import { asset, resolve } from "$app/paths";
-  import { invalidateAll } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import {
@@ -13,6 +13,8 @@
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
   import MobileQuickNavigation from "$lib/components/MobileQuickNavigation.svelte";
+  import OnboardingDialog from "$lib/components/OnboardingDialog.svelte";
+  import SiteUpdateNotice from "$lib/components/SiteUpdateNotice.svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import {
@@ -37,6 +39,13 @@
     setTitlePreviewLabels,
     type TitlePreviewLabels
   } from "$lib/components/shared/title-preview-labels";
+  import {
+    readOnboardingSeen,
+    readSeenSiteVersion,
+    writeOnboardingSeen,
+    writeSeenSiteVersion
+  } from "$lib/onboarding";
+  import { getSiteUpdateForVersion, resolveSiteVersion } from "$lib/site-updates";
   import type { LayoutData } from "./$types";
 
   type ThemeMode = "light" | "dark" | "auto";
@@ -153,6 +162,9 @@
     mint: getInitialI18nText("themeName.mint")
   });
   let showBackToTop = $state(false);
+  let hasSeenOnboarding = $state(false);
+  let isOnboardingDialogOpen = $state(false);
+  let seenSiteVersion = $state<string | null>(null);
   let backToTopAnimationFrame = 0;
   let contentDisplaySettings = $state<ContentDisplaySettingsState>({
     showSpoilerContent: false,
@@ -362,9 +374,36 @@
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");
   const layoutTranslate = $derived(createI18nTranslator(uiLocale, currentLayoutMessages));
+  const siteVersion = $derived(resolveSiteVersion(data.siteVersion));
+  const activeSiteUpdate = $derived(getSiteUpdateForVersion(siteVersion));
+  const showSiteUpdateNotice = $derived(
+    hasSeenOnboarding && !isOnboardingDialogOpen && seenSiteVersion !== siteVersion
+  );
   const themeModeLabel = $derived(layoutTranslate(`themeMode.${themeMode}`, themeMode));
   const resolvedThemeLabel = $derived(layoutTranslate(`themeMode.${resolvedTheme}`, resolvedTheme));
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
+  const onboardingSteps = $derived([
+    {
+      icon: "mdi:home-variant-outline",
+      title: layoutTranslate("onboarding.steps.home.title"),
+      description: layoutTranslate("onboarding.steps.home.description")
+    },
+    {
+      icon: "mdi:book-open-page-variant-outline",
+      title: layoutTranslate("onboarding.steps.navigation.title"),
+      description: layoutTranslate("onboarding.steps.navigation.description")
+    },
+    {
+      icon: "mdi:cog-outline",
+      title: layoutTranslate("onboarding.steps.settings.title"),
+      description: layoutTranslate("onboarding.steps.settings.description")
+    },
+    {
+      icon: "mdi:cards-outline",
+      title: layoutTranslate("onboarding.steps.details.title"),
+      description: layoutTranslate("onboarding.steps.details.description")
+    }
+  ]);
 
   $effect(() => {
     const requestId = ++translationRequestId;
@@ -572,7 +611,12 @@
         window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       ongoingFirst: true
     };
-    const storedSettings = localStorage.getItem(CONTENT_DISPLAY_STORAGE_KEY);
+    let storedSettings: string | null;
+    try {
+      storedSettings = localStorage.getItem(CONTENT_DISPLAY_STORAGE_KEY);
+    } catch {
+      return defaultSettings;
+    }
 
     if (!storedSettings) {
       return defaultSettings;
@@ -601,15 +645,19 @@
   };
 
   const persistContentDisplaySettings = (): void => {
-    localStorage.setItem(
-      CONTENT_DISPLAY_STORAGE_KEY,
-      JSON.stringify({
-        showSpoilerContent: contentDisplaySettings.showSpoilerContent,
-        mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent,
-        lowMotionMode: contentDisplaySettings.lowMotionMode,
-        ongoingFirst: contentDisplaySettings.ongoingFirst
-      })
-    );
+    try {
+      localStorage.setItem(
+        CONTENT_DISPLAY_STORAGE_KEY,
+        JSON.stringify({
+          showSpoilerContent: contentDisplaySettings.showSpoilerContent,
+          mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent,
+          lowMotionMode: contentDisplaySettings.lowMotionMode,
+          ongoingFirst: contentDisplaySettings.ongoingFirst
+        })
+      );
+    } catch {
+      // Storage can be unavailable in privacy-restricted browsing contexts.
+    }
   };
 
   const applyMotionPreference = (): void => {
@@ -658,7 +706,44 @@
   };
 
   const setPreferredRegion = (region: SupportedRegion): void => {
-    persistPreferredRegion(region);
+    try {
+      persistPreferredRegion(region);
+    } catch {
+      preferredRegion = normalizeRegion(region, DEFAULT_REGION);
+    }
+  };
+
+  const closeSettingsMenus = (): void => {
+    isDesktopSettingsMenuOpen = false;
+    isDesktopThemeMenuOpen = false;
+    isMobileSettingsMenuOpen = false;
+    isLocaleMenuOpen = false;
+  };
+
+  const openOnboarding = (): void => {
+    closeSettingsMenus();
+    isOnboardingDialogOpen = true;
+  };
+
+  const markCurrentSiteVersionSeen = (): void => {
+    writeSeenSiteVersion(siteVersion);
+    seenSiteVersion = siteVersion;
+  };
+
+  const handleOnboardingDismiss = (): void => {
+    writeOnboardingSeen();
+    hasSeenOnboarding = true;
+    isOnboardingDialogOpen = false;
+  };
+
+  const handleSettingsUpdatesClick = (): void => {
+    closeSettingsMenus();
+    markCurrentSiteVersionSeen();
+  };
+
+  const navigateToUpdates = (): void => {
+    handleSettingsUpdatesClick();
+    void goto(resolve("/updates"));
   };
 
   const getThemeNameLabel = (themeNameValue: ThemeName): string => {
@@ -768,6 +853,10 @@
   };
 
   onMount(() => {
+    hasSeenOnboarding = readOnboardingSeen();
+    seenSiteVersion = readSeenSiteVersion();
+    isOnboardingDialogOpen = !hasSeenOnboarding;
+
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     const preferredThemeName = resolvePreferredThemeName();
@@ -778,7 +867,11 @@
     themeName = preferredThemeName;
     themeMode = preferredThemeMode;
     resolvedTheme = preferredResolvedTheme;
-    preferredRegion = resolvePreferredRegion();
+    try {
+      preferredRegion = resolvePreferredRegion();
+    } catch {
+      preferredRegion = DEFAULT_REGION;
+    }
     const preferredContentDisplaySettings = resolvePreferredContentDisplaySettings();
     contentDisplaySettings.showSpoilerContent = preferredContentDisplaySettings.showSpoilerContent;
     contentDisplaySettings.mosaickedSpoilerContent =
@@ -1049,6 +1142,27 @@
             <div class="my-2 h-px bg-base-content/12"></div>
 
             {@render contentDisplaySection()}
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
+            <div class="flex flex-col gap-1">
+              <a
+                class="btn btn-ghost min-h-11 justify-start gap-2"
+                href={resolve("/updates")}
+                onclick={handleSettingsUpdatesClick}
+              >
+                <Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />
+                {layoutTranslate("settings.viewUpdates")}
+              </a>
+              <button
+                type="button"
+                class="btn btn-ghost min-h-11 justify-start gap-2"
+                onclick={openOnboarding}
+              >
+                <Icon icon="mdi:book-open-page-variant-outline" class="size-4" aria-hidden="true" />
+                {layoutTranslate("settings.openOnboarding")}
+              </button>
+            </div>
           </div>
         {/if}
       </div>
@@ -1322,6 +1436,27 @@
                 <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
               {/if}
             </div>
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
+            <div class="flex flex-col gap-1">
+              <a
+                class="btn btn-ghost min-h-11 justify-start gap-2"
+                href={resolve("/updates")}
+                onclick={handleSettingsUpdatesClick}
+              >
+                <Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />
+                {layoutTranslate("settings.viewUpdates")}
+              </a>
+              <button
+                type="button"
+                class="btn btn-ghost min-h-11 justify-start gap-2"
+                onclick={openOnboarding}
+              >
+                <Icon icon="mdi:book-open-page-variant-outline" class="size-4" aria-hidden="true" />
+                {layoutTranslate("settings.openOnboarding")}
+              </button>
+            </div>
           </div>
         {/if}
       </div>
@@ -1329,9 +1464,37 @@
   {/snippet}
 
   <div class="page-switch-shell">
+    {#if showSiteUpdateNotice}
+      <div class="content-page-shell gap-4 px-2 pb-4 sm:px-4">
+        <SiteUpdateNotice
+          version={siteVersion}
+          title={layoutTranslate("updates.notice.title")}
+          message={layoutTranslate(activeSiteUpdate.summaryKey)}
+          actionLabel={layoutTranslate("updates.notice.readLabel")}
+          dismissLabel={layoutTranslate("updates.notice.dismissLabel")}
+          onRead={navigateToUpdates}
+          onDismiss={markCurrentSiteVersionSeen}
+        />
+      </div>
+    {/if}
     {@render children()}
   </div>
 </ViewerShell>
+
+<OnboardingDialog
+  open={isOnboardingDialogOpen}
+  title={layoutTranslate("onboarding.title")}
+  progressLabel={layoutTranslate("onboarding.progressLabel")}
+  previousLabel={layoutTranslate("onboarding.previousLabel")}
+  nextLabel={layoutTranslate("onboarding.nextLabel")}
+  finishLabel={layoutTranslate("onboarding.finishLabel")}
+  skipLabel={layoutTranslate("onboarding.skipLabel")}
+  closeLabel={layoutTranslate("onboarding.closeLabel")}
+  steps={onboardingSteps}
+  onComplete={handleOnboardingDismiss}
+  onSkip={handleOnboardingDismiss}
+  onClose={handleOnboardingDismiss}
+/>
 
 {#if showBackToTop}
   <button
