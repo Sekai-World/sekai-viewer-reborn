@@ -33,9 +33,10 @@ test ! -e viewer-values.yaml && cp deploy/helm/sekai-viewer-reborn/values.yaml v
 In `viewer-values.yaml`, replace every placeholder image repository and tag,
 Ingress host, and TLS Secret name with values for the target environment. Use
 versioned immutable image tags rather than `latest`. All four applications need
-`SEKAI_API_BASE_URL` set for server-side dynamic notifications. `content-site`
-and `tools-site` additionally require `SEKAI_MASTER_API_BASE_URL`; `content-site`
-also requires `PUBLIC_REMOTE_ASSET_BASE_URL`. Review the default i18n URL and all other
+`SEKAI_API_BASE_URL` set for server-side dynamic notifications. `content-site`,
+`tools-site`, and `media-lab-site` additionally require
+`SEKAI_MASTER_API_BASE_URL`; `content-site` also requires
+`PUBLIC_REMOTE_ASSET_BASE_URL`. Review the default i18n URL and all other
 application settings as well. Keep this operator-owned file outside the chart
 if it contains environment-specific or sensitive configuration.
 
@@ -94,6 +95,7 @@ helm template viewer deploy/helm/sekai-viewer-reborn \
   --set-string apps.tools-site.env.SEKAI_API_BASE_URL=https://api.example.com \
   --set-string apps.tools-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
   --set-string apps.media-lab-site.env.SEKAI_API_BASE_URL=https://api.example.com \
+  --set-string apps.media-lab-site.env.SEKAI_MASTER_API_BASE_URL=https://master-api.example.com \
   --set-string apps.account-site.env.SEKAI_API_BASE_URL=https://api.example.com
 ```
 
@@ -158,9 +160,11 @@ Ko-fi buttons on its support page. Empty or invalid provider URLs hide their
 buttons. All three support URLs default to empty. Values are quoted when
 rendered, so an intentionally empty value remains an empty string. Every app
 declares an empty `SEKAI_API_BASE_URL`
-default for server-side dynamic notifications. `tools-site` also declares an
-empty `SEKAI_MASTER_API_BASE_URL` for the server-side event tracker;
-`media-lab-site` and `account-site` have no additional API URL defaults.
+default for server-side dynamic notifications. `content-site`, `tools-site`,
+and `media-lab-site` also declare an empty `SEKAI_MASTER_API_BASE_URL` for
+master-data reads: `tools-site` uses it for the server-side event tracker, and
+`media-lab-site` requires it for the story feature and uses it for Live2D
+character names; `account-site` has no additional API URL defaults.
 `envFrom` and `extraEnv` are available per application for straightforward
 Secret/ConfigMap references and additional environment entries.
 
