@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const live2dFetchMock = vi.hoisted(() => vi.fn());
-vi.mock("./player/rate-limited-fetch", () => ({
+vi.mock("@platform/live2d-story-player/core", () => ({
   live2dFetch: live2dFetchMock
 }));
 

@@ -303,52 +303,97 @@ media-lab-only changes, keep the adapter in
 interfaces so it can move into `packages/*` without another architecture
 rewrite.
 
-### Proposed imperative API
+### Current imperative API and browser composition
 
-Names are illustrative; the important property is that no API type mentions
-React, MUI, or a global store. The lifecycle verbs used later in Phase 4 and
-the acceptance checklist (`load`, `play`, `pause`, `reload`) are conceptual
-shorthands over this surface — for example, `playUntilCheckpoint()` is the
-checkpoint-scoped form of `play`.
+The package root exports a synchronous `createStoryPlayer(options)` factory.
+It returns a lifecycle handle immediately; its `initialize(signal, generation)`
+callback creates the asynchronous runtime only when `load()` is called. The
+handle exposes `subscribe`, `load`, `retry`, `nextStep`, `prevStep`, `abort`,
+autoplay/volume/text-animation settings, `resize`, and `destroy`.
 
 ```ts
-const player = await createLive2DStoryPlayer({
-  canvas,
-  size: [width, height],
-  controllerData,
-  assets: assetAdapter,
-  text: textResolver,
-  audio: audioAdapter,
-  onProgress,
-  onWarning
+const player = createStoryPlayer({
+  initialize: async (signal, generation) => createRuntime(signal, generation),
+  autoplay,
+  onStateChange
 });
 
-await player.loadInitialModels();
-await player.playUntilCheckpoint();
+const unsubscribe = player.subscribe((snapshot) => render(snapshot));
+await player.load();
+await player.retry();
 player.abort();
-player.resize(width, height);
-player.setSettings(settings);
 player.destroy();
 ```
 
-The final API should also provide a state/event stream for `ready`, `loading`,
-`loaded`, `playing`, `waiting`, `finished`, and `error`. Autoplay should be a
-command or scheduler option, not a React effect that races with `playing` state.
+Subscriptions synchronously receive the current snapshot, including a retained
+load error for a subscriber that arrives after failure. Concurrent `load()`
+calls share one promise; a failed load remains in `error` until `retry()` starts a
+new generation. Aborting a pending load invalidates that attempt, and destroying
+the handle aborts active work and disposes its runtime once. If an asynchronous
+initializer resolves after cancellation or replacement, the obsolete runtime
+is destroyed instead of being adopted. The host owns state presentation; the
+core reports state and the error rather than rendering an error UI.
 
-### Dependency injection requirements
+`media-lab-site` composes that lifecycle through the browser-only
+`createStoryPlayerSession`. The Svelte `StoryPlayerHost` is a thin host wrapper:
+it imports the session from `onMount`, stores the synchronous session handle
+before awaiting `load()`, subscribes to its replayable state, retries after an
+error, forwards resize/settings and destroys the session during teardown. The
+session first loads the Cubism Core helper and then dynamically imports
+`@platform/live2d-story-player/pixi`; it also supplies the app-resolved scenario
+media URLs, UI assets, model source, and host callbacks. Cubism and Pixi runtime
+construction therefore stays on the client path rather than in route SSR.
 
-At minimum, inject:
+The package exposes separate root, `/core`, and `/pixi` entry points. The `/pixi`
+entry point provides `createPixiStoryRuntime` and the Pixi controller/runtime
+types. Its options accept a host element, stage size, scenario data, already
+resolved scenario/UI asset descriptors, and a model source. Optional runtime
+capabilities include custom image/video/audio resource adapters, `fetch` and
+request functions, a loader logger, an audio/lip-sync adapter, a talk/telop/full-
+screen-text resolver, and application/controller factories. Asset URL policy
+and Sekai-specific model lookup remain host responsibilities.
 
-- `resolveAsset(path, region, kind)` for MinIO/CDN URLs;
-- `fetchJson`/`fetchBinary` or a model/media loader;
-- `createImage`, `createVideo`, and `createSound` for browser media;
-- `getTalkText(referenceIndex, originalText)` for translation/display policy;
-- `logger` and warning reporting;
-- UI asset URLs;
-- optional audio/lip-sync implementation.
+The Pixi runtime owns its application/canvas, controller, and loaded scenario
+media after initialization. The loaded scenario resource transfers a single
+`dispose` function to the runtime; teardown destroys the controller, releases
+those media resources, destroys the Pixi application, and removes its canvas.
+Failed or aborted initialization also runs cleanup, including waiting for late
+application/controller creation so those resources can be released. The core
+then disposes any late runtime returned by a cancelled initializer.
 
-The core may still depend on Pixi and the custom Live2D package. “Framework
-neutral” here means renderer-host neutral, not DOM-free or server-side renderable.
+The optional audio/lip-sync, logger, and text-resolver seams are wired into
+`createPixiStoryRuntime` in `packages/live2d-story-player/src/adapters/pixi/story-runtime.ts`:
+`audioAdapter` (or `loadOptions.audioAdapter`) and `logger` are propagated to
+media loading and the controller, `textResolver` is attached to the controller,
+and `callbacks.onTextResolved` forwards the controller's `textResolved` event.
+The resolver receives `talk_${index}`, `telop_${index}`, or
+`fullscreen_texts_${index}` for the `talk`, `telop`, or `fullscreen` kind. Each
+event contains `{ kind, index, original, resolved }`, where `resolved` has
+`displayText` and `translatedText`; without a resolver, the original text is
+displayed and `translatedText` is `null`.
+
+```ts
+const runtime = await createPixiStoryRuntime(
+  {
+    ...runtimeOptions,
+    audioAdapter: hostAudioAdapter,
+    logger: hostLogger,
+    textResolver: {
+      resolve: (key, originalText) => resolveStoryText(key, originalText)
+    },
+    callbacks: {
+      ...runtimeOptions.callbacks,
+      onTextResolved: ({ kind, index, original, resolved }) => {
+        reportTextResolution({ kind, index, original, resolved });
+      }
+    }
+  },
+  signal
+);
+```
+
+“Framework neutral” here means renderer-host neutral, not DOM-free or
+server-side renderable.
 
 ## Target-specific roadmap
 
@@ -505,23 +550,39 @@ Exit criteria:
 Goal: move playback behavior, not page concerns, into
 `@platform/live2d-story-player`.
 
+Current status: the lifecycle package, Pixi runtime, and media-lab session/host
+composition are implemented. The package's 212 tests and build, and the
+media-lab app's 404 tests, check, lint, and build passed. The package's current
+full-source coverage report is 89.89% lines and 77.30% branches. Automated
+parity checks cover the audio adapter, injected logger, and resolved
+talk/telop/fullscreen text events.
+The dynamic-import warning and all adapter-node empty server-chunk warnings are
+fixed. The adapter regression check covers all four app builds, SSR entry and
+route-node imports, unprefixed runtime environment variables, and content-site
+client retention for EventDebugDialog and Howler. Package and media-lab checks,
+lint, tests, and builds pass; Phase 3's package extraction exit criteria are
+met. Real-browser WebGL verification was
+outside issue #259's non-WebGL test scope and remains part of the later browser
+integration/parity work.
+
 - Move the controller, layers, animations, actions, types, model-data
   normalization, checkpoint scheduler, and motion pruning into the package.
 - Replace imports of legacy types, `urls.ts`, `rootStore`, translation cache,
   and utility barrels with package types and injected adapters.
-- Inject `AssetResolver`, `MediaLoader`, `AudioAdapter`, `TextResolver`,
-  `Logger`, and progress/warning callbacks. The text resolver must cover talk,
-  telop, and full-screen text.
+- Keep host-owned asset URL/model lookup separate from the package. The Pixi
+  runtime wires optional audio/lip-sync, logger, and text-resolver capabilities;
+  automated parity checks cover text resolution for talk, telop, and full-screen
+  text.
 - Preserve checkpoint semantics, effect order, six-model default queue,
-  `ParamMouthOpenY` lip sync behavior, and cleanup behavior for the first
-  release.
+  `ParamMouthOpenY` lip sync behavior, legacy truthiness-based volume behavior,
+  and cleanup behavior for the first release.
 - Make `load`, `abort`, and `destroy` idempotent. Every failed preload must
-  record a terminal failure in observable state that survives host remounts —
-  a one-shot event alone is insufficient because a remounted host can miss it —
-  and release partially created resources; rendering that error stays in the
-  React or Svelte host.
-- Add non-WebGL tests for checkpoint grouping, model queue generation, motion
-  pruning, action dispatch, volume mapping, and abort/cleanup behavior.
+  record a terminal failure in the player's observable snapshot so a later
+  subscriber to that handle receives it; a one-shot event alone is insufficient
+  when subscription happens after failure. Release partially created resources;
+  rendering that error stays in the React or Svelte host.
+- Add focused tests for checkpoint grouping, model queue generation, motion
+  pruning, action dispatch, legacy volume mapping, and abort/cleanup behavior.
 - Keep a thin React compatibility adapter only as a parity harness. It is not
   the migration destination and must not leak React types into the package.
 
@@ -642,9 +703,12 @@ second monolith.
 - **Progress/error semantics:** media preload may return only successfully loaded
   assets, while model asset preload throws if any task fails. Normalize this into
   one explicit error policy in the new loader.
-- **Volume semantics:** the current controller uses truthy checks, so setting a
-  volume to zero is not equivalent to muting, and BGM volume is scaled during
-  updates. Define absolute volume semantics in the new API and test them.
+- **Volume semantics:** `Live2DController.set_volume()` uses truthy checks when
+  applying channel changes. An explicit zero updates the stored setting but
+  skips immediate volume application to already-playing sounds; nonzero BGM
+  updates are scaled by `0.5`. Preserve this behavior for initial legacy parity;
+  treat any change to zero-volume or BGM scaling semantics as a separate
+  compatibility decision.
 - **Unsupported actions:** preserve warnings and behavior for unsupported snippet
   and effect types until compatibility requirements decide otherwise.
 - **Asset policy:** preserve region-aware scenario/voice rules and lowercase/path
@@ -700,3 +764,8 @@ paths are repository-relative to this monorepo root.
 - Target shared shell: `packages/ui-shell/src/`
 - Target master API exports: `packages/sekai-master-api-sdk/src/index.ts`
 - Target i18n source package: `packages/i18n-source/`
+- Story Player lifecycle and replayable state: `packages/live2d-story-player/src/core/story-player.ts`
+- Pixi runtime capabilities and resource ownership: `packages/live2d-story-player/src/adapters/pixi/story-runtime.ts`
+- Pixi media, audio, and loader seams: `packages/live2d-story-player/src/adapters/pixi/adapter-types.ts`, `audio-adapter.ts`, and `load.ts`
+- Media-lab session composition: `apps/media-lab-site/src/lib/story/story-player-session.ts`
+- Media-lab host lifecycle: `apps/media-lab-site/src/lib/components/story-reader/StoryPlayerHost.svelte`
