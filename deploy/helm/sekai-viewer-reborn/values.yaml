@@ -45,6 +45,12 @@ affinity:
 tolerations: []
 nodeSelector: {}
 
+# Optional registry credentials for pulling the application images, e.g.
+#   imagePullSecrets:
+#     - name: my-registry-secret
+# Applied to every enabled application's pod spec.
+imagePullSecrets: []
+
 pdb:
   enabled: true
   minAvailable: 1

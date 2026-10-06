@@ -45,6 +45,10 @@ not different applications in the suite, by replacing the reserved
 rendered. An operator replacing `affinity` can provide its own cluster-specific
 scheduling policy without Helm evaluating that value as a template.
 
+Optional image pull secrets are configured through the top-level
+`imagePullSecrets` list, for example `- name: my-registry-secret`. When set,
+they are applied to every enabled application's pod spec.
+
 Render and lint the chart before applying it:
 
 ```bash
