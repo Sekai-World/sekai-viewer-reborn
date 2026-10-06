@@ -45,6 +45,12 @@ affinity:
 tolerations: []
 nodeSelector: {}
 
+# Optional registry credentials for pulling the application images, e.g.
+#   imagePullSecrets:
+#     - name: my-registry-secret
+# Applied to every enabled application's pod spec.
+imagePullSecrets: []
+
 pdb:
   enabled: true
   minAvailable: 1
@@ -114,9 +120,12 @@ apps:
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # media-lab-site reads SEKAI_API_BASE_URL for server-side dynamic
-    # notifications. Set this empty value before deploying.
+    # notifications. It also reads SEKAI_MASTER_API_BASE_URL for the story
+    # feature (required at request time) and Live2D character names. Set these
+    # empty values before deploying.
     env:
       SEKAI_API_BASE_URL: ""
+      SEKAI_MASTER_API_BASE_URL: ""
       PUBLIC_SUPPORT_PAGE_URL: ""
     envFrom: []
     extraEnv: []
