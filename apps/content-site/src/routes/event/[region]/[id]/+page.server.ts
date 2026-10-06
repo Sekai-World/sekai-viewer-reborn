@@ -8,6 +8,7 @@ import { getServerI18nText } from "$lib/i18n/runtime";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
+import { loadDiscordEmbedLabels } from "$lib/server/discord-embed-labels";
 import {
   parseEventAggregateRelatedData,
   parseEventDetail,
@@ -16,6 +17,18 @@ import {
 } from "$lib/server/event-detail";
 import type { EventHonorBonus, EventRelatedData } from "$lib/domain/event-detail";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
+import { getEventBannerAssetURL } from "$lib/assets/index";
+import { createPageTitle } from "$lib/page-title";
+import {
+  buildCanonicalUrl,
+  buildDiscordEmbedSeo,
+  buildEventMetaLine,
+  isDiscordCrawler,
+  isSEOCrawler,
+  resolveEmbedImageUrl,
+  resolveSeoWithBudget,
+  type DiscordEmbedSeo
+} from "$lib/seo/discord-embed";
 import type { PageServerLoad } from "./$types";
 
 type EventPayload = {
@@ -280,7 +293,7 @@ const fetchIsCurrentEvent = async ({
   return (await aggregatePromise).isCurrentEvent;
 };
 
-export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
+export const load: PageServerLoad = async ({ params, url, request, cookies, fetch }) => {
   const eventId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
   const [
@@ -307,19 +320,57 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
         rawPayloadJson: null
       } satisfies EventAggregateLookup);
 
+  // Server-render the link preview for link-preview crawlers (no JS execution);
+  // browsers keep the streaming path. The budget guard keeps slow upstream
+  // responses (the event aggregate can take 20s+) from blowing Discord's
+  // 10s unfurl window.
+  let seo: DiscordEmbedSeo | null = null;
+  if (isSEOCrawler(request?.headers.get("user-agent")) && eventId) {
+    const labelsPromise = loadDiscordEmbedLabels(uiLocale, fetch);
+    seo = await resolveSeoWithBudget(async () => {
+      const [aggregate, labels] = await Promise.all([aggregatePromise, labelsPromise]);
+      if (!aggregate.event) {
+        return null;
+      }
+      const event = aggregate.event;
+      return buildDiscordEmbedSeo({
+        pageTitle: createPageTitle(event.title, labels.titleEvents),
+        title: event.title,
+        metaLine: buildEventMetaLine(
+          {
+            title: event.title,
+            unitName: event.unitName ?? event.unit,
+            eventType: event.eventType
+          },
+          labels
+        ),
+        description: aggregate.relatedData?.musics?.[0]?.title
+          ? labels.featuring.replace(
+              "{title}",
+              () => aggregate.relatedData?.musics?.[0]?.title ?? ""
+            )
+          : null,
+        imageUrl: resolveEmbedImageUrl(
+          event.assetBundleName,
+          (name) => getEventBannerAssetURL(name, region),
+          url?.origin
+        ),
+        canonicalUrl: buildCanonicalUrl(url?.origin, url?.pathname, false),
+        openLabel: labels.open,
+        includeComponent: isDiscordCrawler(request?.headers.get("user-agent"))
+      });
+    });
+  }
+
   return {
     eventId,
     region,
     regionLabel: regionLabels[region],
+    seo,
     eventUnavailableInCurrentRegionMessage,
     failedToLoadEventDataMessage,
     availableRegions: eventId
-      ? fetchAvailableRegions({
-          baseUrl,
-          eventId,
-          region,
-          aggregatePromise
-        })
+      ? fetchAvailableRegions({ baseUrl, eventId, region, aggregatePromise })
       : Promise.resolve([region] satisfies SupportedRegion[]),
     eventPayload: fetchEventPayload({
       aggregatePromise,

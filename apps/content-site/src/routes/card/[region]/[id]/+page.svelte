@@ -23,6 +23,7 @@
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import type { SupportedRegion } from "$lib/domain/regions";
   import { createPageTitle } from "$lib/page-title";
+  import DiscordEmbedHead from "$lib/components/shared/DiscordEmbedHead.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -36,7 +37,8 @@
 
   let debugDialog: HTMLDialogElement | null = $state(null);
   let displayLocale = $state("");
-  let activeAssetTab = $state<CardAssetTab>("normal");
+  // This one is a $derived because sveltekit reuses the component and the data may change.
+  let activeAssetTab = $derived<CardAssetTab>(data.trained ? "trained" : "normal");
   let homeLabel = $state(getInitialI18nText("home"));
   let cardListTitle = $state(getInitialI18nText("navigation.cards"));
   let pageTitlePrefix = $state(getInitialI18nText("pageTitle.cardPrefix"));
@@ -343,17 +345,21 @@
 {/snippet}
 
 <svelte:head>
-  {#await data.cardPayload}
-    <title>{createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}</title>
-  {:then payload}
-    <title>
-      {payload.card
-        ? createPageTitle(payload.card.title, currentTranslate("navigation.cards"))
-        : createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}
-    </title>
-  {:catch}
-    <title>{createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}</title>
-  {/await}
+  {#if data.seo}
+    <DiscordEmbedHead seo={data.seo} />
+  {:else}
+    {#await data.cardPayload}
+      <title>{createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}</title>
+    {:then payload}
+      <title>
+        {payload.card
+          ? createPageTitle(payload.card.title, currentTranslate("navigation.cards"))
+          : createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}
+      </title>
+    {:catch}
+      <title>{createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}</title>
+    {/await}
+  {/if}
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-4 px-2">
