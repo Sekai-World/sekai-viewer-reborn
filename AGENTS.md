@@ -188,6 +188,16 @@ When changing shared packages:
 - Avoid introducing new hardcoded user-facing strings directly in `apps/content-site` when they should be localized.
 - Locale and region metadata live in `apps/content-site/src/lib/i18n-config.ts` and `apps/content-site/src/lib/regions.ts`.
 
+## `content-site` Release Notes / Update Notices
+
+- Before publishing or deploying a new `content-site` version, add its entry to the beginning of `siteUpdates` in `apps/content-site/src/lib/site-updates.ts`, retaining older entries.
+- Add the entry's title, summary, and change-list text to `packages/i18n-source/content-site/common.json` using the matching `updates.release.<version>.*` keys. Follow the existing i18n sync workflow for translations.
+- After Changesets versioning, verify that the newest update-log entry's version exactly matches `apps/content-site/package.json` before building release images. Do not publish a version bump without its corresponding notes, including releases caused by shared-package changes.
+- The `/updates` page reads this curated array and its i18n keys; it does not automatically ingest Changesets, `CHANGELOG.md`, or GitHub Releases. Updating those alone does not update the in-app log.
+- Run `pnpm i18n:check` and the relevant `content-site` checks/tests; manually verify the new entry in `/updates` and the version notice with browser state from a previous version.
+- Treat missing release entries, missing copy, or version mismatches as release blockers; do not rely on the runtime fallback to show older notes for a new version. This is a release checklist requirement, not an existing automatic CI guard.
+- In-app onboarding, version notices, and update logs are currently implemented only in `content-site`; Changeset coverage for other consuming apps does not imply feature coverage there.
+
 ## `content-site` Environment Variables
 
 - Server-side master API requests require `SEKAI_MASTER_API_BASE_URL`.

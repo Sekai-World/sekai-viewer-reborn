@@ -2,7 +2,7 @@
   import "../app.css";
   import "$lib/icons/mdi";
   import { asset, resolve } from "$app/paths";
-  import { invalidateAll } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import {
@@ -13,8 +13,10 @@
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
   import MobileQuickNavigation from "$lib/components/MobileQuickNavigation.svelte";
-  import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
-  import { onMount, type Snippet } from "svelte";
+  import OnboardingDialog from "$lib/components/OnboardingDialog.svelte";
+  import SiteUpdateNotice from "$lib/components/SiteUpdateNotice.svelte";
+  import { GlobalNotificationBanner, ViewerShell } from "@platform/ui-shell";
+  import { onMount, tick, type Snippet } from "svelte";
   import {
     createI18nTranslator,
     resolveStreamingMessages,
@@ -37,6 +39,13 @@
     setTitlePreviewLabels,
     type TitlePreviewLabels
   } from "$lib/components/shared/title-preview-labels";
+  import {
+    readOnboardingSeen,
+    readSeenSiteVersion,
+    writeOnboardingSeen,
+    writeSeenSiteVersion
+  } from "$lib/onboarding";
+  import { getSiteUpdateForVersion, resolveSiteVersion } from "$lib/site-updates";
   import type { LayoutData } from "./$types";
 
   type ThemeMode = "light" | "dark" | "auto";
@@ -45,6 +54,22 @@
   type UiLocaleOption = {
     code: SupportedUiLocale;
   };
+  type SidebarGroupId = "library" | "activities" | "progression" | "mysekai" | "project";
+  type ContentSiteSidebarItem =
+    | {
+        type?: "link";
+        label: string;
+        href?: string;
+        active?: boolean;
+        icon?: string;
+        disabled?: boolean;
+        groupId?: SidebarGroupId;
+      }
+    | {
+        type: "section";
+        label: string;
+        groupId: SidebarGroupId;
+      };
 
   const THEME_STORAGE_KEY = "content_site_theme_mode";
   const THEME_NAME_STORAGE_KEY = "content_site_theme_name";
@@ -153,6 +178,9 @@
     mint: getInitialI18nText("themeName.mint")
   });
   let showBackToTop = $state(false);
+  let hasSeenOnboarding = $state(false);
+  let isOnboardingDialogOpen = $state(false);
+  let seenSiteVersion = $state<string | null>(null);
   let backToTopAnimationFrame = 0;
   let contentDisplaySettings = $state<ContentDisplaySettingsState>({
     showSpoilerContent: false,
@@ -212,6 +240,7 @@
     href: string;
     active: boolean;
     icon: string;
+    groupId?: SidebarGroupId;
   };
 
   const navigationLinks = $derived<ContentSiteNavigationItem[]>([
@@ -234,31 +263,36 @@
       active:
         page.url.pathname.startsWith("/characters/") ||
         page.url.pathname.startsWith("/character/") ||
-        page.url.pathname.startsWith("/unit/")
+        page.url.pathname.startsWith("/unit/"),
+      groupId: "library"
     },
     {
       label: cardsLabel,
       icon: "mdi:cards-outline",
       href: getCardsNavigationHref(),
-      active: page.url.pathname.startsWith("/cards/")
+      active: page.url.pathname.startsWith("/cards/"),
+      groupId: "library"
     },
     {
       label: songsLabel,
       icon: "mdi:music-note-outline",
       href: `/musics/${sidebarRegion}`,
-      active: page.url.pathname.startsWith("/music/") || page.url.pathname.startsWith("/musics/")
+      active: page.url.pathname.startsWith("/music/") || page.url.pathname.startsWith("/musics/"),
+      groupId: "library"
     },
     {
       label: eventsLabel,
       href: `/events/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/events/") || page.url.pathname.startsWith("/event/"),
-      icon: "mdi:calendar-star"
+      icon: "mdi:calendar-star",
+      groupId: "activities"
     },
     {
       label: gachasLabel,
       href: `/gachas/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/gachas/") || page.url.pathname.startsWith("/gacha/"),
-      icon: "mdi:gift-outline"
+      icon: "mdi:gift-outline",
+      groupId: "activities"
     },
     {
       label: virtualLivesLabel,
@@ -266,57 +300,66 @@
       href: `/virtual-lives/${sidebarRegion}`,
       active:
         page.url.pathname.startsWith("/virtual-lives/") ||
-        page.url.pathname.startsWith("/virtual-live/")
+        page.url.pathname.startsWith("/virtual-live/"),
+      groupId: "activities"
     },
     {
       label: supportLabel,
       href: resolve("/support"),
       active: page.url.pathname === resolve("/support"),
-      icon: "mdi:hand-heart"
+      icon: "mdi:hand-heart",
+      groupId: "project"
     }
   ]);
-  const sidebarItems = $derived<SidebarItem[]>([
+  const sidebarItems = $derived<ContentSiteSidebarItem[]>([
     navigationLinks[0],
     navigationLinks[1],
     {
       type: "section",
-      label: libraryLabel
+      label: libraryLabel,
+      groupId: "library"
     },
     navigationLinks[2],
     navigationLinks[3],
     navigationLinks[4],
     {
       type: "section",
-      label: activitiesLabel
+      label: activitiesLabel,
+      groupId: "activities"
     },
     navigationLinks[5],
     navigationLinks[6],
     navigationLinks[7],
     {
       type: "section",
-      label: progressionLabel
+      label: progressionLabel,
+      groupId: "progression"
     },
     {
       label: missionsLabel,
       href: `/missions/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/missions/"),
-      icon: "mdi:playlist-check"
+      icon: "mdi:playlist-check",
+      groupId: "progression"
     },
     {
       label: honorsLabel,
       href: `/honors/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/honors/"),
-      icon: "mdi:medal-outline"
+      icon: "mdi:medal-outline",
+      groupId: "progression"
     },
     {
       label: stampsLabel,
       href: `/stamps/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/stamps/"),
-      icon: "mdi:sticker-emoji"
+      icon: "mdi:sticker-emoji",
+      groupId: "progression"
     },
     {
       type: "section",
-      label: mysekaiLabel
+      label: mysekaiLabel,
+      groupId: "mysekai"
     },
     {
       label: mysekaiFixturesLabel,
@@ -324,7 +367,8 @@
       active:
         page.url.pathname.startsWith("/mysekai/fixtures/") ||
         page.url.pathname.startsWith("/mysekai/fixture/"),
-      icon: "mdi:sofa-outline"
+      icon: "mdi:sofa-outline",
+      groupId: "mysekai"
     },
     {
       label: mysekaiMaterialsLabel,
@@ -332,23 +376,27 @@
       active:
         page.url.pathname.startsWith("/mysekai/materials/") ||
         page.url.pathname.startsWith("/mysekai/material/"),
-      icon: "mdi:pine-tree-variant-outline"
+      icon: "mdi:pine-tree-variant-outline",
+      groupId: "mysekai"
     },
     {
       label: mysekaiSoundtracksLabel,
       href: `/mysekai/soundtracks/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/mysekai/soundtracks/"),
-      icon: "mdi:album"
+      icon: "mdi:album",
+      groupId: "mysekai"
     },
     {
       label: mysekaiShopLabel,
       href: `/mysekai/shop/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/mysekai/shop/"),
-      icon: "mdi:storefront-outline"
+      icon: "mdi:storefront-outline",
+      groupId: "mysekai"
     },
     {
       type: "section",
-      label: projectLabel
+      label: projectLabel,
+      groupId: "project"
     },
     navigationLinks[navigationLinks.length - 1]
   ]);
@@ -361,10 +409,107 @@
     navigationLinks[6]
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");
+  const isHomeRoute = $derived(page.url.pathname === resolve("/"));
   const layoutTranslate = $derived(createI18nTranslator(uiLocale, currentLayoutMessages));
+  const siteVersion = $derived(resolveSiteVersion(data.siteVersion));
+  const activeSiteUpdate = $derived(getSiteUpdateForVersion(siteVersion));
+  const showSiteUpdateNotice = $derived(
+    hasSeenOnboarding && !isOnboardingDialogOpen && seenSiteVersion !== siteVersion
+  );
   const themeModeLabel = $derived(layoutTranslate(`themeMode.${themeMode}`, themeMode));
   const resolvedThemeLabel = $derived(layoutTranslate(`themeMode.${resolvedTheme}`, resolvedTheme));
   const uiLocaleDisplayLabel = $derived(`${uiLocaleNameByCode[uiLocale]}(${uiLocale})`);
+  const onboardingSteps = $derived([
+    ...(isHomeRoute
+      ? [
+          {
+            icon: "mdi:calendar-star",
+            target: "home-current-events",
+            title: layoutTranslate("onboarding.steps.home.currentEvents.title"),
+            description: layoutTranslate("onboarding.steps.home.currentEvents.description")
+          },
+          {
+            icon: "mdi:clock-outline",
+            target: "home-latest-data",
+            title: layoutTranslate("onboarding.steps.home.latestData.title"),
+            description: layoutTranslate("onboarding.steps.home.latestData.description")
+          },
+          {
+            icon: "mdi:information-outline",
+            target: "home-game-news",
+            title: layoutTranslate("onboarding.steps.home.gameNews.title"),
+            description: layoutTranslate("onboarding.steps.home.gameNews.description")
+          },
+          {
+            icon: "mdi:view-grid-outline",
+            target: "home-catalogue-directory",
+            title: layoutTranslate("onboarding.steps.home.catalogueDirectory.title"),
+            description: layoutTranslate("onboarding.steps.home.catalogueDirectory.description")
+          }
+        ]
+      : [
+          {
+            icon: "mdi:home-variant-outline",
+            target: "home-entry",
+            title: layoutTranslate("onboarding.steps.home.entryTitle"),
+            description: layoutTranslate("onboarding.steps.home.entryDescription")
+          }
+        ]),
+    {
+      icon: "mdi:cards-outline",
+      target: "sidebar-library",
+      title: layoutTranslate("onboarding.steps.sidebar.library.title"),
+      description: layoutTranslate("onboarding.steps.sidebar.library.description")
+    },
+    {
+      icon: "mdi:calendar-star",
+      target: "sidebar-activities",
+      title: layoutTranslate("onboarding.steps.sidebar.activities.title"),
+      description: layoutTranslate("onboarding.steps.sidebar.activities.description")
+    },
+    {
+      icon: "mdi:playlist-check",
+      target: "sidebar-progression",
+      title: layoutTranslate("onboarding.steps.sidebar.progression.title"),
+      description: layoutTranslate("onboarding.steps.sidebar.progression.description")
+    },
+    {
+      icon: "mdi:map-search-outline",
+      target: "sidebar-mysekai",
+      title: layoutTranslate("onboarding.steps.sidebar.mysekai.title"),
+      description: layoutTranslate("onboarding.steps.sidebar.mysekai.description")
+    },
+    {
+      icon: "mdi:hand-heart",
+      target: "sidebar-project",
+      title: layoutTranslate("onboarding.steps.sidebar.project.title"),
+      description: layoutTranslate("onboarding.steps.sidebar.project.description")
+    },
+    {
+      icon: "mdi:cog-outline",
+      target: "settings",
+      title: layoutTranslate("onboarding.steps.settings.title"),
+      description: layoutTranslate("onboarding.steps.settings.description")
+    },
+    {
+      icon: "mdi:earth",
+      target: "region",
+      title: layoutTranslate("onboarding.steps.region.title"),
+      description: layoutTranslate("onboarding.steps.region.description")
+    },
+    {
+      icon: "mdi:palette-outline",
+      target: "theme",
+      title: layoutTranslate("onboarding.steps.theme.title"),
+      description: layoutTranslate("onboarding.steps.theme.description")
+    },
+    {
+      icon: "mdi:translate",
+      target: "language",
+      title: layoutTranslate("onboarding.steps.language.title"),
+      description: layoutTranslate("onboarding.steps.language.description")
+    }
+  ]);
 
   $effect(() => {
     const requestId = ++translationRequestId;
@@ -572,7 +717,12 @@
         window.matchMedia("(prefers-reduced-motion: reduce)").matches,
       ongoingFirst: true
     };
-    const storedSettings = localStorage.getItem(CONTENT_DISPLAY_STORAGE_KEY);
+    let storedSettings: string | null;
+    try {
+      storedSettings = localStorage.getItem(CONTENT_DISPLAY_STORAGE_KEY);
+    } catch {
+      return defaultSettings;
+    }
 
     if (!storedSettings) {
       return defaultSettings;
@@ -601,15 +751,19 @@
   };
 
   const persistContentDisplaySettings = (): void => {
-    localStorage.setItem(
-      CONTENT_DISPLAY_STORAGE_KEY,
-      JSON.stringify({
-        showSpoilerContent: contentDisplaySettings.showSpoilerContent,
-        mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent,
-        lowMotionMode: contentDisplaySettings.lowMotionMode,
-        ongoingFirst: contentDisplaySettings.ongoingFirst
-      })
-    );
+    try {
+      localStorage.setItem(
+        CONTENT_DISPLAY_STORAGE_KEY,
+        JSON.stringify({
+          showSpoilerContent: contentDisplaySettings.showSpoilerContent,
+          mosaickedSpoilerContent: contentDisplaySettings.mosaickedSpoilerContent,
+          lowMotionMode: contentDisplaySettings.lowMotionMode,
+          ongoingFirst: contentDisplaySettings.ongoingFirst
+        })
+      );
+    } catch {
+      // Storage can be unavailable in privacy-restricted browsing contexts.
+    }
   };
 
   const applyMotionPreference = (): void => {
@@ -658,7 +812,219 @@
   };
 
   const setPreferredRegion = (region: SupportedRegion): void => {
-    persistPreferredRegion(region);
+    try {
+      persistPreferredRegion(region);
+    } catch {
+      preferredRegion = normalizeRegion(region, DEFAULT_REGION);
+    }
+  };
+
+  const closeSettingsMenus = (): void => {
+    isDesktopSettingsMenuOpen = false;
+    isDesktopThemeMenuOpen = false;
+    isMobileSettingsMenuOpen = false;
+    isLocaleMenuOpen = false;
+  };
+
+  const openOnboarding = (): void => {
+    closeSettingsMenus();
+    isOnboardingDialogOpen = true;
+  };
+
+  let onboardingSession: {
+    drawerOpen: boolean;
+    scrollX: number;
+    scrollY: number;
+    drawerScrollTop: number;
+  } | null = null;
+  let onboardingPreparation = 0;
+
+  const getOnboardingDrawer = (): HTMLInputElement | null =>
+    document.getElementById(CONTENT_SITE_DRAWER_ID) as HTMLInputElement | null;
+
+  const setOnboardingDrawer = (checked: boolean): void => {
+    const drawer = getOnboardingDrawer();
+    if (!drawer || drawer.checked === checked) return;
+    drawer.checked = checked;
+    drawer.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+
+  const isOnboardingTargetVisible = (target: HTMLElement): boolean => {
+    const rect = target.getBoundingClientRect();
+    const style = getComputedStyle(target);
+    return (
+      target.getClientRects().length > 0 &&
+      rect.width > 0 &&
+      rect.height > 0 &&
+      rect.bottom > 0 &&
+      rect.top < window.innerHeight &&
+      rect.right > 0 &&
+      rect.left < window.innerWidth &&
+      style.visibility !== "hidden" &&
+      style.display !== "none"
+    );
+  };
+
+  const getOnboardingSidebarGroupId = (target: string): SidebarGroupId | null => {
+    const groupId = target.startsWith("sidebar-") ? target.slice("sidebar-".length) : "";
+    return ["library", "activities", "progression", "mysekai", "project"].includes(groupId)
+      ? (groupId as SidebarGroupId)
+      : null;
+  };
+
+  // Resolve shared shell targets by its stable panel ID and real group markers.
+  // No translated labels, DOM indexes, or temporary mutations are needed.
+  const resolveOnboardingTarget = (target: string): HTMLElement | readonly HTMLElement[] | null => {
+    if (target === "home-entry") {
+      const panel = document.getElementById(`${CONTENT_SITE_DRAWER_ID}-panel`);
+      return (
+        [...(panel?.querySelectorAll<HTMLElement>("a[href]") ?? [])].find(
+          (link) => link.getAttribute("href") === resolve("/") && isOnboardingTargetVisible(link)
+        ) ?? null
+      );
+    }
+
+    const groupId = getOnboardingSidebarGroupId(target);
+    if (groupId) {
+      const panel = document.getElementById(`${CONTENT_SITE_DRAWER_ID}-panel`);
+      const groupTargets = [
+        ...(panel?.querySelectorAll<HTMLElement>(`[data-sidebar-group="${groupId}"]`) ?? [])
+      ];
+      return groupTargets.length > 0 ? groupTargets : null;
+    }
+
+    return (
+      [...document.querySelectorAll<HTMLElement>(`[data-onboarding-target="${target}"]`)].find(
+        isOnboardingTargetVisible
+      ) ?? null
+    );
+  };
+
+  const cleanupOnboarding = (): void => {
+    onboardingPreparation += 1;
+    const session = onboardingSession;
+    onboardingSession = null;
+    if (!session) return;
+    setOnboardingDrawer(session.drawerOpen);
+    const drawerScroller = document.getElementById(
+      `${CONTENT_SITE_DRAWER_ID}-panel`
+    )?.parentElement;
+    if (drawerScroller) drawerScroller.scrollTop = session.drawerScrollTop;
+    window.scrollTo({ left: session.scrollX, top: session.scrollY, behavior: "instant" });
+  };
+
+  // Tour-owned menus and drawer never change saved preferences or navigate.
+  const prepareOnboardingStep = async (stepIndex: number): Promise<void> => {
+    if (!isOnboardingDialogOpen) return;
+    const preparation = ++onboardingPreparation;
+    const panel = document.getElementById(`${CONTENT_SITE_DRAWER_ID}-panel`);
+    onboardingSession ??= {
+      drawerOpen: getOnboardingDrawer()?.checked ?? false,
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+      drawerScrollTop: panel?.parentElement?.scrollTop ?? 0
+    };
+    const targetName = onboardingSteps[stepIndex]?.target;
+    closeSettingsMenus();
+    const rail = window.matchMedia("(min-width: 1280px)").matches;
+    const mobile = window.matchMedia("(max-width: 639px)").matches;
+    const needsDrawer =
+      getOnboardingSidebarGroupId(targetName ?? "") !== null ||
+      (targetName === "home-entry" && !rail);
+    if (!rail) setOnboardingDrawer(needsDrawer);
+    if (targetName === "region" || targetName === "theme" || targetName === "language") {
+      if (mobile) isMobileSettingsMenuOpen = true;
+      else if (targetName === "region") isDesktopSettingsMenuOpen = true;
+      else if (targetName === "theme") isDesktopThemeMenuOpen = true;
+      else isLocaleMenuOpen = true;
+    }
+    await tick();
+    // Measure the final drawer position, not its off-screen transition frame.
+    if (needsDrawer && !rail && panel) {
+      await Promise.allSettled(panel.getAnimations().map((animation) => animation.finished));
+    }
+    if (!isOnboardingDialogOpen || preparation !== onboardingPreparation) return;
+    if (targetName?.startsWith("home-")) {
+      const home = document.querySelector<HTMLElement>(`[data-onboarding-target="${targetName}"]`);
+      const rect = home?.getBoundingClientRect();
+      if (
+        home &&
+        rect &&
+        (rect.top < 100 || rect.bottom > window.innerHeight - 100) &&
+        typeof home.scrollIntoView === "function"
+      ) {
+        home.scrollIntoView({ block: "center", behavior: "instant" });
+      }
+    }
+    const groupId = getOnboardingSidebarGroupId(targetName ?? "");
+    if (needsDrawer && groupId && panel) {
+      const groupTargets = [
+        ...panel.querySelectorAll<HTMLElement>(`[data-sidebar-group="${groupId}"]`)
+      ];
+      const scroller = panel.parentElement;
+      if (groupTargets.length > 0 && scroller) {
+        const scrollerRect = scroller.getBoundingClientRect();
+        const firstTop = Math.min(...groupTargets.map((item) => item.getBoundingClientRect().top));
+        const lastBottom = Math.max(
+          ...groupTargets.map((item) => item.getBoundingClientRect().bottom)
+        );
+        const groupHeight = lastBottom - firstTop;
+        const viewportHeight = scroller.clientHeight || scrollerRect.height;
+        const groupFits = groupHeight <= viewportHeight - 32;
+        const targetTop = scrollerRect.top + 16;
+        const targetBottom = scrollerRect.bottom - 16;
+        if (groupFits && firstTop < targetTop) {
+          scroller.scrollTop += firstTop - targetTop;
+        } else if (groupFits && lastBottom > targetBottom) {
+          scroller.scrollTop += lastBottom - targetBottom;
+        } else if (!groupFits && firstTop < targetTop) {
+          scroller.scrollTop += firstTop - targetTop;
+        }
+      }
+    }
+    if (
+      mobile &&
+      (targetName === "region" || targetName === "theme" || targetName === "language")
+    ) {
+      const menu = document.getElementById(MOBILE_SETTINGS_MENU_ID);
+      const target = menu?.querySelector<HTMLElement>(`[data-onboarding-target="${targetName}"]`);
+      if (target && menu) {
+        const menuRect = menu.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        menu.scrollTop += targetRect.top - menuRect.top - 12;
+      }
+    }
+  };
+
+  const restoreOnboardingFocus = (): void => {
+    void tick().then(() => {
+      const mobile = window.matchMedia("(max-width: 639px)").matches;
+      (mobile ? mobileSettingsButton : desktopSettingsButton)?.focus({ preventScroll: true });
+    });
+  };
+
+  const markCurrentSiteVersionSeen = (): void => {
+    writeSeenSiteVersion(siteVersion);
+    seenSiteVersion = siteVersion;
+  };
+
+  const handleOnboardingDismiss = (): void => {
+    writeOnboardingSeen();
+    hasSeenOnboarding = true;
+    isOnboardingDialogOpen = false;
+    closeSettingsMenus();
+    cleanupOnboarding();
+    restoreOnboardingFocus();
+  };
+
+  const handleSettingsUpdatesClick = (): void => {
+    closeSettingsMenus();
+    markCurrentSiteVersionSeen();
+  };
+
+  const navigateToUpdates = (): void => {
+    handleSettingsUpdatesClick();
+    void goto(resolve("/updates"));
   };
 
   const getThemeNameLabel = (themeNameValue: ThemeName): string => {
@@ -768,6 +1134,10 @@
   };
 
   onMount(() => {
+    hasSeenOnboarding = readOnboardingSeen();
+    seenSiteVersion = readSeenSiteVersion();
+    isOnboardingDialogOpen = !hasSeenOnboarding;
+
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
     const preferredThemeName = resolvePreferredThemeName();
@@ -778,7 +1148,11 @@
     themeName = preferredThemeName;
     themeMode = preferredThemeMode;
     resolvedTheme = preferredResolvedTheme;
-    preferredRegion = resolvePreferredRegion();
+    try {
+      preferredRegion = resolvePreferredRegion();
+    } catch {
+      preferredRegion = DEFAULT_REGION;
+    }
     const preferredContentDisplaySettings = resolvePreferredContentDisplaySettings();
     contentDisplaySettings.showSpoilerContent = preferredContentDisplaySettings.showSpoilerContent;
     contentDisplaySettings.mosaickedSpoilerContent =
@@ -805,6 +1179,7 @@
     window.addEventListener("storage", handlePreferredRegionStorageChange);
 
     const handleDocumentClick = (event: MouseEvent): void => {
+      if (isOnboardingDialogOpen) return;
       const target = event.target;
       if (isMobileSettingsMenuOpen) {
         closeDropdownIfClickedOutside(mobileSettingsMenu, target, () => {
@@ -829,6 +1204,7 @@
     };
 
     const handleDocumentKeydown = (event: KeyboardEvent): void => {
+      if (isOnboardingDialogOpen) return;
       if (event.key !== "Escape") {
         return;
       }
@@ -843,6 +1219,7 @@
     document.addEventListener("keydown", handleDocumentKeydown);
 
     return () => {
+      cleanupOnboarding();
       stopLocaleProgressTimers();
       if (backToTopAnimationFrame) {
         window.cancelAnimationFrame(backToTopAnimationFrame);
@@ -893,7 +1270,7 @@
 {/if}
 
 {#snippet regionSelectorSection()}
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-2" data-onboarding-target="region">
     <span class="px-1 text-xs font-semibold opacity-70">{gameContentRegionLabel}</span>
     <div class="flex flex-wrap gap-1">
       {#each supportedRegions as regionOption (regionOption)}
@@ -1024,6 +1401,7 @@
       >
         <button
           bind:this={desktopSettingsButton}
+          data-onboarding-target="settings"
           type="button"
           class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={settingsLabel}
@@ -1049,6 +1427,27 @@
             <div class="my-2 h-px bg-base-content/12"></div>
 
             {@render contentDisplaySection()}
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
+            <div class="flex flex-col gap-1">
+              <a
+                class="btn btn-ghost min-h-11 justify-start gap-2"
+                href={resolve("/updates")}
+                onclick={handleSettingsUpdatesClick}
+              >
+                <Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />
+                {layoutTranslate("settings.viewUpdates")}
+              </a>
+              <button
+                type="button"
+                class="btn btn-ghost min-h-11 justify-start gap-2"
+                onclick={openOnboarding}
+              >
+                <Icon icon="mdi:book-open-page-variant-outline" class="size-4" aria-hidden="true" />
+                {layoutTranslate("settings.openOnboarding")}
+              </button>
+            </div>
           </div>
         {/if}
       </div>
@@ -1076,6 +1475,7 @@
         {#if isDesktopThemeMenuOpen}
           <ul
             id={DESKTOP_THEME_MENU_ID}
+            data-onboarding-target="theme"
             class="menu dropdown-content z-120 mt-3 min-w-max rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-1 shadow-md"
           >
             <li class="menu-title px-2 py-1 text-xs font-semibold opacity-60">
@@ -1157,6 +1557,7 @@
         {#if isLocaleMenuOpen}
           <div
             id={LOCALE_MENU_ID}
+            data-onboarding-target="language"
             class="dropdown-content z-120 mt-3 w-max min-w-44 max-w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
           >
             <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
@@ -1203,6 +1604,7 @@
       >
         <button
           bind:this={mobileSettingsButton}
+          data-onboarding-target="settings"
           type="button"
           class="btn btn-circle btn-sm size-11! min-h-11! btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={settingsLabel}
@@ -1231,7 +1633,7 @@
 
             <div class="my-2 h-px bg-base-content/12"></div>
 
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1" data-onboarding-target="theme">
               <span class="px-1 text-xs font-semibold opacity-70">
                 {themePaletteLabel}
               </span>
@@ -1292,6 +1694,7 @@
                     <button
                       type="button"
                       class="btn btn-sm min-h-12! justify-start rounded-lg border-base-content/15 btn-primary"
+                      data-onboarding-target="language"
                       disabled={true}
                     >
                       <span class="min-w-0 wrap-break-word"
@@ -1322,6 +1725,27 @@
                 <span class="px-1 text-xs opacity-70">{loadingLanguagePackLabel}</span>
               {/if}
             </div>
+
+            <div class="my-2 h-px bg-base-content/12"></div>
+
+            <div class="flex flex-col gap-1">
+              <a
+                class="btn btn-ghost min-h-11 justify-start gap-2"
+                href={resolve("/updates")}
+                onclick={handleSettingsUpdatesClick}
+              >
+                <Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />
+                {layoutTranslate("settings.viewUpdates")}
+              </a>
+              <button
+                type="button"
+                class="btn btn-ghost min-h-11 justify-start gap-2"
+                onclick={openOnboarding}
+              >
+                <Icon icon="mdi:book-open-page-variant-outline" class="size-4" aria-hidden="true" />
+                {layoutTranslate("settings.openOnboarding")}
+              </button>
+            </div>
           </div>
         {/if}
       </div>
@@ -1329,9 +1753,39 @@
   {/snippet}
 
   <div class="page-switch-shell">
+    {#if showSiteUpdateNotice}
+      <div class="content-page-shell gap-4 px-2 pb-4 sm:px-4">
+        <SiteUpdateNotice
+          version={siteVersion}
+          title={layoutTranslate("updates.notice.title")}
+          message={layoutTranslate(activeSiteUpdate.summaryKey)}
+          actionLabel={layoutTranslate("updates.notice.readLabel")}
+          dismissLabel={layoutTranslate("updates.notice.dismissLabel")}
+          onRead={navigateToUpdates}
+          onDismiss={markCurrentSiteVersionSeen}
+        />
+      </div>
+    {/if}
     {@render children()}
   </div>
 </ViewerShell>
+
+<OnboardingDialog
+  open={isOnboardingDialogOpen}
+  title={layoutTranslate("onboarding.title")}
+  progressLabel={layoutTranslate("onboarding.progressLabel")}
+  previousLabel={layoutTranslate("onboarding.previousLabel")}
+  nextLabel={layoutTranslate("onboarding.nextLabel")}
+  finishLabel={layoutTranslate("onboarding.finishLabel")}
+  skipLabel={layoutTranslate("onboarding.skipLabel")}
+  closeLabel={layoutTranslate("onboarding.closeLabel")}
+  steps={onboardingSteps}
+  onStepChange={prepareOnboardingStep}
+  resolveTarget={resolveOnboardingTarget}
+  onComplete={handleOnboardingDismiss}
+  onSkip={handleOnboardingDismiss}
+  onClose={handleOnboardingDismiss}
+/>
 
 {#if showBackToTop}
   <button
