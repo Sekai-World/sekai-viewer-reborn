@@ -1,6 +1,10 @@
-import type { ILive2DModelData, ILive2dModelListElement } from "./scenario-types";
-import type { ILive2DModelDataCollection, ILive2DStoryModelSource } from "./player/player-types";
-import { live2dFetch } from "./player/rate-limited-fetch";
+import type {
+  ILive2DModelData,
+  ILive2DModelDataCollection,
+  ILive2DStoryModelSource,
+  ILive2dModelListElement
+} from "@platform/live2d-story-player";
+import { live2dFetch } from "@platform/live2d-story-player/core";
 
 /**
  * Client-side Live2D model data source for story playback.

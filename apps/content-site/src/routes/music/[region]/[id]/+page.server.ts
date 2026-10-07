@@ -7,8 +7,22 @@ import { getServerI18nText } from "$lib/i18n/runtime";
 import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
 import { getMasterApiBaseUrl } from "$lib/server/config";
+import { loadDiscordEmbedLabels } from "$lib/server/discord-embed-labels";
 import { parseMusicDetail, type MusicDetail } from "$lib/server/music-detail";
 import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
+import { getMusicJacketAssetURL } from "$lib/assets/index";
+import { createPageTitle } from "$lib/page-title";
+import {
+  buildCanonicalUrl,
+  buildDiscordEmbedSeo,
+  buildMusicDescription,
+  buildMusicMetaLine,
+  isDiscordCrawler,
+  isSEOCrawler,
+  resolveEmbedImageUrl,
+  resolveSeoWithBudget,
+  type DiscordEmbedSeo
+} from "$lib/seo/discord-embed";
 import type { PageServerLoad } from "./$types";
 
 type RegionMusicLookup = {
@@ -185,7 +199,7 @@ const fetchMusicPayload = async ({
   }
 };
 
-export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
+export const load: PageServerLoad = async ({ params, url, request, cookies, fetch }) => {
   const musicId = params.id?.trim() ?? "";
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
   const [
@@ -212,10 +226,55 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
         rawPayloadJson: null
       } satisfies RegionMusicLookup);
 
+  // Server-render the link preview for link-preview crawlers (no JS execution);
+  // browsers keep the streaming path. The budget guard keeps slow upstream
+  // responses from blowing Discord's 10s unfurl window.
+  let seo: DiscordEmbedSeo | null = null;
+  if (isSEOCrawler(request?.headers.get("user-agent")) && musicId) {
+    const labelsPromise = loadDiscordEmbedLabels(uiLocale, fetch);
+    seo = await resolveSeoWithBudget(async () => {
+      const [lookup, labels] = await Promise.all([currentLookupPromise, labelsPromise]);
+      if (!lookup.music) {
+        return null;
+      }
+      const music = lookup.music;
+      return buildDiscordEmbedSeo({
+        pageTitle: createPageTitle(music.title, labels.titleMusic),
+        title: music.title,
+        metaLine: buildMusicMetaLine(
+          {
+            title: music.title,
+            composer: music.composer,
+            arranger: music.arranger,
+            lyricist: music.lyricist,
+            creatorName: music.creatorArtist?.name
+          },
+          labels
+        ),
+        description: buildMusicDescription({
+          title: music.title,
+          composer: music.composer,
+          arranger: music.arranger,
+          lyricist: music.lyricist,
+          creatorName: music.creatorArtist?.name
+        }),
+        imageUrl: resolveEmbedImageUrl(
+          music.assetBundleName,
+          (name) => getMusicJacketAssetURL(name, region),
+          url?.origin
+        ),
+        canonicalUrl: buildCanonicalUrl(url?.origin, url?.pathname, false),
+        openLabel: labels.open,
+        includeComponent: isDiscordCrawler(request?.headers.get("user-agent"))
+      });
+    });
+  }
+
   return {
     musicId,
     region,
     regionLabel: regionLabels[region],
+    seo,
     musicUnavailableInCurrentRegionMessage,
     failedToLoadMusicDataMessage,
     availableRegions: musicId

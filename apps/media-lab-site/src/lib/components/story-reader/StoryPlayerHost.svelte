@@ -183,22 +183,28 @@
   onMount(() => {
     let instance: StoryPlayerSession | null = null;
     let observer: ResizeObserver | null = null;
+    let unsubscribe: (() => void) | null = null;
+    let destroyed = false;
+
+    const reportLoadFailure = (error: unknown): void => {
+      if (destroyed) return;
+      console.error("story player failed to mount", error);
+      loadFailed = true;
+      playerState = "error";
+    };
 
     const mount = async (): Promise<void> => {
-      if (!stageHost) return;
+      if (!stageHost || destroyed) return;
       try {
-        // The player engine statically imports the pixi-live2d-display
-        // plugin, which requires window.Live2DCubismCore while its module
-        // evaluates; load the Cubism Core runtime before anything else.
-        const { ensureCubismCore } = await import("$lib/live2d/cubism-core");
-        await ensureCubismCore();
         const [{ createStoryPlayerSession }, { createStoryRegionAssetUrls }] = await Promise.all([
           import("$lib/story/story-player-session"),
           import("$lib/story/story-urls")
         ]);
+        if (destroyed || !stageHost) return;
+
         const urls = createStoryRegionAssetUrls(() => assetBase, region as "jp");
         const [width, height] = stageSizeFor(stageHost);
-        instance = await createStoryPlayerSession({
+        instance = createStoryPlayerSession({
           host: stageHost,
           stageSize: [width, height],
           scenarioData,
@@ -222,31 +228,43 @@
               loadBuckets = { ...loadBuckets, [type]: { count, total } };
             },
             onWarning: pushWarning,
-            onStateChange: (state) => {
-              playerState = state;
-            },
             onSelectable: (choices) => {
+              if (destroyed) return;
               selectableChoices = choices;
               chosenChoice = null;
             }
           }
         });
         session = instance;
+        const activeInstance = instance;
+        unsubscribe = activeInstance.subscribe(({ state }) => {
+          if (destroyed || instance !== activeInstance) return;
+          playerState = state;
+          loadFailed = state === "error";
+        });
         observer = new ResizeObserver(() => {
-          if (!stageHost || !instance) return;
+          if (destroyed || !stageHost || instance !== activeInstance) return;
           const [nextWidth, nextHeight] = stageSizeFor(stageHost);
-          instance.resize(nextWidth, nextHeight);
+          activeInstance.resize(nextWidth, nextHeight);
         });
         observer.observe(stageHost);
+
+        await activeInstance.load();
       } catch (error) {
-        console.error("story player failed to mount", error);
-        loadFailed = true;
-        playerState = "error";
+        reportLoadFailure(error);
       }
     };
     startLoading = (): void => {
-      if (loadStarted) return;
+      if (destroyed) return;
+      if (instance) {
+        if (instance.state !== "error") return;
+        loadFailed = false;
+        void instance.retry().catch(reportLoadFailure);
+        return;
+      }
+      if (loadStarted && !loadFailed) return;
       loadStarted = true;
+      loadFailed = false;
       void mount();
     };
 
@@ -262,6 +280,7 @@
     document.addEventListener("fullscreenchange", syncFullscreen);
 
     return () => {
+      destroyed = true;
       portraitQuery.removeEventListener("change", syncPortrait);
       document.removeEventListener("fullscreenchange", syncFullscreen);
       if (selectableTimer !== null) {
@@ -269,6 +288,7 @@
         selectableTimer = null;
       }
       observer?.disconnect();
+      unsubscribe?.();
       instance?.destroy();
       session = null;
     };

@@ -1,0 +1,43 @@
+import type { ILive2DTextResolvedEvent } from "../../model/live2d-model.js";
+
+export interface Live2DPlayerEvents {
+  warn: (msg: string) => void;
+  /** A SimpleSelectable effect parked playback with these choice labels. */
+  selectable: (choices: string[]) => void;
+  textResolved: (event: ILive2DTextResolvedEvent) => void;
+}
+
+export class Live2DPlayerEventEmitter {
+  private listeners: {
+    [E in keyof Live2DPlayerEvents]?: Live2DPlayerEvents[E][];
+  } = {};
+
+  on<E extends keyof Live2DPlayerEvents>(event: E, listener: Live2DPlayerEvents[E]): this {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(listener);
+    return this;
+  }
+
+  off<E extends keyof Live2DPlayerEvents>(event: E, listener: Live2DPlayerEvents[E]): this {
+    const current = this.listeners[event];
+    if (current) {
+      this.listeners[event] = current.filter((l) => l !== listener) as typeof current;
+    }
+    return this;
+  }
+
+  emit<E extends keyof Live2DPlayerEvents>(
+    event: E,
+    ...args: Parameters<Live2DPlayerEvents[E]>
+  ): boolean {
+    if (this.listeners[event]) {
+      this.listeners[event].forEach((listener) =>
+        (listener as (...args: Parameters<Live2DPlayerEvents[E]>) => void)(...args)
+      );
+      return true;
+    }
+    return false;
+  }
+}
