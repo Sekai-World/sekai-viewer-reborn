@@ -112,6 +112,8 @@ export default defineConfig({
         "src/lib/paged-list.svelte.ts",
         "src/lib/soundtrack-player.svelte.ts",
         "src/lib/i18n/streamed-translator.svelte.ts",
+        "src/lib/onboarding.ts",
+        "src/lib/site-updates.ts",
         "src/lib/components/mission/catalogue-groups.ts",
         "src/lib/components/shared/title-preview-labels.ts",
         "src/lib/domain/honor.ts",
