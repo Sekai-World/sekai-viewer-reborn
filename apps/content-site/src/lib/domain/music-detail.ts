@@ -14,6 +14,20 @@ export type MusicVocal = {
   assetBundleName: string | null;
 };
 
+export type MusicVideoCategory = "original" | "mv_2d";
+
+export type MusicVideoDescriptor = {
+  category: MusicVideoCategory;
+  assetBundleName: string;
+  musicVocalId: string | null;
+};
+
+export type MusicOriginal = {
+  id: string;
+  musicId: string;
+  videoLink: string;
+};
+
 export type MusicDetail = {
   id: string;
   title: string;
@@ -30,4 +44,6 @@ export type MusicDetail = {
   vocals: MusicVocal[];
   fillerSec: number | null;
   tags: string[];
+  musicVideos: MusicVideoDescriptor[];
+  musicOriginals?: MusicOriginal[];
 };

@@ -994,6 +994,8 @@ export type SharedMusicDetailResponse = {
     categories?: Array<string>;
     difficulties?: Array<SharedMusicDifficultyDetailResponse>;
     music?: SharedMusicObjectResponse;
+    musicOriginals: Array<SharedMusicOriginalResponse>;
+    musicVideos?: Array<SharedMusicVideoResponse>;
     tags?: Array<string>;
     vocals?: Array<SharedMusicVocalResponse>;
 };
@@ -1062,10 +1064,22 @@ export type SharedMusicObjectResponse = {
     title?: unknown;
 };
 
+export type SharedMusicOriginalResponse = {
+    id: string;
+    musicId: string;
+    videoLink: string;
+};
+
 export type SharedMusicSoundTrackCategoryResponse = {
     assetbundleName?: string;
     id: number;
     name: string;
+};
+
+export type SharedMusicVideoResponse = {
+    assetbundleName?: string;
+    category?: 'original' | 'mv_2d';
+    musicVocalId?: string;
 };
 
 export type SharedMusicVocalCharacterResponse = {
