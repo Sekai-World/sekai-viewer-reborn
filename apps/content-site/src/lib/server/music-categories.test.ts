@@ -82,6 +82,51 @@ describe("parseMusicDetail categories", () => {
   });
 });
 
+describe("parseMusicDetail music videos", () => {
+  it("parses original and 2D descriptors while preserving explicit vocal references", () => {
+    const detail = parseMusicDetail({
+      music: { id: "1", title: "A" },
+      musicVideos: [
+        { category: "original", assetbundleName: "orig_0001", musicVocalId: "vocal-1" },
+        { category: "mv_2d", assetbundleName: "mv_0001" }
+      ]
+    });
+
+    expect(detail?.musicVideos).toEqual([
+      { category: "original", assetBundleName: "orig_0001", musicVocalId: "vocal-1" },
+      { category: "mv_2d", assetBundleName: "mv_0001", musicVocalId: null }
+    ]);
+  });
+
+  it("defaults missing and malformed music videos to an empty array", () => {
+    expect(parseMusicDetail({ music: { id: "1", title: "A" } })?.musicVideos).toEqual([]);
+    expect(
+      parseMusicDetail({
+        music: { id: "1", title: "A" },
+        musicVideos: [
+          null,
+          { category: "unknown", assetbundleName: "bad" },
+          { category: "original", assetbundleName: " " },
+          { category: "mv_2d", assetbundleName: "../escape" },
+          { category: "mv_2d", assetbundleName: "bad?name" },
+          { category: "mv_2d", assetbundleName: "valid", musicVocalId: {} },
+          { category: "mv_2d", assetbundleName: "valid", musicVocalId: "" },
+          { category: "mv_2d", assetbundleName: "valid" }
+        ]
+      })?.musicVideos
+    ).toEqual([{ category: "mv_2d", assetBundleName: "valid", musicVocalId: null }]);
+  });
+
+  it("does not turn a missing explicit vocal into an implicit reference", () => {
+    const detail = parseMusicDetail({
+      music: { id: "1", title: "A" },
+      musicVideos: [{ category: "original", assetbundleName: "orig", musicVocalId: "missing" }]
+    });
+
+    expect(detail?.musicVideos[0]?.musicVocalId).toBe("missing");
+  });
+});
+
 describe("list/detail category consistency", () => {
   it("produces the same categories for the same canonical input", () => {
     const source = ["vivid", "street", "light_music_club", "vivid"];
