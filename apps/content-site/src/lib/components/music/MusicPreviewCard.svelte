@@ -30,6 +30,8 @@
 
   let {
     vocals,
+    pauseToken = 0,
+    onPlayback,
     region,
     availableRegions,
     musicId,
@@ -54,6 +56,8 @@
     fillerSec
   }: {
     vocals: MusicVocal[];
+    pauseToken?: number;
+    onPlayback?: () => void;
     region: SupportedRegion;
     availableRegions: SupportedRegion[];
     musicId: string;
@@ -150,6 +154,11 @@
 
   const getCharacters = (vocal: MusicVocal): { characterId: number; unit: string }[] =>
     vocal.overrideChara ?? vocal.characters ?? [];
+
+  function coordinatePlayback(event: MouseEvent): void {
+    const button = event.target instanceof Element ? event.target.closest("button") : null;
+    if (button?.getAttribute("aria-label") === playLabel) onPlayback?.();
+  }
 </script>
 
 <article class="card content-card-shell shadow-sm">
@@ -264,25 +273,30 @@
               </div>
 
               <!-- Audio player with download options -->
-              <div class="content-card-inset rounded-xl p-3 sm:p-4">
-                <AudioPlayer
-                  src={currentSrc}
-                  {title}
-                  {subtitle}
-                  {downloadOptions}
-                  downloadName={getDownloadName("mp3")}
-                  offset={currentOffset}
-                  {downloadProgressMessages}
-                  {playLabel}
-                  {pauseLabel}
-                  {downloadLabel}
-                  {downloadCloseLabel}
-                  {volumeLabel}
-                  {seekLabel}
-                  {unavailableLabel}
-                  artworkUrl={jacketUrl}
-                  {artist}
-                />
+              <div
+                class="content-card-inset rounded-xl p-3 sm:p-4"
+                onclickcapture={coordinatePlayback}
+              >
+                {#key pauseToken}
+                  <AudioPlayer
+                    src={currentSrc}
+                    {title}
+                    {subtitle}
+                    {downloadOptions}
+                    downloadName={getDownloadName("mp3")}
+                    offset={currentOffset}
+                    {downloadProgressMessages}
+                    {playLabel}
+                    {pauseLabel}
+                    {downloadLabel}
+                    {downloadCloseLabel}
+                    {volumeLabel}
+                    {seekLabel}
+                    {unavailableLabel}
+                    artworkUrl={jacketUrl}
+                    {artist}
+                  />
+                {/key}
               </div>
             </div>
           {/if}
