@@ -107,6 +107,28 @@ describe("music video asset listing", () => {
     ).rejects.toBeDefined();
   });
 
+  it("rejects listings when the browser XML parser is unavailable", async () => {
+    vi.stubGlobal("DOMParser", undefined);
+    try {
+      await expect(
+        resolveMusicVideoAssetURL(descriptor(), {
+          fetcher: vi.fn().mockResolvedValue(new Response(listing([]))),
+          baseUrlOverride: "/storage"
+        })
+      ).rejects.toThrow("require a browser XML parser");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("reports unsuccessful listing responses", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response("unavailable", { status: 503 }));
+
+    await expect(
+      resolveMusicVideoAssetURL(descriptor(), { fetcher, baseUrlOverride: "/storage" })
+    ).rejects.toThrow("status 503");
+  });
+
   it("uses JP for shared music and the current region for exclusive music", async () => {
     for (const availableRegions of [["jp", "en"], ["en"]] as const) {
       const server = getMusicAssetServer("en", [...availableRegions]);
