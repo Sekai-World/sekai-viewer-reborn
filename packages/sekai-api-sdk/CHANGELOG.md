@@ -1,5 +1,11 @@
 # @platform/sekai-api-sdk
 
+## 0.2.2
+
+### Patch Changes
+
+- 1665fb3: Regenerate the sekai-api SDK from the sekai-api 2.4.0 spec: ranking responses no longer include `id`, and the notification endpoints are now exported.
+
 ## 0.2.1
 
 ### Patch Changes
