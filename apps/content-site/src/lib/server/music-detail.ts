@@ -1,4 +1,10 @@
-import type { MusicDetail, MusicDifficulty, MusicVocal } from "$lib/domain/music-detail";
+import type {
+  MusicDetail,
+  MusicDifficulty,
+  MusicOriginal,
+  MusicVideoDescriptor,
+  MusicVocal
+} from "$lib/domain/music-detail";
 import { parseMusicCategories } from "./music-list";
 
 const getString = (value: unknown): string | null =>
@@ -126,6 +132,41 @@ const parseMusicVocal = (payload: unknown): MusicVocal | null => {
   };
 };
 
+const parseMusicVideo = (payload: unknown): MusicVideoDescriptor | null => {
+  const root = getObject(payload);
+  if (!root) {
+    return null;
+  }
+
+  const category = getString(root.category);
+  const assetBundleName = pickString(root, ["assetbundleName", "assetBundleName"]);
+  if (
+    (category !== "original" && category !== "mv_2d") ||
+    !assetBundleName ||
+    !/^[A-Za-z0-9_-]+$/.test(assetBundleName)
+  ) {
+    return null;
+  }
+
+  const explicitVocalId = root.musicVocalId ?? root.music_vocal_id;
+  if (explicitVocalId != null && !getStringLike(explicitVocalId)) return null;
+
+  return {
+    category,
+    assetBundleName,
+    musicVocalId: getStringLike(explicitVocalId)
+  };
+};
+
+const parseMusicOriginal = (payload: unknown): MusicOriginal | null => {
+  const root = getObject(payload);
+  if (!root) return null;
+  const id = getString(root.id);
+  const musicId = getString(root.musicId);
+  const videoLink = getString(root.videoLink);
+  return id && musicId && videoLink ? { id, musicId, videoLink } : null;
+};
+
 const parseMusicDetail = (payload: unknown): MusicDetail | null => {
   const root = getObject(payload);
   if (!root) {
@@ -156,6 +197,11 @@ const parseMusicDetail = (payload: unknown): MusicDetail | null => {
   const tagsRaw = Array.isArray(root.tags) ? root.tags : [];
   const tags = tagsRaw.map((v) => (typeof v === "string" ? v.trim() : "")).filter(Boolean);
 
+  const musicVideosRaw = Array.isArray(root.musicVideos) ? root.musicVideos : [];
+  const musicVideos = musicVideosRaw
+    .map(parseMusicVideo)
+    .filter((video): video is MusicVideoDescriptor => video !== null);
+
   const creatorArtistNode = getObject(musicNode.creatorArtist);
   const liveStageNode = getObject(musicNode.liveStage);
 
@@ -174,7 +220,11 @@ const parseMusicDetail = (payload: unknown): MusicDetail | null => {
     fillerSec: getNumber(musicNode.fillerSec ?? musicNode.filler_sec),
     difficulties,
     vocals,
-    tags
+    tags,
+    musicVideos,
+    musicOriginals: (Array.isArray(root.musicOriginals) ? root.musicOriginals : [])
+      .map(parseMusicOriginal)
+      .filter((original): original is MusicOriginal => original !== null && original.musicId === id)
   };
 };
 

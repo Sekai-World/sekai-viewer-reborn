@@ -10,6 +10,8 @@
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import MusicDetailInfoCard from "$lib/components/music/MusicDetailInfoCard.svelte";
   import MusicDifficultyCard from "$lib/components/music/MusicDifficultyCard.svelte";
+  import MusicMvPlayer from "$lib/components/music/MusicMvPlayer.svelte";
+  import MusicYoutubeCard from "$lib/components/music/MusicYoutubeCard.svelte";
   import MusicPreviewCard from "$lib/components/music/MusicPreviewCard.svelte";
   import MusicJacketHero from "$lib/components/music/MusicJacketHero.svelte";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
@@ -24,6 +26,20 @@
     resolveStreamingMessages(data.i18nMessages, ["common", "music", "error"]);
   let currentMessages = $state<Record<string, string>>(getInitialMessages());
   let translationRequestId = 0;
+  let previewPauseToken = $state(0);
+  let mvPauseToken = $state(0);
+  let youtubeUnloadToken = $state(0);
+  const youtubeText = $derived.by(() => {
+    const translate = createI18nTranslator(data.uiLocale, currentMessages);
+    return {
+      heading: translate("musicYoutubeTitle"),
+      openLabel: translate("musicYoutubeOpen"),
+      loadLabel: translate("musicYoutubeLoad"),
+      privacyLabel: translate("musicYoutubePrivacy"),
+      selectionLabel: translate("musicYoutubeSelection"),
+      referenceLabel: translate("musicYoutubeReference")
+    };
+  });
 
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(data.uiLocale, getInitialMessages())(key);
@@ -61,6 +77,17 @@
   let musicPreviewNoPreviewAvailable = $state(getInitialI18nText("musicPreviewNoPreviewAvailable"));
   let musicPreviewPlayLabel = $state(getInitialI18nText("musicPreviewPlayLabel"));
   let musicPreviewPauseLabel = $state(getInitialI18nText("musicPreviewPauseLabel"));
+  let musicMvTitle = $state(getInitialI18nText("musicMvTitle"));
+  let musicMvVariantLabel = $state(getInitialI18nText("musicMvVariantLabel"));
+  let musicMvOriginalLabel = $state(getInitialI18nText("musicMvOriginalLabel"));
+  let musicMv2dLabel = $state(getInitialI18nText("musicMv2dLabel"));
+  let musicMvDuplicateLabel = $state(getInitialI18nText("musicMvDuplicateLabel"));
+  let musicMvVocalLabel = $state(getInitialI18nText("musicMvVocalLabel"));
+  let musicMvLoadingLabel = $state(getInitialI18nText("musicMvLoading"));
+  let musicMvRetryLabel = $state(getInitialI18nText("musicMvRetry"));
+  let musicMvNoVideoLabel = $state(getInitialI18nText("musicMvNoVideo"));
+  let musicMvUnsupportedLabel = $state(getInitialI18nText("musicMvUnsupported"));
+  let musicMvAudioUnavailableLabel = $state(getInitialI18nText("musicMvAudioUnavailable"));
   let audioDownloadLabel = $state(getInitialI18nText("audioDownloadLabel"));
   let audioDownloadCloseLabel = $state(getInitialI18nText("audioDownloadCloseLabel"));
   let audioVolumeLabel = $state(getInitialI18nText("audioVolumeLabel"));
@@ -125,6 +152,17 @@
     musicPreviewNoPreviewAvailable = translate("musicPreviewNoPreviewAvailable");
     musicPreviewPlayLabel = translate("musicPreviewPlayLabel");
     musicPreviewPauseLabel = translate("musicPreviewPauseLabel");
+    musicMvTitle = translate("musicMvTitle");
+    musicMvVariantLabel = translate("musicMvVariantLabel");
+    musicMvOriginalLabel = translate("musicMvOriginalLabel");
+    musicMv2dLabel = translate("musicMv2dLabel");
+    musicMvDuplicateLabel = translate("musicMvDuplicateLabel");
+    musicMvVocalLabel = translate("musicMvVocalLabel");
+    musicMvLoadingLabel = translate("musicMvLoading");
+    musicMvRetryLabel = translate("musicMvRetry");
+    musicMvNoVideoLabel = translate("musicMvNoVideo");
+    musicMvUnsupportedLabel = translate("musicMvUnsupported");
+    musicMvAudioUnavailableLabel = translate("musicMvAudioUnavailable");
     audioDownloadLabel = translate("audioDownloadLabel");
     audioDownloadCloseLabel = translate("audioDownloadCloseLabel");
     audioVolumeLabel = translate("audioVolumeLabel");
@@ -296,6 +334,11 @@
           </div>
           <div class="flex flex-col gap-4">
             <MusicPreviewCard
+              pauseToken={previewPauseToken}
+              onPlayback={() => {
+                mvPauseToken += 1;
+                youtubeUnloadToken += 1;
+              }}
               vocals={payload.music.vocals}
               region={data.region}
               {availableRegions}
@@ -324,6 +367,47 @@
               volumeLabel={audioVolumeLabel}
               seekLabel={audioSeekLabel}
               unavailableLabel={audioUnavailableLabel}
+            />
+            <MusicMvPlayer
+              pauseToken={mvPauseToken}
+              onPlayback={() => {
+                previewPauseToken += 1;
+                youtubeUnloadToken += 1;
+              }}
+              descriptors={payload.music.musicVideos ?? []}
+              vocals={payload.music.vocals}
+              audioServer={getMusicAssetServer(data.region, availableRegions)}
+              poster={payload.music.assetBundleName
+                ? getMusicJacketAssetURL(
+                    payload.music.assetBundleName,
+                    getMusicAssetServer(data.region, availableRegions)
+                  )
+                : undefined}
+              title={payload.music.title}
+              heading={musicMvTitle}
+              videoLabel={musicMvTitle}
+              variantLabel={musicMvVariantLabel}
+              originalLabel={musicMvOriginalLabel}
+              mv2dLabel={musicMv2dLabel}
+              duplicateLabel={musicMvDuplicateLabel}
+              vocalLabel={musicMvVocalLabel}
+              loadingLabel={musicMvLoadingLabel}
+              retryLabel={musicMvRetryLabel}
+              noVideoLabel={musicMvNoVideoLabel}
+              unsupportedLabel={musicMvUnsupportedLabel}
+              audioUnavailableLabel={musicMvAudioUnavailableLabel}
+            />
+            <MusicYoutubeCard
+              originals={payload.music.musicOriginals ?? []}
+              songKey={`${data.region}:${data.musicId}`}
+              songTitle={payload.music.title}
+              {...youtubeText}
+              {closeLabel}
+              unloadToken={youtubeUnloadToken}
+              onEmbedOpen={() => {
+                previewPauseToken += 1;
+                mvPauseToken += 1;
+              }}
             />
             <MusicDifficultyCard
               music={payload.music}
