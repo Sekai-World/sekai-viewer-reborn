@@ -11,7 +11,7 @@ overrides:
   esbuild: 0.28.2
   brace-expansion: 5.0.12
   "@microsoft/api-extractor": 7.59.4
-  fast-uri: 4.2.2
+  fast-uri: 4.2.3
   postcss: 8.5.31
   nanoid: 6.0.2
   "read-yaml-file@1": ^2.1.0
