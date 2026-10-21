@@ -8,12 +8,18 @@ import {
   type I18nTranslator
 } from "@platform/i18n-runtime";
 import commonSourceMessages from "@platform/i18n-source/tools-site/common.json";
+import musicRecommenderSourceMessages from "@platform/i18n-source/tools-site/music-recommender.json";
 import serverSourceMessages from "@platform/i18n-source/tools-site/server.json";
 import trackerSourceMessages from "@platform/i18n-source/tools-site/tracker.json";
 import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n/config";
 import { normalizeUiLocale } from "$lib/i18n/region";
 
-export const toolsSiteI18nNamespaces = ["common", "server", "tracker"] as const;
+export const toolsSiteI18nNamespaces = [
+  "common",
+  "server",
+  "tracker",
+  "music-recommender"
+] as const;
 
 export type I18nNamespace = (typeof toolsSiteI18nNamespaces)[number];
 export type ToolsSiteTranslator = I18nTranslator;
@@ -22,7 +28,8 @@ const DEFAULT_SEKAI_I18N_BASE_URL = "https://sekai-world.github.io/sekai-i18n-re
 const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
   common: commonSourceMessages,
   server: serverSourceMessages,
-  tracker: trackerSourceMessages
+  tracker: trackerSourceMessages,
+  "music-recommender": musicRecommenderSourceMessages
 };
 
 const toRepoLocale = (locale: SupportedUiLocale): string => repoLocaleByUiLocale[locale] ?? "en";
