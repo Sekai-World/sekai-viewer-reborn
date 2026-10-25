@@ -19,11 +19,9 @@
     previousLabel,
     nextLabel,
     finishLabel,
-    skipLabel,
     closeLabel,
     steps,
     onComplete,
-    onSkip,
     onClose,
     onStepChange,
     resolveTarget
@@ -34,11 +32,9 @@
     previousLabel: string;
     nextLabel: string;
     finishLabel: string;
-    skipLabel: string;
     closeLabel: string;
     steps: readonly OnboardingStep[];
     onComplete: () => void;
-    onSkip: () => void;
     onClose: () => void;
     onStepChange?: (stepIndex: number) => void | Promise<void>;
     resolveTarget?: (target: string) => TargetResolution | null;
@@ -49,6 +45,8 @@
   const dialogDescriptionId = `${instanceId}-description`;
   let dialog: HTMLDialogElement | null = $state(null);
   let closeButton: HTMLButtonElement | null = $state(null);
+  let primaryButton: HTMLButtonElement | null = $state(null);
+  let spotlight: HTMLButtonElement | null = $state(null);
   let coach: HTMLElement | null = $state(null);
   let currentStep = $state(0);
   let spotlightStyle = $state("");
@@ -58,7 +56,7 @@
   let suppressCloseNotification = false;
   let restoreFocusElement: HTMLElement | null = null;
   let measurementRequest = 0;
-  let preparingTarget = false;
+  let preparingTarget = $state(false);
   let geometryFrame = 0;
   let stopGeometryTracking: (() => void) | null = null;
   const activeStep = $derived(steps[currentStep]);
@@ -217,10 +215,10 @@
     void syncStep(currentStep);
   };
 
-  const getFocusableCoachButtons = (): HTMLButtonElement[] => {
-    if (!coach) return [];
+  const getFocusableTourButtons = (): HTMLButtonElement[] => {
+    if (!dialog) return [];
 
-    return [...coach.querySelectorAll<HTMLButtonElement>("button")].filter((button) => {
+    return [...dialog.querySelectorAll<HTMLButtonElement>("button")].filter((button) => {
       const style = window.getComputedStyle(button);
       return (
         !button.disabled &&
@@ -233,9 +231,15 @@
   };
 
   const handleTourKeydown = (event: KeyboardEvent): void => {
-    if (event.key !== "Tab" || !open || !dialog?.open || !coach) return;
+    if (!open || !dialog?.open) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    if (event.key !== "Tab" || !coach) return;
 
-    const buttons = getFocusableCoachButtons();
+    const buttons = getFocusableTourButtons();
     if (buttons.length === 0) return;
 
     const activeIndex = buttons.indexOf(document.activeElement as HTMLButtonElement);
@@ -308,7 +312,6 @@
 
   const closeByUser = (): void => {
     if (dialog?.open) dialog.close();
-    else onClose();
   };
 
   const handleClose = (): void => {
@@ -329,12 +332,30 @@
   };
 
   const selectStep = (stepIndex: number): void => {
-    if (stepIndex < 0 || stepIndex >= steps.length || stepIndex === currentStep) return;
+    if (
+      !open ||
+      !dialog?.open ||
+      stepIndex < 0 ||
+      stepIndex >= steps.length ||
+      stepIndex === currentStep
+    )
+      return;
     currentStep = stepIndex;
     void syncStep(stepIndex);
   };
 
+  const advanceHighlight = (event: MouseEvent): void => {
+    event.stopPropagation();
+    if (!open || !dialog?.open || !hasTarget || preparingTarget || isLastStep) return;
+    // The old or still-moving rectangle must not count as another target click.
+    if ((spotlight?.getAnimations?.() ?? []).some((animation) => animation.playState === "running"))
+      return;
+    primaryButton?.focus({ preventScroll: true });
+    selectStep(currentStep + 1);
+  };
+
   const finish = (callback: () => void): void => {
+    if (!open || !dialog?.open) return;
     callback();
     closeWithoutNotification();
   };
@@ -366,21 +387,30 @@
   aria-labelledby={dialogTitleId}
   aria-describedby={dialogDescriptionId}
   onclose={handleClose}
+  oncancel={(event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  }}
 >
-  <button
-    type="button"
-    class="onboarding-tour-dismiss"
-    class:onboarding-tour-dismiss-fallback={!hasTarget}
-    tabindex="-1"
-    aria-label={closeLabel}
-    onclick={closeByUser}
-  ></button>
+  <div
+    class="onboarding-tour-background"
+    class:onboarding-tour-background-fallback={!hasTarget}
+    aria-hidden="true"
+  ></div>
 
   {#if hasTarget}
     {#each maskPanels as panel, index (index)}
       <div class="onboarding-tour-scrim" style={panel} aria-hidden="true"></div>
     {/each}
-    <div class="onboarding-tour-spotlight" style={spotlightStyle} aria-hidden="true"></div>
+    <button
+      bind:this={spotlight}
+      type="button"
+      class="onboarding-tour-spotlight"
+      style={spotlightStyle}
+      aria-label={isLastStep ? activeStep?.title : `${nextLabel}: ${activeStep?.title}`}
+      disabled={preparingTarget || isLastStep}
+      onclick={advanceHighlight}
+    ></button>
   {/if}
 
   {#if activeStep}
@@ -435,13 +465,6 @@
       <div
         class="mt-4 flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-(--archive-border-subtle) pt-3"
       >
-        <button
-          type="button"
-          class="btn btn-ghost min-h-11 min-w-11 px-2"
-          onclick={() => finish(onSkip)}
-        >
-          {skipLabel}
-        </button>
         <div class="ml-auto flex flex-wrap justify-end gap-2">
           {#if currentStep > 0}
             <button
@@ -454,6 +477,7 @@
             </button>
           {/if}
           <button
+            bind:this={primaryButton}
             type="button"
             class="btn btn-primary min-h-11 min-w-11 gap-1 px-2"
             onclick={() => (isLastStep ? finish(onComplete) : selectStep(currentStep + 1))}
@@ -491,7 +515,7 @@
     background: transparent;
   }
 
-  .onboarding-tour-dismiss {
+  .onboarding-tour-background {
     position: fixed;
     inset: 0;
     z-index: 0;
@@ -507,7 +531,18 @@
     z-index: 1;
     border: 2px solid var(--color-primary);
     border-radius: 0.75rem;
-    pointer-events: none;
+    padding: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .onboarding-tour-spotlight:disabled {
+    cursor: default;
+  }
+
+  .onboarding-tour-spotlight:focus-visible {
+    outline: 2px solid var(--archive-focus-ring);
+    outline-offset: 2px;
   }
 
   .onboarding-tour-scrim {
@@ -525,7 +560,7 @@
     transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .onboarding-tour-dismiss-fallback {
+  .onboarding-tour-background-fallback {
     background: color-mix(in oklab, black 65%, transparent);
   }
 

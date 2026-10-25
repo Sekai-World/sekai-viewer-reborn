@@ -189,12 +189,10 @@
   previousLabel={translate("onboarding.previousLabel")}
   nextLabel={translate("onboarding.nextLabel")}
   finishLabel={translate("onboarding.finishLabel")}
-  skipLabel={translate("onboarding.skipLabel")}
   closeLabel={translate("closeLabel")}
   {steps}
   {resolveTarget}
   onStepChange={prepareStep}
   onComplete={finishTour}
-  onSkip={finishTour}
   onClose={finishTour}
 />

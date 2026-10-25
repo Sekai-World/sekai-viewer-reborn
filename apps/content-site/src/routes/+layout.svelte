@@ -1824,13 +1824,11 @@
   previousLabel={layoutTranslate("onboarding.previousLabel")}
   nextLabel={layoutTranslate("onboarding.nextLabel")}
   finishLabel={layoutTranslate("onboarding.finishLabel")}
-  skipLabel={layoutTranslate("onboarding.skipLabel")}
   closeLabel={layoutTranslate("onboarding.closeLabel")}
   steps={onboardingSteps}
   onStepChange={prepareOnboardingStep}
   resolveTarget={resolveOnboardingTarget}
   onComplete={handleOnboardingDismiss}
-  onSkip={handleOnboardingDismiss}
   onClose={handleOnboardingDismiss}
 />
 

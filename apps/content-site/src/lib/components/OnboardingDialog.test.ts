@@ -22,6 +22,7 @@ beforeEach(() => {
   Object.defineProperty(HTMLDialogElement.prototype, "close", {
     configurable: true,
     value(this: HTMLDialogElement) {
+      if (!this.open) return;
       this.open = false;
       queueMicrotask(() => this.dispatchEvent(new Event("close")));
     }
@@ -44,7 +45,6 @@ const createTour = (
 ) => {
   const callbacks = {
     onComplete: vi.fn(),
-    onSkip: vi.fn(),
     onClose: vi.fn(),
     onStepChange: vi.fn<(stepIndex: number) => void | Promise<void>>()
   };
@@ -55,7 +55,6 @@ const createTour = (
     previousLabel: "Previous",
     nextLabel: "Next",
     finishLabel: "Finish",
-    skipLabel: "Skip",
     closeLabel: "Close",
     steps: ["home", "navigation", "settings", "region", "theme", "language"].map((target) => ({
       icon: "mdi:cog-outline",
@@ -70,7 +69,187 @@ const createTour = (
   return { ...result, callbacks, dialog, controls: within(dialog) };
 };
 
+const createMeasuredTour = () => {
+  const target = document.createElement("input");
+  target.type = "checkbox";
+  target.dataset.onboardingTarget = "home";
+  document.body.append(target);
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+    this: HTMLElement
+  ) {
+    return this === target ? new DOMRect(40, 60, 180, 44) : new DOMRect(0, 0, 320, 220);
+  });
+  return { ...createTour(() => target), target };
+};
+
 describe("spotlight onboarding", () => {
+  it("advances one step through the accessible highlight without activating the underlying input", async () => {
+    const { dialog, controls, callbacks, target } = createMeasuredTour();
+    const underlyingClick = vi.fn();
+    target.addEventListener("click", underlyingClick);
+    await waitFor(() => expect(controls.getByRole("button", { name: "Next: home" })).toBeTruthy());
+    const spotlight = controls.getByRole("button", { name: "Next: home" });
+    expect(controls.getAllByRole("button", { name: /^Next$/ })).toHaveLength(1);
+    await fireEvent.click(spotlight);
+    expect(callbacks.onStepChange.mock.calls.map(([index]) => index)).toEqual([0, 1]);
+    expect(controls.getByRole("heading").textContent).toBe("navigation");
+    expect(underlyingClick).not.toHaveBeenCalled();
+    expect(target.checked).toBe(false);
+    expect(callbacks.onClose).not.toHaveBeenCalled();
+    expect(callbacks.onComplete).not.toHaveBeenCalled();
+    expect(dialog.open).toBe(true);
+    expect(document.activeElement).toBe(controls.getByRole("button", { name: /^Next$/ }));
+  });
+
+  it("ignores scrim, background, dialog and coach-description clicks", async () => {
+    const { dialog, controls, callbacks, target } = createMeasuredTour();
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    const surfaces = [
+      dialog,
+      dialog.querySelector(".onboarding-tour-background")!,
+      ...dialog.querySelectorAll(".onboarding-tour-scrim"),
+      dialog.querySelector("aside")!,
+      dialog.querySelector("aside p")!
+    ];
+    for (const surface of surfaces) await fireEvent.click(surface);
+    expect(callbacks.onStepChange.mock.calls.map(([index]) => index)).toEqual([0]);
+    expect(callbacks.onClose).not.toHaveBeenCalled();
+    expect(callbacks.onComplete).not.toHaveBeenCalled();
+    expect(controls.queryByRole("button", { name: "Skip" })).toBeNull();
+    expect(target.checked).toBe(false);
+    expect(dialog.open).toBe(true);
+  });
+
+  it("leaves final highlight clicks inert and completes exactly once only through Finish", async () => {
+    const { dialog, controls, callbacks } = createMeasuredTour();
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    for (let index = 1; index < 6; index += 1)
+      await fireEvent.click(controls.getByRole("button", { name: /^Next$/ }));
+    const finalHighlight = dialog.querySelector<HTMLButtonElement>(".onboarding-tour-spotlight")!;
+    expect(finalHighlight.disabled).toBe(true);
+    await fireEvent.click(finalHighlight);
+    expect(callbacks.onComplete).not.toHaveBeenCalled();
+    expect(callbacks.onClose).not.toHaveBeenCalled();
+    expect(dialog.open).toBe(true);
+    const finish = controls.getByRole("button", { name: "Finish" });
+    await fireEvent.click(finish);
+    await fireEvent.click(finish);
+    await waitFor(() => expect(dialog.open).toBe(false));
+    expect(callbacks.onComplete).toHaveBeenCalledTimes(1);
+    expect(callbacks.onClose).not.toHaveBeenCalled();
+  });
+
+  it("ignores stale highlight clicks throughout asynchronous target preparation", async () => {
+    const { dialog, controls, callbacks } = createMeasuredTour();
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    const spotlight = dialog.querySelector<HTMLButtonElement>(".onboarding-tour-spotlight")!;
+    let ready = () => {};
+    callbacks.onStepChange.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          ready = resolve;
+        })
+    );
+    await fireEvent.click(spotlight);
+    expect(spotlight.disabled).toBe(true);
+    await fireEvent.click(spotlight);
+    await fireEvent.click(spotlight);
+    expect(callbacks.onStepChange.mock.calls.map(([index]) => index)).toEqual([0, 1]);
+    expect(controls.getByRole("heading").textContent).toBe("navigation");
+    expect(callbacks.onClose).not.toHaveBeenCalled();
+    ready();
+    await waitFor(() => expect(spotlight.disabled).toBe(false));
+    await fireEvent.click(spotlight);
+    expect(callbacks.onStepChange).toHaveBeenLastCalledWith(2);
+  });
+
+  it("ignores a moving rectangle until its CSS geometry transition has settled", async () => {
+    const { dialog, callbacks } = createMeasuredTour();
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    const spotlight = dialog.querySelector<HTMLButtonElement>(".onboarding-tour-spotlight")!;
+    let moving = true;
+    Object.defineProperty(spotlight, "getAnimations", {
+      value: () => (moving ? [{ playState: "running" }] : [])
+    });
+    await fireEvent.click(spotlight);
+    expect(callbacks.onStepChange.mock.calls.map(([index]) => index)).toEqual([0]);
+    moving = false;
+    await fireEvent.click(spotlight);
+    expect(callbacks.onStepChange).toHaveBeenLastCalledWith(1);
+  });
+
+  it("blocks Escape and native cancel without dismissing or letting other Escape handlers run", async () => {
+    const { dialog, callbacks } = createTour();
+    await waitFor(() => expect(dialog.open).toBe(true));
+    const lowerEscape = vi.fn();
+    document.addEventListener("keydown", lowerEscape);
+    const escape = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+    dialog.dispatchEvent(escape);
+    expect(escape.defaultPrevented).toBe(true);
+    expect(lowerEscape).not.toHaveBeenCalled();
+    const cancel = new Event("cancel", { cancelable: true });
+    dialog.dispatchEvent(cancel);
+    expect(cancel.defaultPrevented).toBe(true);
+    expect(dialog.open).toBe(true);
+    expect(callbacks.onClose).not.toHaveBeenCalled();
+    document.removeEventListener("keydown", lowerEscape);
+  });
+
+  it("does not advance or dismiss on any fallback surface when a target is unavailable", async () => {
+    const { dialog, callbacks } = createTour();
+    await waitFor(() => expect(dialog.open).toBe(true));
+    await fireEvent.click(dialog.querySelector(".onboarding-tour-background-fallback")!);
+    await fireEvent.click(dialog.querySelector("aside p")!);
+    await fireEvent.click(dialog);
+    expect(callbacks.onStepChange.mock.calls.map(([index]) => index)).toEqual([0]);
+    expect(callbacks.onClose).not.toHaveBeenCalled();
+    expect(callbacks.onComplete).not.toHaveBeenCalled();
+    expect(dialog.open).toBe(true);
+  });
+
+  it("includes the advance target in the Tab trap and transfers focus to Next on activation", async () => {
+    const { dialog, controls } = createMeasuredTour();
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    const spotlight = dialog.querySelector<HTMLButtonElement>(".onboarding-tour-spotlight")!;
+    const next = controls.getByRole("button", { name: /^Next$/ });
+    const close = controls.getByRole("button", { name: "Close" });
+    next.focus();
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true })
+    );
+    expect(document.activeElement).toBe(spotlight);
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true })
+    );
+    expect(document.activeElement).toBe(close);
+    spotlight.focus();
+    await fireEvent.click(spotlight, { detail: 0 });
+    expect(document.activeElement).toBe(next);
+  });
+
+  it.each(["parent-close", "destroy"])(
+    "removes keyboard interception after %s without user notification",
+    async (mode) => {
+      const { dialog, callbacks, rerender, unmount, target } = createMeasuredTour();
+      await waitFor(() => expect(dialog.open).toBe(true));
+      if (mode === "parent-close") await rerender({ open: false });
+      else unmount();
+      const escape = new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true
+      });
+      const tab = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
+      document.dispatchEvent(escape);
+      document.dispatchEvent(tab);
+      expect(escape.defaultPrevented).toBe(false);
+      expect(tab.defaultPrevented).toBe(false);
+      await fireEvent.click(target);
+      expect(target.checked).toBe(true);
+      expect(callbacks.onClose).not.toHaveBeenCalled();
+    }
+  );
+
   it("keeps focus on the primary button when Next becomes Finish", async () => {
     const { dialog, controls } = createTour();
     const close = within(dialog.querySelector("aside")!).getByRole("button", { name: "Close" });
@@ -114,7 +293,7 @@ describe("spotlight onboarding", () => {
     );
     await fireEvent.click(controls.getByRole("button", { name: "Next" }));
     expect(dialog.querySelector(".onboarding-tour-spotlight")).toBe(spotlight);
-    expect(dialog.querySelector(".onboarding-tour-dismiss-fallback")).toBeNull();
+    expect(dialog.querySelector(".onboarding-tour-background-fallback")).toBeNull();
     expect(spotlight.style.left).toBe("32px");
 
     // Drawer mutations or scroll events during preparation must not measure an unfinished target.
@@ -165,7 +344,7 @@ describe("spotlight onboarding", () => {
     await fireEvent.click(controls.getByRole("button", { name: "Next" }));
     await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).toBeNull());
     expect(dialog.querySelectorAll(".onboarding-tour-scrim")).toHaveLength(0);
-    expect(dialog.querySelector(".onboarding-tour-dismiss-fallback")).not.toBeNull();
+    expect(dialog.querySelector(".onboarding-tour-background-fallback")).not.toBeNull();
     await fireEvent.click(controls.getByRole("button", { name: "Previous" }));
     await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
     const previousSpotlight = dialog.querySelector(".onboarding-tour-spotlight");
@@ -220,7 +399,7 @@ describe("spotlight onboarding", () => {
     }
     await fireEvent.click(controls.getByRole("button", { name: "Previous" }));
     expect(callbacks.onStepChange).toHaveBeenLastCalledWith(4);
-    await fireEvent.click(controls.getAllByRole("button", { name: "Close" })[1]!);
+    await fireEvent.click(controls.getByRole("button", { name: "Close" }));
     await waitFor(() => expect(callbacks.onClose).toHaveBeenCalledTimes(1));
     expect(dialog.open).toBe(false);
     await rerender({ open: false });
@@ -229,7 +408,7 @@ describe("spotlight onboarding", () => {
     expect(controls.getByRole("heading").textContent).toBe("home");
   });
 
-  it.each(["close", "backdrop", "native-close", "skip", "complete"])(
+  it.each(["close", "native-close", "complete"])(
     "closes through %s without double notification or reopening",
     async (mode) => {
       const { controls, callbacks, dialog } = createTour();
@@ -239,26 +418,18 @@ describe("spotlight onboarding", () => {
           await fireEvent.click(controls.getByRole("button", { name: "Next" }));
         }
         await fireEvent.click(controls.getByRole("button", { name: "Finish" }));
-      } else if (mode === "skip") {
-        await fireEvent.click(controls.getByRole("button", { name: "Skip" }));
       } else if (mode === "native-close") {
-        // The browser's Escape action closes the native dialog and emits close.
+        // A programmatic parent cleanup can still close the native dialog.
         dialog.close();
       } else {
-        const buttons = controls.getAllByRole("button", { name: "Close" });
-        await fireEvent.click(buttons[mode === "backdrop" ? 0 : 1]!);
+        const close = controls.getByRole("button", { name: "Close" });
+        await fireEvent.click(close);
+        await fireEvent.click(close);
       }
-      const expected =
-        mode === "skip"
-          ? callbacks.onSkip
-          : mode === "complete"
-            ? callbacks.onComplete
-            : callbacks.onClose;
+      const expected = mode === "complete" ? callbacks.onComplete : callbacks.onClose;
       await waitFor(() => expect(expected).toHaveBeenCalledTimes(1));
       expect(dialog.open).toBe(false);
-      expect(callbacks.onClose).toHaveBeenCalledTimes(
-        mode === "skip" || mode === "complete" ? 0 : 1
-      );
+      expect(callbacks.onClose).toHaveBeenCalledTimes(mode === "complete" ? 0 : 1);
     }
   );
 
@@ -267,7 +438,7 @@ describe("spotlight onboarding", () => {
     await waitFor(() => expect(dialog.open).toBe(true));
     expect(dialog.querySelector(".onboarding-tour-spotlight")).toBeNull();
     expect(dialog.querySelector(".onboarding-tour-coach-fallback")).not.toBeNull();
-    expect(controls.getAllByRole("button", { name: "Close" })).toHaveLength(2);
+    expect(controls.getAllByRole("button", { name: "Close" })).toHaveLength(1);
   });
 
   it("resolves real shell links without adding onboarding attributes to them", async () => {
@@ -392,7 +563,6 @@ describe("spotlight onboarding", () => {
     await waitFor(() => expect(dialog.open).toBe(true));
     const coach = dialog.querySelector<HTMLElement>(".onboarding-tour-coach")!;
     const close = within(coach).getByRole("button", { name: "Close" });
-    const skip = within(coach).getByRole("button", { name: "Skip" });
     const next = within(coach).getByRole("button", { name: "Next" });
     const disabled = document.createElement("button");
     disabled.textContent = "Disabled";
@@ -400,7 +570,7 @@ describe("spotlight onboarding", () => {
     const hidden = document.createElement("button");
     hidden.textContent = "Hidden";
     hidden.hidden = true;
-    skip.after(disabled, hidden);
+    close.after(disabled, hidden);
 
     next.focus();
     const forward = new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true });
@@ -419,7 +589,7 @@ describe("spotlight onboarding", () => {
     expect(backward.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(next);
 
-    skip.focus();
+    close.focus();
     const skipsDisabled = new KeyboardEvent("keydown", {
       key: "Tab",
       bubbles: true,

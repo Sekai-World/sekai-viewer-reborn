@@ -64,7 +64,6 @@ const labels: Record<string, string> = {
   "onboarding.nextLabel": "Next",
   "onboarding.previousLabel": "Previous",
   "onboarding.finishLabel": "Finish",
-  "onboarding.skipLabel": "Skip guide",
   closeLabel: "Close"
 };
 
@@ -359,7 +358,7 @@ describe("first-use filter guide", () => {
     open();
     await fireEvent.click(within(prompt).getByRole("button", { name: "Show guide" }));
     await waitFor(() => expect(tour.open).toBe(true));
-    expect(tour.querySelector(".onboarding-tour-dismiss-fallback")).not.toBeNull();
+    expect(tour.querySelector(".onboarding-tour-background-fallback")).not.toBeNull();
     await fireEvent.click(
       within(tour.querySelector("aside")!).getByRole("button", { name: "Close" })
     );
@@ -367,12 +366,13 @@ describe("first-use filter guide", () => {
     expect(filter.open).toBe(true);
   });
 
-  it("closes a skipped tour while leaving its filter dialog usable", async () => {
+  it("closes a tour only through its close control while leaving its filter dialog usable", async () => {
     const { prompt, tour, filter, open } = setup();
     open();
     await fireEvent.click(within(prompt).getByRole("button", { name: "Show guide" }));
     await waitFor(() => expect(tour.open).toBe(true));
-    await fireEvent.click(within(tour).getByRole("button", { name: "Skip guide" }));
+    expect(within(tour).queryByRole("button", { name: "Skip guide" })).toBeNull();
+    await fireEvent.click(within(tour).getByRole("button", { name: "Close" }));
     expect(tour.open).toBe(false);
     expect(filter.open).toBe(true);
   });

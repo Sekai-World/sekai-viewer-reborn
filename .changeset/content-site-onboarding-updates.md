@@ -15,6 +15,8 @@ Smoothly transition the spotlight and its cutout between guide steps while respe
 
 Highlight the theme and language menu-opening buttons before showing their options, including the shared settings entry on mobile.
 
+Advance active tours when visitors click the highlighted region without activating the underlying content. Ignore outside clicks and Escape, remove the skip action, and reserve early dismissal for the visible close button; the final step requires the explicit Finish action.
+
 Remove the redundant back-to-home button from the update log, retaining its home breadcrumb.
 
 Move the update log entry from settings menus to the sidebar's Project group.

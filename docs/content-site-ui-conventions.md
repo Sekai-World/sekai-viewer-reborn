@@ -26,6 +26,8 @@ The site-wide tour also covers the individual Content Display switches in settin
 
 Introduce theme and language controls by highlighting their actual menu-opening button before opening and highlighting the options. On mobile, that opener is the shared settings button. Forward and backward navigation must preserve this closed-entry/open-options sequence without changing saved preferences.
 
+During an active tour, clicking the spotlight advances one step without activating the underlying control. Clicks elsewhere and Escape neither advance nor dismiss it. Only the visible close button exits early; the final step requires Finish. The first-use consent prompt retains its separate decline behavior.
+
 ## Confirmed Prismatic Archive design language
 
 Prismatic Archive treats `content-site` as a calm, readable archive/catalogue rather than a generic dashboard or decorative landing page. The following rules are confirmed by the Phase 3 cards catalogue and event detail work:
