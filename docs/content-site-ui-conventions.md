@@ -14,6 +14,20 @@ Follow these rules before introducing new page-level patterns, daisyUI overrides
 
 `apps/content-site/src/app.html` synchronously reads and validates the saved theme name/mode and, for `auto`, the system dark preference before SvelteKit head/styles/hydration run. It sets `data-theme` and the `dark` class early to prevent a light-to-dark first-paint flash. `+layout.svelte` must use the same storage keys and validated values (`default`/`sakura`/`mint`; `light`/`dark`/`auto`), and theme storage reads/writes must tolerate unavailable `localStorage`.
 
+### Filter first-use guides
+
+- Cards, Songs, and Virtual Lives use `FilterOnboarding.svelte` at their existing filter-open action. Events and Gachas open their simpler filters directly without a guide. Inline filters without an opening action do not trigger a guide prompt.
+- Ask before opening the filter dialog. Both accepting and declining remember the choice per catalogue through `src/lib/filter-onboarding.ts`; region variants share that choice. Escape also declines and opens the filters normally. Unavailable browser storage falls back to remembering the choice for the mounted page.
+- Accepted guides use `OnboardingDialog.svelte` above the open filter dialog. Target real controls with scoped `data-filter-guide` markers, scroll them into view without changing selections, and leave the filter dialog usable after the guide finishes or closes.
+- Cover each available filter control. A grouped step must highlight the complete group it describes, not one field with instructions referring to unhighlighted fields. Include conditional controls when visible and explain their prerequisite in the enabling control's step without changing the user's selections.
+- Keep guide copy in the external `common` namespace. Do not reuse the site-wide onboarding-seen flag for filter guidance.
+
+The site-wide tour also covers the individual Content Display switches in settings. Keep those rows limited to their labels and switches; explanatory copy belongs in the spotlight steps. The settings menu's existing tour action replays them for returning visitors.
+
+Introduce theme and language controls by highlighting their actual menu-opening button before opening and highlighting the options. On mobile, that opener is the shared settings button. Forward and backward navigation must preserve this closed-entry/open-options sequence without changing saved preferences.
+
+During an active tour, clicking the spotlight advances one step without activating the underlying control. Clicks elsewhere and Escape neither advance nor dismiss it. Only the visible close button exits early; the final step requires Finish. The first-use consent prompt retains its separate decline behavior.
+
 ## Confirmed Prismatic Archive design language
 
 Prismatic Archive treats `content-site` as a calm, readable archive/catalogue rather than a generic dashboard or decorative landing page. The following rules are confirmed by the Phase 3 cards catalogue and event detail work:
@@ -254,6 +268,7 @@ Current `content-site` sidebar groups:
   - Soundtracks (`/mysekai/soundtracks/:region`)
 - Project (`navigation.project`)
   - Support
+  - Update log (`/updates`, `updates.title`); this entry lives in the sidebar, not the settings menus.
 
 Place a new destination in the group that matches its content rather than adding
 a catch-all section.

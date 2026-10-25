@@ -446,6 +446,7 @@
 
   <section
     class="mx-auto mb-12 [&_.archive-event-banner-details]:border-t-0 [&_.archive-event-banner-details]:pt-2!"
+    data-onboarding-target="home-current-events"
     aria-labelledby="current-event-title"
   >
     <div
@@ -521,7 +522,11 @@
     {/await}
   </section>
 
-  <section class="mx-auto mb-12" aria-labelledby="latest-data-title">
+  <section
+    class="mx-auto mb-12"
+    data-onboarding-target="home-latest-data"
+    aria-labelledby="latest-data-title"
+  >
     <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
       <div class="flex items-center gap-2">
         <Icon icon="mdi:clock-outline" class="size-4 text-primary" aria-hidden="true" />
@@ -756,7 +761,11 @@
     </h3>
   {/snippet}
 
-  <section class="mx-auto mb-12 w-full" aria-labelledby="home-news-title">
+  <section
+    class="mx-auto mb-12 w-full"
+    data-onboarding-target="home-game-news"
+    aria-labelledby="home-news-title"
+  >
     <div
       class="mb-4 flex items-center justify-between gap-3 border-b border-(--archive-border-subtle) pb-4"
     >
@@ -859,7 +868,11 @@
     {/if}
   </section>
 
-  <section class="mx-auto mb-12" aria-labelledby="content-directory-title">
+  <section
+    class="mx-auto mb-12"
+    data-onboarding-target="home-catalogue-directory"
+    aria-labelledby="content-directory-title"
+  >
     <div class="mb-4 border-b border-(--archive-border-subtle) pb-4">
       <div class="flex items-center gap-2">
         <Icon icon="mdi:account-group" class="size-4 text-primary" aria-hidden="true" />

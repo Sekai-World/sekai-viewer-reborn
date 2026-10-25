@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FilterOnboarding from "$lib/components/FilterOnboarding.svelte";
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -51,6 +52,7 @@
   let filterTypes = $state<string[]>([]);
   let appliedTypes = $state<string[]>([]);
   let filterDialog: HTMLDialogElement | null = $state(null);
+  let filterOnboarding: { requestOpen: (openFilters: () => void) => void } | undefined = $state();
 
   let homeLabel = $state(getInitialText("home"));
   let title = $state(getInitialText("navigation.virtualLives"));
@@ -275,8 +277,10 @@
     filterTypes = [...appliedTypes];
   };
   const openFilterDialog = (): void => {
-    syncDraftFiltersFromApplied();
-    filterDialog?.showModal();
+    filterOnboarding?.requestOpen(() => {
+      syncDraftFiltersFromApplied();
+      filterDialog?.showModal();
+    });
   };
   const resetFilterDrafts = (): void => {
     filterName = "";
@@ -428,7 +432,7 @@
         applyFilters();
       }}
     >
-      <label class="flex w-full flex-col">
+      <label class="flex w-full flex-col" data-filter-guide="name">
         <span class="mb-1 text-sm font-medium">{nameLabel}</span>
         <input
           class="input w-full"
@@ -437,7 +441,7 @@
           placeholder={namePlaceholder}
         />
       </label>
-      <label class="flex w-full flex-col">
+      <label class="flex w-full flex-col" data-filter-guide="id">
         <span class="mb-1 text-sm font-medium">{filterIdLabel}</span>
         <input
           class="input w-full"
@@ -446,7 +450,7 @@
           placeholder={filterIdPlaceholder}
         />
       </label>
-      <fieldset class="fieldset w-full gap-2">
+      <fieldset class="fieldset w-full gap-2" data-filter-guide="liveType">
         <legend class="fieldset-legend text-sm font-medium">{filterTypeLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each typeValues as value (value)}
@@ -466,7 +470,7 @@
           {/each}
         </div>
       </fieldset>
-      <div class="modal-action flex-wrap gap-2">
+      <div class="modal-action flex-wrap gap-2" data-filter-guide="actions">
         <button type="button" class="btn btn-outline min-h-12!" onclick={resetFilterDrafts}
           >{filterResetLabel}</button
         >
@@ -478,3 +482,11 @@
     <button type="submit" aria-label={closeLabel}></button>
   </form>
 </dialog>
+
+<FilterOnboarding
+  bind:this={filterOnboarding}
+  scope="virtual-lives"
+  dialog={filterDialog}
+  translate={translateType}
+  targets={["name", "id", "liveType", "actions"]}
+/>

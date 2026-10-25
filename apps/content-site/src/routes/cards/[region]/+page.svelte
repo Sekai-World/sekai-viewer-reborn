@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FilterOnboarding from "$lib/components/FilterOnboarding.svelte";
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { asset, resolve } from "$app/paths";
@@ -110,6 +111,7 @@
   let filterSupportUnitDraft = $state<string[]>([]);
   let has3dmvCutInDraft = $state(false);
   let filterDialog: HTMLDialogElement | null = $state(null);
+  let filterOnboarding: { requestOpen: (openFilters: () => void) => void } | undefined = $state();
   const getUrlViewMode = (): CardListViewMode | null =>
     getCardListViewFromSearchParams(page.url.searchParams);
   let viewMode = $state<CardListViewMode>(getUrlViewMode() ?? DEFAULT_CARD_LIST_VIEW_MODE);
@@ -944,8 +946,10 @@
   };
 
   const openFilterDialog = (): void => {
-    syncDraftFiltersFromCurrent();
-    filterDialog?.showModal();
+    filterOnboarding?.requestOpen(() => {
+      syncDraftFiltersFromCurrent();
+      filterDialog?.showModal();
+    });
   };
 
   const resetFilterDrafts = (): void => {
@@ -1205,7 +1209,7 @@
     </div>
 
     <div class="mt-4 grid grid-cols-1 gap-3">
-      <label class="flex w-full flex-col">
+      <label class="flex w-full flex-col" data-filter-guide="name">
         <span class="mb-1 text-sm font-medium">{cardListFilterNameLabel}</span>
         <input
           type="text"
@@ -1215,7 +1219,7 @@
         />
       </label>
 
-      <fieldset class="fieldset w-full gap-2">
+      <fieldset class="fieldset w-full gap-2" data-filter-guide="cardUnit">
         <legend class="fieldset-legend text-sm font-medium">{cardListFilterUnitLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.unit as option (option.value)}
@@ -1243,7 +1247,7 @@
       </fieldset>
 
       {#if isPiaproUnitSelected(filterUnitDraft)}
-        <fieldset class="fieldset w-full gap-2">
+        <fieldset class="fieldset w-full gap-2" data-filter-guide="supportUnit">
           <legend class="fieldset-legend text-sm font-medium"
             >{cardListFilterSupportUnitLabel}</legend
           >
@@ -1278,7 +1282,7 @@
         </fieldset>
       {/if}
 
-      <fieldset class="fieldset w-full gap-2">
+      <fieldset class="fieldset w-full gap-2" data-filter-guide="characters">
         <legend class="fieldset-legend text-sm font-medium">{cardListFilterCharacterLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.character as option (option.value)}
@@ -1311,7 +1315,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="fieldset w-full gap-2">
+      <fieldset class="fieldset w-full gap-2" data-filter-guide="skills">
         <legend class="fieldset-legend text-sm font-medium">{cardListFilterSkillLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.skill as option (option.value)}
@@ -1338,7 +1342,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="fieldset w-full gap-2">
+      <fieldset class="fieldset w-full gap-2" data-filter-guide="cardType">
         <legend class="fieldset-legend text-sm font-medium">{cardListFilterTypeLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each filterMeta.type as option (option.value)}
@@ -1365,7 +1369,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="fieldset w-full gap-2">
+      <fieldset class="fieldset w-full gap-2" data-filter-guide="appearance">
         <legend class="fieldset-legend text-sm font-medium">{cardListFilterAttrLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each attrOptions as option (option)}
@@ -1399,7 +1403,7 @@
         </div>
       </fieldset>
 
-      <fieldset class="fieldset w-full gap-2">
+      <fieldset class="fieldset w-full gap-2" data-filter-guide="rarity">
         <legend class="fieldset-legend text-sm font-medium">{cardListFilterRarityLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each rarityOptions as option (option)}
@@ -1427,6 +1431,7 @@
       </fieldset>
 
       <label
+        data-filter-guide="extras"
         class="flex items-center justify-between gap-3 rounded-box border border-base-content/20 px-3 py-2"
       >
         <span class="text-sm font-medium">{cardListFilter3dmvCutInLabel}</span>
@@ -1439,7 +1444,7 @@
       </label>
     </div>
 
-    <div class="modal-action flex-wrap gap-2">
+    <div class="modal-action flex-wrap gap-2" data-filter-guide="actions">
       <button type="button" class="btn btn-outline min-h-12!" onclick={resetFilterDrafts}>
         {listFilterReset}
       </button>
@@ -1452,3 +1457,22 @@
     <button type="submit" aria-label={closeLabel}></button>
   </form>
 </dialog>
+
+<FilterOnboarding
+  bind:this={filterOnboarding}
+  scope="cards"
+  dialog={filterDialog}
+  translate={createI18nTranslator(data.uiLocale, currentMessages)}
+  targets={[
+    "name",
+    "cardUnit",
+    ...(isPiaproUnitSelected(filterUnitDraft) ? ["supportUnit"] : []),
+    "characters",
+    "skills",
+    "cardType",
+    "appearance",
+    "rarity",
+    "extras",
+    "actions"
+  ]}
+/>

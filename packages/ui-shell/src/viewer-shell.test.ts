@@ -84,3 +84,25 @@ it("lets icon-less sidebar labels span the icon column", () => {
   expect(withIcon?.className).not.toContain("col-span-2");
   expect(withoutIcon?.className).toContain("col-span-2");
 });
+
+it("exposes optional group metadata on section, enabled-link, and disabled-link rows", () => {
+  renderShell({
+    sidebarItems: [
+      { type: "section", label: "Section", groupId: "test-group-a" },
+      { label: "Enabled", href: "/enabled", groupId: "test-group-a" },
+      { label: "Disabled", disabled: true, groupId: "test-group-b" },
+      { label: "Ungrouped", href: "/ungrouped" }
+    ]
+  });
+
+  const rowFor = (label: string): HTMLLIElement => {
+    const row = screen.getByText(label).closest("li");
+    if (!(row instanceof HTMLLIElement)) throw new Error(`Missing sidebar row: ${label}`);
+    return row;
+  };
+
+  expect(rowFor("Section").getAttribute("data-sidebar-group")).toBe("test-group-a");
+  expect(rowFor("Enabled").getAttribute("data-sidebar-group")).toBe("test-group-a");
+  expect(rowFor("Disabled").getAttribute("data-sidebar-group")).toBe("test-group-b");
+  expect(rowFor("Ungrouped").hasAttribute("data-sidebar-group")).toBe(false);
+});

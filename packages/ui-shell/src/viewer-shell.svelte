@@ -162,13 +162,13 @@
       <ul>
         {#each sidebarItems as item (`${item.type ?? "link"}:${item.label}`)}
           {#if item.type === "section"}
-            <li class="px-2 pt-4 first:pt-0">
+            <li class="px-2 pt-4 first:pt-0" data-sidebar-group={item.groupId}>
               <div class="menu-title pointer-events-none px-0 py-1 select-none">
                 <span>{item.label}</span>
               </div>
             </li>
           {:else if item.href && !item.disabled}
-            <li>
+            <li data-sidebar-group={item.groupId}>
               <a
                 href={item.href}
                 aria-current={item.active ? "page" : undefined}
@@ -186,7 +186,7 @@
               </a>
             </li>
           {:else}
-            <li>
+            <li data-sidebar-group={item.groupId}>
               <button
                 type="button"
                 disabled
