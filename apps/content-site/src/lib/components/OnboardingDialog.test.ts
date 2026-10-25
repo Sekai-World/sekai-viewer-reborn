@@ -46,7 +46,7 @@ const createTour = (
     onComplete: vi.fn(),
     onSkip: vi.fn(),
     onClose: vi.fn(),
-    onStepChange: vi.fn()
+    onStepChange: vi.fn<(stepIndex: number) => void | Promise<void>>()
   };
   const result = render(OnboardingDialog, {
     open: true,
@@ -71,6 +71,117 @@ const createTour = (
 };
 
 describe("spotlight onboarding", () => {
+  it("keeps focus on the primary button when Next becomes Finish", async () => {
+    const { dialog, controls } = createTour();
+    const close = within(dialog.querySelector("aside")!).getByRole("button", { name: "Close" });
+    await waitFor(() => expect(document.activeElement).toBe(close));
+    const primary = controls.getByRole("button", { name: "Next" });
+    primary.focus();
+    for (let step = 1; step < 6; step += 1) await fireEvent.click(primary);
+    expect(controls.getByRole("button", { name: "Finish" })).toBe(primary);
+    expect(document.activeElement).toBe(primary);
+  });
+  it("gives concurrently mounted tours distinct title and description IDs", () => {
+    const first = createTour();
+    const second = createTour();
+    for (const attribute of ["aria-labelledby", "aria-describedby"]) {
+      const firstId = first.dialog.getAttribute(attribute)!;
+      const secondId = second.dialog.getAttribute(attribute)!;
+      expect(firstId).not.toBe(secondId);
+      expect(first.dialog.querySelector(`[id="${firstId}"]`)).not.toBeNull();
+      expect(second.dialog.querySelector(`[id="${secondId}"]`)).not.toBeNull();
+    }
+  });
+  it("preserves the spotlight and cutout while preparing and moving to the next target", async () => {
+    vi.stubGlobal("innerWidth", 1440);
+    vi.stubGlobal("innerHeight", 900);
+    const target = document.createElement("button");
+    target.dataset.onboardingTarget = "home";
+    document.body.append(target);
+    let rect = new DOMRect(40, 60, 180, 44);
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement
+    ) {
+      return this === target ? rect : new DOMRect(0, 0, 320, 220);
+    });
+    const { dialog, controls, callbacks } = createTour(() => target);
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    const spotlight = dialog.querySelector<HTMLElement>(".onboarding-tour-spotlight")!;
+    const panels = [...dialog.querySelectorAll<HTMLElement>(".onboarding-tour-scrim")];
+    let finishPreparation = () => {};
+    callbacks.onStepChange.mockImplementationOnce(
+      () => new Promise<void>((resolve) => (finishPreparation = resolve))
+    );
+    await fireEvent.click(controls.getByRole("button", { name: "Next" }));
+    expect(dialog.querySelector(".onboarding-tour-spotlight")).toBe(spotlight);
+    expect(dialog.querySelector(".onboarding-tour-dismiss-fallback")).toBeNull();
+    expect(spotlight.style.left).toBe("32px");
+
+    // Drawer mutations or scroll events during preparation must not measure an unfinished target.
+    rect = new DOMRect(500, 300, 240, 100);
+    const frames: FrameRequestCallback[] = [];
+    const requestFrame = vi
+      .spyOn(window, "requestAnimationFrame")
+      .mockImplementation((callback) => {
+        frames.push(callback);
+        return frames.length;
+      });
+    await fireEvent.scroll(window);
+    frames.forEach((callback) => callback(0));
+    expect(spotlight.style.left).toBe("32px");
+    requestFrame.mockRestore();
+    finishPreparation();
+
+    await waitFor(() => expect(spotlight.style.left).toBe("492px"));
+    expect(dialog.querySelector(".onboarding-tour-spotlight")).toBe(spotlight);
+    dialog.querySelectorAll(".onboarding-tour-scrim").forEach((panel, index) => {
+      expect(panel).toBe(panels[index]);
+    });
+    expect(spotlight.style.top).toBe("292px");
+    expect(spotlight.style.width).toBe("256px");
+    expect(spotlight.style.height).toBe("116px");
+    expect(panels[0]!.style.height).toBe(spotlight.style.top);
+    expect(panels[1]!.style.top).toBe("408px");
+    expect(panels[2]!.style.width).toBe(spotlight.style.left);
+    expect(panels[2]!.style.height).toBe(spotlight.style.height);
+    expect(panels[3]!.style.left).toBe("748px");
+    expect(panels[3]!.style.height).toBe(spotlight.style.height);
+  });
+
+  it("clears old geometry for missing targets and mounts a fresh spotlight on reopening", async () => {
+    const target = document.createElement("button");
+    target.dataset.onboardingTarget = "home";
+    document.body.append(target);
+    let rect = new DOMRect(40, 60, 180, 44);
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement
+    ) {
+      return this === target ? rect : new DOMRect(0, 0, 320, 220);
+    });
+    const { dialog, controls, callbacks, rerender } = createTour((name) =>
+      name === "home" ? target : null
+    );
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    await fireEvent.click(controls.getByRole("button", { name: "Next" }));
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).toBeNull());
+    expect(dialog.querySelectorAll(".onboarding-tour-scrim")).toHaveLength(0);
+    expect(dialog.querySelector(".onboarding-tour-dismiss-fallback")).not.toBeNull();
+    await fireEvent.click(controls.getByRole("button", { name: "Previous" }));
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    const previousSpotlight = dialog.querySelector(".onboarding-tour-spotlight");
+    dialog.close();
+    await waitFor(() => expect(callbacks.onClose).toHaveBeenCalledTimes(1));
+    expect(dialog.querySelector(".onboarding-tour-spotlight")).toBeNull();
+    rect = new DOMRect(200, 140, 44, 44);
+    await rerender({ open: false });
+    await rerender({ open: true });
+    await waitFor(() => expect(dialog.querySelector(".onboarding-tour-spotlight")).not.toBeNull());
+    const reopenedSpotlight = dialog.querySelector<HTMLElement>(".onboarding-tour-spotlight")!;
+    expect(reopenedSpotlight).not.toBe(previousSpotlight);
+    expect(reopenedSpotlight.style.left).toBe("192px");
+    expect(reopenedSpotlight.style.top).toBe("132px");
+  });
+
   it.each([390, 1440])("positions beside a real control within a %spx viewport", async (width) => {
     vi.stubGlobal("innerWidth", width);
     vi.stubGlobal("innerHeight", 844);

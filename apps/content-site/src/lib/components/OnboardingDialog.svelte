@@ -44,8 +44,9 @@
     resolveTarget?: (target: string) => TargetResolution | null;
   } = $props();
 
-  const dialogTitleId = "content-site-onboarding-title";
-  const dialogDescriptionId = "content-site-onboarding-description";
+  const instanceId = $props.id();
+  const dialogTitleId = `${instanceId}-title`;
+  const dialogDescriptionId = `${instanceId}-description`;
   let dialog: HTMLDialogElement | null = $state(null);
   let closeButton: HTMLButtonElement | null = $state(null);
   let coach: HTMLElement | null = $state(null);
@@ -57,6 +58,7 @@
   let suppressCloseNotification = false;
   let restoreFocusElement: HTMLElement | null = null;
   let measurementRequest = 0;
+  let preparingTarget = false;
   let geometryFrame = 0;
   let stopGeometryTracking: (() => void) | null = null;
   const activeStep = $derived(steps[currentStep]);
@@ -207,7 +209,7 @@
     window.cancelAnimationFrame(geometryFrame);
     geometryFrame = window.requestAnimationFrame(() => {
       geometryFrame = 0;
-      if (open) updateGeometry();
+      if (open && !preparingTarget) updateGeometry();
     });
   };
 
@@ -276,12 +278,16 @@
 
   const syncStep = async (stepIndex: number): Promise<void> => {
     const request = ++measurementRequest;
-    hasTarget = false;
+    // Keep the previous cutout until the new target is ready, including drawer/scroll setup.
+    preparingTarget = true;
     await onStepChange?.(stepIndex);
     await tick();
     if (!open || request !== measurementRequest) return;
     await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-    if (open && request === measurementRequest) updateGeometry();
+    if (open && request === measurementRequest) {
+      preparingTarget = false;
+      updateGeometry();
+    }
   };
 
   const closeWithoutNotification = (): void => {
@@ -309,6 +315,7 @@
     measurementRequest += 1;
     stopGeometryTracking?.();
     currentStep = 0;
+    preparingTarget = false;
     spotlightStyle = "";
     coachStyle = "";
     hasTarget = false;
@@ -370,7 +377,7 @@
   ></button>
 
   {#if hasTarget}
-    {#each maskPanels as panel (panel)}
+    {#each maskPanels as panel, index (index)}
       <div class="onboarding-tour-scrim" style={panel} aria-hidden="true"></div>
     {/each}
     <div class="onboarding-tour-spotlight" style={spotlightStyle} aria-hidden="true"></div>
@@ -446,24 +453,18 @@
               {previousLabel}
             </button>
           {/if}
-          {#if isLastStep}
-            <button
-              type="button"
-              class="btn btn-primary min-h-11 min-w-11 px-2"
-              onclick={() => finish(onComplete)}
-            >
+          <button
+            type="button"
+            class="btn btn-primary min-h-11 min-w-11 gap-1 px-2"
+            onclick={() => (isLastStep ? finish(onComplete) : selectStep(currentStep + 1))}
+          >
+            {#if isLastStep}
               {finishLabel}
-            </button>
-          {:else}
-            <button
-              type="button"
-              class="btn btn-primary min-h-11 min-w-11 gap-1 px-2"
-              onclick={() => selectStep(currentStep + 1)}
-            >
+            {:else}
               {nextLabel}
               <Icon icon="mdi:chevron-right" class="size-5" aria-hidden="true" />
-            </button>
-          {/if}
+            {/if}
+          </button>
         </div>
       </div>
     </aside>
@@ -516,6 +517,14 @@
     pointer-events: none;
   }
 
+  .onboarding-tour-spotlight,
+  .onboarding-tour-scrim {
+    /* Matching timing keeps all four cutout edges aligned with the spotlight. */
+    transition-property: left, top, width, height;
+    transition-duration: 280ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
   .onboarding-tour-dismiss-fallback {
     background: color-mix(in oklab, black 65%, transparent);
   }
@@ -547,12 +556,14 @@
 
   @media (prefers-reduced-motion: reduce) {
     .onboarding-tour-spotlight,
+    .onboarding-tour-scrim,
     .onboarding-tour-coach {
       transition: none;
     }
   }
 
   :global(:root[data-low-motion]) .onboarding-tour-spotlight,
+  :global(:root[data-low-motion]) .onboarding-tour-scrim,
   :global(:root[data-low-motion]) .onboarding-tour-coach {
     transition: none;
   }
