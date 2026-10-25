@@ -3,6 +3,7 @@
 "@apps/content-site": patch
 "@apps/media-lab-site": patch
 "@apps/tools-site": patch
+"@platform/i18n-source": patch
 "@platform/ui-shell": patch
 ---
 
