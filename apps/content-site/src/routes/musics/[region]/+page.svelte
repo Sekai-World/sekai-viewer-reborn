@@ -1,4 +1,5 @@
 <script lang="ts">
+  import FilterOnboarding from "$lib/components/FilterOnboarding.svelte";
   import { browser } from "$app/environment";
   import { replaceState } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -104,6 +105,7 @@
   let levelDraft = $state("");
   let viewMode = $state<MusicListViewMode>("grid");
   let filterDialog: HTMLDialogElement | null = $state(null);
+  let filterOnboarding: { requestOpen: (openFilters: () => void) => void } | undefined = $state();
   let hasTriedRestoreViewMode = $state(false);
   let spoilerContentAppliedState = $state<boolean | null>(null);
   const contentDisplaySettings = getContentDisplaySettings();
@@ -855,9 +857,11 @@
   };
 
   const openFilters = (): void => {
-    syncDrafts();
-    loadFilterMetadata();
-    filterDialog?.showModal();
+    filterOnboarding?.requestOpen(() => {
+      syncDrafts();
+      loadFilterMetadata();
+      filterDialog?.showModal();
+    });
   };
 
   const resetDrafts = (): void => {
@@ -1075,7 +1079,7 @@
       </form>
     </div>
     <div class="mt-4 grid gap-3">
-      <label class="flex flex-col">
+      <label class="flex flex-col" data-filter-guide="name">
         <span class="mb-1 text-sm font-medium">{musicListFilterNameLabel}</span>
         <div class="relative">
           <input
@@ -1096,7 +1100,7 @@
           {/if}
         </div>
       </label>
-      <fieldset class="fieldset gap-2">
+      <fieldset class="fieldset gap-2" data-filter-guide="category">
         <legend class="fieldset-legend text-sm font-medium">{musicListFilterCategoryLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#if metadataState === "loading"}
@@ -1123,7 +1127,7 @@
           {/if}
         </div>
       </fieldset>
-      <fieldset class="fieldset gap-2">
+      <fieldset class="fieldset gap-2" data-filter-guide="tags">
         <legend class="fieldset-legend text-sm font-medium">{musicListTagLabel}</legend>
         <div class="join flex w-full flex-wrap">
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
@@ -1150,7 +1154,7 @@
           {/each}
         </div>
       </fieldset>
-      <fieldset class="fieldset gap-2">
+      <fieldset class="fieldset gap-2" data-filter-guide="vocals">
         <legend class="fieldset-legend text-sm font-medium">{musicListVocalCharacterLabel}</legend>
         <div class="flex flex-wrap gap-1.5">
           {#each gameCharacterValues as character (character)}
@@ -1182,7 +1186,7 @@
           {/each}
         </div>
       </fieldset>
-      <fieldset class="fieldset gap-2">
+      <fieldset class="fieldset gap-2" data-filter-guide="charts">
         <legend class="fieldset-legend text-sm font-medium">{musicListDifficultyLabel}</legend>
         <label
           class="flex min-h-10 items-center justify-between gap-3 rounded-box border border-base-content/20 px-3 py-2"
@@ -1196,8 +1200,11 @@
           />
         </label>
       </fieldset>
-      {#each textFilters as filter (filter.label)}
-        <label class="flex flex-col">
+      {#snippet textFilterField(filter: MusicTextFilter)}
+        <label
+          class="flex flex-col"
+          data-filter-guide={filter.listId === "music-levels" ? "level" : undefined}
+        >
           <span class="mb-1 text-sm font-medium">{filter.label}</span>
           <div class="relative">
             <input
@@ -1227,9 +1234,24 @@
             {/if}
           </div>
         </label>
+      {/snippet}
+      {#each textFilters.filter((filter) => filter.listId === "music-levels") as filter (filter.label)}
+        {@render textFilterField(filter)}
       {/each}
+      <fieldset
+        class="grid min-w-0 gap-3"
+        aria-label={createI18nTranslator(
+          data.uiLocale,
+          currentMessages
+        )("filterGuide.steps.credits.title")}
+        data-filter-guide="credits"
+      >
+        {#each textFilters.filter((filter) => filter.listId !== "music-levels") as filter (filter.label)}
+          {@render textFilterField(filter)}
+        {/each}
+      </fieldset>
     </div>
-    <div class="modal-action">
+    <div class="modal-action" data-filter-guide="actions">
       <button type="button" class="btn btn-outline min-h-12!" onclick={resetDrafts}
         >{listFilterReset}</button
       >
@@ -1242,3 +1264,11 @@
     <button type="submit" aria-label={closeLabel}></button>
   </form>
 </dialog>
+
+<FilterOnboarding
+  bind:this={filterOnboarding}
+  scope="musics"
+  dialog={filterDialog}
+  translate={createI18nTranslator(data.uiLocale, currentMessages)}
+  targets={["name", "category", "tags", "vocals", "charts", "level", "credits", "actions"]}
+/>

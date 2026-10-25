@@ -113,6 +113,7 @@ export default defineConfig({
         "src/lib/soundtrack-player.svelte.ts",
         "src/lib/i18n/streamed-translator.svelte.ts",
         "src/lib/onboarding.ts",
+        "src/lib/filter-onboarding.ts",
         "src/lib/site-updates.ts",
         "src/lib/components/mission/catalogue-groups.ts",
         "src/lib/components/shared/title-preview-labels.ts",
