@@ -88,6 +88,7 @@
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(data.uiLocale, getInitialMessages())(key);
   let uiLocale = $derived<SupportedUiLocale>(normalizeUiLocale(data.uiLocale, DEFAULT_UI_LOCALE));
+  const layoutTranslate = $derived(createI18nTranslator(uiLocale, currentLayoutMessages));
   let themeName = $state<ThemeName>("default");
   let themeMode = $state<ThemeMode>("auto");
   const getInitialPreferredRegion = (): SupportedRegion => data.preferredRegion;
@@ -399,7 +400,14 @@
       label: projectLabel,
       groupId: "project"
     },
-    navigationLinks[navigationLinks.length - 1]
+    navigationLinks[navigationLinks.length - 1],
+    {
+      label: layoutTranslate("updates.title"),
+      href: resolve("/updates"),
+      active: page.url.pathname === resolve("/updates"),
+      icon: "mdi:information-outline",
+      groupId: "project"
+    }
   ]);
   const quickNavigationItems = $derived<ContentSiteNavigationItem[]>([
     navigationLinks[0],
@@ -411,7 +419,6 @@
   ]);
   const showPageTitle = $derived(page.url.pathname === "/");
   const isHomeRoute = $derived(page.url.pathname === resolve("/"));
-  const layoutTranslate = $derived(createI18nTranslator(uiLocale, currentLayoutMessages));
   const siteVersion = $derived(resolveSiteVersion(data.siteVersion));
   const activeSiteUpdate = $derived(getSiteUpdateForVersion(siteVersion));
   const showSiteUpdateNotice = $derived(
@@ -1069,13 +1076,9 @@
     restoreOnboardingFocus();
   };
 
-  const handleSettingsUpdatesClick = (): void => {
+  const navigateToUpdates = (): void => {
     closeSettingsMenus();
     markCurrentSiteVersionSeen();
-  };
-
-  const navigateToUpdates = (): void => {
-    handleSettingsUpdatesClick();
     void goto(resolve("/updates"));
   };
 
@@ -1488,14 +1491,6 @@
             <div class="my-2 h-px bg-base-content/12"></div>
 
             <div class="flex flex-col gap-1">
-              <a
-                class="btn btn-ghost min-h-11 justify-start gap-2"
-                href={resolve("/updates")}
-                onclick={handleSettingsUpdatesClick}
-              >
-                <Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />
-                {layoutTranslate("settings.viewUpdates")}
-              </a>
               <button
                 type="button"
                 class="btn btn-ghost min-h-11 justify-start gap-2"
@@ -1789,14 +1784,6 @@
             <div class="my-2 h-px bg-base-content/12"></div>
 
             <div class="flex flex-col gap-1">
-              <a
-                class="btn btn-ghost min-h-11 justify-start gap-2"
-                href={resolve("/updates")}
-                onclick={handleSettingsUpdatesClick}
-              >
-                <Icon icon="mdi:information-outline" class="size-4" aria-hidden="true" />
-                {layoutTranslate("settings.viewUpdates")}
-              </a>
               <button
                 type="button"
                 class="btn btn-ghost min-h-11 justify-start gap-2"

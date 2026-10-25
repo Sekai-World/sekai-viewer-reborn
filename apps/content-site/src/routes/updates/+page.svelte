@@ -1,6 +1,5 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import Icon from "@iconify/svelte";
   import PageHeader from "$lib/components/shared/PageHeader.svelte";
   import {
     createI18nTranslator,
@@ -30,14 +29,7 @@
 <section class="content-page-shell gap-5 px-2 pb-6 sm:px-4">
   <PageHeader
     breadcrumbs={[{ label: translate("home"), href: resolve("/") }, { label: pageTitle }]}
-  >
-    {#snippet actions()}
-      <a class="btn btn-outline min-h-11 gap-2" href={resolve("/")}>
-        <Icon icon="mdi:home-variant-outline" class="size-4" aria-hidden="true" />
-        {translate("updates.backToHome")}
-      </a>
-    {/snippet}
-  </PageHeader>
+  />
 
   <section aria-labelledby="updates-title" class="flex flex-col gap-4">
     <h1 id="updates-title" class="text-2xl font-semibold text-(--archive-text-strong)">

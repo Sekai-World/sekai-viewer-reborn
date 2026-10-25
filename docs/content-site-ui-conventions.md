@@ -266,6 +266,7 @@ Current `content-site` sidebar groups:
   - Soundtracks (`/mysekai/soundtracks/:region`)
 - Project (`navigation.project`)
   - Support
+  - Update log (`/updates`, `updates.title`); this entry lives in the sidebar, not the settings menus.
 
 Place a new destination in the group that matches its content rather than adding
 a catch-all section.

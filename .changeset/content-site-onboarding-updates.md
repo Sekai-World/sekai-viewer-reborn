@@ -14,6 +14,10 @@ Smoothly transition the spotlight and its cutout between guide steps while respe
 
 Highlight the theme and language menu-opening buttons before showing their options, including the shared settings entry on mobile.
 
+Remove the redundant back-to-home button from the update log, retaining its home breadcrumb.
+
+Move the update log entry from settings menus to the sidebar's Project group.
+
 Explain each content display preference through dedicated site-tour steps in desktop and mobile settings, keeping the setting rows limited to their labels and switches.
 
 Offer an optional first-use guide when opening card, song, and virtual live catalogue filters, remembering the user's choice separately for each catalogue. Cover each available card and song filter with its own step or a complete grouped highlight, including the composer, arranger, and lyricist filters together in the song credits step.
