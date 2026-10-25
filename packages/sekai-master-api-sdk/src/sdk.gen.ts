@@ -391,7 +391,7 @@ export const getMusicsByRegionById = <ThrowOnError extends boolean = false>(opti
 /**
  * Get music detail composite by id
  *
- * Returns music base info, difficulties, vocals, and tags in a single response
+ * Returns music base info, difficulties, vocals, tags, playable music videos, and original video links in a single response
  */
 export const getMusicsByRegionByIdDetail = <ThrowOnError extends boolean = false>(options: Options<GetMusicsByRegionByIdDetailData, ThrowOnError>): RequestResult<GetMusicsByRegionByIdDetailResponses, GetMusicsByRegionByIdDetailErrors, ThrowOnError> => (options.client ?? client).get<GetMusicsByRegionByIdDetailResponses, GetMusicsByRegionByIdDetailErrors, ThrowOnError>({ url: '/musics/{region}/{id}/detail', ...options });
 
