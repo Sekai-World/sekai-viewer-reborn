@@ -6,6 +6,13 @@ export type MusicYoutubeReference = {
   embedUrl: string;
 };
 
+export type MusicVideoReference = {
+  id: string;
+  sourceLabel: string;
+  watchUrl: string;
+  embedUrl?: string;
+};
+
 export function parseYoutubeReference(value: unknown): MusicYoutubeReference | null {
   // Check the raw authority too: URL normalizes explicit :443 and backslashes.
   if (
@@ -39,6 +46,49 @@ export function parseYoutubeReference(value: unknown): MusicYoutubeReference | n
     watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
     embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}`
   };
+}
+
+function parseHttpsUrl(value: unknown): URL | null {
+  if (typeof value !== "string" || /[\s\\]/.test(value)) return null;
+
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" || url.username || url.password || !url.hostname) return null;
+  return url;
+}
+
+function getSourceLabel(url: URL): string {
+  const hostname = url.hostname.toLowerCase().replace(/^www\./, "");
+  if (["youtube.com", "youtu.be", "m.youtube.com"].includes(hostname)) return "YouTube";
+  if (["nicovideo.jp", "nico.ms"].includes(hostname)) return "NicoNico";
+  return hostname;
+}
+
+export function parseMusicVideoReference(value: unknown): MusicVideoReference | null {
+  const url = parseHttpsUrl(value);
+  if (!url) return null;
+
+  const youtubeReference = parseYoutubeReference(value);
+  return {
+    id: youtubeReference?.videoId ?? url.href,
+    sourceLabel: getSourceLabel(url),
+    watchUrl: youtubeReference?.watchUrl ?? url.href,
+    ...(youtubeReference?.embedUrl ? { embedUrl: youtubeReference.embedUrl } : {})
+  };
+}
+
+export function getMusicVideoReferences(originals: MusicOriginal[]): MusicVideoReference[] {
+  const seen = new Set<string>();
+  return originals.flatMap((original) => {
+    const reference = parseMusicVideoReference(original.videoLink);
+    if (!reference || seen.has(reference.watchUrl)) return [];
+    seen.add(reference.watchUrl);
+    return [reference];
+  });
 }
 
 export function getMusicYoutubeReferences(originals: MusicOriginal[]): MusicYoutubeReference[] {

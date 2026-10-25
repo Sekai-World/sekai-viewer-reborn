@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getMusicYoutubeReferences, parseYoutubeReference } from "./music-youtube";
+import {
+  getMusicVideoReferences,
+  getMusicYoutubeReferences,
+  parseMusicVideoReference,
+  parseYoutubeReference
+} from "./music-youtube";
 
 describe("YouTube URL validation", () => {
   it.each([
@@ -56,5 +61,25 @@ describe("YouTube URL validation", () => {
         { id: "3", musicId: "8", videoLink: "https://nicovideo.jp/watch/sm123" }
       ])
     ).toHaveLength(1);
+  });
+
+  it("retains valid HTTPS sources and only adds embeds for supported YouTube URLs", () => {
+    expect(parseMusicVideoReference("https://nicovideo.jp/watch/sm123")).toEqual({
+      id: "https://nicovideo.jp/watch/sm123",
+      sourceLabel: "NicoNico",
+      watchUrl: "https://nicovideo.jp/watch/sm123"
+    });
+    expect(parseMusicVideoReference("https://video.example.test/watch/8")).toEqual({
+      id: "https://video.example.test/watch/8",
+      sourceLabel: "video.example.test",
+      watchUrl: "https://video.example.test/watch/8"
+    });
+    expect(
+      getMusicVideoReferences([
+        { id: "1", musicId: "8", videoLink: "https://youtu.be/EgOWe9ByNaE" },
+        { id: "2", musicId: "8", videoLink: "https://nicovideo.jp/watch/sm123" },
+        { id: "3", musicId: "8", videoLink: "https://video.example.test/watch/8" }
+      ])
+    ).toHaveLength(3);
   });
 });

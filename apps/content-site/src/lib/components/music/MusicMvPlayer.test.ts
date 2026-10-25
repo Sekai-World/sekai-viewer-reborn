@@ -34,7 +34,14 @@ const vocals: MusicVocal[] = ["v1", "v2"].map((id) => ({
   characters: null,
   overrideChara: null
 }));
-const props = { ...labels, descriptors, vocals };
+const props = {
+  ...labels,
+  descriptors,
+  selectedDescriptor: descriptors[0]!,
+  selectedDescriptorIndex: 0,
+  selectedVocal: vocals[0]!,
+  onDescriptorChange: vi.fn()
+};
 const resolver = vi.mocked(resolveMusicVideoAssetURL);
 const video = (): HTMLVideoElement =>
   screen.getByLabelText("Tell Your World Music Video") as HTMLVideoElement;
@@ -44,6 +51,7 @@ beforeEach(() => {
   resolver
     .mockReset()
     .mockImplementation(async (descriptor) => `/video/${descriptor.assetBundleName}.mp4`);
+  props.onDescriptorChange.mockClear();
   vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
   vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(function (
     this: HTMLMediaElement
@@ -74,9 +82,22 @@ async function playVideo(): Promise<void> {
 
 describe("MusicMvPlayer descriptors and listing lifecycle", () => {
   it("hides the entire card without descriptors and makes no listing request", () => {
-    const { container } = render(MusicMvPlayer, { ...props, descriptors: [] });
+    const { container } = render(MusicMvPlayer, {
+      ...props,
+      descriptors: [],
+      selectedDescriptor: null
+    });
     expect(container.querySelector("article")).toBeNull();
     expect(resolver).not.toHaveBeenCalled();
+  });
+
+  it("renders as an embedded section without a nested card shell", async () => {
+    const { container } = render(MusicMvPlayer, { ...props, embedded: true });
+
+    await ready();
+    expect(container.querySelector("article")).toBeNull();
+    expect(container.querySelector("section")).toBeTruthy();
+    expect(container.querySelector(".card")).toBeNull();
   });
 
   it("resolves the descriptor with the supplied music asset server and native controls", async () => {
@@ -101,10 +122,17 @@ describe("MusicMvPlayer descriptors and listing lifecycle", () => {
           finishOld = resolve;
         })
     );
-    const { rerender } = render(MusicMvPlayer, props);
+    const { rerender } = render(MusicMvPlayer, { ...props });
     await waitFor(() => expect(resolver).toHaveBeenCalledTimes(1));
     const signal = resolver.mock.calls[0]![1]!.signal!;
     await fireEvent.change(screen.getByLabelText(labels.variantLabel), { target: { value: "1" } });
+    expect(props.onDescriptorChange).toHaveBeenCalledWith(1);
+    await rerender({
+      ...props,
+      selectedDescriptor: descriptors[1]!,
+      selectedDescriptorIndex: 1,
+      selectedVocal: vocals[1]!
+    });
     await ready();
     expect(signal.aborted).toBe(true);
     await act(() => finishOld("/old.mp4"));
@@ -123,7 +151,7 @@ describe("MusicMvPlayer descriptors and listing lifecycle", () => {
 
   it("retries listing and media failures without invalidating a valid listing", async () => {
     resolver.mockRejectedValueOnce(new Error("listing failed"));
-    render(MusicMvPlayer, props);
+    render(MusicMvPlayer, { ...props });
     await waitFor(() =>
       expect(screen.getByRole("alert").textContent).toContain(labels.unsupportedLabel)
     );
@@ -139,7 +167,9 @@ describe("MusicMvPlayer descriptors and listing lifecycle", () => {
   it("does not substitute a random vocal when an explicit vocal is missing", async () => {
     render(MusicMvPlayer, {
       ...props,
-      descriptors: [{ ...descriptors[0]!, musicVocalId: "missing" }]
+      descriptors: [{ ...descriptors[0]!, musicVocalId: "missing" }],
+      selectedDescriptor: { ...descriptors[0]!, musicVocalId: "missing" },
+      selectedVocal: null
     });
     await ready();
     expect(document.querySelector("audio")).toBeNull();
@@ -151,7 +181,7 @@ describe("MusicMvPlayer descriptors and listing lifecycle", () => {
 
 describe("MusicMvPlayer separate audio synchronization", () => {
   it("syncs play, pause, seek, drift, rate, volume, mute and end from native video controls", async () => {
-    render(MusicMvPlayer, props);
+    render(MusicMvPlayer, { ...props });
     await ready();
     video().currentTime = 10;
     await playVideo();
@@ -182,7 +212,7 @@ describe("MusicMvPlayer separate audio synchronization", () => {
   });
 
   it("pauses audio during video buffering and resumes at canplay; pauses video during audio buffering", async () => {
-    render(MusicMvPlayer, props);
+    render(MusicMvPlayer, { ...props });
     await ready();
     await playVideo();
     await fireEvent.waiting(video());
@@ -197,7 +227,7 @@ describe("MusicMvPlayer separate audio synchronization", () => {
   });
 
   it("shows audio load/play failures and recovers on canplay without autoplay", async () => {
-    render(MusicMvPlayer, props);
+    render(MusicMvPlayer, { ...props });
     await ready();
     await fireEvent.error(audio());
     expect(screen.getByRole("alert").textContent).toContain(labels.audioUnavailableLabel);
@@ -219,7 +249,7 @@ describe("MusicMvPlayer separate audio synchronization", () => {
   });
 
   it("ignores a stale play rejection after pause or a vocal switch and retains the new audio src", async () => {
-    render(MusicMvPlayer, props);
+    const { rerender } = render(MusicMvPlayer, { ...props });
     await ready();
     let rejectPlay!: (reason: Error) => void;
     Object.defineProperty(audio(), "play", {
@@ -232,7 +262,7 @@ describe("MusicMvPlayer separate audio synchronization", () => {
       )
     });
     await playVideo();
-    await fireEvent.change(screen.getByLabelText(labels.vocalLabel), { target: { value: "v2" } });
+    await rerender({ ...props, selectedVocal: vocals[1]! });
     await act(() => rejectPlay(new Error("old play failed")));
     expect(screen.queryByRole("alert")).toBeNull();
     expect(audio().getAttribute("src")).toContain("/v2/v2.mp3");

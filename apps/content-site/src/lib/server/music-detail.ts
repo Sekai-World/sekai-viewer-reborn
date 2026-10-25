@@ -3,6 +3,7 @@ import type {
   MusicDifficulty,
   MusicOriginal,
   MusicVideoDescriptor,
+  MusicVocalCharacter,
   MusicVocal
 } from "$lib/domain/music-detail";
 import { parseMusicCategories } from "./music-list";
@@ -81,7 +82,7 @@ const parseMusicDifficulty = (payload: unknown): MusicDifficulty | null => {
   };
 };
 
-const parseCharacterEntry = (payload: unknown): { characterId: number; unit: string } | null => {
+const parseCharacterEntry = (payload: unknown): MusicVocalCharacter | null => {
   const root = getObject(payload);
   if (!root) {
     return null;
@@ -93,7 +94,17 @@ const parseCharacterEntry = (payload: unknown): { characterId: number; unit: str
     return null;
   }
 
-  return { characterId, unit: unit ?? "" };
+  const characterType = Object.hasOwn(root, "characterType")
+    ? (getString(root.characterType)?.trim() ?? null)
+    : undefined;
+  const name = Object.hasOwn(root, "name") ? (getString(root.name)?.trim() ?? null) : undefined;
+
+  return {
+    characterId,
+    unit: unit ?? "",
+    ...(characterType !== undefined ? { characterType } : {}),
+    ...(name !== undefined ? { name } : {})
+  };
 };
 
 const parseMusicVocal = (payload: unknown): MusicVocal | null => {
@@ -111,7 +122,7 @@ const parseMusicVocal = (payload: unknown): MusicVocal | null => {
   const overrideCharaRaw = root.overrideCharas ?? root.characters;
   const charactersRaw = root.characters;
 
-  const parseCharacterList = (value: unknown): { characterId: number; unit: string }[] | null => {
+  const parseCharacterList = (value: unknown): MusicVocalCharacter[] | null => {
     if (!Array.isArray(value)) {
       return null;
     }

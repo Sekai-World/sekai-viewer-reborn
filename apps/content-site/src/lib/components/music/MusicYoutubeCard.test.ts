@@ -2,108 +2,164 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { parseMusicDetail } from "$lib/server/music-detail";
 import MusicYoutubeCard from "./MusicYoutubeCard.svelte";
+import "$lib/icons/mdi";
 
-const originals = [
-  { id: "1", musicId: "8", videoLink: "https://youtu.be/EgOWe9ByNaE" },
-  { id: "2", musicId: "8", videoLink: "https://youtu.be/XogSflwXgpw" }
-];
+const youtubeOriginal = { id: "1", musicId: "8", videoLink: "https://youtu.be/EgOWe9ByNaE" };
+const secondYoutubeOriginal = {
+  id: "2",
+  musicId: "8",
+  videoLink: "https://youtu.be/XogSflwXgpw"
+};
 const props = {
-  originals,
+  originals: [youtubeOriginal, secondYoutubeOriginal],
   songKey: "jp:8",
   songTitle: "Song",
-  heading: "YouTube",
-  openLabel: "Open on YouTube",
-  loadLabel: "Load video here",
-  privacyLabel: "Loading connects to YouTube. Open externally if unavailable.",
-  selectionLabel: "Video reference",
-  referenceLabel: "Video",
+  openLabel: "Open video source",
+  previewLabel: "Preview video",
+  selectionLabel: "Video source",
   closeLabel: "Close"
 };
 const iframe = (): HTMLIFrameElement | null => document.querySelector("iframe");
-const load = () => fireEvent.click(screen.getByRole("button", { name: props.loadLabel }));
+const externalAction = () => screen.getByRole("link", { name: /Open video source/ });
+const previewAction = () => screen.getByRole("button", { name: /Preview video/ });
 
 afterEach(cleanup);
 
 describe("MusicYoutubeCard", () => {
-  it("makes no embed, thumbnail, or fetch before explicit consent and keeps a safe external link", () => {
+  it("renders one compact source row without explanatory text", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const { container } = render(MusicYoutubeCard, props);
+
     expect(iframe()).toBeNull();
-    expect(container.querySelector("img, link, video, audio")).toBeNull();
     expect(fetchSpy).not.toHaveBeenCalled();
-    const link = screen.getByRole("link", { name: props.openLabel });
-    expect(link.getAttribute("href")).toBe("https://www.youtube.com/watch?v=EgOWe9ByNaE");
-    expect(link.getAttribute("target")).toBe("_blank");
-    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(container.querySelector("article, section, p")).toBeNull();
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(externalAction().getAttribute("href")).toBe(
+      "https://www.youtube.com/watch?v=EgOWe9ByNaE"
+    );
+    expect(externalAction().getAttribute("target")).toBe("_blank");
+    expect(externalAction().getAttribute("rel")).toBe("noopener noreferrer");
+    expect(externalAction().textContent).toBe("");
+    expect(previewAction().textContent).toBe("");
+    for (const action of [externalAction(), previewAction()]) {
+      expect(action.querySelector("svg[aria-hidden='true']")).toBeTruthy();
+      expect(action.classList.contains("min-h-11")).toBe(true);
+      expect(action.classList.contains("min-w-11")).toBe(true);
+    }
     fetchSpy.mockRestore();
   });
 
-  it("loads only the exact nocookie URL, with no autoplay promise, and closes to stop", async () => {
+  it("opens a native YouTube preview dialog only on click and removes the iframe on close", async () => {
     const onEmbedOpen = vi.fn();
     render(MusicYoutubeCard, { ...props, onEmbedOpen });
-    await load();
+    await fireEvent.click(previewAction());
     expect(onEmbedOpen).toHaveBeenCalledOnce();
+    const dialog = screen.getByRole("dialog");
     expect(iframe()?.getAttribute("src")).toBe(
       "https://www.youtube-nocookie.com/embed/EgOWe9ByNaE"
     );
     expect(iframe()?.getAttribute("title")).toBe("Song — YouTube");
     expect(iframe()?.hasAttribute("allowfullscreen")).toBe(true);
-    expect(iframe()?.getAttribute("allow")).not.toContain("autoplay");
-    expect(iframe()?.getAttribute("referrerpolicy")).toBe("strict-origin-when-cross-origin");
-    expect(screen.getByRole("link", { name: props.openLabel })).toBeTruthy();
     await fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(iframe()).toBeNull();
-    await load();
-    expect(iframe()).not.toBeNull();
+    expect(dialog.hasAttribute("open")).toBe(false);
   });
 
-  it("uses one panel and unloads on selection change until clicked again", async () => {
-    const { container } = render(MusicYoutubeCard, props);
-    expect(container.querySelectorAll("article")).toHaveLength(1);
-    await load();
-    await fireEvent.change(screen.getByRole("combobox", { name: props.selectionLabel }), {
-      target: { value: "XogSflwXgpw" }
-    });
+  it("closes on backdrop or native Escape cancellation", async () => {
+    render(MusicYoutubeCard, props);
+    await fireEvent.click(previewAction());
+    const dialog = screen.getByRole("dialog");
+    await fireEvent.click(dialog.querySelector(".modal-box")!);
+    expect(iframe()).not.toBeNull();
+    await fireEvent.click(dialog);
     expect(iframe()).toBeNull();
-    expect(screen.getByRole("link").getAttribute("href")).toBe(
+
+    await fireEvent.click(previewAction());
+    await fireEvent(dialog, new Event("cancel", { cancelable: true }));
+    expect(iframe()).toBeNull();
+  });
+
+  it("removes the iframe on native close and component unmount", async () => {
+    const { unmount } = render(MusicYoutubeCard, props);
+    await fireEvent.click(previewAction());
+    const dialog = screen.getByRole("dialog");
+    dialog.removeAttribute("open");
+    await fireEvent(dialog, new Event("close"));
+    expect(iframe()).toBeNull();
+    await fireEvent.click(previewAction());
+    unmount();
+    expect(iframe()).toBeNull();
+    expect(document.querySelector("dialog")).toBeNull();
+  });
+
+  it("uses native showModal and close when available", async () => {
+    const { container } = render(MusicYoutubeCard, props);
+    const dialog = container.querySelector("dialog")!;
+    const showModal = vi.fn(() => dialog.setAttribute("open", ""));
+    const close = vi.fn(() => {
+      dialog.removeAttribute("open");
+      dialog.dispatchEvent(new Event("close"));
+    });
+    dialog.showModal = showModal;
+    dialog.close = close;
+    await fireEvent.click(previewAction());
+    expect(showModal).toHaveBeenCalledOnce();
+    await fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(close).toHaveBeenCalledOnce();
+    expect(iframe()).toBeNull();
+  });
+
+  it("switches multiple sources in one row and unloads the preview", async () => {
+    const { rerender } = render(MusicYoutubeCard, props);
+    await fireEvent.click(previewAction());
+    const selector = screen.getByRole("combobox", { name: "Video source" });
+    await fireEvent.change(selector, { target: { value: "XogSflwXgpw" } });
+    expect(iframe()).toBeNull();
+    expect(externalAction().getAttribute("href")).toBe(
       "https://www.youtube.com/watch?v=XogSflwXgpw"
     );
-    await load();
-    expect(iframe()?.getAttribute("src")).toBe(
-      "https://www.youtube-nocookie.com/embed/XogSflwXgpw"
-    );
-  });
-
-  it("unloads when a native player starts, the song changes, or references change", async () => {
-    const { rerender } = render(MusicYoutubeCard, props);
-    await load();
+    await fireEvent.click(previewAction());
+    expect(iframe()?.getAttribute("src")).toContain("XogSflwXgpw");
     await rerender({ ...props, unloadToken: 1 });
     expect(iframe()).toBeNull();
-    await load();
-    await rerender({ ...props, unloadToken: 1, songKey: "jp:18" });
-    expect(iframe()).toBeNull();
-    await load();
-    await rerender({ ...props, unloadToken: 1, songKey: "jp:18", originals: [originals[1]] });
-    expect(iframe()).toBeNull();
   });
 
-  it.each([
-    { records: [] },
-    { records: [{ ...originals[0], videoLink: "https://evil.test/embed/EgOWe9ByNaE" }] },
-    { records: [{ ...originals[0], videoLink: "https://nicovideo.jp/watch/sm123" }] }
-  ])("hides absent or non-YouTube references", ({ records }) => {
-    const { container } = render(MusicYoutubeCard, { ...props, originals: records });
-    expect(container.querySelector("article")).toBeNull();
+  it("retains NicoNico and other HTTPS sources without a misleading preview action", async () => {
+    render(MusicYoutubeCard, {
+      ...props,
+      originals: [
+        { ...youtubeOriginal, videoLink: "https://nicovideo.jp/watch/sm123" },
+        { ...secondYoutubeOriginal, videoLink: "https://video.example.test/watch/8" }
+      ]
+    });
+    expect(screen.getByRole("combobox", { name: "Video source" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Preview video/ })).toBeNull();
+    expect(externalAction().getAttribute("href")).toBe("https://nicovideo.jp/watch/sm123");
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await fireEvent.change(screen.getByRole("combobox", { name: "Video source" }), {
+      target: { value: "https://video.example.test/watch/8" }
+    });
+    expect(externalAction().getAttribute("href")).toBe("https://video.example.test/watch/8");
+    expect(screen.queryByRole("button", { name: /Preview video/ })).toBeNull();
   });
 
-  it("shows the panel for parsed song data with no native MV", () => {
+  it("hides absent or invalid HTTPS references", () => {
+    const { container } = render(MusicYoutubeCard, {
+      ...props,
+      originals: [{ ...youtubeOriginal, videoLink: "http://evil.test/watch/8" }]
+    });
+    expect(container.firstElementChild).toBeNull();
+  });
+
+  it("renders parsed song data with a generic source label", () => {
     const detail = parseMusicDetail({
       music: { id: "8", title: "Song" },
-      musicOriginals: [originals[0]]
+      musicOriginals: [youtubeOriginal]
     })!;
     expect(detail.musicVideos).toEqual([]);
     render(MusicYoutubeCard, { ...props, originals: detail.musicOriginals ?? [] });
-    expect(screen.getByRole("heading", { name: "YouTube" })).toBeTruthy();
+    expect(screen.getByText("YouTube")).toBeTruthy();
     expect(screen.queryByRole("combobox")).toBeNull();
   });
 });

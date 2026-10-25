@@ -1084,6 +1084,8 @@ export type SharedMusicVideoResponse = {
 
 export type SharedMusicVocalCharacterResponse = {
     characterId?: unknown;
+    characterType?: string | null;
+    name: string | null;
     sortOrder?: unknown;
 };
 
@@ -1093,6 +1095,7 @@ export type SharedMusicVocalResponse = {
     id?: unknown;
     musicId?: unknown;
     musicVocalId?: unknown;
+    overrideCharas?: Array<SharedMusicVocalCharacterResponse>;
     publishedAt?: unknown;
     releaseCondition?: SharedReleaseConditionResponse;
     seq?: unknown;

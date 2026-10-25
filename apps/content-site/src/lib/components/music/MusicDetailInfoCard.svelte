@@ -1,10 +1,25 @@
 <script lang="ts">
   import { formatDisplayDateTime } from "$lib/time/date-time";
   import type { MusicDetail } from "$lib/domain/music-detail";
+  import MusicYoutubeCard from "$lib/components/music/MusicYoutubeCard.svelte";
+  import { getMusicVideoReferences } from "$lib/domain/music-youtube";
   import { unitCodeByMusicTag } from "$lib/domain/unit-profile";
   import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
+
+  type VideoLinksSection = {
+    originals: NonNullable<MusicDetail["musicOriginals"]>;
+    songKey: string;
+    songTitle: string;
+    heading: string;
+    openLabel: string;
+    previewLabel: string;
+    selectionLabel: string;
+    closeLabel: string;
+    unloadToken?: number;
+    onEmbedOpen?: () => void;
+  };
 
   let {
     music,
@@ -21,7 +36,8 @@
     tagLabel,
     publishedAtLabel,
     getCategoryLabel,
-    getTagLabel
+    getTagLabel,
+    videoLinks
   }: {
     music: MusicDetail;
     displayLocale: string;
@@ -38,7 +54,12 @@
     publishedAtLabel: string;
     getCategoryLabel: (value: string) => string;
     getTagLabel: (value: string) => string;
+    videoLinks?: VideoLinksSection;
   } = $props();
+
+  const hasVideoLinks = $derived(
+    videoLinks ? getMusicVideoReferences(videoLinks.originals).length > 0 : false
+  );
 </script>
 
 <article class="card content-card-shell shadow-sm">
@@ -138,6 +159,16 @@
           </dt>
           <dd class="mt-1 text-sm font-medium">
             {formatDisplayDateTime(music.publishedAt, displayLocale)}
+          </dd>
+        </div>
+      {/if}
+      {#if hasVideoLinks && videoLinks}
+        <div class="content-card-inset rounded-xl p-3 sm:px-4">
+          <dt class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
+            {videoLinks.heading}
+          </dt>
+          <dd class="mt-2 min-w-0">
+            <MusicYoutubeCard {...videoLinks} />
           </dd>
         </div>
       {/if}

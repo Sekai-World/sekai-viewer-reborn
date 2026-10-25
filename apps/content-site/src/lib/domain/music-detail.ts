@@ -5,12 +5,19 @@ export type MusicDifficulty = {
   noteCount: number;
 };
 
+export type MusicVocalCharacter = {
+  characterId: number;
+  unit: string;
+  characterType?: string | null;
+  name?: string | null;
+};
+
 export type MusicVocal = {
   id: string;
   musicId: string;
   vocalType: string | null;
-  overrideChara: { characterId: number; unit: string }[] | null;
-  characters: { characterId: number; unit: string }[] | null;
+  overrideChara: MusicVocalCharacter[] | null;
+  characters: MusicVocalCharacter[] | null;
   assetBundleName: string | null;
 };
 

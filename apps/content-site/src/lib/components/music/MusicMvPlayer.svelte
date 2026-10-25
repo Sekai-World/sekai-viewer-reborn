@@ -8,19 +8,22 @@
 
   let {
     descriptors,
-    vocals,
+    selectedDescriptor,
+    selectedDescriptorIndex,
+    onDescriptorChange,
+    selectedVocal,
     audioServer = "jp",
+    embedded = false,
+    showVariantControl = true,
     pauseToken = 0,
     onPlayback,
     poster,
     title,
-    heading,
     videoLabel,
     variantLabel,
     originalLabel,
     mv2dLabel,
     duplicateLabel,
-    vocalLabel,
     loadingLabel,
     retryLabel,
     noVideoLabel,
@@ -28,19 +31,22 @@
     audioUnavailableLabel
   }: {
     descriptors: MusicVideoDescriptor[];
-    vocals: MusicVocal[];
+    selectedDescriptor: MusicVideoDescriptor | null;
+    selectedDescriptorIndex: number;
+    onDescriptorChange: (index: number) => void;
+    selectedVocal: MusicVocal | null;
     audioServer?: AssetServer;
+    embedded?: boolean;
+    showVariantControl?: boolean;
     pauseToken?: number;
     onPlayback?: () => void;
     poster?: string;
     title: string;
-    heading: string;
     videoLabel: string;
     variantLabel: string;
     originalLabel: string;
     mv2dLabel: string;
     duplicateLabel: string;
-    vocalLabel: string;
     loadingLabel: string;
     retryLabel: string;
     noVideoLabel: string;
@@ -48,8 +54,6 @@
     audioUnavailableLabel: string;
   } = $props();
 
-  let selectedDescriptorIndex = $state(0);
-  let selectedVocalId = $state("");
   let retryNonce = $state(0);
   let videoSource = $state<string | null>(null);
   let loadState = $state<LoadState>("loading");
@@ -81,48 +85,21 @@
     })
   );
 
-  const selectedDescriptor = $derived(descriptors[selectedDescriptorIndex] ?? null);
-
-  const matchingVocals = $derived.by(() => {
-    const descriptor = selectedDescriptor;
-    if (!descriptor) {
-      return [];
-    }
-
-    if (descriptor.musicVocalId) {
-      const vocal = vocals.find((item) => item.id === descriptor.musicVocalId);
-      return vocal?.assetBundleName?.trim() ? [vocal] : [];
-    }
-
-    return vocals.filter((item) => item.assetBundleName?.trim());
-  });
-
-  const selectedVocal = $derived(
-    matchingVocals.find((vocal) => vocal.id === selectedVocalId) ?? matchingVocals[0] ?? null
-  );
-
   const audioSource = $derived(
     selectedVocal?.assetBundleName
       ? getMusicLongPreviewAssetURL(selectedVocal.assetBundleName, audioServer)
       : null
   );
 
-  $effect.pre(() => {
-    // Incoming song data resets selection; selection bindings are not dependencies.
-    void descriptors;
-    void vocals;
-    void title;
-    void audioServer;
-    untrack(() => {
-      selectedDescriptorIndex = 0;
-      selectedVocalId = "";
-    });
-  });
+  const listingKey = $derived(JSON.stringify([selectedDescriptor, audioServer, retryNonce]));
 
   $effect(() => {
-    const descriptor = selectedDescriptor;
-    const currentRetry = retryNonce;
-    const server = audioServer;
+    void listingKey;
+    const { descriptor, currentRetry, server } = untrack(() => ({
+      descriptor: selectedDescriptor,
+      currentRetry: retryNonce,
+      server: audioServer
+    }));
     if (!descriptor) {
       videoSource = null;
       loadState = "error";
@@ -135,7 +112,7 @@
     mediaError = false;
     loadState = "loading";
 
-    void resolveMusicVideoAssetURL(descriptor, { signal: controller.signal, server })
+    void untrack(() => resolveMusicVideoAssetURL(descriptor, { signal: controller.signal, server }))
       .then((source) => {
         if (
           version !== requestVersion ||
@@ -388,11 +365,12 @@
 </script>
 
 {#if descriptors.length > 0}
-  <article class="card content-card-shell shadow-sm">
-    <div class="card-body gap-4 p-3 sm:p-5">
-      <h2 class="text-xs font-semibold uppercase tracking-[0.18em] opacity-60">{heading}</h2>
-
-      {#if descriptors.length > 1}
+  <svelte:element
+    this={embedded ? "section" : "article"}
+    class={embedded ? "flex h-full flex-col gap-4" : "card content-card-shell shadow-sm"}
+  >
+    <div class={embedded ? "flex h-full flex-col gap-4" : "card-body gap-4 p-3 sm:p-5"}>
+      {#if showVariantControl && descriptors.length > 1}
         <label class="flex min-h-11 flex-col gap-1 text-sm font-semibold">
           <span>{variantLabel}</span>
           <select
@@ -400,7 +378,7 @@
             aria-label={variantLabel}
             value={selectedDescriptorIndex}
             onchange={(event) => {
-              selectedDescriptorIndex = Number((event.currentTarget as HTMLSelectElement).value);
+              onDescriptorChange(Number((event.currentTarget as HTMLSelectElement).value));
             }}
           >
             {#each descriptorOptions as option, index (option.value)}
@@ -410,32 +388,9 @@
         </label>
       {/if}
 
-      {#if matchingVocals.length > 1 && !selectedDescriptor?.musicVocalId}
-        <label class="flex min-h-11 flex-col gap-1 text-sm font-semibold">
-          <span>{vocalLabel}</span>
-          <select
-            class="select select-bordered min-h-11 w-full"
-            aria-label={vocalLabel}
-            value={selectedVocal?.id ?? ""}
-            onchange={(event) => {
-              selectedVocalId = (event.currentTarget as HTMLSelectElement).value;
-            }}
-          >
-            {#each matchingVocals as vocal (vocal.id)}
-              <option value={vocal.id}>{vocal.vocalType ?? vocalLabel}</option>
-            {/each}
-          </select>
-        </label>
-      {:else if selectedVocal}
-        <p class="text-sm opacity-70">
-          <span class="font-semibold">{vocalLabel}:</span>
-          {selectedVocal.vocalType ?? vocalLabel}
-        </p>
-      {/if}
-
       {#if loadState === "loading"}
         <div
-          class="content-card-inset flex aspect-video items-center justify-center rounded-xl"
+          class="flex aspect-video items-center justify-center rounded-xl bg-(--archive-surface-sunken)"
           role="status"
         >
           <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
@@ -443,7 +398,7 @@
         </div>
       {:else if loadState === "error" || mediaError}
         <div
-          class="content-card-inset flex aspect-video flex-col items-center justify-center gap-3 rounded-xl px-6 text-center"
+          class="flex aspect-video flex-col items-center justify-center gap-3 rounded-xl bg-(--archive-surface-sunken) px-6 text-center"
           role="alert"
         >
           <p class="text-sm text-base-content/70">{unsupportedLabel}</p>
@@ -455,7 +410,7 @@
         <!-- Caption assets are not part of the current music detail payload. -->
         <video
           bind:this={videoElement}
-          class="content-card-inset aspect-video w-full rounded-xl bg-black object-contain"
+          class="mx-auto aspect-video h-full w-auto max-w-full rounded-xl bg-black object-contain"
           controls
           preload="metadata"
           playsinline
@@ -499,5 +454,5 @@
         {/if}
       {/if}
     </div>
-  </article>
+  </svelte:element>
 {/if}
