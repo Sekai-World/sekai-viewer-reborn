@@ -1,0 +1,167 @@
+import { cleanup, render, waitFor } from "@testing-library/svelte";
+import { createRawSnippet, tick } from "svelte";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import Layout from "./+layout.svelte";
+import type { LayoutData } from "./$types";
+
+type TourProps = {
+  open: boolean;
+  steps: readonly { target: string }[];
+  onStepChange: (index: number) => Promise<void>;
+  resolveTarget: (target: string) => HTMLElement | readonly HTMLElement[] | null;
+  onClose: () => void;
+};
+const tour = vi.hoisted(() => ({ props: null as TourProps | null }));
+
+vi.mock("$lib/components/OnboardingDialog.svelte", () => ({
+  default: (_anchor: unknown, props: TourProps) => {
+    tour.props = props;
+    return {};
+  }
+}));
+vi.mock("$app/state", () => ({ page: { url: new URL("http://localhost/cards/jp") } }));
+vi.mock("$app/navigation", () => ({ goto: vi.fn(), invalidateAll: vi.fn() }));
+vi.mock("$app/paths", () => ({ asset: (path: string) => path, resolve: (path: string) => path }));
+vi.mock("$lib/onboarding", () => ({
+  readOnboardingSeen: () => false,
+  readSeenSiteVersion: () => null,
+  writeOnboardingSeen: vi.fn(),
+  writeSeenSiteVersion: vi.fn()
+}));
+vi.mock("$lib/i18n/runtime", async () => {
+  const { readable } = await import("svelte/store");
+  return {
+    createI18nTranslator: () => (key: string) => key,
+    resolveStreamingMessages: () => ({}),
+    requestI18nLocale: () => 0,
+    setI18nLocale: async (locale: string) => locale,
+    isLocaleLoading: readable(false)
+  };
+});
+
+let viewport = 1440;
+beforeEach(() => {
+  tour.props = null;
+  localStorage.clear();
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query.includes("max-width: 639px")
+      ? viewport < 640
+      : query.includes("min-width: 1280px") && viewport >= 1280,
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn()
+  }));
+  vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
+    new DOMRect(30, 70, 240, 44)
+  );
+  vi.spyOn(HTMLElement.prototype, "getClientRects").mockReturnValue([
+    new DOMRect(30, 70, 240, 44)
+  ] as unknown as DOMRectList);
+});
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
+
+const setup = async (width: number) => {
+  viewport = width;
+  const result = render(Layout, {
+    data: {
+      uiLocale: "en",
+      preferredRegion: "jp",
+      siteVersion: "0.0.2",
+      i18nMessages: {},
+      globalNotices: []
+    } satisfies LayoutData,
+    children: createRawSnippet(() => ({ render: () => "<div></div>" }))
+  });
+  await waitFor(() => expect(tour.props?.open).toBe(true));
+  const props = tour.props!;
+  const prepare = (target: string) => {
+    const index = props.steps.findIndex((step) => step.target === target);
+    expect(index).toBeGreaterThanOrEqual(0);
+    return props.onStepChange(index);
+  };
+  const button = (id: string) =>
+    result.container.querySelector<HTMLButtonElement>(`button[aria-controls="${id}"]`)!;
+  return { ...result, props, prepare, button };
+};
+
+describe.each([1440, 390])("layout appearance/language tour at %spx", (width) => {
+  it("orders real closed triggers before their open option groups, in both directions", async () => {
+    const { props, prepare, button, container } = await setup(width);
+    const mobile = width < 640;
+    const mobileId = "content-site-mobile-settings-menu";
+    const themeId = "content-site-desktop-theme-menu";
+    const languageId = "content-site-locale-menu";
+    const sequence = props.steps.map((step) => step.target);
+    const start = sequence.indexOf("content-display-ongoing-first");
+    expect(sequence.slice(start, start + 5)).toEqual([
+      "content-display-ongoing-first",
+      "theme-trigger",
+      "theme",
+      "language-trigger",
+      "language"
+    ]);
+    const savedPreferences = JSON.stringify({ ...localStorage });
+
+    for (const kind of ["theme", "language"]) {
+      const menuId = mobile ? mobileId : kind === "theme" ? themeId : languageId;
+      const trigger = button(menuId);
+      await prepare(`${kind}-trigger`);
+      expect(props.resolveTarget(`${kind}-trigger`)).toBe(trigger);
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+      expect(container.querySelector(`[id="${menuId}"]`)).toBeNull();
+      await prepare(kind);
+      expect(trigger.getAttribute("aria-expanded")).toBe("true");
+      const menu = container.querySelector(`[id="${menuId}"]`)!;
+      const options = props.resolveTarget(kind) as HTMLElement;
+      expect(menu === options || menu.contains(options)).toBe(true);
+      expect(options.querySelectorAll("button:not(:disabled)").length).toBeGreaterThan(1);
+      await prepare(`${kind}-trigger`);
+      expect(trigger.getAttribute("aria-expanded")).toBe("false");
+      expect(container.querySelector(`[id="${menuId}"]`)).toBeNull();
+    }
+
+    // Back from the language entry restores appearance options, not language options.
+    await prepare("language-trigger");
+    await prepare("theme");
+    expect(button(mobile ? mobileId : themeId).getAttribute("aria-expanded")).toBe("true");
+    if (!mobile) expect(button(languageId).getAttribute("aria-expanded")).toBe("false");
+    props.onClose();
+    await tick();
+    expect(button(mobile ? mobileId : themeId).getAttribute("aria-expanded")).toBe("false");
+    expect(JSON.stringify({ ...localStorage })).toBe(savedPreferences);
+  });
+
+  it("keeps the last requested open/closed state during fast next/back preparation", async () => {
+    const { prepare, button } = await setup(width);
+    const trigger = button(
+      width < 640 ? "content-site-mobile-settings-menu" : "content-site-desktop-theme-menu"
+    );
+    await Promise.all([prepare("theme"), prepare("theme-trigger")]);
+    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    await Promise.all([prepare("theme-trigger"), prepare("theme")]);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  });
+});
+
+it("does not resume stale drawer scrolling after a later trigger step", async () => {
+  const { prepare, container } = await setup(390);
+  const panel = container.querySelector<HTMLElement>("#content-site-drawer-panel")!;
+  let finishEntry = () => {};
+  const finished = new Promise<void>((resolve) => {
+    finishEntry = resolve;
+  });
+  Object.defineProperty(panel, "getAnimations", { value: () => [{ finished }] });
+  const earlierStep = prepare("sidebar-library");
+  await tick();
+  await prepare("theme-trigger");
+  const scroller = panel.parentElement!;
+  scroller.scrollTop = 37;
+  finishEntry();
+  await earlierStep;
+  expect(scroller.scrollTop).toBe(37);
+});

@@ -22,6 +22,10 @@ Follow these rules before introducing new page-level patterns, daisyUI overrides
 - Cover each available filter control. A grouped step must highlight the complete group it describes, not one field with instructions referring to unhighlighted fields. Include conditional controls when visible and explain their prerequisite in the enabling control's step without changing the user's selections.
 - Keep guide copy in the external `common` namespace. Do not reuse the site-wide onboarding-seen flag for filter guidance.
 
+The site-wide tour also covers the individual Content Display switches in settings. Keep those rows limited to their labels and switches; explanatory copy belongs in the spotlight steps. The settings menu's existing tour action replays them for returning visitors.
+
+Introduce theme and language controls by highlighting their actual menu-opening button before opening and highlighting the options. On mobile, that opener is the shared settings button. Forward and backward navigation must preserve this closed-entry/open-options sequence without changing saved preferences.
+
 ## Confirmed Prismatic Archive design language
 
 Prismatic Archive treats `content-site` as a calm, readable archive/catalogue rather than a generic dashboard or decorative landing page. The following rules are confirmed by the Phase 3 cards catalogue and event detail work:

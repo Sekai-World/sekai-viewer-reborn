@@ -180,6 +180,7 @@
   let showBackToTop = $state(false);
   let hasSeenOnboarding = $state(false);
   let isOnboardingDialogOpen = $state(false);
+  let onboardingMosaicStepEnabled = $state(false);
   let seenSiteVersion = $state<string | null>(null);
   let backToTopAnimationFrame = 0;
   let contentDisplaySettings = $state<ContentDisplaySettingsState>({
@@ -498,10 +499,50 @@
       description: layoutTranslate("onboarding.steps.region.description")
     },
     {
+      icon: "mdi:cog-outline",
+      target: "content-display-spoiler",
+      title: showSpoilerContentLabel,
+      description: layoutTranslate("onboarding.steps.contentDisplay.showSpoilerContent.description")
+    },
+    ...(onboardingMosaicStepEnabled
+      ? [
+          {
+            icon: "mdi:cog-outline",
+            target: "content-display-mosaic",
+            title: mosaickedSpoilerContentLabel,
+            description: layoutTranslate("settings.mosaickedSpoilerContentDescription")
+          }
+        ]
+      : []),
+    {
+      icon: "mdi:cog-outline",
+      target: "content-display-low-motion",
+      title: lowMotionModeLabel,
+      description: layoutTranslate("settings.lowMotionModeDescription")
+    },
+    {
+      icon: "mdi:cog-outline",
+      target: "content-display-ongoing-first",
+      title: ongoingFirstLabel,
+      description: layoutTranslate("settings.ongoingFirstDescription")
+    },
+    {
+      icon: "mdi:palette-outline",
+      target: "theme-trigger",
+      title: layoutTranslate("onboarding.steps.theme.triggerTitle"),
+      description: layoutTranslate("onboarding.steps.theme.triggerDescription")
+    },
+    {
       icon: "mdi:palette-outline",
       target: "theme",
       title: layoutTranslate("onboarding.steps.theme.title"),
       description: layoutTranslate("onboarding.steps.theme.description")
+    },
+    {
+      icon: "mdi:translate",
+      target: "language-trigger",
+      title: layoutTranslate("onboarding.steps.language.triggerTitle"),
+      description: layoutTranslate("onboarding.steps.language.triggerDescription")
     },
     {
       icon: "mdi:translate",
@@ -828,6 +869,7 @@
 
   const openOnboarding = (): void => {
     closeSettingsMenus();
+    onboardingMosaicStepEnabled = contentDisplaySettings.showSpoilerContent;
     isOnboardingDialogOpen = true;
   };
 
@@ -875,6 +917,15 @@
   // Resolve shared shell targets by its stable panel ID and real group markers.
   // No translated labels, DOM indexes, or temporary mutations are needed.
   const resolveOnboardingTarget = (target: string): HTMLElement | readonly HTMLElement[] | null => {
+    if (target === "theme-trigger" || target === "language-trigger") {
+      const mobile = window.matchMedia("(max-width: 639px)").matches;
+      const trigger = mobile
+        ? mobileSettingsButton
+        : target === "theme-trigger"
+          ? desktopThemeButton
+          : localeButton;
+      return trigger && isOnboardingTargetVisible(trigger) ? trigger : null;
+    }
     if (target === "home-entry") {
       const panel = document.getElementById(`${CONTENT_SITE_DRAWER_ID}-panel`);
       return (
@@ -932,9 +983,11 @@
       getOnboardingSidebarGroupId(targetName ?? "") !== null ||
       (targetName === "home-entry" && !rail);
     if (!rail) setOnboardingDrawer(needsDrawer);
-    if (targetName === "region" || targetName === "theme" || targetName === "language") {
+    const needsSettingsPanel =
+      targetName === "region" || targetName?.startsWith("content-display-") === true;
+    if (needsSettingsPanel || targetName === "theme" || targetName === "language") {
       if (mobile) isMobileSettingsMenuOpen = true;
-      else if (targetName === "region") isDesktopSettingsMenuOpen = true;
+      else if (needsSettingsPanel) isDesktopSettingsMenuOpen = true;
       else if (targetName === "theme") isDesktopThemeMenuOpen = true;
       else isLocaleMenuOpen = true;
     }
@@ -982,11 +1035,10 @@
         }
       }
     }
-    if (
-      mobile &&
-      (targetName === "region" || targetName === "theme" || targetName === "language")
-    ) {
-      const menu = document.getElementById(MOBILE_SETTINGS_MENU_ID);
+    if (needsSettingsPanel || (mobile && (targetName === "theme" || targetName === "language"))) {
+      const menu = document.getElementById(
+        mobile ? MOBILE_SETTINGS_MENU_ID : DESKTOP_SETTINGS_MENU_ID
+      );
       const target = menu?.querySelector<HTMLElement>(`[data-onboarding-target="${targetName}"]`);
       if (target && menu) {
         const menuRect = menu.getBoundingClientRect();
@@ -1136,7 +1188,6 @@
   onMount(() => {
     hasSeenOnboarding = readOnboardingSeen();
     seenSiteVersion = readSeenSiteVersion();
-    isOnboardingDialogOpen = !hasSeenOnboarding;
 
     systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     systemThemeMediaQuery.addEventListener("change", handleSystemThemeChange);
@@ -1159,6 +1210,8 @@
       preferredContentDisplaySettings.mosaickedSpoilerContent;
     contentDisplaySettings.lowMotionMode = preferredContentDisplaySettings.lowMotionMode;
     contentDisplaySettings.ongoingFirst = preferredContentDisplaySettings.ongoingFirst;
+    onboardingMosaicStepEnabled = contentDisplaySettings.showSpoilerContent;
+    isOnboardingDialogOpen = !hasSeenOnboarding;
     applyMotionPreference();
     persistContentDisplaySettings();
     updateBackToTopVisibility();
@@ -1293,11 +1346,12 @@
       {contentDisplayLabel}
     </span>
     <label
+      data-onboarding-target="content-display-spoiler"
       class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
     >
-      <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
-        >{showSpoilerContentLabel}</span
-      >
+      <span class="flex min-w-0 flex-col gap-1 whitespace-normal wrap-break-word">
+        <span class="text-sm/snug font-medium">{showSpoilerContentLabel}</span>
+      </span>
       <input
         type="checkbox"
         class="toggle toggle-primary shrink-0"
@@ -1308,11 +1362,12 @@
     </label>
     {#if contentDisplaySettings.showSpoilerContent}
       <label
+        data-onboarding-target="content-display-mosaic"
         class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
       >
-        <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
-          >{mosaickedSpoilerContentLabel}</span
-        >
+        <span class="flex min-w-0 flex-col gap-1 whitespace-normal wrap-break-word">
+          <span class="text-sm/snug font-medium">{mosaickedSpoilerContentLabel}</span>
+        </span>
         <input
           type="checkbox"
           class="toggle toggle-primary shrink-0"
@@ -1323,11 +1378,12 @@
       </label>
     {/if}
     <label
+      data-onboarding-target="content-display-low-motion"
       class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
     >
-      <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
-        >{lowMotionModeLabel}</span
-      >
+      <span class="flex min-w-0 flex-col gap-1 whitespace-normal wrap-break-word">
+        <span class="text-sm/snug font-medium">{lowMotionModeLabel}</span>
+      </span>
       <input
         type="checkbox"
         class="toggle toggle-primary shrink-0"
@@ -1337,11 +1393,12 @@
       />
     </label>
     <label
+      data-onboarding-target="content-display-ongoing-first"
       class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-base-content/12 bg-base-100/65 px-3 py-2"
     >
-      <span class="min-w-0 whitespace-normal wrap-break-word text-sm/snug font-medium"
-        >{ongoingFirstLabel}</span
-      >
+      <span class="flex min-w-0 flex-col gap-1 whitespace-normal wrap-break-word">
+        <span class="text-sm/snug font-medium">{ongoingFirstLabel}</span>
+      </span>
       <input
         type="checkbox"
         class="toggle toggle-primary shrink-0"
@@ -1420,7 +1477,7 @@
             id={DESKTOP_SETTINGS_MENU_ID}
             role="dialog"
             aria-label={settingsLabel}
-            class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-3 shadow-md"
+            class="dropdown-content z-120 mt-3 w-[min(18rem,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-6rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-3 shadow-md"
           >
             {@render regionSelectorSection()}
 
@@ -1459,6 +1516,7 @@
       >
         <button
           bind:this={desktopThemeButton}
+          data-onboarding-target="theme-trigger"
           type="button"
           class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
           aria-label={switchThemeAriaLabel}
@@ -1536,6 +1594,7 @@
       >
         <button
           bind:this={localeButton}
+          data-onboarding-target="language-trigger"
           type="button"
           class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100 disabled:opacity-75"
           aria-label={`${switchUiLanguageCurrentLabel}: ${uiLocale}`}
@@ -1633,58 +1692,60 @@
 
             <div class="my-2 h-px bg-base-content/12"></div>
 
-            <div class="flex flex-col gap-1" data-onboarding-target="theme">
-              <span class="px-1 text-xs font-semibold opacity-70">
-                {themePaletteLabel}
-              </span>
-              <div class="grid grid-cols-2 gap-1 sm:grid-cols-3">
-                {#each themeNameOptions as themeNameOption (themeNameOption)}
-                  <button
-                    type="button"
-                    class={`btn btn-sm h-auto min-h-12! flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
-                    onclick={() => {
-                      applyTheme(themeNameOption, themeMode);
-                    }}
-                  >
-                    {@render themePalettePreview(themeNameOption)}
-                    <span class="text-[0.6rem] font-semibold leading-none"
-                      >{getThemeNameLabel(themeNameOption)}</span
+            <div data-onboarding-target="theme">
+              <div class="flex flex-col gap-1">
+                <span class="px-1 text-xs font-semibold opacity-70">
+                  {themePaletteLabel}
+                </span>
+                <div class="grid grid-cols-2 gap-1 sm:grid-cols-3">
+                  {#each themeNameOptions as themeNameOption (themeNameOption)}
+                    <button
+                      type="button"
+                      class={`btn btn-sm h-auto min-h-12! flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeName === themeNameOption ? "btn-primary" : "bg-base-100"}`}
+                      onclick={() => {
+                        applyTheme(themeNameOption, themeMode);
+                      }}
                     >
-                  </button>
-                {/each}
+                      {@render themePalettePreview(themeNameOption)}
+                      <span class="text-[0.6rem] font-semibold leading-none"
+                        >{getThemeNameLabel(themeNameOption)}</span
+                      >
+                    </button>
+                  {/each}
+                </div>
+              </div>
+
+              <div class="my-2 h-px bg-base-content/12"></div>
+
+              <div class="flex flex-col gap-1">
+                <span class="px-1 text-xs font-semibold opacity-70">
+                  {themeControlLabel}
+                </span>
+                <div class="grid grid-cols-2 gap-1 sm:grid-cols-3">
+                  {#each ["auto", "light", "dark"] as themeOption (themeOption)}
+                    <button
+                      type="button"
+                      class={`btn btn-sm h-auto min-h-12! flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
+                      onclick={() => {
+                        applyTheme(themeName, themeOption as ThemeMode);
+                      }}
+                    >
+                      <Icon
+                        icon={getThemeModeIcon(themeOption as ThemeMode)}
+                        class="size-5 shrink-0"
+                      />
+                      <span class="text-[0.6rem] font-semibold leading-none"
+                        >{layoutTranslate(`themeMode.${themeOption}`, themeOption)}</span
+                      >
+                    </button>
+                  {/each}
+                </div>
               </div>
             </div>
 
             <div class="my-2 h-px bg-base-content/12"></div>
 
-            <div class="flex flex-col gap-1">
-              <span class="px-1 text-xs font-semibold opacity-70">
-                {themeControlLabel}
-              </span>
-              <div class="grid grid-cols-2 gap-1 sm:grid-cols-3">
-                {#each ["auto", "light", "dark"] as themeOption (themeOption)}
-                  <button
-                    type="button"
-                    class={`btn btn-sm h-auto min-h-12! flex-col justify-center gap-1 rounded-lg border-base-content/15 py-2 ${themeMode === themeOption ? "btn-primary" : "bg-base-100"}`}
-                    onclick={() => {
-                      applyTheme(themeName, themeOption as ThemeMode);
-                    }}
-                  >
-                    <Icon
-                      icon={getThemeModeIcon(themeOption as ThemeMode)}
-                      class="size-5 shrink-0"
-                    />
-                    <span class="text-[0.6rem] font-semibold leading-none"
-                      >{layoutTranslate(`themeMode.${themeOption}`, themeOption)}</span
-                    >
-                  </button>
-                {/each}
-              </div>
-            </div>
-
-            <div class="my-2 h-px bg-base-content/12"></div>
-
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-1" data-onboarding-target="language">
               <span class="px-1 text-xs font-semibold opacity-70">
                 {interfaceLanguageLabel}
               </span>
@@ -1694,7 +1755,6 @@
                     <button
                       type="button"
                       class="btn btn-sm min-h-12! justify-start rounded-lg border-base-content/15 btn-primary"
-                      data-onboarding-target="language"
                       disabled={true}
                     >
                       <span class="min-w-0 wrap-break-word"
