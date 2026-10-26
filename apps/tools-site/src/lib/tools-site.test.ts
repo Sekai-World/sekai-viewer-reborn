@@ -35,12 +35,14 @@ describe("tools-site region and locale helpers", () => {
 
   it("normalizes browser locale aliases and preserves supported locales", () => {
     expect(DEFAULT_UI_LOCALE).toBe("en");
-    expect(supportedUiLocales).toContain("zh-TW");
+    expect(supportedUiLocales).toEqual(["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"]);
     expect(normalizeUiLocale("en-US")).toBe("en");
     expect(normalizeUiLocale("en-GB")).toBe("en");
     expect(normalizeUiLocale("zh")).toBe("zh-CN");
     expect(normalizeUiLocale("ja-JP")).toBe("ja-JP");
     expect(normalizeUiLocale("unsupported", "ko-KR")).toBe("ko-KR");
+    expect(normalizeUiLocale("fr")).toBe("en");
+    expect(normalizeUiLocale("ar")).toBe("en");
     expect(normalizeUiLocale(undefined)).toBe("en");
   });
 

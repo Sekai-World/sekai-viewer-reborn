@@ -9,7 +9,12 @@
     setContentDisplaySettings,
     type ContentDisplaySettingsState
   } from "$lib/settings/content-display";
-  import { supportedUiLocales, uiLocaleNameByCode, type SupportedUiLocale } from "$lib/i18n/config";
+  import {
+    getUiLocaleDirection,
+    supportedUiLocales,
+    uiLocaleNameByCode,
+    type SupportedUiLocale
+  } from "$lib/i18n/config";
   import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
   import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
   import MobileQuickNavigation from "$lib/components/MobileQuickNavigation.svelte";
@@ -558,6 +563,12 @@
       description: layoutTranslate("onboarding.steps.language.description")
     }
   ]);
+
+  $effect(() => {
+    const locale = uiLocale;
+    document.documentElement.lang = locale;
+    document.documentElement.dir = getUiLocaleDirection(locale);
+  });
 
   $effect(() => {
     const requestId = ++translationRequestId;
@@ -1612,7 +1623,7 @@
           <div
             id={LOCALE_MENU_ID}
             data-onboarding-target="language"
-            class="dropdown-content z-120 mt-3 w-max min-w-44 max-w-[min(14rem,calc(100vw-2rem))] overflow-hidden rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
+            class="dropdown-content z-120 mt-3 w-max min-w-44 max-w-[min(14rem,calc(100vw-2rem))] max-h-[calc(100dvh-6rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
           >
             <div class="rounded-xl border border-base-content/12 bg-base-100/65 p-2">
               <p class="px-1 text-xs font-semibold opacity-60">

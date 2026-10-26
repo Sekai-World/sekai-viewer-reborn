@@ -7,36 +7,120 @@ export type I18nLocaleResolver = (localeValue: string) => string;
 export type I18nTranslator = (key: string, fallback?: string) => string;
 export type I18nRequestToken = { readonly version: number; readonly isCurrent: () => boolean };
 
-export const supportedUiLocales = ["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"] as const;
+export const supportedUiLocales = [
+  "ar",
+  "ca-ES",
+  "cs",
+  "de",
+  "en",
+  "es",
+  "es-419",
+  "es-MX",
+  "fr",
+  "he-IL",
+  "id",
+  "it",
+  "ja-JP",
+  "ko-KR",
+  "ms",
+  "nl",
+  "pl",
+  "pt-BR",
+  "pt",
+  "ro",
+  "ru",
+  "sk-SK",
+  "th",
+  "tr",
+  "uk",
+  "vi-VN",
+  "yue",
+  "zh-CN",
+  "zh-TW"
+] as const;
 
 export type SupportedUiLocale = (typeof supportedUiLocales)[number];
 
 export const DEFAULT_UI_LOCALE: SupportedUiLocale = "en";
 
-export const repoLocaleByUiLocale: Record<SupportedUiLocale, string> = {
+export const repoLocaleByUiLocale = {
+  ar: "ar",
+  "ca-ES": "ca-ES",
+  cs: "cs",
+  de: "de",
   en: "en",
+  es: "es",
+  "es-419": "es-419",
+  "es-MX": "es-MX",
+  fr: "fr",
+  "he-IL": "he-IL",
+  id: "id",
+  it: "it",
   "ja-JP": "ja",
   "ko-KR": "ko",
+  ms: "ms",
+  nl: "nl",
+  pl: "pl",
+  "pt-BR": "pt-BR",
+  pt: "pt",
+  ro: "ro",
+  ru: "ru",
+  "sk-SK": "sk-SK",
+  th: "th",
+  tr: "tr",
+  uk: "uk",
+  "vi-VN": "vi-VN",
+  yue: "yue",
   "zh-CN": "zh-CN",
   "zh-TW": "zh-TW"
-};
+} satisfies Record<SupportedUiLocale, string>;
+
+const supportedUiLocaleByCaseInsensitiveCode = new Map<string, SupportedUiLocale>(
+  supportedUiLocales.map((locale) => [locale.toLowerCase(), locale])
+);
+
+const supportedUiLocaleByLanguage = new Map<string, SupportedUiLocale>();
+for (const locale of supportedUiLocales) {
+  const [language] = locale.toLowerCase().split("-");
+  if (language && !supportedUiLocaleByLanguage.has(language)) {
+    supportedUiLocaleByLanguage.set(language, locale);
+  }
+}
+
+const legacyUiLocaleAliases = new Map<string, SupportedUiLocale>([
+  ["ja", "ja-JP"],
+  ["ko", "ko-KR"],
+  ["zh", "zh-CN"]
+]);
+
+const rtlUiLocales = new Set<SupportedUiLocale>(["ar", "he-IL"]);
 
 export const normalizeUiLocale = (
   value: string | null | undefined,
   fallback: SupportedUiLocale = DEFAULT_UI_LOCALE
 ): SupportedUiLocale => {
-  if (value === "en-US" || value === "en-GB") {
-    return "en";
-  }
+  const normalizedValue = value?.trim().replaceAll("_", "-").toLowerCase();
+  if (!normalizedValue) return fallback;
 
-  if (value === "zh") {
-    return "zh-CN";
-  }
+  const exactLocale = supportedUiLocaleByCaseInsensitiveCode.get(normalizedValue);
+  if (exactLocale) return exactLocale;
 
-  return value && supportedUiLocales.includes(value as SupportedUiLocale)
-    ? (value as SupportedUiLocale)
-    : fallback;
+  const language = normalizedValue.split("-")[0];
+  if (!language) return fallback;
+
+  return (
+    legacyUiLocaleAliases.get(normalizedValue) ??
+    legacyUiLocaleAliases.get(language) ??
+    supportedUiLocaleByCaseInsensitiveCode.get(language) ??
+    supportedUiLocaleByLanguage.get(language) ??
+    fallback
+  );
 };
+
+export type UiLocaleDirection = "ltr" | "rtl";
+
+export const getUiLocaleDirection = (localeValue: string): UiLocaleDirection =>
+  rtlUiLocales.has(normalizeUiLocale(localeValue)) ? "rtl" : "ltr";
 
 export const resolveI18nMessageBundle = async (
   loadBundle: () => Promise<I18nMessages>,

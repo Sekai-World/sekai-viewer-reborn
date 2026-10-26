@@ -50,9 +50,9 @@ describe("media-lab-site layout server load", () => {
     }
   });
 
-  it("falls back to the default locale for unsupported cookie values", async () => {
+  it("falls back to the default locale for languages without this app's dictionaries", async () => {
     const loadEvent = {
-      cookies: { get: vi.fn().mockReturnValue("fr-FR") },
+      cookies: { get: vi.fn().mockReturnValue("ar") },
       fetch: vi.fn()
     } as unknown as Parameters<typeof load>[0];
 

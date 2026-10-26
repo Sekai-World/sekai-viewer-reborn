@@ -38,6 +38,11 @@ describe("region and locale preferences", () => {
     ["en-US", "en"],
     ["en-GB", "en"],
     ["zh", "zh-CN"],
+    ["JA", "ja-JP"],
+    ["ko_kr", "ko-KR"],
+    ["CA_es", "ca-ES"],
+    ["PT_br", "pt-BR"],
+    ["ES_419", "es-419"],
     ["ja-JP", "ja-JP"],
     ["ko-KR", "ko-KR"],
     ["zh-CN", "zh-CN"],
@@ -49,7 +54,7 @@ describe("region and locale preferences", () => {
   it("uses the locale fallback for missing and unsupported values", () => {
     expect(normalizeUiLocale(undefined)).toBe(DEFAULT_UI_LOCALE);
     expect(normalizeUiLocale(null, "en")).toBe("en");
-    expect(normalizeUiLocale("fr-FR", "ja-JP")).toBe("ja-JP");
+    expect(normalizeUiLocale("unsupported", "ja-JP")).toBe("ja-JP");
   });
 
   it("returns the default region during SSR without reading storage", () => {

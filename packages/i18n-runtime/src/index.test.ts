@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createRemoteI18nRuntime,
   DEFAULT_UI_LOCALE,
+  getUiLocaleDirection,
   normalizeUiLocale,
   repoLocaleByUiLocale,
   resolveI18nMessageBundle,
@@ -10,24 +11,96 @@ import {
 
 describe("UI locale configuration", () => {
   it("exposes the supported locale and repository mappings", () => {
-    expect(supportedUiLocales).toEqual(["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"]);
+    expect(supportedUiLocales).toEqual([
+      "ar",
+      "ca-ES",
+      "cs",
+      "de",
+      "en",
+      "es",
+      "es-419",
+      "es-MX",
+      "fr",
+      "he-IL",
+      "id",
+      "it",
+      "ja-JP",
+      "ko-KR",
+      "ms",
+      "nl",
+      "pl",
+      "pt-BR",
+      "pt",
+      "ro",
+      "ru",
+      "sk-SK",
+      "th",
+      "tr",
+      "uk",
+      "vi-VN",
+      "yue",
+      "zh-CN",
+      "zh-TW"
+    ]);
     expect(DEFAULT_UI_LOCALE).toBe("en");
     expect(repoLocaleByUiLocale).toEqual({
+      ar: "ar",
+      "ca-ES": "ca-ES",
+      cs: "cs",
+      de: "de",
       en: "en",
+      es: "es",
+      "es-419": "es-419",
+      "es-MX": "es-MX",
+      fr: "fr",
+      "he-IL": "he-IL",
+      id: "id",
+      it: "it",
       "ja-JP": "ja",
       "ko-KR": "ko",
+      ms: "ms",
+      nl: "nl",
+      pl: "pl",
+      "pt-BR": "pt-BR",
+      pt: "pt",
+      ro: "ro",
+      ru: "ru",
+      "sk-SK": "sk-SK",
+      th: "th",
+      tr: "tr",
+      uk: "uk",
+      "vi-VN": "vi-VN",
+      yue: "yue",
       "zh-CN": "zh-CN",
       "zh-TW": "zh-TW"
     });
   });
 
-  it("normalizes browser locale aliases and falls back unsupported values", () => {
+  it("normalizes locale casing, separators, language fallbacks, and legacy aliases", () => {
     expect(normalizeUiLocale("en-US")).toBe("en");
     expect(normalizeUiLocale("en-GB")).toBe("en");
     expect(normalizeUiLocale("zh")).toBe("zh-CN");
+    expect(normalizeUiLocale("JA")).toBe("ja-JP");
+    expect(normalizeUiLocale("ko_kr")).toBe("ko-KR");
+    expect(normalizeUiLocale("CA_es")).toBe("ca-ES");
+    expect(normalizeUiLocale("PT_br")).toBe("pt-BR");
+    expect(normalizeUiLocale("ES_419")).toBe("es-419");
+    expect(normalizeUiLocale("he")).toBe("he-IL");
+    expect(normalizeUiLocale("ca")).toBe("ca-ES");
+    expect(normalizeUiLocale("sk")).toBe("sk-SK");
+    expect(normalizeUiLocale("vi")).toBe("vi-VN");
+    expect(normalizeUiLocale("fr-CA")).toBe("fr");
+    expect(normalizeUiLocale("pt-PT")).toBe("pt");
     expect(normalizeUiLocale("ja-JP")).toBe("ja-JP");
-    expect(normalizeUiLocale("fr")).toBe("en");
+    expect(normalizeUiLocale("unsupported")).toBe("en");
     expect(normalizeUiLocale(null, "zh-TW")).toBe("zh-TW");
+  });
+
+  it("uses right-to-left document direction for Arabic and Hebrew", () => {
+    expect(getUiLocaleDirection("ar")).toBe("rtl");
+    expect(getUiLocaleDirection("HE_il")).toBe("rtl");
+    expect(getUiLocaleDirection("he")).toBe("rtl");
+    expect(getUiLocaleDirection("zh-TW")).toBe("ltr");
   });
 });
 

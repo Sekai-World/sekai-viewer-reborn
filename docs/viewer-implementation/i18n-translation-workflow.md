@@ -7,11 +7,26 @@ Source strings are authored in `packages/i18n-source/content-site/*.json` inside
 `sekai-viewer-reborn`, then synced to `sekai-i18n-reborn` via
 `.github/workflows/i18n-sync.yml`.
 
+The `content-site` UI locale registry includes `ar`, `ca-ES`, `cs`, `de`, `en`,
+`es`, `es-419`, `es-MX`, `fr`, `he-IL`, `id`, `it`, `ja-JP`, `ko-KR`, `ms`,
+`nl`, `pl`, `pt-BR`, `pt`, `ro`, `ru`, `sk-SK`, `th`, `tr`, `uk`, `vi-VN`,
+`yue`, `zh-CN`, and `zh-TW`. The UI codes `ja-JP` and `ko-KR` map to the
+dictionary directories `ja` and `ko`; the other codes map to matching directory
+names. Locale matching ignores case and accepts `_` in place of `-`; bare `ja`,
+`ko`, and `zh` remain compatibility aliases for `ja-JP`, `ko-KR`, and `zh-CN`.
+The `tools-site` and `media-lab-site` selectors remain limited to their current
+`en`, `ja-JP`, `ko-KR`, `zh-CN`, and `zh-TW` dictionaries.
+
+Expanding the registry does not add or copy legacy translation text. Current
+English source dictionaries remain the local fallback; add translations through
+the workflow below. Arabic and Hebrew set the document language and right-to-left
+direction on `content-site`.
+
 ## Translation PR Flow
 
 1. English source strings added/changed in `packages/i18n-source/content-site/*.json`.
 2. `i18n-sync.yml` bot pushes a sync PR to `Sekai-World/sekai-i18n-reborn` (branch `sync/content-site-i18n-source`).
-3. Manual translation PRs add ja/ko/zh-CN/zh-TW translations for the new English keys.
+3. Translation PRs add translations for those English keys in the supported locale directories.
 4. Merge order does not matter — each locale PR is independent.
 
 ## Lessons Learned
