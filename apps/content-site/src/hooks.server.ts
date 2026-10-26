@@ -5,7 +5,10 @@ import { DEFAULT_UI_LOCALE, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$li
 const ROOT_HTML_OPEN_TAG = /<html\b(?:[^>"']|"[^"]*"|'[^']*')*>/i;
 
 const setRootHtmlAttribute = (tag: string, name: "lang" | "dir", value: string): string => {
-  const attributePattern = new RegExp(`\\s+${name}(?:\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+))?`, "i");
+  const attributePattern = new RegExp(
+    String.raw`\s+${name}(?=\s|=|/?>)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?`,
+    "i"
+  );
   const replacement = ` ${name}="${value}"`;
 
   return attributePattern.test(tag)

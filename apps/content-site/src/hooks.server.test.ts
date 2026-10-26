@@ -4,9 +4,9 @@ import { handle } from "./hooks.server";
 
 type HandleInput = Parameters<Handle>[0];
 
-const renderWithLocaleCookie = async (
+const renderWithChunks = async (
   localeCookie: string | undefined,
-  html: string
+  chunks: string[]
 ): Promise<string> => {
   const event = {
     cookies: { get: vi.fn().mockReturnValue(localeCookie) }
@@ -14,8 +14,6 @@ const renderWithLocaleCookie = async (
 
   const resolve: HandleInput["resolve"] = async (_event, options) => {
     const transformPageChunk = options?.transformPageChunk;
-    const splitAt = html.indexOf("<html") + 7;
-    const chunks = [html.slice(0, splitAt), html.slice(splitAt)];
     const transformedHtml = chunks
       .map(
         (chunk, index) =>
@@ -29,6 +27,9 @@ const renderWithLocaleCookie = async (
   const response = await handle({ event, resolve });
   return response.text();
 };
+
+const renderWithLocaleCookie = (localeCookie: string | undefined, html: string): Promise<string> =>
+  renderWithChunks(localeCookie, [html]);
 
 const htmlDocument =
   '<!doctype html><html lang="zh-CN" dir="ltr"><head></head><body><main lang="zh-CN" dir="ltr">content</main></body></html>';
@@ -65,5 +66,44 @@ describe("content-site SSR document locale", () => {
     expect(html).toBe(
       '<!doctype html><html lang="ar" dir="rtl"><head></head><body><main lang="zh-CN" dir="ltr">content</main></body></html>'
     );
+  });
+
+  it.each([
+    ["single-quoted", "<html lang='en' dir='ltr'>"],
+    ["unquoted", "<html lang=en dir=ltr>"],
+    ["case-insensitive", "<html LANG=en DIR='ltr'>"]
+  ])("updates existing %s root attributes", async (_caseName, rootTag) => {
+    const html = await renderWithLocaleCookie("ar", rootTag);
+
+    expect(html).toBe('<html lang="ar" dir="rtl">');
+  });
+
+  it("inserts missing root attributes without matching longer attribute names", async () => {
+    const html = await renderWithLocaleCookie("ar", '<html lang-code="en" dir-extra="ltr">');
+
+    expect(html).toBe('<html lang-code="en" dir-extra="ltr" lang="ar" dir="rtl">');
+  });
+
+  it("buffers an html root tag split across chunks", async () => {
+    const html = await renderWithChunks("ar", [
+      "<!doctype html><ht",
+      "ml lang='en' dir=ltr><body>content</body></html>"
+    ]);
+
+    expect(html).toBe('<!doctype html><html lang="ar" dir="rtl"><body>content</body></html>');
+  });
+
+  it("returns the original buffered HTML when no root tag arrives by the final chunk", async () => {
+    const chunks = ["<!doctype html><body>no ", "root tag</body>"];
+    const html = await renderWithChunks(undefined, chunks);
+
+    expect(html).toBe(chunks.join(""));
+  });
+
+  it("leaves all later chunks unchanged after handling the root tag", async () => {
+    const laterChunk = '<main lang="zh-CN" dir="ltr">content</main><html lang="en" dir="ltr">';
+    const html = await renderWithChunks("ar", ['<html lang="en" dir="ltr"><body>', laterChunk]);
+
+    expect(html).toBe(`<html lang="ar" dir="rtl"><body>${laterChunk}`);
   });
 });

@@ -74,13 +74,16 @@ describe("UI locale configuration", () => {
       "zh-CN": "zh-CN",
       "zh-TW": "zh-TW"
     });
+    expect(Object.keys(repoLocaleByUiLocale)).toEqual(supportedUiLocales);
   });
 
   it("normalizes locale casing, separators, language fallbacks, and legacy aliases", () => {
     expect(normalizeUiLocale("en-US")).toBe("en");
     expect(normalizeUiLocale("en-GB")).toBe("en");
+    expect(normalizeUiLocale("ja")).toBe("ja-JP");
     expect(normalizeUiLocale("zh")).toBe("zh-CN");
     expect(normalizeUiLocale("JA")).toBe("ja-JP");
+    expect(normalizeUiLocale("ko")).toBe("ko-KR");
     expect(normalizeUiLocale("ko_kr")).toBe("ko-KR");
     expect(normalizeUiLocale("CA_es")).toBe("ca-ES");
     expect(normalizeUiLocale("PT_br")).toBe("pt-BR");
