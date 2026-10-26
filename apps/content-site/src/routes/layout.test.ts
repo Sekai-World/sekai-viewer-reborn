@@ -40,8 +40,12 @@ vi.mock("$lib/i18n/runtime", async () => {
 });
 
 let viewport = 1440;
+let originalRootLanguage: string | null = null;
+let originalRootDirection: string | null = null;
 beforeEach(() => {
   tour.props = null;
+  originalRootLanguage = document.documentElement.getAttribute("lang");
+  originalRootDirection = document.documentElement.getAttribute("dir");
   localStorage.clear();
   vi.stubGlobal("matchMedia", (query: string) => ({
     matches: query.includes("max-width: 639px")
@@ -61,15 +65,25 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  if (originalRootLanguage === null) {
+    document.documentElement.removeAttribute("lang");
+  } else {
+    document.documentElement.setAttribute("lang", originalRootLanguage);
+  }
+  if (originalRootDirection === null) {
+    document.documentElement.removeAttribute("dir");
+  } else {
+    document.documentElement.setAttribute("dir", originalRootDirection);
+  }
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
-const setup = async (width: number) => {
+const setup = async (width: number, uiLocale: LayoutData["uiLocale"] = "en") => {
   viewport = width;
   const result = render(Layout, {
     data: {
-      uiLocale: "en",
+      uiLocale,
       preferredRegion: "jp",
       siteVersion: "0.0.2",
       i18nMessages: {},
@@ -88,6 +102,44 @@ const setup = async (width: number) => {
     result.container.querySelector<HTMLButtonElement>(`button[aria-controls="${id}"]`)!;
   return { ...result, props, prepare, button };
 };
+
+it("sets the document language and direction for an RTL locale", async () => {
+  await setup(1440, "ar");
+
+  await waitFor(() => {
+    expect(document.documentElement.lang).toBe("ar");
+    expect(document.documentElement.dir).toBe("rtl");
+  });
+});
+
+it("bounds the desktop language menu and keeps all alternative locales focusable", async () => {
+  const { props, button, container } = await setup(1440);
+  props.onClose();
+  await tick();
+  const trigger = button("content-site-locale-menu");
+  trigger.click();
+  await tick();
+
+  const menu = container.querySelector<HTMLElement>("#content-site-locale-menu")!;
+  expect(menu.classList.contains("max-h-[calc(100dvh-6rem)]")).toBe(true);
+  expect(menu.classList.contains("overflow-y-auto")).toBe(true);
+  expect(menu.classList.contains("overflow-x-hidden")).toBe(true);
+  expect(menu.classList.contains("overflow-hidden")).toBe(false);
+  const options = [...menu.querySelectorAll<HTMLButtonElement>("li button")];
+  expect(options).toHaveLength(28);
+  for (const option of options) {
+    expect(option.disabled).toBe(false);
+    expect(option.tabIndex).toBe(0);
+    option.focus();
+    expect(document.activeElement).toBe(option);
+  }
+  expect(options.at(-1)?.textContent).toContain("繁體中文(zh-TW)");
+
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+  await tick();
+  expect(container.querySelector("#content-site-locale-menu")).toBeNull();
+  expect(document.activeElement).toBe(trigger);
+});
 
 describe.each([1440, 390])("layout appearance/language tour at %spx", (width) => {
   it("orders real closed triggers before their open option groups, in both directions", async () => {

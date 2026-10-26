@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { supportedUiLocales as sharedSupportedUiLocales } from "@platform/i18n-runtime";
 import {
   DEFAULT_UI_LOCALE,
   UI_LOCALE_COOKIE_MAX_AGE_SECONDS,
@@ -15,8 +14,8 @@ describe("media-lab-site ui locale region module", () => {
     expect(UI_LOCALE_COOKIE_MAX_AGE_SECONDS).toBe(31_536_000);
   });
 
-  it("re-exports the shared supported locale list instead of redefining it", () => {
-    expect(supportedUiLocales).toBe(sharedSupportedUiLocales);
+  it("keeps the current locale choices until this app has dictionaries for more languages", () => {
+    expect(supportedUiLocales).toEqual(["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"]);
     expect(DEFAULT_UI_LOCALE).toBe("en");
   });
 
@@ -25,6 +24,8 @@ describe("media-lab-site ui locale region module", () => {
     expect(normalizeUiLocale("zh")).toBe("zh-CN");
     expect(normalizeUiLocale("en-US")).toBe("en");
     expect(normalizeUiLocale("fr-FR")).toBe(DEFAULT_UI_LOCALE);
+    expect(normalizeUiLocale("ar")).toBe(DEFAULT_UI_LOCALE);
+    expect(normalizeUiLocale("JA_jp")).toBe("ja-JP");
     expect(normalizeUiLocale(undefined)).toBe(DEFAULT_UI_LOCALE);
   });
 
