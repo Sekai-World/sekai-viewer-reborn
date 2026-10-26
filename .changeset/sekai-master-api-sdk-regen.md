@@ -18,3 +18,5 @@ Unify audio previews and native music videos in a shared-vocal playback card, an
 Keep short/full playback controls beside the vocal versions, provide complete mobile dropdown options, and show verified character-name tooltips. Remove character-avatar navigation and preserve character namespaces so external singers never borrow game-character portraits or names.
 
 Consume vocal-character names from the master API, including external singers, without additional character-list requests.
+
+Tighten music video XML validation and use a specific error type when browser XML parsing is unavailable.

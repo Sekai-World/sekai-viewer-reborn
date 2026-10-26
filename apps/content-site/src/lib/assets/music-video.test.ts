@@ -115,9 +115,23 @@ describe("music video asset listing", () => {
           fetcher: vi.fn().mockResolvedValue(new Response(listing([]))),
           baseUrlOverride: "/storage"
         })
-      ).rejects.toThrow("require a browser XML parser");
+      ).rejects.toThrow(TypeError);
     } finally {
       vi.unstubAllGlobals();
+    }
+  });
+
+  it("rejects XML documents without a root element", async () => {
+    const emptyDocument = document.implementation.createDocument(null, "", null);
+    const parser = vi.spyOn(DOMParser.prototype, "parseFromString").mockReturnValue(emptyDocument);
+    try {
+      await expect(
+        resolveMusicVideoAssetURL(descriptor(), {
+          fetcher: vi.fn().mockResolvedValue(new Response(listing([])))
+        })
+      ).rejects.toThrow("malformed XML");
+    } finally {
+      parser.mockRestore();
     }
   });
 

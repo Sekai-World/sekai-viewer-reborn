@@ -57,13 +57,12 @@ const parseListing = (
   prefix: string
 ): { key: string | null; truncated: boolean; token: string | null } => {
   if (typeof DOMParser === "undefined") {
-    throw new Error("Music video listings require a browser XML parser.");
+    throw new TypeError("Music video listings require a browser XML parser.");
   }
 
   const document = new DOMParser().parseFromString(xml, "application/xml");
   if (
-    !document.documentElement ||
-    document.documentElement.localName !== "ListBucketResult" ||
+    document.documentElement?.localName !== "ListBucketResult" ||
     document.getElementsByTagName("parsererror").length > 0
   ) {
     throw new Error("Music video listing returned malformed XML.");
