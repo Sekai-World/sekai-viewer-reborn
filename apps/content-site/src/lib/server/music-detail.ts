@@ -1,4 +1,11 @@
-import type { MusicDetail, MusicDifficulty, MusicVocal } from "$lib/domain/music-detail";
+import type {
+  MusicDetail,
+  MusicDifficulty,
+  MusicOriginal,
+  MusicVideoDescriptor,
+  MusicVocalCharacter,
+  MusicVocal
+} from "$lib/domain/music-detail";
 import { parseMusicCategories } from "./music-list";
 
 const getString = (value: unknown): string | null =>
@@ -75,7 +82,7 @@ const parseMusicDifficulty = (payload: unknown): MusicDifficulty | null => {
   };
 };
 
-const parseCharacterEntry = (payload: unknown): { characterId: number; unit: string } | null => {
+const parseCharacterEntry = (payload: unknown): MusicVocalCharacter | null => {
   const root = getObject(payload);
   if (!root) {
     return null;
@@ -87,7 +94,17 @@ const parseCharacterEntry = (payload: unknown): { characterId: number; unit: str
     return null;
   }
 
-  return { characterId, unit: unit ?? "" };
+  const characterType = Object.hasOwn(root, "characterType")
+    ? (getString(root.characterType)?.trim() ?? null)
+    : undefined;
+  const name = Object.hasOwn(root, "name") ? (getString(root.name)?.trim() ?? null) : undefined;
+
+  return {
+    characterId,
+    unit: unit ?? "",
+    ...(characterType !== undefined ? { characterType } : {}),
+    ...(name !== undefined ? { name } : {})
+  };
 };
 
 const parseMusicVocal = (payload: unknown): MusicVocal | null => {
@@ -105,7 +122,7 @@ const parseMusicVocal = (payload: unknown): MusicVocal | null => {
   const overrideCharaRaw = root.overrideCharas ?? root.characters;
   const charactersRaw = root.characters;
 
-  const parseCharacterList = (value: unknown): { characterId: number; unit: string }[] | null => {
+  const parseCharacterList = (value: unknown): MusicVocalCharacter[] | null => {
     if (!Array.isArray(value)) {
       return null;
     }
@@ -124,6 +141,41 @@ const parseMusicVocal = (payload: unknown): MusicVocal | null => {
     characters: parseCharacterList(charactersRaw),
     assetBundleName: pickString(root, ["assetbundleName", "assetBundleName"])
   };
+};
+
+const parseMusicVideo = (payload: unknown): MusicVideoDescriptor | null => {
+  const root = getObject(payload);
+  if (!root) {
+    return null;
+  }
+
+  const category = getString(root.category);
+  const assetBundleName = pickString(root, ["assetbundleName", "assetBundleName"]);
+  if (
+    (category !== "original" && category !== "mv_2d") ||
+    !assetBundleName ||
+    !/^[A-Za-z0-9_-]+$/.test(assetBundleName)
+  ) {
+    return null;
+  }
+
+  const explicitVocalId = root.musicVocalId ?? root.music_vocal_id;
+  if (explicitVocalId != null && !getStringLike(explicitVocalId)) return null;
+
+  return {
+    category,
+    assetBundleName,
+    musicVocalId: getStringLike(explicitVocalId)
+  };
+};
+
+const parseMusicOriginal = (payload: unknown): MusicOriginal | null => {
+  const root = getObject(payload);
+  if (!root) return null;
+  const id = getString(root.id);
+  const musicId = getString(root.musicId);
+  const videoLink = getString(root.videoLink);
+  return id && musicId && videoLink ? { id, musicId, videoLink } : null;
 };
 
 const parseMusicDetail = (payload: unknown): MusicDetail | null => {
@@ -156,6 +208,11 @@ const parseMusicDetail = (payload: unknown): MusicDetail | null => {
   const tagsRaw = Array.isArray(root.tags) ? root.tags : [];
   const tags = tagsRaw.map((v) => (typeof v === "string" ? v.trim() : "")).filter(Boolean);
 
+  const musicVideosRaw = Array.isArray(root.musicVideos) ? root.musicVideos : [];
+  const musicVideos = musicVideosRaw
+    .map(parseMusicVideo)
+    .filter((video): video is MusicVideoDescriptor => video !== null);
+
   const creatorArtistNode = getObject(musicNode.creatorArtist);
   const liveStageNode = getObject(musicNode.liveStage);
 
@@ -174,7 +231,11 @@ const parseMusicDetail = (payload: unknown): MusicDetail | null => {
     fillerSec: getNumber(musicNode.fillerSec ?? musicNode.filler_sec),
     difficulties,
     vocals,
-    tags
+    tags,
+    musicVideos,
+    musicOriginals: (Array.isArray(root.musicOriginals) ? root.musicOriginals : [])
+      .map(parseMusicOriginal)
+      .filter((original): original is MusicOriginal => original !== null && original.musicId === id)
   };
 };
 

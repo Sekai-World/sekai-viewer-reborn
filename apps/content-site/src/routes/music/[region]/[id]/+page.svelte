@@ -10,7 +10,7 @@
   } from "$lib/components/shared/RegionBadgeSwitch.svelte";
   import MusicDetailInfoCard from "$lib/components/music/MusicDetailInfoCard.svelte";
   import MusicDifficultyCard from "$lib/components/music/MusicDifficultyCard.svelte";
-  import MusicPreviewCard from "$lib/components/music/MusicPreviewCard.svelte";
+  import MusicPlaybackCard from "$lib/components/music/MusicPlaybackCard.svelte";
   import MusicJacketHero from "$lib/components/music/MusicJacketHero.svelte";
   import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
   import { formatUnitFallbackLabel, unitCodeByMusicTag } from "$lib/domain/unit-profile";
@@ -24,6 +24,17 @@
     resolveStreamingMessages(data.i18nMessages, ["common", "music", "error"]);
   let currentMessages = $state<Record<string, string>>(getInitialMessages());
   let translationRequestId = 0;
+  let localPauseToken = $state(0);
+  let videoLinksUnloadToken = $state(0);
+  const videoLinksText = $derived.by(() => {
+    const translate = createI18nTranslator(data.uiLocale, currentMessages);
+    return {
+      heading: translate("musicVideoLinksLabel"),
+      openLabel: translate("musicVideoLinkOpen"),
+      previewLabel: translate("musicVideoLinkPreview"),
+      selectionLabel: translate("musicVideoLinkSelection")
+    };
+  });
 
   const getInitialI18nText = (key: string): string =>
     createI18nTranslator(data.uiLocale, getInitialMessages())(key);
@@ -58,9 +69,21 @@
   let noMusicLabel = $state(getInitialI18nText("failedToLoadMusicData"));
   let musicPreviewShortLabel = $state(getInitialI18nText("musicPreviewShortLabel"));
   let musicPreviewLongLabel = $state(getInitialI18nText("musicPreviewLongLabel"));
+  let musicPlaybackAudioLabel = $state(getInitialI18nText("musicPlaybackAudioLabel"));
+  let musicPlaybackVocalLocked = $state(getInitialI18nText("musicPlaybackVocalLocked"));
   let musicPreviewNoPreviewAvailable = $state(getInitialI18nText("musicPreviewNoPreviewAvailable"));
   let musicPreviewPlayLabel = $state(getInitialI18nText("musicPreviewPlayLabel"));
   let musicPreviewPauseLabel = $state(getInitialI18nText("musicPreviewPauseLabel"));
+  let musicMvTitle = $state(getInitialI18nText("musicMvTitle"));
+  let musicMvVariantLabel = $state(getInitialI18nText("musicMvVariantLabel"));
+  let musicMvOriginalLabel = $state(getInitialI18nText("musicMvOriginalLabel"));
+  let musicMv2dLabel = $state(getInitialI18nText("musicMv2dLabel"));
+  let musicMvDuplicateLabel = $state(getInitialI18nText("musicMvDuplicateLabel"));
+  let musicMvLoadingLabel = $state(getInitialI18nText("musicMvLoading"));
+  let musicMvRetryLabel = $state(getInitialI18nText("musicMvRetry"));
+  let musicMvNoVideoLabel = $state(getInitialI18nText("musicMvNoVideo"));
+  let musicMvUnsupportedLabel = $state(getInitialI18nText("musicMvUnsupported"));
+  let musicMvAudioUnavailableLabel = $state(getInitialI18nText("musicMvAudioUnavailable"));
   let audioDownloadLabel = $state(getInitialI18nText("audioDownloadLabel"));
   let audioDownloadCloseLabel = $state(getInitialI18nText("audioDownloadCloseLabel"));
   let audioVolumeLabel = $state(getInitialI18nText("audioVolumeLabel"));
@@ -122,9 +145,21 @@
     noMusicLabel = translate("failedToLoadMusicData");
     musicPreviewShortLabel = translate("musicPreviewShortLabel");
     musicPreviewLongLabel = translate("musicPreviewLongLabel");
+    musicPlaybackAudioLabel = translate("musicPlaybackAudioLabel");
+    musicPlaybackVocalLocked = translate("musicPlaybackVocalLocked");
     musicPreviewNoPreviewAvailable = translate("musicPreviewNoPreviewAvailable");
     musicPreviewPlayLabel = translate("musicPreviewPlayLabel");
     musicPreviewPauseLabel = translate("musicPreviewPauseLabel");
+    musicMvTitle = translate("musicMvTitle");
+    musicMvVariantLabel = translate("musicMvVariantLabel");
+    musicMvOriginalLabel = translate("musicMvOriginalLabel");
+    musicMv2dLabel = translate("musicMv2dLabel");
+    musicMvDuplicateLabel = translate("musicMvDuplicateLabel");
+    musicMvLoadingLabel = translate("musicMvLoading");
+    musicMvRetryLabel = translate("musicMvRetry");
+    musicMvNoVideoLabel = translate("musicMvNoVideo");
+    musicMvUnsupportedLabel = translate("musicMvUnsupported");
+    musicMvAudioUnavailableLabel = translate("musicMvAudioUnavailable");
     audioDownloadLabel = translate("audioDownloadLabel");
     audioDownloadCloseLabel = translate("audioDownloadCloseLabel");
     audioVolumeLabel = translate("audioVolumeLabel");
@@ -263,13 +298,14 @@
     {/if}
 
     {#if payload.music}
+      {@const music = payload.music}
       {#await data.availableRegions then availableRegions}
         <div
           class="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,min(33%,400px))_minmax(0,1fr)] lg:items-start"
         >
           <div class="flex flex-col gap-4">
             <MusicJacketHero
-              music={payload.music}
+              {music}
               region={data.region}
               {availableRegions}
               {jacketAltSuffix}
@@ -277,7 +313,7 @@
               {closeLabel}
             />
             <MusicDetailInfoCard
-              music={payload.music}
+              {music}
               {displayLocale}
               region={data.region}
               title={musicDetailInfoTitle}
@@ -292,23 +328,40 @@
               {publishedAtLabel}
               {getCategoryLabel}
               {getTagLabel}
+              videoLinks={{
+                originals: music.musicOriginals ?? [],
+                songKey: `${data.region}:${data.musicId}`,
+                songTitle: music.title,
+                ...videoLinksText,
+                closeLabel,
+                unloadToken: videoLinksUnloadToken,
+                onEmbedOpen: () => {
+                  localPauseToken += 1;
+                }
+              }}
             />
           </div>
           <div class="flex flex-col gap-4">
-            <MusicPreviewCard
-              vocals={payload.music.vocals}
+            <MusicPlaybackCard
+              {music}
+              audioLabel={musicPlaybackAudioLabel}
+              lockedVocalLabel={musicPlaybackVocalLocked}
+              musicVideoLabel={musicMvTitle}
+              pauseToken={localPauseToken}
+              onPlayback={() => {
+                videoLinksUnloadToken += 1;
+              }}
               region={data.region}
               {availableRegions}
               musicId={data.musicId}
-              title={payload.music.title}
-              jacketUrl={payload.music.assetBundleName
+              title={music.title}
+              jacketUrl={music.assetBundleName
                 ? getMusicJacketAssetURL(
-                    payload.music.assetBundleName,
+                    music.assetBundleName,
                     getMusicAssetServer(data.region, availableRegions)
                   )
                 : undefined}
-              artist={payload.music.composer ?? undefined}
-              fillerSec={payload.music.fillerSec}
+              artist={music.composer ?? undefined}
               {vocalLabel}
               {vocalTypeLabel}
               {vocalCharacterLabel}
@@ -324,9 +377,18 @@
               volumeLabel={audioVolumeLabel}
               seekLabel={audioSeekLabel}
               unavailableLabel={audioUnavailableLabel}
+              variantLabel={musicMvVariantLabel}
+              originalLabel={musicMvOriginalLabel}
+              mv2dLabel={musicMv2dLabel}
+              duplicateLabel={musicMvDuplicateLabel}
+              loadingLabel={musicMvLoadingLabel}
+              retryLabel={musicMvRetryLabel}
+              noVideoLabel={musicMvNoVideoLabel}
+              unsupportedLabel={musicMvUnsupportedLabel}
+              audioUnavailableLabel={musicMvAudioUnavailableLabel}
             />
             <MusicDifficultyCard
-              music={payload.music}
+              {music}
               region={data.region}
               {difficultyLabel}
               {levelLabel}
