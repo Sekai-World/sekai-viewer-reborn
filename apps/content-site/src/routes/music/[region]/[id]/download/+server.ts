@@ -375,10 +375,20 @@ export const GET: RequestHandler = async ({ params, fetch, request, url }) => {
       path: { id: musicId }
     });
 
+    const availabilityData: unknown = availabilityResponse.data;
+    const availabilityRegions: unknown[] | null = Array.isArray(availabilityData)
+      ? (availabilityData as unknown[])
+      : availabilityData !== null &&
+          typeof availabilityData === "object" &&
+          "regions" in availabilityData &&
+          Array.isArray(availabilityData.regions)
+        ? (availabilityData.regions as unknown[])
+        : null;
+
     const availableRegions: SupportedRegion[] = availabilityResponse.error
       ? [region]
-      : Array.isArray(availabilityResponse.data)
-        ? (availabilityResponse.data as unknown[]).filter(
+      : availabilityRegions
+        ? availabilityRegions.filter(
             (r): r is SupportedRegion =>
               typeof r === "string" && supportedRegions.includes(r as SupportedRegion)
           )
