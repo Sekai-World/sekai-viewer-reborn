@@ -2,7 +2,7 @@
   import { AssetImage } from "@platform/ui-shell";
   import type { ImageRetryPolicy } from "@platform/ui-shell/image-retry";
 
-  let props = $props<{
+  let props: {
     src: string;
     fallbackSrc?: string;
     alt?: string;
@@ -13,7 +13,7 @@
     interactive?: boolean;
     retryPolicy?: ImageRetryPolicy;
     onclick?: () => void;
-  }>();
+  } = $props();
 </script>
 
 <AssetImage {...props} />
