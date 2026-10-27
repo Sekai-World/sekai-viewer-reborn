@@ -18,7 +18,7 @@ export const repoLocaleByUiLocale = {
 } satisfies Record<SupportedUiLocale, string>;
 
 const isSupportedUiLocale = (locale: SharedSupportedUiLocale): locale is SupportedUiLocale =>
-  supportedUiLocales.some((supportedLocale) => supportedLocale === locale);
+  (supportedUiLocales as readonly SharedSupportedUiLocale[]).includes(locale);
 
 export const normalizeUiLocale = (
   value: string | null | undefined,

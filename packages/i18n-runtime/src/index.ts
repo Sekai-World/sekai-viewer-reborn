@@ -43,37 +43,14 @@ export type SupportedUiLocale = (typeof supportedUiLocales)[number];
 
 export const DEFAULT_UI_LOCALE: SupportedUiLocale = "en";
 
-export const repoLocaleByUiLocale = {
-  ar: "ar",
-  "ca-ES": "ca-ES",
-  cs: "cs",
-  de: "de",
-  en: "en",
-  es: "es",
-  "es-419": "es-419",
-  "es-MX": "es-MX",
-  fr: "fr",
-  "he-IL": "he-IL",
-  id: "id",
-  it: "it",
+const repoLocaleOverrides: Partial<Record<SupportedUiLocale, string>> = {
   "ja-JP": "ja",
-  "ko-KR": "ko",
-  ms: "ms",
-  nl: "nl",
-  pl: "pl",
-  "pt-BR": "pt-BR",
-  pt: "pt",
-  ro: "ro",
-  ru: "ru",
-  "sk-SK": "sk-SK",
-  th: "th",
-  tr: "tr",
-  uk: "uk",
-  "vi-VN": "vi-VN",
-  yue: "yue",
-  "zh-CN": "zh-CN",
-  "zh-TW": "zh-TW"
-} satisfies Record<SupportedUiLocale, string>;
+  "ko-KR": "ko"
+};
+
+export const repoLocaleByUiLocale = Object.fromEntries(
+  supportedUiLocales.map((locale) => [locale, repoLocaleOverrides[locale] ?? locale])
+) as Record<SupportedUiLocale, string>;
 
 const supportedUiLocaleByCaseInsensitiveCode = new Map<string, SupportedUiLocale>(
   supportedUiLocales.map((locale) => [locale.toLowerCase(), locale])
