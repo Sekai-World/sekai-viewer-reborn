@@ -376,23 +376,27 @@ export const GET: RequestHandler = async ({ params, fetch, request, url }) => {
     });
 
     const availabilityData: unknown = availabilityResponse.data;
-    const availabilityRegions: unknown[] | null = Array.isArray(availabilityData)
-      ? (availabilityData as unknown[])
-      : availabilityData !== null &&
-          typeof availabilityData === "object" &&
-          "regions" in availabilityData &&
-          Array.isArray(availabilityData.regions)
-        ? (availabilityData.regions as unknown[])
-        : null;
+    let availabilityRegions: unknown[] | null = null;
+    if (Array.isArray(availabilityData)) {
+      availabilityRegions = availabilityData as unknown[];
+    } else if (
+      availabilityData !== null &&
+      typeof availabilityData === "object" &&
+      "regions" in availabilityData &&
+      Array.isArray(availabilityData.regions)
+    ) {
+      availabilityRegions = availabilityData.regions as unknown[];
+    }
 
-    const availableRegions: SupportedRegion[] = availabilityResponse.error
-      ? [region]
-      : availabilityRegions
-        ? availabilityRegions.filter(
-            (r): r is SupportedRegion =>
-              typeof r === "string" && supportedRegions.includes(r as SupportedRegion)
-          )
-        : [region];
+    let availableRegions: SupportedRegion[];
+    if (availabilityResponse.error || availabilityRegions === null) {
+      availableRegions = [region];
+    } else {
+      availableRegions = availabilityRegions.filter(
+        (r): r is SupportedRegion =>
+          typeof r === "string" && supportedRegions.includes(r as SupportedRegion)
+      );
+    }
 
     const assetServer = getMusicAssetServer(region, availableRegions);
 
