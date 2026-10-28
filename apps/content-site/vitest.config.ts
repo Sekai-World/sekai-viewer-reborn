@@ -152,6 +152,7 @@ export default defineConfig({
         "src/routes/musics/[region]/+page.server.ts",
         "src/routes/musics/[region]/data/+server.ts",
         "src/routes/musics/[region]/metadata/+server.ts",
+        "src/routes/music/[region]/[id]/download/+server.ts",
         "src/routes/virtual-live/[region]/[id]/+page.server.ts",
         "src/routes/mysekai/fixtures/[region]/+page.server.ts",
         "src/routes/mysekai/fixtures/[region]/data/+server.ts",

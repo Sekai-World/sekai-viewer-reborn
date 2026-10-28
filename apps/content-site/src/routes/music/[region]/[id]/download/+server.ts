@@ -375,14 +375,28 @@ export const GET: RequestHandler = async ({ params, fetch, request, url }) => {
       path: { id: musicId }
     });
 
-    const availableRegions: SupportedRegion[] = availabilityResponse.error
-      ? [region]
-      : Array.isArray(availabilityResponse.data)
-        ? (availabilityResponse.data as unknown[]).filter(
-            (r): r is SupportedRegion =>
-              typeof r === "string" && supportedRegions.includes(r as SupportedRegion)
-          )
-        : [region];
+    const availabilityData: unknown = availabilityResponse.data;
+    let availabilityRegions: unknown[] | null = null;
+    if (Array.isArray(availabilityData)) {
+      availabilityRegions = availabilityData as unknown[];
+    } else if (
+      availabilityData !== null &&
+      typeof availabilityData === "object" &&
+      "regions" in availabilityData &&
+      Array.isArray(availabilityData.regions)
+    ) {
+      availabilityRegions = availabilityData.regions as unknown[];
+    }
+
+    let availableRegions: SupportedRegion[];
+    if (availabilityResponse.error || availabilityRegions === null) {
+      availableRegions = [region];
+    } else {
+      availableRegions = availabilityRegions.filter(
+        (r): r is SupportedRegion =>
+          typeof r === "string" && supportedRegions.includes(r as SupportedRegion)
+      );
+    }
 
     const assetServer = getMusicAssetServer(region, availableRegions);
 

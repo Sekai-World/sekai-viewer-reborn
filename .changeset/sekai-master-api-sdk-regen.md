@@ -20,3 +20,5 @@ Keep short/full playback controls beside the vocal versions, provide complete mo
 Consume vocal-character names from the master API, including external singers, without additional character-list requests.
 
 Tighten music video XML validation and use a specific error type when browser XML parsing is unavailable.
+
+Correct song download resource selection by reading the regions returned by the master API, preferring JP assets when available and retaining current-region fallback.
