@@ -20,3 +20,6 @@ overrides:
 patchedDependencies:
   "@sekai-world/pixi-live2d-display-mulmotion@0.5.1": patches/@sekai-world__pixi-live2d-display-mulmotion@0.5.1.patch
   "@sveltejs/adapter-node@5.5.7": patches/@sveltejs__adapter-node@5.5.7.patch
+minimumReleaseAgeExclude:
+  # Renovate security update: @sveltejs/kit@3.0.0
+  - "@sveltejs/kit@3.0.0"
