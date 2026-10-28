@@ -108,9 +108,7 @@ const SCENARIO_ARRAY_FIELDS = [
   "ScenarioSnippetCharacterLayoutModes"
 ] as const;
 
-/** Validates the scenario fields used by preprocessing and playback reference collection. */
-export const parseScenarioData = (input: unknown): IScenarioData => {
-  if (!isRecord(input)) throw new Error("Scenario document is malformed: root");
+const validateScenarioRootFields = (input: Record<string, unknown>): void => {
   if (!isString(input.ScenarioId) || input.ScenarioId.length === 0) malformed("ScenarioId");
   if (
     !isString(input.FirstBgm) ||
@@ -122,7 +120,9 @@ export const parseScenarioData = (input: unknown): IScenarioData => {
   if (SCENARIO_ARRAY_FIELDS.some((field) => !Array.isArray(input[field]))) {
     malformed("top-level arrays");
   }
+};
 
+const validateScenarioArrayContents = (input: Record<string, unknown>): void => {
   if (!isRecordArray(input.AppearCharacters, isCharacter)) malformed("AppearCharacters");
   if (!isRecordArray(input.FirstLayout, isFirstLayout)) malformed("FirstLayout");
   if (!isRecordArray(input.LayoutData, isLayout)) malformed("LayoutData");
@@ -135,7 +135,9 @@ export const parseScenarioData = (input: unknown): IScenarioData => {
   if (!isRecordArray(input.ScenarioSnippetCharacterLayoutModes, isLayoutMode)) {
     malformed("ScenarioSnippetCharacterLayoutModes");
   }
+};
 
+const validateSnippetReferences = (input: Record<string, unknown>): void => {
   const snippets = input.Snippets as unknown[];
   for (const [index, value] of snippets.entries()) {
     if (!isRecord(value)) throw new Error(`Scenario document is malformed: Snippets[${index}]`);
@@ -152,6 +154,13 @@ export const parseScenarioData = (input: unknown): IScenarioData => {
       malformed(`Snippets[${index}].ReferenceIndex`);
     }
   }
+};
 
+/** Validates the scenario fields used by preprocessing and playback reference collection. */
+export const parseScenarioData = (input: unknown): IScenarioData => {
+  if (!isRecord(input)) throw new Error("Scenario document is malformed: root");
+  validateScenarioRootFields(input);
+  validateScenarioArrayContents(input);
+  validateSnippetReferences(input);
   return input as unknown as IScenarioData;
 };

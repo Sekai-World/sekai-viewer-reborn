@@ -252,4 +252,156 @@ describe("createStoryModelSource", () => {
       /model list is malformed/
     );
   });
+
+  it("ignores non-object entries in the model list", async () => {
+    routeRequests({ list: [null, "broken row", modelListItem] });
+    const source = createStoryModelSource({ live2dUrl });
+
+    await expect(source.getModelDataForCostume("v2_01ichika", 1)).resolves.toMatchObject({
+      costume: "v2_01ichika",
+      cid: 1
+    });
+  });
+
+  it("preserves an already-existing mixed-case file reference", async () => {
+    routeRequests({
+      onHead: (path) => (path.endsWith("01ICHIKA.MOC3") ? 200 : 404),
+      onGet: (path) =>
+        path === MODEL3_PATH
+          ? {
+              json: {
+                ...model3(),
+                FileReferences: {
+                  Moc: "01ICHIKA.MOC3",
+                  Physics: "physics.json",
+                  Textures: ["tex_00.png"],
+                  Motions: {}
+                }
+              }
+            }
+          : undefined
+    });
+    const source = createStoryModelSource({ live2dUrl });
+    const collection = await source.getModelDataForCostume("v2_01ichika", 1);
+
+    expect(collection?.data.FileReferences.Moc).toBe("01ICHIKA.MOC3");
+  });
+
+  it("retries a failed HEAD check with a lowercase asset path", async () => {
+    routeRequests({
+      onHead: (path) => {
+        if (path.endsWith("01ICHIKA.MOC3")) throw new Error("mixed-case HEAD unavailable");
+        return path === path.toLowerCase() ? 200 : 404;
+      },
+      onGet: (path) => {
+        if (path === MODEL3_PATH) {
+          return {
+            json: {
+              ...model3(),
+              FileReferences: {
+                Moc: "01ICHIKA.MOC3",
+                Physics: "PHYSICS.JSON",
+                Textures: ["TEX_00.PNG"],
+                Motions: {}
+              }
+            }
+          };
+        }
+        if (path === MOTION_BASE_PATH) return { json: { motions: [], expressions: [] } };
+        return undefined;
+      }
+    });
+    const source = createStoryModelSource({ live2dUrl });
+    const collection = await source.getModelDataForCostume("v2_01ichika", 1);
+
+    expect(collection?.data.FileReferences).toMatchObject({
+      Moc: "01ichika.moc3",
+      Physics: "physics.json",
+      Textures: ["tex_00.png"]
+    });
+    expect(live2dFetchMock).toHaveBeenCalledWith(
+      `${BUCKET}/live2d/model/v2/01ichika/01ichika.moc3`,
+      { method: "HEAD" },
+      undefined
+    );
+  });
+
+  it.each([
+    ["collaboration model", "v2_clb01_21miku", "v2_21miku"],
+    ["back costume", "v2_20mizuki_culture_back03", "v2_20mizuki_back"],
+    ["numbered model", "21miku01", "21miku"]
+  ])("finds a motion base from a reduced %s name", async (_label, modelBase, motionBase) => {
+    const motionPath = `live2d/motion/v2/${motionBase}_motion_base/BuildMotionData.json`;
+    routeRequests({
+      list: [{ ...modelListItem, modelBase }],
+      onHead: (path) => (path === motionPath ? 200 : 404),
+      onGet: (path) =>
+        path === motionPath ? { json: { motions: ["idle"], expressions: [] } } : undefined
+    });
+    const source = createStoryModelSource({ live2dUrl });
+    const collection = await source.getModelDataForCostume(modelBase, 1);
+
+    expect(collection?.data.FileReferences.Motions.Motion).toEqual([
+      {
+        Name: "idle",
+        File: `${BUCKET}/live2d/motion/v2/${motionBase}_motion_base/motion/idle.motion3.json`,
+        FadeInTime: 0.5,
+        FadeOutTime: 0.1
+      }
+    ]);
+  });
+
+  it("keeps playback usable when base and additional motion metadata fail", async () => {
+    routeRequests({
+      onHead: () => 200,
+      onGet: (path) => {
+        if (path === MOTION_BASE_PATH) return { status: 503, json: {} };
+        if (path === BUILD_MODEL_PATH) return { json: { AdditionalMotionData: ["missing"] } };
+        if (path === "live2d/model/v2/01ichika/motions/BuildMotionData.json") {
+          return { status: 503, json: {} };
+        }
+        return undefined;
+      }
+    });
+    const source = createStoryModelSource({ live2dUrl });
+    const collection = await source.getModelDataForCostume("v2_01ichika", 1);
+
+    expect(collection?.data.FileReferences.Motions).toEqual({ Motion: [], Expression: [] });
+  });
+
+  it("does not retry a model descriptor after a non-404 response", async () => {
+    const upperDescriptor = "live2d/model/v2/01ichika/01ICHIKA.MODEL3.JSON";
+    routeRequests({
+      list: [{ ...modelListItem, modelFile: "01ICHIKA.MODEL3.JSON" }],
+      onGet: (path) => (path === upperDescriptor ? { status: 503, json: {} } : undefined)
+    });
+    const source = createStoryModelSource({ live2dUrl });
+
+    await expect(source.getModelDataForCostume("v2_01ichika", 1)).rejects.toThrow(
+      /Failed to fetch .*01ICHIKA\.MODEL3\.JSON: 503/
+    );
+    expect(
+      live2dFetchMock.mock.calls
+        .map(([url]) => String(url).slice(BUCKET.length + 1))
+        .filter((path) => path.includes("MODEL3.JSON"))
+    ).toEqual([upperDescriptor]);
+  });
+
+  it("rejects an already-cancelled model request without starting model lookups", async () => {
+    routeRequests({});
+    const controller = new AbortController();
+    const source = createStoryModelSource({ live2dUrl, signal: controller.signal });
+    controller.abort("story changed");
+
+    await expect(source.getModelDataForCostume("v2_01ichika", 1)).rejects.toMatchObject({
+      name: "AbortError",
+      cause: "story changed"
+    });
+    expect(live2dFetchMock).toHaveBeenCalledWith(
+      `${BUCKET}/live2d/model_list.json`,
+      { signal: controller.signal },
+      controller.signal
+    );
+    expect(live2dFetchMock).toHaveBeenCalledTimes(1);
+  });
 });

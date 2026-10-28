@@ -111,6 +111,46 @@ const readResponseText = async (
   }
 };
 
+const fetchScenarioResponse = async (
+  url: string,
+  fetchFn: typeof fetch,
+  signal: AbortSignal
+): Promise<Response> => {
+  let response: Response;
+  try {
+    response = await fetchFn(url, { signal });
+  } catch (error) {
+    if (signal.aborted) throw abortError(signal);
+    throw new StoryDocumentLoadError(
+      "scenario-network",
+      "The scenario could not be reached. Retry the load when the connection is available.",
+      { cause: error }
+    );
+  }
+  if (!response.ok) {
+    throw new StoryDocumentLoadError(
+      "scenario-http",
+      `The scenario request failed with status ${response.status}.`
+    );
+  }
+  return response;
+};
+
+const parseScenarioResponse = async (
+  response: Response,
+  signal: AbortSignal,
+  onProgress?: (progress: StoryDocumentLoadProgress) => void
+): Promise<ReturnType<typeof parseScenarioData>> => {
+  try {
+    const text = await readResponseText(response, signal, onProgress);
+    return parseScenarioData(JSON.parse(text) as unknown);
+  } catch (error) {
+    if (signal.aborted) throw abortError(signal);
+    if (error instanceof StoryDocumentLoadError) throw error;
+    throw invalidScenarioError(error);
+  }
+};
+
 const mediaKindOf = (type: string): MediaAssetKind | null => {
   switch (type) {
     case "background-image":
@@ -243,33 +283,8 @@ export const loadStoryDocument = async (
   const fetchFn = options.fetch ?? fetch;
   throwIfAborted(signal);
 
-  let response: Response;
-  try {
-    response = await fetchFn(reference.scenario.url, { signal });
-  } catch (error) {
-    if (signal.aborted) throw abortError(signal);
-    throw new StoryDocumentLoadError(
-      "scenario-network",
-      "The scenario could not be reached. Retry the load when the connection is available.",
-      { cause: error }
-    );
-  }
-  if (!response.ok) {
-    throw new StoryDocumentLoadError(
-      "scenario-http",
-      `The scenario request failed with status ${response.status}.`
-    );
-  }
-
-  let scenarioData: ReturnType<typeof parseScenarioData>;
-  try {
-    const text = await readResponseText(response, signal, onProgress);
-    scenarioData = parseScenarioData(JSON.parse(text) as unknown);
-  } catch (error) {
-    if (signal.aborted) throw abortError(signal);
-    if (error instanceof StoryDocumentLoadError) throw error;
-    throw invalidScenarioError(error);
-  }
+  const response = await fetchScenarioResponse(reference.scenario.url, fetchFn, signal);
+  const scenarioData = await parseScenarioResponse(response, signal, onProgress);
 
   throwIfAborted(signal);
   const resolver = createStoryAssetResolver(() => reference.assetBase, reference.identity.region);

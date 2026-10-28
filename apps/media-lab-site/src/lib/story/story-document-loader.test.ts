@@ -317,4 +317,215 @@ describe("loadStoryDocument", () => {
     await expect(loading).rejects.toMatchObject({ name: "AbortError" });
     expect(onWarning).not.toHaveBeenCalled();
   });
+
+  it("classifies rejected scenario requests separately from HTTP failures", async () => {
+    const networkFailure = new Error("offline");
+    const fetch = vi.fn().mockRejectedValue(networkFailure);
+
+    await expect(
+      loadStoryDocument(createReference(), {
+        signal: new AbortController().signal,
+        fetch
+      })
+    ).rejects.toMatchObject({
+      name: "StoryDocumentLoadError",
+      code: "scenario-network",
+      cause: networkFailure
+    });
+    expect(fetch).toHaveBeenCalledOnce();
+
+    await expect(
+      loadStoryDocument(createReference(), {
+        signal: new AbortController().signal,
+        fetch: vi.fn().mockResolvedValue(new Response("", { status: 503 }))
+      })
+    ).rejects.toMatchObject({ code: "scenario-http", message: expect.stringContaining("503") });
+  });
+
+  it("does not start a scenario request when cancellation already happened", async () => {
+    const controller = new AbortController();
+    controller.abort("navigation changed");
+    const fetch = vi.fn();
+
+    await expect(
+      loadStoryDocument(createReference(), { signal: controller.signal, fetch })
+    ).rejects.toMatchObject({ name: "AbortError", cause: "navigation changed" });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("reports actual byte progress when the response has no readable body", async () => {
+    const text = JSON.stringify(verifiedScenarioFixture);
+    const byteLength = new TextEncoder().encode(text).byteLength;
+    const response = {
+      ok: true,
+      status: 200,
+      headers: new Headers({ "content-length": "0" }),
+      body: null,
+      text: vi.fn().mockResolvedValue(text)
+    } as unknown as Response;
+    const progress: { loadedBytes: number; totalBytes: number | null }[] = [];
+
+    await loadStoryDocument(createReference(), {
+      signal: new AbortController().signal,
+      fetch: vi.fn().mockResolvedValue(response),
+      onProgress: (value) => progress.push(value)
+    });
+
+    expect(response.text).toHaveBeenCalledOnce();
+    expect(progress).toEqual([
+      { loadedBytes: 0, totalBytes: null },
+      { loadedBytes: byteLength, totalBytes: byteLength }
+    ]);
+  });
+
+  it("uses a valid content length for streamed progress updates", async () => {
+    const text = JSON.stringify(verifiedScenarioFixture);
+    const byteLength = new TextEncoder().encode(text).byteLength;
+    const progress: { loadedBytes: number; totalBytes: number | null }[] = [];
+
+    await loadStoryDocument(createReference(), {
+      signal: new AbortController().signal,
+      fetch: vi.fn().mockResolvedValue(
+        new Response(text, {
+          headers: { "content-length": String(byteLength) }
+        })
+      ),
+      onProgress: (value) => progress.push(value)
+    });
+
+    expect(progress[0]).toEqual({ loadedBytes: 0, totalBytes: byteLength });
+    expect(progress.at(-1)).toEqual({ loadedBytes: byteLength, totalBytes: byteLength });
+  });
+
+  it("converts a failed stream read into an invalid-scenario error with its cause", async () => {
+    const streamFailure = new Error("scenario stream interrupted");
+    const response = new Response(
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.error(streamFailure);
+        }
+      })
+    );
+
+    await expect(
+      loadStoryDocument(createReference(), {
+        signal: new AbortController().signal,
+        fetch: vi.fn().mockResolvedValue(response)
+      })
+    ).rejects.toMatchObject({
+      code: "scenario-invalid",
+      cause: expect.objectContaining({ message: "scenario stream interrupted" })
+    });
+  });
+
+  it("aborts a streamed read when cancellation arrives during progress reporting", async () => {
+    const controller = new AbortController();
+    const text = JSON.stringify(verifiedScenarioFixture);
+    const response = new Response(
+      new ReadableStream<Uint8Array>({
+        start(streamController) {
+          streamController.enqueue(new TextEncoder().encode(text));
+        }
+      })
+    );
+
+    await expect(
+      loadStoryDocument(createReference(), {
+        signal: controller.signal,
+        fetch: vi.fn().mockResolvedValue(response),
+        onProgress: ({ loadedBytes }) => {
+          if (loadedBytes > 0) controller.abort("reader closed");
+        }
+      })
+    ).rejects.toMatchObject({ name: "AbortError", cause: "reader closed" });
+  });
+
+  it("deduplicates model references while retaining character unit metadata", async () => {
+    const repeatedCostume = "05minori_normal";
+    const scenario = {
+      ...verifiedScenarioFixture,
+      FirstLayout: [
+        {
+          Character2dId: 5,
+          CostumeType: repeatedCostume,
+          MotionName: "idle",
+          FacialName: "normal",
+          OffsetX: 0,
+          PositionSide: 4
+        }
+      ],
+      LayoutData: [
+        {
+          Character2dId: 5,
+          CostumeType: repeatedCostume,
+          MotionName: "idle",
+          FacialName: "normal"
+        }
+      ]
+    };
+    const document = await loadStoryDocument(
+      createReference("jp", {
+        voiceCharacters: [{ character2dId: 5, assetName: "05minori", unit: "mmj" }]
+      }),
+      {
+        signal: new AbortController().signal,
+        fetch: vi.fn().mockResolvedValue(scenarioResponse(scenario))
+      }
+    );
+
+    expect(document.models.filter(({ assetName }) => assetName === repeatedCostume)).toEqual([
+      { character2dId: 5, assetName: repeatedCostume, unit: "mmj" }
+    ]);
+  });
+
+  it("classifies an unsafe nested media path as a media-resolution failure", async () => {
+    const scenario = structuredClone(verifiedScenarioFixture);
+    scenario.TalkData[0]!.Voices[0]!.VoiceId = "../outside-bucket";
+
+    await expect(
+      loadStoryDocument(createReference(), {
+        signal: new AbortController().signal,
+        fetch: vi.fn().mockResolvedValue(scenarioResponse(scenario))
+      })
+    ).rejects.toMatchObject({
+      name: "StoryDocumentLoadError",
+      code: "media-resolution"
+    });
+  });
+
+  it("normalizes sound-effect references without treating them as music", async () => {
+    const scenario = {
+      ...verifiedScenarioFixture,
+      Snippets: [
+        {
+          Action: SnippetAction.Sound,
+          ProgressBehavior: SnippetProgressBehavior.Now,
+          ReferenceIndex: 0,
+          Delay: 0
+        }
+      ],
+      SoundData: [
+        {
+          PlayMode: 0,
+          Bgm: "",
+          Se: "se00001",
+          Volume: 1,
+          SeBundleName: "",
+          Duration: 0
+        }
+      ]
+    };
+    const document = await loadStoryDocument(createReference(), {
+      signal: new AbortController().signal,
+      fetch: vi.fn().mockResolvedValue(scenarioResponse(scenario))
+    });
+
+    expect(document.media).toContainEqual(
+      expect.objectContaining({
+        kind: "se",
+        identifier: "se00001",
+        path: "sound/scenario/se/se_pack00001/se00001.mp3"
+      })
+    );
+  });
 });

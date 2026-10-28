@@ -1,10 +1,10 @@
-import { createStoryPlayer } from "@platform/live2d-story-player";
-import type {
-  ILive2DAssetUrl,
-  StoryPlayerSnapshot,
-  StoryPlayerState
+import {
+  createStoryPlayer,
+  Live2DAssetType,
+  type ILive2DAssetUrl,
+  type StoryPlayerSnapshot,
+  type StoryPlayerState
 } from "@platform/live2d-story-player";
-import { Live2DAssetType } from "@platform/live2d-story-player";
 import type { ILive2DLoadProgressHandler } from "@platform/live2d-story-player/pixi";
 import type { StoryDocument, MediaAssetKind } from "$lib/live2d/story-document";
 import { createStoryModelSource } from "./story-model-source";
