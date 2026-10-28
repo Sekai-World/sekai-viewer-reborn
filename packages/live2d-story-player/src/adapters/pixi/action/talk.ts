@@ -2,6 +2,14 @@ import type { Live2DController } from "../Live2DController.js";
 import type { Snippet } from "../../../model/scenario-types.js";
 import { Live2DAssetType } from "../player-types.js";
 
+type PromiseOutcome = { status: "fulfilled" } | { status: "rejected"; reason: unknown };
+
+const settle = (promise: Promise<void>): Promise<PromiseOutcome> =>
+  promise.then(
+    () => ({ status: "fulfilled" }),
+    (reason: unknown) => ({ status: "rejected", reason })
+  );
+
 export default async function action_talk(controller: Live2DController, action: Snippet) {
   const action_detail = controller.scenarioData.TalkData[action.ReferenceIndex];
   controller.logger.log("Live2DController", "Talk", action, action_detail);
@@ -14,25 +22,31 @@ export default async function action_talk(controller: Live2DController, action: 
   //clear
   await controller.layers.telop.hide(200);
   // show dialog — silently replayed go-back draws the line instantly
-  let dialog;
+  let dialog_outcome: Promise<PromiseOutcome> = Promise.resolve({ status: "fulfilled" });
   if (controller.replay_silent || !controller.settings.text_animation) {
-    controller.layers.dialog.draw(action_detail.WindowDisplayName, displayText, translatedText);
-  } else {
-    dialog = controller.layers.dialog.animate(
+    await controller.layers.dialog.draw(
       action_detail.WindowDisplayName,
       displayText,
       translatedText
+    );
+  } else {
+    dialog_outcome = settle(
+      controller.layers.dialog.animate(action_detail.WindowDisplayName, displayText, translatedText)
     );
   }
 
   await controller.layers.dialog.show(200);
   // motion
   for (const m of action_detail.Motions) {
-    controller.apply_live2d_motion(
-      controller.live2d_get_costume(m.Character2dId)!,
-      m.MotionName,
-      m.FacialName
-    );
+    controller
+      .apply_live2d_motion(
+        controller.live2d_get_costume(m.Character2dId)!,
+        m.MotionName,
+        m.FacialName
+      )
+      .catch((error: unknown) => {
+        controller.logger.warn("Live2DController", "Talk motion failed:", action, error);
+      });
   }
   // sound — silent replay must not blast through every voice on the way back
   if (action_detail.Voices.length > 0 && !controller.replay_silent) {
@@ -62,6 +76,8 @@ export default async function action_talk(controller: Live2DController, action: 
       controller.events.emit("warn", `${action_detail.Voices[0].VoiceId} not loaded, skip.`);
     }
   }
-  // wait for the text animation
-  await dialog;
+  // Text rendering remains part of the talk action; motions are intentionally
+  // non-blocking alongside voice playback and report failures independently.
+  const failure = await dialog_outcome;
+  if (failure?.status === "rejected") throw failure.reason;
 }

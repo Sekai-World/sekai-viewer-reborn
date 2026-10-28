@@ -29,3 +29,5 @@ The story voice/SE control is upgraded to the ring-style circular button: conten
 Extracts the Live2D Story Player lifecycle into `@platform/live2d-story-player` with a synchronous `createStoryPlayer` handle, retryable loads, replayable state/error snapshots, and abort/destroy cleanup for late initialization results. The package exposes its browser Pixi runtime through `/pixi`; media-lab-site lazily composes Cubism and Pixi from its browser host while keeping Sekai asset/session orchestration app-owned. Optional audio/lip-sync, loader-logger, and text-resolver seams remain subject to final end-to-end parity confirmation, and the legacy truthiness-based volume behavior is preserved.
 
 Adds Node-based coverage for the Story Player's special-effect dispatch and Pixi scene-layer behavior. The current full-source package report covers 212 tests with 89.89% line and 77.30% branch coverage.
+
+Handle asynchronous Story Player animation and rendering failures without changing the timing of concurrent effects.

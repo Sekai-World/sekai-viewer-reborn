@@ -264,7 +264,11 @@ export default class Live2D extends BaseLayer {
         this.structure.effect.addChild(hologram.root);
         this.logger.log("Live2DPlayer", hologram);
         model.live2DInfo.animations.push(hologram);
-        hologram.start();
+        // start() runs until the effect is destroyed, so don't await it here;
+        // report startup/runtime rejection while preserving that cancellation lifetime.
+        Promise.resolve(hologram.start()).catch((error: unknown) => {
+          this.logger.warn("Live2DPlayer", `Hologram animation failed for ${costume}:`, error);
+        });
         // set alpha equals model alpha
         hologram.root.alpha = (model.filters![0] as AlphaFilter).alpha;
         // add filter

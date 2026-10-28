@@ -93,7 +93,7 @@ export default class FullScreenText extends BaseLayer {
   }
 
   async animate(text: string, translatedText?: string | null) {
-    this.draw("", translatedText);
+    await this.draw("", translatedText);
     for (let i = 1; i <= text.length; i++) {
       // if aborted, jump to full text
       const aborted = this.animation_controller.abort_controller.signal.aborted;

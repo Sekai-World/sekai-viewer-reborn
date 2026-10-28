@@ -252,7 +252,17 @@ export class Live2DController extends Live2DPlayer {
       // clear signal
       this.animate.reset_abort();
       // if total delay time before stop > 1 seconds, clear dialog box
-      if (total_delay > 1) this.layers.dialog.hide(200);
+      if (total_delay > 1) {
+        // This fade intentionally overlaps action playback and must not extend
+        // the checkpoint. Observe its failure without waiting for it to finish.
+        this.layers.dialog.hide(200).catch((error: unknown) => {
+          this.logger.warn(
+            "Live2DController",
+            "Dialog hide failed during checkpoint advance:",
+            error
+          );
+        });
+      }
       // apply all actions
       let offset_ms = 0;
       for (const action_in_parallel of action_list) {
