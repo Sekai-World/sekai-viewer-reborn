@@ -44,17 +44,7 @@
   // gate playback data behind an explicit runtime guard so Svelte 5 keeps
   // the narrowed object.
   const player = $derived(
-    playerReady && data.scenarioData
-      ? {
-          scenarioData: data.scenarioData,
-          voiceCharacters: data.voiceCharacters ?? [],
-          region: data.identity.region,
-          assetBase: data.assetBase ?? "https://storage.sekai.best",
-          regionBucket: data.regionBucket ?? "sekai-jp-assets",
-          isCardStory: data.isCardStory ?? false,
-          isActionSet: data.isActionSet ?? false
-        }
-      : null
+    playerReady && data.storyDocument ? { documentReference: data.storyDocument } : null
   );
 </script>
 
@@ -89,13 +79,7 @@
 
   {#if player}
     <StoryPlayerHost
-      scenarioData={player.scenarioData}
-      voiceCharacters={player.voiceCharacters}
-      region={player.region}
-      assetBase={player.assetBase}
-      regionBucket={player.regionBucket}
-      isCardStory={player.isCardStory}
-      isActionSet={player.isActionSet}
+      documentReference={player.documentReference}
       labels={{
         tapToLoad: translate("storyReader.player.hint.tapToLoad"),
         tapToPlay: translate("storyReader.player.hint.tapToPlay"),
@@ -112,6 +96,7 @@
         loading: translate("storyReader.player.loading.label"),
         loadFailed: translate("storyReader.player.loading.failed"),
         retry: translate("storyReader.player.loading.retry"),
+        cancel: translate("storyReader.modeDialog.cancel"),
         warnings: translate("storyReader.player.warnings"),
         phaseAssets: translate("storyReader.player.loading.phase.assets"),
         phaseModels: translate("storyReader.player.loading.phase.models"),
@@ -124,11 +109,6 @@
     <div class="alert alert-soft alert-warning" role="alert">
       <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
       <span>{translate("storyReader.state.unavailable")}</span>
-    </div>
-  {:else if data.readerStatus === "scenario-error"}
-    <div class="alert alert-soft alert-error" role="alert">
-      <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
-      <span>{translate("storyReader.state.scenarioError")}</span>
     </div>
   {:else if data.readerStatus === "unsupported-story"}
     <div class="alert alert-soft" role="status">

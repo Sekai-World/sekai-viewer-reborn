@@ -131,7 +131,12 @@
     <label
       class="mt-4 flex min-h-11 cursor-pointer items-center gap-3 text-sm text-(--archive-text-muted)"
     >
-      <input class="toggle toggle-primary" type="checkbox" bind:checked={showSpoilers} />
+      <input
+        class="toggle toggle-primary"
+        type="checkbox"
+        bind:checked={showSpoilers}
+        onchange={() => (page = 1)}
+      />
       {t("gameNews.showSpoilers")}
     </label>
   </section>

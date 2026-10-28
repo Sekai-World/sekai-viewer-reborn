@@ -1,6 +1,6 @@
 import { env as publicEnv } from "$env/dynamic/public";
 import type { StoryRouteIdentity } from "$lib/live2d/story-route";
-import { parseScenarioData } from "./scenario-process";
+import { parseScenarioData } from "./scenario-validation";
 import type { IScenarioData } from "./scenario-types";
 import { createStoryRegionAssetUrls, type StoryAssetUrls } from "./story-urls";
 import {

@@ -7,4 +7,6 @@
 Expose region-scoped Game News through `sekai-master-api`, request the complete
 dataset with `includeAll=true` for client-side spoiler filtering, and migrate
 content-site to the generated SDK client. Add the content-site Game News
-translation source entries used by the new route and navigation.
+translation source entries used by the new route and navigation. Add component
+regression coverage for tags, filtering, ordering, pagination, and load states,
+and reset local pagination when spoiler visibility changes.

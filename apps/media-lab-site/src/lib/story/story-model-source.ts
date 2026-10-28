@@ -24,6 +24,8 @@ import { live2dFetch } from "@platform/live2d-story-player/core";
 export interface StoryModelSourceOptions {
   /** Absolute URL builder for paths on the Live2D asset bucket. */
   live2dUrl: (path: string) => string;
+  /** Cancels catalog, descriptor, and motion requests with the player load. */
+  signal?: AbortSignal;
 }
 
 interface Live2DBuildModelData {
@@ -40,19 +42,29 @@ const lowercasePath = (path: string): string => path.toLowerCase();
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
+const throwIfAborted = (signal?: AbortSignal): void => {
+  if (!signal?.aborted) return;
+  const error = new Error("Live2D model loading was aborted", { cause: signal.reason });
+  error.name = "AbortError";
+  throw error;
+};
+
 /** HEAD-checks an endpoint, retrying with a lowercased path; "" when absent. */
 const verifyLive2dEndpoint = async (
   endpoint: string,
-  live2dUrl: (path: string) => string
+  live2dUrl: (path: string) => string,
+  signal?: AbortSignal
 ): Promise<string> => {
   const attempt = async (value: string): Promise<number | null> => {
     try {
-      const response = await live2dFetch(live2dUrl(value), { method: "HEAD" });
+      const response = await live2dFetch(live2dUrl(value), { method: "HEAD" }, signal);
       return response.status;
     } catch {
+      throwIfAborted(signal);
       return null;
     }
   };
+  throwIfAborted(signal);
   const status = await attempt(endpoint);
   if (status !== null && status < 400) return live2dUrl(endpoint);
   const fallbackEndpoint = lowercasePath(endpoint);
@@ -67,10 +79,12 @@ const verifyLive2dEndpoint = async (
 /** Fetches JSON, retrying with a lowercased path on a 404. */
 const fetchJsonWithLowercaseFallback = async <T>(
   endpoint: string,
-  live2dUrl: (path: string) => string
+  live2dUrl: (path: string) => string,
+  signal?: AbortSignal
 ): Promise<T> => {
   const parse = async (value: string): Promise<T> => {
-    const response = await live2dFetch(live2dUrl(value));
+    throwIfAborted(signal);
+    const response = await live2dFetch(live2dUrl(value), signal ? { signal } : undefined, signal);
     if (!response.ok) {
       throw new Error(`Failed to fetch ${value}: ${response.status}`);
     }
@@ -90,10 +104,11 @@ const fetchJsonWithLowercaseFallback = async <T>(
 const getExistingRelativeModelAssetPath = async (
   modelItem: ILive2dModelListElement,
   path: string,
-  live2dUrl: (path: string) => string
+  live2dUrl: (path: string) => string,
+  signal?: AbortSignal
 ): Promise<string> => {
   const endpoint = `live2d/model/${modelItem.modelPath}/${path}`;
-  const url = await verifyLive2dEndpoint(endpoint, live2dUrl);
+  const url = await verifyLive2dEndpoint(endpoint, live2dUrl, signal);
   if (!url) return path;
   return url.endsWith(lowercasePath(endpoint)) ? lowercasePath(path) : path;
 };
@@ -104,21 +119,24 @@ const applyModelFileReferencesFallback = async (
     DisplayInfo?: string;
     Pose?: string;
   },
-  live2dUrl: (path: string) => string
+  live2dUrl: (path: string) => string,
+  signal?: AbortSignal
 ): Promise<void> => {
   fileReferences.Moc = await getExistingRelativeModelAssetPath(
     modelItem,
     fileReferences.Moc,
-    live2dUrl
+    live2dUrl,
+    signal
   );
   fileReferences.Physics = await getExistingRelativeModelAssetPath(
     modelItem,
     fileReferences.Physics,
-    live2dUrl
+    live2dUrl,
+    signal
   );
   fileReferences.Textures = await Promise.all(
     fileReferences.Textures.map((texture) =>
-      getExistingRelativeModelAssetPath(modelItem, texture, live2dUrl)
+      getExistingRelativeModelAssetPath(modelItem, texture, live2dUrl, signal)
     )
   );
 };
@@ -174,7 +192,8 @@ const modelNameToMotionBaseName: [RegExp, (name: string) => string][] = [
 
 const getBuildMotionDataUrl = async (
   modelItem: ILive2dModelListElement,
-  live2dUrl: (path: string) => string
+  live2dUrl: (path: string) => string,
+  signal?: AbortSignal
 ): Promise<[string, string] | null> => {
   let modelBaseName = modelItem.modelBase;
   let modelDir = modelItem.modelPath.split("/").slice(0, -1).join("/");
@@ -187,7 +206,8 @@ const getBuildMotionDataUrl = async (
   const attempt = async (baseName: string): Promise<string | null> =>
     verifyLive2dEndpoint(
       `live2d/motion/${modelDir}/${baseName}_motion_base/BuildMotionData.json`,
-      live2dUrl
+      live2dUrl,
+      signal
     );
 
   // case 1: directly from model path + motion_base
@@ -216,14 +236,15 @@ const getBuildMotionDataUrl = async (
 
 const getMotionData = async (
   modelItem: ILive2dModelListElement,
-  live2dUrl: (path: string) => string
+  live2dUrl: (path: string) => string,
+  signal?: AbortSignal
 ): Promise<[string, Live2DMotionsExpressions]> => {
   try {
-    const found = await getBuildMotionDataUrl(modelItem, live2dUrl);
+    const found = await getBuildMotionDataUrl(modelItem, live2dUrl, signal);
     if (!found) return ["", { motions: [], expressions: [] }];
     const [motionDataUrl, motionBaseName] = found;
     if (!lowercasePath(modelItem.modelBase).startsWith("normal")) {
-      const response = await live2dFetch(motionDataUrl);
+      const response = await live2dFetch(motionDataUrl, signal ? { signal } : undefined, signal);
       if (!response.ok) {
         throw new Error(`Failed to fetch motion data: ${response.status}`);
       }
@@ -231,20 +252,24 @@ const getMotionData = async (
     }
     return [motionBaseName, { motions: [], expressions: [] }];
   } catch {
+    throwIfAborted(signal);
     return ["", { motions: [], expressions: [] }];
   }
 };
 
 const getAdditionalMotionData = async (
   modelItem: ILive2dModelListElement,
-  live2dUrl: (path: string) => string
+  live2dUrl: (path: string) => string,
+  signal?: AbortSignal
 ): Promise<Live2DMotionsExpressions> => {
   try {
     return await fetchJsonWithLowercaseFallback<Live2DMotionsExpressions>(
       `live2d/model/${modelItem.modelPath}/motions/BuildMotionData.json`,
-      live2dUrl
+      live2dUrl,
+      signal
     );
   } catch {
+    throwIfAborted(signal);
     return { expressions: [], motions: [] };
   }
 };
@@ -257,9 +282,15 @@ export const createStoryModelSource = (
   options: StoryModelSourceOptions
 ): ILive2DStoryModelSource => {
   const live2dUrl = options.live2dUrl;
+  const signal = options.signal;
 
   const modelListPromise: Promise<ILive2dModelListElement[]> = (async () => {
-    const response = await live2dFetch(live2dUrl("live2d/model_list.json"));
+    throwIfAborted(signal);
+    const response = await live2dFetch(
+      live2dUrl("live2d/model_list.json"),
+      signal ? { signal } : undefined,
+      signal
+    );
     if (!response.ok) {
       throw new Error(`Failed to fetch model list: ${response.status}`);
     }
@@ -270,26 +301,38 @@ export const createStoryModelSource = (
     return raw.filter(isRecord) as unknown as ILive2dModelListElement[];
   })();
 
-  const findModelItem = async (costume: string): Promise<ILive2dModelListElement | null> => {
+  const findModelItem = async (
+    costume: string,
+    requestSignal?: AbortSignal
+  ): Promise<ILive2dModelListElement | null> => {
+    const activeSignal = requestSignal ?? signal;
+    throwIfAborted(activeSignal);
     const modelList = await modelListPromise;
+    throwIfAborted(activeSignal);
     const exact = modelList.find((m) => m.modelBase === costume);
     if (exact) return exact;
     return modelList.find((m) => m.modelBase.toLowerCase() === costume.toLowerCase()) ?? null;
   };
 
-  const getModelData = async (modelItem: ILive2dModelListElement): Promise<ILive2DModelData> => {
+  const getModelData = async (
+    modelItem: ILive2dModelListElement,
+    requestSignal?: AbortSignal
+  ): Promise<ILive2DModelData> => {
+    const activeSignal = requestSignal ?? signal;
     const motionFade: [number, number] = [0.5, 0.1];
     const expressionFade: [number, number] = [0.1, 0.1];
 
     const model3Promise = fetchJsonWithLowercaseFallback<ILive2DModelData>(
       `live2d/model/${modelItem.modelPath}/${modelItem.modelFile}`,
-      live2dUrl
+      live2dUrl,
+      activeSignal
     );
     const buildModelDataPromise = fetchJsonWithLowercaseFallback<Live2DBuildModelData>(
       `live2d/model/${modelItem.modelPath}/buildmodeldata.asset`,
-      live2dUrl
+      live2dUrl,
+      activeSignal
     );
-    const [motionBaseName, motionData] = await getMotionData(modelItem, live2dUrl);
+    const [motionBaseName, motionData] = await getMotionData(modelItem, live2dUrl, activeSignal);
     const [model3, modelBuildData] = await Promise.all([model3Promise, buildModelDataPromise]);
 
     await applyModelFileReferencesFallback(
@@ -298,13 +341,14 @@ export const createStoryModelSource = (
         DisplayInfo?: string;
         Pose?: string;
       },
-      live2dUrl
+      live2dUrl,
+      activeSignal
     );
 
     const additionalMotionData =
       Array.isArray(modelBuildData.AdditionalMotionData) &&
       modelBuildData.AdditionalMotionData.length > 0
-        ? await getAdditionalMotionData(modelItem, live2dUrl)
+        ? await getAdditionalMotionData(modelItem, live2dUrl, activeSignal)
         : { expressions: [], motions: [] };
 
     const modelBaseUrl = live2dUrl(`live2d/model/${modelItem.modelPath}/`);
@@ -324,7 +368,8 @@ export const createStoryModelSource = (
         File: await getExistingRelativeModelAssetPath(
           modelItem,
           `motions/${elem}.motion3.json`,
-          live2dUrl
+          live2dUrl,
+          activeSignal
         ).then((path) => (path.startsWith("http") ? path : `${modelBaseUrl}${path}`)),
         FadeInTime: motionFade[0],
         FadeOutTime: motionFade[1]
@@ -343,17 +388,22 @@ export const createStoryModelSource = (
       Motion: motions,
       Expression: expressions
     };
+    throwIfAborted(activeSignal);
     return model3;
   };
 
   return {
     getModelDataForCostume: async (
       costume: string,
-      character2dId: number
+      character2dId: number,
+      requestSignal?: AbortSignal
     ): Promise<ILive2DModelDataCollection | null> => {
-      const modelItem = await findModelItem(costume);
+      const activeSignal = requestSignal ?? signal;
+      throwIfAborted(activeSignal);
+      const modelItem = await findModelItem(costume, activeSignal);
       if (!modelItem) return null;
-      const data = await getModelData(modelItem);
+      const data = await getModelData(modelItem, activeSignal);
+      throwIfAborted(activeSignal);
       return { costume, cid: character2dId, data };
     }
   };

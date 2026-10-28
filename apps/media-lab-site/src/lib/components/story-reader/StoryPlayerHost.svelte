@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
-  import type { IScenarioData } from "$lib/story/scenario-types";
+  import type { StoryDocumentReference } from "$lib/live2d/story-document";
   import type {
     StoryPlayerSession,
     StoryPlayerSessionState
@@ -14,13 +14,7 @@
    * browser, after hydration.
    */
   interface Props {
-    scenarioData: IScenarioData;
-    voiceCharacters: { character2dId: number; assetName?: string; unit?: string }[];
-    region: string;
-    assetBase: string;
-    regionBucket: string;
-    isCardStory: boolean;
-    isActionSet: boolean;
+    documentReference: StoryDocumentReference;
     labels: {
       tapToLoad: string;
       tapToPlay: string;
@@ -37,6 +31,7 @@
       loading: string;
       loadFailed: string;
       retry: string;
+      cancel: string;
       warnings: string;
       phaseAssets: string;
       phaseModels: string;
@@ -46,16 +41,7 @@
     };
   }
 
-  let {
-    scenarioData,
-    voiceCharacters,
-    region,
-    assetBase,
-    regionBucket,
-    isCardStory,
-    isActionSet,
-    labels
-  }: Props = $props();
+  let { documentReference, labels }: Props = $props();
 
   let stageHost: HTMLDivElement | undefined = $state();
   let stageContainer: HTMLDivElement | undefined = $state();
@@ -68,6 +54,8 @@
   // for it, so a story only downloads its assets when actually opened.
   let loadStarted = $state(false);
   let startLoading: () => void = () => {};
+  let cancelLoading = $state<() => void>(() => {});
+  let scenarioProgress = $state<{ loadedBytes: number; totalBytes: number | null } | null>(null);
   let isFullscreen = $state(false);
   // True only on touch devices held upright (pointer: coarse keeps desktop
   // narrow windows unaffected); playback is landscape-only there.
@@ -91,17 +79,6 @@
   let selectableChoices = $state<string[] | null>(null);
   let chosenChoice = $state<number | null>(null);
   let selectableTimer: ReturnType<typeof setTimeout> | null = null;
-
-  // Derived so a layout-triggered reload (locale or region switch) that
-  // refreshes `voiceCharacters` is seen by a session created afterwards.
-  const voiceCharacterLookup = $derived(
-    new Map(
-      voiceCharacters.map((entry) => [
-        entry.character2dId,
-        { assetName: entry.assetName, unit: entry.unit }
-      ])
-    )
-  );
 
   const stageSizeFor = (element: HTMLElement): [number, number] => {
     const width = element.clientWidth || 960;
@@ -184,6 +161,7 @@
     let instance: StoryPlayerSession | null = null;
     let observer: ResizeObserver | null = null;
     let unsubscribe: (() => void) | null = null;
+    let documentController: AbortController | null = null;
     let destroyed = false;
 
     const reportLoadFailure = (error: unknown): void => {
@@ -191,30 +169,36 @@
       console.error("story player failed to mount", error);
       loadFailed = true;
       playerState = "error";
+      scenarioProgress = null;
     };
 
     const mount = async (): Promise<void> => {
       if (!stageHost || destroyed) return;
+      const controller = new AbortController();
+      documentController = controller;
       try {
-        const [{ createStoryPlayerSession }, { createStoryRegionAssetUrls }] = await Promise.all([
-          import("$lib/story/story-player-session"),
-          import("$lib/story/story-urls")
-        ]);
-        if (destroyed || !stageHost) return;
+        const { loadStoryDocument } = await import("$lib/story/story-document-loader");
+        const storyDocument = await loadStoryDocument(documentReference, {
+          signal: controller.signal,
+          onProgress: (progress) => {
+            if (destroyed || controller.signal.aborted) return;
+            scenarioProgress = progress;
+          },
+          onWarning: (reason) => {
+            if (destroyed || controller.signal.aborted) return;
+            pushWarning(reason);
+          }
+        });
+        if (destroyed || controller.signal.aborted || !stageHost) return;
+        scenarioProgress = null;
 
-        const urls = createStoryRegionAssetUrls(() => assetBase, region as "jp");
+        const { createStoryPlayerSession } = await import("$lib/story/story-player-session");
+        if (destroyed || controller.signal.aborted || !stageHost) return;
         const [width, height] = stageSizeFor(stageHost);
         instance = createStoryPlayerSession({
           host: stageHost,
           stageSize: [width, height],
-          scenarioData,
-          isCardStory,
-          isActionSet,
-          regionBucket,
-          regionBase: assetBase,
-          regionUrl: urls.region,
-          live2dUrl: urls.live2d,
-          voiceCharacters: voiceCharacterLookup,
+          storyDocument,
           settings: {
             voiceVolume,
             bgmVolume,
@@ -251,7 +235,12 @@
 
         await activeInstance.load();
       } catch (error) {
+        if (controller.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
+          return;
+        }
         reportLoadFailure(error);
+      } finally {
+        if (documentController === controller) documentController = null;
       }
     };
     startLoading = (): void => {
@@ -259,13 +248,36 @@
       if (instance) {
         if (instance.state !== "error") return;
         loadFailed = false;
+        scenarioProgress = null;
         void instance.retry().catch(reportLoadFailure);
         return;
       }
       if (loadStarted && !loadFailed) return;
       loadStarted = true;
       loadFailed = false;
+      playerState = "loading";
+      scenarioProgress = null;
+      loadBuckets = {};
       void mount();
+    };
+
+    cancelLoading = (): void => {
+      if (destroyed || !loadStarted || playerState !== "loading") return;
+      documentController?.abort();
+      unsubscribe?.();
+      unsubscribe = null;
+      observer?.disconnect();
+      observer = null;
+      const currentInstance = instance;
+      instance = null;
+      session = null;
+      currentInstance?.destroy();
+      loadStarted = false;
+      loadFailed = false;
+      scenarioProgress = null;
+      loadBuckets = {};
+      currentLoadItem = "";
+      playerState = "destroyed";
     };
 
     const portraitQuery = window.matchMedia("(orientation: portrait) and (pointer: coarse)");
@@ -281,6 +293,7 @@
 
     return () => {
       destroyed = true;
+      documentController?.abort();
       portraitQuery.removeEventListener("change", syncPortrait);
       document.removeEventListener("fullscreenchange", syncFullscreen);
       if (selectableTimer !== null) {
@@ -387,7 +400,7 @@
       }}
       tabindex="0"
     ></div>
-    {#if playerState !== "loading" && !loadFailed}
+    {#if loadStarted && playerState !== "loading" && !loadFailed}
       <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5">
         <button
           type="button"
@@ -543,6 +556,33 @@
               {currentLoadItem}
             </p>
           {/if}
+          {#if scenarioProgress}
+            <div class="flex w-full items-center gap-2 text-xs text-base-100/80">
+              <span class="w-20 shrink-0 truncate text-right">{labels.phaseAssets}</span>
+              {#if scenarioProgress.totalBytes !== null}
+                <progress
+                  class="progress progress-primary h-2 grow"
+                  value={Math.min(scenarioProgress.loadedBytes, scenarioProgress.totalBytes)}
+                  max={scenarioProgress.totalBytes}
+                ></progress>
+                <span class="w-14 shrink-0 text-right tabular-nums">
+                  {Math.round((scenarioProgress.loadedBytes / scenarioProgress.totalBytes) * 100)}%
+                </span>
+              {:else}
+                <progress class="progress progress-primary h-2 grow" max="1"></progress>
+                <span class="w-14 shrink-0 text-right tabular-nums">
+                  {scenarioProgress.loadedBytes.toLocaleString()}
+                </span>
+              {/if}
+            </div>
+          {/if}
+          <button
+            type="button"
+            class="btn btn-sm btn-outline touch-target border-white/40 text-white hover:border-white hover:bg-white/10 hover:text-white"
+            onclick={cancelLoading}
+          >
+            {labels.cancel}
+          </button>
         </div>
       </div>
     {:else if showStartHint}
