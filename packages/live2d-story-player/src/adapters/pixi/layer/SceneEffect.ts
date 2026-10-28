@@ -82,7 +82,11 @@ export default class SceneEffect extends BaseLayer {
       ani: ani
     });
     ani.set_style(this.stage_size);
-    ani.start();
+    // A scene animation is intentionally long-lived until remove()/destroy().
+    // Keep draw() non-blocking while making an unexpected start rejection visible.
+    Promise.resolve(ani.start()).catch((error: unknown) => {
+      this.logger.warn("SceneEffects", `Animation failed for ${effect}:`, error);
+    });
     return Promise.resolve();
   }
 

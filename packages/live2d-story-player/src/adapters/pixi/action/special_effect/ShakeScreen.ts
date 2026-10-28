@@ -1,6 +1,7 @@
 import type { Live2DController } from "../../Live2DController.js";
 import { Curve } from "../../animation/Curve.js";
 import type { Snippet } from "../../../../model/scenario-types.js";
+import handleDetachedPromise from "./handle-detached-promise.js";
 
 export default async function ShakeScreen(controller: Live2DController, action: Snippet) {
   const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
@@ -10,6 +11,17 @@ export default async function ShakeScreen(controller: Live2DController, action: 
   const amp = 0.01 * controller.stage_size[1];
   const curve_x = new Curve().wiggle(Math.floor((time_ms / 1000) * freq)).map_range(-amp, amp);
   const curve_y = new Curve().wiggle(Math.floor((time_ms / 1000) * freq)).map_range(-amp, amp);
-  controller.layers.background.shake(curve_x, curve_y, time_ms);
-  controller.layers.live2d.shake(curve_x, curve_y, time_ms);
+  // Both layers shake together without holding playback on either animation.
+  handleDetachedPromise(
+    controller.layers.background.shake(curve_x, curve_y, time_ms),
+    controller,
+    action,
+    "ShakeScreen"
+  );
+  handleDetachedPromise(
+    controller.layers.live2d.shake(curve_x, curve_y, time_ms),
+    controller,
+    action,
+    "ShakeScreen"
+  );
 }

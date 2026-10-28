@@ -1,6 +1,7 @@
 import type { Live2DController } from "../../Live2DController.js";
 import type { Snippet } from "../../../../model/scenario-types.js";
 import { Live2DAssetType } from "../../player-types.js";
+import handleDetachedPromise from "./handle-detached-promise.js";
 
 export default async function FlashbackIn(controller: Live2DController, action: Snippet) {
   const action_detail = controller.scenarioData.SpecialEffectData[action.ReferenceIndex];
@@ -26,10 +27,22 @@ export default async function FlashbackIn(controller: Live2DController, action: 
   const displayText = resolved.displayText;
   const translatedDisplayText = resolved.translatedText;
 
-  controller.layers.fullscreen_text.show(500);
+  handleDetachedPromise(
+    controller.layers.fullscreen_text.show(500),
+    controller,
+    action,
+    "FullScreenText",
+    "show"
+  );
   if (controller.settings.text_animation) {
     await controller.layers.fullscreen_text.animate(displayText, translatedDisplayText);
   } else {
-    controller.layers.fullscreen_text.draw(displayText, translatedDisplayText);
+    handleDetachedPromise(
+      controller.layers.fullscreen_text.draw(displayText, translatedDisplayText),
+      controller,
+      action,
+      "FullScreenText",
+      "draw"
+    );
   }
 }

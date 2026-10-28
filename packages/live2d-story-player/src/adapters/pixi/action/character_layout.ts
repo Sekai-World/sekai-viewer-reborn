@@ -56,7 +56,14 @@ function move_speed(t: CharacterLayoutMoveSpeedType) {
 
 export default async function action_layout(controller: Live2DController, action: Snippet) {
   const action_detail = controller.scenarioData.LayoutData[action.ReferenceIndex];
-  controller.layers.telop.hide(500);
+  controller.layers.telop.hide(500).catch((error: unknown) => {
+    controller.logger.warn(
+      "Live2DController",
+      "Character layout telop hide failed:",
+      action,
+      error
+    );
+  });
   const layout_mode = controller.layers.live2d.layout_mode;
   switch (action_detail.Type) {
     case CharacterLayoutType.Motion:
@@ -123,6 +130,8 @@ export default async function action_layout(controller: Live2DController, action
           );
         }
         // (Same time) Apply the same motions and expressions again.
+        // This pose update runs in the background with the entrance animation,
+        // as it did previously; report failures without delaying the action.
         controller.animate
           .delay(10)
           .then(() =>
@@ -131,8 +140,15 @@ export default async function action_layout(controller: Live2DController, action
               action_detail.MotionName,
               action_detail.FacialName
             )
-          );
-        //await motion;
+          )
+          .catch((error: unknown) => {
+            controller.logger.warn(
+              "Live2DController",
+              "Character appearance motion failed:",
+              action,
+              error
+            );
+          });
         await show;
         controller.live2d_set_appear(action_detail.Character2dId);
         await move;

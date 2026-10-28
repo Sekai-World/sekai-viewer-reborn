@@ -206,7 +206,7 @@ export default class Dialog extends BaseLayer {
   }
 
   async animate(cn: string, text: string, translatedText?: string | null) {
-    this.draw(cn, "");
+    await this.draw(cn, "");
     for (let i = 1; i <= text.length; i++) {
       // if aborted, jump to full text
       const aborted = this.animation_controller.abort_controller.signal.aborted;
