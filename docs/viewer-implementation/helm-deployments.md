@@ -51,6 +51,9 @@ health endpoint.
 - `PUBLIC_REMOTE_ASSET_BASE_URL`: empty and operator-supplied
 - `PUBLIC_SEKAI_I18N_BASE_URL`: defaults to
   `https://sekai-world.github.io/sekai-i18n-reborn`
+- `PUBLIC_TOOLS_SITE_BASE_URL`: optional tools-site origin for Event Tracker
+  links; empty hides them (see
+  [`content-site-launch-readiness.md`](content-site-launch-readiness.md))
 
 Every app (`content-site`, `tools-site`, `media-lab-site`, `account-site`)
 declares an empty `SEKAI_API_BASE_URL` default for server-side dynamic
