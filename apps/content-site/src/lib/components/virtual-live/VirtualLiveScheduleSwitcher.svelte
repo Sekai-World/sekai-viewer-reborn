@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { VirtualLiveSchedule } from "$lib/domain/virtual-live";
-  import { normalizeUiLocale } from "$lib/i18n/region";
-  import { toTimestampMs } from "$lib/time/date-time";
+  import type { VirtualLiveSchedule } from "#lib/domain/virtual-live.js";
+  import { normalizeUiLocale } from "#lib/i18n/region.js";
+  import { toTimestampMs } from "#lib/time/date-time.js";
 
   type ScheduleEntry = {
     schedule: VirtualLiveSchedule;

@@ -1,10 +1,13 @@
 <script lang="ts">
-  import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  import { getMusicAssetServer, getMusicJacketAssetURL } from "#lib/assets/index.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
-  import type { MusicDetail } from "$lib/domain/music-detail";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
+  import type { MusicDetail } from "#lib/domain/music-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import {
+    DETAIL_MEDIA_BUTTON_CLASS,
+    DETAIL_MEDIA_RADIUS_CLASS
+  } from "#lib/styles/detail-media.js";
 
   let {
     music,

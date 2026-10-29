@@ -3,11 +3,9 @@ import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import CardListCard from "./CardListCard.svelte";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.example.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.example.test" }));
 
-vi.mock("$lib/settings/content-display", () => ({
+vi.mock("#lib/settings/content-display.js", () => ({
   getContentDisplaySettings: () => ({ mosaickedSpoilerContent: false })
 }));
 

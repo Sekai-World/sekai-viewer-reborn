@@ -1,6 +1,5 @@
-import { json } from "@sveltejs/kit";
 import { getCardsByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
+import { normalizeRegion } from "#lib/i18n/region.js";
 import {
   createCardListRequestQuery,
   DEFAULT_CARD_LIST_PAGE_SIZE,
@@ -8,8 +7,8 @@ import {
   logCardListFilterDebug,
   parseCardListPage,
   parseCardListQueryState
-} from "$lib/server/card-list";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+} from "#lib/server/card-list.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import type { RequestHandler } from "./$types";
 
 const parsePageNumber = (value: string | null): number => {
@@ -50,10 +49,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
         error: response.error
       });
 
-      return json({ error: true }, { status: 500 });
+      return Response.json({ error: true }, { status: 500 });
     }
 
-    return json(parseCardListPage(response.data, page, DEFAULT_CARD_LIST_PAGE_SIZE));
+    return Response.json(parseCardListPage(response.data, page, DEFAULT_CARD_LIST_PAGE_SIZE));
   } catch (error) {
     logCardListFilterDebug("data exception", {
       region,
@@ -62,6 +61,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
       error
     });
 
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

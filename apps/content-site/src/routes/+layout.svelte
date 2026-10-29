@@ -1,25 +1,26 @@
 <script lang="ts">
   import "../app.css";
-  import "$lib/icons/mdi";
+  import "#lib/icons/mdi.js";
   import { asset, resolve } from "$app/paths";
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto, refreshAll } from "$app/navigation";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import {
     setContentDisplaySettings,
     type ContentDisplaySettingsState
-  } from "$lib/settings/content-display";
+  } from "#lib/settings/content-display.js";
+
   import {
     getUiLocaleDirection,
     supportedUiLocales,
     uiLocaleNameByCode,
     type SupportedUiLocale
-  } from "$lib/i18n/config";
-  import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
-  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
-  import MobileQuickNavigation from "$lib/components/MobileQuickNavigation.svelte";
-  import OnboardingDialog from "$lib/components/OnboardingDialog.svelte";
-  import SiteUpdateNotice from "$lib/components/SiteUpdateNotice.svelte";
+  } from "#lib/i18n/config.js";
+  import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
+  import { getCardListViewFromSearchParams, withCardListView } from "#lib/card-list-view.js";
+  import MobileQuickNavigation from "#lib/components/MobileQuickNavigation.svelte";
+  import OnboardingDialog from "#lib/components/OnboardingDialog.svelte";
+  import SiteUpdateNotice from "#lib/components/SiteUpdateNotice.svelte";
   import { GlobalNotificationBanner, ViewerShell } from "@platform/ui-shell";
   import { onMount, tick, type Snippet } from "svelte";
   import {
@@ -28,7 +29,7 @@
     requestI18nLocale,
     isLocaleLoading,
     setI18nLocale
-  } from "$lib/i18n/runtime";
+  } from "#lib/i18n/runtime.js";
   import {
     DEFAULT_REGION,
     DEFAULT_UI_LOCALE,
@@ -39,18 +40,20 @@
     persistPreferredRegion,
     resolvePreferredRegion,
     UI_LOCALE_COOKIE_NAME
-  } from "$lib/i18n/region";
+  } from "#lib/i18n/region.js";
+
   import {
     setTitlePreviewLabels,
     type TitlePreviewLabels
-  } from "$lib/components/shared/title-preview-labels";
+  } from "#lib/components/shared/title-preview-labels.js";
+
   import {
     readOnboardingSeen,
     readSeenSiteVersion,
     writeOnboardingSeen,
     writeSeenSiteVersion
-  } from "$lib/onboarding";
-  import { getSiteUpdateForVersion, resolveSiteVersion } from "$lib/site-updates";
+  } from "#lib/onboarding.js";
+  import { getSiteUpdateForVersion, resolveSiteVersion } from "#lib/site-updates.js";
   import type { LayoutData } from "./$types";
 
   type ThemeMode = "light" | "dark" | "auto";
@@ -312,8 +315,8 @@
     },
     {
       label: supportLabel,
-      href: resolve("/support"),
-      active: page.url.pathname === resolve("/support"),
+      href: resolve("support"),
+      active: page.url.pathname === resolve("support"),
       icon: "mdi:hand-heart",
       groupId: "project"
     }
@@ -363,11 +366,7 @@
       icon: "mdi:sticker-emoji",
       groupId: "progression"
     },
-    {
-      type: "section",
-      label: mysekaiLabel,
-      groupId: "mysekai"
-    },
+    { type: "section", label: mysekaiLabel, groupId: "mysekai" },
     {
       label: mysekaiFixturesLabel,
       href: `/mysekai/fixtures/${sidebarRegion}`,
@@ -408,8 +407,8 @@
     navigationLinks[navigationLinks.length - 1],
     {
       label: layoutTranslate("updates.title"),
-      href: resolve("/updates"),
-      active: page.url.pathname === resolve("/updates"),
+      href: resolve("updates"),
+      active: page.url.pathname === resolve("updates"),
       icon: "mdi:information-outline",
       groupId: "project"
     }
@@ -706,7 +705,6 @@
 
   const getSystemTheme = (): ResolvedTheme =>
     window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-
   const resolveThemeMode = (themeModeValue: ThemeMode): ResolvedTheme =>
     themeModeValue === "auto" ? getSystemTheme() : themeModeValue;
 
@@ -912,6 +910,7 @@
   const isOnboardingTargetVisible = (target: HTMLElement): boolean => {
     const rect = target.getBoundingClientRect();
     const style = getComputedStyle(target);
+
     return (
       target.getClientRects().length > 0 &&
       rect.width > 0 &&
@@ -927,6 +926,7 @@
 
   const getOnboardingSidebarGroupId = (target: string): SidebarGroupId | null => {
     const groupId = target.startsWith("sidebar-") ? target.slice("sidebar-".length) : "";
+
     return ["library", "activities", "progression", "mysekai", "project"].includes(groupId)
       ? (groupId as SidebarGroupId)
       : null;
@@ -946,6 +946,7 @@
     }
     if (target === "home-entry") {
       const panel = document.getElementById(`${CONTENT_SITE_DRAWER_ID}-panel`);
+
       return (
         [...(panel?.querySelectorAll<HTMLElement>("a[href]") ?? [])].find(
           (link) => link.getAttribute("href") === resolve("/") && isOnboardingTargetVisible(link)
@@ -1000,6 +1001,7 @@
     const needsDrawer =
       getOnboardingSidebarGroupId(targetName ?? "") !== null ||
       (targetName === "home-entry" && !rail);
+
     if (!rail) setOnboardingDrawer(needsDrawer);
     const needsSettingsPanel =
       targetName === "region" || targetName?.startsWith("content-display-") === true;
@@ -1053,6 +1055,7 @@
         }
       }
     }
+
     if (needsSettingsPanel || (mobile && (targetName === "theme" || targetName === "language"))) {
       const menu = document.getElementById(
         mobile ? MOBILE_SETTINGS_MENU_ID : DESKTOP_SETTINGS_MENU_ID
@@ -1090,7 +1093,7 @@
   const navigateToUpdates = (): void => {
     closeSettingsMenus();
     markCurrentSiteVersionSeen();
-    void goto(resolve("/updates"));
+    void goto(resolve("updates"));
   };
 
   const getThemeNameLabel = (themeNameValue: ThemeName): string => {
@@ -1153,7 +1156,7 @@
 
     uiLocale = nextLocale;
     document.cookie = `${UI_LOCALE_COOKIE_NAME}=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
-    await invalidateAll();
+    await refreshAll();
   };
 
   const updateBackToTopVisibility = (): void => {
@@ -1304,7 +1307,8 @@
 
 <svelte:head>
   <title>Sekai Viewer</title>
-  <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
+
+  <link rel="icon" href={asset("favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
 <GlobalNotificationBanner

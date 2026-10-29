@@ -1,18 +1,18 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { getGachaLogoAssetURL } from "$lib/assets/index";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
+  import { getGachaLogoAssetURL } from "#lib/assets/index.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import EventCardFrame from "#lib/components/shared/EventCardFrame.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
   import {
     EVENT_LIST_CARD_FRAME_CLASS,
     EVENT_LIST_CARD_IMAGE_CLASS,
     EVENT_LIST_CARD_MEDIA_CLASS,
     EVENT_LIST_CARD_TITLE_CLASS
-  } from "$lib/styles/event-card";
-  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
-  import type { GachaListItem } from "$lib/server/gacha-list";
+  } from "#lib/styles/event-card.js";
+  import { formatDisplayDateTime, toTimestampMs } from "#lib/time/date-time.js";
+  import type { GachaListItem } from "#lib/server/gacha-list.js";
 
   let {
     region,

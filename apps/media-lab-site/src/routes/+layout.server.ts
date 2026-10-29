@@ -2,10 +2,10 @@ import {
   getLocalI18nMessages,
   loadI18nMessageBundle,
   mediaLabI18nNamespaces
-} from "$lib/i18n/runtime";
-import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { fetchGlobalNotices } from "$lib/server/notifications";
-import { getStoryAssetBase } from "$lib/story/story-resolver.server";
+} from "#lib/i18n/runtime.js";
+import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+import { fetchGlobalNotices } from "#lib/server/notifications.js";
+import { getStoryAssetBase } from "#lib/story/story-resolver.server.js";
 import { resolveI18nMessageBundle } from "@platform/i18n-runtime";
 import packageJson from "../../package.json";
 import type { LayoutServerLoad } from "./$types";

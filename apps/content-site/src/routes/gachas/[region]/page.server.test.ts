@@ -8,10 +8,10 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({ getGachasByRegionList }));
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 import { load } from "./+page.server";
-import type { GachaListPage, GachaListQueryState } from "$lib/server/gacha-list";
+import type { GachaListPage, GachaListQueryState } from "#lib/server/gacha-list.js";
 
 type GachaPageLoadResult = {
   region: string;

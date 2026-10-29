@@ -1,15 +1,15 @@
 <script lang="ts">
-  import type { MissionResourceBoxDetail } from "$lib/domain/mission";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { getRewardItemIcon } from "$lib/domain/reward-item";
-  import { titlePreviewKindOf } from "$lib/domain/title-preview";
+  import type { MissionResourceBoxDetail } from "#lib/domain/mission.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { getRewardItemIcon } from "#lib/domain/reward-item.js";
+  import { titlePreviewKindOf } from "#lib/domain/title-preview.js";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import {
     REWARD_CHIP_BUTTON_CLASS,
     REWARD_CHIP_CLASS,
     REWARD_CHIP_ICON_CLASS,
     REWARD_CHIP_QUANTITY_CLASS
-  } from "$lib/styles/reward-chip";
+  } from "#lib/styles/reward-chip.js";
   import TitlePreviewDialog from "./TitlePreviewDialog.svelte";
   import { getTitlePreviewLabels } from "./title-preview-labels";
 

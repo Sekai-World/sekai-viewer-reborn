@@ -2,12 +2,13 @@ import type {
   GetCardsByRegionListData,
   SharedCardListResponse
 } from "@platform/sekai-master-api-sdk";
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
+
 import {
   formatUnitFallbackLabel,
   UNIT_CODE_ORDER,
   type UnitProfileMap
-} from "$lib/server/unit-profiles";
+} from "#lib/server/unit-profiles.js";
 
 export type CardListItem = {
   id: string;
@@ -35,15 +36,8 @@ export type CardListPagination = {
   totalPages: number | null;
 };
 
-export type CardListPage = {
-  items: CardListItem[];
-  pagination: CardListPagination;
-};
-
-export type CardListFilterOption = {
-  value: string;
-  label: string;
-};
+export type CardListPage = { items: CardListItem[]; pagination: CardListPagination };
+export type CardListFilterOption = { value: string; label: string };
 
 export type CardListFilterMeta = {
   unit: CardListFilterOption[];
@@ -182,7 +176,6 @@ export const createCardListRequestQuery = (
 export const getDefaultCardListQueryState = (): CardListQueryState => ({
   ...DEFAULT_CARD_LIST_QUERY_STATE
 });
-
 export const hasCardListFilters = (queryState: CardListQueryState): boolean =>
   queryState.name.length > 0 ||
   queryState.unit.length > 0 ||
@@ -220,7 +213,6 @@ const getStringLike = (value: unknown): string | null => {
 
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
-
 const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const getDateValue = (value: unknown): string | number | null => {
@@ -339,6 +331,7 @@ const parseCharacterName = (characterNode: Record<string, unknown> | null): stri
 
   const firstName = pickFirstString(characterNode, ["firstName"]);
   const givenName = pickFirstString(characterNode, ["givenName"]);
+
   return (
     [firstName, givenName].filter((value): value is string => value !== null).join(" ") || null
   );
@@ -460,17 +453,12 @@ const parsePagination = (
   const total = pickFirstNumber(paginationNode ?? {}, ["total"]);
   const totalPages = pickFirstNumber(paginationNode ?? {}, ["total_pages", "totalPages"]);
   const hasNextFlag = getBoolean((paginationNode ?? {})["has_next"]);
+
   const hasNext =
     hasNextFlag ??
     (totalPages !== null ? page < totalPages : pageSize > 0 && itemCount >= pageSize);
 
-  return {
-    page,
-    pageSize,
-    hasNext,
-    total,
-    totalPages
-  };
+  return { page, pageSize, hasNext, total, totalPages };
 };
 
 export const parseCardListPage = (
@@ -577,10 +565,8 @@ const formatLabel = (value: string): string =>
     .filter((segment) => segment.length > 0)
     .map((segment) => segment.slice(0, 1).toUpperCase() + segment.slice(1))
     .join(" ");
-
 const toOptionList = (entries: Map<string, string>): CardListFilterOption[] =>
   [...entries.entries()].map(([value, label]) => ({ value, label }));
-
 const getUnitLabel = (unitProfiles: UnitProfileMap, value: string): string =>
   unitProfiles[value] ?? formatUnitFallbackLabel(value);
 

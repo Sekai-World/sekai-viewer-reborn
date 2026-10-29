@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { StoryDocumentReference } from "$lib/live2d/story-document";
+import type { StoryDocumentReference } from "#lib/live2d/story-document.js";
 import { SnippetAction, SnippetProgressBehavior, SpecialEffectType } from "./scenario-types";
 import { loadStoryDocument, StoryDocumentLoadError } from "./story-document-loader";
 

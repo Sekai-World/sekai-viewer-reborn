@@ -1,25 +1,28 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
+  import { browser } from "$app/env";
+  import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { untrack } from "svelte";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import Icon from "@iconify/svelte";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import GachaListCard from "$lib/components/gacha/GachaListCard.svelte";
-  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import GachaListCard from "#lib/components/gacha/GachaListCard.svelte";
+  import ListToolbarButton from "#lib/components/shared/ListToolbarButton.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { toTimestampMs } from "$lib/time/date-time";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import { toTimestampMs } from "#lib/time/date-time.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
-  import type { GachaListPage, GachaListItem as GachaListItemType } from "$lib/server/gacha-list";
+  import type {
+    GachaListPage,
+    GachaListItem as GachaListItemType
+  } from "#lib/server/gacha-list.js";
 
   type GachaListPagePayload = GachaListPage;
   type GachaListItem = GachaListItemType;
@@ -438,7 +441,7 @@
     const pathname = resolve("/gachas/[region]", { region: data.region });
     const query = searchParams.toString();
     const nextUrl = query.length > 0 ? `${pathname}?${query}` : pathname;
-    replaceState(nextUrl, {});
+    goto(nextUrl, { shallow: true, replace: true });
   };
 
   const getBreadcrumbItems = () => [

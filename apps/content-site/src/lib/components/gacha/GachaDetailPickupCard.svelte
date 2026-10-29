@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import { getCardThumbnailPresentation } from "#lib/components/card/card-presentation.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import { CardThumbnail } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
   import { resolve } from "$app/paths";

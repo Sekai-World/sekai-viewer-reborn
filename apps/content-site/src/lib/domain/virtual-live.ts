@@ -1,5 +1,5 @@
-import { toTimestampMs } from "$lib/time/date-time";
-import type { SupportedRegion } from "$lib/domain/regions";
+import { toTimestampMs } from "#lib/time/date-time.js";
+import type { SupportedRegion } from "#lib/domain/regions.js";
 
 export type VirtualLiveStatus = "upcoming" | "ongoing" | "ended";
 

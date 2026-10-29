@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { resolve } from "$app/paths";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "#lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import MusicDetailInfoCard from "$lib/components/music/MusicDetailInfoCard.svelte";
-  import MusicDifficultyCard from "$lib/components/music/MusicDifficultyCard.svelte";
-  import MusicPlaybackCard from "$lib/components/music/MusicPlaybackCard.svelte";
-  import MusicJacketHero from "$lib/components/music/MusicJacketHero.svelte";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { formatUnitFallbackLabel, unitCodeByMusicTag } from "$lib/domain/unit-profile";
-  import { getMusicAssetServer, getMusicJacketAssetURL } from "$lib/assets/index";
-  import { createPageTitle } from "$lib/page-title";
-  import DiscordEmbedHead from "$lib/components/shared/DiscordEmbedHead.svelte";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import MusicDetailInfoCard from "#lib/components/music/MusicDetailInfoCard.svelte";
+  import MusicDifficultyCard from "#lib/components/music/MusicDifficultyCard.svelte";
+  import MusicPlaybackCard from "#lib/components/music/MusicPlaybackCard.svelte";
+  import MusicJacketHero from "#lib/components/music/MusicJacketHero.svelte";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { formatUnitFallbackLabel, unitCodeByMusicTag } from "#lib/domain/unit-profile.js";
+  import { getMusicAssetServer, getMusicJacketAssetURL } from "#lib/assets/index.js";
+  import { createPageTitle } from "#lib/page-title.js";
+  import DiscordEmbedHead from "#lib/components/shared/DiscordEmbedHead.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();

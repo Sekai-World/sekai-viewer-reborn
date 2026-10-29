@@ -1,6 +1,6 @@
 import type { HonorDegreeAssetResolver } from "@platform/ui-shell";
-import { getRemoteAssetEndpointURL } from "$lib/assets/index";
-import type { SupportedRegion } from "$lib/domain/regions";
+import { getRemoteAssetEndpointURL } from "#lib/assets/index.js";
+import type { SupportedRegion } from "#lib/domain/regions.js";
 
 export {
   getBondsHonorPartnerUnit,

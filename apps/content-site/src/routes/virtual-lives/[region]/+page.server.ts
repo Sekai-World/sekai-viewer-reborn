@@ -1,13 +1,13 @@
 import { getVirtualLivesByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
+import { normalizeRegion } from "#lib/i18n/region.js";
 import {
   createVirtualLiveListRequestQuery,
   DEFAULT_VIRTUAL_LIVE_LIST_PAGE_SIZE,
   logVirtualLiveListFilterDebug,
   parseVirtualLiveListPage,
   parseVirtualLiveListQueryState
-} from "$lib/server/virtual-live-list";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+} from "#lib/server/virtual-live-list.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import type { PageServerLoad } from "./$types";
 
 const createEmptyPage = () => ({

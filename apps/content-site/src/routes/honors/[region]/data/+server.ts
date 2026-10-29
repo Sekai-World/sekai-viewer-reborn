@@ -1,8 +1,7 @@
-import { json } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parsePositivePage } from "$lib/server/catalogue-data";
-import { fetchHonorListPage, parseHonorListQueryState } from "$lib/server/honor-list";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parsePositivePage } from "#lib/server/catalogue-data.js";
+import { fetchHonorListPage, parseHonorListQueryState } from "#lib/server/honor-list.js";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -11,8 +10,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const queryState = parseHonorListQueryState(url.searchParams);
 
   try {
-    return json(await fetchHonorListPage(getMasterApiBaseUrl(), region, page, queryState));
+    return Response.json(await fetchHonorListPage(getMasterApiBaseUrl(), region, page, queryState));
   } catch {
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

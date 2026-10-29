@@ -1,4 +1,4 @@
-import type { GameNewsTarget } from "$lib/server/game-news";
+import type { GameNewsTarget } from "#lib/server/game-news.js";
 
 export const openGameNewsTarget = (
   target: GameNewsTarget,

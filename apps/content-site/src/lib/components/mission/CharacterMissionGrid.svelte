@@ -5,9 +5,9 @@
   import {
     formatCharacterMissionSentence,
     summarizeCharacterMission
-  } from "$lib/domain/character-growth";
-  import type { Mission, MissionParameterGroupLevel } from "$lib/domain/mission";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  } from "#lib/domain/character-growth.js";
+  import type { Mission, MissionParameterGroupLevel } from "#lib/domain/mission.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
 
   type LevelPage = {
     items: MissionParameterGroupLevel[];

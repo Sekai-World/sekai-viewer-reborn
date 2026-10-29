@@ -6,11 +6,9 @@ import {
   createHonorDegreeAssetResolver,
   toCatalogueHonorDegree,
   type CatalogueHonorDegree
-} from "$lib/honor-degree";
+} from "#lib/honor-degree.js";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }));
 
 afterEach(() => {
   cleanup();

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import packageJson from "../../package.json";
 
-vi.mock("$lib/server/notifications", () => ({
+vi.mock("#lib/server/notifications.js", () => ({
   fetchGlobalNotices: vi.fn().mockResolvedValue([])
 }));
 

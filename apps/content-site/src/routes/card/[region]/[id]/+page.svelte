@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { browser, dev } from "$app/environment";
-  import { invalidateAll } from "$app/navigation";
+  import { browser, dev } from "$app/env";
+  import { refreshAll } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import { getCardListViewFromSearchParams, withCardListView } from "#lib/card-list-view.js";
   import CardDetailAssetCard, {
     type CardAssetTab
-  } from "$lib/components/card/CardDetailAssetCard.svelte";
-  import CardDetailEpisodesCard from "$lib/components/card/CardDetailEpisodesCard.svelte";
-  import CardDetailEventsCard from "$lib/components/card/CardDetailEventsCard.svelte";
-  import CardDetailGachaCard from "$lib/components/card/CardDetailGachaCard.svelte";
-  import CardDetailInfoCard from "$lib/components/card/CardDetailInfoCard.svelte";
-  import CardDetailSkillCard from "$lib/components/card/CardDetailSkillCard.svelte";
-  import CardDetailStatsCard from "$lib/components/card/CardDetailStatsCard.svelte";
-  import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
+  } from "#lib/components/card/CardDetailAssetCard.svelte";
+  import CardDetailEpisodesCard from "#lib/components/card/CardDetailEpisodesCard.svelte";
+  import CardDetailEventsCard from "#lib/components/card/CardDetailEventsCard.svelte";
+  import CardDetailGachaCard from "#lib/components/card/CardDetailGachaCard.svelte";
+  import CardDetailInfoCard from "#lib/components/card/CardDetailInfoCard.svelte";
+  import CardDetailSkillCard from "#lib/components/card/CardDetailSkillCard.svelte";
+  import CardDetailStatsCard from "#lib/components/card/CardDetailStatsCard.svelte";
+  import EventDebugDialog from "#lib/components/shared/EventDebugDialog.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "#lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { createPageTitle } from "$lib/page-title";
-  import DiscordEmbedHead from "$lib/components/shared/DiscordEmbedHead.svelte";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { createPageTitle } from "#lib/page-title.js";
+  import DiscordEmbedHead from "#lib/components/shared/DiscordEmbedHead.svelte";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -504,7 +504,7 @@
                       <button
                         type="button"
                         class="btn btn-outline btn-sm touch-target"
-                        onclick={() => void invalidateAll()}
+                        onclick={() => void refreshAll()}
                       >
                         {retryLabel}
                       </button>
@@ -537,7 +537,7 @@
                       <button
                         type="button"
                         class="btn btn-outline btn-sm touch-target"
-                        onclick={() => void invalidateAll()}
+                        onclick={() => void refreshAll()}
                       >
                         {retryLabel}
                       </button>
@@ -580,7 +580,7 @@
                       <button
                         type="button"
                         class="btn btn-outline btn-sm touch-target"
-                        onclick={() => void invalidateAll()}
+                        onclick={() => void refreshAll()}
                       >
                         {retryLabel}
                       </button>
@@ -611,7 +611,7 @@
                       <button
                         type="button"
                         class="btn btn-outline btn-sm touch-target"
-                        onclick={() => void invalidateAll()}
+                        onclick={() => void refreshAll()}
                       >
                         {retryLabel}
                       </button>

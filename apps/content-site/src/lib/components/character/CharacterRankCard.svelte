@@ -1,13 +1,13 @@
 <script lang="ts">
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import Icon from "@iconify/svelte";
-  import RewardLadder from "$lib/components/shared/RewardLadder.svelte";
+  import RewardLadder from "#lib/components/shared/RewardLadder.svelte";
   import {
     getCharacterRankRewardDetails,
     summarizeCharacterRanks,
     type CharacterRankSummary
-  } from "$lib/domain/character-growth";
-  import type { CharacterRankReference } from "$lib/domain/mission";
+  } from "#lib/domain/character-growth.js";
+  import type { CharacterRankReference } from "#lib/domain/mission.js";
 
   let {
     ranks,

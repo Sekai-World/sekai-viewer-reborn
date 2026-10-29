@@ -1,7 +1,7 @@
 <script lang="ts">
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
   import HonorArtwork from "./HonorArtwork.svelte";
-  import type { CatalogueHonorDegree } from "$lib/honor-degree";
+  import type { CatalogueHonorDegree } from "#lib/honor-degree.js";
   import type { HonorDegreeAssetResolver } from "@platform/ui-shell";
 
   let {

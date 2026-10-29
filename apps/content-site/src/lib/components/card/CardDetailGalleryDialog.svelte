@@ -6,8 +6,8 @@
     getCardGachaAssetURL,
     getCardSmallAssetURL,
     getCardThumbnailAssetURL
-  } from "$lib/assets/index";
-  import type { CardDetail } from "$lib/domain/card-detail";
+  } from "#lib/assets/index.js";
+  import type { CardDetail } from "#lib/domain/card-detail.js";
   import Icon from "@iconify/svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import { untrack } from "svelte";

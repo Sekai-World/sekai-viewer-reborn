@@ -2,7 +2,7 @@
  * The picker-side story type vocabulary: one sidebar sub-page per type.
  *
  * Deliberately narrower than `storyRouteStoryTypes` in
- * `$lib/live2d/story-route`: the `profile` type has no picker surface yet.
+ * `#lib/live2d/story-route`: the `profile` type has no picker surface yet.
  */
 export const pickerStoryTypes = [
   "unit",

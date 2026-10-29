@@ -1,8 +1,8 @@
 <script lang="ts" generics="T">
-  import RewardItem from "$lib/components/shared/RewardItem.svelte";
-  import type { MissionResourceBoxDetail } from "$lib/domain/mission";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import type { RewardLadderSummary } from "$lib/domain/reward-ladder";
+  import RewardItem from "#lib/components/shared/RewardItem.svelte";
+  import type { MissionResourceBoxDetail } from "#lib/domain/mission.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import type { RewardLadderSummary } from "#lib/domain/reward-ladder.js";
 
   let {
     steps,

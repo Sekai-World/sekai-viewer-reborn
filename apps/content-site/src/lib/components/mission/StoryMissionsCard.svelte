@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import Icon from "@iconify/svelte";
-  import RewardLadder from "$lib/components/shared/RewardLadder.svelte";
-  import type { Mission, MissionResourceBoxDetail } from "$lib/domain/mission";
-  import { summarizeRewardLadder } from "$lib/domain/reward-ladder";
+  import RewardLadder from "#lib/components/shared/RewardLadder.svelte";
+  import type { Mission, MissionResourceBoxDetail } from "#lib/domain/mission.js";
+  import { summarizeRewardLadder } from "#lib/domain/reward-ladder.js";
 
   let {
     missions,

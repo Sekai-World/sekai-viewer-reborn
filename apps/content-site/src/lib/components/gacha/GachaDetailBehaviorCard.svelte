@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { GachaBehavior } from "$lib/domain/gacha-detail";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { getCommonMaterialThumbnailURL, getGachaTicketThumbnailURL } from "$lib/assets/index";
+  import type { GachaBehavior } from "#lib/domain/gacha-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { getCommonMaterialThumbnailURL, getGachaTicketThumbnailURL } from "#lib/assets/index.js";
   import Icon from "@iconify/svelte";
 
   let {

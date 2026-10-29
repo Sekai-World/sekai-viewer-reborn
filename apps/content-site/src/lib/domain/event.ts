@@ -1,4 +1,4 @@
-import type { ContentSiteTranslator } from "$lib/i18n/runtime";
+import type { ContentSiteTranslator } from "#lib/i18n/runtime.js";
 
 const eventTypeTextKeyMap = {
   marathon: "eventTypeValues.marathon",

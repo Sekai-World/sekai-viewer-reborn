@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import "$lib/icons/mdi";
+  import "#lib/icons/mdi.js";
 
   type QuickNavigationItem = {
     label: string;

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import { getStampDisplayName, type StampItem } from "$lib/domain/stamp";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import { getStampDisplayName, type StampItem } from "#lib/domain/stamp.js";
 
   let {
     stamp,

@@ -1,14 +1,13 @@
-import { json } from "@sveltejs/kit";
 import { getGachasByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   createGachaListRequestQuery,
   DEFAULT_GACHA_LIST_PAGE_SIZE,
   logGachaListFilterDebug,
   parseGachaListPage,
   parseGachaListQueryState
-} from "$lib/server/gacha-list";
+} from "#lib/server/gacha-list.js";
 import type { RequestHandler } from "./$types";
 
 const summarizeResponse = (
@@ -64,7 +63,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
         error: response.error
       });
 
-      return json({ error: true }, { status: 500 });
+      return Response.json({ error: true }, { status: 500 });
     }
 
     const gachaListPage = parseGachaListPage(response.data, page, DEFAULT_GACHA_LIST_PAGE_SIZE);
@@ -79,7 +78,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
       pagination: gachaListPage.pagination
     });
 
-    return json(gachaListPage);
+    return Response.json(gachaListPage);
   } catch (error) {
     logGachaListFilterDebug("data exception", {
       region,
@@ -88,6 +87,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
       error
     });
 
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

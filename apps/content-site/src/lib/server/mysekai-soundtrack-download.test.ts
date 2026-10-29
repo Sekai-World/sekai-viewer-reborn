@@ -16,9 +16,7 @@ const tagLib = vi.hoisted(() => {
   return { tag, file, edit };
 });
 vi.mock("taglib-wasm", () => ({ TagLib: { initialize: async () => ({ edit: tagLib.edit }) } }));
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.example.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.example.test" }));
 
 import {
   buildMysekaiSoundtrackDownload,

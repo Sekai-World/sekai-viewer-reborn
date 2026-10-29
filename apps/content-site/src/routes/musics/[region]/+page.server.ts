@@ -1,5 +1,5 @@
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   canUsePaginatedMusicList,
   createMusicListPage,
@@ -10,9 +10,9 @@ import {
   hasMusicListFilters,
   logMusicListFilterDebug,
   parseMusicListQueryState
-} from "$lib/server/music-list";
-import type { MusicListPage } from "$lib/server/music-list";
-import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
+} from "#lib/server/music-list.js";
+import type { MusicListPage } from "#lib/server/music-list.js";
+import { fetchUnitProfiles, toUnitProfileMap } from "#lib/server/unit-profiles.js";
 import type { PageServerLoad } from "./$types";
 
 type InitialPageResult =

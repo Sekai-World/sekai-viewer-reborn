@@ -1,7 +1,7 @@
 import { error, type RequestHandler } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { loadGachaProbabilityPayload } from "$lib/server/gacha-probability";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { loadGachaProbabilityPayload } from "#lib/server/gacha-probability.js";
 
 export const GET: RequestHandler = async ({ params }) => {
   const region = normalizeRegion(params.region);

@@ -1,18 +1,21 @@
 import { error } from "@sveltejs/kit";
-import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "$lib/server/config";
-import { getEventMetadata, type EventMetadataResult } from "$lib/server/event-catalog";
-import { getEventRewards } from "$lib/server/event-rewards";
-import { getChapterTrackerRankings, type ChapterTrackerResult } from "$lib/server/chapter-tracker";
+import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "#lib/server/config.js";
+import { getEventMetadata, type EventMetadataResult } from "#lib/server/event-catalog.js";
+import { getEventRewards } from "#lib/server/event-rewards.js";
+import {
+  getChapterTrackerRankings,
+  type ChapterTrackerResult
+} from "#lib/server/chapter-tracker.js";
 import {
   getWorldBloomMetadata,
   type WorldBloomMetadata,
   type WorldBloomRankableChapter
-} from "$lib/server/world-bloom";
+} from "#lib/server/world-bloom.js";
 import {
   getEventTrackerRankings,
   isTrackerRegion,
   type EventTrackerResult
-} from "$lib/server/event-tracker";
+} from "#lib/server/event-tracker.js";
 import type { PageServerLoad } from "./$types";
 
 type TrackerPageReady = {

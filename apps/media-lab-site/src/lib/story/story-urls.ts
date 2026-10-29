@@ -1,4 +1,4 @@
-import type { StoryRouteRegion } from "$lib/live2d/story-route";
+import type { StoryRouteRegion } from "#lib/live2d/story-route.js";
 
 /**
  * Sekai story asset URL rules.

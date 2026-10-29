@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import type { VirtualLiveCharacter } from "$lib/domain/virtual-live";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import type { VirtualLiveCharacter } from "#lib/domain/virtual-live.js";
 
   type EnrichedVirtualLiveCharacter = VirtualLiveCharacter & {
     gameCharacterId?: number | null;

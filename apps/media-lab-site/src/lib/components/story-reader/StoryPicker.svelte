@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import AssetImage from "@platform/ui-shell/asset-image";
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
   import { goto } from "$app/navigation";
   import {
@@ -10,13 +10,13 @@
     resolveUnitIconUrl,
     resolveUnitLogoUrl
   } from "@platform/ui-shell";
-  import { useRegionSelection } from "$lib/region-selection.svelte";
-  import { localCharacterAvatarUrl } from "$lib/story/character-avatar";
+  import { useRegionSelection } from "#lib/region-selection.svelte.js";
+  import { localCharacterAvatarUrl } from "#lib/story/character-avatar.js";
   import {
     readRememberedStoryReaderMode,
     rememberStoryReaderMode,
     type StoryReaderMode
-  } from "$lib/story/story-reader-mode";
+  } from "#lib/story/story-reader-mode.js";
 
   /**
    * Story picker for one story type sub-page. The region follows the shared
@@ -375,7 +375,9 @@
         pagination?: { page?: number; hasNext?: boolean };
       };
       if (seq !== eventLoadSeq) return;
+
       events = append ? [...events, ...(payload.events ?? [])] : (payload.events ?? []);
+
       eventUnitOptions = payload.unitOptions ?? [];
       eventPage = payload.pagination?.page ?? page;
       eventHasNext = payload.pagination?.hasNext === true;
@@ -502,7 +504,9 @@
         pagination?: { page?: number; hasNext?: boolean };
       };
       if (seq !== cardLoadSeq) return;
+
       cards = append ? [...cards, ...(payload.cards ?? [])] : (payload.cards ?? []);
+
       cardUnitOptions = payload.unitOptions ?? [];
       cardCharacterOptions = payload.characterOptions ?? [];
       cardPage = payload.pagination?.page ?? page;
@@ -827,10 +831,10 @@
       ? (filteredUnits.find((unit) => unit.unit === selectedUnit) ?? null)
       : null
   );
+
   const unitNameBySlug = $derived(
     new Map(units.map((unit) => [unit.unit, unit.unitName] as const))
   );
-
   const storyHref = (storyId: string, mode: StoryReaderMode): string =>
     `${MODE_BASES[mode]}/${regionSelection.primary}/${storyType}/${storyId}`;
 
@@ -1133,6 +1137,7 @@
                       class="truncate text-sm font-semibold transition-colors duration-180 group-hover:text-primary"
                       >{event.name}</span
                     >
+
                     <div class="flex items-center gap-1.5 text-xs text-base-content/60">
                       <span class="font-mono">#{event.eventId}</span>
                       {#if event.eventType}
@@ -1388,9 +1393,8 @@
                     class={`btn btn-sm ${cardFilterDraft.types.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
                     onclick={() =>
                       (cardFilterDraft.types = toggleDraftValue(cardFilterDraft.types, option))}
+                    >{formatCardOptionLabel(option)}</button
                   >
-                    {formatCardOptionLabel(option)}
-                  </button>
                 {/each}
               </div>
             </section>
@@ -1405,10 +1409,8 @@
                       (cardFilterDraft.rarities = toggleDraftValue(
                         cardFilterDraft.rarities,
                         option
-                      ))}
+                      ))}>{cardRarityLabel(option)}</button
                   >
-                    {cardRarityLabel(option)}
-                  </button>
                 {/each}
               </div>
             </section>
@@ -1421,9 +1423,8 @@
                     class={`btn btn-sm capitalize ${cardFilterDraft.attrs.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
                     onclick={() =>
                       (cardFilterDraft.attrs = toggleDraftValue(cardFilterDraft.attrs, option))}
+                    >{option}</button
                   >
-                    {option}
-                  </button>
                 {/each}
               </div>
             </section>
@@ -1438,10 +1439,8 @@
                       (cardFilterDraft.characters = toggleDraftValue(
                         cardFilterDraft.characters,
                         option.value
-                      ))}
+                      ))}>{option.label}</button
                   >
-                    {option.label}
-                  </button>
                 {/each}
               </div>
             </section>
@@ -1454,9 +1453,8 @@
                     class={`btn btn-sm ${cardFilterDraft.skills.includes(option) ? "btn-primary" : "btn-outline border-base-content/20"}`}
                     onclick={() =>
                       (cardFilterDraft.skills = toggleDraftValue(cardFilterDraft.skills, option))}
+                    >{formatCardOptionLabel(option)}</button
                   >
-                    {formatCardOptionLabel(option)}
-                  </button>
                 {/each}
               </div>
             </section>

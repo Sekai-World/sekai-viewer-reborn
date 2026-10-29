@@ -1,5 +1,5 @@
 import { getCardsByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
+import { normalizeRegion } from "#lib/i18n/region.js";
 import {
   createCardListRequestQuery,
   DEFAULT_CARD_LIST_PAGE_SIZE,
@@ -9,9 +9,9 @@ import {
   parseCardListPage,
   parseCardListQueryState,
   type CardListPage
-} from "$lib/server/card-list";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
+} from "#lib/server/card-list.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { fetchUnitProfiles, toUnitProfileMap } from "#lib/server/unit-profiles.js";
 import type { PageServerLoad } from "./$types";
 
 const createEmptyPage = (): CardListPage => ({

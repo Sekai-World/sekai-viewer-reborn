@@ -1,8 +1,8 @@
 <script lang="ts">
   import "../app.css";
-  import "$lib/icons/mdi";
-  import { env } from "$env/dynamic/public";
-  import { goto, invalidateAll } from "$app/navigation";
+  import "#lib/icons/mdi.js";
+  import { PUBLIC_SUPPORT_PAGE_URL } from "$app/env/public";
+  import { goto, refreshAll } from "$app/navigation";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
@@ -12,27 +12,27 @@
     createI18nTranslator,
     getLocalI18nMessages,
     mediaLabI18nNamespaces
-  } from "$lib/i18n/runtime";
-  import { registerStoryAssetCache } from "$lib/story/asset-cache-client";
+  } from "#lib/i18n/runtime.js";
+  import { registerStoryAssetCache } from "#lib/story/asset-cache-client.js";
   import {
     isActivePickerStoryTypePath,
     pickerStoryTypeIcons,
     pickerStoryTypes
-  } from "$lib/story/story-picker";
+  } from "#lib/story/story-picker.js";
   import {
     DEFAULT_UI_LOCALE,
     buildUiLocaleCookie,
     normalizeUiLocale,
     supportedUiLocales,
     type SupportedUiLocale
-  } from "$lib/i18n/region";
+  } from "#lib/i18n/region.js";
   import {
     buildPrimaryRegionUrl,
     normalizePrimaryRegion,
     provideRegionSelection,
     supportedRegions,
     type SupportedRegion
-  } from "$lib/region-selection.svelte";
+  } from "#lib/region-selection.svelte.js";
   import type { LayoutData } from "./$types";
   import {
     applyDocumentTheme,
@@ -43,10 +43,10 @@
     type ResolvedTheme,
     type ThemeMode,
     type ThemeName
-  } from "$lib/theme";
+  } from "#lib/theme.js";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
-  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
+  const supportPageUrl = PUBLIC_SUPPORT_PAGE_URL?.trim();
   const regionSelection = provideRegionSelection();
   regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
   // The shell (including the sidebar's story-type labels) translates keys
@@ -187,14 +187,13 @@
     const nextLocale = normalizeUiLocale(localeValue, DEFAULT_UI_LOCALE);
     if (nextLocale === data.uiLocale) return;
     document.cookie = buildUiLocaleCookie(nextLocale);
-    await invalidateAll();
+    await refreshAll();
   };
 
   const applyPrimaryRegion = async (region: SupportedRegion): Promise<void> => {
-    await goto(buildPrimaryRegionUrl(page.url, region), {
-      invalidateAll: true,
-      keepFocus: true,
-      noScroll: true
+    await goto(buildPrimaryRegionUrl(new URL(page.url.href), region), {
+      refreshAll: true,
+      reset: false
     });
   };
 
@@ -267,7 +266,8 @@
 
 <svelte:head>
   <title>{translate("shell.title")}</title>
-  <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
+
+  <link rel="icon" href={asset("favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
 <GlobalNotificationBanner

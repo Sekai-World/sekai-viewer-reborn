@@ -2,8 +2,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import type { I18nMessages } from "@platform/i18n-runtime";
 import { tick } from "svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { SupportedRegion } from "$lib/domain/regions";
-import type { HomeRegionData } from "$lib/server/home-page-data";
+import type { SupportedRegion } from "#lib/domain/regions.js";
+import type { HomeRegionData } from "#lib/server/home-page-data.js";
 import HomePage from "./+page.svelte";
 import type { PageData } from "./$types";
 

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { tick, type ComponentProps } from "svelte";
   import Icon from "@iconify/svelte";
-  import CatalogueFrame from "$lib/components/mission/CatalogueFrame.svelte";
-  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
+  import CatalogueFrame from "#lib/components/mission/CatalogueFrame.svelte";
+  import ListToolbarButton from "#lib/components/shared/ListToolbarButton.svelte";
   import HonorSummary from "./HonorSummary.svelte";
   import HonorArtwork from "./HonorArtwork.svelte";
-  import { defaultBondsHonorView, type BondsHonorView } from "$lib/domain/honor";
-  import type { CatalogueHonorDegree } from "$lib/honor-degree";
+  import { defaultBondsHonorView, type BondsHonorView } from "#lib/domain/honor.js";
+  import type { CatalogueHonorDegree } from "#lib/honor-degree.js";
   import type { HonorDegreeAssetResolver } from "@platform/ui-shell";
 
   export type HonorCatalogueGroup = {

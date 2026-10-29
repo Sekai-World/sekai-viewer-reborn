@@ -1,18 +1,18 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { resolve } from "$app/paths";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { openGameNewsTarget } from "$lib/game-news-navigation";
-  import type { GameNewsItem, GameNewsTag } from "$lib/server/game-news";
-  import { toTimestampMs } from "$lib/time/date-time";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
+  import RegionBadgeSwitch from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { openGameNewsTarget } from "#lib/game-news-navigation.js";
+  import type { GameNewsItem, GameNewsTag } from "#lib/server/game-news.js";
+  import { toTimestampMs } from "#lib/time/date-time.js";
   import { tick } from "svelte";
-  import { getTablistTargetIndex } from "$lib/a11y/tablist";
+  import { getTablistTargetIndex } from "#lib/a11y/tablist.js";
   import type { PageProps } from "./$types";
   import { getNewsRegionOptions } from "./region-options";
 

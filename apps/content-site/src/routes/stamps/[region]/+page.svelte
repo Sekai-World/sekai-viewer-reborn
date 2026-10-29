@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto, refreshAll } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { getStampImageURL } from "$lib/assets/index";
-  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
-  import CatalogueFrame from "$lib/components/mission/CatalogueFrame.svelte";
-  import MissionCharacterPicker from "$lib/components/mission/MissionCharacterPicker.svelte";
-  import MysekaiLoadMore from "$lib/components/mysekai/MysekaiLoadMore.svelte";
-  import StampTile from "$lib/components/stamp/StampTile.svelte";
-  import type { MissionCharacterOption } from "$lib/domain/mission";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getStampImageURL } from "#lib/assets/index.js";
+  import ListToolbarButton from "#lib/components/shared/ListToolbarButton.svelte";
+  import CatalogueFrame from "#lib/components/mission/CatalogueFrame.svelte";
+  import MissionCharacterPicker from "#lib/components/mission/MissionCharacterPicker.svelte";
+  import MysekaiLoadMore from "#lib/components/mysekai/MysekaiLoadMore.svelte";
+  import StampTile from "#lib/components/stamp/StampTile.svelte";
+  import type { MissionCharacterOption } from "#lib/domain/mission.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
   import {
     getStampCharacters,
     getStampDisplayName,
@@ -19,11 +19,11 @@
     toStampSearchParams,
     type StampItem,
     type StampListQuery
-  } from "$lib/domain/stamp";
-  import { createStreamedTranslator } from "$lib/i18n/streamed-translator.svelte";
-  import { fetchPagedResult, PagedList } from "$lib/paged-list.svelte";
-  import { createPageTitle } from "$lib/page-title";
-  import { STAMP_PREVIEW_BOX_CLASS } from "$lib/styles/stamp-preview";
+  } from "#lib/domain/stamp.js";
+  import { createStreamedTranslator } from "#lib/i18n/streamed-translator.svelte.js";
+  import { fetchPagedResult, PagedList } from "#lib/paged-list.svelte.js";
+  import { createPageTitle } from "#lib/page-title.js";
+  import { STAMP_PREVIEW_BOX_CLASS } from "#lib/styles/stamp-preview.js";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import type { Snippet } from "svelte";
   import type { PageProps } from "./$types";
@@ -89,8 +89,7 @@
   );
   const navigateQuery = (overrides: Partial<StampListQuery>): void => {
     void goto(listPath(data.region, { ...data.query, ...overrides }), {
-      keepFocus: true,
-      noScroll: true
+      reset: false
     });
   };
   const loadMore = (): void => {
@@ -195,7 +194,7 @@
             secondCharacterId:
               data.query.secondCharacterId === characterId ? null : data.query.secondCharacterId
           })}
-        onRetry={() => void invalidateAll()}
+        onRetry={() => void refreshAll()}
       />
       <div class="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
         {#if data.query.characterId !== null}
@@ -226,7 +225,7 @@
           getImageSrc={getLocalCharacterThumbnailAssetURL}
           labels={{ ...pickerLabels, title: t("stamp.secondCharacterTitle") }}
           onSelect={(secondCharacterId) => navigateQuery({ secondCharacterId })}
-          onRetry={() => void invalidateAll()}
+          onRetry={() => void refreshAll()}
         />
       {/if}
     </div>
@@ -262,7 +261,7 @@
   {controls}
   resultsLabel={t("stamp.results")}
   onSearch={(name) => navigateQuery({ name })}
-  onRetry={() => void invalidateAll()}
+  onRetry={() => void refreshAll()}
 >
   {#snippet loadingPlaceholder()}
     <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-6 2xl:grid-cols-8">

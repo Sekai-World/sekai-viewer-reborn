@@ -1,12 +1,10 @@
 import { cleanup, render, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import "$lib/icons/mdi";
-import type { TitlePreview } from "$lib/domain/title-preview";
+import "#lib/icons/mdi.js";
+import type { TitlePreview } from "#lib/domain/title-preview.js";
 import TitlePreviewDialog from "./TitlePreviewDialog.svelte";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }));
 
 afterEach(() => {
   cleanup();

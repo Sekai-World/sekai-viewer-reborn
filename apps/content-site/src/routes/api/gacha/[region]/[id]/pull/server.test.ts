@@ -12,8 +12,8 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getCardsByRegionBatch,
   getGachasByRegionById
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
-vi.mock("$lib/server/secure-random", () => ({ getSecureRandomUnit }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/secure-random.js", () => ({ getSecureRandomUnit }));
 
 import { POST } from "./+server";
 

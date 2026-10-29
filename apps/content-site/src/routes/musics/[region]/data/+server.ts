@@ -1,6 +1,5 @@
-import { json } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   canUsePaginatedMusicList,
   createMusicListPage,
@@ -9,7 +8,7 @@ import {
   hasMusicListFilters,
   logMusicListFilterDebug,
   parseMusicListQueryState
-} from "$lib/server/music-list";
+} from "#lib/server/music-list.js";
 import type { RequestHandler } from "./$types";
 
 const parsePageNumber = (value: string | null): number => {
@@ -67,7 +66,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
       pagination: musicListPage.pagination
     });
 
-    return json(musicListPage);
+    return Response.json(musicListPage);
   } catch (error) {
     logMusicListFilterDebug("data exception", {
       region,
@@ -76,6 +75,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
       hasFilters,
       error
     });
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

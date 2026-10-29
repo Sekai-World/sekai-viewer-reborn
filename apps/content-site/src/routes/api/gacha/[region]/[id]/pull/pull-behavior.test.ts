@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { GachaBehavior } from "$lib/domain/gacha-detail";
+import type { GachaBehavior } from "#lib/domain/gacha-detail.js";
 import {
   getGuaranteeLevel,
   isRarityAtLeast,

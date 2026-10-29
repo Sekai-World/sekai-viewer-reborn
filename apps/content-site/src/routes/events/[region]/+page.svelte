@@ -1,25 +1,28 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
+  import { browser } from "$app/env";
+  import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
-  import { toTimestampMs } from "$lib/time/date-time";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
+  import { toTimestampMs } from "#lib/time/date-time.js";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { formatUnitFallbackLabel, UNIT_CODE_ORDER } from "#lib/domain/unit-profile.js";
   import Icon from "@iconify/svelte";
-  import EventListCard from "$lib/components/event/EventListCard.svelte";
-  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import EventListCard from "#lib/components/event/EventListCard.svelte";
+  import ListToolbarButton from "#lib/components/shared/ListToolbarButton.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import type { EventListPage, EventListItem as EventListItemType } from "$lib/server/event-list";
-  import type { UnitProfileMap } from "$lib/server/unit-profiles";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import type {
+    EventListPage,
+    EventListItem as EventListItemType
+  } from "#lib/server/event-list.js";
+  import type { UnitProfileMap } from "#lib/server/unit-profiles.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   type EventListPagePayload = EventListPage;
@@ -105,7 +108,11 @@
 
   const getEventTypeOptions = (): Array<{ value: string; label: string }> => {
     return [
-      { value: "marathon", label: eventTypeLabel("eventTypeValues.marathon", marathonFallback) },
+      {
+        value: "marathon",
+        label: eventTypeLabel("eventTypeValues.marathon", marathonFallback)
+      },
+
       {
         value: "cheerful_carnival",
         label: eventTypeLabel("eventTypeValues.cheerfulCarnival", cheerfulCarnivalFallback)
@@ -562,7 +569,7 @@
     const pathname = resolve("/events/[region]", { region: data.region });
     const query = searchParams.toString();
     const nextUrl = query.length > 0 ? `${pathname}?${query}` : pathname;
-    replaceState(nextUrl, {});
+    goto(nextUrl, { shallow: true, replace: true });
   };
 
   const getBreadcrumbItems = () => [

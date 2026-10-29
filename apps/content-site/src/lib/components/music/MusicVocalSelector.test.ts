@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { MusicVocal } from "$lib/domain/music-detail";
+import type { MusicVocal } from "#lib/domain/music-detail.js";
 import MusicVocalSelector from "./MusicVocalSelector.svelte";
 
-vi.mock("$lib/assets/characters", () => ({
+vi.mock("#lib/assets/characters.js", () => ({
   getLocalCharacterThumbnailAssetURL: (characterId: number) => `/characters/${characterId}.png`
 }));
 

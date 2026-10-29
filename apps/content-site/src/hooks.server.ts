@@ -1,6 +1,6 @@
-import type { Handle } from "@sveltejs/kit";
-import { getUiLocaleDirection } from "$lib/i18n/config";
-import { DEFAULT_UI_LOCALE, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
+import type { Handle } from "@sveltejs/kit/hooks";
+import { getUiLocaleDirection } from "#lib/i18n/config.js";
+import { DEFAULT_UI_LOCALE, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
 
 const ROOT_HTML_OPEN_TAG = /<html\b(?:[^>"']|"[^"]*"|'[^']*')*>/i;
 

@@ -1,11 +1,10 @@
-import { json } from "@sveltejs/kit";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { isTrackerRegion } from "$lib/server/event-tracker";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { isTrackerRegion } from "#lib/server/event-tracker.js";
 import {
   MAX_HONOR_LOOKUP_IDS,
   getTrackerHonorLookup,
   parseIdList
-} from "$lib/server/tracker-profile";
+} from "#lib/server/tracker-profile.js";
 import type { RequestHandler } from "./$types";
 
 const emptyLookup = { honors: [], bondsHonors: [], bondsViewData: null };
@@ -20,13 +19,13 @@ export const GET: RequestHandler = async ({ params, url }) => {
     bondsHonorIds === null ||
     honorIds.length + bondsHonorIds.length > MAX_HONOR_LOOKUP_IDS
   ) {
-    return json({ status: "invalid-request", ...emptyLookup });
+    return Response.json({ status: "invalid-request", ...emptyLookup });
   }
   if (honorIds.length + bondsHonorIds.length === 0) {
-    return json({ status: "available", ...emptyLookup });
+    return Response.json({ status: "available", ...emptyLookup });
   }
 
-  return json({
+  return Response.json({
     status: "available",
     ...(await getTrackerHonorLookup(getMasterApiBaseUrl(), params.region, honorIds, bondsHonorIds))
   });

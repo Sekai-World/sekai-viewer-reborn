@@ -63,3 +63,40 @@ jobs:
 
       - name: Verify
         run: pnpm verify:ci
+
+  docker-image-smoke:
+    name: Docker image smoke (${{ matrix.app }})
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        app:
+          - content-site
+          - tools-site
+          - media-lab-site
+          - account-site
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js for the smoke harness
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+
+      - name: Test smoke harness
+        run: node --test scripts/verify-docker-image.test.mjs
+
+      - name: Build local image and run HTTP smoke test
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          image="sekai-viewer-${APP}:ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          # This job only builds and runs a local image; it has no registry login or push step.
+          docker build --pull --tag "$image" --file "apps/${APP}/Dockerfile" .
+          node scripts/verify-docker-image.mjs "$APP" "$image"

@@ -6,7 +6,7 @@ const { getGameNewsByRegionList, getMasterApiBaseUrl } = vi.hoisted(() => ({
 }));
 
 vi.mock("@platform/sekai-master-api-sdk", () => ({ getGameNewsByRegionList }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 import {
   clearGameNewsCache,

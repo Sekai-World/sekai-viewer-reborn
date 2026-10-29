@@ -12,7 +12,7 @@
 // These helpers are intentionally pure (no $env imports) so they can run in
 // `+page.server.ts` loads and in unit tests.
 
-import type { CardDetail } from "$lib/domain/card-detail";
+import type { CardDetail } from "#lib/domain/card-detail.js";
 
 export const DISCORD_COMPONENT_EMBED_SCRIPT_ID = "discord:component-embed";
 
@@ -195,8 +195,9 @@ export const parseTrainedParam = (value: string | null | undefined): boolean => 
 /**
  * Validate a request origin for public embeds. The origin is trusted as
  * SvelteKit reports it: adapter-node defaults the protocol to https and takes
- * the host from the Host header (pin it with `ORIGIN` if needed). A plain-http
- * origin only occurs under `vite dev`, e.g. behind a tunnel.
+ * the host from the Host header. Deployments that cannot provide the public
+ * host reliably need a configured `paths.origin` or trusted proxy headers. A
+ * plain-http origin normally occurs under `vite dev`, e.g. behind a tunnel.
  */
 const normalizePublicOrigin = (origin: string | null | undefined): string | null => {
   const trimmed = origin?.trim() ?? "";

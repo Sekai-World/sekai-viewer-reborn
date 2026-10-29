@@ -6,5 +6,5 @@ export { normalizeUnitIconSlug as resolveCanonicalUnitSlug } from "@platform/ui-
 /** Resolve the unit logo URL for a canonical unit slug under /logos/. */
 export const resolveUnitLogoUrl = (slug: string): string | null => {
   const normalized = normalizeUnitIconSlug(slug);
-  return normalized ? asset(`/logos/logo_${normalized}.png`) : null;
+  return normalized ? asset(`logos/logo_${normalized}.png`) : null;
 };

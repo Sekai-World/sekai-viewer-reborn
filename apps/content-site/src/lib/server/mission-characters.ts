@@ -1,10 +1,10 @@
-import type { MissionCharacterOption } from "$lib/domain/mission";
-import { parseCharacterList, parseCharacterUnits } from "$lib/server/character-list";
+import type { MissionCharacterOption } from "#lib/domain/mission.js";
+import { parseCharacterList, parseCharacterUnits } from "#lib/server/character-list.js";
 import {
   aggregateGameCharactersByRegion,
   aggregateGameCharacterUnitsByRegion
-} from "$lib/server/character-pages";
-import { fetchUnitProfiles } from "$lib/server/unit-profiles";
+} from "#lib/server/character-pages.js";
+import { fetchUnitProfiles } from "#lib/server/unit-profiles.js";
 
 /** Characters in `seq` order for the Character Missions picker, with their unit names. */
 export const fetchMissionCharacterOptions = async (

@@ -1,5 +1,5 @@
-import { env as publicEnv } from "$env/dynamic/public";
-import type { StoryRouteIdentity } from "$lib/live2d/story-route";
+import { PUBLIC_REMOTE_ASSET_BASE_URL } from "$app/env/public";
+import type { StoryRouteIdentity } from "#lib/live2d/story-route.js";
 import { parseScenarioData } from "./scenario-validation";
 import type { IScenarioData } from "./scenario-types";
 import { createStoryRegionAssetUrls, type StoryAssetUrls } from "./story-urls";
@@ -18,7 +18,6 @@ import {
  * Server-side story route resolution: master-data lookup, scenario document
  * fetch, and character identity tables for one validated route identity.
  */
-
 const COLLECTIONS_BY_STORY_TYPE: Record<
   StoryRouteIdentity["storyType"],
   readonly (
@@ -51,9 +50,7 @@ const stripTrailingSlashes = (value: string): string => {
 
 /** The configured remote asset origin (or same-origin dev path), without trailing slash. */
 export const getStoryAssetBase = (): string =>
-  stripTrailingSlashes(
-    publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL?.trim() || "https://storage.sekai.best"
-  );
+  stripTrailingSlashes(PUBLIC_REMOTE_ASSET_BASE_URL?.trim() || "https://storage.sekai.best");
 
 /**
  * The asset origin for server-side `fetch` calls. A relative public base

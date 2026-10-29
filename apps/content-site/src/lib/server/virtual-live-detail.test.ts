@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getVirtualLiveBannerBundle } from "$lib/domain/virtual-live";
+import { getVirtualLiveBannerBundle } from "#lib/domain/virtual-live.js";
 import { parseVirtualLiveDetail } from "./virtual-live-detail";
 import { parseVirtualLiveListPage } from "./virtual-live-list";
 

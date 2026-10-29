@@ -1,11 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { onMount } from "svelte";
-  import type { StoryDocumentReference } from "$lib/live2d/story-document";
+  import type { StoryDocumentReference } from "#lib/live2d/story-document.js";
   import type {
     StoryPlayerSession,
     StoryPlayerSessionState
-  } from "$lib/story/story-player-session";
+  } from "#lib/story/story-player-session.js";
 
   /**
    * Browser-only Live2D story player host. Mounts the ported playback engine
@@ -177,7 +177,7 @@
       const controller = new AbortController();
       documentController = controller;
       try {
-        const { loadStoryDocument } = await import("$lib/story/story-document-loader");
+        const { loadStoryDocument } = await import("#lib/story/story-document-loader.js");
         const storyDocument = await loadStoryDocument(documentReference, {
           signal: controller.signal,
           onProgress: (progress) => {
@@ -192,7 +192,7 @@
         if (destroyed || controller.signal.aborted || !stageHost) return;
         scenarioProgress = null;
 
-        const { createStoryPlayerSession } = await import("$lib/story/story-player-session");
+        const { createStoryPlayerSession } = await import("#lib/story/story-player-session.js");
         if (destroyed || controller.signal.aborted || !stageHost) return;
         const [width, height] = stageSizeFor(stageHost);
         instance = createStoryPlayerSession({

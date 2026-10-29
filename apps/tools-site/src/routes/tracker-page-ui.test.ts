@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveTrackerEventId } from "$lib/tracker-event-identity";
+import { resolveTrackerEventId } from "#lib/tracker-event-identity.js";
 
 const pagePath = resolve(process.cwd(), "src/routes/tracker/[region]/+page.svelte");
 const homePagePath = resolve(process.cwd(), "src/routes/+page.svelte");
@@ -172,8 +172,10 @@ describe("tracker page UI contract", () => {
     expect(homeSource).toMatch(
       /events = trackerSupportedRegions\.map\(\(region\) => \(\{\s*region,\s*status: "failed",\s*event: null\s*\}\)\);/
     );
-    expect(homeSource).toContain('import { getEventBannerAssetURL } from "$lib/event-assets";');
-    expect(homeSource).toContain('import { getTrackerCountdown } from "$lib/tracker-countdown";');
+    expect(homeSource).toContain('import { getEventBannerAssetURL } from "#lib/event-assets.js";');
+    expect(homeSource).toContain(
+      'import { getTrackerCountdown } from "#lib/tracker-countdown.js";'
+    );
     expect(homeSource).toContain(
       "const clock = window.setInterval(() => (now = Date.now()), 1_000);"
     );
@@ -231,7 +233,7 @@ describe("tracker page UI contract", () => {
     expect(source).not.toContain(
       'trackerStatus !== "available"}<p role="status">{translate("tracker.loading")}</p>'
     );
-    expect(source).toContain('getTrackerCountdown } from "$lib/tracker-countdown";');
+    expect(source).toContain('getTrackerCountdown } from "#lib/tracker-countdown.js";');
     expect(source).toContain("const countdown = $derived(");
     expect(source).toContain("closedAt: selectedEvent?.closedAt");
     expect(source).toContain('translate("tracker.countdownEndsIn")');
@@ -897,7 +899,7 @@ describe("tracker page UI contract", () => {
     expect(source).toContain("graphIdentity.rank !== requestRank");
     expect(source).toContain('payload.status !== "available" || !Array.isArray(payload.points)');
     expect(source).toContain(
-      'import { resolveTrackerEventId } from "$lib/tracker-event-identity";'
+      'import { resolveTrackerEventId } from "#lib/tracker-event-identity.js";'
     );
     expect(source).not.toContain("resolvedCurrentEventId: trackerResult?.resolvedCurrentEventId");
     expect(source).toContain("catalogCurrentEventId: trackerPageReady?.resolvedEventId ?? null");
@@ -1135,7 +1137,7 @@ describe("tracker page UI contract", () => {
   it("hides tracker export controls and keeps the export library out of the page", async () => {
     const source = await readFile(pagePath, "utf8");
 
-    expect(source).not.toContain("$lib/tracker-export");
+    expect(source).not.toContain("#lib/tracker-export.js");
     expect(source).not.toContain("tracker-export");
     expect(source).not.toContain("exportOpenButton");
     expect(source).not.toContain("exportMenu");

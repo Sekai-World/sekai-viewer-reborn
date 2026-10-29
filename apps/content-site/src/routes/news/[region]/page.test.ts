@@ -1,13 +1,13 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
 import type { I18nMessages } from "@platform/i18n-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { GameNewsItem, GameNewsLoadResult, GameNewsTag } from "$lib/server/game-news";
+import type { GameNewsItem, GameNewsLoadResult, GameNewsTag } from "#lib/server/game-news.js";
 
-vi.mock("$lib/settings/content-display", () => ({
+vi.mock("#lib/settings/content-display.js", () => ({
   getContentDisplaySettings: () => ({ showSpoilerContent: false })
 }));
 
-import "$lib/icons/mdi";
+import "#lib/icons/mdi.js";
 import NewsPage from "./+page.svelte";
 import type { PageData } from "./$types";
 

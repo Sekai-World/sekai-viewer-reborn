@@ -1,5 +1,5 @@
 import type { GetVirtualLivesByRegionListData } from "@platform/sekai-master-api-sdk";
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import {
   DEFAULT_VIRTUAL_LIVE_LIST_QUERY_STATE,
   DEFAULT_VIRTUAL_LIVE_LIST_PAGE_SIZE,
@@ -10,7 +10,7 @@ import {
   type VirtualLiveListQueryState,
   type VirtualLiveListSortBy,
   type VirtualLiveListSortOrder
-} from "$lib/domain/virtual-live";
+} from "#lib/domain/virtual-live.js";
 
 const DEFAULT_VIRTUAL_LIVE_LIST_QUERY_STATE_COPY: VirtualLiveListQueryState = {
   ...DEFAULT_VIRTUAL_LIVE_LIST_QUERY_STATE
@@ -27,7 +27,6 @@ const getTrimmedSearchParam = (value: string | null): string => {
 
 const parseSortBy = (value: string | null): VirtualLiveListSortBy =>
   value === "id" ? "id" : "startAt";
-
 const parseSortOrder = (value: string | null): VirtualLiveListSortOrder =>
   value === "asc" ? "asc" : "desc";
 
@@ -128,7 +127,6 @@ const getDateValue = (value: unknown): string | number | null => {
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
-
 const getArray = (value: unknown): unknown[] | null => (Array.isArray(value) ? value : null);
 
 const pickFirstStringLike = (
@@ -218,7 +216,6 @@ const parsePagination = (
     getNumber(paginationSource["page_size"] ?? paginationSource["pageSize"]) ?? fallbackPageSize;
   const total = getNumber(paginationSource["total"]);
   const totalPages = getNumber(paginationSource["total_pages"] ?? paginationSource["totalPages"]);
-
   const hasNextFlag =
     typeof paginationSource["has_next"] === "boolean"
       ? (paginationSource["has_next"] as boolean)
@@ -228,13 +225,7 @@ const parsePagination = (
     hasNextFlag ??
     (totalPages !== null ? page < totalPages : pageSize > 0 && itemCount >= pageSize);
 
-  return {
-    page,
-    pageSize,
-    hasNext,
-    total,
-    totalPages
-  };
+  return { page, pageSize, hasNext, total, totalPages };
 };
 
 export const parseVirtualLiveListPage = (

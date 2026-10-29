@@ -1,12 +1,22 @@
-import { env } from "$env/dynamic/private";
+import {
+  SEKAI_API_BASE_URL,
+  SEKAI_MASTER_API_BASE_URL,
+  SEKAI_REMOTE_ASSET_BASE_URL
+} from "$app/env/private";
+
+const privateEnv = {
+  SEKAI_API_BASE_URL,
+  SEKAI_MASTER_API_BASE_URL,
+  SEKAI_REMOTE_ASSET_BASE_URL
+};
 
 const trimTrailingSlash = (value: string): string => {
   const normalized = value.replace(/\/+$/, "");
   return normalized.length > 0 ? normalized : "/";
 };
 
-const getRequiredPrivateEnv = (name: keyof typeof env): string => {
-  const rawValue = env[name];
+const getRequiredPrivateEnv = (name: keyof typeof privateEnv): string => {
+  const rawValue = privateEnv[name];
   if (!rawValue) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
@@ -19,8 +29,8 @@ const getRequiredPrivateEnv = (name: keyof typeof env): string => {
   return trimTrailingSlash(value);
 };
 
-const getOptionalPrivateEnv = (name: keyof typeof env): string | null => {
-  const rawValue = env[name];
+const getOptionalPrivateEnv = (name: keyof typeof privateEnv): string | null => {
+  const rawValue = privateEnv[name];
   if (!rawValue) {
     return null;
   }

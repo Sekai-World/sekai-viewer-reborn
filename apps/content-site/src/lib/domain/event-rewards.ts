@@ -4,7 +4,7 @@ import type {
   EventRewardHonorGroup,
   EventRewardHonorLevel,
   EventRewardResourceBoxDetail
-} from "$lib/domain/event-detail";
+} from "#lib/domain/event-detail.js";
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;

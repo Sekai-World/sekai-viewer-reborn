@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { env } from "$env/dynamic/public";
+  import { PUBLIC_SUPPORT_PAGE_URL } from "$app/env/public";
   import { BrandLockup } from "@platform/ui-shell";
   import { UnitIconBadge } from "@platform/ui-shell";
   import AssetImage from "@platform/ui-shell/asset-image";
   import { onMount } from "svelte";
   import type { PageData } from "./$types";
   import type { RegionCurrentEvent } from "./+page.server";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
-  import { trackerSupportedRegions, type TrackerSupportedRegion } from "$lib/regions";
-  import { getEventBannerAssetURL } from "$lib/event-assets";
-  import { getTrackerCountdown } from "$lib/tracker-countdown";
+  import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
+  import { trackerSupportedRegions, type TrackerSupportedRegion } from "#lib/regions.js";
+  import { getEventBannerAssetURL } from "#lib/event-assets.js";
+  import { getTrackerCountdown } from "#lib/tracker-countdown.js";
 
   let { data }: { data: PageData } = $props();
-  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
+  const supportPageUrl = PUBLIC_SUPPORT_PAGE_URL?.trim();
   const fallbackMessages = getLocalI18nMessages(["common", "tracker"]);
   let messages = $state(fallbackMessages);
   let events = $state<RegionCurrentEvent[] | null>(null);
@@ -224,10 +224,10 @@
                 <div class="empty-card">
                   <h3 id={`result-${result.region}`}>{translate("home.failed")}</h3>
                   <p>{translate("home.failedDescription")}</p>
-                  <a class="tracker-link" href={`/tracker/${result.region}`}
-                    >{translate("home.openRegionalTracker")}
-                    <span class="tracker-link-arrow" aria-hidden="true">→</span></a
-                  >
+                  <a class="tracker-link" href={`/tracker/${result.region}`}>
+                    {translate("home.openRegionalTracker")}
+                    <span class="tracker-link-arrow" aria-hidden="true">→</span>
+                  </a>
                 </div>
               {/if}
             </article>

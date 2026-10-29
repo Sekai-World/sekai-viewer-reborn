@@ -1,8 +1,8 @@
 import type {
   StoryDocumentReference,
   StoryVoiceCharacterReference
-} from "$lib/live2d/story-document";
-import type { StoryRouteIdentity } from "$lib/live2d/story-route";
+} from "#lib/live2d/story-document.js";
+import type { StoryRouteIdentity } from "#lib/live2d/story-route.js";
 import { createStoryAssetResolver } from "./story-urls";
 import type { StoryResolution } from "./story-identity";
 

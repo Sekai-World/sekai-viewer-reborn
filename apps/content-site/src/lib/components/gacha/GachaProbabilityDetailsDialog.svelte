@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { resolve, base } from "$app/paths";
-  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
-  import type { GachaProbabilityCard } from "$lib/domain/gacha-probability";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import { resolve } from "$app/paths";
+  import { getCardThumbnailPresentation } from "#lib/components/card/card-presentation.js";
+  import type { GachaProbabilityCard } from "#lib/domain/gacha-probability.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import { CardThumbnail } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
   import { tick } from "svelte";
@@ -270,9 +270,12 @@
     activeRequestController = controller;
     try {
       const response = await fetch(
-        `${base}/api/gacha/${encodeURIComponent(region)}/${encodeURIComponent(gachaId)}/probabilities`,
+        resolve(
+          `api/gacha/${encodeURIComponent(region)}/${encodeURIComponent(gachaId)}/probabilities`
+        ),
         { signal: controller.signal }
       );
+
       if (!response.ok) {
         throw new Error("probability request failed");
       }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { DISCORD_SITE_NAME, type DiscordEmbedSeo } from "$lib/seo/discord-embed";
+  import { DISCORD_SITE_NAME, type DiscordEmbedSeo } from "#lib/seo/discord-embed.js";
 
   let { seo }: { seo: DiscordEmbedSeo } = $props();
 </script>

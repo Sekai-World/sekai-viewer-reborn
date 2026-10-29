@@ -16,11 +16,9 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionList: mocks.getEventsByRegionList,
   getEventsByRegionById: mocks.getEventsByRegionById
 }));
-vi.mock("$env/dynamic/private", () => ({
-  env: {
-    SEKAI_API_BASE_URL: "https://api.example.test/",
-    SEKAI_MASTER_API_BASE_URL: "https://master.example.test/"
-  }
+vi.mock("$app/env/private", () => ({
+  SEKAI_API_BASE_URL: "https://api.example.test/",
+  SEKAI_MASTER_API_BASE_URL: "https://master.example.test/"
 }));
 
 import { GET as graph } from "./tracker/[region]/graph/+server";
@@ -28,7 +26,7 @@ import { GET as snapshot } from "./tracker/[region]/snapshot/+server";
 import { GET as time } from "./tracker/[region]/time/+server";
 import { GET as chapter } from "./tracker/[region]/chapter/+server";
 import { GET as eventSearch } from "./tracker/[region]/events/+server";
-import { clearMetadataCache } from "$lib/server/metadata-cache";
+import { clearMetadataCache } from "#lib/server/metadata-cache.js";
 
 const request = (path: string, region = "en") =>
   ({ params: { region }, url: new URL(`https://tools.example.test${path}`) }) as never;
@@ -98,6 +96,17 @@ describe("tracker time-travel endpoints", () => {
     expect(mocks.getEventsByRegionById).not.toHaveBeenCalled();
   });
 
+  it("returns an empty result for unsupported regions and blank event queries", async () => {
+    await expect(
+      (await eventSearch(request("/tracker/cn/events?query=Wonder", "cn"))).json()
+    ).resolves.toEqual({ status: "invalid-data", events: [] });
+    await expect(
+      (await eventSearch(request("/tracker/en/events?query=%20%20"))).json()
+    ).resolves.toEqual({ status: "invalid-data", events: [] });
+    expect(mocks.getEventsByRegionList).not.toHaveBeenCalled();
+    expect(mocks.getEventsByRegionById).not.toHaveBeenCalled();
+  });
+
   it("resolves numeric event picker queries through by-id instead of the list", async () => {
     mocks.getEventsByRegionById.mockResolvedValue({
       data: { id: 42, name: "Historical event", startAt: "2020-01-01T00:00:00Z" }
@@ -125,6 +134,12 @@ describe("tracker time-travel endpoints", () => {
     });
     await expect(
       (await snapshot(request("/tracker/en/snapshot?eventId=42"))).json()
+    ).resolves.toEqual({ status: "invalid-request", rankings: [] });
+    await expect(
+      (await time(request("/tracker/cn/time?eventId=42", "cn"))).json()
+    ).resolves.toEqual({ status: "invalid-request", timePoints: [] });
+    await expect(
+      (await snapshot(request("/tracker/cn/snapshot?eventId=42&timestamp=2026-01-01", "cn"))).json()
     ).resolves.toEqual({ status: "invalid-request", rankings: [] });
     await expect(
       (await graph(request("/tracker/cn/graph?eventId=42&rank=1", "cn"))).json()
@@ -192,6 +207,33 @@ describe("tracker time-travel endpoints", () => {
         query: { charaId: 12, region: "en" }
       })
     );
+  });
+
+  it("loads a historical chapter ranking by event id", async () => {
+    mocks.getEventChapterRankingsByEventIdAndCharaId
+      .mockResolvedValueOnce({ data: [{ timestamp: "2026-01-01T00:00:00Z" }] })
+      .mockResolvedValueOnce({
+        data: { eventRankings: [{ rank: 1, score: 321, userId: "7" }] }
+      });
+
+    await expect(
+      (await chapter(request("/tracker/en/chapter?charaId=12&eventId=42&mode=history"))).json()
+    ).resolves.toEqual({
+      status: "available",
+      rankings: [
+        {
+          rank: 1,
+          score: 321,
+          userId: "7",
+          userName: null,
+          timestamp: null,
+          eventId: null,
+          leaderCard: null,
+          profileHonors: [],
+          honorMissions: []
+        }
+      ]
+    });
   });
 
   it("rejects a historical event request routed through live mode", async () => {

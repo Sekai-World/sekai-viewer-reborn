@@ -1,5 +1,5 @@
-import { env } from "$env/dynamic/public";
-import type { SupportedRegion } from "$lib/domain/regions";
+import { PUBLIC_REMOTE_ASSET_BASE_URL } from "$app/env/public";
+import type { SupportedRegion } from "#lib/domain/regions.js";
 
 const trimTrailingSlash = (value: string): string => {
   const trimmed = value.trim();
@@ -13,8 +13,9 @@ const trimTrailingSlash = (value: string): string => {
 
 export const getRemoteAssetBaseURL = (baseUrlOverride?: string | null): string => {
   const configuredBaseUrl = trimTrailingSlash(
-    baseUrlOverride ?? env.PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
+    baseUrlOverride ?? PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
   );
+
   if (!configuredBaseUrl) {
     throw new Error("Missing required environment variable: PUBLIC_REMOTE_ASSET_BASE_URL");
   }

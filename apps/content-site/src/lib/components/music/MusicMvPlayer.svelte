@@ -1,8 +1,8 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { getMusicLongPreviewAssetURL, type AssetServer } from "$lib/assets/index";
-  import { resolveMusicVideoAssetURL } from "$lib/assets/music-video";
-  import type { MusicVideoDescriptor, MusicVocal } from "$lib/domain/music-detail";
+  import { getMusicLongPreviewAssetURL, type AssetServer } from "#lib/assets/index.js";
+  import { resolveMusicVideoAssetURL } from "#lib/assets/music-video.js";
+  import type { MusicVideoDescriptor, MusicVocal } from "#lib/domain/music-detail.js";
 
   type LoadState = "loading" | "ready" | "error";
 

@@ -4,11 +4,11 @@ const server = vi.hoisted(() => ({
   fetchMissionCharacterOptions: vi.fn(),
   fetchStampListPage: vi.fn()
 }));
-vi.mock("$lib/server/stamps", () => ({ fetchStampListPage: server.fetchStampListPage }));
-vi.mock("$lib/server/mission-characters", () => ({
+vi.mock("#lib/server/stamps.js", () => ({ fetchStampListPage: server.fetchStampListPage }));
+vi.mock("#lib/server/mission-characters.js", () => ({
   fetchMissionCharacterOptions: server.fetchMissionCharacterOptions
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl: () => "https://master-api.test" }));
+vi.mock("#lib/server/config", () => ({ getMasterApiBaseUrl: () => "https://master-api.test" }));
 
 import { GET as getStampsPage } from "./[region]/data/+server";
 import { load as loadStamps } from "./[region]/+page.server";

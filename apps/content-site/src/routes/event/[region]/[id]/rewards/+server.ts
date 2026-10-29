@@ -1,7 +1,7 @@
 import { getEventsByRegionByIdRewards } from "@platform/sekai-master-api-sdk";
 import { error, type RequestHandler } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 
 export const GET: RequestHandler = async ({ params }) => {
   const id = params.id?.trim() ?? "";

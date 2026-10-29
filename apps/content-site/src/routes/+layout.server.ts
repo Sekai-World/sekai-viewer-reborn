@@ -3,14 +3,14 @@ import {
   loadI18nMessageBundle,
   resolveI18nMessageBundle,
   type I18nNamespace
-} from "$lib/i18n/runtime";
+} from "#lib/i18n/runtime.js";
 import {
   normalizeRegion,
   normalizeUiLocale,
   PREFERRED_REGION_COOKIE_NAME,
   UI_LOCALE_COOKIE_NAME
-} from "$lib/i18n/region";
-import { fetchGlobalNotices } from "$lib/server/notifications";
+} from "#lib/i18n/region.js";
+import { fetchGlobalNotices } from "#lib/server/notifications.js";
 import packageJson from "../../package.json";
 
 const getRouteI18nNamespaces = (pathname: string): readonly I18nNamespace[] => {

@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto, refreshAll } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import CatalogueFrame from "$lib/components/mission/CatalogueFrame.svelte";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
-  import MysekaiFixtureTile from "$lib/components/mysekai/MysekaiFixtureTile.svelte";
-  import MysekaiLoadMore from "$lib/components/mysekai/MysekaiLoadMore.svelte";
-  import { getMysekaiFixtureThumbnailURL } from "$lib/assets/index";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
+  import CatalogueFrame from "#lib/components/mission/CatalogueFrame.svelte";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import ListToolbarButton from "#lib/components/shared/ListToolbarButton.svelte";
+  import MysekaiFixtureTile from "#lib/components/mysekai/MysekaiFixtureTile.svelte";
+  import MysekaiLoadMore from "#lib/components/mysekai/MysekaiLoadMore.svelte";
+  import { getMysekaiFixtureThumbnailURL } from "#lib/assets/index.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
   import {
     getMysekaiFixtureTagsOfType,
     toMysekaiFixtureSearchParams,
     type MysekaiFixture,
     type MysekaiFixtureFilters,
     type MysekaiFixtureListQuery
-  } from "$lib/domain/mysekai";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createStreamedTranslator } from "$lib/i18n/streamed-translator.svelte";
-  import { fetchPagedResult, PagedList } from "$lib/paged-list.svelte";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/domain/mysekai.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { createStreamedTranslator } from "#lib/i18n/streamed-translator.svelte.js";
+  import { fetchPagedResult, PagedList } from "#lib/paged-list.svelte.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -76,8 +76,7 @@
   );
   const navigateQuery = (overrides: Partial<MysekaiFixtureListQuery>): void => {
     void goto(listPath(data.region, { ...data.query, ...overrides }), {
-      keepFocus: true,
-      noScroll: true
+      reset: false
     });
   };
   const loadMore = (): void => {
@@ -233,7 +232,7 @@
   {controls}
   resultsLabel={t("mysekai.results")}
   onSearch={(name) => navigateQuery({ name })}
-  onRetry={() => void invalidateAll()}
+  onRetry={() => void refreshAll()}
 >
   {#snippet loadingPlaceholder()}
     <div class="grid grid-cols-4 gap-2 sm:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-12">

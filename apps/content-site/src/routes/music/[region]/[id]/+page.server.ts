@@ -1,17 +1,17 @@
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import {
   getMusicsByRegionByIdDetail,
   getMusicsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { getServerI18nText } from "$lib/i18n/runtime";
-import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { loadDiscordEmbedLabels } from "$lib/server/discord-embed-labels";
-import { parseMusicDetail, type MusicDetail } from "$lib/server/music-detail";
-import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
-import { getMusicJacketAssetURL } from "$lib/assets/index";
-import { createPageTitle } from "$lib/page-title";
+import { getServerI18nText } from "#lib/i18n/runtime.js";
+import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { loadDiscordEmbedLabels } from "#lib/server/discord-embed-labels.js";
+import { parseMusicDetail, type MusicDetail } from "#lib/server/music-detail.js";
+import { fetchUnitProfiles, toUnitProfileMap } from "#lib/server/unit-profiles.js";
+import { getMusicJacketAssetURL } from "#lib/assets/index.js";
+import { createPageTitle } from "#lib/page-title.js";
 import {
   buildCanonicalUrl,
   buildDiscordEmbedSeo,
@@ -22,7 +22,7 @@ import {
   resolveEmbedImageUrl,
   resolveSeoWithBudget,
   type DiscordEmbedSeo
-} from "$lib/seo/discord-embed";
+} from "#lib/seo/discord-embed.js";
 import type { PageServerLoad } from "./$types";
 
 type RegionMusicLookup = {
@@ -67,6 +67,7 @@ const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
   const toSupportedRegionMap = (value: unknown): SupportedRegion[] => {
     const record =
       value !== null && typeof value === "object" ? (value as Record<string, unknown>) : null;
+
     if (!record) {
       return [];
     }
@@ -81,6 +82,7 @@ const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
         regionValue !== null && typeof regionValue === "object"
           ? (regionValue as Record<string, unknown>)
           : null;
+
       return nested?.available === true || nested?.exists === true;
     });
   };
@@ -103,6 +105,7 @@ const normalizeAvailableRegions = (payload: unknown): SupportedRegion[] => {
     root.data !== null && typeof root.data === "object"
       ? (root.data as Record<string, unknown>)
       : null;
+
   if (dataNode) {
     const nestedRegions = normalizeAvailableRegions(dataNode);
     if (nestedRegions.length > 0) {

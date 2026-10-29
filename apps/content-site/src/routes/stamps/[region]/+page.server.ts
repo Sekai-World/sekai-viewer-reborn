@@ -1,8 +1,8 @@
-import { normalizeRegion } from "$lib/i18n/region";
-import { parseStampListQuery } from "$lib/domain/stamp";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { fetchMissionCharacterOptions } from "$lib/server/mission-characters";
-import { fetchStampListPage } from "$lib/server/stamps";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { parseStampListQuery } from "#lib/domain/stamp.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { fetchMissionCharacterOptions } from "#lib/server/mission-characters.js";
+import { fetchStampListPage } from "#lib/server/stamps.js";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = ({ params, url }) => {

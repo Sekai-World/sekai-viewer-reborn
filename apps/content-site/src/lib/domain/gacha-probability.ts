@@ -1,4 +1,4 @@
-import type { GachaCardRarityRate, GachaDetailSub } from "$lib/domain/gacha-detail";
+import type { GachaCardRarityRate, GachaDetailSub } from "#lib/domain/gacha-detail.js";
 
 export type GachaProbabilityCardMetadata = {
   title: string | null;

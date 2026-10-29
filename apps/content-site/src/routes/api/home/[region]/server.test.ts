@@ -20,21 +20,21 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
 }));
 
 const { getServerI18nText } = vi.hoisted(() => ({ getServerI18nText: vi.fn() }));
-vi.mock("$lib/i18n/runtime", () => ({ getServerI18nText }));
+vi.mock("#lib/i18n/runtime.js", () => ({ getServerI18nText }));
 
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 const { fetchUnitProfiles, toUnitProfileMap } = vi.hoisted(() => ({
   fetchUnitProfiles: vi.fn(),
   toUnitProfileMap: vi.fn()
 }));
-vi.mock("$lib/server/unit-profiles", () => ({ fetchUnitProfiles, toUnitProfileMap }));
+vi.mock("#lib/server/unit-profiles.js", () => ({ fetchUnitProfiles, toUnitProfileMap }));
 
 const { loadGameNews } = vi.hoisted(() => ({ loadGameNews: vi.fn() }));
-vi.mock("$lib/server/game-news", () => ({ loadGameNews }));
+vi.mock("#lib/server/game-news.js", () => ({ loadGameNews }));
 
 import { GET } from "./+server";
 

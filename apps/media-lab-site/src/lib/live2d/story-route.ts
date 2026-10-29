@@ -1,4 +1,4 @@
-import { supportedRegions, type SupportedRegion } from "$lib/region-selection.svelte";
+import { supportedRegions, type SupportedRegion } from "#lib/region-selection.svelte.js";
 
 /**
  * Route-level validation for the Live2D StoryReader path params.

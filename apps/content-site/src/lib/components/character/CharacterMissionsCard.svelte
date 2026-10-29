@@ -1,10 +1,10 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import CharacterMissionGrid from "$lib/components/mission/CharacterMissionGrid.svelte";
-  import ViewAllLink from "$lib/components/shared/ViewAllLink.svelte";
-  import { countCharacterMissionGoals } from "$lib/domain/character-growth";
-  import type { Mission } from "$lib/domain/mission";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import CharacterMissionGrid from "#lib/components/mission/CharacterMissionGrid.svelte";
+  import ViewAllLink from "#lib/components/shared/ViewAllLink.svelte";
+  import { countCharacterMissionGoals } from "#lib/domain/character-growth.js";
+  import type { Mission } from "#lib/domain/mission.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
 
   let {
     missions,

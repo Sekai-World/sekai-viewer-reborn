@@ -26,15 +26,13 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionByIdRewards: mocks.getEventsByRegionByIdRewards,
   getWorldBloomsByRegionList: mocks.getWorldBloomsByRegionList
 }));
-vi.mock("$env/dynamic/private", () => ({
-  env: {
-    SEKAI_API_BASE_URL: "https://api.example.test/",
-    SEKAI_MASTER_API_BASE_URL: "https://master.example.test/"
-  }
+vi.mock("$app/env/private", () => ({
+  SEKAI_API_BASE_URL: "https://api.example.test/",
+  SEKAI_MASTER_API_BASE_URL: "https://master.example.test/"
 }));
 
 import { load } from "./tracker/[region]/+page.server";
-import { clearMetadataCache } from "$lib/server/metadata-cache";
+import { clearMetadataCache } from "#lib/server/metadata-cache.js";
 
 const runLoad = (region: string, eventId?: string) =>
   (

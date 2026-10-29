@@ -1,9 +1,8 @@
-import { json } from "@sveltejs/kit";
-import { parseStampListQuery } from "$lib/domain/stamp";
-import { normalizeRegion } from "$lib/i18n/region";
-import { parsePositivePage } from "$lib/server/catalogue-data";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { fetchStampListPage } from "$lib/server/stamps";
+import { parseStampListQuery } from "#lib/domain/stamp.js";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { parsePositivePage } from "#lib/server/catalogue-data.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { fetchStampListPage } from "#lib/server/stamps.js";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -12,8 +11,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const query = parseStampListQuery(url.searchParams);
 
   try {
-    return json(await fetchStampListPage(getMasterApiBaseUrl(), region, query, page));
+    return Response.json(await fetchStampListPage(getMasterApiBaseUrl(), region, query, page));
   } catch {
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

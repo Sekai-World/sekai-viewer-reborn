@@ -1,8 +1,8 @@
 <script lang="ts">
   import { untrack } from "svelte";
   import Icon from "@iconify/svelte";
-  import type { MusicOriginal } from "$lib/domain/music-detail";
-  import { getMusicVideoReferences } from "$lib/domain/music-youtube";
+  import type { MusicOriginal } from "#lib/domain/music-detail.js";
+  import { getMusicVideoReferences } from "#lib/domain/music-youtube.js";
 
   let {
     originals,

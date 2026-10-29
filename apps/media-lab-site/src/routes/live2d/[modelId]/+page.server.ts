@@ -2,8 +2,8 @@ import { error } from "@sveltejs/kit";
 import {
   resolveLive2dCatalogRouteData,
   toLive2dRouteModelDescriptor
-} from "$lib/live2d/catalog-route-data";
-import { parseModelRouteParams } from "$lib/live2d/model-route";
+} from "#lib/live2d/catalog-route-data.js";
+import { parseModelRouteParams } from "#lib/live2d/model-route.js";
 import type { PageServerLoad } from "./$types";
 
 const LEGACY_MODEL_ID_PATTERN = /^[A-Za-z0-9_.-]+$/;

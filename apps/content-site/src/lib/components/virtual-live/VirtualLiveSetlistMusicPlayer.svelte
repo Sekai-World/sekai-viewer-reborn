@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { getMusicJacketAssetURL, getMusicLongPreviewAssetURL } from "$lib/assets/index";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import type { VirtualLiveSetlistMusicDisplay } from "$lib/domain/virtual-live";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getMusicJacketAssetURL, getMusicLongPreviewAssetURL } from "#lib/assets/index.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import type { VirtualLiveSetlistMusicDisplay } from "#lib/domain/virtual-live.js";
   import { AudioPlayer } from "@platform/ui-shell";
 
   let {

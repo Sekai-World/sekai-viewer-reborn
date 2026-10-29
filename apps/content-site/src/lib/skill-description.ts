@@ -3,7 +3,7 @@ import type {
   CardDetailSkill,
   CardDetailSkillEffect,
   CardDetailSkillEffectDetail
-} from "$lib/domain/card-detail";
+} from "#lib/domain/card-detail.js";
 
 type SelectedSkillEffect = {
   effect: CardDetailSkillEffect;

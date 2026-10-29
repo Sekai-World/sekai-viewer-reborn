@@ -19,6 +19,8 @@
   const navigationTransitionKey = $derived(`${page.url.pathname}${page.url.search}`);
 
   onNavigate((navigation) => {
+    if (navigation.shallow && navigation.type === "goto") return;
+
     const documentWithViewTransition = document as DocumentWithViewTransition;
     if (typeof documentWithViewTransition.startViewTransition !== "function") {
       return;

@@ -1,8 +1,7 @@
-import { json } from "@sveltejs/kit";
-import { getSekaiApiBaseUrl } from "$lib/server/config";
-import { isTrackerRegion } from "$lib/server/event-tracker";
-import { getTrackerChapterGraph, getTrackerGraph } from "$lib/server/tracker-graph";
-import { parseTrackerTimestamp } from "$lib/tracker-phase";
+import { getSekaiApiBaseUrl } from "#lib/server/config.js";
+import { isTrackerRegion } from "#lib/server/event-tracker.js";
+import { getTrackerChapterGraph, getTrackerGraph } from "#lib/server/tracker-graph.js";
+import { parseTrackerTimestamp } from "#lib/tracker-phase.js";
 import type { RequestHandler } from "./$types";
 
 const parsePositiveInteger = (value: string | null): number | null => {
@@ -17,7 +16,8 @@ const parseTimestamp = (value: string | null): string | null => {
 };
 
 export const GET: RequestHandler = async ({ params, url }) => {
-  if (!isTrackerRegion(params.region)) return json({ status: "invalid-request", points: [] });
+  if (!isTrackerRegion(params.region))
+    return Response.json({ status: "invalid-request", points: [] });
   const eventId = parsePositiveInteger(url.searchParams.get("eventId"));
   const rank = parsePositiveInteger(url.searchParams.get("rank"));
   const charaIdValue = url.searchParams.get("charaId");
@@ -30,10 +30,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
     (charaIdValue !== null && charaId === null) ||
     (timestampValue !== null && timestamp === null)
   ) {
-    return json({ status: "invalid-request", points: [] });
+    return Response.json({ status: "invalid-request", points: [] });
   }
 
-  return json(
+  return Response.json(
     charaId === null
       ? await getTrackerGraph(
           getSekaiApiBaseUrl(),

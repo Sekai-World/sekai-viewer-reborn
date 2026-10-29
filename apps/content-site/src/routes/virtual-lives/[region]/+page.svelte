@@ -1,28 +1,28 @@
 <script lang="ts">
-  import FilterOnboarding from "$lib/components/FilterOnboarding.svelte";
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
+  import FilterOnboarding from "#lib/components/FilterOnboarding.svelte";
+  import { browser } from "$app/env";
+  import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
   import Icon from "@iconify/svelte";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import ListToolbarButton from "#lib/components/shared/ListToolbarButton.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import VirtualLiveListCard from "$lib/components/virtual-live/VirtualLiveListCard.svelte";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import VirtualLiveListCard from "#lib/components/virtual-live/VirtualLiveListCard.svelte";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
   import type {
     VirtualLiveListItem,
     VirtualLiveListPage,
     VirtualLiveListSortBy,
     VirtualLiveListSortOrder
-  } from "$lib/domain/virtual-live";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { toTimestampMs } from "$lib/time/date-time";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/domain/virtual-live.js";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import { toTimestampMs } from "#lib/time/date-time.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -221,10 +221,10 @@
     if (!browser) return;
     const params = createSearchParams(1);
     params.delete("page");
-    replaceState(
-      `${resolve("/virtual-lives/[region]", { region: data.region })}?${params.toString()}`,
-      {}
-    );
+    goto(`${resolve("/virtual-lives/[region]", { region: data.region })}?${params.toString()}`, {
+      shallow: true,
+      replace: true
+    });
   };
 
   const fetchPage = async (page: number, replace: boolean): Promise<void> => {
@@ -386,8 +386,11 @@
         class="archive-list-empty rounded-2xl border py-12 text-center text-sm"
       >
         {emptyLabel}
-      </div>{/if}
-    {#if errorMessage}<div class="archive-list-error mx-auto max-w-xl rounded-2xl border p-3">
+      </div>
+    {/if}
+
+    {#if errorMessage}
+      <div class="archive-list-error mx-auto max-w-xl rounded-2xl border p-3">
         <div class="alert alert-error">
           {errorMessage}<button class="btn btn-sm" onclick={() => void loadNextPage()}
             >{retryLabel}</button

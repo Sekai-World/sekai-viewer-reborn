@@ -13,9 +13,7 @@ import {
 } from "./honor-degree";
 import type { BondsHonor, Honor, HonorGroupMetadata } from "./domain/honor";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }));
 const group: HonorGroupMetadata = {
   id: 1,
   name: null,

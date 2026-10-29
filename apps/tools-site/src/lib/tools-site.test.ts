@@ -1,28 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("$env/dynamic/private", () => ({
-  env: {
-    SEKAI_API_BASE_URL: " https://api.example.test/api/// ",
-    SEKAI_MASTER_API_BASE_URL: " https://master.example.test/api/v1/// "
-  }
+vi.mock("$app/env/private", () => ({
+  SEKAI_API_BASE_URL: " https://api.example.test/api/// ",
+  SEKAI_MASTER_API_BASE_URL: " https://master.example.test/api/v1/// "
 }));
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_SEKAI_I18N_BASE_URL: " https://i18n.example.test/// " }
+vi.mock("$app/env/public", () => ({
+  PUBLIC_SEKAI_I18N_BASE_URL: " https://i18n.example.test/// "
 }));
 
-vi.mock("$app/environment", () => ({ browser: false }));
+vi.mock("$app/env", () => ({ browser: false }));
 
-import { repoLocaleByUiLocale, supportedUiLocales } from "$lib/i18n/config";
-import { DEFAULT_UI_LOCALE, normalizeUiLocale } from "$lib/i18n/region";
+import { repoLocaleByUiLocale, supportedUiLocales } from "#lib/i18n/config.js";
+import { DEFAULT_UI_LOCALE, normalizeUiLocale } from "#lib/i18n/region.js";
 import {
   createI18nTranslator,
   getLocalI18nMessages,
   loadI18nMessageBundle,
   toolsSiteI18nNamespaces
-} from "$lib/i18n/runtime";
-import { normalizeRegion, supportedRegions, trackerSupportedRegions } from "$lib/regions";
-import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "$lib/server/config";
+} from "#lib/i18n/runtime.js";
+import { normalizeRegion, supportedRegions, trackerSupportedRegions } from "#lib/regions.js";
+import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "#lib/server/config.js";
 
 describe("tools-site region and locale helpers", () => {
   it("normalizes supported regions and falls back for invalid values", () => {

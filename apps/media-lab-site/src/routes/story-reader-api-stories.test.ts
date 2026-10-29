@@ -8,8 +8,8 @@ const mocks = vi.hoisted(() => ({
   fetchStoryCollection: vi.fn()
 }));
 
-vi.mock("$lib/story/master-data-client.server", () => mocks);
-vi.mock("$lib/story/story-resolver.server", () => ({
+vi.mock("#lib/story/master-data-client.server.js", () => mocks);
+vi.mock("#lib/story/story-resolver.server.js", () => ({
   getStoryAssetBase: () => "https://assets.test"
 }));
 

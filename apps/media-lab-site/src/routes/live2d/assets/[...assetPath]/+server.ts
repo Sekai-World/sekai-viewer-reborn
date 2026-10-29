@@ -3,7 +3,7 @@ import {
   toLive2dAssetBucketUrlFromPath,
   toLive2dAssetRelayUrlFromPath,
   validateLive2dAssetPath
-} from "$lib/live2d/associated-catalog";
+} from "#lib/live2d/associated-catalog.js";
 
 const FETCH_TIMEOUT_MS = 10_000;
 const ASSET_CACHE_CONTROL = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800";

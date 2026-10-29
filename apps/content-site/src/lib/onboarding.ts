@@ -1,4 +1,4 @@
-import { isValidSiteVersion } from "$lib/site-updates";
+import { isValidSiteVersion } from "#lib/site-updates.js";
 
 export const ONBOARDING_SEEN_STORAGE_KEY = "content_site_onboarding_seen";
 export const SEEN_SITE_VERSION_STORAGE_KEY = "content_site_seen_version";

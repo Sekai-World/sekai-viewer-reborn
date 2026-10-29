@@ -1,12 +1,12 @@
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   BONDS_HONOR_TYPE,
   createEmptyHonorListPage,
   fetchBondsHonorViewData,
   fetchHonorListPage,
   parseHonorListQueryState
-} from "$lib/server/honor-list";
+} from "#lib/server/honor-list.js";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = ({ params, url }) => {

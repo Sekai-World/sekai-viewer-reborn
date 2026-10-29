@@ -12,7 +12,7 @@ const sdk = vi.hoisted(() => ({
 }));
 vi.mock("@platform/sekai-master-api-sdk", () => sdk);
 
-import { parseMysekaiFixtureListQuery } from "$lib/domain/mysekai";
+import { parseMysekaiFixtureListQuery } from "#lib/domain/mysekai.js";
 import {
   createMysekaiFixtureListRequestQuery,
   createMysekaiSoundtrackListRequestQuery,

@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
-import type { EventDetail, EventHonorBonus, EventRelatedData } from "$lib/domain/event-detail";
+import type { EventDetail, EventHonorBonus, EventRelatedData } from "#lib/domain/event-detail.js";
 import eventMessages from "../../../../../../../packages/i18n-source/content-site/event.json";
 import EventPage from "./+page.svelte";
 import type { PageData } from "./$types";

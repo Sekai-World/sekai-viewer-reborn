@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import { SEKAI_MASTER_API_BASE_URL } from "$app/env/private";
 import {
   getActionSetsByRegionList,
   getCardEpisodesByRegionList,
@@ -16,7 +16,7 @@ import {
   getUnitStoriesByRegionList,
   getUnitStoryEpisodeGroupsByRegionList
 } from "@platform/sekai-master-api-sdk";
-import type { StoryRouteRegion } from "$lib/live2d/story-route";
+import type { StoryRouteRegion } from "#lib/live2d/story-route.js";
 import type {
   StoryActionSet,
   StoryArea,
@@ -79,15 +79,11 @@ export interface StoryMasterDataClientOptions {
 }
 
 const asArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-
 const asString = (value: unknown): string => (typeof value === "string" ? value : "");
-
 const asNumber = (value: unknown): number =>
   typeof value === "number" && Number.isFinite(value) ? value : 0;
-
 const asOptionalString = (value: unknown): string | undefined =>
   typeof value === "string" && value.length > 0 ? value : undefined;
-
 const asOptionalNumber = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
@@ -371,7 +367,7 @@ const stripTrailingSlashes = (value: string): string => {
 };
 
 const resolveApiBaseUrl = (options: StoryMasterDataClientOptions): string => {
-  const base = stripTrailingSlashes(options.baseUrl ?? env.SEKAI_MASTER_API_BASE_URL?.trim() ?? "");
+  const base = stripTrailingSlashes(options.baseUrl ?? SEKAI_MASTER_API_BASE_URL?.trim() ?? "");
   if (!base) {
     throw new Error("Missing required environment variable: SEKAI_MASTER_API_BASE_URL");
   }
@@ -529,7 +525,6 @@ export interface StoryEventListPagination {
   hasNext: boolean;
   total: number | null;
 }
-
 export interface StoryEventListPage {
   items: unknown[];
   pagination: StoryEventListPagination;

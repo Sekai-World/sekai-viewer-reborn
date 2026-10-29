@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { getMusicJacketAssetURL } from "$lib/assets/index";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { toTimestampMs } from "$lib/time/date-time";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import { getMusicJacketAssetURL } from "#lib/assets/index.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import { toTimestampMs } from "#lib/time/date-time.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
 
   type MusicListItem = {
     id: string;
