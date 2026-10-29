@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { goto } from "$app/navigation";
   import Icon from "@iconify/svelte";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
   import type { PageProps } from "./$types";
 
   type PageData = PageProps["data"];
@@ -15,13 +15,7 @@
     deckBonus: "0",
     boostMultiplier: "1"
   };
-  const FIELD_DETAIL_REASON_CODES = new Set([
-    "invalid-schema",
-    "incomplete-data",
-    "mixed-data",
-    "freshness-metadata-missing",
-    "invalid-freshness"
-  ]);
+  const FIELD_DETAIL_REASON_CODES = new Set(["invalid-schema", "incomplete-data", "mixed-data"]);
   const MODES = [
     { id: "jp-solo", labelKey: "musicRecommender.jpSolo", enabled: true },
     { id: "auto", labelKey: "musicRecommender.modeAuto", enabled: false },
@@ -149,7 +143,7 @@
   );
   const formulaVersion = $derived(data.formulaVersion);
   const sourceHash = $derived(data.sourceHash ?? data.provenance?.contentHash ?? null);
-  const sourceLastModifiedAt = $derived(data.provenance?.freshness.lastModifiedAt ?? null);
+  const sourceLastModifiedAt = $derived(data.provenance?.lastModifiedAt ?? null);
   const shouldShowFieldDetails = $derived(
     data.status === "unavailable" &&
       data.reasonCode !== null &&
@@ -165,8 +159,6 @@
         return "musicRecommender.fetchError";
       case "http-error":
         return "musicRecommender.httpError";
-      case "stale-data":
-        return "musicRecommender.staleData";
       case "invalid-json":
         return "musicRecommender.invalidJson";
       case "invalid-schema":
@@ -175,10 +167,6 @@
         return "musicRecommender.incompleteData";
       case "mixed-data":
         return "musicRecommender.mixedData";
-      case "freshness-metadata-missing":
-        return "musicRecommender.freshnessMetadataMissing";
-      case "invalid-freshness":
-        return "musicRecommender.invalidFreshness";
       case "missing-inputs":
         return "musicRecommender.missingInputs";
       case "invalid-inputs":
@@ -214,9 +202,8 @@
     try {
       await goto(`${url.pathname}?${url.searchParams.toString()}`, {
         invalidateAll: true,
-        keepFocus: true,
-        noScroll: true,
-        replaceState: true
+        reset: false,
+        replace: true
       });
     } finally {
       isSubmitting = false;

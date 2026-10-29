@@ -106,7 +106,7 @@
     {
       label: translate("musicRecommender.navigation"),
       href: "/music-recommender",
-      icon: "mdi:music-note-search",
+      icon: "mdi:playlist-music-outline",
       active: page.url.pathname === "/music-recommender"
     },
     ...(supportPageUrl

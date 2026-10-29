@@ -1,24 +1,22 @@
-import { createHash } from "node:crypto";
-import { withRequestTimeout } from "$lib/server/network";
+import {
+  computeMusicMetasRevision,
+  parseMusicMetas,
+  type MusicMetasIssue
+} from "#lib/server/music-metas.js";
+import { withRequestTimeout } from "#lib/server/network.js";
 import {
   DEFAULT_MUSIC_META_SOURCE_ID,
   JP_SOLO_FORMULA_VERSION,
+  MUSIC_META_MINIMUM_RECORD_COUNT,
   MUSIC_META_SOURCES,
-  normalizeMusicMetaPayload,
   rankJpSoloRecommendations,
   type MusicMetaDataset,
   type MusicMetaFailureReasonCode,
-  type MusicMetaFreshness,
   type MusicMetaProvenance,
   type MusicMetaSource,
   type MusicMetaSourceId,
   type JpSoloYieldInputs
-} from "$lib/music-recommender";
-
-// Reject cached representations older than one day and source artifacts older than 90 days.
-const MAX_RESPONSE_AGE_MS = 24 * 60 * 60 * 1_000;
-const MAX_LAST_MODIFIED_AGE_MS = 90 * 24 * 60 * 60 * 1_000;
-const MAX_CLOCK_SKEW_MS = 5 * 60 * 1_000;
+} from "#lib/music-recommender.js";
 
 export type MusicMetaFetcher = (input: string, init?: RequestInit) => Promise<Response>;
 export type MusicRecommenderMetric = "score" | "eventPoints";
@@ -141,131 +139,19 @@ const failure = (
   invalidFields: [...invalidFields]
 });
 
-const parseFreshness = (
-  headers: Headers,
-  checkedAt: Date
-):
-  | { status: "fresh"; freshness: MusicMetaFreshness }
-  | {
-      status: "unavailable";
-      reasonCode: "freshness-metadata-missing" | "invalid-freshness" | "stale-data";
-      reason: string;
-      missingFields: string[];
-      invalidFields: string[];
-    } => {
-  const responseDateHeader = headers.get("date");
-  if (responseDateHeader === null) {
-    return {
-      status: "unavailable",
-      reasonCode: "freshness-metadata-missing",
-      reason:
-        "The selected source response did not include a Date header for freshness validation.",
-      missingFields: ["headers.date"],
-      invalidFields: []
-    };
-  }
-
-  const responseDate = new Date(responseDateHeader);
-  if (!Number.isFinite(responseDate.getTime())) {
-    return {
-      status: "unavailable",
-      reasonCode: "invalid-freshness",
-      reason: "The selected source returned an invalid Date header.",
-      missingFields: [],
-      invalidFields: ["headers.date"]
-    };
-  }
-
-  const nowMs = checkedAt.getTime();
-  const responseDateMs = responseDate.getTime();
-  if (responseDateMs > nowMs + MAX_CLOCK_SKEW_MS) {
-    return {
-      status: "unavailable",
-      reasonCode: "invalid-freshness",
-      reason: "The selected source Date header is unexpectedly in the future.",
-      missingFields: [],
-      invalidFields: ["headers.date"]
-    };
-  }
-
-  const ageHeader = headers.get("age");
-  const ageSeconds =
-    ageHeader === null ? 0 : /^\d+$/.test(ageHeader.trim()) ? Number(ageHeader) : Number.NaN;
-  if (!Number.isFinite(ageSeconds) || ageSeconds < 0) {
-    return {
-      status: "unavailable",
-      reasonCode: "invalid-freshness",
-      reason: "The selected source returned an invalid Age header.",
-      missingFields: [],
-      invalidFields: ["headers.age"]
-    };
-  }
-
-  const responseAgeMs = Math.max(0, nowMs - responseDateMs) + ageSeconds * 1_000;
-  const warningHeader = headers.get("warning") ?? "";
-  if (responseAgeMs > MAX_RESPONSE_AGE_MS || /\b(?:110|113)\b/.test(warningHeader)) {
-    return {
-      status: "unavailable",
-      reasonCode: "stale-data",
-      reason: "The selected source response is older than the allowed freshness window.",
-      missingFields: [],
-      invalidFields: []
-    };
-  }
-
-  const lastModifiedHeader = headers.get("last-modified");
-  let lastModifiedAt: string | null = null;
-  if (lastModifiedHeader !== null) {
-    const lastModified = new Date(lastModifiedHeader);
-    const lastModifiedMs = lastModified.getTime();
-    if (!Number.isFinite(lastModifiedMs) || lastModifiedMs > nowMs + MAX_CLOCK_SKEW_MS) {
-      return {
-        status: "unavailable",
-        reasonCode: "invalid-freshness",
-        reason: "The selected source returned an invalid Last-Modified header.",
-        missingFields: [],
-        invalidFields: ["headers.last-modified"]
-      };
-    }
-
-    if (nowMs - lastModifiedMs > MAX_LAST_MODIFIED_AGE_MS) {
-      return {
-        status: "unavailable",
-        reasonCode: "stale-data",
-        reason:
-          "The selected source content has not been modified within the allowed freshness window.",
-        missingFields: [],
-        invalidFields: []
-      };
-    }
-    lastModifiedAt = lastModified.toISOString();
-  }
-
-  return {
-    status: "fresh",
-    freshness: {
-      status: "fresh",
-      checkedAt: checkedAt.toISOString(),
-      responseDate: responseDate.toISOString(),
-      responseAgeMs,
-      lastModifiedAt
-    }
-  };
+/** Last-Modified is shown with results only; a missing or unreadable value never blocks them. */
+const parseLastModified = (headers: Headers): string | null => {
+  const value = headers.get("last-modified");
+  if (value === null) return null;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null;
 };
 
-const hashMusicMetaRecords = (
-  items: Extract<MusicMetaDataset, { status: "available" }>["items"]
-): `sha256:${string}` => {
-  const canonicalRecords = items.map((item) => ({
-    music_id: item.musicId,
-    difficulty: item.difficulty,
-    music_time: item.musicTime,
-    event_rate: item.eventRate,
-    base_score: item.baseScore,
-    skill_score_solo: item.skillScoreSolo
-  }));
-  const digest = createHash("sha256").update(JSON.stringify(canonicalRecords)).digest("hex");
-  return `sha256:${digest}`;
+const describeIssue = ({ code, index, field }: MusicMetasIssue): string => {
+  if (code === "not-array") return "music_metas[]";
+  if (index === undefined) return "music_metas";
+  if (code === "duplicate-key") return `music_metas[${index}].music_id/difficulty`;
+  return field === undefined ? `music_metas[${index}]` : `music_metas[${index}].${field}`;
 };
 
 /** Fetches only the selected allow-listed source; an absent selection uses the documented default. */
@@ -313,17 +199,6 @@ export const loadMusicMetaCatalog = async (
   }
 
   const checkedAt = now();
-  const freshness = parseFreshness(response.headers, checkedAt);
-  if (freshness.status === "unavailable") {
-    return failure(
-      source,
-      freshness.reasonCode,
-      freshness.reason,
-      freshness.missingFields,
-      freshness.invalidFields
-    );
-  }
-
   let payload: unknown;
   try {
     payload = await response.json();
@@ -331,30 +206,54 @@ export const loadMusicMetaCatalog = async (
     return failure(source, "invalid-json", "The selected source did not return valid JSON.");
   }
 
-  const normalized = normalizeMusicMetaPayload(payload);
-  if (normalized.status === "unavailable") {
-    return {
-      status: "unavailable",
-      source,
-      reasonCode: normalized.reasonCode,
-      reason: normalized.reason,
-      missingFields: normalized.missingFields,
-      invalidFields: normalized.invalidFields
-    };
+  const parsed = parseMusicMetas(payload);
+  if (parsed.status === "invalid") {
+    const [first] = parsed.issues;
+    if (first?.code === "empty") {
+      return failure(
+        source,
+        "incomplete-data",
+        `The selected source contains no records; at least ${MUSIC_META_MINIMUM_RECORD_COUNT} are required for a complete catalog.`,
+        [`music_metas records (minimum ${MUSIC_META_MINIMUM_RECORD_COUNT})`]
+      );
+    }
+    const fields = [...new Set(parsed.issues.map(describeIssue))].sort(compareStrings);
+    return first?.code === "not-array"
+      ? failure(
+          source,
+          "invalid-schema",
+          "The selected source must contain a JSON array of music metadata records.",
+          fields
+        )
+      : failure(
+          source,
+          "invalid-schema",
+          "One or more music metadata records are missing required fields or contain invalid values.",
+          [],
+          fields
+        );
   }
 
-  const fetchedAt = checkedAt.toISOString();
+  if (parsed.records.length < MUSIC_META_MINIMUM_RECORD_COUNT) {
+    return failure(
+      source,
+      "incomplete-data",
+      `The selected source contains ${parsed.records.length} records; at least ${MUSIC_META_MINIMUM_RECORD_COUNT} are required for a complete catalog.`,
+      [`music_metas records (minimum ${MUSIC_META_MINIMUM_RECORD_COUNT})`]
+    );
+  }
+
   return {
     status: "available",
     source,
-    items: normalized.items,
+    items: [...parsed.records],
     provenance: {
       sourceId,
       sourceUrl: source.url,
-      contentHash: hashMusicMetaRecords(normalized.items),
-      recordCount: normalized.items.length,
-      fetchedAt,
-      freshness: freshness.freshness
+      contentHash: `sha256:${computeMusicMetasRevision(parsed.records)}`,
+      recordCount: parsed.records.length,
+      fetchedAt: checkedAt.toISOString(),
+      lastModifiedAt: parseLastModified(response.headers)
     }
   };
 };

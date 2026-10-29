@@ -45,10 +45,7 @@ export type MusicMetaFailureReasonCode =
   | "invalid-json"
   | "invalid-schema"
   | "incomplete-data"
-  | "mixed-data"
-  | "freshness-metadata-missing"
-  | "invalid-freshness"
-  | "stale-data";
+  | "mixed-data";
 
 export type MusicMetaUnavailable = {
   status: "unavailable";
@@ -59,21 +56,14 @@ export type MusicMetaUnavailable = {
   invalidFields: string[];
 };
 
-export type MusicMetaFreshness = {
-  status: "fresh" | "stale" | "unknown";
-  checkedAt: string;
-  responseDate: string | null;
-  responseAgeMs: number | null;
-  lastModifiedAt: string | null;
-};
-
 export type MusicMetaProvenance = {
   sourceId: MusicMetaSourceId;
   sourceUrl: string;
   contentHash: `sha256:${string}`;
   recordCount: number;
   fetchedAt: string;
-  freshness: MusicMetaFreshness;
+  /** HTTP Last-Modified of the source, shown for information only; there is no maximum data age. */
+  lastModifiedAt: string | null;
 };
 
 export type MusicMetaDataset =
@@ -84,16 +74,6 @@ export type MusicMetaDataset =
       provenance: MusicMetaProvenance;
     }
   | MusicMetaUnavailable;
-
-export type MusicMetaNormalizationResult =
-  | { status: "available"; items: MusicMeta[] }
-  | {
-      status: "unavailable";
-      reasonCode: "invalid-schema" | "incomplete-data" | "mixed-data";
-      reason: string;
-      missingFields: string[];
-      invalidFields: string[];
-    };
 
 export type JpSoloSkillAssignment = {
   coefficientIndex: number;
@@ -194,164 +174,6 @@ const normalizeDifficulty = (value: unknown): MusicMetaDifficulty | null => {
     : null;
 };
 
-const compareMusicMeta = (left: MusicMeta, right: MusicMeta): number =>
-  left.musicId - right.musicId ||
-  (difficultyOrder.get(left.difficulty) ?? Number.MAX_SAFE_INTEGER) -
-    (difficultyOrder.get(right.difficulty) ?? Number.MAX_SAFE_INTEGER);
-
-/** Strictly normalizes the JP Solo score-input records without filling absent fields. */
-export const normalizeMusicMetaPayload = (payload: unknown): MusicMetaNormalizationResult => {
-  if (!Array.isArray(payload)) {
-    return {
-      status: "unavailable",
-      reasonCode: "invalid-schema",
-      reason: "The selected source must contain a JSON array of music metadata records.",
-      missingFields: ["music_metas[]"],
-      invalidFields: []
-    };
-  }
-
-  const missingFields = new Set<string>();
-  const invalidFields = new Set<string>();
-  const items: MusicMeta[] = [];
-  const records: unknown[] = payload;
-
-  records.forEach((record, index) => {
-    const recordPrefix = `music_metas[${index}]`;
-    if (!isObject(record)) {
-      addIssue(invalidFields, recordPrefix);
-      return;
-    }
-
-    const readNumber = (key: string, strictlyPositive = false): number | null => {
-      if (!(key in record)) {
-        addIssue(missingFields, `${recordPrefix}.${key}`);
-        return null;
-      }
-
-      const value = record[key];
-      if (
-        typeof value !== "number" ||
-        !Number.isFinite(value) ||
-        value < 0 ||
-        (strictlyPositive && value === 0)
-      ) {
-        addIssue(invalidFields, `${recordPrefix}.${key}`);
-        return null;
-      }
-
-      return value;
-    };
-
-    let musicId: number | null = null;
-    if (!("music_id" in record)) {
-      addIssue(missingFields, `${recordPrefix}.music_id`);
-    } else if (
-      typeof record.music_id !== "number" ||
-      !Number.isSafeInteger(record.music_id) ||
-      record.music_id <= 0
-    ) {
-      addIssue(invalidFields, `${recordPrefix}.music_id`);
-    } else {
-      musicId = record.music_id;
-    }
-
-    let difficulty: MusicMetaDifficulty | null = null;
-    if (!("difficulty" in record)) {
-      addIssue(missingFields, `${recordPrefix}.difficulty`);
-    } else {
-      difficulty = normalizeDifficulty(record.difficulty);
-      if (difficulty === null) addIssue(invalidFields, `${recordPrefix}.difficulty`);
-    }
-
-    const musicTime = readNumber("music_time", true);
-    const eventRate = readNumber("event_rate");
-    const baseScore = readNumber("base_score");
-
-    let skillScoreSolo: MusicMetaSkillScores | null = null;
-    if (!("skill_score_solo" in record)) {
-      addIssue(missingFields, `${recordPrefix}.skill_score_solo`);
-    } else if (!Array.isArray(record.skill_score_solo) || record.skill_score_solo.length !== 6) {
-      addIssue(invalidFields, `${recordPrefix}.skill_score_solo`);
-    } else {
-      const parsedSkills: number[] = [];
-      const rawSkills: unknown[] = record.skill_score_solo;
-      rawSkills.forEach((value, skillIndex) => {
-        if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
-          addIssue(invalidFields, `${recordPrefix}.skill_score_solo[${skillIndex}]`);
-        } else {
-          parsedSkills.push(value);
-        }
-      });
-
-      if (parsedSkills.length === 6) {
-        skillScoreSolo = parsedSkills as [number, number, number, number, number, number];
-      }
-    }
-
-    if (
-      musicId !== null &&
-      difficulty !== null &&
-      musicTime !== null &&
-      eventRate !== null &&
-      baseScore !== null &&
-      skillScoreSolo !== null
-    ) {
-      items.push({ musicId, difficulty, musicTime, eventRate, baseScore, skillScoreSolo });
-    }
-  });
-
-  if (missingFields.size > 0 || invalidFields.size > 0) {
-    return {
-      status: "unavailable",
-      reasonCode: "invalid-schema",
-      reason:
-        "One or more music metadata records are missing required fields or contain invalid values.",
-      missingFields: [...missingFields].sort(compareStrings),
-      invalidFields: [...invalidFields].sort(compareStrings)
-    };
-  }
-
-  const recordByKey = new Map<string, MusicMeta>();
-  let hasConflictingDuplicate = false;
-  items.forEach((item, index) => {
-    const key = `${item.musicId}:${item.difficulty}`;
-    const existing = recordByKey.get(key);
-    if (!existing) {
-      recordByKey.set(key, item);
-      return;
-    }
-
-    const duplicateField = `music_metas[${index}].music_id/difficulty`;
-    addIssue(invalidFields, duplicateField);
-    if (JSON.stringify(existing) !== JSON.stringify(item)) hasConflictingDuplicate = true;
-  });
-
-  if (invalidFields.size > 0) {
-    return {
-      status: "unavailable",
-      reasonCode: hasConflictingDuplicate ? "mixed-data" : "invalid-schema",
-      reason: hasConflictingDuplicate
-        ? "The selected source contains conflicting records for the same song and difficulty."
-        : "The selected source contains duplicate song and difficulty records.",
-      missingFields: [],
-      invalidFields: [...invalidFields].sort(compareStrings)
-    };
-  }
-
-  if (items.length < MUSIC_META_MINIMUM_RECORD_COUNT) {
-    return {
-      status: "unavailable",
-      reasonCode: "incomplete-data",
-      reason: `The selected source contains ${items.length} records; at least ${MUSIC_META_MINIMUM_RECORD_COUNT} are required for a complete catalog.`,
-      missingFields: [`music_metas records (minimum ${MUSIC_META_MINIMUM_RECORD_COUNT})`],
-      invalidFields: []
-    };
-  }
-
-  return { status: "available", items: items.sort(compareMusicMeta) };
-};
-
 const unavailableCalculation = (
   reasonCode: JpSoloCalculationFailureReasonCode,
   reason: string,
@@ -418,18 +240,6 @@ const validateDataset = (
         provenance,
         [],
         ["source provenance"]
-      )
-    };
-  }
-
-  if (provenance.freshness.status !== "fresh") {
-    return {
-      status: "unavailable",
-      failure: unavailableCalculation(
-        "stale-data",
-        "The selected music metadata source is not confirmed fresh.",
-        provenance,
-        ["freshness metadata"]
       )
     };
   }

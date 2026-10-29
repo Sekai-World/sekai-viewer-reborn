@@ -3,11 +3,13 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { JP_SOLO_FORMULA_VERSION, MUSIC_META_SOURCES } from "$lib/music-recommender";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { JP_SOLO_FORMULA_VERSION, MUSIC_META_SOURCES } from "#lib/music-recommender.js";
 import { goto } from "../lib/test/app-navigation";
 import type { PageData } from "./music-recommender/$types";
 import MusicRecommenderPage from "./music-recommender/+page.svelte";
+
+vi.mock("$app/env", () => ({ browser: true, dev: false }));
 
 const pagePath = resolve(process.cwd(), "src/routes/music-recommender/+page.svelte");
 const layoutPath = resolve(process.cwd(), "src/routes/+layout.svelte");
@@ -150,7 +152,7 @@ describe("music recommender UI contract", () => {
     const messages = JSON.parse(messagesText) as Record<string, string>;
 
     expect(source).toContain('translate("musicRecommender.lastModified")');
-    expect(source).toContain("data.provenance?.freshness.lastModifiedAt");
+    expect(source).toContain("data.provenance?.lastModifiedAt");
     expect(messages["musicRecommender.lastModified"]).toBe("Source last modified");
     expect(messages["musicRecommender.sourceRevision"]).toBeUndefined();
   });
@@ -221,13 +223,7 @@ describe("music recommender UI contract", () => {
       recordCount: data.items.length,
       fetchedAt: "2026-01-01T00:00:00Z",
       contentHash: `sha256:${"a".repeat(64)}`,
-      freshness: {
-        status: "fresh",
-        checkedAt: "2026-01-01T00:00:00Z",
-        responseDate: "2026-01-01T00:00:00Z",
-        responseAgeMs: 0,
-        lastModifiedAt: "2026-01-01T00:00:00Z"
-      }
+      lastModifiedAt: "2026-01-01T00:00:00Z"
     };
     const { container } = renderPage(data);
 

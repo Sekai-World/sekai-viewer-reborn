@@ -7,11 +7,11 @@
     icon,
     class: className,
     "aria-hidden": ariaHidden
-  } = $props<{
+  }: {
     icon: string;
     class?: string;
     "aria-hidden"?: boolean | "true" | "false";
-  }>();
+  } = $props();
 </script>
 
 <span class={className} aria-hidden={ariaHidden} data-icon={icon}></span>

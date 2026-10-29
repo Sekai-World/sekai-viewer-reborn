@@ -4,25 +4,11 @@ import {
   MUSIC_META_MINIMUM_RECORD_COUNT,
   MUSIC_META_SOURCES,
   calculateJpSoloYield,
-  normalizeMusicMetaPayload,
   rankJpSoloRecommendations,
   type JpSoloYieldInputs,
   type MusicMeta,
   type MusicMetaDataset
-} from "$lib/music-recommender";
-
-const makeRawMusicMeta = (musicId: number, overrides: Record<string, unknown> = {}) => ({
-  music_id: musicId,
-  difficulty: "expert",
-  music_time: 120,
-  event_rate: 100,
-  base_score: 100,
-  skill_score_solo: [1, 2, 3, 4, 5, 6],
-  ...overrides
-});
-
-const makeRawCatalog = (count = MUSIC_META_MINIMUM_RECORD_COUNT) =>
-  Array.from({ length: count }, (_, index) => makeRawMusicMeta(index + 1));
+} from "#lib/music-recommender.js";
 
 const makeMusicMeta = (musicId: number, overrides: Partial<MusicMeta> = {}): MusicMeta => ({
   musicId,
@@ -52,13 +38,7 @@ const makeDataset = (records: MusicMeta[] = [makeMusicMeta(5)]): MusicMetaDatase
       contentHash: `sha256:${"a".repeat(64)}`,
       recordCount: items.length,
       fetchedAt: "2026-09-25T00:00:00.000Z",
-      freshness: {
-        status: "fresh",
-        checkedAt: "2026-09-25T00:00:00.000Z",
-        responseDate: "2026-09-25T00:00:00.000Z",
-        responseAgeMs: 0,
-        lastModifiedAt: "2026-09-25T00:00:00.000Z"
-      }
+      lastModifiedAt: "2026-09-25T00:00:00.000Z"
     }
   };
 };
@@ -72,118 +52,6 @@ const makeInputs = (overrides: Partial<JpSoloYieldInputs> = {}): JpSoloYieldInpu
   cardLength: 1,
   skillAllocation: { strategy: "default", skillEffects: [100] },
   ...overrides
-});
-
-describe("music metadata normalization", () => {
-  it("normalizes required fields and sorts records independently of source order", () => {
-    const payload = makeRawCatalog().reverse();
-
-    const result = normalizeMusicMetaPayload(payload);
-
-    expect(result.status).toBe("available");
-    if (result.status !== "available") return;
-    expect(result.items).toHaveLength(MUSIC_META_MINIMUM_RECORD_COUNT);
-    expect(result.items[0]).toMatchObject({
-      musicId: 1,
-      difficulty: "expert",
-      musicTime: 120,
-      eventRate: 100,
-      baseScore: 100,
-      skillScoreSolo: [1, 2, 3, 4, 5, 6]
-    });
-    expect(result.items.at(-1)?.musicId).toBe(MUSIC_META_MINIMUM_RECORD_COUNT);
-  });
-
-  it("reports missing required fields without filling them with zero", () => {
-    const payload = makeRawCatalog();
-    const firstRecord = payload[0] as Record<string, unknown>;
-    delete firstRecord.music_time;
-    delete firstRecord.base_score;
-
-    const result = normalizeMusicMetaPayload(payload);
-
-    expect(result).toMatchObject({
-      status: "unavailable",
-      reasonCode: "invalid-schema",
-      missingFields: ["music_metas[0].base_score", "music_metas[0].music_time"]
-    });
-  });
-
-  it("orders invalid field diagnostics deterministically", () => {
-    const payload = makeRawCatalog();
-    Object.assign(payload[0], {
-      music_id: "1",
-      difficulty: "unknown",
-      event_rate: -1,
-      base_score: -1
-    });
-
-    const result = normalizeMusicMetaPayload(payload);
-
-    expect(result).toMatchObject({
-      status: "unavailable",
-      invalidFields: [
-        "music_metas[0].base_score",
-        "music_metas[0].difficulty",
-        "music_metas[0].event_rate",
-        "music_metas[0].music_id"
-      ]
-    });
-  });
-
-  it.each([
-    ["skill array with fewer than six values", { skill_score_solo: [1, 2, 3, 4, 5] }],
-    ["non-finite numeric value", { event_rate: Number.POSITIVE_INFINITY }],
-    ["string numeric value", { base_score: "100" }],
-    ["invalid difficulty", { difficulty: "unknown" }]
-  ])("rejects %s", (_label, override) => {
-    const payload = makeRawCatalog();
-    Object.assign(payload[0], override);
-
-    const result = normalizeMusicMetaPayload(payload);
-
-    expect(result.status).toBe("unavailable");
-    if (result.status !== "unavailable") return;
-    expect(result.reasonCode).toBe("invalid-schema");
-    expect(result.invalidFields.length).toBeGreaterThan(0);
-  });
-
-  it("rejects a catalog below the audited completeness floor", () => {
-    const result = normalizeMusicMetaPayload(makeRawCatalog(MUSIC_META_MINIMUM_RECORD_COUNT - 1));
-
-    expect(result).toMatchObject({
-      status: "unavailable",
-      reasonCode: "incomplete-data",
-      missingFields: ["music_metas records (minimum 3727)"]
-    });
-  });
-
-  it("rejects conflicting duplicate song-difficulty records as mixed data", () => {
-    const payload = makeRawCatalog();
-    payload.push(makeRawMusicMeta(1, { base_score: 999 }));
-    payload.push(makeRawMusicMeta(2, { base_score: 999 }));
-    payload.push(makeRawMusicMeta(3, { base_score: 999 }));
-
-    const result = normalizeMusicMetaPayload(payload);
-
-    expect(result).toMatchObject({
-      status: "unavailable",
-      reasonCode: "mixed-data",
-      invalidFields: [
-        "music_metas[3727].music_id/difficulty",
-        "music_metas[3728].music_id/difficulty",
-        "music_metas[3729].music_id/difficulty"
-      ]
-    });
-  });
-
-  it.each([null, {}, "not-json-array"])("rejects a non-array payload: %s", (payload) => {
-    expect(normalizeMusicMetaPayload(payload)).toMatchObject({
-      status: "unavailable",
-      reasonCode: "invalid-schema",
-      missingFields: ["music_metas[]"]
-    });
-  });
 });
 
 describe("JP Solo yield calculation", () => {
@@ -353,28 +221,28 @@ describe("JP Solo yield calculation", () => {
     expect(result).toMatchObject({ status: "unavailable", reasonCode });
   });
 
-  it("rejects stale or source-mixed datasets", () => {
+  it("does not reject a dataset for its age or a missing Last-Modified", () => {
     const dataset = makeDataset();
     if (dataset.status !== "available") throw new Error("Expected fixture catalog.");
-    const staleDataset: MusicMetaDataset = {
-      ...dataset,
-      provenance: {
-        ...dataset.provenance,
-        freshness: { ...dataset.provenance.freshness, status: "stale" }
-      }
-    };
+    const request = { ...makeInputs(), musicId: 5, difficulty: "expert" };
+
+    for (const lastModifiedAt of ["2020-01-01T00:00:00.000Z", null]) {
+      const result = calculateJpSoloYield(
+        { ...dataset, provenance: { ...dataset.provenance, lastModifiedAt } },
+        request
+      );
+      expect(result.status).toBe("available");
+    }
+  });
+
+  it("rejects source-mixed datasets", () => {
+    const dataset = makeDataset();
+    if (dataset.status !== "available") throw new Error("Expected fixture catalog.");
     const mixedDataset: MusicMetaDataset = {
       ...dataset,
       provenance: { ...dataset.provenance, sourceId: "moesekai" }
     };
 
-    expect(
-      calculateJpSoloYield(staleDataset, {
-        ...makeInputs(),
-        musicId: 5,
-        difficulty: "expert"
-      })
-    ).toMatchObject({ status: "unavailable", reasonCode: "stale-data" });
     expect(
       calculateJpSoloYield(mixedDataset, {
         ...makeInputs(),

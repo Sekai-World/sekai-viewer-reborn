@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { MUSIC_META_MINIMUM_RECORD_COUNT, MUSIC_META_SOURCES } from "$lib/music-recommender";
+import { MUSIC_META_MINIMUM_RECORD_COUNT, MUSIC_META_SOURCES } from "#lib/music-recommender.js";
+import { computeMusicMetasRevision, parseMusicMetas } from "#lib/server/music-metas.js";
 import {
   loadMusicMetaCatalog,
   loadMusicRecommenderPageData,
   parseMusicRecommenderQuery,
   type MusicMetaFetcher,
   type MusicRecommenderPageData
-} from "$lib/server/music-recommender";
+} from "#lib/server/music-recommender.js";
 import { load as loadMusicRecommenderPage } from "../../routes/music-recommender/+page.server";
 
 const NOW = new Date("2026-09-25T00:00:00.000Z");
@@ -18,7 +19,13 @@ const makePayload = (count = MUSIC_META_MINIMUM_RECORD_COUNT) =>
     music_time: 120,
     event_rate: 100,
     base_score: 100,
-    skill_score_solo: [1, 2, 3, 4, 5, 6]
+    base_score_auto: 80,
+    skill_score_solo: [1, 2, 3, 4, 5, 6],
+    skill_score_auto: [1, 2, 3, 4, 5, 6],
+    skill_score_multi: [1, 2, 3, 4, 5, 6],
+    fever_score: 0.2,
+    fever_end_time: 100,
+    tap_count: 500
   }));
 
 const responseFor = (body: string, headers: Record<string, string> = {}, status = 200): Response =>
@@ -30,14 +37,6 @@ const responseFor = (body: string, headers: Record<string, string> = {}, status 
       ...headers
     }
   });
-
-const staleHeaderCases: { name: string; headers: Record<string, string> }[] = [
-  { name: "an aged response", headers: { age: "90000" } },
-  {
-    name: "old source content",
-    headers: { "last-modified": "Wed, 01 Jan 2025 00:00:00 GMT" }
-  }
-];
 
 const makeFetcher = (
   response: Response
@@ -70,7 +69,7 @@ describe("music metadata source loader", () => {
         sourceUrl: MUSIC_META_SOURCES["sekai-best"].url,
         recordCount: MUSIC_META_MINIMUM_RECORD_COUNT,
         fetchedAt: NOW.toISOString(),
-        freshness: { status: "fresh", checkedAt: NOW.toISOString() }
+        lastModifiedAt: NOW.toISOString()
       }
     });
     if (result.status === "available") {
@@ -134,28 +133,82 @@ describe("music metadata source loader", () => {
     expect(requests).toEqual([]);
   });
 
-  it.each(staleHeaderCases)("returns unavailable for $name", async ({ headers }) => {
-    const { fetcher } = makeFetcher(responseFor(JSON.stringify(makePayload()), headers));
+  it("does not reject a source for its age or missing freshness headers", async () => {
+    const aged = makeFetcher(
+      responseFor(JSON.stringify(makePayload()), {
+        age: "90000",
+        "last-modified": "Wed, 01 Jan 2020 00:00:00 GMT"
+      })
+    );
+    const agedResult = await loadMusicMetaCatalog("sekai-best", aged.fetcher, () => NOW);
+    expect(agedResult).toMatchObject({
+      status: "available",
+      provenance: { lastModifiedAt: "2020-01-01T00:00:00.000Z" }
+    });
+
+    const undated = makeFetcher(new Response(JSON.stringify(makePayload()), { status: 200 }));
+    const undatedResult = await loadMusicMetaCatalog("sekai-best", undated.fetcher, () => NOW);
+    expect(undatedResult).toMatchObject({
+      status: "available",
+      provenance: { lastModifiedAt: null }
+    });
+  });
+
+  it("records an unreadable Last-Modified as absent instead of failing", async () => {
+    const { fetcher } = makeFetcher(
+      responseFor(JSON.stringify(makePayload()), { "last-modified": "not a date" })
+    );
 
     const result = await loadMusicMetaCatalog("sekai-best", fetcher, () => NOW);
 
-    expect(result).toMatchObject({ status: "unavailable", reasonCode: "stale-data" });
+    expect(result).toMatchObject({ status: "available", provenance: { lastModifiedAt: null } });
   });
 
-  it("rejects a response without a Date header", async () => {
-    const response = new Response(JSON.stringify(makePayload()), {
-      status: 200,
-      headers: { "last-modified": NOW.toUTCString() }
+  it("reports the contract revision as the content hash", async () => {
+    const payload = makePayload();
+    const parsed = parseMusicMetas(payload);
+    if (parsed.status !== "ready") throw new Error("Expected a valid fixture payload.");
+    const { fetcher } = makeFetcher(responseFor(JSON.stringify(payload.slice().reverse())));
+
+    const result = await loadMusicMetaCatalog("sekai-best", fetcher, () => NOW);
+
+    expect(result).toMatchObject({
+      status: "available",
+      provenance: { contentHash: `sha256:${computeMusicMetasRevision(parsed.records)}` }
     });
-    const { fetcher } = makeFetcher(response);
+  });
+
+  it.each([
+    ["a non-array payload", {}, { missingFields: ["music_metas[]"], invalidFields: [] }],
+    [
+      "a record with an invalid skill array",
+      [{ ...makePayload(1)[0], skill_score_solo: [1, 2, 3] }],
+      { missingFields: [], invalidFields: ["music_metas[0].skill_score_solo"] }
+    ],
+    [
+      "duplicate song and difficulty records",
+      [makePayload(1)[0], makePayload(1)[0]],
+      { missingFields: [], invalidFields: ["music_metas[1].music_id/difficulty"] }
+    ]
+  ])("fails closed for %s", async (_label, payload, fields) => {
+    const { fetcher, requests } = makeFetcher(responseFor(JSON.stringify(payload)));
 
     const result = await loadMusicMetaCatalog("sekai-best", fetcher, () => NOW);
 
     expect(result).toMatchObject({
       status: "unavailable",
-      reasonCode: "freshness-metadata-missing",
-      missingFields: ["headers.date"]
+      reasonCode: "invalid-schema",
+      ...fields
     });
+    expect(requests).toHaveLength(1);
+  });
+
+  it("treats an empty catalog as incomplete", async () => {
+    const { fetcher } = makeFetcher(responseFor("[]"));
+
+    const result = await loadMusicMetaCatalog("sekai-best", fetcher, () => NOW);
+
+    expect(result).toMatchObject({ status: "unavailable", reasonCode: "incomplete-data" });
   });
 
   it("reports invalid JSON and incomplete schema without trying a second source", async () => {
