@@ -17,7 +17,7 @@ import type {
   EventRarityBonusRate,
   EventRelatedData,
   EventVirtualLive
-} from "$lib/domain/event-detail";
+} from "#lib/domain/event-detail.js";
 import { getPositiveInteger } from "./response-values";
 
 const getString = (value: unknown): string | null =>

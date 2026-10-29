@@ -4,7 +4,7 @@ import type {
   CardGachaBanner,
   CardDetailParams,
   CardRelatedEvent
-} from "$lib/domain/card-detail";
+} from "#lib/domain/card-detail.js";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;

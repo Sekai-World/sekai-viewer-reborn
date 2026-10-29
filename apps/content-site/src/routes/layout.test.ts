@@ -13,22 +13,22 @@ type TourProps = {
 };
 const tour = vi.hoisted(() => ({ props: null as TourProps | null }));
 
-vi.mock("$lib/components/OnboardingDialog.svelte", () => ({
+vi.mock("#lib/components/OnboardingDialog.svelte", () => ({
   default: (_anchor: unknown, props: TourProps) => {
     tour.props = props;
     return {};
   }
 }));
 vi.mock("$app/state", () => ({ page: { url: new URL("http://localhost/cards/jp") } }));
-vi.mock("$app/navigation", () => ({ goto: vi.fn(), invalidateAll: vi.fn() }));
+vi.mock("$app/navigation", () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
 vi.mock("$app/paths", () => ({ asset: (path: string) => path, resolve: (path: string) => path }));
-vi.mock("$lib/onboarding", () => ({
+vi.mock("#lib/onboarding.js", () => ({
   readOnboardingSeen: () => false,
   readSeenSiteVersion: () => null,
   writeOnboardingSeen: vi.fn(),
   writeSeenSiteVersion: vi.fn()
 }));
-vi.mock("$lib/i18n/runtime", async () => {
+vi.mock("#lib/i18n/runtime.js", async () => {
   const { readable } = await import("svelte/store");
   return {
     createI18nTranslator: () => (key: string) => key,

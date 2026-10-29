@@ -2,7 +2,7 @@
   import Icon from "@iconify/svelte";
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
 
   const fallbackMessages = getLocalI18nMessages(["common", "error"]);
   const translate = createI18nTranslator("en", fallbackMessages);

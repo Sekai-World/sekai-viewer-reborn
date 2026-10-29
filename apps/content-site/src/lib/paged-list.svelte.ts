@@ -1,4 +1,4 @@
-import type { MysekaiPagination } from "$lib/domain/mysekai";
+import type { MysekaiPagination } from "#lib/domain/mysekai.js";
 
 export type PagedResult<T> = { items: T[]; pagination: MysekaiPagination };
 

@@ -10,7 +10,7 @@ const config = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test"),
   getInternalRemoteAssetBaseUrl: vi.fn(() => "https://assets.example.test")
 }));
-vi.mock("$lib/server/config", () => config);
+vi.mock("#lib/server/config.js", () => config);
 
 const tagLib = vi.hoisted(() => {
   const file = {

@@ -1,27 +1,30 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto, refreshAll } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import CatalogueFrame from "$lib/components/mission/CatalogueFrame.svelte";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import MysekaiLoadMore from "$lib/components/mysekai/MysekaiLoadMore.svelte";
-  import { getMysekaiSoundTrackAudioURL, getMysekaiSoundTrackJacketURL } from "$lib/assets/index";
+  import CatalogueFrame from "#lib/components/mission/CatalogueFrame.svelte";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import MysekaiLoadMore from "#lib/components/mysekai/MysekaiLoadMore.svelte";
+  import {
+    getMysekaiSoundTrackAudioURL,
+    getMysekaiSoundTrackJacketURL
+  } from "#lib/assets/index.js";
   import {
     toMysekaiSoundtrackSearchParams,
     type MusicSoundTrackCategory,
     type MysekaiMusicRecord,
     type MysekaiSoundtrackListQuery
-  } from "$lib/domain/mysekai";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createStreamedTranslator } from "$lib/i18n/streamed-translator.svelte";
-  import { fetchPagedResult, PagedList } from "$lib/paged-list.svelte";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/domain/mysekai.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { createStreamedTranslator } from "#lib/i18n/streamed-translator.svelte.js";
+  import { fetchPagedResult, PagedList } from "#lib/paged-list.svelte.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import {
     downloadFile,
     formatPlaybackTime,
     SoundtrackPlayer,
     toDownloadFileName
-  } from "$lib/soundtrack-player.svelte";
+  } from "#lib/soundtrack-player.svelte.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -93,8 +96,7 @@
   );
   const navigateQuery = (overrides: Partial<MysekaiSoundtrackListQuery>): void => {
     void goto(listPath(data.region, { ...data.query, ...overrides }), {
-      keepFocus: true,
-      noScroll: true
+      reset: false
     });
   };
   const loadMore = (): void => {
@@ -154,7 +156,7 @@
   {controls}
   resultsLabel={t("mysekai.results")}
   onSearch={(name) => navigateQuery({ name })}
-  onRetry={() => void invalidateAll()}
+  onRetry={() => void refreshAll()}
 >
   <ul class="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-3">
     {#each list.items as record (record.id)}

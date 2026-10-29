@@ -1,16 +1,16 @@
 <script lang="ts">
   import { navigating } from "$app/state";
   import Icon from "@iconify/svelte";
-  import { createI18nTranslator } from "$lib/i18n/runtime";
-  import type { Live2dCatalogRouteData } from "$lib/live2d/catalog-route-data";
+  import { createI18nTranslator } from "#lib/i18n/runtime.js";
+  import type { Live2dCatalogRouteData } from "#lib/live2d/catalog-route-data.js";
   import {
     getLive2dCharacterGroupKey,
     getLive2dCharacterTypeKey,
     type Live2dCharacterType
-  } from "$lib/live2d/character-grouping";
+  } from "#lib/live2d/character-grouping.js";
   import { tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
-  import { createPageTitle } from "$lib/page-title";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   type CharacterOption = {

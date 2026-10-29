@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const sdk = vi.hoisted(() => ({ getStampsByRegionList: vi.fn() }));
 vi.mock("@platform/sekai-master-api-sdk", () => sdk);
 
-import { parseStampListQuery } from "$lib/domain/stamp";
+import { parseStampListQuery } from "#lib/domain/stamp.js";
 import { createStampListRequestQuery, fetchStampListPage, STAMP_PAGE_SIZE } from "./stamps";
 
 const query = (search: string) => parseStampListQuery(new URLSearchParams(search));

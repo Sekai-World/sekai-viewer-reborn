@@ -1,7 +1,7 @@
-import { getTrackerRankLadder, type TrackerRankLadder } from "$lib/tracker-ladders";
-import type { ChapterTrackerResult } from "$lib/server/chapter-tracker";
+import { getTrackerRankLadder, type TrackerRankLadder } from "#lib/tracker-ladders.js";
+import type { ChapterTrackerResult } from "#lib/server/chapter-tracker.js";
 import { calculateRankingElapsedMs, calculateScorePerElapsedHour } from "./tracker-math";
-import type { TrackerDateValue } from "$lib/tracker-phase";
+import type { TrackerDateValue } from "#lib/tracker-phase.js";
 
 export type ChapterRow = ChapterTrackerResult["rankings"][number] & {
   rank: number;

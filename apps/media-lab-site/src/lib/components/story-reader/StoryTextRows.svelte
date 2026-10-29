@@ -7,7 +7,7 @@
     ImagePreviewTrigger,
     VoicePlayButton
   } from "@platform/ui-shell";
-  import { localCharacterAvatarUrl } from "$lib/story/character-avatar";
+  import { localCharacterAvatarUrl } from "#lib/story/character-avatar.js";
 
   /**
    * Script-style (台本) rendering of flattened scenario rows. All labels are

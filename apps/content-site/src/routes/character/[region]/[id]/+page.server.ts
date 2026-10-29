@@ -4,22 +4,22 @@ import {
   getGameCharactersByRegionByIdProfile,
   getGameCharactersRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
-import type { CharacterRankReference, Mission } from "$lib/domain/mission";
-import type { SupportedRegion } from "$lib/domain/regions";
-import { supportedRegions } from "$lib/domain/regions";
-import { getPositiveInteger } from "$lib/server/catalogue-data";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import type { CharacterRankReference, Mission } from "#lib/domain/mission.js";
+import type { SupportedRegion } from "#lib/domain/regions.js";
+import { supportedRegions } from "#lib/domain/regions.js";
+import { getPositiveInteger } from "#lib/server/catalogue-data.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   normalizeCharacterAvailability,
   parseRelatedCharacterCards,
   parseRelatedCharacterCardTotal
-} from "$lib/server/character-detail";
-import { parseCharacter, parseCharacterUnits } from "$lib/server/character-list";
-import { parseCharacterProfile } from "$lib/server/character-profile";
-import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
-import { fetchCharacterMissions, fetchCharacterRankReferences } from "$lib/server/mission-list";
-import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "$lib/server/unit-profiles";
+} from "#lib/server/character-detail.js";
+import { parseCharacter, parseCharacterUnits } from "#lib/server/character-list.js";
+import { parseCharacterProfile } from "#lib/server/character-profile.js";
+import { aggregateGameCharacterUnitsByRegion } from "#lib/server/character-pages.js";
+import { fetchCharacterMissions, fetchCharacterRankReferences } from "#lib/server/mission-list.js";
+import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "#lib/server/unit-profiles.js";
 import type { PageServerLoad } from "./$types";
 
 type CharacterPayload = { character: unknown; loadFailed: boolean };

@@ -1,5 +1,5 @@
-import type { GachaDetailSub } from "$lib/domain/gacha-detail";
-import { getStringLike, pickFirstString } from "$lib/server/response-values";
+import type { GachaDetailSub } from "#lib/domain/gacha-detail.js";
+import { getStringLike, pickFirstString } from "#lib/server/response-values.js";
 
 export const GACHA_CARD_METADATA_BATCH_SIZE = 100;
 

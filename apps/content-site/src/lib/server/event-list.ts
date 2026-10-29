@@ -1,5 +1,5 @@
 import type { GetEventsByRegionListData } from "@platform/sekai-master-api-sdk";
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 
 export type EventListItem = {
   id: string;
@@ -55,7 +55,6 @@ const getTrimmedSearchParam = (value: string | null): string => {
 };
 
 const parseSortBy = (value: string | null): EventListSortBy => (value === "id" ? "id" : "startAt");
-
 const parseSortOrder = (value: string | null): EventListSortOrder =>
   value === "asc" ? "asc" : "desc";
 
@@ -135,7 +134,6 @@ const getStringLike = (value: unknown): string | null => {
 
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
-
 const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const getDateValue = (value: unknown): string | number | null => {
@@ -290,17 +288,12 @@ const parsePagination = (
   const total = pickFirstNumber(paginationNode ?? {}, ["total"]);
   const totalPages = pickFirstNumber(paginationNode ?? {}, ["total_pages", "totalPages"]);
   const hasNextFlag = getBoolean((paginationNode ?? {})["has_next"]);
+
   const hasNext =
     hasNextFlag ??
     (totalPages !== null ? page < totalPages : pageSize > 0 && itemCount >= pageSize);
 
-  return {
-    page,
-    pageSize,
-    hasNext,
-    total,
-    totalPages
-  };
+  return { page, pageSize, hasNext, total, totalPages };
 };
 
 export const parseEventListPage = (

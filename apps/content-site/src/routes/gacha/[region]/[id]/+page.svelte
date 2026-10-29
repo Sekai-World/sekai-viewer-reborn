@@ -1,25 +1,25 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { resolve } from "$app/paths";
-  import { swipeRegion } from "$lib/actions/swipe-region";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
   import GachaDetailAssetCard, {
     type GachaAssetTab
-  } from "$lib/components/gacha/GachaDetailAssetCard.svelte";
-  import GachaDetailBehaviorCard from "$lib/components/gacha/GachaDetailBehaviorCard.svelte";
-  import GachaDetailCountdownCard from "$lib/components/gacha/GachaDetailCountdownCard.svelte";
-  import GachaDetailInfoCard from "$lib/components/gacha/GachaDetailInfoCard.svelte";
-  import GachaDetailPickupCard from "$lib/components/gacha/GachaDetailPickupCard.svelte";
-  import GachaDetailRarityRateCard from "$lib/components/gacha/GachaDetailRarityRateCard.svelte";
-  import GachaSimulatorCard from "$lib/components/gacha/GachaSimulatorCard.svelte";
+  } from "#lib/components/gacha/GachaDetailAssetCard.svelte";
+  import GachaDetailBehaviorCard from "#lib/components/gacha/GachaDetailBehaviorCard.svelte";
+  import GachaDetailCountdownCard from "#lib/components/gacha/GachaDetailCountdownCard.svelte";
+  import GachaDetailInfoCard from "#lib/components/gacha/GachaDetailInfoCard.svelte";
+  import GachaDetailPickupCard from "#lib/components/gacha/GachaDetailPickupCard.svelte";
+  import GachaDetailRarityRateCard from "#lib/components/gacha/GachaDetailRarityRateCard.svelte";
+  import GachaSimulatorCard from "#lib/components/gacha/GachaSimulatorCard.svelte";
   import Icon from "@iconify/svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "#lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();

@@ -7,7 +7,7 @@ Monorepo for the Sekai viewer platform and related sites.
 - pnpm workspace
 - Turborepo
 - TypeScript
-- SvelteKit 2
+- SvelteKit 3
 - Tailwind CSS 4
 
 ## Monorepo Structure

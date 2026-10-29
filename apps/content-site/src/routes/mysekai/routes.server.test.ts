@@ -10,8 +10,8 @@ const server = vi.hoisted(() => ({
   fetchMysekaiSoundtrackFilters: vi.fn(),
   fetchMysekaiSoundtrackListPage: vi.fn()
 }));
-vi.mock("$lib/server/mysekai", () => server);
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl: () => "https://master-api.test" }));
+vi.mock("#lib/server/mysekai.js", () => server);
+vi.mock("#lib/server/config", () => ({ getMasterApiBaseUrl: () => "https://master-api.test" }));
 
 import { load as loadFixtures } from "./fixtures/[region]/+page.server";
 import { GET as getFixturesPage } from "./fixtures/[region]/data/+server";

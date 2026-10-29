@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$env/dynamic/private", () => ({ env: {} }));
+vi.mock("$app/env/private", () => ({ SEKAI_MASTER_API_BASE_URL: "", SEKAI_API_BASE_URL: "" }));
 
-import { LIVE2D_ASSOCIATED_CATALOG_URL } from "$lib/live2d/associated-catalog";
+import { LIVE2D_ASSOCIATED_CATALOG_URL } from "#lib/live2d/associated-catalog.js";
 import {
   createLive2dCatalogRouteDataResolver,
   type Live2dCatalogRouteData
-} from "$lib/live2d/catalog-route-data";
+} from "#lib/live2d/catalog-route-data.js";
 import { _createLive2dCatalogPageLoad, load as defaultCatalogLoad } from "./live2d/+page.server";
 import {
   _createLive2dModelPageLoad,

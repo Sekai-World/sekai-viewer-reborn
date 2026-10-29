@@ -4,7 +4,7 @@ import type {
   VirtualLiveTimelineCharacter,
   VirtualLiveTimelineDocument,
   VirtualLiveTimelineEvent
-} from "$lib/domain/virtual-live-timeline";
+} from "#lib/domain/virtual-live-timeline.js";
 
 export type VirtualLiveTimelineNormalizationErrorCode =
   "MALFORMED_TIMELINE" | "EVENT_LIMIT_EXCEEDED";

@@ -4,7 +4,7 @@ const envState = vi.hoisted(() => ({
   SEKAI_API_BASE_URL: undefined as string | undefined
 }));
 
-vi.mock("$env/dynamic/private", () => ({ env: envState }));
+vi.mock("$app/env/private", () => envState);
 
 import { fetchGlobalNotices } from "./notifications";
 

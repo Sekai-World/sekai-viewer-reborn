@@ -1,4 +1,4 @@
-import type { Handle } from "@sveltejs/kit";
+import type { Handle } from "@sveltejs/kit/hooks";
 import { describe, expect, it, vi } from "vitest";
 import { handle } from "./hooks.server";
 
@@ -30,7 +30,6 @@ const renderWithChunks = async (
 
 const renderWithLocaleCookie = (localeCookie: string | undefined, html: string): Promise<string> =>
   renderWithChunks(localeCookie, [html]);
-
 const htmlDocument =
   '<!doctype html><html lang="zh-CN" dir="ltr"><head></head><body><main lang="zh-CN" dir="ltr">content</main></body></html>';
 

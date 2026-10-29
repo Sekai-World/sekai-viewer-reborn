@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 const {
   canUsePaginatedMusicList,
@@ -22,7 +22,7 @@ const {
   logMusicListFilterDebug: vi.fn(),
   parseMusicListQueryState: vi.fn()
 }));
-vi.mock("$lib/server/music-list", () => ({
+vi.mock("#lib/server/music-list.js", () => ({
   canUsePaginatedMusicList,
   createMusicListPage,
   fetchMusicCatalog,
@@ -33,7 +33,7 @@ vi.mock("$lib/server/music-list", () => ({
 }));
 
 import { GET } from "./+server";
-import type { MusicListItem, MusicListPage, MusicListQueryState } from "$lib/server/music-list";
+import type { MusicListItem, MusicListPage, MusicListQueryState } from "#lib/server/music-list.js";
 
 const makeQueryState = (overrides: Partial<MusicListQueryState> = {}): MusicListQueryState => ({
   sortBy: "publishedAt",

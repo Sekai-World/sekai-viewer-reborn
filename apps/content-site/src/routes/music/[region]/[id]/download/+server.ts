@@ -2,25 +2,25 @@ import {
   getMusicsByRegionByIdDetail,
   getMusicsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import type { SupportedRegion } from "$lib/domain/regions";
-import { supportedRegions } from "$lib/domain/regions";
+import type { SupportedRegion } from "#lib/domain/regions.js";
+import { supportedRegions } from "#lib/domain/regions.js";
 import { error, type RequestEvent, type RequestHandler } from "@sveltejs/kit";
 import {
   getMusicAssetServer,
   getMusicLongPreviewAssetURL,
   getMusicShortPreviewAssetURL,
   getMusicJacketAssetURL
-} from "$lib/assets/index";
-import { normalizeRegion } from "$lib/i18n/region";
+} from "#lib/assets/index.js";
+import { normalizeRegion } from "#lib/i18n/region.js";
 import {
   publishDownloadTask,
   registerDownloadTaskAbort,
   type DownloadTaskSnapshot,
   type DownloadTaskState,
   unregisterDownloadTaskAbort
-} from "$lib/server/download-progress";
-import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "$lib/server/config";
-import { parseMusicDetail } from "$lib/server/music-detail";
+} from "#lib/server/download-progress.js";
+import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseMusicDetail } from "#lib/server/music-detail.js";
 import { TagLib, type Picture } from "taglib-wasm";
 
 const SUPPORTED_DOWNLOAD_FORMATS = new Set(["mp3", "flac", "wav"]);

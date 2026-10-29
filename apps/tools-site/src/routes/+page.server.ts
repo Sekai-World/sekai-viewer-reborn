@@ -1,6 +1,6 @@
 import { getEventsByRegionCurrent } from "@platform/sekai-master-api-sdk";
-import { trackerSupportedRegions, type TrackerSupportedRegion } from "$lib/regions";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { trackerSupportedRegions, type TrackerSupportedRegion } from "#lib/regions.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import type { PageServerLoad } from "./$types";
 
 export type EventSummary = {

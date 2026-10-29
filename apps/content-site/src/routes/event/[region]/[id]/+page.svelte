@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { browser, dev } from "$app/environment";
+  import { browser, dev } from "$app/env";
   import { resolve } from "$app/paths";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
-  import EventDetailAssetCard from "$lib/components/event/EventDetailAssetCard.svelte";
-  import EventDetailBgmCard from "$lib/components/event/EventDetailBgmCard.svelte";
-  import EventDetailCountdownCard from "$lib/components/event/EventDetailCountdownCard.svelte";
-  import EventDetailDataCard from "$lib/components/event/EventDetailDataCard.svelte";
-  import EventDetailInfoCard from "$lib/components/event/EventDetailInfoCard.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import EventDebugDialog from "#lib/components/shared/EventDebugDialog.svelte";
+  import EventDetailAssetCard from "#lib/components/event/EventDetailAssetCard.svelte";
+  import EventDetailBgmCard from "#lib/components/event/EventDetailBgmCard.svelte";
+  import EventDetailCountdownCard from "#lib/components/event/EventDetailCountdownCard.svelte";
+  import EventDetailDataCard from "#lib/components/event/EventDetailDataCard.svelte";
+  import EventDetailInfoCard from "#lib/components/event/EventDetailInfoCard.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "#lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
-  import { getEventTrackerHref } from "$lib/tools-site";
-  import { createPageTitle } from "$lib/page-title";
-  import DiscordEmbedHead from "$lib/components/shared/DiscordEmbedHead.svelte";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { formatUnitFallbackLabel } from "#lib/domain/unit-profile.js";
+  import { getEventTrackerHref } from "#lib/tools-site.js";
+  import { createPageTitle } from "#lib/page-title.js";
+  import DiscordEmbedHead from "#lib/components/shared/DiscordEmbedHead.svelte";
   import type { PageProps } from "./$types";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";

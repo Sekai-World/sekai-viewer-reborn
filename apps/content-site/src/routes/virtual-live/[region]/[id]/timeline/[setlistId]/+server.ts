@@ -1,27 +1,27 @@
-import { error, json } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import {
   getCharacter3DsByRegionBatch,
   getGameCharactersByRegionById,
   getVirtualLivesByRegionByIdSetlists
 } from "@platform/sekai-master-api-sdk";
-import { getRemoteAssetEndpointURL } from "$lib/assets/index";
+import { getRemoteAssetEndpointURL } from "#lib/assets/index.js";
 import {
   isPositiveSafeInteger,
   isSupportedVirtualLiveRegion
-} from "$lib/domain/virtual-live-timeline";
+} from "#lib/domain/virtual-live-timeline.js";
 import type {
   VirtualLiveTimelineCharacter,
   VirtualLiveTimelineDocument,
   VirtualLiveTimelineEvent
-} from "$lib/domain/virtual-live-timeline";
-import type { SupportedRegion } from "$lib/domain/regions";
-import { formatCharacterName } from "$lib/domain/character";
-import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "$lib/server/config";
+} from "#lib/domain/virtual-live-timeline.js";
+import type { SupportedRegion } from "#lib/domain/regions.js";
+import { formatCharacterName } from "#lib/domain/character.js";
+import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   normalizeVirtualLiveMCScenario,
   normalizeVirtualLiveTimeline,
   VirtualLiveTimelineNormalizationError
-} from "$lib/server/virtual-live-timeline";
+} from "#lib/server/virtual-live-timeline.js";
 import type { RequestHandler } from "./$types";
 
 const MAX_TIMELINE_BYTES = 8 * 1024 * 1024;
@@ -310,7 +310,7 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
         ? normalizeVirtualLiveMCScenario(payload)
         : normalizeVirtualLiveTimeline(payload);
     const document = await enrichTimeline(normalized, getMasterApiBaseUrl(), region, bundleName);
-    return json(document, {
+    return Response.json(document, {
       headers: {
         "cache-control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
         "x-content-type-options": "nosniff"

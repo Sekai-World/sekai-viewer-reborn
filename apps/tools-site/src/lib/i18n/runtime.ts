@@ -1,5 +1,5 @@
-import { browser } from "$app/environment";
-import { env } from "$env/dynamic/public";
+import { browser } from "$app/env";
+import { PUBLIC_SEKAI_I18N_BASE_URL } from "$app/env/public";
 import {
   createRemoteI18nRuntime,
   createScopedI18nLoader,
@@ -10,8 +10,8 @@ import {
 import commonSourceMessages from "@platform/i18n-source/tools-site/common.json";
 import serverSourceMessages from "@platform/i18n-source/tools-site/server.json";
 import trackerSourceMessages from "@platform/i18n-source/tools-site/tracker.json";
-import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n/config";
-import { normalizeUiLocale } from "$lib/i18n/region";
+import { repoLocaleByUiLocale, type SupportedUiLocale } from "#lib/i18n/config.js";
+import { normalizeUiLocale } from "#lib/i18n/region.js";
 
 export const toolsSiteI18nNamespaces = ["common", "server", "tracker"] as const;
 
@@ -34,7 +34,7 @@ const removeTrailingSlashes = (value: string): string => {
 };
 
 const getI18nBaseUrl = (): string =>
-  removeTrailingSlashes(env.PUBLIC_SEKAI_I18N_BASE_URL?.trim() || DEFAULT_SEKAI_I18N_BASE_URL);
+  removeTrailingSlashes(PUBLIC_SEKAI_I18N_BASE_URL?.trim() || DEFAULT_SEKAI_I18N_BASE_URL);
 
 const i18nRuntime = createRemoteI18nRuntime({
   baseUrl: getI18nBaseUrl(),

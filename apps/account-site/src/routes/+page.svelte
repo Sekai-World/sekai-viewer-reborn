@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { env } from "$env/dynamic/public";
+  import { PUBLIC_SUPPORT_PAGE_URL } from "$app/env/public";
   import { RegionSwitcher, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
-  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
+  const supportPageUrl = PUBLIC_SUPPORT_PAGE_URL?.trim();
 
   const supportedRegions = ["jp", "en", "tw", "kr", "cn"] as const;
   type SupportedRegion = (typeof supportedRegions)[number];

@@ -1,9 +1,9 @@
-import { json, error } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
 import {
   isStoryRouteRegion,
   storyRouteStoryTypes,
   type StoryRouteRegion
-} from "$lib/live2d/story-route";
+} from "#lib/live2d/story-route.js";
 import {
   fetchCardEpisodesByCardIds,
   fetchCardListPage,
@@ -11,7 +11,7 @@ import {
   fetchStoryCollection,
   fetchStoryCollections,
   type StoryCollectionName
-} from "$lib/story/master-data-client.server";
+} from "#lib/story/master-data-client.server.js";
 import {
   buildStoryAreaTalkPicker,
   buildStoryCardPickerFromPage,
@@ -19,9 +19,9 @@ import {
   buildStoryCharacterPicker,
   buildUnitStoryCatalog,
   type StoryMasterCollections
-} from "$lib/story/story-identity";
-import { createStoryRegionAssetUrls, eventBannerImagePath } from "$lib/story/story-urls";
-import { getStoryAssetBase } from "$lib/story/story-resolver.server";
+} from "#lib/story/story-identity.js";
+import { createStoryRegionAssetUrls, eventBannerImagePath } from "#lib/story/story-urls.js";
+import { getStoryAssetBase } from "#lib/story/story-resolver.server.js";
 import type { RequestHandler } from "./$types";
 
 /** Event / card rows per page in the picker's first level (mirrors content-site). */
@@ -100,7 +100,7 @@ const eventPickerPayload = async (
     };
   });
 
-  return json({
+  return Response.json({
     storyType: "event",
     events,
     pagination: eventPage.pagination,
@@ -168,7 +168,7 @@ const cardPickerPayload = async (
         `#${character.id}`
     }));
 
-  return json({
+  return Response.json({
     storyType: "card",
     cards,
     pagination: cardPage.pagination,
@@ -192,7 +192,7 @@ const unitCatalogPayload = (
       }))
     }))
   }));
-  return json({ storyType: "unit", units });
+  return Response.json({ storyType: "unit", units });
 };
 
 const areaTalkPickerPayload = async (
@@ -216,7 +216,7 @@ const areaTalkPickerPayload = async (
     ...area,
     thumbnailUrl: area.thumbnailPath ? assetUrls.region(area.thumbnailPath) : null
   }));
-  return json({ storyType: "area-talk", groups, areas });
+  return Response.json({ storyType: "area-talk", groups, areas });
 };
 
 /**
@@ -259,7 +259,7 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
   const groups = buildStoryCatalog(storyType as (typeof storyRouteStoryTypes)[number], collections);
 
   if (storyType === "character") {
-    return json({
+    return Response.json({
       storyType,
       groups,
       characters: buildStoryCharacterPicker(collections)
@@ -269,5 +269,5 @@ export const GET: RequestHandler = async ({ params, fetch, url }) => {
     return areaTalkPickerPayload(region, fetch, collections, groups);
   }
 
-  return json({ storyType, groups });
+  return Response.json({ storyType, groups });
 };

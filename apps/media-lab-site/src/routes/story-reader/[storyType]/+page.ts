@@ -1,5 +1,5 @@
 import { error } from "@sveltejs/kit";
-import { isPickerStoryType } from "$lib/story/story-picker";
+import { isPickerStoryType } from "#lib/story/story-picker.js";
 import type { PageLoad } from "./$types";
 
 export const load: PageLoad = ({ params }) => {

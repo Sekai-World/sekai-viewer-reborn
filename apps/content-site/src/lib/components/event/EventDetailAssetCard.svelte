@@ -4,14 +4,17 @@
     getEventBannerAssetURL,
     getEventCharacterAssetURL,
     getEventLogoAssetURL
-  } from "$lib/assets/index";
-  import type { EventDetail } from "$lib/domain/event-detail";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  } from "#lib/assets/index.js";
+  import type { EventDetail } from "#lib/domain/event-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
   import { ImagePreviewDialog } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
-  import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
-  import { getTablistTargetIndex } from "$lib/a11y/tablist";
+  import {
+    DETAIL_MEDIA_BUTTON_CLASS,
+    DETAIL_MEDIA_RADIUS_CLASS
+  } from "#lib/styles/detail-media.js";
+  import { getTablistTargetIndex } from "#lib/a11y/tablist.js";
 
   type EventAssetTab = "banner" | "title" | "background" | "characters";
 

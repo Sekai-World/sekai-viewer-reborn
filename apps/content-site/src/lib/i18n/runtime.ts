@@ -1,5 +1,5 @@
-import { browser, dev } from "$app/environment";
-import { env } from "$env/dynamic/public";
+import { browser, dev } from "$app/env";
+import { PUBLIC_SEKAI_I18N_BASE_URL } from "$app/env/public";
 import {
   createScopedI18nLoader,
   createRemoteI18nRuntime,
@@ -23,8 +23,8 @@ import stampSourceMessages from "@platform/i18n-source/content-site/stamp.json";
 import serverSourceMessages from "@platform/i18n-source/content-site/server.json";
 import virtualLiveSourceMessages from "@platform/i18n-source/content-site/virtual-live.json";
 import unitSourceMessages from "@platform/i18n-source/content-site/unit.json";
-import { repoLocaleByUiLocale, type SupportedUiLocale } from "$lib/i18n/config";
-import { normalizeUiLocale } from "$lib/i18n/region";
+import { repoLocaleByUiLocale, type SupportedUiLocale } from "#lib/i18n/config.js";
+import { normalizeUiLocale } from "#lib/i18n/region.js";
 
 const toRepoLocale = (uiLocale: SupportedUiLocale): string =>
   repoLocaleByUiLocale[uiLocale] ?? "en";
@@ -118,7 +118,7 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
 };
 
 const getI18nBaseUrl = (): string => {
-  const value = env.PUBLIC_SEKAI_I18N_BASE_URL?.trim() || DEFAULT_SEKAI_I18N_BASE_URL;
+  const value = PUBLIC_SEKAI_I18N_BASE_URL?.trim() || DEFAULT_SEKAI_I18N_BASE_URL;
   return value.replace(/\/+$/, "");
 };
 
@@ -199,12 +199,10 @@ export const getLocalI18nMessages = (namespaces: readonly I18nNamespace[]): I18n
     (messages, namespace) => ({ ...messages, ...localSourceMessagesByNamespace[namespace] }),
     {}
   );
-
 export const createI18nTranslator = (
   localeValue: string,
   messages: I18nMessages
 ): ContentSiteTranslator => i18nRuntime.createPureTranslator(localeValue, messages);
-
 export const requestI18nLocale = (): ReturnType<typeof i18nRuntime.requestLocale> =>
   i18nRuntime.requestLocale();
 

@@ -5,7 +5,7 @@ import type {
   GachaBehavior,
   GachaDetailSub,
   GachaInformation
-} from "$lib/domain/gacha-detail";
+} from "#lib/domain/gacha-detail.js";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;

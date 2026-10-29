@@ -1,14 +1,13 @@
-import { json } from "@sveltejs/kit";
 import { getVirtualLivesByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
+import { normalizeRegion } from "#lib/i18n/region.js";
 import {
   createVirtualLiveListRequestQuery,
   DEFAULT_VIRTUAL_LIVE_LIST_PAGE_SIZE,
   logVirtualLiveListFilterDebug,
   parseVirtualLiveListPage,
   parseVirtualLiveListQueryState
-} from "$lib/server/virtual-live-list";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+} from "#lib/server/virtual-live-list.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import type { RequestHandler } from "./$types";
 
 const summarizeResponse = (
@@ -70,7 +69,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
         error: response.error
       });
 
-      return json({ error: true }, { status: 500 });
+      return Response.json({ error: true }, { status: 500 });
     }
 
     const virtualLiveListPage = parseVirtualLiveListPage(
@@ -89,7 +88,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
       pagination: virtualLiveListPage.pagination
     });
 
-    return json(virtualLiveListPage);
+    return Response.json(virtualLiveListPage);
   } catch (error) {
     logVirtualLiveListFilterDebug("data exception", {
       region,
@@ -98,6 +97,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
       error
     });
 
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

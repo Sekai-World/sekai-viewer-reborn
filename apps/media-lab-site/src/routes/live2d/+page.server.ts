@@ -1,13 +1,13 @@
 import {
   resolveLive2dCatalogRouteData,
   type Live2dCatalogRouteData
-} from "$lib/live2d/catalog-route-data";
+} from "#lib/live2d/catalog-route-data.js";
 import {
   createLive2dCharacterOptions,
   resolveLive2dCharacterData
-} from "$lib/server/live2d-characters";
-import type { Live2dCharacterOption } from "$lib/server/live2d-characters";
-import { normalizePrimaryRegion, type SupportedRegion } from "$lib/region-selection.svelte";
+} from "#lib/server/live2d-characters.js";
+import type { Live2dCharacterOption } from "#lib/server/live2d-characters.js";
+import { normalizePrimaryRegion, type SupportedRegion } from "#lib/region-selection.svelte.js";
 import type { PageServerLoad } from "./$types";
 
 type Live2dCatalogModel = Extract<Live2dCatalogRouteData, { status: "ready" }>["models"][number];

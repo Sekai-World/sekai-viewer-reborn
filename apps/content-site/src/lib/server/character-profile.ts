@@ -1,4 +1,4 @@
-import type { CharacterProfile } from "$lib/domain/character";
+import type { CharacterProfile } from "#lib/domain/character.js";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value.trim() : null;

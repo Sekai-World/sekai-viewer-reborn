@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { resolveModelSelection, type Live2dModelOption } from "$lib/live2d/model-catalog";
+  import { resolveModelSelection, type Live2dModelOption } from "#lib/live2d/model-catalog.js";
 
   /** Localized labels, resolved by the hosting route's translator. */
   export interface Live2dModelSelectorLabels {

@@ -1,4 +1,4 @@
-import { normalizeUiLocale } from "$lib/i18n/region";
+import { normalizeUiLocale } from "#lib/i18n/region.js";
 
 const formatterCache = new Map<string, Intl.DateTimeFormat>();
 

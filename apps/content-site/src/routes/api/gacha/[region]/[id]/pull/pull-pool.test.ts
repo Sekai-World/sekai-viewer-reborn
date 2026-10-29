@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { GachaDetailSub } from "$lib/domain/gacha-detail";
+import type { GachaDetailSub } from "#lib/domain/gacha-detail.js";
 import {
   buildRarityPools,
   fetchGachaCardMetadata,

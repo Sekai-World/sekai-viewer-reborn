@@ -1,7 +1,7 @@
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { fetchMysekaiFixtureFilters, fetchMysekaiFixtureListPage } from "$lib/server/mysekai";
-import { parseMysekaiFixtureListQuery } from "$lib/domain/mysekai";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { fetchMysekaiFixtureFilters, fetchMysekaiFixtureListPage } from "#lib/server/mysekai.js";
+import { parseMysekaiFixtureListQuery } from "#lib/domain/mysekai.js";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = ({ params, url }) => {

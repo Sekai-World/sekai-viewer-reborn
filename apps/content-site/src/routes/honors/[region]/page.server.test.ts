@@ -8,16 +8,16 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({ getHonorGroupsByRegionList })
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 const { fetchBondsHonorViewData } = vi.hoisted(() => ({ fetchBondsHonorViewData: vi.fn() }));
-vi.mock("$lib/server/honor-list", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("$lib/server/honor-list")>()),
+vi.mock("#lib/server/honor-list.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("#lib/server/honor-list.js")>()),
   fetchBondsHonorViewData
 }));
 
 import { load } from "./+page.server";
-import type { HonorGroup } from "$lib/domain/honor";
+import type { HonorGroup } from "#lib/domain/honor.js";
 
 type HonorPageLoadResult = {
   region: string;

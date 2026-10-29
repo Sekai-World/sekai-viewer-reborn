@@ -1,9 +1,8 @@
-import { json } from "@sveltejs/kit";
-import { parseMysekaiSoundtrackListQuery } from "$lib/domain/mysekai";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parsePositivePage } from "$lib/server/catalogue-data";
-import { fetchMysekaiSoundtrackListPage } from "$lib/server/mysekai";
+import { parseMysekaiSoundtrackListQuery } from "#lib/domain/mysekai.js";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parsePositivePage } from "#lib/server/catalogue-data.js";
+import { fetchMysekaiSoundtrackListPage } from "#lib/server/mysekai.js";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -12,8 +11,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const query = parseMysekaiSoundtrackListQuery(url.searchParams);
 
   try {
-    return json(await fetchMysekaiSoundtrackListPage(getMasterApiBaseUrl(), region, query, page));
+    return Response.json(
+      await fetchMysekaiSoundtrackListPage(getMasterApiBaseUrl(), region, query, page)
+    );
   } catch {
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

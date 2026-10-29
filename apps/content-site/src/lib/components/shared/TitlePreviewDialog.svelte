@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { TitlePreview } from "$lib/domain/title-preview";
+  import type { TitlePreview } from "#lib/domain/title-preview.js";
 
   // One request per title and level, shared by every reward row that shows it. It only
   // de-duplicates fetches and never drives rendering, so it need not be reactive.
@@ -11,9 +11,9 @@
   import Icon from "@iconify/svelte";
   import { resolve } from "$app/paths";
   import { HonorDegree } from "@platform/ui-shell";
-  import type { TitlePreviewKind } from "$lib/domain/title-preview";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { createHonorDegreeAssetResolver } from "$lib/honor-degree";
+  import type { TitlePreviewKind } from "#lib/domain/title-preview.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { createHonorDegreeAssetResolver } from "#lib/honor-degree.js";
   import { getTitlePreviewLabels } from "./title-preview-labels";
 
   let {

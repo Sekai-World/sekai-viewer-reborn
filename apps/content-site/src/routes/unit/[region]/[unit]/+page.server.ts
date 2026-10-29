@@ -2,10 +2,10 @@ import {
   getUnitProfilesByRegionByUnit,
   getUnitProfilesByRegionByUnitMembers
 } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
-import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parseUnitDetail, parseUnitMembers } from "$lib/server/unit-detail";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { resolveCanonicalUnitSlug } from "#lib/domain/unit-icon.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseUnitDetail, parseUnitMembers } from "#lib/server/unit-detail.js";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params }) => {

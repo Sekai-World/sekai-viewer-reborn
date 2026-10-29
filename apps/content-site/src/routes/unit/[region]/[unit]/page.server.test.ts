@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 const { getUnitProfilesByRegionByUnit, getUnitProfilesByRegionByUnitMembers } = vi.hoisted(() => ({
   getUnitProfilesByRegionByUnit: vi.fn(),
   getUnitProfilesByRegionByUnitMembers: vi.fn()

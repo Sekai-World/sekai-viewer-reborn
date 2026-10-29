@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { parseMusicDetail } from "$lib/server/music-detail";
+import { parseMusicDetail } from "#lib/server/music-detail.js";
 import MusicYoutubeCard from "./MusicYoutubeCard.svelte";
-import "$lib/icons/mdi";
+import "#lib/icons/mdi.js";
 
 const youtubeOriginal = { id: "1", musicId: "8", videoLink: "https://youtu.be/EgOWe9ByNaE" };
 const secondYoutubeOriginal = {

@@ -6,7 +6,7 @@
     readFilterGuideSeen,
     writeFilterGuideSeen,
     type FilterGuideScope
-  } from "$lib/filter-onboarding";
+  } from "#lib/filter-onboarding.js";
 
   let {
     scope,
@@ -129,7 +129,8 @@
     return () => filterDialog.removeEventListener("close", finishTour);
   });
 
-  beforeNavigate(() => {
+  beforeNavigate(({ shallow, type }) => {
+    if (shallow && type === "goto") return;
     if (!pendingOpen && !opening && !tourOpen) return;
     pendingOpen = null;
     consentDialog?.close();

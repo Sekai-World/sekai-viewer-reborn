@@ -1,9 +1,9 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import "$lib/icons/mdi";
+import "#lib/icons/mdi.js";
 import HonorCatalogue, { type HonorCatalogueGroup } from "./HonorCatalogue.svelte";
-import type { BondsHonor } from "$lib/domain/honor";
-import { toCatalogueBondsHonorDegree, type CatalogueHonorDegree } from "$lib/honor-degree";
+import type { BondsHonor } from "#lib/domain/honor.js";
+import { toCatalogueBondsHonorDegree, type CatalogueHonorDegree } from "#lib/honor-degree.js";
 
 const degree = (bundle: string): CatalogueHonorDegree => ({
   main: { kind: "normal", assetBundleName: bundle, rarity: "high", level: 3 },

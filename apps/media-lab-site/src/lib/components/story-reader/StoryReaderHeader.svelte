@@ -1,6 +1,6 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import type { StoryRouteIdentity } from "$lib/live2d/story-route";
+  import type { StoryRouteIdentity } from "#lib/live2d/story-route.js";
 
   /** Shared reader page header: navigation, titles, and story identity meta. */
   interface Props {

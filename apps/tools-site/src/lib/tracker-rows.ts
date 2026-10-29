@@ -3,12 +3,12 @@ import {
   calculateScorePerElapsedHour,
   type ScorePerElapsedHour
 } from "./tracker-math";
-import type { TrackerDateValue } from "$lib/tracker-phase";
+import type { TrackerDateValue } from "#lib/tracker-phase.js";
 import type {
   TrackerHonorMission,
   TrackerLeaderCard,
   TrackerProfileHonor
-} from "$lib/tracker-player-profile";
+} from "#lib/tracker-player-profile.js";
 
 export type TrackerRankingRecord = Readonly<{
   rank: number | null | undefined;

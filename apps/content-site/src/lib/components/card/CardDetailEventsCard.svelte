@@ -1,11 +1,11 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { getEventBannerAssetURL } from "$lib/assets/index";
-  import type { CardRelatedEvent } from "$lib/domain/card-detail";
-  import { getEventTypeDisplay } from "$lib/domain/event";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
+  import { getEventBannerAssetURL } from "#lib/assets/index.js";
+  import type { CardRelatedEvent } from "#lib/domain/card-detail.js";
+  import { getEventTypeDisplay } from "#lib/domain/event.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import { formatDisplayDateTime, toTimestampMs } from "#lib/time/date-time.js";
   import Icon from "@iconify/svelte";
   import type { I18nTranslator } from "@platform/i18n-runtime";
 

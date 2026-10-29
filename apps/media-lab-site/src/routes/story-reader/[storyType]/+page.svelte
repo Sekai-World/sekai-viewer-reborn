@@ -1,7 +1,7 @@
 <script lang="ts">
-  import StoryPicker from "$lib/components/story-reader/StoryPicker.svelte";
-  import { createI18nTranslator } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
+  import StoryPicker from "#lib/components/story-reader/StoryPicker.svelte";
+  import { createI18nTranslator } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

@@ -1,4 +1,4 @@
-import { parseTrackerTimestamp } from "$lib/tracker-phase";
+import { parseTrackerTimestamp } from "#lib/tracker-phase.js";
 
 export type TrackerNameSnapshot = Readonly<{
   rank: number | null | undefined;

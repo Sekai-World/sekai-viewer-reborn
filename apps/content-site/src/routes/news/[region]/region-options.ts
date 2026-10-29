@@ -1,5 +1,5 @@
 import { resolve } from "$app/paths";
-import { regionLabels, type SupportedRegion } from "$lib/domain/regions";
+import { regionLabels, type SupportedRegion } from "#lib/domain/regions.js";
 
 export type NewsRegionOption = {
   key: SupportedRegion;

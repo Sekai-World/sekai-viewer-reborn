@@ -4,7 +4,7 @@ import {
   getDownloadTaskSnapshot,
   subscribeDownloadTask,
   type DownloadTaskSnapshot
-} from "$lib/server/download-progress";
+} from "#lib/server/download-progress.js";
 
 const formatSseMessage = (snapshot: DownloadTaskSnapshot): string =>
   `data: ${JSON.stringify(snapshot)}\n\n`;

@@ -1,13 +1,12 @@
-import { json } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parsePositivePage, getPositiveInteger } from "$lib/server/catalogue-data";
-import { fetchMissionParameterGroupLevels } from "$lib/server/mission-list";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parsePositivePage, getPositiveInteger } from "#lib/server/catalogue-data.js";
+import { fetchMissionParameterGroupLevels } from "#lib/server/mission-list.js";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ params, url }) => {
   const parameterGroupId = getPositiveInteger(params.id);
-  if (parameterGroupId === null) return json({ error: true }, { status: 400 });
+  if (parameterGroupId === null) return Response.json({ error: true }, { status: 400 });
 
   try {
     const levels = await fetchMissionParameterGroupLevels(
@@ -16,8 +15,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
       parameterGroupId,
       parsePositivePage(url.searchParams.get("page"))
     );
-    return json(levels);
+    return Response.json(levels);
   } catch {
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

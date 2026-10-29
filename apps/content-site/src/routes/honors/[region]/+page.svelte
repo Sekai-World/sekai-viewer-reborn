@@ -1,26 +1,26 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { goto, invalidateAll } from "$app/navigation";
+  import { browser } from "$app/env";
+  import { goto, refreshAll } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
-  import HonorCatalogue from "$lib/components/honor/HonorCatalogue.svelte";
+  import HonorCatalogue from "#lib/components/honor/HonorCatalogue.svelte";
   import type {
     BondsHonor,
     BondsHonorGroup,
     BondsHonorViewData,
     HonorGroup
-  } from "$lib/domain/honor";
-  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
+  } from "#lib/domain/honor.js";
+  import { formatUnitFallbackLabel } from "#lib/domain/unit-profile.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
   import {
     createHonorDegreeAssetResolver,
     getBondsHonorPartnerUnit,
     hasBondsHonorOutfitOption,
     toCatalogueBondsHonorDegree,
     toCatalogueHonorDegree
-  } from "$lib/honor-degree";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/honor-degree.js";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import sourceMessages from "@platform/i18n-source/content-site/honor.json";
   import type { PageProps } from "./$types";
 
@@ -80,8 +80,10 @@
         ? "honor.category.all"
         : (honorTypeLabelKeys[honorType] ?? "honor.category.unknown")
     );
+
   const formatNumber = (value: number): string =>
     new Intl.NumberFormat(data.uiLocale).format(value);
+
   const rarityLabel = (rarity: string | null): string | undefined => {
     switch (rarity) {
       case "low":
@@ -203,8 +205,7 @@
     params.delete("page");
     const queryString = params.toString();
     void goto(`${resolve("/honors/[region]", { region: data.region })}?${queryString}`, {
-      keepFocus: true,
-      noScroll: true
+      reset: false
     });
   };
 
@@ -331,6 +332,6 @@
   loadMoreError={loadMoreError ? t("honor.loadMoreError") : null}
   onLoadMore={() => void loadNextPage()}
   onRetryLoadMore={() => void loadNextPage()}
-  onRetry={() => void invalidateAll()}
+  onRetry={() => void refreshAll()}
   {resolveAsset}
 />

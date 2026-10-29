@@ -1,21 +1,21 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { getEventBannerAssetURL } from "$lib/assets/index";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { getEventBannerAssetURL } from "#lib/assets/index.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import EventCardFrame from "#lib/components/shared/EventCardFrame.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
-  import EventCountdownCard from "$lib/components/event/EventCountdownCard.svelte";
-  import { getEventTypeDisplay } from "$lib/domain/event";
+  import EventCountdownCard from "#lib/components/event/EventCountdownCard.svelte";
+  import { getEventTypeDisplay } from "#lib/domain/event.js";
   import {
     CURRENT_EVENT_CARD_FRAME_CLASS,
     EVENT_CARD_BANNER_BODY_CLASS,
     EVENT_CARD_IMAGE_CLASS,
     EVENT_CARD_META_BADGE_CLASS,
     EVENT_CARD_MEDIA_CLASS
-  } from "$lib/styles/event-card";
-  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
-  import { getEventTrackerHref } from "$lib/tools-site";
+  } from "#lib/styles/event-card.js";
+  import { formatUnitFallbackLabel } from "#lib/domain/unit-profile.js";
+  import { getEventTrackerHref } from "#lib/tools-site.js";
   import type { I18nMessages, I18nTranslator } from "@platform/i18n-runtime";
   import Icon from "@iconify/svelte";
 

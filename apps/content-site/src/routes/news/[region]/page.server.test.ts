@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 const { loadGameNews } = vi.hoisted(() => ({ loadGameNews: vi.fn() }));
-vi.mock("$lib/server/game-news", () => ({ loadGameNews }));
+vi.mock("#lib/server/game-news.js", () => ({ loadGameNews }));
 
 import { load } from "./+page.server";
 

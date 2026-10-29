@@ -11,7 +11,7 @@
  * revalidation and evicted least-recently-used once the stored total exceeds
  * the byte cap. The page registers this worker and posts a
  * `configure-story-asset-cache` message with the allowlist (see
- * `$lib/story/asset-cache-client.ts`); until that arrives the worker caches
+ * `#lib/story/asset-cache-client.ts`); until that arrives the worker caches
  * nothing and passes every request through.
  */
 

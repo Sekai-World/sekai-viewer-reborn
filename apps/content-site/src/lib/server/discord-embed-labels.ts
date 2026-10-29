@@ -1,4 +1,4 @@
-import { getServerI18nText, type ContentSiteServerMessageKey } from "$lib/i18n/runtime";
+import { getServerI18nText, type ContentSiteServerMessageKey } from "#lib/i18n/runtime.js";
 import type { I18nFetcher } from "@platform/i18n-runtime";
 
 const SIMPLE_LABEL_KEYS = {

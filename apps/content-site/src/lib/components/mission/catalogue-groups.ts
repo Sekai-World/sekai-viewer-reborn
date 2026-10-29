@@ -1,4 +1,4 @@
-import type { MissionFamily } from "$lib/domain/mission";
+import type { MissionFamily } from "#lib/domain/mission.js";
 
 /** Group only this bounded page, preserving source family and member order. */
 export function groupMissionsByFamily<T extends { family: MissionFamily }>(

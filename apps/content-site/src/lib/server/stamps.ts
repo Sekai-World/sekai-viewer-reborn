@@ -2,8 +2,8 @@ import {
   getStampsByRegionList,
   type GetStampsByRegionListData
 } from "@platform/sekai-master-api-sdk";
-import type { MysekaiPagination } from "$lib/domain/mysekai";
-import type { StampItem, StampListQuery } from "$lib/domain/stamp";
+import type { MysekaiPagination } from "#lib/domain/mysekai.js";
+import type { StampItem, StampListQuery } from "#lib/domain/stamp.js";
 import { getMasterApiV1BaseUrl } from "./catalogue-data";
 import { toPagination } from "./mysekai";
 

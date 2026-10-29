@@ -1,7 +1,7 @@
 <script lang="ts">
   import { LineChart } from "layerchart";
   import type { ChartState } from "layerchart";
-  import { findSnappedNameChange, findTrackerNameChanges } from "$lib/tracker-name-changes";
+  import { findSnappedNameChange, findTrackerNameChanges } from "#lib/tracker-name-changes.js";
 
   type RankingHistoryPoint = Readonly<{
     rank: number;

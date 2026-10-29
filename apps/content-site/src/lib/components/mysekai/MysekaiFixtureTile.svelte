@@ -1,5 +1,5 @@
 <script lang="ts">
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
 
   let {
     href,

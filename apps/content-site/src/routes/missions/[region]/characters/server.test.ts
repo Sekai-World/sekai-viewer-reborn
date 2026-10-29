@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 const { fetchMissionCharacterOptions } = vi.hoisted(() => ({
   fetchMissionCharacterOptions: vi.fn()
 }));
-vi.mock("$lib/server/mission-characters", () => ({ fetchMissionCharacterOptions }));
+vi.mock("#lib/server/mission-characters.js", () => ({ fetchMissionCharacterOptions }));
 
 import { GET } from "./+server";
 

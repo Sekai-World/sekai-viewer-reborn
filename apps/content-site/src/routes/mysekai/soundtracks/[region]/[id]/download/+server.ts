@@ -1,8 +1,8 @@
 import { error, type RequestHandler } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "$lib/server/config";
-import { buildMysekaiSoundtrackDownload } from "$lib/server/mysekai-soundtrack-download";
-import { toDownloadFileName } from "$lib/soundtrack-player.svelte";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "#lib/server/config.js";
+import { buildMysekaiSoundtrackDownload } from "#lib/server/mysekai-soundtrack-download.js";
+import { toDownloadFileName } from "#lib/soundtrack-player.svelte.js";
 
 /** A soundtrack's MP3 with its title, category (artist and album), and jacket tagged in. */
 export const GET: RequestHandler = async ({ params, fetch }) => {

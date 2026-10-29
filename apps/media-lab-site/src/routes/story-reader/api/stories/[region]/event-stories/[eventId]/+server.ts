@@ -1,9 +1,9 @@
-import { error, json } from "@sveltejs/kit";
-import { isStoryRouteRegion } from "$lib/live2d/story-route";
-import { fetchEventStoriesByEvent } from "$lib/story/master-data-client.server";
-import { buildEventStoryEpisodeLinks } from "$lib/story/story-identity";
-import { createStoryRegionAssetUrls } from "$lib/story/story-urls";
-import { getStoryAssetBase } from "$lib/story/story-resolver.server";
+import { error } from "@sveltejs/kit";
+import { isStoryRouteRegion } from "#lib/live2d/story-route.js";
+import { fetchEventStoriesByEvent } from "#lib/story/master-data-client.server.js";
+import { buildEventStoryEpisodeLinks } from "#lib/story/story-identity.js";
+import { createStoryRegionAssetUrls } from "#lib/story/story-urls.js";
+import { getStoryAssetBase } from "#lib/story/story-resolver.server.js";
 import type { RequestHandler } from "./$types";
 
 /**
@@ -25,7 +25,7 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
   try {
     const stories = await fetchEventStoriesByEvent(region, eventId, { fetch });
     const assetUrls = createStoryRegionAssetUrls(getStoryAssetBase, region);
-    return json({
+    return Response.json({
       storyType: "event",
       eventId,
       episodes: buildEventStoryEpisodeLinks(stories).map((episode) => ({

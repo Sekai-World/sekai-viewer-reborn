@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { MusicVideoDescriptor } from "$lib/domain/music-detail";
+import type { MusicVideoDescriptor } from "#lib/domain/music-detail.js";
 import {
   getMusicVideoListingURL,
   getMusicVideoPrefix,
@@ -7,9 +7,7 @@ import {
 } from "./music-video";
 import { getMusicAssetServer } from "./index";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "/storage" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "/storage" }));
 
 const descriptor = (overrides: Partial<MusicVideoDescriptor> = {}): MusicVideoDescriptor => ({
   category: "mv_2d",

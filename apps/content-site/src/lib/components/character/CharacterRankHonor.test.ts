@@ -1,13 +1,11 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import "$lib/icons/mdi";
-import type { CharacterRankReference } from "$lib/domain/mission";
-import type { TitlePreview } from "$lib/domain/title-preview";
+import "#lib/icons/mdi.js";
+import type { CharacterRankReference } from "#lib/domain/mission.js";
+import type { TitlePreview } from "#lib/domain/title-preview.js";
 import CharacterRankCard from "./CharacterRankCard.svelte";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }));
 
 afterEach(() => {
   cleanup();

@@ -8,10 +8,10 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({ getMissionsByRegionList }));
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 import { load } from "./+page.server";
-import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
+import { missionFamilies, type Mission, type MissionFamily } from "#lib/domain/mission.js";
 
 type CatalogueResult = {
   items: Mission[];

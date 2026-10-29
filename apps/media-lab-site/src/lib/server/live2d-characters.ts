@@ -1,10 +1,10 @@
-import { env } from "$env/dynamic/private";
+import { SEKAI_MASTER_API_BASE_URL } from "$app/env/private";
 import {
   getCharacter2DsByRegionBatch,
   getGameCharactersByRegionList
 } from "@platform/sekai-master-api-sdk";
-import { LIVE2D_CATALOG_REGION } from "$lib/live2d/associated-catalog";
-import type { SupportedRegion } from "$lib/region-selection.svelte";
+import { LIVE2D_CATALOG_REGION } from "#lib/live2d/associated-catalog.js";
+import type { SupportedRegion } from "#lib/region-selection.svelte.js";
 
 export interface Live2dCharacterOption {
   id: number | null;
@@ -35,7 +35,6 @@ export interface Live2dCharacterResolution<TModel extends Live2dCharacterModel> 
 const PAGE_SIZE = 100;
 const CHARACTER2D_BATCH_SIZE = 100;
 const MAX_PAGES = 20;
-
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -91,7 +90,7 @@ const getPaginationFromEnvelope = (
 };
 
 const resolveMasterApiBaseUrl = (): string | null => {
-  const value = env.SEKAI_MASTER_API_BASE_URL?.trim();
+  const value = SEKAI_MASTER_API_BASE_URL?.trim();
   if (!value) return null;
 
   let end = value.length;
@@ -221,6 +220,7 @@ const resolveModelCharacterId = (
   character2dMappings: ReadonlyMap<number, Character2dMapping>
 ): number | null => {
   const character2dId = getPositiveSafeInteger(model.character2dId);
+
   return (
     (character2dId === null
       ? undefined
@@ -234,6 +234,7 @@ const resolveModelCharacterType = (
   character2dMappings: ReadonlyMap<number, Character2dMapping>
 ): string | null => {
   const character2dId = getPositiveSafeInteger(model.character2dId);
+
   return (
     (character2dId === null ? undefined : character2dMappings.get(character2dId)?.characterType) ??
     getNamePart(model.characterType)

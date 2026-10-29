@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Mission, MissionFamily } from "$lib/domain/mission";
-import { missionFamilies } from "$lib/domain/mission";
+import type { Mission, MissionFamily } from "#lib/domain/mission.js";
+import { missionFamilies } from "#lib/domain/mission.js";
 
 const { getMissionsByRegionList } = vi.hoisted(() => ({
   getMissionsByRegionList: vi.fn()

@@ -16,11 +16,9 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionList: mocks.getEventsByRegionList,
   getEventsByRegionById: mocks.getEventsByRegionById
 }));
-vi.mock("$env/dynamic/private", () => ({
-  env: {
-    SEKAI_API_BASE_URL: "https://api.example.test/",
-    SEKAI_MASTER_API_BASE_URL: "https://master.example.test/"
-  }
+vi.mock("$app/env/private", () => ({
+  SEKAI_API_BASE_URL: "https://api.example.test/",
+  SEKAI_MASTER_API_BASE_URL: "https://master.example.test/"
 }));
 
 import { GET as graph } from "./tracker/[region]/graph/+server";
@@ -28,7 +26,7 @@ import { GET as snapshot } from "./tracker/[region]/snapshot/+server";
 import { GET as time } from "./tracker/[region]/time/+server";
 import { GET as chapter } from "./tracker/[region]/chapter/+server";
 import { GET as eventSearch } from "./tracker/[region]/events/+server";
-import { clearMetadataCache } from "$lib/server/metadata-cache";
+import { clearMetadataCache } from "#lib/server/metadata-cache.js";
 
 const request = (path: string, region = "en") =>
   ({ params: { region }, url: new URL(`https://tools.example.test${path}`) }) as never;

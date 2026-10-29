@@ -1,16 +1,23 @@
 import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { BeforeNavigate } from "$app/navigation";
 import { tick } from "svelte";
 import FilterOnboarding from "./FilterOnboarding.svelte";
-import { readFilterGuideSeen, writeFilterGuideSeen } from "$lib/filter-onboarding";
+import { readFilterGuideSeen, writeFilterGuideSeen } from "#lib/filter-onboarding.js";
 
-const navigationCallbacks = vi.hoisted(() => [] as (() => void)[]);
+type NavigationDetails = Pick<BeforeNavigate, "shallow" | "type">;
+const navigationCallbacks = vi.hoisted(() => [] as ((navigation: NavigationDetails) => void)[]);
 
 vi.mock("$app/navigation", () => ({
-  beforeNavigate: (callback: () => void) => navigationCallbacks.push(callback)
+  beforeNavigate: (callback: (navigation: NavigationDetails) => void) =>
+    navigationCallbacks.push(callback)
 }));
 
-vi.mock("$lib/filter-onboarding", () => ({
+const triggerBeforeNavigate = (navigation: NavigationDetails): void => {
+  navigationCallbacks.forEach((callback) => callback(navigation));
+};
+
+vi.mock("#lib/filter-onboarding.js", () => ({
   readFilterGuideSeen: vi.fn(() => false),
   writeFilterGuideSeen: vi.fn()
 }));
@@ -204,7 +211,7 @@ describe("first-use filter guide", () => {
       open();
       await fireEvent.click(within(prompt).getByRole("button", { name: "Show guide" }));
       expect(tour.open).toBe(false);
-      if (exit === "navigation") navigationCallbacks[0]?.();
+      if (exit === "navigation") triggerBeforeNavigate({ shallow: false, type: "goto" });
       else if (exit === "filter close") filter.close();
       else unmount();
       complete();
@@ -322,7 +329,7 @@ describe("first-use filter guide", () => {
   it("cancels pending consent on same-component region navigation", async () => {
     const { prompt, filter, open, openFilters } = setup();
     open();
-    navigationCallbacks[0]?.();
+    triggerBeforeNavigate({ shallow: false, type: "goto" });
     await Promise.resolve();
     expect(prompt.open).toBe(false);
     expect(filter.open).toBe(false);
@@ -335,16 +342,29 @@ describe("first-use filter guide", () => {
     open();
     await fireEvent.click(within(prompt).getByRole("button", { name: "Show guide" }));
     await waitFor(() => expect(tour.open).toBe(true));
-    navigationCallbacks[0]?.();
+    triggerBeforeNavigate({ shallow: false, type: "goto" });
     await waitFor(() => expect(tour.open).toBe(false));
     expect(filter.open).toBe(false);
+  });
+
+  it("keeps the guide and filter open during a shallow goto navigation", async () => {
+    const { prompt, tour, filter, open } = setup();
+    open();
+    await fireEvent.click(within(prompt).getByRole("button", { name: "Show guide" }));
+    await waitFor(() => expect(tour.open).toBe(true));
+
+    triggerBeforeNavigate({ shallow: true, type: "goto" });
+
+    expect(prompt.open).toBe(false);
+    expect(tour.open).toBe(true);
+    expect(filter.open).toBe(true);
   });
 
   it("does not start a stale accepted tour if navigation occurs while filters open", async () => {
     const { prompt, tour, filter, open, openFilters } = setup();
     openFilters.mockImplementationOnce(() => {
       filter.showModal();
-      navigationCallbacks[0]?.();
+      triggerBeforeNavigate({ shallow: false, type: "goto" });
     });
     open();
     await fireEvent.click(within(prompt).getByRole("button", { name: "Show guide" }));

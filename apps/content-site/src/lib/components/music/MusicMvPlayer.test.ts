@@ -1,11 +1,11 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { resolveMusicVideoAssetURL } from "$lib/assets/music-video";
-import type { MusicVideoDescriptor, MusicVocal } from "$lib/domain/music-detail";
+import { resolveMusicVideoAssetURL } from "#lib/assets/music-video.js";
+import type { MusicVideoDescriptor, MusicVocal } from "#lib/domain/music-detail.js";
 import MusicMvPlayer from "./MusicMvPlayer.svelte";
 
-vi.mock("$lib/assets/music-video", () => ({ resolveMusicVideoAssetURL: vi.fn() }));
-vi.mock("$env/dynamic/public", () => ({ env: { PUBLIC_REMOTE_ASSET_BASE_URL: "/storage" } }));
+vi.mock("#lib/assets/music-video.js", () => ({ resolveMusicVideoAssetURL: vi.fn() }));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "/storage" }));
 
 const labels = {
   title: "Tell Your World",

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { type ComponentProps, type Snippet } from "svelte";
-  import type { MissionFamily, MissionResourceBoxDetail } from "$lib/domain/mission";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import RewardItem from "$lib/components/shared/RewardItem.svelte";
-  import ViewAllLink from "$lib/components/shared/ViewAllLink.svelte";
-  import { missionFamilies } from "$lib/domain/mission";
+  import type { MissionFamily, MissionResourceBoxDetail } from "#lib/domain/mission.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import RewardItem from "#lib/components/shared/RewardItem.svelte";
+  import ViewAllLink from "#lib/components/shared/ViewAllLink.svelte";
+  import { missionFamilies } from "#lib/domain/mission.js";
   import CatalogueFrame from "./CatalogueFrame.svelte";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
   import Icon from "@iconify/svelte";
 
   export type MissionCatalogueItem = {

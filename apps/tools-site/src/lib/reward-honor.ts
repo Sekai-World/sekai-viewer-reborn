@@ -4,7 +4,7 @@ import type {
 } from "@platform/sekai-master-api-sdk";
 import type { HonorDegreeInput } from "@platform/ui-shell";
 import { toCatalogueHonorDegree } from "@platform/ui-shell/honor-degree-adapter";
-import { asString, parseHonor } from "$lib/honor-master";
+import { asString, parseHonor } from "#lib/honor-master.js";
 
 export type RewardHonorInput = Extract<HonorDegreeInput, { kind: "normal" | "rank-match" }>;
 

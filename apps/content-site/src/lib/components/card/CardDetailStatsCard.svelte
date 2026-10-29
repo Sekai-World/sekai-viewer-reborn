@@ -4,7 +4,7 @@
     CardDetailEpisode,
     CardDetailParams,
     CardParameterSet
-  } from "$lib/domain/card-detail";
+  } from "#lib/domain/card-detail.js";
   import Icon from "@iconify/svelte";
 
   let {

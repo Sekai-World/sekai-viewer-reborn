@@ -1,5 +1,5 @@
-import type { CharacterRelatedCard } from "$lib/domain/character";
-import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import type { CharacterRelatedCard } from "#lib/domain/character.js";
+import { supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)

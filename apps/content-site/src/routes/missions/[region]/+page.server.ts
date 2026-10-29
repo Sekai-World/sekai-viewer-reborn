@@ -1,5 +1,5 @@
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   createEmptyMissionListPage,
   fetchCharacterMissions,
@@ -8,8 +8,8 @@ import {
   fetchStoryMissions,
   parseMissionCharacterId,
   parseMissionFamily
-} from "$lib/server/mission-list";
-import { missionFamilies, type Mission, type MissionFamily } from "$lib/domain/mission";
+} from "#lib/server/mission-list.js";
+import { missionFamilies, type Mission, type MissionFamily } from "#lib/domain/mission.js";
 import type { PageServerLoad } from "./$types";
 
 type MissionCatalogueQuery = {

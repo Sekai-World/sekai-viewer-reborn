@@ -1,6 +1,6 @@
-import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import { supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 import { getGameNewsByRegionList } from "@platform/sekai-master-api-sdk";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 
 export const GAME_NEWS_TAGS = [
   "information",

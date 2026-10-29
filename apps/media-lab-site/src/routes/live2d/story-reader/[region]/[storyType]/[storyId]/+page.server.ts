@@ -1,11 +1,11 @@
 import { error } from "@sveltejs/kit";
-import { parseStoryRouteParams } from "$lib/live2d/story-route";
+import { parseStoryRouteParams } from "#lib/live2d/story-route.js";
 import {
   fetchStoryCharactersOrEmpty,
   getStoryAssetBase,
   resolveStoryRoute
-} from "$lib/story/story-resolver.server";
-import { createStoryDocumentReference } from "$lib/story/story-document.server";
+} from "#lib/story/story-resolver.server.js";
+import { createStoryDocumentReference } from "#lib/story/story-document.server.js";
 import type { PageServerLoad } from "./$types";
 
 /**

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { getEventBgmAssetURL, getEventBannerAssetURL } from "$lib/assets/index";
-  import type { EventDetail } from "$lib/domain/event-detail";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import { getEventBgmAssetURL, getEventBannerAssetURL } from "#lib/assets/index.js";
+  import type { EventDetail } from "#lib/domain/event-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import { AudioPlayer } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
 

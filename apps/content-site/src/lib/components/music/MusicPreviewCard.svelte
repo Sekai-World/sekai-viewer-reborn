@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type { MusicVocal } from "$lib/domain/music-detail";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import type { MusicVocal } from "#lib/domain/music-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import {
     getMusicAssetServer,
     getMusicLongPreviewAssetURL,
     getMusicShortPreviewAssetURL
-  } from "$lib/assets/index";
+  } from "#lib/assets/index.js";
   import { AudioPlayer } from "@platform/ui-shell";
 
   type DownloadProgressMessages = {

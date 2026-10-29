@@ -1,6 +1,6 @@
-import { type SupportedUiLocale } from "$lib/i18n/config";
+import { type SupportedUiLocale } from "#lib/i18n/config.js";
 import { normalizeUiLocale as normalizeSharedUiLocale } from "@platform/i18n-runtime";
-import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import { supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 
 export const UI_LOCALE_COOKIE_NAME = "content_site_ui_locale";
 export const PREFERRED_REGION_STORAGE_KEY = "content_site_preferred_region";

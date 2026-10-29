@@ -1,5 +1,5 @@
-import { getRemoteAssetEndpointURL, type AssetServer } from "$lib/assets/index";
-import type { MusicVideoDescriptor } from "$lib/domain/music-detail";
+import { getRemoteAssetEndpointURL, type AssetServer } from "#lib/assets/index.js";
+import type { MusicVideoDescriptor } from "#lib/domain/music-detail.js";
 
 const MAX_LIST_PAGES = 20;
 const DEFAULT_TIMEOUT_MS = 10_000;

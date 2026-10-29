@@ -1,6 +1,6 @@
 <script lang="ts">
   import { HonorDegree, type HonorDegreeAssetResolver } from "@platform/ui-shell";
-  import type { CatalogueHonorDegree } from "$lib/honor-degree";
+  import type { CatalogueHonorDegree } from "#lib/honor-degree.js";
   let {
     degree,
     resolveAsset,

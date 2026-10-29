@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockEnv = vi.hoisted(() => ({ PUBLIC_TOOLS_SITE_BASE_URL: "" as string | undefined }));
 
-vi.mock("$env/dynamic/public", () => ({ env: mockEnv }));
+vi.mock("$app/env/public", () => mockEnv);
 
 const { getEventTrackerHref } = await import("./tools-site");
 

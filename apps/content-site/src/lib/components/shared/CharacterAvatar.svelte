@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getStaticCharacterColor } from "$lib/domain/character-colors";
+  import { getStaticCharacterColor } from "#lib/domain/character-colors.js";
 
   type Variant = "xs" | "sm" | "default" | "lg";
 

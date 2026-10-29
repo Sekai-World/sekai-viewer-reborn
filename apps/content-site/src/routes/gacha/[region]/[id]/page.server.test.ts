@@ -14,12 +14,12 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
 }));
 
 const { getServerI18nText } = vi.hoisted(() => ({ getServerI18nText: vi.fn() }));
-vi.mock("$lib/i18n/runtime", () => ({ getServerI18nText }));
+vi.mock("#lib/i18n/runtime.js", () => ({ getServerI18nText }));
 
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 import { load } from "./+page.server";
 

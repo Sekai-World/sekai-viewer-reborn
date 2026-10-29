@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { buildMysekaiSoundtrackDownload } = vi.hoisted(() => ({
   buildMysekaiSoundtrackDownload: vi.fn()
 }));
-vi.mock("$lib/server/mysekai-soundtrack-download", () => ({ buildMysekaiSoundtrackDownload }));
-vi.mock("$lib/server/config", () => ({
+vi.mock("#lib/server/mysekai-soundtrack-download.js", () => ({ buildMysekaiSoundtrackDownload }));
+vi.mock("#lib/server/config.js", () => ({
   getMasterApiBaseUrl: () => "https://master-api.test",
   getInternalRemoteAssetBaseUrl: () => "https://assets.internal.test"
 }));

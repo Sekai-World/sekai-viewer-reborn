@@ -1,11 +1,11 @@
 <script lang="ts">
   import { untrack, type Snippet } from "svelte";
   import Icon from "@iconify/svelte";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
 
   export type CatalogueLabels = {
     title: string;

@@ -4,26 +4,26 @@ import {
   getGachasByRegionList,
   getMusicsByRegionList
 } from "@platform/sekai-master-api-sdk";
-import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 import {
   fetchUnitProfiles,
   toUnitProfileMap,
   type UnitProfileMap
-} from "$lib/server/unit-profiles";
-import { loadGameNews, type GameNewsLoadResult } from "$lib/server/game-news";
+} from "#lib/server/unit-profiles.js";
+import { loadGameNews, type GameNewsLoadResult } from "#lib/server/game-news.js";
 import {
   LATEST_GACHA_LIMIT,
   isOngoingGacha,
   selectLatestGachas,
   type LatestGachaItem
-} from "$lib/server/home-latest-data";
+} from "#lib/server/home-latest-data.js";
 import {
   getObject,
   pickFirstDateValuePreservingWhitespace as pickFirstDateValue,
   pickFirstObject,
   pickFirstStringLikePreservingWhitespace as pickFirstStringLike,
   pickFirstStringPreservingWhitespace as pickFirstString
-} from "$lib/server/response-values";
+} from "#lib/server/response-values.js";
 
 export type EventSummary = {
   id: string;

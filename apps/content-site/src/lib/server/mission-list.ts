@@ -13,8 +13,8 @@ import type {
   MissionResourceBox,
   MissionResourceBoxDetail,
   MissionReward
-} from "$lib/domain/mission";
-import { missionFamilies } from "$lib/domain/mission";
+} from "#lib/domain/mission.js";
+import { missionFamilies } from "#lib/domain/mission.js";
 import type { CataloguePagination, CataloguePaginationMetadata } from "./catalogue-data";
 import {
   getArray,

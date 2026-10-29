@@ -1,24 +1,24 @@
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import {
   getEventsByRegionByIdDetail,
   getEventsByRegionByIdHonorBonuses,
   getEventsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { getServerI18nText } from "$lib/i18n/runtime";
-import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { loadDiscordEmbedLabels } from "$lib/server/discord-embed-labels";
+import { getServerI18nText } from "#lib/i18n/runtime.js";
+import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { loadDiscordEmbedLabels } from "#lib/server/discord-embed-labels.js";
 import {
   parseEventAggregateRelatedData,
   parseEventDetail,
   parseEventHonorBonusesResponse,
   type EventDetail
-} from "$lib/server/event-detail";
-import type { EventHonorBonus, EventRelatedData } from "$lib/domain/event-detail";
-import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
-import { getEventBannerAssetURL } from "$lib/assets/index";
-import { createPageTitle } from "$lib/page-title";
+} from "#lib/server/event-detail.js";
+import type { EventHonorBonus, EventRelatedData } from "#lib/domain/event-detail.js";
+import { fetchUnitProfiles, toUnitProfileMap } from "#lib/server/unit-profiles.js";
+import { getEventBannerAssetURL } from "#lib/assets/index.js";
+import { createPageTitle } from "#lib/page-title.js";
 import {
   buildCanonicalUrl,
   buildDiscordEmbedSeo,
@@ -28,7 +28,7 @@ import {
   resolveEmbedImageUrl,
   resolveSeoWithBudget,
   type DiscordEmbedSeo
-} from "$lib/seo/discord-embed";
+} from "#lib/seo/discord-embed.js";
 import type { PageServerLoad } from "./$types";
 
 type EventPayload = {

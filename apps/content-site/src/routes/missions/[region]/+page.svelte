@@ -1,25 +1,25 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { resolve } from "$app/paths";
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto, refreshAll } from "$app/navigation";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import MissionCatalogue from "$lib/components/mission/MissionCatalogue.svelte";
-  import MissionCharacterPicker from "$lib/components/mission/MissionCharacterPicker.svelte";
-  import CharacterMissionGrid from "$lib/components/mission/CharacterMissionGrid.svelte";
-  import StoryMissionsCard from "$lib/components/mission/StoryMissionsCard.svelte";
-  import { groupMissionsByFamily } from "$lib/components/mission/catalogue-groups";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import MissionCatalogue from "#lib/components/mission/MissionCatalogue.svelte";
+  import MissionCharacterPicker from "#lib/components/mission/MissionCharacterPicker.svelte";
+  import CharacterMissionGrid from "#lib/components/mission/CharacterMissionGrid.svelte";
+  import StoryMissionsCard from "#lib/components/mission/StoryMissionsCard.svelte";
+  import { groupMissionsByFamily } from "#lib/components/mission/catalogue-groups.js";
   import {
     missionFamilies,
     type Mission,
     type MissionCharacterOption,
     type MissionFamily,
     type MissionResourceBoxDetail
-  } from "$lib/domain/mission";
-  import { formatCharacterMissionSentence } from "$lib/domain/character-growth";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/domain/mission.js";
+  import { formatCharacterMissionSentence } from "#lib/domain/character-growth.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import sourceMessages from "@platform/i18n-source/content-site/mission.json";
   import type { PageProps } from "./$types";
 
@@ -94,8 +94,10 @@
     "bonds_honor",
     "virtual_coin"
   ]);
+
   const resourceLabel = (type: string | null): string =>
     type && knownRewardTypes.has(type) ? t(`mission.resource.${type}`) : t("mission.reward");
+
   const rewardsOf = (item: Mission) =>
     item.rewards
       .flatMap(
@@ -220,8 +222,7 @@
     void goto(
       `${resolve("/missions/[region]", { region: data.region })}${query ? `?${query}` : ""}`,
       {
-        keepFocus: true,
-        noScroll: true
+        reset: false
       }
     );
   };
@@ -265,6 +266,7 @@
     const request = fetch(resolve("/missions/[region]/characters", { region }))
       .then(async (response) => {
         if (!response.ok) throw new Error("Mission character list request failed.");
+
         return ((await response.json()) as { items: MissionCharacterOption[] }).items;
       })
       .catch((error: unknown) => {
@@ -372,7 +374,7 @@
       locale={data.uiLocale}
       {t}
       {resourceLabel}
-      onRetry={() => void invalidateAll()}
+      onRetry={() => void refreshAll()}
     />
   {/if}
 {/snippet}
@@ -473,5 +475,5 @@
   loadMoreError={loadMoreError ? t("mission.loadMoreError") : null}
   onLoadMore={() => void loadNextPage()}
   onRetryLoadMore={() => void loadNextPage()}
-  onRetry={() => void invalidateAll()}
+  onRetry={() => void refreshAll()}
 />

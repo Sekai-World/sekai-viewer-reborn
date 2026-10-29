@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
-  import { resolveUnitLogoUrl } from "$lib/domain/unit-icon";
-  import { regionLabels } from "$lib/domain/regions";
-  import { formatUnitMemberName } from "$lib/domain/unit-detail";
-  import type { UnitMember } from "$lib/server/unit-detail";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
+  import { resolveUnitLogoUrl } from "#lib/domain/unit-icon.js";
+  import { regionLabels } from "#lib/domain/regions.js";
+  import { formatUnitMemberName } from "#lib/domain/unit-detail.js";
+  import type { UnitMember } from "#lib/server/unit-detail.js";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();

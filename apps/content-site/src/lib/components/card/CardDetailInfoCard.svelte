@@ -1,14 +1,15 @@
 <script lang="ts">
   import { asset, resolve } from "$app/paths";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import type { CardDetail, CardDetailCharacter } from "$lib/domain/card-detail";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { getCardGachaVoiceAssetURL } from "$lib/assets/index";
-  import { formatDisplayDateTime } from "$lib/time/date-time";
-  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import type { CardDetail, CardDetailCharacter } from "#lib/domain/card-detail.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getDynamicStaticAssetURL } from "#lib/assets/static.js";
+  import { getCardGachaVoiceAssetURL } from "#lib/assets/index.js";
+  import { formatDisplayDateTime } from "#lib/time/date-time.js";
+  import { formatUnitFallbackLabel } from "#lib/domain/unit-profile.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
   import { UnitIconBadge, VoicePlayButton } from "@platform/ui-shell";
-  import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
+  import { resolveCanonicalUnitSlug } from "#lib/domain/unit-icon.js";
   import Icon from "@iconify/svelte";
 
   let {
@@ -51,8 +52,8 @@
     unitProfiles: Record<string, string>;
   } = $props();
 
-  const rarityStarUrl = asset("/card_rarity/rarity_star_normal.png");
-  const rarityBirthdayUrl = asset("/card_rarity/rarity_birthday.png");
+  const rarityStarUrl = asset("card_rarity/rarity_star_normal.png");
+  const rarityBirthdayUrl = asset("card_rarity/rarity_birthday.png");
   const normalizedGachaPhrase = $derived(card.gachaPhrase?.trim() ?? "");
   const shouldShowGachaPhrase = $derived(
     normalizedGachaPhrase.length > 0 && normalizedGachaPhrase !== "-"
@@ -83,7 +84,7 @@
     return unitProfiles[normalizedUnit] ?? formatUnitFallbackLabel(normalizedUnit);
   };
   const getAttrIconUrl = (): string | null =>
-    card.attr ? asset(`/card_attr/icon_attribute_${card.attr}.png`) : null;
+    card.attr ? getDynamicStaticAssetURL(`card_attr/icon_attribute_${card.attr}.png`) : null;
   const getCharacterThumbnailUrl = (): string | null =>
     card.character?.id !== null && card.character?.id !== undefined
       ? getLocalCharacterThumbnailAssetURL(card.character.id)

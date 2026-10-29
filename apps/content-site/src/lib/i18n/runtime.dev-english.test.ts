@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$app/environment", () => ({ browser: true, dev: true }));
+vi.mock("$app/env", () => ({ browser: true, dev: true }));
 
 import { loadI18nMessages } from "./runtime";
 

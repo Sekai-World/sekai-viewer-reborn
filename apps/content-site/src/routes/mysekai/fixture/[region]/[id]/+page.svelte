@@ -1,20 +1,20 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import MysekaiDetailSection from "$lib/components/mysekai/MysekaiDetailSection.svelte";
-  import MysekaiDetailStatus from "$lib/components/mysekai/MysekaiDetailStatus.svelte";
-  import MysekaiInfoRow from "$lib/components/mysekai/MysekaiInfoRow.svelte";
-  import MysekaiMaterialChip from "$lib/components/mysekai/MysekaiMaterialChip.svelte";
-  import { getMysekaiFixtureThumbnailURL, getMysekaiMaterialIconURL } from "$lib/assets/index";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import type { MysekaiDetailPayload, MysekaiFixtureDetail } from "$lib/domain/mysekai";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createStreamedTranslator } from "$lib/i18n/streamed-translator.svelte";
-  import { createPageTitle } from "$lib/page-title";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
+  import RegionBadgeSwitch from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import MysekaiDetailSection from "#lib/components/mysekai/MysekaiDetailSection.svelte";
+  import MysekaiDetailStatus from "#lib/components/mysekai/MysekaiDetailStatus.svelte";
+  import MysekaiInfoRow from "#lib/components/mysekai/MysekaiInfoRow.svelte";
+  import MysekaiMaterialChip from "#lib/components/mysekai/MysekaiMaterialChip.svelte";
+  import { getMysekaiFixtureThumbnailURL, getMysekaiMaterialIconURL } from "#lib/assets/index.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import type { MysekaiDetailPayload, MysekaiFixtureDetail } from "#lib/domain/mysekai.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { createStreamedTranslator } from "#lib/i18n/streamed-translator.svelte.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

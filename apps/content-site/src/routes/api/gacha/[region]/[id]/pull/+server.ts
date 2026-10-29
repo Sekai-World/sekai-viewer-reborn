@@ -1,9 +1,8 @@
-import { json } from "@sveltejs/kit";
 import { getCardsByRegionBatch, getGachasByRegionById } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parseGachaDetail } from "$lib/server/gacha-detail";
-import { getSecureRandomUnit } from "$lib/server/secure-random";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseGachaDetail } from "#lib/server/gacha-detail.js";
+import { getSecureRandomUnit } from "#lib/server/secure-random.js";
 import type { RequestHandler } from "./$types";
 import {
   getGuaranteeLevel,
@@ -65,14 +64,14 @@ export const POST: RequestHandler = async ({ params, request }) => {
   const gachaId = params.id?.trim() ?? "";
 
   if (!gachaId) {
-    return json({ error: "missing_gacha_id" }, { status: 400 });
+    return Response.json({ error: "missing_gacha_id" }, { status: 400 });
   }
 
   let body: ReturnType<typeof parsePullRequestBody>;
   try {
     body = parsePullRequestBody(await request.json());
   } catch {
-    return json({ error: "invalid_json" }, { status: 400 });
+    return Response.json({ error: "invalid_json" }, { status: 400 });
   }
 
   const count =
@@ -89,21 +88,21 @@ export const POST: RequestHandler = async ({ params, request }) => {
     });
 
     if (gachaResponse.error) {
-      return json({ error: "gacha_not_found" }, { status: 404 });
+      return Response.json({ error: "gacha_not_found" }, { status: 404 });
     }
 
     const gacha = parseGachaDetail(gachaResponse.data);
     if (!gacha) {
-      return json({ error: "gacha_parse_failed" }, { status: 500 });
+      return Response.json({ error: "gacha_parse_failed" }, { status: 500 });
     }
 
     const pool = gacha.gachaDetails;
     if (pool.length === 0) {
-      return json({ error: "empty_pool" }, { status: 422 });
+      return Response.json({ error: "empty_pool" }, { status: 422 });
     }
 
     if (pool.every((detail) => !detail.cardId?.trim())) {
-      return json({ error: "empty_pool" }, { status: 422 });
+      return Response.json({ error: "empty_pool" }, { status: 422 });
     }
 
     const metadata = await fetchGachaCardMetadata({
@@ -141,7 +140,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
       .filter((entry) => entry.pool.length > 0 && entry.totalWeight > 0);
 
     if (rarityEntries.length === 0) {
-      return json({ error: "no_valid_rarity_pool" }, { status: 422 });
+      return Response.json({ error: "no_valid_rarity_pool" }, { status: 422 });
     }
 
     const selectedBehavior = resolveSelectedBehavior(
@@ -228,8 +227,8 @@ export const POST: RequestHandler = async ({ params, request }) => {
         } satisfies PulledGachaCard;
       });
 
-    return json({ results });
+    return Response.json({ results });
   } catch {
-    return json({ error: "internal_error" }, { status: 500 });
+    return Response.json({ error: "internal_error" }, { status: 500 });
   }
 };

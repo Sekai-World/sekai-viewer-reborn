@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { HonorGroup } from "$lib/domain/honor";
+import type { HonorGroup } from "#lib/domain/honor.js";
 
 const {
   getBondsHonorsByRegionList,

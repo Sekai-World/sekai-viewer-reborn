@@ -21,7 +21,7 @@ const pixiImportControl = vi.hoisted(() => ({
   createPixiStoryRuntime: vi.fn()
 }));
 
-vi.mock("$lib/live2d/cubism-core", async () => {
+vi.mock("#lib/live2d/cubism-core.js", async () => {
   cubismImportControl.onStart();
   await cubismImportControl.gate;
   cubismImportControl.onFinish();
@@ -139,7 +139,7 @@ describe("createStoryPlayerSession", () => {
     await loading;
     importGate.resolve(undefined);
     await importFinished.promise;
-    await import("$lib/live2d/cubism-core");
+    await import("#lib/live2d/cubism-core.js");
 
     expect(sessionMocks.ensureCubismCore).not.toHaveBeenCalled();
     expect(pixiImportControl.createPixiStoryRuntime).not.toHaveBeenCalled();

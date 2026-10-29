@@ -1,5 +1,5 @@
-import { env } from "$env/dynamic/public";
-import { isTrackerSupportedRegion, type TrackerSupportedRegion } from "$lib/regions";
+import { PUBLIC_REMOTE_ASSET_BASE_URL } from "$app/env/public";
+import { isTrackerSupportedRegion, type TrackerSupportedRegion } from "#lib/regions.js";
 
 const assetBucketByRegion: Record<TrackerSupportedRegion, string> = {
   jp: "sekai-jp-assets",
@@ -28,7 +28,7 @@ const trimBoundarySlashes = (value: string): string => {
 export const getEventBannerAssetURL = (
   assetBundleName: string,
   region: TrackerSupportedRegion,
-  baseUrl = env.PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
+  baseUrl = PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
 ): string | null => {
   const bundle = trimBoundarySlashes(assetBundleName);
   const baseUrlValue = trimTrailingSlashes(baseUrl);
@@ -48,10 +48,11 @@ export const getHonorAssetURL = (
   bundlePath: string | null | undefined,
   resourceName: string | null | undefined,
   region: string,
-  baseUrl: string | null = env.PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
+  baseUrl: string | null = PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
 ): string | null => {
   const bundle = trimBoundarySlashes(bundlePath ?? "");
   const resource = trimBoundarySlashes(resourceName ?? "");
+
   if (
     !bundle ||
     !resource ||
@@ -80,7 +81,7 @@ export const getLeaderCardAssetURL = (
   assetBundleName: string | null | undefined,
   trained: boolean,
   region: TrackerSupportedRegion,
-  baseUrl = env.PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
+  baseUrl = PUBLIC_REMOTE_ASSET_BASE_URL ?? ""
 ): string | null => {
   const bundle = trimBoundarySlashes(assetBundleName ?? "");
   const base = trimTrailingSlashes(baseUrl);

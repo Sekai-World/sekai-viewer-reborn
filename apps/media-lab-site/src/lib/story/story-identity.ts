@@ -28,7 +28,7 @@ import {
   LOCAL_AVATAR_CHARACTER_ID_MIN
 } from "./character-avatar";
 import { resolveCardRarityCount, resolveCardTrained } from "@platform/ui-shell/card-thumbnail";
-import type { StoryRouteStoryType } from "$lib/live2d/story-route";
+import type { StoryRouteStoryType } from "#lib/live2d/story-route.js";
 
 // ---------------------------------------------------------------------------
 // Raw master-data shapes (story-relevant fields only)

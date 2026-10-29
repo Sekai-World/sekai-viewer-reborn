@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { GachaCardRarityRate, GachaDetail, GachaDetailSub } from "$lib/domain/gacha-detail";
+import type { GachaCardRarityRate, GachaDetail, GachaDetailSub } from "#lib/domain/gacha-detail.js";
 
 const { getCardsByRegionBatch, getGachasByRegionById, getGachasByRegionByIdRateChoiceWishes } =
   vi.hoisted(() => ({

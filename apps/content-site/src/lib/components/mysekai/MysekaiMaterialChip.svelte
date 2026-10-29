@@ -4,7 +4,7 @@
     REWARD_CHIP_CLASS,
     REWARD_CHIP_ICON_CLASS,
     REWARD_CHIP_QUANTITY_CLASS
-  } from "$lib/styles/reward-chip";
+  } from "#lib/styles/reward-chip.js";
 
   let {
     name,

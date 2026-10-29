@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import type { MusicVocal, MusicVocalCharacter } from "$lib/domain/music-detail";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import type { MusicVocal, MusicVocalCharacter } from "#lib/domain/music-detail.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
 
   let {
     vocals,

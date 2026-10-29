@@ -24,10 +24,10 @@ const { fetchUnitProfiles, toUnitProfileMap } = vi.hoisted(() => ({
   toUnitProfileMap: vi.fn()
 }));
 
-vi.mock("$lib/server/unit-profiles", () => ({ fetchUnitProfiles, toUnitProfileMap }));
+vi.mock("#lib/server/unit-profiles.js", () => ({ fetchUnitProfiles, toUnitProfileMap }));
 
 const { loadGameNews } = vi.hoisted(() => ({ loadGameNews: vi.fn() }));
-vi.mock("$lib/server/game-news", () => ({ loadGameNews }));
+vi.mock("#lib/server/game-news.js", () => ({ loadGameNews }));
 
 import {
   fetchLatestGachas,

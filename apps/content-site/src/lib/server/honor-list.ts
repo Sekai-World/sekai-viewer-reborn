@@ -13,7 +13,7 @@ import type {
   HonorGroup,
   HonorGroupMetadata,
   HonorLevel
-} from "$lib/domain/honor";
+} from "#lib/domain/honor.js";
 import type { CataloguePagination } from "./catalogue-data";
 import { parseCharacterUnits } from "./character-list";
 import { aggregateGameCharacterUnitsByRegion } from "./character-pages";

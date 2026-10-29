@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import CharacterCatalogueCard from "$lib/components/character/CharacterCatalogueCard.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import CharacterCatalogueCard from "#lib/components/character/CharacterCatalogueCard.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import type { CharacterCatalogueItem } from "$lib/domain/character";
-  import { resolveCanonicalUnitSlug, resolveUnitLogoUrl } from "$lib/domain/unit-icon";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import type { CharacterCatalogueItem } from "#lib/domain/character.js";
+  import { resolveCanonicalUnitSlug, resolveUnitLogoUrl } from "#lib/domain/unit-icon.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -108,6 +108,7 @@
           class="content-card-shell flex w-fit max-w-full self-center flex-col items-center gap-2 rounded-2xl border border-base-content/8 px-5 py-3 sm:gap-2.5 sm:px-6 sm:py-4"
         >
           <div class="skeleton aspect-[2.4/1] w-52 max-w-full rounded-2xl sm:w-64"></div>
+
           <div
             class="scrollbar-none flex max-w-full flex-nowrap items-center justify-center gap-2 overflow-x-auto p-2 sm:gap-6 sm:px-3 lg:gap-10"
           >
@@ -169,10 +170,9 @@
           <div
             class="scrollbar-none flex max-w-full flex-nowrap items-center justify-center gap-2 overflow-x-auto p-2 sm:gap-6 sm:px-3 lg:gap-10"
           >
-            {#each characters as character (character.id)}<CharacterCatalogueCard
-                {character}
-                region={data.region}
-              />{/each}
+            {#each characters as character (character.id)}
+              <CharacterCatalogueCard {character} region={data.region} />
+            {/each}
           </div>
         </section>
       {/each}

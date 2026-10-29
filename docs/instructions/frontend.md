@@ -2,7 +2,7 @@
 
 ## Scope and priority
 
-This repository uses SvelteKit 2, Svelte 5, Tailwind CSS 4, and daisyUI.
+This repository uses SvelteKit 3, Svelte 5, Tailwind CSS 4, and daisyUI.
 For visual or component decisions, `DESIGN.md` has the highest priority. Follow
 its daisyUI-first, semantic, interaction, and accessibility requirements before
 using the implementation guidance below. Keep the more specific established

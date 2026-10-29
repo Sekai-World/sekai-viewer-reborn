@@ -1,6 +1,6 @@
 import { getBondsHonorsByRegionById, getHonorsByRegionById } from "@platform/sekai-master-api-sdk";
-import type { TitlePreview, TitlePreviewKind } from "$lib/domain/title-preview";
-import { toCatalogueBondsHonorDegree, toCatalogueHonorDegree } from "$lib/honor-degree";
+import type { TitlePreview, TitlePreviewKind } from "#lib/domain/title-preview.js";
+import { toCatalogueBondsHonorDegree, toCatalogueHonorDegree } from "#lib/honor-degree.js";
 import { getMasterApiV1BaseUrl } from "./catalogue-data";
 import { parseBondsHonor, parseHonor } from "./honor-list";
 

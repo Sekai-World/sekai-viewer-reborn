@@ -1,14 +1,14 @@
 import { getEventsByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
+import { normalizeRegion } from "#lib/i18n/region.js";
 import {
   createEventListRequestQuery,
   DEFAULT_EVENT_LIST_PAGE_SIZE,
   logEventListFilterDebug,
   parseEventListPage,
   parseEventListQueryState
-} from "$lib/server/event-list";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
+} from "#lib/server/event-list.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { fetchUnitProfiles, toUnitProfileMap } from "#lib/server/unit-profiles.js";
 import type { PageServerLoad } from "./$types";
 
 const createEmptyPage = () => ({

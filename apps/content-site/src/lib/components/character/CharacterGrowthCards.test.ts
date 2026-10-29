@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import "$lib/icons/mdi";
-import type { CharacterRankReference, Mission } from "$lib/domain/mission";
+import "#lib/icons/mdi.js";
+import type { CharacterRankReference, Mission } from "#lib/domain/mission.js";
 import CharacterMissionsCard from "./CharacterMissionsCard.svelte";
 import CharacterRankCard from "./CharacterRankCard.svelte";
 

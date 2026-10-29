@@ -1,12 +1,12 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
   import Icon from "@iconify/svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import type { MusicDetail } from "$lib/domain/music-detail";
-  import { getMusicAssetServer } from "$lib/assets/index";
-  import MusicMvPlayer from "$lib/components/music/MusicMvPlayer.svelte";
-  import MusicPreviewCard from "$lib/components/music/MusicPreviewCard.svelte";
-  import MusicVocalSelector from "$lib/components/music/MusicVocalSelector.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import type { MusicDetail } from "#lib/domain/music-detail.js";
+  import { getMusicAssetServer } from "#lib/assets/index.js";
+  import MusicMvPlayer from "#lib/components/music/MusicMvPlayer.svelte";
+  import MusicPreviewCard from "#lib/components/music/MusicPreviewCard.svelte";
+  import MusicVocalSelector from "#lib/components/music/MusicVocalSelector.svelte";
 
   type PlaybackMode = "audio" | "mv";
   type PreviewMode = "short" | "long";

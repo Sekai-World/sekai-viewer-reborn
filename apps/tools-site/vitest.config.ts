@@ -6,8 +6,20 @@ const iconifyStubPath = new URL("./src/lib/test/iconify-stub.ts", import.meta.ur
 export default defineConfig({
   resolve: {
     alias: [
-      { find: "$lib", replacement: libPath },
-      { find: /^@iconify\/svelte$/, replacement: iconifyStubPath }
+      { find: "#lib", replacement: libPath },
+      { find: /^@iconify\/svelte$/, replacement: iconifyStubPath },
+      {
+        find: /^\$app\/env$/,
+        replacement: new URL("./src/lib/test/app-environment.ts", import.meta.url).pathname
+      },
+      {
+        find: "$app/env/public",
+        replacement: new URL("./src/lib/test/public-env.ts", import.meta.url).pathname
+      },
+      {
+        find: "$app/env/private",
+        replacement: new URL("./src/lib/test/private-env.ts", import.meta.url).pathname
+      }
     ]
   },
   test: {

@@ -262,7 +262,7 @@ horizontal page overflow.
 
 ## 8. Cross-site implementation rules
 
-- The stack is SvelteKit 2, Svelte 5, Tailwind CSS 4, and daisyUI. Use Tailwind
+- The stack is SvelteKit 3, Svelte 5, Tailwind CSS 4, and daisyUI. Use Tailwind
   v4 utilities and the existing local daisyUI proxy pattern in each app CSS.
 - **Choose daisyUI first.** Start with the daisyUI component or official template
   that matches the semantic role: button, card, menu, dropdown, modal, drawer,

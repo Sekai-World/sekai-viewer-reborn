@@ -3,13 +3,13 @@ import {
   getGachasByRegionById,
   getGachasRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { getServerI18nText } from "$lib/i18n/runtime";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
-import type { GachaDetail, GachaPickup } from "$lib/domain/gacha-detail";
-import { parseGachaDetail } from "$lib/server/gacha-detail";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parseCardDetail } from "$lib/server/card-detail";
+import { getServerI18nText } from "#lib/i18n/runtime.js";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
+import type { GachaDetail, GachaPickup } from "#lib/domain/gacha-detail.js";
+import { parseGachaDetail } from "#lib/server/gacha-detail.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseCardDetail } from "#lib/server/card-detail.js";
 import type { PageServerLoad } from "./$types";
 
 type RegionGachaLookup = {
