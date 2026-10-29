@@ -121,6 +121,12 @@ const toMusicMeta = (record: RawRecord): MusicMeta => ({
   tapCount: record.tap_count as number
 });
 
+// Plain code-unit order, matching the digest documented in the contract.
+const compareStrings = (a: string, b: string): number => {
+  if (a < b) return -1;
+  return a > b ? 1 : 0;
+};
+
 /**
  * Revision of the score-input fields only: SHA-256 (hex) of `JSON.stringify` over the
  * records projected to the twelve contract fields in contract order, sorted by
@@ -129,11 +135,7 @@ const toMusicMeta = (record: RawRecord): MusicMeta => ({
  */
 export const computeMusicMetasRevision = (records: readonly MusicMeta[]): string => {
   const rows = [...records]
-    .sort(
-      (a, b) =>
-        a.musicId - b.musicId ||
-        (a.difficulty < b.difficulty ? -1 : a.difficulty > b.difficulty ? 1 : 0)
-    )
+    .sort((a, b) => a.musicId - b.musicId || compareStrings(a.difficulty, b.difficulty))
     .map((record) => ({
       music_id: record.musicId,
       difficulty: record.difficulty,
