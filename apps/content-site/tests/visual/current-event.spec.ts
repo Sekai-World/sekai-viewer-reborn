@@ -1,29 +1,43 @@
 import { expect, test, type Page } from "@playwright/test";
+import contentSitePackage from "../../package.json" with { type: "json" };
 
 const frozenTime = new Date("2026-01-01T00:00:00.000Z").valueOf();
 const viewportWidth = (projectName: string): string => projectName.replace("chromium-", "");
+const onboardingSeenStorageKey = "content_site_onboarding_seen";
+const seenSiteVersionStorageKey = "content_site_seen_version";
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript((timestamp) => {
-    const OriginalDate = Date;
-    class FrozenDate extends OriginalDate {
-      constructor(...args: ConstructorParameters<typeof Date>) {
-        super(args.length ? args[0] : timestamp);
+  await page.addInitScript(
+    ({ timestamp, siteVersion, onboardingStorageKey, siteVersionStorageKey }) => {
+      localStorage.setItem(onboardingStorageKey, "true");
+      localStorage.setItem(siteVersionStorageKey, siteVersion);
+
+      const OriginalDate = Date;
+      class FrozenDate extends OriginalDate {
+        constructor(...args: ConstructorParameters<typeof Date>) {
+          super(args.length ? args[0] : timestamp);
+        }
+
+        static readonly now = (): number => timestamp;
       }
 
-      static readonly now = (): number => timestamp;
+      Object.defineProperty(window, "Date", { configurable: true, value: FrozenDate });
+      let animationFrameStarted = false;
+      window.requestAnimationFrame = ((callback: FrameRequestCallback): number => {
+        if (!animationFrameStarted) {
+          animationFrameStarted = true;
+          callback(0);
+        }
+        return 1;
+      }) as typeof window.requestAnimationFrame;
+    },
+    {
+      timestamp: frozenTime,
+      siteVersion: contentSitePackage.version,
+      onboardingStorageKey: onboardingSeenStorageKey,
+      siteVersionStorageKey: seenSiteVersionStorageKey
     }
-
-    Object.defineProperty(window, "Date", { configurable: true, value: FrozenDate });
-    let animationFrameStarted = false;
-    window.requestAnimationFrame = ((callback: FrameRequestCallback): number => {
-      if (!animationFrameStarted) {
-        animationFrameStarted = true;
-        callback(0);
-      }
-      return 1;
-    }) as typeof window.requestAnimationFrame;
-  }, frozenTime);
+  );
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
 });
 
@@ -62,6 +76,7 @@ test("current event pending", async ({ page, request }, testInfo) => {
   const section = page.locator('section[aria-labelledby="current-event-title"]');
   await expect(section.locator('[aria-busy="true"]')).toBeVisible();
   await page.evaluate(() => window.stop());
+  await expect(page.locator("dialog.onboarding-tour")).not.toBeVisible();
   await stabilizeVisualState(page, section);
   await expect(section).toHaveScreenshot(
     `current-event-pending-${viewportWidth(testInfo.project.name)}.png`
@@ -75,6 +90,7 @@ test("current event fulfilled", async ({ page, request }, testInfo) => {
   const section = page.locator('section[aria-labelledby="current-event-title"]');
   await expect(section.getByRole("heading", { name: "Visual Regression Event" })).toBeVisible();
   await expect(section.locator('[aria-busy="true"]')).toHaveCount(0);
+  await expect(page.locator("dialog.onboarding-tour")).not.toBeVisible();
   await stabilizeVisualState(page, section);
   await expect.poll(() => section.boundingBox()).toEqual(expect.any(Object));
   await expect(section).toHaveScreenshot(
