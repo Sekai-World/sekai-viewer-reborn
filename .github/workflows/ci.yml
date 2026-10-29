@@ -89,6 +89,9 @@ jobs:
         with:
           node-version: 24
 
+      - name: Test smoke harness
+        run: node --test scripts/verify-docker-image.test.mjs
+
       - name: Build local image and run HTTP smoke test
         env:
           APP: ${{ matrix.app }}
