@@ -136,6 +136,12 @@ describe("tracker time-travel endpoints", () => {
       (await snapshot(request("/tracker/en/snapshot?eventId=42"))).json()
     ).resolves.toEqual({ status: "invalid-request", rankings: [] });
     await expect(
+      (await time(request("/tracker/cn/time?eventId=42", "cn"))).json()
+    ).resolves.toEqual({ status: "invalid-request", timePoints: [] });
+    await expect(
+      (await snapshot(request("/tracker/cn/snapshot?eventId=42&timestamp=2026-01-01", "cn"))).json()
+    ).resolves.toEqual({ status: "invalid-request", rankings: [] });
+    await expect(
       (await graph(request("/tracker/cn/graph?eventId=42&rank=1", "cn"))).json()
     ).resolves.toEqual({ status: "invalid-request", points: [] });
     await expect(
@@ -201,6 +207,33 @@ describe("tracker time-travel endpoints", () => {
         query: { charaId: 12, region: "en" }
       })
     );
+  });
+
+  it("loads a historical chapter ranking by event id", async () => {
+    mocks.getEventChapterRankingsByEventIdAndCharaId
+      .mockResolvedValueOnce({ data: [{ timestamp: "2026-01-01T00:00:00Z" }] })
+      .mockResolvedValueOnce({
+        data: { eventRankings: [{ rank: 1, score: 321, userId: "7" }] }
+      });
+
+    await expect(
+      (await chapter(request("/tracker/en/chapter?charaId=12&eventId=42&mode=history"))).json()
+    ).resolves.toEqual({
+      status: "available",
+      rankings: [
+        {
+          rank: 1,
+          score: 321,
+          userId: "7",
+          userName: null,
+          timestamp: null,
+          eventId: null,
+          leaderCard: null,
+          profileHonors: [],
+          honorMissions: []
+        }
+      ]
+    });
   });
 
   it("rejects a historical event request routed through live mode", async () => {
