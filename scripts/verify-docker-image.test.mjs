@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  findSvelteKitImmutableAssetUrl,
   getSmokeContainerUrl,
   smokePort,
   supportedApps,
@@ -29,6 +30,47 @@ test("accepts only fixed app names and numeric local CI image tags", () => {
     () => validateSmokeArguments("account-site", undefined),
     /numeric run ID and attempt/
   );
+});
+
+test("finds Kit 3 relative immutable assets in actual SSR link markup", () => {
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <link href="./_app/immutable/entry/start.DvPAjCZb.js" rel="modulepreload">
+    <link href="./_app/immutable/assets/regions.DWBwJ0gC.css" rel="stylesheet">
+  </head>
+</html>`;
+
+  assert.equal(
+    findSvelteKitImmutableAssetUrl(html, "http://172.18.0.2:3000")?.href,
+    "http://172.18.0.2:3000/_app/immutable/entry/start.DvPAjCZb.js"
+  );
+});
+
+test("accepts same-origin absolute and single-quoted static asset attributes", () => {
+  const html = "<script src='/_app/immutable/chunks/app.CSsH-SR-.js'></script>";
+
+  assert.equal(
+    findSvelteKitImmutableAssetUrl(html, "http://127.0.0.1:3000")?.href,
+    "http://127.0.0.1:3000/_app/immutable/chunks/app.CSsH-SR-.js"
+  );
+});
+
+test("rejects external, traversal, non-immutable, and non-resource references", () => {
+  const baseUrl = "http://172.18.0.2:3000";
+  const invalidHtml = [
+    '<link href="https://cdn.example/_app/immutable/entry/start.js" rel="modulepreload">',
+    '<script src="./_app/immutable/../entry/start.js"></script>',
+    '<link href="/favicon.svg" rel="icon"/>',
+    '<script src="./_app/immutable/entry/start.js?cache=1"></script>',
+    '<script src="./_app/immutable/entry/start.js#fragment"></script>',
+    '<p>href="./_app/immutable/entry/start.js"</p>',
+    '<link href="./_app/immutable/assets/logo.svg" rel="preload">'
+  ];
+
+  for (const html of invalidHtml) {
+    assert.equal(findSvelteKitImmutableAssetUrl(html, baseUrl), null, html);
+  }
 });
 
 test("targets a live app on its private smoke-network address and runtime port", () => {

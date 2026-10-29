@@ -168,6 +168,33 @@ const assertRootResponse = async (response) => {
   return body;
 };
 
+export function findSvelteKitImmutableAssetUrl(html, baseUrl) {
+  const base = new URL(baseUrl);
+
+  for (const [tag] of html.matchAll(/<(?:script|link)\b[^>]*>/gi)) {
+    for (const [, , reference] of tag.matchAll(/\b(?:src|href)\s*=\s*(["'])(.*?)\1/gi)) {
+      let assetUrl;
+      try {
+        assetUrl = new URL(reference, base);
+      } catch {
+        continue;
+      }
+
+      if (
+        assetUrl.origin === base.origin &&
+        assetUrl.pathname.startsWith("/_app/immutable/") &&
+        /\.(?:m?js|css)$/i.test(assetUrl.pathname) &&
+        assetUrl.search === "" &&
+        assetUrl.hash === ""
+      ) {
+        return assetUrl;
+      }
+    }
+  }
+
+  return null;
+}
+
 const waitForRoot = async (baseUrl) => {
   const deadline = Date.now() + 90_000;
   let nextStateCheck = 0;
@@ -263,28 +290,45 @@ if (isDirectExecution) {
     };
     await assertRootResponse(await requestRoot(appBaseUrl, cookieByApp[app]));
 
-    const staticAsset = rootHtml.match(/(?:src|href)="(\/_app\/immutable\/[^"]+)"/);
-    assert.ok(staticAsset, `${app} SSR did not reference a SvelteKit immutable asset`);
-    const assetResponse = await fetch(new URL(staticAsset[1], appBaseUrl), {
+    const staticAssetUrl = findSvelteKitImmutableAssetUrl(rootHtml, appBaseUrl);
+    assert.ok(
+      staticAssetUrl,
+      `${app} SSR did not reference a same-origin SvelteKit immutable JavaScript or CSS asset`
+    );
+    const assetRequestOptions = {
       redirect: "manual",
       signal: AbortSignal.timeout(20_000)
-    });
-    const assetBody = await assetResponse.arrayBuffer();
-    assert.equal(
-      assetResponse.status,
-      200,
-      `${app} immutable asset returned ${assetResponse.status}`
-    );
-    assert.ok(assetBody.byteLength > 0, `${app} immutable asset response was empty`);
-    assert.match(
-      assetResponse.headers.get("content-type") ?? "",
-      /(?:javascript|ecmascript|text\/css)/i,
-      `${app} immutable asset did not return JavaScript or CSS`
-    );
+    };
+    const [assetResponse, assetHeadResponse] = await Promise.all([
+      fetch(staticAssetUrl, assetRequestOptions),
+      fetch(staticAssetUrl, { ...assetRequestOptions, method: "HEAD" })
+    ]);
+
+    for (const [method, response] of [
+      ["GET", assetResponse],
+      ["HEAD", assetHeadResponse]
+    ]) {
+      assert.equal(
+        response.status,
+        200,
+        `${app} immutable asset ${method} returned ${response.status}`
+      );
+      assert.match(
+        response.headers.get("content-type") ?? "",
+        /(?:javascript|ecmascript|text\/css)/i,
+        `${app} immutable asset ${method} did not return JavaScript or CSS`
+      );
+      const body = await response.arrayBuffer();
+      if (method === "GET") {
+        assert.ok(body.byteLength > 0, `${app} immutable asset GET response was empty`);
+      } else {
+        assert.equal(body.byteLength, 0, `${app} immutable asset HEAD response included a body`);
+      }
+    }
 
     assert.ok(stubRequestCount > 0, `${app} did not use the local runtime API/i18n stub`);
     console.log(
-      `${app}: root SSR with and without cookies, local stub HTTP (${stubRequestCount} requests), and immutable asset HTTP passed`
+      `${app}: root SSR with and without cookies, local stub HTTP (${stubRequestCount} requests), and immutable asset GET/HEAD passed`
     );
   } catch (error) {
     if (containerCreated) {

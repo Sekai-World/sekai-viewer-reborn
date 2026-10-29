@@ -96,6 +96,17 @@ describe("tracker time-travel endpoints", () => {
     expect(mocks.getEventsByRegionById).not.toHaveBeenCalled();
   });
 
+  it("returns an empty result for unsupported regions and blank event queries", async () => {
+    await expect(
+      (await eventSearch(request("/tracker/cn/events?query=Wonder", "cn"))).json()
+    ).resolves.toEqual({ status: "invalid-data", events: [] });
+    await expect(
+      (await eventSearch(request("/tracker/en/events?query=%20%20"))).json()
+    ).resolves.toEqual({ status: "invalid-data", events: [] });
+    expect(mocks.getEventsByRegionList).not.toHaveBeenCalled();
+    expect(mocks.getEventsByRegionById).not.toHaveBeenCalled();
+  });
+
   it("resolves numeric event picker queries through by-id instead of the list", async () => {
     mocks.getEventsByRegionById.mockResolvedValue({
       data: { id: 42, name: "Historical event", startAt: "2020-01-01T00:00:00Z" }
