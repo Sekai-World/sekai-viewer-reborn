@@ -59,6 +59,11 @@ or an unverified duration field must not be presented as a calculated yield.
 
 ## Approved Music Meta Input for #385
 
+The consumer contract (fields, units, revision, freshness, failure states, and
+vector V0) is defined in
+[`tools-site-farming-yield-data-contract.md`](tools-site-farming-yield-data-contract.md);
+this section records the source decision it builds on.
+
 The user has approved licensed, externally supplied `music_metas.json` as a
 coefficient input. The planned Music Recommender defaults to the self-hosted
 k3s/SeaweedFS URL
