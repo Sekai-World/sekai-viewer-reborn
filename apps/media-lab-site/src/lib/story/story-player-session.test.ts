@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { StoryPlayerRuntime } from "@platform/live2d-story-player";
+import { Live2DAssetType, type StoryPlayerRuntime } from "@platform/live2d-story-player";
 import type { IScenarioData } from "./scenario-types";
-import type { StoryVoiceCharacter } from "./scenario-rows";
 
 const sessionMocks = vi.hoisted(() => ({
   ensureCubismCore: vi.fn(),
-  collectStoryMediaUrls: vi.fn(),
   createStoryModelSource: vi.fn(),
   getUIMediaUrls: vi.fn()
 }));
@@ -35,9 +33,6 @@ vi.mock("@platform/live2d-story-player/pixi", async () => {
   pixiImportControl.onFinish();
   return { createPixiStoryRuntime: pixiImportControl.createPixiStoryRuntime };
 });
-vi.mock("./story-media", () => ({
-  collectStoryMediaUrls: sessionMocks.collectStoryMediaUrls
-}));
 vi.mock("./story-model-source", () => ({
   createStoryModelSource: sessionMocks.createStoryModelSource
 }));
@@ -45,7 +40,11 @@ vi.mock("./player/ui_assets", () => ({
   getUIMediaUrls: sessionMocks.getUIMediaUrls
 }));
 
-import { createStoryPlayerSession, type StoryPlayerSessionSnapshot } from "./story-player-session";
+import {
+  createStoryPlayerSession,
+  type StoryPlayerSessionOptions,
+  type StoryPlayerSessionSnapshot
+} from "./story-player-session";
 
 const createDeferred = <T>() => {
   let resolve!: (value: T) => void;
@@ -66,17 +65,34 @@ const createRuntime = (): StoryPlayerRuntime => ({
   destroy: vi.fn()
 });
 
-const createOptions = () => ({
+const createOptions = (): StoryPlayerSessionOptions => ({
   host: {} as HTMLElement,
   stageSize: [640, 360] as [number, number],
-  scenarioData: {} as IScenarioData,
-  isCardStory: true,
-  isActionSet: false,
-  regionBucket: "bucket-jp",
-  regionBase: "https://assets.test/",
-  regionUrl: (path: string) => `https://region.test/${path}`,
-  live2dUrl: (path: string) => `https://live2d.test/${path}`,
-  voiceCharacters: new Map<number, StoryVoiceCharacter>(),
+  storyDocument: {
+    identity: { region: "jp", storyType: "unit", storyId: "idol-1-1" },
+    story: { scenarioId: "mmj_01_00" },
+    scenario: {
+      scenarioId: "mmj_01_00",
+      path: "scenario/unitstory/idol-story-chapter/mmj_01_00.asset",
+      url: "https://assets.test/sekai-jp-assets/scenario/unitstory/idol-story-chapter/mmj_01_00.asset"
+    },
+    assetBase: "https://assets.test",
+    isCardStory: true,
+    isActionSet: false,
+    voiceCharacters: [],
+    scenarioData: {} as IScenarioData,
+    text: { scenarioId: "mmj_01_00", translationSource: "none" },
+    initialMedia: [],
+    media: [
+      {
+        kind: "voice",
+        identifier: "voice_01",
+        path: "sound/card_scenario/voice/mmj_01_00/voice_01.mp3",
+        url: "https://assets.test/sekai-jp-assets/sound/card_scenario/voice/mmj_01_00/voice_01.mp3"
+      }
+    ],
+    models: []
+  },
   settings: {
     voiceVolume: 0.8,
     bgmVolume: 0.5,
@@ -93,7 +109,6 @@ const createOptions = () => ({
 
 beforeEach(() => {
   sessionMocks.ensureCubismCore.mockReset().mockResolvedValue(undefined);
-  sessionMocks.collectStoryMediaUrls.mockReset().mockResolvedValue([]);
   sessionMocks.createStoryModelSource.mockReset().mockReturnValue({});
   sessionMocks.getUIMediaUrls.mockReset().mockReturnValue([]);
   cubismImportControl.gate = Promise.resolve();
@@ -160,36 +175,21 @@ describe("createStoryPlayerSession", () => {
     await import("@platform/live2d-story-player/pixi");
 
     expect(session.state).toBe("destroyed");
-    expect(sessionMocks.collectStoryMediaUrls).not.toHaveBeenCalled();
-    expect(pixiImportControl.createPixiStoryRuntime).not.toHaveBeenCalled();
-  });
-
-  it("does not continue initialization when media collection finishes after destroy", async () => {
-    const media = createDeferred<unknown[]>();
-    sessionMocks.collectStoryMediaUrls.mockReturnValue(media.promise);
-
-    const session = createStoryPlayerSession(createOptions());
-    const loading = session.load();
-    await vi.waitFor(() => expect(sessionMocks.collectStoryMediaUrls).toHaveBeenCalledOnce());
-
-    session.destroy();
-    await loading;
-    media.resolve([]);
-    await media.promise;
-    await Promise.resolve();
-    await Promise.resolve();
-
-    expect(sessionMocks.createStoryModelSource).not.toHaveBeenCalled();
     expect(pixiImportControl.createPixiStoryRuntime).not.toHaveBeenCalled();
   });
 
   it("creates the command handle synchronously and wires app media into Pixi on load", async () => {
     const options = createOptions();
     const modelSource = { getModelDataForCostume: vi.fn() };
-    const mediaAssets = [{ url: "https://region.test/voice.ogg", type: "voice" }];
+    const mediaAssets = [
+      {
+        identifier: "voice_01",
+        type: Live2DAssetType.Talk,
+        url: options.storyDocument.media[0].url
+      }
+    ];
     const uiAssets = [{ url: "https://region.test/ui.png", type: "image" }];
     sessionMocks.createStoryModelSource.mockReturnValue(modelSource);
-    sessionMocks.collectStoryMediaUrls.mockResolvedValue(mediaAssets);
     sessionMocks.getUIMediaUrls.mockReturnValue(uiAssets);
 
     const session = createStoryPlayerSession(options);
@@ -200,29 +200,21 @@ describe("createStoryPlayerSession", () => {
     await session.load();
 
     expect(session.state).toBe("ready");
-    expect(sessionMocks.collectStoryMediaUrls).toHaveBeenCalledWith(
+    expect(sessionMocks.createStoryModelSource).toHaveBeenCalledWith(
       expect.objectContaining({
-        scenarioData: options.scenarioData,
-        isCardStory: options.isCardStory,
-        isActionSet: options.isActionSet,
-        regionBucket: options.regionBucket,
-        regionBase: options.regionBase,
-        regionUrl: options.regionUrl,
-        voiceCharacters: options.voiceCharacters
+        live2dUrl: expect.any(Function),
+        signal: expect.any(AbortSignal)
       })
     );
-    expect(sessionMocks.createStoryModelSource).toHaveBeenCalledWith({
-      live2dUrl: options.live2dUrl
-    });
     expect(sessionMocks.getUIMediaUrls).toHaveBeenCalledWith(
-      options.scenarioData,
-      options.regionUrl
+      options.storyDocument.scenarioData,
+      expect.any(Function)
     );
     expect(pixiImportControl.createPixiStoryRuntime).toHaveBeenCalledWith(
       expect.objectContaining({
         host: options.host,
         stageSize: options.stageSize,
-        scenarioData: options.scenarioData,
+        scenarioData: options.storyDocument.scenarioData,
         mediaAssets,
         uiAssets,
         modelSource,

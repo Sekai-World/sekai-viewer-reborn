@@ -34,11 +34,13 @@ const decodeXmlEntities = (value: string): string =>
 const searchVideoFile = async (
   regionBase: string,
   regionBucket: string,
-  dirPath: string
+  dirPath: string,
+  fetchFn: typeof fetch,
+  signal?: AbortSignal
 ): Promise<string | null> => {
   try {
     const url = `${regionBase}/${regionBucket}/?delimiter=/&list-type=2&max-keys=500&prefix=${encodeURIComponent(dirPath)}`;
-    const response = await fetch(url);
+    const response = await fetchFn(url, signal ? { signal } : undefined);
     if (!response.ok) return null;
     const xml = await response.text();
     const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) => decodeXmlEntities(m[1]));
@@ -60,15 +62,31 @@ export interface CollectStoryMediaOptions {
   regionUrl: (path: string) => string;
   /** character2dId → asset identity for part-voice fallback paths. */
   voiceCharacters: Map<number, StoryVoiceCharacter>;
+  /** Injected for tests and cancellation; defaults to the browser fetch. */
+  fetch?: typeof fetch;
+  signal?: AbortSignal;
   onWarning?: (reason: string) => void;
 }
 
+export interface CollectedStoryMediaAsset {
+  identifier: string;
+  type: ILive2DAssetUrl["type"];
+  path: string;
+  url: string;
+  character2dId?: number;
+  character2dAssetName?: string;
+  character2dUnit?: string;
+}
+
 interface MediaCollectContext {
-  push: (asset: ILive2DAssetUrl) => void;
+  push: (asset: Omit<CollectedStoryMediaAsset, "url">) => void;
   voiceBundleName: string;
-  regionUrl: (path: string) => string;
   regionBase: string;
   regionBucket: string;
+  regionUrl: (path: string) => string;
+  fetch: typeof fetch;
+  signal?: AbortSignal;
+  voiceCharacters: Map<number, StoryVoiceCharacter>;
   onWarning?: (reason: string) => void;
 }
 
@@ -78,11 +96,17 @@ const collectTalkVoices = (
   context: MediaCollectContext
 ): void => {
   if (!talk) return;
+  const character2dId = talk.TalkCharacters[0]?.Character2dId;
+  const character =
+    character2dId === undefined ? undefined : context.voiceCharacters.get(character2dId);
   for (const v of talk.Voices) {
     context.push({
       identifier: v.VoiceId,
       type: Live2DAssetType.Talk,
-      url: voiceUrlFor(v.VoiceId, talk.TalkCharacters[0]?.Character2dId)
+      path: voiceUrlFor(v.VoiceId, character2dId),
+      ...(character2dId !== undefined ? { character2dId } : {}),
+      ...(character?.assetName ? { character2dAssetName: character.assetName } : {}),
+      ...(character?.unit ? { character2dUnit: character.unit } : {})
     });
   }
 };
@@ -92,23 +116,29 @@ const collectSpecialEffectMedia = async (
   context: MediaCollectContext
 ): Promise<void> => {
   if (!effect) return;
-  const { push, regionUrl } = context;
+  const { push } = context;
   switch (effect.EffectType) {
     case SpecialEffectType.ChangeBackground:
       push({
         identifier: effect.StringValSub,
         type: Live2DAssetType.BackgroundImage,
-        url: regionUrl(backgroundImagePath(effect.StringValSub))
+        path: backgroundImagePath(effect.StringValSub)
       });
       return;
     case SpecialEffectType.FullScreenText: {
-      const url = regionUrl(scenarioVoicePath(context.voiceBundleName, effect.StringValSub));
-      push({ identifier: effect.StringValSub, type: Live2DAssetType.Talk, url });
+      const path = scenarioVoicePath(context.voiceBundleName, effect.StringValSub);
+      push({ identifier: effect.StringValSub, type: Live2DAssetType.Talk, path });
       return;
     }
     case SpecialEffectType.Movie: {
       const dirPath = movieDirPath(effect.StringVal);
-      const found = await searchVideoFile(context.regionBase, context.regionBucket, dirPath);
+      const found = await searchVideoFile(
+        context.regionBase,
+        context.regionBucket,
+        dirPath,
+        context.fetch,
+        context.signal
+      );
       const path = found ?? movieFallbackPath(effect.StringVal);
       if (!found) {
         context.onWarning?.(
@@ -118,7 +148,7 @@ const collectSpecialEffectMedia = async (
       push({
         identifier: effect.StringVal,
         type: Live2DAssetType.Video,
-        url: regionUrl(path)
+        path
       });
       return;
     }
@@ -136,13 +166,13 @@ const collectSoundMedia = (
     context.push({
       identifier: sound.Bgm,
       type: Live2DAssetType.BackgroundMusic,
-      url: context.regionUrl(bgmPath(sound.Bgm))
+      path: bgmPath(sound.Bgm)
     });
   } else if (sound.Se) {
     context.push({
       identifier: sound.Se,
       type: Live2DAssetType.SoundEffect,
-      url: context.regionUrl(soundEffectPaths(sound.Se)[0])
+      path: soundEffectPaths(sound.Se)[0]
     });
   }
 };
@@ -152,9 +182,9 @@ const collectSoundMedia = (
  * `processScenarioDataForPlayer`) and resolves every media URL the player
  * will preload, including the UI assets appended by the loader.
  */
-export const collectStoryMediaUrls = async (
+export const collectStoryMediaAssets = async (
   options: CollectStoryMediaOptions
-): Promise<ILive2DAssetUrl[]> => {
+): Promise<CollectedStoryMediaAsset[]> => {
   const {
     scenarioData,
     isCardStory,
@@ -163,12 +193,15 @@ export const collectStoryMediaUrls = async (
     regionBase,
     regionUrl,
     voiceCharacters,
+    fetch: fetchFn = fetch,
+    signal,
     onWarning
   } = options;
-  const result: ILive2DAssetUrl[] = [];
-  const push = (asset: ILive2DAssetUrl): void => {
-    if (!result.some((r) => r.url === asset.url && r.type === asset.type)) {
-      result.push(asset);
+  const result: CollectedStoryMediaAsset[] = [];
+  const push = (asset: Omit<CollectedStoryMediaAsset, "url">): void => {
+    const url = regionUrl(asset.path);
+    if (!result.some((existing) => existing.url === url && existing.type === asset.type)) {
+      result.push({ ...asset, url });
     }
   };
 
@@ -184,19 +217,27 @@ export const collectStoryMediaUrls = async (
     });
     // The canonical path is what the mirror serves for normal voices;
     // part-voice candidates are only useful at playback time, not preload.
-    return regionUrl(candidates[0]);
+    return candidates[0];
   };
 
   const context: MediaCollectContext = {
     push,
     voiceBundleName,
-    regionUrl,
     regionBase,
     regionBucket,
+    regionUrl,
+    fetch: fetchFn,
+    signal,
+    voiceCharacters,
     onWarning
   };
 
   for (const snippet of scenarioData.Snippets) {
+    if (signal?.aborted) {
+      const error = new Error("Story media collection was aborted");
+      error.name = "AbortError";
+      throw error;
+    }
     switch (snippet.Action) {
       case SnippetAction.Talk:
         collectTalkVoices(scenarioData.TalkData[snippet.ReferenceIndex], voiceUrlFor, context);
@@ -214,5 +255,20 @@ export const collectStoryMediaUrls = async (
         break;
     }
   }
+  if (signal?.aborted) {
+    const error = new Error("Story media collection was aborted");
+    error.name = "AbortError";
+    throw error;
+  }
   return result;
 };
+
+/** Compatibility projection consumed by the existing player runtime. */
+export const collectStoryMediaUrls = async (
+  options: CollectStoryMediaOptions
+): Promise<ILive2DAssetUrl[]> =>
+  (await collectStoryMediaAssets(options)).map(({ identifier, type, url }) => ({
+    identifier,
+    type,
+    url
+  }));

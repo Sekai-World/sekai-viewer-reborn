@@ -5,6 +5,7 @@ import {
   bgmPath,
   cardStoryScenarioPath,
   collaborationWorldmapAreaImagePath,
+  createStoryAssetResolver,
   createStoryRegionAssetUrls,
   eventStoryScenarioPath,
   movieDirPath,
@@ -62,6 +63,28 @@ describe("createStoryRegionAssetUrls", () => {
       urls.live2d("motion/v1/main/02_saki/02saki_motion_base/facial/face_ worry_01.motion3.json")
     ).toBe(
       "https://storage.sekai.best/sekai-live2d-assets/motion/v1/main/02_saki/02saki_motion_base/facial/face_%20worry_01.motion3.json"
+    );
+  });
+});
+
+describe("createStoryAssetResolver", () => {
+  it("uses one explicit story region for scenario and media, with the independent model bucket", () => {
+    const resolver = createStoryAssetResolver(() => "https://cdn.test", "en");
+
+    expect(resolver.scenario("scenario/a.asset")).toBe(
+      "https://cdn.test/sekai-en-assets/scenario/a.asset"
+    );
+    expect(resolver.image("scenario/background/bg_a/bg_a.webp")).toBe(
+      "https://cdn.test/sekai-en-assets/scenario/background/bg_a/bg_a.webp"
+    );
+    expect(resolver.audio("sound/scenario/bgm/bgm00000/bgm00000.mp3")).toBe(
+      "https://cdn.test/sekai-en-assets/sound/scenario/bgm/bgm00000/bgm00000.mp3"
+    );
+    expect(resolver.video("scenario/movie/movie_a/movie_a.mp4")).toBe(
+      "https://cdn.test/sekai-en-assets/scenario/movie/movie_a/movie_a.mp4"
+    );
+    expect(resolver.model("live2d/model_list.json")).toBe(
+      "https://cdn.test/sekai-live2d-assets/live2d/model_list.json"
     );
   });
 });

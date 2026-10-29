@@ -1,9 +1,10 @@
 # Media Lab API and Asset Contract Audit
 
-Status: draft decision record for
+Status: decision record for
 [#256](https://github.com/Sekai-World/sekai-viewer-reborn/issues/256)
-(roadmap Phase 0). Evidence is code- or resource-confirmed; open questions are
-listed explicitly and must be resolved in the issues that consume this document.
+(roadmap Phase 0). The #268 associated-catalog findings and #258 StoryDocument
+adapter implementation are documented with code- or resource-confirmed evidence;
+remaining open questions are listed explicitly.
 
 ## Evidence sources
 
@@ -16,6 +17,11 @@ listed explicitly and must be resolved in the issues that consume this document.
 - Extraction roadmap:
   `docs/viewer-implementation/live2d-story-reader-extraction-roadmap.md`
   (§Target-side data and asset boundary, §Phase 0, §Source map).
+- Story Reader adapter and confirmed scenario sample:
+  `apps/media-lab-site/src/lib/live2d/story-document.ts`,
+  `apps/media-lab-site/src/lib/story/story-document-loader.ts`,
+  `apps/media-lab-site/src/lib/story/story-urls.ts`, and
+  `apps/media-lab-site/src/lib/story/story-document-loader.test.ts`.
 - Legacy scenario/asset URL rules, read-only from the workspace external
   reference `Moesekai/web/src/lib/storyAsset.ts`, `Moesekai/web/src/lib/assets.ts`,
   and `Moesekai/web/src/lib/storyLoader.ts`. The canonical pin remains
@@ -282,15 +288,45 @@ Live2D player mode). Implementation lives under
   (`docs/game-data-knowledge/stories-virtual-live-mysekai.md`, "Story reader
   URL and id facts").
 
-## Draft contracts
+## Issue #258: serializable StoryDocument adapter (2026-10-28)
 
-- `apps/media-lab-site/src/lib/live2d/story-document.ts` — draft
-  `StoryDocument` for #258.
-- `apps/media-lab-site/src/lib/asset-viewer/model-bundle-manifest.ts` —
-  draft `ModelBundleManifest` for #262.
+The media-lab-owned StoryDocument contract and browser adapter are implemented.
+`StoryDocumentReference` is the route-facing, JSON-serializable descriptor; it
+contains the validated story identity, display metadata, scenario path and URL,
+configured asset base, story-kind flags, and voice-character references. The
+server route resolves master data and returns this reference without fetching
+the large scenario document or importing browser player code. When the user
+starts playback, `story-document-loader.ts` fetches and validates the `.asset`
+document in the browser, applies the existing player preprocessing, and builds
+the normalized `StoryDocument` with text, media, initial-media, and model
+references. The contract carries data and references only, not runtime objects.
 
-Both are type-only drafts. Do not build player or viewer code against them
-before the consuming issues finalize the shapes.
+Scenario, background, audio, and video references resolve against the explicit
+story region bucket from the route identity. Model requests continue to use the
+independent `sekai-live2d-assets` bucket. The adapter does not silently retry a
+missing scenario or media object from another region. Scenario download reports
+byte progress and accepts an `AbortSignal`; scenario network/HTTP/validation and
+media-resolution errors remain distinguishable so the player host can present
+retry and cancel actions. The player model source also receives the load signal.
+
+The confirmed JP sample is
+`https://storage.sekai.best/sekai-jp-assets/scenario/unitstory/idol-story-chapter/mmj_01_00.asset`.
+Its fixture verifies the initial `bg_b000603` background and `bgm00000` BGM,
+plus voice `voice_op_idol0_05a_158`; the corresponding region-bucket paths are
+covered by the loader test. This sample confirms the representative unit-story
+path and mapping, not the complete `IScenarioData` action/effect surface.
+
+## Contract status
+
+- `apps/media-lab-site/src/lib/live2d/story-document.ts` — finalized
+  serializable `StoryDocumentReference` and normalized `StoryDocument` for #258;
+  consumed through the media-lab browser adapter.
+- `apps/media-lab-site/src/lib/asset-viewer/model-bundle-manifest.ts` — draft
+  `ModelBundleManifest` for #262.
+
+The `StoryDocument` contract is now consumed by the issue #258 player adapter.
+The `ModelBundleManifest` remains a type-only draft; do not build viewer code
+against it before #262 finalizes its shape.
 
 ## Open questions
 
@@ -306,14 +342,17 @@ before the consuming issues finalize the shapes.
    asset pipeline is not in this workspace; #262 must confirm before the
    manifest leaves draft.
 4. `IScenarioData`'s full action/effect surface remains defined by the legacy
-   pin (`sekai-viewer@0504bee6:src/story-scenerio.d.ts`); the coverage table
-   from real scenario data is #258/#259 work.
+   pin (`sekai-viewer@0504bee6:src/story-scenerio.d.ts`); #258 confirms a
+   representative scenario and top-level validation, while broader real-data
+   coverage remains #259 work.
 
 ## Acceptance criteria mapping (issue #256)
 
 - Gap analysis document — this file.
 - Data-source strategy decision with trade-offs — §Data-source strategy.
-- `StoryDocument` / `ModelBundleManifest` draft interfaces — §Draft contracts.
+- Finalized #258 `StoryDocument` contract and media-lab browser adapter —
+  §Issue #258 and §Contract status; the #262 `ModelBundleManifest` remains a
+  draft.
 - Cross-repo workflow steps — §Data-source strategy decision, item 4.
 - Region/asset URL assumptions backed by a confirmed sample or explicit
   blocker — §Reborn asset rule and legacy comparison plus §Verification result:

@@ -1,20 +1,17 @@
 import { error } from "@sveltejs/kit";
 import { parseStoryRouteParams } from "$lib/live2d/story-route";
 import {
-  fetchScenarioDocument,
   fetchStoryCharactersOrEmpty,
   getStoryAssetBase,
   resolveStoryRoute
 } from "$lib/story/story-resolver.server";
-import { processScenarioDataForPlayer } from "$lib/story/scenario-process";
-import { createStoryRegionAssetUrls, storyRegionBuckets } from "$lib/story/story-urls";
+import { createStoryDocumentReference } from "$lib/story/story-document.server";
 import type { PageServerLoad } from "./$types";
 
 /**
- * Live2D Player StoryReader route. Resolves the story, fetches the scenario
- * document server-side, and returns the playback-ready scenario (First*
- * synthesis applied) plus the identity tables the browser session needs.
- * Pixi/Howler stay client-only.
+ * Live2D Player StoryReader route. Resolves metadata and returns a
+ * serializable scenario reference. Large scenario/model/media payloads are
+ * loaded by the browser adapter after the user starts playback.
  */
 export const load: PageServerLoad = async ({ params, fetch, url }) => {
   const parsed = parseStoryRouteParams(params);
@@ -41,42 +38,23 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
     };
   }
 
-  const { resolution, urls } = resolved.value;
-  // Client-facing URLs keep the configured (possibly relative) asset base.
-  const pageUrls = createStoryRegionAssetUrls(getStoryAssetBase, identity.region);
+  const characters = await fetchStoryCharactersOrEmpty(identity.region, fetch);
+  const voiceCharacters = characters.character2ds.map((character2d) => ({
+    character2dId: character2d.id,
+    assetName: character2d.assetName,
+    unit: character2d.unit
+  }));
+  const storyDocument = createStoryDocumentReference({
+    identity,
+    resolution: resolved.value.resolution,
+    assetBase: getStoryAssetBase(),
+    voiceCharacters
+  });
 
-  try {
-    const [scenarioData, characters] = await Promise.all([
-      fetchScenarioDocument(urls, resolution.scenarioPath, fetch),
-      fetchStoryCharactersOrEmpty(identity.region, fetch)
-    ]);
-
-    const processed = processScenarioDataForPlayer(identity, scenarioData);
-
-    return {
-      identity,
-      readerStatus: "ok" as const,
-      story: {
-        chapterTitle: resolution.chapterTitle ?? "",
-        episodeTitle: resolution.episodeTitle ?? "",
-        scenarioId: resolution.scenarioId,
-        bannerUrl: resolution.bannerPath ? pageUrls.region(resolution.bannerPath) : undefined
-      },
-      isCardStory: resolution.isCardStory,
-      isActionSet: resolution.isActionSet,
-      assetBase: getStoryAssetBase(),
-      regionBucket: storyRegionBuckets[identity.region],
-      scenarioData: processed,
-      voiceCharacters: characters.character2ds.map((character2d) => ({
-        character2dId: character2d.id,
-        assetName: character2d.assetName,
-        unit: character2d.unit
-      }))
-    };
-  } catch {
-    return {
-      identity,
-      readerStatus: "scenario-error" as const
-    };
-  }
+  return {
+    identity,
+    readerStatus: "ok" as const,
+    story: storyDocument.story,
+    storyDocument
+  };
 };

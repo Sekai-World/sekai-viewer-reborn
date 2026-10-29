@@ -53,6 +53,15 @@ export interface StoryAssetUrls {
   live2d: (path: string) => string;
 }
 
+/** Explicit URL destinations for the story document's asset categories. */
+export interface StoryAssetResolver {
+  scenario: (path: string) => string;
+  model: (path: string) => string;
+  image: (path: string) => string;
+  audio: (path: string) => string;
+  video: (path: string) => string;
+}
+
 /** Removes all trailing slashes. Equivalent to `.replace(/\/+$/, "")` but without regex backtracking. */
 const stripTrailingSlashes = (value: string): string => {
   let end = value.length;
@@ -82,6 +91,25 @@ export const createStoryRegionAssetUrls = (
   return {
     region: (path) => `${origin}/${storyRegionBuckets[region]}/${toSafeEncodedPath(path)}`,
     live2d: (path) => `${origin}/${LIVE2D_BUCKET}/${toSafeEncodedPath(path)}`
+  };
+};
+
+/**
+ * Creates explicit scenario/model/media resolvers. Scenario and media stay on
+ * the requested region bucket; model assets use the independent JP Live2D
+ * bucket. The resolver never tries another region.
+ */
+export const createStoryAssetResolver = (
+  getRemoteAssetBase: () => string | undefined,
+  region: StoryAssetRegion
+): StoryAssetResolver => {
+  const urls = createStoryRegionAssetUrls(getRemoteAssetBase, region);
+  return {
+    scenario: urls.region,
+    model: urls.live2d,
+    image: urls.region,
+    audio: urls.region,
+    video: urls.region
   };
 };
 

@@ -58,7 +58,7 @@ const buildScenario = (overrides: Partial<IScenarioData> = {}): IScenarioData =>
 
 describe("parseScenarioData", () => {
   it("accepts a well-formed scenario document", () => {
-    const scenario = buildScenario();
+    const scenario = buildScenario({ Snippets: [] });
     expect(parseScenarioData(scenario)).toBe(scenario);
   });
 

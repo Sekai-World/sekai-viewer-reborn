@@ -265,6 +265,40 @@ describe("loadGameNews", () => {
     });
   });
 
+  it("does not reuse a cached region response across master API base URLs", async () => {
+    getGameNewsByRegionList
+      .mockResolvedValueOnce({ data: { items: [makeItem({ id: 1 })] } })
+      .mockResolvedValueOnce({ data: { items: [makeItem({ id: 2 })] } });
+
+    await expect(loadGameNews("jp")).resolves.toMatchObject({
+      status: "ready",
+      items: [expect.objectContaining({ id: 1 })]
+    });
+
+    getMasterApiBaseUrl.mockReturnValue("https://other-master-api.test/api/v1");
+
+    await expect(loadGameNews("jp")).resolves.toMatchObject({
+      status: "ready",
+      items: [expect.objectContaining({ id: 2 })]
+    });
+    await expect(loadGameNews("jp")).resolves.toMatchObject({
+      status: "ready",
+      items: [expect.objectContaining({ id: 2 })]
+    });
+
+    expect(getGameNewsByRegionList).toHaveBeenCalledTimes(2);
+    expect(getGameNewsByRegionList).toHaveBeenNthCalledWith(1, {
+      baseUrl: "https://master-api.test/api/v1",
+      path: { region: "jp" },
+      query: { includeAll: true }
+    });
+    expect(getGameNewsByRegionList).toHaveBeenNthCalledWith(2, {
+      baseUrl: "https://other-master-api.test/api/v1",
+      path: { region: "jp" },
+      query: { includeAll: true }
+    });
+  });
+
   it("refreshes successful responses after the 60-second cache TTL", async () => {
     vi.useFakeTimers();
     try {

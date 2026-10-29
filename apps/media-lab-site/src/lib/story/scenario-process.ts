@@ -12,6 +12,7 @@ import {
   type SoundData,
   type SpecialEffectData
 } from "./scenario-types";
+export { parseScenarioData } from "./scenario-validation";
 
 /**
  * Pure scenario preprocessing for playback. Ports the legacy viewer's
@@ -176,22 +177,4 @@ export const processScenarioDataForPlayer = (
     });
   }
   return cloned;
-};
-
-/**
- * Basic runtime validation of a fetched scenario document. Keeps malformed
- * payloads from reaching the player with a clear failure instead of a deep
- * undefined access.
- */
-export const parseScenarioData = (input: unknown): IScenarioData => {
-  if (
-    typeof input !== "object" ||
-    input === null ||
-    !Array.isArray((input as IScenarioData).Snippets) ||
-    !Array.isArray((input as IScenarioData).AppearCharacters) ||
-    typeof (input as IScenarioData).ScenarioId !== "string"
-  ) {
-    throw new Error("Scenario document is malformed");
-  }
-  return input as IScenarioData;
 };

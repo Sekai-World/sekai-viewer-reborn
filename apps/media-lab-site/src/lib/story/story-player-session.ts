@@ -1,14 +1,15 @@
-import { createStoryPlayer } from "@platform/live2d-story-player";
-import type {
-  IScenarioData,
-  StoryPlayerSnapshot,
-  StoryPlayerState
+import {
+  createStoryPlayer,
+  Live2DAssetType,
+  type ILive2DAssetUrl,
+  type StoryPlayerSnapshot,
+  type StoryPlayerState
 } from "@platform/live2d-story-player";
 import type { ILive2DLoadProgressHandler } from "@platform/live2d-story-player/pixi";
+import type { StoryDocument, MediaAssetKind } from "$lib/live2d/story-document";
 import { createStoryModelSource } from "./story-model-source";
-import { collectStoryMediaUrls } from "./story-media";
+import { createStoryAssetResolver } from "./story-urls";
 import { getUIMediaUrls } from "./player/ui_assets";
-import type { StoryVoiceCharacter } from "./scenario-rows";
 
 /**
  * Browser-only composition layer between the app's asset policies and the
@@ -41,15 +42,7 @@ export interface StoryPlayerSessionCallbacks {
 export interface StoryPlayerSessionOptions {
   host: HTMLElement;
   stageSize: [number, number];
-  /** Processed scenario data (First* synthesis already applied). */
-  scenarioData: IScenarioData;
-  isCardStory: boolean;
-  isActionSet: boolean;
-  regionBucket: string;
-  regionBase: string;
-  regionUrl: (path: string) => string;
-  live2dUrl: (path: string) => string;
-  voiceCharacters: Map<number, StoryVoiceCharacter>;
+  storyDocument: StoryDocument;
   settings: StoryPlayerSettings;
   callbacks: StoryPlayerSessionCallbacks;
 }
@@ -107,6 +100,14 @@ const getAbortError = (signal: AbortSignal): Error => {
 
 const throwIfAborted = (signal: AbortSignal): void => {
   if (signal.aborted) throw getAbortError(signal);
+};
+
+const PLAYER_ASSET_TYPES: Record<MediaAssetKind, ILive2DAssetUrl["type"]> = {
+  background: Live2DAssetType.BackgroundImage,
+  bgm: Live2DAssetType.BackgroundMusic,
+  se: Live2DAssetType.SoundEffect,
+  voice: Live2DAssetType.Talk,
+  movie: Live2DAssetType.Video
 };
 
 const waitForSignal = <T>(
@@ -175,33 +176,28 @@ export const createStoryPlayerSession = (
       );
       throwIfAborted(signal);
 
-      const mediaAssets = await waitForSignal(
-        () =>
-          collectStoryMediaUrls({
-            scenarioData: options.scenarioData,
-            isCardStory: options.isCardStory,
-            isActionSet: options.isActionSet,
-            regionBucket: options.regionBucket,
-            regionBase: options.regionBase,
-            regionUrl: options.regionUrl,
-            voiceCharacters: options.voiceCharacters,
-            onWarning: (reason) => {
-              if (!signal.aborted) options.callbacks.onWarning(reason);
-            }
-          }),
-        signal
+      const storyDocument = options.storyDocument;
+      const assetUrls = createStoryAssetResolver(
+        () => storyDocument.assetBase,
+        storyDocument.identity.region
       );
-      throwIfAborted(signal);
-
-      const modelSource = createStoryModelSource({ live2dUrl: options.live2dUrl });
-      const uiAssets = getUIMediaUrls(options.scenarioData, options.regionUrl);
+      const mediaAssets: ILive2DAssetUrl[] = storyDocument.media.map((asset) => ({
+        identifier: asset.identifier,
+        type: PLAYER_ASSET_TYPES[asset.kind],
+        url: asset.url
+      }));
+      const modelSource = createStoryModelSource({
+        live2dUrl: assetUrls.model,
+        signal
+      });
+      const uiAssets = getUIMediaUrls(storyDocument.scenarioData, assetUrls.image);
       throwIfAborted(signal);
 
       return createPixiStoryRuntime(
         {
           host: options.host,
           stageSize: options.stageSize,
-          scenarioData: options.scenarioData,
+          scenarioData: storyDocument.scenarioData,
           mediaAssets,
           uiAssets,
           modelSource,

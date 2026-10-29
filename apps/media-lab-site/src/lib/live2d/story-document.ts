@@ -1,67 +1,84 @@
-/**
- * Draft StoryDocument contract for the media-lab Live2D StoryReader.
- *
- * DRAFT (issue #256): normalized from the legacy scenario/asset URL rules
- * documented in `docs/media-lab/api-contract-audit.md`. Do not build player
- * code against these types before #258 finalizes the shapes.
- */
+import type { IScenarioData } from "$lib/story/scenario-types";
+import type { StoryRouteIdentity } from "./story-route";
 
-export type StoryRegion = "jp" | "en" | "tw" | "kr" | "cn";
+/** The route region is always explicit; it is never inferred from asset paths. */
+export type StoryRegion = StoryRouteIdentity["region"];
+export type StoryType = StoryRouteIdentity["storyType"];
+export type StoryIdentity = StoryRouteIdentity;
 
-export type StoryType =
-  "unit" | "event" | "character" | "card" | "area-talk" | "special" | "profile";
-
-export interface StoryIdentity {
-  region: StoryRegion;
-  storyType: StoryType;
-  storyId: string;
-}
-
-/** Reference to a scenario JSON document on the configured asset mirror. */
+/** A scenario document on the selected region's scenario bucket. */
 export interface ScenarioSource {
   scenarioId: string;
-  /** Absolute URL, or mirror-relative path resolved with an explicit region. */
+  /** Bucket-relative object path, as resolved from the story master data. */
+  path: string;
+  /** Configured asset-base URL for this path and the explicit story region. */
   url: string;
-  /** Bundle/asset name when the story type requires one (unit/event/character/special). */
   assetbundleName?: string;
-  /** Action-set group number (area-talk / action-set stories). */
   group?: number;
+}
+
+export interface StoryDisplayMetadata {
+  scenarioId: string;
+  chapterTitle?: string;
+  episodeTitle?: string;
+  bannerUrl?: string;
+}
+
+export interface StoryVoiceCharacterReference {
+  character2dId: number;
+  assetName?: string;
+  unit?: string;
+}
+
+/** Serializable route data; large scenario and media payloads are loaded later in the browser. */
+export interface StoryDocumentReference {
+  identity: StoryIdentity;
+  story: StoryDisplayMetadata;
+  scenario: ScenarioSource;
+  /** The same configured origin used to resolve scenario and media URLs. */
+  assetBase: string;
+  isCardStory: boolean;
+  isActionSet: boolean;
+  voiceCharacters: StoryVoiceCharacterReference[];
 }
 
 export type MediaAssetKind = "background" | "bgm" | "se" | "voice" | "movie";
 
+/** A normalized region-bound media object. All fields are JSON-serializable. */
 export interface MediaAssetReference {
   kind: MediaAssetKind;
-  /** Mirror-relative logical path, before region/bucket resolution. */
+  identifier: string;
+  /** Bucket-relative logical path, before URL encoding. */
   path: string;
-  /** Absolute URL after region/bucket resolution, when resolvable ahead of playback. */
-  url?: string;
-  /** Voice binding from scenario character2d data, used for part_voice fallback. */
+  /** Resolved against the region explicitly carried by the document identity. */
+  url: string;
+  character2dId?: number;
   character2dAssetName?: string;
   character2dUnit?: string;
 }
 
 export interface StoryModelReference {
-  /** Live2D model identity as referenced by the scenario data. */
-  assetName?: string;
+  character2dId: number;
+  /** Scenario `CostumeType`, which matches the legacy catalog's `modelBase`. */
+  assetName: string;
+  /** Character2D identity retained for the existing story voice/model adapter. */
   unit?: string;
 }
 
-export interface StoryDocument {
-  identity: StoryIdentity;
-  scenario: ScenarioSource;
-  /** Raw scenario payload as delivered by the mirror; action/effect shape stays game-data-owned. */
-  scenarioData: unknown;
-  /** Synthetic initial media derived from FirstBackground/FirstBgm during pure preprocessing. */
+export interface StoryTextReference {
+  scenarioId: string;
+  /** No translation endpoint is currently part of the confirmed story contract. */
+  translationSource: "official" | "llm" | "none";
+}
+
+/**
+ * Fully normalized playback descriptor. It contains data and references only:
+ * no browser factories, Maps, DOM objects, or player lifecycle handles.
+ */
+export interface StoryDocument extends StoryDocumentReference {
+  scenarioData: IScenarioData;
+  text: StoryTextReference;
   initialMedia: MediaAssetReference[];
-  /** Normalized media references discovered in the scenario payload. */
   media: MediaAssetReference[];
   models: StoryModelReference[];
-  /**
-   * Translation/text source policy. The translation service stays app-owned;
-   * the player only receives resolved text through its adapter.
-   */
-  text?: {
-    translationSource?: "official" | "llm" | "none";
-  };
 }
