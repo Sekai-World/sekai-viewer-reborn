@@ -593,6 +593,17 @@ MUI, `react-i18next`, application store, or reborn app import.
 
 Goal: complete the first `media-lab-site` vertical slice.
 
+Current status: the unit-story route `/live2d/story-reader/[region]/[storyType]/[storyId]`
+plays a real JP story. The page keys the host on story identity, the host
+derives an explicit phase (`idle`, `loading`, `ready`, `playing`, `waiting`,
+`finished`, `error`, plus an independent warning flag) in
+`story-player-status.ts`, offers a reload action, and unit stories link to
+their previous and next episodes. Verified in the in-app browser on a real
+story: 16:9 resize at desktop, tablet, and phone widths, player teardown on
+route navigation (canvas removed, Howler instances released), and reload.
+Browser fullscreen, WebGL context and ticker release, and non-unit story types
+are not yet verified.
+
 - In `+page.svelte`, receive route data through `$props`; use `$state` for
   player lifecycle and UI state, and `$effect` only for command synchronization
   with explicit cleanup.

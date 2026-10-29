@@ -13,6 +13,7 @@ import {
   fetchStoryCollections,
   type StoryCharacterTables
 } from "./master-data-client.server";
+import { resolveStoryNeighbors, type StoryNeighbors } from "./story-neighbors";
 
 /**
  * Server-side story route resolution: master-data lookup, scenario document
@@ -67,6 +68,7 @@ export interface StoryRouteResolution {
   identity: StoryRouteIdentity;
   resolution: StoryResolution;
   urls: StoryAssetUrls;
+  neighbors: StoryNeighbors;
 }
 
 export type ResolveStoryRouteResult =
@@ -86,6 +88,7 @@ export const resolveStoryRoute = async (
   requestOrigin?: string
 ): Promise<ResolveStoryRouteResult> => {
   let result: StoryResolutionResult;
+  let neighbors: StoryNeighbors;
   try {
     const collections = await fetchStoryCollections(
       identity.region,
@@ -98,6 +101,7 @@ export const resolveStoryRoute = async (
       collections,
       identity.region
     );
+    neighbors = resolveStoryNeighbors(identity.storyType, identity.storyId, collections);
   } catch (error) {
     return {
       status: "master-data-error",
@@ -110,7 +114,8 @@ export const resolveStoryRoute = async (
     value: {
       identity,
       resolution: result.resolution,
-      urls: createStoryRegionAssetUrls(() => getStoryFetchBase(requestOrigin), identity.region)
+      urls: createStoryRegionAssetUrls(() => getStoryFetchBase(requestOrigin), identity.region),
+      neighbors
     }
   };
 };
