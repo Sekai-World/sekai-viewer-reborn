@@ -55,6 +55,7 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
     identity,
     readerStatus: "ok" as const,
     story: storyDocument.story,
-    storyDocument
+    storyDocument,
+    neighbors: resolved.value.neighbors
   };
 };
