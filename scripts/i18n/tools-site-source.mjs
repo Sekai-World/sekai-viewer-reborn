@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const appRoot = path.join(repoRoot, "apps/tools-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/tools-site");
-const namespaces = ["common", "server", "tracker"];
+const namespaces = ["common", "server", "tracker", "music-recommender"];
 const translatorKeyPatterns = [
   /createI18nTranslator\([^)]*\)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
   /\b(?:t|tTools)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
@@ -90,6 +90,12 @@ const getNamespaceForFile = (filePath) => {
     relativePath === "src/routes/+layout.server.ts"
   ) {
     return "common";
+  }
+  if (
+    relativePath.startsWith("src/routes/music-recommender/") ||
+    relativePath.startsWith("src/routes/music-recommender-")
+  ) {
+    return "music-recommender";
   }
   return relativePath.startsWith("src/routes/tracker/") ||
     relativePath.startsWith("src/routes/tracker-")
