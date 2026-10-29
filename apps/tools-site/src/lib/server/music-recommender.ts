@@ -85,8 +85,8 @@ const INPUT_PARAMETER_NAMES = [
 ] as const;
 
 const isAsciiDigitAt = (value: string, index: number): boolean => {
-  const code = value.charCodeAt(index);
-  return code >= 48 && code <= 57;
+  const code = value.codePointAt(index);
+  return code !== undefined && code >= 48 && code <= 57;
 };
 
 const isDecimalNumberSyntax = (value: string): boolean => {
@@ -154,18 +154,19 @@ const describeIssue = ({ code, index, field }: MusicMetasIssue): string => {
   return field === undefined ? `music_metas[${index}]` : `music_metas[${index}].${field}`;
 };
 
+/** An absent selection uses the documented default; anything unlisted is rejected. */
+const resolveRequestedSource = (requested: string | null): MusicMetaSourceId | null => {
+  if (requested === null) return DEFAULT_MUSIC_META_SOURCE_ID;
+  return isMusicMetaSourceId(requested) ? requested : null;
+};
+
 /** Fetches only the selected allow-listed source; an absent selection uses the documented default. */
 export const loadMusicMetaCatalog = async (
   requestedSource: string | null,
   fetcher: MusicMetaFetcher,
   now: () => Date = () => new Date()
 ): Promise<MusicMetaDataset> => {
-  const sourceId =
-    requestedSource === null
-      ? DEFAULT_MUSIC_META_SOURCE_ID
-      : isMusicMetaSourceId(requestedSource)
-        ? requestedSource
-        : null;
+  const sourceId = resolveRequestedSource(requestedSource);
 
   if (sourceId === null) {
     return failure(null, "invalid-source", "The requested music metadata source is not supported.");
@@ -258,6 +259,14 @@ export const loadMusicMetaCatalog = async (
   };
 };
 
+const SKILL_SLOT_COUNT = 6;
+const zeroSkillRates = (): number[] => Array.from({ length: SKILL_SLOT_COUNT }, () => 0);
+
+const parseDecimalText = (value: string): number => {
+  const normalized = value.trim();
+  return isDecimalNumberSyntax(normalized) ? Number(normalized) : Number.NaN;
+};
+
 const getSingleParameter = (
   searchParams: URLSearchParams,
   key: string,
@@ -280,8 +289,7 @@ const parseFiniteQueryNumber = (
     return null;
   }
 
-  const normalized = value.trim();
-  const parsed = isDecimalNumberSyntax(normalized) ? Number(normalized) : Number.NaN;
+  const parsed = parseDecimalText(value);
   if (!Number.isFinite(parsed) || !isValid(parsed)) {
     invalidFields.add(field);
     return null;
@@ -299,85 +307,203 @@ const makeDefaultPageInputs = (
   deckPower: null,
   deckBonus: 0,
   boostMultiplier: 1,
-  skillRates: Array.from({ length: 6 }, () => 0),
+  skillRates: zeroSkillRates(),
   noSkill: false
+});
+
+type QueryIssues = { missingFields: Set<string>; invalidFields: Set<string> };
+type UnavailableQuery = Extract<ParsedMusicRecommenderQuery, { status: "unavailable" }>;
+
+const readQuerySourceId = (sourceValues: readonly string[]): MusicMetaSourceId | null => {
+  if (sourceValues.length === 0) return DEFAULT_MUSIC_META_SOURCE_ID;
+  const [requested] = sourceValues;
+  return sourceValues.length === 1 ? resolveRequestedSource(requested) : null;
+};
+
+const readQueryMetric = (
+  searchParams: URLSearchParams,
+  invalidFields: Set<string>
+): MusicRecommenderMetric => {
+  const metricValue = getSingleParameter(searchParams, "metric", invalidFields);
+  if (metricValue !== null && metricValue !== "score" && metricValue !== "eventPoints") {
+    invalidFields.add("metric");
+  }
+  return metricValue === "eventPoints" ? "eventPoints" : "score";
+};
+
+/** Returns the calculation mode name, or null with the problem recorded. */
+const readQueryMode = (modeValue: string | null, issues: QueryIssues): string | null => {
+  if (modeValue === null) {
+    issues.missingFields.add("mode");
+    return null;
+  }
+  if (modeValue.trim() === "") {
+    issues.invalidFields.add("mode");
+    return null;
+  }
+  return modeValue === "jp-solo" ? "solo" : modeValue;
+};
+
+const readQueryNoSkill = (noSkillValue: string | null, issues: QueryIssues): boolean | null => {
+  if (noSkillValue === null) {
+    issues.missingFields.add("noSkill");
+    return null;
+  }
+  if (noSkillValue === "true") return true;
+  if (noSkillValue === "false") return false;
+  issues.invalidFields.add("noSkill");
+  return null;
+};
+
+const readSkillRate = (entry: string, index: number, invalidFields: Set<string>): number | null => {
+  const parsed = parseDecimalText(entry);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    invalidFields.add(`skillRates[${index}]`);
+    return null;
+  }
+  return parsed;
+};
+
+const readQuerySkillRates = (
+  skillRatesValue: string | null,
+  noSkill: boolean | null,
+  issues: QueryIssues
+): number[] | null => {
+  if (skillRatesValue === null) {
+    issues.missingFields.add("skillRates");
+    return null;
+  }
+  if (noSkill === true && skillRatesValue.trim() === "") return zeroSkillRates();
+
+  const values = skillRatesValue.split(",");
+  if (values.length !== SKILL_SLOT_COUNT) {
+    issues.invalidFields.add("skillRates");
+    return null;
+  }
+
+  const rates = values.map((entry, index) => readSkillRate(entry, index, issues.invalidFields));
+  if (rates.includes(null)) return null;
+  const parsedRates = rates as number[];
+  if (noSkill === true && parsedRates.some((rate) => rate !== 0)) {
+    issues.invalidFields.add("skillRates");
+    return null;
+  }
+  return parsedRates;
+};
+
+const classifyQueryFailure = (
+  sourceId: MusicMetaSourceId | null,
+  hasInvalidFields: boolean
+): Pick<UnavailableQuery, "reasonCode" | "reason"> => {
+  if (sourceId === null) {
+    return {
+      reasonCode: "invalid-source",
+      reason: "The requested music metadata source is not supported."
+    };
+  }
+  if (hasInvalidFields) {
+    return {
+      reasonCode: "invalid-inputs",
+      reason: "One or more recommender query parameters are invalid."
+    };
+  }
+  return {
+    reasonCode: "missing-inputs",
+    reason: "One or more required recommender query parameters are missing."
+  };
+};
+
+const makeUnavailableQuery = (
+  source: MusicMetaSource | null,
+  metric: MusicRecommenderMetric,
+  inputs: MusicRecommenderPageInputs,
+  failureDetails: Pick<UnavailableQuery, "reasonCode" | "reason">,
+  issues: QueryIssues
+): UnavailableQuery => ({
+  status: "unavailable",
+  source,
+  metric,
+  inputs,
+  ...failureDetails,
+  missingFields: [...issues.missingFields].sort(compareStrings),
+  invalidFields: [...issues.invalidFields].sort(compareStrings)
+});
+
+/** Handles a request with no calculation controls: invalid input is reported, otherwise deck power is requested. */
+const rejectQueryWithoutCalculation = (
+  sourceId: MusicMetaSourceId | null,
+  metric: MusicRecommenderMetric,
+  issues: QueryIssues
+): UnavailableQuery => {
+  const source = sourceId === null ? null : MUSIC_META_SOURCES[sourceId];
+  const inputs = makeDefaultPageInputs(sourceId, metric);
+  if (source === null || issues.invalidFields.size > 0) {
+    return makeUnavailableQuery(
+      source,
+      metric,
+      inputs,
+      classifyQueryFailure(sourceId, issues.invalidFields.size > 0),
+      issues
+    );
+  }
+  return {
+    status: "unavailable",
+    source,
+    metric,
+    inputs,
+    reasonCode: "missing-inputs",
+    reason: "A raw JP Solo deck power total is required for this calculation.",
+    missingFields: ["deckPower"],
+    invalidFields: []
+  };
+};
+
+/** Keeps the parsed value when valid, otherwise echoes the raw text so the form can show it. */
+const buildPageInputs = (
+  sourceId: MusicMetaSourceId | null,
+  metric: MusicRecommenderMetric,
+  raw: Record<(typeof INPUT_PARAMETER_NAMES)[number], string | null>,
+  parsed: {
+    deckPower: number | null;
+    deckBonus: number | null;
+    boostMultiplier: number | null;
+    skillRates: number[] | null;
+    noSkill: boolean | null;
+  }
+): MusicRecommenderPageInputs => ({
+  source: sourceId,
+  metric,
+  mode: raw.mode,
+  deckPower: parsed.deckPower ?? raw.deckPower,
+  deckBonus: parsed.deckBonus ?? raw.deckBonus,
+  boostMultiplier: parsed.boostMultiplier ?? raw.boostMultiplier,
+  skillRates: parsed.skillRates ?? raw.skillRates?.split(",") ?? null,
+  noSkill: parsed.noSkill
 });
 
 /** Parses the route's query controls without substituting values for malformed input. */
 export const parseMusicRecommenderQuery = (
   searchParams: URLSearchParams
 ): ParsedMusicRecommenderQuery => {
-  const missingFields = new Set<string>();
-  const invalidFields = new Set<string>();
+  const issues: QueryIssues = { missingFields: new Set(), invalidFields: new Set() };
+  const { missingFields, invalidFields } = issues;
 
   const sourceValues = searchParams.getAll("source");
-  const requestedSource = sourceValues[0] ?? null;
   if (sourceValues.length > 1) invalidFields.add("source");
-  const sourceId =
-    sourceValues.length === 0
-      ? DEFAULT_MUSIC_META_SOURCE_ID
-      : sourceValues.length === 1 &&
-          requestedSource !== null &&
-          isMusicMetaSourceId(requestedSource)
-        ? requestedSource
-        : null;
+  const sourceId = readQuerySourceId(sourceValues);
   const source = sourceId === null ? null : MUSIC_META_SOURCES[sourceId];
-
-  const metricValue = getSingleParameter(searchParams, "metric", invalidFields);
-  const metric: MusicRecommenderMetric = metricValue === "eventPoints" ? "eventPoints" : "score";
-  if (metricValue !== null && metricValue !== "score" && metricValue !== "eventPoints") {
-    invalidFields.add("metric");
-  }
+  const metric = readQueryMetric(searchParams, invalidFields);
 
   const queryValues = Object.fromEntries(
     INPUT_PARAMETER_NAMES.map((key) => [key, getSingleParameter(searchParams, key, invalidFields)])
   ) as Record<(typeof INPUT_PARAMETER_NAMES)[number], string | null>;
   const hasCalculationQuery = INPUT_PARAMETER_NAMES.some((key) => searchParams.has(key));
 
-  if (!hasCalculationQuery) {
-    const inputs = makeDefaultPageInputs(sourceId, metric);
-    if (source === null || invalidFields.size > 0) {
-      return {
-        status: "unavailable",
-        source,
-        metric,
-        inputs,
-        reasonCode: source === null ? "invalid-source" : "invalid-inputs",
-        reason:
-          source === null
-            ? "The requested music metadata source is not supported."
-            : "One or more recommender query parameters are invalid.",
-        missingFields: [...missingFields].sort(compareStrings),
-        invalidFields: [...invalidFields].sort(compareStrings)
-      };
-    }
-    return {
-      status: "unavailable",
-      source,
-      metric,
-      inputs,
-      reasonCode: "missing-inputs",
-      reason: "A raw JP Solo deck power total is required for this calculation.",
-      missingFields: ["deckPower"],
-      invalidFields: []
-    };
-  }
+  if (!hasCalculationQuery) return rejectQueryWithoutCalculation(sourceId, metric, issues);
 
-  const modeValue = queryValues.mode;
-  const deckPowerValue = queryValues.deckPower;
-  const deckBonusValue = queryValues.deckBonus;
-  const boostMultiplierValue = queryValues.boostMultiplier;
-  const skillRatesValue = queryValues.skillRates;
-  const noSkillValue = queryValues.noSkill;
-  let normalizedMode: string | null = null;
-  if (modeValue === null) {
-    missingFields.add("mode");
-  } else if (modeValue.trim() === "") {
-    invalidFields.add("mode");
-  } else {
-    normalizedMode = modeValue === "jp-solo" ? "solo" : modeValue;
-  }
-
+  const { mode: modeValue, deckPower: deckPowerValue, deckBonus: deckBonusValue } = queryValues;
+  const { boostMultiplier: boostMultiplierValue, skillRates: skillRatesValue } = queryValues;
+  const normalizedMode = readQueryMode(modeValue, issues);
   const deckPower = parseFiniteQueryNumber(
     deckPowerValue,
     "deckPower",
@@ -399,79 +525,26 @@ export const parseMusicRecommenderQuery = (
     invalidFields,
     (value) => Number.isSafeInteger(value) && value > 0
   );
+  const noSkill = readQueryNoSkill(queryValues.noSkill, issues);
+  const skillRates = readQuerySkillRates(skillRatesValue, noSkill, issues);
 
-  let noSkill: boolean | null = null;
-  if (noSkillValue === null) {
-    missingFields.add("noSkill");
-  } else if (noSkillValue === "true") {
-    noSkill = true;
-  } else if (noSkillValue === "false") {
-    noSkill = false;
-  } else {
-    invalidFields.add("noSkill");
-  }
-
-  let skillRates: number[] | null = null;
-  if (skillRatesValue === null) {
-    missingFields.add("skillRates");
-  } else if (noSkill === true && skillRatesValue.trim() === "") {
-    skillRates = Array.from({ length: 6 }, () => 0);
-  } else {
-    const values = skillRatesValue.split(",");
-    if (values.length !== 6) {
-      invalidFields.add("skillRates");
-    } else {
-      const parsedRates: number[] = [];
-      values.forEach((value, index) => {
-        const normalized = value.trim();
-        const parsed = isDecimalNumberSyntax(normalized) ? Number(normalized) : Number.NaN;
-        if (!Number.isFinite(parsed) || parsed < 0) {
-          invalidFields.add(`skillRates[${index}]`);
-        } else {
-          parsedRates.push(parsed);
-        }
-      });
-      if (parsedRates.length === 6) {
-        if (noSkill === true && parsedRates.some((rate) => rate !== 0)) {
-          invalidFields.add("skillRates");
-        } else {
-          skillRates = parsedRates;
-        }
-      }
-    }
-  }
-
-  const pageInputs: MusicRecommenderPageInputs = {
-    source: sourceId,
-    metric,
-    mode: modeValue,
-    deckPower: deckPower ?? deckPowerValue,
-    deckBonus: deckBonus ?? deckBonusValue,
-    boostMultiplier: boostMultiplier ?? boostMultiplierValue,
-    skillRates: skillRates ?? skillRatesValue?.split(",") ?? null,
+  const pageInputs = buildPageInputs(sourceId, metric, queryValues, {
+    deckPower,
+    deckBonus,
+    boostMultiplier,
+    skillRates,
     noSkill
-  };
+  });
 
   if (sourceId === null) invalidFields.add("source");
   if (missingFields.size > 0 || invalidFields.size > 0) {
-    const isInvalid = invalidFields.size > 0;
-    const reasonCode =
-      sourceId === null ? "invalid-source" : isInvalid ? "invalid-inputs" : "missing-inputs";
-    return {
-      status: "unavailable",
+    return makeUnavailableQuery(
       source,
       metric,
-      inputs: pageInputs,
-      reasonCode,
-      reason:
-        reasonCode === "invalid-source"
-          ? "The requested music metadata source is not supported."
-          : isInvalid
-            ? "One or more recommender query parameters are invalid."
-            : "One or more required recommender query parameters are missing.",
-      missingFields: [...missingFields].sort(compareStrings),
-      invalidFields: [...invalidFields].sort(compareStrings)
-    };
+      pageInputs,
+      classifyQueryFailure(sourceId, invalidFields.size > 0),
+      issues
+    );
   }
 
   return {
@@ -485,35 +558,42 @@ export const parseMusicRecommenderQuery = (
       deckPower,
       deckBonus,
       boostMultiplier,
-      cardLength: 6,
+      cardLength: SKILL_SLOT_COUNT,
       skillAllocation: { strategy: "default", skillEffects: skillRates }
     }
   };
+};
+
+type UnavailableDetails = {
+  reasonCode: string;
+  reason: string;
+  missingFields?: readonly string[];
+  invalidFields?: readonly string[];
+  provenance?: MusicMetaProvenance | null;
 };
 
 const makeUnavailablePageData = (
   source: MusicMetaSource | null,
   metric: MusicRecommenderMetric,
   inputs: MusicRecommenderPageInputs,
-  reasonCode: string,
-  reason: string,
-  missingFields: readonly string[] = [],
-  invalidFields: readonly string[] = [],
-  provenance: MusicMetaProvenance | null = null
-): MusicRecommenderPageData => ({
-  status: "unavailable",
-  source,
-  metric,
-  inputs,
-  items: [],
-  formulaVersion: JP_SOLO_FORMULA_VERSION,
-  provenance,
-  sourceHash: provenance?.contentHash ?? null,
-  reasonCode,
-  reason,
-  missingFields: [...missingFields],
-  invalidFields: [...invalidFields]
-});
+  details: UnavailableDetails
+): MusicRecommenderPageData => {
+  const provenance = details.provenance ?? null;
+  return {
+    status: "unavailable",
+    source,
+    metric,
+    inputs,
+    items: [],
+    formulaVersion: JP_SOLO_FORMULA_VERSION,
+    provenance,
+    sourceHash: provenance?.contentHash ?? null,
+    reasonCode: details.reasonCode,
+    reason: details.reason,
+    missingFields: [...(details.missingFields ?? [])],
+    invalidFields: [...(details.invalidFields ?? [])]
+  };
+};
 
 /** Builds the serializable page contract; only ranked results leave the server. */
 export const loadMusicRecommenderPageData = async (
@@ -527,10 +607,7 @@ export const loadMusicRecommenderPageData = async (
       parsedQuery.source,
       parsedQuery.metric,
       parsedQuery.inputs,
-      parsedQuery.reasonCode,
-      parsedQuery.reason,
-      parsedQuery.missingFields,
-      parsedQuery.invalidFields
+      parsedQuery
     );
   }
 
@@ -540,25 +617,13 @@ export const loadMusicRecommenderPageData = async (
       dataset.source ?? parsedQuery.source,
       parsedQuery.metric,
       parsedQuery.inputs,
-      dataset.reasonCode,
-      dataset.reason,
-      dataset.missingFields,
-      dataset.invalidFields
+      dataset
     );
   }
 
   const ranking = rankJpSoloRecommendations(dataset, parsedQuery.domainInputs, parsedQuery.metric);
   if (ranking.status === "unavailable") {
-    return makeUnavailablePageData(
-      dataset.source,
-      parsedQuery.metric,
-      parsedQuery.inputs,
-      ranking.reasonCode,
-      ranking.reason,
-      ranking.missingFields,
-      ranking.invalidFields,
-      ranking.provenance
-    );
+    return makeUnavailablePageData(dataset.source, parsedQuery.metric, parsedQuery.inputs, ranking);
   }
 
   return {

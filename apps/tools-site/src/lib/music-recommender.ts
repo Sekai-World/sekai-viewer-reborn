@@ -225,8 +225,7 @@ const validateDataset = (
   const expectedSource = MUSIC_META_SOURCES[dataset.source.id];
   const { provenance } = dataset;
   if (
-    expectedSource === undefined ||
-    expectedSource.url !== dataset.source.url ||
+    expectedSource?.url !== dataset.source.url ||
     provenance.sourceId !== dataset.source.id ||
     provenance.sourceUrl !== dataset.source.url ||
     provenance.recordCount !== dataset.items.length ||
@@ -259,6 +258,175 @@ const validateDataset = (
   return { status: "available", dataset };
 };
 
+type InputIssues = { missingFields: Set<string>; invalidFields: Set<string> };
+type PreparedSkillAllocation = PreparedInputs["skillAllocation"];
+
+const isNonNegativeFinite = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value >= 0;
+
+const isCoefficientIndex = (value: unknown): value is number =>
+  typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value < 6;
+
+const checkRegionAndMode = (
+  inputs: JpSoloYieldInputs,
+  provenance: MusicMetaProvenance | null
+): JpSoloCalculationUnavailable | null => {
+  if (typeof inputs.region !== "string" || inputs.region.trim() === "") {
+    return unavailableCalculation(
+      "missing-inputs",
+      "A region is required for this calculation.",
+      provenance,
+      ["region"]
+    );
+  }
+  if (inputs.region !== "jp") {
+    return unavailableCalculation(
+      "unsupported-region",
+      "JP Solo calculations are only supported for the jp region.",
+      provenance
+    );
+  }
+  if (typeof inputs.mode !== "string" || inputs.mode.trim() === "") {
+    return unavailableCalculation(
+      "missing-inputs",
+      "A live mode is required for this calculation.",
+      provenance,
+      ["mode"]
+    );
+  }
+  if (inputs.mode !== "solo") {
+    return unavailableCalculation(
+      "unsupported-mode",
+      "Only JP Solo score and event-point calculations are supported.",
+      provenance
+    );
+  }
+  return null;
+};
+
+const requireNumber = (
+  key: "deckPower" | "deckBonus" | "boostMultiplier" | "cardLength",
+  value: number | null,
+  isValid: (candidate: number) => boolean,
+  issues: InputIssues
+): number | null => {
+  if (value === null || value === undefined) {
+    addIssue(issues.missingFields, key);
+    return null;
+  }
+  if (typeof value !== "number" || !Number.isFinite(value) || !isValid(value)) {
+    addIssue(issues.invalidFields, key);
+    return null;
+  }
+  return value;
+};
+
+const readDefaultSkillAllocation = (
+  skillEffects: readonly number[] | null | undefined,
+  cardLength: number | null,
+  issues: InputIssues
+): PreparedSkillAllocation | null => {
+  if (skillEffects === null || skillEffects === undefined) {
+    addIssue(issues.missingFields, "skillAllocation.skillEffects");
+    return null;
+  }
+  if (!Array.isArray(skillEffects)) {
+    addIssue(issues.invalidFields, "skillAllocation.skillEffects");
+    return null;
+  }
+  if (cardLength !== null && skillEffects.length !== cardLength) {
+    addIssue(issues.invalidFields, "skillAllocation.skillEffects.length");
+    return null;
+  }
+  if (!skillEffects.every(isNonNegativeFinite)) {
+    addIssue(issues.invalidFields, "skillAllocation.skillEffects");
+    return null;
+  }
+  return { strategy: "default", skillEffects: [...skillEffects] };
+};
+
+const readSkillSequenceEntry = (
+  entry: unknown,
+  index: number,
+  usedCoefficientIndices: Set<number>,
+  invalidFields: Set<string>
+): JpSoloSkillAssignment | null => {
+  const path = `skillAllocation.skillSequence[${index}]`;
+  if (!isObject(entry)) {
+    addIssue(invalidFields, path);
+    return null;
+  }
+
+  const { coefficientIndex, effectiveSkillRate } = entry;
+  let isValid = true;
+  if (!isCoefficientIndex(coefficientIndex) || usedCoefficientIndices.has(coefficientIndex)) {
+    addIssue(invalidFields, `${path}.coefficientIndex`);
+    isValid = false;
+  } else {
+    usedCoefficientIndices.add(coefficientIndex);
+  }
+  if (!isNonNegativeFinite(effectiveSkillRate)) {
+    addIssue(invalidFields, `${path}.effectiveSkillRate`);
+    isValid = false;
+  }
+
+  return isValid
+    ? {
+        coefficientIndex: coefficientIndex as number,
+        effectiveSkillRate: effectiveSkillRate as number
+      }
+    : null;
+};
+
+const readExplicitSkillAllocation = (
+  skillSequence: readonly JpSoloSkillAssignment[] | null | undefined,
+  cardLength: number | null,
+  issues: InputIssues
+): PreparedSkillAllocation | null => {
+  if (skillSequence === null || skillSequence === undefined) {
+    addIssue(issues.missingFields, "skillAllocation.skillSequence");
+    return null;
+  }
+  if (!Array.isArray(skillSequence)) {
+    addIssue(issues.invalidFields, "skillAllocation.skillSequence");
+    return null;
+  }
+  if (cardLength !== null && skillSequence.length !== cardLength) {
+    addIssue(issues.invalidFields, "skillAllocation.skillSequence.length");
+    return null;
+  }
+
+  const usedCoefficientIndices = new Set<number>();
+  const rawSkillSequence: unknown[] = skillSequence;
+  const parsedSkillSequence = rawSkillSequence
+    .map((entry, index) =>
+      readSkillSequenceEntry(entry, index, usedCoefficientIndices, issues.invalidFields)
+    )
+    .filter((entry): entry is JpSoloSkillAssignment => entry !== null);
+  return parsedSkillSequence.length === skillSequence.length
+    ? { strategy: "explicit", skillSequence: parsedSkillSequence }
+    : null;
+};
+
+const readSkillAllocation = (
+  allocation: JpSoloSkillAllocation | null | undefined,
+  cardLength: number | null,
+  issues: InputIssues
+): PreparedSkillAllocation | null => {
+  if (allocation === null || allocation === undefined) {
+    addIssue(issues.missingFields, "skillAllocation");
+    return null;
+  }
+  if (allocation.strategy === "default") {
+    return readDefaultSkillAllocation(allocation.skillEffects, cardLength, issues);
+  }
+  if (allocation.strategy === "explicit") {
+    return readExplicitSkillAllocation(allocation.skillSequence, cardLength, issues);
+  }
+  addIssue(issues.invalidFields, "skillAllocation.strategy");
+  return null;
+};
+
 const validateInputs = (
   inputs: JpSoloYieldInputs,
   provenance: MusicMetaProvenance | null
@@ -268,174 +436,39 @@ const validateInputs = (
       status: "unavailable";
       failure: JpSoloCalculationUnavailable;
     } => {
-  if (typeof inputs.region !== "string" || inputs.region.trim() === "") {
-    return {
-      status: "unavailable",
-      failure: unavailableCalculation(
-        "missing-inputs",
-        "A region is required for this calculation.",
-        provenance,
-        ["region"]
-      )
-    };
-  }
-  if (inputs.region !== "jp") {
-    return {
-      status: "unavailable",
-      failure: unavailableCalculation(
-        "unsupported-region",
-        "JP Solo calculations are only supported for the jp region.",
-        provenance
-      )
-    };
-  }
-  if (typeof inputs.mode !== "string" || inputs.mode.trim() === "") {
-    return {
-      status: "unavailable",
-      failure: unavailableCalculation(
-        "missing-inputs",
-        "A live mode is required for this calculation.",
-        provenance,
-        ["mode"]
-      )
-    };
-  }
-  if (inputs.mode !== "solo") {
-    return {
-      status: "unavailable",
-      failure: unavailableCalculation(
-        "unsupported-mode",
-        "Only JP Solo score and event-point calculations are supported.",
-        provenance
-      )
-    };
-  }
+  const unsupported = checkRegionAndMode(inputs, provenance);
+  if (unsupported) return { status: "unavailable", failure: unsupported };
 
-  const missingFields = new Set<string>();
-  const invalidFields = new Set<string>();
-  const requireNumber = (
-    key: "deckPower" | "deckBonus" | "boostMultiplier" | "cardLength",
-    value: number | null,
-    isValid: (candidate: number) => boolean
-  ): number | null => {
-    if (value === null || value === undefined) {
-      addIssue(missingFields, key);
-      return null;
-    }
-    if (typeof value !== "number" || !Number.isFinite(value) || !isValid(value)) {
-      addIssue(invalidFields, key);
-      return null;
-    }
-    return value;
-  };
-
+  const issues: InputIssues = { missingFields: new Set(), invalidFields: new Set() };
   const deckPower = requireNumber(
     "deckPower",
     inputs.deckPower,
-    (value) => Number.isSafeInteger(value) && value > 0
+    (value) => Number.isSafeInteger(value) && value > 0,
+    issues
   );
-  const deckBonus = requireNumber("deckBonus", inputs.deckBonus, (value) => value >= 0);
+  const deckBonus = requireNumber("deckBonus", inputs.deckBonus, (value) => value >= 0, issues);
   const boostMultiplier = requireNumber(
     "boostMultiplier",
     inputs.boostMultiplier,
-    (value) => Number.isSafeInteger(value) && value > 0
+    (value) => Number.isSafeInteger(value) && value > 0,
+    issues
   );
   const cardLength = requireNumber(
     "cardLength",
     inputs.cardLength,
-    (value) => Number.isSafeInteger(value) && value >= 1 && value <= 6
+    (value) => Number.isSafeInteger(value) && value >= 1 && value <= 6,
+    issues
   );
+  const skillAllocation = readSkillAllocation(inputs.skillAllocation, cardLength, issues);
 
-  if (inputs.skillAllocation === null || inputs.skillAllocation === undefined) {
-    addIssue(missingFields, "skillAllocation");
-  }
-
-  let skillAllocation: PreparedInputs["skillAllocation"] | null = null;
-  if (inputs.skillAllocation?.strategy === "default") {
-    const { skillEffects } = inputs.skillAllocation;
-    if (skillEffects === null || skillEffects === undefined) {
-      addIssue(missingFields, "skillAllocation.skillEffects");
-    } else if (!Array.isArray(skillEffects)) {
-      addIssue(invalidFields, "skillAllocation.skillEffects");
-    } else if (cardLength !== null && skillEffects.length !== cardLength) {
-      addIssue(invalidFields, "skillAllocation.skillEffects.length");
-    } else if (
-      skillEffects.some(
-        (value: unknown) => typeof value !== "number" || !Number.isFinite(value) || value < 0
-      )
-    ) {
-      addIssue(invalidFields, "skillAllocation.skillEffects");
-    } else {
-      skillAllocation = { strategy: "default", skillEffects: [...skillEffects] };
-    }
-  } else if (inputs.skillAllocation?.strategy === "explicit") {
-    const { skillSequence } = inputs.skillAllocation;
-    if (skillSequence === null || skillSequence === undefined) {
-      addIssue(missingFields, "skillAllocation.skillSequence");
-    } else if (!Array.isArray(skillSequence)) {
-      addIssue(invalidFields, "skillAllocation.skillSequence");
-    } else if (cardLength !== null && skillSequence.length !== cardLength) {
-      addIssue(invalidFields, "skillAllocation.skillSequence.length");
-    } else {
-      const usedCoefficientIndices = new Set<number>();
-      const parsedSkillSequence: JpSoloSkillAssignment[] = [];
-      const rawSkillSequence: unknown[] = skillSequence;
-      rawSkillSequence.forEach((entry, index) => {
-        if (!isObject(entry)) {
-          addIssue(invalidFields, `skillAllocation.skillSequence[${index}]`);
-          return;
-        }
-
-        const coefficientIndex = entry.coefficientIndex;
-        const effectiveSkillRate = entry.effectiveSkillRate;
-        let validEntry = true;
-        if (
-          typeof coefficientIndex !== "number" ||
-          !Number.isSafeInteger(coefficientIndex) ||
-          coefficientIndex < 0 ||
-          coefficientIndex >= 6
-        ) {
-          addIssue(invalidFields, `skillAllocation.skillSequence[${index}].coefficientIndex`);
-          validEntry = false;
-        } else if (usedCoefficientIndices.has(coefficientIndex)) {
-          addIssue(invalidFields, `skillAllocation.skillSequence[${index}].coefficientIndex`);
-          validEntry = false;
-        } else {
-          usedCoefficientIndices.add(coefficientIndex);
-        }
-
-        if (
-          typeof effectiveSkillRate !== "number" ||
-          !Number.isFinite(effectiveSkillRate) ||
-          effectiveSkillRate < 0
-        ) {
-          addIssue(invalidFields, `skillAllocation.skillSequence[${index}].effectiveSkillRate`);
-          validEntry = false;
-        }
-        if (validEntry) {
-          parsedSkillSequence.push({
-            coefficientIndex: coefficientIndex as number,
-            effectiveSkillRate: effectiveSkillRate as number
-          });
-        }
-      });
-      if (parsedSkillSequence.length === skillSequence.length) {
-        skillAllocation = {
-          strategy: "explicit",
-          skillSequence: parsedSkillSequence
-        };
-      }
-    }
-  } else if (inputs.skillAllocation !== null && inputs.skillAllocation !== undefined) {
-    addIssue(invalidFields, "skillAllocation.strategy");
-  }
-
+  const { missingFields, invalidFields } = issues;
   if (missingFields.size > 0 || invalidFields.size > 0) {
+    const isMissing = missingFields.size > 0;
     return {
       status: "unavailable",
       failure: unavailableCalculation(
-        missingFields.size > 0 ? "missing-inputs" : "invalid-inputs",
-        missingFields.size > 0
+        isMissing ? "missing-inputs" : "invalid-inputs",
+        isMissing
           ? "One or more required JP Solo inputs are missing."
           : "One or more JP Solo inputs are invalid.",
         provenance,
@@ -452,7 +485,7 @@ const validateInputs = (
       deckBonus: deckBonus as number,
       boostMultiplier: boostMultiplier as number,
       cardLength: cardLength as number,
-      skillAllocation: skillAllocation as PreparedInputs["skillAllocation"]
+      skillAllocation: skillAllocation as PreparedSkillAllocation
     }
   };
 };
@@ -588,7 +621,7 @@ export const rankJpSoloRecommendations = (
     const result = calculateForMusic(music, validatedInputs.prepared, provenance);
     return result.status === "available" ? result : null;
   });
-  if (calculated.some((result) => result === null)) {
+  if (calculated.includes(null)) {
     return unavailableCalculation(
       "invalid-inputs",
       "At least one music record could not be calculated safely.",
