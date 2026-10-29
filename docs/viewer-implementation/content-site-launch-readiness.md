@@ -6,7 +6,7 @@ deployment, not a production migration.
 
 ## 1. Legacy URL / old-domain compatibility
 
-**Decision: not required at launch (pending owner sign-off).**
+**Decision: not required at launch (confirmed by the repository owner on #302, 2026-10-29).**
 
 - No old domain or legacy URL contract has been identified for this launch, and
   #302 puts redirects out of scope until a compatibility requirement is
@@ -15,8 +15,8 @@ deployment, not a production migration.
   legacy-domain compatibility, and stay as they are:
   `/musics/:region/:id[/download[/progress]]` → `/music/...` (301, query kept)
   and `/events/:region/list[/data]` → the current events list (308).
-- The owner must confirm this decision before launch. Record the confirmation
-  (who, when) in #302.
+- The confirmation is recorded on #302. Revisit this section only if a
+  compatibility requirement appears later.
 
 If compatibility is later approved, this section must be completed before any
 redirect ships:
