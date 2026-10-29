@@ -100,7 +100,7 @@ event points = floor((100 + floor(score / 20000)) × (event_rate / 100) × (1 + 
 - For the first mode the skill sequence is supplied explicitly and complete;
   preserve its order and do not reorder or reassign rates.
 
-## Provenance, Revision, and Freshness
+## Provenance and Revision
 
 Every displayed result must carry a provenance record:
 
@@ -109,21 +109,19 @@ Every displayed result must carry a provenance record:
 | Source id / URL | One of `MUSIC_META_SOURCES`.                                                                                                                                                                                                                  |
 | Revision        | `computeMusicMetasRevision`: SHA-256 hex of `JSON.stringify` over the records projected to the twelve contract fields in the table order, sorted by `music_id` ascending, then `difficulty` string ascending. Derived fields never affect it. |
 | Record count    | Number of validated records.                                                                                                                                                                                                                  |
-| Last-Modified   | The HTTP `Last-Modified` header of the response, or recorded as absent.                                                                                                                                                                       |
+| Last-Modified   | The HTTP `Last-Modified` header of the response, or recorded as absent. Shown for information only.                                                                                                                                           |
 | Fetched at      | Time the artifact was fetched.                                                                                                                                                                                                                |
 
 The artifact has no embedded version or timestamp, and ETags are not comparable
-between the two hosts, so the content digest is the revision and `Last-Modified`
-is the only freshness signal.
+between the two hosts, so the content digest is the revision.
 
-Freshness (`assessMusicMetasFreshness`):
-
-- `fresh`: `Last-Modified` is no older than `MUSIC_METAS_MAX_AGE_MS` (30 days).
-- `stale`: older than that.
-- `unknown`: the header is missing, unparsable, or in the future.
-
-`stale` and `unknown` are not served as current: fail closed (see below). The
-30-day limit is a proposed default and is listed under _Open Decisions_.
+**There is no maximum data age** (owner decision, 2026-10-29). Data is never
+rejected for being old, and a missing or unreadable `Last-Modified` header does
+not block results. `Last-Modified` and the fetch time are recorded so the user
+can see how old the data is, but they are never a failure condition. Staleness
+is already bounded by the other checks: a song missing from an old file shows as
+"data unavailable", and a changed file produces a new revision that is shown with
+the results.
 
 Audit on 2026-10-29: both sources returned HTTP 200 and 3,810 records
 (731 each of `easy`/`normal`/`hard`/`expert`, 732 `master`, 154 `append`). Every
@@ -140,9 +138,8 @@ own.
 
 | State                                   | Behavior                                                                                                         |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Fetch failed, timed out, or non-2xx     | Source unavailable. Show it as unavailable; do not switch sources and do not use stale cached values as current. |
+| Fetch failed, timed out, or non-2xx     | Source unavailable. Show it as unavailable; do not switch sources. Caching is decided in #381.                   |
 | Payload invalid (`parseMusicMetas`)     | Source invalid. Show no yield figures.                                                                           |
-| Freshness `stale` or `unknown`          | Source not current. Show no yield figures; explain that the data is out of date.                                 |
 | No record for the song and difficulty   | That song is "data unavailable". Never use zero, a neighbouring difficulty, or a value inferred from note count. |
 | A manual deck input is missing/invalid  | The metric for that input is unavailable. No default is substituted.                                             |
 | Region other than `jp`, or another mode | Unsupported. Show no figures.                                                                                    |
@@ -214,15 +211,15 @@ These stay blocked and are not treated as implementation-ready:
   figures and duration/energy semantics are defined.
 - #380 remains the gate for any mode other than JP Solo.
 
-## Open Decisions
+## Decisions and Open Items
 
-1. **Maximum age.** 30 days is proposed. The artifact only changes when songs or
-   coefficients change, and a stale file mainly yields missing songs, so the
-   limit trades availability against silent coefficient drift. The owner should
-   confirm or change `MUSIC_METAS_MAX_AGE_MS`.
-2. **Skill slot mapping.** The artifact has six slots per live type. The mapping
+Decided: no maximum data age (see _Provenance and Revision_).
+
+Open:
+
+1. **Skill slot mapping.** The artifact has six slots per live type. The mapping
    to deck cards must be taken from the JP Solo reference by #381 and recorded
    there; this contract deliberately does not guess it.
-3. **Units of `music_time` and `fever_end_time`.** Treated as seconds from
+2. **Units of `music_time` and `fever_end_time`.** Treated as seconds from
    observation. They do not feed the first metric, so this only matters if a
    duration-based metric is later added.

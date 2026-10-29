@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  MUSIC_METAS_MAX_AGE_MS,
-  assessMusicMetasFreshness,
-  computeMusicMetasRevision,
-  parseMusicMetas
-} from "./music-metas";
+import { computeMusicMetasRevision, parseMusicMetas } from "./music-metas";
 
 // Real row from the 2026-10-29 audit (music 1, master) so V0 uses published coefficients.
 const music1Master = {
@@ -130,31 +125,6 @@ describe("computeMusicMetasRevision", () => {
   it("is a SHA-256 hex digest", () => {
     expect(computeMusicMetasRevision(parseReady([record()]).records)).toMatch(/^[0-9a-f]{64}$/);
   });
-});
-
-describe("assessMusicMetasFreshness", () => {
-  const now = Date.parse("2026-10-29T12:00:00Z");
-
-  it("is fresh within the maximum age, inclusive", () => {
-    expect(assessMusicMetasFreshness("Sun, 25 Oct 2026 12:17:42 GMT", now)).toBe("fresh");
-    expect(
-      assessMusicMetasFreshness(new Date(now - MUSIC_METAS_MAX_AGE_MS).toUTCString(), now)
-    ).toBe("fresh");
-  });
-
-  it("is stale beyond the maximum age", () => {
-    expect(
-      assessMusicMetasFreshness(new Date(now - MUSIC_METAS_MAX_AGE_MS - 1000).toUTCString(), now)
-    ).toBe("stale");
-    expect(assessMusicMetasFreshness("Sun, 25 Oct 2026 12:00:00 GMT", now, 1000)).toBe("stale");
-  });
-
-  it.each([null, undefined, "", "not a date", "Fri, 30 Oct 2026 12:00:00 GMT"])(
-    "is unknown for a missing, unparsable, or future header (%o)",
-    (header) => {
-      expect(assessMusicMetasFreshness(header, now)).toBe("unknown");
-    }
-  );
 });
 
 describe("JP Solo vector V0 (formula jp-solo-community-v1)", () => {

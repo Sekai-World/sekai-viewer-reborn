@@ -32,9 +32,6 @@ export type MusicMetaDifficulty = (typeof MUSIC_META_DIFFICULTIES)[number];
 
 export const MUSIC_META_SKILL_SLOTS = 6;
 
-/** Coefficients may be refreshed upstream without a version field; stale data fails closed. */
-export const MUSIC_METAS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
-
 const MAX_REPORTED_ISSUES = 20;
 
 type SkillScores = readonly [number, number, number, number, number, number];
@@ -72,8 +69,6 @@ export type MusicMetasParseResult =
       revision: string;
     }>
   | Readonly<{ status: "invalid"; issues: readonly MusicMetasIssue[] }>;
-
-export type MusicMetasFreshness = "fresh" | "stale" | "unknown";
 
 type RawRecord = Readonly<Record<string, unknown>>;
 
@@ -195,20 +190,4 @@ export const parseMusicMetas = (payload: unknown): MusicMetasParseResult => {
     return { status: "invalid", issues };
   }
   return { status: "ready", records, revision: computeMusicMetasRevision(records) };
-};
-
-/**
- * The artifact has no embedded timestamp, so freshness comes from the HTTP
- * `Last-Modified` header. A missing, unparsable, or future value is `unknown`,
- * which callers must treat like `stale` rather than assuming the data is current.
- */
-export const assessMusicMetasFreshness = (
-  lastModifiedHeader: string | null | undefined,
-  now: number,
-  maxAgeMs: number = MUSIC_METAS_MAX_AGE_MS
-): MusicMetasFreshness => {
-  if (!lastModifiedHeader) return "unknown";
-  const lastModified = Date.parse(lastModifiedHeader);
-  if (!Number.isFinite(lastModified) || lastModified > now) return "unknown";
-  return now - lastModified <= maxAgeMs ? "fresh" : "stale";
 };
