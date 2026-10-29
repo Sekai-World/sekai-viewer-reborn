@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { MissionFamily } from "$lib/domain/mission";
+import type { MissionFamily } from "#lib/domain/mission.js";
 
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 const { fetchMissionListPage, parseMissionFamily } = vi.hoisted(() => ({
   fetchMissionListPage: vi.fn(),
   parseMissionFamily: vi.fn()
 }));
-vi.mock("$lib/server/mission-list", async (importOriginal) => ({
-  parseMissionCharacterId: (await importOriginal<typeof import("$lib/server/mission-list")>())
+vi.mock("#lib/server/mission-list.js", async (importOriginal) => ({
+  parseMissionCharacterId: (await importOriginal<typeof import("#lib/server/mission-list.js")>())
     .parseMissionCharacterId,
   fetchMissionListPage,
   parseMissionFamily

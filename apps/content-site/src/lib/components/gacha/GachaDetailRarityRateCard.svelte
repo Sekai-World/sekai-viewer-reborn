@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { GachaCardRarityRate } from "$lib/domain/gacha-detail";
+  import type { GachaCardRarityRate } from "#lib/domain/gacha-detail.js";
   import Icon from "@iconify/svelte";
   import GachaProbabilityDetailsDialog from "./GachaProbabilityDetailsDialog.svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
 
   const rarityBarColorMap: Record<string, string> = {
     rarity_1: "bg-base-content/20",

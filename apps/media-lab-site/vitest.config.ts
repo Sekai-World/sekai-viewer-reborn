@@ -1,13 +1,17 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { svelteTesting } from "@testing-library/svelte/vite";
 import { defineConfig } from "vitest/config";
+import { createSvelteKitEnvironmentAliases } from "../../test/vitest-env-aliases.mjs";
 
 const libPath = new URL("./src/lib", import.meta.url).pathname;
 
 export default defineConfig({
   plugins: [svelte({ prebundleSvelteLibraries: false }), svelteTesting()],
   resolve: {
-    alias: [{ find: "$lib", replacement: libPath }],
+    alias: [
+      { find: "#lib", replacement: libPath },
+      ...createSvelteKitEnvironmentAliases(import.meta.url, { includeAppEnvironment: true })
+    ],
     conditions: ["browser", "node", "module-sync"]
   },
   ssr: {

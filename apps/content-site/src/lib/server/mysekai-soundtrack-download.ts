@@ -1,7 +1,7 @@
 import { getMysekaiMusicRecordsByRegionList } from "@platform/sekai-master-api-sdk";
 import { TagLib, type Picture } from "taglib-wasm";
-import { getMysekaiSoundTrackAudioURL, getMysekaiSoundTrackJacketURL } from "$lib/assets/index";
-import type { MusicSoundTrackCategory, MysekaiMusicRecord } from "$lib/domain/mysekai";
+import { getMysekaiSoundTrackAudioURL, getMysekaiSoundTrackJacketURL } from "#lib/assets/index.js";
+import type { MusicSoundTrackCategory, MysekaiMusicRecord } from "#lib/domain/mysekai.js";
 import { getMasterApiV1BaseUrl } from "./catalogue-data";
 import { fetchMysekaiSoundtrackFilters } from "./mysekai";
 

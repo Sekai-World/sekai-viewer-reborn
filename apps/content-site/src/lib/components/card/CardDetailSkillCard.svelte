@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { CardDetailCharacter, CardDetailSkill } from "$lib/domain/card-detail";
+  import type { CardDetailCharacter, CardDetailSkill } from "#lib/domain/card-detail.js";
   import {
     formatEffectValue,
     formatSkillDescription,
     getSelectedSkillEffects
-  } from "$lib/skill-description";
+  } from "#lib/skill-description.js";
   import Icon from "@iconify/svelte";
 
   let {

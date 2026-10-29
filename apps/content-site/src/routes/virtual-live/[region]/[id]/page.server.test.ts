@@ -28,20 +28,20 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
 }));
 
 const { getMusicAssetServer } = vi.hoisted(() => ({ getMusicAssetServer: vi.fn() }));
-vi.mock("$lib/assets/index", () => ({ getMusicAssetServer }));
+vi.mock("#lib/assets/index.js", () => ({ getMusicAssetServer }));
 
 const { getServerI18nText } = vi.hoisted(() => ({ getServerI18nText: vi.fn() }));
-vi.mock("$lib/i18n/runtime", () => ({ getServerI18nText }));
+vi.mock("#lib/i18n/runtime.js", () => ({ getServerI18nText }));
 
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 const { aggregateGameCharacterUnitsByRegion } = vi.hoisted(() => ({
   aggregateGameCharacterUnitsByRegion: vi.fn()
 }));
-vi.mock("$lib/server/character-pages", () => ({ aggregateGameCharacterUnitsByRegion }));
+vi.mock("#lib/server/character-pages.js", () => ({ aggregateGameCharacterUnitsByRegion }));
 
 const {
   buildCharacterUnitEnrichmentMap,
@@ -54,7 +54,7 @@ const {
   parseVirtualLiveDetail: vi.fn(),
   parseVirtualLiveSetlistItems: vi.fn()
 }));
-vi.mock("$lib/server/virtual-live-detail", () => ({
+vi.mock("#lib/server/virtual-live-detail.js", () => ({
   buildCharacterUnitEnrichmentMap,
   enrichVirtualLiveCharacters,
   parseVirtualLiveDetail,
@@ -62,7 +62,7 @@ vi.mock("$lib/server/virtual-live-detail", () => ({
 }));
 
 const { parseMusicDetail } = vi.hoisted(() => ({ parseMusicDetail: vi.fn() }));
-vi.mock("$lib/server/music-detail", () => ({ parseMusicDetail }));
+vi.mock("#lib/server/music-detail.js", () => ({ parseMusicDetail }));
 
 import { load } from "./+page.server";
 

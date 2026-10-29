@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { tCommon } from "$lib/i18n/runtime";
+  import { tCommon } from "#lib/i18n/runtime.js";
 
   type DetailSkeletonKind = "card" | "event" | "music" | "gacha" | "virtual-live" | "character";
 

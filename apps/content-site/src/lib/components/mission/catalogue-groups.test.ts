@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { MissionFamily } from "$lib/domain/mission";
+import type { MissionFamily } from "#lib/domain/mission.js";
 import { groupMissionsByFamily } from "./catalogue-groups";
 
 describe("groupMissionsByFamily", () => {

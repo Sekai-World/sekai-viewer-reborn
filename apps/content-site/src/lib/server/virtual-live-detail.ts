@@ -20,7 +20,7 @@ import {
   type VirtualLiveTotalCheerPointSurplusReward,
   type VirtualLiveVirtualItemOverrideCost,
   type VirtualLiveWaitingRoom
-} from "$lib/domain/virtual-live";
+} from "#lib/domain/virtual-live.js";
 
 const getString = (value: unknown): string | null =>
   typeof value === "string" && value.trim().length > 0 ? value : null;

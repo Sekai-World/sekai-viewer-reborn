@@ -4,7 +4,7 @@ const config = vi.hoisted(() => ({
   getSekaiApiBaseUrl: vi.fn()
 }));
 
-vi.mock("$lib/server/config", () => config);
+vi.mock("#lib/server/config.js", () => config);
 
 import { fetchGlobalNotices } from "./notifications";
 

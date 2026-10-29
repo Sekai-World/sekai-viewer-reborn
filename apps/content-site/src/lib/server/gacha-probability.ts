@@ -6,11 +6,11 @@ import {
 import type {
   GachaRateChoiceWishGroup,
   GachaProbabilityCardMetadata
-} from "$lib/domain/gacha-probability";
-import type { GachaDetail } from "$lib/domain/gacha-detail";
-import { buildGachaProbabilityCards } from "$lib/domain/gacha-probability";
-import { parseGachaDetail } from "$lib/server/gacha-detail";
-import { getStringLike, pickFirstString } from "$lib/server/response-values";
+} from "#lib/domain/gacha-probability.js";
+import type { GachaDetail } from "#lib/domain/gacha-detail.js";
+import { buildGachaProbabilityCards } from "#lib/domain/gacha-probability.js";
+import { parseGachaDetail } from "#lib/server/gacha-detail.js";
+import { getStringLike, pickFirstString } from "#lib/server/response-values.js";
 
 const GACHA_CARD_METADATA_BATCH_SIZE = 100;
 const GACHA_PROBABILITY_CACHE_TTL_MS = 5 * 60 * 1000;

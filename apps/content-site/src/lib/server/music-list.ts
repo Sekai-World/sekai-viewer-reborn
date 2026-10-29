@@ -1,9 +1,9 @@
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import {
   getMusicsByRegionList,
   type GetMusicsByRegionListData
 } from "@platform/sekai-master-api-sdk";
-import { musicTagByUnitCode } from "$lib/server/unit-profiles";
+import { musicTagByUnitCode } from "#lib/server/unit-profiles.js";
 
 export type MusicListItem = {
   id: string;
@@ -258,7 +258,6 @@ export const parseMusicListItem = (payload: unknown): MusicListItem | null => {
 
 const parseSortBy = (value: string | null): MusicListSortBy =>
   value === "id" ? "id" : "publishedAt";
-
 const parseSortOrder = (value: string | null): MusicListSortOrder =>
   value === "asc" ? "asc" : "desc";
 
@@ -273,7 +272,6 @@ const parseMultiValueParam = (searchParams: URLSearchParams, key: string): strin
 
 const normalizeMusicTagFilters = (values: string[]): string[] =>
   values.includes("all") ? [] : values;
-
 const normalizeLegacyVocalUnitFilters = (values: string[]): string[] =>
   values.map((value) => musicTagByUnitCode[value] ?? value);
 
@@ -398,8 +396,8 @@ const fetchMusicCatalogFromApi = async (
     const nextItems = (response.data?.items ?? [])
       .map(parseMusicListItem)
       .filter((item): item is MusicListItem => item !== null);
-    items.push(...nextItems);
 
+    items.push(...nextItems);
     hasNext = response.data?.pagination?.has_next === true;
     page += 1;
   }
@@ -462,7 +460,6 @@ export const fetchMusicCatalog = async (
 
 const getNumber = (value: unknown): number | null =>
   typeof value === "number" && Number.isFinite(value) ? value : null;
-
 const getBoolean = (value: unknown): boolean | null => (typeof value === "boolean" ? value : null);
 
 const parseMusicListPagination = (

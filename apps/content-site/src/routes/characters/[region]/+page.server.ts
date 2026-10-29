@@ -1,11 +1,11 @@
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { fetchUnitProfiles } from "$lib/server/unit-profiles";
-import { parseCharacterList, parseCharacterUnits } from "$lib/server/character-list";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { fetchUnitProfiles } from "#lib/server/unit-profiles.js";
+import { parseCharacterList, parseCharacterUnits } from "#lib/server/character-list.js";
 import {
   aggregateGameCharactersByRegion,
   aggregateGameCharacterUnitsByRegion
-} from "$lib/server/character-pages";
+} from "#lib/server/character-pages.js";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = async ({ params }) => {

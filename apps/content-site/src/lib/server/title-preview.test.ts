@@ -8,9 +8,7 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getBondsHonorsByRegionById,
   getHonorsByRegionById
 }));
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }));
 
 import { fetchTitlePreview } from "./title-preview";
 

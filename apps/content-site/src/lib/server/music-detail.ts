@@ -5,7 +5,7 @@ import type {
   MusicVideoDescriptor,
   MusicVocalCharacter,
   MusicVocal
-} from "$lib/domain/music-detail";
+} from "#lib/domain/music-detail.js";
 import { parseMusicCategories } from "./music-list";
 
 const getString = (value: unknown): string | null =>

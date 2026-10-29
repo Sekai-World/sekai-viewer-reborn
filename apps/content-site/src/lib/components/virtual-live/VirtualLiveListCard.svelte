@@ -1,20 +1,23 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { getVirtualLiveBannerAssetURL } from "$lib/assets/index";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { getVirtualLiveBannerBundle, type VirtualLiveListItem } from "$lib/domain/virtual-live";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
+  import { getVirtualLiveBannerAssetURL } from "#lib/assets/index.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import EventCardFrame from "#lib/components/shared/EventCardFrame.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import {
+    getVirtualLiveBannerBundle,
+    type VirtualLiveListItem
+  } from "#lib/domain/virtual-live.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
   import {
     EVENT_LIST_CARD_FRAME_CLASS,
     EVENT_LIST_CARD_IMAGE_CLASS,
     EVENT_LIST_CARD_TITLE_CLASS
-  } from "$lib/styles/event-card";
+  } from "#lib/styles/event-card.js";
 
   const VIRTUAL_LIVE_CARD_MEDIA_CLASS =
     "relative flex h-32 items-center justify-center overflow-hidden bg-transparent px-4 pb-1.5 pt-4 sm:h-36 sm:pb-2";
-  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
+  import { formatDisplayDateTime, toTimestampMs } from "#lib/time/date-time.js";
 
   let {
     region,

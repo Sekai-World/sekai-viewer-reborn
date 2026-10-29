@@ -1,27 +1,17 @@
 import assert from "node:assert/strict";
-import { cpSync, mkdirSync, rmSync } from "node:fs";
-import {
-  mkdtemp,
-  mkdir,
-  readFile,
-  realpath,
-  readdir,
-  rm,
-  stat,
-  symlink,
-  writeFile
-} from "node:fs/promises";
-import os from "node:os";
+import { spawn } from "node:child_process";
+import { createServer } from "node:http";
+import { createConnection } from "node:net";
+import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import process from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import adapter from "../apps/content-site/node_modules/@sveltejs/adapter-node/index.js";
 
 const rootDirectory = fileURLToPath(new URL("../", import.meta.url));
 const apps = ["content-site", "tools-site", "media-lab-site", "account-site"];
 const runtimeVariables = {
   HOST: "127.0.0.1",
   PORT: "19453",
-  ORIGIN: "http://127.0.0.1:19453",
   BODY_SIZE_LIMIT: "8388608",
   SHUTDOWN_TIMEOUT: "23"
 };
@@ -38,29 +28,29 @@ async function listFiles(directory) {
   return nestedFiles.flat();
 }
 
-function matchesChunkName(file, name) {
-  return new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:-[^/]+)?\\.js$`).test(
-    path.basename(file)
-  );
-}
+async function verifyRuntimeEnvironment(serverFiles, app) {
+  const runtimeEnvEntry = serverFiles.find((file) => path.basename(file) === "adapter-env.js");
+  assert.ok(runtimeEnvEntry, `${app} is missing the adapter-node environment entry`);
 
-async function verifyRuntimeEnvironment(buildDirectory, app) {
-  const envModule = await import(pathToFileURL(path.join(buildDirectory, "env.js")).href);
+  const runtimeEnv = await import(pathToFileURL(runtimeEnvEntry).href);
+  assert.equal(typeof runtimeEnv.env, "function", `${app} lost adapter-node env()`);
+  assert.equal(typeof runtimeEnv.timeout_env, "function", `${app} lost adapter-node timeout_env()`);
+
   const previousValues = new Map(
     Object.keys(runtimeVariables).map((name) => [name, process.env[name]])
   );
 
   try {
-    assert.equal(envModule.env_prefix, "", `${app} changed the default env prefix`);
-    assert.equal(typeof envModule.env, "function", `${app} lost the env helper`);
-    assert.equal(typeof envModule.timeout_env, "function", `${app} lost timeout_env`);
-
     for (const [name, value] of Object.entries(runtimeVariables)) {
       process.env[name] = value;
-      assert.equal(envModule.env(name), value, `${app} did not read unprefixed ${name}`);
+      assert.equal(runtimeEnv.env(name), value, `${app} did not read runtime ${name}`);
     }
 
-    assert.equal(envModule.timeout_env("SHUTDOWN_TIMEOUT"), 23);
+    assert.equal(
+      runtimeEnv.timeout_env("SHUTDOWN_TIMEOUT"),
+      Number(runtimeVariables.SHUTDOWN_TIMEOUT),
+      `${app} did not parse SHUTDOWN_TIMEOUT as seconds`
+    );
   } finally {
     for (const [name, value] of previousValues) {
       if (value === undefined) {
@@ -68,6 +58,178 @@ async function verifyRuntimeEnvironment(buildDirectory, app) {
       } else {
         process.env[name] = value;
       }
+    }
+  }
+}
+
+async function verifyRuntimeConfiguration(buildDirectory, serverFiles, app) {
+  const adapterConfigPath = path.join(buildDirectory, "adapter-node.js");
+  const adapterConfig = await import(pathToFileURL(adapterConfigPath).href);
+  assert.equal(adapterConfig.env_prefix, "", `${app} changed adapter-node's default env prefix`);
+  assert.equal(adapterConfig.origin, undefined, `${app} unexpectedly pinned a public origin`);
+
+  const runtimeEntry = serverFiles.find((file) => path.basename(file).startsWith("adapter-index"));
+  const handlerEntry = serverFiles.find((file) => path.basename(file).startsWith("handler"));
+  assert.ok(runtimeEntry, `${app} is missing the adapter-node server entry`);
+  assert.ok(handlerEntry, `${app} is missing the adapter-node request handler`);
+
+  await verifyRuntimeEnvironment(serverFiles, app);
+
+  const handlerModule = await import(pathToFileURL(path.join(buildDirectory, "handler.js")).href);
+  assert.equal(
+    typeof handlerModule.handler,
+    "function",
+    `${app} request handler is not importable`
+  );
+}
+
+async function verifyServerManifest(serverFiles, app) {
+  const manifestPath =
+    serverFiles.find((file) => path.basename(file) === "manifest.js") ??
+    serverFiles.find((file) => {
+      const name = path.basename(file);
+      return name.startsWith("manifest.js-") || name.startsWith("manifest-");
+    });
+  assert.ok(manifestPath, `${app} is missing its server route manifest`);
+
+  const manifestModule = await import(pathToFileURL(manifestPath).href);
+  const routeNodeLoaders = manifestModule.manifest?.nodes;
+  assert.ok(Array.isArray(routeNodeLoaders), `${app} server manifest has no route nodes`);
+  assert.ok(routeNodeLoaders.length > 0, `${app} server manifest has an empty route-node list`);
+  const routeNodeModules = await Promise.all(
+    routeNodeLoaders.map((load, index) => {
+      assert.equal(typeof load, "function", `${app} route node ${index} is not importable`);
+      return load();
+    })
+  );
+  assert.ok(
+    routeNodeModules.every((routeNode) => routeNode && typeof routeNode === "object"),
+    `${app} route-node imports returned an invalid module`
+  );
+}
+
+async function listen(server) {
+  await new Promise((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  assert.ok(address && typeof address === "object", "smoke server did not bind a TCP port");
+  return address.port;
+}
+
+const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function waitForServer(child, port, app, getOutput) {
+  const deadline = Date.now() + 15_000;
+
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null || child.signalCode !== null) {
+      throw new Error(`${app} adapter server exited before serving HTTP:\n${getOutput()}`);
+    }
+
+    const listening = await new Promise((resolve) => {
+      const socket = createConnection({ host: "127.0.0.1", port });
+      socket.once("connect", () => {
+        socket.destroy();
+        resolve(true);
+      });
+      socket.once("error", () => resolve(false));
+    });
+    if (listening) {
+      return fetch(`http://127.0.0.1:${port}/`, {
+        headers: { cookie: "adapter-smoke=1; smoke-pair=two" },
+        redirect: "manual",
+        signal: AbortSignal.timeout(20_000)
+      });
+    }
+    await delay(100);
+  }
+
+  throw new Error(`${app} adapter server did not listen on HTTP:\n${getOutput()}`);
+}
+
+async function stopChild(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+
+  const exited = new Promise((resolve) => child.once("exit", resolve));
+  child.kill("SIGTERM");
+  await Promise.race([exited, delay(5_000)]);
+  if (child.exitCode === null && child.signalCode === null) {
+    child.kill("SIGKILL");
+    await exited;
+  }
+}
+
+async function verifyAdapterSsrHttp(app, buildDirectory) {
+  const upstream = createServer((_request, response) => {
+    response.writeHead(404, { "content-type": "application/json" });
+    response.end('{"error":"adapter smoke fixture"}');
+  });
+  let portProbe;
+  let child;
+  let output = "";
+  const appendOutput = (chunk) => {
+    output = `${output}${chunk}`.slice(-16_000);
+  };
+
+  try {
+    const upstreamPort = await listen(upstream);
+    portProbe = createServer();
+    const port = await listen(portProbe);
+    await new Promise((resolve, reject) =>
+      portProbe.close((error) => (error ? reject(error) : resolve()))
+    );
+
+    const baseUrl = `http://127.0.0.1:${upstreamPort}`;
+    const childEnvironment = {
+      ...process.env,
+      HOST: "127.0.0.1",
+      PORT: String(port),
+      SHUTDOWN_TIMEOUT: "5",
+      BODY_SIZE_LIMIT: "8388608",
+      SEKAI_MASTER_API_BASE_URL: baseUrl,
+      SEKAI_API_BASE_URL: baseUrl,
+      SEKAI_REMOTE_ASSET_BASE_URL: baseUrl,
+      PUBLIC_REMOTE_ASSET_BASE_URL: baseUrl,
+      PUBLIC_SEKAI_I18N_BASE_URL: baseUrl
+    };
+    delete childEnvironment.SOCKET_PATH;
+    delete childEnvironment.LISTEN_PID;
+    delete childEnvironment.LISTEN_FDS;
+
+    child = spawn(process.execPath, ["index.js"], {
+      cwd: buildDirectory,
+      env: childEnvironment,
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    child.stdout.setEncoding("utf8").on("data", appendOutput);
+    child.stderr.setEncoding("utf8").on("data", appendOutput);
+
+    const response = await waitForServer(child, port, app, () => output);
+    const body = await response.text();
+    assert.equal(
+      response.status,
+      200,
+      `${app} adapter SSR returned ${response.status}: ${body.slice(0, 500)}\n${output}`
+    );
+    assert.match(
+      response.headers.get("content-type") ?? "",
+      /^text\/html\b/i,
+      `${app} adapter SSR did not return an HTML document`
+    );
+    assert.match(body, /<!doctype html/i, `${app} adapter SSR response has no document doctype`);
+  } finally {
+    await stopChild(child);
+    if (portProbe?.listening) {
+      await new Promise((resolve, reject) =>
+        portProbe.close((error) => (error ? reject(error) : resolve()))
+      );
+    }
+    if (upstream.listening) {
+      await new Promise((resolve, reject) =>
+        upstream.close((error) => (error ? reject(error) : resolve()))
+      );
     }
   }
 }
@@ -97,7 +259,8 @@ async function verifyContentSiteClientManifest(appDirectory) {
 
   const eventDebugConsumers = Object.entries(manifest).filter(
     ([key, entry]) =>
-      key.includes(".svelte-kit/generated/client-optimized/nodes/") &&
+      key.includes(".svelte-kit/generated/") &&
+      key.includes("/client-optimized/nodes/") &&
       entry.imports?.includes(eventDebugKey)
   );
   assert.ok(
@@ -111,181 +274,23 @@ async function verifyContentSiteClientManifest(appDirectory) {
   assert.ok(howlerConsumers.length > 0, "Howler is not retained as a client dynamic import");
 }
 
-async function verifyLiveExemptionsAtAdapterBoundary() {
-  const fixtureDirectory = await realpath(
-    await mkdtemp(path.join(os.tmpdir(), "adapter-node-chunk-fixture-"))
-  );
-  const serverDirectory = path.join(fixtureDirectory, ".svelte-kit/output/server");
-  const oldWorkingDirectory = process.cwd();
-  const oldFixtureEffects = globalThis.__adapterNodeChunkFixtureEffects;
-  const oldFixtureValues = globalThis.__adapterNodeChunkFixtureValues;
-  globalThis.__adapterNodeChunkFixtureEffects = [];
-  delete globalThis.__adapterNodeChunkFixtureValues;
-
-  try {
-    await mkdir(path.join(serverDirectory, "chunks"), { recursive: true });
-    await writeFile(
-      path.join(fixtureDirectory, "package.json"),
-      JSON.stringify({ type: "module", dependencies: {} })
-    );
-    await symlink(
-      path.join(rootDirectory, "apps/content-site/node_modules"),
-      path.join(fixtureDirectory, "node_modules"),
-      "dir"
-    );
-    await writeFile(
-      path.join(serverDirectory, "chunks/env.js"),
-      'globalThis.__adapterNodeChunkFixtureEffects.push("env.js");\nexport const envValue = "env export";\n'
-    );
-    await writeFile(
-      path.join(serverDirectory, "chunks/EventDebugDialog.js"),
-      'globalThis.__adapterNodeChunkFixtureEffects.push("EventDebugDialog.js");\nexport const dialogValue = "dialog export";\n'
-    );
-    await writeFile(
-      path.join(serverDirectory, "chunks/howler.js"),
-      'globalThis.__adapterNodeChunkFixtureEffects.push("howler.js");\nexport const howlerValue = "howler export";\n'
-    );
-    await writeFile(
-      path.join(serverDirectory, "chunks/retained.js"),
-      'globalThis.__adapterNodeChunkFixtureEffects.push("retained.js");\nexport const retainedValue = "retained export";\n'
-    );
-    await writeFile(
-      path.join(serverDirectory, "index.js"),
-      [
-        'import { envValue } from "./chunks/env.js";',
-        'import { dialogValue } from "./chunks/EventDebugDialog.js";',
-        'import { howlerValue } from "./chunks/howler.js";',
-        'import { retainedValue } from "./chunks/retained.js";',
-        "globalThis.__adapterNodeChunkFixtureValues = { envValue, dialogValue, howlerValue, retainedValue };",
-        "export class Server {}"
-      ].join("\n")
-    );
-    await writeFile(path.join(serverDirectory, "manifest.js"), "export const manifest = {};\n");
-
-    const resolveFixturePath = (target) =>
-      path.isAbsolute(target) ? target : path.join(fixtureDirectory, target);
-    const builder = {
-      config: { kit: { paths: { base: "" } } },
-      prerendered: { paths: [] },
-      getBuildDirectory: (name) => path.join(fixtureDirectory, ".svelte-kit", name),
-      getServerDirectory: () => serverDirectory,
-      rimraf: (target) => rmSync(resolveFixturePath(target), { recursive: true, force: true }),
-      mkdirp: (target) => mkdirSync(resolveFixturePath(target), { recursive: true }),
-      copy: (source, target) => cpSync(source, resolveFixturePath(target), { recursive: true }),
-      writeClient: () => {},
-      writePrerendered: () => {},
-      log: { minor: (message) => console.log(`adapter fixture: ${message}`) }
-    };
-
-    process.chdir(fixtureDirectory);
-    await adapter({ out: "build", precompress: false }).adapt(builder);
-
-    const serverFiles = await listFiles(path.join(fixtureDirectory, "build/server"));
-    const ssrEntry = serverFiles.find((file) => /\/chunks\/index\.js-[^/]+\.js$/.test(file));
-    assert.ok(ssrEntry, "adapter fixture is missing its server entry chunk");
-    const retainedFileStructuredChunk = serverFiles.find((file) =>
-      /\/chunks\/chunks\/retained\.js-[^/]+\.js$/.test(file)
-    );
-    assert.ok(
-      retainedFileStructuredChunk,
-      `adapter fixture lost normal file-structured chunking: ${serverFiles
-        .map((file) => path.relative(fixtureDirectory, file))
-        .join(", ")}`
-    );
-
-    const serverModule = await import(pathToFileURL(ssrEntry).href);
-    assert.equal(typeof serverModule, "object", "adapter fixture server chunk did not import");
-    assert.deepEqual(globalThis.__adapterNodeChunkFixtureValues, {
-      envValue: "env export",
-      dialogValue: "dialog export",
-      howlerValue: "howler export",
-      retainedValue: "retained export"
-    });
-    assert.deepEqual(
-      new Set(globalThis.__adapterNodeChunkFixtureEffects),
-      new Set(["env.js", "EventDebugDialog.js", "howler.js", "retained.js"])
-    );
-  } finally {
-    process.chdir(oldWorkingDirectory);
-    if (oldFixtureEffects === undefined) {
-      delete globalThis.__adapterNodeChunkFixtureEffects;
-    } else {
-      globalThis.__adapterNodeChunkFixtureEffects = oldFixtureEffects;
-    }
-    if (oldFixtureValues === undefined) {
-      delete globalThis.__adapterNodeChunkFixtureValues;
-    } else {
-      globalThis.__adapterNodeChunkFixtureValues = oldFixtureValues;
-    }
-    await rm(fixtureDirectory, { recursive: true, force: true });
-  }
-}
-
 for (const app of apps) {
   const appDirectory = path.join(rootDirectory, "apps", app);
   const buildDirectory = path.join(appDirectory, "build");
   const serverDirectory = path.join(buildDirectory, "server");
   const serverFiles = await listFiles(serverDirectory);
-  const expectedExemptions =
-    app === "content-site" ? ["env.js", "EventDebugDialog.js", "howler.js"] : ["env.js"];
+  const emptyServerChunks = await Promise.all(
+    serverFiles
+      .filter((file) => file.endsWith(".js"))
+      .map(async (file) => ((await stat(file)).size === 0 ? file : null))
+  ).then((files) => files.filter((file) => file !== null));
+  assert.deepEqual(emptyServerChunks, [], `${app} emitted empty adapter-node server chunks`);
 
-  for (const chunkName of expectedExemptions) {
-    const chunkArtifacts = serverFiles.filter((file) => {
-      const relativePath = path.relative(serverDirectory, file);
-      return (
-        relativePath.startsWith(path.join("chunks", "chunks") + path.sep) &&
-        matchesChunkName(file, chunkName)
-      );
-    });
-    assert.deepEqual(
-      chunkArtifacts,
-      [],
-      `${app} emitted an exempt adapter-node chunk ${chunkName}: ${chunkArtifacts.join(", ")}`
-    );
-  }
-
-  const retainedFileStructuredChunks = serverFiles.filter((file) => {
-    const relativePath = path.relative(serverDirectory, file);
-    return (
-      relativePath.startsWith(path.join("chunks", "chunks") + path.sep) &&
-      file.endsWith(".js") &&
-      !expectedExemptions.some((chunkName) => matchesChunkName(file, chunkName))
-    );
-  });
-  assert.ok(
-    retainedFileStructuredChunks.length > 0,
-    `${app} should retain other file-structured server chunks`
-  );
-
-  const ssrEntryPath = serverFiles.find((file) =>
-    /\/server\/chunks\/index\.js-[^/]+\.js$/.test(file)
-  );
-  assert.ok(ssrEntryPath, `${app} is missing its server SSR entry chunk`);
-  const ssrEntry = await import(pathToFileURL(ssrEntryPath).href);
-  assert.equal(typeof ssrEntry, "object", `${app} server SSR entry did not import`);
-
-  const serverManifestPath = serverFiles.find((file) =>
-    /\/server\/chunks\/manifest\.js-[^/]+\.js$/.test(file)
-  );
-  assert.ok(serverManifestPath, `${app} is missing its server route manifest`);
-  const serverManifestModule = await import(pathToFileURL(serverManifestPath).href);
-  const routeNodeLoaders = serverManifestModule.m?._?.nodes;
-  assert.ok(Array.isArray(routeNodeLoaders), `${app} server manifest has no route nodes`);
-  const routeNodeModules = await Promise.all(
-    routeNodeLoaders.map((load, index) => {
-      assert.equal(typeof load, "function", `${app} route node ${index} is not importable`);
-      return load();
-    })
-  );
-  assert.equal(routeNodeModules.length, routeNodeLoaders.length);
-  assert.ok(
-    routeNodeModules.every((routeNode) => routeNode && typeof routeNode === "object"),
-    `${app} route-node imports returned an invalid module`
-  );
-
-  await verifyRuntimeEnvironment(buildDirectory, app);
+  await verifyRuntimeConfiguration(buildDirectory, serverFiles, app);
+  await verifyServerManifest(serverFiles, app);
+  await verifyAdapterSsrHttp(app, buildDirectory);
   console.log(
-    `${app}: no exempt chunks; SSR, route nodes, and unprefixed environment checks passed`
+    `${app}: non-empty output, runtime env reads, timeout parsing, route imports, and adapter SSR HTTP passed`
   );
 
   if (app === "content-site") {
@@ -293,6 +298,3 @@ for (const app of apps) {
     console.log("content-site: client manifest retains Howler and EventDebugDialog entries");
   }
 }
-
-await verifyLiveExemptionsAtAdapterBoundary();
-console.log("adapter fixture: exempt exports/side effects and ordinary chunking are preserved");

@@ -4,7 +4,7 @@ This directory contains concise repository guidance consolidated from the former
 `.github` instruction files. Read this entry point with `AGENTS.md` before making
 changes, then use the topic that matches the work.
 
-- [Frontend](frontend.md) — Svelte 5, SvelteKit 2, daisyUI, Tailwind, accessibility, and UI testing.
+- [Frontend](frontend.md) — Svelte 5, SvelteKit 3, daisyUI, Tailwind, accessibility, and UI testing.
 - [TypeScript](typescript.md) — strict ESM TypeScript, error handling, security, and tests.
 - [Performance](performance.md) — frontend and Node/SvelteKit performance work.
 - [Containers](containers.md) — Dockerfiles, image builds, and compose changes.

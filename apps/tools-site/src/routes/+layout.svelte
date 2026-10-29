@@ -1,13 +1,13 @@
 <script lang="ts">
   import "../app.css";
-  import "$lib/icons/mdi";
-  import { env } from "$env/dynamic/public";
+  import "#lib/icons/mdi.js";
+  import { PUBLIC_SUPPORT_PAGE_URL } from "$app/env/public";
   import { asset } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
+  import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
   import type { LayoutData } from "./$types";
   import {
     applyDocumentTheme,
@@ -18,16 +18,16 @@
     type ResolvedTheme,
     type ThemeMode,
     type ThemeName
-  } from "$lib/theme";
+  } from "#lib/theme.js";
   import {
     regionLabels,
     isTrackerSupportedRegion,
     trackerSupportedRegions,
     type TrackerSupportedRegion
-  } from "$lib/regions";
+  } from "#lib/regions.js";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
-  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
+  const supportPageUrl = PUBLIC_SUPPORT_PAGE_URL?.trim();
   const fallbackMessages = getLocalI18nMessages(["common", "tracker"]);
   let messages = $state(fallbackMessages);
   let themeName = $state<ThemeName>("default");
@@ -172,7 +172,8 @@
 
 <svelte:head>
   <title>Sekai Tools</title>
-  <link rel="icon" href={asset("/favicon.svg")} type="image/svg+xml" />
+
+  <link rel="icon" href={asset("favicon.svg")} type="image/svg+xml" />
 </svelte:head>
 
 <GlobalNotificationBanner

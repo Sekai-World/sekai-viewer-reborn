@@ -17,8 +17,8 @@ import {
   isPresent,
   parseBondsHonor,
   parseHonor
-} from "$lib/honor-master";
-import type { TrackerCardArt, TrackerHonorLookup } from "$lib/tracker-player-profile";
+} from "#lib/honor-master.js";
+import type { TrackerCardArt, TrackerHonorLookup } from "#lib/tracker-player-profile.js";
 import type { TrackerRegion } from "./event-tracker";
 import { getCachedMetadata } from "./metadata-cache";
 import { withRequestTimeout } from "./network";

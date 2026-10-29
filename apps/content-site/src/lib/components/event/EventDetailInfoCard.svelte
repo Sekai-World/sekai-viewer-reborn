@@ -1,15 +1,15 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { getEventPointIconAssetURL } from "$lib/assets/index";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { formatDisplayDateTime } from "$lib/time/date-time";
-  import type { BannerGameCharacter, EventDetail } from "$lib/domain/event-detail";
-  import { getEventTypeDisplay } from "$lib/domain/event";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { formatUnitFallbackLabel } from "$lib/domain/unit-profile";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
+  import { getEventPointIconAssetURL } from "#lib/assets/index.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { formatDisplayDateTime } from "#lib/time/date-time.js";
+  import type { BannerGameCharacter, EventDetail } from "#lib/domain/event-detail.js";
+  import { getEventTypeDisplay } from "#lib/domain/event.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { formatUnitFallbackLabel } from "#lib/domain/unit-profile.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
-  import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
+  import { resolveCanonicalUnitSlug } from "#lib/domain/unit-icon.js";
   import Icon from "@iconify/svelte";
   import type { I18nTranslator } from "@platform/i18n-runtime";
 

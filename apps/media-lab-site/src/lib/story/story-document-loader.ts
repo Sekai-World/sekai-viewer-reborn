@@ -4,7 +4,7 @@ import type {
   StoryDocument,
   StoryDocumentReference,
   StoryModelReference
-} from "$lib/live2d/story-document";
+} from "#lib/live2d/story-document.js";
 import {
   backgroundImagePath,
   bgmPath,

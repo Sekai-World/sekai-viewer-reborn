@@ -1,30 +1,30 @@
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import {
   getCardsByRegionByIdDetail,
   getCardsRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { getServerI18nText } from "$lib/i18n/runtime";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import { getServerI18nText } from "#lib/i18n/runtime.js";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 import type {
   CardDetail,
   CardDetailEpisode,
   CardDetailParams,
   CardGachaBanner,
   CardRelatedEvent
-} from "$lib/domain/card-detail";
+} from "#lib/domain/card-detail.js";
 import {
   parseCardDetail,
   parseCardDetailEpisodes,
   parseCardDetailParams,
   parseCardGachaBanners,
   parseCardRelatedEvents
-} from "$lib/server/card-detail";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { loadDiscordEmbedLabels } from "$lib/server/discord-embed-labels";
-import { fetchUnitProfiles, toUnitProfileMap } from "$lib/server/unit-profiles";
-import { getCardFullAssetURL } from "$lib/assets/index";
-import { createPageTitle } from "$lib/page-title";
+} from "#lib/server/card-detail.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { loadDiscordEmbedLabels } from "#lib/server/discord-embed-labels.js";
+import { fetchUnitProfiles, toUnitProfileMap } from "#lib/server/unit-profiles.js";
+import { getCardFullAssetURL } from "#lib/assets/index.js";
+import { createPageTitle } from "#lib/page-title.js";
 import {
   buildCardDescription,
   buildCardMetaLine,
@@ -37,7 +37,7 @@ import {
   resolveSeoWithBudget,
   type DiscordEmbedSeo,
   resolveEffectiveTrained
-} from "$lib/seo/discord-embed";
+} from "#lib/seo/discord-embed.js";
 import type { PageServerLoad } from "./$types";
 
 type CardPayload = {

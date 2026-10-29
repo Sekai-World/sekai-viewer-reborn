@@ -5,4 +5,4 @@
 "@apps/account-site": patch
 ---
 
-Avoid emitting empty adapter-node server chunks while preserving client-side EventDebugDialog and Howler bundles and the runtime environment contract.
+Migrate all four apps to SvelteKit 3 and adapter-node 6, including the new environment-variable modules and navigation/response APIs. Remove the adapter-node 5 chunk workaround now that adapter-node 6 uses Rolldown and no longer needs the patch; retain client-side EventDebugDialog and Howler bundles and verify the generated Node server output.

@@ -1,6 +1,6 @@
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { fetchMysekaiMaterials } from "$lib/server/mysekai";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { fetchMysekaiMaterials } from "#lib/server/mysekai.js";
 import type { PageServerLoad } from "./$types";
 
 export const load: PageServerLoad = ({ params }) => {

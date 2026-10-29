@@ -1,10 +1,12 @@
-import { asset } from "$app/paths";
+import { getDynamicStaticAssetURL } from "./static.js";
 
 export const getLocalCharacterThumbnailAssetURL = (
   characterId: string | number | null | undefined
 ): string | null => {
   if (typeof characterId === "number") {
-    return Number.isFinite(characterId) ? asset(`/chr_ts/chr_ts_${characterId}_g1.png`) : null;
+    return Number.isFinite(characterId)
+      ? getDynamicStaticAssetURL(`chr_ts/chr_ts_${characterId}_g1.png`)
+      : null;
   }
 
   const normalizedId = characterId?.trim() ?? "";
@@ -12,5 +14,5 @@ export const getLocalCharacterThumbnailAssetURL = (
     return null;
   }
 
-  return asset(`/chr_ts/chr_ts_${normalizedId}_g1.png`);
+  return getDynamicStaticAssetURL(`chr_ts/chr_ts_${normalizedId}_g1.png`);
 };

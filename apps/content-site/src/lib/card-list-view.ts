@@ -15,7 +15,7 @@ export const parseCardListViewMode = (value: string | null | undefined): CardLis
 };
 
 export const getCardListViewFromSearchParams = (
-  searchParams: URLSearchParams
+  searchParams: Pick<URLSearchParams, "get">
 ): CardListViewMode | null => {
   const value = searchParams.get("view");
   return value === null ? null : parseCardListViewMode(value);

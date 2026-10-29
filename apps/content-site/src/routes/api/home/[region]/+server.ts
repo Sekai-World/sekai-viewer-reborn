@@ -1,8 +1,7 @@
-import { json } from "@sveltejs/kit";
-import { getServerI18nText } from "$lib/i18n/runtime";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { loadHomeRegionData } from "$lib/server/home-page-data";
+import { getServerI18nText } from "#lib/i18n/runtime.js";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { loadHomeRegionData } from "#lib/server/home-page-data.js";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ cookies, fetch, params }) => {
@@ -20,5 +19,5 @@ export const GET: RequestHandler = async ({ cookies, fetch, params }) => {
     requestFailedErrorText: homeEventDataRequestFailed
   });
 
-  return json(regionData);
+  return Response.json(regionData);
 };

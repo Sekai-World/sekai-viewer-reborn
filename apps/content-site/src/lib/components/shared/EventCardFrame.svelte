@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { Snippet } from "svelte";
-  import { EVENT_CARD_BODY_CLASS, EVENT_CARD_SURFACE_CLASS } from "$lib/styles/event-card";
+  import { EVENT_CARD_BODY_CLASS, EVENT_CARD_SURFACE_CLASS } from "#lib/styles/event-card.js";
 
   let {
     id,

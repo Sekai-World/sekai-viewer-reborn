@@ -1,13 +1,13 @@
 import { getGachasByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   createGachaListRequestQuery,
   DEFAULT_GACHA_LIST_PAGE_SIZE,
   logGachaListFilterDebug,
   parseGachaListPage,
   parseGachaListQueryState
-} from "$lib/server/gacha-list";
+} from "#lib/server/gacha-list.js";
 import type { PageServerLoad } from "./$types";
 
 const createEmptyPage = () => ({

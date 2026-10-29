@@ -1,4 +1,4 @@
-export const asset = (path: string): string => path;
+export const asset = (path: string): string => `/${path.startsWith("/") ? path.slice(1) : path}`;
 
 export const resolve = (
   route: string,

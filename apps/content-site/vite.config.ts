@@ -1,3 +1,4 @@
+import adapter from "@sveltejs/adapter-node";
 import { defineConfig, loadEnv } from "vite";
 import { sveltekit } from "@sveltejs/kit/vite";
 import tailwindcss from "@tailwindcss/vite";
@@ -20,7 +21,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [sveltekit(), tailwindcss()],
+    plugins: [sveltekit({ adapter: adapter() }), tailwindcss()],
     server: {
       host: devHost,
       strictPort: true,

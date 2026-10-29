@@ -8,13 +8,13 @@ const { envState, getCharacter2DsByRegionBatch, getGameCharactersByRegionList } 
   })
 );
 
-vi.mock("$env/dynamic/private", () => ({ env: envState }));
+vi.mock("$app/env/private", () => envState);
 vi.mock("@platform/sekai-master-api-sdk", () => ({
   getCharacter2DsByRegionBatch,
   getGameCharactersByRegionList
 }));
 
-import { LIVE2D_CATALOG_REGION } from "$lib/live2d/associated-catalog";
+import { LIVE2D_CATALOG_REGION } from "#lib/live2d/associated-catalog.js";
 import {
   createLive2dCharacterOptions,
   resolveLive2dCharacterData,

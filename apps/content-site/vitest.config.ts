@@ -1,6 +1,7 @@
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { svelteTesting } from "@testing-library/svelte/vite";
 import { defineConfig } from "vitest/config";
+import { createSvelteKitEnvironmentAliases } from "../../test/vitest-env-aliases.mjs";
 
 export default defineConfig({
   plugins: [
@@ -17,10 +18,6 @@ export default defineConfig({
         replacement: new URL("./src/lib/test/app-paths.ts", import.meta.url).pathname
       },
       {
-        find: "$app/environment",
-        replacement: new URL("./src/lib/test/app-environment.ts", import.meta.url).pathname
-      },
-      {
         find: "$app/navigation",
         replacement: new URL("./src/lib/test/app-navigation.ts", import.meta.url).pathname
       },
@@ -28,12 +25,9 @@ export default defineConfig({
         find: "$app/state",
         replacement: new URL("./src/lib/test/app-state.ts", import.meta.url).pathname
       },
+      ...createSvelteKitEnvironmentAliases(import.meta.url, { includeAppEnvironment: true }),
       {
-        find: "$env/dynamic/public",
-        replacement: new URL("./src/lib/test/public-env.ts", import.meta.url).pathname
-      },
-      {
-        find: "$lib",
+        find: "#lib",
         replacement: new URL("./src/lib", import.meta.url).pathname
       }
     ],
@@ -77,6 +71,8 @@ export default defineConfig({
     setupFiles: ["../../test/setup.js"],
     coverage: {
       include: [
+        "src/env.ts",
+        "src/lib/server/config.ts",
         "src/hooks.server.ts",
         "src/lib/a11y/tablist.ts",
         "src/lib/i18n/region.ts",
@@ -141,6 +137,7 @@ export default defineConfig({
         "src/routes/card/[region]/[id]/+page.server.ts",
         "src/routes/character/[region]/[id]/+page.server.ts",
         "src/routes/event/[region]/[id]/+page.server.ts",
+        "src/routes/events/[region]/data/+server.ts",
         "src/routes/+page.server.ts",
         "src/routes/news/[region]/+page.server.ts",
         "src/routes/news/[region]/region-options.ts",

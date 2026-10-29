@@ -1,5 +1,5 @@
-import { getCardThumbnailAssetURL } from "$lib/assets/index";
-import type { SupportedRegion } from "$lib/domain/regions";
+import { getCardThumbnailAssetURL } from "#lib/assets/index.js";
+import type { SupportedRegion } from "#lib/domain/regions.js";
 import { resolveCardTrained, type CardTrainingMetadata } from "@platform/ui-shell/card-thumbnail";
 
 export type { CardTrainingMetadata } from "@platform/ui-shell/card-thumbnail";

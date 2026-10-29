@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { MusicDetail } from "$lib/domain/music-detail";
-  import { getMusicChartPreviewAssetURL } from "$lib/assets/index";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import type { MusicDetail } from "#lib/domain/music-detail.js";
+  import { getMusicChartPreviewAssetURL } from "#lib/assets/index.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import Icon from "@iconify/svelte";
 
   const difficultyOrder = ["easy", "normal", "hard", "expert", "master", "append"];

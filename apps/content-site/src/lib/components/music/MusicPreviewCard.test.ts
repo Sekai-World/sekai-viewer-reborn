@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/sv
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import MusicPreviewCard from "./MusicPreviewCard.svelte";
 
-vi.mock("$env/dynamic/public", () => ({ env: { PUBLIC_REMOTE_ASSET_BASE_URL: "/storage" } }));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "/storage" }));
 vi.mock("$app/paths", () => ({ resolve: (path: string) => path }));
 const howler = vi.hoisted(() => ({ unload: vi.fn(), created: vi.fn() }));
 vi.mock("../../../../../../packages/ui-shell/node_modules/howler", () => ({

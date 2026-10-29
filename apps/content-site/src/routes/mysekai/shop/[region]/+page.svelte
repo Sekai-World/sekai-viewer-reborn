@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { goto, invalidateAll } from "$app/navigation";
+  import { goto, refreshAll } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import CatalogueFrame from "$lib/components/mission/CatalogueFrame.svelte";
-  import { getMysekaiMaterialIconURL, getMysekaiToolIconURL } from "$lib/assets/index";
+  import CatalogueFrame from "#lib/components/mission/CatalogueFrame.svelte";
+  import { getMysekaiMaterialIconURL, getMysekaiToolIconURL } from "#lib/assets/index.js";
   import {
     mysekaiShopTypes,
     type MysekaiShopItem,
     type MysekaiShopType
-  } from "$lib/domain/mysekai";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { getRewardItemIcon } from "$lib/domain/reward-item";
-  import { createStreamedTranslator } from "$lib/i18n/streamed-translator.svelte";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/domain/mysekai.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { getRewardItemIcon } from "#lib/domain/reward-item.js";
+  import { createStreamedTranslator } from "#lib/i18n/streamed-translator.svelte.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -66,7 +66,7 @@
     }))
   );
   const navigate = (type: MysekaiShopType | null, query: string): void => {
-    void goto(listHref(data.region, type, query), { keepFocus: true, noScroll: true });
+    void goto(listHref(data.region, type, query), { reset: false });
   };
 
   const formatNumber = (value: number): string =>
@@ -219,7 +219,7 @@
   {controls}
   resultsLabel={t("mysekai.results")}
   onSearch={(query) => navigate(selectedType, query)}
-  onRetry={() => void invalidateAll()}
+  onRetry={() => void refreshAll()}
 >
   <ul class="grid items-stretch gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
     {#each visibleItems as item (item.id)}

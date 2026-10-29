@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import type { MissionCharacterOption } from "$lib/domain/mission";
-  import { resolveUnitLogoUrl } from "$lib/domain/unit-icon";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import type { MissionCharacterOption } from "#lib/domain/mission.js";
+  import { resolveUnitLogoUrl } from "#lib/domain/unit-icon.js";
 
   let {
     characters,

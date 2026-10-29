@@ -1,22 +1,22 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import MysekaiDetailSection from "$lib/components/mysekai/MysekaiDetailSection.svelte";
-  import MysekaiDetailStatus from "$lib/components/mysekai/MysekaiDetailStatus.svelte";
-  import MysekaiFixtureTile from "$lib/components/mysekai/MysekaiFixtureTile.svelte";
-  import MysekaiInfoRow from "$lib/components/mysekai/MysekaiInfoRow.svelte";
-  import { getMysekaiFixtureThumbnailURL, getMysekaiMaterialIconURL } from "$lib/assets/index";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
+  import RegionBadgeSwitch from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import MysekaiDetailSection from "#lib/components/mysekai/MysekaiDetailSection.svelte";
+  import MysekaiDetailStatus from "#lib/components/mysekai/MysekaiDetailStatus.svelte";
+  import MysekaiFixtureTile from "#lib/components/mysekai/MysekaiFixtureTile.svelte";
+  import MysekaiInfoRow from "#lib/components/mysekai/MysekaiInfoRow.svelte";
+  import { getMysekaiFixtureThumbnailURL, getMysekaiMaterialIconURL } from "#lib/assets/index.js";
   import {
     getMysekaiMaterialRarity,
     getMysekaiMaterialTab,
     type MysekaiDetailPayload,
     type MysekaiMaterialDetail
-  } from "$lib/domain/mysekai";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { createStreamedTranslator } from "$lib/i18n/streamed-translator.svelte";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/domain/mysekai.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { createStreamedTranslator } from "#lib/i18n/streamed-translator.svelte.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

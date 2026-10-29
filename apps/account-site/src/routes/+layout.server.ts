@@ -1,4 +1,4 @@
-import { fetchGlobalNotices } from "$lib/server/notifications";
+import { fetchGlobalNotices } from "#lib/server/notifications.js";
 import packageJson from "../../package.json";
 import type { LayoutServerLoad } from "./$types";
 

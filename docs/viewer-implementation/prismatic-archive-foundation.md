@@ -21,7 +21,7 @@ until a phase explicitly migrates them.
 
 ## Current constraints to preserve
 
-- The monorepo is `pnpm` + Turborepo, with SvelteKit 2, Svelte 5 runes,
+- The monorepo is `pnpm` + Turborepo, with SvelteKit 3, Svelte 5 runes,
   TypeScript, Tailwind CSS 4, and daisyUI.
 - `content-site` is SSR-first and owns the current database/archive reading
   experience. Its route conventions use path parameters such as

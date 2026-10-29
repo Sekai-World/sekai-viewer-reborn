@@ -1,35 +1,36 @@
 <script lang="ts">
-  import FilterOnboarding from "$lib/components/FilterOnboarding.svelte";
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
-  import { asset, resolve } from "$app/paths";
+  import FilterOnboarding from "#lib/components/FilterOnboarding.svelte";
+  import { browser } from "$app/env";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
   import { untrack } from "svelte";
   import { SvelteURLSearchParams } from "svelte/reactivity";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import { toTimestampMs } from "$lib/time/date-time";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getDynamicStaticAssetURL } from "#lib/assets/static.js";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import { toTimestampMs } from "#lib/time/date-time.js";
   import {
     DEFAULT_CARD_LIST_VIEW_MODE,
     getCardListViewFromSearchParams,
     type CardListViewMode,
     withCardListView
-  } from "$lib/card-list-view";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
-  import { UNIT_CODE_ORDER } from "$lib/domain/unit-profile";
-  import CardListCard from "$lib/components/card/CardListCard.svelte";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  } from "#lib/card-list-view.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
+  import { UNIT_CODE_ORDER } from "#lib/domain/unit-profile.js";
+  import CardListCard from "#lib/components/card/CardListCard.svelte";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import ListToolbarButton from "#lib/components/shared/ListToolbarButton.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
-  import type { CardListPage, CardListItem as CardListItemType } from "$lib/server/card-list";
-  import { createPageTitle } from "$lib/page-title";
+  import type { CardListPage, CardListItem as CardListItemType } from "#lib/server/card-list.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   type CardListPagePayload = CardListPage;
@@ -194,11 +195,10 @@
     value === "none" ? getUnitOptionLabel("piapro") : getUnitOptionLabel(value);
 
   const isPiaproUnitSelected = (values: string[]): boolean => values.includes("piapro");
-
   const getVisibleSupportUnitFilter = (units: string[], supportUnits: string[]): string[] =>
     isPiaproUnitSelected(units) ? supportUnits : [];
-
-  const getAttrIconUrl = (value: string): string => asset(`/card_attr/icon_attribute_${value}.png`);
+  const getAttrIconUrl = (value: string): string =>
+    getDynamicStaticAssetURL(`card_attr/icon_attribute_${value}.png`);
 
   const isSpoilerCard = (item: CardListItem): boolean => {
     const releaseAtMs = toTimestampMs(item.releaseAt ?? item.archivePublishedAt);
@@ -794,7 +794,7 @@
     const pathname = resolve("/cards/[region]", { region: data.region });
     const query = searchParams.toString();
     const nextUrl = query.length > 0 ? `${pathname}?${query}` : pathname;
-    replaceState(withCardListView(nextUrl, getViewModeForNavigation()), {});
+    goto(withCardListView(nextUrl, getViewModeForNavigation()), { shallow: true, replace: true });
   };
 
   const syncViewUrl = (nextViewMode: CardListViewMode): void => {
@@ -803,7 +803,7 @@
     }
 
     const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    replaceState(withCardListView(currentUrl, nextViewMode), {});
+    goto(withCardListView(currentUrl, nextViewMode), { shallow: true, replace: true });
   };
 
   const getBreadcrumbItems = () => [

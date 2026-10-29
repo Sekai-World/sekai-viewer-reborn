@@ -6,7 +6,7 @@ import {
   type BondsHonorViewData,
   type Honor
 } from "@platform/ui-shell/honor-degree-adapter";
-import { asObject, asPositiveInteger } from "$lib/honor-master";
+import { asObject, asPositiveInteger } from "#lib/honor-master.js";
 
 /**
  * The card a ranked player shows as their avatar: the leader of their current deck.

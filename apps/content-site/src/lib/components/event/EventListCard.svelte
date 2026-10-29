@@ -1,12 +1,12 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { getEventBannerAssetURL } from "$lib/assets/index";
-  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import { getEventTypeDisplay } from "$lib/domain/event";
-  import EventCardFrame from "$lib/components/shared/EventCardFrame.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { getEventBannerAssetURL } from "#lib/assets/index.js";
+  import { formatDisplayDateTime, toTimestampMs } from "#lib/time/date-time.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import { getEventTypeDisplay } from "#lib/domain/event.js";
+  import EventCardFrame from "#lib/components/shared/EventCardFrame.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
   import type { I18nTranslator } from "@platform/i18n-runtime";
   import {
@@ -15,7 +15,7 @@
     EVENT_LIST_CARD_MEDIA_CLASS,
     EVENT_CARD_META_BADGE_CLASS,
     EVENT_LIST_CARD_TITLE_CLASS
-  } from "$lib/styles/event-card";
+  } from "#lib/styles/event-card.js";
 
   type EventListCardItem = {
     id: string;

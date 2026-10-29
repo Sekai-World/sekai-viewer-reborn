@@ -8,13 +8,13 @@ const mocks = vi.hoisted(() => ({
   buildVoiceCharacterLookup: vi.fn()
 }));
 
-vi.mock("$lib/story/story-resolver.server", () => ({
+vi.mock("#lib/story/story-resolver.server.js", () => ({
   resolveStoryRoute: mocks.resolveStoryRoute,
   fetchScenarioDocument: mocks.fetchScenarioDocument,
   fetchStoryCharactersOrEmpty: mocks.fetchStoryCharactersOrEmpty,
   getStoryAssetBase: () => "https://assets.test"
 }));
-vi.mock("$lib/story/scenario-rows", () => ({
+vi.mock("#lib/story/scenario-rows.js", () => ({
   flattenScenarioToRows: mocks.flattenScenarioToRows,
   buildVoiceCharacterLookup: mocks.buildVoiceCharacterLookup
 }));

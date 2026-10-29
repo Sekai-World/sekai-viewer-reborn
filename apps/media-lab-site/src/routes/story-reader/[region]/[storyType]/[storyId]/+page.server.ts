@@ -1,13 +1,13 @@
 import { error } from "@sveltejs/kit";
-import { parseStoryRouteParams } from "$lib/live2d/story-route";
+import { parseStoryRouteParams } from "#lib/live2d/story-route.js";
 import {
   fetchScenarioDocument,
   fetchStoryCharactersOrEmpty,
   getStoryAssetBase,
   resolveStoryRoute
-} from "$lib/story/story-resolver.server";
-import { createStoryRegionAssetUrls } from "$lib/story/story-urls";
-import { buildVoiceCharacterLookup, flattenScenarioToRows } from "$lib/story/scenario-rows";
+} from "#lib/story/story-resolver.server.js";
+import { createStoryRegionAssetUrls } from "#lib/story/story-urls.js";
+import { buildVoiceCharacterLookup, flattenScenarioToRows } from "#lib/story/scenario-rows.js";
 import type { PageServerLoad } from "./$types";
 
 /**

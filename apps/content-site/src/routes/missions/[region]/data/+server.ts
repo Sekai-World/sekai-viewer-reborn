@@ -1,12 +1,11 @@
-import { json } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
-import { parsePositivePage } from "$lib/server/catalogue-data";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parsePositivePage } from "#lib/server/catalogue-data.js";
 import {
   fetchMissionListPage,
   parseMissionCharacterId,
   parseMissionFamily
-} from "$lib/server/mission-list";
+} from "#lib/server/mission-list.js";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -15,7 +14,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
   const family = parseMissionFamily(url.searchParams);
 
   try {
-    return json(
+    return Response.json(
       await fetchMissionListPage(
         getMasterApiBaseUrl(),
         region,
@@ -28,6 +27,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
       )
     );
   } catch {
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

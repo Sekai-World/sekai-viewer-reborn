@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { env } from "$env/dynamic/public";
+  import { PUBLIC_SUPPORT_PAGE_URL } from "$app/env/public";
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
   import { onMount, tick } from "svelte";
@@ -8,8 +8,8 @@
     createI18nTranslator,
     getLocalI18nMessages,
     resolveStreamingMessages
-  } from "$lib/i18n/runtime";
-  import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+  } from "#lib/i18n/runtime.js";
+  import { supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
   import {
     DEFAULT_REGION,
     normalizeRegion,
@@ -17,37 +17,37 @@
     PREFERRED_REGION_STORAGE_KEY,
     persistPreferredRegion,
     resolvePreferredRegion
-  } from "$lib/i18n/region";
+  } from "#lib/i18n/region.js";
   import {
     getMusicJacketAssetURL,
     getGachaBannerAssetURL,
     getGachaLogoAssetURL
-  } from "$lib/assets";
-  import { trackPromise } from "$lib/promise-cache";
-  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
-  import { openGameNewsTarget } from "$lib/game-news-navigation";
-  import CurrentEventCard from "$lib/components/event/CurrentEventCard.svelte";
-  import RegionBadgeSwitch from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import ViewAllLink from "$lib/components/shared/ViewAllLink.svelte";
-  import { swipeRegion } from "$lib/actions/swipe-region";
+  } from "#lib/assets/index.js";
+  import { trackPromise } from "#lib/promise-cache.js";
+  import { getCardThumbnailPresentation } from "#lib/components/card/card-presentation.js";
+  import { openGameNewsTarget } from "#lib/game-news-navigation.js";
+  import CurrentEventCard from "#lib/components/event/CurrentEventCard.svelte";
+  import RegionBadgeSwitch from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import ViewAllLink from "#lib/components/shared/ViewAllLink.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
   import { CardThumbnail } from "@platform/ui-shell";
-  import { toTimestampMs } from "$lib/time/date-time";
-  import type { GameNewsItem, GameNewsLoadResult } from "$lib/server/game-news";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import type { HomeRegionData } from "$lib/server/home-page-data";
+  import { toTimestampMs } from "#lib/time/date-time.js";
+  import type { GameNewsItem, GameNewsLoadResult } from "#lib/server/game-news.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import type { HomeRegionData } from "#lib/server/home-page-data.js";
   import {
     EVENT_CARD_BANNER_BODY_CLASS,
     EVENT_CARD_EMPTY_BODY_CLASS,
     EVENT_CARD_MEDIA_CLASS,
     EVENT_CARD_SURFACE_CLASS
-  } from "$lib/styles/event-card";
+  } from "#lib/styles/event-card.js";
   import type { PageData } from "./$types";
 
   const HOME_I18N_NAMESPACES = ["common", "home", "event", "error"] as const;
 
   let { data }: { data: PageData } = $props();
-  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim() || resolve("/support");
+  const supportPageUrl = PUBLIC_SUPPORT_PAGE_URL?.trim() || resolve("support");
   const mergeHomeMessages = (messages: Record<string, string>): Record<string, string> => ({
     ...getLocalI18nMessages(HOME_I18N_NAMESPACES),
     ...messages
@@ -111,12 +111,7 @@
   function getInitialRegionData(): Promise<HomeRegionData> {
     return Promise.all([data.initialCard, data.initialLatestData, data.initialNews]).then(
       ([card, latestData, news]) =>
-        ({
-          region: data.initialRegion,
-          card,
-          latestData,
-          news
-        }) satisfies HomeRegionData
+        ({ region: data.initialRegion, card, latestData, news }) satisfies HomeRegionData
     );
   }
 
@@ -136,6 +131,7 @@
 
     const card = value.card;
     const latestData = value.latestData;
+
     return (
       isRecord(card) &&
       isRecord(latestData) &&

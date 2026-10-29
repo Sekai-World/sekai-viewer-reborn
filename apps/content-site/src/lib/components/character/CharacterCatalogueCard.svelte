@@ -1,8 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import type { CharacterCatalogueItem } from "$lib/domain/character";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import type { CharacterCatalogueItem } from "#lib/domain/character.js";
 
   let { character, region }: { character: CharacterCatalogueItem; region: string } = $props();
   const href = $derived(resolve("/character/[region]/[id]", { region, id: character.id }));

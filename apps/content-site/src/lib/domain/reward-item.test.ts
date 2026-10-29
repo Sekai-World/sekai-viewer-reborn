@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.test" }));
 import type { MissionResourceBoxDetail } from "./mission";
 import { getRewardItemIcon } from "./reward-item";
 import { summarizeRewardLadder } from "./reward-ladder";

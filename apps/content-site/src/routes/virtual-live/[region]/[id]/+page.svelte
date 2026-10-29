@@ -1,45 +1,48 @@
 <script lang="ts">
-  import { browser, dev } from "$app/environment";
+  import { browser, dev } from "$app/env";
   import { resolve } from "$app/paths";
-  import { swipeRegion } from "$lib/actions/swipe-region";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
   import {
     getCommonMaterialThumbnailURL,
     getGachaTicketThumbnailURL,
     getRemoteAssetEndpointURL,
     getVirtualLiveBannerAssetURL,
     type AssetServer
-  } from "$lib/assets/index";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import RewardItem from "$lib/components/shared/RewardItem.svelte";
-  import { getRewardItemIcon, isTitleReward } from "$lib/domain/reward-item";
-  import VirtualLiveScheduleSwitcher from "$lib/components/virtual-live/VirtualLiveScheduleSwitcher.svelte";
-  import VirtualLiveCharacterGrid from "$lib/components/virtual-live/VirtualLiveCharacterGrid.svelte";
-  import VirtualLiveSetlistSummary from "$lib/components/virtual-live/VirtualLiveSetlistSummary.svelte";
-  import VirtualLiveAdditionalData from "$lib/components/virtual-live/VirtualLiveAdditionalData.svelte";
-  import EventDebugDialog from "$lib/components/shared/EventDebugDialog.svelte";
+  } from "#lib/assets/index.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import RewardItem from "#lib/components/shared/RewardItem.svelte";
+  import { getRewardItemIcon, isTitleReward } from "#lib/domain/reward-item.js";
+  import VirtualLiveScheduleSwitcher from "#lib/components/virtual-live/VirtualLiveScheduleSwitcher.svelte";
+  import VirtualLiveCharacterGrid from "#lib/components/virtual-live/VirtualLiveCharacterGrid.svelte";
+  import VirtualLiveSetlistSummary from "#lib/components/virtual-live/VirtualLiveSetlistSummary.svelte";
+  import VirtualLiveAdditionalData from "#lib/components/virtual-live/VirtualLiveAdditionalData.svelte";
+  import EventDebugDialog from "#lib/components/shared/EventDebugDialog.svelte";
   import Icon from "@iconify/svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
-  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
+  import DetailPageSkeleton from "#lib/components/shared/DetailPageSkeleton.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import {
     getVirtualLiveBannerBundle,
     type VirtualLiveReward,
     type VirtualLiveRewardResourceBoxDetail
-  } from "$lib/domain/virtual-live";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
+  } from "#lib/domain/virtual-live.js";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { formatDisplayDateTime, toTimestampMs } from "#lib/time/date-time.js";
   import { ImagePreviewDialog } from "@platform/ui-shell";
-  import { createPageTitle } from "$lib/page-title";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
-  import { DETAIL_MEDIA_BUTTON_CLASS, DETAIL_MEDIA_RADIUS_CLASS } from "$lib/styles/detail-media";
+  import {
+    DETAIL_MEDIA_BUTTON_CLASS,
+    DETAIL_MEDIA_RADIUS_CLASS
+  } from "#lib/styles/detail-media.js";
   import {
     REWARD_CHIP_CLASS,
     REWARD_CHIP_ICON_CLASS,
     REWARD_CHIP_QUANTITY_CLASS
-  } from "$lib/styles/reward-chip";
+  } from "#lib/styles/reward-chip.js";
 
   let { data }: { data: PageData } = $props();
   const getInitialMessages = (): Record<string, string> =>

@@ -6,7 +6,7 @@ import {
   type StoryPlayerState
 } from "@platform/live2d-story-player";
 import type { ILive2DLoadProgressHandler } from "@platform/live2d-story-player/pixi";
-import type { StoryDocument, MediaAssetKind } from "$lib/live2d/story-document";
+import type { StoryDocument, MediaAssetKind } from "#lib/live2d/story-document.js";
 import { createStoryModelSource } from "./story-model-source";
 import { createStoryAssetResolver } from "./story-urls";
 import { getUIMediaUrls } from "./player/ui_assets";
@@ -163,7 +163,7 @@ export const createStoryPlayerSession = (
     initialize: async (signal) => {
       throwIfAborted(signal);
       const { ensureCubismCore } = await waitForSignal(
-        () => import("$lib/live2d/cubism-core"),
+        () => import("#lib/live2d/cubism-core.js"),
         signal
       );
       throwIfAborted(signal);

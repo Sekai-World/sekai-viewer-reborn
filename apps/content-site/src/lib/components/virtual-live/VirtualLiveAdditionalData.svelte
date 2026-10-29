@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { getMusicJacketAssetURL } from "$lib/assets/index";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getMusicJacketAssetURL } from "#lib/assets/index.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
   import Icon from "@iconify/svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import type {
     VirtualLiveGroupDisplay,
     VirtualLivePamphletDisplay,
     VirtualLiveScreenMvMusicVocalDisplay,
     VirtualLiveTicketDisplay
-  } from "$lib/domain/virtual-live";
+  } from "#lib/domain/virtual-live.js";
 
   let {
     group,

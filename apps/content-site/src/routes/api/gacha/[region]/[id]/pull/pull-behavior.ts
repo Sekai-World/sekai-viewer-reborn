@@ -1,4 +1,4 @@
-import type { GachaBehavior } from "$lib/domain/gacha-detail";
+import type { GachaBehavior } from "#lib/domain/gacha-detail.js";
 
 export type PullRequestBody = {
   count: unknown;

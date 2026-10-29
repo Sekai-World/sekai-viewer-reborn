@@ -1,6 +1,6 @@
 import { cleanup, render } from "@testing-library/svelte";
 import { afterEach, describe, expect, it } from "vitest";
-import type { DiscordEmbedSeo } from "$lib/seo/discord-embed";
+import type { DiscordEmbedSeo } from "#lib/seo/discord-embed.js";
 import DiscordEmbedHead from "./DiscordEmbedHead.svelte";
 
 afterEach(cleanup);

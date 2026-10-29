@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { getCardThumbnailPresentation } from "$lib/components/card/card-presentation";
-  import type { GachaBehavior } from "$lib/domain/gacha-detail";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  import { getCardThumbnailPresentation } from "#lib/components/card/card-presentation.js";
+  import type { GachaBehavior } from "#lib/domain/gacha-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import { CardThumbnail } from "@platform/ui-shell";
   import Icon from "@iconify/svelte";
-  import { resolve, base } from "$app/paths";
+  import { resolve } from "$app/paths";
   import { SvelteMap } from "svelte/reactivity";
 
   type PulledGachaCard = {
@@ -113,7 +113,6 @@
 
   const getBehaviorDisplay = (type: string | null): string =>
     type ? (behaviorTypeMap[type] ?? type) : "—";
-
   const getSpinnableDisplay = (type: string | null): string | null =>
     type && type !== "any" ? (spinnableTypeMap[type] ?? type) : null;
 
@@ -170,6 +169,7 @@
 
   const selectedBehaviorGroup = $derived.by(() => {
     if (behaviorGroups.length === 0) return null;
+
     return (
       behaviorGroups.find((group) => group.key === selectedBehaviorKey) ??
       behaviorGroups.find(
@@ -240,12 +240,11 @@
     pendingCount = count;
 
     try {
-      const url = `${base}/api/gacha/${region}/${gachaId}/pull`;
-      const requestBody: {
-        count: number;
-        behaviorType?: string;
-        spinnableType?: string;
-      } = { count };
+      const url = resolve(`api/gacha/${region}/${gachaId}/pull`);
+      const requestBody: { count: number; behaviorType?: string; spinnableType?: string } = {
+        count
+      };
+
       if (selectedBehaviorGroup) {
         if (selectedBehaviorGroup.behaviorType) {
           requestBody.behaviorType = selectedBehaviorGroup.behaviorType;
@@ -295,10 +294,8 @@
 
   const getCardDetailHref = (cardId: string): string =>
     resolve("/card/[region]/[id]", { region, id: cardId });
-
   const getRarityValue = (rarityType: string | null): number =>
     rarityType ? (rarityValueByType[rarityType] ?? 0) : 0;
-
   const sortedLatestResult = $derived(
     [...latestResult].sort(
       (a, b) => (rarityOrder[b.rarityType ?? ""] ?? 99) - (rarityOrder[a.rarityType ?? ""] ?? 99)
@@ -498,9 +495,9 @@
                       {rarityLabelByType[rarityType] ?? rarityType}
                     </td>
                     <td class="text-right tabular-nums">{count}</td>
-                    <td class="text-right tabular-nums opacity-80">
-                      {((count / totalPulls) * 100).toFixed(2)}%
-                    </td>
+                    <td class="text-right tabular-nums opacity-80"
+                      >{((count / totalPulls) * 100).toFixed(2)}%</td
+                    >
                   </tr>
                 {/each}
               </tbody>

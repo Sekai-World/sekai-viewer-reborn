@@ -5,9 +5,9 @@ import {
   getMysekaiToolIconURL,
   getRemoteAssetEndpointURL,
   type AssetServer
-} from "$lib/assets";
-import type { MissionResourceBoxDetail } from "$lib/domain/mission";
-import type { SupportedRegion } from "$lib/domain/regions";
+} from "#lib/assets/index.js";
+import type { MissionResourceBoxDetail } from "#lib/domain/mission.js";
+import type { SupportedRegion } from "#lib/domain/regions.js";
 
 export type RewardItemIcon = {
   src: string;

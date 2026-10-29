@@ -1,5 +1,5 @@
-import type { CharacterCatalogueItem, CharacterUnit } from "$lib/domain/character";
-import { formatCharacterName } from "$lib/domain/character";
+import type { CharacterCatalogueItem, CharacterUnit } from "#lib/domain/character.js";
+import { formatCharacterName } from "#lib/domain/character.js";
 
 const getObject = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === "object" && !Array.isArray(value)

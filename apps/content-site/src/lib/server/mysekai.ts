@@ -22,7 +22,7 @@ import type {
   MysekaiSoundtrackListQuery,
   MysekaiPagination,
   MysekaiShopItem
-} from "$lib/domain/mysekai";
+} from "#lib/domain/mysekai.js";
 import { getMasterApiV1BaseUrl } from "./catalogue-data";
 
 // 48 fills whole rows at every fixture grid width (2, 3, 4, and 6 columns) and keeps the

@@ -1,18 +1,18 @@
 import { getEventsByRegionById } from "@platform/sekai-master-api-sdk";
-import type { SupportedRegion } from "$lib/domain/regions";
+import type { SupportedRegion } from "#lib/domain/regions.js";
 import { error, type RequestEvent, type RequestHandler } from "@sveltejs/kit";
-import { getEventBgmAssetURL, getEventLogoAssetURL } from "$lib/assets/index";
-import { normalizeRegion } from "$lib/i18n/region";
+import { getEventBgmAssetURL, getEventLogoAssetURL } from "#lib/assets/index.js";
+import { normalizeRegion } from "#lib/i18n/region.js";
 import {
   publishDownloadTask,
   registerDownloadTaskAbort,
   type DownloadTaskSnapshot,
   type DownloadTaskState,
   unregisterDownloadTaskAbort
-} from "$lib/server/download-progress";
-import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "$lib/server/config";
-import { parseEventDetail } from "$lib/server/event-detail";
-import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "$lib/server/unit-profiles";
+} from "#lib/server/download-progress.js";
+import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseEventDetail } from "#lib/server/event-detail.js";
+import { fetchUnitProfiles, getUnitName, toUnitProfileMap } from "#lib/server/unit-profiles.js";
 import { TagLib, type Picture } from "taglib-wasm";
 
 const SUPPORTED_DOWNLOAD_FORMATS = new Set(["mp3", "wav"]);

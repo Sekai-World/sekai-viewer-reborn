@@ -1,28 +1,28 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
+  import { browser } from "$app/env";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import Icon from "@iconify/svelte";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import { getCardThumbnailAssetURL } from "$lib/assets/index";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
-  import { resolveCardTrained } from "$lib/components/card/card-presentation";
-  import CharacterMissionsCard from "$lib/components/character/CharacterMissionsCard.svelte";
-  import ViewAllLink from "$lib/components/shared/ViewAllLink.svelte";
-  import CharacterRankCard from "$lib/components/character/CharacterRankCard.svelte";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import DetailPageSkeleton from "$lib/components/shared/DetailPageSkeleton.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import { getCardThumbnailAssetURL } from "#lib/assets/index.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getCardListViewFromSearchParams, withCardListView } from "#lib/card-list-view.js";
+  import { resolveCardTrained } from "#lib/components/card/card-presentation.js";
+  import CharacterMissionsCard from "#lib/components/character/CharacterMissionsCard.svelte";
+  import ViewAllLink from "#lib/components/shared/ViewAllLink.svelte";
+  import CharacterRankCard from "#lib/components/character/CharacterRankCard.svelte";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import DetailPageSkeleton from "#lib/components/shared/DetailPageSkeleton.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
   import { CardThumbnail, UnitIconBadge } from "@platform/ui-shell";
-  import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
-  import type { CharacterDetail, CharacterRelatedCard } from "$lib/domain/character";
-  import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
+  import { resolveCanonicalUnitSlug } from "#lib/domain/unit-icon.js";
+  import type { CharacterDetail, CharacterRelatedCard } from "#lib/domain/character.js";
+  import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();

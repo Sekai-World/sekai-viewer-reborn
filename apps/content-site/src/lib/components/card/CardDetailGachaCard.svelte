@@ -1,10 +1,10 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { getGachaLogoAssetURL } from "$lib/assets/index";
-  import type { CardGachaBanner } from "$lib/domain/card-detail";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
+  import { getGachaLogoAssetURL } from "#lib/assets/index.js";
+  import type { CardGachaBanner } from "#lib/domain/card-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { formatDisplayDateTime, toTimestampMs } from "#lib/time/date-time.js";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
   import Icon from "@iconify/svelte";
 
   let {

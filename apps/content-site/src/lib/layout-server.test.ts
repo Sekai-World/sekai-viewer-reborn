@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { I18nMessages } from "@platform/i18n-runtime";
-import { getLocalI18nMessages, type I18nNamespace } from "$lib/i18n/runtime";
+import { getLocalI18nMessages, type I18nNamespace } from "#lib/i18n/runtime.js";
 import {
   DEFAULT_REGION,
   PREFERRED_REGION_COOKIE_NAME,
   UI_LOCALE_COOKIE_NAME
-} from "$lib/i18n/region";
+} from "#lib/i18n/region.js";
 import packageJson from "../../package.json";
 
 const { loadI18nMessageBundle } = vi.hoisted(() => ({
@@ -19,8 +19,8 @@ const { loadI18nMessageBundle } = vi.hoisted(() => ({
     >()
 }));
 
-vi.mock("$lib/i18n/runtime", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("$lib/i18n/runtime")>()),
+vi.mock("#lib/i18n/runtime.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("#lib/i18n/runtime.js")>()),
   loadI18nMessageBundle
 }));
 
@@ -28,7 +28,7 @@ const { fetchGlobalNotices } = vi.hoisted(() => ({
   fetchGlobalNotices: vi.fn()
 }));
 
-vi.mock("$lib/server/notifications", () => ({
+vi.mock("#lib/server/notifications.js", () => ({
   fetchGlobalNotices
 }));
 

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import {
     createI18nTranslator,
     getLocalI18nMessages,
     resolveStreamingMessages
-  } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
-  import { siteUpdates } from "$lib/site-updates";
+  } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
+  import { siteUpdates } from "#lib/site-updates.js";
   import type { PageData } from "./$types";
 
   const UPDATES_I18N_NAMESPACES = ["common", "error"] as const;

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/svelte";
 import { createRawSnippet } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import "$lib/icons/mdi";
+import "#lib/icons/mdi.js";
 import MissionCatalogue, { type MissionCatalogueGroup } from "./MissionCatalogue.svelte";
 
 afterEach(cleanup);

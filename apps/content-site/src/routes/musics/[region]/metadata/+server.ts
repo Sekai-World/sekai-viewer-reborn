@@ -1,6 +1,5 @@
-import { json } from "@sveltejs/kit";
-import { normalizeRegion } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { normalizeRegion } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   buildMusicListFilterMeta,
   fetchMusicCatalog,
@@ -8,7 +7,7 @@ import {
   hasMusicListFilters,
   logMusicListFilterDebug,
   parseMusicListQueryState
-} from "$lib/server/music-list";
+} from "#lib/server/music-list.js";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async ({ params, url }) => {
@@ -44,7 +43,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
       catalogItemCount: catalog.length
     });
 
-    return json({ filterMeta, loadFailed: false as const });
+    return Response.json({ filterMeta, loadFailed: false as const });
   } catch (error) {
     logMusicListFilterDebug("metadata exception", {
       region,
@@ -53,7 +52,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
       error
     });
 
-    return json(
+    return Response.json(
       { filterMeta: getDefaultMusicListFilterMeta(), loadFailed: true as const },
       { status: 500 }
     );

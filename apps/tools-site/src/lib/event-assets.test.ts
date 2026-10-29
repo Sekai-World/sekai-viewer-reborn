@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$env/dynamic/public", () => ({ env: {} }));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "" }));
 
 import { getEventBannerAssetURL, getHonorAssetURL, getLeaderCardAssetURL } from "./event-assets";
 

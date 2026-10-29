@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 const {
   canUsePaginatedMusicList,
@@ -24,7 +24,7 @@ const {
   logMusicListFilterDebug: vi.fn(),
   parseMusicListQueryState: vi.fn()
 }));
-vi.mock("$lib/server/music-list", () => ({
+vi.mock("#lib/server/music-list.js", () => ({
   canUsePaginatedMusicList,
   createMusicListPage,
   DEFAULT_MUSIC_LIST_PAGE_SIZE: 24,
@@ -40,7 +40,7 @@ const { fetchUnitProfiles, toUnitProfileMap } = vi.hoisted(() => ({
   fetchUnitProfiles: vi.fn(),
   toUnitProfileMap: vi.fn()
 }));
-vi.mock("$lib/server/unit-profiles", () => ({ fetchUnitProfiles, toUnitProfileMap }));
+vi.mock("#lib/server/unit-profiles.js", () => ({ fetchUnitProfiles, toUnitProfileMap }));
 
 import { load } from "./+page.server";
 import type {
@@ -48,7 +48,7 @@ import type {
   MusicListItem,
   MusicListPage,
   MusicListQueryState
-} from "$lib/server/music-list";
+} from "#lib/server/music-list.js";
 
 const makeQueryState = (overrides: Partial<MusicListQueryState> = {}): MusicListQueryState => ({
   sortBy: "publishedAt",

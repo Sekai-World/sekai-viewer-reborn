@@ -1,14 +1,15 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import type { ComponentProps } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Honor, HonorGroup } from "$lib/domain/honor";
-import "$lib/icons/mdi";
+import type { Honor, HonorGroup } from "#lib/domain/honor.js";
+import "#lib/icons/mdi.js";
 import HonorsPage from "../../../routes/honors/[region]/+page.svelte";
 
-const { goto, invalidateAll } = vi.hoisted(() => ({ goto: vi.fn(), invalidateAll: vi.fn() }));
-vi.mock("$app/navigation", () => ({ goto, invalidateAll }));
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.example.test" }
+const { goto, refreshAll } = vi.hoisted(() => ({ goto: vi.fn(), refreshAll: vi.fn() }));
+vi.mock("$app/navigation", () => ({ goto, refreshAll }));
+vi.mock("$app/env/public", () => ({
+  PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.example.test",
+  PUBLIC_SEKAI_I18N_BASE_URL: ""
 }));
 afterEach(() => {
   cleanup();
@@ -210,8 +211,7 @@ describe("Honors page group contract", () => {
     await fireEvent.input(searchbox, { target: { value: "stage" } });
     await fireEvent.submit(search);
     expect(goto).toHaveBeenLastCalledWith("/honors/jp?name=stage&sort_by=id&sort_order=asc", {
-      keepFocus: true,
-      noScroll: true
+      reset: false
     });
     expect(screen.getByRole("link", { name: "EN" }).getAttribute("href")).toBe(
       "/honors/en?sort_by=id&sort_order=asc"
@@ -264,18 +264,17 @@ describe("Honors page group contract", () => {
 
     await fireEvent.click(within(tablist).getByRole("tab", { name: "All titles" }));
     expect(goto).toHaveBeenLastCalledWith("/honors/jp?sort_by=id&sort_order=asc", {
-      keepFocus: true,
-      noScroll: true
+      reset: false
     });
     await fireEvent.click(within(tablist).getByRole("tab", { name: "Achievements" }));
     expect(goto).toHaveBeenLastCalledWith(
       "/honors/jp?honor_type=achievement&sort_by=id&sort_order=asc",
-      { keepFocus: true, noScroll: true }
+      { reset: false }
     );
     await fireEvent.click(screen.getByRole("button", { name: "Title ID order: Descending" }));
     expect(goto).toHaveBeenLastCalledWith(
       "/honors/jp?honor_type=event&sort_by=id&sort_order=desc",
-      { keepFocus: true, noScroll: true }
+      { reset: false }
     );
   });
 
@@ -295,8 +294,7 @@ describe("Honors page group contract", () => {
     expect(goto).not.toHaveBeenCalled();
     await fireEvent.input(searchbox, { target: { value: "" } });
     expect(goto).toHaveBeenLastCalledWith("/honors/jp?sort_by=id&sort_order=asc", {
-      keepFocus: true,
-      noScroll: true
+      reset: false
     });
   });
 
@@ -312,13 +310,13 @@ describe("Honors page group contract", () => {
     await fireEvent.click(within(tablist).getByRole("tab", { name: "Achievements" }));
     expect(goto).toHaveBeenLastCalledWith(
       "/honors/jp?honor_type=achievement&sort_by=id&sort_order=asc",
-      { keepFocus: true, noScroll: true }
+      { reset: false }
     );
     // Sorting keeps the search.
     await fireEvent.click(screen.getByRole("button", { name: "Title ID order: Descending" }));
     expect(goto).toHaveBeenLastCalledWith(
       "/honors/jp?honor_type=event&name=Stage&sort_by=id&sort_order=desc",
-      { keepFocus: true, noScroll: true }
+      { reset: false }
     );
   });
 
@@ -330,7 +328,7 @@ describe("Honors page group contract", () => {
     });
     await screen.findByText("Titles could not be loaded. Please try again.");
     await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(invalidateAll).toHaveBeenCalledOnce();
+    expect(refreshAll).toHaveBeenCalledOnce();
     expect(screen.queryByRole("button", { name: "Next" })).toBeNull();
     await rerender({ data: data(Promise.resolve({ ...result, items: [] })) });
     await screen.findByText("No titles found. Try another region.");
@@ -339,6 +337,6 @@ describe("Honors page group contract", () => {
     await rerender({ data: data(rejected) });
     await screen.findByText("Titles could not be loaded. Please try again.");
     await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(invalidateAll).toHaveBeenCalledTimes(2);
+    expect(refreshAll).toHaveBeenCalledTimes(2);
   });
 });

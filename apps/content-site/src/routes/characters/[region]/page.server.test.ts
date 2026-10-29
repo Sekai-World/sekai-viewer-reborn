@@ -7,12 +7,12 @@ const { aggregateGameCharactersByRegion, aggregateGameCharacterUnitsByRegion, fe
     fetchUnitProfiles: vi.fn()
   }));
 
-vi.mock("$lib/server/character-pages", () => ({
+vi.mock("#lib/server/character-pages.js", () => ({
   aggregateGameCharactersByRegion,
   aggregateGameCharacterUnitsByRegion
 }));
-vi.mock("$lib/server/unit-profiles", () => ({ fetchUnitProfiles }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl: () => "https://master-api.test" }));
+vi.mock("#lib/server/unit-profiles.js", () => ({ fetchUnitProfiles }));
+vi.mock("#lib/server/config", () => ({ getMasterApiBaseUrl: () => "https://master-api.test" }));
 
 import { load } from "./+page.server";
 

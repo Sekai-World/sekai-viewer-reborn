@@ -3,13 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { getMasterApiBaseUrl } = vi.hoisted(() => ({
   getMasterApiBaseUrl: vi.fn(() => "https://master-api.test")
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl }));
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl }));
 
 const { fetchTitlePreview } = vi.hoisted(() => ({ fetchTitlePreview: vi.fn() }));
-vi.mock("$lib/server/title-preview", () => ({ fetchTitlePreview }));
+vi.mock("#lib/server/title-preview.js", () => ({ fetchTitlePreview }));
 
 import { GET } from "./+server";
-import type { TitlePreview } from "$lib/domain/title-preview";
+import type { TitlePreview } from "#lib/domain/title-preview.js";
 
 const preview: TitlePreview = {
   kind: "honor",

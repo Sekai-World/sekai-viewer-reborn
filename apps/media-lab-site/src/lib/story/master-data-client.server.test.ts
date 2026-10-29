@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("$env/dynamic/private", () => ({ env: {} }));
+vi.mock("$app/env/private", () => ({ SEKAI_MASTER_API_BASE_URL: "", SEKAI_API_BASE_URL: "" }));
 
 const listEndpointMocks = vi.hoisted(() => ({
   getActionSetsByRegionList: vi.fn(),

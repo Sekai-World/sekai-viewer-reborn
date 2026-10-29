@@ -1,5 +1,5 @@
-import { env } from "$env/dynamic/public";
-import type { SupportedRegion } from "$lib/domain/regions";
+import { PUBLIC_TOOLS_SITE_BASE_URL } from "$app/env/public";
+import type { SupportedRegion } from "#lib/domain/regions.js";
 
 const isTrackerSupportedRegion = (region: SupportedRegion): boolean =>
   region === "jp" || region === "tw" || region === "en" || region === "kr";
@@ -13,7 +13,7 @@ export const getEventTrackerHref = (region: SupportedRegion, eventId: string): s
     return null;
   }
 
-  const baseUrl = env.PUBLIC_TOOLS_SITE_BASE_URL?.trim().replace(/\/+$/, "");
+  const baseUrl = PUBLIC_TOOLS_SITE_BASE_URL?.trim().replace(/\/+$/, "");
   if (!baseUrl) {
     return null;
   }

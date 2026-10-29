@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { formatDisplayDateTime } from "$lib/time/date-time";
-  import type { MusicDetail } from "$lib/domain/music-detail";
-  import MusicYoutubeCard from "$lib/components/music/MusicYoutubeCard.svelte";
-  import { getMusicVideoReferences } from "$lib/domain/music-youtube";
-  import { unitCodeByMusicTag } from "$lib/domain/unit-profile";
-  import { resolveCanonicalUnitSlug } from "$lib/domain/unit-icon";
+  import { formatDisplayDateTime } from "#lib/time/date-time.js";
+  import type { MusicDetail } from "#lib/domain/music-detail.js";
+  import MusicYoutubeCard from "#lib/components/music/MusicYoutubeCard.svelte";
+  import { getMusicVideoReferences } from "#lib/domain/music-youtube.js";
+  import { unitCodeByMusicTag } from "#lib/domain/unit-profile.js";
+  import { resolveCanonicalUnitSlug } from "#lib/domain/unit-icon.js";
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
 

@@ -1,4 +1,4 @@
-import { dev } from "$app/environment";
+import { dev } from "$app/env";
 import {
   getMusicsByRegionById,
   getMusicsByRegionByIdDetail,
@@ -8,20 +8,20 @@ import {
   getVirtualLivesByRegionByIdSetlists,
   getVirtualLivesRegionsByIdAvailability
 } from "@platform/sekai-master-api-sdk";
-import { getMusicAssetServer } from "$lib/assets/index";
-import { getServerI18nText } from "$lib/i18n/runtime";
-import { regionLabels, supportedRegions, type SupportedRegion } from "$lib/domain/regions";
-import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "$lib/i18n/region";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+import { getMusicAssetServer } from "#lib/assets/index.js";
+import { getServerI18nText } from "#lib/i18n/runtime.js";
+import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
+import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   parseVirtualLiveDetail,
   parseVirtualLiveSetlistItems,
   buildCharacterUnitEnrichmentMap,
   enrichVirtualLiveCharacters,
   type VirtualLiveDetail
-} from "$lib/server/virtual-live-detail";
-import { aggregateGameCharacterUnitsByRegion } from "$lib/server/character-pages";
-import { parseMusicDetail } from "$lib/server/music-detail";
+} from "#lib/server/virtual-live-detail.js";
+import { aggregateGameCharacterUnitsByRegion } from "#lib/server/character-pages.js";
+import { parseMusicDetail } from "#lib/server/music-detail.js";
 import type { PageServerLoad } from "./$types";
 
 type VirtualLivePayload = {

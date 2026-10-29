@@ -1,14 +1,14 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$env/dynamic/private", () => ({ env: {} }));
+vi.mock("$app/env/private", () => ({ SEKAI_MASTER_API_BASE_URL: "", SEKAI_API_BASE_URL: "" }));
 
-import type { Live2dCatalogRouteData } from "$lib/live2d/catalog-route-data";
+import type { Live2dCatalogRouteData } from "#lib/live2d/catalog-route-data.js";
 import {
   createLive2dCharacterOptions,
   resolveLive2dCharacterData,
   type Live2dCharacterOption
-} from "$lib/server/live2d-characters";
+} from "#lib/server/live2d-characters.js";
 import { _createLive2dCatalogPageLoad } from "./+page.server";
 
 type ReadyCatalog = Extract<Live2dCatalogRouteData, { status: "ready" }>;

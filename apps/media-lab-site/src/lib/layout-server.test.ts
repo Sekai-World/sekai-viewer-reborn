@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import packageJson from "../../package.json";
 
-vi.mock("$lib/server/notifications", () => ({
+vi.mock("#lib/server/notifications.js", () => ({
   fetchGlobalNotices: vi.fn().mockResolvedValue([])
 }));
 
-vi.mock("$lib/story/story-resolver.server", () => ({
+vi.mock("#lib/story/story-resolver.server.js", () => ({
   getStoryAssetBase: () => "https://storage.example.test"
 }));
 
-import { getLocalI18nMessages, mediaLabI18nNamespaces } from "$lib/i18n/runtime";
-import { DEFAULT_UI_LOCALE, UI_LOCALE_COOKIE_NAME, supportedUiLocales } from "$lib/i18n/region";
+import { getLocalI18nMessages, mediaLabI18nNamespaces } from "#lib/i18n/runtime.js";
+import { DEFAULT_UI_LOCALE, UI_LOCALE_COOKIE_NAME, supportedUiLocales } from "#lib/i18n/region.js";
 import { load } from "../routes/+layout.server";
 
 describe("media-lab-site layout server load", () => {

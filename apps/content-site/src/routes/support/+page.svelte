@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { env } from "$env/dynamic/public";
+  import { PUBLIC_PATREON_URL, PUBLIC_KOFI_URL } from "$app/env/public";
   import { resolve } from "$app/paths";
   import Icon from "@iconify/svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import {
     createI18nTranslator,
     getLocalI18nMessages,
     resolveStreamingMessages
-  } from "$lib/i18n/runtime";
-  import { createPageTitle } from "$lib/page-title";
-  import { getKofiSupportUrl, getPatreonSupportUrl } from "$lib/support-provider-url";
+  } from "#lib/i18n/runtime.js";
+  import { createPageTitle } from "#lib/page-title.js";
+  import { getKofiSupportUrl, getPatreonSupportUrl } from "#lib/support-provider-url.js";
   import type { PageData } from "./$types";
 
   const SUPPORT_I18N_NAMESPACES = ["common", "home", "error"] as const;
@@ -22,8 +22,8 @@
   });
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const pageTitle = $derived(translate("support.title"));
-  const patreonUrl = getPatreonSupportUrl(env.PUBLIC_PATREON_URL);
-  const kofiUrl = getKofiSupportUrl(env.PUBLIC_KOFI_URL);
+  const patreonUrl = getPatreonSupportUrl(PUBLIC_PATREON_URL);
+  const kofiUrl = getKofiSupportUrl(PUBLIC_KOFI_URL);
 </script>
 
 <svelte:head>
@@ -39,6 +39,7 @@
     <h1 id="support-title" class="mb-4 text-2xl font-semibold text-(--archive-text-strong)">
       {pageTitle}
     </h1>
+
     <p class="mb-5 max-w-3xl leading-7 text-(--archive-text-default)">
       {translate("support.description")}
     </p>

@@ -1,4 +1,4 @@
-import { parseTrackerTimestamp, type TrackerDateValue } from "$lib/tracker-phase";
+import { parseTrackerTimestamp, type TrackerDateValue } from "#lib/tracker-phase.js";
 
 export type ScorePerElapsedHourInput = Readonly<{
   score: number | null | undefined;

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$env/dynamic/public", () => ({ env: {} }));
+const envState = vi.hoisted(() => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "" }));
+vi.mock("$app/env/public", () => envState);
 
 const mdMocks = vi.hoisted(() => ({
   fetchStoryCollections: vi.fn(),
@@ -8,7 +9,6 @@ const mdMocks = vi.hoisted(() => ({
 }));
 vi.mock("./master-data-client.server", () => mdMocks);
 
-import { env as publicEnv } from "$env/dynamic/public";
 import {
   fetchScenarioDocument,
   fetchStoryCharactersOrEmpty,
@@ -59,22 +59,22 @@ const identity = {
 
 describe("getStoryAssetBase / getStoryFetchBase", () => {
   it("trims trailing slashes from the configured asset base", () => {
-    publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL = "https://assets.test///";
+    envState.PUBLIC_REMOTE_ASSET_BASE_URL = "https://assets.test///";
     expect(getStoryAssetBase()).toBe("https://assets.test");
   });
 
   it("falls back to the public mirror when unset or blank", () => {
-    publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL = "   ";
+    envState.PUBLIC_REMOTE_ASSET_BASE_URL = "   ";
     expect(getStoryAssetBase()).toBe("https://storage.sekai.best");
   });
 
   it("returns an absolute base unchanged for fetching", () => {
-    publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL = "https://assets.test";
+    envState.PUBLIC_REMOTE_ASSET_BASE_URL = "https://assets.test";
     expect(getStoryFetchBase()).toBe("https://assets.test");
   });
 
   it("qualifies a relative base with the request origin", () => {
-    publicEnv.PUBLIC_REMOTE_ASSET_BASE_URL = "/storage";
+    envState.PUBLIC_REMOTE_ASSET_BASE_URL = "/storage";
     expect(getStoryFetchBase("http://localhost:4103")).toBe("http://localhost:4103/storage");
     expect(getStoryFetchBase()).toBe("/storage");
   });

@@ -6,15 +6,15 @@ const mocks = vi.hoisted(() => ({
   getEventsByRegionCurrent: vi.fn()
 }));
 
-vi.mock("$lib/i18n/runtime", () => ({
+vi.mock("#lib/i18n/runtime.js", () => ({
   getLocalI18nMessages: (namespaces: readonly string[]) => ({ namespaces }),
   loadI18nMessageBundle: mocks.loadI18nMessageBundle
 }));
 vi.mock("@platform/sekai-master-api-sdk", () => ({
   getEventsByRegionCurrent: mocks.getEventsByRegionCurrent
 }));
-vi.mock("$env/dynamic/private", () => ({
-  env: { SEKAI_MASTER_API_BASE_URL: "https://master.example.test///" }
+vi.mock("$app/env/private", () => ({
+  SEKAI_MASTER_API_BASE_URL: "https://master.example.test///"
 }));
 
 import { load as loadLayout } from "./+layout.server";

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { browser } from "$app/environment";
-  import { toTimestampMs } from "$lib/time/date-time";
-  import { createI18nTranslator } from "$lib/i18n/runtime";
+  import { browser } from "$app/env";
+  import { toTimestampMs } from "#lib/time/date-time.js";
+  import { createI18nTranslator } from "#lib/i18n/runtime.js";
   import type { I18nMessages } from "@platform/i18n-runtime";
   import { onMount } from "svelte";
 

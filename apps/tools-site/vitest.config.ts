@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { createSvelteKitEnvironmentAliases } from "../../test/vitest-env-aliases.mjs";
 
 const libPath = new URL("./src/lib", import.meta.url).pathname;
 const iconifyStubPath = new URL("./src/lib/test/iconify-stub.ts", import.meta.url).pathname;
@@ -6,8 +7,9 @@ const iconifyStubPath = new URL("./src/lib/test/iconify-stub.ts", import.meta.ur
 export default defineConfig({
   resolve: {
     alias: [
-      { find: "$lib", replacement: libPath },
-      { find: /^@iconify\/svelte$/, replacement: iconifyStubPath }
+      { find: "#lib", replacement: libPath },
+      { find: /^@iconify\/svelte$/, replacement: iconifyStubPath },
+      ...createSvelteKitEnvironmentAliases(import.meta.url, { includeAppEnvironment: true })
     ]
   },
   test: {

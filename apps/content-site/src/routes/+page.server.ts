@@ -1,11 +1,11 @@
-import { getServerI18nText } from "$lib/i18n/runtime";
+import { getServerI18nText } from "#lib/i18n/runtime.js";
 import {
   DEFAULT_REGION,
   normalizeRegion,
   normalizeUiLocale,
   PREFERRED_REGION_COOKIE_NAME,
   UI_LOCALE_COOKIE_NAME
-} from "$lib/i18n/region";
+} from "#lib/i18n/region.js";
 import { getVersions } from "@platform/sekai-master-api-sdk";
 import {
   loadHomeLatestData,
@@ -13,8 +13,8 @@ import {
   loadHomeRegionEventCard,
   parseVersionsByRegion,
   type VersionsByRegion
-} from "$lib/server/home-page-data";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+} from "#lib/server/home-page-data.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import type { PageServerLoad } from "./$types";
 
 const loadVersionsByRegion = async (baseUrl: string): Promise<VersionsByRegion> => {

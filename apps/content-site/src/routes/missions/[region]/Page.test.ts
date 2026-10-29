@@ -1,16 +1,16 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/svelte";
 import type { ComponentProps } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { Mission, MissionCharacterOption, MissionFamily } from "$lib/domain/mission";
-import "$lib/icons/mdi";
+import type { Mission, MissionCharacterOption, MissionFamily } from "#lib/domain/mission.js";
+import "#lib/icons/mdi.js";
 import MissionsPage from "./+page.svelte";
 
-const { goto, invalidateAll } = vi.hoisted(() => ({
+const { goto, refreshAll } = vi.hoisted(() => ({
   goto: vi.fn(),
-  invalidateAll: vi.fn()
+  refreshAll: vi.fn()
 }));
-vi.mock("$app/environment", () => ({ browser: true }));
-vi.mock("$app/navigation", () => ({ goto, invalidateAll }));
+vi.mock("$app/env", () => ({ browser: true }));
+vi.mock("$app/navigation", () => ({ goto, refreshAll }));
 
 afterEach(() => {
   cleanup();
@@ -212,7 +212,7 @@ describe("Missions page", () => {
     );
 
     await fireEvent.click(withinTab(tablist, "All"));
-    expect(goto).toHaveBeenLastCalledWith("/missions/jp", { keepFocus: true, noScroll: true });
+    expect(goto).toHaveBeenLastCalledWith("/missions/jp", { reset: false });
   });
 
   it("appends and de-duplicates later pages for a selected family", async () => {
@@ -274,8 +274,7 @@ describe("Missions page", () => {
 
     await fireEvent.click(saki);
     expect(goto).toHaveBeenLastCalledWith("/missions/jp?family=characterMissionV2s&character=2", {
-      keepFocus: true,
-      noScroll: true
+      reset: false
     });
   });
 
@@ -379,7 +378,7 @@ describe("Missions page", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByRole("button", { name: "Saki Tenma" })).toBeTruthy();
     expect(characterListCalls(fetchMock)).toBe(1);
-    expect(invalidateAll).not.toHaveBeenCalled();
+    expect(refreshAll).not.toHaveBeenCalled();
   });
 
   it("shows bounded, count-led previews in All mode as each family arrives", async () => {
@@ -421,7 +420,7 @@ describe("Missions page", () => {
       .closest("section")!;
     expect(normalSection.textContent).toContain("Missions could not be loaded.");
     await fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    expect(invalidateAll).toHaveBeenCalledOnce();
+    expect(refreshAll).toHaveBeenCalledOnce();
 
     for (const family of ["Story missions", "Character missions", "Normal missions"]) {
       expect(screen.getByRole("button", { name: `View all ${family}` })).toBeTruthy();

@@ -2,18 +2,18 @@
   import { navigating } from "$app/state";
   import Icon from "@iconify/svelte";
   import { onMount, untrack } from "svelte";
-  import { createI18nTranslator } from "$lib/i18n/runtime";
-  import Live2dModelStudio from "$lib/components/Live2dModelStudio.svelte";
-  import { createLive2dModelLoader } from "$lib/live2d/live2d-model-loader";
-  import { attachLive2dModelInteractions } from "$lib/live2d/live2d-model-interactions";
+  import { createI18nTranslator } from "#lib/i18n/runtime.js";
+  import Live2dModelStudio from "#lib/components/Live2dModelStudio.svelte";
+  import { createLive2dModelLoader } from "#lib/live2d/live2d-model-loader.js";
+  import { attachLive2dModelInteractions } from "#lib/live2d/live2d-model-interactions.js";
   import {
     createLive2dModelViewer,
     type Live2dModelDescriptor,
     type Live2dModelViewer,
     type Live2dModelViewerState
-  } from "$lib/live2d/model-viewer";
-  import type { Live2dRouteModelDescriptor } from "$lib/live2d/catalog-route-data";
-  import { createPageTitle } from "$lib/page-title";
+  } from "#lib/live2d/model-viewer.js";
+  import type { Live2dRouteModelDescriptor } from "#lib/live2d/catalog-route-data.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();

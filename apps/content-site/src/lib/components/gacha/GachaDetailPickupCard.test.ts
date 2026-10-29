@@ -3,9 +3,7 @@ import { tick } from "svelte";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import GachaDetailPickupCard from "./GachaDetailPickupCard.svelte";
 
-vi.mock("$env/dynamic/public", () => ({
-  env: { PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.example.test" }
-}));
+vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://assets.example.test" }));
 
 afterEach(() => {
   cleanup();

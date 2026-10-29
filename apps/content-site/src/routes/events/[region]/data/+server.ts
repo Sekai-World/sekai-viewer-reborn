@@ -1,14 +1,13 @@
-import { json } from "@sveltejs/kit";
 import { getEventsByRegionList } from "@platform/sekai-master-api-sdk";
-import { normalizeRegion } from "$lib/i18n/region";
+import { normalizeRegion } from "#lib/i18n/region.js";
 import {
   createEventListRequestQuery,
   DEFAULT_EVENT_LIST_PAGE_SIZE,
   logEventListFilterDebug,
   parseEventListPage,
   parseEventListQueryState
-} from "$lib/server/event-list";
-import { getMasterApiBaseUrl } from "$lib/server/config";
+} from "#lib/server/event-list.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import type { RequestHandler } from "./$types";
 
 const summarizeResponse = (
@@ -70,7 +69,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
         error: response.error
       });
 
-      return json({ error: true }, { status: 500 });
+      return Response.json({ error: true }, { status: 500 });
     }
 
     const eventListPage = parseEventListPage(response.data, page, DEFAULT_EVENT_LIST_PAGE_SIZE);
@@ -85,7 +84,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
       pagination: eventListPage.pagination
     });
 
-    return json(eventListPage);
+    return Response.json(eventListPage);
   } catch (error) {
     logEventListFilterDebug("data exception", {
       region,
@@ -94,6 +93,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
       error
     });
 
-    return json({ error: true }, { status: 500 });
+    return Response.json({ error: true }, { status: 500 });
   }
 };

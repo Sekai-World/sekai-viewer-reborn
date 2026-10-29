@@ -5,12 +5,11 @@ const mocks = vi.hoisted(() => ({
   fetchStoryCharactersOrEmpty: vi.fn()
 }));
 
-vi.mock("$lib/story/story-resolver.server", () => ({
+vi.mock("#lib/story/story-resolver.server.js", () => ({
   resolveStoryRoute: mocks.resolveStoryRoute,
   fetchStoryCharactersOrEmpty: mocks.fetchStoryCharactersOrEmpty,
   getStoryAssetBase: () => "https://assets.test"
 }));
-
 import { load } from "./live2d/story-reader/[region]/[storyType]/[storyId]/+page.server";
 
 const buildLoadEvent = (params: Record<string, string | undefined>) =>

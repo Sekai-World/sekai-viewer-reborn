@@ -1,4 +1,4 @@
-import type { IScenarioData } from "$lib/story/scenario-types";
+import type { IScenarioData } from "#lib/story/scenario-types.js";
 import type { StoryRouteIdentity } from "./story-route";
 
 /** The route region is always explicit; it is never inferred from asset paths. */

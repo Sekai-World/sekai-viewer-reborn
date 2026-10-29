@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { env } from "$env/dynamic/public";
+  import { PUBLIC_SUPPORT_PAGE_URL } from "$app/env/public";
   import Icon from "@iconify/svelte";
-  import { createI18nTranslator } from "$lib/i18n/runtime";
-  import { pickerStoryTypeIcons, pickerStoryTypes } from "$lib/story/story-picker";
+  import { createI18nTranslator } from "#lib/i18n/runtime.js";
+  import { pickerStoryTypeIcons, pickerStoryTypes } from "#lib/story/story-picker.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
 
-  const supportPageUrl = env.PUBLIC_SUPPORT_PAGE_URL?.trim();
+  const supportPageUrl = PUBLIC_SUPPORT_PAGE_URL?.trim();
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
 </script>
 

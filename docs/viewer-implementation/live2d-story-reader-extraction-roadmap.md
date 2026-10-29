@@ -165,7 +165,7 @@ runtime can drop it; the wrappers keep it until they are retired.
 
 ### Confirmed starting point
 
-`apps/media-lab-site` is a SvelteKit 2 / Svelte 5 app with a minimal home page.
+`apps/media-lab-site` is a SvelteKit 3 / Svelte 5 app with a minimal home page.
 It already uses `ViewerShell`, `RegionSwitcher`, Tailwind 4, daisyUI 5, and a
 route transition shell, and it now includes localized Story Reader/Live2D route
 shells plus a server-side associated-catalog load for model metadata. The

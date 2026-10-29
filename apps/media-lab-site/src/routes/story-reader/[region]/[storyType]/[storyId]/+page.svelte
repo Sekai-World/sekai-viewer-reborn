@@ -1,11 +1,11 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import StoryReaderHeader from "$lib/components/story-reader/StoryReaderHeader.svelte";
-  import StoryTextRows from "$lib/components/story-reader/StoryTextRows.svelte";
-  import { createI18nTranslator } from "$lib/i18n/runtime";
-  import type { StoryRouteStoryType } from "$lib/live2d/story-route";
-  import { readerBackPath } from "$lib/story/story-picker";
-  import { createPageTitle } from "$lib/page-title";
+  import StoryReaderHeader from "#lib/components/story-reader/StoryReaderHeader.svelte";
+  import StoryTextRows from "#lib/components/story-reader/StoryTextRows.svelte";
+  import { createI18nTranslator } from "#lib/i18n/runtime.js";
+  import type { StoryRouteStoryType } from "#lib/live2d/story-route.js";
+  import { readerBackPath } from "#lib/story/story-picker.js";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();

@@ -26,27 +26,27 @@ vi.mock("@platform/sekai-master-api-sdk", () => ({
   getGameCharactersByRegionByIdProfile: mocks.getGameCharactersByRegionByIdProfile,
   getGameCharactersRegionsByIdAvailability: mocks.getGameCharactersRegionsByIdAvailability
 }));
-vi.mock("$lib/server/config", () => ({ getMasterApiBaseUrl: mocks.getMasterApiBaseUrl }));
-vi.mock("$lib/server/character-detail", () => ({
+vi.mock("#lib/server/config.js", () => ({ getMasterApiBaseUrl: mocks.getMasterApiBaseUrl }));
+vi.mock("#lib/server/character-detail.js", () => ({
   normalizeCharacterAvailability: mocks.normalizeCharacterAvailability,
   parseRelatedCharacterCards: mocks.parseRelatedCharacterCards,
   parseRelatedCharacterCardTotal: mocks.parseRelatedCharacterCardTotal
 }));
-vi.mock("$lib/server/character-list", () => ({
+vi.mock("#lib/server/character-list.js", () => ({
   parseCharacter: mocks.parseCharacter,
   parseCharacterUnits: mocks.parseCharacterUnits
 }));
-vi.mock("$lib/server/character-profile", () => ({
+vi.mock("#lib/server/character-profile.js", () => ({
   parseCharacterProfile: mocks.parseCharacterProfile
 }));
-vi.mock("$lib/server/character-pages", () => ({
+vi.mock("#lib/server/character-pages.js", () => ({
   aggregateGameCharacterUnitsByRegion: mocks.aggregateGameCharacterUnitsByRegion
 }));
-vi.mock("$lib/server/mission-list", () => ({
+vi.mock("#lib/server/mission-list.js", () => ({
   fetchCharacterRankReferences: mocks.fetchCharacterRankReferences,
   fetchCharacterMissions: mocks.fetchCharacterMissions
 }));
-vi.mock("$lib/server/unit-profiles", () => ({
+vi.mock("#lib/server/unit-profiles.js", () => ({
   fetchUnitProfiles: mocks.fetchUnitProfiles,
   getUnitName: mocks.getUnitName,
   toUnitProfileMap: mocks.toUnitProfileMap

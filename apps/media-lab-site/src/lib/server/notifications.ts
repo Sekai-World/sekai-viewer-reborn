@@ -1,4 +1,4 @@
-import { env } from "$env/dynamic/private";
+import { SEKAI_API_BASE_URL } from "$app/env/private";
 import type { GlobalNotice } from "@platform/ui-shell";
 import {
   fetchGlobalNotices as sharedFetchGlobalNotices,
@@ -6,7 +6,7 @@ import {
 } from "@platform/ui-shell/global-notices";
 
 const resolveBaseUrl = (): string | null => {
-  const value = env.SEKAI_API_BASE_URL?.trim();
+  const value = SEKAI_API_BASE_URL?.trim();
   if (!value) {
     return null;
   }

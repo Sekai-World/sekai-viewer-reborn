@@ -1,8 +1,8 @@
 <script lang="ts">
   import { asset, resolve } from "$app/paths";
   import { page } from "$app/state";
-  import { getCardListViewFromSearchParams, withCardListView } from "$lib/card-list-view";
-  import { parseEventRewardRanges } from "$lib/domain/event-rewards";
+  import { getCardListViewFromSearchParams, withCardListView } from "#lib/card-list-view.js";
+  import { parseEventRewardRanges } from "#lib/domain/event-rewards.js";
   import {
     getCardThumbnailAssetURL,
     getCommonMaterialThumbnailURL,
@@ -11,15 +11,16 @@
     getRemoteAssetEndpointURL,
     getVirtualLiveBannerAssetURL,
     type AssetServer
-  } from "$lib/assets/index";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { resolveCardTrained } from "$lib/components/card/card-presentation";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import AssetImage from "$lib/components/shared/AssetImage.svelte";
-  import RewardItem from "$lib/components/shared/RewardItem.svelte";
-  import HonorSummary from "$lib/components/honor/HonorSummary.svelte";
+  } from "#lib/assets/index.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getDynamicStaticAssetURL } from "#lib/assets/static.js";
+  import { resolveCardTrained } from "#lib/components/card/card-presentation.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import AssetImage from "#lib/components/shared/AssetImage.svelte";
+  import RewardItem from "#lib/components/shared/RewardItem.svelte";
+  import HonorSummary from "#lib/components/honor/HonorSummary.svelte";
   import { CardThumbnail, UnitIconBadge } from "@platform/ui-shell";
-  import { formatDisplayDateTime } from "$lib/time/date-time";
+  import { formatDisplayDateTime } from "#lib/time/date-time.js";
   import { SvelteSet, SvelteURLSearchParams } from "svelte/reactivity";
   import type {
     EventDetail,
@@ -29,14 +30,14 @@
     EventRewardResourceBoxDetail,
     EventRankingRewardRange,
     EventRelatedData
-  } from "$lib/domain/event-detail";
-  import type { SupportedRegion } from "$lib/domain/regions";
+  } from "#lib/domain/event-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
   import Icon from "@iconify/svelte";
   import {
     REWARD_CHIP_CLASS,
     REWARD_CHIP_ICON_CLASS,
     REWARD_CHIP_QUANTITY_CLASS
-  } from "$lib/styles/reward-chip";
+  } from "#lib/styles/reward-chip.js";
 
   type SummaryItem = {
     key: string;
@@ -130,11 +131,13 @@
   let rewardsLoading = $state(false);
   let rewardsLoadError = $state(false);
   let rewardStateKey = $state("");
+
   const displayRelatedData = $derived(
     relatedData && fullRewardRanges
       ? ({ ...relatedData, rewardRanges: fullRewardRanges } as EventRelatedData)
       : relatedData
   );
+
   $effect(() => {
     const key = `${region}:${event.id}`;
     if (rewardStateKey !== key) {
@@ -215,6 +218,7 @@
     rarityType ? (rarityValueByType[rarityType] ?? 0) : 0;
   const isCardTrained = (card: EventFeaturedCard): boolean =>
     resolveCardTrained(card, card.rarityType === "rarity_birthday");
+
   const getCardThumbnailSrc = (card: EventFeaturedCard): string | null =>
     card.assetBundleName
       ? getCardThumbnailAssetURL(card.assetBundleName, isCardTrained(card), "jp")
@@ -227,22 +231,26 @@
     music.assetBundleName
       ? getMusicJacketAssetURL(music.assetBundleName, region as AssetServer)
       : null;
+
   const getVirtualLiveBannerSrc = (assetBundleName: string | null): string | null =>
     assetBundleName ? getVirtualLiveBannerAssetURL(assetBundleName, region as AssetServer) : null;
+
   const getCardHref = (card: EventFeaturedCard): string | null =>
     card.cardId ? resolve("/card/[region]/[id]", { region, id: card.cardId }) : null;
+
   const getMusicHref = (music: EventMusic): string | null =>
     music.musicId ? resolve("/music/[region]/[id]", { region, id: music.musicId }) : null;
+
   const getCardTitle = (card: EventFeaturedCard): string =>
     card.title ?? (card.cardId ? `${cardIdLabel} ${card.cardId}` : noDataLabel);
   const getMusicTitle = (music: EventMusic): string =>
     music.title ?? (music.musicId ? formatHashId(music.musicId) : noDataLabel);
   const getAttrIconUrl = (attr: string | null): string | null =>
-    attr ? asset(`/card_attr/icon_attribute_${attr}.png`) : null;
+    attr ? getDynamicStaticAssetURL(`card_attr/icon_attribute_${attr}.png`) : null;
   const getAnyAttrIconUrls = (excludedAttr: string | null): string[] =>
     standardCardAttrs
       .filter((attr) => attr !== excludedAttr)
-      .map((attr) => asset(`/card_attr/icon_attribute_${attr}.png`));
+      .map((attr) => getDynamicStaticAssetURL(`card_attr/icon_attribute_${attr}.png`));
   const getAttrLabel = (attr: string | null): string => attr ?? cardAttrAnyLabel;
   const getRarityLabel = (rarityType: string | null): string => {
     if (rarityType === "rarity_birthday") {
@@ -254,10 +262,10 @@
   };
   const getRarityIconUrl = (rarityType: string | null): string | null => {
     if (rarityType === "rarity_birthday") {
-      return asset("/card_rarity/rarity_birthday.png");
+      return asset("card_rarity/rarity_birthday.png");
     }
 
-    return getRarityValue(rarityType) > 0 ? asset("/card_rarity/rarity_star_normal.png") : null;
+    return getRarityValue(rarityType) > 0 ? asset("card_rarity/rarity_star_normal.png") : null;
   };
 
   const getBonusCharacterIdentityKey = (
@@ -285,7 +293,6 @@
   const getBonusDisplayName = (item: BonusCharacterItem): string =>
     getBonusCharacterName(item) ??
     (hasBonusCharacterData(item) ? bonusCharacterLabel : anyCharacterLabel);
-
   const hasBonusCharacterData = (item: BonusCharacterItem): boolean =>
     item.gameCharacterId !== null || getBonusCharacterName(item) !== null || item.unit !== null;
 
@@ -384,6 +391,7 @@
         if ((entry.bonusRate ?? -Infinity) <= (existing.bonusRate ?? -Infinity)) {
           return entries;
         }
+
         return entries.map((existingEntry, index) =>
           index === entryIndex ? entry : existingEntry
         );
@@ -403,7 +411,6 @@
 
   const getRaritySortValue = (rarityType: string | null): number =>
     rarityType === "rarity_birthday" ? 5 : getRarityValue(rarityType);
-
   const getRarityRows = (data: EventRelatedData | null): string[] =>
     Array.from(
       new Set<string>(
@@ -412,7 +419,6 @@
         )
       )
     ).sort((left: string, right: string) => getRaritySortValue(left) - getRaritySortValue(right));
-
   const getMasterRankColumns = (data: EventRelatedData | null): number[] =>
     Array.from(
       new Set<number>(
@@ -461,9 +467,9 @@
 
   const shouldShowRankingRewardToggle = (data: EventRelatedData | null): boolean =>
     data?.rewardRangesHasMore ?? false;
-
   const getRewardDetailKey = (detail: EventRewardResourceBoxDetail, index: number): string =>
     `${detail.resourceType ?? "resource"}-${detail.resourceId ?? "none"}-${detail.seq ?? index}`;
+
   const getHonorBonusImageSrc = (bonus: (typeof honorBonuses)[number]): string | null => {
     const honor = bonus.honor;
     if (!honor) {
@@ -787,6 +793,7 @@
         <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {formatHashId(content.cardId)}
         </p>
+
         <p
           class="mt-1 line-clamp-2 text-sm font-semibold [@media(hover:hover)]:group-hover:text-primary"
         >
@@ -855,6 +862,7 @@
         <p class="text-xs font-semibold uppercase tracking-[0.16em] opacity-60">
           {formatHashId(content.musicId)}
         </p>
+
         <p
           class="mt-1 line-clamp-2 text-sm font-semibold [@media(hover:hover)]:group-hover:text-primary"
         >

@@ -1,36 +1,36 @@
 <script lang="ts">
-  import FilterOnboarding from "$lib/components/FilterOnboarding.svelte";
-  import { browser } from "$app/environment";
-  import { replaceState } from "$app/navigation";
+  import FilterOnboarding from "#lib/components/FilterOnboarding.svelte";
+  import { browser } from "$app/env";
+  import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { SvelteURLSearchParams } from "svelte/reactivity";
-  import { swipeRegion } from "$lib/actions/swipe-region";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import { toTimestampMs } from "$lib/time/date-time";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
-  import ListToolbarButton from "$lib/components/shared/ListToolbarButton.svelte";
-  import MusicListCard from "$lib/components/music/MusicListCard.svelte";
-  import PageHeader from "$lib/components/shared/PageHeader.svelte";
+  import { swipeRegion } from "#lib/actions/swipe-region.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import { toTimestampMs } from "#lib/time/date-time.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import ListToolbarButton from "#lib/components/shared/ListToolbarButton.svelte";
+  import MusicListCard from "#lib/components/music/MusicListCard.svelte";
+  import PageHeader from "#lib/components/shared/PageHeader.svelte";
   import RegionBadgeSwitch, {
     type RegionBadgeOption
-  } from "$lib/components/shared/RegionBadgeSwitch.svelte";
+  } from "#lib/components/shared/RegionBadgeSwitch.svelte";
   import { UnitIconBadge } from "@platform/ui-shell";
-  import { createI18nTranslator, resolveStreamingMessages } from "$lib/i18n/runtime";
-  import { regionLabels, supportedRegions } from "$lib/domain/regions";
+  import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
+  import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
   import {
     formatUnitFallbackLabel,
     musicTagByUnitCode,
     unitCodeByMusicTag
-  } from "$lib/domain/unit-profile";
+  } from "#lib/domain/unit-profile.js";
   import type {
     MusicListFilterMeta,
     MusicListPage,
     MusicListItem as MusicListItemType
-  } from "$lib/server/music-list";
-  import type { UnitProfileMap } from "$lib/server/unit-profiles";
+  } from "#lib/server/music-list.js";
+  import type { UnitProfileMap } from "#lib/server/unit-profiles.js";
   import Icon from "@iconify/svelte";
-  import { createPageTitle } from "$lib/page-title";
+  import { createPageTitle } from "#lib/page-title.js";
   import type { PageData } from "./$types";
 
   type MusicListPagePayload = MusicListPage;
@@ -205,7 +205,6 @@
 
   const getCategoryLabel = (category: string): string =>
     createI18nTranslator(data.uiLocale, currentMessages)(`musicListCategory.${category}`, category);
-
   const formatOptionLabel = (value: string): string =>
     value
       .replaceAll("_", " ")
@@ -691,7 +690,10 @@
     if (!browser) return;
     const params = createSearchParams(1);
     params.delete("page");
-    replaceState(`${resolve("/musics/[region]", { region: data.region })}?${params}`, {});
+    goto(`${resolve("/musics/[region]", { region: data.region })}?${params}`, {
+      shallow: true,
+      replace: true
+    });
   };
 
   const fetchPage = async (page: number): Promise<MusicListPagePayload> => {
@@ -830,6 +832,7 @@
     )
       .then(async (response) => {
         const payload = (await response.json()) as MusicMetadataResponse;
+
         if (
           !response.ok ||
           payload.loadFailed ||
@@ -1094,9 +1097,8 @@
               title={`${clearLabel}: ${musicListFilterNameLabel}`}
               aria-label={`${clearLabel}: ${musicListFilterNameLabel}`}
               onclick={() => (nameDraft = "")}
+              ><Icon icon="mdi:close-circle-outline" class="size-5" /></button
             >
-              <Icon icon="mdi:close-circle-outline" class="size-5" />
-            </button>
           {/if}
         </div>
       </label>
@@ -1133,7 +1135,13 @@
           {#each musicTagOptions as tag (`music-tag:${tag}`)}
             {@const unitCode = unitCodeByMusicTag[tag]}
             <label
-              class={`btn btn-sm join-item size-12! min-h-12! p-0 ${tag === "all" ? (tagDraft.length === 0 ? "btn-primary" : "btn-outline border-primary text-primary") : getFilterButtonClass(tagDraft, tag)}`}
+              class={`btn btn-sm join-item size-12! min-h-12! p-0 ${
+                tag === "all"
+                  ? tagDraft.length === 0
+                    ? "btn-primary"
+                    : "btn-outline border-primary text-primary"
+                  : getFilterButtonClass(tagDraft, tag)
+              }`}
               title={getMusicTagLabel(tag)}
             >
               <input

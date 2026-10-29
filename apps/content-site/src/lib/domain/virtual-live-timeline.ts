@@ -1,4 +1,4 @@
-import { supportedRegions, type SupportedRegion } from "$lib/domain/regions";
+import { supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 
 export type JsonValue =
   null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };

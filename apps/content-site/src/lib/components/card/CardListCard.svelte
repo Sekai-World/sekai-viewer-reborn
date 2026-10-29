@@ -1,17 +1,18 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { asset } from "$app/paths";
-  import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "$lib/assets/index";
-  import { getLocalCharacterThumbnailAssetURL } from "$lib/assets/characters";
-  import { formatDisplayDateTime, toTimestampMs } from "$lib/time/date-time";
-  import { getContentDisplaySettings } from "$lib/settings/content-display";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import CardGridImage from "$lib/components/card/CardGridImage.svelte";
+  import { getCardSmallAssetURL, getCardThumbnailAssetURL } from "#lib/assets/index.js";
+  import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
+  import { getDynamicStaticAssetURL } from "#lib/assets/static.js";
+  import { formatDisplayDateTime, toTimestampMs } from "#lib/time/date-time.js";
+  import { getContentDisplaySettings } from "#lib/settings/content-display.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import CardGridImage from "#lib/components/card/CardGridImage.svelte";
   import {
     isTrainedOnlyCard as hasTrainedOnlyArtwork,
     resolveCardTrained
-  } from "$lib/components/card/card-presentation";
-  import CharacterAvatar from "$lib/components/shared/CharacterAvatar.svelte";
+  } from "#lib/components/card/card-presentation.js";
+  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
   import { CardThumbnail, UnitIconBadge } from "@platform/ui-shell";
 
   type CardListCardItem = {
@@ -85,8 +86,10 @@
     (item.characterId !== null
       ? `${cardListCharacterFallback} ${item.characterId}`
       : cardListCharacterFallback);
+
   const getRarityValue = (): number =>
     item.rarityType ? (rarityValueByType[item.rarityType] ?? 0) : 0;
+
   const getRarityFrameLevel = (): string | null => {
     if (item.rarityType === "rarity_birthday") {
       return "bd";
@@ -95,15 +98,22 @@
     const rarityValue = getRarityValue();
     return rarityValue > 0 ? String(rarityValue) : null;
   };
+
   const getAttrIconUrl = (size: 64 | 88 = 64): string | null =>
-    item.attr ? asset(`/card_attr/icon_attribute_${item.attr}_${size}.png`) : null;
+    item.attr
+      ? getDynamicStaticAssetURL(`card_attr/icon_attribute_${item.attr}_${size}.png`)
+      : null;
+
   const getCardFrameUrl = (size: "L" | "S"): string | null => {
     const rarityFrameLevel = getRarityFrameLevel();
-    return rarityFrameLevel ? asset(`/card_frame/cardFrame_${size}_${rarityFrameLevel}.png`) : null;
+
+    return rarityFrameLevel
+      ? getDynamicStaticAssetURL(`card_frame/cardFrame_${size}_${rarityFrameLevel}.png`)
+      : null;
   };
   const getRarityIconUrl = (trained: boolean): string | null => {
     if (item.rarityType === "rarity_birthday") {
-      return asset("/card_rarity/rarity_birthday.png");
+      return asset("card_rarity/rarity_birthday.png");
     }
 
     if (getRarityValue() <= 0) {
@@ -112,8 +122,8 @@
 
     return asset(
       resolveCardTrained(item, trained)
-        ? "/card_rarity/rarity_star_afterTraining.png"
-        : "/card_rarity/rarity_star_normal.png"
+        ? "card_rarity/rarity_star_afterTraining.png"
+        : "card_rarity/rarity_star_normal.png"
     );
   };
   const hasSpoiler = (): boolean => {
@@ -123,7 +133,6 @@
 
   const isSpoilerContentMosaicked = (): boolean =>
     hasSpoiler() && contentDisplaySettings.mosaickedSpoilerContent && !spoilerRevealed;
-
   const isSpoilerPlaceholderVisible = (): boolean =>
     hasSpoiler() &&
     contentDisplaySettings.mosaickedSpoilerContent &&
@@ -323,7 +332,7 @@
     aria-hidden="true"
   >
     {#if attrIconUrl}
-      <image href={attrIconUrl} x="0" y="0" width="21" height="21" class="drop-shadow" />
+      <image href={attrIconUrl} x="0" y="0" width="21" height="21" class="drop-shadow"></image>
     {/if}
     {#if normalRarityIconUrl && rarityCount > 0}
       <g
@@ -339,7 +348,7 @@
             width="14"
             height="14"
             class="drop-shadow"
-          />
+          ></image>
         {/each}
       </g>
     {/if}
@@ -353,7 +362,7 @@
             width="14"
             height="14"
             class="drop-shadow"
-          />
+          ></image>
         {/each}
       </g>
     {/if}

@@ -5,7 +5,7 @@ description: Implementation plan for the SvelteKit multi-site rewrite and monore
 
 **推荐结论（非 React + 多站点）**
 
-- 主框架建议选 `SvelteKit 2`（四个站点统一技术栈），原因是 SSR/SEO、路由与数据加载、K8s 自托管适配都比较均衡，且比混用框架更利于团队维护。
+- 四个站点统一使用 `SvelteKit 3`，通过 SSR/SEO、路由与数据加载以及 K8s 自托管保持一致的工程基础。
 - 仅把“超重交互媒体能力”做成独立站点并允许更高 CSR 比例（Live2D/Chibi/StoryReader），其余三个站点坚持 SSR-first。
 - Monorepo 建议 `pnpm + Turborepo` 起步；你后续若团队扩大再升级到 Nx 的强约束治理。
 - 部署建议保持 K8s 主线，同时引入“类 Lambda”能力时优先考虑 Knative（跑在现有 K8s 上），避免再维护第二套云函数平台。

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onDestroy, tick } from "svelte";
   import Icon from "@iconify/svelte";
-  import type { SupportedRegion } from "$lib/domain/regions";
-  import type { VirtualLiveSetlist } from "$lib/domain/virtual-live";
-  import type { VirtualLiveTimelineDocument } from "$lib/domain/virtual-live-timeline";
-  import VirtualLiveSetlistMusicPlayer from "$lib/components/virtual-live/VirtualLiveSetlistMusicPlayer.svelte";
-  import VirtualLiveTimelinePanel from "$lib/components/virtual-live/VirtualLiveTimelinePanel.svelte";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import type { VirtualLiveSetlist } from "#lib/domain/virtual-live.js";
+  import type { VirtualLiveTimelineDocument } from "#lib/domain/virtual-live-timeline.js";
+  import VirtualLiveSetlistMusicPlayer from "#lib/components/virtual-live/VirtualLiveSetlistMusicPlayer.svelte";
+  import VirtualLiveTimelinePanel from "#lib/components/virtual-live/VirtualLiveTimelinePanel.svelte";
 
   type TimelineState = {
     status: "loading" | "error" | "ready";

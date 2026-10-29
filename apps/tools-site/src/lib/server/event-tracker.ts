@@ -3,9 +3,9 @@ import {
   isTrackerSupportedRegion,
   trackerSupportedRegions,
   type TrackerSupportedRegion
-} from "$lib/regions";
+} from "#lib/regions.js";
 import { isRestoreResponse, withRequestTimeout } from "./network";
-import { CRITICAL_RANK_LADDER } from "$lib/tracker-ladders";
+import { CRITICAL_RANK_LADDER } from "#lib/tracker-ladders.js";
 import {
   parseHonorMissions,
   parseLeaderCard,
@@ -13,7 +13,7 @@ import {
   type TrackerHonorMission,
   type TrackerLeaderCard,
   type TrackerProfileHonor
-} from "$lib/tracker-player-profile";
+} from "#lib/tracker-player-profile.js";
 
 export const trackerRegions: readonly TrackerSupportedRegion[] = [...trackerSupportedRegions];
 export type TrackerRegion = TrackerSupportedRegion;

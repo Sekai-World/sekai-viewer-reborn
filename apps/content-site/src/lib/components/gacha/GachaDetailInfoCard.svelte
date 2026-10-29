@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { formatDisplayDateTime } from "$lib/time/date-time";
-  import type { GachaDetail } from "$lib/domain/gacha-detail";
+  import { formatDisplayDateTime } from "#lib/time/date-time.js";
+  import type { GachaDetail } from "#lib/domain/gacha-detail.js";
   import Icon from "@iconify/svelte";
 
   /** Map from raw gachaType value (lowercase) to localized display string. */

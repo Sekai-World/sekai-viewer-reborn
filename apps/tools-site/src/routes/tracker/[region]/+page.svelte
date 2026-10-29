@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { goto, invalidate, replaceState } from "$app/navigation";
+  import { goto, invalidate } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { SharedEventRewardRangeResponse } from "@platform/sekai-master-api-sdk";
   import { CardThumbnail, HonorDegree, resolveCardRarityCount } from "@platform/ui-shell";
-  import { getHonorAssetURL, getLeaderCardAssetURL } from "$lib/event-assets";
-  import { selectRewardHonor } from "$lib/reward-honor";
+  import { getHonorAssetURL, getLeaderCardAssetURL } from "#lib/event-assets.js";
+  import { selectRewardHonor } from "#lib/reward-honor.js";
   import {
     getProfileCardLayers,
     toProfileHonorDegrees,
@@ -14,37 +14,37 @@
     type TrackerLeaderCard,
     type TrackerProfileHonor,
     type TrackerProfileHonorDegree
-  } from "$lib/tracker-player-profile";
+  } from "#lib/tracker-player-profile.js";
   import Icon from "@iconify/svelte";
   import { onMount, tick, untrack } from "svelte";
   import { SvelteMap, SvelteSet } from "svelte/reactivity";
-  import { createI18nTranslator, getLocalI18nMessages } from "$lib/i18n/runtime";
-  import RankingHistoryChart from "$lib/components/RankingHistoryChart.svelte";
-  import GoalProjectionChart from "$lib/components/GoalProjectionChart.svelte";
-  import { getTrackerChapterCountdown, getTrackerCountdown } from "$lib/tracker-countdown";
-  import { getTrackerRankLadder, type TrackerRankLadder } from "$lib/tracker-ladders";
+  import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
+  import RankingHistoryChart from "#lib/components/RankingHistoryChart.svelte";
+  import GoalProjectionChart from "#lib/components/GoalProjectionChart.svelte";
+  import { getTrackerChapterCountdown, getTrackerCountdown } from "#lib/tracker-countdown.js";
+  import { getTrackerRankLadder, type TrackerRankLadder } from "#lib/tracker-ladders.js";
   import {
     getNextTrackerRefreshDeadline,
     getTrackerPhase,
     parseTrackerTimestamp
-  } from "$lib/tracker-phase";
-  import { createTrackerRows, type TrackerRow } from "$lib/tracker-rows";
+  } from "#lib/tracker-phase.js";
+  import { createTrackerRows, type TrackerRow } from "#lib/tracker-rows.js";
   import {
     calculateChapterRowSpeed,
     createChapterRows,
     type ChapterRow
-  } from "$lib/tracker-chapter-rows";
-  import { calculateRecentRates, sortTrackerRatePoints } from "$lib/tracker-rates";
+  } from "#lib/tracker-chapter-rows.js";
+  import { calculateRecentRates, sortTrackerRatePoints } from "#lib/tracker-rates.js";
   import {
     calculateTrackerGoalPlan,
     type TrackerGoalPlan,
     type TrackerGoalResult
-  } from "$lib/tracker-goal";
-  import { resolveTrackerEventId } from "$lib/tracker-event-identity";
-  import type { EventRewardsResult } from "$lib/server/event-rewards";
-  import type { EventTrackerResult } from "$lib/server/event-tracker";
-  import type { ChapterTrackerResult } from "$lib/server/chapter-tracker";
-  import type { WorldBloomMetadata, WorldBloomRankableChapter } from "$lib/server/world-bloom";
+  } from "#lib/tracker-goal.js";
+  import { resolveTrackerEventId } from "#lib/tracker-event-identity.js";
+  import type { EventRewardsResult } from "#lib/server/event-rewards.js";
+  import type { EventTrackerResult } from "#lib/server/event-tracker.js";
+  import type { ChapterTrackerResult } from "#lib/server/chapter-tracker.js";
+  import type { WorldBloomMetadata, WorldBloomRankableChapter } from "#lib/server/world-bloom.js";
   import type { PageData } from "./$types";
 
   type EventMetadata = {
@@ -96,6 +96,7 @@
     | "sdk-error"
     | "network-error"
     | "invalid-data";
+
   type ExtendedData = PageData & {
     trackerResult?: Promise<EventTrackerResult>;
     catalog?: Promise<Catalog | null>;
@@ -244,14 +245,17 @@
     const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;
     return event?.id === eventKey ? event : null;
   });
+
   const pickerValue = $derived(
     eventKey === null ? "" : formatEventLabel(eventKey, selectedEvent?.name)
   );
+
   const currentEventId = $derived(
     !isExplicitSelection
       ? (trackerPageReady?.resolvedEventId ?? null)
       : (catalog?.currentEvent?.id ?? null)
   );
+
   const currentMetadataUnavailable = $derived(
     catalog !== null && (catalog.currentStatus !== "available" || catalog.currentEvent === null)
   );
@@ -296,11 +300,13 @@
       : translate("tracker.countdownStartsIn")
   );
   const displayRankings = $derived(snapshotRankings ?? trackerResult?.rankings ?? []);
+
   const getReward = (rank: number): SharedEventRewardRangeResponse | null =>
     rewards?.status === "available"
       ? (rewards.items.find((reward) => {
           const fromRank = reward.fromRank;
           const toRank = reward.toRank;
+
           return (
             typeof fromRank === "number" &&
             typeof toRank === "number" &&
@@ -386,6 +392,7 @@
       goalAvailablePlayHours === undefined ||
       (Number.isFinite(goalAvailablePlayHours) && goalAvailablePlayHours >= 0)
   );
+
   const goalChapterIsLive = $derived.by(() => {
     if (selectedRankingTab === "event") return true;
     const chapter = selectedChapter?.chapter;
@@ -635,6 +642,7 @@
   const isEventMetadata = (value: unknown): value is EventMetadata => {
     if (!value || typeof value !== "object" || Array.isArray(value)) return false;
     const event = value as Record<string, unknown>;
+
     return (
       typeof event.id === "number" &&
       Number.isSafeInteger(event.id) &&
@@ -896,8 +904,10 @@
     data.region === "jp"
       ? null
       : getLeaderCardAssetURL(variant, assetBundleName, trained, data.region);
+
   const getCardArt = (leaderCard: TrackerLeaderCard | null | undefined): TrackerCardArt | null =>
     leaderCard ? (cardArtByKey.get(cardArtKey(leaderCard.cardId)) ?? null) : null;
+
   const loadCardArt = async (ids: number[]): Promise<void> => {
     const keys = ids.map(cardArtKey);
     try {
@@ -1063,7 +1073,7 @@
     const url = new URL(window.location.href);
     if (!url.searchParams.has("snapshot")) return;
     url.searchParams.delete("snapshot");
-    replaceState(url, {});
+    goto(url, { shallow: true, replace: true });
   };
   const resetTimeTravel = (): void => {
     timePointsRequestToken += 1;
@@ -1519,8 +1529,9 @@
             title={isRefreshing
               ? translate("tracker.refreshing")
               : translate("tracker.refreshRankings")}
-            ><Icon icon={isRefreshing ? "mdi:loading" : "mdi:refresh"} aria-hidden="true" /></button
           >
+            <Icon icon={isRefreshing ? "mdi:loading" : "mdi:refresh"} aria-hidden="true" />
+          </button>
         </div>
       {/if}
     </div>
@@ -1650,7 +1661,9 @@
               type="button"
               aria-pressed={ladder === "critical"}
               onclick={() => (ladder = "critical")}>{translate("tracker.ranks.critical")}</button
-            ><button
+            >
+
+            <button
               class:btn-primary={ladder === "full"}
               class:btn-outline={ladder !== "full"}
               class="btn btn-sm rounded-full border-0 touch-target tracker-ladder-option"
@@ -1725,13 +1738,17 @@
                     class="select select-sm"
                     value={selectedTimePointGroup?.id ?? ""}
                     onchange={(event) => selectTimePointGroup(Number(event.currentTarget.value))}
-                    >{#each timePointGroups as group (group.id)}<option value={group.id}
-                        >{formatActivityDay(group)}</option
-                      >{/each}</select
-                  ></label
-                >
-                <label class="tracker-time-control" for="tracker-saved-time"
-                  ><span>{translate("tracker.rankingSnapshotTime")}</span><select
+                  >
+                    {#each timePointGroups as group (group.id)}
+                      <option value={group.id}>{formatActivityDay(group)}</option>
+                    {/each}
+                  </select>
+                </label>
+
+                <label class="tracker-time-control" for="tracker-saved-time">
+                  <span>{translate("tracker.rankingSnapshotTime")}</span>
+
+                  <select
                     id="tracker-saved-time"
                     class="select select-sm"
                     value={selectedTimePoint ?? ""}
@@ -1857,12 +1874,15 @@
                     tabindex={selectedRankingTab === chapter.chapter.id ? 0 : -1}
                     onclick={() => selectRankingTab(chapter.chapter.id)}
                     onkeydown={(event) => handleRankingTabKeydown(event, index + 1)}
-                    >{interpolate("tracker.chapter", {
-                      number: chapter.chapter.chapterNo
-                    })}{#if isCurrent}<span class="tracker-current-marker"
-                        >{translate("tracker.currentChapter")}</span
-                      >{/if}</button
                   >
+                    {interpolate("tracker.chapter", {
+                      number: chapter.chapter.chapterNo
+                    })}{#if isCurrent}
+                      <span class="tracker-current-marker"
+                        >{translate("tracker.currentChapter")}</span
+                      >
+                    {/if}
+                  </button>
                 {/each}
               {/if}
             </div>
@@ -1951,11 +1971,11 @@
         {:else if isInvalidSelection}
           <div class="tracker-ranking-result-message">
             <p role="alert">{translate("tracker.eventIdInvalid")}</p>
-            <a class="btn btn-sm btn-outline touch-target" href={trackerPath}
-              ><Icon icon="mdi:arrow-left" aria-hidden="true" />{translate(
-                "tracker.goToCurrentEvent"
-              )}</a
-            >
+
+            <a class="btn btn-sm btn-outline touch-target" href={trackerPath}>
+              <Icon icon="mdi:arrow-left" aria-hidden="true" />
+              {translate("tracker.goToCurrentEvent")}
+            </a>
           </div>
         {:else if trackerStatus !== "available"}
           <div class="tracker-ranking-result-message">
@@ -2352,7 +2372,10 @@
                   >
                     {#if leaderCard.level !== null}
                       <!-- Not part of the game's profile card: a level bar, drawn under the frame. -->
-                      <rect x="0" y="448" width="940" height="82" fill="black" fill-opacity="0.6" />
+
+                      <rect x="0" y="448" width="940" height="82" fill="black" fill-opacity="0.6"
+                      ></rect>
+
                       <text x="100" y="506" font-size="50" font-weight="600" fill="white"
                         >{interpolate("tracker.cardLevel", { level: leaderCard.level })}</text
                       >
@@ -2365,7 +2388,7 @@
                         width={layer.width}
                         height={layer.height}
                         preserveAspectRatio="none"
-                      />
+                      ></image>
                     {/each}
                   </svg>
                 {:else}
