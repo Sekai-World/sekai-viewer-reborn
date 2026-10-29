@@ -6,6 +6,7 @@
     StoryPlayerSession,
     StoryPlayerSessionState
   } from "#lib/story/story-player-session.js";
+  import { deriveStoryPlayerStatus } from "#lib/story/story-player-status.js";
 
   /**
    * Browser-only Live2D story player host. Mounts the ported playback engine
@@ -15,6 +16,10 @@
    */
   interface Props {
     documentReference: StoryDocumentReference;
+    /** Starts loading on mount instead of waiting for the first click. */
+    autoStart?: boolean;
+    /** Tears this host down and mounts a fresh one; hides the reload button when absent. */
+    onReload?: () => void;
     labels: {
       tapToLoad: string;
       tapToPlay: string;
@@ -31,6 +36,9 @@
       loading: string;
       loadFailed: string;
       retry: string;
+      reload: string;
+      statusPlaying: string;
+      statusFinished: string;
       cancel: string;
       warnings: string;
       phaseAssets: string;
@@ -41,7 +49,7 @@
     };
   }
 
-  let { documentReference, labels }: Props = $props();
+  let { documentReference, labels, autoStart = false, onReload }: Props = $props();
 
   let stageHost: HTMLDivElement | undefined = $state();
   let stageContainer: HTMLDivElement | undefined = $state();
@@ -290,6 +298,8 @@
     syncPortrait();
     portraitQuery.addEventListener("change", syncPortrait);
     document.addEventListener("fullscreenchange", syncFullscreen);
+    // Portrait touch devices load through the fullscreen gate instead.
+    if (autoStart && !isPortraitCoarse) startLoading();
 
     return () => {
       destroyed = true;
@@ -364,7 +374,29 @@
      user advances for the first time, then never comes back. Playback state
      is not written out anywhere below the stage, matching the game. */
   let hasStarted = $state(false);
-  const showStartHint = $derived(playerState === "ready" && !hasStarted);
+  const status = $derived(
+    deriveStoryPlayerStatus({
+      loadStarted,
+      sessionState: playerState,
+      loadFailed,
+      hasStarted,
+      warningCount: warnings.length
+    })
+  );
+  const showStartHint = $derived(status.phase === "ready");
+  // Loading and failure already announce themselves through their overlays;
+  // the remaining phases get a screen-reader-only status line.
+  const statusText = $derived(
+    {
+      ready: labels.tapToPlay,
+      waiting: labels.tapToContinue,
+      playing: labels.statusPlaying,
+      finished: labels.statusFinished
+    }[status.phase as "ready" | "waiting" | "playing" | "finished"] ?? ""
+  );
+  const reloadable = $derived(
+    onReload !== undefined && ["ready", "playing", "waiting", "finished"].includes(status.phase)
+  );
 
   $effect(() => {
     if (playerState === "playing") hasStarted = true;
@@ -384,7 +416,12 @@
   });
 </script>
 
-<div class="flex flex-col gap-3">
+<div
+  class="flex flex-col gap-3"
+  data-player-phase={status.phase}
+  data-player-warning={status.warning}
+>
+  <p class="sr-only" role="status" aria-live="polite">{statusText}</p>
   <div
     bind:this={stageContainer}
     class="relative aspect-video w-full overflow-hidden rounded-xl border border-base-content/10 bg-black"
@@ -658,6 +695,18 @@
         oninput={applyVolume}
       />
     </label>
+    {#if reloadable}
+      <div class="flex justify-end sm:col-span-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline touch-target"
+          onclick={() => onReload?.()}
+        >
+          <Icon icon="mdi:reload" class="size-4" aria-hidden="true" />
+          {labels.reload}
+        </button>
+      </div>
+    {/if}
   </div>
 
   {#if warnings.length > 0}
