@@ -59,6 +59,11 @@ or an unverified duration field must not be presented as a calculated yield.
 
 ## Approved Music Meta Input for #385
 
+The consumer contract (fields, units, revision, failure states, and
+vector V0) is defined in
+[`tools-site-farming-yield-data-contract.md`](tools-site-farming-yield-data-contract.md);
+this section records the source decision it builds on.
+
 The user has approved licensed, externally supplied `music_metas.json` as a
 coefficient input. The planned Music Recommender defaults to the self-hosted
 k3s/SeaweedFS URL
@@ -73,7 +78,8 @@ difficulty and hashing only the shared score-input fields yielded the same
 SHA-256, `7875548d5da4b1b5ee65f2671d61126dcc660ee32b371596f48214a7ed96e01e`.
 This is a point-in-time comparison, not a guarantee of future equivalence.
 Validate identifiers, coefficient types, all three six-element skill arrays,
-completeness, freshness, and revision on each selected source; ignore the
+completeness, and revision on each selected source (no maximum data age is
+enforced); ignore the
 external CDN's preset-team score/PT/ranking fields as yield evidence. The
 historical Moesekai fallback `metadata.pjsk.moe` returned 404 and is not an
 available source. Team Haruki consumes caller-supplied metas rather than
