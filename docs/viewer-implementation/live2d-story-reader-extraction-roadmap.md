@@ -688,6 +688,18 @@ second monolith.
 - Add browser integration tests for one story per supported type, plus visual
   checks for model motion, transitions, movies, filters, telop, full-screen
   text, and responsive sizes.
+  Done so far: `apps/media-lab-site/tests/e2e` runs Playwright against a
+  production build with a local mock master-api and asset server and small
+  synthetic fixtures (`pnpm --filter @apps/media-lab-site test:e2e`). It covers
+  the text reader and the player shell for every supported story type, a region
+  that has not synced (503), a failing data service (500), unknown and malformed
+  routes (404), a missing scenario file, responsive widths (390 and 1280), and
+  route changes. It does not render a real Live2D model, so model motion,
+  transitions, movies, filters, telop and full-screen text are still unchecked
+  in a browser. The suite builds and serves the production adapter-node bundle
+  rather than `vite dev`, so it exercises what is deployed. Run
+  `svelte-kit sync` in every app on a fresh worktree first, or Vite fails with a
+  misleading `Could not resolve 'node:module'` dependency-optimization error.
 - Add audio checks for voice volume, BGM cross-fade, SE loop/stop, and lip sync.
 - Compare the legacy React page and media-lab output until representative parity
   is reached. Unsupported actions/effects remain explicit warnings.
