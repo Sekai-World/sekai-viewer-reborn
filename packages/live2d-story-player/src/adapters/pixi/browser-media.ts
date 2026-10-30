@@ -1,5 +1,6 @@
 import { Howl } from "howler";
 import type { Live2DMediaAdapters, Live2DResourceAdapter } from "./adapter-types.js";
+import { Live2DMediaLoadError } from "../../model/media-load-error.js";
 import { createHowlerStoryAudioAdapter } from "./audio-adapter.js";
 import type { PixiStoryAudioAdapter } from "./audio-adapter.js";
 
@@ -67,7 +68,7 @@ const loadImage: Live2DResourceAdapter<HTMLImageElement>["load"] = (image, url, 
     }
 
     image.onload = () => completion.succeed();
-    image.onerror = () => completion.fail(new Error(`Failed to load image: ${url}`));
+    image.onerror = () => completion.fail(new Live2DMediaLoadError("image", url));
     signal.addEventListener("abort", onAbort, { once: true });
     image.crossOrigin = "anonymous";
     try {
@@ -97,7 +98,7 @@ const loadVideo: Live2DResourceAdapter<HTMLVideoElement>["load"] = (video, url, 
     }
 
     video.onloadeddata = () => completion.succeed();
-    video.onerror = () => completion.fail(new Error(`Failed to load video: ${url}`));
+    video.onerror = () => completion.fail(new Live2DMediaLoadError("video", url));
     signal.addEventListener("abort", onAbort, { once: true });
     video.crossOrigin = "anonymous";
     video.preload = "metadata";
@@ -121,7 +122,7 @@ const loadAudio: Live2DResourceAdapter<Howl>["load"] = (sound, url, signal) =>
       `Failed to load sound: ${url}`
     );
     const onLoad = () => completion.succeed();
-    const onLoadError = () => completion.fail(new Error(`Failed to load sound: ${url}`));
+    const onLoadError = () => completion.fail(new Live2DMediaLoadError("sound", url));
     const onAbort = () => completion.fail(abortReason(signal));
 
     if (signal.aborted) {

@@ -241,6 +241,26 @@ describe("resolveStoryIdentity", () => {
     });
   });
 
+  it("builds a card story path from the card's own bundle when the episode has none", () => {
+    const withCard = {
+      ...collections,
+      cards: [{ id: 900, name: "", assetBundleName: "res900_no001" }]
+    };
+    const tw = resolveStoryIdentity("card", "2050", withCard, "tw");
+    expect(tw.status).toBe("ok");
+    if (tw.status !== "ok") return;
+    expect(tw.resolution).toMatchObject({
+      scenarioPath: "character/member/res900_no001/card_900.asset",
+      bannerPath: "character/member_small/res900_no001/card_normal.webp",
+      isCardStory: true
+    });
+
+    const en = resolveStoryIdentity("card", "2050", withCard, "en");
+    expect(en.status === "ok" && en.resolution.scenarioPath).toBe(
+      "character/member_scenario/res900_no001/card_900.asset"
+    );
+  });
+
   it("resolves an area talk as an action set", () => {
     const result = resolveStoryIdentity("area-talk", "1838", collections, "jp");
     expect(result.status).toBe("ok");

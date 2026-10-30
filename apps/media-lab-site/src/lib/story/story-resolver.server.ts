@@ -4,11 +4,14 @@ import { parseScenarioData } from "./scenario-validation";
 import type { IScenarioData } from "./scenario-types";
 import { createStoryRegionAssetUrls, type StoryAssetUrls } from "./story-urls";
 import {
+  parseStoryId,
   resolveStoryIdentity,
   type StoryResolution,
+  type StoryMasterCollections,
   type StoryResolutionResult
 } from "./story-identity";
 import {
+  fetchStoryCardAssetbundleName,
   fetchStoryCharacterTables,
   fetchStoryCollections,
   type StoryCharacterTables
@@ -38,6 +41,20 @@ const COLLECTIONS_BY_STORY_TYPE: Record<
   "area-talk": ["actionSets"],
   special: ["specialStories"],
   profile: ["characterProfiles"]
+};
+
+/**
+ * The collection a story type is looked up in. When the region has not synced
+ * it, a missing story means "no data yet" rather than "no such story".
+ */
+const PRIMARY_COLLECTION_BY_STORY_TYPE: Record<StoryRouteIdentity["storyType"], string> = {
+  unit: "unitStories",
+  event: "eventStories",
+  character: "characterProfiles",
+  card: "cardEpisodes",
+  "area-talk": "actionSets",
+  special: "specialStories",
+  profile: "characterProfiles"
 };
 
 /** Removes all trailing slashes. Equivalent to `.replace(/\/+$/, "")` but without regex backtracking. */
@@ -74,8 +91,36 @@ export interface StoryRouteResolution {
 export type ResolveStoryRouteResult =
   | { status: "ok"; value: StoryRouteResolution }
   | { status: "not-found" }
+  /** The region has not synced the master data this story type is looked up in. */
+  | { status: "region-unavailable" }
   | { status: "unsupported"; reason: string }
   | { status: "master-data-error"; error: Error };
+
+/**
+ * Card episodes of regions other than jp carry no `assetbundleName`; add the
+ * episode's own card (same region) so the scenario path can be built. Returns
+ * "unsynced" when the region has not synced cards yet.
+ */
+const withCardAssetbundle = async (
+  identity: StoryRouteIdentity,
+  collections: StoryMasterCollections,
+  fetchFn: typeof fetch
+): Promise<StoryMasterCollections | "unsynced"> => {
+  if (identity.storyType !== "card") return collections;
+  const parsed = parseStoryId("card", identity.storyId);
+  if (parsed?.kind !== "card") return collections;
+  const episode = collections.cardEpisodes.find((ce) => ce.id === parsed.cardEpisodeId);
+  if (!episode || episode.assetbundleName) return collections;
+  const lookup = await fetchStoryCardAssetbundleName(identity.region, episode.cardId, {
+    fetch: fetchFn
+  });
+  if (lookup.status === "unsynced") return "unsynced";
+  if (lookup.status === "not-found") return collections;
+  return {
+    ...collections,
+    cards: [{ id: episode.cardId, name: "", assetBundleName: lookup.assetbundleName }]
+  };
+};
 
 /**
  * Resolves a validated route identity to a scenario path using the raw
@@ -89,12 +134,15 @@ export const resolveStoryRoute = async (
 ): Promise<ResolveStoryRouteResult> => {
   let result: StoryResolutionResult;
   let neighbors: StoryNeighbors;
+  let regionSynced: boolean;
   try {
-    const collections = await fetchStoryCollections(
+    const fetched = await fetchStoryCollections(
       identity.region,
       COLLECTIONS_BY_STORY_TYPE[identity.storyType],
       { fetch: fetchFn }
     );
+    const collections = await withCardAssetbundle(identity, fetched, fetchFn);
+    if (collections === "unsynced") return { status: "region-unavailable" };
     result = resolveStoryIdentity(
       identity.storyType,
       identity.storyId,
@@ -102,12 +150,17 @@ export const resolveStoryRoute = async (
       identity.region
     );
     neighbors = resolveStoryNeighbors(identity.storyType, identity.storyId, collections);
+    regionSynced = !collections.unsyncedCollections?.includes(
+      PRIMARY_COLLECTION_BY_STORY_TYPE[identity.storyType]
+    );
   } catch (error) {
     return {
       status: "master-data-error",
       error: error instanceof Error ? error : new Error(String(error))
     };
   }
+  // Only a miss is reinterpreted: a story found in synced data stays ok.
+  if (result.status === "not-found" && !regionSynced) return { status: "region-unavailable" };
   if (result.status !== "ok") return result;
   return {
     status: "ok",

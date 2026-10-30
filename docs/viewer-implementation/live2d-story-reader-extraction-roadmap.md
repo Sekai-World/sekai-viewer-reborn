@@ -601,8 +601,47 @@ derives an explicit phase (`idle`, `loading`, `ready`, `playing`, `waiting`,
 their previous and next episodes. Verified in the in-app browser on a real
 story: 16:9 resize at desktop, tablet, and phone widths, player teardown on
 route navigation (canvas removed, Howler instances released), and reload.
-Browser fullscreen, WebGL context and ticker release, and non-unit story types
-are not yet verified.
+WebGL context, ticker, and Howler release after leaving the route were also
+verified. Browser fullscreen is not verified.
+
+Phase 5 progress (issue #261): event, character, card, area-talk, and special
+stories were each played in the in-app browser against the JP dev data. Event 1-1,
+character 1, card 100, and special 12-1 played; area-talk 1838 failed because part
+voices were only requested from the story's own voice bundle. Part-voice
+fallback now applies to every story type and is resolved through a bucket
+listing at media-collection time, with the canonical path kept when no
+candidate exists. Special story 2-1 remains a known upstream-broken story (missing
+models and background).
+
+Region availability (issue #261): a region whose master data for a story type is not
+synced (503) now shows a distinct "not available in this region yet" state instead of
+a 404, and a service error keeps its own "temporarily unavailable" state. Nothing falls
+back to another region. Card episodes of tw/kr/cn have no `assetbundleName`, so card
+stories resolve through the same region's card (`GET /cards/{region}/{id}`), as the
+legacy viewer did; the text reader now opens them. Those regions' buckets have no card
+story voices, so the Live2D player stops on the first missing voice. The player now
+reports a file the asset host confirms as 404 as "not available in this region" and
+drops the retry button for it.
+
+Warnings and audio parity (issue #261): unsupported snippets now always reach the
+player warnings list, including unmapped enum values, unknown layout modes, missing
+backgrounds, failed talk motions and motions on models that did not load. Failures of
+detached effect transitions stay console-only by design (their tests pin it). Going
+back a step now stops sound effects and the silent replay re-applies looping-SE start and
+stop (one-shot SEs are still skipped), so loops started after the target stop and loops
+active at the target resume. Known deviations kept for parity with the legacy
+reader, not fixed here:
+
+- `set_volume` ignores a value of 0, so dragging a slider to 0 does not mute a sound
+  that is already playing (later sounds are silent), and it overwrites per-sound gain.
+- `SoundPlayMode.Stack` scales an SE by the BGM volume instead of the SE volume.
+- BGM "cross-fade" hard-stops the previous track while the new one fades in; nothing
+  stops BGM or a looping SE at story finish, only on destroy.
+- Only the first voice of a talk plays; lip sync needs `LipSync == 1` and a loaded
+  costume, otherwise only motions drive the mouth.
+- Host default volumes (0.8/0.5/0.8) differ from the legacy reader (0.8/0.8/0.3).
+- Unverified in a browser: whether a lip-synced voice stays audible when the same file
+  later plays without lip sync, and `getVolume` during a fade.
 
 - In `+page.svelte`, receive route data through `$props`; use `$state` for
   player lifecycle and UI state, and `$effect` only for command synchronization

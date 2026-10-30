@@ -179,16 +179,12 @@ export default async function action_layout(controller: Live2DController, action
         await controller.layers.live2d.hide_model(costume, 200);
       }
       break;
-    default:
-      controller.logger.warn(
-        "Live2DController",
-        `${SnippetAction[action.Action]}/${CharacterLayoutType[action_detail.Type]} not implemented!`,
-        action,
-        action_detail
-      );
-      controller.events.emit(
-        "warn",
-        `${SnippetAction[action.Action]}/${CharacterLayoutType[action_detail.Type]} not implemented!`
-      );
+    default: {
+      const message = `${SnippetAction[action.Action]}/${
+        CharacterLayoutType[action_detail.Type] ?? `#${action_detail.Type}`
+      } not implemented!`;
+      controller.logger.warn("Live2DController", message, action, action_detail);
+      controller.events.emit("warn", message);
+    }
   }
 }

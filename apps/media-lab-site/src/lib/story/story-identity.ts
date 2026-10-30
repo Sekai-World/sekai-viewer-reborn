@@ -202,6 +202,11 @@ export interface StoryMasterCollections {
   specialStories: StorySpecialStory[];
   unitProfiles?: StoryUnitProfile[];
   unitStoryEpisodeGroups?: StoryUnitEpisodeGroup[];
+  /**
+   * Requested collections the region reported as not synced (empty because
+   * the region has no data yet, not because the entities do not exist).
+   */
+  unsyncedCollections?: readonly string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -389,20 +394,22 @@ const resolveCardIdentity = (
 ): StoryResolutionResult => {
   const episode = collections.cardEpisodes.find((ce) => ce.id === parsed.cardEpisodeId);
   if (!episode) return { status: "not-found" };
-  if (!episode.assetbundleName) {
+  // Regions other than jp ship episodes without their own bundle name; the
+  // card's bundle in the same region is the story's home (same as the legacy
+  // viewer). Never borrowed from another region.
+  const assetbundleName =
+    episode.assetbundleName ??
+    collections.cards?.find((card) => card.id === episode.cardId)?.assetBundleName;
+  if (!assetbundleName) {
     return { status: "unsupported", reason: "card episode has no asset bundle" };
   }
   return {
     status: "ok",
     resolution: {
-      scenarioPath: cardStoryScenarioPath(
-        episode.assetbundleName,
-        episode.scenarioId,
-        region as "jp"
-      ),
+      scenarioPath: cardStoryScenarioPath(assetbundleName, episode.scenarioId, region as "jp"),
       isCardStory: true,
       isActionSet: false,
-      bannerPath: `character/member_small/${episode.assetbundleName}/card_normal.webp`,
+      bannerPath: `character/member_small/${assetbundleName}/card_normal.webp`,
       episodeTitle: episode.title,
       scenarioId: episode.scenarioId
     }

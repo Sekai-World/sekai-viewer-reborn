@@ -223,6 +223,236 @@ describe("collectStoryMediaUrls", () => {
     ]);
   });
 
+  describe("part voices", () => {
+    const talkWithVoice = (voiceId: string): IScenarioData["TalkData"][number] => ({
+      TalkCharacters: [{ Character2dId: 0 }],
+      WindowDisplayName: "星乃一歌",
+      Body: "こんにちは",
+      TalkTention: 0,
+      LipSync: 1,
+      MotionChangeFrom: 0,
+      Motions: [],
+      Voices: [{ Character2dId: 0, VoiceId: voiceId, Volume: 1 }],
+      Speed: 0,
+      FontSize: 0,
+      WhenFinishCloseWindow: 0,
+      RequirePlayEffect: 0,
+      EffectReferenceIdx: 0,
+      RequirePlaySound: 0,
+      SoundReferenceIdx: 0
+    });
+
+    const partVoiceScenario = (voiceIds: string[]) =>
+      buildScenario({
+        Snippets: voiceIds.map((_, index) => snippet(SnippetAction.Talk, index)),
+        TalkData: voiceIds.map(talkWithVoice)
+      });
+
+    const listing = (...keys: string[]) =>
+      `<ListBucketResult><IsTruncated>false</IsTruncated>${keys
+        .map((key) => `<Key>${key}</Key>`)
+        .join("")}</ListBucketResult>`;
+
+    const stubListings = (byPrefix: Record<string, string>) => {
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input));
+        const prefix = url.searchParams.get("prefix") ?? "";
+        return { ok: true, text: async () => byPrefix[prefix] ?? listing() };
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      return fetchMock;
+    };
+
+    it("lists only the requested region's bucket and never another region's", async () => {
+      const fetchMock = stubListings({
+        "sound/scenario/voice/part_voice_cls_01ichika_light_sound/": listing(
+          "sound/scenario/voice/part_voice_cls_01ichika_light_sound/partvoice_01_023.mp3"
+        )
+      });
+      await collectStoryMediaUrls(
+        buildOptions({
+          scenarioData: { ...partVoiceScenario(["partvoice_01_023"]), ScenarioId: "areatalk_a" },
+          isActionSet: true,
+          regionBucket: "sekai-kr-assets"
+        })
+      );
+      const urls = fetchMock.mock.calls.map(([input]) => String(input));
+      expect(urls.length).toBeGreaterThan(0);
+      for (const url of urls) {
+        expect(url.startsWith("https://assets.example/sekai-kr-assets/?")).toBe(true);
+        expect(url).not.toContain("sekai-jp-assets");
+      }
+    });
+
+    it("falls back to the part-voice pack when the story bundle lacks the file", async () => {
+      stubListings({
+        "sound/actionset/voice/areatalk_a/": listing(
+          "sound/actionset/voice/areatalk_a/areatalk_a_001.mp3"
+        ),
+        "sound/scenario/voice/part_voice_cls_01ichika_light_sound/": listing(
+          "sound/scenario/voice/part_voice_cls_01ichika_light_sound/partvoice_01_023.mp3"
+        )
+      });
+      const assets = await collectStoryMediaUrls(
+        buildOptions({
+          scenarioData: { ...partVoiceScenario(["partvoice_01_023"]), ScenarioId: "areatalk_a" },
+          isActionSet: true
+        })
+      );
+      expect(assets).toEqual([
+        {
+          identifier: "partvoice_01_023",
+          type: Live2DAssetType.Talk,
+          url: "https://assets.example/sound/scenario/voice/part_voice_cls_01ichika_light_sound/partvoice_01_023.mp3"
+        }
+      ]);
+    });
+
+    it("keeps the canonical path when the story bundle has the file", async () => {
+      const fetchMock = stubListings({
+        "sound/scenario/voice/mmj_01_00/": listing(
+          "sound/scenario/voice/mmj_01_00/partvoice_01_023.mp3"
+        )
+      });
+      const assets = await collectStoryMediaUrls(
+        buildOptions({ scenarioData: partVoiceScenario(["partvoice_01_023"]) })
+      );
+      expect(assets[0].url).toBe(
+        "https://assets.example/sound/scenario/voice/mmj_01_00/partvoice_01_023.mp3"
+      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps the canonical path when no candidate exists", async () => {
+      stubListings({});
+      const assets = await collectStoryMediaUrls(
+        buildOptions({ scenarioData: partVoiceScenario(["partvoice_01_023"]) })
+      );
+      expect(assets[0].url).toBe(
+        "https://assets.example/sound/scenario/voice/mmj_01_00/partvoice_01_023.mp3"
+      );
+    });
+
+    it("keeps the canonical path when listings are unavailable", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({ ok: false, text: async () => "" }))
+      );
+      const assets = await collectStoryMediaUrls(
+        buildOptions({ scenarioData: partVoiceScenario(["partvoice_01_023"]) })
+      );
+      expect(assets[0].url).toBe(
+        "https://assets.example/sound/scenario/voice/mmj_01_00/partvoice_01_023.mp3"
+      );
+    });
+
+    it("lists each directory once for many part voices", async () => {
+      const fetchMock = stubListings({});
+      await collectStoryMediaUrls(
+        buildOptions({
+          scenarioData: {
+            ...partVoiceScenario(["partvoice_01_023"]),
+            Snippets: [snippet(SnippetAction.Talk, 0), snippet(SnippetAction.Talk, 0)]
+          }
+        })
+      );
+      // canonical + two part-voice layouts, each listed once.
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
+    it("follows listing continuation tokens", async () => {
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const url = new URL(String(input));
+        const prefix = url.searchParams.get("prefix");
+        if (prefix !== "sound/scenario/part_voice/cls_01ichika_light_sound/") {
+          return { ok: true, text: async () => listing() };
+        }
+        const token = url.searchParams.get("continuation-token");
+        return {
+          ok: true,
+          text: async () =>
+            token
+              ? listing("sound/scenario/part_voice/cls_01ichika_light_sound/partvoice_01_023.mp3")
+              : "<ListBucketResult><IsTruncated>true</IsTruncated><NextContinuationToken>tok-1</NextContinuationToken><Key>sound/scenario/part_voice/cls_01ichika_light_sound/other.mp3</Key></ListBucketResult>"
+        };
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const assets = await collectStoryMediaUrls(
+        buildOptions({ scenarioData: partVoiceScenario(["partvoice_01_023"]) })
+      );
+      expect(assets[0].url).toBe(
+        "https://assets.example/sound/scenario/part_voice/cls_01ichika_light_sound/partvoice_01_023.mp3"
+      );
+    });
+
+    it("keeps the canonical path when the listing request rejects", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => {
+          throw new Error("network down");
+        })
+      );
+      const assets = await collectStoryMediaUrls(
+        buildOptions({ scenarioData: partVoiceScenario(["partvoice_01_023"]) })
+      );
+      expect(assets[0].url).toBe(
+        "https://assets.example/sound/scenario/voice/mmj_01_00/partvoice_01_023.mp3"
+      );
+    });
+
+    it("treats a truncated listing without a continuation token as unknown", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(async () => ({
+          ok: true,
+          text: async () =>
+            "<ListBucketResult><IsTruncated>true</IsTruncated><Key>sound/scenario/part_voice/cls_01ichika_light_sound/partvoice_01_023.mp3</Key></ListBucketResult>"
+        }))
+      );
+      const assets = await collectStoryMediaUrls(
+        buildOptions({ scenarioData: partVoiceScenario(["partvoice_01_023"]) })
+      );
+      expect(assets[0].url).toBe(
+        "https://assets.example/sound/scenario/voice/mmj_01_00/partvoice_01_023.mp3"
+      );
+    });
+
+    it("gives up after the listing page cap", async () => {
+      const fetchMock = vi.fn(async () => ({
+        ok: true,
+        text: async () =>
+          "<ListBucketResult><IsTruncated>true</IsTruncated><NextContinuationToken>more</NextContinuationToken></ListBucketResult>"
+      }));
+      vi.stubGlobal("fetch", fetchMock);
+      const assets = await collectStoryMediaUrls(
+        buildOptions({ scenarioData: partVoiceScenario(["partvoice_01_023"]) })
+      );
+      expect(assets[0].url).toBe(
+        "https://assets.example/sound/scenario/voice/mmj_01_00/partvoice_01_023.mp3"
+      );
+      // 10 pages for each of the three candidate directories.
+      expect(fetchMock).toHaveBeenCalledTimes(30);
+    });
+
+    it("shares one listing across different part voices", async () => {
+      const fetchMock = stubListings({});
+      await collectStoryMediaUrls(
+        buildOptions({
+          scenarioData: partVoiceScenario(["partvoice_01_023", "partvoice_01_024"])
+        })
+      );
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
+    it("does not probe the bucket for ordinary voices", async () => {
+      const fetchMock = stubListings({});
+      await collectStoryMediaUrls(
+        buildOptions({ scenarioData: partVoiceScenario(["voice_a_01"]) })
+      );
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+  });
+
   it("lists the movie directory via S3 and uses the found file", async () => {
     vi.stubGlobal(
       "fetch",

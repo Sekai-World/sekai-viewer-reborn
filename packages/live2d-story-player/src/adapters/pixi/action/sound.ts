@@ -221,9 +221,16 @@ export default async function action_sound(controller: Live2DController, action:
   const resolution = resolveSound(controller, action_detail);
   if (resolution.kind === "skip") return;
   // different play mode
-  // Silent go-back replay: skip SEs (one-shot churn); BGM keeps playing so
-  // the scene converges on the correct music state.
-  if (controller.replay_silent && resolution.sound_type === "se") return;
+  // Silent go-back replay: skip one-shot SEs (churn); BGM and looping SE
+  // state keep converging so the scene ends with the right ambience.
+  if (
+    controller.replay_silent &&
+    resolution.sound_type === "se" &&
+    action_detail.PlayMode !== SoundPlayMode.LoopSe &&
+    action_detail.PlayMode !== SoundPlayMode.StopSe
+  ) {
+    return;
+  }
   const bgm_volume = controller.settings.bgm_volume * action_detail.Volume;
   const se_volume = controller.settings.se_volume * action_detail.Volume;
   applySoundPlayMode(controller, action, action_detail, resolution, bgm_volume, se_volume);

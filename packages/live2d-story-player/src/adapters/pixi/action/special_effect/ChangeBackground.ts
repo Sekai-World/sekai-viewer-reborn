@@ -22,7 +22,7 @@ export default async function ChangeBackground(controller: Live2DController, act
     "ChangeBackground",
     "dialog hide"
   );
-  if (bg)
+  if (bg) {
     handleDetachedPromise(
       controller.layers.background.draw(bg.data),
       controller,
@@ -30,4 +30,7 @@ export default async function ChangeBackground(controller: Live2DController, act
       "ChangeBackground",
       "background draw"
     );
+  } else {
+    controller.events.emit("warn", `${action_detail.StringValSub} not loaded, skip.`);
+  }
 }

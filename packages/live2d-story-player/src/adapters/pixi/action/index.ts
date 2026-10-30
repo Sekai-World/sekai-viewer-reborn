@@ -29,12 +29,10 @@ export default async function single_action(controller: Live2DController, action
     case SnippetAction.CharacterLayoutMode:
       await action_layout_mode(controller, action);
       break;
-    default:
-      controller.logger.warn(
-        "Live2DController",
-        `${SnippetAction[action.Action]} not implemented!`,
-        action
-      );
-      controller.events.emit("warn", `${SnippetAction[action.Action]} not implemented!`);
+    default: {
+      const name = SnippetAction[action.Action] ?? `#${action.Action}`;
+      controller.logger.warn("Live2DController", `${name} not implemented!`, action);
+      controller.events.emit("warn", `${name} not implemented!`);
+    }
   }
 }

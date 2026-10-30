@@ -24,6 +24,12 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
   if (resolved.status === "not-found") {
     error(404, "Story not found");
   }
+  if (resolved.status === "region-unavailable") {
+    return {
+      identity,
+      readerStatus: "region-unavailable" as const
+    };
+  }
   if (resolved.status === "master-data-error") {
     return {
       identity,

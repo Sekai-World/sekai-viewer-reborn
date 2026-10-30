@@ -2,6 +2,7 @@
 
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { Live2DMediaLoadError } from "@platform/live2d-story-player";
 import type { StoryDocumentReference } from "#lib/live2d/story-document.js";
 import StoryPlayerHost from "./StoryPlayerHost.svelte";
 
@@ -28,6 +29,7 @@ const labels = {
   seVolume: "SE",
   loading: "Loading",
   loadFailed: "Failed",
+  loadFailedMediaMissing: "Missing in region",
   retry: "Retry",
   reload: "Reload story",
   statusPlaying: "Playing",
@@ -215,5 +217,95 @@ describe("StoryPlayerHost", () => {
     const withoutReload = renderHost({ autoStart: true });
     await waitFor(() => expect(phaseOf(withoutReload.container)).toBe("ready"));
     expect(screen.queryByRole("button", { name: labels.reload })).toBeNull();
+  });
+
+  it("shows a retryable failure for an unexplained load error", async () => {
+    loadStoryDocument.mockRejectedValue(new Error("scenario broke"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const { container } = renderHost({ autoStart: true });
+    await waitFor(() => expect(phaseOf(container)).toBe("error"));
+
+    expect(screen.getByRole("alert").textContent).toContain(labels.loadFailed);
+    expect(screen.getByRole("button", { name: labels.retry })).toBeTruthy();
+  });
+
+  it("names a media file the region lacks and withdraws the pointless retry", async () => {
+    const mediaError = new Live2DMediaLoadError("sound", "https://assets.example/voice.mp3");
+    loadStoryDocument.mockRejectedValue(mediaError);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetchMock = vi.fn(async () => new Response(null, { status: 404 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = renderHost({ autoStart: true });
+    await waitFor(() => expect(phaseOf(container)).toBe("error"));
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toContain(labels.loadFailedMediaMissing)
+    );
+    expect(screen.queryByRole("button", { name: labels.retry })).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith("https://assets.example/voice.mp3", { method: "HEAD" });
+  });
+
+  it("keeps the retry for a media failure the asset host does not confirm as missing", async () => {
+    loadStoryDocument.mockRejectedValue(
+      new Live2DMediaLoadError("image", "https://assets.example/bg.webp")
+    );
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const fetchMock = vi.fn(async () => new Response(null, { status: 503 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { container } = renderHost({ autoStart: true });
+    await waitFor(() => expect(phaseOf(container)).toBe("error"));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await fetchMock.mock.results[0].value;
+    await Promise.resolve();
+
+    expect(screen.getByRole("alert").textContent).toContain(labels.loadFailed);
+    expect(screen.getByRole("button", { name: labels.retry })).toBeTruthy();
+  });
+
+  it("ignores a probe result that arrives after the user retried", async () => {
+    let resolveProbe!: (response: Response) => void;
+    const fetchMock = vi.fn(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolveProbe = resolve;
+        })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    loadStoryDocument.mockRejectedValueOnce(
+      new Live2DMediaLoadError("sound", "https://assets.example/voice.mp3")
+    );
+    const { container } = renderHost({ autoStart: true });
+    await waitFor(() => expect(phaseOf(container)).toBe("error"));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
+    loadStoryDocument.mockRejectedValueOnce(new Error("scenario broke"));
+    await fireEvent.click(screen.getByRole("button", { name: labels.retry }));
+    await waitFor(() => expect(loadStoryDocument).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(phaseOf(container)).toBe("error"));
+
+    resolveProbe(new Response(null, { status: 404 }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(screen.getByRole("alert").textContent).toContain(labels.loadFailed);
+    expect(screen.getByRole("alert").textContent).not.toContain(labels.loadFailedMediaMissing);
+    expect(screen.getByRole("button", { name: labels.retry })).toBeTruthy();
+  });
+
+  it("forwards the three volume sliders to the session", async () => {
+    const { container } = renderHost({ autoStart: true });
+    await waitFor(() => expect(phaseOf(container)).toBe("ready"));
+
+    const slider = (label: string) =>
+      screen.getByText(label).closest("label")!.querySelector("input") as HTMLInputElement;
+    await fireEvent.input(slider(labels.voiceVolume), { target: { value: "0.3" } });
+    await fireEvent.input(slider(labels.bgmVolume), { target: { value: "0.6" } });
+    await fireEvent.input(slider(labels.seVolume), { target: { value: "0" } });
+
+    expect(sessions[0].setVolume).toHaveBeenLastCalledWith({
+      voiceVolume: 0.3,
+      bgmVolume: 0.6,
+      seVolume: 0
+    });
   });
 });

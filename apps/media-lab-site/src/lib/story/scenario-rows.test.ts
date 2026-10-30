@@ -203,7 +203,7 @@ describe("flattenScenarioToRows", () => {
     expect(document_.rows[1]).toMatchObject({ voicePaths: [] });
   });
 
-  it("uses card and action-set voice packs per story kind", () => {
+  it("uses card and action-set voice packs and part-voice fallbacks per story kind", () => {
     const scenario = buildScenario({
       Snippets: [snippet(SnippetAction.Talk, 0)],
       TalkData: [
@@ -235,7 +235,11 @@ describe("flattenScenarioToRows", () => {
       { isCardStory: false, isActionSet: true }
     );
     expect(actionSet.rows[0]).toMatchObject({
-      voicePaths: ["sound/actionset/voice/areatalk03_266/partvoice_01.mp3"]
+      voicePaths: [
+        "sound/actionset/voice/areatalk03_266/partvoice_01.mp3",
+        "sound/scenario/part_voice/cls_01ichika_light_sound/partvoice_01.mp3",
+        "sound/scenario/voice/part_voice_cls_01ichika_light_sound/partvoice_01.mp3"
+      ]
     });
   });
 
