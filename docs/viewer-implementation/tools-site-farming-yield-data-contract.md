@@ -13,7 +13,7 @@ any recommendation UI.
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Contract owner          | tools-site consumes a licensed, externally supplied `music_metas.json` as an input. It is not assigned to `sekai-master-api` and no repository generator is required (user decision, 2026-09-25).     |
 | Authoritative source    | Default: self-hosted `https://storage.sekai.best/sekai-best-assets/music_metas.json`. Explicit alternative: `https://moe.exmeaning.com/data/music_meta/music_metas.json`. Both confirmed by the user. |
-| First supported mode    | **JP Solo**, region `jp` only, formula version `jp-solo-community-v1`.                                                                                                                                |
+| First supported mode    | **JP Solo**, formula version `jp-solo-community-v1`, for regions `jp`, `tw`, `en`, and `kr` (see _Region Evidence_).                                                                                  |
 | First supported metrics | Per-live **score** and per-live **event points** for one song and difficulty. No per-hour, per-energy, or cumulative metric.                                                                          |
 | Deck and bonus inputs   | Supplied manually by the user for the first mode. No user-data import and no derived event-bonus resolution.                                                                                          |
 | Upstream API work       | None required. If the data later moves into `sekai-master-api`, follow the OpenAPI/SDK workflow in `AGENTS.md` and update this contract in the same change.                                           |
@@ -40,22 +40,25 @@ selects one; an unknown value is rejected, never replaced by the default.
 
 ## Scope
 
-| Dimension       | Supported              | Everything else                                                                                                         |
-| --------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Region          | `jp`                   | Blocked. The artifact carries no region field, so it cannot prove coverage for any other region. See _Region Evidence_. |
-| Mode            | Solo (non-Auto)        | Auto, Multi, Challenge, Cheerful Carnival, World Bloom stay blocked/unverified.                                         |
-| Formula version | `jp-solo-community-v1` | Any other value is unsupported.                                                                                         |
+| Dimension       | Supported              | Everything else                                                                                                     |
+| --------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Region          | `jp`, `tw`, `en`, `kr` | `cn` and any other value are unsupported. TW, EN, and KR use the JP values (owner decision, see _Region Evidence_). |
+| Mode            | Solo (non-Auto)        | Auto, Multi, Challenge, Cheerful Carnival, World Bloom stay blocked/unverified.                                     |
+| Formula version | `jp-solo-community-v1` | Any other value is unsupported.                                                                                     |
 
 Records for songs that are absent from the selected region's own music list are
-not evidence that the song exists there. Only songs the region's master data
-lists are offered, and each needs a matching record (see _Missing-data states_).
+not evidence that the song exists there. For `tw`, `en`, and `kr` only the
+charts the region's master data lists are offered, and each needs a matching
+artifact record (see _Missing-data states_).
 
 ## Region Evidence (TW, EN, KR)
 
-Decision (#539): **TW, EN, and KR stay blocked.** The recommender remains `jp`
-only. Measured 2026-10-30 against the default source (3,810 records, 735 songs)
-and each region's published master data (`sekai-master-db-diff` for `jp`,
-`-tc-diff`, `-en-diff`, `-kr-diff`):
+Decision (#539, owner, 2026-10-30): **TW, EN, and KR are enabled with the JP
+values.** For a song the region shares with JP, the artifact's JP record is used.
+Songs only a region has are not offered, because no data exists for them; they
+stay out until a region-scoped source appears. Measured 2026-10-30 against the
+default source (3,810 records, 735 songs) and each region's published master
+data (`sekai-master-db-diff` for `jp`, `-tc-diff`, `-en-diff`, `-kr-diff`):
 
 | Region | Songs in master data | Songs also in the artifact | Songs in master data but not in the artifact | Chart rows without an artifact record |
 | ------ | -------------------- | -------------------------- | -------------------------------------------- | ------------------------------------- |
@@ -79,25 +82,37 @@ What the measurements show:
   `music_metas_{tw,en,kr}.json` and `{tw,en,kr}/music_metas.json` returned 404
   on both supported sources.
 
-Status per region:
+What is enabled, and what is not proven:
 
-| Region | Status  | Missing evidence                                                                                                                                              |
-| ------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tw`   | Blocked | An authority that the artifact's coefficients and `event_rate` apply to `tw`, or a `tw`-scoped artifact, and an observed `tw` vector for the formula version. |
-| `en`   | Blocked | The same, for `en`.                                                                                                                                           |
-| `kr`   | Blocked | The same, for `kr`.                                                                                                                                           |
+| Region | Status      | Behavior                                                                                                                  |
+| ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `jp`   | Enabled     | The whole artifact, unchanged.                                                                                            |
+| `tw`   | Enabled     | Charts in the `tw` master data that have an artifact record, with the JP values. Songs only `tw` has (8) are not offered. |
+| `en`   | Enabled     | The same for `en`. Songs only `en` has (28) are not offered.                                                              |
+| `kr`   | Enabled     | The same for `kr`. Songs only `kr` has (16) are not offered.                                                              |
+| `cn`   | Unsupported | Not offered.                                                                                                              |
 
-To enable a region later:
+This is an owner decision, not independent evidence. No observed in-game vector
+exists for `tw`, `en`, or `kr`, and the artifact does not say that its
+coefficients and `event_rate` apply to them. The validation document's rule that
+a passing vector in one region does not authorize another is waived for these
+three regions by that decision. The page tells the user that Japanese song data
+is used and that region-only songs are excluded.
 
-1. Obtain a region-scoped source (a per-region artifact or a region field) or a
-   statement from the artifact's maintainer about which regions its values
-   apply to. Record it here with the date.
-2. Offer only songs in that region's own master data, and answer a song or
-   difficulty without a matching record as unavailable. Today the same state
-   already covers the two `jp` songs that have no record. Never compute it from
-   another region.
-3. Add one reproducible vector per enabled region with its formula version
-   (see `tools-site-yield-validation.md`), and show the region on every result.
+Implementation:
+
+- The `region` query parameter takes `jp`, `tw`, `en`, or `kr`. A missing value
+  means `jp`; a repeated or unknown value is reported as invalid and is never
+  replaced.
+- For a non-JP region the server reads the region's chart list from
+  `sekai-master-api` (`/musics/{region}/list`, five-minute cache) and keeps only
+  the artifact records whose song and difficulty it lists. The target planner
+  plans from that same list.
+- If the list cannot be loaded or is malformed, the result is unavailable
+  (`region-data-unavailable`). It never falls back to the unfiltered JP list.
+
+To add region-only songs later, obtain a region-scoped source (a per-region
+artifact or a region field) and record it here with the date.
 
 ## Deck and Bonus Inputs
 
@@ -271,8 +286,8 @@ the boost.
 
 These stay blocked and are not treated as implementation-ready:
 
-- Any region other than `jp`, and Auto, Multi, Challenge, Cheerful Carnival, and
-  World Bloom yields.
+- Region `cn`, songs only TW, EN, or KR has, and Auto, Multi, Challenge,
+  Cheerful Carnival, and World Bloom yields.
 - Per-hour, per-energy, and cumulative planning metrics. Duration and energy
   semantics are undefined, and the Moesekai `cycles_*`/`pt_per_hour_*` fields are
   derived from preset teams, not personalized observations.

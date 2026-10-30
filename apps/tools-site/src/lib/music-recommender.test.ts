@@ -4,6 +4,7 @@ import {
   MUSIC_META_MINIMUM_RECORD_COUNT,
   MUSIC_META_SOURCES,
   calculateJpSoloYield,
+  makeRegionChartKey,
   rankJpSoloRecommendations,
   type JpSoloYieldInputs,
   type MusicMeta,
@@ -209,7 +210,7 @@ describe("JP Solo yield calculation", () => {
   );
 
   it.each([
-    ["another region", { region: "en", mode: "solo" }, "unsupported-region"],
+    ["an unsupported region", { region: "cn", mode: "solo" }, "unsupported-region"],
     ["another mode", { region: "jp", mode: "auto" }, "unsupported-mode"]
   ])("does not calculate for %s", (_label, overrides, reasonCode) => {
     const result = calculateJpSoloYield(makeDataset(), {
@@ -284,5 +285,92 @@ describe("JP Solo yield calculation", () => {
     expect(forward.items.map(({ rank }) => rank)).toEqual(
       Array.from({ length: MUSIC_META_MINIMUM_RECORD_COUNT }, (_, index) => index + 1)
     );
+  });
+});
+
+describe("region scope for TW, EN, and KR", () => {
+  const dataset = makeDataset([
+    makeMusicMeta(5),
+    makeMusicMeta(6),
+    makeMusicMeta(6, { difficulty: "master", baseScore: 200 })
+  ]);
+  const charts = (...keys: Array<[number, string]>): Set<string> =>
+    new Set(keys.map(([musicId, difficulty]) => makeRegionChartKey(musicId, difficulty)));
+
+  it.each(["tw", "en", "kr"])("ranks only the charts the %s master data lists", (region) => {
+    const result = rankJpSoloRecommendations(
+      dataset,
+      makeInputs({ region }),
+      "score",
+      charts([5, "expert"], [6, "master"])
+    );
+
+    expect(result.status).toBe("available");
+    if (result.status !== "available") return;
+    expect(result.items.map(({ music }) => `${music.musicId}:${music.difficulty}`)).toEqual([
+      "6:master",
+      "5:expert"
+    ]);
+  });
+
+  it("uses the JP values for a chart the region shares with JP", () => {
+    const jp = rankJpSoloRecommendations(dataset, makeInputs(), "score");
+    const tw = rankJpSoloRecommendations(
+      dataset,
+      makeInputs({ region: "tw" }),
+      "score",
+      charts([6, "master"])
+    );
+
+    if (jp.status !== "available" || tw.status !== "available")
+      throw new Error("Expected ranking.");
+    const jpMaster = jp.items.find(
+      ({ music }) => music.musicId === 6 && music.difficulty === "master"
+    );
+    expect(tw.items).toHaveLength(1);
+    expect(tw.items[0]).toMatchObject({
+      score: jpMaster?.score,
+      eventPoints: jpMaster?.eventPoints
+    });
+  });
+
+  it("leaves JP unfiltered, with or without a chart list", () => {
+    const withoutList = rankJpSoloRecommendations(dataset, makeInputs(), "score");
+    const withList = rankJpSoloRecommendations(
+      dataset,
+      makeInputs(),
+      "score",
+      charts([5, "expert"])
+    );
+
+    expect(withList).toEqual(withoutList);
+    expect(withoutList.status === "available" && withoutList.items.length).toBe(
+      dataset.status === "available" ? dataset.items.length : -1
+    );
+  });
+
+  it.each([
+    ["without the region's chart list", null, "region-data-unavailable"],
+    ["when no chart of the region has a record", charts([1_000_000, "expert"]), "incomplete-data"]
+  ])("is unavailable %s", (_label, regionCharts, reasonCode) => {
+    expect(
+      rankJpSoloRecommendations(dataset, makeInputs({ region: "kr" }), "score", regionCharts)
+    ).toMatchObject({ status: "unavailable", reasonCode });
+  });
+
+  it("never computes a single chart the region does not list", () => {
+    const request = { ...makeInputs({ region: "en" }), musicId: 5, difficulty: "expert" };
+
+    expect(calculateJpSoloYield(dataset, request, charts([6, "master"]))).toMatchObject({
+      status: "unavailable",
+      reasonCode: "incomplete-data"
+    });
+    expect(calculateJpSoloYield(dataset, request, charts([5, "expert"]))).toMatchObject({
+      status: "available"
+    });
+    expect(calculateJpSoloYield(dataset, request)).toMatchObject({
+      status: "unavailable",
+      reasonCode: "region-data-unavailable"
+    });
   });
 });

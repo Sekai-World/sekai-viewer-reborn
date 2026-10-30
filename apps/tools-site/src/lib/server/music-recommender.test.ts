@@ -1,5 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { MUSIC_META_MINIMUM_RECORD_COUNT, MUSIC_META_SOURCES } from "#lib/music-recommender.js";
+import { describe, expect, it, vi } from "vitest";
+import {
+  MUSIC_META_MINIMUM_RECORD_COUNT,
+  MUSIC_META_SOURCES,
+  makeRegionChartKey
+} from "#lib/music-recommender.js";
 import { computeMusicMetasRevision, parseMusicMetas } from "#lib/server/music-metas.js";
 import {
   loadMusicMetaCatalog,
@@ -8,6 +12,7 @@ import {
   type MusicMetaFetcher,
   type MusicRecommenderPageData
 } from "#lib/server/music-recommender.js";
+import type { RegionChartLoader } from "#lib/server/region-charts.js";
 import { load as loadMusicRecommenderPage } from "../../routes/music-recommender/+page.server";
 
 const NOW = new Date("2026-09-25T00:00:00.000Z");
@@ -671,5 +676,98 @@ describe("target plan in the page data", () => {
 
     expect(result.status).toBe("unavailable");
     expect(result.plan).toMatchObject({ status: "invalid", invalidFields: ["target"] });
+  });
+});
+
+describe("region selection in the page data", () => {
+  const deck =
+    "mode=jp-solo&deckPower=200000&deckBonus=0&boostMultiplier=1&skillRates=0,0,0,0,0,0&noSkill=false";
+
+  const chartsOf = (...ids: number[]): RegionChartLoader =>
+    vi.fn(async () => ({
+      status: "available" as const,
+      charts: new Set(ids.map((id) => makeRegionChartKey(id, "expert")))
+    }));
+
+  const load = async (extra: string, loadCharts: RegionChartLoader) => {
+    const { fetcher } = makeFetcher(responseFor(JSON.stringify(makePayload())));
+    return loadMusicRecommenderPageData(
+      new URLSearchParams(`${deck}&${extra}`),
+      fetcher,
+      () => NOW,
+      loadCharts
+    );
+  };
+
+  it("treats a missing region as JP and does not load a chart list", async () => {
+    const loadCharts = chartsOf(1);
+
+    const result = await load("metric=score", loadCharts);
+
+    expect(result).toMatchObject({ status: "available", inputs: { region: "jp" } });
+    expect(result.items).toHaveLength(MUSIC_META_MINIMUM_RECORD_COUNT);
+    expect(loadCharts).not.toHaveBeenCalled();
+  });
+
+  it.each(["tw", "en", "kr"] as const)(
+    "ranks only the %s songs with the JP values",
+    async (region) => {
+      const loadCharts = chartsOf(2, 5);
+
+      const result = await load(`region=${region}&metric=score`, loadCharts);
+
+      expect(loadCharts).toHaveBeenCalledWith(region);
+      expect(result).toMatchObject({ status: "available", inputs: { region } });
+      expect(result.items.map((item) => item.musicId)).toEqual([2, 5]);
+      expect(result.items[0]).toMatchObject({ score: 80_000_000 });
+    }
+  );
+
+  it("plans only from the songs of the selected region", async () => {
+    const result = await load(
+      "region=tw&metric=eventPoints&target=10000&objective=fewestPlays&maxPlays=10&repeats=true",
+      chartsOf(7, 9)
+    );
+
+    expect(result.plan.status).toBe("ready");
+    if (result.plan.status !== "ready") throw new Error("Expected a plan.");
+    expect(result.plan.plan.items.map((item) => item.musicId)).toEqual([7]);
+  });
+
+  it("is unavailable, with no figures, when the region's song list cannot be loaded", async () => {
+    const loadCharts: RegionChartLoader = async () => ({ status: "unavailable" });
+
+    const result = await load("region=kr&metric=score", loadCharts);
+
+    expect(result).toMatchObject({
+      status: "unavailable",
+      reasonCode: "region-data-unavailable",
+      inputs: { region: "kr" },
+      items: []
+    });
+    expect(result.plan.status).toBe("idle");
+  });
+
+  it.each(["cn", "TW", ""])(
+    "rejects the unknown region %j without substituting JP",
+    async (region) => {
+      const loadCharts = chartsOf(1);
+
+      const result = await load(`region=${region}`, loadCharts);
+
+      expect(result).toMatchObject({
+        status: "unavailable",
+        reasonCode: "invalid-inputs",
+        invalidFields: ["region"],
+        inputs: { region: null }
+      });
+      expect(loadCharts).not.toHaveBeenCalled();
+    }
+  );
+
+  it("rejects a repeated region parameter", async () => {
+    const result = await load("region=tw&region=en", chartsOf(1));
+
+    expect(result).toMatchObject({ status: "unavailable", invalidFields: ["region"] });
   });
 });
