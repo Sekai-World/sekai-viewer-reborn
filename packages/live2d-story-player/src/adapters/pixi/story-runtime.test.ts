@@ -167,6 +167,7 @@ const makeController = (options: FakeControllerOptions = {}) => {
       return stepResults.shift() ?? -1;
     },
     stop_sounds: vi.fn(),
+    fade_out_ambience: vi.fn(),
     set_volume: vi.fn((volume: Parameters<PixiStoryRuntimeController["set_volume"]>[0]) => {
       volumeCalls.push(volume);
     }),
@@ -275,6 +276,19 @@ describe("createPixiStoryRuntime", () => {
     expect(releaseImage).toHaveBeenCalledOnce();
   };
 
+  it("winds down music and looping effects once when the story finishes", async () => {
+    const { options, controllerFixture } = makeOptions();
+    const runtime = await createPixiStoryRuntime(options, new AbortController().signal);
+
+    await expect(runtime.nextStep()).resolves.toBe("ready");
+    await expect(runtime.nextStep()).resolves.toBe("ready");
+    expect(controllerFixture.controller.fade_out_ambience).not.toHaveBeenCalled();
+    await expect(runtime.nextStep()).resolves.toBe("finished");
+
+    expect(controllerFixture.controller.fade_out_ambience).toHaveBeenCalledOnce();
+    expect(controllerFixture.controller.fade_out_ambience).toHaveBeenCalledWith(1500);
+  });
+
   it("initializes and exposes checkpoint, settings, and resize commands", async () => {
     const { options, application, children, controllerFixture, releaseImage } = makeOptions();
     const selected: string[][] = [];
@@ -292,6 +306,7 @@ describe("createPixiStoryRuntime", () => {
     await expect(runtime.nextStep()).resolves.toBe("ready");
     await expect(runtime.nextStep()).resolves.toBe("ready");
     expect(runtime.canGoBack).toBe(true);
+    expect(controllerFixture.controller.fade_out_ambience).not.toHaveBeenCalled();
 
     controllerFixture.setPendingSelectable(["choice"]);
     expect(runtime.canAutoplay).toBe(false);

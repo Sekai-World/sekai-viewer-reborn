@@ -9,7 +9,7 @@ import {
   SoundPlayMode
 } from "../../../model/scenario-types.js";
 import { Live2DAssetType } from "../player-types.js";
-import action_sound from "./sound.js";
+import action_sound, { fadeOutStoryAmbience } from "./sound.js";
 import action_talk from "./talk.js";
 
 type Listener = () => void;
@@ -103,18 +103,60 @@ const run = (controller: Live2DController) =>
   action_sound(controller, snippet(SnippetAction.Sound));
 
 describe("sound action", () => {
-  it("fades in a new BGM on loop after stopping the previous one", async () => {
+  it("fades in a new BGM on loop while the previous one fades out", async () => {
     const f = createSoundController({ bgm: "bgmB", volume: 0.5, duration: 2.5 });
+    f.audio.playing.add(f.bgmA);
     await run(f.controller);
 
-    expect(f.order).toEqual([
-      `stop_sounds:${Live2DAssetType.BackgroundMusic}`,
-      "setLoop",
-      "fade",
-      "play"
-    ]);
-    expect(f.audio.adapter.setLoop).toHaveBeenCalledWith(f.bgmB, true);
+    expect(f.audio.adapter.stop).not.toHaveBeenCalled();
+    expect(f.audio.adapter.fade).toHaveBeenCalledWith(f.bgmA, 1, 0, 2500);
     expect(f.audio.adapter.fade).toHaveBeenCalledWith(f.bgmB, 0, 0.125, 2500);
+    expect(f.audio.adapter.setLoop).toHaveBeenCalledWith(f.bgmB, true);
+    expect(f.audio.adapter.play).toHaveBeenCalledWith(f.bgmB);
+    f.audio.fire(f.bgmA);
+    expect(f.audio.adapter.stop).toHaveBeenCalledWith(f.bgmA);
+    expect(f.audio.adapter.stop).not.toHaveBeenCalledWith(f.bgmB);
+  });
+
+  it("cuts the previous BGM immediately when the cross-fade has no duration", async () => {
+    const f = createSoundController({ bgm: "bgmB", duration: 0 });
+    f.audio.playing.add(f.bgmA);
+    await run(f.controller);
+
+    expect(f.audio.adapter.stop).toHaveBeenCalledWith(f.bgmA);
+    expect(f.audio.adapter.fade).not.toHaveBeenCalledWith(f.bgmA, expect.anything(), 0, 0);
+  });
+
+  it("restarts a BGM that is already playing instead of layering it", async () => {
+    const f = createSoundController({ bgm: "bgmA" });
+    f.audio.playing.add(f.bgmA);
+    await run(f.controller);
+
+    expect(f.audio.adapter.stop).toHaveBeenCalledWith(f.bgmA);
+    expect(f.audio.adapter.fade).not.toHaveBeenCalledWith(f.bgmA, 1, 0, expect.anything());
+    expect(f.audio.adapter.play).toHaveBeenCalledWith(f.bgmA);
+  });
+
+  it("stacks an SE at the SE volume, not the BGM volume", async () => {
+    const f = createSoundController({ mode: SoundPlayMode.Stack, se: "se1", volume: 0.5 });
+    await run(f.controller);
+
+    expect(f.audio.adapter.setVolume).toHaveBeenCalledWith(f.se, 0.2);
+    expect(f.audio.adapter.play).toHaveBeenCalledWith(f.se);
+  });
+
+  it("winds down playing BGM and effects, but not voices, at story end", () => {
+    const f = createSoundController({});
+    f.audio.playing.add(f.bgmA);
+    f.audio.playing.add(f.se);
+    fadeOutStoryAmbience(f.controller, 1500);
+
+    expect(f.audio.adapter.fade).toHaveBeenCalledWith(f.bgmA, 1, 0, 1500);
+    expect(f.audio.adapter.fade).toHaveBeenCalledWith(f.se, 1, 0, 1500);
+    f.audio.fire(f.bgmA);
+    f.audio.fire(f.se);
+    expect(f.audio.adapter.stop).toHaveBeenCalledWith(f.bgmA);
+    expect(f.audio.adapter.stop).toHaveBeenCalledWith(f.se);
   });
 
   it("fades out and stops only the playing BGM for bgm00000", async () => {

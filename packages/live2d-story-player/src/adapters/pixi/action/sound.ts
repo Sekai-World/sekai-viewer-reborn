@@ -3,6 +3,7 @@ import type { Snippet } from "../../../model/scenario-types.js";
 import { SoundPlayMode } from "../../../model/scenario-types.js";
 import { Live2DAssetType } from "../player-types.js";
 import type { Howl } from "howler";
+import { setSoundGain } from "../audio-volume.js";
 
 type SoundDetail = Live2DController["scenarioData"]["SoundData"][number];
 
@@ -13,25 +14,51 @@ interface SoundResolution {
 
 type SoundResolutionResult = { kind: "skip" } | ({ kind: "play" } & SoundResolution);
 
-function fadeOutAllBgm(controller: Live2DController, duration_seconds: number): void {
+function fadeOutPlaying(
+  controller: Live2DController,
+  types: readonly Live2DAssetType[],
+  duration_ms: number,
+  except?: Howl
+): void {
   controller.scenarioResource.audio
     .filter(
       (sound) =>
-        sound.type === Live2DAssetType.BackgroundMusic &&
+        types.includes(sound.type) &&
+        sound.data !== except &&
         controller.audioAdapter.isPlaying(sound.data)
     )
     .forEach((sound) => {
       const sound_instance = sound.data;
+      if (duration_ms <= 0) {
+        controller.audioAdapter.stop(sound_instance);
+        return;
+      }
       controller.audioAdapter.fade(
         sound_instance,
         controller.audioAdapter.getVolume(sound_instance),
         0,
-        duration_seconds * 1000
+        duration_ms
       );
       controller.audioAdapter.once(sound_instance, "fade", () => {
         controller.audioAdapter.stop(sound_instance);
       });
     });
+}
+
+function fadeOutAllBgm(controller: Live2DController, duration_seconds: number): void {
+  fadeOutPlaying(controller, [Live2DAssetType.BackgroundMusic], duration_seconds * 1000);
+}
+
+/**
+ * Winds down the music and any looping effect when a story ends, so a finished
+ * story does not leave ambience running behind the end screen.
+ */
+export function fadeOutStoryAmbience(controller: Live2DController, duration_ms: number): void {
+  fadeOutPlaying(
+    controller,
+    [Live2DAssetType.BackgroundMusic, Live2DAssetType.SoundEffect],
+    duration_ms
+  );
 }
 
 function warnMissingSound(controller: Live2DController, identifier: string): void {
@@ -79,13 +106,17 @@ function playCrossFade(
   resolution: SoundResolution,
   bgm_volume: number,
   se_volume: number,
-  duration_ms: number
+  duration_ms: number,
+  gain: number
 ): void {
   const { sound, sound_type } = resolution;
   if (!sound) return;
+  setSoundGain(sound, gain);
   if (sound_type === "bgm") {
+    // The previous track fades out over the same duration the new one fades in.
+    if (controller.audioAdapter.isPlaying(sound)) controller.audioAdapter.stop(sound);
+    fadeOutPlaying(controller, [Live2DAssetType.BackgroundMusic], duration_ms, sound);
     // bgm always loop
-    controller.stop_sounds([Live2DAssetType.BackgroundMusic]);
     controller.audioAdapter.setLoop(sound, true);
     controller.audioAdapter.fade(sound, 0, bgm_volume, duration_ms);
     controller.audioAdapter.play(sound);
@@ -99,12 +130,14 @@ function playCrossFade(
 function playStack(
   controller: Live2DController,
   resolution: SoundResolution,
-  bgm_volume: number
+  se_volume: number,
+  gain: number
 ): void {
   const { sound } = resolution;
   if (!sound) return;
+  setSoundGain(sound, gain);
   controller.audioAdapter.setLoop(sound, false);
-  controller.audioAdapter.setVolume(sound, bgm_volume);
+  controller.audioAdapter.setVolume(sound, se_volume);
   controller.audioAdapter.play(sound);
 }
 
@@ -112,10 +145,12 @@ function playLoopSe(
   controller: Live2DController,
   resolution: SoundResolution,
   se_volume: number,
-  duration_ms: number
+  duration_ms: number,
+  gain: number
 ): void {
   const { sound } = resolution;
   if (!sound) return;
+  setSoundGain(sound, gain);
   controller.audioAdapter.setLoop(sound, true);
   controller.audioAdapter.fade(sound, 0, se_volume, duration_ms);
   controller.audioAdapter.play(sound);
@@ -137,7 +172,8 @@ function stopSe(
 function fadeAllBgmVolume(
   controller: Live2DController,
   bgm_volume: number,
-  duration_seconds: number
+  duration_seconds: number,
+  gain: number
 ): void {
   // if no bgm asset, fade to new volume for all playing bgm
   controller.scenarioResource.audio
@@ -148,6 +184,7 @@ function fadeAllBgmVolume(
     )
     .forEach((sound) => {
       const sound_instance = sound.data;
+      setSoundGain(sound_instance, gain);
       controller.audioAdapter.fade(
         sound_instance,
         controller.audioAdapter.getVolume(sound_instance),
@@ -161,11 +198,13 @@ function setBgmVolume(
   controller: Live2DController,
   resolution: SoundResolution,
   bgm_volume: number,
-  duration_seconds: number
+  duration_seconds: number,
+  gain: number
 ): void {
   const { sound } = resolution;
   if (sound) {
     // fade to new volume
+    setSoundGain(sound, gain);
     controller.audioAdapter.fade(
       sound,
       controller.audioAdapter.getVolume(sound),
@@ -173,7 +212,7 @@ function setBgmVolume(
       duration_seconds * 1000
     );
   } else {
-    fadeAllBgmVolume(controller, bgm_volume, duration_seconds);
+    fadeAllBgmVolume(controller, bgm_volume, duration_seconds, gain);
   }
 }
 
@@ -188,19 +227,32 @@ function applySoundPlayMode(
   const duration_ms = action_detail.Duration * 1000;
   switch (action_detail.PlayMode) {
     case SoundPlayMode.CrossFade:
-      playCrossFade(controller, resolution, bgm_volume, se_volume, duration_ms);
+      playCrossFade(
+        controller,
+        resolution,
+        bgm_volume,
+        se_volume,
+        duration_ms,
+        action_detail.Volume
+      );
       break;
     case SoundPlayMode.Stack:
-      playStack(controller, resolution, bgm_volume);
+      playStack(controller, resolution, se_volume, action_detail.Volume);
       break;
     case SoundPlayMode.LoopSe:
-      playLoopSe(controller, resolution, se_volume, duration_ms);
+      playLoopSe(controller, resolution, se_volume, duration_ms, action_detail.Volume);
       break;
     case SoundPlayMode.StopSe:
       stopSe(controller, resolution, duration_ms);
       break;
     case SoundPlayMode.SetBgmVolume:
-      setBgmVolume(controller, resolution, bgm_volume, action_detail.Duration);
+      setBgmVolume(
+        controller,
+        resolution,
+        bgm_volume,
+        action_detail.Duration,
+        action_detail.Volume
+      );
       break;
     default:
       controller.logger.warn(

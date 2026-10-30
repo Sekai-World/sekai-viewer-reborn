@@ -629,14 +629,20 @@ backgrounds, failed talk motions and motions on models that did not load. Failur
 detached effect transitions stay console-only by design (their tests pin it). Going
 back a step now stops sound effects and the silent replay re-applies looping-SE start and
 stop (one-shot SEs are still skipped), so loops started after the target stop and loops
-active at the target resume. Known deviations kept for parity with the legacy
-reader, not fixed here:
+active at the target resume. Audio behavior that was wrong in the legacy reader is
+fixed rather than ported:
 
-- `set_volume` ignores a value of 0, so dragging a slider to 0 does not mute a sound
-  that is already playing (later sounds are silent), and it overwrites per-sound gain.
-- `SoundPlayMode.Stack` scales an SE by the BGM volume instead of the SE volume.
-- BGM "cross-fade" hard-stops the previous track while the new one fades in; nothing
-  stops BGM or a looping SE at story finish, only on destroy.
+- A channel volume of `0` mutes sounds that are already playing, and channel sliders
+  keep each sound's scenario `Volume` (voice `Voices[0].Volume`, SE/BGM snippet
+  `Volume`) instead of flattening it.
+- `SoundPlayMode.Stack` scales an SE by the SE volume.
+- BGM cross-fade fades the previous track out over the same duration the new one
+  fades in; a zero duration cuts it immediately.
+- When the story finishes, playing BGM and looping SEs fade out over 1.5 s. Going
+  back replays the sound snippets, so the music returns.
+
+Known deviations kept as-is, with no verified game behavior to justify a change:
+
 - Only the first voice of a talk plays; lip sync needs `LipSync == 1` and a loaded
   costume, otherwise only motions drive the mouth.
 - Host default volumes (0.8/0.5/0.8) differ from the legacy reader (0.8/0.8/0.3).

@@ -672,7 +672,7 @@ describe("Live2D engine parity", () => {
     expect(audioAdapter.stop).toHaveBeenCalledWith(talkSound);
   });
 
-  it("keeps the legacy zero-volume truthiness behavior", () => {
+  it("applies an explicit zero volume so playing sounds can be muted", () => {
     const voice = createSound();
     const bgm = createSound();
     const soundEffect = createSound();
@@ -692,9 +692,9 @@ describe("Live2D engine parity", () => {
       bgm_volume: 0,
       se_volume: 0
     });
-    expect(voice.volume).not.toHaveBeenCalled();
-    expect(bgm.volume).not.toHaveBeenCalled();
-    expect(soundEffect.volume).not.toHaveBeenCalled();
+    expect(voice.volume).toHaveBeenCalledWith(0);
+    expect(bgm.volume).toHaveBeenCalledWith(0);
+    expect(soundEffect.volume).toHaveBeenCalledWith(0);
   });
 
   it("resolves talk, telop, and full-screen text by stable scenario keys and renders the results", async () => {
