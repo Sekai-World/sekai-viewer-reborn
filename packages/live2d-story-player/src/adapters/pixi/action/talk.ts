@@ -46,6 +46,7 @@ export default async function action_talk(controller: Live2DController, action: 
       )
       .catch((error: unknown) => {
         controller.logger.warn("Live2DController", "Talk motion failed:", action, error);
+        controller.events.emit("warn", `Talk motion failed: ${String(error)}`);
       });
   }
   // sound — silent replay must not blast through every voice on the way back

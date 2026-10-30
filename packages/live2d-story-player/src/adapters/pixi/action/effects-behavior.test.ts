@@ -16,6 +16,7 @@ vi.mock("pixi.js", () => pixi);
 
 import type { Live2DController } from "../Live2DController.js";
 import {
+  CharacterLayoutMode,
   SeAttachCharacterShaderType,
   SnippetAction,
   SnippetProgressBehavior,
@@ -639,6 +640,51 @@ describe("special-effect dispatch and transitions", () => {
     });
     await single_action(missing.controller, missing.action);
     expect(missing.layers.background.draw).not.toHaveBeenCalled();
+    expect(missing.events.emit).toHaveBeenCalledWith("warn", "not-loaded not loaded, skip.");
+  });
+
+  it("names unmapped enum values instead of printing undefined", async () => {
+    const unmappedEffect = createController({ effect: 37 as SpecialEffectType });
+    await single_action(unmappedEffect.controller, unmappedEffect.action);
+    expect(unmappedEffect.events.emit).toHaveBeenCalledWith(
+      "warn",
+      "SpecialEffect/#37 not implemented!"
+    );
+
+    const unmappedAction = createController();
+    await single_action(unmappedAction.controller, {
+      ...unmappedAction.action,
+      Action: 99 as SnippetAction
+    });
+    expect(unmappedAction.events.emit).toHaveBeenCalledWith("warn", "#99 not implemented!");
+  });
+
+  it("warns for an unknown character layout mode and still applies known ones", async () => {
+    const layout = createController();
+    (layout.controller.scenarioData as unknown as Record<string, unknown>)[
+      "ScenarioSnippetCharacterLayoutModes"
+    ] = [{ CharacterLayoutMode: 99 }, { CharacterLayoutMode: CharacterLayoutMode.ThreeModels }];
+    (layout.layers as unknown as Record<string, unknown>).live2d = { layout_mode: "normal" };
+    (layout.controller as unknown as { layers: unknown }).layers = layout.layers;
+
+    await single_action(layout.controller, {
+      ...layout.action,
+      Action: SnippetAction.CharacterLayoutMode,
+      ReferenceIndex: 0
+    });
+    expect(layout.events.emit).toHaveBeenCalledWith(
+      "warn",
+      "CharacterLayoutMode/99 not implemented!"
+    );
+
+    await single_action(layout.controller, {
+      ...layout.action,
+      Action: SnippetAction.CharacterLayoutMode,
+      ReferenceIndex: 1
+    });
+    expect(
+      (layout.layers as unknown as { live2d: { layout_mode: string } }).live2d.layout_mode
+    ).toBe("three_models");
   });
 
   it("reports unknown effect types and unsupported top-level actions", async () => {

@@ -358,6 +358,10 @@ export class Live2DController extends Live2DPlayer {
           to_last_frame
         )
       );
+    } else {
+      const message = `${costume} model is not loaded; motion skipped.`;
+      this.logger.warn("Live2DController", message);
+      this.events.emit("warn", message);
     }
     await Promise.all(wait_list);
   };

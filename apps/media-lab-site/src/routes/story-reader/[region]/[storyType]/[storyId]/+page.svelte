@@ -128,6 +128,11 @@
         audioDownloadCancelled: translate("storyReader.textOnly.audio.downloadProgress.cancelled")
       }}
     />
+  {:else if data.readerStatus === "region-unavailable"}
+    <div class="alert alert-soft" role="status">
+      <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
+      <span>{translate("storyReader.state.regionUnavailable")}</span>
+    </div>
   {:else if data.readerStatus === "unavailable"}
     <div class="alert alert-soft alert-warning" role="alert">
       <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />

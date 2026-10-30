@@ -313,7 +313,7 @@ export const talkVoicePathCandidates = ({
     isActionSet ? "actionset" : "scenario"
   }/voice/${bundleName}/${voiceId}.mp3`;
   const candidates = [canonical];
-  if (voiceId.startsWith("partvoice") && !isActionSet && character?.assetName) {
+  if (voiceId.startsWith("partvoice") && character?.assetName) {
     candidates.push(...partVoicePathVariants(character.assetName, character.unit, voiceId));
   }
   return candidates;

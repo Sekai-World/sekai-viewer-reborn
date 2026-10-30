@@ -30,6 +30,44 @@ const XML_ENTITY_DECODINGS: Record<string, string> = {
 const decodeXmlEntities = (value: string): string =>
   value.replace(/&(amp|lt|gt);/g, (_, entity: string) => XML_ENTITY_DECODINGS[entity] ?? entity);
 
+const MAX_LISTING_PAGES = 10;
+
+/**
+ * Lists every object key directly under a bucket prefix via S3 listing,
+ * following continuation tokens. Returns null when the listing is
+ * unavailable or incomplete, so callers never treat "unknown" as "absent".
+ */
+const listBucketKeys = async (
+  regionBase: string,
+  regionBucket: string,
+  dirPath: string,
+  fetchFn: typeof fetch,
+  signal?: AbortSignal
+): Promise<string[] | null> => {
+  const keys: string[] = [];
+  let continuationToken: string | undefined;
+  try {
+    for (let page = 0; page < MAX_LISTING_PAGES; page += 1) {
+      const continuation = continuationToken
+        ? `&continuation-token=${encodeURIComponent(continuationToken)}`
+        : "";
+      const url = `${regionBase}/${regionBucket}/?delimiter=/&list-type=2&max-keys=1000&prefix=${encodeURIComponent(dirPath)}${continuation}`;
+      const response = await fetchFn(url, signal ? { signal } : undefined);
+      if (!response.ok) return null;
+      const xml = await response.text();
+      keys.push(...[...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) => decodeXmlEntities(m[1])));
+      const next = /<NextContinuationToken>([^<]+)<\/NextContinuationToken>/.exec(xml);
+      if (!xml.includes("<IsTruncated>true</IsTruncated>")) return keys;
+      // A truncated page without a token cannot be continued: incomplete.
+      if (!next) return null;
+      continuationToken = decodeXmlEntities(next[1]);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 /** Finds the first video file under a bucket prefix via S3 listing. */
 const searchVideoFile = async (
   regionBase: string,
@@ -38,17 +76,8 @@ const searchVideoFile = async (
   fetchFn: typeof fetch,
   signal?: AbortSignal
 ): Promise<string | null> => {
-  try {
-    const url = `${regionBase}/${regionBucket}/?delimiter=/&list-type=2&max-keys=500&prefix=${encodeURIComponent(dirPath)}`;
-    const response = await fetchFn(url, signal ? { signal } : undefined);
-    if (!response.ok) return null;
-    const xml = await response.text();
-    const keys = [...xml.matchAll(/<Key>([^<]+)<\/Key>/g)].map((m) => decodeXmlEntities(m[1]));
-    const videoFile = keys.find((key) => VIDEO_FILE_PATTERN.test(key));
-    return videoFile ?? null;
-  } catch {
-    return null;
-  }
+  const keys = await listBucketKeys(regionBase, regionBucket, dirPath, fetchFn, signal);
+  return keys?.find((key) => VIDEO_FILE_PATTERN.test(key)) ?? null;
 };
 
 export interface CollectStoryMediaOptions {
@@ -88,13 +117,50 @@ interface MediaCollectContext {
   signal?: AbortSignal;
   voiceCharacters: Map<number, StoryVoiceCharacter>;
   onWarning?: (reason: string) => void;
+  /** Bucket directory → its object keys (null when the listing failed). */
+  directoryListings: Map<string, Promise<ReadonlySet<string> | null>>;
 }
 
-const collectTalkVoices = (
-  talk: IScenarioData["TalkData"][number] | undefined,
-  voiceUrlFor: (voiceId: string, character2dId: number | undefined) => string,
+const listDirectory = (
+  context: MediaCollectContext,
+  dirPath: string
+): Promise<ReadonlySet<string> | null> => {
+  const cached = context.directoryListings.get(dirPath);
+  if (cached) return cached;
+  const listing = listBucketKeys(
+    context.regionBase,
+    context.regionBucket,
+    dirPath,
+    context.fetch,
+    context.signal
+  ).then((keys) => (keys ? new Set(keys) : null));
+  context.directoryListings.set(dirPath, listing);
+  return listing;
+};
+
+/**
+ * Picks the first voice candidate that exists in the bucket. Only called for
+ * part voices, which live outside the story's own voice bundle. When no
+ * listing confirms any candidate, the canonical path is kept so a genuinely
+ * missing file still fails loudly instead of being hidden.
+ */
+const resolveExistingVoicePath = async (
+  candidates: string[],
   context: MediaCollectContext
-): void => {
+): Promise<string> => {
+  const [canonical] = candidates;
+  for (const candidate of candidates) {
+    const files = await listDirectory(context, candidate.slice(0, candidate.lastIndexOf("/") + 1));
+    if (files?.has(candidate)) return candidate;
+  }
+  return canonical;
+};
+
+const collectTalkVoices = async (
+  talk: IScenarioData["TalkData"][number] | undefined,
+  voicePathFor: (voiceId: string, character2dId: number | undefined) => Promise<string>,
+  context: MediaCollectContext
+): Promise<void> => {
   if (!talk) return;
   const character2dId = talk.TalkCharacters[0]?.Character2dId;
   const character =
@@ -103,7 +169,7 @@ const collectTalkVoices = (
     context.push({
       identifier: v.VoiceId,
       type: Live2DAssetType.Talk,
-      path: voiceUrlFor(v.VoiceId, character2dId),
+      path: await voicePathFor(v.VoiceId, character2dId),
       ...(character2dId !== undefined ? { character2dId } : {}),
       ...(character?.assetName ? { character2dAssetName: character.assetName } : {}),
       ...(character?.unit ? { character2dUnit: character.unit } : {})
@@ -207,7 +273,10 @@ export const collectStoryMediaAssets = async (
 
   const voiceBundleName = scenarioIdToAssetbundleName(scenarioData.ScenarioId);
 
-  const voiceUrlFor = (voiceId: string, character2dId: number | undefined): string => {
+  const voicePathFor = async (
+    voiceId: string,
+    character2dId: number | undefined
+  ): Promise<string> => {
     const candidates = talkVoicePathCandidates({
       scenarioId: voiceBundleName,
       voiceId,
@@ -215,9 +284,11 @@ export const collectStoryMediaAssets = async (
       isActionSet,
       character: character2dId !== undefined ? voiceCharacters.get(character2dId) : undefined
     });
-    // The canonical path is what the mirror serves for normal voices;
-    // part-voice candidates are only useful at playback time, not preload.
-    return candidates[0];
+    // Normal voices are served from the canonical bundle with no probing;
+    // only part-voice ids carry fallback candidates that need a listing.
+    return candidates.length > 1
+      ? await resolveExistingVoicePath(candidates, context)
+      : candidates[0];
   };
 
   const context: MediaCollectContext = {
@@ -229,7 +300,8 @@ export const collectStoryMediaAssets = async (
     fetch: fetchFn,
     signal,
     voiceCharacters,
-    onWarning
+    onWarning,
+    directoryListings: new Map()
   };
 
   for (const snippet of scenarioData.Snippets) {
@@ -240,7 +312,11 @@ export const collectStoryMediaAssets = async (
     }
     switch (snippet.Action) {
       case SnippetAction.Talk:
-        collectTalkVoices(scenarioData.TalkData[snippet.ReferenceIndex], voiceUrlFor, context);
+        await collectTalkVoices(
+          scenarioData.TalkData[snippet.ReferenceIndex],
+          voicePathFor,
+          context
+        );
         break;
       case SnippetAction.SpecialEffect:
         await collectSpecialEffectMedia(

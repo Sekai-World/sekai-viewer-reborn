@@ -225,16 +225,31 @@ describe("talkVoicePathCandidates", () => {
     ).toEqual(["sound/card_scenario/voice/card_101/voice_1.mp3"]);
   });
 
-  it("routes action sets to the actionset pack without part-voice fallback", () => {
+  it("routes action sets to the actionset pack", () => {
     expect(
       talkVoicePathCandidates({
         scenarioId: "areatalk03_266",
-        voiceId: "partvoice_01",
+        voiceId: "voice_01",
         isCardStory: false,
         isActionSet: true,
         character: { assetName: "v2_01ichika", unit: "light_sound" }
       })
-    ).toEqual(["sound/actionset/voice/areatalk03_266/partvoice_01.mp3"]);
+    ).toEqual(["sound/actionset/voice/areatalk03_266/voice_01.mp3"]);
+  });
+
+  it("appends part-voice fallbacks to action set voices too", () => {
+    expect(
+      talkVoicePathCandidates({
+        scenarioId: "areatalk_3rdaniv_041",
+        voiceId: "partvoice_77_023_idol",
+        isCardStory: false,
+        isActionSet: true,
+        character: { assetName: "v2_23len", unit: "idol" }
+      })
+    ).toEqual([
+      "sound/actionset/voice/areatalk_3rdaniv_041/partvoice_77_023_idol.mp3",
+      "sound/scenario/voice/part_voice_v2_23len_idol/partvoice_77_023_idol.mp3"
+    ]);
   });
 
   it("appends part-voice fallbacks for partvoice ids with a known character", () => {

@@ -301,7 +301,10 @@ describe("createPixiStoryRuntime", () => {
       { step: 4, silent: false },
       { step: 0, silent: true }
     ]);
-    expect(controllerFixture.controller.stop_sounds).toHaveBeenCalledWith([Live2DAssetType.Talk]);
+    expect(controllerFixture.controller.stop_sounds).toHaveBeenCalledWith([
+      Live2DAssetType.Talk,
+      Live2DAssetType.SoundEffect
+    ]);
     expect(selected).toEqual([["choice"]]);
     expect(runtime.canGoBack).toBe(false);
 

@@ -154,6 +154,11 @@ describe("browser media adapters", () => {
     image.onerror?.();
 
     await expect(loading).rejects.toThrow("Failed to load image");
+    await expect(loading).rejects.toMatchObject({
+      name: "Live2DMediaLoadError",
+      kind: "image",
+      url: "https://assets.example.test/image.png"
+    });
     expect(image.onload).toBeNull();
     expect(image.onerror).toBeNull();
     adapter.release(resource);
@@ -321,6 +326,11 @@ describe("browser media adapters", () => {
     fixture.emit("loaderror");
 
     await expect(loading).rejects.toThrow("Failed to load sound");
+    await expect(loading).rejects.toMatchObject({
+      name: "Live2DMediaLoadError",
+      kind: "sound",
+      url: "https://assets.example.test/voice.ogg"
+    });
     expect(fixture.loadCalls).toBe(1);
     expect(fixture.listenerCount("load")).toBe(0);
     expect(fixture.listenerCount("loaderror")).toBe(0);

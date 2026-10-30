@@ -405,7 +405,9 @@ export const createPixiStoryRuntime = async (
         try {
           const target = checkpointHistory.at(-2);
           if (target === undefined) return "ready";
-          controller.stop_sounds([Live2DAssetType.Talk]);
+          // The silent replay skips every SE, so a looping SE started after the
+          // target checkpoint would otherwise keep playing after going back.
+          controller.stop_sounds([Live2DAssetType.Talk, Live2DAssetType.SoundEffect]);
           controller.animate.abort();
           let index = 0;
           while (index !== -1 && index !== target) {

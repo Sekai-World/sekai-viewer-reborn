@@ -6,6 +6,7 @@ const listEndpointMocks = vi.hoisted(() => ({
   getActionSetsByRegionList: vi.fn(),
   getCardEpisodesByRegionList: vi.fn(),
   getAreasByRegionList: vi.fn(),
+  getCardsByRegionById: vi.fn(),
   getCardsByRegionList: vi.fn(),
   getCharacter2DsByRegionList: vi.fn(),
   getCharacterProfilesByRegionList: vi.fn(),
@@ -28,6 +29,7 @@ import {
   fetchCardListPage,
   fetchEventListPage,
   fetchEventStoriesByEvent,
+  fetchStoryCardAssetbundleName,
   fetchStoryCharacterTables,
   fetchStoryCollection,
   fetchStoryCollections
@@ -271,6 +273,52 @@ describe("story master-data client", () => {
       baseUrl: "https://master.test/api/v1"
     });
     expect(result).toEqual([]);
+  });
+
+  it("reports which requested collections the region has not synced", async () => {
+    listEndpointMocks.getEventStoriesByRegionList.mockResolvedValue({
+      error: { body: { code: "REGION_DATA_NOT_READY" } },
+      response: new Response(null, { status: 503 })
+    });
+    listEndpointMocks.getEventsByRegionList.mockResolvedValue(okPage([{ id: 34, name: "E" }]));
+
+    const result = await fetchStoryCollections("cn", ["eventStories", "events"], {
+      baseUrl: "https://master.test/api/v1"
+    });
+    expect(result.eventStories).toEqual([]);
+    expect(result.unsyncedCollections).toEqual(["eventStories"]);
+  });
+
+  it("reports nothing unsynced for a synced region, even when a collection is empty", async () => {
+    listEndpointMocks.getEventStoriesByRegionList.mockResolvedValue(okPage([]));
+    const result = await fetchStoryCollections("jp", ["eventStories"], {
+      baseUrl: "https://master.test/api/v1"
+    });
+    expect(result.unsyncedCollections).toEqual([]);
+  });
+
+  it("re-checks an unsynced region after a minute instead of the full TTL", async () => {
+    let now = 1_000_000;
+    const options = {
+      baseUrl: "https://master.test/api/v1",
+      now: () => now,
+      ttlMs: 30 * 60 * 1000
+    };
+    listEndpointMocks.getSpecialStoriesByRegionList.mockResolvedValue({
+      error: { body: { code: "REGION_DATA_NOT_READY" } },
+      response: new Response(null, { status: 503 })
+    });
+
+    const first = await fetchStoryCollections("kr", ["specialStories"], options);
+    await fetchStoryCollections("kr", ["specialStories"], options);
+    expect(first.unsyncedCollections).toEqual(["specialStories"]);
+    expect(listEndpointMocks.getSpecialStoriesByRegionList).toHaveBeenCalledTimes(1);
+
+    now += 61 * 1000;
+    listEndpointMocks.getSpecialStoriesByRegionList.mockResolvedValue(okPage([]));
+    const second = await fetchStoryCollections("kr", ["specialStories"], options);
+    expect(listEndpointMocks.getSpecialStoriesByRegionList).toHaveBeenCalledTimes(2);
+    expect(second.unsyncedCollections).toEqual([]);
   });
 
   it("throws for other endpoint failures", async () => {
@@ -747,5 +795,65 @@ describe("fetchCardEpisodesByCardIds", () => {
       baseUrl: "https://master.test/api/v1"
     });
     expect(episodes).toEqual([]);
+  });
+});
+
+describe("fetchStoryCardAssetbundleName", () => {
+  const options = { baseUrl: "https://master.test/api/v1" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reads the bundle name of one card in the requested region", async () => {
+    listEndpointMocks.getCardsByRegionById.mockResolvedValue({
+      data: { id: 50, assetbundleName: "res013_no002" },
+      response: new Response(null, { status: 200 })
+    });
+    expect(await fetchStoryCardAssetbundleName("tw", 50, options)).toEqual({
+      status: "ok",
+      assetbundleName: "res013_no002"
+    });
+    expect(listEndpointMocks.getCardsByRegionById).toHaveBeenCalledWith(
+      expect.objectContaining({ path: { region: "tw", id: "50" } })
+    );
+  });
+
+  it("tells a missing card apart from an unsynced region", async () => {
+    listEndpointMocks.getCardsByRegionById.mockResolvedValue({
+      error: {},
+      response: new Response(null, { status: 404 })
+    });
+    expect(await fetchStoryCardAssetbundleName("kr", 50, options)).toEqual({
+      status: "not-found"
+    });
+
+    listEndpointMocks.getCardsByRegionById.mockResolvedValue({
+      error: {},
+      response: new Response(null, { status: 503 })
+    });
+    expect(await fetchStoryCardAssetbundleName("kr", 50, options)).toEqual({
+      status: "unsynced"
+    });
+  });
+
+  it("reports not-found when the card carries no bundle name", async () => {
+    listEndpointMocks.getCardsByRegionById.mockResolvedValue({
+      data: { id: 50 },
+      response: new Response(null, { status: 200 })
+    });
+    expect(await fetchStoryCardAssetbundleName("cn", 50, options)).toEqual({
+      status: "not-found"
+    });
+  });
+
+  it("throws on other failures so they surface as a data service error", async () => {
+    listEndpointMocks.getCardsByRegionById.mockResolvedValue({
+      error: {},
+      response: new Response(null, { status: 500 })
+    });
+    await expect(fetchStoryCardAssetbundleName("tw", 50, options)).rejects.toThrow(
+      /card 50 \(500\)/
+    );
   });
 });

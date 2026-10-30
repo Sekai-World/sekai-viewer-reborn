@@ -2,6 +2,7 @@ import { SEKAI_MASTER_API_BASE_URL } from "$app/env/private";
 import {
   getActionSetsByRegionList,
   getCardEpisodesByRegionList,
+  getCardsByRegionById,
   getAreasByRegionList,
   getCardsByRegionList,
   getCharacter2DsByRegionList,
@@ -59,6 +60,8 @@ export type StoryCollectionName =
   | "subGameCharacters";
 
 const DEFAULT_TTL_MS = 30 * 60 * 1000;
+/** Region data that has not synced yet is re-checked soon, not after 30 minutes. */
+const UNSYNCED_TTL_MS = 60 * 1000;
 const MAX_CACHE_ENTRIES = 64;
 const PAGE_SIZE = 100;
 const MAX_PAGES = 100;
@@ -66,6 +69,8 @@ const MAX_PAGES = 100;
 interface CacheEntry {
   value: unknown;
   expiresAt: number;
+  /** The region reported its master data for this collection as not synced. */
+  unsynced: boolean;
 }
 
 const cache = new Map<string, CacheEntry>();
@@ -377,14 +382,15 @@ const resolveApiBaseUrl = (options: StoryMasterDataClientOptions): string => {
 /**
  * Reads one collection through its paginated list endpoint. A region whose
  * master data does not include the entity yet resolves to an empty array
- * (regional rollouts happen at different times); any other failure throws.
+ * flagged `unsynced` (regional rollouts happen at different times); any other
+ * failure throws.
  */
 const listCollection = async (
   region: StoryRouteRegion,
   name: StoryCollectionName,
   fetcher: typeof fetch,
   baseUrl: string
-): Promise<unknown[]> => {
+): Promise<{ rows: unknown[]; unsynced: boolean }> => {
   const endpoint = storyListEndpoints[name];
   const rows: unknown[] = [];
 
@@ -399,7 +405,7 @@ const listCollection = async (
       const status = response.response?.status ?? 0;
       // Region data not synced for this entity — mirrors the previous
       // "collection missing on a regional mirror" tolerance.
-      if (status === 503) return [];
+      if (status === 503) return { rows: [], unsynced: true };
       throw new Error(`Failed to fetch story master data ${name} (${status || "unknown error"})`);
     }
 
@@ -408,7 +414,33 @@ const listCollection = async (
     if (response.data.pagination?.has_next !== true) break;
   }
 
-  return rows;
+  return { rows, unsynced: false };
+};
+
+const loadCollection = async <T>(
+  region: StoryRouteRegion,
+  name: StoryCollectionName,
+  options: StoryMasterDataClientOptions
+): Promise<{ value: T; unsynced: boolean }> => {
+  const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
+  const now = options.now ?? Date.now;
+  const key = cacheKey(region, name);
+  const cached = cache.get(key);
+  if (cached && cached.expiresAt > now()) {
+    return { value: cached.value as T, unsynced: cached.unsynced };
+  }
+
+  const fetcher = options.fetch ?? fetch;
+  const baseUrl = resolveApiBaseUrl(options);
+  const { rows, unsynced } = await listCollection(region, name, fetcher, baseUrl);
+  const parsed = collectionParsers[name](rows) as T;
+  evictIfNeeded(now());
+  cache.set(key, {
+    value: parsed,
+    expiresAt: now() + (unsynced ? Math.min(ttlMs, UNSYNCED_TTL_MS) : ttlMs),
+    unsynced
+  });
+  return { value: parsed, unsynced };
 };
 
 /**
@@ -419,28 +451,24 @@ export const fetchStoryCollection = async <T = unknown>(
   region: StoryRouteRegion,
   name: StoryCollectionName,
   options: StoryMasterDataClientOptions = {}
-): Promise<T> => {
-  const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
-  const now = options.now ?? Date.now;
-  const key = cacheKey(region, name);
-  const cached = cache.get(key);
-  if (cached && cached.expiresAt > now()) return cached.value as T;
+): Promise<T> => (await loadCollection<T>(region, name, options)).value;
 
-  const fetcher = options.fetch ?? fetch;
-  const baseUrl = resolveApiBaseUrl(options);
-  const rows = await listCollection(region, name, fetcher, baseUrl);
-  const parsed = collectionParsers[name](rows) as T;
-  evictIfNeeded(now());
-  cache.set(key, { value: parsed, expiresAt: now() + ttlMs });
-  return parsed;
-};
-
-/** Fetches the typed collections needed to resolve stories for a region. */
+/**
+ * Fetches the typed collections needed to resolve stories for a region.
+ * `unsyncedCollections` lists the requested collections the region has not
+ * synced yet, so callers can tell "region has no data" from "no such story".
+ */
 export const fetchStoryCollections = async (
   region: StoryRouteRegion,
   names: readonly StoryCollectionName[],
   options: StoryMasterDataClientOptions = {}
 ): Promise<StoryMasterCollections> => {
+  const unsyncedCollections: StoryCollectionName[] = [];
+  const load = async <T>(name: StoryCollectionName): Promise<T> => {
+    const { value, unsynced } = await loadCollection<T>(region, name, options);
+    if (unsynced) unsyncedCollections.push(name);
+    return value;
+  };
   const [
     unitStories,
     unitProfiles,
@@ -455,41 +483,25 @@ export const fetchStoryCollections = async (
     actionSets,
     specialStories
   ] = await Promise.all([
-    names.includes("unitStories")
-      ? fetchStoryCollection<StoryUnitStory[]>(region, "unitStories", options)
-      : Promise.resolve([]),
-    names.includes("unitProfiles")
-      ? fetchStoryCollection<StoryUnitProfile[]>(region, "unitProfiles", options)
-      : Promise.resolve([]),
+    names.includes("unitStories") ? load<StoryUnitStory[]>("unitStories") : Promise.resolve([]),
+    names.includes("unitProfiles") ? load<StoryUnitProfile[]>("unitProfiles") : Promise.resolve([]),
     names.includes("unitStoryEpisodeGroups")
-      ? fetchStoryCollection<StoryUnitEpisodeGroup[]>(region, "unitStoryEpisodeGroups", options)
+      ? load<StoryUnitEpisodeGroup[]>("unitStoryEpisodeGroups")
       : Promise.resolve([]),
-    names.includes("eventStories")
-      ? fetchStoryCollection<StoryEventStory[]>(region, "eventStories", options)
-      : Promise.resolve([]),
-    names.includes("events")
-      ? fetchStoryCollection<StoryEvent[]>(region, "events", options)
-      : Promise.resolve([]),
+    names.includes("eventStories") ? load<StoryEventStory[]>("eventStories") : Promise.resolve([]),
+    names.includes("events") ? load<StoryEvent[]>("events") : Promise.resolve([]),
     names.includes("characterProfiles")
-      ? fetchStoryCollection<StoryCharacterProfile[]>(region, "characterProfiles", options)
+      ? load<StoryCharacterProfile[]>("characterProfiles")
       : Promise.resolve([]),
-    names.includes("cardEpisodes")
-      ? fetchStoryCollection<StoryCardEpisode[]>(region, "cardEpisodes", options)
-      : Promise.resolve([]),
-    names.includes("cards")
-      ? fetchStoryCollection<StoryCardSummary[]>(region, "cards", options)
-      : Promise.resolve([]),
+    names.includes("cardEpisodes") ? load<StoryCardEpisode[]>("cardEpisodes") : Promise.resolve([]),
+    names.includes("cards") ? load<StoryCardSummary[]>("cards") : Promise.resolve([]),
     names.includes("gameCharacters")
-      ? fetchStoryCollection<StoryGameCharacter[]>(region, "gameCharacters", options)
+      ? load<StoryGameCharacter[]>("gameCharacters")
       : Promise.resolve([]),
-    names.includes("areas")
-      ? fetchStoryCollection<StoryArea[]>(region, "areas", options)
-      : Promise.resolve([]),
-    names.includes("actionSets")
-      ? fetchStoryCollection<StoryActionSet[]>(region, "actionSets", options)
-      : Promise.resolve([]),
+    names.includes("areas") ? load<StoryArea[]>("areas") : Promise.resolve([]),
+    names.includes("actionSets") ? load<StoryActionSet[]>("actionSets") : Promise.resolve([]),
     names.includes("specialStories")
-      ? fetchStoryCollection<StorySpecialStory[]>(region, "specialStories", options)
+      ? load<StorySpecialStory[]>("specialStories")
       : Promise.resolve([])
   ]);
   return {
@@ -504,7 +516,8 @@ export const fetchStoryCollections = async (
     gameCharacters,
     areas,
     actionSets,
-    specialStories
+    specialStories,
+    unsyncedCollections
   };
 };
 
@@ -727,6 +740,39 @@ export const fetchCardEpisodesByCardIds = async (
   }
   const rows = Array.isArray(response.data.items) ? response.data.items : [];
   return collectionParsers.cardEpisodes(rows) as StoryCardEpisode[];
+};
+
+/**
+ * Looks up one card's asset bundle name in its own region. Regions other than
+ * jp ship card episodes without an `assetbundleName`; the card story scenario
+ * lives under the card's bundle. Not cached: a single small request. Tells
+ * "no such card / no bundle name" apart from "region has not synced cards".
+ */
+export type StoryCardAssetbundleLookup =
+  { status: "ok"; assetbundleName: string } | { status: "not-found" } | { status: "unsynced" };
+
+export const fetchStoryCardAssetbundleName = async (
+  region: StoryRouteRegion,
+  cardId: number,
+  options: StoryMasterDataClientOptions = {}
+): Promise<StoryCardAssetbundleLookup> => {
+  const fetcher = options.fetch ?? fetch;
+  const baseUrl = resolveApiBaseUrl(options);
+  const response = await getCardsByRegionById({
+    baseUrl,
+    fetch: fetcher,
+    path: { region, id: String(cardId) }
+  });
+  if (response.error || !response.data) {
+    const status = response.response?.status ?? 0;
+    if (status === 404) return { status: "not-found" };
+    if (status === 503) return { status: "unsynced" };
+    throw new Error(`Failed to fetch card ${cardId} (${status || "unknown error"})`);
+  }
+  const assetbundleName = asOptionalString(
+    (response.data as Record<string, unknown>).assetbundleName
+  );
+  return assetbundleName ? { status: "ok", assetbundleName } : { status: "not-found" };
 };
 
 /** Fetches the character identity tables used for names and part voices. */

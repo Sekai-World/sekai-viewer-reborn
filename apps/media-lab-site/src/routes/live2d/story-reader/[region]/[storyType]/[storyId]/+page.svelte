@@ -112,6 +112,7 @@
           seVolume: translate("storyReader.player.controls.seVolume"),
           loading: translate("storyReader.player.loading.label"),
           loadFailed: translate("storyReader.player.loading.failed"),
+          loadFailedMediaMissing: translate("storyReader.player.loading.mediaMissing"),
           retry: translate("storyReader.player.loading.retry"),
           reload: translate("storyReader.player.controls.reload"),
           statusPlaying: translate("storyReader.player.status.playing"),
@@ -160,6 +161,11 @@
         {/if}
       </nav>
     {/if}
+  {:else if data.readerStatus === "region-unavailable"}
+    <div class="alert alert-soft" role="status">
+      <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />
+      <span>{translate("storyReader.state.regionUnavailable")}</span>
+    </div>
   {:else if data.readerStatus === "unavailable"}
     <div class="alert alert-soft alert-warning" role="alert">
       <Icon icon="mdi:alert-circle-outline" class="size-5 shrink-0" aria-hidden="true" />

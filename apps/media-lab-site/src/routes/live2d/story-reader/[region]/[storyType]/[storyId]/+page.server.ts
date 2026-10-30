@@ -1,10 +1,8 @@
-import { error } from "@sveltejs/kit";
-import { parseStoryRouteParams } from "#lib/live2d/story-route.js";
 import {
   fetchStoryCharactersOrEmpty,
-  getStoryAssetBase,
-  resolveStoryRoute
+  getStoryAssetBase
 } from "#lib/story/story-resolver.server.js";
+import { resolveStoryPage } from "#lib/story/story-page-load.server.js";
 import { createStoryDocumentReference } from "#lib/story/story-document.server.js";
 import type { PageServerLoad } from "./$types";
 
@@ -14,29 +12,9 @@ import type { PageServerLoad } from "./$types";
  * loaded by the browser adapter after the user starts playback.
  */
 export const load: PageServerLoad = async ({ params, fetch, url }) => {
-  const parsed = parseStoryRouteParams(params);
-  if (parsed.status !== "ok") {
-    error(404, "Story route not found");
-  }
-  const identity = parsed.identity;
-
-  const resolved = await resolveStoryRoute(identity, fetch, url.origin);
-  if (resolved.status === "not-found") {
-    error(404, "Story not found");
-  }
-  if (resolved.status === "master-data-error") {
-    return {
-      identity,
-      readerStatus: "unavailable" as const
-    };
-  }
-  if (resolved.status === "unsupported") {
-    return {
-      identity,
-      readerStatus: "unsupported-story" as const,
-      reason: resolved.reason
-    };
-  }
+  const page = await resolveStoryPage(params, fetch, url.origin);
+  if (!page.ready) return page.page;
+  const { identity } = page;
 
   const characters = await fetchStoryCharactersOrEmpty(identity.region, fetch);
   const voiceCharacters = characters.character2ds.map((character2d) => ({
@@ -46,7 +24,7 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
   }));
   const storyDocument = createStoryDocumentReference({
     identity,
-    resolution: resolved.value.resolution,
+    resolution: page.value.resolution,
     assetBase: getStoryAssetBase(),
     voiceCharacters
   });
@@ -56,6 +34,6 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
     readerStatus: "ok" as const,
     story: storyDocument.story,
     storyDocument,
-    neighbors: resolved.value.neighbors
+    neighbors: page.value.neighbors
   };
 };

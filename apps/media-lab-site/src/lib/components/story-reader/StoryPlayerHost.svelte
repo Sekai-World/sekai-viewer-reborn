@@ -6,6 +6,10 @@
     StoryPlayerSession,
     StoryPlayerSessionState
   } from "#lib/story/story-player-session.js";
+  import {
+    classifyStoryLoadFailure,
+    type StoryLoadFailureKind
+  } from "#lib/story/story-load-failure.js";
   import { deriveStoryPlayerStatus } from "#lib/story/story-player-status.js";
 
   /**
@@ -35,6 +39,7 @@
       seVolume: string;
       loading: string;
       loadFailed: string;
+      loadFailedMediaMissing: string;
       retry: string;
       reload: string;
       statusPlaying: string;
@@ -58,6 +63,8 @@
   let session: StoryPlayerSession | null = $state.raw(null);
   let playerState = $state<StoryPlayerSessionState>("loading");
   let loadFailed = $state(false);
+  let loadFailureKind = $state<StoryLoadFailureKind>("failed");
+  let failureSerial = 0;
   // Loading is opt-in: the stage shows "Click to load" until the user asks
   // for it, so a story only downloads its assets when actually opened.
   let loadStarted = $state(false);
@@ -95,6 +102,8 @@
   };
 
   const pushWarning = (reason: string): void => {
+    // Warnings are keyed by text in the list; a repeat adds no information.
+    if (warnings.includes(reason)) return;
     warnings = [...warnings.slice(-9), reason];
   };
 
@@ -176,8 +185,16 @@
       if (destroyed) return;
       console.error("story player failed to mount", error);
       loadFailed = true;
+      loadFailureKind = "failed";
       playerState = "error";
       scenarioProgress = null;
+      // A confirmed-missing media file is final; retrying cannot fix it. A
+      // probe that outlives a retry must not label the newer failure.
+      failureSerial += 1;
+      const serial = failureSerial;
+      void classifyStoryLoadFailure(error).then((kind) => {
+        if (!destroyed && loadFailed && serial === failureSerial) loadFailureKind = kind;
+      });
     };
 
     const mount = async (): Promise<void> => {
@@ -233,6 +250,8 @@
           if (destroyed || instance !== activeInstance) return;
           playerState = state;
           loadFailed = state === "error";
+          // Leaving the error state makes any in-flight failure probe stale.
+          if (state !== "error") failureSerial += 1;
         });
         observer = new ResizeObserver(() => {
           if (destroyed || !stageHost || instance !== activeInstance) return;
@@ -256,6 +275,8 @@
       if (instance) {
         if (instance.state !== "error") return;
         loadFailed = false;
+        failureSerial += 1;
+        loadFailureKind = "failed";
         scenarioProgress = null;
         void instance.retry().catch(reportLoadFailure);
         return;
@@ -263,6 +284,8 @@
       if (loadStarted && !loadFailed) return;
       loadStarted = true;
       loadFailed = false;
+      failureSerial += 1;
+      loadFailureKind = "failed";
       playerState = "loading";
       scenarioProgress = null;
       loadBuckets = {};
@@ -523,16 +546,20 @@
         <div class="flex flex-col items-center gap-3 px-6 text-center">
           <p class="flex items-center gap-2 text-sm" role="alert">
             <Icon icon="mdi:alert-circle-outline" class="size-5" aria-hidden="true" />
-            {labels.loadFailed}
+            {loadFailureKind === "media-missing"
+              ? labels.loadFailedMediaMissing
+              : labels.loadFailed}
           </p>
-          <button
-            type="button"
-            class="btn btn-sm btn-outline touch-target border-white/40 text-white hover:border-white hover:bg-white/10 hover:text-white"
-            onclick={() => startLoading()}
-          >
-            <Icon icon="mdi:reload" class="size-4" aria-hidden="true" />
-            {labels.retry}
-          </button>
+          {#if loadFailureKind !== "media-missing"}
+            <button
+              type="button"
+              class="btn btn-sm btn-outline touch-target border-white/40 text-white hover:border-white hover:bg-white/10 hover:text-white"
+              onclick={() => startLoading()}
+            >
+              <Icon icon="mdi:reload" class="size-4" aria-hidden="true" />
+              {labels.retry}
+            </button>
+          {/if}
         </div>
       </div>
     {:else if portraitGate}

@@ -100,14 +100,9 @@ export default async function action_se(controller: Live2DController, action: Sn
     await effectAction(controller, action);
     return;
   }
-  controller.logger.warn(
-    "Live2DController",
-    `${SnippetAction[action.Action]}/${SpecialEffectType[action_detail.EffectType]} not implemented!`,
-    action,
-    action_detail
-  );
-  controller.events.emit(
-    "warn",
-    `${SnippetAction[action.Action]}/${SpecialEffectType[action_detail.EffectType]} not implemented!`
-  );
+  const message = `${SnippetAction[action.Action]}/${
+    SpecialEffectType[action_detail.EffectType] ?? `#${action_detail.EffectType}`
+  } not implemented!`;
+  controller.logger.warn("Live2DController", message, action, action_detail);
+  controller.events.emit("warn", message);
 }

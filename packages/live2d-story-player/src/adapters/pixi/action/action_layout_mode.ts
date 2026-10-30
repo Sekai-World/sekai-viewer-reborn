@@ -13,5 +13,10 @@ export default async function action_layout_mode(controller: Live2DController, a
     case CharacterLayoutMode.ThreeModels:
       controller.layers.live2d.layout_mode = "three_models";
       break;
+    default: {
+      const message = `CharacterLayoutMode/${String(action_detail.CharacterLayoutMode)} not implemented!`;
+      controller.logger.warn("Live2DController", message, action, action_detail);
+      controller.events.emit("warn", message);
+    }
   }
 }

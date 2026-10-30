@@ -548,12 +548,8 @@ describe("Live2D engine parity", () => {
     const unknown = createSnippet(255 as SnippetAction);
     await single_action(controller, unknown);
 
-    expect(log.warn).toHaveBeenCalledWith(
-      "Live2DController",
-      "undefined not implemented!",
-      unknown
-    );
-    expect(warnings).toEqual(["undefined not implemented!"]);
+    expect(log.warn).toHaveBeenCalledWith("Live2DController", "#255 not implemented!", unknown);
+    expect(warnings).toEqual(["#255 not implemented!"]);
   });
 
   it("routes engine warnings through the injected logger", async () => {
@@ -569,16 +565,8 @@ describe("Live2D engine parity", () => {
 
     await single_action(controller, unknown);
 
-    expect(logger.warn).toHaveBeenCalledWith(
-      "Live2DController",
-      "undefined not implemented!",
-      unknown
-    );
-    expect(log.warn).not.toHaveBeenCalledWith(
-      "Live2DController",
-      "undefined not implemented!",
-      unknown
-    );
+    expect(logger.warn).toHaveBeenCalledWith("Live2DController", "#255 not implemented!", unknown);
+    expect(log.warn).not.toHaveBeenCalledWith("Live2DController", "#255 not implemented!", unknown);
   });
 
   it("multiplies scenario gain by channel settings and halves the configured BGM level", async () => {
