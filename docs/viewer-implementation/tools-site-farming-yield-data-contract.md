@@ -211,8 +211,11 @@ These stay blocked and are not treated as implementation-ready:
   event-point metrics above as the `/music-recommender` page, with manual deck
   inputs, the provenance display, and the explicit source selector. It adds no
   other modes or regions. The page shows the content hash as `sha256:<revision>`.
-- #382 (cumulative planning) stays blocked until #381 delivers its single-song
-  figures and duration/energy semantics are defined.
+- #382 (cumulative planning) may plan only score and event-point targets from
+  these per-live figures, as described in
+  [`tools-site-target-planner.md`](tools-site-target-planner.md). Its energy and
+  time objectives stay blocked until duration and energy semantics are defined
+  (#540).
 - #380 remains the gate for any mode other than JP Solo.
 
 ## Decisions and Open Items

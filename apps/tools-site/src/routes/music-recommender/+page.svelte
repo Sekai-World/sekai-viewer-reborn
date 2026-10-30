@@ -4,6 +4,7 @@
   import Icon from "@iconify/svelte";
   import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
   import type { PageProps } from "./$types";
+  import TargetPlanPanel from "./TargetPlanPanel.svelte";
 
   type PageData = PageProps["data"];
   type SourceId = NonNullable<PageData["source"]>["id"];
@@ -210,13 +211,8 @@
     }
   }
 
-  function submitControls(event: SubmitEvent): void {
-    event.preventDefault();
-    hasTouchedDeckPower = true;
-    hasSubmittedInvalidForm = hasInvalidInputs;
-    if (hasInvalidInputs) return;
-    hasSubmittedInvalidForm = false;
-    void reloadWithQuery({
+  function deckQuery(): Record<string, string> {
+    return {
       source,
       metric,
       mode: "jp-solo",
@@ -225,7 +221,26 @@
       boostMultiplier,
       skillRates: noSkill ? "" : skillRates.join(","),
       noSkill: String(noSkill)
-    });
+    };
+  }
+
+  function submitControls(event: SubmitEvent): void {
+    event.preventDefault();
+    hasTouchedDeckPower = true;
+    hasSubmittedInvalidForm = hasInvalidInputs;
+    if (hasInvalidInputs) return;
+    hasSubmittedInvalidForm = false;
+    void reloadWithQuery(deckQuery());
+  }
+
+  /** A plan is made for the deck as currently entered, so invalid deck settings block it. */
+  function submitPlan(planParams: Record<string, string>): boolean {
+    hasTouchedDeckPower = true;
+    hasSubmittedInvalidForm = hasInvalidInputs;
+    if (hasInvalidInputs) return false;
+    hasSubmittedInvalidForm = false;
+    void reloadWithQuery({ ...deckQuery(), ...planParams });
+    return true;
   }
 
   function resetInputs(): void {
@@ -540,6 +555,17 @@
       {/if}
     </section>
   </div>
+
+  <TargetPlanPanel
+    plan={data.plan}
+    {metric}
+    {sourceLabel}
+    {formulaVersion}
+    busy={isSubmitting}
+    {translate}
+    {formatNumber}
+    onSubmit={submitPlan}
+  />
 
   <section class="provenance-panel" aria-labelledby="provenance-heading">
     <div class="provenance-heading">
