@@ -6,19 +6,6 @@ import { createHash } from "node:crypto";
  * Validation fails closed: one malformed record invalidates the whole source.
  */
 
-export const MUSIC_META_SOURCES = {
-  selfHosted: {
-    id: "self-hosted",
-    url: "https://storage.sekai.best/sekai-best-assets/music_metas.json"
-  },
-  moesekai: {
-    id: "moesekai",
-    url: "https://moe.exmeaning.com/data/music_meta/music_metas.json"
-  }
-} as const;
-
-export type MusicMetasSourceId = (typeof MUSIC_META_SOURCES)[keyof typeof MUSIC_META_SOURCES]["id"];
-
 export const MUSIC_META_DIFFICULTIES = [
   "easy",
   "normal",

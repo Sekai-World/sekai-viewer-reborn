@@ -33,8 +33,10 @@ only as recorded in the validation document.
 - Results must show which source, URL, and revision supplied them.
 - Source selection belongs to #381's UI, not Tracker.
 
-The URLs and ids are constants in
-`apps/tools-site/src/lib/server/music-metas.ts` (`MUSIC_META_SOURCES`).
+The source ids and URLs are the `MUSIC_META_SOURCES` constants in
+`apps/tools-site/src/lib/music-recommender.ts`: `sekai-best` (the self-hosted
+default) and `moesekai`. The `source` query parameter of `/music-recommender`
+selects one; an unknown value is rejected, never replaced by the default.
 
 ## Scope
 
@@ -140,6 +142,7 @@ own.
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | Fetch failed, timed out, or non-2xx     | Source unavailable. Show it as unavailable; do not switch sources. Caching is decided in #381.                   |
 | Payload invalid (`parseMusicMetas`)     | Source invalid. Show no yield figures.                                                                           |
+| Fewer than 3,727 records                | Source incomplete (treated as truncated). Show no yield figures. Additions above the floor are accepted.         |
 | No record for the song and difficulty   | That song is "data unavailable". Never use zero, a neighbouring difficulty, or a value inferred from note count. |
 | A manual deck input is missing/invalid  | The metric for that input is unavailable. No default is substituted.                                             |
 | Region other than `jp`, or another mode | Unsupported. Show no figures.                                                                                    |
@@ -204,9 +207,10 @@ These stay blocked and are not treated as implementation-ready:
 
 ## Dependencies
 
-- #381 (single-song recommendations) may implement only the JP Solo score and
-  event-point metrics above, with manual deck inputs, the provenance display, and
-  the explicit source selector. It must not add other modes or regions.
+- #381 (single-song recommendations) implements only the JP Solo score and
+  event-point metrics above as the `/music-recommender` page, with manual deck
+  inputs, the provenance display, and the explicit source selector. It adds no
+  other modes or regions. The page shows the content hash as `sha256:<revision>`.
 - #382 (cumulative planning) stays blocked until #381 delivers its single-song
   figures and duration/energy semantics are defined.
 - #380 remains the gate for any mode other than JP Solo.
