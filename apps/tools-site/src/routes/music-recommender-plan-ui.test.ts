@@ -275,6 +275,22 @@ describe("target plan panel results", () => {
     expect(section.getByText(/Energy and time are not part of the plan/)).toBeTruthy();
   });
 
+  it("labels a finished plan with the metric it was calculated for", () => {
+    // The recommender is now showing score, but this plan was made for event points.
+    renderPage({ ...createPageData(readyPlan()), metric: "score" });
+
+    const summary = planSection().querySelector("dl.plan-summary") as HTMLElement;
+    expect(within(summary).getByText("Total event points").nextElementSibling?.textContent).toBe(
+      "10,200"
+    );
+    expect(within(summary).getByText("Total score").nextElementSibling?.textContent).toBe(
+      "130,000,000"
+    );
+    expect(within(summary).getByText("Target total event points")).toBeTruthy();
+    // The form still follows the metric chosen for the recommendations.
+    expect(screen.getByLabelText("Target total score")).toBeTruthy();
+  });
+
   it("describes the least-overshoot guarantee", () => {
     const plan = readyPlan();
     if (plan.status !== "ready") throw new Error("fixture");

@@ -9,9 +9,10 @@
   import type { PageProps } from "./$types";
 
   type PageData = PageProps["data"];
+  type Metric = PageData["metric"];
   type Props = {
     plan: PageData["plan"];
-    metric: PageData["metric"];
+    metric: Metric;
     sourceLabel: string;
     formulaVersion: string;
     busy: boolean;
@@ -97,19 +98,21 @@
     Boolean(errors.target || errors.maxPlays || errors.difficulties || errors.required)
   );
 
-  const metricLabel = $derived(
-    translate(
-      metric === "score"
+  function labelFor(target: Metric): string {
+    return translate(
+      target === "score"
         ? "musicRecommender.planMetricScore"
         : "musicRecommender.planMetricEventPoints"
-    )
-  );
-  const otherMetricLabel = $derived(
-    translate(
-      metric === "score"
-        ? "musicRecommender.planMetricEventPoints"
-        : "musicRecommender.planMetricScore"
-    )
+    );
+  }
+
+  // The form follows the metric chosen for the recommendations; a finished plan describes the
+  // metric it was calculated for, even if the selection has changed since.
+  const metricLabel = $derived(labelFor(metric));
+  const resultMetric = $derived<Metric>(plan.status === "ready" ? plan.plan.metric : metric);
+  const resultMetricLabel = $derived(labelFor(resultMetric));
+  const otherResultMetricLabel = $derived(
+    labelFor(resultMetric === "score" ? "eventPoints" : "score")
   );
 
   function submit(event: SubmitEvent): void {
@@ -313,11 +316,11 @@
             <dd>{formatNumber(plan.plan.plays)}</dd>
           </div>
           <div>
-            <dt>{interpolate("musicRecommender.planTarget", { metric: metricLabel })}</dt>
+            <dt>{interpolate("musicRecommender.planTarget", { metric: resultMetricLabel })}</dt>
             <dd>{formatNumber(plan.plan.target)}</dd>
           </div>
           <div>
-            <dt>{interpolate("musicRecommender.planTotal", { metric: metricLabel })}</dt>
+            <dt>{interpolate("musicRecommender.planTotal", { metric: resultMetricLabel })}</dt>
             <dd>{formatNumber(plan.plan.total)}</dd>
           </div>
           <div>
@@ -325,10 +328,10 @@
             <dd>{formatNumber(plan.plan.overshoot)}</dd>
           </div>
           <div>
-            <dt>{interpolate("musicRecommender.planTotal", { metric: otherMetricLabel })}</dt>
+            <dt>{interpolate("musicRecommender.planTotal", { metric: otherResultMetricLabel })}</dt>
             <dd>
               {formatNumber(
-                metric === "score" ? plan.plan.totals.eventPoints : plan.plan.totals.score
+                plan.plan.metric === "score" ? plan.plan.totals.eventPoints : plan.plan.totals.score
               )}
             </dd>
           </div>
