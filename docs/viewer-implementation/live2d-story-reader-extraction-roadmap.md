@@ -690,9 +690,10 @@ second monolith.
   routes (404), a missing scenario file, responsive widths (390 and 1280), and
   route changes. It does not render a real Live2D model, so model motion,
   transitions, movies, filters, telop and full-screen text are still unchecked
-  in a browser. The dev server (`vite dev`) fails to start on a fresh install
-  with SvelteKit 3.1.0 (dependency optimization error), which is why the suite
-  uses a production build.
+  in a browser. The suite builds and serves the production adapter-node bundle
+  rather than `vite dev`, so it exercises what is deployed. Run
+  `svelte-kit sync` in every app on a fresh worktree first, or Vite fails with a
+  misleading `Could not resolve 'node:module'` dependency-optimization error.
 - Add audio checks for voice volume, BGM cross-fade, SE loop/stop, and lip sync.
 - Compare the legacy React page and media-lab output until representative parity
   is reached. Unsupported actions/effects remain explicit warnings.
