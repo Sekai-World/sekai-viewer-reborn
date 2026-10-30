@@ -1,6 +1,7 @@
 import type { Live2DController } from "../Live2DController.js";
 import type { Snippet } from "../../../model/scenario-types.js";
 import { Live2DAssetType } from "../player-types.js";
+import { setSoundGain } from "../audio-volume.js";
 
 type PromiseOutcome = { status: "fulfilled" } | { status: "rejected"; reason: unknown };
 
@@ -60,6 +61,7 @@ export default async function action_talk(controller: Live2DController, action: 
       const costumes = action_detail.TalkCharacters.map((c) =>
         controller.live2d_get_costume(c.Character2dId)
       ).filter((i) => i !== undefined);
+      setSoundGain(sound.data, action_detail.Voices[0].Volume);
       const volume = action_detail.Voices[0].Volume * controller.settings.voice_volume;
       if (costumes.length > 0 && action_detail.LipSync == 1) {
         controller.layers.live2d.speak(costumes, sound.data, volume);

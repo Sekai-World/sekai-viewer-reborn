@@ -22,6 +22,9 @@ import type { StoryPlayerRuntime } from "../../core/story-player.js";
 import type { PixiStoryAudioAdapter } from "./audio-adapter.js";
 import type { StoryPlayerLogger } from "../../core/log.js";
 
+/** How long music and looping effects take to wind down when a story ends. */
+const STORY_END_FADE_MS = 1500;
+
 interface PixiApplicationLike {
   view: HTMLCanvasElement;
   renderer: { resize(width: number, height: number): void };
@@ -42,6 +45,7 @@ export interface PixiStoryRuntimeController {
   readonly step_until_checkpoint: Live2DController["step_until_checkpoint"];
   readonly stop_sounds: Live2DController["stop_sounds"];
   readonly set_volume: Live2DController["set_volume"];
+  readonly fade_out_ambience: Live2DController["fade_out_ambience"];
   readonly set_stage_size: Live2DController["set_stage_size"];
   readonly destroy: Live2DController["destroy"];
 }
@@ -385,7 +389,10 @@ export const createPixiStoryRuntime = async (
         try {
           const next = await controller.step_until_checkpoint(controller.step);
           if (destroyed) return "ready";
-          if (next === -1) return "finished";
+          if (next === -1) {
+            controller.fade_out_ambience(STORY_END_FADE_MS);
+            return "finished";
+          }
           controller.step = next;
           checkpointHistory.push(next);
           return "ready";

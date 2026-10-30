@@ -22,6 +22,8 @@ import type { StoryPlayerLogger } from "../../core/log.js";
 import single_action from "./action/index.js";
 import { parseSimpleSelectableChoices } from "./action/special_effect/SimpleSelectable.js";
 import { createHowlerStoryAudioAdapter } from "./audio-adapter.js";
+import { applyChannelVolumes } from "./audio-volume.js";
+import { fadeOutStoryAmbience } from "./action/sound.js";
 import type { PixiStoryAudioAdapter } from "./audio-adapter.js";
 
 interface CostumeState {
@@ -471,29 +473,11 @@ export class Live2DController extends Live2DPlayer {
     }
   };
   set_volume = (volume: { voice_volume?: number; bgm_volume?: number; se_volume?: number }) => {
-    Object.assign(this.settings, volume);
-    if (volume.bgm_volume) this.settings.bgm_volume *= 0.5; // bgm too load
-    const s_list = this.scenarioResource.audio.filter((sound) =>
-      this.audioAdapter.isPlaying(sound.data)
-    );
-    if (volume.voice_volume)
-      s_list
-        .filter((sound) => sound.type === Live2DAssetType.Talk)
-        .forEach((sound) => {
-          this.audioAdapter.setVolume(sound.data, this.settings.voice_volume);
-        });
-    if (volume.bgm_volume)
-      s_list
-        .filter((sound) => sound.type === Live2DAssetType.BackgroundMusic)
-        .forEach((sound) => {
-          this.audioAdapter.setVolume(sound.data, this.settings.bgm_volume);
-        });
-    if (volume.se_volume)
-      s_list
-        .filter((sound) => sound.type === Live2DAssetType.SoundEffect)
-        .forEach((sound) => {
-          this.audioAdapter.setVolume(sound.data, this.settings.se_volume);
-        });
+    applyChannelVolumes(this.settings, volume, this.scenarioResource.audio, this.audioAdapter);
+  };
+  /** Fades out music and looping effects, e.g. when the story ends. */
+  fade_out_ambience = (duration_ms: number) => {
+    fadeOutStoryAmbience(this, duration_ms);
   };
   show_ui = () => {
     this.UIRoot.alpha = 1;
