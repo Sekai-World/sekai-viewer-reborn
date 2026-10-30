@@ -47,6 +47,7 @@ Implementation patterns, guides, and records:
 - [`viewer-implementation/sonarcloud.md`](viewer-implementation/sonarcloud.md)
 - [`viewer-implementation/streaming-data-patterns.md`](viewer-implementation/streaming-data-patterns.md)
 - [`viewer-implementation/tools-site-farming-yield-data-contract.md`](viewer-implementation/tools-site-farming-yield-data-contract.md)
+- [`viewer-implementation/tools-site-target-planner.md`](viewer-implementation/tools-site-target-planner.md)
 - [`viewer-implementation/tools-site-ranking-snapshot-time-groups.md`](viewer-implementation/tools-site-ranking-snapshot-time-groups.md)
 - [`viewer-implementation/tools-site-yield-validation.md`](viewer-implementation/tools-site-yield-validation.md)
 - [`viewer-implementation/visual-qa.md`](viewer-implementation/visual-qa.md)

@@ -5,6 +5,18 @@ import {
 } from "#lib/server/music-metas.js";
 import { withRequestTimeout } from "#lib/server/network.js";
 import {
+  parseTargetPlanQuery,
+  type ParsedPlanQuery,
+  type PlanFormInputs
+} from "#lib/target-plan-query.js";
+import {
+  planTarget,
+  type PlanUnavailable,
+  type PlanUnavailableReason,
+  type PlannerYield,
+  type TargetPlan
+} from "#lib/target-planner.js";
+import {
   DEFAULT_MUSIC_META_SOURCE_ID,
   JP_SOLO_FORMULA_VERSION,
   MUSIC_META_MINIMUM_RECORD_COUNT,
@@ -15,6 +27,7 @@ import {
   type MusicMetaProvenance,
   type MusicMetaSource,
   type MusicMetaSourceId,
+  type JpSoloRankingItem,
   type JpSoloYieldInputs
 } from "#lib/music-recommender.js";
 
@@ -41,6 +54,24 @@ export type MusicRecommenderResultItem = {
   eventPoints: number;
 };
 
+/** The target-plan panel's state; a plan is only attempted when its controls are in the URL. */
+export type MusicRecommenderPlanData =
+  | { status: "idle"; inputs: PlanFormInputs }
+  | {
+      status: "invalid";
+      inputs: PlanFormInputs;
+      missingFields: string[];
+      invalidFields: string[];
+    }
+  | {
+      status: "unavailable";
+      inputs: PlanFormInputs;
+      reason: PlanUnavailableReason | "yields-unavailable";
+      invalidFields: string[];
+      bound: PlanUnavailable["bound"];
+    }
+  | { status: "ready"; inputs: PlanFormInputs; plan: TargetPlan };
+
 export type MusicRecommenderPageData = {
   status: "available" | "unavailable";
   source: MusicMetaSource | null;
@@ -54,6 +85,7 @@ export type MusicRecommenderPageData = {
   reason: string | null;
   missingFields: string[];
   invalidFields: string[];
+  plan: MusicRecommenderPlanData;
 };
 
 type ParsedMusicRecommenderQuery =
@@ -572,11 +604,54 @@ type UnavailableDetails = {
   provenance?: MusicMetaProvenance | null;
 };
 
+/** The plan panel when per-live yields cannot be calculated: its own input errors still show. */
+const planWithoutYields = (planQuery: ParsedPlanQuery): MusicRecommenderPlanData => {
+  if (planQuery.status === "idle") return { status: "idle", inputs: planQuery.inputs };
+  if (planQuery.status === "invalid") {
+    const { inputs, missingFields, invalidFields } = planQuery;
+    return { status: "invalid", inputs, missingFields, invalidFields };
+  }
+  return {
+    status: "unavailable",
+    inputs: planQuery.inputs,
+    reason: "yields-unavailable",
+    invalidFields: [],
+    bound: null
+  };
+};
+
+const planWithYields = (
+  planQuery: ParsedPlanQuery,
+  metric: MusicRecommenderMetric,
+  items: readonly JpSoloRankingItem[]
+): MusicRecommenderPlanData => {
+  if (planQuery.status !== "ready") return planWithoutYields(planQuery);
+
+  const yields: PlannerYield[] = items.map(({ music, score, eventPoints }) => ({
+    musicId: music.musicId,
+    difficulty: music.difficulty,
+    score,
+    eventPoints
+  }));
+  const result = planTarget({ yields, metric, ...planQuery.request });
+  if (result.status === "ready") {
+    return { status: "ready", inputs: planQuery.inputs, plan: result };
+  }
+  return {
+    status: "unavailable",
+    inputs: planQuery.inputs,
+    reason: result.reason,
+    invalidFields: [...result.invalidFields],
+    bound: result.bound
+  };
+};
+
 const makeUnavailablePageData = (
   source: MusicMetaSource | null,
   metric: MusicRecommenderMetric,
   inputs: MusicRecommenderPageInputs,
-  details: UnavailableDetails
+  details: UnavailableDetails,
+  planQuery: ParsedPlanQuery
 ): MusicRecommenderPageData => {
   const provenance = details.provenance ?? null;
   return {
@@ -591,7 +666,8 @@ const makeUnavailablePageData = (
     reasonCode: details.reasonCode,
     reason: details.reason,
     missingFields: [...(details.missingFields ?? [])],
-    invalidFields: [...(details.invalidFields ?? [])]
+    invalidFields: [...(details.invalidFields ?? [])],
+    plan: planWithoutYields(planQuery)
   };
 };
 
@@ -601,13 +677,15 @@ export const loadMusicRecommenderPageData = async (
   fetcher: MusicMetaFetcher,
   now: () => Date = () => new Date()
 ): Promise<MusicRecommenderPageData> => {
+  const planQuery = parseTargetPlanQuery(searchParams);
   const parsedQuery = parseMusicRecommenderQuery(searchParams);
   if (parsedQuery.status === "unavailable") {
     return makeUnavailablePageData(
       parsedQuery.source,
       parsedQuery.metric,
       parsedQuery.inputs,
-      parsedQuery
+      parsedQuery,
+      planQuery
     );
   }
 
@@ -617,13 +695,20 @@ export const loadMusicRecommenderPageData = async (
       dataset.source ?? parsedQuery.source,
       parsedQuery.metric,
       parsedQuery.inputs,
-      dataset
+      dataset,
+      planQuery
     );
   }
 
   const ranking = rankJpSoloRecommendations(dataset, parsedQuery.domainInputs, parsedQuery.metric);
   if (ranking.status === "unavailable") {
-    return makeUnavailablePageData(dataset.source, parsedQuery.metric, parsedQuery.inputs, ranking);
+    return makeUnavailablePageData(
+      dataset.source,
+      parsedQuery.metric,
+      parsedQuery.inputs,
+      ranking,
+      planQuery
+    );
   }
 
   return {
@@ -645,6 +730,7 @@ export const loadMusicRecommenderPageData = async (
     reasonCode: null,
     reason: null,
     missingFields: [],
-    invalidFields: []
+    invalidFields: [],
+    plan: planWithYields(planQuery, parsedQuery.metric, ranking.items)
   };
 };

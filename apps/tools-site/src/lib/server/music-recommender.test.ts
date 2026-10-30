@@ -549,3 +549,127 @@ describe("music recommender query and page loader", () => {
     expect(requests).toEqual([]);
   });
 });
+
+describe("target plan in the page data", () => {
+  // Every fixture song yields 80,000,000 score and 4,100 event points for this deck.
+  const deck =
+    "mode=jp-solo&deckPower=200000&deckBonus=0&boostMultiplier=1&skillRates=0,0,0,0,0,0&noSkill=false";
+
+  const load = async (extra: string, response = responseFor(JSON.stringify(makePayload()))) => {
+    const { fetcher, requests } = makeFetcher(response);
+    const result = await loadMusicRecommenderPageData(
+      new URLSearchParams(`${deck}&${extra}`),
+      fetcher,
+      () => NOW
+    );
+    return { result, requests };
+  };
+
+  it("stays idle and plans nothing when no plan control is present", async () => {
+    const { result, requests } = await load("metric=score");
+
+    expect(result.status).toBe("available");
+    expect(result.plan).toMatchObject({ status: "idle", inputs: { objective: "fewestPlays" } });
+    expect(requests).toHaveLength(1);
+  });
+
+  it("plans the fewest event-point lives from the calculated yields", async () => {
+    const { result } = await load(
+      "metric=eventPoints&target=10000&objective=fewestPlays&maxPlays=10&repeats=true"
+    );
+
+    expect(result.plan).toMatchObject({
+      status: "ready",
+      plan: {
+        metric: "eventPoints",
+        plays: 3,
+        total: 12_300,
+        overshoot: 2_300,
+        totals: { score: 240_000_000, eventPoints: 12_300 },
+        items: [{ musicId: 1, difficulty: "expert", plays: 3, yieldPerPlay: 4_100 }]
+      }
+    });
+  });
+
+  it("uses the score metric when it is selected", async () => {
+    const { result } = await load(
+      "metric=score&target=100000000&objective=fewestPlays&maxPlays=10&repeats=true"
+    );
+
+    expect(result.plan).toMatchObject({ status: "ready", plan: { metric: "score", plays: 2 } });
+  });
+
+  it("plans the least overshoot exactly", async () => {
+    const { result } = await load(
+      "metric=eventPoints&target=8200&objective=leastOvershoot&maxPlays=10&repeats=true"
+    );
+
+    expect(result.plan).toMatchObject({
+      status: "ready",
+      plan: { objective: "leastOvershoot", overshoot: 0, plays: 2 }
+    });
+  });
+
+  it("reports invalid plan controls without hiding the recommendations", async () => {
+    const { result } = await load("target=abc&objective=fewestPlays&maxPlays=10&repeats=true");
+
+    expect(result.status).toBe("available");
+    expect(result.items.length).toBeGreaterThan(0);
+    expect(result.plan).toMatchObject({
+      status: "invalid",
+      invalidFields: ["target"],
+      inputs: { target: "abc" }
+    });
+  });
+
+  it("passes the planner's unavailable reasons through", async () => {
+    const missing = await load(
+      "target=100&objective=fewestPlays&maxPlays=10&repeats=true&required=999999:master"
+    );
+    const tooFewLives = await load(
+      "metric=score&target=800000000&objective=fewestPlays&maxPlays=5&repeats=true"
+    );
+    const tooLarge = await load(
+      "metric=score&target=90000000000&objective=leastOvershoot&maxPlays=10000&repeats=true"
+    );
+
+    expect(missing.result.plan).toMatchObject({
+      status: "unavailable",
+      reason: "required-unavailable"
+    });
+    expect(tooFewLives.result.plan).toMatchObject({ status: "unavailable", reason: "plays-limit" });
+    expect(tooLarge.result.plan).toMatchObject({
+      status: "unavailable",
+      reason: "out-of-bounds",
+      bound: { name: "sumSpan" }
+    });
+  });
+
+  it("does not plan when the yields cannot be calculated", async () => {
+    const failed = await load(
+      "target=100&objective=fewestPlays&maxPlays=10&repeats=true",
+      responseFor("unavailable", {}, 503)
+    );
+    const noDeck = await loadMusicRecommenderPageData(
+      new URLSearchParams(
+        "deckPower=bad&target=100&objective=fewestPlays&maxPlays=10&repeats=true"
+      ),
+      makeFetcher(responseFor(JSON.stringify(makePayload()))).fetcher,
+      () => NOW
+    );
+
+    expect(failed.result.status).toBe("unavailable");
+    expect(failed.result.plan).toMatchObject({
+      status: "unavailable",
+      reason: "yields-unavailable"
+    });
+    expect(noDeck.plan).toMatchObject({ status: "unavailable", reason: "yields-unavailable" });
+  });
+
+  it("still reports the plan's own input errors when the yields are unavailable", async () => {
+    const { result } = await load("target=abc", responseFor("unavailable", {}, 503));
+
+    expect(result.status).toBe("unavailable");
+    expect(result.plan).toMatchObject({ status: "invalid", invalidFields: ["target"] });
+  });
+});

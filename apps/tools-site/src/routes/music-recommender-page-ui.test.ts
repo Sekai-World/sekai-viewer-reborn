@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { JP_SOLO_FORMULA_VERSION, MUSIC_META_SOURCES } from "#lib/music-recommender.js";
+import { makeDefaultPlanInputs } from "#lib/target-plan-query.js";
 import { goto } from "../lib/test/app-navigation";
 import type { PageData } from "./music-recommender/$types";
 import MusicRecommenderPage from "./music-recommender/+page.svelte";
@@ -52,6 +53,7 @@ const createPageData = (items = createResults(126)): PageData => ({
   reason: null,
   missingFields: [],
   invalidFields: [],
+  plan: { status: "idle", inputs: makeDefaultPlanInputs() },
   uiLocale: "en",
   i18nMessages: {},
   globalNotices: [],
