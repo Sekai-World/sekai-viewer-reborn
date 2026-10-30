@@ -75,7 +75,7 @@ const fetchRegionCharts = async (baseUrl: string, region: YieldRegion): Promise<
         })
       );
       const parsed = readListPage(result);
-      if (parsed === null || !parsed.items.every((item) => addItemCharts(item, charts))) {
+      if (!parsed?.items.every((item) => addItemCharts(item, charts))) {
         return { status: "unavailable" };
       }
       if (!parsed.hasNext)
