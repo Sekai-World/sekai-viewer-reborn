@@ -7,7 +7,7 @@ import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const namespaces = ["common", "tracker"] as const;
+  const namespaces = ["common", "tracker", "music-recommender"] as const;
   const localMessages = getLocalI18nMessages(namespaces);
   const [i18nMessages, globalNotices] = await Promise.all([
     resolveI18nMessageBundle(
