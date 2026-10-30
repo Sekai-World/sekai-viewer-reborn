@@ -1,11 +1,9 @@
-import { error } from "@sveltejs/kit";
-import { parseStoryRouteParams } from "#lib/live2d/story-route.js";
 import {
   fetchScenarioDocument,
   fetchStoryCharactersOrEmpty,
-  getStoryAssetBase,
-  resolveStoryRoute
+  getStoryAssetBase
 } from "#lib/story/story-resolver.server.js";
+import { resolveStoryPage } from "#lib/story/story-page-load.server.js";
 import { createStoryRegionAssetUrls } from "#lib/story/story-urls.js";
 import { buildVoiceCharacterLookup, flattenScenarioToRows } from "#lib/story/scenario-rows.js";
 import type { PageServerLoad } from "./$types";
@@ -17,43 +15,17 @@ import type { PageServerLoad } from "./$types";
  * base so the browser resolves them against whichever host it is on.
  */
 export const load: PageServerLoad = async ({ params, fetch, url }) => {
-  const parsed = parseStoryRouteParams(params);
-  if (parsed.status !== "ok") {
-    error(404, "Story route not found");
-  }
-  const identity = parsed.identity;
+  const page = await resolveStoryPage(params, fetch, url.origin);
+  if (!page.ready) return page.page;
+  const { identity } = page;
 
-  const resolved = await resolveStoryRoute(identity, fetch, url.origin);
-  if (resolved.status === "not-found") {
-    error(404, "Story not found");
-  }
-  if (resolved.status === "region-unavailable") {
-    return {
-      identity,
-      readerStatus: "region-unavailable" as const
-    };
-  }
-  if (resolved.status === "master-data-error") {
-    return {
-      identity,
-      readerStatus: "unavailable" as const
-    };
-  }
-  if (resolved.status === "unsupported") {
-    return {
-      identity,
-      readerStatus: "unsupported-story" as const,
-      reason: resolved.reason
-    };
-  }
-
-  const { resolution } = resolved.value;
+  const { resolution } = page.value;
   // Client-facing URLs keep the configured (possibly relative) asset base.
   const pageUrls = createStoryRegionAssetUrls(getStoryAssetBase, identity.region);
 
   try {
     const [scenarioData, characters] = await Promise.all([
-      fetchScenarioDocument(resolved.value.urls, resolution.scenarioPath, fetch),
+      fetchScenarioDocument(page.value.urls, resolution.scenarioPath, fetch),
       fetchStoryCharactersOrEmpty(identity.region, fetch)
     ]);
 
