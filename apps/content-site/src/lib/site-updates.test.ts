@@ -10,7 +10,7 @@ import {
 describe("site updates", () => {
   it("provides the current release entry", () => {
     expect(siteUpdates[0]).toBe(currentSiteUpdate);
-    expect(currentSiteUpdate.version).toBe("0.0.2");
+    expect(currentSiteUpdate.version).toBe("0.1.0");
   });
 
   it("accepts semantic versions and rejects malformed values", () => {
