@@ -127,6 +127,8 @@ const readRequiredSongs = (value: string | null, issues: Issues): PlannerSongRef
   return songs;
 };
 
+const compareText = (left: string, right: string): number => left.localeCompare(right, "en");
+
 type FieldReading<T> = { text: string | null; value: T | null };
 
 /** A control that must be present: absent is a missing field, unparsable is an invalid one. */
@@ -187,8 +189,8 @@ export const parseTargetPlanQuery = (searchParams: URLSearchParams): ParsedPlanQ
     return {
       status: "invalid",
       inputs,
-      missingFields: [...issues.missingFields].sort(),
-      invalidFields: [...issues.invalidFields].sort()
+      missingFields: [...issues.missingFields].sort(compareText),
+      invalidFields: [...issues.invalidFields].sort(compareText)
     };
   }
 

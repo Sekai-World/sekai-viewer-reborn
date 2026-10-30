@@ -408,25 +408,20 @@ const findLeastOvershoot = (
   return reachable ? "plays-limit" : "unreachable";
 };
 
-/**
- * Least overshoot, repeats allowed: unbounded-knapsack table of the fewest plays reaching each
- * sum. Dropping any play from a plan that overshoots by a full largest yield would still reach
- * the target, so the optimum lies below `need + largest yield`.
- */
-const solveLeastOvershootWithRepeats = (
-  pool: readonly Candidate[],
-  need: number,
-  freeBudget: number
-): ReadonlyMap<Candidate, number> | PlanUnavailable => {
+/** One song per distinct yield: equal yields are interchangeable, so the lowest id stands in. */
+const pickRepresentatives = (pool: readonly Candidate[]): Map<number, Candidate> => {
   const representative = new Map<number, Candidate>();
   for (const candidate of pool) {
     if (!representative.has(candidate.y)) representative.set(candidate.y, candidate);
   }
-  const yields = [...representative.keys()].sort((left, right) => left - right);
-  const span = need + yields[yields.length - 1];
-  const exceeded = checkBounds(span, span * yields.length);
-  if (exceeded !== null) return exceeded;
+  return representative;
+};
 
+/** Fewest plays to reach each sum with unlimited repeats, and the last yield used to get there. */
+const buildRepeatTable = (
+  yields: readonly number[],
+  span: number
+): { fewestPlays: Uint32Array; choice: Int32Array } => {
   const fewestPlays = new Uint32Array(span).fill(NO_PATH);
   const choice = new Int32Array(span).fill(-1);
   fewestPlays[0] = 0;
@@ -443,7 +438,26 @@ const solveLeastOvershootWithRepeats = (
     }
     fewestPlays[sum] = best;
   }
+  return { fewestPlays, choice };
+};
 
+/**
+ * Least overshoot, repeats allowed: unbounded-knapsack table of the fewest plays reaching each
+ * sum. Dropping any play from a plan that overshoots by a full largest yield would still reach
+ * the target, so the optimum lies below `need + largest yield`.
+ */
+const solveLeastOvershootWithRepeats = (
+  pool: readonly Candidate[],
+  need: number,
+  freeBudget: number
+): ReadonlyMap<Candidate, number> | PlanUnavailable => {
+  const representative = pickRepresentatives(pool);
+  const yields = [...representative.keys()].sort((left, right) => left - right);
+  const span = need + (yields.at(-1) ?? 0);
+  const exceeded = checkBounds(span, span * yields.length);
+  if (exceeded !== null) return exceeded;
+
+  const { fewestPlays, choice } = buildRepeatTable(yields, span);
   const found = findLeastOvershoot(fewestPlays, need, freeBudget);
   if (found === "unreachable") return unavailable("target-unreachable");
   if (found === "plays-limit") return unavailable("plays-limit");
