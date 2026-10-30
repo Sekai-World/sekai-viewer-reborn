@@ -17,6 +17,21 @@ export const DEFAULT_MUSIC_META_SOURCE_ID: MusicMetaSourceId = "sekai-best";
 export const MUSIC_META_MINIMUM_RECORD_COUNT = 3_727;
 export const JP_SOLO_FORMULA_VERSION = "jp-solo-community-v1" as const;
 
+/**
+ * Regions the recommender serves. TW, EN, and KR use the JP song data for the songs the region
+ * shares with JP (owner decision on #539); songs only the region has are not offered.
+ */
+export const YIELD_REGIONS = ["jp", "tw", "en", "kr"] as const;
+export type YieldRegion = (typeof YIELD_REGIONS)[number];
+export const DEFAULT_YIELD_REGION: YieldRegion = "jp";
+
+export const isYieldRegion = (value: unknown): value is YieldRegion =>
+  typeof value === "string" && (YIELD_REGIONS as readonly string[]).includes(value);
+
+/** Identifies one chart in the set of charts a region's master data lists. */
+export const makeRegionChartKey = (musicId: number, difficulty: string): string =>
+  `${musicId}:${difficulty}`;
+
 export const MUSIC_META_DIFFICULTIES = [
   "easy",
   "normal",
@@ -104,6 +119,7 @@ export type JpSoloCalculationFailureReasonCode =
   | "missing-inputs"
   | "invalid-inputs"
   | "unsupported-region"
+  | "region-data-unavailable"
   | "unsupported-mode";
 
 export type JpSoloCalculationUnavailable = {
@@ -279,10 +295,10 @@ const checkRegionAndMode = (
       ["region"]
     );
   }
-  if (inputs.region !== "jp") {
+  if (!isYieldRegion(inputs.region)) {
     return unavailableCalculation(
       "unsupported-region",
-      "JP Solo calculations are only supported for the jp region.",
+      "JP Solo calculations are only supported for the jp, tw, en, and kr regions.",
       provenance
     );
   }
@@ -490,6 +506,45 @@ const validateInputs = (
   };
 };
 
+/**
+ * A region other than JP only offers the songs its own master data lists, with the JP values.
+ * Without that list nothing is computed, and a song the region lacks is never taken from JP.
+ */
+const scopeToRegion = (
+  items: readonly MusicMeta[],
+  region: string | null,
+  regionCharts: ReadonlySet<string> | null,
+  provenance: MusicMetaProvenance
+):
+  | { status: "available"; items: readonly MusicMeta[] }
+  | { status: "unavailable"; failure: JpSoloCalculationUnavailable } => {
+  if (region === DEFAULT_YIELD_REGION) return { status: "available", items };
+  if (regionCharts === null) {
+    return {
+      status: "unavailable",
+      failure: unavailableCalculation(
+        "region-data-unavailable",
+        "The song list of the selected region is not available.",
+        provenance
+      )
+    };
+  }
+  const scoped = items.filter((item) =>
+    regionCharts.has(makeRegionChartKey(item.musicId, item.difficulty))
+  );
+  if (scoped.length === 0) {
+    return {
+      status: "unavailable",
+      failure: unavailableCalculation(
+        "incomplete-data",
+        "No song of the selected region has a record in the validated source.",
+        provenance
+      )
+    };
+  }
+  return { status: "available", items: scoped };
+};
+
 const calculateForMusic = (
   music: MusicMeta,
   inputs: PreparedInputs,
@@ -553,7 +608,8 @@ const calculateForMusic = (
 /** Calculates one explicitly selected JP Solo song and difficulty. */
 export const calculateJpSoloYield = (
   dataset: MusicMetaDataset | null,
-  request: JpSoloYieldRequest
+  request: JpSoloYieldRequest,
+  regionCharts: ReadonlySet<string> | null = null
 ): JpSoloYieldResult => {
   const validatedDataset = validateDataset(dataset);
   if (validatedDataset.status === "unavailable") return validatedDataset.failure;
@@ -589,7 +645,15 @@ export const calculateJpSoloYield = (
     );
   }
 
-  const music = validatedDataset.dataset.items.find(
+  const scoped = scopeToRegion(
+    validatedDataset.dataset.items,
+    request.region,
+    regionCharts,
+    provenance
+  );
+  if (scoped.status === "unavailable") return scoped.failure;
+
+  const music = scoped.items.find(
     (item) => item.musicId === request.musicId && item.difficulty === difficulty
   );
   if (!music) {
@@ -608,7 +672,8 @@ export const calculateJpSoloYield = (
 export const rankJpSoloRecommendations = (
   dataset: MusicMetaDataset | null,
   inputs: JpSoloYieldInputs,
-  rankBy: "score" | "eventPoints"
+  rankBy: "score" | "eventPoints",
+  regionCharts: ReadonlySet<string> | null = null
 ): JpSoloRankingResult => {
   const validatedDataset = validateDataset(dataset);
   if (validatedDataset.status === "unavailable") return validatedDataset.failure;
@@ -617,7 +682,15 @@ export const rankJpSoloRecommendations = (
   const validatedInputs = validateInputs(inputs, provenance);
   if (validatedInputs.status === "unavailable") return validatedInputs.failure;
 
-  const calculated = validatedDataset.dataset.items.map((music) => {
+  const scoped = scopeToRegion(
+    validatedDataset.dataset.items,
+    inputs.region,
+    regionCharts,
+    provenance
+  );
+  if (scoped.status === "unavailable") return scoped.failure;
+
+  const calculated = scoped.items.map((music) => {
     const result = calculateForMusic(music, validatedInputs.prepared, provenance);
     return result.status === "available" ? result : null;
   });

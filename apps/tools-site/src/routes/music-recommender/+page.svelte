@@ -8,6 +8,7 @@
 
   type PageData = PageProps["data"];
   type SourceId = NonNullable<PageData["source"]>["id"];
+  type Region = NonNullable<PageData["inputs"]["region"]>;
   type Metric = PageData["metric"];
   type MusicRecommendation = PageData["items"][number];
 
@@ -25,12 +26,19 @@
     { id: "cheerful-carnival", labelKey: "musicRecommender.modeCheerfulCarnival", enabled: false },
     { id: "world-bloom", labelKey: "musicRecommender.modeWorldBloom", enabled: false }
   ] as const;
+  const REGIONS = [
+    { id: "jp", labelKey: "region.jp" },
+    { id: "tw", labelKey: "region.tw" },
+    { id: "en", labelKey: "region.en" },
+    { id: "kr", labelKey: "region.kr" }
+  ] as const;
   const RECOMMENDATION_LIMIT = 10;
 
   let { data }: PageProps = $props();
   const fallbackMessages = getLocalI18nMessages(["common", "music-recommender"]);
   let messages = $state(fallbackMessages);
   let source = $state<SourceId>(getInitialSource());
+  let region = $state<Region>(getInitialRegion());
   let metric = $state<Metric>(getInitialMetric());
   let deckPower = $state(getInitialInput("deckPower"));
   let deckBonus = $state(getInitialInput("deckBonus"));
@@ -58,6 +66,10 @@
 
   function getInitialSource(): SourceId {
     return data.source?.id ?? data.inputs.source ?? "sekai-best";
+  }
+
+  function getInitialRegion(): Region {
+    return data.inputs.region ?? "jp";
   }
 
   function getInitialMetric(): Metric {
@@ -174,6 +186,8 @@
         return "musicRecommender.invalidInputs";
       case "unsupported-region":
         return "musicRecommender.unsupportedRegion";
+      case "region-data-unavailable":
+        return "musicRecommender.regionDataUnavailable";
       case "unsupported-mode":
         return "musicRecommender.unsupportedMode";
       default:
@@ -195,6 +209,15 @@
     void reloadWithQuery({ source: next });
   }
 
+  function regionChanged(event: Event): void {
+    if (!(event.currentTarget instanceof HTMLSelectElement)) return;
+    const value = event.currentTarget.value;
+    const next = REGIONS.find((entry) => entry.id === value);
+    if (next === undefined) return;
+    region = next.id;
+    void reloadWithQuery({ region: next.id });
+  }
+
   async function reloadWithQuery(overrides: Record<string, string>): Promise<void> {
     if (!browser) return;
     const url = new URL(window.location.href);
@@ -214,6 +237,7 @@
   function deckQuery(): Record<string, string> {
     return {
       source,
+      region,
       metric,
       mode: "jp-solo",
       deckPower,
@@ -304,19 +328,38 @@
         {translate("musicRecommender.sourceSelected")}: <strong>{sourceLabel}</strong>
       </p>
     </div>
-    <div class="source-control">
-      <label for="music-source">{translate("musicRecommender.source")}</label>
-      <select
-        id="music-source"
-        class="select select-bordered min-h-11"
-        value={source}
-        onchange={sourceChanged}
-        disabled={isSubmitting}
-      >
-        <option value="sekai-best">{translate("musicRecommender.sourceSelfHosted")}</option>
-        <option value="moesekai">{translate("musicRecommender.sourceMoesekai")}</option>
-      </select>
-      <p class="source-hint">{translate("musicRecommender.sourceSwitchHint")}</p>
+    <div class="source-controls">
+      <div class="source-control">
+        <label for="music-source">{translate("musicRecommender.source")}</label>
+        <select
+          id="music-source"
+          class="select select-bordered min-h-11"
+          value={source}
+          onchange={sourceChanged}
+          disabled={isSubmitting}
+        >
+          <option value="sekai-best">{translate("musicRecommender.sourceSelfHosted")}</option>
+          <option value="moesekai">{translate("musicRecommender.sourceMoesekai")}</option>
+        </select>
+        <p class="source-hint">{translate("musicRecommender.sourceSwitchHint")}</p>
+      </div>
+      <div class="source-control">
+        <label for="music-region">{translate("musicRecommender.region")}</label>
+        <select
+          id="music-region"
+          class="select select-bordered min-h-11"
+          value={region}
+          onchange={regionChanged}
+          disabled={isSubmitting}
+        >
+          {#each REGIONS as entry (entry.id)}
+            <option value={entry.id}>{translate(entry.labelKey)}</option>
+          {/each}
+        </select>
+        {#if region !== "jp"}
+          <p class="source-hint">{translate("musicRecommender.regionNote")}</p>
+        {/if}
+      </div>
     </div>
   </section>
 
@@ -694,6 +737,10 @@
     gap: 1rem;
     padding: 1rem 1.25rem;
     background: var(--archive-surface-raised);
+  }
+  .source-controls {
+    display: grid;
+    gap: 1rem;
   }
   .source-summary {
     color: var(--archive-text-muted);

@@ -37,6 +37,7 @@ const createPageData = (items = createResults(126)): PageData => ({
   metric: "score",
   inputs: {
     source: "sekai-best",
+    region: "jp",
     metric: "score",
     mode: "jp-solo",
     deckPower: 200000,
@@ -241,6 +242,47 @@ describe("music recommender UI contract", () => {
     expect(screen.getByText(`sha256:${"a".repeat(64)}`)).toBeTruthy();
     expect(screen.getByText("Source last modified")).toBeTruthy();
     expect(goto).toHaveBeenCalledTimes(2);
+  });
+
+  it("reloads with the chosen region and keeps it in the next calculation", async () => {
+    const { container } = renderPage(createPageData());
+    const select = screen.getByRole("combobox", { name: "Region" });
+
+    expect(select).toHaveProperty("value", "jp");
+    expect(screen.queryByText(/Uses Japanese song data/)).toBeNull();
+
+    await fireEvent.change(select, { target: { value: "tw" } });
+
+    expect(goto).toHaveBeenCalledTimes(1);
+    expect(new URL(goto.mock.calls[0][0], "http://localhost").searchParams.get("region")).toBe(
+      "tw"
+    );
+    expect(screen.getByText(/Uses Japanese song data/)).toBeTruthy();
+
+    await fireEvent.submit(
+      container.querySelector('input[placeholder="e.g. 200000"]')!.closest("form")!
+    );
+
+    const lastUrl = goto.mock.calls.at(-1)?.[0] ?? "";
+    expect(new URL(lastUrl, "http://localhost").searchParams.get("region")).toBe("tw");
+  });
+
+  it("starts on the region of the page data", () => {
+    const data = createPageData();
+    data.inputs.region = "kr";
+    renderPage(data);
+
+    expect(screen.getByRole("combobox", { name: "Region" })).toHaveProperty("value", "kr");
+    expect(screen.getByText(/Uses Japanese song data/)).toBeTruthy();
+  });
+
+  it("says the region's song list is missing instead of showing a generic error", () => {
+    const data = createMissingInputPageData();
+    data.reasonCode = "region-data-unavailable";
+    data.missingFields = [];
+    renderPage(data);
+
+    expect(screen.getByText("The song list for this region could not be loaded.")).toBeTruthy();
   });
 
   it("keeps the recommendation heading localized", async () => {

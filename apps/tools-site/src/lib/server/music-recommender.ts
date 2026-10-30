@@ -3,7 +3,13 @@ import {
   parseMusicMetas,
   type MusicMetasIssue
 } from "#lib/server/music-metas.js";
+import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import { withRequestTimeout } from "#lib/server/network.js";
+import {
+  loadRegionCharts,
+  type RegionChartLoader,
+  type RegionCharts
+} from "#lib/server/region-charts.js";
 import {
   parseTargetPlanQuery,
   type ParsedPlanQuery,
@@ -18,6 +24,8 @@ import {
 } from "#lib/target-planner.js";
 import {
   DEFAULT_MUSIC_META_SOURCE_ID,
+  DEFAULT_YIELD_REGION,
+  isYieldRegion,
   JP_SOLO_FORMULA_VERSION,
   MUSIC_META_MINIMUM_RECORD_COUNT,
   MUSIC_META_SOURCES,
@@ -28,7 +36,8 @@ import {
   type MusicMetaSource,
   type MusicMetaSourceId,
   type JpSoloRankingItem,
-  type JpSoloYieldInputs
+  type JpSoloYieldInputs,
+  type YieldRegion
 } from "#lib/music-recommender.js";
 
 export type MusicMetaFetcher = (input: string, init?: RequestInit) => Promise<Response>;
@@ -36,6 +45,7 @@ export type MusicRecommenderMetric = "score" | "eventPoints";
 
 export type MusicRecommenderPageInputs = {
   source: MusicMetaSourceId | null;
+  region: YieldRegion | null;
   metric: MusicRecommenderMetric;
   mode: string | null;
   deckPower: number | string | null;
@@ -331,9 +341,11 @@ const parseFiniteQueryNumber = (
 
 const makeDefaultPageInputs = (
   source: MusicMetaSourceId | null,
+  region: YieldRegion | null,
   metric: MusicRecommenderMetric
 ): MusicRecommenderPageInputs => ({
   source,
+  region,
   metric,
   mode: "jp-solo",
   deckPower: null,
@@ -350,6 +362,18 @@ const readQuerySourceId = (sourceValues: readonly string[]): MusicMetaSourceId |
   if (sourceValues.length === 0) return DEFAULT_MUSIC_META_SOURCE_ID;
   const [requested] = sourceValues;
   return sourceValues.length === 1 ? resolveRequestedSource(requested) : null;
+};
+
+/** No region means JP; a repeated or unknown value is reported, never replaced. */
+const readQueryRegion = (
+  searchParams: URLSearchParams,
+  invalidFields: Set<string>
+): YieldRegion | null => {
+  const values = searchParams.getAll("region");
+  if (values.length === 0) return DEFAULT_YIELD_REGION;
+  if (values.length === 1 && isYieldRegion(values[0])) return values[0];
+  invalidFields.add("region");
+  return null;
 };
 
 const readQueryMetric = (
@@ -464,11 +488,12 @@ const makeUnavailableQuery = (
 /** Handles a request with no calculation controls: invalid input is reported, otherwise deck power is requested. */
 const rejectQueryWithoutCalculation = (
   sourceId: MusicMetaSourceId | null,
+  region: YieldRegion | null,
   metric: MusicRecommenderMetric,
   issues: QueryIssues
 ): UnavailableQuery => {
   const source = sourceId === null ? null : MUSIC_META_SOURCES[sourceId];
-  const inputs = makeDefaultPageInputs(sourceId, metric);
+  const inputs = makeDefaultPageInputs(sourceId, region, metric);
   if (source === null || issues.invalidFields.size > 0) {
     return makeUnavailableQuery(
       source,
@@ -493,6 +518,7 @@ const rejectQueryWithoutCalculation = (
 /** Keeps the parsed value when valid, otherwise echoes the raw text so the form can show it. */
 const buildPageInputs = (
   sourceId: MusicMetaSourceId | null,
+  region: YieldRegion | null,
   metric: MusicRecommenderMetric,
   raw: Record<(typeof INPUT_PARAMETER_NAMES)[number], string | null>,
   parsed: {
@@ -504,6 +530,7 @@ const buildPageInputs = (
   }
 ): MusicRecommenderPageInputs => ({
   source: sourceId,
+  region,
   metric,
   mode: raw.mode,
   deckPower: parsed.deckPower ?? raw.deckPower,
@@ -524,6 +551,7 @@ export const parseMusicRecommenderQuery = (
   if (sourceValues.length > 1) invalidFields.add("source");
   const sourceId = readQuerySourceId(sourceValues);
   const source = sourceId === null ? null : MUSIC_META_SOURCES[sourceId];
+  const region = readQueryRegion(searchParams, invalidFields);
   const metric = readQueryMetric(searchParams, invalidFields);
 
   const queryValues = Object.fromEntries(
@@ -531,7 +559,7 @@ export const parseMusicRecommenderQuery = (
   ) as Record<(typeof INPUT_PARAMETER_NAMES)[number], string | null>;
   const hasCalculationQuery = INPUT_PARAMETER_NAMES.some((key) => searchParams.has(key));
 
-  if (!hasCalculationQuery) return rejectQueryWithoutCalculation(sourceId, metric, issues);
+  if (!hasCalculationQuery) return rejectQueryWithoutCalculation(sourceId, region, metric, issues);
 
   const { mode: modeValue, deckPower: deckPowerValue, deckBonus: deckBonusValue } = queryValues;
   const { boostMultiplier: boostMultiplierValue, skillRates: skillRatesValue } = queryValues;
@@ -560,7 +588,7 @@ export const parseMusicRecommenderQuery = (
   const noSkill = readQueryNoSkill(queryValues.noSkill, issues);
   const skillRates = readQuerySkillRates(skillRatesValue, noSkill, issues);
 
-  const pageInputs = buildPageInputs(sourceId, metric, queryValues, {
+  const pageInputs = buildPageInputs(sourceId, region, metric, queryValues, {
     deckPower,
     deckBonus,
     boostMultiplier,
@@ -585,7 +613,7 @@ export const parseMusicRecommenderQuery = (
     metric,
     inputs: pageInputs,
     domainInputs: {
-      region: "jp",
+      region,
       mode: normalizedMode,
       deckPower,
       deckBonus,
@@ -671,11 +699,20 @@ const makeUnavailablePageData = (
   };
 };
 
+const defaultRegionChartLoader: RegionChartLoader = async (region): Promise<RegionCharts> => {
+  try {
+    return await loadRegionCharts(getMasterApiBaseUrl(), region);
+  } catch {
+    return { status: "unavailable" };
+  }
+};
+
 /** Builds the serializable page contract; only ranked results leave the server. */
 export const loadMusicRecommenderPageData = async (
   searchParams: URLSearchParams,
   fetcher: MusicMetaFetcher,
-  now: () => Date = () => new Date()
+  now: () => Date = () => new Date(),
+  loadCharts: RegionChartLoader = defaultRegionChartLoader
 ): Promise<MusicRecommenderPageData> => {
   const planQuery = parseTargetPlanQuery(searchParams);
   const parsedQuery = parseMusicRecommenderQuery(searchParams);
@@ -700,7 +737,15 @@ export const loadMusicRecommenderPageData = async (
     );
   }
 
-  const ranking = rankJpSoloRecommendations(dataset, parsedQuery.domainInputs, parsedQuery.metric);
+  const { region } = parsedQuery.inputs;
+  const charts =
+    region === null || region === DEFAULT_YIELD_REGION ? null : await loadCharts(region);
+  const ranking = rankJpSoloRecommendations(
+    dataset,
+    parsedQuery.domainInputs,
+    parsedQuery.metric,
+    charts?.status === "available" ? charts.charts : null
+  );
   if (ranking.status === "unavailable") {
     return makeUnavailablePageData(
       dataset.source,

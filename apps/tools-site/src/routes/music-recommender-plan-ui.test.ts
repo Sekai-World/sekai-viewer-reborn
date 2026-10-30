@@ -28,6 +28,7 @@ const createPageData = (
   metric: "eventPoints",
   inputs: {
     source: "sekai-best",
+    region: "jp",
     metric: "eventPoints",
     mode: "jp-solo",
     deckPower: 200000,

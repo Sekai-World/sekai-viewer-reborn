@@ -16,8 +16,8 @@ recommender (#381) and the data contract in
   overshoot**.
 - **Not supported, and refused rather than approximated:** energy and time
   objectives (no semantics yet, tracked in #540), modes other than Solo
-  (#538), regions other than `jp` (#539), and decks or event bonuses derived from
-  user data (#541).
+  (#538), regions other than `jp`, `tw`, `en`, and `kr`, and decks or event bonuses derived
+  from user data (#541).
 
 ## Inputs
 
@@ -154,6 +154,6 @@ and the recommender's per-live values, and energy and time are not planned.
 ## Out of scope
 
 - Energy, boost cost, and time objectives, and per-hour or per-energy efficiency.
-- Modes other than JP Solo and regions other than `jp`.
+- Modes other than JP Solo, and regions other than `jp`, `tw`, `en`, and `kr`.
 - Heuristic or approximate plans. If one is added later it must be labelled
   as such and kept separate from the exact objectives above.
