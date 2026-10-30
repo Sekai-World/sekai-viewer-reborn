@@ -40,15 +40,91 @@ selects one; an unknown value is rejected, never replaced by the default.
 
 ## Scope
 
-| Dimension       | Supported              | Everything else                                                                                  |
-| --------------- | ---------------------- | ------------------------------------------------------------------------------------------------ |
-| Region          | `jp`                   | Blocked. The artifact carries no region field, so it cannot prove coverage for any other region. |
-| Mode            | Solo (non-Auto)        | Auto, Multi, Challenge, Cheerful Carnival, World Bloom stay blocked/unverified.                  |
-| Formula version | `jp-solo-community-v1` | Any other value is unsupported.                                                                  |
+| Dimension       | Supported              | Everything else                                                                                                         |
+| --------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Region          | `jp`                   | Blocked. The artifact carries no region field, so it cannot prove coverage for any other region. See _Region Evidence_. |
+| Mode            | Solo (non-Auto)        | Auto, Multi, Challenge, Cheerful Carnival, World Bloom stay blocked/unverified.                                         |
+| Formula version | `jp-solo-community-v1` | Any other value is unsupported.                                                                                         |
 
 Records for songs that are absent from the selected region's own music list are
 not evidence that the song exists there. Only songs the region's master data
 lists are offered, and each needs a matching record (see _Missing-data states_).
+
+## Region Evidence (TW, EN, KR)
+
+Decision (#539): **TW, EN, and KR stay blocked.** The recommender remains `jp`
+only. Measured 2026-10-30 against the default source (3,810 records, 735 songs)
+and each region's published master data (`sekai-master-db-diff` for `jp`,
+`-tc-diff`, `-en-diff`, `-kr-diff`):
+
+| Region | Songs in master data | Songs also in the artifact | Songs in master data but not in the artifact | Chart rows without an artifact record |
+| ------ | -------------------- | -------------------------- | -------------------------------------------- | ------------------------------------- |
+| `jp`   | 737                  | 735                        | 2                                            | 10                                    |
+| `tw`   | 651                  | 643                        | 8                                            | 40                                    |
+| `en`   | 652                  | 624                        | 28                                           | 140                                   |
+| `kr`   | 660                  | 644                        | 16                                           | 80                                    |
+
+What the measurements show:
+
+- The artifact is a single, region-less file, and its song set follows JP. It
+  holds 92 (TW), 111 (EN), and 91 (KR) songs that the region does not have, and
+  it lacks records for songs only that region has (for example music 11011 on
+  `tw` and 10001 on `kr`). Region coverage therefore cannot be read from the artifact.
+- Chart structure is shared. For every song a non-JP region shares with JP, the
+  note counts match, and play levels match except one TW chart (music 739, easy:
+  level 6 on `jp`, 8 on `tw`). This supports, but does not prove, that
+  coefficients are region-independent: the artifact's `base_score`,
+  `skill_score_*`, and `event_rate` are not derivable from these tables.
+- No region-specific artifact exists at the known locations. The URL variants
+  `music_metas_{tw,en,kr}.json` and `{tw,en,kr}/music_metas.json` returned 404
+  on both supported sources.
+
+Status per region:
+
+| Region | Status  | Missing evidence                                                                                                                                              |
+| ------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tw`   | Blocked | An authority that the artifact's coefficients and `event_rate` apply to `tw`, or a `tw`-scoped artifact, and an observed `tw` vector for the formula version. |
+| `en`   | Blocked | The same, for `en`.                                                                                                                                           |
+| `kr`   | Blocked | The same, for `kr`.                                                                                                                                           |
+
+To enable a region later:
+
+1. Obtain a region-scoped source (a per-region artifact or a region field) or a
+   statement from the artifact's maintainer about which regions its values
+   apply to. Record it here with the date.
+2. Offer only songs in that region's own master data, and answer a song or
+   difficulty without a matching record as unavailable. Today the same state
+   already covers the two `jp` songs that have no record. Never compute it from
+   another region.
+3. Add one reproducible vector per enabled region with its formula version
+   (see `tools-site-yield-validation.md`), and show the region on every result.
+
+## Deck and Bonus Inputs
+
+Decision (#541): **every deck and bonus input stays manual.** None can be
+derived without per-user card state, and master data alone is not proven
+sufficient to compute a deck bonus. The recommender computes nothing from
+guessed or defaulted inputs; a missing input keeps the result unavailable.
+
+| Input                      | Source  | Basis                                                                                                                                                                                                                            |
+| -------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Raw deck power             | Manual  | Needs the user's owned cards, levels, training, and episode state. No current contract provides it.                                                                                                                              |
+| Skill rate sequence        | Manual  | Needs the user's cards, skill levels, and leader and support state, plus the slot mapping that is still an open item below.                                                                                                      |
+| Deck bonus percent         | Manual  | Master data lists the per-event pieces (`eventDeckBonuses`, `eventRarityBonusRates` by rarity and master rank, `eventCards`, `eventHonorBonuses`), but summing them needs the user's deck. No observed vector validates the sum. |
+| Boost multiplier           | Manual  | A choice the user makes for each live, not a stored value.                                                                                                                                                                       |
+| `event_rate` (song figure) | Derived | Read from the validated artifact record, shown with the source, URL, and revision.                                                                                                                                               |
+
+Findings that keep the bonus input manual:
+
+- The bonus data is partial. For event 222 the master data holds 25
+  `eventDeckBonuses` rows and no `eventCards` or `eventHonorBonuses` rows, so
+  a missing row cannot be told apart from a bonus of zero.
+- `sekai-master-api` exposes these tables through `/events/{region}/{id}/bonuses`
+  and related routes. They describe what an event grants and are display
+  oriented. They do not define how a deck's bonus is assembled from them.
+- No API or SDK change is made. If a derived bonus is ever wanted, it needs an
+  observed in-game deck-bonus vector first; follow the OpenAPI/SDK workflow in
+  `AGENTS.md` for any contract change.
 
 ## Raw Fields
 
@@ -201,7 +277,8 @@ These stay blocked and are not treated as implementation-ready:
   semantics are undefined, and the Moesekai `cycles_*`/`pt_per_hour_*` fields are
   derived from preset teams, not personalized observations.
 - Deck state derived from user data, and event/card bonus resolution from master
-  data (display-oriented and partial per the validation document).
+  data (display-oriented and partial per the validation document). See _Deck and
+  Bonus Inputs_.
 - Independent in-game observed vectors are not required for JP Solo but remain
   required for every other mode.
 
