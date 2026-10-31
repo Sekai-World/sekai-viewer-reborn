@@ -1,4 +1,4 @@
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 
 WORKDIR /repo
 RUN corepack enable
@@ -22,7 +22,7 @@ RUN pnpm rebuild esbuild
 RUN pnpm --filter @apps/tools-site exec svelte-kit sync
 RUN pnpm --filter @apps/tools-site build
 
-FROM node:24-alpine AS runner
+FROM node:26-alpine AS runner
 
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
