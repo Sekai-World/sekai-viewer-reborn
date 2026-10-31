@@ -20,6 +20,16 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
+# Container probe type for the startup, liveness, and readiness probes.
+# "tcp" only checks that port 3000 accepts connections and works with every
+# image. "http" requests `path`, which only images that ship the /healthz
+# route serve; older images would fail readiness, so keep "tcp" until every
+# enabled app runs such an image. The endpoint does no upstream calls on
+# purpose: a sekai-api or sekai-master-api outage must not drain every pod.
+probes:
+  type: tcp
+  path: /healthz
+
 # Do not enable readOnlyRootFilesystem by default: the application runtime has
 # not been assessed for a read-only root filesystem and writable tmpfs mounts.
 containerSecurityContext:
@@ -59,7 +69,7 @@ apps:
   content-site:
     enabled: true
     image:
-      repository: docker.dnaroma.eu/sekai-viewer-reborn/content-site
+      repository: zot.dna.moe/sekai-viewer-reborn/content-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # Set the required empty values before deploying. content-site needs
@@ -94,7 +104,7 @@ apps:
   tools-site:
     enabled: true
     image:
-      repository: docker.dnaroma.eu/sekai-viewer-reborn/tools-site
+      repository: zot.dna.moe/sekai-viewer-reborn/tools-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # tools-site reads both API URLs for the server-side event tracker and
@@ -119,7 +129,7 @@ apps:
   media-lab-site:
     enabled: true
     image:
-      repository: docker.dnaroma.eu/sekai-viewer-reborn/media-lab-site
+      repository: zot.dna.moe/sekai-viewer-reborn/media-lab-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # media-lab-site reads SEKAI_API_BASE_URL for server-side dynamic
@@ -146,7 +156,7 @@ apps:
   account-site:
     enabled: true
     image:
-      repository: docker.dnaroma.eu/sekai-viewer-reborn/account-site
+      repository: zot.dna.moe/sekai-viewer-reborn/account-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # account-site reads SEKAI_API_BASE_URL for server-side dynamic

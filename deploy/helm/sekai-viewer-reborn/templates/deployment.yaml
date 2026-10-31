@@ -68,20 +68,17 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           startupProbe:
-            tcpSocket:
-              port: http
+            {{- include "sekai-viewer-reborn.probeAction" $root | nindent 12 }}
             failureThreshold: 30
             periodSeconds: 5
             timeoutSeconds: 2
           livenessProbe:
-            tcpSocket:
-              port: http
+            {{- include "sekai-viewer-reborn.probeAction" $root | nindent 12 }}
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 3
           readinessProbe:
-            tcpSocket:
-              port: http
+            {{- include "sekai-viewer-reborn.probeAction" $root | nindent 12 }}
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 3
