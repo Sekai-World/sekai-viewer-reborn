@@ -19,6 +19,8 @@
     /** Optional link to the other reading mode for the same story address. */
     switchModeHref?: string;
     switchModeLabel?: string;
+    /** Longer explanation shown as the link's tooltip. */
+    switchModeHint?: string;
   }
 
   let {
@@ -34,7 +36,8 @@
     subtitle,
     bannerUrl,
     switchModeHref,
-    switchModeLabel
+    switchModeLabel,
+    switchModeHint
   }: Props = $props();
 
   const uid = $props.id();
@@ -52,7 +55,11 @@
       {backLabel}
     </a>
     {#if showSwitchMode}
-      <a class="link link-hover inline-flex items-center gap-1 text-primary" href={switchModeHref}>
+      <a
+        class="link link-hover inline-flex items-center gap-1 text-primary"
+        href={switchModeHref}
+        title={switchModeHint}
+      >
         <Icon icon="mdi:swap-horizontal" class="size-4" aria-hidden="true" />
         {switchModeLabel}
       </a>
