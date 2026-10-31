@@ -289,6 +289,27 @@ describe("createPixiStoryRuntime", () => {
     expect(controllerFixture.controller.fade_out_ambience).toHaveBeenCalledWith(1500);
   });
 
+  it("restarts to the first checkpoint without replaying audio", async () => {
+    const { options, controllerFixture } = makeOptions();
+    const runtime = await createPixiStoryRuntime(options, new AbortController().signal);
+
+    await expect(runtime.restart()).resolves.toBe("ready");
+    expect(controllerFixture.stepCalls).toEqual([]);
+
+    await runtime.nextStep();
+    await runtime.nextStep();
+    expect(runtime.canGoBack).toBe(true);
+
+    await expect(runtime.restart()).resolves.toBe("ready");
+    expect(controllerFixture.stepCalls.at(-1)).toEqual({ step: 0, silent: true });
+    expect(controllerFixture.controller.step).toBe(4);
+    expect(controllerFixture.controller.stop_sounds).toHaveBeenCalledWith([
+      Live2DAssetType.Talk,
+      Live2DAssetType.SoundEffect
+    ]);
+    expect(runtime.canGoBack).toBe(false);
+  });
+
   it("initializes and exposes checkpoint, settings, and resize commands", async () => {
     const { options, application, children, controllerFixture, releaseImage } = makeOptions();
     const selected: string[][] = [];

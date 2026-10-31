@@ -10,7 +10,7 @@ const registeredIconNames = addIcon.mock.calls.map(([name]) => name);
 
 describe("media-lab-site mdi icon registration", () => {
   it("registers all shell icons synchronously", () => {
-    expect(registeredIconNames).toHaveLength(47);
+    expect(registeredIconNames).toHaveLength(48);
     expect(registeredIconNames).toEqual([
       "mdi:menu",
       "mdi:close",
@@ -54,6 +54,7 @@ describe("media-lab-site mdi icon registration", () => {
       "mdi:map-marker-radius-outline",
       "mdi:auto-fix",
       "mdi:skip-previous",
+      "mdi:skip-backward",
       "mdi:download-circle-outline",
       "mdi:fullscreen",
       "mdi:fullscreen-exit",

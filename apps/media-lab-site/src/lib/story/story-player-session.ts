@@ -61,6 +61,8 @@ export interface StoryPlayerSession {
   readonly canGoBack: boolean;
   /** Silently rewinds to the checkpoint before the current one. */
   prevStep(): Promise<void>;
+  /** Silently rewinds to the first line of the story. */
+  restart(): Promise<void>;
   /** Skips the currently running animations and sounds. */
   abort(): void;
   setAutoplay(enabled: boolean): void;
@@ -237,6 +239,7 @@ export const createStoryPlayerSession = (
       return player.canGoBack;
     },
     prevStep: (): Promise<void> => player.prevStep(),
+    restart: (): Promise<void> => player.restart(),
     abort: (): void => player.abort(),
     setAutoplay: (enabled): void => player.setAutoplay(enabled),
     setVolume: (volume): void => player.setVolume(volume),

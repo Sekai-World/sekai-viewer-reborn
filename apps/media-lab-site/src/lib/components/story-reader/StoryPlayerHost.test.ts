@@ -19,6 +19,7 @@ const labels = {
   tapToPlay: "Click to start",
   tapToContinue: "Click to continue",
   rotateToPlay: "Rotate",
+  restart: "Restart",
   previous: "Previous",
   next: "Next",
   autoplay: "Autoplay",
@@ -64,6 +65,7 @@ const createFakeSession = () => {
     retry: vi.fn(async () => {}),
     nextStep: vi.fn(async () => {}),
     prevStep: vi.fn(async () => {}),
+    restart: vi.fn(async () => {}),
     abort: vi.fn(),
     setAutoplay: vi.fn(),
     setVolume: vi.fn(),
@@ -141,6 +143,21 @@ describe("StoryPlayerHost", () => {
 
     await waitFor(() => expect(phaseOf(container)).toBe("ready"));
     expect(createStoryPlayerSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("restarts from the first line through the Restart button", async () => {
+    renderHost({ autoStart: true });
+    await waitFor(() => expect(sessions).toHaveLength(1));
+    // The host re-reads canGoBack when the session state changes.
+    sessions[0].canGoBack = true;
+    sessions[0].emit("playing");
+    sessions[0].emit("ready");
+
+    const restart = await screen.findByRole("button", { name: labels.restart });
+    await waitFor(() => expect((restart as HTMLButtonElement).disabled).toBe(false));
+    await fireEvent.click(restart);
+
+    expect(sessions[0].restart).toHaveBeenCalledOnce();
   });
 
   it("separates playing, waiting at a checkpoint, and finished", async () => {

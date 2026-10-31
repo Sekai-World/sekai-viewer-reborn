@@ -57,6 +57,7 @@ const createDeferred = <T>() => {
 const createRuntime = (): StoryPlayerRuntime => ({
   nextStep: async () => "ready",
   prevStep: async () => "ready",
+  restart: async () => "ready",
   canGoBack: false,
   abort: vi.fn(),
   setVolume: vi.fn(),
