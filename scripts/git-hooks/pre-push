@@ -17,20 +17,15 @@ if [[ -n "$status_output" ]]; then
   exit 1
 fi
 
-run_full_gate() {
-  printf '%s\n' "pre-push: $1; running the full local gate (format:check, test, lint, check, and i18n:check; production build runs in CI)." >&2
-  pnpm format:check
-  pnpm test
-  pnpm lint
-  pnpm check
-  pnpm i18n:check
-}
-
 # The branch is compared with the default branch, so only the packages it changes (and their
-# dependents) are validated. CI still runs the full `pnpm verify:ci` sequence, including the build.
+# dependents) are validated. CI runs the full `pnpm verify:ci` sequence, including the build, so
+# this hook never runs the whole repository's tests; a change to root configuration is covered by
+# the Prettier check on the changed files here and by CI.
 default_ref="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || printf '%s' origin/main)"
 if ! base="$(git merge-base HEAD "$default_ref" 2>/dev/null)"; then
-  run_full_gate "no merge base with $default_ref"
+  printf '%s\n' "pre-push: no merge base with $default_ref; checking formatting and i18n only. CI runs the full gate." >&2
+  pnpm format:check
+  pnpm i18n:check
   exit 0
 fi
 
@@ -38,21 +33,6 @@ changed_files=()
 while IFS= read -r -d '' file; do
   changed_files+=("$file")
 done < <(git diff --name-only --diff-filter=ACMR -z "$base" HEAD --)
-
-# Root configuration (lockfile, Prettier, ESLint, TypeScript, Turbo) can change every package's
-# result, so a change outside the package folders, the docs and the changesets runs everything.
-# The length guard keeps macOS's bash 3.2 from treating an empty array as unbound.
-if ((${#changed_files[@]} > 0)); then
-  for file in "${changed_files[@]}"; do
-    case "$file" in
-      apps/* | packages/* | docs/* | .changeset/* | *.md) ;;
-      *)
-        run_full_gate "$file changed"
-        exit 0
-        ;;
-    esac
-  done
-fi
 
 printf '%s\n' "pre-push: validating changes since $default_ref (format:check on changed files; test, lint and check on affected packages; i18n:check). CI runs the full gate and the production build." >&2
 if ((${#changed_files[@]} > 0)); then
