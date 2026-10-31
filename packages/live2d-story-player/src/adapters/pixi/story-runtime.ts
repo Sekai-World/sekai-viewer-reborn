@@ -18,7 +18,7 @@ import {
 import type { ILive2DAssetUrl, ILive2DLoadWarningHandler } from "../../model/live2d-assets.js";
 import type { ILive2DTextResolvedEvent, ILive2DTextResolver } from "../../model/live2d-model.js";
 import type { IScenarioData } from "../../model/scenario-types.js";
-import type { StoryPlayerRuntime } from "../../core/story-player.js";
+import type { StoryDialogueLine, StoryPlayerRuntime } from "../../core/story-player.js";
 import type { PixiStoryAudioAdapter } from "./audio-adapter.js";
 import type { StoryPlayerLogger } from "../../core/log.js";
 
@@ -45,6 +45,8 @@ export interface PixiStoryRuntimeController {
   readonly step_until_checkpoint: Live2DController["step_until_checkpoint"];
   readonly stop_sounds: Live2DController["stop_sounds"];
   readonly reset_for_replay: Live2DController["reset_for_replay"];
+  readonly dialogue_at: Live2DController["dialogue_at"];
+  readonly set_ui_visible: Live2DController["set_ui_visible"];
   readonly set_volume: Live2DController["set_volume"];
   readonly fade_out_ambience: Live2DController["fade_out_ambience"];
   readonly set_stage_size: Live2DController["set_stage_size"];
@@ -439,6 +441,17 @@ export const createPixiStoryRuntime = async (
       },
       get canAutoplay(): boolean {
         return !destroyed && controller?.pending_selectable === null;
+      },
+      dialogueLog: (): StoryDialogueLine[] => {
+        const lines: StoryDialogueLine[] = [];
+        for (const step of checkpointHistory) {
+          const line = controller?.dialogue_at(step);
+          if (line) lines.push(line);
+        }
+        return lines;
+      },
+      setUiVisible: (visible: boolean): void => {
+        controller?.set_ui_visible(visible);
       },
       prevStep: (): Promise<"ready"> => rewindTo(checkpointHistory.length - 1),
       restart: (): Promise<"ready"> => rewindTo(2),

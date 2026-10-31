@@ -18,6 +18,7 @@ import type {
 } from "./player-types.js";
 import type { ILive2DResolvedText, ILive2DTextKind } from "../../model/live2d-model.js";
 import type { StoryPlayerLogger } from "../../core/log.js";
+import type { StoryDialogueLine } from "../../core/story-player.js";
 
 import single_action from "./action/index.js";
 import { parseSimpleSelectableChoices } from "./action/special_effect/SimpleSelectable.js";
@@ -139,6 +140,26 @@ export class Live2DController extends Live2DPlayer {
     };
     this.events.emit("textResolved", { kind, index, original, resolved });
     return resolved;
+  }
+
+  /**
+   * The spoken line at a talk snippet, or null for any other snippet. Reads the
+   * text policy directly so looking a line up does not emit `textResolved`.
+   */
+  dialogue_at(step: number): StoryDialogueLine | null {
+    const action = this.scenarioData.Snippets[step];
+    if (action?.Action !== SnippetAction.Talk) return null;
+    const detail = this.scenarioData.TalkData[action.ReferenceIndex];
+    if (!detail) return null;
+    const resolved = this.textResolver?.resolve(`talk_${action.ReferenceIndex}`, detail.Body) ?? {
+      displayText: detail.Body,
+      translatedText: null
+    };
+    return {
+      speaker: detail.WindowDisplayName,
+      text: resolved.displayText,
+      translatedText: resolved.translatedText
+    };
   }
 
   /**

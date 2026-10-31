@@ -168,6 +168,11 @@ const makeController = (options: FakeControllerOptions = {}) => {
     },
     stop_sounds: vi.fn(),
     reset_for_replay: vi.fn(),
+    // Steps above 0 stand in for talk snippets; step 0 is the story opening.
+    dialogue_at: vi.fn((step: number) =>
+      step > 0 ? { speaker: `Speaker ${step}`, text: `Line ${step}`, translatedText: null } : null
+    ),
+    set_ui_visible: vi.fn(),
     fade_out_ambience: vi.fn(),
     set_volume: vi.fn((volume: Parameters<PixiStoryRuntimeController["set_volume"]>[0]) => {
       volumeCalls.push(volume);
@@ -310,6 +315,36 @@ describe("createPixiStoryRuntime", () => {
       Live2DAssetType.SoundEffect
     ]);
     expect(runtime.canGoBack).toBe(false);
+  });
+
+  it("lists the spoken lines reached so far and follows rewinds", async () => {
+    const { options } = makeOptions();
+    const runtime = await createPixiStoryRuntime(options, new AbortController().signal);
+
+    expect(runtime.dialogueLog?.()).toEqual([]);
+
+    await runtime.nextStep();
+    await runtime.nextStep();
+    expect(runtime.dialogueLog?.().map((line) => line.text)).toEqual(["Line 4", "Line 9"]);
+
+    await runtime.prevStep();
+    expect(runtime.dialogueLog?.().map((line) => line.text)).toEqual(["Line 4"]);
+
+    await runtime.nextStep();
+    await runtime.restart();
+    expect(runtime.dialogueLog?.()).toEqual([
+      { speaker: "Speaker 4", text: "Line 4", translatedText: null }
+    ]);
+  });
+
+  it("forwards the dialog visibility to the controller", async () => {
+    const { options, controllerFixture } = makeOptions();
+    const runtime = await createPixiStoryRuntime(options, new AbortController().signal);
+
+    runtime.setUiVisible?.(false);
+    runtime.setUiVisible?.(true);
+
+    expect(controllerFixture.controller.set_ui_visible.mock.calls).toEqual([[false], [true]]);
   });
 
   it("initializes and exposes checkpoint, settings, and resize commands", async () => {

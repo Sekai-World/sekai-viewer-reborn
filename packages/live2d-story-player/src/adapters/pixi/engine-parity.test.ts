@@ -472,6 +472,47 @@ describe("Live2D engine parity", () => {
       });
   });
 
+  it("looks up a spoken line through the text policy without emitting textResolved", () => {
+    const scenario = createScenario([
+      createSnippet(SnippetAction.None),
+      createSnippet(SnippetAction.Talk, SnippetProgressBehavior.WaitUnitilFinished, 0)
+    ]);
+    scenario.TalkData = [createTalkData({ WindowDisplayName: "Miku", Body: "hello" })];
+    const controller = createController(scenario);
+    const resolved = vi.fn();
+    controller.events.on("textResolved", resolved);
+
+    expect(controller.dialogue_at(0)).toBeNull();
+    expect(controller.dialogue_at(99)).toBeNull();
+    expect(controller.dialogue_at(1)).toEqual({
+      speaker: "Miku",
+      text: "hello",
+      translatedText: null
+    });
+
+    controller.textResolver = {
+      resolve: (key, original) => ({ displayText: `${key}:${original}`, translatedText: "hi" })
+    };
+    expect(controller.dialogue_at(1)).toEqual({
+      speaker: "Miku",
+      text: "talk_0:hello",
+      translatedText: "hi"
+    });
+    expect(resolved).not.toHaveBeenCalled();
+  });
+
+  it("hides and shows the dialog box and telop together", () => {
+    const controller = createController();
+
+    controller.set_ui_visible(false);
+    expect(controller.UIRoot.visible).toBe(false);
+    expect(controller.layers.telop.root.visible).toBe(false);
+
+    controller.set_ui_visible(true);
+    expect(controller.UIRoot.visible).toBe(true);
+    expect(controller.layers.telop.root.visible).toBe(true);
+  });
+
   it("lets a Clear wait for the Appear that is still running", async () => {
     const controller = createController();
     controller.live2d_set_costume(1, "costume-a");

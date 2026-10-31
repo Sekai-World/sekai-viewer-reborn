@@ -2,6 +2,7 @@ import {
   createStoryPlayer,
   Live2DAssetType,
   type ILive2DAssetUrl,
+  type StoryDialogueLine,
   type StoryPlayerSnapshot,
   type StoryPlayerState
 } from "@platform/live2d-story-player";
@@ -63,6 +64,10 @@ export interface StoryPlayerSession {
   prevStep(): Promise<void>;
   /** Silently rewinds to the first line of the story. */
   restart(): Promise<void>;
+  /** Spoken lines reached so far, oldest first; empty until the story is ready. */
+  dialogueLog(): StoryDialogueLine[];
+  /** Shows or hides the in-stage dialog box and captions. */
+  setUiVisible(visible: boolean): void;
   /** Skips the currently running animations and sounds. */
   abort(): void;
   setAutoplay(enabled: boolean): void;
@@ -240,6 +245,8 @@ export const createStoryPlayerSession = (
     },
     prevStep: (): Promise<void> => player.prevStep(),
     restart: (): Promise<void> => player.restart(),
+    dialogueLog: (): StoryDialogueLine[] => player.dialogueLog(),
+    setUiVisible: (visible): void => player.setUiVisible(visible),
     abort: (): void => player.abort(),
     setAutoplay: (enabled): void => player.setAutoplay(enabled),
     setVolume: (volume): void => player.setVolume(volume),

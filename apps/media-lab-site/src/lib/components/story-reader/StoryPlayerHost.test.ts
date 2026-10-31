@@ -24,6 +24,11 @@ const labels = {
   next: "Next",
   autoplay: "Autoplay",
   fullscreen: "Fullscreen",
+  textLog: "Text log",
+  textLogClose: "Close text log",
+  textLogEmpty: "No lines yet.",
+  hideInterface: "Hide interface",
+  showInterface: "Show interface",
   textAnimation: "Text animation",
   voiceVolume: "Voice",
   bgmVolume: "BGM",
@@ -66,6 +71,15 @@ const createFakeSession = () => {
     nextStep: vi.fn(async () => {}),
     prevStep: vi.fn(async () => {}),
     restart: vi.fn(async () => {}),
+    dialogueLog: vi.fn(
+      () =>
+        [] as Array<{
+          speaker: string;
+          text: string;
+          translatedText: string | null;
+        }>
+    ),
+    setUiVisible: vi.fn(),
     abort: vi.fn(),
     setAutoplay: vi.fn(),
     setVolume: vi.fn(),
@@ -158,6 +172,85 @@ describe("StoryPlayerHost", () => {
     await fireEvent.click(restart);
 
     expect(sessions[0].restart).toHaveBeenCalledOnce();
+  });
+
+  it("lists the spoken lines in a text log and refreshes it after a rewind", async () => {
+    renderHost({ autoStart: true });
+    await waitFor(() => expect(sessions).toHaveLength(1));
+    const session = sessions[0];
+    session.dialogueLog.mockReturnValue([
+      { speaker: "Miku", text: "First line", translatedText: null },
+      { speaker: "Rin", text: "Second line", translatedText: "Second, translated" }
+    ]);
+
+    await fireEvent.click(await screen.findByRole("button", { name: labels.textLog }));
+
+    const dialog = screen.getByRole("dialog", { name: labels.textLog });
+    expect(dialog.textContent).toContain("Miku");
+    expect(dialog.textContent).toContain("Second line");
+    expect(dialog.textContent).toContain("Second, translated");
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: labels.textLogClose }));
+
+    session.dialogueLog.mockReturnValue([
+      { speaker: "Miku", text: "First line", translatedText: null }
+    ]);
+    session.emit("playing");
+    session.emit("ready");
+
+    await waitFor(() => expect(dialog.textContent).not.toContain("Second line"));
+    expect(dialog.textContent).toContain("First line");
+  });
+
+  it("shows an empty text log and closes it with Escape, returning focus to the button", async () => {
+    renderHost({ autoStart: true });
+    await waitFor(() => expect(sessions).toHaveLength(1));
+
+    const toggle = await screen.findByRole("button", { name: labels.textLog });
+    await fireEvent.click(toggle);
+    const dialog = screen.getByRole("dialog", { name: labels.textLog });
+    expect(dialog.textContent).toContain(labels.textLogEmpty);
+
+    await fireEvent.keyDown(dialog, { key: "Escape" });
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(document.activeElement).toBe(toggle);
+  });
+
+  it("hides the interface and restores it on a stage tap without advancing", async () => {
+    renderHost({ autoStart: true });
+    await waitFor(() => expect(sessions).toHaveLength(1));
+    const session = sessions[0];
+
+    await fireEvent.click(await screen.findByRole("button", { name: labels.hideInterface }));
+
+    expect(session.setUiVisible).toHaveBeenLastCalledWith(false);
+    // Only the stage itself still answers to "Next"; the control button is gone.
+    const stage = screen.getByRole("button", { name: labels.next });
+    expect(screen.queryByRole("button", { name: labels.textLog })).toBeNull();
+    expect(screen.getByRole("button", { name: labels.showInterface })).toBeTruthy();
+
+    // Tapping the stage only restores the interface.
+    await fireEvent.click(stage);
+
+    expect(session.nextStep).not.toHaveBeenCalled();
+    expect(session.setUiVisible).toHaveBeenLastCalledWith(true);
+    expect(screen.getByRole("button", { name: labels.hideInterface })).toBeTruthy();
+  });
+
+  it("restores the interface from the eye button and closes an open log when hiding", async () => {
+    renderHost({ autoStart: true });
+    await waitFor(() => expect(sessions).toHaveLength(1));
+    const session = sessions[0];
+
+    await fireEvent.click(await screen.findByRole("button", { name: labels.textLog }));
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    await fireEvent.click(screen.getByRole("button", { name: labels.hideInterface }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    await fireEvent.click(screen.getByRole("button", { name: labels.showInterface }));
+
+    expect(session.setUiVisible).toHaveBeenLastCalledWith(true);
+    expect(session.nextStep).not.toHaveBeenCalled();
   });
 
   it("separates playing, waiting at a checkpoint, and finished", async () => {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
+  import type { StoryDialogueLine } from "@platform/live2d-story-player";
   import type { StoryDocumentReference } from "#lib/live2d/story-document.js";
   import type {
     StoryPlayerSession,
@@ -34,6 +35,11 @@
       next: string;
       autoplay: string;
       fullscreen: string;
+      textLog: string;
+      textLogClose: string;
+      textLogEmpty: string;
+      hideInterface: string;
+      showInterface: string;
       textAnimation: string;
       voiceVolume: string;
       bgmVolume: string;
@@ -95,6 +101,16 @@
   let selectableChoices = $state<string[] | null>(null);
   let chosenChoice = $state<number | null>(null);
   let selectableTimer: ReturnType<typeof setTimeout> | null = null;
+  // Text log drawer: the lines are read from the session when it opens and
+  // after each state change, so rewinds shorten the list on their own.
+  let logOpen = $state(false);
+  let logLines = $state.raw<StoryDialogueLine[]>([]);
+  let logList: HTMLOListElement | undefined = $state();
+  let logButton: HTMLButtonElement | undefined = $state();
+  let logCloseButton: HTMLButtonElement | undefined = $state();
+  // Hidden interface: dialog box, captions, and controls are out of the way
+  // so the stage can be looked at; playback itself is unaffected.
+  let interfaceHidden = $state(false);
 
   const stageSizeFor = (element: HTMLElement): [number, number] => {
     const width = element.clientWidth || 960;
@@ -125,6 +141,29 @@
       dismissSelectable();
       void session?.nextStep();
     }, 600);
+  };
+
+  const refreshLog = (): void => {
+    logLines = session?.dialogueLog() ?? [];
+  };
+
+  const openLog = async (): Promise<void> => {
+    refreshLog();
+    logOpen = true;
+    await tick();
+    logCloseButton?.focus();
+  };
+
+  const closeLog = async (): Promise<void> => {
+    logOpen = false;
+    await tick();
+    logButton?.focus();
+  };
+
+  const setInterfaceHidden = (hidden: boolean): void => {
+    interfaceHidden = hidden;
+    session?.setUiVisible(!hidden);
+    if (hidden) logOpen = false;
   };
 
   /* Fullscreen playback on the stage container; locking the orientation to
@@ -347,6 +386,11 @@
       return;
     }
     if (!session) return;
+    // Bringing the interface back must not also skip a line.
+    if (interfaceHidden) {
+      setInterfaceHidden(false);
+      return;
+    }
     if (playerState === "playing") {
       session.abort();
       return;
@@ -434,12 +478,25 @@
     if (playerState === "playing") hasStarted = true;
   });
 
+  // Keep the open log in step with the session (new line, rewind, restart).
+  $effect(() => {
+    void playerState;
+    if (logOpen) refreshLog();
+  });
+
+  // Follow the newest line whenever the list grows or the drawer opens.
+  $effect(() => {
+    void logLines;
+    if (logOpen && logList) logList.scrollTop = logList.scrollHeight;
+  });
+
   /* Landscape-only playback on touch devices. Entering the portrait gate
      also stops any running playback so nothing advances while hidden. */
   const portraitGate = $derived(isPortraitCoarse && !isFullscreen);
 
   $effect(() => {
     if (!portraitGate) return;
+    logOpen = false;
     if (autoplay) {
       autoplay = false;
       session?.setAutoplay(false);
@@ -469,7 +526,21 @@
       }}
       tabindex="0"
     ></div>
-    {#if loadStarted && playerState !== "loading" && !loadFailed}
+    {#if loadStarted && playerState !== "loading" && !loadFailed && interfaceHidden}
+      <div
+        class="absolute top-2 right-2 z-10 opacity-50 transition-opacity hover:opacity-100 focus-within:opacity-100"
+      >
+        <button
+          type="button"
+          class={controlButtonClass}
+          aria-label={labels.showInterface}
+          title={labels.showInterface}
+          onclick={() => setInterfaceHidden(false)}
+        >
+          <Icon icon="mdi:eye-outline" class="size-5" aria-hidden="true" />
+        </button>
+      </div>
+    {:else if loadStarted && playerState !== "loading" && !loadFailed}
       <div class="absolute top-2 right-2 z-10 flex flex-wrap items-center justify-end gap-1.5">
         <button
           type="button"
@@ -528,6 +599,28 @@
           AUTO
         </button>
         <button
+          bind:this={logButton}
+          type="button"
+          class={controlButtonClass}
+          aria-label={labels.textLog}
+          title={labels.textLog}
+          aria-expanded={logOpen}
+          onclick={() => (logOpen ? void closeLog() : void openLog())}
+          disabled={!session || loadFailed}
+        >
+          <Icon icon="mdi:text-box-outline" class="size-5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class={controlButtonClass}
+          aria-label={labels.hideInterface}
+          title={labels.hideInterface}
+          onclick={() => setInterfaceHidden(true)}
+          disabled={!session || loadFailed}
+        >
+          <Icon icon="mdi:eye-off-outline" class="size-5" aria-hidden="true" />
+        </button>
+        <button
           type="button"
           class={controlButtonClass}
           aria-label={labels.fullscreen}
@@ -541,6 +634,53 @@
             aria-hidden="true"
           />
         </button>
+      </div>
+    {/if}
+    {#if logOpen && !interfaceHidden}
+      <div
+        class="absolute top-12 right-0 bottom-0 z-20 flex w-80 max-w-[85%] flex-col bg-black/85 text-white max-sm:inset-x-0 max-sm:top-auto max-sm:h-3/5 max-sm:w-full max-sm:max-w-none"
+        role="dialog"
+        aria-label={labels.textLog}
+        tabindex="-1"
+        onkeydown={(event) => {
+          if (event.key === "Escape") {
+            event.stopPropagation();
+            void closeLog();
+          }
+        }}
+      >
+        <div
+          class="flex items-center justify-between gap-2 border-b border-white/15 py-1.5 pr-2 pl-3"
+        >
+          <h2 class="text-sm font-semibold">{labels.textLog}</h2>
+          <button
+            bind:this={logCloseButton}
+            type="button"
+            class={controlButtonClass}
+            aria-label={labels.textLogClose}
+            title={labels.textLogClose}
+            onclick={() => void closeLog()}
+          >
+            <Icon icon="mdi:close" class="size-5" aria-hidden="true" />
+          </button>
+        </div>
+        {#if logLines.length === 0}
+          <p class="px-3 py-4 text-sm text-white/70">{labels.textLogEmpty}</p>
+        {:else}
+          <ol bind:this={logList} class="flex grow flex-col gap-3 overflow-y-auto p-3">
+            {#each logLines as line, index (index)}
+              <li class="text-sm/relaxed">
+                <p class="text-xs font-semibold text-white/70">{line.speaker}</p>
+                <p class="wrap-break-word whitespace-pre-line">{line.text}</p>
+                {#if line.translatedText}
+                  <p class="wrap-break-word whitespace-pre-line text-white/70">
+                    {line.translatedText}
+                  </p>
+                {/if}
+              </li>
+            {/each}
+          </ol>
+        {/if}
       </div>
     {/if}
     <!-- Choices surface only once the parked step fully settled (voices
@@ -679,7 +819,7 @@
         </div>
       </div>
     {/if}
-    {#if playerState !== "loading" && !loadFailed && !portraitGate}
+    {#if playerState !== "loading" && !loadFailed && !portraitGate && !interfaceHidden}
       {#if autoplay}
         <span
           class="badge badge-success pointer-events-none absolute right-3 bottom-3 font-bold tracking-wide"

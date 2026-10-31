@@ -7,6 +7,14 @@ export interface StoryPlayerSnapshot {
   generation: number;
 }
 
+/** One spoken line the story has already reached. */
+export interface StoryDialogueLine {
+  speaker: string;
+  text: string;
+  /** Secondary text from the host's text policy, when it supplies one. */
+  translatedText: string | null;
+}
+
 export interface StoryPlayerRuntime {
   /** Advances from the current checkpoint and reports the resulting state. */
   nextStep(): Promise<"ready" | "finished">;
@@ -15,6 +23,10 @@ export interface StoryPlayerRuntime {
   /** Silently rewinds to the first checkpoint of the story. */
   restart(): Promise<"ready">;
   readonly canGoBack: boolean;
+  /** Every spoken line reached so far, in story order; follows rewinds. */
+  dialogueLog?(): StoryDialogueLine[];
+  /** Shows or hides the dialog box and captions so the stage stays visible. */
+  setUiVisible?(visible: boolean): void;
   /** False while playback is parked on an explicit user choice. */
   readonly canAutoplay?: boolean;
   abort(): void;
@@ -37,10 +49,13 @@ export interface StoryPlayer {
   readonly canGoBack: boolean;
   prevStep(): Promise<void>;
   restart(): Promise<void>;
+  /** Spoken lines reached so far; empty before the runtime is ready. */
+  dialogueLog(): StoryDialogueLine[];
   abort(): void;
   setAutoplay(enabled: boolean): void;
   setVolume(volume: { voiceVolume?: number; bgmVolume?: number; seVolume?: number }): void;
   setTextAnimation(enabled: boolean): void;
+  setUiVisible(visible: boolean): void;
   resize(width: number, height: number): void;
   destroy(): void;
 }
@@ -104,6 +119,7 @@ export const createStoryPlayer = (options: CreateStoryPlayerOptions): StoryPlaye
   let autoplayRevision = 0;
   let pendingVolume: StoryPlayerVolume = {};
   let pendingTextAnimation: boolean | undefined;
+  let pendingUiVisible: boolean | undefined;
   let pendingResize: { width: number; height: number } | null = null;
   let destroyed = false;
   const listeners = new Set<(snapshot: StoryPlayerSnapshot) => void>();
@@ -199,6 +215,7 @@ export const createStoryPlayer = (options: CreateStoryPlayerOptions): StoryPlaye
     if (pendingTextAnimation !== undefined) {
       activeRuntime.setTextAnimation(pendingTextAnimation);
     }
+    if (pendingUiVisible !== undefined) activeRuntime.setUiVisible?.(pendingUiVisible);
     if (pendingResize) activeRuntime.resize(pendingResize.width, pendingResize.height);
   };
 
@@ -379,6 +396,7 @@ export const createStoryPlayer = (options: CreateStoryPlayerOptions): StoryPlaye
       runPlayback((activeRuntime) => activeRuntime.prevStep(), ["ready", "finished"]),
     restart: (): Promise<void> =>
       runPlayback((activeRuntime) => activeRuntime.restart(), ["ready", "finished"]),
+    dialogueLog: (): StoryDialogueLine[] => runtime?.dialogueLog?.() ?? [],
     abort: (): void => {
       if (destroyed) return;
       clearAutoplayTimer();
@@ -401,6 +419,10 @@ export const createStoryPlayer = (options: CreateStoryPlayerOptions): StoryPlaye
     setTextAnimation: (enabled): void => {
       pendingTextAnimation = enabled;
       currentRuntime()?.setTextAnimation(enabled);
+    },
+    setUiVisible: (visible): void => {
+      pendingUiVisible = visible;
+      currentRuntime()?.setUiVisible?.(visible);
     },
     resize: (width, height): void => {
       if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
