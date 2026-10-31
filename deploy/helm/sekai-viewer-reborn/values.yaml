@@ -59,7 +59,7 @@ apps:
   content-site:
     enabled: true
     image:
-      repository: docker.dnaroma.eu/sekai-viewer-reborn/content-site
+      repository: zot.dna.moe/sekai-viewer-reborn/content-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # Set the required empty values before deploying. content-site needs
@@ -94,7 +94,7 @@ apps:
   tools-site:
     enabled: true
     image:
-      repository: docker.dnaroma.eu/sekai-viewer-reborn/tools-site
+      repository: zot.dna.moe/sekai-viewer-reborn/tools-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # tools-site reads both API URLs for the server-side event tracker and
@@ -119,7 +119,7 @@ apps:
   media-lab-site:
     enabled: true
     image:
-      repository: docker.dnaroma.eu/sekai-viewer-reborn/media-lab-site
+      repository: zot.dna.moe/sekai-viewer-reborn/media-lab-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # media-lab-site reads SEKAI_API_BASE_URL for server-side dynamic
@@ -146,7 +146,7 @@ apps:
   account-site:
     enabled: true
     image:
-      repository: docker.dnaroma.eu/sekai-viewer-reborn/account-site
+      repository: zot.dna.moe/sekai-viewer-reborn/account-site
       tag: "0.0.0"
       pullPolicy: IfNotPresent
     # account-site reads SEKAI_API_BASE_URL for server-side dynamic

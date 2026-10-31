@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 env:
-  IMAGE_REGISTRY: docker.dnaroma.eu
+  IMAGE_REGISTRY: zot.dna.moe
   IMAGE_REPOSITORY_PREFIX: sekai-viewer-reborn
 
 jobs:
