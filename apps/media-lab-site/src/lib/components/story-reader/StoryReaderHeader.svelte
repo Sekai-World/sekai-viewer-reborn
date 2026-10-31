@@ -19,6 +19,8 @@
     /** Optional link to the other reading mode for the same story address. */
     switchModeHref?: string;
     switchModeLabel?: string;
+    /** Longer explanation shown as the link's tooltip. */
+    switchModeHint?: string;
   }
 
   let {
@@ -34,11 +36,16 @@
     subtitle,
     bannerUrl,
     switchModeHref,
-    switchModeLabel
+    switchModeLabel,
+    switchModeHint
   }: Props = $props();
 
   const uid = $props.id();
   const showSwitchMode = $derived(Boolean(switchModeHref && switchModeLabel));
+  // The story's own name leads the page when master data resolved one; the
+  // reader mode (kicker, or the mode title) becomes the small label above it.
+  const heading = $derived(subtitle ?? title);
+  const eyebrow = $derived(subtitle ? (kicker ?? title) : kicker);
 </script>
 
 <section aria-labelledby={`${uid}-title`} class="flex flex-col gap-5">
@@ -48,59 +55,63 @@
       {backLabel}
     </a>
     {#if showSwitchMode}
-      <a class="link link-hover inline-flex items-center gap-1 text-primary" href={switchModeHref}>
+      <a
+        class="link link-hover inline-flex items-center gap-1 text-primary"
+        href={switchModeHref}
+        title={switchModeHint}
+      >
         <Icon icon="mdi:swap-horizontal" class="size-4" aria-hidden="true" />
         {switchModeLabel}
       </a>
     {/if}
   </nav>
 
-  <!-- Episode banners are small fixed-size thumbnails (e.g. 280x144); they sit
-       beside the title row on wide screens and wrap below it on mobile. -->
-  <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
-    <header class="flex min-w-0 flex-col gap-3">
-      {#if kicker}
-        <p class="text-sm font-semibold text-primary">{kicker}</p>
-      {/if}
-      <h1 id={`${uid}-title`} class="text-3xl font-bold tracking-tight text-base-content">
-        {title}
-      </h1>
-      {#if subtitle}
-        <p class="max-w-3xl text-lg/7 font-medium text-base-content/85">{subtitle}</p>
-      {/if}
-      {#if description}
-        <p class="max-w-2xl text-base/7 text-base-content/75">{description}</p>
-      {/if}
-    </header>
-
+  <!-- Episode banners are small fixed-size thumbnails (e.g. 280x144). On narrow
+       screens they shrink into a thumbnail beside the title; from `lg` up they
+       sit at the right edge at their natural size. -->
+  <div class="flex items-start gap-4 lg:justify-between lg:gap-8">
     {#if bannerUrl}
       <img
         src={bannerUrl}
         alt=""
-        class="mx-auto size-auto max-h-56 max-w-full self-center rounded-xl border border-base-content/10 lg:mx-0 lg:shrink-0 lg:self-start"
+        class="h-auto w-24 shrink-0 rounded-lg border border-base-content/10 sm:w-36 lg:order-last lg:w-auto lg:max-h-56 lg:max-w-sm lg:rounded-xl"
         loading="lazy"
       />
     {/if}
+    <header class="flex min-w-0 flex-1 flex-col gap-2 lg:flex-none">
+      {#if eyebrow}
+        <p class="text-sm font-semibold text-primary">{eyebrow}</p>
+      {/if}
+      <h1
+        id={`${uid}-title`}
+        class="text-2xl font-bold tracking-tight text-balance text-base-content [word-break:auto-phrase] sm:text-3xl"
+      >
+        {heading}
+      </h1>
+      {#if description}
+        <p class="max-w-2xl text-base/7 text-base-content/75">{description}</p>
+      {/if}
+    </header>
   </div>
 
-  <dl class="grid gap-3 sm:grid-cols-3">
-    <div class="rounded-xl border border-base-content/10 bg-base-100 p-3 shadow-sm">
-      <dt class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-        {metaLabels.region}
-      </dt>
-      <dd class="mt-1 font-semibold">{regionLabel}</dd>
+  <dl class="flex flex-wrap gap-2 text-sm">
+    <div
+      class="inline-flex items-center rounded-full border border-base-content/10 bg-base-100 px-3 py-1 shadow-sm"
+    >
+      <dt class="sr-only">{metaLabels.region}</dt>
+      <dd class="font-semibold">{regionLabel}</dd>
     </div>
-    <div class="rounded-xl border border-base-content/10 bg-base-100 p-3 shadow-sm">
-      <dt class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-        {metaLabels.storyType}
-      </dt>
-      <dd class="mt-1 font-semibold">{storyTypeLabel}</dd>
+    <div
+      class="inline-flex items-center rounded-full border border-base-content/10 bg-base-100 px-3 py-1 shadow-sm"
+    >
+      <dt class="sr-only">{metaLabels.storyType}</dt>
+      <dd class="font-semibold">{storyTypeLabel}</dd>
     </div>
-    <div class="rounded-xl border border-base-content/10 bg-base-100 p-3 shadow-sm">
-      <dt class="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-        {metaLabels.storyId}
-      </dt>
-      <dd class="mt-1 font-mono text-sm break-all">{identity.storyId}</dd>
+    <div
+      class="inline-flex items-center rounded-full border border-base-content/10 bg-base-100 px-3 py-1 shadow-sm"
+    >
+      <dt class="sr-only">{metaLabels.storyId}</dt>
+      <dd class="font-mono break-all">{identity.storyId}</dd>
     </div>
   </dl>
 </section>

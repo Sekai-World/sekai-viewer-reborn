@@ -82,7 +82,9 @@ test.describe("player route", () => {
 test.describe("route changes", () => {
   test("switches between the text reader and the player and back", async ({ page }) => {
     await page.goto(textPath("jp", "unit", "testunit-1-1"));
-    await page.getByRole("link", { name: /Open this story in the Live2D Player/ }).click();
+    const switchLink = page.getByRole("link", { name: "Live2D Player", exact: true });
+    await expect(switchLink).toHaveAttribute("title", /Open this story in the Live2D Player/);
+    await switchLink.click();
 
     await expect(page).toHaveURL(playerPath("jp", "unit", "testunit-1-1"));
     await expect(page.locator("[data-player-phase]")).toBeVisible();

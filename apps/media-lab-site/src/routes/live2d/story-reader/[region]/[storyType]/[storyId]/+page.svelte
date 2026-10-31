@@ -84,6 +84,7 @@
     bannerUrl={data.story?.bannerUrl}
     switchModeHref={`/story-reader/${data.identity.region}/${data.identity.storyType}/${data.identity.storyId}`}
     switchModeLabel={translate("storyReader.player.switchToTextOnly")}
+    switchModeHint={translate("storyReader.player.switchToTextOnlyHint")}
   />
 
   {#if player}

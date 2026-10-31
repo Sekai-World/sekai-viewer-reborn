@@ -73,6 +73,7 @@
     bannerUrl={data.story?.bannerUrl}
     switchModeHref={`/live2d/story-reader/${data.identity.region}/${data.identity.storyType}/${data.identity.storyId}`}
     switchModeLabel={translate("storyReader.textOnly.switchToPlayer")}
+    switchModeHint={translate("storyReader.textOnly.switchToPlayerHint")}
   />
 
   {#if readerReady}
