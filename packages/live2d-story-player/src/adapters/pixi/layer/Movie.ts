@@ -59,6 +59,10 @@ export default class Movie extends BaseLayer {
     }
   }
 
+  protected clear_content(): void {
+    this.clear();
+  }
+
   clear() {
     try {
       const container = this.root;

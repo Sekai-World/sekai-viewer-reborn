@@ -26,6 +26,7 @@ const flushMicrotasks = async (): Promise<void> => {
 const createRuntime = (overrides: Partial<StoryPlayerRuntime> = {}): StoryPlayerRuntime => ({
   nextStep: async () => "ready",
   prevStep: async () => "ready",
+  restart: async () => "ready",
   canGoBack: true,
   canAutoplay: true,
   abort: () => undefined,
@@ -317,21 +318,50 @@ describe("createStoryPlayer", () => {
     expect(player.state).toBe("ready");
   });
 
-  it("does not navigate after the runtime finishes", async () => {
+  it("does not advance after the runtime finishes but still rewinds", async () => {
     const nextStep = vi.fn(async () => "finished" as const);
     const prevStep = vi.fn(async () => "ready" as const);
+    const restart = vi.fn(async () => "ready" as const);
     const player = createStoryPlayer({
-      initialize: async () => createRuntime({ nextStep, prevStep })
+      initialize: async () => createRuntime({ nextStep, prevStep, restart })
     });
     await player.load();
 
     await player.nextStep();
     await player.nextStep();
-    await player.prevStep();
-
     expect(player.state).toBe("finished");
     expect(nextStep).toHaveBeenCalledOnce();
-    expect(prevStep).not.toHaveBeenCalled();
+
+    await player.prevStep();
+    expect(prevStep).toHaveBeenCalledOnce();
+    expect(player.state).toBe("ready");
+
+    await player.nextStep();
+    expect(player.state).toBe("finished");
+    await player.restart();
+    expect(restart).toHaveBeenCalledOnce();
+    expect(player.state).toBe("ready");
+  });
+
+  it("restarts only from a settled state", async () => {
+    const nextStepDeferred = deferred<"ready" | "finished">();
+    const restart = vi.fn(async () => "ready" as const);
+    const player = createStoryPlayer({
+      initialize: async () => createRuntime({ nextStep: () => nextStepDeferred.promise, restart })
+    });
+
+    await player.restart();
+    expect(restart).not.toHaveBeenCalled();
+
+    await player.load();
+    const advancing = player.nextStep();
+    await player.restart();
+    expect(restart).not.toHaveBeenCalled();
+
+    nextStepDeferred.resolve("ready");
+    await advancing;
+    await player.restart();
+    expect(restart).toHaveBeenCalledOnce();
   });
 
   it("destroys a ready runtime exactly once", async () => {

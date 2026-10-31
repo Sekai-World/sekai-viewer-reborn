@@ -29,6 +29,7 @@
       tapToPlay: string;
       tapToContinue: string;
       rotateToPlay: string;
+      restart: string;
       previous: string;
       next: string;
       autoplay: string;
@@ -355,6 +356,14 @@
     }
   };
 
+  // Icon-only buttons on the stage; the label lives in the tooltip and
+  // aria-label. Disabled ones stay legible so an unavailable step does not
+  // read as a missing one.
+  const controlButtonBase = "btn btn-circle btn-sm touch-target border-0 shadow-none";
+  const controlButtonIdle =
+    "bg-black/60 text-white hover:bg-black/80 disabled:bg-black/60 disabled:text-white/50";
+  const controlButtonClass = `${controlButtonBase} ${controlButtonIdle}`;
+
   const applyVolume = (): void => {
     session?.setVolume({
       voiceVolume,
@@ -461,10 +470,23 @@
       tabindex="0"
     ></div>
     {#if loadStarted && playerState !== "loading" && !loadFailed}
-      <div class="absolute top-2 right-2 z-10 flex items-center gap-1.5">
+      <div class="absolute top-2 right-2 z-10 flex flex-wrap items-center justify-end gap-1.5">
         <button
           type="button"
-          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70 disabled:bg-black/45 disabled:text-white/40"
+          class={controlButtonClass}
+          aria-label={labels.restart}
+          title={labels.restart}
+          onclick={() => {
+            dismissSelectable();
+            void session?.restart();
+          }}
+          disabled={!session || !session.canGoBack || loadFailed}
+        >
+          <Icon icon="mdi:skip-backward" class="size-5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class={controlButtonClass}
           aria-label={labels.previous}
           title={labels.previous}
           onclick={() => {
@@ -477,8 +499,22 @@
         </button>
         <button
           type="button"
-          class={`btn btn-circle btn-sm touch-target border-0 text-[10px] font-bold tracking-wide shadow-none disabled:bg-black/45 disabled:text-white/40 ${
-            autoplay ? "btn-success" : "bg-black/45 text-white hover:bg-black/70"
+          class={controlButtonClass}
+          aria-label={labels.next}
+          title={labels.next}
+          onclick={() => {
+            dismissSelectable();
+            if (playerState === "playing") session?.abort();
+            else void session?.nextStep();
+          }}
+          disabled={!session || playerState === "finished" || loadFailed}
+        >
+          <Icon icon="mdi:skip-next" class="size-5" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          class={`${controlButtonBase} text-[10px] font-bold tracking-wide ${
+            autoplay ? "btn-success" : controlButtonIdle
           }`}
           aria-pressed={autoplay}
           aria-label={labels.autoplay}
@@ -493,21 +529,7 @@
         </button>
         <button
           type="button"
-          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70 disabled:bg-black/45 disabled:text-white/40"
-          aria-label={labels.next}
-          title={labels.next}
-          onclick={() => {
-            dismissSelectable();
-            if (playerState === "playing") session?.abort();
-            else void session?.nextStep();
-          }}
-          disabled={!session || playerState === "finished" || loadFailed}
-        >
-          <Icon icon="mdi:skip-next" class="size-5" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          class="btn btn-circle btn-sm touch-target border-0 bg-black/45 text-white shadow-none hover:bg-black/70"
+          class={controlButtonClass}
           aria-label={labels.fullscreen}
           title={labels.fullscreen}
           aria-pressed={isFullscreen}

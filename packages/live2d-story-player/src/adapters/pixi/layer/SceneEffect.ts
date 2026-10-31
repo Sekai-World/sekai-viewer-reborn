@@ -133,6 +133,12 @@ export default class SceneEffect extends BaseLayer {
     this.scene_effects.forEach((e) => e.ani.set_style(this.stage_size));
   }
 
+  protected clear_content(): void {
+    this.scene_effects.forEach((e) => e.ani.destroy());
+    this.scene_effects = [];
+    super.clear_content();
+  }
+
   remove(effect: string) {
     const idx = this.scene_effects.findIndex((e) => e.type === effect);
     if (idx !== -1) {

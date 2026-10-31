@@ -167,6 +167,7 @@ const makeController = (options: FakeControllerOptions = {}) => {
       return stepResults.shift() ?? -1;
     },
     stop_sounds: vi.fn(),
+    reset_for_replay: vi.fn(),
     fade_out_ambience: vi.fn(),
     set_volume: vi.fn((volume: Parameters<PixiStoryRuntimeController["set_volume"]>[0]) => {
       volumeCalls.push(volume);
@@ -287,6 +288,28 @@ describe("createPixiStoryRuntime", () => {
 
     expect(controllerFixture.controller.fade_out_ambience).toHaveBeenCalledOnce();
     expect(controllerFixture.controller.fade_out_ambience).toHaveBeenCalledWith(1500);
+  });
+
+  it("restarts to the first checkpoint without replaying audio", async () => {
+    const { options, controllerFixture } = makeOptions();
+    const runtime = await createPixiStoryRuntime(options, new AbortController().signal);
+
+    await expect(runtime.restart()).resolves.toBe("ready");
+    expect(controllerFixture.stepCalls).toEqual([]);
+
+    await runtime.nextStep();
+    await runtime.nextStep();
+    expect(runtime.canGoBack).toBe(true);
+
+    await expect(runtime.restart()).resolves.toBe("ready");
+    expect(controllerFixture.stepCalls.at(-1)).toEqual({ step: 0, silent: true });
+    expect(controllerFixture.controller.reset_for_replay).toHaveBeenCalledOnce();
+    expect(controllerFixture.controller.step).toBe(4);
+    expect(controllerFixture.controller.stop_sounds).toHaveBeenCalledWith([
+      Live2DAssetType.Talk,
+      Live2DAssetType.SoundEffect
+    ]);
+    expect(runtime.canGoBack).toBe(false);
   });
 
   it("initializes and exposes checkpoint, settings, and resize commands", async () => {

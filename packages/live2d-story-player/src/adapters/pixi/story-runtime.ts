@@ -44,6 +44,7 @@ export interface PixiStoryRuntimeController {
   readonly live2d_load_model: Live2DController["live2d_load_model"];
   readonly step_until_checkpoint: Live2DController["step_until_checkpoint"];
   readonly stop_sounds: Live2DController["stop_sounds"];
+  readonly reset_for_replay: Live2DController["reset_for_replay"];
   readonly set_volume: Live2DController["set_volume"];
   readonly fade_out_ambience: Live2DController["fade_out_ambience"];
   readonly set_stage_size: Live2DController["set_stage_size"];
@@ -382,6 +383,39 @@ export const createPixiStoryRuntime = async (
     signal.removeEventListener("abort", onSignalAbort);
     signalListenerAttached = false;
 
+    /**
+     * Silently replays the story up to an earlier checkpoint and drops the
+     * history after it. `historyLength` is how many history entries survive:
+     * `length - 1` steps back one line, `2` returns to the first line.
+     */
+    const rewindTo = async (historyLength: number): Promise<"ready"> => {
+      if (destroyed || busy || !controller || checkpointHistory.length < 3) return "ready";
+      busy = true;
+      try {
+        const target = checkpointHistory[historyLength - 1];
+        if (target === undefined) return "ready";
+        // The silent replay skips every SE, so a looping SE started after the
+        // target checkpoint would otherwise keep playing after going back.
+        controller.stop_sounds([Live2DAssetType.Talk, Live2DAssetType.SoundEffect]);
+        controller.animate.abort();
+        // Replay from a blank stage: anything that appeared after the target
+        // would otherwise still be on screen.
+        controller.reset_for_replay();
+        let index = 0;
+        while (index !== -1 && index !== target) {
+          index = await controller.step_until_checkpoint(index, { silent: true });
+          if (destroyed) return "ready";
+        }
+        controller.step = target;
+        checkpointHistory.length = historyLength;
+        const parked = controller.pending_selectable;
+        if (parked) controller.events.emit("selectable", parked);
+        return "ready";
+      } finally {
+        busy = false;
+      }
+    };
+
     const runtime: StoryPlayerRuntime = {
       nextStep: async (): Promise<"ready" | "finished"> => {
         if (destroyed || busy || !controller) return "ready";
@@ -406,30 +440,8 @@ export const createPixiStoryRuntime = async (
       get canAutoplay(): boolean {
         return !destroyed && controller?.pending_selectable === null;
       },
-      prevStep: async (): Promise<"ready"> => {
-        if (destroyed || busy || !controller || checkpointHistory.length < 3) return "ready";
-        busy = true;
-        try {
-          const target = checkpointHistory.at(-2);
-          if (target === undefined) return "ready";
-          // The silent replay skips every SE, so a looping SE started after the
-          // target checkpoint would otherwise keep playing after going back.
-          controller.stop_sounds([Live2DAssetType.Talk, Live2DAssetType.SoundEffect]);
-          controller.animate.abort();
-          let index = 0;
-          while (index !== -1 && index !== target) {
-            index = await controller.step_until_checkpoint(index, { silent: true });
-            if (destroyed) return "ready";
-          }
-          controller.step = target;
-          checkpointHistory.pop();
-          const parked = controller.pending_selectable;
-          if (parked) controller.events.emit("selectable", parked);
-          return "ready";
-        } finally {
-          busy = false;
-        }
-      },
+      prevStep: (): Promise<"ready"> => rewindTo(checkpointHistory.length - 1),
+      restart: (): Promise<"ready"> => rewindTo(2),
       abort: (): void => {
         if (destroyed) return;
         controller?.animate.abort();

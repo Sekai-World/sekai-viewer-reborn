@@ -101,6 +101,7 @@
         labels={{
           tapToLoad: translate("storyReader.player.hint.tapToLoad"),
           tapToPlay: translate("storyReader.player.hint.tapToPlay"),
+          restart: translate("storyReader.player.controls.restart"),
           previous: translate("storyReader.player.controls.previous"),
           next: translate("storyReader.player.controls.next"),
           autoplay: translate("storyReader.player.controls.autoplay"),

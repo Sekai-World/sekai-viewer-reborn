@@ -12,6 +12,8 @@ export interface StoryPlayerRuntime {
   nextStep(): Promise<"ready" | "finished">;
   /** Silently rewinds to the preceding checkpoint. */
   prevStep(): Promise<"ready">;
+  /** Silently rewinds to the first checkpoint of the story. */
+  restart(): Promise<"ready">;
   readonly canGoBack: boolean;
   /** False while playback is parked on an explicit user choice. */
   readonly canAutoplay?: boolean;
@@ -34,6 +36,7 @@ export interface StoryPlayer {
   nextStep(): Promise<void>;
   readonly canGoBack: boolean;
   prevStep(): Promise<void>;
+  restart(): Promise<void>;
   abort(): void;
   setAutoplay(enabled: boolean): void;
   setVolume(volume: { voiceVolume?: number; bgmVolume?: number; seVolume?: number }): void;
@@ -209,10 +212,11 @@ export const createStoryPlayer = (options: CreateStoryPlayerOptions): StoryPlaye
   };
 
   const runPlayback = async (
-    operation: (activeRuntime: StoryPlayerRuntime) => Promise<"ready" | "finished">
+    operation: (activeRuntime: StoryPlayerRuntime) => Promise<"ready" | "finished">,
+    startStates: readonly StoryPlayerState[] = ["ready"]
   ): Promise<void> => {
     const activeRuntime = currentRuntime();
-    if (!activeRuntime || state !== "ready") return;
+    if (!activeRuntime || !startStates.includes(state)) return;
 
     clearAutoplayTimer();
     const activeAutoplayRevision = autoplayRevision;
@@ -370,7 +374,11 @@ export const createStoryPlayer = (options: CreateStoryPlayerOptions): StoryPlaye
     get canGoBack(): boolean {
       return runtime?.canGoBack ?? false;
     },
-    prevStep: (): Promise<void> => runPlayback((activeRuntime) => activeRuntime.prevStep()),
+    // Rewinding is also valid once the story has finished.
+    prevStep: (): Promise<void> =>
+      runPlayback((activeRuntime) => activeRuntime.prevStep(), ["ready", "finished"]),
+    restart: (): Promise<void> =>
+      runPlayback((activeRuntime) => activeRuntime.restart(), ["ready", "finished"]),
     abort: (): void => {
       if (destroyed) return;
       clearAutoplayTimer();

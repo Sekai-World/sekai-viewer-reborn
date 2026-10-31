@@ -102,56 +102,65 @@ export default async function action_layout(controller: Live2DController, action
         } else {
           costume = controller.live2d_get_costume(action_detail.Character2dId)!;
         }
-        // Step 1: Apply motions and expressions. (To get the finish pose.)
-        await controller.apply_live2d_motion(
-          costume,
-          action_detail.MotionName,
-          action_detail.FacialName,
-          true
-        );
-        // Step 2: Show. (after motion finished)
-        const show = controller.layers.live2d.show_model(costume, 200);
-        // (Same time) Move from SideFrom position to SideTo position or at SideFrom position.
-        const from = side_to_position(
-          action_detail.SideFrom,
-          action_detail.SideFromOffsetX,
-          layout_mode
-        );
-        const to = side_to_position(action_detail.SideTo, action_detail.SideToOffsetX, layout_mode);
-        let move;
-        if (from[0] === to[0] && from[1] === to[1]) {
-          controller.layers.live2d.set_position(costume, from);
-        } else {
-          move = controller.layers.live2d.move(
+        // A Clear running in parallel waits on this promise before hiding.
+        const appearing = (async () => {
+          // Step 1: Apply motions and expressions. (To get the finish pose.)
+          await controller.apply_live2d_motion(
             costume,
-            from,
-            to,
-            move_speed(action_detail.MoveSpeedType)
+            action_detail.MotionName,
+            action_detail.FacialName,
+            true
           );
-        }
-        // (Same time) Apply the same motions and expressions again.
-        // This pose update runs in the background with the entrance animation,
-        // as it did previously; report failures without delaying the action.
-        controller.animate
-          .delay(10)
-          .then(() =>
-            controller.apply_live2d_motion(
+          // Step 2: Show. (after motion finished)
+          const show = controller.layers.live2d.show_model(costume, 200);
+          // (Same time) Move from SideFrom position to SideTo position or at SideFrom position.
+          const from = side_to_position(
+            action_detail.SideFrom,
+            action_detail.SideFromOffsetX,
+            layout_mode
+          );
+          const to = side_to_position(
+            action_detail.SideTo,
+            action_detail.SideToOffsetX,
+            layout_mode
+          );
+          let move;
+          if (from[0] === to[0] && from[1] === to[1]) {
+            controller.layers.live2d.set_position(costume, from);
+          } else {
+            move = controller.layers.live2d.move(
               costume,
-              action_detail.MotionName,
-              action_detail.FacialName
-            )
-          )
-          .catch((error: unknown) => {
-            controller.logger.warn(
-              "Live2DController",
-              "Character appearance motion failed:",
-              action,
-              error
+              from,
+              to,
+              move_speed(action_detail.MoveSpeedType)
             );
-          });
-        await show;
-        controller.live2d_set_appear(action_detail.Character2dId);
-        await move;
+          }
+          // (Same time) Apply the same motions and expressions again.
+          // This pose update runs in the background with the entrance animation,
+          // as it did previously; report failures without delaying the action.
+          controller.animate
+            .delay(10)
+            .then(() =>
+              controller.apply_live2d_motion(
+                costume,
+                action_detail.MotionName,
+                action_detail.FacialName
+              )
+            )
+            .catch((error: unknown) => {
+              controller.logger.warn(
+                "Live2DController",
+                "Character appearance motion failed:",
+                action,
+                error
+              );
+            });
+          await show;
+          controller.live2d_set_appear(action_detail.Character2dId);
+          await move;
+        })();
+        controller.live2d_track_appear(action_detail.Character2dId, appearing);
+        await appearing;
       }
       break;
     case CharacterLayoutType.Clear:
@@ -173,7 +182,9 @@ export default async function action_layout(controller: Live2DController, action
             move_speed(action_detail.MoveSpeedType)
           );
         }
-        // Step 2: Wait for the model exist at least 2 seconds.
+        // Step 2: Wait for an Appear that is still running, then for the model to
+        // exist at least 2 seconds.
+        await controller.live2d_wait_appeared(action_detail.Character2dId);
         await controller.live2d_stay(action_detail.Character2dId, 2000);
         // Step 3: Hide.
         await controller.layers.live2d.hide_model(costume, 200);

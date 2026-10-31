@@ -21,6 +21,11 @@ export default class Sekai extends BaseLayer {
     this.stage_size = stage_size ?? this.stage_size;
     if (this.sekai) this.sekai.set_style(this.stage_size);
   }
+  protected clear_content(): void {
+    this.sekai?.destroy();
+    this.sekai = undefined;
+    super.clear_content();
+  }
   destroy() {
     this.sekai?.destroy();
     this.sekai = undefined;

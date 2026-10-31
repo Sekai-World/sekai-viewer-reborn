@@ -16,6 +16,7 @@ export default abstract class BaseLayer {
   protected textures: ILive2DTexture[];
   protected init: boolean;
   protected logger: StoryPlayerLogger;
+  private initial_alpha = 1;
 
   constructor(data: ILive2DLayerData) {
     this.stage_size = data.stage_size ?? [1, 1];
@@ -26,6 +27,29 @@ export default abstract class BaseLayer {
     this.init = false;
     this.logger = data.logger ?? log;
     this.root = new Container();
+  }
+
+  /** Remembers the freshly built look so `reset` can return to it. */
+  public capture_initial_state = () => {
+    this.initial_alpha = this.root.alpha;
+  };
+
+  /**
+   * Returns the layer to its freshly built look: drawn content, filters, shake
+   * offset and fade are all dropped. Used before a rewind replays the story.
+   */
+  public reset = () => {
+    this.stop_shake();
+    this.clear_content();
+    this.root.filters = null;
+    this.root.position.set(0);
+    this.root.alpha = this.initial_alpha;
+  };
+
+  /** Drops what `draw` put on screen. Layers with persistent children override it. */
+  protected clear_content(): void {
+    this.root.removeChildren();
+    this.init = false;
   }
 
   public abstract draw(...args: unknown[]): Promise<void>;

@@ -414,6 +414,25 @@ describe("BaseLayer lifecycle", () => {
     expect(layer.shakeController.abort).toHaveBeenCalledOnce();
   });
 
+  it("returns to its freshly built look on reset", () => {
+    const layer = new TestLayer({});
+    layer.root.alpha = 0.4;
+    layer.capture_initial_state();
+    layer.root.addChild(new Container());
+    layer.root.alpha = 1;
+    layer.root.position.set(12, 8);
+    layer.add_blur(2);
+
+    layer.reset();
+
+    expect(layer.root.children).toHaveLength(0);
+    expect(layer.root.filters).toBeNull();
+    expect(layer.root.alpha).toBe(0.4);
+    expect(layer.root.position.x).toBe(0);
+    expect(layer.root.position.y).toBe(0);
+    expect(layer.shakeController.abort).toHaveBeenCalledOnce();
+  });
+
   it("adds and removes only the requested filter types", () => {
     const layer = new TestLayer({});
     const matrixA = Array.from({ length: 20 }, (_, index) => index);
@@ -730,6 +749,28 @@ describe("Live2D layer lifecycle", () => {
     expect(model?.x).toBe(200);
     layer.set_position("missing", [0, 0]);
     await layer.move("missing", undefined, [0, 0], 50);
+  });
+
+  it("clears every model even though destroying one removes it from the live list", async () => {
+    const { layer } = createLive2DLayer();
+    const models = [
+      await loadModel(layer, "costume-a"),
+      await loadModel(layer, "costume-b"),
+      await loadModel(layer, "costume-c")
+    ];
+    // Like pixi, destroying a model takes it out of its parent.
+    models.forEach((model) => {
+      const destroy = model.destroy.bind(model);
+      model.destroy = () => {
+        model.removeFromParent();
+        destroy();
+      };
+    });
+
+    layer.reset();
+
+    expect(layer.get_model_list()).toHaveLength(0);
+    expect(models.every((model) => model.destroyed)).toBe(true);
   });
 
   it("shows and hides models, including their attached animations", async () => {
