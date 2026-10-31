@@ -1,5 +1,15 @@
 # @platform/i18n-runtime
 
+## 0.2.0
+
+### Minor Changes
+
+- b39daaf: Expand the content-site UI locale registry while keeping other apps restricted to their current dictionary-backed choices.
+
+  Derive dictionary mappings from the shared locale registry and include SSR locale handling in coverage collection, with regressions for streamed document attributes.
+
+- 806897b: Add shared supported UI locale configuration and locale normalization helpers.
+
 ## 0.1.3
 
 ### Patch Changes
