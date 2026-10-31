@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@types/howler": "^2.2.12",
-    "@types/node": "^25.9.1",
+    "@types/node": "^26.0.0",
     "typescript": "~6.0.3",
     "vitest": "^5.0.0"
   }
