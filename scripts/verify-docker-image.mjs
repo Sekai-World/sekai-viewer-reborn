@@ -290,6 +290,22 @@ if (isDirectExecution) {
     };
     await assertRootResponse(await requestRoot(appBaseUrl, cookieByApp[app]));
 
+    // Probe endpoint: must answer without any upstream (stub) request, so an
+    // API outage cannot fail readiness.
+    const requestsBeforeHealthz = stubRequestCount;
+    const healthzResponse = await fetch(`${appBaseUrl}/healthz`, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(5_000)
+    });
+    assert.equal(healthzResponse.status, 200, `${app} /healthz returned ${healthzResponse.status}`);
+    assert.equal(healthzResponse.headers.get("cache-control"), "no-store");
+    assert.equal(await healthzResponse.text(), "ok", `${app} /healthz body changed`);
+    assert.equal(
+      stubRequestCount,
+      requestsBeforeHealthz,
+      `${app} /healthz made upstream API or i18n requests`
+    );
+
     const staticAssetUrl = findSvelteKitImmutableAssetUrl(rootHtml, appBaseUrl);
     assert.ok(
       staticAssetUrl,
@@ -328,7 +344,7 @@ if (isDirectExecution) {
 
     assert.ok(stubRequestCount > 0, `${app} did not use the local runtime API/i18n stub`);
     console.log(
-      `${app}: root SSR with and without cookies, local stub HTTP (${stubRequestCount} requests), and immutable asset GET/HEAD passed`
+      `${app}: root SSR with and without cookies, /healthz without upstream calls, local stub HTTP (${stubRequestCount} requests), and immutable asset GET/HEAD passed`
     );
   } catch (error) {
     if (containerCreated) {
