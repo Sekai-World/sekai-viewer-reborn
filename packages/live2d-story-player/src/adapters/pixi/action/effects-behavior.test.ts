@@ -489,7 +489,15 @@ describe("special-effect dispatch and transitions", () => {
       stringVal: SeAttachCharacterShaderType.Hologram
     });
     entering.controller.current_costume = [
-      { cid: 42, costume: "costume-42", motion: "", expression: "", appear_time: 0, animations: [] }
+      {
+        cid: 42,
+        costume: "costume-42",
+        motion: "",
+        expression: "",
+        appear_time: 0,
+        appearing: null,
+        animations: []
+      }
     ];
     await single_action(entering.controller, entering.action);
     expect(entering.controller.live2d_get_costume).toHaveBeenCalledWith(42);
@@ -507,6 +515,7 @@ describe("special-effect dispatch and transitions", () => {
         motion: "",
         expression: "",
         appear_time: 0,
+        appearing: null,
         animations: ["hologram", "other"]
       }
     ];

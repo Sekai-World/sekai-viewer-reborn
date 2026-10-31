@@ -47,6 +47,8 @@ const doubles = vi.hoisted(() => {
   class FakeLayer {
     root = new FakeContainer();
     set_style = vi.fn();
+    capture_initial_state = vi.fn();
+    reset = vi.fn();
     destroy = vi.fn();
   }
 
@@ -452,6 +454,53 @@ describe("Live2D engine parity", () => {
       "costume-1-alt",
       "costume-2"
     ]);
+  });
+
+  it("resets every layer and forgets model state before a rewind replay", () => {
+    const controller = createController();
+    controller.live2d_set_costume(1, "costume-a");
+    expect(controller.current_costume).toHaveLength(1);
+
+    controller.reset_for_replay();
+
+    expect(controller.current_costume).toEqual([]);
+    // The Live2D layer is real in this suite; every other layer is a double.
+    Object.entries(controller.layers)
+      .filter(([name]) => name !== "live2d")
+      .forEach(([, layer]) => {
+        expect(layer.reset).toHaveBeenCalledOnce();
+      });
+  });
+
+  it("lets a Clear wait for the Appear that is still running", async () => {
+    const controller = createController();
+    controller.live2d_set_costume(1, "costume-a");
+    let finishAppear!: () => void;
+    controller.live2d_track_appear(
+      1,
+      new Promise<void>((resolve) => {
+        finishAppear = resolve;
+      })
+    );
+
+    let waited = false;
+    const waiting = controller.live2d_wait_appeared(1).then(() => {
+      waited = true;
+    });
+    await Promise.resolve();
+    expect(waited).toBe(false);
+
+    finishAppear();
+    await waiting;
+    expect(waited).toBe(true);
+  });
+
+  it("skips the minimum stay while silently replaying", async () => {
+    const controller = createController();
+    controller.live2d_set_costume(1, "costume-a");
+    controller.replay_silent = true;
+    await controller.live2d_stay(1, 60_000);
+    expect(controller.animate.delay).not.toHaveBeenCalled();
   });
 
   it("preserves the scene and UI layer child ordering from the player constructor", () => {

@@ -380,6 +380,7 @@ describe("Sonar async ownership regressions", () => {
       live2d_set_costume: vi.fn(() => "costume-a"),
       live2d_get_costume: vi.fn(() => "costume-a"),
       live2d_set_appear: vi.fn(),
+      live2d_track_appear: vi.fn(),
       apply_live2d_motion: applyMotion
     } as unknown as Live2DController;
     const result = action_layout(controller, createSnippet(SnippetAction.CharacterLayout)).then(
@@ -421,6 +422,37 @@ describe("Sonar async ownership regressions", () => {
       expect.anything(),
       hideError
     );
+  });
+
+  it("hides a cleared model only after its parallel Appear has finished", async () => {
+    const appeared = deferred<void>();
+    const hideModel = vi.fn(async () => {});
+    const controller = {
+      scenarioData: { LayoutData: [createLayoutData(CharacterLayoutType.Clear)] },
+      logger: createLogger(),
+      layers: {
+        telop: { hide: vi.fn(async () => {}) },
+        live2d: {
+          layout_mode: "normal" as const,
+          move: vi.fn(async () => {}),
+          hide_model: hideModel
+        }
+      },
+      live2d_get_costume: vi.fn(() => "costume-a"),
+      live2d_wait_appeared: vi.fn(() => appeared.promise),
+      live2d_stay: vi.fn(async () => {})
+    } as unknown as Live2DController;
+
+    const done = action_layout(controller, createSnippet(SnippetAction.CharacterLayout));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(controller.live2d_wait_appeared).toHaveBeenCalledWith(1);
+    expect(controller.live2d_stay).not.toHaveBeenCalled();
+    expect(hideModel).not.toHaveBeenCalled();
+
+    appeared.resolve(undefined);
+    await done;
+    expect(hideModel).toHaveBeenCalledWith("costume-a", 200);
   });
 
   it("reports a rejected telop hide without blocking an otherwise synchronous layout action", async () => {

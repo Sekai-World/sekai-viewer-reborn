@@ -32,6 +32,8 @@ interface CostumeState {
   motion: string;
   expression: string;
   appear_time: number;
+  /** Settles once the model's latest Appear action has fully shown it. */
+  appearing: Promise<void> | null;
   animations: string[];
 }
 
@@ -450,6 +452,7 @@ export class Live2DController extends Live2DPlayer {
         motion: "",
         expression: "",
         appear_time: Date.now(),
+        appearing: null,
         animations: []
       });
     } else {
@@ -465,7 +468,26 @@ export class Live2DController extends Live2DPlayer {
     const model = this.current_costume.find((p) => p.cid === cid);
     if (model) model.appear_time = Date.now();
   };
+  /** Records the in-flight Appear so a parallel Clear can wait for it. */
+  live2d_track_appear = (cid: number, appearing: Promise<void>) => {
+    const model = this.current_costume.find((p) => p.cid === cid);
+    if (model) model.appearing = appearing.catch(() => undefined);
+  };
+  live2d_wait_appeared = async (cid: number) => {
+    await this.current_costume.find((p) => p.cid === cid)?.appearing;
+  };
+  /**
+   * Returns the story to its first frame before a rewind replays it: the
+   * stage is emptied and every model's costume/appearance history is dropped
+   * (the replay rebuilds them).
+   */
+  reset_for_replay = () => {
+    this.reset_stage();
+    this.current_costume = [];
+  };
   live2d_stay = async (cid: number, min_time_ms: number) => {
+    // A silent replay converges the picture without waiting in real time.
+    if (this.replay_silent) return;
     const model = this.current_costume.find((p) => p.cid === cid);
     if (model) {
       const duration = Date.now() - model.appear_time;

@@ -167,6 +167,7 @@ const makeController = (options: FakeControllerOptions = {}) => {
       return stepResults.shift() ?? -1;
     },
     stop_sounds: vi.fn(),
+    reset_for_replay: vi.fn(),
     fade_out_ambience: vi.fn(),
     set_volume: vi.fn((volume: Parameters<PixiStoryRuntimeController["set_volume"]>[0]) => {
       volumeCalls.push(volume);
@@ -302,6 +303,7 @@ describe("createPixiStoryRuntime", () => {
 
     await expect(runtime.restart()).resolves.toBe("ready");
     expect(controllerFixture.stepCalls.at(-1)).toEqual({ step: 0, silent: true });
+    expect(controllerFixture.controller.reset_for_replay).toHaveBeenCalledOnce();
     expect(controllerFixture.controller.step).toBe(4);
     expect(controllerFixture.controller.stop_sounds).toHaveBeenCalledWith([
       Live2DAssetType.Talk,

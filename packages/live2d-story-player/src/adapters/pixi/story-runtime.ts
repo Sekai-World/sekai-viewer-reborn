@@ -44,6 +44,7 @@ export interface PixiStoryRuntimeController {
   readonly live2d_load_model: Live2DController["live2d_load_model"];
   readonly step_until_checkpoint: Live2DController["step_until_checkpoint"];
   readonly stop_sounds: Live2DController["stop_sounds"];
+  readonly reset_for_replay: Live2DController["reset_for_replay"];
   readonly set_volume: Live2DController["set_volume"];
   readonly fade_out_ambience: Live2DController["fade_out_ambience"];
   readonly set_stage_size: Live2DController["set_stage_size"];
@@ -397,6 +398,9 @@ export const createPixiStoryRuntime = async (
         // target checkpoint would otherwise keep playing after going back.
         controller.stop_sounds([Live2DAssetType.Talk, Live2DAssetType.SoundEffect]);
         controller.animate.abort();
+        // Replay from a blank stage: anything that appeared after the target
+        // would otherwise still be on screen.
+        controller.reset_for_replay();
         let index = 0;
         while (index !== -1 && index !== target) {
           index = await controller.step_until_checkpoint(index, { silent: true });

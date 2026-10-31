@@ -22,6 +22,13 @@ import Movie from "./layer/Movie.js";
 import AnimationController from "./animation/AnimationController.js";
 import { Live2DPlayerEventEmitter } from "./Live2DPlayerEventEmitter.js";
 
+const initialCamera = () => ({
+  pivot: [0.5, 0.5] as [number, number],
+  position: [0, 0] as [number, number],
+  scale: [1, 1] as [number, number],
+  rotation: 0
+});
+
 export class Live2DPlayer {
   app: Application;
   stage_size: [number, number];
@@ -123,15 +130,22 @@ export class Live2DPlayer {
     UIRoot.addChild(this.layers.dialog.root);
     UIRoot.addChild(this.layers.place_info.root);
 
-    this.camera = {
-      pivot: [0.5, 0.5],
-      position: [0, 0],
-      scale: [1, 1],
-      rotation: 0
-    };
+    this.camera = initialCamera();
+    Object.values(this.layers).forEach((layer) => layer.capture_initial_state());
     this.set_stage_size(stage_size);
     this.logger.log("Live2DPlayer", `player init.`);
   }
+
+  /**
+   * Puts the stage back to how it looked before the story started: nothing
+   * drawn on any layer, no models, camera centered. A rewind calls this before
+   * silently replaying the story up to an earlier checkpoint.
+   */
+  reset_stage = () => {
+    Object.values(this.layers).forEach((layer) => layer.reset());
+    this.camera = initialCamera();
+    this.set_style();
+  };
 
   set_style = () => {
     this.root.pivot.set(

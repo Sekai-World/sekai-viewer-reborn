@@ -44,6 +44,12 @@ export default class Live2D extends BaseLayer {
   }
 
   async draw(): Promise<void> {} // NOSONAR: intentional no-op override
+  protected clear_content(): void {
+    this.stop_speaking();
+    this.clear();
+    this.structure.effect.removeChildren();
+    this.layout_mode = "normal";
+  }
   set_style(stage_size?: [number, number], model_list: Live2DModelWithInfo[] = []): void {
     this.stage_size = stage_size ?? this.stage_size;
     let models = model_list;
@@ -108,7 +114,8 @@ export default class Live2D extends BaseLayer {
   };
 
   clear = () => {
-    this.get_model_list().forEach((o) => o.destroy());
+    // `children` is live and destroying a model removes it, so walk a copy.
+    [...this.get_model_list()].forEach((o) => o.destroy());
     this.logger.log("Live2DPlayer", "live2d stage clear.");
   };
 
