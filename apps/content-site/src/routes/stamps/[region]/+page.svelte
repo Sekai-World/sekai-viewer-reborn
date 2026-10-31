@@ -8,12 +8,10 @@
   import MissionCharacterPicker from "#lib/components/mission/MissionCharacterPicker.svelte";
   import MysekaiLoadMore from "#lib/components/mysekai/MysekaiLoadMore.svelte";
   import StampTile from "#lib/components/stamp/StampTile.svelte";
+  import StampPreviewDialog from "#lib/components/stamp/StampPreviewDialog.svelte";
   import type { MissionCharacterOption } from "#lib/domain/mission.js";
   import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
-  import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
   import {
-    getStampCharacters,
-    getStampDisplayName,
     stampCategories,
     stampSources,
     toStampSearchParams,
@@ -23,9 +21,6 @@
   import { createStreamedTranslator } from "#lib/i18n/streamed-translator.svelte.js";
   import { fetchPagedResult, PagedList } from "#lib/paged-list.svelte.js";
   import { createPageTitle } from "#lib/page-title.js";
-  import { STAMP_PREVIEW_BOX_CLASS } from "#lib/styles/stamp-preview.js";
-  import { ImagePreviewDialog } from "@platform/ui-shell";
-  import type { Snippet } from "svelte";
   import type { PageProps } from "./$types";
 
   let { data }: PageProps = $props();
@@ -133,12 +128,7 @@
     }
   };
 
-  let previewStamp = $state<StampItem | null>(null);
-  let previewOpen = $state(false);
-  const openPreview = (stamp: StampItem): void => {
-    previewStamp = stamp;
-    previewOpen = true;
-  };
+  let preview: StampPreviewDialog | undefined = $state();
 </script>
 
 <svelte:head><title>{createPageTitle(`${title} ${regionLabels[data.region]}`)}</title></svelte:head>
@@ -282,7 +272,7 @@
           {stamp}
           imageSrc={getStampImageURL(stamp.assetbundleName, data.region)}
           imageUnavailableLabel={t("imageUnavailable")}
-          onOpen={() => openPreview(stamp)}
+          onOpen={(trigger) => void preview?.show(stamp, trigger)}
         />
       </li>
     {/each}
@@ -299,52 +289,10 @@
   />
 </CatalogueFrame>
 
-{#snippet previewField(label: string, value: Snippet)}
-  <div class="grid gap-0.5">
-    <dt class="text-xs font-semibold tracking-[0.16em] uppercase opacity-60">{label}</dt>
-    <dd class="text-sm wrap-anywhere whitespace-pre-line">{@render value()}</dd>
-  </div>
-{/snippet}
-
-{#if previewStamp}
-  {@const stamp = previewStamp}
-  {@const characters = getStampCharacters(stamp.characterIds, characterOptions.items)}
-  <ImagePreviewDialog
-    bind:open={previewOpen}
-    src={getStampImageURL(stamp.assetbundleName, data.region) ?? ""}
-    alt={getStampDisplayName(stamp.name)}
-    closeLabel={t("closeLabel")}
-    formatOptions={["webp", "png"]}
-    dialogBoxClass={STAMP_PREVIEW_BOX_CLASS}
-  >
-    <dl class="grid gap-3 border-t border-(--archive-border-subtle) pt-3 text-left">
-      {#snippet name()}
-        <span class="font-semibold">{getStampDisplayName(stamp.name)}</span>
-      {/snippet}
-      {@render previewField(t("stamp.previewName"), name)}
-      {#if characters.length > 0}
-        {#snippet characterList()}
-          <ul class="flex flex-wrap gap-x-3 gap-y-1.5">
-            {#each characters as character (character.id)}
-              <li class="flex items-center gap-1.5">
-                <CharacterAvatar
-                  src={getLocalCharacterThumbnailAssetURL(character.id)}
-                  label=""
-                  characterId={character.id}
-                  variant="xs"
-                  decorative
-                />
-                <span>{character.name}</span>
-              </li>
-            {/each}
-          </ul>
-        {/snippet}
-        {@render previewField(t("stamp.previewCharacters"), characterList)}
-      {/if}
-      {#if stamp.description}
-        {#snippet obtain()}{stamp.description}{/snippet}
-        {@render previewField(t("stamp.previewObtain"), obtain)}
-      {/if}
-    </dl>
-  </ImagePreviewDialog>
-{/if}
+<StampPreviewDialog
+  bind:this={preview}
+  {catalogueKey}
+  region={data.region}
+  characters={characterOptions.items}
+  {t}
+/>
