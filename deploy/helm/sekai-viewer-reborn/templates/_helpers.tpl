@@ -55,3 +55,22 @@ app.kubernetes.io/component: web
 app.kubernetes.io/part-of: {{ include "sekai-viewer-reborn.name" $root | quote }}
 app.kubernetes.io/managed-by: {{ $root.Release.Service | quote }}
 {{- end }}
+
+{{/*
+Probe action shared by the startup, liveness, and readiness probes. "tcp"
+only checks that the container port accepts connections and works with every
+image; "http" requests probes.path, which only images that serve it support.
+*/}}
+{{- define "sekai-viewer-reborn.probeAction" -}}
+{{- $type := default "tcp" .Values.probes.type -}}
+{{- if eq $type "http" -}}
+httpGet:
+  path: {{ .Values.probes.path | quote }}
+  port: http
+{{- else if eq $type "tcp" -}}
+tcpSocket:
+  port: http
+{{- else -}}
+{{- fail (printf "probes.type must be \"tcp\" or \"http\", got %q" $type) -}}
+{{- end -}}
+{{- end }}

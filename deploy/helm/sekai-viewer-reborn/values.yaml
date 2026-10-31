@@ -20,6 +20,16 @@ podSecurityContext:
   seccompProfile:
     type: RuntimeDefault
 
+# Container probe type for the startup, liveness, and readiness probes.
+# "tcp" only checks that port 3000 accepts connections and works with every
+# image. "http" requests `path`, which only images that ship the /healthz
+# route serve; older images would fail readiness, so keep "tcp" until every
+# enabled app runs such an image. The endpoint does no upstream calls on
+# purpose: a sekai-api or sekai-master-api outage must not drain every pod.
+probes:
+  type: tcp
+  path: /healthz
+
 # Do not enable readOnlyRootFilesystem by default: the application runtime has
 # not been assessed for a read-only root filesystem and writable tmpfs mounts.
 containerSecurityContext:

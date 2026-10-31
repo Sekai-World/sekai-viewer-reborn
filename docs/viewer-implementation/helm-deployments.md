@@ -17,7 +17,7 @@ an Ingress by default. PodDisruptionBudgets are enabled by default through
 release namespace is supplied by the command line.
 
 The default image repositories are
-`docker.dnaroma.eu/sekai-viewer-reborn/<app-name>`, and every app uses the
+`zot.dna.moe/sekai-viewer-reborn/<app-name>`, and every app uses the
 explicit default tag `0.0.0`. Images are published by the `Docker Publish`
 workflow (`.github/workflows/docker-publish.yml`), which builds each app image
 when a release tag `@apps/<app-name>@<version>` is pushed and pushes both the
@@ -38,9 +38,13 @@ anti-affinity spreads replicas of each app by substituting the current app name
 for the reserved `__APP_NAME__` affinity value. Empty tolerations and an empty
 node selector are provided in `values.yaml`.
 
-The startup, liveness, and readiness probes are TCP probes against the named
-`http` port, which is container port 3000. The chart does not assume an HTTP
-health endpoint.
+The startup, liveness, and readiness probes share one action selected by
+`probes.type`. The default `tcp` checks the named `http` port (container port 3000) and works with every image. `http` requests `probes.path` (default
+`/healthz`), which every app serves from the release that introduced
+`apps/*/src/routes/healthz`; older images do not have it, so switch to `http`
+only after every enabled app runs such an image. The endpoint makes no upstream
+calls on purpose, so a `sekai-api` or `sekai-master-api` outage degrades pages
+instead of draining every pod.
 
 ## Application environment configuration
 
@@ -115,7 +119,7 @@ resources, and `--reuse-values` should only be used deliberately.
 
 - `deploy/helm/sekai-viewer-reborn/values.yaml` — chart defaults and app values.
 - `deploy/helm/sekai-viewer-reborn/templates/deployment.yaml` — deployment,
-  security, resources, scheduling, environment, and TCP probe rendering.
+  security, resources, scheduling, environment, and probe rendering.
 - `deploy/helm/sekai-viewer-reborn/templates/service.yaml` — ClusterIP service
   port mapping.
 - `deploy/helm/sekai-viewer-reborn/templates/ingress.yaml` — per-app host and

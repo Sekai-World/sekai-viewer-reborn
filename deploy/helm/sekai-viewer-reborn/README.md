@@ -99,8 +99,19 @@ helm template viewer deploy/helm/sekai-viewer-reborn \
   --set-string apps.account-site.env.SEKAI_API_BASE_URL=https://api.example.com
 ```
 
-The chart uses TCP startup, liveness, and readiness probes against the named
-`http` container port (3000). No HTTP health-check path is assumed.
+The startup, liveness, and readiness probes use `probes.type`. The default
+`tcp` only checks the named `http` container port (3000) and works with every
+image. Set `probes.type: http` to request `probes.path` (default `/healthz`);
+every app serves it from the release that added `apps/*/src/routes/healthz`,
+and older images fail readiness on it, so switch only after every enabled app
+runs a newer image. `/healthz` returns `200 ok` and makes no upstream calls, so
+an API outage does not drain the pods.
+
+Adapter-node derives each request origin at runtime. Set
+`PROTOCOL_HEADER=x-forwarded-proto` per environment (through `extraEnv` or
+`env`) so the protocol comes from the ingress; without it the origin is always
+`https`. See `docs/viewer-implementation/docker-builds.md` for the full origin
+decisions.
 
 The pod security context keeps `runAsNonRoot: true` and
 `seccompProfile.type: RuntimeDefault`. Numeric `runAsUser` and `runAsGroup`
