@@ -82,6 +82,9 @@
   // True only on touch devices held upright (pointer: coarse keeps desktop
   // narrow windows unaffected); playback is landscape-only there.
   let isPortraitCoarse = $state(false);
+  // Any touch device, held either way: its screen is often wider than 16:9 and
+  // too short for a full-width stage, so the stage is fitted to the screen.
+  let isCoarsePointer = $state(false);
   /* Per-phase load progress (media / model data / model files / motions),
      keyed by Live2DLoadProgressType. Phases start at different times, so an
      aggregate count/total would jump backwards whenever a new phase's total
@@ -352,14 +355,20 @@
     };
 
     const portraitQuery = window.matchMedia("(orientation: portrait) and (pointer: coarse)");
+    const coarseQuery = window.matchMedia("(pointer: coarse)");
     const syncPortrait = (): void => {
       isPortraitCoarse = portraitQuery.matches;
+    };
+    const syncCoarse = (): void => {
+      isCoarsePointer = coarseQuery.matches;
     };
     const syncFullscreen = (): void => {
       isFullscreen = document.fullscreenElement === stageContainer;
     };
     syncPortrait();
+    syncCoarse();
     portraitQuery.addEventListener("change", syncPortrait);
+    coarseQuery.addEventListener("change", syncCoarse);
     document.addEventListener("fullscreenchange", syncFullscreen);
     // Portrait touch devices load through the fullscreen gate instead.
     if (autoStart && !isPortraitCoarse) startLoading();
@@ -368,6 +377,7 @@
       destroyed = true;
       documentController?.abort();
       portraitQuery.removeEventListener("change", syncPortrait);
+      coarseQuery.removeEventListener("change", syncCoarse);
       document.removeEventListener("fullscreenchange", syncFullscreen);
       if (selectableTimer !== null) {
         clearTimeout(selectableTimer);
@@ -382,6 +392,9 @@
 
   const onStageClick = (): void => {
     if (!loadStarted) {
+      // The load tap is the user gesture fullscreen needs; on a touch device
+      // the stage only fits the screen properly once it is fullscreen.
+      if (isCoarsePointer && !isFullscreen) void enterStageFullscreen();
       startLoading();
       return;
     }
@@ -407,6 +420,10 @@
   const controlButtonIdle =
     "bg-black/60 text-white hover:bg-black/80 disabled:bg-black/60 disabled:text-white/50";
   const controlButtonClass = `${controlButtonBase} ${controlButtonIdle}`;
+
+  // Largest 16:9 box that fits the screen's height, so a screen wider than
+  // 16:9 gets side bars instead of a stage cut off at the bottom.
+  const fittedStageWidth = "min(100%, calc(100dvh * 16 / 9))";
 
   const applyVolume = (): void => {
     session?.setVolume({
@@ -513,11 +530,17 @@
   <p class="sr-only" role="status" aria-live="polite">{statusText}</p>
   <div
     bind:this={stageContainer}
-    class="relative aspect-video w-full overflow-hidden rounded-xl border border-base-content/10 bg-black"
+    class={`relative aspect-video w-full overflow-hidden rounded-xl border border-base-content/10 bg-black ${
+      isCoarsePointer && !isFullscreen ? "mx-auto" : ""
+    }`}
+    style:width={isCoarsePointer && !isFullscreen ? fittedStageWidth : undefined}
   >
     <div
       bind:this={stageHost}
-      class="absolute inset-0"
+      class={isFullscreen
+        ? "absolute top-1/2 left-1/2 aspect-video -translate-1/2"
+        : "absolute inset-0"}
+      style:width={isFullscreen ? fittedStageWidth : undefined}
       role="button"
       aria-label={!loadStarted ? labels.tapToLoad : labels.next}
       onclick={onStageClick}

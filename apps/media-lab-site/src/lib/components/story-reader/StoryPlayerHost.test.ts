@@ -103,6 +103,18 @@ const renderHost = (props: { autoStart?: boolean; onReload?: () => void } = {}) 
     ...props
   });
 
+/** Makes only the listed media queries match; every other query does not. */
+const matchOnly = (...matching: string[]): void => {
+  window.matchMedia = vi.fn((query: string) => ({
+    matches: matching.includes(query),
+    addEventListener: () => {},
+    removeEventListener: () => {}
+  })) as unknown as typeof window.matchMedia;
+};
+
+const stageOf = (container: HTMLElement): HTMLElement =>
+  container.querySelector<HTMLElement>('[role="button"][tabindex="0"]')!;
+
 const phaseOf = (container: HTMLElement): string | null =>
   container.querySelector("[data-player-phase]")?.getAttribute("data-player-phase") ?? null;
 
@@ -251,6 +263,72 @@ describe("StoryPlayerHost", () => {
 
     expect(session.setUiVisible).toHaveBeenLastCalledWith(true);
     expect(session.nextStep).not.toHaveBeenCalled();
+  });
+
+  it("asks a touch device for fullscreen on the load tap and not a mouse device", async () => {
+    const requestFullscreen = vi.fn(async () => {});
+    Object.defineProperty(HTMLElement.prototype, "requestFullscreen", {
+      configurable: true,
+      value: requestFullscreen
+    });
+    try {
+      matchOnly();
+      const mouse = renderHost();
+      await fireEvent.click(screen.getByRole("button", { name: labels.tapToLoad }));
+      await waitFor(() => expect(createStoryPlayerSession).toHaveBeenCalledTimes(1));
+      expect(requestFullscreen).not.toHaveBeenCalled();
+      mouse.unmount();
+
+      matchOnly("(pointer: coarse)");
+      renderHost();
+      await fireEvent.click(screen.getByRole("button", { name: labels.tapToLoad }));
+      await waitFor(() => expect(createStoryPlayerSession).toHaveBeenCalledTimes(2));
+      expect(requestFullscreen).toHaveBeenCalledOnce();
+    } finally {
+      Reflect.deleteProperty(HTMLElement.prototype, "requestFullscreen");
+    }
+  });
+
+  it("fits the stage to the screen height on touch devices outside fullscreen", () => {
+    matchOnly("(pointer: coarse)");
+    const { container } = renderHost();
+    const frame = stageOf(container).parentElement!;
+
+    expect(frame.className).toContain("mx-auto");
+    expect(frame.style.width).toMatch(/^min\(100%, [\d.]+dvh\)$/);
+    expect(stageOf(container).className).toContain("inset-0");
+  });
+
+  it("keeps the full-width stage for mouse devices", () => {
+    matchOnly();
+    const { container } = renderHost();
+    const frame = stageOf(container).parentElement!;
+
+    expect(frame.className).not.toContain("mx-auto");
+    expect(frame.style.width).toBe("");
+  });
+
+  it("letterboxes the stage inside fullscreen so a wide screen does not cut it off", async () => {
+    matchOnly("(pointer: coarse)");
+    const { container } = renderHost();
+    const frame = stageOf(container).parentElement!;
+    let current: Element | null = frame;
+    Object.defineProperty(document, "fullscreenElement", {
+      configurable: true,
+      get: () => current
+    });
+
+    document.dispatchEvent(new Event("fullscreenchange"));
+
+    await waitFor(() => expect(stageOf(container).className).toContain("aspect-video"));
+    expect(stageOf(container).className).not.toContain("inset-0");
+    expect(stageOf(container).style.width).toMatch(/^min\(100%, [\d.]+dvh\)$/);
+    expect(frame.style.width).toBe("");
+
+    current = null;
+    document.dispatchEvent(new Event("fullscreenchange"));
+    await waitFor(() => expect(stageOf(container).className).toContain("inset-0"));
+    Reflect.deleteProperty(document, "fullscreenElement");
   });
 
   it("separates playing, waiting at a checkpoint, and finished", async () => {
