@@ -51,6 +51,12 @@ Prismatic Archive treats `content-site` as a calm, readable archive/catalogue ra
 - Catalogue grids use stretch-aligned rows; each list card's clickable frame must fill its grid cell so cards share a row height without changing their media aspect ratios.
 - Keep catalogue surface structure shared, but keep each domain's card internals specific: cards, music, events, gachas, and virtual lives may expose different metadata, artwork, and interactions within the common page-level surfaces.
 
+### Stamp preview history
+
+- The `/stamps/:region` image preview is a history-only shallow-routing pilot. Opening a stamp adds a same-URL history entry without changing the list filters; Back closes it and Forward restores it. The close button, Escape, and backdrop consume the preview entry as well.
+- The preview is not shareable: direct entry and SSR show the list, and refreshing an open preview closes it. The list URL, including its query and fragment, remains unchanged. Normal navigation and the existing filter behavior are not replaced by shallow routing.
+- Keep the triggering tile and scroll position stable when opening or closing; the native dialog contains focus and restores it to the tile when it remains available. The preview remains keyboard accessible and scrollable on narrow screens.
+
 ## daisyUI Override Rules
 
 ### 1. Override daisyUI component defaults with `@utility`
