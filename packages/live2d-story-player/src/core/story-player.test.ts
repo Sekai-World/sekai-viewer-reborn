@@ -222,6 +222,36 @@ describe("createStoryPlayer", () => {
     expect(resizeCalls).toEqual([[800, 600]]);
   });
 
+  it("reports dialogue lines from the runtime and applies a pending UI visibility", async () => {
+    const initialization = deferred<StoryPlayerRuntime>();
+    const lines = [{ speaker: "Miku", text: "hello", translatedText: null }];
+    const visibilityCalls: boolean[] = [];
+    const runtime = createRuntime({
+      dialogueLog: () => lines,
+      setUiVisible: (visible) => visibilityCalls.push(visible)
+    });
+    const player = createStoryPlayer({ initialize: () => initialization.promise });
+
+    expect(player.dialogueLog()).toEqual([]);
+    player.setUiVisible(false);
+    const load = player.load();
+    initialization.resolve(runtime);
+    await load;
+
+    expect(visibilityCalls).toEqual([false]);
+    expect(player.dialogueLog()).toEqual(lines);
+    player.setUiVisible(true);
+    expect(visibilityCalls).toEqual([false, true]);
+  });
+
+  it("tolerates runtimes without a dialogue log or UI toggle", async () => {
+    const player = createStoryPlayer({ initialize: async () => createRuntime() });
+    await player.load();
+
+    expect(player.dialogueLog()).toEqual([]);
+    expect(() => player.setUiVisible(false)).not.toThrow();
+  });
+
   it("autoplays only after the configured delay", async () => {
     vi.useFakeTimers();
     const nextStep = vi.fn(async () => "ready" as const);

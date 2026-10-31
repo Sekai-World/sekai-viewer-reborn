@@ -147,6 +147,12 @@ export class Live2DPlayer {
     this.set_style();
   };
 
+  /** Hides or shows the dialog box, place caption and telop. */
+  set_ui_visible = (visible: boolean) => {
+    this.UIRoot.visible = visible;
+    this.layers.telop.root.visible = visible;
+  };
+
   set_style = () => {
     this.root.pivot.set(
       this.stage_size[0] * this.camera.pivot[0],
