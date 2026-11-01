@@ -58,7 +58,7 @@ priorities are tracked in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Prerequisites
 
-- Node.js 24+
+- Node.js 26+
 - pnpm 11+
 
 ## Local Development

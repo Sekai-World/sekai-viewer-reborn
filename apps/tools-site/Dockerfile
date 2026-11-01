@@ -1,7 +1,7 @@
-FROM node:24-alpine AS deps
+FROM node:26-alpine AS deps
 
 WORKDIR /repo
-RUN corepack enable
+RUN npm install -g corepack@0.36.0 && corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY patches ./patches
@@ -22,7 +22,7 @@ RUN pnpm rebuild esbuild
 RUN pnpm --filter @apps/tools-site exec svelte-kit sync
 RUN pnpm --filter @apps/tools-site build
 
-FROM node:24-alpine AS runner
+FROM node:26-alpine AS runner
 
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

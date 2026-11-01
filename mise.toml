@@ -6,7 +6,7 @@ _.path = ["{{config_root}}/node_modules/.bin"]
 
 [tools]
 pnpm = "12.16.1"
-node = "24"
+node = "26"
 
 [hooks]
 postinstall = "mise reshim"

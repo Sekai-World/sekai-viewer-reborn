@@ -45,7 +45,7 @@ Guidance for coding agents working in this workspace.
   - shared packages: `@platform/*`
 - Use ESM and strict TypeScript patterns already present in repo.
 - Assume the repo may already contain generated `dist/` output and `.turbo/` artifacts; do not hand-edit generated build output unless explicitly requested.
-- Match the CI/runtime toolchain already used in the repo: Node.js 24 and pnpm 12, at the exact version pinned by `packageManager` in the root `package.json` (mirrored in `mise.toml`).
+- Match the CI/runtime toolchain already used in the repo: Node.js 26 and pnpm 12, at the exact version pinned by `packageManager` in the root `package.json` (mirrored in `mise.toml`).
 
 ## Root Commands
 
@@ -269,7 +269,7 @@ pnpm --filter @platform/sekai-master-api-sdk check
 ## Docker / Container Notes
 
 - Build context must be repo root when using app Dockerfiles.
-- Current app Dockerfiles use multi-stage `node:24-alpine` builds.
+- Current app Dockerfiles use multi-stage `node:26-alpine` builds. Node.js 25+ no longer bundles Corepack, so each Dockerfile installs a pinned Corepack before `corepack enable`.
 - Each app image builds only its own workspace with `pnpm --filter @apps/<app-name> build`.
 - Runtime containers execute `node build` and expose port `3000`.
 

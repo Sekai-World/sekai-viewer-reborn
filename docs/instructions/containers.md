@@ -11,7 +11,7 @@ actual runtime contract rather than replacing it.
 - Use multi-stage builds when build-time dependencies are not needed at runtime.
 - Keep the build context at the repository root when using the current app
   Dockerfiles, and preserve the workspace-aware `pnpm` build commands.
-- Use the repository's Node.js 24 Alpine base and pinned package-manager version
+- Use the repository's Node.js 26 Alpine base and pinned package-manager version
   unless a documented runtime requirement justifies a change.
 - Copy dependency manifests before source files where that improves build-cache
   reuse. Do not copy secrets, local `.env` files, `.git`, host `node_modules`, or
