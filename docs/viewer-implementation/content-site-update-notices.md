@@ -20,12 +20,16 @@ The curated entries and their copy follow the release checklist in `AGENTS.md`
 ## How SvelteKit detects a deployment
 
 These notes were checked against `@sveltejs/kit` 3.1.1
-(`src/runtime/app/state/client.svelte.js` and `src/core/config/options.js`).
+(`src/runtime/app/state/client.svelte.js`, `src/runtime/client/client.js`, and
+`src/core/config/options.js`).
 
 - `updated.check()` fetches `_app/version.json` with `cache-control: no-cache`.
-  A network error or a non-OK response returns `false`. Once a check succeeds,
-  `updated.current` stays `true` and polling stops. On the dev server the check
-  always returns `false`, so the prompt cannot appear under `vite dev`.
+  A network error or a non-OK response returns `false`, and so does a
+  successful check that finds the same build name; each of these re-arms the
+  poll timer. Only a check that finds a different build name sets
+  `updated.current` to `true`. It then stays `true` and polling stops. On the
+  dev server the check always returns `false`, so the prompt cannot appear under
+  `vite dev`.
 - Checks run on a timer (`version.pollInterval`), when the window gains focus,
   when the tab becomes visible, and when a `__data.json`, form, or remote
   response carries a different `x-sveltekit-version` header. `content-site`
@@ -37,10 +41,12 @@ These notes were checked against `@sveltejs/kit` 3.1.1
   (`.github/workflows/docker-publish.yml`), and test and production run the same
   image, so they share a name. Re-running the image build for a tag, or rolling
   back to an older image, also counts as a new deployment.
-- SvelteKit has its own fallback. When `updated.current` is `true` and a
-  client-side navigation fails or returns a status of 400 or more, SvelteKit
-  loads the target URL as a full page. This only happens on a navigation the
-  user started.
+- SvelteKit has its own fallback. When a client-side navigation fails to load
+  a route or returns a status of 400 or more, SvelteKit calls `updated.check()`
+  (`client.js`, around lines 1538 and 2072). If that check finds a new build, it
+  loads the target URL as a full page, even if `updated.current` was still
+  `false` before the navigation. This only happens on a navigation the user
+  started.
 
 ## Prompt rules
 
@@ -51,7 +57,8 @@ These notes were checked against `@sveltejs/kit` 3.1.1
   dialog is open.
 - **Dismissal:** dismissal is remembered for each build name. Other tabs that
   show the prompt for the same build hide it through the `storage` event. A
-  build with a different name prompts again. Because `updated` stays `true`, a
+  dismissal of a different build in another tab is ignored, so a dismissal made
+  in this tab stays in effect. A build with a different name prompts again. Because `updated` stays `true`, a
   tab detects at most one deployment per page load.
 - **Multiple tabs:** each tab detects a deployment independently. Reloading one
   tab does not reload the others.
@@ -68,8 +75,12 @@ These notes were checked against `@sveltejs/kit` 3.1.1
 - **Rolling updates:** while old and new pods both serve traffic, a tab can see
   a different build name for a moment. The prompt names whichever build
   answered `_app/version.json`.
-- **Accessibility:** the prompt is a polite `role="status"` region with a
-  labelled **Reload** button and **Dismiss** icon button. Both targets are at
+- **Accessibility:** the layout always renders an empty `role="status"` region
+  in the notice slot, and the prompt is mounted inside it. Screen readers then
+  announce the prompt politely when it appears, which they often skip for a
+  live region inserted with its content already in place. The curated notice
+  keeps its own `role="alert"`. The prompt has a labelled **Reload** button and
+  **Dismiss** icon button. Both targets are at
   least 44px, and the styling reuses the curated notice.
 
 ## Tests

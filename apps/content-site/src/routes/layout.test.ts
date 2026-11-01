@@ -242,39 +242,56 @@ describe("deployment update prompt", () => {
     });
   };
 
-  it("replaces the curated update notice when a new deployment is detected", async () => {
+  it("announces a detected deployment in a live region that exists beforehand", async () => {
     appState.updated.current = true;
+    let respond: (response: Response) => void = () => {};
     const fetchVersion = vi.fn(
-      async () => new Response(JSON.stringify({ version: "next-build" }), { status: 200 })
+      () =>
+        new Promise<Response>((resolve) => {
+          respond = resolve;
+        })
     );
     vi.stubGlobal("fetch", fetchVersion);
 
-    renderReturningVisitor();
+    const { container } = renderReturningVisitor();
+
+    const region = container.querySelector<HTMLElement>("[data-deployment-update-region]");
+    expect(region?.getAttribute("role")).toBe("status");
+    await waitFor(() => expect(fetchVersion).toHaveBeenCalledTimes(1));
+    expect(region?.textContent?.trim()).toBe("");
+    expect(fetchVersion).toHaveBeenCalledWith("/_app/version.json", { cache: "no-store" });
+
+    respond(new Response(JSON.stringify({ version: "next-build" }), { status: 200 }));
 
     const title = await screen.findByText("updates.deployment.title");
-    expect(title.closest("section")?.getAttribute("role")).toBe("status");
+    expect(region?.contains(title)).toBe(true);
+    expect(title.closest("section")?.hasAttribute("role")).toBe(false);
     expect(screen.getByRole("button", { name: "updates.deployment.reloadLabel" })).toBeTruthy();
     expect(screen.queryByText("updates.notice.title")).toBeNull();
-    expect(fetchVersion).toHaveBeenCalledWith("/_app/version.json", { cache: "no-store" });
 
     screen.getByRole("button", { name: "updates.deployment.dismissLabel" }).click();
     await waitFor(() => expect(screen.queryByText("updates.deployment.title")).toBeNull());
     expect(localStorage.getItem("content_site_dismissed_deployment")).toBe("next-build");
     expect(screen.queryByText("updates.notice.title")).toBeNull();
+    expect(container.querySelector("[data-deployment-update-region]")).toBe(region);
   });
 
   it("keeps the curated notice when the deployment check fails", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => {
-        throw new TypeError("Failed to fetch");
-      })
-    );
+    const failingFetch = vi.fn(async () => {
+      throw new TypeError("Failed to fetch");
+    });
+    vi.stubGlobal("fetch", failingFetch);
     appState.updated.current = true;
 
     renderReturningVisitor();
 
-    expect(await screen.findByText("updates.notice.title")).toBeTruthy();
+    await waitFor(() => expect(failingFetch).toHaveBeenCalledTimes(1));
+    // Let the rejected request settle before checking that nothing changed.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await tick();
+
+    const curatedTitle = await screen.findByText("updates.notice.title");
+    expect(curatedTitle.closest("section")?.getAttribute("role")).toBe("alert");
     expect(screen.queryByText("updates.deployment.title")).toBeNull();
   });
 });

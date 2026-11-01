@@ -26,9 +26,10 @@ const markReturningVisitor = async (context: BrowserContext, seenVersion: string
 
 /** Serves `_app/version.json` from the test so it can simulate a new deployment. */
 const controlVersionFile = async (page: Page, initialMode: VersionMode) => {
-  const state = { mode: initialMode, requests: 0 };
+  const state = { mode: initialMode, requests: 0, urls: new Set<string>() };
   await page.route("**/_app/version.json", async (route: Route) => {
     state.requests += 1;
+    state.urls.add(route.request().url());
     if (state.mode === "offline") {
       await route.abort("internetdisconnected");
     } else if (state.mode === "next") {
@@ -56,14 +57,22 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("prompts an old client after a new deployment and reloads only on request", async ({
+  baseURL,
   context,
   page
 }) => {
+  let loads = 0;
+  page.on("load", () => {
+    loads += 1;
+  });
   await markReturningVisitor(context, contentSitePackage.version);
   const versionFile = await controlVersionFile(page, "next");
   await page.goto("/updates");
 
   await checkUntil(page, () => expect(prompt(page)).toBeVisible({ timeout: 1_000 }));
+  // SvelteKit's check and the prompt's own read both fetch `/_app/version.json` from the site root.
+  expect(versionFile.requests).toBeGreaterThanOrEqual(2);
+  expect([...versionFile.urls]).toEqual([`${baseURL}/_app/version.json`]);
   const reload = prompt(page).getByRole("button", { name: "Reload", exact: true });
   await expect(reload).toBeVisible();
   await expect(
@@ -75,19 +84,24 @@ test("prompts an old client after a new deployment and reloads only on request",
   expect(box!.x).toBeGreaterThanOrEqual(0);
   expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width);
 
-  // Detection alone never reloads the page.
+  // Detection alone never reloads the page. After detection, SvelteKit's check and the
+  // prompt's read both short-circuit, so a further focus makes no request. Waiting for the
+  // network to go idle gives a reload started by detection time to fire a second `load`.
   await page.evaluate(() => {
     (window as Window & { beforeReload?: boolean }).beforeReload = true;
   });
+  const requestsAtDetection = versionFile.requests;
   await page.evaluate(() => window.dispatchEvent(new Event("focus")));
-  await expect
-    .poll(() =>
-      page.evaluate(() => (window as Window & { beforeReload?: boolean }).beforeReload ?? false)
-    )
-    .toBe(true);
+  await page.waitForLoadState("networkidle");
+  expect(versionFile.requests).toBe(requestsAtDetection);
+  expect(loads).toBe(1);
+  expect(
+    await page.evaluate(() => (window as Window & { beforeReload?: boolean }).beforeReload)
+  ).toBe(true);
 
   versionFile.mode = "current";
   await Promise.all([page.waitForEvent("load"), reload.click()]);
+  expect(loads).toBe(2);
   expect(
     await page.evaluate(() => (window as Window & { beforeReload?: boolean }).beforeReload)
   ).toBeUndefined();

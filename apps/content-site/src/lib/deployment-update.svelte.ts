@@ -116,9 +116,11 @@ export class DeploymentUpdateMonitor {
       this.#fetch ?? ((input, init) => fetch(input, init))
     )
       .then((version) => {
-        if (version !== null && version !== this.#clientVersion) {
-          this.deployedVersion = version;
+        if (version === null || version === this.#clientVersion) return;
+        if (readDismissedDeployment(this.#getStorage()) === version) {
+          this.dismissedVersion = version;
         }
+        this.deployedVersion = version;
       })
       .finally(() => {
         this.#pending = null;
@@ -138,22 +140,24 @@ export class DeploymentUpdateMonitor {
   }
 
   /**
-   * Restores the remembered dismissal, follows dismissals from other tabs, and
-   * retries a failed read when the tab regains focus, becomes visible, or goes
-   * back online. Returns the cleanup function.
+   * Follows dismissals of this tab's deployment from other tabs, and retries a
+   * failed read when the tab regains focus, becomes visible, or goes back
+   * online. Returns the cleanup function.
    */
   listen(isUpdated: () => boolean): () => void {
-    this.dismissedVersion = readDismissedDeployment(this.#getStorage());
-
     const retry = (): void => {
       if (isUpdated()) void this.detect();
     };
     const handleVisibilityChange = (): void => {
       if (document.visibilityState === "visible") retry();
     };
+    // Only another tab's dismissal of the same build hides the prompt here. A dismissal of a
+    // different build is ignored, so a dismissal made in this tab stays in effect.
     const handleStorage = (event: StorageEvent): void => {
       if (event.key !== DISMISSED_DEPLOYMENT_STORAGE_KEY) return;
-      this.dismissedVersion = isValidDeploymentVersion(event.newValue) ? event.newValue : null;
+      if (this.deployedVersion !== null && event.newValue === this.deployedVersion) {
+        this.dismissedVersion = event.newValue;
+      }
     };
 
     window.addEventListener("focus", retry);

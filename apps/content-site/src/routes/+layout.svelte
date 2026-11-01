@@ -1835,19 +1835,23 @@
   {/snippet}
 
   <div class="page-switch-shell">
-    {#if showDeploymentUpdateNotice}
-      <div class="content-page-shell gap-4 px-2 pb-4 sm:px-4">
-        <SiteUpdateNotice
-          role="status"
-          title={layoutTranslate("updates.deployment.title")}
-          message={layoutTranslate("updates.deployment.message")}
-          actionLabel={layoutTranslate("updates.deployment.reloadLabel")}
-          dismissLabel={layoutTranslate("updates.deployment.dismissLabel")}
-          onRead={() => deploymentUpdate.reload()}
-          onDismiss={() => deploymentUpdate.dismiss()}
-        />
-      </div>
-    {:else if showSiteUpdateNotice}
+    <!-- Keep the live region mounted and empty so the prompt is announced when it appears. -->
+    <div role="status" data-deployment-update-region>
+      {#if showDeploymentUpdateNotice}
+        <div class="content-page-shell gap-4 px-2 pb-4 sm:px-4">
+          <SiteUpdateNotice
+            alert={false}
+            title={layoutTranslate("updates.deployment.title")}
+            message={layoutTranslate("updates.deployment.message")}
+            actionLabel={layoutTranslate("updates.deployment.reloadLabel")}
+            dismissLabel={layoutTranslate("updates.deployment.dismissLabel")}
+            onRead={() => deploymentUpdate.reload()}
+            onDismiss={() => deploymentUpdate.dismiss()}
+          />
+        </div>
+      {/if}
+    </div>
+    {#if showSiteUpdateNotice}
       <div class="content-page-shell gap-4 px-2 pb-4 sm:px-4">
         <SiteUpdateNotice
           version={siteVersion}

@@ -5,7 +5,7 @@
   let {
     version,
     title,
-    role = "alert",
+    alert = true,
     message,
     actionLabel,
     dismissLabel,
@@ -14,7 +14,8 @@
   }: {
     version?: string;
     title: string;
-    role?: "alert" | "status";
+    /** `false` when the caller already renders the notice inside a live region. */
+    alert?: boolean;
     message: string;
     actionLabel: string;
     dismissLabel: string;
@@ -25,7 +26,7 @@
 
 <section
   class="alert alert-info flex flex-col items-stretch gap-3 border border-(--archive-border-default) bg-(--archive-surface-default) p-3 text-(--archive-text-default) sm:flex-row sm:items-start sm:gap-4 sm:p-4"
-  {role}
+  role={alert ? "alert" : undefined}
 >
   <Icon
     icon="mdi:information-outline"

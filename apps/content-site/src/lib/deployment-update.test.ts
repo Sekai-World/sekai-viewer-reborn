@@ -137,6 +137,37 @@ describe("DeploymentUpdateMonitor", () => {
     stop();
   });
 
+  it("keeps its own dismissal when another tab dismisses a different build", async () => {
+    // Tab A runs build X ("1000") and has dismissed the prompt for build C ("2000").
+    // Another tab then dismisses build Y ("3000").
+    const { monitor, storage } = createMonitor(async () => versionResponse("2000"));
+    const stop = monitor.listen(() => true);
+    await monitor.detect();
+    monitor.dismiss();
+
+    storage.setItem(DISMISSED_DEPLOYMENT_STORAGE_KEY, "3000");
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: DISMISSED_DEPLOYMENT_STORAGE_KEY, newValue: "3000" })
+    );
+
+    expect(monitor.dismissedVersion).toBe("2000");
+    expect(monitor.visible).toBe(false);
+    stop();
+  });
+
+  it("keeps the prompt when another tab dismisses a different build", async () => {
+    const { monitor } = createMonitor(async () => versionResponse("2000"));
+    const stop = monitor.listen(() => true);
+    await monitor.detect();
+
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: DISMISSED_DEPLOYMENT_STORAGE_KEY, newValue: "3000" })
+    );
+
+    expect(monitor.visible).toBe(true);
+    stop();
+  });
+
   it("keeps a failed check silent and retries when the tab regains focus", async () => {
     const consoleError = vi.spyOn(console, "error");
     const fetcher = vi
