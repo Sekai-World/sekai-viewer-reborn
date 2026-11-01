@@ -9,7 +9,7 @@ import { mockServerPort, type MockFailure } from "./mock-server";
  * - Retry re-runs the page's server load: the stamp list and the character
  *   options are fetched again for the same region and query.
  * - It is not a navigation: no document reload, no new history entry, and the
- *   URL and scroll position stay where they were.
+ *   URL stays the same. On a scrolled page the scroll position stays too.
  * - `refreshAll` keeps `page.state`, so a stamp preview held in history state
  *   survives a refresh and shows the refreshed data.
  *
@@ -69,6 +69,12 @@ const snapshotDocument = (page: Page): Promise<DocumentSnapshot> =>
 
 const retryButton = (page: Page): Locator => page.getByRole("button", { name: "Try again" });
 
+/** Scrolls so the retry button sits below the sticky header at a known offset. */
+const scrollRetryIntoView = (page: Page): Promise<void> =>
+  retryButton(page).evaluate((button) => {
+    window.scrollTo({ top: button.getBoundingClientRect().top + window.scrollY - 200 });
+  });
+
 const openFestivalPreview = async (page: Page): Promise<Locator> => {
   const trigger = page.getByRole("button", { name: festivalStampName, exact: true });
   await expect(trigger).toBeVisible();
@@ -94,7 +100,6 @@ test("retry after a failed catalogue load refetches it in place", async ({ page 
   });
 
   await setUpstream(page);
-  await retryButton(page).scrollIntoViewIfNeeded();
   await markDocument(page);
   const before = await snapshotDocument(page);
   await retryButton(page).click();
@@ -104,7 +109,14 @@ test("retry after a failed catalogue load refetches it in place", async ({ page 
     await expect(page.getByText("The stamps could not be loaded. Please try again.")).toHaveCount(
       0
     );
-    expect(await snapshotDocument(page)).toEqual(before);
+    // The short error state does not scroll at every width, so scroll is
+    // checked in the character retry test instead.
+    const after = await snapshotDocument(page);
+    expect([after.path, after.historyLength, after.documentMarker]).toEqual([
+      before.path,
+      before.historyLength,
+      before.documentMarker
+    ]);
   });
 
   await test.step("mock: retry re-ran the page load with the same query", async () => {
@@ -131,9 +143,10 @@ test("character retry keeps the history preview and shows refreshed characters",
   await expect(dialog).not.toBeVisible();
 
   await setUpstream(page);
-  await retryButton(page).scrollIntoViewIfNeeded();
+  await scrollRetryIntoView(page);
   await markDocument(page);
   const before = await snapshotDocument(page);
+  expect(before.scrollY).toBeGreaterThan(0);
   await retryButton(page).click();
 
   await test.step("browser: characters load without leaving the list entry", async () => {
