@@ -114,10 +114,10 @@ const cleanupDocker = (args) => {
   }
 };
 
-const readContainerLogs = () => {
-  if (!containerCreated) return "";
+const readContainerLogs = (name = containerName, created = containerCreated) => {
+  if (!created) return "";
   try {
-    return runDocker(["logs", containerName], { captureOutput: true });
+    return runDocker(["logs", name], { captureOutput: true });
   } catch {
     return "";
   }
@@ -423,6 +423,11 @@ if (isDirectExecution) {
     const logs = readContainerLogs();
     if (logs) {
       console.error(`\n${app} container logs:\n${logs}`);
+    }
+    // the rejected container only ever sees the synthetic private marker, never a real value
+    const rejectedLogs = readContainerLogs(rejectedContainerName, rejectedContainerCreated);
+    if (rejectedLogs) {
+      console.error(`\n${app} rejected-environment container logs:\n${rejectedLogs}`);
     }
     throw error;
   } finally {

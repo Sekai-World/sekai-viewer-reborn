@@ -5,14 +5,15 @@ export interface EnvUrlOptions {
   readonly required?: boolean;
 }
 
+// `https:cdn.example.com` parses, but a browser resolves it as a path against a same-scheme base.
 const isHttpUrl = (value: string): boolean => {
-  if (!URL.canParse(value)) return false;
+  if (!/^https?:\/\//i.test(value) || !URL.canParse(value)) return false;
   const { protocol } = new URL(value);
   return protocol === "http:" || protocol === "https:";
 };
 
-const isRootRelativePath = (value: string): boolean =>
-  value.startsWith("/") && !value.startsWith("//");
+// `//host` and `/\host` both resolve to another origin in browsers.
+const isRootRelativePath = (value: string): boolean => /^\/(?![/\\])/.test(value);
 
 /**
  * Creates a `defineEnvVars` validator for a URL-valued environment variable.

@@ -32,6 +32,8 @@ describe("envUrl", () => {
       `api.example.com/${secret}`,
       `localhost:18080/${secret}`,
       `ftp://files.example.com/${secret}`,
+      `https:cdn.example.com/${secret}`,
+      `http:/cdn.example.com/${secret}`,
       `/storage/${secret}`,
       `//cdn.example.com/${secret}`
     ]) {
@@ -44,6 +46,15 @@ describe("envUrl", () => {
     const validate = envUrl({ allowPath: true });
     expect(validate("/storage")).toBe("/storage");
     expect(validate("https://storage.sekai.best")).toBe("https://storage.sekai.best");
+    for (const value of [
+      "/\\storage.sekai.best",
+      "/\\/storage.sekai.best",
+      "https:storage.sekai.best"
+    ]) {
+      expect(() => validate(value)).toThrow(
+        "Value must be an absolute http(s) URL or a path starting with /."
+      );
+    }
     expect(() => validate("//storage.sekai.best")).toThrow(
       "Value must be an absolute http(s) URL or a path starting with /."
     );

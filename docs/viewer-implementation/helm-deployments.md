@@ -58,13 +58,23 @@ instead of draining every pod.
 - `PUBLIC_TOOLS_SITE_BASE_URL`: optional tools-site origin for Event Tracker
   links; empty hides them (see
   [`content-site-launch-readiness.md`](content-site-launch-readiness.md))
+- `PUBLIC_SUPPORT_PAGE_URL`, `PUBLIC_PATREON_URL`, `PUBLIC_KOFI_URL`: empty and
+  optional
 
 Every app (`content-site`, `tools-site`, `media-lab-site`, `account-site`)
 declares an empty `SEKAI_API_BASE_URL` default for server-side dynamic
-notifications; the three non-content apps provide only that key by default
-(`env` maps are otherwise empty). `envFrom` and `extraEnv` can be set per app
-for simple Secret/ConfigMap references and additional environment entries.
-Environment map values are rendered as quoted strings, including empty strings.
+notifications and an empty `PUBLIC_SUPPORT_PAGE_URL`. `tools-site` and
+`media-lab-site` also declare an empty `SEKAI_MASTER_API_BASE_URL`; those are
+the only defaults of the three non-content apps. `envFrom` and `extraEnv` can
+be set per app for simple Secret/ConfigMap references and additional
+environment entries. Environment map values are rendered as quoted strings,
+including empty strings.
+
+The chart renders every key of `apps.<app>.env` as an explicit container `env`
+entry, including the empty defaults such as content-site's
+`PUBLIC_REMOTE_ASSET_BASE_URL`. Kubernetes gives explicit `env` entries
+precedence over `envFrom`, so a Secret or ConfigMap referenced through `envFrom`
+cannot fill these keys: set them in `apps.<app>.env`.
 
 ### Declaration and startup validation
 
