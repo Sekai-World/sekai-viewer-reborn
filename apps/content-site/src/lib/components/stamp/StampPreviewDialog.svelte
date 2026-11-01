@@ -61,15 +61,18 @@
     const container = host;
     if (!preview || !container) return;
 
-    // WebKit can restore BODY after showModal during history traversal. Wait
-    // until the next rendering frame, then repair only missing/outer focus:
-    // never steal a control the user has already reached or scroll the list.
+    // WebKit can restore BODY during history traversal. Chromium can initially
+    // focus the implicitly focusable, overflowing modal box before the image
+    // loads, then drop focus to BODY when that overflow disappears. Move these
+    // transient targets to an action, never a control the user already reached.
     const frame = requestAnimationFrame(() => {
       const dialog = container.querySelector("dialog");
       if (
         selected !== preview ||
         !dialog?.open ||
-        (document.activeElement !== document.body && document.activeElement !== dialog)
+        (document.activeElement !== document.body &&
+          document.activeElement !== dialog &&
+          document.activeElement !== dialog.querySelector(".modal-box"))
       )
         return;
       dialog.querySelector<HTMLElement>(".modal-box summary, .modal-box button")?.focus({

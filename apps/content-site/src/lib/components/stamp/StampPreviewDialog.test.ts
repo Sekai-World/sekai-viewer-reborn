@@ -248,6 +248,58 @@ describe("stamp list history-only preview", () => {
     expect(history.back).not.toHaveBeenCalled();
   });
 
+  it.each(["opening", "Forward"])(
+    "moves transient scroll-box focus to an action after %s, before image layout changes",
+    async (method) => {
+      const frames: FrameRequestCallback[] = [];
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) =>
+        frames.push(callback)
+      );
+      const showModal = HTMLDialogElement.prototype.showModal;
+      vi.spyOn(HTMLDialogElement.prototype, "showModal").mockImplementation(function (
+        this: HTMLDialogElement
+      ) {
+        showModal.call(this);
+        // Chromium can pick the overflowing modal box before the image loads.
+        // jsdom has no implicitly focusable scrollers, so emulate that choice.
+        const box = this.querySelector<HTMLElement>(".modal-box")!;
+        box.tabIndex = -1;
+        box.focus();
+      });
+      const { component, trigger } = setup();
+      await component.show(stamp, trigger);
+      await tick();
+      if (method === "Forward") {
+        travel(-1);
+        await tick();
+        travel(1);
+        await tick();
+      }
+
+      const dialog = getDialog();
+      const box = dialog.querySelector<HTMLElement>(".modal-box")!;
+      expect(document.activeElement).toBe(box);
+      const download = within(dialog).getByLabelText("Download");
+      const focus = vi.spyOn(download, "focus");
+      frames.at(-1)!(0);
+      expect(document.activeElement).toBe(download);
+      expect(focus).toHaveBeenCalledExactlyOnceWith({ preventScroll: true });
+
+      // Losing the box's focusability as the image settles must not drop focus
+      // to BODY after the one-shot repair frame has already run.
+      box.removeAttribute("tabindex");
+      box.blur();
+      await fireEvent.load(within(dialog).getByRole("img", { name: "Hello!" }));
+      expect(document.activeElement).toBe(download);
+      expect(window.scrollTo).not.toHaveBeenCalled();
+      travel(-1);
+      await tick();
+      expect(document.activeElement).toBe(trigger);
+      expect(kit.goto).toHaveBeenCalledTimes(1);
+      expect(history.back).not.toHaveBeenCalled();
+    }
+  );
+
   it("does not move focus away from a control or another dialog before the repair frame", async () => {
     const frames: FrameRequestCallback[] = [];
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) =>

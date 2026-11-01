@@ -247,6 +247,18 @@ test("touch opens and closes the preview in a mobile browser context", async ({
   try {
     await hideFirstRunOverlays(context);
     const page = await context.newPage();
+    // Keep the stamp image pending through the preview's opening frame. Route
+    // before navigation so WebKit cannot reuse the tile's decoded image either.
+    // Without its intrinsic width, Chromium can focus the temporarily overflowing
+    // modal box and drop focus to BODY when the loaded image removes overflow.
+    let releaseImage = (): void => {};
+    const pendingImage = new Promise<void>((resolve) => {
+      releaseImage = resolve;
+    });
+    await page.route("**/stamp/visual-stamp-25/visual-stamp-25.webp", async (route) => {
+      await pendingImage;
+      await route.continue();
+    });
     await page.goto(new URL(filteredCatalogueUrl, contentSiteBaseUrl).href);
 
     const mobileSignals = await page.evaluate(() => ({
@@ -274,6 +286,14 @@ test("touch opens and closes the preview in a mobile browser context", async ({
     const dialog = page.getByRole("dialog", { name: festivalStampName });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByText("Awarded at the festival.", { exact: true })).toBeVisible();
+    const image = dialog.getByRole("img", { name: festivalStampName, exact: true });
+    await expect(image).toHaveJSProperty("complete", false);
+    await expectStablePreviewFocus(page);
+    releaseImage();
+    await expect(image).toHaveJSProperty("complete", true);
+    // Check again after the load/layout change, not just showModal's transient
+    // focus inside the scroll container. No sleeps or focus calls in the test.
+    await expectStablePreviewFocus(page);
     await expect
       .poll(() => dialog.evaluate((element) => element.contains(document.activeElement)))
       .toBe(true);
