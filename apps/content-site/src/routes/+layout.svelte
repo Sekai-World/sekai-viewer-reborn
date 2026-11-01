@@ -1,9 +1,10 @@
 <script lang="ts">
   import "../app.css";
   import "#lib/icons/mdi.js";
+  import { version as clientVersion } from "$app/env";
   import { asset, resolve } from "$app/paths";
   import { goto, refreshAll } from "$app/navigation";
-  import { page } from "$app/state";
+  import { page, updated } from "$app/state";
   import Icon from "@iconify/svelte";
   import {
     setContentDisplaySettings,
@@ -54,6 +55,7 @@
     writeSeenSiteVersion
   } from "#lib/onboarding.js";
   import { getSiteUpdateForVersion, resolveSiteVersion } from "#lib/site-updates.js";
+  import { DeploymentUpdateMonitor } from "#lib/deployment-update.svelte.js";
   import type { LayoutData } from "./$types";
 
   type ThemeMode = "light" | "dark" | "auto";
@@ -425,8 +427,20 @@
   const isHomeRoute = $derived(page.url.pathname === resolve("/"));
   const siteVersion = $derived(resolveSiteVersion(data.siteVersion));
   const activeSiteUpdate = $derived(getSiteUpdateForVersion(siteVersion));
+  const deploymentUpdate = new DeploymentUpdateMonitor({
+    clientVersion,
+    // SvelteKit serves the build name at `<appDir>/version.json`; content-site keeps the
+    // default `_app` app directory.
+    versionUrl: `${resolve("/")}_app/version.json`
+  });
+  // A newer deployment supersedes the curated notice for the version this tab runs:
+  // after reloading, the curated notice describes the new version instead.
+  const showDeploymentUpdateNotice = $derived(deploymentUpdate.visible && !isOnboardingDialogOpen);
   const showSiteUpdateNotice = $derived(
-    hasSeenOnboarding && !isOnboardingDialogOpen && seenSiteVersion !== siteVersion
+    hasSeenOnboarding &&
+      !isOnboardingDialogOpen &&
+      seenSiteVersion !== siteVersion &&
+      deploymentUpdate.deployedVersion === null
   );
   const themeModeLabel = $derived(layoutTranslate(`themeMode.${themeMode}`, themeMode));
   const resolvedThemeLabel = $derived(layoutTranslate(`themeMode.${resolvedTheme}`, resolvedTheme));
@@ -1202,6 +1216,10 @@
     backToTopAnimationFrame = window.requestAnimationFrame(animate);
   };
 
+  $effect(() => {
+    if (updated.current) void deploymentUpdate.detect();
+  });
+
   onMount(() => {
     hasSeenOnboarding = readOnboardingSeen();
     seenSiteVersion = readSeenSiteVersion();
@@ -1287,8 +1305,10 @@
 
     document.addEventListener("click", handleDocumentClick);
     document.addEventListener("keydown", handleDocumentKeydown);
+    const stopDeploymentUpdate = deploymentUpdate.listen(() => updated.current);
 
     return () => {
+      stopDeploymentUpdate();
       cleanupOnboarding();
       stopLocaleProgressTimers();
       if (backToTopAnimationFrame) {
@@ -1815,6 +1835,22 @@
   {/snippet}
 
   <div class="page-switch-shell">
+    <!-- Keep the live region mounted and empty so the prompt is announced when it appears. -->
+    <div role="status" data-deployment-update-region>
+      {#if showDeploymentUpdateNotice}
+        <div class="content-page-shell gap-4 px-2 pb-4 sm:px-4">
+          <SiteUpdateNotice
+            alert={false}
+            title={layoutTranslate("updates.deployment.title")}
+            message={layoutTranslate("updates.deployment.message")}
+            actionLabel={layoutTranslate("updates.deployment.reloadLabel")}
+            dismissLabel={layoutTranslate("updates.deployment.dismissLabel")}
+            onRead={() => deploymentUpdate.reload()}
+            onDismiss={() => deploymentUpdate.dismiss()}
+          />
+        </div>
+      {/if}
+    </div>
     {#if showSiteUpdateNotice}
       <div class="content-page-shell gap-4 px-2 pb-4 sm:px-4">
         <SiteUpdateNotice

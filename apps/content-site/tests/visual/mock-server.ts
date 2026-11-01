@@ -150,7 +150,15 @@ const createMockServer = (): Server =>
         "labels.timeUnit.day": "Days",
         "labels.timeUnit.hour": "Hours",
         "labels.timeUnit.minute": "Minutes",
-        "labels.timeUnit.second": "Seconds"
+        "labels.timeUnit.second": "Seconds",
+        "updates.deployment.dismissLabel": "Dismiss new version notice",
+        "updates.deployment.message":
+          "Reload the page to start using it. Anything in progress on this page, such as a download, will stop.",
+        "updates.deployment.reloadLabel": "Reload",
+        "updates.deployment.title": "A new version of the site is available",
+        "updates.notice.dismissLabel": "Dismiss update notice",
+        "updates.notice.readLabel": "Read the update log",
+        "updates.notice.title": "A new update is available"
       });
       return;
     }

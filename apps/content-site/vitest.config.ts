@@ -109,6 +109,7 @@ export default defineConfig({
         "src/lib/server/stamps.ts",
         "src/lib/paged-list.svelte.ts",
         "src/lib/soundtrack-player.svelte.ts",
+        "src/lib/deployment-update.svelte.ts",
         "src/lib/i18n/streamed-translator.svelte.ts",
         "src/lib/onboarding.ts",
         "src/lib/filter-onboarding.ts",
