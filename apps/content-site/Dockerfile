@@ -1,7 +1,7 @@
 FROM node:26-alpine AS deps
 
 WORKDIR /repo
-RUN corepack enable
+RUN npm install -g corepack@0.36.0 && corepack enable
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY patches ./patches
