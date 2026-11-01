@@ -66,6 +66,34 @@ notifications; the three non-content apps provide only that key by default
 for simple Secret/ConfigMap references and additional environment entries.
 Environment map values are rendered as quoted strings, including empty strings.
 
+### Declaration and startup validation
+
+Each app declares its variables in `apps/<app>/src/env.ts`. None is `static`, so
+adapter-node reads every value from the container environment when the server
+starts, and image builds need none of them. Public values reach the browser
+through the SSR payload and `/_app/env.js`; private values stay on the server.
+
+At startup, a set URL value must be an absolute `http(s)` URL (the
+`PUBLIC_REMOTE_ASSET_BASE_URL` may also be a path such as `/storage`). Otherwise
+the server exits with `Invalid environment variables`, naming the variable but
+not its value. Empty values stay allowed, except `content-site`'s
+`PUBLIC_REMOTE_ASSET_BASE_URL`: without it every client-side asset URL throws,
+so the server refuses to start. `PUBLIC_PATREON_URL` and `PUBLIC_KOFI_URL` are
+not checked at startup; the support page hides anything but an HTTPS Patreon or
+Ko-fi URL.
+
+| Variable                       | Apps                                 | Scope   | When unset or empty                                                                                      |
+| ------------------------------ | ------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------- |
+| `SEKAI_MASTER_API_BASE_URL`    | content, tools, media-lab            | private | Master-data loads and endpoints return 500 and log the variable name; media-lab Live2D names are omitted |
+| `SEKAI_API_BASE_URL`           | all                                  | private | Global notices are hidden; tools-site tracker pages return 500 and log the variable name                 |
+| `SEKAI_REMOTE_ASSET_BASE_URL`  | content                              | private | Server-side asset downloads use `PUBLIC_REMOTE_ASSET_BASE_URL`                                           |
+| `PUBLIC_REMOTE_ASSET_BASE_URL` | content (required), tools, media-lab | public  | content: startup fails; tools: event banners are hidden; media-lab: `https://storage.sekai.best`         |
+| `PUBLIC_SEKAI_I18N_BASE_URL`   | content, tools                       | public  | `https://sekai-world.github.io/sekai-i18n-reborn`                                                        |
+| `PUBLIC_TOOLS_SITE_BASE_URL`   | content                              | public  | Event Tracker links are hidden                                                                           |
+| `PUBLIC_SUPPORT_PAGE_URL`      | all                                  | public  | content links to its own `/support`; the other apps hide the support link                                |
+| `PUBLIC_PATREON_URL`           | content                              | public  | Button hidden                                                                                            |
+| `PUBLIC_KOFI_URL`              | content                              | public  | Button hidden                                                                                            |
+
 ## Confirmed workflow
 
 From the repository root, validate the chart and render a release that exposes

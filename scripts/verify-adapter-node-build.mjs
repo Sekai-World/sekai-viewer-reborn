@@ -75,6 +75,9 @@ async function verifyRuntimeConfiguration(buildDirectory, serverFiles, app) {
 
   await verifyRuntimeEnvironment(serverFiles, app);
 
+  // Importing the handler starts the server, and content-site refuses to start without its
+  // public asset base (apps/content-site/src/env.ts).
+  process.env.PUBLIC_REMOTE_ASSET_BASE_URL ??= "/storage";
   const handlerModule = await import(pathToFileURL(path.join(buildDirectory, "handler.js")).href);
   assert.equal(
     typeof handlerModule.handler,

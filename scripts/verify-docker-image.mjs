@@ -60,10 +60,12 @@ let app;
 let image;
 let networkName;
 let containerName;
+let rejectedContainerName;
 let stubRequestCount = 0;
 let stubServer;
 let networkCreated = false;
 let containerCreated = false;
+let rejectedContainerCreated = false;
 
 const runDocker = (args, { captureOutput = false } = {}) => {
   const result = spawnSync("docker", args, {
@@ -139,8 +141,19 @@ const listen = (server, host) =>
     server.listen(0, host, resolve);
   });
 
-const inspectContainer = () =>
-  JSON.parse(runDocker(["inspect", containerName], { captureOutput: true }))[0];
+const inspectContainer = (name = containerName) =>
+  JSON.parse(runDocker(["inspect", name], { captureOutput: true }))[0];
+
+const waitForExit = async (name) => {
+  const deadline = Date.now() + 60_000;
+  while (Date.now() < deadline) {
+    const state = inspectContainer(name).State;
+    if (state?.Running === false && state.Status !== "created") return state.ExitCode;
+    await delay(250);
+  }
+
+  throw new Error(`${app} container ${name} kept running with an invalid environment`);
+};
 
 const requestRoot = (baseUrl, cookie) => {
   const headers = cookie ? { cookie } : undefined;
@@ -227,6 +240,11 @@ if (isDirectExecution) {
   const suffix = `${process.pid}-${randomUUID().replaceAll("-", "").slice(0, 12)}`;
   networkName = `sekai-viewer-smoke-${app}-${suffix}`;
   containerName = `sekai-viewer-smoke-${app}-${suffix}`;
+  rejectedContainerName = `${containerName}-rejected`;
+  // Private URLs carry a marker that must never reach the browser; the public support URL carries
+  // one that must, so the exposure check cannot pass vacuously.
+  const privateMarker = `private-${suffix}`;
+  const publicMarker = `public-${suffix}`;
 
   try {
     runDocker(["network", "create", "--internal", networkName]);
@@ -246,36 +264,41 @@ if (isDirectExecution) {
     assert.ok(stubAddress && typeof stubAddress === "object", "Local API stub did not bind a port");
     const stubBaseUrl = `http://${gateway}:${stubAddress.port}`;
 
-    const containerArgs = [
-      "run",
-      "--detach",
-      "--pull=never",
-      "--name",
-      containerName,
-      "--network",
-      networkName,
-      "--env",
-      "NODE_ENV=production",
-      "--env",
-      "HOST=0.0.0.0",
-      "--env",
-      `PORT=${smokePort}`,
-      "--env",
-      "BODY_SIZE_LIMIT=8388608"
-    ];
+    const runContainer = (name, environment) =>
+      runDocker([
+        "run",
+        "--detach",
+        "--pull=never",
+        "--name",
+        name,
+        "--network",
+        networkName,
+        "--env",
+        "NODE_ENV=production",
+        "--env",
+        "HOST=0.0.0.0",
+        "--env",
+        `PORT=${smokePort}`,
+        "--env",
+        "BODY_SIZE_LIMIT=8388608",
+        ...Object.entries(environment).flatMap(([envName, value]) => [
+          "--env",
+          `${envName}=${value}`
+        ]),
+        image
+      ]);
 
-    for (const name of [
-      "SEKAI_API_BASE_URL",
-      "SEKAI_MASTER_API_BASE_URL",
-      "SEKAI_REMOTE_ASSET_BASE_URL",
-      "PUBLIC_REMOTE_ASSET_BASE_URL",
-      "PUBLIC_SEKAI_I18N_BASE_URL"
-    ]) {
-      containerArgs.push("--env", `${name}=${stubBaseUrl}`);
-    }
-    containerArgs.push(image);
+    const privateBaseUrl = `${stubBaseUrl}/${privateMarker}`;
+    const runtimeEnvironment = {
+      SEKAI_API_BASE_URL: privateBaseUrl,
+      SEKAI_MASTER_API_BASE_URL: privateBaseUrl,
+      SEKAI_REMOTE_ASSET_BASE_URL: privateBaseUrl,
+      PUBLIC_REMOTE_ASSET_BASE_URL: stubBaseUrl,
+      PUBLIC_SEKAI_I18N_BASE_URL: stubBaseUrl,
+      PUBLIC_SUPPORT_PAGE_URL: `https://support.example.test/${publicMarker}`
+    };
 
-    runDocker(containerArgs);
+    runContainer(containerName, runtimeEnvironment);
     containerCreated = true;
 
     // The runner can reach a private bridge IP directly; publishing would break isolation.
@@ -288,7 +311,9 @@ if (isDirectExecution) {
       "media-lab-site": "media_lab_site_ui_locale=en",
       "account-site": "smoke-cookie=present"
     };
-    await assertRootResponse(await requestRoot(appBaseUrl, cookieByApp[app]));
+    const cookieRootHtml = await assertRootResponse(
+      await requestRoot(appBaseUrl, cookieByApp[app])
+    );
 
     // Probe endpoint: must answer without any upstream (stub) request, so an
     // API outage cannot fail readiness.
@@ -315,6 +340,7 @@ if (isDirectExecution) {
       redirect: "manual",
       signal: AbortSignal.timeout(20_000)
     };
+    let assetText = "";
     const [assetResponse, assetHeadResponse] = await Promise.all([
       fetch(staticAssetUrl, assetRequestOptions),
       fetch(staticAssetUrl, { ...assetRequestOptions, method: "HEAD" })
@@ -337,14 +363,53 @@ if (isDirectExecution) {
       const body = await response.arrayBuffer();
       if (method === "GET") {
         assert.ok(body.byteLength > 0, `${app} immutable asset GET response was empty`);
+        assetText = new TextDecoder().decode(body);
       } else {
         assert.equal(body.byteLength, 0, `${app} immutable asset HEAD response included a body`);
       }
     }
 
     assert.ok(stubRequestCount > 0, `${app} did not use the local runtime API/i18n stub`);
+
+    const envModuleResponse = await fetch(`${appBaseUrl}/_app/env.js`, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(5_000)
+    });
+    assert.equal(envModuleResponse.status, 200, `${app} /_app/env.js returned an error`);
+    const envModule = await envModuleResponse.text();
+    assert.ok(envModule.includes(publicMarker), `${app} /_app/env.js lacks its public runtime env`);
+    for (const [label, text] of [
+      ["root SSR", rootHtml],
+      ["root SSR with cookies", cookieRootHtml],
+      ["/_app/env.js", envModule],
+      ["immutable asset", assetText]
+    ]) {
+      assert.ok(!text.includes(privateMarker), `${app} ${label} exposed a private env value`);
+    }
+
+    // A malformed URL, and for content-site the missing asset base, must stop the server at
+    // startup with each variable named and its value withheld.
+    const rejectedEnvironment = {
+      ...runtimeEnvironment,
+      SEKAI_API_BASE_URL: `sekai-api.invalid/${privateMarker}`
+    };
+    const rejectedNames = ["SEKAI_API_BASE_URL"];
+    if (app === "content-site") {
+      delete rejectedEnvironment.PUBLIC_REMOTE_ASSET_BASE_URL;
+      rejectedNames.push("PUBLIC_REMOTE_ASSET_BASE_URL");
+    }
+    runContainer(rejectedContainerName, rejectedEnvironment);
+    rejectedContainerCreated = true;
+    const rejectedExitCode = await waitForExit(rejectedContainerName);
+    const rejectedLogs = runDocker(["logs", rejectedContainerName], { captureOutput: true });
+    assert.notEqual(rejectedExitCode, 0, `${app} started with an invalid environment`);
+    assert.match(rejectedLogs, /Invalid environment variables/, `${app} gave no env error`);
+    for (const name of rejectedNames) {
+      assert.match(rejectedLogs, new RegExp(`^${name}$`, "m"), `${app} did not name ${name}`);
+    }
+    assert.ok(!rejectedLogs.includes(privateMarker), `${app} logged a rejected env value`);
     console.log(
-      `${app}: root SSR with and without cookies, /healthz without upstream calls, local stub HTTP (${stubRequestCount} requests), and immutable asset GET/HEAD passed`
+      `${app}: root SSR with and without cookies, /healthz without upstream calls, local stub HTTP (${stubRequestCount} requests), immutable asset GET/HEAD, private env exposure, and invalid env startup rejection passed`
     );
   } catch (error) {
     if (containerCreated) {
@@ -362,6 +427,7 @@ if (isDirectExecution) {
     throw error;
   } finally {
     if (containerCreated) cleanupDocker(["rm", "--force", containerName]);
+    if (rejectedContainerCreated) cleanupDocker(["rm", "--force", rejectedContainerName]);
     await closeStubServer();
     if (networkCreated) cleanupDocker(["network", "rm", networkName]);
     cleanupDocker(["image", "rm", "--force", image]);
