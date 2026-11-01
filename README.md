@@ -123,13 +123,11 @@ When installed:
 - `pre-push` requires a clean worktree, including ordinary untracked files, and
   validates the branch against its merge base with the default branch: a
   Prettier check on the changed files, one parallel
-  `turbo run test lint check --affected --concurrency=4` over the changed packages and their
-  dependents, and `pnpm i18n:check`. A change outside `apps/`, `packages/`,
-  `docs/`, `.changeset/` and Markdown files (root configuration such as the
-  lockfile, Prettier, ESLint, TypeScript or Turbo) runs the full gate over every
-  package instead. It intentionally skips the full production build so that
-  pushes get fast local feedback; CI continues to run the unchanged
-  `pnpm verify:ci` sequence, including `pnpm build`.
+  `turbo run lint check --affected --concurrency=4` over the changed packages and their
+  dependents, and `pnpm i18n:check`. It does not run tests: those, the production build and
+  everything the hook does not cover are CI's job (`pnpm verify:ci`). A change that touches no
+  package (root ESLint, Prettier or TypeScript configuration, the lockfile, workflow files) only
+  gets the Prettier check, and Turbo itself selects every package when `turbo.json` changes.
 
 Use `--no-verify` as an explicit escape hatch when a hook must be bypassed:
 
