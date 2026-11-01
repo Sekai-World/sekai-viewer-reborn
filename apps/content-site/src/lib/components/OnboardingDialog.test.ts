@@ -1,6 +1,10 @@
-import { cleanup, fireEvent, render, waitFor, within } from "@testing-library/svelte";
+import { cleanup, configure, fireEvent, render, waitFor, within } from "@testing-library/svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import OnboardingDialog from "./OnboardingDialog.svelte";
+
+// The tour waits on animation frames, which jsdom schedules on timers. Under CPU load
+// (turbo runs every package in parallel) the first mount can outlast the default 1 s.
+configure({ asyncUtilTimeout: 4000 });
 
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal");
 const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close");
