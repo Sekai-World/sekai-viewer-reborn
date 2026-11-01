@@ -21,7 +21,16 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [sveltekit({ adapter: adapter() }), tailwindcss()],
+    plugins: [
+      sveltekit({
+        adapter: adapter(),
+        // Check `_app/version.json` for a new deployment every 10 minutes, in addition to
+        // SvelteKit's checks on focus, visibility, and data responses. The build name
+        // (`version.name`) keeps SvelteKit's per-build timestamp default.
+        version: { pollInterval: 600_000 }
+      }),
+      tailwindcss()
+    ],
     server: {
       host: devHost,
       strictPort: true,

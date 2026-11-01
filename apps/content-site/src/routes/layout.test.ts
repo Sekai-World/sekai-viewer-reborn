@@ -1,4 +1,4 @@
-import { cleanup, render, waitFor } from "@testing-library/svelte";
+import { cleanup, render, screen, waitFor } from "@testing-library/svelte";
 import { createRawSnippet, tick } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Layout from "./+layout.svelte";
@@ -12,6 +12,8 @@ type TourProps = {
   onClose: () => void;
 };
 const tour = vi.hoisted(() => ({ props: null as TourProps | null }));
+const appState = vi.hoisted(() => ({ updated: { current: false } }));
+const onboardingState = vi.hoisted(() => ({ seen: false, seenVersion: null as string | null }));
 
 vi.mock("#lib/components/OnboardingDialog.svelte", () => ({
   default: (_anchor: unknown, props: TourProps) => {
@@ -19,12 +21,15 @@ vi.mock("#lib/components/OnboardingDialog.svelte", () => ({
     return {};
   }
 }));
-vi.mock("$app/state", () => ({ page: { url: new URL("http://localhost/cards/jp") } }));
+vi.mock("$app/state", () => ({
+  page: { url: new URL("http://localhost/cards/jp") },
+  updated: appState.updated
+}));
 vi.mock("$app/navigation", () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
 vi.mock("$app/paths", () => ({ asset: (path: string) => path, resolve: (path: string) => path }));
 vi.mock("#lib/onboarding.js", () => ({
-  readOnboardingSeen: () => false,
-  readSeenSiteVersion: () => null,
+  readOnboardingSeen: () => onboardingState.seen,
+  readSeenSiteVersion: () => onboardingState.seenVersion,
   writeOnboardingSeen: vi.fn(),
   writeSeenSiteVersion: vi.fn()
 }));
@@ -44,6 +49,9 @@ let originalRootLanguage: string | null = null;
 let originalRootDirection: string | null = null;
 beforeEach(() => {
   tour.props = null;
+  appState.updated.current = false;
+  onboardingState.seen = false;
+  onboardingState.seenVersion = null;
   originalRootLanguage = document.documentElement.getAttribute("lang");
   originalRootDirection = document.documentElement.getAttribute("dir");
   localStorage.clear();
@@ -216,4 +224,57 @@ it("does not resume stale drawer scrolling after a later trigger step", async ()
   finishEntry();
   await earlierStep;
   expect(scroller.scrollTop).toBe(37);
+});
+
+describe("deployment update prompt", () => {
+  const renderReturningVisitor = () => {
+    onboardingState.seen = true;
+    onboardingState.seenVersion = "0.0.1";
+    return render(Layout, {
+      data: {
+        uiLocale: "en",
+        preferredRegion: "jp",
+        siteVersion: "0.0.2",
+        i18nMessages: {},
+        globalNotices: []
+      } satisfies LayoutData,
+      children: createRawSnippet(() => ({ render: () => "<div></div>" }))
+    });
+  };
+
+  it("replaces the curated update notice when a new deployment is detected", async () => {
+    appState.updated.current = true;
+    const fetchVersion = vi.fn(
+      async () => new Response(JSON.stringify({ version: "next-build" }), { status: 200 })
+    );
+    vi.stubGlobal("fetch", fetchVersion);
+
+    renderReturningVisitor();
+
+    const title = await screen.findByText("updates.deployment.title");
+    expect(title.closest("section")?.getAttribute("role")).toBe("status");
+    expect(screen.getByRole("button", { name: "updates.deployment.reloadLabel" })).toBeTruthy();
+    expect(screen.queryByText("updates.notice.title")).toBeNull();
+    expect(fetchVersion).toHaveBeenCalledWith("/_app/version.json", { cache: "no-store" });
+
+    screen.getByRole("button", { name: "updates.deployment.dismissLabel" }).click();
+    await waitFor(() => expect(screen.queryByText("updates.deployment.title")).toBeNull());
+    expect(localStorage.getItem("content_site_dismissed_deployment")).toBe("next-build");
+    expect(screen.queryByText("updates.notice.title")).toBeNull();
+  });
+
+  it("keeps the curated notice when the deployment check fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("Failed to fetch");
+      })
+    );
+    appState.updated.current = true;
+
+    renderReturningVisitor();
+
+    expect(await screen.findByText("updates.notice.title")).toBeTruthy();
+    expect(screen.queryByText("updates.deployment.title")).toBeNull();
+  });
 });

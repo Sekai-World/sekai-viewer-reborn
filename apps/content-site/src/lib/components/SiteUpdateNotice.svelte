@@ -5,14 +5,16 @@
   let {
     version,
     title,
+    role = "alert",
     message,
     actionLabel,
     dismissLabel,
     onRead,
     onDismiss
   }: {
-    version: string;
+    version?: string;
     title: string;
+    role?: "alert" | "status";
     message: string;
     actionLabel: string;
     dismissLabel: string;
@@ -23,7 +25,7 @@
 
 <section
   class="alert alert-info flex flex-col items-stretch gap-3 border border-(--archive-border-default) bg-(--archive-surface-default) p-3 text-(--archive-text-default) sm:flex-row sm:items-start sm:gap-4 sm:p-4"
-  role="alert"
+  {role}
 >
   <Icon
     icon="mdi:information-outline"
@@ -33,11 +35,13 @@
   <div class="min-w-0 flex-1">
     <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
       <h2 class="wrap-break-word font-semibold">{title}</h2>
-      <span
-        class="content-card-inset max-w-full break-all rounded-md border border-(--archive-border-subtle) px-2 py-0.5 font-mono text-xs text-(--archive-text-muted)"
-      >
-        {version}
-      </span>
+      {#if version}
+        <span
+          class="content-card-inset max-w-full break-all rounded-md border border-(--archive-border-subtle) px-2 py-0.5 font-mono text-xs text-(--archive-text-muted)"
+        >
+          {version}
+        </span>
+      {/if}
     </div>
     <p class="mt-1 wrap-break-word text-sm/6 text-(--archive-text-muted)">{message}</p>
   </div>
