@@ -50,6 +50,28 @@ describe("tools-site route error page", () => {
     ).toBeNull();
   });
 
+  it("treats other 4xx errors like a missing page, without a retry", () => {
+    showError(403, "/tracker/jp", { message: "Forbidden" });
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: commonMessages["errorPage.notFoundTitle"] })
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: commonMessages["errorPage.retryAction"] })
+    ).toBeNull();
+  });
+
+  it("titles the document with the status and the localized site name", () => {
+    showError(
+      500,
+      "/",
+      { message: "Internal Error" },
+      { uiLocale: "ja-JP", i18nMessages: { "errorPage.kicker": "Sekai ツール" } }
+    );
+
+    expect(document.title).toBe("500 | Sekai ツール");
+  });
+
   it("offers a full-reload retry of the same URL for an unexpected error", () => {
     showError(500, "/tracker/jp?eventId=12", {
       message: "Internal Error",

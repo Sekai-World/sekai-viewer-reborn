@@ -61,15 +61,15 @@ describe("tools-site handleError", () => {
     const result = await callHandleError({ kind: "unknown", error: new Error("upstream failed") });
 
     expect(consoleError).toHaveBeenCalledTimes(1);
-    const [label, payload] = consoleError.mock.calls[0] ?? [];
+    const [label, payload, chain] = consoleError.mock.calls[0] ?? [];
     expect(label).toBe("tools-site: unexpected server error");
-    expect(payload).toMatchObject({
+    expect(payload).toEqual({
       errorId: result?.errorId,
       status: 500,
       method: "GET",
       routeId: "/tracker/[region]"
     });
-    expect(String((payload as { error: unknown }).error)).toContain("upstream failed");
+    expect(chain).toContain("Error: upstream failed\n    at ");
 
     const logged = JSON.stringify(consoleError.mock.calls);
     expect(logged).not.toContain("tools.example");
@@ -77,6 +77,45 @@ describe("tools-site handleError", () => {
     expect(logged).not.toContain("eventId=12");
     expect(logged).not.toContain("cookie-secret");
     expect(logged).not.toContain("header-secret");
+  });
+
+  it("logs every link of the cause chain, including a non-Error root cause", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const networkFailure = new Error("connect ECONNREFUSED 10.0.0.5:8080");
+    const fetchFailure = new TypeError("fetch failed", { cause: networkFailure });
+    networkFailure.cause = "socket closed";
+
+    await callHandleError({ kind: "unknown", error: fetchFailure });
+
+    const chain = String(consoleError.mock.calls[0]?.[2]);
+    expect(chain).toContain("TypeError: fetch failed");
+    expect(chain).toContain("Caused by: Error: connect ECONNREFUSED 10.0.0.5:8080");
+    expect(chain).toContain("Caused by: socket closed");
+  });
+
+  it("stops at a cyclic cause chain", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const first = new Error("first");
+    const second = new Error("second", { cause: first });
+    first.cause = second;
+
+    await callHandleError({ kind: "unknown", error: first });
+
+    const chain = String(consoleError.mock.calls[0]?.[2]);
+    expect(chain.match(/Caused by:/g)).toHaveLength(1);
+  });
+
+  it("keeps remote function validation errors unchanged and unlogged", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(
+      callHandleError({
+        kind: "validation",
+        error: { status: 400, message: "Bad Request" },
+        issues: [{ message: "Expected a number" }]
+      })
+    ).resolves.toBeUndefined();
+    expect(consoleError).not.toHaveBeenCalled();
   });
 
   it("issues a new correlation id for every unexpected error", async () => {

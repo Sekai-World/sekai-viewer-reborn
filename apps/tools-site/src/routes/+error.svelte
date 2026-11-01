@@ -8,7 +8,8 @@
   const isMessages = (value: unknown): value is I18nMessages =>
     value !== null && typeof value === "object" && !Array.isArray(value);
   // A page-level error keeps the root layout data, so reuse its locale and
-  // dictionary; the bundled English source covers a failed root layout load.
+  // dictionary; the bundled English source covers layout data without them.
+  // (A failed root layout load renders SvelteKit's static error.html instead.)
   const uiLocale = $derived(typeof page.data.uiLocale === "string" ? page.data.uiLocale : "en");
   const messages = $derived(
     isMessages(page.data.i18nMessages)
@@ -17,19 +18,21 @@
   );
   const translate = $derived(createI18nTranslator(uiLocale, messages));
   const status = $derived(page.status);
-  const isNotFound = $derived(status === 404);
+  // Only server-side failures (5xx) are worth retrying; 4xx means the request
+  // itself cannot succeed, so it gets the not-found copy and a way home.
+  const isUnexpected = $derived(status >= 500);
   const title = $derived(
-    isNotFound ? translate("errorPage.notFoundTitle") : translate("errorPage.title")
+    isUnexpected ? translate("errorPage.title") : translate("errorPage.notFoundTitle")
   );
   const description = $derived(
-    isNotFound ? translate("errorPage.notFoundDescription") : translate("errorPage.description")
+    isUnexpected ? translate("errorPage.description") : translate("errorPage.notFoundDescription")
   );
-  const icon = $derived(isNotFound ? "mdi:map-search-outline" : "mdi:alert-circle-outline");
+  const icon = $derived(isUnexpected ? "mdi:alert-circle-outline" : "mdi:map-search-outline");
   const currentPath = $derived(`${page.url.pathname}${page.url.search}`);
 </script>
 
 <svelte:head>
-  <title>{status} | Sekai Tools</title>
+  <title>{status} | {translate("errorPage.kicker")}</title>
 </svelte:head>
 
 <section class="hero min-h-[calc(100svh-16rem)] px-3 py-8 sm:px-6 lg:py-12">
@@ -54,7 +57,7 @@
             {title}
           </h1>
           <p class="mt-4 text-base/7 text-(--archive-text-muted)">{description}</p>
-          {#if !isNotFound}
+          {#if isUnexpected}
             <p class="mt-2 text-sm/6 text-(--archive-text-muted)">
               {translate("errorPage.nextStep")}
             </p>
@@ -68,7 +71,7 @@
             <Icon icon="mdi:home-variant-outline" class="size-5" aria-hidden="true" />
             {translate("errorPage.homeAction")}
           </a>
-          {#if !isNotFound}
+          {#if isUnexpected}
             <a class="btn btn-outline min-h-11" href={currentPath} data-sveltekit-reload>
               <Icon icon="mdi:refresh" class="size-5" aria-hidden="true" />
               {translate("errorPage.retryAction")}

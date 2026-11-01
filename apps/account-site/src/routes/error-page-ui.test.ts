@@ -36,6 +36,22 @@ describe("account-site route error page", () => {
     expect(screen.queryByRole("link", { name: "Try again" })).toBeNull();
   });
 
+  it("renders inside a main landmark", () => {
+    showError(404, "/missing", { message: "Not Found" });
+
+    const main = screen.getByRole("main");
+    expect(main.querySelector("h1")?.textContent?.trim()).toBe("We couldn't find that page");
+  });
+
+  it("treats other 4xx errors like a missing page, without a retry", () => {
+    showError(403, "/", { message: "Forbidden" });
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "We couldn't find that page" })
+    ).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Try again" })).toBeNull();
+  });
+
   it("offers a full-reload retry of the same URL for an unexpected error", () => {
     showError(500, "/?region=jp", { message: "Internal Error" });
 
