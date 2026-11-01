@@ -75,7 +75,20 @@ async function verifyRuntimeConfiguration(buildDirectory, serverFiles, app) {
 
   await verifyRuntimeEnvironment(serverFiles, app);
 
-  const handlerModule = await import(pathToFileURL(path.join(buildDirectory, "handler.js")).href);
+  // Importing the handler starts the server, and content-site refuses to start without its
+  // public asset base (apps/content-site/src/env.ts). Supply one only for this import.
+  const previousAssetBaseUrl = process.env.PUBLIC_REMOTE_ASSET_BASE_URL;
+  if (!previousAssetBaseUrl?.trim()) process.env.PUBLIC_REMOTE_ASSET_BASE_URL = "/storage";
+  let handlerModule;
+  try {
+    handlerModule = await import(pathToFileURL(path.join(buildDirectory, "handler.js")).href);
+  } finally {
+    if (previousAssetBaseUrl === undefined) {
+      delete process.env.PUBLIC_REMOTE_ASSET_BASE_URL;
+    } else {
+      process.env.PUBLIC_REMOTE_ASSET_BASE_URL = previousAssetBaseUrl;
+    }
+  }
   assert.equal(
     typeof handlerModule.handler,
     "function",
