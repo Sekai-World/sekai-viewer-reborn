@@ -5,6 +5,11 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Commit before the release merge; packages whose package.json changed after it get tags and releases. Defaults to the parent of HEAD.
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -60,14 +65,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Refresh git tags
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.has-changesets == 'false'
         run: git fetch --force --tags
 
       - name: Publish workspace GitHub releases
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.has-changesets == 'false'
         run: pnpm release:github
         env:
-          GIT_BASE_SHA: ${{ github.event.before }}
+          GIT_BASE_SHA: ${{ inputs.base_sha || github.event.before }}
           GIT_HEAD_SHA: ${{ github.sha }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -76,7 +81,7 @@ jobs:
       # dispatch the image builds explicitly. workflow_dispatch is exempt from
       # that restriction.
       - name: Trigger app image builds for pushed release tags
-        if: steps.changesets.outputs.hasChangesets == 'false'
+        if: steps.changesets.outputs.has-changesets == 'false'
         run: |
           git fetch --force --tags
           tags="$(git tag --points-at "${GIT_HEAD_SHA:-HEAD}" | grep '^@apps/' || true)"
