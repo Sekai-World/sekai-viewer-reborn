@@ -5,7 +5,8 @@ vi.mock("$app/env/private", () => ({ SEKAI_MASTER_API_BASE_URL: "", SEKAI_API_BA
 import { LIVE2D_ASSOCIATED_CATALOG_URL } from "#lib/live2d/associated-catalog.js";
 import {
   createLive2dCatalogRouteDataResolver,
-  type Live2dCatalogRouteData
+  type Live2dCatalogRouteData,
+  type Live2dCatalogSummary
 } from "#lib/live2d/catalog-route-data.js";
 import { _createLive2dCatalogPageLoad, load as defaultCatalogLoad } from "./live2d/+page.server";
 import {
@@ -101,15 +102,16 @@ const buildCatalogLoadEvent = (fetch: (url: string) => Promise<Response>) =>
 
 const getStreamedCatalog = (
   loaded: Awaited<ReturnType<typeof defaultCatalogLoad>>
-): Promise<Live2dCatalogRouteData> =>
-  (loaded as unknown as { catalog: Promise<Live2dCatalogRouteData> }).catalog;
+): Promise<Live2dCatalogSummary> =>
+  (loaded as unknown as { catalog: Promise<Live2dCatalogSummary> }).catalog;
 
 describe("media-lab-site Live2D catalog route", () => {
-  it("returns a serializable catalog model list with separate body and facial motion arrays", async () => {
-    const { loadCatalog } = createRouteLoads();
-    const loaded = await loadCatalog(buildCatalogLoadEvent(createFetch(sampleCatalog)));
+  it("resolves route data with relay URLs and separate body and facial motion arrays", async () => {
+    const routeData = await createLive2dCatalogRouteDataResolver().resolve(
+      createFetch(sampleCatalog)
+    );
 
-    await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
+    expect(routeData).toMatchObject({
       status: "ready",
       source: "network",
       models: [
@@ -136,12 +138,24 @@ describe("media-lab-site Live2D catalog route", () => {
         }
       ]
     });
-    expect(JSON.stringify(loaded)).not.toContain("https://storage.sekai.best");
+    expect(JSON.stringify(routeData)).not.toContain("https://storage.sekai.best");
+  });
+
+  it("streams a serializable catalog summary without asset URLs", async () => {
+    const { loadCatalog } = createRouteLoads();
+    const loaded = await loadCatalog(buildCatalogLoadEvent(createFetch(sampleCatalog)));
+
+    await expect(getStreamedCatalog(loaded)).resolves.toEqual({
+      status: "ready",
+      models: [
+        { id: "sample-model", modelName: "sample-model", modelBase: "sample", characterId: 1 }
+      ]
+    });
+    expect(JSON.stringify(await getStreamedCatalog(loaded))).not.toContain("/live2d/assets/");
     expect(() => JSON.stringify(loaded)).not.toThrow();
   });
 
   it("emits canonical relay URLs for asset filenames containing spaces", async () => {
-    const { loadCatalog } = createRouteLoads();
     const catalog = [
       {
         ...sampleCatalog[0],
@@ -155,9 +169,9 @@ describe("media-lab-site Live2D catalog route", () => {
       }
     ];
 
-    const loaded = await loadCatalog(buildCatalogLoadEvent(createFetch(catalog)));
+    const routeData = await createLive2dCatalogRouteDataResolver().resolve(createFetch(catalog));
 
-    await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
+    expect(routeData).toMatchObject({
       status: "ready",
       models: [
         {
@@ -175,7 +189,7 @@ describe("media-lab-site Live2D catalog route", () => {
         }
       ]
     });
-    expect(JSON.stringify(loaded)).not.toContain("https://storage.sekai.best");
+    expect(JSON.stringify(routeData)).not.toContain("https://storage.sekai.best");
   });
 
   it("resolves the reported modelName URL as a legacy compatibility route", async () => {
@@ -233,10 +247,9 @@ describe("media-lab-site Live2D catalog route", () => {
     await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
       status: "ready",
       models: [
-        { id: "sample-model", modelId: "sample-model", modelName: "sample-model" },
+        { id: "sample-model", modelName: "sample-model" },
         {
           id: "sample-model-2",
-          modelId: "sample-model-2",
           modelName: "sample-model",
           modelBase: "sample-alt"
         }
@@ -409,10 +422,7 @@ describe("media-lab-site Live2D catalog route", () => {
 
     const [landingData, modelData] = await Promise.all([landing, model]);
     expect(requestCount).toBe(1);
-    await expect(getStreamedCatalog(landingData)).resolves.toMatchObject({
-      status: "ready",
-      source: "network"
-    });
+    await expect(getStreamedCatalog(landingData)).resolves.toMatchObject({ status: "ready" });
     expect(modelData).toMatchObject({
       catalog: { status: "ready", source: "network", model: { modelName: "sample-model" } }
     });
@@ -424,7 +434,7 @@ describe("media-lab-site Live2D catalog route", () => {
       ttlMs: 100,
       now: () => timestamp
     });
-    const { loadCatalog } = createRouteLoadsWithResolver(resolver);
+    const { loadCatalog, loadModel } = createRouteLoadsWithResolver(resolver);
 
     const initial = await loadCatalog(buildCatalogLoadEvent(createFetch(sampleCatalog)));
     await getStreamedCatalog(initial);
@@ -435,8 +445,14 @@ describe("media-lab-site Live2D catalog route", () => {
     );
     await expect(getStreamedCatalog(loaded)).resolves.toMatchObject({
       status: "ready",
-      source: "last-known-good",
-      reason: "temporarily offline"
+      models: [{ id: "sample-model" }]
+    });
+    await expect(
+      loadModel(
+        buildModelLoadEvent({ modelId: "sample-model" }, createFailingFetch("temporarily offline"))
+      )
+    ).resolves.toMatchObject({
+      catalog: { status: "ready", source: "last-known-good", reason: "temporarily offline" }
     });
   });
 });

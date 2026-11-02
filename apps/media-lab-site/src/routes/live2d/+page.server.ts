@@ -1,7 +1,11 @@
 import {
   resolveLive2dCatalogRouteData,
-  type Live2dCatalogRouteData
+  toLive2dCatalogSummary
 } from "#lib/live2d/catalog-route-data.js";
+import {
+  createLive2dCharacterOverrides,
+  type Live2dCharacterOverride
+} from "#lib/live2d/character-grouping.js";
 import {
   createLive2dCharacterOptions,
   resolveLive2dCharacterData
@@ -10,11 +14,12 @@ import type { Live2dCharacterOption } from "#lib/server/live2d-characters.js";
 import { normalizePrimaryRegion, type SupportedRegion } from "#lib/region-selection.svelte.js";
 import type { PageServerLoad } from "./$types";
 
-type Live2dCatalogModel = Extract<Live2dCatalogRouteData, { status: "ready" }>["models"][number];
 type Live2dCharacterPayload = {
-  readonly models: readonly Live2dCatalogModel[];
   readonly characters: readonly Live2dCharacterOption[];
+  readonly overrides: readonly Live2dCharacterOverride[];
 };
+
+const EMPTY_CHARACTER_PAYLOAD: Live2dCharacterPayload = { characters: [], overrides: [] };
 
 export const _createLive2dCatalogPageLoad =
   (
@@ -23,21 +28,26 @@ export const _createLive2dCatalogPageLoad =
   ): PageServerLoad =>
   async ({ fetch, url }) => {
     const region: SupportedRegion = normalizePrimaryRegion(url?.searchParams.get("region"));
-    const catalog = resolveCatalog(fetch);
-    const characters: Promise<Live2dCharacterPayload> = catalog.then(
-      (catalog) => {
-        if (catalog.status !== "ready") {
-          return { models: catalog.models, characters: [] };
-        }
+    const routeData = resolveCatalog(fetch);
+    // The page renders a few fields per model, so serialize the model list once
+    // as a summary and stream only the character changes after resolution.
+    const catalog = routeData.then(toLive2dCatalogSummary);
+    const characters: Promise<Live2dCharacterPayload> = routeData.then(
+      (routeData) => {
+        if (routeData.status !== "ready") return EMPTY_CHARACTER_PAYLOAD;
 
         return Promise.resolve()
-          .then(() => resolveCharacters(catalog.models, fetch, region))
+          .then(() => resolveCharacters(routeData.models, fetch, region))
+          .then((resolution) => ({
+            characters: resolution.characters,
+            overrides: createLive2dCharacterOverrides(routeData.models, resolution.models)
+          }))
           .catch(() => ({
-            models: catalog.models,
-            characters: createLive2dCharacterOptions(catalog.models)
+            characters: createLive2dCharacterOptions(routeData.models),
+            overrides: []
           }));
       },
-      () => ({ models: [], characters: [] })
+      () => EMPTY_CHARACTER_PAYLOAD
     );
 
     // Keep the original rejections available to SvelteKit's streaming error
