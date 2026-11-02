@@ -1,5 +1,22 @@
 # @apps/content-site
 
+## 0.1.1
+
+### Patch Changes
+
+- 82217f4: Tell content-site visitors when a newer version of the site has been deployed. A notice above the page content offers a Reload button and a dismiss button. The site never reloads on its own, and dismissing hides the notice for that deployment in every tab. Content-site checks for a new deployment every 10 minutes and when the tab regains focus. Failed checks stay silent. While a newer deployment is known, it replaces the release-notes notice for the version the tab is running.
+
+  Add the English source strings for the new notice to the content-site `common` namespace. Media-lab-site and tools-site are included only because they consume `@platform/i18n-source`. Their behavior does not change.
+
+- 55ce4ce: Validate URL environment variables when each app starts. A set API, asset, i18n, tools-site, or support-page URL must now be an absolute http(s) URL (the public asset base may also be a path such as `/storage`); otherwise the server exits with an error that names the variable without printing its value, instead of serving pages whose data or links are silently broken. Content-site also refuses to start without `PUBLIC_REMOTE_ASSET_BASE_URL`, which every client-side asset URL needs. Unset optional values and image builds without runtime configuration keep working as before.
+- f5ce0cb: Percent-encode the region and ID segments of the legacy `/musics/:region/:id` redirects so non-Latin-1 or CR/LF values redirect instead of failing with a 500, and decoded `../` segments stay inside the canonical `/music/:region/:id` path.
+- 9980793: Add route error pages to tools-site (localized) and account-site (English) so expected 404s and other request errors show a heading and a way home, with a retry only for unexpected server errors, instead of the bare framework status text. Tools-site now logs each unexpected server error once with a correlation id, status, method, route pattern, and its cause chain, without the request URL, query, headers, or cookies, and returns only a generic message to the browser. Content-site and media-lab-site only pick up the shared i18n source package.
+- Updated dependencies [82217f4]
+- Updated dependencies [55ce4ce]
+- Updated dependencies [9980793]
+  - @platform/i18n-source@0.3.1
+  - @platform/ui-shell@0.5.1
+
 ## 0.1.0
 
 ### Minor Changes
