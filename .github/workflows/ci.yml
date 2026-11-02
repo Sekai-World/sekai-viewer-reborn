@@ -120,6 +120,62 @@ jobs:
             apps/media-lab-site/test-results/
             apps/media-lab-site/playwright-report/
 
+  e2e-content-site:
+    name: e2e (content-site)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup mise tools
+        uses: jdx/mise-action@6612f0ef07ed2a736cd1e00a94a065522dd41195 # v5.2.5
+        with:
+          experimental: true
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Rebuild esbuild
+        run: pnpm rebuild esbuild
+
+      - name: Resolve Playwright version
+        id: playwright
+        run: echo "version=$(pnpm --filter @apps/content-site exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Install Chromium and system dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm --filter @apps/content-site exec playwright install --with-deps chromium
+
+      - name: Install system dependencies only
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter @apps/content-site exec playwright install-deps chromium
+
+      - name: Run content-site end-to-end tests
+        run: pnpm --filter @apps/content-site test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: content-site-e2e-report
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            apps/content-site/test-results/
+            apps/content-site/playwright-report/
+
   docker-image-smoke:
     name: Docker image smoke (${{ matrix.app }})
     runs-on: ubuntu-26.04

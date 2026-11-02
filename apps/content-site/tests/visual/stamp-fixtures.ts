@@ -1,5 +1,7 @@
 import type { SharedStampListItemResponse } from "@platform/sekai-master-api-sdk";
 
+// Also served by the e2e mock server (tests/e2e/mock-server.ts).
+
 export const stampFixtures: SharedStampListItemResponse[] = Array.from(
   { length: 42 },
   (_, index) => {
