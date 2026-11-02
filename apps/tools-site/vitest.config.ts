@@ -5,6 +5,7 @@ import { createSvelteKitEnvironmentAliases } from "../../test/vitest-env-aliases
 
 const libPath = new URL("./src/lib", import.meta.url).pathname;
 const appNavigationPath = new URL("./src/lib/test/app-navigation.ts", import.meta.url).pathname;
+const appStatePath = new URL("./src/lib/test/app-state.ts", import.meta.url).pathname;
 const iconifyComponentStubPath = new URL(
   "./src/lib/test/iconify-component-stub.svelte",
   import.meta.url
@@ -16,6 +17,7 @@ export default defineConfig({
     alias: [
       { find: "#lib", replacement: libPath },
       { find: "$app/navigation", replacement: appNavigationPath },
+      { find: "$app/state", replacement: appStatePath },
       { find: /^@iconify\/svelte$/, replacement: iconifyComponentStubPath },
       ...createSvelteKitEnvironmentAliases(import.meta.url, { includeAppEnvironment: true })
     ],
