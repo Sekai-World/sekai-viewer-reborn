@@ -22,3 +22,57 @@ export const getLive2dCharacterGroupKey = (
       : "";
   return `character-${typePrefix}${encodeURIComponent(String(characterId))}`;
 };
+
+type Live2dCharacterFields = {
+  readonly id: string;
+  readonly characterId?: number | null;
+  readonly characterType?: string | null;
+};
+
+/** Resolved character fields for one catalog model, keyed by its route ID. */
+export type Live2dCharacterOverride = {
+  readonly id: string;
+  readonly characterId: number | null;
+  readonly characterType: string | null;
+};
+
+/**
+ * Lists only the models whose resolved character differs from the catalog, so
+ * the streamed character data does not repeat the model list.
+ */
+export const createLive2dCharacterOverrides = (
+  catalogModels: readonly Live2dCharacterFields[],
+  resolvedModels: readonly Live2dCharacterFields[]
+): readonly Live2dCharacterOverride[] => {
+  const catalogById = new Map(catalogModels.map((model) => [model.id, model]));
+
+  return resolvedModels.flatMap((model) => {
+    const characterId = model.characterId ?? null;
+    const characterType = model.characterType ?? null;
+    const catalogModel = catalogById.get(model.id);
+    if (
+      catalogModel &&
+      (catalogModel.characterId ?? null) === characterId &&
+      (catalogModel.characterType ?? null) === characterType
+    ) {
+      return [];
+    }
+
+    return [{ id: model.id, characterId, characterType }];
+  });
+};
+
+export const applyLive2dCharacterOverrides = <TModel extends Live2dCharacterFields>(
+  models: readonly TModel[],
+  overrides: readonly Live2dCharacterOverride[] = []
+): readonly TModel[] => {
+  if (overrides.length === 0) return models;
+
+  const overridesById = new Map(overrides.map((override) => [override.id, override]));
+  return models.map((model) => {
+    const override = overridesById.get(model.id);
+    return override
+      ? { ...model, characterId: override.characterId, characterType: override.characterType }
+      : model;
+  });
+};

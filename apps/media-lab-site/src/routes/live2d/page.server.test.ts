@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("$app/env/private", () => ({ SEKAI_MASTER_API_BASE_URL: "", SEKAI_API_BASE_URL: "" }));
 
-import type { Live2dCatalogRouteData } from "#lib/live2d/catalog-route-data.js";
+import type {
+  Live2dCatalogRouteData,
+  Live2dCatalogSummary
+} from "#lib/live2d/catalog-route-data.js";
+import type { Live2dCharacterOverride } from "#lib/live2d/character-grouping.js";
 import {
   createLive2dCharacterOptions,
   resolveLive2dCharacterData,
@@ -13,12 +17,12 @@ import { _createLive2dCatalogPageLoad } from "./+page.server";
 
 type ReadyCatalog = Extract<Live2dCatalogRouteData, { status: "ready" }>;
 type CharacterPayload = {
-  models: ReadyCatalog["models"];
   characters: readonly Live2dCharacterOption[];
+  overrides: readonly Live2dCharacterOverride[];
 };
 type StreamingPageData = {
   track: "live2d";
-  catalog: Promise<Live2dCatalogRouteData>;
+  catalog: Promise<Live2dCatalogSummary>;
   characters: Promise<CharacterPayload>;
 };
 
@@ -53,6 +57,10 @@ const readyCatalog: ReadyCatalog = {
     }
   ]
 };
+const readySummary: Live2dCatalogSummary = {
+  status: "ready",
+  models: [{ id: "ichika", modelName: "ichika", modelBase: "ichika", characterId: 1 }]
+};
 
 describe("Live2D catalog page load", () => {
   it("returns catalog and character data as deferred promises", async () => {
@@ -70,10 +78,10 @@ describe("Live2D catalog page load", () => {
       url: new URL("https://media-lab.test/live2d")
     } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
-    await expect(loaded.catalog).resolves.toEqual(readyCatalog);
+    await expect(loaded.catalog).resolves.toEqual(readySummary);
     await expect(loaded.characters).resolves.toEqual({
-      models: resolvedModels,
-      characters: resolvedCharacters
+      characters: resolvedCharacters,
+      overrides: [{ id: "ichika", characterId: 2, characterType: null }]
     });
     expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher, "jp");
   });
@@ -96,10 +104,7 @@ describe("Live2D catalog page load", () => {
       url: new URL(`https://media-lab.test/live2d${search}`)
     } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
-    await expect(loaded.characters).resolves.toEqual({
-      models: readyCatalog.models,
-      characters: []
-    });
+    await expect(loaded.characters).resolves.toEqual({ characters: [], overrides: [] });
     expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher, region);
   });
 
@@ -126,7 +131,7 @@ describe("Live2D catalog page load", () => {
     expect(resolveCharacters).not.toHaveBeenCalled();
 
     catalogRequest.resolve(readyCatalog);
-    await expect(loaded.catalog).resolves.toEqual(readyCatalog);
+    await expect(loaded.catalog).resolves.toEqual(readySummary);
     expect(resolveCharacters).toHaveBeenCalledWith(readyCatalog.models, fetcher, "jp");
 
     characterRequest.resolve({
@@ -134,8 +139,8 @@ describe("Live2D catalog page load", () => {
       characters: [{ id: 1, name: "Hoshino Ichika", modelCount: 1 }]
     });
     await expect(loaded.characters).resolves.toEqual({
-      models: readyCatalog.models,
-      characters: [{ id: 1, name: "Hoshino Ichika", modelCount: 1 }]
+      characters: [{ id: 1, name: "Hoshino Ichika", modelCount: 1 }],
+      overrides: []
     });
   });
 
@@ -157,10 +162,13 @@ describe("Live2D catalog page load", () => {
       url: new URL("https://media-lab.test/live2d")
     } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
-    await expect(loaded.catalog).resolves.toMatchObject({ models: [character2dOnlyModel] });
+    await expect(loaded.catalog).resolves.toEqual({
+      status: "ready",
+      models: [{ id: "ichika", modelName: "ichika", modelBase: "ichika" }]
+    });
     await expect(loaded.characters).resolves.toEqual({
-      models: [resolvedModel],
-      characters: [{ id: 2, name: "Hoshino Ichika", modelCount: 1 }]
+      characters: [{ id: 2, name: "Hoshino Ichika", modelCount: 1 }],
+      overrides: [{ id: "ichika", characterId: 2, characterType: null }]
     });
     expect(resolveCharacters).toHaveBeenCalledWith([character2dOnlyModel], fetcher, "jp");
   });
@@ -175,10 +183,10 @@ describe("Live2D catalog page load", () => {
       url: new URL("https://media-lab.test/live2d")
     } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
-    await expect(loaded.catalog).resolves.toEqual(readyCatalog);
+    await expect(loaded.catalog).resolves.toEqual(readySummary);
     await expect(loaded.characters).resolves.toEqual({
-      models: readyCatalog.models,
-      characters: createLive2dCharacterOptions(readyCatalog.models)
+      characters: createLive2dCharacterOptions(readyCatalog.models),
+      overrides: []
     });
   });
 
@@ -198,7 +206,7 @@ describe("Live2D catalog page load", () => {
     } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).resolves.toEqual(catalog);
-    await expect(loaded.characters).resolves.toEqual({ models: [], characters: [] });
+    await expect(loaded.characters).resolves.toEqual({ characters: [], overrides: [] });
     expect(resolveCharacters).not.toHaveBeenCalled();
   });
 
@@ -214,8 +222,48 @@ describe("Live2D catalog page load", () => {
     } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
 
     await expect(loaded.catalog).rejects.toBe(failure);
-    await expect(loaded.characters).resolves.toEqual({ models: [], characters: [] });
+    await expect(loaded.characters).resolves.toEqual({ characters: [], overrides: [] });
     expect(resolveCharacters).not.toHaveBeenCalled();
+  });
+
+  it("serializes each model once without asset URLs or motion sets", async () => {
+    const motionSet = {
+      motionSetId: "ichika-motion",
+      motionPath: "motion/ichika",
+      motionFiles: ["wave.motion3.json"],
+      facialPath: "motion/ichika-face",
+      facialFiles: ["smile.motion3.json"],
+      bodyMotions: [
+        { id: "wave.motion3.json", url: "/live2d/assets/motion/ichika/wave.motion3.json" }
+      ],
+      facialMotions: [
+        { id: "smile.motion3.json", url: "/live2d/assets/motion/ichika-face/smile.motion3.json" }
+      ]
+    };
+    const models = Array.from({ length: 3 }, (_, index) => ({
+      ...readyCatalog.models[0],
+      id: `model-${index}`,
+      modelId: `model-${index}`,
+      modelBase: `base-${index}`,
+      modelName: `model-${index}`,
+      motionSets: [motionSet]
+    }));
+    const resolveCatalog = vi.fn().mockResolvedValue({ ...readyCatalog, models });
+    const load = _createLive2dCatalogPageLoad(resolveCatalog, resolveLive2dCharacterData);
+    const loaded = (await load({
+      fetch: vi.fn() as unknown as typeof fetch,
+      url: new URL("https://media-lab.test/live2d")
+    } as Parameters<typeof load>[0])) as unknown as StreamingPageData;
+
+    const serialized = JSON.stringify([await loaded.catalog, await loaded.characters]);
+
+    for (const field of ["motionSets", "modelUrl", "modelPath", "modelFile", "character2dId"]) {
+      expect(serialized).not.toContain(field);
+    }
+    expect(serialized).not.toContain("/live2d/assets/");
+    for (const model of models) {
+      expect(serialized.split(`"${model.modelBase}"`)).toHaveLength(2);
+    }
   });
 
   it("keeps page rendering behind the streamed catalog and character boundaries", () => {

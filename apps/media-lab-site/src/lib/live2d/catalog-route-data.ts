@@ -27,6 +27,20 @@ export type Live2dCatalogRouteData =
       models: readonly [];
     };
 
+/** The fields the `/live2d` catalog page renders or groups by. */
+export type Live2dCatalogSummaryModel = Pick<
+  Live2dRouteModelDescriptor,
+  "modelName" | "modelBase" | "characterId" | "characterType"
+> & { id: string };
+
+/**
+ * Catalog data serialized into the `/live2d` page. Asset URLs and motion sets
+ * stay on the server; the model viewer route resolves them per model.
+ */
+export type Live2dCatalogSummary =
+  | { status: "ready"; models: readonly Live2dCatalogSummaryModel[] }
+  | Exclude<Live2dCatalogRouteData, { status: "ready" }>;
+
 export type Live2dCatalogResponseFetcher = (url: string) => Promise<Response>;
 
 export interface Live2dCatalogRouteDataResolverOptions {
@@ -121,6 +135,19 @@ const toRouteData = (resolution: Live2dCatalogResolution): Live2dCatalogRouteDat
     ? { status: "unavailable", reason: resolution.reason, models: [] }
     : { status: "error", reason: toErrorReason(resolution.error), models: [] };
 };
+
+const toSummaryModel = (
+  model: Live2dRouteModelDescriptor & { id: string }
+): Live2dCatalogSummaryModel => ({
+  id: model.id,
+  modelName: model.modelName,
+  modelBase: model.modelBase,
+  ...(model.characterId === undefined ? {} : { characterId: model.characterId }),
+  ...(model.characterType === undefined ? {} : { characterType: model.characterType })
+});
+
+export const toLive2dCatalogSummary = (data: Live2dCatalogRouteData): Live2dCatalogSummary =>
+  data.status === "ready" ? { status: "ready", models: data.models.map(toSummaryModel) } : data;
 
 const createFetchJson =
   (fetcher: Live2dCatalogResponseFetcher): Live2dCatalogFetchJson =>

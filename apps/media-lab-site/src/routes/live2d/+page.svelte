@@ -2,10 +2,12 @@
   import { navigating } from "$app/state";
   import Icon from "@iconify/svelte";
   import { createI18nTranslator } from "#lib/i18n/runtime.js";
-  import type { Live2dCatalogRouteData } from "#lib/live2d/catalog-route-data.js";
+  import type { Live2dCatalogSummary } from "#lib/live2d/catalog-route-data.js";
   import {
+    applyLive2dCharacterOverrides,
     getLive2dCharacterGroupKey,
     getLive2dCharacterTypeKey,
+    type Live2dCharacterOverride,
     type Live2dCharacterType
   } from "#lib/live2d/character-grouping.js";
   import { tick } from "svelte";
@@ -19,10 +21,10 @@
     name?: string;
     modelCount?: number;
   };
-  type CatalogModel = Extract<Live2dCatalogRouteData, { status: "ready" }>["models"][number];
+  type CatalogModel = Extract<Live2dCatalogSummary, { status: "ready" }>["models"][number];
   type CharacterPayload = {
-    models: readonly CatalogModel[];
     characters: readonly CharacterOption[];
+    overrides: readonly Live2dCharacterOverride[];
   };
   type Live2dPageData = Omit<PageData, "characters"> & {
     characters?: CharacterPayload | PromiseLike<CharacterPayload>;
@@ -33,7 +35,7 @@
   const format = (key: string, token: string, value: string | number) =>
     translate(key).replace(`{${token}}`, String(value));
 
-  let catalog = $state<Live2dCatalogRouteData | null>(null);
+  let catalog = $state<Live2dCatalogSummary | null>(null);
   let characterOptions = $state<readonly CharacterOption[]>([]);
   let models = $state<readonly CatalogModel[]>([]);
   type Group = {
@@ -57,7 +59,7 @@
     // runtime value is still a promise during the initial streamed render.
     // Promise.resolve also handles already-resolved values on client navigation.
     const catalogPromise = Promise.resolve(
-      data.catalog as unknown as Live2dCatalogRouteData | PromiseLike<Live2dCatalogRouteData>
+      data.catalog as unknown as Live2dCatalogSummary | PromiseLike<Live2dCatalogSummary>
     );
     void catalogPromise.then(
       (nextCatalog) => {
@@ -72,7 +74,7 @@
         void charactersPromise.then(
           (nextCharacters) => {
             if (cancelled) return;
-            models = nextCharacters?.models ?? nextCatalog.models;
+            models = applyLive2dCharacterOverrides(nextCatalog.models, nextCharacters?.overrides);
             characterOptions = nextCharacters?.characters ?? [];
           },
           () => {
