@@ -36,8 +36,10 @@ versioned immutable image tags rather than `latest`. All four applications need
 `SEKAI_API_BASE_URL` set for server-side dynamic notifications. `content-site`,
 `tools-site`, and `media-lab-site` additionally require
 `SEKAI_MASTER_API_BASE_URL`; `content-site` also requires
-`PUBLIC_REMOTE_ASSET_BASE_URL`. Review the default i18n URL and all other
-application settings as well. Keep this operator-owned file outside the chart
+`PUBLIC_REMOTE_ASSET_BASE_URL`, and refuses to start without it. Every app
+also exits at startup when a set URL value is not an absolute `http(s)` URL;
+see `docs/viewer-implementation/helm-deployments.md` for the rules. Review the
+default i18n URL and all other application settings as well. Keep this operator-owned file outside the chart
 if it contains environment-specific or sensitive configuration.
 
 The default preferred pod anti-affinity spreads replicas of each application,

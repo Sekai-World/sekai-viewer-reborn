@@ -1,10 +1,15 @@
 import { defineEnvVars } from "@sveltejs/kit/env";
+import { envUrl } from "@platform/ui-shell/env-url";
 
-// Empty defaults keep build-time configuration optional; server helpers validate required URLs when used.
+const optionalUrl = envUrl();
+
+// Unset values stay "" so image builds need no runtime configuration; server helpers report
+// missing API URLs per request. Set URLs must be well formed so a typo fails at startup instead
+// of degrading SSR.
 export const variables = defineEnvVars({
-  PUBLIC_SUPPORT_PAGE_URL: { public: true, schema: (input) => input ?? "" },
-  PUBLIC_REMOTE_ASSET_BASE_URL: { public: true, schema: (input) => input ?? "" },
-  SEKAI_MASTER_API_BASE_URL: { schema: (input) => input ?? "" },
-  SEKAI_API_BASE_URL: { schema: (input) => input ?? "" },
-  PUBLIC_SEKAI_I18N_BASE_URL: { public: true, schema: (input) => input ?? "" }
+  PUBLIC_SUPPORT_PAGE_URL: { public: true, schema: optionalUrl },
+  PUBLIC_REMOTE_ASSET_BASE_URL: { public: true, schema: envUrl({ allowPath: true }) },
+  SEKAI_MASTER_API_BASE_URL: { schema: optionalUrl },
+  SEKAI_API_BASE_URL: { schema: optionalUrl },
+  PUBLIC_SEKAI_I18N_BASE_URL: { public: true, schema: optionalUrl }
 });

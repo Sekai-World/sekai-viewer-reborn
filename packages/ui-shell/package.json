@@ -37,6 +37,10 @@
       "types": "./src/theme-controls.types.ts",
       "default": "./src/theme-controls.types.ts"
     },
+    "./env-url": {
+      "types": "./src/env-url.ts",
+      "default": "./src/env-url.ts"
+    },
     "./global-notices": {
       "types": "./src/global-notices.ts",
       "default": "./src/global-notices.ts"
