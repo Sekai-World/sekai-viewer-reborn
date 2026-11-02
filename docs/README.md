@@ -34,6 +34,7 @@ Implementation patterns, guides, and records:
 - [`viewer-implementation/audio-download-pattern.md`](viewer-implementation/audio-download-pattern.md)
 - [`viewer-implementation/card-thumbnail.md`](viewer-implementation/card-thumbnail.md)
 - [`viewer-implementation/content-site-launch-readiness.md`](viewer-implementation/content-site-launch-readiness.md)
+- [`viewer-implementation/content-site-update-notices.md`](viewer-implementation/content-site-update-notices.md)
 - [`viewer-implementation/detail-page-design.md`](viewer-implementation/detail-page-design.md)
 - [`viewer-implementation/docker-builds.md`](viewer-implementation/docker-builds.md)
 - [`viewer-implementation/helm-deployments.md`](viewer-implementation/helm-deployments.md)

@@ -197,6 +197,7 @@ When changing shared packages:
 - Run `pnpm i18n:check` and the relevant `content-site` checks/tests; manually verify the new entry in `/updates` and the version notice with browser state from a previous version.
 - Treat missing release entries, missing copy, or version mismatches as release blockers; do not rely on the runtime fallback to show older notes for a new version. This is a release checklist requirement, not an existing automatic CI guard.
 - In-app onboarding, version notices, and update logs are currently implemented only in `content-site`; Changeset coverage for other consuming apps does not imply feature coverage there.
+- The new-deployment prompt (SvelteKit `updated` plus `_app/version.json`) is separate from the curated notice and takes precedence over it; see `docs/viewer-implementation/content-site-update-notices.md`.
 
 ## `content-site` Environment Variables
 
