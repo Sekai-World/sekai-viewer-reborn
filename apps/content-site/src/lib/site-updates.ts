@@ -27,8 +27,23 @@ const RELEASE_0_1_0: SiteUpdate = {
   ]
 };
 
+const RELEASE_0_1_1: SiteUpdate = {
+  version: "0.1.1",
+  titleKey: "updates.release.0.1.1.title",
+  summaryKey: "updates.release.0.1.1.summary",
+  changeKeys: [
+    "updates.release.0.1.1.change.deployment",
+    "updates.release.0.1.1.change.links",
+    "updates.release.0.1.1.change.live2d"
+  ]
+};
+
 // Keep new releases at the beginning of this array.
-export const siteUpdates: readonly SiteUpdate[] = [RELEASE_0_1_0, FALLBACK_SITE_UPDATE];
+export const siteUpdates: readonly SiteUpdate[] = [
+  RELEASE_0_1_1,
+  RELEASE_0_1_0,
+  FALLBACK_SITE_UPDATE
+];
 
 export const currentSiteUpdate: SiteUpdate = siteUpdates[0] ?? FALLBACK_SITE_UPDATE;
 
