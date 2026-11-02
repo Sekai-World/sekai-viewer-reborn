@@ -296,7 +296,7 @@ importers:
     dependencies:
       '@iconify/svelte':
         specifier: ^5.2.1
-        version: 5.2.3(svelte@5.57.3(@typescript-eslint/types@8.72.1))
+        version: 5.2.4(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       '@platform/auth-client':
         specifier: workspace:*
         version: link:../../packages/auth-client
@@ -357,7 +357,7 @@ importers:
     dependencies:
       '@iconify/svelte':
         specifier: ^5.2.1
-        version: 5.2.3(svelte@5.57.3(@typescript-eslint/types@8.72.1))
+        version: 5.2.4(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       '@platform/auth-client':
         specifier: workspace:*
         version: link:../../packages/auth-client
@@ -436,7 +436,7 @@ importers:
     dependencies:
       '@iconify/svelte':
         specifier: ^5.2.1
-        version: 5.2.3(svelte@5.57.3(@typescript-eslint/types@8.72.1))
+        version: 5.2.4(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       '@platform/auth-client':
         specifier: workspace:*
         version: link:../../packages/auth-client
@@ -589,7 +589,7 @@ importers:
     dependencies:
       '@iconify/svelte':
         specifier: ^5.2.1
-        version: 5.2.3(svelte@5.57.3(@typescript-eslint/types@8.72.1))
+        version: 5.2.4(svelte@5.57.3(@typescript-eslint/types@8.72.1))
       howler:
         specifier: ^2.2.4
         version: 2.2.4
@@ -1067,8 +1067,8 @@ packages:
   '@iconify-icons/mdi@2.0.0':
     resolution: {integrity: sha512-ppVItcrp6uRn9XYA4e8XkJC6VnFfBGSLJVrTrHrc7ft9iwLVat3u4ol/UldokaSZ2EyWYukdYYT2AhZP0uNOjg==}
 
-  '@iconify/svelte@5.2.3':
-    resolution: {integrity: sha512-RV08FAHSsUW3/4WJsfoMYGbNt413Eh+4thU864pmX2QGFaem2P7zTcANYwkSOnApGlpYhMXJM813tN1tfk68ug==}
+  '@iconify/svelte@5.2.4':
+    resolution: {integrity: sha512-rKIsZikeLb2D30WaOoA/B5ggwm9KelOu0gXizmPHCjcwBNNm6+AGi+16gQ9HNEfm6MvMQqEuGKcp068ZeAsiNw==}
     peerDependencies:
       svelte: '>5.0.0'
 
@@ -4302,7 +4302,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify/svelte@5.2.3(svelte@5.57.3(@typescript-eslint/types@8.72.1))':
+  '@iconify/svelte@5.2.4(svelte@5.57.3(@typescript-eslint/types@8.72.1))':
     dependencies:
       '@iconify/types': 2.0.0
       svelte: 5.57.3(@typescript-eslint/types@8.72.1)
