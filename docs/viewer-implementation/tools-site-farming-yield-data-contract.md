@@ -40,11 +40,11 @@ selects one; an unknown value is rejected, never replaced by the default.
 
 ## Scope
 
-| Dimension       | Supported              | Everything else                                                                                                     |
-| --------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Region          | `jp`, `tw`, `en`, `kr` | `cn` and any other value are unsupported. TW, EN, and KR use the JP values (owner decision, see _Region Evidence_). |
-| Mode            | Solo (non-Auto)        | Auto, Multi, Challenge, Cheerful Carnival, World Bloom stay blocked/unverified.                                     |
-| Formula version | `jp-solo-community-v1` | Any other value is unsupported.                                                                                     |
+| Dimension       | Supported              | Everything else                                                                                                                                      |
+| --------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Region          | `jp`, `tw`, `en`, `kr` | `cn` and any other value are unsupported. TW, EN, and KR use the JP values (owner decision, see _Region Evidence_).                                  |
+| Mode            | Solo (non-Auto)        | Auto, Multi, Challenge, Cheerful Carnival, World Bloom stay blocked; formula authority and vectors are in the validation document (_Mode Evidence_). |
+| Formula version | `jp-solo-community-v1` | Any other value is unsupported.                                                                                                                      |
 
 Records for songs that are absent from the selected region's own music list are
 not evidence that the song exists there. For `tw`, `en`, and `kr` only the
