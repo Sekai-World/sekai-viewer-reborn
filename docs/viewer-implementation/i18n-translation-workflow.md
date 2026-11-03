@@ -66,6 +66,12 @@ must match.
 
 ## Namespace Files
 
+`pnpm i18n:check` and `pnpm i18n:sync` cover every `*.json` file in
+`packages/i18n-source/content-site/`. When adding a namespace, also map its
+routes and components in `namespaceByRoutePattern` in
+`scripts/i18n/content-site-source.mjs`; unmapped files are checked against
+`common.json`.
+
 - `card.json` — card detail page strings
 - `gacha.json` — gacha list/detail/simulator strings
 - `common.json` — navigation, settings, shared labels
