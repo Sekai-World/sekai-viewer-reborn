@@ -45,15 +45,18 @@ implementing the formulas:
   outer `floor` before multiplying by `boost_multiplier`; do not reorder or
   combine the rounding steps.
 
-Mode status is summarized below. Only JP Solo is enabled. #538 found a formula
-authority for every other mode (see _Mode Evidence_ below), but none is enabled:
-each still needs the owner's acceptance of reference-only evidence, and Multi,
-Cheerful Carnival, and Challenge also need inputs the recommender does not have.
+Mode status is summarized below. JP Solo and Auto are enabled; Auto was enabled
+on 2026-11-03 by the owner under the same standard as Solo (community reference
+formulas and deterministic vectors, no in-game observation). #538 found a
+formula authority for the other modes (see _Mode Evidence_ below), but none is
+enabled: each still needs the owner's acceptance of reference-only evidence, and
+Multi, Cheerful Carnival, and Challenge also need inputs the recommender does
+not have.
 
 | Mode              | Formula authority found | Status  | What is still missing                                                                                                         |
 | ----------------- | ----------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | JP Solo           | Yes                     | Enabled | Nothing; complete runtime inputs are required from the user.                                                                  |
-| Auto              | Yes                     | Blocked | Owner acceptance of reference-only evidence. No extra live-result input.                                                      |
+| Auto              | Yes                     | Enabled | Nothing. Formula `jp-auto-community-v1`, vector V1, owner decision 2026-11-03.                                                |
 | Multi             | Yes                     | Blocked | Explicit inputs for the other players' total score and team power, and the aggregated multi skill effect. Owner acceptance.   |
 | Challenge         | Yes                     | Blocked | What the reference's challenge value measures is not stated, so it cannot be labelled an event-point yield. Owner acceptance. |
 | Cheerful Carnival | Yes                     | Blocked | The Multi inputs plus the remaining life, and a way to know the event is a Cheerful Carnival. Owner acceptance.               |
@@ -196,13 +199,14 @@ floor(1.9754853955477398 × 300000 × 4 + 5 × 0.015 × 1,500,000) = 2,483,082;
 b = 110 + floor(2,483,082 / 17000) + min(13, floor(8,000,000 / 340000)) =
 110 + 146 + 13 = 269; floor(269 × 1.14 × 3) = floor(919.98) = 919.
 
-None of these vectors is wired into the app. They are recorded so that a mode
-can be enabled later with a test that asserts them.
+Vectors V0 and V1 are asserted through the app's own calculation by
+`apps/tools-site/src/lib/music-recommender.test.ts`. V2 to V4 are recorded
+only; they are not wired into the app.
 
-To enable a mode: the owner accepts reference-only evidence for it, the missing
-inputs above are added as explicit user inputs (never defaults), a unit test
-asserts its vector, and the recommender keeps answering "unavailable" for every
-mode that has none.
+To enable another mode: the owner accepts reference-only evidence for it, the
+missing inputs above are added as explicit user inputs (never defaults), a unit
+test asserts its vector, and the recommender keeps answering "unavailable" for
+every mode that has none.
 
 ## Historical Reference Boundary
 

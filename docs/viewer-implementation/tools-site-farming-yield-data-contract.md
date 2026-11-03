@@ -13,7 +13,7 @@ any recommendation UI.
 | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Contract owner          | tools-site consumes a licensed, externally supplied `music_metas.json` as an input. It is not assigned to `sekai-master-api` and no repository generator is required (user decision, 2026-09-25).     |
 | Authoritative source    | Default: self-hosted `https://storage.sekai.best/sekai-best-assets/music_metas.json`. Explicit alternative: `https://moe.exmeaning.com/data/music_meta/music_metas.json`. Both confirmed by the user. |
-| First supported mode    | **JP Solo**, formula version `jp-solo-community-v1`, for regions `jp`, `tw`, `en`, and `kr` (see _Region Evidence_).                                                                                  |
+| Supported modes         | **Solo** (`jp-solo-community-v1`) and **Auto** (`jp-auto-community-v1`, owner decision 2026-11-03), for regions `jp`, `tw`, `en`, and `kr` (see _Region Evidence_).                                   |
 | First supported metrics | Per-live **score** and per-live **event points** for one song and difficulty. No per-hour, per-energy, or cumulative metric.                                                                          |
 | Deck and bonus inputs   | Supplied manually by the user for the first mode. No user-data import and no derived event-bonus resolution.                                                                                          |
 | Upstream API work       | None required. If the data later moves into `sekai-master-api`, follow the OpenAPI/SDK workflow in `AGENTS.md` and update this contract in the same change.                                           |
@@ -40,11 +40,11 @@ selects one; an unknown value is rejected, never replaced by the default.
 
 ## Scope
 
-| Dimension       | Supported              | Everything else                                                                                                                                      |
-| --------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Region          | `jp`, `tw`, `en`, `kr` | `cn` and any other value are unsupported. TW, EN, and KR use the JP values (owner decision, see _Region Evidence_).                                  |
-| Mode            | Solo (non-Auto)        | Auto, Multi, Challenge, Cheerful Carnival, World Bloom stay blocked; formula authority and vectors are in the validation document (_Mode Evidence_). |
-| Formula version | `jp-solo-community-v1` | Any other value is unsupported.                                                                                                                      |
+| Dimension       | Supported                                                    | Everything else                                                                                                                                |
+| --------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Region          | `jp`, `tw`, `en`, `kr`                                       | `cn` and any other value are unsupported. TW, EN, and KR use the JP values (owner decision, see _Region Evidence_).                            |
+| Mode            | Solo, Auto                                                   | Multi, Challenge, Cheerful Carnival, World Bloom stay blocked; formula authority and vectors are in the validation document (_Mode Evidence_). |
+| Formula version | `jp-solo-community-v1` (Solo), `jp-auto-community-v1` (Auto) | Any other value is unsupported.                                                                                                                |
 
 Records for songs that are absent from the selected region's own music list are
 not evidence that the song exists there. For `tw`, `en`, and `kr` only the
@@ -176,13 +176,18 @@ source. Partial records are never dropped and filled in.
 
 ## Units, Formulas, and Rounding
 
-Formulas are the approved JP Solo community references from the validation
+Formulas are the approved Solo community references from the validation
 document, restated here as the contract's rounding order:
 
 ```text
 score        = floor((base_score + Σ skill_score_solo[i] × effective_skill_rate[i] / 100) × deck_power × 4)
 event points = floor((100 + floor(score / 20000)) × (event_rate / 100) × (1 + deck_bonus / 100)) × boost_multiplier
 ```
+
+Auto (`jp-auto-community-v1`, enabled 2026-11-03) uses the same expressions with
+`base_score_auto` and `skill_score_auto` in place of `base_score` and
+`skill_score_solo`. It needs no other input, and its rounding, boost, and skill
+allocation are the Solo ones. Vector V1 in the validation document covers it.
 
 - `effective_skill_rate` and `deck_bonus` are percentages; `boost_multiplier` is
   an integer multiplier.
@@ -286,8 +291,8 @@ the boost.
 
 These stay blocked and are not treated as implementation-ready:
 
-- Region `cn`, songs only TW, EN, or KR has, and Auto, Multi, Challenge,
-  Cheerful Carnival, and World Bloom yields.
+- Region `cn`, songs only TW, EN, or KR has, and Multi, Challenge, Cheerful
+  Carnival, and World Bloom yields.
 - Per-hour, per-energy, and cumulative planning metrics. Duration and energy
   semantics are undefined, and the Moesekai `cycles_*`/`pt_per_hour_*` fields are
   derived from preset teams, not personalized observations.

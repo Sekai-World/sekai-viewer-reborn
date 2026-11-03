@@ -16,6 +16,21 @@ export const DEFAULT_MUSIC_META_SOURCE_ID: MusicMetaSourceId = "sekai-best";
 // The audited sources contained 3,727 records; additions are allowed, but a smaller payload is treated as truncated.
 export const MUSIC_META_MINIMUM_RECORD_COUNT = 3_727;
 export const JP_SOLO_FORMULA_VERSION = "jp-solo-community-v1" as const;
+export const JP_AUTO_FORMULA_VERSION = "jp-auto-community-v1" as const;
+export type YieldFormulaVersion = typeof JP_SOLO_FORMULA_VERSION | typeof JP_AUTO_FORMULA_VERSION;
+
+/**
+ * Modes that have a formula. Auto uses the Solo formula with the Auto base term and skill array
+ * (the same community reference as Solo, see the validation document); it needs no other input.
+ */
+export const YIELD_MODES = ["solo", "auto"] as const;
+export type YieldMode = (typeof YIELD_MODES)[number];
+
+export const isYieldMode = (value: unknown): value is YieldMode =>
+  typeof value === "string" && (YIELD_MODES as readonly string[]).includes(value);
+
+export const formulaVersionForMode = (mode: YieldMode): YieldFormulaVersion =>
+  mode === "auto" ? JP_AUTO_FORMULA_VERSION : JP_SOLO_FORMULA_VERSION;
 
 /**
  * Regions the recommender serves. TW, EN, and KR use the JP song data for the songs the region
@@ -50,7 +65,9 @@ export type MusicMeta = {
   musicTime: number;
   eventRate: number;
   baseScore: number;
+  baseScoreAuto: number;
   skillScoreSolo: MusicMetaSkillScores;
+  skillScoreAuto: MusicMetaSkillScores;
 };
 
 export type MusicMetaFailureReasonCode =
@@ -136,7 +153,7 @@ export type JpSoloYieldAvailable = {
   music: Pick<MusicMeta, "musicId" | "difficulty" | "musicTime">;
   score: number;
   eventPoints: number;
-  formulaVersion: typeof JP_SOLO_FORMULA_VERSION;
+  formulaVersion: YieldFormulaVersion;
   provenance: MusicMetaProvenance;
 };
 
@@ -154,12 +171,13 @@ export type JpSoloRankingResult =
       status: "available";
       rankBy: "score" | "eventPoints";
       items: JpSoloRankingItem[];
-      formulaVersion: typeof JP_SOLO_FORMULA_VERSION;
+      formulaVersion: YieldFormulaVersion;
       provenance: MusicMetaProvenance;
     }
   | JpSoloCalculationUnavailable;
 
 type PreparedInputs = {
+  mode: YieldMode;
   deckPower: number;
   deckBonus: number;
   boostMultiplier: number;
@@ -310,10 +328,10 @@ const checkRegionAndMode = (
       ["mode"]
     );
   }
-  if (inputs.mode !== "solo") {
+  if (!isYieldMode(inputs.mode)) {
     return unavailableCalculation(
       "unsupported-mode",
-      "Only JP Solo score and event-point calculations are supported.",
+      "Only Solo and Auto score and event-point calculations are supported.",
       provenance
     );
   }
@@ -497,6 +515,7 @@ const validateInputs = (
   return {
     status: "available",
     prepared: {
+      mode: inputs.mode as YieldMode,
       deckPower: deckPower as number,
       deckBonus: deckBonus as number,
       boostMultiplier: boostMultiplier as number,
@@ -550,6 +569,7 @@ const calculateForMusic = (
   inputs: PreparedInputs,
   provenance: MusicMetaProvenance
 ): JpSoloYieldAvailable | JpSoloCalculationUnavailable => {
+  const skillCoefficients = inputs.mode === "auto" ? music.skillScoreAuto : music.skillScoreSolo;
   let skillPairs: { coefficientIndex: number; effectiveSkillRate: number }[];
   if (inputs.skillAllocation.strategy === "explicit") {
     skillPairs = inputs.skillAllocation.skillSequence;
@@ -561,7 +581,7 @@ const calculateForMusic = (
           left.effectiveSkillRate - right.effectiveSkillRate ||
           left.originalIndex - right.originalIndex
       );
-    const sortedCoefficients = music.skillScoreSolo
+    const sortedCoefficients = skillCoefficients
       .slice(0, inputs.cardLength)
       .map((coefficient, coefficientIndex) => ({ coefficient, coefficientIndex }))
       .sort(
@@ -576,10 +596,11 @@ const calculateForMusic = (
 
   let skillScore = 0;
   for (const { coefficientIndex, effectiveSkillRate } of skillPairs) {
-    skillScore += (music.skillScoreSolo[coefficientIndex] * effectiveSkillRate) / 100;
+    skillScore += (skillCoefficients[coefficientIndex] * effectiveSkillRate) / 100;
   }
 
-  const score = Math.floor((music.baseScore + skillScore) * inputs.deckPower * 4);
+  const baseScore = inputs.mode === "auto" ? music.baseScoreAuto : music.baseScore;
+  const score = Math.floor((baseScore + skillScore) * inputs.deckPower * 4);
   const eventPointBase = Math.floor(
     (100 + Math.floor(score / 20_000)) * (music.eventRate / 100) * (1 + inputs.deckBonus / 100)
   );
@@ -600,7 +621,7 @@ const calculateForMusic = (
     music: { musicId: music.musicId, difficulty: music.difficulty, musicTime: music.musicTime },
     score,
     eventPoints,
-    formulaVersion: JP_SOLO_FORMULA_VERSION,
+    formulaVersion: formulaVersionForMode(inputs.mode),
     provenance
   };
 };
@@ -727,7 +748,7 @@ export const rankJpSoloRecommendations = (
       score,
       eventPoints
     })),
-    formulaVersion: JP_SOLO_FORMULA_VERSION,
+    formulaVersion: formulaVersionForMode(validatedInputs.prepared.mode),
     provenance
   };
 };

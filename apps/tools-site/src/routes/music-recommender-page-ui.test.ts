@@ -106,7 +106,7 @@ describe("music recommender UI contract", () => {
     expect(source).not.toContain("rankMusicRecommendations");
   });
 
-  it("exposes the required states, inputs, and JP Solo-only mode", async () => {
+  it("exposes the required states, inputs, and the Solo and Auto modes", async () => {
     const source = await readFile(pagePath, "utf8");
     expect(source).toContain("let noSkill = $state");
     expect(source).toContain("Array.from({ length: 6 }");
@@ -118,7 +118,49 @@ describe("music recommender UI contract", () => {
     expect(source).toContain("data.missingFields.join");
     expect(source).toContain("data.invalidFields.join");
     expect(source).toContain('id: "jp-solo"');
+    expect(source).toContain('id: "auto"');
     expect(source).toContain("enabled: false");
+  });
+
+  it("shows Solo and Auto as selectable and the other modes as unavailable", () => {
+    renderPage(createPageData());
+
+    expect(screen.getByRole("button", { name: "Solo" }).getAttribute("aria-pressed")).toBe("true");
+    const auto = screen.getByRole("button", { name: "Auto" });
+    expect(auto.getAttribute("aria-pressed")).toBe("false");
+    expect(auto).toHaveProperty("disabled", false);
+    for (const name of [/^Multi/, /^Challenge/, /^Cheerful Carnival/, /^World Bloom/]) {
+      expect(screen.getByRole("button", { name })).toHaveProperty("disabled", true);
+    }
+  });
+
+  it("recalculates in the chosen mode and keeps it in the next calculation", async () => {
+    renderPage(createPageData());
+
+    await fireEvent.click(screen.getByRole("button", { name: "Auto" }));
+
+    expect(goto).toHaveBeenCalledTimes(1);
+    const params = new URL(goto.mock.calls[0][0], "http://localhost").searchParams;
+    expect(params.get("mode")).toBe("auto");
+    expect(params.get("deckPower")).toBe("200000");
+    expect(screen.getByRole("button", { name: "Auto" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("only remembers the mode while there is nothing to calculate", async () => {
+    renderPage(createMissingInputPageData());
+
+    await fireEvent.click(screen.getByRole("button", { name: "Auto" }));
+
+    expect(goto).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Auto" }).getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("starts on the mode of the page data", () => {
+    const data = createPageData();
+    data.inputs.mode = "auto";
+    renderPage(data);
+
+    expect(screen.getByRole("button", { name: "Auto" }).getAttribute("aria-pressed")).toBe("true");
   });
 
   it("registers the dedicated namespace and navigation entry", async () => {
