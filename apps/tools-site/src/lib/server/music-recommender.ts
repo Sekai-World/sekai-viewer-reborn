@@ -25,7 +25,9 @@ import {
 import {
   DEFAULT_MUSIC_META_SOURCE_ID,
   DEFAULT_YIELD_REGION,
+  isYieldMode,
   isYieldRegion,
+  formulaVersionForMode,
   JP_SOLO_FORMULA_VERSION,
   MUSIC_META_MINIMUM_RECORD_COUNT,
   MUSIC_META_SOURCES,
@@ -37,6 +39,7 @@ import {
   type MusicMetaSourceId,
   type JpSoloRankingItem,
   type JpSoloYieldInputs,
+  type YieldFormulaVersion,
   type YieldRegion
 } from "#lib/music-recommender.js";
 
@@ -88,7 +91,7 @@ export type MusicRecommenderPageData = {
   metric: MusicRecommenderMetric;
   inputs: MusicRecommenderPageInputs;
   items: MusicRecommenderResultItem[];
-  formulaVersion: typeof JP_SOLO_FORMULA_VERSION;
+  formulaVersion: YieldFormulaVersion;
   provenance: MusicMetaProvenance | null;
   sourceHash: string | null;
   reasonCode: string | null;
@@ -385,6 +388,12 @@ const readQueryMetric = (
     invalidFields.add("metric");
   }
   return metricValue === "eventPoints" ? "eventPoints" : "score";
+};
+
+/** The formula named by the requested mode; an unsupported mode shows the Solo one with no figures. */
+const formulaVersionForRequestedMode = (mode: string | null): YieldFormulaVersion => {
+  const normalized = mode === "jp-solo" ? "solo" : mode;
+  return isYieldMode(normalized) ? formulaVersionForMode(normalized) : JP_SOLO_FORMULA_VERSION;
 };
 
 /** Returns the calculation mode name, or null with the problem recorded. */
@@ -688,7 +697,7 @@ const makeUnavailablePageData = (
     metric,
     inputs,
     items: [],
-    formulaVersion: JP_SOLO_FORMULA_VERSION,
+    formulaVersion: formulaVersionForRequestedMode(inputs.mode),
     provenance,
     sourceHash: provenance?.contentHash ?? null,
     reasonCode: details.reasonCode,

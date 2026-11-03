@@ -9,6 +9,7 @@
   type PageData = PageProps["data"];
   type SourceId = NonNullable<PageData["source"]>["id"];
   type Region = NonNullable<PageData["inputs"]["region"]>;
+  type ModeId = "jp-solo" | "auto";
   type Metric = PageData["metric"];
   type MusicRecommendation = PageData["items"][number];
 
@@ -20,7 +21,7 @@
   const FIELD_DETAIL_REASON_CODES = new Set(["invalid-schema", "incomplete-data", "mixed-data"]);
   const MODES = [
     { id: "jp-solo", labelKey: "musicRecommender.jpSolo", enabled: true },
-    { id: "auto", labelKey: "musicRecommender.modeAuto", enabled: false },
+    { id: "auto", labelKey: "musicRecommender.modeAuto", enabled: true },
     { id: "multi", labelKey: "musicRecommender.modeMulti", enabled: false },
     { id: "challenge", labelKey: "musicRecommender.modeChallenge", enabled: false },
     { id: "cheerful-carnival", labelKey: "musicRecommender.modeCheerfulCarnival", enabled: false },
@@ -39,6 +40,7 @@
   let messages = $state(fallbackMessages);
   let source = $state<SourceId>(getInitialSource());
   let region = $state<Region>(getInitialRegion());
+  let mode = $state<ModeId>(getInitialMode());
   let metric = $state<Metric>(getInitialMetric());
   let deckPower = $state(getInitialInput("deckPower"));
   let deckBonus = $state(getInitialInput("deckBonus"));
@@ -66,6 +68,10 @@
 
   function getInitialSource(): SourceId {
     return data.source?.id ?? data.inputs.source ?? "sekai-best";
+  }
+
+  function getInitialMode(): ModeId {
+    return data.inputs.mode === "auto" ? "auto" : "jp-solo";
   }
 
   function getInitialRegion(): Region {
@@ -209,6 +215,24 @@
     void reloadWithQuery({ source: next });
   }
 
+  const modeLabelKey = $derived(
+    MODES.find((entry) => entry.id === mode)?.labelKey ?? "musicRecommender.jpSolo"
+  );
+  const hasValidDeckInputs = $derived(
+    !inputErrors.deckPower &&
+      !inputErrors.deckBonus &&
+      !inputErrors.boostMultiplier &&
+      !inputErrors.skillRates.some(Boolean)
+  );
+
+  /** Recalculates at once when there is something to calculate; otherwise only remembers the mode. */
+  function modeChanged(next: string): void {
+    if ((next !== "jp-solo" && next !== "auto") || next === mode) return;
+    mode = next;
+    if (hasValidDeckInputs) void reloadWithQuery(deckQuery());
+    else if (data.status === "available") void reloadWithQuery({ mode: next });
+  }
+
   function regionChanged(event: Event): void {
     if (!(event.currentTarget instanceof HTMLSelectElement)) return;
     const value = event.currentTarget.value;
@@ -239,7 +263,7 @@
       source,
       region,
       metric,
-      mode: "jp-solo",
+      mode,
       deckPower,
       deckBonus,
       boostMultiplier,
@@ -299,21 +323,22 @@
 <div class="music-recommender-page">
   <header class="music-recommender-header">
     <div>
-      <p class="eyebrow">{translate("musicRecommender.jpSolo")}</p>
+      <p class="eyebrow">{translate(modeLabelKey)}</p>
       <h1 id="music-recommender-title">{translate("musicRecommender.title")}</h1>
       <p>{translate("musicRecommender.description")}</p>
     </div>
     <div class="mode-strip" aria-label={translate("musicRecommender.mode")} role="group">
-      {#each MODES as mode (mode.id)}
+      {#each MODES as entry (entry.id)}
         <button
           type="button"
           class="mode-option"
-          class:mode-option-active={mode.enabled}
-          disabled={!mode.enabled}
-          aria-pressed={mode.enabled}
+          class:mode-option-active={entry.id === mode}
+          disabled={!entry.enabled || isSubmitting}
+          aria-pressed={entry.id === mode}
+          onclick={() => modeChanged(entry.id)}
         >
-          {translate(mode.labelKey)}
-          {#if !mode.enabled}<span class="mode-unavailable"
+          {translate(entry.labelKey)}
+          {#if !entry.enabled}<span class="mode-unavailable"
               >{translate("musicRecommender.unsupported")}</span
             >{/if}
         </button>
@@ -367,7 +392,7 @@
     <section class="control-panel" aria-labelledby="controls-heading">
       <div class="section-heading">
         <div>
-          <p class="section-kicker">{translate("musicRecommender.jpSolo")}</p>
+          <p class="section-kicker">{translate(modeLabelKey)}</p>
           <h2 id="controls-heading">{translate("musicRecommender.controls")}</h2>
         </div>
         <Icon icon="mdi:tune-variant" class="size-5 text-primary" aria-hidden="true" />
@@ -486,7 +511,7 @@
     <section class="results-panel" aria-labelledby="results-heading" aria-busy={isSubmitting}>
       <div class="results-heading">
         <div>
-          <p class="section-kicker">{translate("musicRecommender.jpSolo")}</p>
+          <p class="section-kicker">{translate(modeLabelKey)}</p>
           <h2 id="results-heading">{translate("musicRecommender.results")}</h2>
         </div>
         <label class="metric-control">

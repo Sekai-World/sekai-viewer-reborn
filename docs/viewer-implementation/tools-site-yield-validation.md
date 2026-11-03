@@ -45,17 +45,22 @@ implementing the formulas:
   outer `floor` before multiplying by `boost_multiplier`; do not reorder or
   combine the rounding steps.
 
-Mode status is summarized below; all modes other than JP Solo remain
-**blocked / unverified**:
+Mode status is summarized below. JP Solo and Auto are enabled; Auto was enabled
+on 2026-11-03 by the owner under the same standard as Solo (community reference
+formulas and deterministic vectors, no in-game observation). #538 found a
+formula authority for the other modes (see _Mode Evidence_ below), but none is
+enabled: each still needs the owner's acceptance of reference-only evidence, and
+Multi, Cheerful Carnival, and Challenge also need inputs the recommender does
+not have.
 
-| Mode              | Score yield                    | Event-point yield              | Current reason                                                                                   |
-| ----------------- | ------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------ |
-| JP Solo           | Approved / community-validated | Approved / community-validated | Moesekai reference formulas and deterministic tests; complete runtime inputs are still required. |
-| Auto              | Unverified                     | Unverified                     | No Auto-specific score inputs or validated formula implementation.                               |
-| Multi             | Unverified                     | Unverified                     | No live-result inputs, skill arrays, or validated multi formula.                                 |
-| Challenge         | Unverified                     | Unverified                     | No challenge-result contract or validated mode formula.                                          |
-| Cheerful Carnival | Unverified                     | Unverified                     | Event type is represented, but its live-result and bonus semantics are not validated.            |
-| World Bloom       | Unverified                     | Unverified                     | Tracker chapter metadata exists, but no chapter yield/bonus calculation evidence exists.         |
+| Mode              | Formula authority found | Status  | What is still missing                                                                                                         |
+| ----------------- | ----------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| JP Solo           | Yes                     | Enabled | Nothing; complete runtime inputs are required from the user.                                                                  |
+| Auto              | Yes                     | Enabled | Nothing. Formula `jp-auto-community-v1`, vector V1, owner decision 2026-11-03.                                                |
+| Multi             | Yes                     | Blocked | Explicit inputs for the other players' total score and team power, and the aggregated multi skill effect. Owner acceptance.   |
+| Challenge         | Yes                     | Blocked | What the reference's challenge value measures is not stated, so it cannot be labelled an event-point yield. Owner acceptance. |
+| Cheerful Carnival | Yes                     | Blocked | The Multi inputs plus the remaining life, and a way to know the event is a Cheerful Carnival. Owner acceptance.               |
+| World Bloom       | Yes                     | Blocked | The deck bonus must include the support-deck bonus, which cannot be derived (#541); manual total only. Owner acceptance.      |
 
 This status is intentional. Difficulty, note count, tracker score, `eventPointIcon`,
 or an unverified duration field must not be presented as a calculated yield.
@@ -117,6 +122,91 @@ metadata (`apps/tools-site/src/lib/server/world-bloom.ts:16-28,66-85,103-123`).
 World Bloom tracker tests cover chapter loading and UI, not production or bonus
 calculation (`apps/tools-site/src/routes/tracker-loader.test.ts:269`,
 `apps/tools-site/src/routes/tracker-page-ui.test.ts:214,274`).
+
+## Mode Evidence (#538)
+
+Surveyed 2026-11-03. The authority is the same one that approved JP Solo: the
+Moesekai `re_sekai-calculator` reference (`refer/re_sekai-calculator` in
+`StarMoe-org/Moesekai`, a fork of `sekai-calculator`, LGPL-2.1; do not copy its
+code), namely `src/live-score/live-calculator.ts` and
+`src/event-point/event-calculator.ts`. It is community evidence, not an in-game
+observation. Its `test/event-calculator.test.ts` holds 5 Multi, 7 Cheerful, and
+1 Challenge input-to-output pairs. All 13 were reproduced here from the formulas
+below; the reference does not say where those numbers came from, so they are
+treated as reference tests and not as independent observations.
+
+Score, where `rate` is a sum over the six skill slots and `P` is the deck power:
+
+| Mode            | Base term                        | Skill array         | Skill effect used                                                                    | Score                                          |
+| --------------- | -------------------------------- | ------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| Solo, Challenge | `base_score`                     | `skill_score_solo`  | Each slot's own effective rate.                                                      | `floor(rate × P × 4)`                          |
+| Auto            | `base_score_auto`                | `skill_score_auto`  | Each slot's own effective rate.                                                      | `floor(rate × P × 4)`                          |
+| Multi, Cheerful | `base_score + fever_score × 0.5` | `skill_score_multi` | One value for all six slots: leader's effect plus the other four cards' effects ÷ 5. | `floor(rate × P × 4 + 5 × 0.015 × team power)` |
+
+For Multi and Cheerful the "team power" is the sum of the five players' deck
+power; the reference assumes `5 × P` when it is not given.
+
+Event points, with `s` the live score, `r = event_rate / 100`, `d = 1 + deck bonus / 100`:
+
+| Mode        | Event points                                                                                                                                                                           |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Solo, Auto  | `floor((100 + floor(s / 20000)) × r × d) × boost`                                                                                                                                      |
+| Multi       | `b = 110 + floor(s / 17000) + min(13, floor(other / 340000))`; `floor(b × r × d) × boost`. `other` is the other players' total score; the reference uses `4 × s` when it is not given. |
+| Cheerful    | `floor(floor(b × r × d) × (1.15 + min(max(life / 5000, 0.1), 0.2))) × boost`, with `life` the remaining life (reference default 1000). Only valid in a Cheerful Carnival event.        |
+| Challenge   | `(100 + floor(s / 20000)) × 120`. No song rate, deck bonus, or boost.                                                                                                                  |
+| World Bloom | The Solo or Multi formula, with the support-deck bonus added to the deck bonus. The chapter does not enter the formula.                                                                |
+
+Findings per mode:
+
+- **Auto.** The same shape as Solo with the Auto base term and array, and no
+  live-result input. The artifact already carries both fields. The smallest step
+  to enable it.
+- **Multi.** Needs three inputs the recommender does not have: the other
+  players' total score, the team's total power, and the multi skill effect
+  (leader plus a fifth of each other card). The reference substitutes `4 × s`
+  and `5 × P` when they are missing. The contract forbids silent defaults, so
+  each would have to be an explicit user input.
+- **Cheerful Carnival.** Multi plus the remaining life, and the formula only
+  applies in a Cheerful Carnival event, so the event type must be known.
+- **Challenge.** The reference returns `(100 + floor(s / 20000)) × 120` with
+  the event type set to none. Nothing in the reference or the artifact says what
+  this value is in the game, so it is not presented as an event-point yield.
+- **World Bloom.** No chapter-specific yield. The extra term is the support-deck
+  bonus (the reference uses 12, 20, or 25 support cards by chapter turn) and the
+  different-attribute bonus, both parts of a deck bonus that is derived from the
+  user's cards. The deck bonus therefore stays a manual total (#541).
+
+Reproducible vectors follow the schema below. They use the real record of music
+1, master, from the 2026-10-30 sekai.best artifact (`event_rate` 114,
+`base_score` 1.1599442522953187, `base_score_auto` 0.7735, `fever_score`
+0.16103453653628477, and the three skill arrays in the contract's V0), with deck
+power 300,000, deck bonus 200, and effective skill rates 140, 130, 120, 110, 100,
+90 applied by position. Inputs are synthetic and the expected values come from
+the reference formulas, like V0.
+
+| Vector | Mode      | Extra inputs                                                                                                                     | Score     | Event points           |
+| ------ | --------- | -------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------------------- |
+| V0     | Solo      | none                                                                                                                             | 1,776,928 | 642 (3,210 at boost 5) |
+| V1     | Auto      | none                                                                                                                             | 1,186,323 | 543 (2,715 at boost 5) |
+| V2     | Multi     | Multi skill effect 232 (leader 140 + (130 + 120 + 110 + 100) ÷ 5), team power 1,500,000, other players' score 8,000,000, boost 1 | 2,483,082 | 919 (4,595 at boost 5) |
+| V2b    | Multi     | As V2 with other players' score 1,000,000                                                                                        | 2,483,082 | 882                    |
+| V3     | Challenge | none                                                                                                                             | 1,776,928 | 22,560                 |
+| V4     | Cheerful  | As V2, remaining life 1,000 / 920 / 0                                                                                            | 2,483,082 | 1,240 / 1,225 / 1,148  |
+
+Step check for V2: rate = 1.1599442522953187 + 0.16103453653628477 × 0.5 +
+2.32 × (sum of `skill_score_multi`) = 1.9754853955477398; score =
+floor(1.9754853955477398 × 300000 × 4 + 5 × 0.015 × 1,500,000) = 2,483,082;
+b = 110 + floor(2,483,082 / 17000) + min(13, floor(8,000,000 / 340000)) =
+110 + 146 + 13 = 269; floor(269 × 1.14 × 3) = floor(919.98) = 919.
+
+Vectors V0 and V1 are asserted through the app's own calculation by
+`apps/tools-site/src/lib/music-recommender.test.ts`. V2 to V4 are recorded
+only; they are not wired into the app.
+
+To enable another mode: the owner accepts reference-only evidence for it, the
+missing inputs above are added as explicit user inputs (never defaults), a unit
+test asserts its vector, and the recommender keeps answering "unavailable" for
+every mode that has none.
 
 ## Historical Reference Boundary
 

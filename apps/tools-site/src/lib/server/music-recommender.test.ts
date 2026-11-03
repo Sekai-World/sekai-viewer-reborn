@@ -771,3 +771,66 @@ describe("region selection in the page data", () => {
     expect(result).toMatchObject({ status: "unavailable", invalidFields: ["region"] });
   });
 });
+
+describe("Auto mode in the page data", () => {
+  const deck =
+    "deckPower=200000&deckBonus=0&boostMultiplier=1&skillRates=0,0,0,0,0,0&noSkill=false";
+
+  const load = async (mode: string, extra = "metric=score") => {
+    const { fetcher } = makeFetcher(responseFor(JSON.stringify(makePayload())));
+    return loadMusicRecommenderPageData(
+      new URLSearchParams(`mode=${mode}&${deck}&${extra}`),
+      fetcher,
+      () => NOW
+    );
+  };
+
+  it("calculates with the Auto base term and reports the Auto formula", async () => {
+    // The fixture records have base_score 100 and base_score_auto 80.
+    const solo = await load("jp-solo");
+    const auto = await load("auto");
+
+    expect(solo).toMatchObject({ status: "available", formulaVersion: "jp-solo-community-v1" });
+    expect(solo.items[0]).toMatchObject({ score: 80_000_000 });
+    expect(auto).toMatchObject({
+      status: "available",
+      formulaVersion: "jp-auto-community-v1",
+      inputs: { mode: "auto" }
+    });
+    expect(auto.items[0]).toMatchObject({ score: 64_000_000, eventPoints: 3_300 });
+  });
+
+  it("plans from the Auto yields", async () => {
+    const result = await load(
+      "auto",
+      "metric=eventPoints&target=10000&objective=fewestPlays&maxPlays=10&repeats=true"
+    );
+
+    // Each Auto live yields 3,300 event points for this deck, so 10,000 takes four lives.
+    expect(result.plan).toMatchObject({ status: "ready", plan: { plays: 4, total: 13_200 } });
+  });
+
+  it.each(["multi", "challenge", "cheerful-carnival", "world-bloom"])(
+    "keeps %s unavailable and shows the Solo formula with no figures",
+    async (mode) => {
+      const result = await load(mode);
+
+      expect(result).toMatchObject({
+        status: "unavailable",
+        reasonCode: "unsupported-mode",
+        formulaVersion: "jp-solo-community-v1",
+        items: []
+      });
+    }
+  );
+
+  it("keeps an unavailable Auto request on the Auto formula", async () => {
+    const result = await loadMusicRecommenderPageData(
+      new URLSearchParams("mode=auto&deckPower=abc"),
+      makeFetcher(responseFor("{}")).fetcher,
+      () => NOW
+    );
+
+    expect(result).toMatchObject({ status: "unavailable", formulaVersion: "jp-auto-community-v1" });
+  });
+});

@@ -17,7 +17,9 @@ const makeMusicMeta = (musicId: number, overrides: Partial<MusicMeta> = {}): Mus
   musicTime: 120,
   eventRate: 100,
   baseScore: 100,
+  baseScoreAuto: 80,
   skillScoreSolo: [1, 2, 3, 4, 5, 6],
+  skillScoreAuto: [6, 5, 4, 3, 2, 1],
   ...overrides
 });
 
@@ -211,7 +213,7 @@ describe("JP Solo yield calculation", () => {
 
   it.each([
     ["an unsupported region", { region: "cn", mode: "solo" }, "unsupported-region"],
-    ["another mode", { region: "jp", mode: "auto" }, "unsupported-mode"]
+    ["another mode", { region: "jp", mode: "multi" }, "unsupported-mode"]
   ])("does not calculate for %s", (_label, overrides, reasonCode) => {
     const result = calculateJpSoloYield(makeDataset(), {
       ...makeInputs(overrides),
@@ -373,4 +375,132 @@ describe("region scope for TW, EN, and KR", () => {
       reasonCode: "region-data-unavailable"
     });
   });
+});
+
+describe("Auto mode (formula jp-auto-community-v1)", () => {
+  // The real record of music 1, master, from the 2026-10-30 audit (vectors V0 and V1 in
+  // docs/viewer-implementation/tools-site-yield-validation.md).
+  const music1Master = makeMusicMeta(1, {
+    difficulty: "master",
+    eventRate: 114,
+    baseScore: 1.1599442522953187,
+    baseScoreAuto: 0.7735,
+    skillScoreSolo: [
+      0.03796830587347502, 0.03652851213683813, 0.05339327757514775, 0.04202641177210418,
+      0.0637942585838259, 0.05121274053578169
+    ],
+    skillScoreAuto: [
+      0.026461074078732237, 0.02509910703056219, 0.036286693497673245, 0.028017607848069427,
+      0.04173456169035342, 0.032589925795497424
+    ]
+  });
+  const explicitRates = [140, 130, 120, 110, 100, 90].map(
+    (effectiveSkillRate, coefficientIndex) => ({
+      coefficientIndex,
+      effectiveSkillRate
+    })
+  );
+  const vectorInputs = (mode: string, boostMultiplier = 1): JpSoloYieldInputs =>
+    makeInputs({
+      mode,
+      deckPower: 300_000,
+      deckBonus: 200,
+      boostMultiplier,
+      cardLength: 6,
+      skillAllocation: { strategy: "explicit", skillSequence: explicitRates }
+    });
+  const calculate = (mode: string, boostMultiplier = 1) =>
+    calculateJpSoloYield(makeDataset([music1Master]), {
+      ...vectorInputs(mode, boostMultiplier),
+      musicId: 1,
+      difficulty: "master"
+    });
+
+  it("reproduces vector V1 with the Auto base term and skill array", () => {
+    expect(calculate("auto")).toMatchObject({
+      status: "available",
+      score: 1_186_323,
+      eventPoints: 543,
+      formulaVersion: "jp-auto-community-v1"
+    });
+    expect(calculate("auto", 5)).toMatchObject({ eventPoints: 2_715 });
+  });
+
+  it("keeps vector V0 for Solo from the same record", () => {
+    expect(calculate("solo")).toMatchObject({
+      status: "available",
+      score: 1_776_928,
+      eventPoints: 642,
+      formulaVersion: "jp-solo-community-v1"
+    });
+  });
+
+  it("does not let the Auto fields change a Solo result or the reverse", () => {
+    const changedAuto = makeMusicMeta(1, {
+      ...music1Master,
+      baseScoreAuto: 9,
+      skillScoreAuto: [9, 9, 9, 9, 9, 9]
+    });
+    const changedSolo = makeMusicMeta(1, {
+      ...music1Master,
+      baseScore: 9,
+      skillScoreSolo: [9, 9, 9, 9, 9, 9]
+    });
+    const request = { ...vectorInputs("solo"), musicId: 1, difficulty: "master" };
+
+    expect(calculateJpSoloYield(makeDataset([changedAuto]), request)).toMatchObject({
+      score: 1_776_928
+    });
+    expect(
+      calculateJpSoloYield(makeDataset([changedSolo]), { ...request, mode: "auto" })
+    ).toMatchObject({ score: 1_186_323 });
+  });
+
+  it("pairs sorted Auto coefficients with sorted skill rates by default", () => {
+    const music = makeMusicMeta(7, {
+      baseScoreAuto: 1,
+      skillScoreSolo: [0, 0, 0, 0, 0, 0],
+      skillScoreAuto: [0.3, 0.1, 0.2, 0, 0, 0]
+    });
+    const result = calculateJpSoloYield(makeDataset([music]), {
+      ...makeInputs({
+        mode: "auto",
+        deckPower: 1000,
+        cardLength: 3,
+        skillAllocation: { strategy: "default", skillEffects: [100, 300, 200] }
+      }),
+      musicId: 7,
+      difficulty: "expert"
+    });
+
+    // Sorted coefficients 0.1, 0.2, 0.3 meet sorted rates 100, 200, 300: 1 + 0.1 + 0.4 + 0.9; an
+    // unsorted pairing would give 8,400.
+    expect(result).toMatchObject({ status: "available", score: 9600 });
+  });
+
+  it("ranks Auto results by the Auto figures", () => {
+    const dataset = makeDataset([
+      makeMusicMeta(1, { baseScore: 500, baseScoreAuto: 1, skillScoreAuto: [0, 0, 0, 0, 0, 0] }),
+      makeMusicMeta(2, { baseScore: 1, baseScoreAuto: 500, skillScoreAuto: [0, 0, 0, 0, 0, 0] })
+    ]);
+    const solo = rankJpSoloRecommendations(dataset, makeInputs(), "score");
+    const auto = rankJpSoloRecommendations(dataset, makeInputs({ mode: "auto" }), "score");
+
+    expect(solo.status === "available" && solo.items[0].music.musicId).toBe(1);
+    expect(auto.status === "available" && auto.items[0].music.musicId).toBe(2);
+    expect(auto.status === "available" && auto.formulaVersion).toBe("jp-auto-community-v1");
+  });
+
+  it.each(["multi", "challenge", "cheerful", "world-bloom"])(
+    "still refuses the %s mode",
+    (mode) => {
+      expect(
+        calculateJpSoloYield(makeDataset(), {
+          ...makeInputs({ mode }),
+          musicId: 5,
+          difficulty: "expert"
+        })
+      ).toMatchObject({ status: "unavailable", reasonCode: "unsupported-mode" });
+    }
+  );
 });
