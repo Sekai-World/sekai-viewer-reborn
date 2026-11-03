@@ -1,6 +1,12 @@
 import type { Handle } from "@sveltejs/kit/hooks";
 import { getUiLocaleDirection } from "#lib/i18n/config.js";
-import { DEFAULT_UI_LOCALE, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+import {
+  DEFAULT_UI_LOCALE,
+  normalizeUiLocale,
+  PREFERRED_REGION_COOKIE_NAME,
+  UI_LOCALE_COOKIE_NAME
+} from "#lib/i18n/region.js";
+import { getRegionListRedirect } from "#lib/server/region-list-redirect.js";
 
 const ROOT_HTML_OPEN_TAG = /<html\b(?:[^>"']|"[^"]*"|'[^']*')*>/i;
 
@@ -22,6 +28,13 @@ const transformRootHtmlTag = (tag: string, locale: string): string => {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
+  const regionListRedirect = getRegionListRedirect(
+    event.request.method,
+    event.url,
+    event.cookies.get(PREFERRED_REGION_COOKIE_NAME)
+  );
+  if (regionListRedirect) return regionListRedirect;
+
   const locale = normalizeUiLocale(event.cookies.get(UI_LOCALE_COOKIE_NAME), DEFAULT_UI_LOCALE);
   let bufferedHtml = "";
   let rootTagHandled = false;

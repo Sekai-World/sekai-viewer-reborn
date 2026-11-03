@@ -13,8 +13,17 @@ deployment, not a production migration.
   approved. No redirect rules, ingress rewrites, or CDN rules are added.
 - Existing redirects inside the app are internal route-shape redirects, not
   legacy-domain compatibility, and stay as they are:
-  `/musics/:region/:id[/download[/progress]]` → `/music/...` (301, query kept)
-  and `/events/:region/list[/data]` → the current events list (308).
+  - `/musics/:region/:id[/download[/progress]]` → `/music/...` (301, query
+    kept).
+  - `/events/:region/list[/data]` → the current events list (308).
+  - A list URL without a region (`/musics`, `/cards`, `/mysekai/fixtures`, …;
+    full list in `REGION_LIST_PATHS`,
+    `apps/content-site/src/lib/server/region-list-redirect.ts`) →
+    `/<list>/<region>` (302, `Cache-Control: private, no-store`, query kept,
+    GET/HEAD only). The region is the `content_site_preferred_region` cookie,
+    or `jp` when it is absent or unsupported. Handled in
+    `apps/content-site/src/hooks.server.ts`. Detail URLs without a region
+    (`/music/:id`) are not redirected.
 - The confirmation is recorded on #302. Revisit this section only if a
   compatibility requirement appears later.
 
