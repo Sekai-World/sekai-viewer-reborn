@@ -9,7 +9,9 @@ const renderWithChunks = async (
   chunks: string[]
 ): Promise<string> => {
   const event = {
-    cookies: { get: vi.fn().mockReturnValue(localeCookie) }
+    cookies: { get: vi.fn().mockReturnValue(localeCookie) },
+    request: new Request("https://example.test/"),
+    url: new URL("https://example.test/")
   } as unknown as HandleInput["event"];
 
   const resolve: HandleInput["resolve"] = async (_event, options) => {
@@ -104,5 +106,23 @@ describe("content-site SSR document locale", () => {
     const html = await renderWithChunks("ar", ['<html lang="en" dir="ltr"><body>', laterChunk]);
 
     expect(html).toBe(`<html lang="ar" dir="rtl"><body>${laterChunk}`);
+  });
+});
+
+describe("content-site list URLs without a region", () => {
+  it("redirects to the preferred region before rendering", async () => {
+    const cookies = new Map([["content_site_preferred_region", "tw"]]);
+    const event = {
+      cookies: { get: (name: string) => cookies.get(name) },
+      request: new Request("https://example.test/musics?q=1"),
+      url: new URL("https://example.test/musics?q=1")
+    } as unknown as HandleInput["event"];
+    const resolve = vi.fn<HandleInput["resolve"]>();
+
+    const response = await handle({ event, resolve });
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe("/musics/tw?q=1");
+    expect(resolve).not.toHaveBeenCalled();
   });
 });

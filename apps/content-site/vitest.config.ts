@@ -74,6 +74,7 @@ export default defineConfig({
         "src/env.ts",
         "src/lib/server/config.ts",
         "src/hooks.server.ts",
+        "src/lib/server/region-list-redirect.ts",
         "src/lib/a11y/tablist.ts",
         "src/lib/i18n/region.ts",
         "src/lib/i18n/runtime.ts",
