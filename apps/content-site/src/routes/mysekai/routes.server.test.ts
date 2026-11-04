@@ -6,6 +6,7 @@ const server = vi.hoisted(() => ({
   fetchMysekaiFixtureListPage: vi.fn(),
   fetchMysekaiMaterialDetail: vi.fn(),
   fetchMysekaiMaterials: vi.fn(),
+  fetchMysekaiPhotoFrames: vi.fn(),
   fetchMysekaiShopItems: vi.fn(),
   fetchMysekaiSoundtrackFilters: vi.fn(),
   fetchMysekaiSoundtrackListPage: vi.fn()
@@ -18,6 +19,7 @@ import { GET as getFixturesPage } from "./fixtures/[region]/data/+server";
 import { load as loadFixture } from "./fixture/[region]/[id]/+page.server";
 import { load as loadMaterials } from "./materials/[region]/+page.server";
 import { load as loadMaterial } from "./material/[region]/[id]/+page.server";
+import { load as loadPhotoFrames } from "./photo-frames/[region]/+page.server";
 import { load as loadShop } from "./shop/[region]/+page.server";
 import { load as loadSoundtracks } from "./soundtracks/[region]/+page.server";
 import { GET as getSoundtracksPage } from "./soundtracks/[region]/data/+server";
@@ -82,6 +84,19 @@ describe("MySekai list loaders", () => {
 
     server.fetchMysekaiShopItems.mockRejectedValueOnce(new Error("offline"));
     await expect(run(loadShop, event({ region: "en" })).items).resolves.toBeNull();
+  });
+
+  it("streams every photo frame and resolves failures to null", async () => {
+    server.fetchMysekaiPhotoFrames.mockResolvedValueOnce([{ id: 1 }]);
+
+    const data = run(loadPhotoFrames, event({ region: "kr" }));
+
+    expect(data.region).toBe("kr");
+    await expect(data.frames).resolves.toEqual([{ id: 1 }]);
+    expect(server.fetchMysekaiPhotoFrames).toHaveBeenCalledWith("https://master-api.test", "kr");
+
+    server.fetchMysekaiPhotoFrames.mockRejectedValueOnce(new Error("offline"));
+    await expect(run(loadPhotoFrames, event({ region: "xx" })).frames).resolves.toBeNull();
   });
 
   it("streams the soundtracks of the selected category", async () => {

@@ -32,6 +32,7 @@
   "mysekai.material.error": "This material could not be loaded.",
   "mysekai.material.notFound": "This material is not available in this region.",
   "mysekai.material.search": "Search materials",
+  "mysekai.photoFrame.search": "Search photo frames",
   "mysekai.materialCosts": "Materials per craft",
   "mysekai.materialInfo": "Material info",
   "mysekai.materialType": "Material type",

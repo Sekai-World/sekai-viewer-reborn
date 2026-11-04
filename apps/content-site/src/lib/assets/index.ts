@@ -633,6 +633,21 @@ export const getMysekaiToolIconURL = (
     : null;
 };
 
+/** A photo frame's preview, which only the JP asset server has. */
+export const getMysekaiPhotoFrameURL = (
+  assetbundleName: string | null | undefined,
+  baseUrlOverride?: string | null
+): string | null => {
+  const bundle = normalizeBundleName(assetbundleName);
+  return bundle
+    ? buildServerAssetURL(
+        `mysekai/photo_frame/preview/${bundle}.webp`,
+        MYSEKAI_ASSET_SERVER,
+        baseUrlOverride
+      )
+    : null;
+};
+
 /** A stamp's image; the bundle name is the stamp's own, not built from its ID. */
 export const getStampImageURL = (
   assetbundleName: string | null | undefined,

@@ -6,6 +6,7 @@ import {
   getMysekaiMaterialsByRegionList,
   getMysekaiMusicRecordsByRegionFilters,
   getMysekaiMusicRecordsByRegionList,
+  getMysekaiPhotoDecorationsByRegionList,
   getMysekaiShopsByRegionList,
   type GetMysekaiFixturesByRegionListData,
   type GetMysekaiMusicRecordsByRegionListData
@@ -21,6 +22,7 @@ import type {
   MysekaiMusicRecordListPage,
   MysekaiSoundtrackListQuery,
   MysekaiPagination,
+  MysekaiPhotoFrame,
   MysekaiShopItem
 } from "#lib/domain/mysekai.js";
 import { getMasterApiV1BaseUrl } from "./catalogue-data";
@@ -35,6 +37,9 @@ const MAX_MATERIAL_PAGES = 5;
 // The secret shop sells a few dozen items; one page holds them all.
 const MYSEKAI_SHOP_PAGE_SIZE = 100;
 const MAX_SHOP_PAGES = 5;
+// Every region has about a dozen photo frames; one page holds them all.
+const MYSEKAI_PHOTO_FRAME_PAGE_SIZE = 100;
+const MAX_PHOTO_FRAME_PAGES = 5;
 
 type MasterApiPagination = {
   page?: number;
@@ -188,6 +193,27 @@ export const fetchMysekaiShopItems = async (
     if (!response.data.pagination?.has_next) break;
   }
   return items;
+};
+
+/** Every photo frame of the region, in the game's display order (`seq`). */
+export const fetchMysekaiPhotoFrames = async (
+  baseUrl: string,
+  region: string
+): Promise<MysekaiPhotoFrame[]> => {
+  const frames: MysekaiPhotoFrame[] = [];
+  for (let page = 1; page <= MAX_PHOTO_FRAME_PAGES; page += 1) {
+    const response = await getMysekaiPhotoDecorationsByRegionList({
+      baseUrl: getMasterApiV1BaseUrl(baseUrl),
+      path: { region },
+      query: { page, page_size: MYSEKAI_PHOTO_FRAME_PAGE_SIZE }
+    });
+    if (response.error || !response.data) {
+      throw new Error("Failed to load MySekai photo frames.");
+    }
+    frames.push(...(response.data.items ?? []));
+    if (!response.data.pagination?.has_next) break;
+  }
+  return frames.sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0) || (a.id ?? 0) - (b.id ?? 0));
 };
 
 /** Soundtracks are the music records of the `music_sound_track` type. */
