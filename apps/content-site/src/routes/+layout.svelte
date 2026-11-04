@@ -145,6 +145,7 @@
   let mysekaiMaterialsLabel = $state(getInitialI18nText("navigation.mysekaiMaterials"));
   let mysekaiSoundtracksLabel = $state(getInitialI18nText("navigation.mysekaiSoundtracks"));
   let mysekaiShopLabel = $state(getInitialI18nText("navigation.mysekaiShop"));
+  let mysekaiPhotoFramesLabel = $state(getInitialI18nText("navigation.mysekaiPhotoFrames"));
   // Any reward list can open a title preview, so the layout provides its labels.
   const titlePreviewLabelsFrom = (text: (key: string) => string): TitlePreviewLabels => ({
     dialog: text("titlePreview.dialog"),
@@ -399,6 +400,13 @@
       href: `/mysekai/shop/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/mysekai/shop/"),
       icon: "mdi:storefront-outline",
+      groupId: "mysekai"
+    },
+    {
+      label: mysekaiPhotoFramesLabel,
+      href: `/mysekai/photo-frames/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/mysekai/photo-frames/"),
+      icon: "mdi:image-frame",
       groupId: "mysekai"
     },
     {
@@ -674,6 +682,7 @@
     mysekaiMaterialsLabel = translate("navigation.mysekaiMaterials");
     mysekaiSoundtracksLabel = translate("navigation.mysekaiSoundtracks");
     mysekaiShopLabel = translate("navigation.mysekaiShop");
+    mysekaiPhotoFramesLabel = translate("navigation.mysekaiPhotoFrames");
     titlePreviewLabels = titlePreviewLabelsFrom(translate);
     supportLabel = translate("navigation.support");
     quickNavigationLabel = translate("navigation.quickNavigation");

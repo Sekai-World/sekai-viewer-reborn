@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getMysekaiFixtureThumbnailURL,
   getMysekaiMaterialIconURL,
+  getMysekaiPhotoFrameURL,
   getMysekaiSoundTrackAudioURL,
   getMysekaiSoundTrackJacketURL,
   getStampImageURL
@@ -37,6 +38,13 @@ describe("MySekai asset URLs", () => {
       `${jp}/mysekai/thumbnail/material/item_wood_1.webp`
     );
     expect(getMysekaiMaterialIconURL(" /// ")).toBeNull();
+  });
+
+  it("reads photo frame previews from the JP server", () => {
+    expect(getMysekaiPhotoFrameURL("decoflame_simple_0001")).toBe(
+      `${jp}/mysekai/photo_frame/preview/decoflame_simple_0001.webp`
+    );
+    expect(getMysekaiPhotoFrameURL(" ")).toBeNull();
   });
 
   it("returns null without a bundle name", () => {

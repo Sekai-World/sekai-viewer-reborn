@@ -8,6 +8,7 @@ const sdk = vi.hoisted(() => ({
   getMysekaiMaterialsByRegionList: vi.fn(),
   getMysekaiMusicRecordsByRegionFilters: vi.fn(),
   getMysekaiMusicRecordsByRegionList: vi.fn(),
+  getMysekaiPhotoDecorationsByRegionList: vi.fn(),
   getMysekaiShopsByRegionList: vi.fn()
 }));
 vi.mock("@platform/sekai-master-api-sdk", () => sdk);
@@ -21,6 +22,7 @@ import {
   fetchMysekaiFixtureListPage,
   fetchMysekaiMaterialDetail,
   fetchMysekaiMaterials,
+  fetchMysekaiPhotoFrames,
   fetchMysekaiShopItems,
   fetchMysekaiSoundtrackFilters,
   fetchMysekaiSoundtrackListPage,
@@ -123,6 +125,36 @@ describe("MySekai secret shop", () => {
 
     sdk.getMysekaiShopsByRegionList.mockResolvedValueOnce({ error: { code: "x" } });
     await expect(fetchMysekaiShopItems("https://api.example.test", "jp")).rejects.toThrow();
+  });
+});
+
+describe("MySekai photo frames", () => {
+  it("reads every page from the v1 API, sorts by display order, and throws on failure", async () => {
+    sdk.getMysekaiPhotoDecorationsByRegionList
+      .mockResolvedValueOnce({
+        data: {
+          items: [
+            { id: 3, seq: 3 },
+            { id: 2, seq: 1 }
+          ],
+          pagination: { has_next: true }
+        }
+      })
+      .mockResolvedValueOnce({ data: { items: [{ id: 1, seq: 1 }] } });
+
+    const frames = await fetchMysekaiPhotoFrames("https://api.example.test", "tw");
+
+    // Equal `seq` falls back to the ID.
+    expect(frames.map((frame) => frame.id)).toEqual([1, 2, 3]);
+    expect(sdk.getMysekaiPhotoDecorationsByRegionList).toHaveBeenNthCalledWith(1, {
+      baseUrl: "https://api.example.test/api/v1",
+      path: { region: "tw" },
+      query: { page: 1, page_size: 100 }
+    });
+    expect(sdk.getMysekaiPhotoDecorationsByRegionList).toHaveBeenCalledTimes(2);
+
+    sdk.getMysekaiPhotoDecorationsByRegionList.mockResolvedValueOnce({ error: { code: "x" } });
+    await expect(fetchMysekaiPhotoFrames("https://api.example.test", "tw")).rejects.toThrow();
   });
 });
 

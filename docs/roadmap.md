@@ -205,9 +205,16 @@ Catalogue (list + detail) coverage already shipped for:
   and pagination controls.
 - **MySekai** — furniture list (`/mysekai/fixtures/[region]`) and detail
   (`/mysekai/fixture/[region]/[id]`), materials list and detail
-  (`/mysekai/materials/[region]`, `/mysekai/material/[region]/[id]`), and
-  soundtracks (`/mysekai/soundtracks/[region]`), on the `mysekaiFixtures`,
-  `mysekaiMaterials`, and `mysekaiMusicRecords` master API contracts.
+  (`/mysekai/materials/[region]`, `/mysekai/material/[region]/[id]`),
+  soundtracks (`/mysekai/soundtracks/[region]`), the secret shop
+  (`/mysekai/shop/[region]`), and photo frames (`/mysekai/photo-frames/[region]`),
+  on the `mysekaiFixtures`, `mysekaiMaterials`, `mysekaiMusicRecords`,
+  `mysekaiShops`, and `mysekaiPhotoDecorations` master API contracts.
+- **Degrees / Titles** — honors catalogue (`/honors/[region]`), including bonds
+  honors, on the `honors` and `bondsHonors` contracts.
+- **Missions / Rewards** — mission catalogue (`/missions/[region]`) with reward
+  details, on the `missions` contract.
+- **Stamps** — stamp catalogue (`/stamps/[region]`) with a preview dialog.
 
 These use generated public `sekai-master-api` contracts, region-aware
 availability switching, and scoped localized UI bundles with remote dictionaries
@@ -256,8 +263,7 @@ routes use the public `sekai-master-api` contracts and generated SDK:
 ### Planned — Next Content Priorities
 
 Requested by the user and **not yet viewer-ready**: the corresponding
-content-site routes and pages have not been built. Their master API contracts
-are merged and the viewer SDK has been regenerated. For any new or extended API
+content-site routes and pages have not been built. For any new or extended API
 contract, follow this cross-repo pipeline:
 
 1. `sekai-master-api` must expose the relevant public contracts (or extend
@@ -270,17 +276,13 @@ contract, follow this cross-repo pipeline:
    (`mise run update-sekai-master-api-sdk-local`) and validate
    (`pnpm --filter @platform/sekai-master-api-sdk check`).
 
-Specific next priorities:
+Specific next priorities (split from #304; candidate matrix in its comments):
 
-- **Costumes / Decorations**
-- **Degrees / Titles**
-- **Missions / Rewards**
-
-The master API contracts for these domains are merged and the viewer SDK has
-been regenerated (`sekai-master-api` #118 added `honors`, `bondsHonors`,
-`missions`, `costume3ds`, and `mysekaiPhotoDecorations`; viewer SDK regen in
-#347), but no corresponding content-site routes or pages exist yet, so they
-remain **Planned** pending frontend work.
+- **Comics** (#598) — blocked on a new `comics` contract
+  (Sekai-World/sekai-master-api#186).
+- **3D Costumes** (#599) — blocked on a design-level costume list contract
+  (Sekai-World/sekai-master-api#187); the existing `costume3ds` routes return
+  individual part and color rows.
 
 ### Exploratory — Later Candidates
 

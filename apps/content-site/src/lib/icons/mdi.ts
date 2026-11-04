@@ -24,6 +24,7 @@ import pineTreeVariantOutline from "@iconify-icons/mdi/pine-tree-variant-outline
 import album from "@iconify-icons/mdi/album";
 import stickerEmoji from "@iconify-icons/mdi/sticker-emoji";
 import storefrontOutline from "@iconify-icons/mdi/storefront-outline";
+import imageFrame from "@iconify-icons/mdi/image-frame";
 import hammerWrench from "@iconify-icons/mdi/hammer-wrench";
 import packageVariantClosed from "@iconify-icons/mdi/package-variant-closed";
 
@@ -224,5 +225,6 @@ addIcon("mdi:pine-tree-variant-outline", pineTreeVariantOutline);
 addIcon("mdi:album", album);
 addIcon("mdi:sticker-emoji", stickerEmoji);
 addIcon("mdi:storefront-outline", storefrontOutline);
+addIcon("mdi:image-frame", imageFrame);
 addIcon("mdi:hammer-wrench", hammerWrench);
 addIcon("mdi:package-variant-closed", packageVariantClosed);
