@@ -38,8 +38,16 @@ const RELEASE_0_1_1: SiteUpdate = {
   ]
 };
 
+const RELEASE_0_1_2: SiteUpdate = {
+  version: "0.1.2",
+  titleKey: "updates.release.0.1.2.title",
+  summaryKey: "updates.release.0.1.2.summary",
+  changeKeys: ["updates.release.0.1.2.change.photoFrames", "updates.release.0.1.2.change.links"]
+};
+
 // Keep new releases at the beginning of this array.
 export const siteUpdates: readonly SiteUpdate[] = [
+  RELEASE_0_1_2,
   RELEASE_0_1_1,
   RELEASE_0_1_0,
   FALLBACK_SITE_UPDATE
