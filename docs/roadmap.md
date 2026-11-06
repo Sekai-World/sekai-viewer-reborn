@@ -215,8 +215,8 @@ Catalogue (list + detail) coverage already shipped for:
 - **Missions / Rewards** — mission catalogue (`/missions/[region]`) with reward
   details, on the `missions` contract.
 - **Stamps** — stamp catalogue (`/stamps/[region]`) with a preview dialog.
-- **Comics** — comic catalogue (`/comics/[region]`) with a preview dialog that
-  steps through the region's comics, on the `comics` contract.
+- **Comics** — comic catalogue (`/comics/[region]`) with title search and a
+  preview dialog that steps through the listed comics, on the `comics` contract.
 
 These use generated public `sekai-master-api` contracts, region-aware
 availability switching, and scoped localized UI bundles with remote dictionaries

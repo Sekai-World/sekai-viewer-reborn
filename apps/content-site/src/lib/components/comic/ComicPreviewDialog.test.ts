@@ -50,6 +50,7 @@ const comics: ComicItem[] = [
   { id: 1002, title: "Second", assetbundleName: "comic_0002" },
   { id: 1003, title: "Third", assetbundleName: "comic_0003" }
 ];
+const catalogueKey = "jp:";
 const t: ContentSiteTranslator = (key) => key;
 const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal");
 const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close");
@@ -116,7 +117,7 @@ const open = async (list: readonly ComicItem[] = comics) => {
     document.body.append(tile);
     return tile;
   });
-  const { component } = render(ComicPreviewDialog, { region: "jp", comics: list, t });
+  const { component } = render(ComicPreviewDialog, { catalogueKey, region: "jp", comics: list, t });
   await component.show(list[0], tiles[0]);
   await tick();
   return tiles;
@@ -170,7 +171,7 @@ describe("ComicPreviewDialog", () => {
   });
 
   it("ignores arrow keys while closed", async () => {
-    render(ComicPreviewDialog, { region: "jp", comics, t });
+    render(ComicPreviewDialog, { catalogueKey, region: "jp", comics, t });
 
     await fireEvent.keyDown(window, { key: "ArrowRight" });
 
@@ -215,7 +216,7 @@ describe("ComicPreviewDialog", () => {
 
   it("does not stack entries when a second comic is opened over the first", async () => {
     const tile = document.createElement("button");
-    const { component } = render(ComicPreviewDialog, { region: "jp", comics, t });
+    const { component } = render(ComicPreviewDialog, { catalogueKey, region: "jp", comics, t });
 
     await component.show(comics[0], tile);
     await tick();
@@ -223,6 +224,15 @@ describe("ComicPreviewDialog", () => {
 
     expect(entries).toHaveLength(2);
     expect(shownImage()).toContain("comic_0001");
+  });
+
+  it("steps only through the comics it is given", async () => {
+    await open([comics[0], comics[2]]);
+
+    await fireEvent.keyDown(window, { key: "ArrowRight" });
+    await tick();
+
+    expect(shownImage()).toContain("comic_0003");
   });
 
   it("shows no stepping controls for a single comic", async () => {
@@ -234,11 +244,11 @@ describe("ComicPreviewDialog", () => {
     expect(kit.goto).toHaveBeenCalledTimes(1);
   });
 
-  it("does not open from a state that belongs to another region", async () => {
+  it("does not open from a state that belongs to another list", async () => {
     kit.setShallowURL(new URL("http://localhost/comics/jp"));
-    kit.setState({ comicPreview: { catalogueKey: "tw", comic: comics[0] } });
+    kit.setState({ comicPreview: { catalogueKey: "jp:first", comic: comics[0] } });
 
-    render(ComicPreviewDialog, { region: "jp", comics, t });
+    render(ComicPreviewDialog, { catalogueKey, region: "jp", comics, t });
     await tick();
 
     expect(screen.queryByRole("dialog")).toBeNull();

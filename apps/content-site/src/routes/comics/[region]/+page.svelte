@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { refreshAll } from "$app/navigation";
+  import { goto, refreshAll } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import { getComicImageURL } from "#lib/assets/index.js";
   import ComicPreviewDialog from "#lib/components/comic/ComicPreviewDialog.svelte";
   import ComicTile from "#lib/components/comic/ComicTile.svelte";
   import CatalogueFrame from "#lib/components/mission/CatalogueFrame.svelte";
-  import type { ComicItem } from "#lib/domain/comic.js";
+  import { filterComicsByTitle, type ComicItem } from "#lib/domain/comic.js";
   import { regionLabels, supportedRegions } from "#lib/domain/regions.js";
   import { createStreamedTranslator } from "#lib/i18n/streamed-translator.svelte.js";
   import { createPageTitle } from "#lib/page-title.js";
@@ -30,12 +31,19 @@
     };
   });
 
+  const name = $derived(page.url.searchParams.get("name")?.trim() ?? "");
+  const visibleComics = $derived(filterComicsByTitle(comics, name));
+
+  const listHref = (region: string, query: string): string =>
+    `${resolve("/comics/[region]", { region })}${
+      query ? `?name=${encodeURIComponent(query)}` : ""
+    }`;
   const regions = $derived(
     supportedRegions.map((region) => ({
       key: region,
       label: regionLabels[region],
       active: region === data.region,
-      href: resolve("/comics/[region]", { region })
+      href: listHref(region, name)
     }))
   );
 
@@ -43,8 +51,8 @@
   const labels = $derived({
     title,
     home: t("home"),
-    search: "",
-    searchAction: "",
+    search: t("comic.search"),
+    searchAction: t("comic.searchAction"),
     loading: t("comic.loading"),
     empty: t("comic.empty"),
     error: t("comic.error"),
@@ -67,9 +75,12 @@
   homeHref={resolve("/")}
   {regions}
   {status}
-  empty={status === "ready" && comics.length === 0}
+  empty={status === "ready" && visibleComics.length === 0}
+  query={name}
+  resetKey={data.region}
   {pageIdentity}
   resultsLabel={t("comic.results")}
+  onSearch={(query) => void goto(listHref(data.region, query), { reset: false })}
   onRetry={() => void refreshAll()}
 >
   {#snippet loadingPlaceholder()}
@@ -83,7 +94,7 @@
     </div>
   {/snippet}
   <ul class="grid grid-cols-2 items-stretch gap-2 sm:gap-3 lg:grid-cols-3 2xl:grid-cols-4">
-    {#each comics as comic (comic.id)}
+    {#each visibleComics as comic (comic.id)}
       <li class="min-w-0">
         <ComicTile
           {comic}
@@ -96,4 +107,10 @@
   </ul>
 </CatalogueFrame>
 
-<ComicPreviewDialog bind:this={preview} region={data.region} {comics} {t} />
+<ComicPreviewDialog
+  bind:this={preview}
+  catalogueKey={`${data.region}:${name}`}
+  region={data.region}
+  comics={visibleComics}
+  {t}
+/>

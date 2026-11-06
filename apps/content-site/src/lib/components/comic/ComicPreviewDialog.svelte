@@ -14,11 +14,15 @@
   import { STAMP_PREVIEW_BOX_CLASS } from "#lib/styles/stamp-preview.js";
 
   let {
+    catalogueKey,
     region,
     comics,
     t
   }: {
+    /** The region and search this list shows. A preview only opens over its own list. */
+    catalogueKey: string;
     region: SupportedRegion;
+    /** The comics on the list, which are the ones the preview steps through. */
     comics: readonly ComicItem[];
     t: ContentSiteTranslator;
   } = $props();
@@ -26,12 +30,13 @@
   // History-only, like the stamp preview: opening adds a same-URL entry that Back closes,
   // and SSR, direct entry, and reload show just the list.
   const selected = $derived(
-    page.shallow?.url.href === page.url.href && page.state.comicPreview?.catalogueKey === region
+    page.shallow?.url.href === page.url.href &&
+      page.state.comicPreview?.catalogueKey === catalogueKey
       ? page.state.comicPreview
       : null
   );
   let displayedComic = $state<ComicItem | null>(null);
-  let displayedRegion: SupportedRegion | null = null;
+  let displayedCatalogueKey: string | null = null;
   let host: HTMLDivElement | undefined = $state();
   let navigating = false;
   let closing = false;
@@ -45,11 +50,11 @@
       // native dismissal restores the right tile without scrolling.
       tileFor(selected.comic)?.focus({ preventScroll: true });
       displayedComic = selected.comic;
-      displayedRegion = region;
+      displayedCatalogueKey = catalogueKey;
     } else {
       closing = false;
-      // Do not load a previously selected comic's artwork in a new region.
-      if (displayedRegion !== region) displayedComic = null;
+      // Do not load a previously selected comic's artwork in a new region or search.
+      if (displayedCatalogueKey !== catalogueKey) displayedComic = null;
     }
   });
 
@@ -72,7 +77,7 @@
         shallow: true,
         replace,
         persistState: false,
-        state: { ...page.state, comicPreview: { catalogueKey: region, comic } }
+        state: { ...page.state, comicPreview: { catalogueKey, comic } }
       });
     } finally {
       navigating = false;

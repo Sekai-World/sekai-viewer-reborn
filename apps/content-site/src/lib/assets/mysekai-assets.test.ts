@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  getComicImageURL,
   getMysekaiFixtureThumbnailURL,
   getMysekaiMaterialIconURL,
   getMysekaiPhotoFrameURL,
@@ -45,6 +46,16 @@ describe("MySekai asset URLs", () => {
       `${jp}/mysekai/photo_frame/preview/decoflame_simple_0001.webp`
     );
     expect(getMysekaiPhotoFrameURL(" ")).toBeNull();
+  });
+
+  it("reads comics from the given region's server", () => {
+    expect(getComicImageURL("comic_0041")).toContain(
+      "/sekai-jp-assets/comic/one_frame/comic_0041.webp"
+    );
+    expect(getComicImageURL("comic_0041", "tw")).toContain(
+      "/sekai-tc-assets/comic/one_frame/comic_0041.webp"
+    );
+    expect(getComicImageURL(" ")).toBeNull();
   });
 
   it("returns null without a bundle name", () => {

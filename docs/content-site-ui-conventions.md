@@ -60,7 +60,7 @@ Prismatic Archive treats `content-site` as a calm, readable archive/catalogue ra
 
 ### Comic preview history
 
-- `/comics/:region` uses the same history-only preview as stamps, including its focus handling (`src/lib/components/shared/preview-dialog-focus.ts`). Stepping with the previous and next buttons or the left and right arrow keys replaces the preview's history entry, so Back always closes the preview, however many comics were viewed. Stepping wraps around at both ends.
+- `/comics/:region` uses the same history-only preview as stamps, including its focus handling (`src/lib/components/shared/preview-dialog-focus.ts`). Stepping with the previous and next buttons or the left and right arrow keys replaces the preview's history entry, so Back always closes the preview, however many comics were viewed. Stepping wraps around at both ends and stays within the current search results.
 - On close, focus returns to the tile of the comic last shown, scrolling it into view if needed. The stepping row stays left to right in RTL locales, so the buttons match the arrow keys.
 
 ## daisyUI Override Rules

@@ -107,6 +107,8 @@ export default defineConfig({
         "src/lib/assets/music-video.ts",
         "src/lib/domain/mysekai.ts",
         "src/lib/domain/stamp.ts",
+        "src/lib/domain/comic.ts",
+        "src/lib/components/shared/preview-dialog-focus.ts",
         "src/lib/server/stamps.ts",
         "src/lib/server/comics.ts",
         "src/lib/paged-list.svelte.ts",
