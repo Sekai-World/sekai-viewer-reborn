@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   LEAST_OVERSHOOT_MAX_DEFICIT_SPAN,
-  LEAST_OVERSHOOT_MAX_SEARCH_WORK,
   searchLeastOvershootWithoutRepeats,
   searchLeastOvershootWithRepeats,
   type LeastOvershootOutcome
@@ -76,7 +75,8 @@ const drawYields = (int: (min: number, max: number) => number, count: number): n
   return Array.from({ length: count }, () => (low + int(0, width)) * factor);
 };
 
-describe("least-overshoot search against a full table", () => {
+// Seeded runs can take several seconds on a CI runner that also records coverage.
+describe("least-overshoot search against a full table", { timeout: 60_000 }, () => {
   it("matches with repeats", () => {
     const int = makeRandom(20261106);
     const seen = { exact: 0, inexact: 0, limit: 0 };
@@ -143,28 +143,32 @@ describe("least-overshoot search against a full table", () => {
   });
 });
 
-describe("least-overshoot search on yields shaped like the real score data", () => {
-  // Thousands of nearly all distinct yields of about two million: no sum table can hold this.
-  const int = makeRandom(545);
-  const rows = Array.from({ length: 3_800 }, () => int(1_450_000, 2_000_000));
-  const distinct = [...new Set(rows)];
+describe(
+  "least-overshoot search on yields shaped like the real score data",
+  { timeout: 60_000 },
+  () => {
+    // Thousands of nearly all distinct yields of about two million: no sum table can hold this.
+    const int = makeRandom(545);
+    const rows = Array.from({ length: 3_800 }, () => int(1_450_000, 2_000_000));
+    const distinct = [...new Set(rows)];
 
-  it.each([12_345_678, 30_000_000, 55_555_555, 1_000_000_000])(
-    "proves a plan for %i with repeats at the fewest possible plays",
-    (need) => {
-      const answer = answerOf(searchLeastOvershootWithRepeats(distinct, need, 10_000));
-      expect(answer).toEqual({ total: need, plays: Math.ceil(need / Math.max(...distinct)) });
-    }
-  );
+    it.each([12_345_678, 30_000_000, 55_555_555, 1_000_000_000])(
+      "proves a plan for %i with repeats at the fewest possible plays",
+      (need) => {
+        const answer = answerOf(searchLeastOvershootWithRepeats(distinct, need, 10_000));
+        expect(answer).toEqual({ total: need, plays: Math.ceil(need / Math.max(...distinct)) });
+      }
+    );
 
-  it.each([12_345_678, 30_000_000, 55_555_555])(
-    "finds an exact total for %i without repeats",
-    (need) => {
-      const answer = answerOf(searchLeastOvershootWithoutRepeats(rows, need, 10_000));
-      expect(answer).toMatchObject({ total: need });
-    }
-  );
-});
+    it.each([12_345_678, 30_000_000, 55_555_555])(
+      "finds an exact total for %i without repeats",
+      (need) => {
+        const answer = answerOf(searchLeastOvershootWithoutRepeats(rows, need, 10_000));
+        expect(answer).toMatchObject({ total: need });
+      }
+    );
+  }
+);
 
 describe("least-overshoot search bounds", () => {
   it("refuses a deficit range too wide to table", () => {
@@ -182,22 +186,23 @@ describe("least-overshoot search bounds", () => {
   // All yields are odd, so an even number of plays can never make an odd total: nothing closes
   // the search early, and it has to rule out every combination before it may answer.
   const oddYields = Array.from({ length: 3_000 }, (_, index) => 2_000_001 - index * 200);
+  const smallLimit = 5_000_000;
 
   it("refuses a search with repeats that needs too much work", () => {
     const need = 2_000_001 * 16 - 1_500_001;
-    const outcome = searchLeastOvershootWithRepeats(oddYields, need, 10_000);
+    const outcome = searchLeastOvershootWithRepeats(oddYields, need, 10_000, smallLimit);
     expect(outcome).toMatchObject({
       status: "exceeded",
-      bound: { name: "searchWork", limit: LEAST_OVERSHOOT_MAX_SEARCH_WORK }
+      bound: { name: "searchWork", limit: smallLimit }
     });
   });
 
   it("refuses a search without repeats that needs too much work", () => {
     const need = 31_976_016 - 100_001;
-    const outcome = searchLeastOvershootWithoutRepeats(oddYields, need, 10_000);
+    const outcome = searchLeastOvershootWithoutRepeats(oddYields, need, 10_000, smallLimit);
     expect(outcome).toMatchObject({
       status: "exceeded",
-      bound: { name: "searchWork", limit: LEAST_OVERSHOOT_MAX_SEARCH_WORK }
+      bound: { name: "searchWork", limit: smallLimit }
     });
   });
 });

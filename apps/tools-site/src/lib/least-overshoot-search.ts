@@ -41,12 +41,14 @@ class SearchLimitExceeded extends Error {
 class WorkMeter {
   spent = 0;
 
+  constructor(private readonly limit: number) {}
+
   charge(amount: number): void {
     this.spent += amount;
-    if (this.spent > LEAST_OVERSHOOT_MAX_SEARCH_WORK) {
+    if (this.spent > this.limit) {
       throw new SearchLimitExceeded({
         name: "searchWork",
-        limit: LEAST_OVERSHOOT_MAX_SEARCH_WORK,
+        limit: this.limit,
         actual: this.spent
       });
     }
@@ -231,9 +233,12 @@ const normalize = (yields: readonly number[], need: number): Normalized => {
   };
 };
 
-const runSearch = (search: (meter: WorkMeter) => LeastOvershootOutcome): LeastOvershootOutcome => {
+const runSearch = (
+  maxWork: number,
+  search: (meter: WorkMeter) => LeastOvershootOutcome
+): LeastOvershootOutcome => {
   try {
-    return search(new WorkMeter());
+    return search(new WorkMeter(maxWork));
   } catch (error) {
     if (error instanceof SearchLimitExceeded) return { status: "exceeded", bound: error.bound };
     throw error;
@@ -426,12 +431,16 @@ const searchWithoutRepeats = (
 export const searchLeastOvershootWithRepeats = (
   yields: readonly number[],
   need: number,
-  budget: number
-): LeastOvershootOutcome => runSearch((meter) => searchWithRepeats(yields, need, budget, meter));
+  budget: number,
+  maxWork: number = LEAST_OVERSHOOT_MAX_SEARCH_WORK
+): LeastOvershootOutcome =>
+  runSearch(maxWork, (meter) => searchWithRepeats(yields, need, budget, meter));
 
 /** `rows` holds one yield per playable row, repeated when rows share a yield. */
 export const searchLeastOvershootWithoutRepeats = (
   rows: readonly number[],
   need: number,
-  budget: number
-): LeastOvershootOutcome => runSearch((meter) => searchWithoutRepeats(rows, need, budget, meter));
+  budget: number,
+  maxWork: number = LEAST_OVERSHOOT_MAX_SEARCH_WORK
+): LeastOvershootOutcome =>
+  runSearch(maxWork, (meter) => searchWithoutRepeats(rows, need, budget, meter));

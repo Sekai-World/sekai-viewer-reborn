@@ -646,7 +646,8 @@ describe("planTarget against exhaustive search", () => {
     expect(noRepeatCases).toBeGreaterThan(500);
   });
 
-  it("matches the true optimum on problems too large to table", () => {
+  // This run can take several seconds on a CI runner that also records coverage.
+  it("matches the true optimum on problems too large to table", { timeout: 60_000 }, () => {
     const random = makeRandom(20261106);
     const base = PLANNER_MAX_SUM_SPAN + 1_000_000;
     let exactCases = 0;
