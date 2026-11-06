@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MUSIC_META_DIFFICULTIES } from "#lib/music-recommender.js";
+import { LEAST_OVERSHOOT_MAX_DEFICIT_SPAN } from "#lib/least-overshoot-search.js";
 import {
   PLANNER_MAX_SUM_SPAN,
   PLANNER_MAX_WORK,
@@ -429,12 +430,60 @@ describe("planTarget invalid input", () => {
 });
 
 describe("planTarget bounds", () => {
-  it("refuses a least-overshoot table wider than the supported sum span", () => {
+  it("searches when the sum table would be wider than its span bound", () => {
+    const input = make({
+      yields: [row(1, "expert", 1_000_000), row(2, "expert", 900_000)],
+      target: 6_300_000,
+      maxPlays: 100,
+      objective: "leastOvershoot"
+    });
+
+    const plan = ready(planTarget(input));
+
+    assertPlanMatchesInput(plan, input);
+    expect(plan.overshoot).toBe(0);
+    expect(plan.plays).toBe(7);
+  });
+
+  it("searches when the sum table would need too much work", () => {
+    const input = make({
+      yields: Array.from({ length: 3_000 }, (_, index) => row(index + 1, "expert", 1_000 + index)),
+      target: Math.ceil(PLANNER_MAX_WORK / 3_000),
+      maxPlays: 100,
+      objective: "leastOvershoot"
+    });
+
+    const plan = ready(planTarget(input));
+
+    assertPlanMatchesInput(plan, input);
+    expect(plan.overshoot).toBe(0);
+    expect(plan.plays).toBe(Math.ceil(input.target / 3_999));
+  });
+
+  it("uses the lowest song id and difficulty for equal yields when searching", () => {
+    const input = make({
+      yields: [row(3, "expert", 6_000_000), row(2, "master", 6_000_000), row(2, "easy", 6_000_000)],
+      target: 11_000_000,
+      maxPlays: 2,
+      objective: "leastOvershoot",
+      allowRepeats: false
+    });
+
+    expect(ready(planTarget(input)).items.map((item) => [item.musicId, item.difficulty])).toEqual([
+      [2, "easy"],
+      [2, "master"]
+    ]);
+    expect(ready(planTarget({ ...input, allowRepeats: true })).items).toMatchObject([
+      { musicId: 2, difficulty: "easy", plays: 2 }
+    ]);
+  });
+
+  it("refuses a request the search cannot settle within its bounds", () => {
     const result = planTarget(
       make({
-        yields: [row(1, "expert", 1_000_000), row(2, "expert", 900_000)],
-        target: 10_000_000,
-        maxPlays: 100,
+        yields: [row(1, "expert", 10_000_000_000), row(2, "expert", 1)],
+        target: 5_000_000_000,
+        maxPlays: 10_000,
         objective: "leastOvershoot"
       })
     );
@@ -442,25 +491,7 @@ describe("planTarget bounds", () => {
     expect(result).toMatchObject({
       status: "unavailable",
       reason: "out-of-bounds",
-      bound: { name: "sumSpan", limit: PLANNER_MAX_SUM_SPAN }
-    });
-    expect(result.status === "unavailable" && result.bound?.actual).toBeGreaterThan(
-      PLANNER_MAX_SUM_SPAN
-    );
-  });
-
-  it("refuses a least-overshoot table with too much work", () => {
-    const yields = Array.from({ length: 3_000 }, (_, index) =>
-      row(index + 1, "expert", 1_000 + index)
-    );
-
-    const result = planTarget(
-      make({ yields, target: 40_000, maxPlays: 100, objective: "leastOvershoot" })
-    );
-
-    expect(result).toMatchObject({
-      reason: "out-of-bounds",
-      bound: { name: "work", limit: PLANNER_MAX_WORK }
+      bound: { name: "deficitSpan", limit: LEAST_OVERSHOOT_MAX_DEFICIT_SPAN }
     });
   });
 
@@ -613,5 +644,72 @@ describe("planTarget against exhaustive search", () => {
     expect(feasibleCases).toBeGreaterThan(1_500);
     expect(requiredCases).toBeGreaterThan(100);
     expect(noRepeatCases).toBeGreaterThan(500);
+  });
+
+  it("matches the true optimum on problems too large to table", () => {
+    const random = makeRandom(20261106);
+    const base = PLANNER_MAX_SUM_SPAN + 1_000_000;
+    let exactCases = 0;
+    let inexactCases = 0;
+    let requiredCases = 0;
+    let noRepeatCases = 0;
+
+    for (let round = 0; round < 3_000; round += 1) {
+      const songCount = random.int(1, 5);
+      const spread = random.chance(0.5) ? 40 : 2_000_000;
+      const used = new Set<string>();
+      const yields: PlannerYield[] = [];
+      while (yields.length < songCount) {
+        const difficulty = MUSIC_META_DIFFICULTIES[random.int(0, 2)];
+        const musicId = random.int(1, 3);
+        if (used.has(`${musicId}:${difficulty}`)) continue;
+        used.add(`${musicId}:${difficulty}`);
+        const score = base + random.int(0, spread);
+        yields.push(row(musicId, difficulty, score, score));
+      }
+      const requiredSongs = yields
+        .filter(() => random.chance(0.2))
+        .slice(0, 2)
+        .map(({ musicId, difficulty }) => ({ musicId, difficulty }));
+      const input: PlannerInput = {
+        yields,
+        metric: "score",
+        target: random.chance(0.3)
+          ? yields.reduce((sum, entry) => sum + entry.score * random.int(0, 2), yields[0].score)
+          : base * random.int(1, 6) + random.int(-spread, spread),
+        objective: "leastOvershoot",
+        maxPlays: random.int(1, 6),
+        allowRepeats: random.chance(0.5),
+        allowedDifficulties: random.chance(0.2) ? ["easy", "normal"] : null,
+        requiredSongs
+      };
+      const result = planTarget(input);
+      if (
+        result.status === "unavailable" &&
+        ["no-candidates", "required-unavailable"].includes(result.reason)
+      ) {
+        continue;
+      }
+
+      const oracle = bruteForce(input);
+      const label = JSON.stringify(input);
+      if (!oracle.feasible) {
+        expect(result, label).toMatchObject({ status: "unavailable", reason: oracle.reason });
+        continue;
+      }
+      const plan = ready(result);
+      assertPlanMatchesInput(plan, input);
+      expect(plan.overshoot, label).toBe(oracle.overshoot);
+      expect(plan.plays, label).toBe(oracle.plays);
+      if (oracle.overshoot === 0) exactCases += 1;
+      else inexactCases += 1;
+      if (requiredSongs.length > 0) requiredCases += 1;
+      if (!input.allowRepeats) noRepeatCases += 1;
+    }
+
+    expect(exactCases).toBeGreaterThan(30);
+    expect(inexactCases).toBeGreaterThan(500);
+    expect(requiredCases).toBeGreaterThan(100);
+    expect(noRepeatCases).toBeGreaterThan(300);
   });
 });

@@ -337,7 +337,7 @@ describe("target plan panel results", () => {
         inputs: makeDefaultPlanInputs(),
         reason: "out-of-bounds",
         invalidFields: [],
-        bound: { name: "sumSpan", limit: 5_000_000, actual: 11_000_000 }
+        bound: { name: "searchWork", limit: 400_000_000, actual: 400_000_001 }
       })
     );
 

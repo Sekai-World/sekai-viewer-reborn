@@ -99,7 +99,7 @@
   "musicRecommender.planPlaysLimit": "The target cannot be reached within the maximum number of lives.",
   "musicRecommender.planTargetUnreachable": "The target cannot be reached with these songs. Allow repeats or add difficulties.",
   "musicRecommender.planOutOfBounds": "This request is too large to solve exactly.",
-  "musicRecommender.planOutOfBoundsHint": "Closest to the target is solved exactly only for smaller problems, mainly event-point targets. Lower the target, use fewer difficulties, or choose fewest lives.",
+  "musicRecommender.planOutOfBoundsHint": "Closest to the target could not be proven within the search limit. Try a slightly different target, or choose fewest lives.",
   "musicRecommender.planResult": "Plan",
   "musicRecommender.planOptimalFewest": "No plan uses fewer lives under these settings.",
   "musicRecommender.planOptimalLeastOvershoot": "No plan gets closer to the target under these settings.",

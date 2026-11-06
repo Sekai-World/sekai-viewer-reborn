@@ -1,3 +1,9 @@
+import {
+  searchLeastOvershootWithoutRepeats,
+  searchLeastOvershootWithRepeats,
+  type LeastOvershootBound,
+  type LeastOvershootOutcome
+} from "#lib/least-overshoot-search.js";
 import { MUSIC_META_DIFFICULTIES, type MusicMetaDifficulty } from "#lib/music-recommender.js";
 
 /**
@@ -14,7 +20,7 @@ export type PlannerObjective = "fewestPlays" | "leastOvershoot";
 /** Targets and per-play yields are capped so every sum stays a safe integer. */
 export const PLANNER_MAX_TARGET = 100_000_000_000;
 export const PLANNER_MAX_PLAYS = 10_000;
-/** The exact least-overshoot solver tables sums below `target + largest yield`. */
+/** Least overshoot tables sums below `target + largest yield` when this fits, else searches. */
 export const PLANNER_MAX_SUM_SPAN = 5_000_000;
 export const PLANNER_MAX_WORK = 50_000_000;
 
@@ -82,7 +88,7 @@ export type PlanUnavailable = Readonly<{
   reason: PlanUnavailableReason;
   invalidFields: readonly string[];
   /** For `out-of-bounds`: which bound was exceeded and by how much. */
-  bound: Readonly<{ name: "sumSpan" | "work"; limit: number; actual: number }> | null;
+  bound: LeastOvershootBound | null;
 }>;
 
 export type PlanResult = TargetPlan | PlanUnavailable;
@@ -372,22 +378,27 @@ const solveFewestPlaysWithoutRepeats = (
   return picked;
 };
 
-const checkBounds = (span: number, work: number): PlanUnavailable | null => {
-  if (span > PLANNER_MAX_SUM_SPAN) {
-    return unavailable("out-of-bounds", [], {
-      name: "sumSpan",
-      limit: PLANNER_MAX_SUM_SPAN,
-      actual: span
-    });
+const fitsTable = (span: number, work: number): boolean =>
+  span <= PLANNER_MAX_SUM_SPAN && work <= PLANNER_MAX_WORK;
+
+/** Turns a search result into plays, using the lowest song id and difficulty for equal yields. */
+const fromSearch = (
+  outcome: LeastOvershootOutcome,
+  pool: readonly Candidate[],
+  maxPerRow: number
+): ReadonlyMap<Candidate, number> | PlanUnavailable => {
+  if (outcome.status === "plays-limit") return unavailable("plays-limit");
+  if (outcome.status === "unreachable") return unavailable("target-unreachable");
+  if (outcome.status === "exceeded") return unavailable("out-of-bounds", [], outcome.bound);
+  const left = new Map(outcome.playsByYield);
+  const counts = new Map<Candidate, number>();
+  for (const candidate of pool) {
+    const plays = Math.min(left.get(candidate.y) ?? 0, maxPerRow);
+    if (plays === 0) continue;
+    counts.set(candidate, plays);
+    left.set(candidate.y, (left.get(candidate.y) as number) - plays);
   }
-  if (work > PLANNER_MAX_WORK) {
-    return unavailable("out-of-bounds", [], {
-      name: "work",
-      limit: PLANNER_MAX_WORK,
-      actual: work
-    });
-  }
-  return null;
+  return counts;
 };
 
 const NO_PATH = 0xffffffff;
@@ -454,8 +465,9 @@ const solveLeastOvershootWithRepeats = (
   const representative = pickRepresentatives(pool);
   const yields = [...representative.keys()].sort((left, right) => left - right);
   const span = need + (yields.at(-1) ?? 0);
-  const exceeded = checkBounds(span, span * yields.length);
-  if (exceeded !== null) return exceeded;
+  if (!fitsTable(span, span * yields.length)) {
+    return fromSearch(searchLeastOvershootWithRepeats(yields, need, freeBudget), pool, Infinity);
+  }
 
   const { fewestPlays, choice } = buildRepeatTable(yields, span);
   const found = findLeastOvershoot(fewestPlays, need, freeBudget);
@@ -479,8 +491,10 @@ const solveLeastOvershootWithoutRepeats = (
 ): ReadonlyMap<Candidate, number> | PlanUnavailable => {
   const largest = pool.reduce((top, candidate) => Math.max(top, candidate.y), 0);
   const span = need + largest;
-  const exceeded = checkBounds(span, span * pool.length);
-  if (exceeded !== null) return exceeded;
+  if (!fitsTable(span, span * pool.length)) {
+    const rows = pool.map((candidate) => candidate.y);
+    return fromSearch(searchLeastOvershootWithoutRepeats(rows, need, freeBudget), pool, 1);
+  }
 
   const fewestPlays = new Uint32Array(span).fill(NO_PATH);
   fewestPlays[0] = 0;

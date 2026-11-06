@@ -627,14 +627,14 @@ describe("target plan in the page data", () => {
     });
   });
 
-  it("passes the planner's unavailable reasons through", async () => {
+  it("passes the planner's results through", async () => {
     const missing = await load(
       "target=100&objective=fewestPlays&maxPlays=10&repeats=true&required=999999:master"
     );
     const tooFewLives = await load(
       "metric=score&target=800000000&objective=fewestPlays&maxPlays=5&repeats=true"
     );
-    const tooLarge = await load(
+    const hugeTarget = await load(
       "metric=score&target=90000000000&objective=leastOvershoot&maxPlays=10000&repeats=true"
     );
 
@@ -643,11 +643,7 @@ describe("target plan in the page data", () => {
       reason: "required-unavailable"
     });
     expect(tooFewLives.result.plan).toMatchObject({ status: "unavailable", reason: "plays-limit" });
-    expect(tooLarge.result.plan).toMatchObject({
-      status: "unavailable",
-      reason: "out-of-bounds",
-      bound: { name: "sumSpan" }
-    });
+    expect(hugeTarget.result.plan).toMatchObject({ status: "ready" });
   });
 
   it("does not plan when the yields cannot be calculated", async () => {
