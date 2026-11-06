@@ -108,9 +108,12 @@ export default defineConfig({
         "src/lib/domain/mysekai.ts",
         "src/lib/domain/stamp.ts",
         "src/lib/domain/comic.ts",
+        "src/lib/domain/costume.ts",
         "src/lib/components/shared/preview-dialog-focus.ts",
         "src/lib/server/stamps.ts",
         "src/lib/server/comics.ts",
+        "src/lib/server/character-list.ts",
+        "src/lib/server/costumes.ts",
         "src/lib/paged-list.svelte.ts",
         "src/lib/soundtrack-player.svelte.ts",
         "src/lib/deployment-update.svelte.ts",
@@ -168,7 +171,10 @@ export default defineConfig({
         "src/routes/mysekai/soundtracks/[region]/[id]/download/+server.ts",
         "src/routes/stamps/[region]/+page.server.ts",
         "src/routes/stamps/[region]/data/+server.ts",
-        "src/routes/comics/[region]/+page.server.ts"
+        "src/routes/comics/[region]/+page.server.ts",
+        "src/routes/costumes/[region]/+page.server.ts",
+        "src/routes/costumes/[region]/data/+server.ts",
+        "src/routes/costume/[region]/[id]/+page.server.ts"
       ],
       reporter: ["lcov"]
     }

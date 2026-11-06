@@ -298,6 +298,54 @@ export type SharedCostume3dObjectResponse = {
     type?: string;
 };
 
+export type SharedCostume3dOutfitColorResponse = {
+    id?: number;
+    name?: string;
+};
+
+export type SharedCostume3dOutfitCostumeResponse = {
+    characterId?: number;
+    colorId?: number;
+    groupId?: number;
+    howToObtain?: string;
+    id?: number;
+    partType?: string;
+    thumbnailAssetbundleName?: string;
+};
+
+export type SharedCostume3dOutfitDetailResponse = {
+    characterIds?: Array<number>;
+    colorIds?: Array<number>;
+    colors?: Array<SharedCostume3dOutfitColorResponse>;
+    costumes?: Array<SharedCostume3dOutfitCostumeResponse>;
+    designer?: string;
+    id?: number;
+    name?: string;
+    partTypes?: Array<string>;
+    publishedAt?: number;
+    rarity?: string;
+    thumbnailAssetbundleName?: string;
+    type?: string;
+};
+
+export type SharedCostume3dOutfitListResponse = {
+    items?: Array<SharedCostume3dOutfitResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedCostume3dOutfitResponse = {
+    characterIds?: Array<number>;
+    colorIds?: Array<number>;
+    designer?: string;
+    id?: number;
+    name?: string;
+    partTypes?: Array<string>;
+    publishedAt?: number;
+    rarity?: string;
+    thumbnailAssetbundleName?: string;
+    type?: string;
+};
+
 export type SharedCurrentEventResponse = {
     aggregateAt?: unknown;
     assetbundleName?: unknown;
@@ -3156,6 +3204,128 @@ export type GetComicsByRegionByIdResponses = {
 };
 
 export type GetComicsByRegionByIdResponse = GetComicsByRegionByIdResponses[keyof GetComicsByRegionByIdResponses];
+
+export type GetCostume3dOutfitsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Case-insensitive substring of the outfit name
+         */
+        name?: string;
+        /**
+         * Comma-separated character IDs; the outfit must have at least one of them
+         */
+        character_id?: string;
+        /**
+         * Comma-separated rarities
+         */
+        rarity?: string;
+        /**
+         * Include costumes that are not published yet
+         */
+        spoiler?: boolean;
+        /**
+         * Sort field (id|name|publishedAt)
+         */
+        sort_by?: string;
+        /**
+         * Sort order (asc|desc)
+         */
+        sort_order?: string;
+    };
+    url: '/costume3dOutfits/{region}/list';
+};
+
+export type GetCostume3dOutfitsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCostume3dOutfitsByRegionListError = GetCostume3dOutfitsByRegionListErrors[keyof GetCostume3dOutfitsByRegionListErrors];
+
+export type GetCostume3dOutfitsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedCostume3dOutfitListResponse;
+};
+
+export type GetCostume3dOutfitsByRegionListResponse = GetCostume3dOutfitsByRegionListResponses[keyof GetCostume3dOutfitsByRegionListResponses];
+
+export type GetCostume3dOutfitsByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Outfit ID: its lowest costume ID
+         */
+        id: number;
+    };
+    query?: {
+        /**
+         * Include costumes that are not published yet
+         */
+        spoiler?: boolean;
+    };
+    url: '/costume3dOutfits/{region}/{id}';
+};
+
+export type GetCostume3dOutfitsByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCostume3dOutfitsByRegionByIdError = GetCostume3dOutfitsByRegionByIdErrors[keyof GetCostume3dOutfitsByRegionByIdErrors];
+
+export type GetCostume3dOutfitsByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedCostume3dOutfitDetailResponse;
+};
+
+export type GetCostume3dOutfitsByRegionByIdResponse = GetCostume3dOutfitsByRegionByIdResponses[keyof GetCostume3dOutfitsByRegionByIdResponses];
 
 export type GetCostume3DsByRegionListData = {
     body?: never;

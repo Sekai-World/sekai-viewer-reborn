@@ -18,6 +18,7 @@ import homeSourceMessages from "@platform/i18n-source/content-site/home.json";
 import honorSourceMessages from "@platform/i18n-source/content-site/honor.json";
 import missionSourceMessages from "@platform/i18n-source/content-site/mission.json";
 import comicSourceMessages from "@platform/i18n-source/content-site/comic.json";
+import costumeSourceMessages from "@platform/i18n-source/content-site/costume.json";
 import musicSourceMessages from "@platform/i18n-source/content-site/music.json";
 import mysekaiSourceMessages from "@platform/i18n-source/content-site/mysekai.json";
 import stampSourceMessages from "@platform/i18n-source/content-site/stamp.json";
@@ -43,6 +44,7 @@ export const contentSiteI18nNamespaces = [
   "mysekai",
   "stamp",
   "comic",
+  "costume",
   "error",
   "server",
   "virtual-live",
@@ -108,6 +110,7 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
   error: errorSourceMessages,
   event: eventSourceMessages,
   comic: comicSourceMessages,
+  costume: costumeSourceMessages,
   gacha: gachaSourceMessages,
   home: homeSourceMessages,
   honor: honorSourceMessages,

@@ -648,6 +648,18 @@ export const getMysekaiPhotoFrameURL = (
     : null;
 };
 
+/** A 3D costume part's thumbnail; the master API resolves the file name for every region. */
+export const getCostumeThumbnailURL = (
+  thumbnailAssetbundleName: string | null | undefined,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string | null => {
+  const bundle = normalizeBundleName(thumbnailAssetbundleName);
+  return bundle
+    ? buildServerAssetURL(`thumbnail/costume/${bundle}.webp`, server, baseUrlOverride)
+    : null;
+};
+
 /** A stamp's image; the bundle name is the stamp's own, not built from its ID. */
 export const getStampImageURL = (
   assetbundleName: string | null | undefined,
