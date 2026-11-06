@@ -215,6 +215,9 @@ Catalogue (list + detail) coverage already shipped for:
 - **Missions / Rewards** — mission catalogue (`/missions/[region]`) with reward
   details, on the `missions` contract.
 - **Stamps** — stamp catalogue (`/stamps/[region]`) with a preview dialog.
+- **3D Costumes** — outfit directory (`/costumes/[region]`) with a page per outfit
+  (`/costume/[region]/[id]`). One outfit is the costumes of one name across every
+  character who has it.
 - **Comics** — comic catalogue (`/comics/[region]`) with title search and a
   preview dialog that steps through the listed comics, on the `comics` contract.
 
@@ -279,10 +282,6 @@ contract, follow this cross-repo pipeline:
    (`pnpm --filter @platform/sekai-master-api-sdk check`).
 
 Specific next priorities (split from #304; candidate matrix in its comments):
-
-- **3D Costumes** (#599) — blocked on a design-level costume list contract
-  (Sekai-World/sekai-master-api#187); the existing `costume3ds` routes return
-  individual part and color rows.
 
 ### Exploratory — Later Candidates
 

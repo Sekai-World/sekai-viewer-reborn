@@ -74,7 +74,9 @@ export const parseCharacterList = (
   getItems(payload)
     .map((item) => parseCharacter(item, units))
     .filter((item): item is CharacterCatalogueItem => item !== null)
+    // Characters without `seq` keep to ID order, which keeps each unit together.
     .sort(
       (left, right) =>
-        (left.seq ?? Number.MAX_SAFE_INTEGER) - (right.seq ?? Number.MAX_SAFE_INTEGER)
+        (left.seq ?? Number.MAX_SAFE_INTEGER) - (right.seq ?? Number.MAX_SAFE_INTEGER) ||
+        Number(left.id) - Number(right.id)
     );

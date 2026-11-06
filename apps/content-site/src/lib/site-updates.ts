@@ -45,6 +45,7 @@ const RELEASE_0_1_2: SiteUpdate = {
   changeKeys: [
     "updates.release.0.1.2.change.photoFrames",
     "updates.release.0.1.2.change.comics",
+    "updates.release.0.1.2.change.costumes",
     "updates.release.0.1.2.change.links"
   ]
 };

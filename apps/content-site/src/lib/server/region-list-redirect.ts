@@ -18,6 +18,7 @@ export const REGION_LIST_PATHS: readonly string[] = [
   "/news",
   "/stamps",
   "/comics",
+  "/costumes",
   "/virtual-lives"
 ];
 

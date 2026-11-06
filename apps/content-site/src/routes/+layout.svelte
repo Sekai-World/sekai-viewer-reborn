@@ -141,6 +141,7 @@
   let honorsLabel = $state(getInitialI18nText("navigation.honors"));
   let stampsLabel = $state(getInitialI18nText("navigation.stamps"));
   let comicsLabel = $state(getInitialI18nText("navigation.comics"));
+  let costumesLabel = $state(getInitialI18nText("navigation.costumes"));
   let mysekaiLabel = $state(getInitialI18nText("navigation.mysekai"));
   let mysekaiFixturesLabel = $state(getInitialI18nText("navigation.mysekaiFixtures"));
   let mysekaiMaterialsLabel = $state(getInitialI18nText("navigation.mysekaiMaterials"));
@@ -230,6 +231,8 @@
         first === "honors" ||
         first === "stamps" ||
         first === "comics" ||
+        first === "costumes" ||
+        first === "costume" ||
         first === "virtual-live" ||
         first === "virtual-lives") &&
       second
@@ -342,6 +345,14 @@
       href: `/comics/${sidebarRegion}`,
       active: page.url.pathname.startsWith("/comics/"),
       icon: "mdi:book-open-page-variant-outline",
+      groupId: "library"
+    },
+    {
+      label: costumesLabel,
+      href: `/costumes/${sidebarRegion}`,
+      active:
+        page.url.pathname.startsWith("/costumes/") || page.url.pathname.startsWith("/costume/"),
+      icon: "mdi:hanger",
       groupId: "library"
     },
     {
@@ -687,6 +698,7 @@
     honorsLabel = translate("navigation.honors");
     stampsLabel = translate("navigation.stamps");
     comicsLabel = translate("navigation.comics");
+    costumesLabel = translate("navigation.costumes");
     mysekaiLabel = translate("navigation.mysekai");
     mysekaiFixturesLabel = translate("navigation.mysekaiFixtures");
     mysekaiMaterialsLabel = translate("navigation.mysekaiMaterials");
