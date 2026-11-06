@@ -57,46 +57,87 @@ yield.
 **Least overshoot.** The smallest total that is at least the target, using at
 most the allowed lives; among plans with that total, the fewest lives.
 Dropping any one life from a plan that overshoots by a full `y_max` would still
-reach the target, so the optimum lies below `need + y_max`. An exact table over
-those sums gives the fewest lives to reach each sum:
+reach the target, so the optimum lies below `need + y_max`. When a table of those
+sums fits the bounds, it gives the fewest lives to reach each sum:
 
 - Repeats allowed: unbounded-knapsack table over the distinct yields.
 - No repeats: 0/1-knapsack table over the songs, with one bit per song and sum to
   rebuild the plan.
 
+Otherwise an exact search in `lib/least-overshoot-search.ts` answers instead,
+going through the number of lives `k` from the fewest that can reach `need`. Yields
+are first divided by their common factor, so every total is a multiple of it and
+the smallest possible overshoot is known. Stopping is proven: every life yields at
+least `y_min`, so once `k × y_min - need` reaches the best overshoot, more lives
+cannot beat it.
+
+- **Repeats allowed.** A `k`-life total is `k × y_max` minus the deficits
+  `y_max - y` of its lives. A deficit of 0 is always available, so `k` lives can make
+  a total exactly when `k × y_max - total` is a sum of at most `k` positive deficits.
+  That number is below one yield at the first `k`, whatever the target. Bitsets of
+  the sums of at most `j` deficits, layer by layer, give the largest deficit at or
+  below `k × y_max - need`, which is the smallest overshoot for that `k`.
+- **No repeats.** Branch and bound over the rows from the largest down settles each
+  `k`. A subtree is cut when its next rows cannot reach `need`, or when its smallest
+  rows cannot beat the best overshoot; equal yields are tried once.
+- **Shortcuts that prove themselves.** The overshoot cannot be below the smallest
+  possible one, and every smaller `k` has already been ruled out, so a plan that
+  hits that total at the current `k` needs no further search. With repeats, the search
+  looks for one as repeats of the widest deficit plus at most four others, meeting
+  in the middle over the sums of two. Without repeats, it picks each life closest to
+  the average still needed and closes with an exact pair.
+
 ## Bounds and complexity
 
-| Bound                         | Value           | Applies to      |
-| ----------------------------- | --------------- | --------------- |
-| Target and per-live yield cap | 100,000,000,000 | all requests    |
-| Maximum lives                 | 10,000          | all requests    |
-| Sum span (`need + y_max`)     | 5,000,000       | least overshoot |
-| Table work                    | 50,000,000      | least overshoot |
+| Bound                               | Value           | Applies to             |
+| ----------------------------------- | --------------- | ---------------------- |
+| Target and per-live yield cap       | 100,000,000,000 | all requests           |
+| Maximum lives                       | 10,000          | all requests           |
+| Table sum span (`need + y_max`)     | 5,000,000       | least overshoot table  |
+| Table work                          | 50,000,000      | least overshoot table  |
+| Search deficit span (`deficitSpan`) | 67,108,864      | least overshoot search |
+| Search work (`searchWork`)          | 400,000,000     | least overshoot search |
 
 - **Fewest lives** is `O(n)` (repeats) or `O(n log n)` (no repeats) in the number
   of song and difficulty rows, with no dependence on the size of the target.
-- **Least overshoot** is `O(span × distinct yields)` time and `O(span)` memory with
-  repeats, and `O(span × songs)` time with `O(span × songs / 8)` bytes without.
-  A request beyond either of the last two bounds is answered `out-of-bounds` with
-  the bound that was exceeded and by how much.
+- **Least overshoot table** is `O(span × distinct yields)` time and `O(span)` memory
+  with repeats, and `O(span × songs)` time with `O(span × songs / 8)` bytes without.
+  A request beyond either table bound goes to the search.
+- **Least overshoot search** with repeats takes `O(n²)` bit operations for the
+  shortcut, independent of the target. Ruling a `k` out takes at most
+  `O(layers × n × deficit / 32)` word operations and `layers × deficit / 8` bytes. Without
+  repeats, it takes `O(k log n + n)` for the shortcut, and branch and bound is
+  exponential in the worst case, with each node charged as 8 operations of work.
+  A request beyond either search bound is answered `out-of-bounds` with the bound
+  that was exceeded and by how much. Nothing else is ever returned in its place.
 
-Measured on the 3,810 rows of the 2026-10-29 `music_metas.json`, with all
-difficulties allowed and 10,000 lives:
+Measured with random targets on the 3,832 rows of the 2026-11-06 `music_metas.json`,
+with all difficulties allowed and 10,000 lives, 250 targets per row:
 
-| Deck (power / bonus % / boost) | Metric       | Distinct yields | Largest exact least-overshoot target                     |
-| ------------------------------ | ------------ | --------------- | -------------------------------------------------------- |
-| 300,000 / 200 / 1              | event points | 147             | about 339,000 with repeats (80 ms); about 12,000 without |
-| 400,000 / 300 / 5              | event points | 210             | about 232,000 with repeats (60 ms); about 7,400 without  |
-| 300,000 / 200 / 1              | score        | 3,794           | none: every target is out of bounds                      |
-| 400,000 / 300 / 5              | score        | 3,798           | none: every target is out of bounds                      |
+| Deck (power / bonus % / boost / effects 100) | Metric and target range  | Repeats | Exact / with overshoot / out of bounds | Median | Slowest |
+| -------------------------------------------- | ------------------------ | ------- | -------------------------------------- | ------ | ------- |
+| 300,000 / 200 / 1                            | score, 3M to 100M        | yes     | 245 / 4 / 1                            | 22 ms  | 306 ms  |
+| 300,000 / 200 / 1                            | score, 3M to 100M        | no      | 250 / 0 / 0                            | 23 ms  | 216 ms  |
+| 300,000 / 200 / 1                            | score, 100M to 5B        | yes     | 250 / 0 / 0                            | 22 ms  | 26 ms   |
+| 300,000 / 200 / 1                            | score, 100M to 5B        | no      | 250 / 0 / 0                            | 62 ms  | 240 ms  |
+| 400,000 / 300 / 5                            | score, 3M to 100M        | yes     | 244 / 6 / 0                            | 22 ms  | 322 ms  |
+| 400,000 / 300 / 5                            | score, 3M to 100M        | no      | 244 / 6 / 0                            | 30 ms  | 208 ms  |
+| 400,000 / 300 / 5                            | score, 100M to 5B        | yes     | 250 / 0 / 0                            | 22 ms  | 27 ms   |
+| 400,000 / 300 / 5                            | score, 100M to 5B        | no      | 250 / 0 / 0                            | 83 ms  | 252 ms  |
+| 300,000 / 200 / 1                            | event points, 340K to 5M | yes     | 250 / 0 / 0                            | 1 ms   | 1 ms    |
+| 400,000 / 300 / 5                            | event points, 340K to 5M | yes     | 51 / 199 / 0                           | 1 ms   | 1 ms    |
 
-Event-point yields repeat across songs, so the tables stay small. Score yields
-are almost all different and about two million per live, so the table is wider
-than the span bound allows even for the smallest target. **In this version
-_least overshoot_ is therefore effectively available for event-point targets
-only; score targets are planned exactly for _fewest lives_.** A smarter exact
-solver for score (for example a search over a few lives) is a possible
-follow-up, not part of this version.
+The event-point overshoots on the second deck are expected: its yields are all
+multiples of 5, so a target that is not has no exact total. Below about 340,000
+event points, the table still answers, so those results are unchanged. Without
+repeats, event-point targets above the sum of every row are `target-unreachable`.
+
+A narrower pool stays in bounds too: a sweep of 400 score targets from 2M to 80M for
+each deck, with and without repeats, limited to `append` or to `easy` and `normal`,
+returned no `out-of-bounds`. With all difficulties in that sweep, one target of 1,600
+was refused (5,854,981 with repeats on the first deck). Small-looking targets
+are the hard ones: few lives leave few combinations, so an exact total is often
+impossible and every combination has to be ruled out.
 
 ## Ties and determinism
 
@@ -114,7 +155,7 @@ optimal, one is returned; the others are not listed.
 | `required-unavailable` | A required song is not among the candidates.                                         |
 | `plays-limit`          | Required songs alone exceed the lives limit, or the target needs more lives.         |
 | `target-unreachable`   | Even every allowed song once (no repeats) falls short, or nothing is left to play.   |
-| `out-of-bounds`        | Least overshoot beyond the sum-span or work bound.                                   |
+| `out-of-bounds`        | Least overshoot beyond the search bounds.                                            |
 | `yields-unavailable`   | (page only) The recommender could not calculate yields, so there is nothing to plan. |
 
 When required songs exceed the lives limit the lives limit is reported first.
@@ -148,6 +189,14 @@ and the recommender's per-live values, and energy and time are not planned.
 - A seeded run of 4,000 random small problems compares both objectives, with and
   without repeats and required songs, against exhaustive search over every legal
   play count vector. Injecting an off-by-one in each solver makes it fail.
+- A seeded run of 3,000 problems too large to table does the same for least
+  overshoot, with difficulty filters and required songs, through `planTarget`.
+- Seeded runs of 5,000 denser problems compare the search directly against a full
+  table of every sum. Of 27 off-by-one and logic mutations of the search, 24 fail the
+  tests. The other 3 change only speed, not answers: an early exit from a shortcut,
+  the frontier used to build a layer, and a shortcut tried at one life fewer.
+- Tests on 3,800 generated yields shaped like the real score data check a proven plan
+  at the fewest possible lives, and that both search bounds refuse.
 - Component and loader tests cover input validation, the loading, idle, invalid,
   unavailable, and result states, and accessible controls.
 
