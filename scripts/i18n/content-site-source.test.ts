@@ -8,7 +8,7 @@ import {
 } from "./content-site-source.mjs";
 
 const sourceDir = resolve(process.cwd(), "../../packages/i18n-source/content-site");
-const routeNamespaces = ["character", "honor", "mission", "mysekai", "stamp", "unit"];
+const routeNamespaces = ["character", "comic", "honor", "mission", "mysekai", "stamp", "unit"];
 
 describe("content-site i18n source namespaces", () => {
   it("checks and syncs every source dictionary", async () => {
@@ -26,6 +26,8 @@ describe("content-site i18n source namespaces", () => {
     expect(namespaceForFile("src/routes/missions/[region]/+page.svelte")).toBe("mission");
     expect(namespaceForFile("src/routes/mysekai/fixtures/[region]/+page.svelte")).toBe("mysekai");
     expect(namespaceForFile("src/lib/components/stamp/StampTile.svelte")).toBe("stamp");
+    expect(namespaceForFile("src/routes/comics/[region]/+page.svelte")).toBe("comic");
+    expect(namespaceForFile("src/lib/components/comic/ComicTile.svelte")).toBe("comic");
     expect(namespaceForFile("src/routes/unit/[region]/[unit]/+page.svelte")).toBe("unit");
   });
 

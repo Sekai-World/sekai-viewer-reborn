@@ -265,6 +265,19 @@ export type SharedCharacterResponse = {
     unit?: string;
 };
 
+export type SharedComicListResponse = {
+    items?: Array<SharedComicResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedComicResponse = {
+    assetbundleName?: string;
+    fromUserRank?: number;
+    id?: number;
+    title?: string;
+    toUserRank?: number;
+};
+
 export type SharedCostume3dListResponse = {
     items?: Array<SharedCostume3dObjectResponse>;
     pagination?: SharedPaginationResponse;
@@ -3050,6 +3063,99 @@ export type GetCharacterRanksByRegionListResponses = {
 };
 
 export type GetCharacterRanksByRegionListResponse = GetCharacterRanksByRegionListResponses[keyof GetCharacterRanksByRegionListResponses];
+
+export type GetComicsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+    };
+    url: '/comics/{region}/list';
+};
+
+export type GetComicsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetComicsByRegionListError = GetComicsByRegionListErrors[keyof GetComicsByRegionListErrors];
+
+export type GetComicsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedComicListResponse;
+};
+
+export type GetComicsByRegionListResponse = GetComicsByRegionListResponses[keyof GetComicsByRegionListResponses];
+
+export type GetComicsByRegionByIdData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+        /**
+         * Comic ID
+         */
+        id: number;
+    };
+    query?: never;
+    url: '/comics/{region}/{id}';
+};
+
+export type GetComicsByRegionByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Not Found
+     */
+    404: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetComicsByRegionByIdError = GetComicsByRegionByIdErrors[keyof GetComicsByRegionByIdErrors];
+
+export type GetComicsByRegionByIdResponses = {
+    /**
+     * OK
+     */
+    200: SharedComicResponse;
+};
+
+export type GetComicsByRegionByIdResponse = GetComicsByRegionByIdResponses[keyof GetComicsByRegionByIdResponses];
 
 export type GetCostume3DsByRegionListData = {
     body?: never;

@@ -5,6 +5,10 @@
   import { getLocalCharacterThumbnailAssetURL } from "#lib/assets/characters.js";
   import { getStampImageURL } from "#lib/assets/index.js";
   import CharacterAvatar from "#lib/components/shared/CharacterAvatar.svelte";
+  import {
+    loopDialogTabFocus,
+    rescueDialogFocus
+  } from "#lib/components/shared/preview-dialog-focus.js";
   import type { MissionCharacterOption } from "#lib/domain/mission.js";
   import type { SupportedRegion } from "#lib/domain/regions.js";
   import { getStampCharacters, getStampDisplayName, type StampItem } from "#lib/domain/stamp.js";
@@ -61,23 +65,9 @@
     const container = host;
     if (!preview || !container) return;
 
-    // WebKit can restore BODY during history traversal. Chromium can initially
-    // focus the implicitly focusable, overflowing modal box before the image
-    // loads, then drop focus to BODY when that overflow disappears. Move these
-    // transient targets to an action, never a control the user already reached.
     const frame = requestAnimationFrame(() => {
       const dialog = container.querySelector("dialog");
-      if (
-        selected !== preview ||
-        !dialog?.open ||
-        (document.activeElement !== document.body &&
-          document.activeElement !== dialog &&
-          document.activeElement !== dialog.querySelector(".modal-box"))
-      )
-        return;
-      dialog.querySelector<HTMLElement>(".modal-box summary, .modal-box button")?.focus({
-        preventScroll: true
-      });
+      if (selected === preview && dialog) rescueDialogFocus(dialog);
     });
     return () => cancelAnimationFrame(frame);
   });
@@ -113,46 +103,7 @@
     const dialog = host?.querySelector("dialog");
     if (!dialog) return;
 
-    const loopFocus = (event: KeyboardEvent): void => {
-      if (
-        !selected ||
-        !dialog.open ||
-        event.defaultPrevented ||
-        event.key !== "Tab" ||
-        event.altKey ||
-        event.ctrlKey ||
-        event.metaKey
-      )
-        return;
-
-      // Native modal dialogs make the page inert, but Chromium can still send
-      // boundary Tab to browser chrome (activeElement becomes BODY). Wrap only
-      // those boundaries; keep native Tab order and details/menu behavior inside.
-      const controls = [
-        ...dialog.querySelectorAll<HTMLElement>("summary, a[href], button, [tabindex]")
-      ].filter((element) => {
-        const style = getComputedStyle(element);
-        return (
-          element.tabIndex >= 0 &&
-          !element.matches(":disabled") &&
-          !element.closest("[hidden], [inert]") &&
-          style.visibility !== "hidden" &&
-          style.visibility !== "collapse" &&
-          element.getClientRects().length > 0
-        );
-      });
-      const first = controls[0];
-      const last = controls[controls.length - 1];
-      const boundary = event.shiftKey ? first : last;
-      const destination = event.shiftKey ? last : first;
-      if (destination && document.activeElement === boundary) {
-        event.preventDefault();
-        destination.focus();
-      }
-    };
-
-    dialog.addEventListener("keydown", loopFocus);
-    return () => dialog.removeEventListener("keydown", loopFocus);
+    return loopDialogTabFocus(dialog, () => selected !== null);
   });
 </script>
 

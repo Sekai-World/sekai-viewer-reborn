@@ -58,6 +58,11 @@ Prismatic Archive treats `content-site` as a calm, readable archive/catalogue ra
 - Keep the triggering tile and scroll position stable when opening or closing; the native dialog contains focus and restores it to the tile when it remains available. The preview remains keyboard accessible and scrollable on narrow screens.
 - Retry on this page (catalogue or character picker) calls `refreshAll()`: it re-runs the page's server loads on the same document, URL and history entry, and keeps `page.state`, so a preview held in history shows the refreshed data. A character retry on a scrolled page keeps the scroll position. Do not switch it to `invalidateAll()`, which resets `page.state` and closes an open preview while leaving its history entry behind. `apps/content-site/tests/e2e/stamp-refresh.spec.ts` covers this (`pnpm --filter @apps/content-site test:e2e`).
 
+### Comic preview history
+
+- `/comics/:region` uses the same history-only preview as stamps, including its focus handling (`src/lib/components/shared/preview-dialog-focus.ts`). Stepping with the previous and next buttons or the left and right arrow keys replaces the preview's history entry, so Back always closes the preview, however many comics were viewed. Stepping wraps around at both ends and stays within the current search results.
+- On close, focus returns to the tile of the comic last shown, scrolling it into view if needed. The stepping row stays left to right in RTL locales, so the buttons match the arrow keys.
+
 ## daisyUI Override Rules
 
 ### 1. Override daisyUI component defaults with `@utility`

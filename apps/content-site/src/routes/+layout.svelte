@@ -140,6 +140,7 @@
   let missionsLabel = $state(getInitialI18nText("navigation.missions"));
   let honorsLabel = $state(getInitialI18nText("navigation.honors"));
   let stampsLabel = $state(getInitialI18nText("navigation.stamps"));
+  let comicsLabel = $state(getInitialI18nText("navigation.comics"));
   let mysekaiLabel = $state(getInitialI18nText("navigation.mysekai"));
   let mysekaiFixturesLabel = $state(getInitialI18nText("navigation.mysekaiFixtures"));
   let mysekaiMaterialsLabel = $state(getInitialI18nText("navigation.mysekaiMaterials"));
@@ -228,6 +229,7 @@
         first === "missions" ||
         first === "honors" ||
         first === "stamps" ||
+        first === "comics" ||
         first === "virtual-live" ||
         first === "virtual-lives") &&
       second
@@ -335,6 +337,13 @@
     navigationLinks[2],
     navigationLinks[3],
     navigationLinks[4],
+    {
+      label: comicsLabel,
+      href: `/comics/${sidebarRegion}`,
+      active: page.url.pathname.startsWith("/comics/"),
+      icon: "mdi:book-open-page-variant-outline",
+      groupId: "library"
+    },
     {
       type: "section",
       label: activitiesLabel,
@@ -677,6 +686,7 @@
     missionsLabel = translate("navigation.missions");
     honorsLabel = translate("navigation.honors");
     stampsLabel = translate("navigation.stamps");
+    comicsLabel = translate("navigation.comics");
     mysekaiLabel = translate("navigation.mysekai");
     mysekaiFixturesLabel = translate("navigation.mysekaiFixtures");
     mysekaiMaterialsLabel = translate("navigation.mysekaiMaterials");
