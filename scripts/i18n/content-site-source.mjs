@@ -113,6 +113,7 @@ const namespaceByRoutePattern = [
   { pattern: /src\/routes\/missions\//, namespace: "mission" },
   { pattern: /src\/routes\/mysekai\//, namespace: "mysekai" },
   { pattern: /src\/routes\/stamps\//, namespace: "stamp" },
+  { pattern: /src\/routes\/comics\//, namespace: "comic" },
   { pattern: /src\/lib\/event\.ts$/, namespace: "event" },
   { pattern: /src\/lib\/components\/CurrentEventCard\.svelte$/, namespace: "home" },
   { pattern: /src\/lib\/components\/Card/, namespace: "card" },
@@ -127,7 +128,8 @@ const namespaceByRoutePattern = [
   { pattern: /src\/lib\/components\/honor\//, namespace: "honor" },
   { pattern: /src\/lib\/components\/mission\//, namespace: "mission" },
   { pattern: /src\/lib\/components\/mysekai\//, namespace: "mysekai" },
-  { pattern: /src\/lib\/components\/stamp\//, namespace: "stamp" }
+  { pattern: /src\/lib\/components\/stamp\//, namespace: "stamp" },
+  { pattern: /src\/lib\/components\/comic\//, namespace: "comic" }
 ];
 
 export const namespaceForFile = (relativeFilePath) =>

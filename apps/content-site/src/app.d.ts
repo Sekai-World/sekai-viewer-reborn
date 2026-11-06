@@ -1,3 +1,4 @@
+import type { ComicItem } from "#lib/domain/comic.js";
 import type { StampItem } from "#lib/domain/stamp.js";
 
 declare global {
@@ -6,6 +7,7 @@ declare global {
     interface PageData {}
     interface PageState {
       stampPreview?: { catalogueKey: string; stamp: StampItem };
+      comicPreview?: { catalogueKey: string; comic: ComicItem };
     }
     interface Platform {}
   }

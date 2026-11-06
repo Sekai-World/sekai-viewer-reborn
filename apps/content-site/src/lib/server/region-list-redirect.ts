@@ -17,6 +17,7 @@ export const REGION_LIST_PATHS: readonly string[] = [
   "/mysekai/soundtracks",
   "/news",
   "/stamps",
+  "/comics",
   "/virtual-lives"
 ];
 

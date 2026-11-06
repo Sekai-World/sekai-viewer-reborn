@@ -660,6 +660,18 @@ export const getStampImageURL = (
     : null;
 };
 
+/** A comic's image. Each region's server holds its own localized version. */
+export const getComicImageURL = (
+  assetbundleName: string | null | undefined,
+  server: AssetServer = "jp",
+  baseUrlOverride?: string | null
+): string | null => {
+  const bundle = normalizeBundleName(assetbundleName);
+  return bundle
+    ? buildServerAssetURL(`comic/one_frame/${bundle}.webp`, server, baseUrlOverride)
+    : null;
+};
+
 /** The jacket of a sound-track category, named by the category's asset bundle. */
 export const getMysekaiSoundTrackJacketURL = (
   categoryAssetbundleName: string | null | undefined,

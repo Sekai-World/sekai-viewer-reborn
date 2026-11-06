@@ -96,6 +96,18 @@ describe("content-site layout server load", () => {
     );
   });
 
+  it("loads the comic namespace for the comic list", async () => {
+    loadI18nMessageBundle.mockResolvedValueOnce({});
+
+    await load(createLoadEvent("/comics/jp"));
+
+    expect(loadI18nMessageBundle).toHaveBeenCalledWith(
+      "en",
+      ["common", "comic", "error"],
+      expect.any(Function)
+    );
+  });
+
   it("loads the unit namespace for unit detail routes", async () => {
     loadI18nMessageBundle.mockResolvedValueOnce({ unitRosterTitle: "Members" });
 
