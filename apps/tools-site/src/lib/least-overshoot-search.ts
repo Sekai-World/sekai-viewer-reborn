@@ -80,6 +80,37 @@ const countBits = (bits: Uint32Array): number => {
   return count;
 };
 
+/** Adds every frontier bit plus every deficit, for a frontier with few bits. */
+const addEachBit = (
+  frontier: Uint32Array,
+  deficits: readonly number[],
+  cap: number,
+  next: Uint32Array
+): void => {
+  forEachBit(frontier, (base) => {
+    for (const deficit of deficits) {
+      const sum = base + deficit;
+      if (sum > cap) break;
+      next[sum >>> 5] |= 1 << (sum & 31);
+    }
+  });
+};
+
+/** Adds the whole frontier shifted up by one deficit, a word at a time. */
+const addShifted = (frontier: Uint32Array, deficit: number, next: Uint32Array): void => {
+  const words = next.length;
+  const wordShift = deficit >>> 5;
+  const bitShift = deficit & 31;
+  for (let word = 0; word + wordShift < words; word += 1) {
+    const value = frontier[word];
+    if (value === 0) continue;
+    next[word + wordShift] |= value << bitShift;
+    if (bitShift !== 0 && word + wordShift + 1 < words) {
+      next[word + wordShift + 1] |= value >>> (32 - bitShift);
+    }
+  }
+};
+
 /** Sums of at most j positive deficits up to `cap`, one bitset per j, built only as far as asked. */
 class DeficitLayers {
   private readonly layers: Uint32Array[];
@@ -126,30 +157,13 @@ class DeficitLayers {
 
     if (frontierBits < words) {
       meter.charge(frontierBits * deficits.length);
-      forEachBit(frontier, (base) => {
-        for (const deficit of deficits) {
-          const sum = base + deficit;
-          if (sum > cap) break;
-          next[sum >>> 5] |= 1 << (sum & 31);
-        }
-      });
+      addEachBit(frontier, deficits, cap, next);
     } else {
       meter.charge(words * deficits.length);
-      for (const deficit of deficits) {
-        const wordShift = deficit >>> 5;
-        const bitShift = deficit & 31;
-        for (let word = 0; word + wordShift < words; word += 1) {
-          const value = frontier[word];
-          if (value === 0) continue;
-          next[word + wordShift] |= value << bitShift;
-          if (bitShift !== 0 && word + wordShift + 1 < words) {
-            next[word + wordShift + 1] |= value >>> (32 - bitShift);
-          }
-        }
-      }
+      for (const deficit of deficits) addShifted(frontier, deficit, next);
     }
 
-    const previous = this.layers[this.layers.length - 1];
+    const previous = this.layers.at(-1) as Uint32Array;
     const newFrontier = new Uint32Array(words);
     for (let word = 0; word < words; word += 1) {
       newFrontier[word] = next[word] & ~previous[word];
@@ -225,7 +239,7 @@ type Normalized = { unit: number; yields: number[]; need: number };
 
 /** Dividing by the common factor keeps every sum whole and widens nothing. */
 const normalize = (yields: readonly number[], need: number): Normalized => {
-  const unit = yields.reduce(greatestCommonDivisor);
+  const unit = yields.reduce((left, right) => greatestCommonDivisor(left, right));
   return {
     unit,
     yields: yields.map((value) => value / unit).sort((left, right) => right - left),
@@ -257,7 +271,7 @@ const searchWithRepeats = (
 ): LeastOvershootOutcome => {
   const { unit, yields, need } = normalize(distinctYields, rawNeed);
   const largest = yields[0];
-  const smallest = yields[yields.length - 1];
+  const smallest = yields.at(-1) as number;
   const fewest = Math.ceil(need / largest);
   if (fewest > budget) return { status: "plays-limit" };
 
@@ -317,6 +331,57 @@ const searchWithRepeats = (
   return { status: "solved", playsByYield: bestPlays };
 };
 
+/** The unused row whose yield is closest to `average`; rows are sorted from the largest down. */
+const closestUnusedRow = (yields: readonly number[], used: Uint8Array, average: number): number => {
+  let low = 0;
+  let high = yields.length;
+  while (low < high) {
+    const middle = (low + high) >>> 1;
+    if (yields[middle] > average) low = middle + 1;
+    else high = middle;
+  }
+  let above = low - 1;
+  let below = low;
+  while (above >= 0 && used[above] === 1) above -= 1;
+  while (below < yields.length && used[below] === 1) below += 1;
+  if (below >= yields.length) return above;
+  if (above < 0) return below;
+  return Math.abs(yields[above] - average) <= Math.abs(yields[below] - average) ? above : below;
+};
+
+/** Two unused rows making exactly `total`, if there are any. */
+const findExactPair = (
+  yields: readonly number[],
+  used: Uint8Array,
+  total: number
+): [number, number] | null => {
+  let front = 0;
+  let back = yields.length - 1;
+  while (front < back) {
+    if (used[front] === 1) front += 1;
+    else if (used[back] === 1) back -= 1;
+    else if (yields[front] + yields[back] === total) return [front, back];
+    else if (yields[front] + yields[back] > total) front += 1;
+    else back -= 1;
+  }
+  return null;
+};
+
+/** The rows of a closest-to-average head and a pair making `need` exactly, if there is one. */
+const closeExactly = (yields: readonly number[], need: number, plays: number): number[] | null => {
+  const used = new Uint8Array(yields.length);
+  const picked: number[] = [];
+  let rest = need;
+  for (let left = plays; left > 2; left -= 1) {
+    const pick = closestUnusedRow(yields, used, rest / left);
+    used[pick] = 1;
+    picked.push(pick);
+    rest -= yields[pick];
+  }
+  const pair = findExactPair(yields, used, rest);
+  return pair === null ? null : [...picked, ...pair];
+};
+
 /**
  * Each row once: a greedy head closed by an exact pair proves a plan outright when it hits the
  * target at the fewest plays; otherwise branch and bound over the rows settles that play count.
@@ -338,47 +403,6 @@ const searchWithoutRepeats = (
   let fewest = 1;
   while (prefix[fewest] < need) fewest += 1;
   if (fewest > budget) return { status: "plays-limit" };
-
-  /** The indices of a closest-to-average head and a pair making `need` exactly, if there is one. */
-  const closeExactly = (plays: number): number[] | null => {
-    meter.charge(count + plays);
-    const used = new Uint8Array(count);
-    const picked: number[] = [];
-    let rest = need;
-    for (let left = plays; left > 2; left -= 1) {
-      const average = rest / left;
-      let low = 0;
-      let high = count;
-      while (low < high) {
-        const middle = (low + high) >>> 1;
-        if (yields[middle] > average) low = middle + 1;
-        else high = middle;
-      }
-      let above = low - 1;
-      let below = low;
-      while (above >= 0 && used[above] === 1) above -= 1;
-      while (below < count && used[below] === 1) below += 1;
-      const pick =
-        below >= count ||
-        (above >= 0 && Math.abs(yields[above] - average) <= Math.abs(yields[below] - average))
-          ? above
-          : below;
-      used[pick] = 1;
-      picked.push(pick);
-      rest -= yields[pick];
-    }
-
-    let front = 0;
-    let back = count - 1;
-    while (front < back) {
-      if (used[front] === 1) front += 1;
-      else if (used[back] === 1) back -= 1;
-      else if (yields[front] + yields[back] === rest) return [...picked, front, back];
-      else if (yields[front] + yields[back] > rest) front += 1;
-      else back -= 1;
-    }
-    return null;
-  };
 
   let bestOvershoot = Infinity;
   let bestRows: number[] = [];
@@ -409,7 +433,8 @@ const searchWithoutRepeats = (
 
   for (let plays = fewest; plays <= Math.min(budget, count); plays += 1) {
     if (prefix[count] - prefix[count - plays] - need >= bestOvershoot) break;
-    const closed = plays >= 2 ? closeExactly(plays) : null;
+    meter.charge(count + plays);
+    const closed = plays >= 2 ? closeExactly(yields, need, plays) : null;
     if (closed !== null) {
       bestOvershoot = 0;
       bestRows = closed;
