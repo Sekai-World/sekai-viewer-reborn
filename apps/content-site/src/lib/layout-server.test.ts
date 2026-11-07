@@ -108,6 +108,18 @@ describe("content-site layout server load", () => {
     );
   });
 
+  it("loads the costume namespace for the costume list and detail", async () => {
+    loadI18nMessageBundle.mockResolvedValue({});
+
+    await load(createLoadEvent("/costumes/jp"));
+    await load(createLoadEvent("/costume/jp/11"));
+
+    expect(loadI18nMessageBundle).toHaveBeenCalledTimes(2);
+    for (const call of loadI18nMessageBundle.mock.calls) {
+      expect(call[1]).toEqual(["common", "costume", "error"]);
+    }
+  });
+
   it("loads the unit namespace for unit detail routes", async () => {
     loadI18nMessageBundle.mockResolvedValueOnce({ unitRosterTitle: "Members" });
 
