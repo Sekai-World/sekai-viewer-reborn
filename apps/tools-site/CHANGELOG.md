@@ -1,5 +1,34 @@
 # @apps/tools-site
 
+## 0.2.0
+
+### Minor Changes
+
+- a09522a: Make the target plan's "Closest to the target" objective work for score targets, and for event-point targets above the old limit. An exact search now answers when the sum table would be too large, and still refuses a request it cannot prove within its limits. Update the English hint shown for such a request. Content-site and media-lab-site only pick up the shared i18n source package.
+- a17f8fa: Add Auto mode to the tools-site music recommender and target plan. Auto ranks songs and plans targets with the Auto base score and Auto skill array under the same deck inputs as Solo, and results show which formula produced them. The mode strip now switches between Solo and Auto, and the other modes stay unavailable. Content-site and media-lab-site only pick up the shared i18n source package.
+
+### Patch Changes
+
+- a5a396f: Add a comics page to content-site at `/comics/[region]`, with a sidebar entry under Library. It lists the comics in the region's master data in ID order, with images from that region, and can be searched by title. A preview opens from each comic, with previous and next buttons, the left and right arrow keys, download, and open in a new window. Back closes the preview.
+
+  Regenerate the master API SDK for the new `comics` routes and add the page's English source strings in a new content-site `comic` namespace. The other apps are included only because they consume these shared packages. Their behavior does not change.
+
+- 22dcbf1: Add a 3D costume directory to content-site at `/costumes/[region]`, with a sidebar entry under Library. It lists whole outfits, one per name across every character who has it, with filters by character and rarity, a name search, and ID order. Each outfit has its own page at `/costume/[region]/[id]` with its designer, rarity, publish time, how to obtain it, characters, and colors.
+
+  Regenerate the master API SDK for the new `costume3dOutfits` routes and add the pages' English source strings in a new content-site `costume` namespace. The other apps are included only because they consume these shared packages. Their behavior does not change.
+
+- 889bfba: Add a MySekai photo frames page to content-site at `/mysekai/photo-frames/[region]`, with a sidebar entry under MySekai. It lists every photo frame of the region in the game's order, with its preview and name, and can be searched by name. Previews always come from the JP asset server, the only one that has them.
+
+  Add the English source strings for the page to the content-site `common` and `mysekai` namespaces. Media-lab-site and tools-site are included only because they consume `@platform/i18n-source`. Their behavior does not change.
+
+- Updated dependencies [a5a396f]
+- Updated dependencies [22dcbf1]
+- Updated dependencies [a09522a]
+- Updated dependencies [889bfba]
+- Updated dependencies [a17f8fa]
+  - @platform/i18n-source@0.4.0
+  - @platform/sekai-master-api-sdk@1.1.1
+
 ## 0.1.1
 
 ### Patch Changes
