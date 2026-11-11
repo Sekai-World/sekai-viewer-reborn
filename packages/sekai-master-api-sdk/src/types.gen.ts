@@ -278,6 +278,21 @@ export type SharedComicResponse = {
     toUserRank?: number;
 };
 
+export type SharedCostume2dListResponse = {
+    items?: Array<SharedCostume2dResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedCostume2dResponse = {
+    character2dId?: number;
+    costume2dGroupId?: number;
+    fromMmddhh?: string;
+    id?: number;
+    live2dAssetbundleName?: string;
+    spineAssetbundleName?: string;
+    toMmddhh?: string;
+};
+
 export type SharedCostume3dListResponse = {
     items?: Array<SharedCostume3dObjectResponse>;
     pagination?: SharedPaginationResponse;
@@ -3204,6 +3219,57 @@ export type GetComicsByRegionByIdResponses = {
 };
 
 export type GetComicsByRegionByIdResponse = GetComicsByRegionByIdResponses[keyof GetComicsByRegionByIdResponses];
+
+export type GetCostume2DsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+        /**
+         * Keep only costumes with a Spine model
+         */
+        has_spine?: boolean;
+    };
+    url: '/costume2ds/{region}/list';
+};
+
+export type GetCostume2DsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetCostume2DsByRegionListError = GetCostume2DsByRegionListErrors[keyof GetCostume2DsByRegionListErrors];
+
+export type GetCostume2DsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedCostume2dListResponse;
+};
+
+export type GetCostume2DsByRegionListResponse = GetCostume2DsByRegionListResponses[keyof GetCostume2DsByRegionListResponses];
 
 export type GetCostume3dOutfitsByRegionListData = {
     body?: never;
