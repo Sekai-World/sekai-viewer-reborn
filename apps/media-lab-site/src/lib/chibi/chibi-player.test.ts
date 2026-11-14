@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { resolveChibiModelDescriptor, type ChibiModelDescriptor } from "./chibi-model";
 import {
+  ChibiAssetLoadError,
   createChibiPlayer,
   readChibiAtlasPageNames,
   type ChibiAssetResponse,
@@ -176,9 +177,16 @@ describe("createChibiPlayer", () => {
   it("fails when the atlas cannot be fetched", async () => {
     const { player, spine } = createHarness({ atlasStatus: 404 });
 
-    await expect(
-      player.load(describeModel("sd_01ichika_normal"), HOST, new AbortController().signal)
-    ).rejects.toThrow("Failed to load Chibi atlas (404)");
+    const failure = await player
+      .load(describeModel("sd_01ichika_normal"), HOST, new AbortController().signal)
+      .catch((cause: unknown) => cause);
+
+    expect(failure).toBeInstanceOf(ChibiAssetLoadError);
+    expect(failure).toMatchObject({
+      asset: "atlas",
+      status: 404,
+      message: "Failed to load Chibi atlas (404)"
+    });
     expect(spine.createModel).not.toHaveBeenCalled();
   });
 

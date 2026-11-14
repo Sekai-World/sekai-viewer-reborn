@@ -169,11 +169,17 @@ export const masterRows: Record<string, unknown[]> = {
       ]
     }
   ],
+  costume2ds: [
+    { id: 1, character2dId: 1, spineAssetbundleName: "sd_01hero_normal" },
+    { id: 2, character2dId: 1, spineAssetbundleName: "v2_sd_01hero_school" },
+    { id: 3, character2dId: 9, spineAssetbundleName: "sd_mob001" }
+  ],
   character2ds: [
     {
       id: 1,
       characterType: "game_character",
       characterId: 1,
+      gameCharacterId: 1,
       unit: "testunit",
       assetName: "test_hero"
     }

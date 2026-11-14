@@ -1,12 +1,19 @@
 import type { I18nMessages, I18nTranslator } from "@platform/i18n-runtime";
+import chibiSourceMessages from "@platform/i18n-source/media-lab-site/chibi.json";
 import commonSourceMessages from "@platform/i18n-source/media-lab-site/common.json";
 import homeSourceMessages from "@platform/i18n-source/media-lab-site/home.json";
 import live2dSourceMessages from "@platform/i18n-source/media-lab-site/live2d.json";
 import storyReaderSourceMessages from "@platform/i18n-source/media-lab-site/story-reader.json";
 
 // Route-aware namespaces: `common` powers the shared shell, while `home`,
-// `live2d`, and `story-reader` scope their route tracks.
-export const mediaLabI18nNamespaces = ["common", "home", "live2d", "story-reader"] as const;
+// `live2d`, `chibi`, and `story-reader` scope their route tracks.
+export const mediaLabI18nNamespaces = [
+  "common",
+  "home",
+  "live2d",
+  "chibi",
+  "story-reader"
+] as const;
 
 export type I18nNamespace = (typeof mediaLabI18nNamespaces)[number];
 export type MediaLabTranslator = I18nTranslator;
@@ -20,6 +27,7 @@ const localSourceMessagesByNamespace: Record<I18nNamespace, I18nMessages> = {
   common: commonSourceMessages,
   home: homeSourceMessages,
   live2d: live2dSourceMessages,
+  chibi: chibiSourceMessages,
   "story-reader": storyReaderSourceMessages
 };
 

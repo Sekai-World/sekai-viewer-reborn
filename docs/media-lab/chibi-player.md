@@ -1,7 +1,7 @@
 # Media Lab Chibi Player
 
-Runtime and asset descriptor for Chibi (SD) models in `media-lab-site`
-(issue #621). There is no user-facing route yet; that is issue #622.
+Runtime, asset descriptor and viewer routes for Chibi (SD) models in
+`media-lab-site` (issues #621 and #622).
 
 Asset facts (families, paths, which models exist) live in the workspace
 knowledge base: `docs/game-data-knowledge/assets.md`, "Chibi（SD 小人）资源".
@@ -17,6 +17,8 @@ All under `apps/media-lab-site/src/lib/chibi/`:
 - `chibi-player.ts` — `createChibiPlayer(runtime).load(descriptor, host, signal)`
   returns a resource with `animations`, `setAnimation`, `resize` and `destroy`.
   It has no browser imports; the runtime is injected.
+- `chibi-catalog.ts` — catalog types shared by the server and the pages, and
+  the labels derived from asset names.
 - `chibi-spine-runtime.ts` — the browser runtime: `pixi.js` 7 and
   `@esotericsoftware/spine-pixi` 4.1, both imported lazily.
 
@@ -32,13 +34,31 @@ Behavior worth knowing:
 - Texture alpha follows the atlas: `pma:true` (main and v2 families) is
   uploaded as-is, an atlas without it (mob family) is premultiplied by Pixi.
 
-## Developer preview
+## Routes (issue #622)
 
-`/dev/chibi` shows one model from each family. It exists only in the dev
-server and returns 404 in production builds.
+- `/chibi` — the catalog. `src/lib/server/chibi-catalog.ts` reads every page
+  of `GET /costume2ds/jp/list?has_spine=true`, lists each asset name once and
+  groups models by game character through the Character2D lookup that Live2D
+  already uses. Models of mob and other non-playable characters share the
+  "Others" tab. The loader streams the catalog; a failed character lookup
+  still lists the models, ungrouped.
+- `/chibi/[modelName]` — the viewer. The descriptor comes from the name alone,
+  so the page does not call the master API. A name outside the known families
+  is a 404. A well-formed name whose atlas the asset host answers with 404 is
+  shown as "not available" (`ChibiAssetLoadError.status`); any other failure
+  offers a retry.
+
+Master data has no display names for Chibi costumes, so labels are derived
+from the asset name (`describeChibiModelName` in `chibi-catalog.ts`).
+
+The e2e suite covers the catalog states and the viewer's failure states. It
+does not play a model: game skeleton files cannot be committed as fixtures.
+Check playback by hand against the dev API.
+
+## Local preview
 
 The asset host rejects requests whose `Referer` is a `localhost` origin, so
-open the preview through `127.0.0.1` and start the dev server with
+open the site through `127.0.0.1` and start the dev server with
 `--host 127.0.0.1`:
 
 ```bash

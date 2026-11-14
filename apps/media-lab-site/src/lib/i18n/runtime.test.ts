@@ -8,7 +8,7 @@ import {
 
 describe("media-lab-site local i18n runtime", () => {
   it("exposes route-aware namespaces", () => {
-    expect(mediaLabI18nNamespaces).toEqual(["common", "home", "live2d", "story-reader"]);
+    expect(mediaLabI18nNamespaces).toEqual(["common", "home", "live2d", "chibi", "story-reader"]);
   });
 
   it("merges the requested local namespaces", () => {

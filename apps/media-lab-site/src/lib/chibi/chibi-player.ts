@@ -95,14 +95,30 @@ const assertSingleKnownTexturePage = (atlasText: string): void => {
   }
 };
 
+/** The model's own atlas, or the skeleton its whole family shares. */
+export type ChibiAssetKind = "atlas" | "skeleton";
+
+/** A model asset the host answered with a non-success status. */
+export class ChibiAssetLoadError extends Error {
+  readonly asset: ChibiAssetKind;
+  readonly status: number;
+
+  constructor(asset: ChibiAssetKind, status: number) {
+    super(`Failed to load Chibi ${asset} (${status})`);
+    this.name = "ChibiAssetLoadError";
+    this.asset = asset;
+    this.status = status;
+  }
+}
+
 const fetchOk = async (
   fetchAsset: ChibiAssetFetcher,
   url: string,
-  label: string,
+  asset: ChibiAssetKind,
   signal?: AbortSignal
 ): Promise<ChibiAssetResponse> => {
   const response = await fetchAsset(url, signal);
-  if (!response.ok) throw new Error(`Failed to load Chibi ${label} (${response.status})`);
+  if (!response.ok) throw new ChibiAssetLoadError(asset, response.status);
   return response;
 };
 
