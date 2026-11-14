@@ -53,4 +53,5 @@ Implementation patterns, guides, and records:
 - [`viewer-implementation/tools-site-target-planner.md`](viewer-implementation/tools-site-target-planner.md)
 - [`viewer-implementation/tools-site-ranking-snapshot-time-groups.md`](viewer-implementation/tools-site-ranking-snapshot-time-groups.md)
 - [`viewer-implementation/tools-site-yield-validation.md`](viewer-implementation/tools-site-yield-validation.md)
+- [`viewer-implementation/tools-site-yield-duration-energy.md`](viewer-implementation/tools-site-yield-duration-energy.md)
 - [`viewer-implementation/visual-qa.md`](viewer-implementation/visual-qa.md)
