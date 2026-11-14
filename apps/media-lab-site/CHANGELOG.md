@@ -1,5 +1,19 @@
 # @apps/media-lab-site
 
+## 0.2.0
+
+### Minor Changes
+
+- aede89f: Add Chibi Studio to media-lab: a catalog of the JP Chibi models grouped by character, and a viewer that plays a model's animations on a Spine 4.1 stage.
+
+### Patch Changes
+
+- e09af57: Show the live bonus a target plan consumes and let a plan be limited to a maximum live bonus, using the boost table from the master API. Regenerate the master API SDK with the `boosts` list endpoint.
+- 65321e6: Regenerate the master API SDK with the `costume2ds` list endpoint, which the Chibi viewer will read its model list from.
+- Updated dependencies [e09af57]
+- Updated dependencies [65321e6]
+  - @platform/sekai-master-api-sdk@1.1.2
+
 ## 0.1.2
 
 ### Patch Changes
