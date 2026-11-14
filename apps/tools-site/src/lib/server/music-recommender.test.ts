@@ -12,6 +12,7 @@ import {
   type MusicMetaFetcher,
   type MusicRecommenderPageData
 } from "#lib/server/music-recommender.js";
+import type { RegionBoostLoader } from "#lib/server/region-boosts.js";
 import type { RegionChartLoader } from "#lib/server/region-charts.js";
 import { load as loadMusicRecommenderPage } from "../../routes/music-recommender/+page.server";
 
@@ -672,6 +673,185 @@ describe("target plan in the page data", () => {
 
     expect(result.status).toBe("unavailable");
     expect(result.plan).toMatchObject({ status: "invalid", invalidFields: ["target"] });
+  });
+});
+
+describe("live bonus in the target plan", () => {
+  // Every fixture song yields 4,100 event points at multiplier 1, so 143,500 at multiplier 35.
+  const deckAt = (boostMultiplier: number) =>
+    `mode=jp-solo&deckPower=200000&deckBonus=0&boostMultiplier=${boostMultiplier}&skillRates=0,0,0,0,0,0&noSkill=false&metric=eventPoints`;
+  const planFor = (target: number, maxPlays = 10) =>
+    `target=${target}&objective=fewestPlays&maxPlays=${maxPlays}&repeats=true`;
+
+  // The JP `boosts.json` pairs of 2026-11-12.
+  const boostTable = (): RegionBoostLoader =>
+    vi.fn(async () => ({
+      status: "available" as const,
+      boosts: [1, 5, 10, 15, 20, 25, 27, 29, 31, 33, 35].map((eventPointRate, costBoost) => ({
+        costBoost,
+        eventPointRate
+      }))
+    }));
+  const noBoostTable = (): RegionBoostLoader =>
+    vi.fn(async () => ({ status: "unavailable" as const }));
+  const allCharts: RegionChartLoader = async () => ({
+    status: "available",
+    charts: new Set(
+      Array.from({ length: MUSIC_META_MINIMUM_RECORD_COUNT }, (_, index) =>
+        makeRegionChartKey(index + 1, "expert")
+      )
+    )
+  });
+
+  const load = async (query: string, loadBoosts: RegionBoostLoader = boostTable()) => {
+    const { fetcher } = makeFetcher(responseFor(JSON.stringify(makePayload())));
+    const result = await loadMusicRecommenderPageData(
+      new URLSearchParams(query),
+      fetcher,
+      () => NOW,
+      allCharts,
+      loadBoosts
+    );
+    return { result, loadBoosts };
+  };
+
+  it("reports the lives times the cost of the entered boost", async () => {
+    const { result } = await load(`${deckAt(35)}&${planFor(300_000)}`);
+
+    expect(result.plan).toMatchObject({
+      status: "ready",
+      plan: { plays: 3, total: 430_500 },
+      liveBonus: { status: "available", perLive: 10, total: 30, limit: null }
+    });
+  });
+
+  it("plans within a live bonus limit that still allows enough lives", async () => {
+    const { result } = await load(`${deckAt(35)}&${planFor(300_000)}&maxLiveBonus=30`);
+
+    expect(result.plan).toMatchObject({
+      status: "ready",
+      plan: { plays: 3 },
+      liveBonus: { status: "available", perLive: 10, total: 30, limit: 30 }
+    });
+  });
+
+  it("refuses a plan that needs more live bonus than allowed, naming that limit", async () => {
+    // 29 live bonus allows two lives of 10, which reach 287,000.
+    const oneShort = await load(`${deckAt(35)}&${planFor(300_000)}&maxLiveBonus=29`);
+    const lessThanOneLive = await load(`${deckAt(35)}&${planFor(300_000)}&maxLiveBonus=9`);
+
+    expect(oneShort.result.plan).toMatchObject({
+      status: "unavailable",
+      reason: "live-bonus-limit"
+    });
+    expect(lessThanOneLive.result.plan).toMatchObject({
+      status: "unavailable",
+      reason: "live-bonus-limit"
+    });
+  });
+
+  it("names the live bonus limit when required songs alone exceed it", async () => {
+    // Three required lives of 10 against 20 live bonus, well within ten lives.
+    const { result } = await load(
+      `${deckAt(35)}&${planFor(300_000)}&maxLiveBonus=20&required=1:expert,2:expert,3:expert`
+    );
+
+    expect(result.plan).toMatchObject({ status: "unavailable", reason: "live-bonus-limit" });
+  });
+
+  it("applies the limit to the other objective, without repeats, and in Auto mode", async () => {
+    const exact = "target=287000&objective=leastOvershoot&maxPlays=10&repeats=false";
+    const fits = await load(`${deckAt(35)}&${exact}&maxLiveBonus=20`);
+    const tooTight = await load(`${deckAt(35)}&${exact}&maxLiveBonus=19`);
+    const auto = await load(
+      `${deckAt(35).replace("mode=jp-solo", "mode=auto")}&${planFor(300_000, 100)}&maxLiveBonus=1000`
+    );
+
+    expect(fits.result.plan).toMatchObject({
+      status: "ready",
+      plan: { objective: "leastOvershoot", allowRepeats: false, plays: 2, overshoot: 0 },
+      liveBonus: { total: 20, limit: 20 }
+    });
+    expect(tooTight.result.plan).toMatchObject({ reason: "live-bonus-limit" });
+    if (auto.result.plan.status !== "ready") throw new Error("Expected an Auto plan.");
+    expect(auto.result.plan.liveBonus).toEqual({
+      status: "available",
+      perLive: 10,
+      total: auto.result.plan.plan.plays * 10,
+      limit: 1000
+    });
+  });
+
+  it("names the lives limit when that is the tighter one", async () => {
+    const { result } = await load(`${deckAt(35)}&${planFor(300_000, 2)}&maxLiveBonus=1000`);
+
+    expect(result.plan).toMatchObject({ status: "unavailable", reason: "plays-limit" });
+  });
+
+  it("does not limit lives that use no live bonus", async () => {
+    const { result } = await load(`${deckAt(1)}&${planFor(10_000)}&maxLiveBonus=1`);
+
+    expect(result.plan).toMatchObject({
+      status: "ready",
+      plan: { plays: 3 },
+      liveBonus: { status: "available", perLive: 0, total: 0, limit: 1 }
+    });
+  });
+
+  it("still plans for a multiplier outside the table, without a live bonus", async () => {
+    const { result } = await load(`${deckAt(4)}&${planFor(10_000)}`);
+
+    expect(result.plan).toMatchObject({
+      status: "ready",
+      plan: { plays: 1, total: 16_400 },
+      liveBonus: { status: "not-in-table" }
+    });
+  });
+
+  it("refuses a live bonus limit for a multiplier outside the table", async () => {
+    const { result } = await load(`${deckAt(4)}&${planFor(10_000)}&maxLiveBonus=50`);
+
+    expect(result.plan).toMatchObject({
+      status: "unavailable",
+      reason: "boost-not-in-table",
+      invalidFields: ["boostMultiplier"]
+    });
+  });
+
+  it("plans without a live bonus when the table cannot be read, and refuses a limit", async () => {
+    const plain = await load(`${deckAt(5)}&${planFor(10_000)}`, noBoostTable());
+    const limited = await load(`${deckAt(5)}&${planFor(10_000)}&maxLiveBonus=50`, noBoostTable());
+
+    expect(plain.result.plan).toMatchObject({
+      status: "ready",
+      liveBonus: { status: "unavailable" }
+    });
+    expect(limited.result.plan).toMatchObject({
+      status: "unavailable",
+      reason: "live-bonus-unavailable"
+    });
+  });
+
+  it("reads the table of the selected region, and JP when none is selected", async () => {
+    const jp = await load(`${deckAt(5)}&${planFor(10_000)}`);
+    const kr = await load(`${deckAt(5)}&region=kr&${planFor(10_000)}`);
+
+    expect(jp.loadBoosts).toHaveBeenCalledExactlyOnceWith("jp");
+    expect(kr.loadBoosts).toHaveBeenCalledExactlyOnceWith("kr");
+    expect(kr.result.plan).toMatchObject({ status: "ready", liveBonus: { total: 1 } });
+  });
+
+  it("does not read the table when there is no plan to describe", async () => {
+    const idle = await load(deckAt(5));
+    const invalid = await load(`${deckAt(5)}&target=0&objective=fewestPlays&maxPlays=1`);
+    const noYields = await load(`mode=jp-solo&${planFor(10_000)}`);
+
+    expect(idle.result.plan.status).toBe("idle");
+    expect(invalid.result.plan.status).toBe("invalid");
+    expect(noYields.result.plan).toMatchObject({ reason: "yields-unavailable" });
+    for (const { loadBoosts } of [idle, invalid, noYields]) {
+      expect(loadBoosts).not.toHaveBeenCalled();
+    }
   });
 });
 

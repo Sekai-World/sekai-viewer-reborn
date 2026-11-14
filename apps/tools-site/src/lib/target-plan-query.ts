@@ -1,4 +1,5 @@
 import { MUSIC_META_DIFFICULTIES, type MusicMetaDifficulty } from "#lib/music-recommender.js";
+import { PLAN_MAX_LIVE_BONUS } from "#lib/plan-live-bonus.js";
 import {
   PLANNER_MAX_PLAYS,
   PLANNER_MAX_TARGET,
@@ -15,6 +16,7 @@ export const PLAN_QUERY_PARAMETER_NAMES = [
   "target",
   "objective",
   "maxPlays",
+  "maxLiveBonus",
   "repeats",
   "difficulties",
   "required"
@@ -28,6 +30,8 @@ export type PlanFormInputs = {
   target: string;
   objective: PlannerObjective;
   maxPlays: string;
+  /** Empty means no limit on live bonus. */
+  maxLiveBonus: string;
   allowRepeats: boolean;
   /** Empty means every difficulty. */
   difficulties: MusicMetaDifficulty[];
@@ -38,6 +42,8 @@ export type PlanRequest = {
   target: number;
   objective: PlannerObjective;
   maxPlays: number;
+  /** The most live bonus the plan may consume; null means no limit. */
+  maxLiveBonus: number | null;
   allowRepeats: boolean;
   allowedDifficulties: MusicMetaDifficulty[] | null;
   requiredSongs: PlannerSongRef[];
@@ -59,6 +65,7 @@ export const makeDefaultPlanInputs = (): PlanFormInputs => ({
   target: "",
   objective: DEFAULT_PLAN_OBJECTIVE,
   maxPlays: DEFAULT_PLAN_MAX_PLAYS,
+  maxLiveBonus: "",
   allowRepeats: true,
   difficulties: [],
   requiredSongs: ""
@@ -101,6 +108,14 @@ const readDifficulties = (
     list.push(name);
   });
   return { list, selected: list };
+};
+
+/** An optional whole number: absent or blank means no limit, anything unparsable is invalid. */
+const readMaxLiveBonus = (value: string | null, issues: Issues): number | null => {
+  if (value === null || value.trim() === "") return null;
+  const parsed = readWholeNumber(value, PLAN_MAX_LIVE_BONUS);
+  if (parsed === null) issues.invalidFields.push("maxLiveBonus");
+  return parsed;
 };
 
 /** Songs are written as `songId:difficulty`, separated by commas. */
@@ -170,6 +185,8 @@ export const parseTargetPlanQuery = (searchParams: URLSearchParams): ParsedPlanQ
   const maxPlays = readRequiredField(searchParams, "maxPlays", issues, (text) =>
     readWholeNumber(text, PLANNER_MAX_PLAYS)
   );
+  const maxLiveBonusText = readSingle(searchParams, "maxLiveBonus", issues);
+  const maxLiveBonus = readMaxLiveBonus(maxLiveBonusText, issues);
   const repeats = readRequiredField(searchParams, "repeats", issues, parseBoolean);
   const difficulties = readDifficulties(readSingle(searchParams, "difficulties", issues), issues);
   const requiredText = readSingle(searchParams, "required", issues);
@@ -179,6 +196,7 @@ export const parseTargetPlanQuery = (searchParams: URLSearchParams): ParsedPlanQ
     target: target.text ?? defaults.target,
     objective: objective.value ?? defaults.objective,
     maxPlays: maxPlays.text ?? defaults.maxPlays,
+    maxLiveBonus: maxLiveBonusText ?? defaults.maxLiveBonus,
     allowRepeats: repeats.value ?? defaults.allowRepeats,
     difficulties: difficulties.list,
     requiredSongs: requiredText ?? defaults.requiredSongs
@@ -201,6 +219,7 @@ export const parseTargetPlanQuery = (searchParams: URLSearchParams): ParsedPlanQ
       target: target.value as number,
       objective: objective.value as PlannerObjective,
       maxPlays: maxPlays.value as number,
+      maxLiveBonus,
       allowRepeats: repeats.value as boolean,
       allowedDifficulties: difficulties.selected,
       requiredSongs
@@ -214,6 +233,7 @@ export const buildPlanQuery = (values: PlanFormInputs): Record<string, string> =
     target: values.target.trim(),
     objective: values.objective,
     maxPlays: values.maxPlays.trim(),
+    maxLiveBonus: values.maxLiveBonus.trim(),
     repeats: String(values.allowRepeats),
     difficulties: values.difficulties.join(","),
     required: values.requiredSongs.trim()
