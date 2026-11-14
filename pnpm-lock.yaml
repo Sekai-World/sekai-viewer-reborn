@@ -355,6 +355,9 @@ importers:
 
   apps/media-lab-site:
     dependencies:
+      '@esotericsoftware/spine-pixi':
+        specifier: ~4.1.56
+        version: 4.1.56(@pixi/assets@7.4.3(@pixi/core@7.4.3))(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))(@pixi/graphics@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))(@pixi/sprite@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))))(@pixi/mesh@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3)))(@pixi/text@7.4.3(@pixi/core@7.4.3)(@pixi/sprite@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))))
       '@iconify/svelte':
         specifier: ^5.2.1
         version: 5.2.4(svelte@5.57.3(@typescript-eslint/types@8.72.2))
@@ -985,6 +988,19 @@ packages:
   '@eslint/plugin-kit@0.7.3':
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
+  '@esotericsoftware/spine-core@4.1.56':
+    resolution: {integrity: sha512-sJbqIof+yE7LbkImbJt2cHfYcGBqadABttx8RY3ggu4JCa0sZLGdh+tWwe0+aRoN/91VI0rGSgG16fmkZ7Hc8Q==}
+
+  '@esotericsoftware/spine-pixi@4.1.56':
+    resolution: {integrity: sha512-QKvEhANQ7MkNW52z8Ozl08sZhPMoH0rN+E7U1ABX376sbqzX5L6Ke8EmMm5uol/MrdzCiv/UUmXc42CtP7vfQw==}
+    peerDependencies:
+      '@pixi/assets': ^7.2.4
+      '@pixi/core': ^7.2.4
+      '@pixi/display': ^7.2.4
+      '@pixi/graphics': ^7.2.4
+      '@pixi/mesh': ^7.2.4
+      '@pixi/text': ^7.2.4
 
   '@exodus/bytes@1.16.0':
     resolution: {integrity: sha512-IcpW84uEn3N7ETtNZMlxKhfl6Pec8rUNGOTBtWbK1FKhJxIFAptZyVrvVRVBimAJxJCgc3PxepxkdWWG4DVzfA==}
@@ -4174,6 +4190,18 @@ snapshots:
     dependencies:
       '@eslint/core': 1.2.1
       levn: 0.4.1
+
+  '@esotericsoftware/spine-core@4.1.56': {}
+
+  '@esotericsoftware/spine-pixi@4.1.56(@pixi/assets@7.4.3(@pixi/core@7.4.3))(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))(@pixi/graphics@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))(@pixi/sprite@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))))(@pixi/mesh@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3)))(@pixi/text@7.4.3(@pixi/core@7.4.3)(@pixi/sprite@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))))':
+    dependencies:
+      '@esotericsoftware/spine-core': 4.1.56
+      '@pixi/assets': 7.4.3(@pixi/core@7.4.3)
+      '@pixi/core': 7.4.3
+      '@pixi/display': 7.4.3(@pixi/core@7.4.3)
+      '@pixi/graphics': 7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))(@pixi/sprite@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3)))
+      '@pixi/mesh': 7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3))
+      '@pixi/text': 7.4.3(@pixi/core@7.4.3)(@pixi/sprite@7.4.3(@pixi/core@7.4.3)(@pixi/display@7.4.3(@pixi/core@7.4.3)))
 
   '@exodus/bytes@1.16.0': {}
 
