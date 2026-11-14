@@ -156,6 +156,12 @@
       active: pathname.startsWith("/live2d") && !isStoryReaderRoute
     },
     {
+      label: translate("navigation.chibi"),
+      href: "/chibi",
+      icon: "mdi:human-child",
+      active: pathname.startsWith("/chibi")
+    },
+    {
       label: translate("navigation.assetViewer"),
       icon: "mdi:cube-outline",
       disabled: true

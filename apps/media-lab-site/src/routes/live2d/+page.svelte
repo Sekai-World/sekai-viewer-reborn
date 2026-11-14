@@ -13,6 +13,7 @@
   import { tick } from "svelte";
   import { SvelteMap } from "svelte/reactivity";
   import { createPageTitle } from "#lib/page-title.js";
+  import { getRovingTabIndex } from "#lib/roving-tabs.js";
   import type { PageData } from "./$types";
 
   type CharacterOption = {
@@ -198,12 +199,7 @@
     document.getElementById(`character-type-tab-${characterTypeGroup.key}`)?.focus();
   };
   const handleCharacterTypeKeydown = (event: KeyboardEvent, index: number) => {
-    let nextIndex: number | null = null;
-    if (event.key === "ArrowRight") nextIndex = (index + 1) % groupedCharacterTypes.length;
-    if (event.key === "ArrowLeft")
-      nextIndex = (index - 1 + groupedCharacterTypes.length) % groupedCharacterTypes.length;
-    if (event.key === "Home") nextIndex = 0;
-    if (event.key === "End") nextIndex = groupedCharacterTypes.length - 1;
+    const nextIndex = getRovingTabIndex(event.key, index, groupedCharacterTypes.length);
     if (nextIndex === null) return;
     event.preventDefault();
     void selectCharacterTypeByOffset(nextIndex);
@@ -217,12 +213,7 @@
   };
   const handleGroupKeydown = (event: KeyboardEvent, index: number) => {
     const groups = selectedCharacterTypeGroup?.groups ?? [];
-    if (groups.length === 0) return;
-    let nextIndex: number | null = null;
-    if (event.key === "ArrowRight") nextIndex = (index + 1) % groups.length;
-    if (event.key === "ArrowLeft") nextIndex = (index - 1 + groups.length) % groups.length;
-    if (event.key === "Home") nextIndex = 0;
-    if (event.key === "End") nextIndex = groups.length - 1;
+    const nextIndex = getRovingTabIndex(event.key, index, groups.length);
     if (nextIndex === null) return;
     event.preventDefault();
     void selectGroupByOffset(nextIndex);

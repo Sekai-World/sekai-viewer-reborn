@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const appRoot = path.join(repoRoot, "apps/media-lab-site");
 const sourceDir = path.join(repoRoot, "packages/i18n-source/media-lab-site");
-const namespaces = ["common", "home", "live2d", "story-reader"];
+const namespaces = ["common", "home", "live2d", "chibi", "story-reader"];
 const translatorKeyPatterns = [
   /createI18nTranslator\([^)]*\)\(\s*(?:[^,\n]+,\s*)?["']([^"'`]+)["']/g,
   /\btranslate\(\s*["']([^"'`]+)["']/g
@@ -19,6 +19,7 @@ const namespaceByRoutePattern = [
   { pattern: /src\/routes\/\+error\.svelte$/, namespace: "common" },
   { pattern: /src\/routes\/live2d\/story-reader\//, namespace: "story-reader" },
   { pattern: /src\/routes\/live2d\//, namespace: "live2d" },
+  { pattern: /src\/routes\/chibi\//, namespace: "chibi" },
   { pattern: /src\/routes\/story-reader\//, namespace: "story-reader" },
   { pattern: /src\/routes\/\+page\.svelte$/, namespace: "home" }
 ];
