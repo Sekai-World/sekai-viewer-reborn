@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { MUSIC_META_DIFFICULTIES } from "#lib/music-recommender.js";
 import { LEAST_OVERSHOOT_MAX_DEFICIT_SPAN } from "#lib/least-overshoot-search.js";
+import { SHORTEST_TIME_MAX_SPAN } from "#lib/shortest-time-search.js";
 import {
+  PLANNER_MAX_LIVE_TIME,
   PLANNER_MAX_SUM_SPAN,
   PLANNER_MAX_WORK,
   planTarget,
@@ -61,6 +63,13 @@ const assertPlanMatchesInput = (plan: TargetPlan, input: PlannerInput): void => 
   expect(plan.total).toBeGreaterThanOrEqual(input.target);
   expect(plan.overshoot).toBe(total - input.target);
   expect(plan.totals).toEqual({ score, eventPoints });
+  const times = plan.items.map(
+    (item) => (byKey.get(`${item.musicId}:${item.difficulty}`)?.time ?? null) as number | null
+  );
+  const time = times.includes(null)
+    ? null
+    : plan.items.reduce((sum, item, index) => sum + (times[index] as number) * item.plays, 0);
+  expect(plan.time).toBe(time);
   for (const required of input.requiredSongs ?? []) {
     const item = plan.items.find(
       (candidate) =>
@@ -712,5 +721,236 @@ describe("planTarget against exhaustive search", () => {
     expect(inexactCases).toBeGreaterThan(500);
     expect(requiredCases).toBeGreaterThan(100);
     expect(noRepeatCases).toBeGreaterThan(300);
+  });
+});
+
+const timed = (
+  musicId: number,
+  difficulty: string,
+  amount: number,
+  time: number | null
+): PlannerYield => ({ musicId, difficulty, score: amount, eventPoints: amount, time });
+
+describe("planTarget shortest time", () => {
+  const short = timed(1, "easy", 4, 3);
+  const long = timed(2, "master", 10, 10);
+  const shortest = (overrides: Partial<PlannerInput> = {}): PlannerInput =>
+    make({ yields: [long, short], target: 20, objective: "shortestTime", ...overrides });
+
+  it("plays many short lives when that is quicker than few long ones", () => {
+    const input = shortest();
+    const plan = ready(planTarget(input));
+
+    assertPlanMatchesInput(plan, input);
+    expect(plan).toMatchObject({
+      objective: "shortestTime",
+      optimality: "optimal",
+      plays: 5,
+      time: 15,
+      objectiveValue: 15,
+      items: [{ musicId: 1, plays: 5 }]
+    });
+  });
+
+  it("uses longer lives when the lives limit rules the quickest plan out", () => {
+    const input = shortest({ maxPlays: 4 });
+    const plan = ready(planTarget(input));
+
+    assertPlanMatchesInput(plan, input);
+    expect(plan).toMatchObject({ plays: 4, time: 19, total: 22 });
+    expect(planTarget(shortest({ maxPlays: 1 }))).toMatchObject({
+      status: "unavailable",
+      reason: "plays-limit"
+    });
+  });
+
+  it("plays each required song once and counts its time", () => {
+    const input = shortest({ requiredSongs: [{ musicId: 2, difficulty: "master" }] });
+    const plan = ready(planTarget(input));
+
+    // The long song is forced once (10 of 20); three short lives close the rest.
+    assertPlanMatchesInput(plan, input);
+    expect(plan).toMatchObject({ plays: 4, time: 19, total: 22 });
+  });
+
+  it("plans only the required songs when they already reach the target", () => {
+    const input = shortest({ target: 9, requiredSongs: [{ musicId: 2, difficulty: "master" }] });
+
+    expect(ready(planTarget(input))).toMatchObject({ plays: 1, time: 10, objectiveValue: 10 });
+  });
+
+  it("respects the difficulty filter", () => {
+    const input = shortest({ allowedDifficulties: ["master"] });
+
+    expect(ready(planTarget(input))).toMatchObject({ plays: 2, time: 20 });
+  });
+
+  it("returns the same plan whatever the input order", () => {
+    const yields = [timed(3, "hard", 4, 3), long, short, timed(4, "easy", 10, 10)];
+    const plan = ready(planTarget(shortest({ yields, target: 24 })));
+
+    expect(ready(planTarget(shortest({ yields: [...yields].reverse(), target: 24 })))).toEqual(
+      plan
+    );
+    // Equal rows are interchangeable; the lowest song id stands in.
+    expect(plan.items.map((item) => item.musicId)).toEqual([1]);
+  });
+
+  it("refuses to plan without repeats instead of approximating", () => {
+    expect(planTarget(shortest({ allowRepeats: false }))).toEqual({
+      status: "unavailable",
+      reason: "invalid-input",
+      invalidFields: ["allowRepeats"],
+      bound: null
+    });
+  });
+
+  it("refuses rows without a time, naming them", () => {
+    const yields = [long, { ...short, time: null }, row(3, "hard", 5)];
+
+    expect(planTarget(shortest({ yields }))).toMatchObject({
+      status: "unavailable",
+      reason: "invalid-input",
+      invalidFields: ["yields[1].time", "yields[2].time"]
+    });
+  });
+
+  it.each([0, -3, 1.5, Number.NaN, PLANNER_MAX_LIVE_TIME + 1, "30"])(
+    "refuses the time %s under any objective",
+    (time) => {
+      const yields = [{ ...short, time: time as number }];
+
+      expect(planTarget(make({ yields, target: 4 }))).toMatchObject({
+        reason: "invalid-input",
+        invalidFields: ["yields[0].time"]
+      });
+    }
+  );
+
+  it("reports the total time under the other objectives when every live played has a time", () => {
+    const untimed = { ...short, time: null };
+
+    expect(ready(planTarget(make({ yields: [long, short], target: 14 })))).toMatchObject({
+      plays: 2,
+      time: 13
+    });
+    // One long live and one short one; the short one has no time, so there is no total.
+    expect(ready(planTarget(make({ yields: [long, untimed], target: 14 })))).toMatchObject({
+      plays: 2,
+      time: null
+    });
+    expect(ready(planTarget(make({ target: 100 })))).toMatchObject({ time: null });
+  });
+
+  it("answers a request beyond the search limits out-of-bounds, with the limit", () => {
+    const yields = [timed(1, "easy", 1, PLANNER_MAX_LIVE_TIME)];
+
+    expect(planTarget(shortest({ yields, target: 5, maxPlays: 10 }))).toEqual({
+      status: "unavailable",
+      reason: "out-of-bounds",
+      invalidFields: [],
+      bound: {
+        name: "timeSpan",
+        limit: SHORTEST_TIME_MAX_SPAN,
+        actual: 5 * PLANNER_MAX_LIVE_TIME + 1
+      }
+    });
+  });
+
+  it("matches exhaustive search with required songs and difficulty filters", () => {
+    const random = makeRandom(20261115);
+    let feasibleCases = 0;
+    let requiredCases = 0;
+    let limitCases = 0;
+
+    for (let round = 0; round < 3_000; round += 1) {
+      const used = new Set<string>();
+      const yields: PlannerYield[] = [];
+      const songCount = random.int(1, 5);
+      while (yields.length < songCount) {
+        const difficulty = MUSIC_META_DIFFICULTIES[random.int(0, 2)];
+        const musicId = random.int(1, 3);
+        if (used.has(`${musicId}:${difficulty}`)) continue;
+        used.add(`${musicId}:${difficulty}`);
+        yields.push({
+          musicId,
+          difficulty,
+          score: random.int(1, 12),
+          eventPoints: random.int(1, 12),
+          time: random.int(1, 12)
+        });
+      }
+      const input: PlannerInput = {
+        yields,
+        metric: random.chance(0.5) ? "score" : "eventPoints",
+        target: random.int(1, 45),
+        objective: "shortestTime",
+        maxPlays: random.int(1, 6),
+        allowRepeats: true,
+        allowedDifficulties: random.chance(0.3) ? ["easy", "normal"] : null,
+        requiredSongs: yields
+          .filter(() => random.chance(0.25))
+          .slice(0, 2)
+          .map(({ musicId, difficulty }) => ({ musicId, difficulty }))
+      };
+      const result = planTarget(input);
+      if (
+        result.status === "unavailable" &&
+        ["no-candidates", "required-unavailable"].includes(result.reason)
+      ) {
+        continue;
+      }
+
+      // Every play count vector within the lives limit, with each required song at least once.
+      const allowed = input.allowedDifficulties;
+      const pool = yields.filter((entry) => !allowed || allowed.includes(entry.difficulty));
+      const isRequired = (entry: PlannerYield): boolean =>
+        (input.requiredSongs ?? []).some(
+          (song) => song.musicId === entry.musicId && song.difficulty === entry.difficulty
+        );
+      let best: { time: number; total: number } | null = null;
+      const visit = (index: number, plays: number, time: number, total: number): void => {
+        if (index === pool.length) {
+          if (total < input.target) return;
+          if (best === null || time < best.time || (time === best.time && total > best.total)) {
+            best = { time, total };
+          }
+          return;
+        }
+        const entry = pool[index];
+        for (let count = isRequired(entry) ? 1 : 0; count <= input.maxPlays - plays; count += 1) {
+          visit(
+            index + 1,
+            plays + count,
+            time + count * (entry.time as number),
+            total + count * entry[input.metric]
+          );
+        }
+      };
+      visit(0, 0, 0, 0);
+
+      const label = JSON.stringify(input);
+      if (best === null) {
+        expect(result, label).toMatchObject({ status: "unavailable", reason: "plays-limit" });
+        limitCases += 1;
+        continue;
+      }
+      const plan = ready(result);
+      assertPlanMatchesInput(plan, input);
+      expect({ time: plan.time, total: plan.total }, label).toEqual(best);
+      expect(plan.objectiveValue, label).toBe(plan.time);
+      feasibleCases += 1;
+      if (
+        (input.requiredSongs ?? []).some((song) =>
+          pool.some((entry) => isRequired(entry) && entry.musicId === song.musicId)
+        )
+      ) {
+        requiredCases += 1;
+      }
+    }
+
+    expect(feasibleCases).toBeGreaterThan(1_200);
+    expect(requiredCases).toBeGreaterThan(300);
+    expect(limitCases).toBeGreaterThan(300);
   });
 });

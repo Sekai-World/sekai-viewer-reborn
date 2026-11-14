@@ -87,9 +87,11 @@ const readyPlan = (): Plan => ({
     total: 10_200,
     totals: { score: 130_000_000, eventPoints: 10_200 },
     overshoot: 200,
+    time: null,
     objectiveValue: 3
   },
-  liveBonus: { status: "available", perLive: 10, total: 30, limit: null }
+  liveBonus: { status: "available", perLive: 10, total: 30, limit: null },
+  playTime: { status: "no-overhead" }
 });
 
 const renderPage = (data: PageData) =>
@@ -197,6 +199,73 @@ describe("target plan panel inputs", () => {
     expect(maxLiveBonus.getAttribute("aria-describedby")).toContain(error.id);
   });
 
+  it("offers the shortest play time and an empty overhead with its hint", () => {
+    renderPage(createPageData());
+
+    const objective = screen.getByLabelText("Optimize for") as HTMLSelectElement;
+    expect([...objective.options].map((option) => option.value)).toEqual([
+      "fewestPlays",
+      "leastOvershoot",
+      "shortestTime"
+    ]);
+    const overhead = screen.getByLabelText(/Seconds per live/) as HTMLInputElement;
+    expect(overhead.value).toBe("");
+    expect(overhead.getAttribute("aria-describedby")).toBe("plan-overhead-hint");
+  });
+
+  it("rejects a malformed overhead and sends nothing", async () => {
+    renderPage(createPageData());
+    await fireEvent.input(targetInput(), { target: { value: "10000" } });
+    const overhead = screen.getByLabelText(/Seconds per live/) as HTMLInputElement;
+    await fireEvent.input(overhead, { target: { value: "3601" } });
+
+    await submitPlan();
+
+    expect(goto).not.toHaveBeenCalled();
+    expect(overhead.getAttribute("aria-invalid")).toBe("true");
+    const error = screen.getByText(
+      "Enter a whole number of seconds from 0 to 3,600, or leave it empty."
+    );
+    expect(overhead.getAttribute("aria-describedby")).toContain(error.id);
+  });
+
+  it("asks for the overhead before planning the shortest play time", async () => {
+    renderPage(createPageData());
+    await fireEvent.input(targetInput(), { target: { value: "10000" } });
+    await fireEvent.change(screen.getByLabelText("Optimize for"), {
+      target: { value: "shortestTime" }
+    });
+
+    await submitPlan();
+
+    expect(goto).not.toHaveBeenCalled();
+    const overhead = screen.getByLabelText(/Seconds per live/) as HTMLInputElement;
+    expect(overhead.getAttribute("aria-invalid")).toBe("true");
+    const error = screen.getByText(/Shortest play time needs the seconds per live/);
+    expect(overhead.getAttribute("aria-describedby")).toContain(error.id);
+
+    await fireEvent.input(overhead, { target: { value: "60" } });
+    expect(screen.queryByText(/Shortest play time needs the seconds per live/)).toBeNull();
+  });
+
+  it("asks for repeats before planning the shortest play time", async () => {
+    renderPage(createPageData());
+    await fireEvent.input(targetInput(), { target: { value: "10000" } });
+    await fireEvent.input(screen.getByLabelText(/Seconds per live/), { target: { value: "60" } });
+    await fireEvent.change(screen.getByLabelText("Optimize for"), {
+      target: { value: "shortestTime" }
+    });
+    const repeats = screen.getByRole("checkbox", { name: /Allow repeating a song/ });
+    await fireEvent.click(repeats);
+
+    await submitPlan();
+
+    expect(goto).not.toHaveBeenCalled();
+    const error = screen.getByText("Shortest play time needs repeats to be allowed.");
+    expect(repeats.getAttribute("aria-invalid")).toBe("true");
+    expect(repeats.getAttribute("aria-describedby")).toBe(error.id);
+  });
+
   it("rejects malformed required songs", async () => {
     renderPage(createPageData());
     await fireEvent.input(targetInput(), { target: { value: "5000" } });
@@ -224,6 +293,7 @@ describe("target plan panel submission", () => {
     await fireEvent.input(screen.getByLabelText(/Maximum live bonus/), {
       target: { value: " 120 " }
     });
+    await fireEvent.input(screen.getByLabelText(/Seconds per live/), { target: { value: " 45 " } });
     await fireEvent.click(screen.getByRole("checkbox", { name: "easy" }));
     await fireEvent.click(screen.getByRole("checkbox", { name: "normal" }));
     await fireEvent.input(screen.getByLabelText(/Songs that must be played/), {
@@ -242,6 +312,7 @@ describe("target plan panel submission", () => {
       objective: "leastOvershoot",
       maxPlays: "25",
       maxLiveBonus: "120",
+      overhead: "45",
       repeats: "true",
       difficulties: "hard,expert,master,append",
       required: "3:master"
@@ -297,7 +368,7 @@ describe("target plan panel results", () => {
     expect(within(rows[0]).getByText("Required")).toBeTruthy();
     expect(within(rows[1]).getByText("8,200")).toBeTruthy();
     expect(section.getByText(new RegExp(`formula ${JP_SOLO_FORMULA_VERSION}`))).toBeTruthy();
-    expect(section.getByText(/Play time is not part of the plan/)).toBeTruthy();
+    expect(section.getByText(/Live bonus recovery is not part of the plan/)).toBeTruthy();
   });
 
   it("shows the plan's live bonus and where the cost per live comes from", () => {
@@ -373,6 +444,47 @@ describe("target plan panel results", () => {
     expect(screen.getByLabelText("Target total score")).toBeTruthy();
   });
 
+  it("describes the shortest-time guarantee and shows the play time it is about", () => {
+    const plan = readyPlan();
+    if (plan.status !== "ready") throw new Error("fixture");
+    renderPage(
+      createPageData({
+        ...plan,
+        plan: { ...plan.plan, objective: "shortestTime", time: 18_320, objectiveValue: 18_320 },
+        playTime: { status: "available", overhead: 60, total: 18_320 }
+      })
+    );
+
+    const section = within(planSection());
+    expect(section.getByText("No plan takes less play time under these settings.")).toBeTruthy();
+    expect(section.getByText("Total play time").nextElementSibling?.textContent?.trim()).toBe(
+      "30:32"
+    );
+    expect(
+      section.getByText(
+        "Every live is counted as the length of its song plus 60 seconds, the time per live entered above."
+      )
+    ).toBeTruthy();
+  });
+
+  it.each([
+    ["no-overhead", "Play time is not counted, because no seconds per live were entered."],
+    [
+      "region-unverified",
+      "Play time is not counted, because song lengths have only been checked for the JP server."
+    ]
+  ] as const)("shows no play time when it is %s, and says why", (status, message) => {
+    const plan = readyPlan();
+    if (plan.status !== "ready") throw new Error("fixture");
+    renderPage(createPageData({ ...plan, playTime: { status } }));
+
+    const section = within(planSection());
+    expect(section.getByText("Total play time").nextElementSibling?.textContent?.trim()).toBe(
+      "Not available"
+    );
+    expect(section.getByText(message)).toBeTruthy();
+  });
+
   it("describes the least-overshoot guarantee", () => {
     const plan = readyPlan();
     if (plan.status !== "ready") throw new Error("fixture");
@@ -396,7 +508,11 @@ describe("target plan panel results", () => {
     ],
     ["no-candidates", "No songs match the selected difficulties."],
     ["required-unavailable", "A required song is not available with these settings."],
-    ["invalid-input", "Check the plan settings and try again."]
+    ["invalid-input", "Check the plan settings and try again."],
+    [
+      "time-region-unverified",
+      "Shortest play time is only available for the JP server, where song lengths have been checked."
+    ]
   ] as const)("explains an unavailable plan: %s", (reason, message) => {
     renderPage(
       createPageData({
@@ -467,6 +583,7 @@ describe("target plan panel results", () => {
           objective: "leastOvershoot",
           maxPlays: "12",
           maxLiveBonus: "45",
+          overhead: "30",
           allowRepeats: false,
           difficulties: ["master", "append"],
           requiredSongs: "5:master"
@@ -480,6 +597,7 @@ describe("target plan panel results", () => {
     );
     expect((screen.getByLabelText("Maximum lives") as HTMLInputElement).value).toBe("12");
     expect((screen.getByLabelText(/Maximum live bonus/) as HTMLInputElement).value).toBe("45");
+    expect((screen.getByLabelText(/Seconds per live/) as HTMLInputElement).value).toBe("30");
     expect((screen.getByRole("checkbox", { name: "master" }) as HTMLInputElement).checked).toBe(
       true
     );

@@ -28,6 +28,7 @@ describe("parseTargetPlanQuery", () => {
         objective: "fewestPlays",
         maxPlays: "50",
         maxLiveBonus: "",
+        overhead: "",
         allowRepeats: true,
         difficulties: [],
         requiredSongs: ""
@@ -37,10 +38,77 @@ describe("parseTargetPlanQuery", () => {
         objective: "fewestPlays",
         maxPlays: 50,
         maxLiveBonus: null,
+        overhead: null,
         allowRepeats: true,
         allowedDifficulties: null,
         requiredSongs: []
       }
+    });
+  });
+
+  it("reads the optional overhead per live, zero included, and treats a blank one as not entered", () => {
+    expect(parse(`${base}&overhead=45`)).toMatchObject({
+      status: "ready",
+      inputs: { overhead: "45" },
+      request: { overhead: 45 }
+    });
+    expect(parse(`${base}&overhead=0`)).toMatchObject({ request: { overhead: 0 } });
+    expect(parse(`${base}&overhead=3600`)).toMatchObject({ request: { overhead: 3600 } });
+    expect(parse(`${base}&overhead=`)).toMatchObject({
+      status: "ready",
+      request: { overhead: null }
+    });
+  });
+
+  it.each(["3601", "-1", "1.5", "1e2", "abc", "45&overhead=50"])(
+    "rejects the overhead %s and echoes what was typed",
+    (value) => {
+      expect(parse(`${base}&overhead=${value}`)).toMatchObject({
+        status: "invalid",
+        invalidFields: ["overhead"]
+      });
+    }
+  );
+
+  it("accepts the shortest play time with an overhead and repeats", () => {
+    const query = base.replace("objective=fewestPlays", "objective=shortestTime");
+
+    expect(parse(`${query}&overhead=60`)).toMatchObject({
+      status: "ready",
+      request: { objective: "shortestTime", overhead: 60, allowRepeats: true }
+    });
+  });
+
+  it("refuses the shortest play time without an overhead: none is assumed", () => {
+    const query = base.replace("objective=fewestPlays", "objective=shortestTime");
+
+    expect(parse(query)).toMatchObject({
+      status: "invalid",
+      inputs: { objective: "shortestTime", overhead: "" },
+      missingFields: ["overhead"],
+      invalidFields: []
+    });
+    expect(parse(`${query}&overhead=`)).toMatchObject({ missingFields: ["overhead"] });
+    // A malformed overhead is invalid, not missing.
+    expect(parse(`${query}&overhead=x`)).toMatchObject({
+      missingFields: [],
+      invalidFields: ["overhead"]
+    });
+  });
+
+  it("refuses the shortest play time without repeats", () => {
+    const query = base
+      .replace("objective=fewestPlays", "objective=shortestTime")
+      .replace("repeats=true", "repeats=false");
+
+    expect(parse(`${query}&overhead=60`)).toMatchObject({
+      status: "invalid",
+      missingFields: [],
+      invalidFields: ["repeats"]
+    });
+    // The other objectives keep accepting it.
+    expect(parse(`${base.replace("repeats=true", "repeats=false")}&overhead=60`)).toMatchObject({
+      status: "ready"
     });
   });
 
@@ -167,6 +235,7 @@ describe("buildPlanQuery", () => {
       objective: "leastOvershoot" as const,
       maxPlays: "20",
       maxLiveBonus: " 300 ",
+      overhead: " 45 ",
       allowRepeats: false,
       difficulties: ["master" as const, "append" as const],
       requiredSongs: " 3:master "
@@ -180,6 +249,7 @@ describe("buildPlanQuery", () => {
         objective: "leastOvershoot",
         maxPlays: 20,
         maxLiveBonus: 300,
+        overhead: 45,
         allowRepeats: false,
         allowedDifficulties: ["master", "append"],
         requiredSongs: [{ musicId: 3, difficulty: "master" }]

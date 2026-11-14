@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from "@iconify/svelte";
   import { MUSIC_META_DIFFICULTIES } from "#lib/music-recommender.js";
+  import { formatPlayTime } from "#lib/plan-play-time.js";
   import {
     buildPlanQuery,
     parseTargetPlanQuery,
@@ -37,6 +38,7 @@
   let objective = $state(getInitialInputs().objective);
   let maxPlays = $state(getInitialInputs().maxPlays);
   let maxLiveBonus = $state(getInitialInputs().maxLiveBonus);
+  let overhead = $state(getInitialInputs().overhead);
   let allowRepeats = $state(getInitialInputs().allowRepeats);
   let selectedDifficulties = $state<string[]>(getInitialDifficulties());
   let requiredSongs = $state(getInitialInputs().requiredSongs);
@@ -74,6 +76,7 @@
     objective,
     maxPlays,
     maxLiveBonus,
+    overhead,
     allowRepeats,
     // Every difficulty selected means no restriction, which is how the query expresses it.
     difficulties:
@@ -87,12 +90,21 @@
     parsed.status === "invalid" ? [...parsed.missingFields, ...parsed.invalidFields] : []
   );
   const showErrors = $derived(hasSubmitted || plan.status === "invalid");
+  const overheadError = $derived.by(() => {
+    if (parsed.status !== "invalid") return null;
+    if (parsed.missingFields.includes("overhead")) return "musicRecommender.planOverheadRequired";
+    return parsed.invalidFields.includes("overhead")
+      ? "musicRecommender.planOverheadInvalid"
+      : null;
+  });
   const errors = $derived({
     target: problemFields.includes("target") ? "musicRecommender.planTargetInvalid" : null,
     maxPlays: problemFields.includes("maxPlays") ? "musicRecommender.planMaxPlaysInvalid" : null,
     maxLiveBonus: problemFields.includes("maxLiveBonus")
       ? "musicRecommender.planMaxLiveBonusInvalid"
       : null,
+    overhead: overheadError,
+    repeats: problemFields.includes("repeats") ? "musicRecommender.planRepeatsRequired" : null,
     difficulties:
       selectedDifficulties.length === 0 ? "musicRecommender.planDifficultiesRequired" : null,
     required: problemFields.some((field) => field.startsWith("required"))
@@ -104,6 +116,8 @@
       errors.target ||
       errors.maxPlays ||
       errors.maxLiveBonus ||
+      errors.overhead ||
+      errors.repeats ||
       errors.difficulties ||
       errors.required
     )
@@ -154,8 +168,21 @@
         return "musicRecommender.planBoostNotInTable";
       case "live-bonus-unavailable":
         return "musicRecommender.planLiveBonusUnavailable";
+      case "time-region-unverified":
+        return "musicRecommender.planTimeRegionUnverified";
       default:
         return "musicRecommender.planInvalidSettings";
+    }
+  }
+
+  function getOptimalNoteKey(planObjective: PlanFormInputs["objective"]): string {
+    switch (planObjective) {
+      case "fewestPlays":
+        return "musicRecommender.planOptimalFewest";
+      case "leastOvershoot":
+        return "musicRecommender.planOptimalLeastOvershoot";
+      default:
+        return "musicRecommender.planOptimalShortestTime";
     }
   }
 </script>
@@ -203,6 +230,9 @@
           <option value="leastOvershoot"
             >{translate("musicRecommender.planObjectiveLeastOvershoot")}</option
           >
+          <option value="shortestTime"
+            >{translate("musicRecommender.planObjectiveShortestTime")}</option
+          >
         </select>
       </label>
       <label class="field">
@@ -248,14 +278,51 @@
             role="alert">{translate(errors.maxLiveBonus)}</small
           >{/if}
       </label>
-      <label class="repeat-toggle">
-        <input class="toggle toggle-primary" type="checkbox" bind:checked={allowRepeats} />
-        <span
-          ><strong>{translate("musicRecommender.planAllowRepeats")}</strong><small
-            >{translate("musicRecommender.planAllowRepeatsDescription")}</small
-          ></span
+      <label class="field">
+        <span>{translate("musicRecommender.planOverhead")}</span>
+        <input
+          id="plan-overhead"
+          class="input input-bordered min-h-11"
+          class:input-error={showErrors && Boolean(errors.overhead)}
+          type="text"
+          inputmode="numeric"
+          value={overhead}
+          oninput={(event) => (overhead = readText(event))}
+          aria-invalid={showErrors && Boolean(errors.overhead)}
+          aria-describedby={showErrors && errors.overhead
+            ? "plan-overhead-hint plan-overhead-error"
+            : "plan-overhead-hint"}
+        />
+        <small class="field-hint" id="plan-overhead-hint"
+          >{translate("musicRecommender.planOverheadHint")}</small
         >
+        {#if showErrors && errors.overhead}<small
+            class="field-error"
+            id="plan-overhead-error"
+            role="alert">{translate(errors.overhead)}</small
+          >{/if}
       </label>
+      <div class="repeat-field">
+        <label class="repeat-toggle">
+          <input
+            class="toggle toggle-primary"
+            type="checkbox"
+            bind:checked={allowRepeats}
+            aria-invalid={showErrors && Boolean(errors.repeats)}
+            aria-describedby={showErrors && errors.repeats ? "plan-repeats-error" : undefined}
+          />
+          <span
+            ><strong>{translate("musicRecommender.planAllowRepeats")}</strong><small
+              >{translate("musicRecommender.planAllowRepeatsDescription")}</small
+            ></span
+          >
+        </label>
+        {#if showErrors && errors.repeats}<small
+            class="field-error"
+            id="plan-repeats-error"
+            role="alert">{translate(errors.repeats)}</small
+          >{/if}
+      </div>
     </div>
 
     <fieldset class="plan-fieldset">
@@ -344,11 +411,7 @@
           <h3>{translate("musicRecommender.planResult")}</h3>
           <p class="optimal-note">
             <Icon icon="mdi:shield-check-outline" class="size-4" aria-hidden="true" />
-            {translate(
-              plan.plan.objective === "fewestPlays"
-                ? "musicRecommender.planOptimalFewest"
-                : "musicRecommender.planOptimalLeastOvershoot"
-            )}
+            {translate(getOptimalNoteKey(plan.plan.objective))}
           </p>
         </div>
         <dl class="plan-summary">
@@ -362,6 +425,14 @@
               {plan.liveBonus.status === "available"
                 ? formatNumber(plan.liveBonus.total)
                 : translate("musicRecommender.planLiveBonusUnknown")}
+            </dd>
+          </div>
+          <div>
+            <dt>{translate("musicRecommender.planPlayTime")}</dt>
+            <dd>
+              {plan.playTime.status === "available"
+                ? formatPlayTime(plan.playTime.total)
+                : translate("musicRecommender.planPlayTimeUnknown")}
             </dd>
           </div>
           <div>
@@ -439,6 +510,17 @@
           {:else}
             <li>{translate("musicRecommender.planAssumptionLiveBonusUnavailable")}</li>
           {/if}
+          {#if plan.playTime.status === "available"}
+            <li>
+              {interpolate("musicRecommender.planAssumptionPlayTime", {
+                seconds: formatNumber(plan.playTime.overhead)
+              })}
+            </li>
+          {:else if plan.playTime.status === "no-overhead"}
+            <li>{translate("musicRecommender.planAssumptionPlayTimeNoOverhead")}</li>
+          {:else}
+            <li>{translate("musicRecommender.planAssumptionPlayTimeRegion")}</li>
+          {/if}
           <li>{translate("musicRecommender.planAssumptionLimits")}</li>
         </ul>
       </div>
@@ -511,6 +593,12 @@
     color: var(--color-error);
     font-size: 0.72rem;
     line-height: 1.35;
+  }
+  .repeat-field {
+    display: grid;
+    gap: 0.4rem;
+    align-content: center;
+    min-width: 0;
   }
   .repeat-toggle {
     display: flex;
