@@ -17,6 +17,7 @@ export const PLAN_QUERY_PARAMETER_NAMES = [
   "objective",
   "maxPlays",
   "maxLiveBonus",
+  "overhead",
   "repeats",
   "difficulties",
   "required"
@@ -24,6 +25,8 @@ export const PLAN_QUERY_PARAMETER_NAMES = [
 
 export const DEFAULT_PLAN_OBJECTIVE: PlannerObjective = "fewestPlays";
 export const DEFAULT_PLAN_MAX_PLAYS = "100";
+/** The longest overhead per live accepted, in seconds. */
+export const PLAN_MAX_OVERHEAD_SECONDS = 3_600;
 
 /** The form's values as typed, echoed back so an invalid entry is never silently replaced. */
 export type PlanFormInputs = {
@@ -32,6 +35,8 @@ export type PlanFormInputs = {
   maxPlays: string;
   /** Empty means no limit on live bonus. */
   maxLiveBonus: string;
+  /** Seconds a live takes besides its song; empty means not entered, and no play time. */
+  overhead: string;
   allowRepeats: boolean;
   /** Empty means every difficulty. */
   difficulties: MusicMetaDifficulty[];
@@ -44,6 +49,8 @@ export type PlanRequest = {
   maxPlays: number;
   /** The most live bonus the plan may consume; null means no limit. */
   maxLiveBonus: number | null;
+  /** Whole seconds a live takes besides its song; null when not entered. It has no default. */
+  overhead: number | null;
   allowRepeats: boolean;
   allowedDifficulties: MusicMetaDifficulty[] | null;
   requiredSongs: PlannerSongRef[];
@@ -59,13 +66,14 @@ export type ParsedPlanQuery =
     }
   | { status: "ready"; inputs: PlanFormInputs; request: PlanRequest };
 
-const OBJECTIVES: readonly PlannerObjective[] = ["fewestPlays", "leastOvershoot"];
+const OBJECTIVES: readonly PlannerObjective[] = ["fewestPlays", "leastOvershoot", "shortestTime"];
 
 export const makeDefaultPlanInputs = (): PlanFormInputs => ({
   target: "",
   objective: DEFAULT_PLAN_OBJECTIVE,
   maxPlays: DEFAULT_PLAN_MAX_PLAYS,
   maxLiveBonus: "",
+  overhead: "",
   allowRepeats: true,
   difficulties: [],
   requiredSongs: ""
@@ -116,6 +124,31 @@ const readMaxLiveBonus = (value: string | null, issues: Issues): number | null =
   const parsed = readWholeNumber(value, PLAN_MAX_LIVE_BONUS);
   if (parsed === null) issues.invalidFields.push("maxLiveBonus");
   return parsed;
+};
+
+/** An optional whole number of seconds from 0; absent or blank means it was not entered. */
+const readOverhead = (value: string | null, issues: Issues): number | null => {
+  if (value === null || value.trim() === "") return null;
+  const text = value.trim();
+  const parsed = /^\d+$/.test(text) ? Number(text) : Number.NaN;
+  if (Number.isSafeInteger(parsed) && parsed <= PLAN_MAX_OVERHEAD_SECONDS) return parsed;
+  issues.invalidFields.push("overhead");
+  return null;
+};
+
+/**
+ * The shortest play time is play time, so it needs the overhead, and it is only solved with
+ * repeats. Neither is assumed for the user.
+ */
+const checkShortestTime = (
+  objective: PlannerObjective | null,
+  overheadText: string | null,
+  repeats: boolean | null,
+  issues: Issues
+): void => {
+  if (objective !== "shortestTime") return;
+  if (overheadText === null || overheadText.trim() === "") issues.missingFields.push("overhead");
+  if (repeats === false) issues.invalidFields.push("repeats");
 };
 
 /** Songs are written as `songId:difficulty`, separated by commas. */
@@ -187,7 +220,10 @@ export const parseTargetPlanQuery = (searchParams: URLSearchParams): ParsedPlanQ
   );
   const maxLiveBonusText = readSingle(searchParams, "maxLiveBonus", issues);
   const maxLiveBonus = readMaxLiveBonus(maxLiveBonusText, issues);
+  const overheadText = readSingle(searchParams, "overhead", issues);
+  const overhead = readOverhead(overheadText, issues);
   const repeats = readRequiredField(searchParams, "repeats", issues, parseBoolean);
+  checkShortestTime(objective.value, overheadText, repeats.value, issues);
   const difficulties = readDifficulties(readSingle(searchParams, "difficulties", issues), issues);
   const requiredText = readSingle(searchParams, "required", issues);
   const requiredSongs = readRequiredSongs(requiredText, issues);
@@ -197,6 +233,7 @@ export const parseTargetPlanQuery = (searchParams: URLSearchParams): ParsedPlanQ
     objective: objective.value ?? defaults.objective,
     maxPlays: maxPlays.text ?? defaults.maxPlays,
     maxLiveBonus: maxLiveBonusText ?? defaults.maxLiveBonus,
+    overhead: overheadText ?? defaults.overhead,
     allowRepeats: repeats.value ?? defaults.allowRepeats,
     difficulties: difficulties.list,
     requiredSongs: requiredText ?? defaults.requiredSongs
@@ -220,6 +257,7 @@ export const parseTargetPlanQuery = (searchParams: URLSearchParams): ParsedPlanQ
       objective: objective.value as PlannerObjective,
       maxPlays: maxPlays.value as number,
       maxLiveBonus,
+      overhead,
       allowRepeats: repeats.value as boolean,
       allowedDifficulties: difficulties.selected,
       requiredSongs
@@ -234,6 +272,7 @@ export const buildPlanQuery = (values: PlanFormInputs): Record<string, string> =
     objective: values.objective,
     maxPlays: values.maxPlays.trim(),
     maxLiveBonus: values.maxLiveBonus.trim(),
+    overhead: values.overhead.trim(),
     repeats: String(values.allowRepeats),
     difficulties: values.difficulties.join(","),
     required: values.requiredSongs.trim()

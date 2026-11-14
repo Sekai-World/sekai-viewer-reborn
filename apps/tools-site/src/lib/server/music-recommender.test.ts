@@ -676,6 +676,174 @@ describe("target plan in the page data", () => {
   });
 });
 
+describe("play time in the target plan", () => {
+  // Every fixture song yields 4,100 event points per live. Song 5 is the short one: 74.8 s
+  // against 120 s for the rest.
+  const deck =
+    "mode=jp-solo&deckPower=200000&deckBonus=0&boostMultiplier=1&skillRates=0,0,0,0,0,0&noSkill=false&metric=eventPoints";
+  const planFor = (objective: string, target = 10_000, maxPlays = 10) =>
+    `target=${target}&objective=${objective}&maxPlays=${maxPlays}&repeats=true`;
+  const payload = () =>
+    makePayload().map((record) =>
+      record.music_id === 5 ? { ...record, music_time: 74.8 } : record
+    );
+  const boosts: RegionBoostLoader = async () => ({
+    status: "available",
+    boosts: [
+      { costBoost: 0, eventPointRate: 1 },
+      { costBoost: 1, eventPointRate: 5 }
+    ]
+  });
+  const allCharts: RegionChartLoader = async () => ({
+    status: "available",
+    charts: new Set(
+      Array.from({ length: MUSIC_META_MINIMUM_RECORD_COUNT }, (_, index) =>
+        makeRegionChartKey(index + 1, "expert")
+      )
+    )
+  });
+
+  const load = async (query: string) => {
+    const { fetcher } = makeFetcher(responseFor(JSON.stringify(payload())));
+    const result = await loadMusicRecommenderPageData(
+      new URLSearchParams(query),
+      fetcher,
+      () => NOW,
+      allCharts,
+      boosts
+    );
+    return result.plan;
+  };
+
+  it("states no play time when no overhead was entered", async () => {
+    expect(await load(`${deck}&${planFor("fewestPlays")}`)).toMatchObject({
+      status: "ready",
+      plan: { plays: 3, time: null },
+      playTime: { status: "no-overhead" }
+    });
+  });
+
+  it("adds the overhead to every live's song time, in tenths of a second", async () => {
+    // Fewest lives plays song 1 three times: 3 x (120.0 s + 60 s).
+    expect(await load(`${deck}&${planFor("fewestPlays")}&overhead=60`)).toMatchObject({
+      status: "ready",
+      plan: { plays: 3, time: 5_400, items: [{ musicId: 1, plays: 3 }] },
+      playTime: { status: "available", overhead: 60, total: 5_400 }
+    });
+    expect(await load(`${deck}&${planFor("fewestPlays")}&overhead=0`)).toMatchObject({
+      playTime: { status: "available", overhead: 0, total: 3_600 }
+    });
+  });
+
+  it("rounds a song time to the nearest tenth of a second", async () => {
+    const { fetcher } = makeFetcher(
+      responseFor(
+        JSON.stringify(
+          makePayload().map((record) =>
+            record.music_id === 6 ? { ...record, music_time: 119.96 } : record
+          )
+        )
+      )
+    );
+    const result = await loadMusicRecommenderPageData(
+      new URLSearchParams(`${deck}&${planFor("fewestPlays", 4_100)}&overhead=0&required=6:expert`),
+      fetcher,
+      () => NOW,
+      allCharts,
+      boosts
+    );
+
+    expect(result.plan).toMatchObject({ status: "ready", plan: { plays: 1, time: 1_200 } });
+  });
+
+  it("plans the shortest play time with the quickest songs", async () => {
+    // Song 5 three times: 3 x (74.8 s + 60 s).
+    expect(await load(`${deck}&${planFor("shortestTime")}&overhead=60`)).toMatchObject({
+      status: "ready",
+      plan: {
+        objective: "shortestTime",
+        plays: 3,
+        time: 4_044,
+        objectiveValue: 4_044,
+        items: [{ musicId: 5, plays: 3 }]
+      },
+      playTime: { status: "available", overhead: 60, total: 4_044 }
+    });
+  });
+
+  it("counts a required song's time in the shortest plan", async () => {
+    const plan = await load(`${deck}&${planFor("shortestTime")}&overhead=60&required=2:expert`);
+
+    expect(plan).toMatchObject({
+      status: "ready",
+      plan: {
+        plays: 3,
+        time: 1_800 + 2 * 1_348,
+        items: [
+          { musicId: 2, plays: 1, required: true },
+          { musicId: 5, plays: 2 }
+        ]
+      }
+    });
+  });
+
+  it("plans the shortest play time for Auto lives too", async () => {
+    const plan = await load(
+      `${deck.replace("mode=jp-solo", "mode=auto")}&${planFor("shortestTime", 1_000)}&overhead=60`
+    );
+
+    if (plan.status !== "ready") throw new Error("Expected an Auto plan.");
+    expect(plan.plan.items.map((item) => item.musicId)).toEqual([5]);
+    expect(plan.playTime).toEqual({
+      status: "available",
+      overhead: 60,
+      total: plan.plan.plays * 1_348
+    });
+  });
+
+  it("keeps the lives and live bonus limits under the shortest play time", async () => {
+    expect(await load(`${deck}&${planFor("shortestTime", 10_000, 2)}&overhead=60`)).toMatchObject({
+      status: "unavailable",
+      reason: "plays-limit"
+    });
+    // At multiplier 5 a live yields 20,500 and costs 1 live bonus; 50,000 needs three.
+    const boosted = deck.replace("boostMultiplier=1", "boostMultiplier=5");
+    const plan = `${planFor("shortestTime", 50_000)}&overhead=60`;
+    expect(await load(`${boosted}&${plan}&maxLiveBonus=2`)).toMatchObject({
+      status: "unavailable",
+      reason: "live-bonus-limit"
+    });
+    expect(await load(`${boosted}&${plan}&maxLiveBonus=3`)).toMatchObject({
+      status: "ready",
+      plan: { plays: 3, time: 4_044 },
+      liveBonus: { status: "available", total: 3, limit: 3 }
+    });
+  });
+
+  it("refuses the shortest play time outside JP, where song lengths are unverified", async () => {
+    expect(await load(`${deck}&region=kr&${planFor("shortestTime")}&overhead=60`)).toMatchObject({
+      status: "unavailable",
+      reason: "time-region-unverified",
+      inputs: { objective: "shortestTime", overhead: "60" }
+    });
+  });
+
+  it("states no play time outside JP but still plans the other objectives", async () => {
+    expect(await load(`${deck}&region=kr&${planFor("fewestPlays")}&overhead=60`)).toMatchObject({
+      status: "ready",
+      plan: { plays: 3, time: null },
+      playTime: { status: "region-unverified" }
+    });
+  });
+
+  it("reports the plan's own input errors for the shortest play time", async () => {
+    expect(await load(`${deck}&${planFor("shortestTime")}`)).toMatchObject({
+      status: "invalid",
+      missingFields: ["overhead"]
+    });
+  });
+});
+
 describe("live bonus in the target plan", () => {
   // Every fixture song yields 4,100 event points at multiplier 1, so 143,500 at multiplier 35.
   const deckAt = (boostMultiplier: number) =>

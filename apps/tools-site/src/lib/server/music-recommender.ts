@@ -83,9 +83,20 @@ export type PlanLiveBonus =
   | { status: "not-in-table" }
   | { status: "unavailable" };
 
+/**
+ * How long a plan takes to play: the song time of every live plus the overhead the user entered.
+ * `no-overhead` is a plan made without one; `region-unverified` is a region whose song times were
+ * never checked against its audio. Totals are in tenths of a second.
+ */
+export type PlanPlayTime =
+  | { status: "available"; overhead: number; total: number }
+  | { status: "no-overhead" }
+  | { status: "region-unverified" };
+
 export type MusicRecommenderPlanUnavailableReason =
   | PlanUnavailableReason
   | "yields-unavailable"
+  | "time-region-unverified"
   | "live-bonus-unavailable"
   | "boost-not-in-table"
   | "live-bonus-limit";
@@ -106,7 +117,13 @@ export type MusicRecommenderPlanData =
       invalidFields: string[];
       bound: PlanUnavailable["bound"];
     }
-  | { status: "ready"; inputs: PlanFormInputs; plan: TargetPlan; liveBonus: PlanLiveBonus };
+  | {
+      status: "ready";
+      inputs: PlanFormInputs;
+      plan: TargetPlan;
+      liveBonus: PlanLiveBonus;
+      playTime: PlanPlayTime;
+    };
 
 export type MusicRecommenderPageData = {
   status: "available" | "unavailable";
@@ -727,14 +744,44 @@ const resolveLivesLimit = (
   return { status: "ok", maxPlays: Math.min(maxPlays, lives) };
 };
 
+/** Song time has one decimal in the source; totals are kept in whole tenths of a second. */
+const TENTHS_PER_SECOND = 10;
+
+/**
+ * The time of one live in tenths of a second, or null when play time cannot be stated: no
+ * overhead was entered, or the region's song times are unverified (only JP was checked).
+ */
+const livePlayTime = (
+  musicTime: number,
+  overhead: number | null,
+  region: YieldRegion
+): number | null =>
+  overhead === null || region !== DEFAULT_YIELD_REGION
+    ? null
+    : Math.round(musicTime * TENTHS_PER_SECOND) + overhead * TENTHS_PER_SECOND;
+
+const readPlayTime = (
+  plan: TargetPlan,
+  overhead: number | null,
+  region: YieldRegion
+): PlanPlayTime => {
+  if (overhead === null) return { status: "no-overhead" };
+  if (region !== DEFAULT_YIELD_REGION || plan.time === null) return { status: "region-unverified" };
+  return { status: "available", overhead, total: plan.time };
+};
+
 const planWithYields = (
   planQuery: Extract<ParsedPlanQuery, { status: "ready" }>,
   metric: MusicRecommenderMetric,
   items: readonly JpSoloRankingItem[],
-  cost: BoostCost
+  cost: BoostCost,
+  region: YieldRegion
 ): MusicRecommenderPlanData => {
   const { inputs } = planQuery;
-  const { maxLiveBonus, ...request } = planQuery.request;
+  const { maxLiveBonus, overhead, ...request } = planQuery.request;
+  if (request.objective === "shortestTime" && region !== DEFAULT_YIELD_REGION) {
+    return planUnavailable(inputs, "time-region-unverified");
+  }
   const limit = resolveLivesLimit(request.maxPlays, maxLiveBonus, cost);
   if (limit.status === "refused") {
     // An off-table multiplier is the deck field to change, so it is named.
@@ -749,7 +796,8 @@ const planWithYields = (
     musicId: music.musicId,
     difficulty: music.difficulty,
     score,
-    eventPoints
+    eventPoints,
+    time: livePlayTime(music.musicTime, overhead, region)
   }));
   const result = planTarget({ yields, metric, ...request, maxPlays: limit.maxPlays });
   if (result.status === "unavailable") {
@@ -770,7 +818,13 @@ const planWithYields = (
           limit: maxLiveBonus
         }
       : cost;
-  return { status: "ready", inputs, plan: result, liveBonus };
+  return {
+    status: "ready",
+    inputs,
+    plan: result,
+    liveBonus,
+    playTime: readPlayTime(result, overhead, region)
+  };
 };
 
 const makeUnavailablePageData = (
@@ -865,6 +919,7 @@ export const loadMusicRecommenderPageData = async (
   }
 
   // The boost table is only read when there is a plan to describe.
+  const planRegion = region ?? DEFAULT_YIELD_REGION;
   const plan =
     planQuery.status === "ready"
       ? planWithYields(
@@ -872,9 +927,10 @@ export const loadMusicRecommenderPageData = async (
           parsedQuery.metric,
           ranking.items,
           readBoostCost(
-            await loadBoosts(region ?? DEFAULT_YIELD_REGION),
+            await loadBoosts(planRegion),
             parsedQuery.domainInputs.boostMultiplier as number
-          )
+          ),
+          planRegion
         )
       : planWithoutYields(planQuery);
 
