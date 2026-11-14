@@ -10,7 +10,8 @@ vi.mock("$app/env", () => ({
 
 import { load } from "./+page.server";
 
-type LoadEvent = Parameters<typeof load>[0];
+// The loader reads nothing from its event, so it is called without one.
+const runLoad = load as () => ReturnType<typeof load>;
 
 describe("Chibi developer preview loader", () => {
   beforeEach(() => {
@@ -18,12 +19,12 @@ describe("Chibi developer preview loader", () => {
   });
 
   it("does not exist outside the dev server", () => {
-    expect(() => load({} as LoadEvent)).toThrow(expect.objectContaining({ status: 404 }));
+    expect(() => runLoad()).toThrow(expect.objectContaining({ status: 404 }));
   });
 
   it("loads in the dev server", () => {
     env.dev = true;
 
-    expect(load({} as LoadEvent)).toEqual({});
+    expect(runLoad()).toEqual({});
   });
 });
