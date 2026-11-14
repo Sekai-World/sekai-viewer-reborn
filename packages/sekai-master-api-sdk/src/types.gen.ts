@@ -84,6 +84,22 @@ export type SharedBondsHonorWordResponse = {
     seq?: number;
 };
 
+export type SharedBoostListResponse = {
+    items?: Array<SharedBoostResponse>;
+    pagination?: SharedPaginationResponse;
+};
+
+export type SharedBoostResponse = {
+    bondsExpRate?: number;
+    costBoost?: number;
+    eventPointRate?: number;
+    expRate?: number;
+    id?: number;
+    isEventOnly?: boolean;
+    livePointRate?: number;
+    rewardRate?: number;
+};
+
 export type SharedCardBatchItemResponse = {
     assetbundleName?: unknown;
     attr?: unknown;
@@ -2285,6 +2301,53 @@ export type GetBondsHonorsByRegionByIdResponses = {
 };
 
 export type GetBondsHonorsByRegionByIdResponse = GetBondsHonorsByRegionByIdResponses[keyof GetBondsHonorsByRegionByIdResponses];
+
+export type GetBoostsByRegionListData = {
+    body?: never;
+    path: {
+        /**
+         * Region
+         */
+        region: string;
+    };
+    query?: {
+        /**
+         * Page number
+         */
+        page?: number;
+        /**
+         * Page size
+         */
+        page_size?: number;
+    };
+    url: '/boosts/{region}/list';
+};
+
+export type GetBoostsByRegionListErrors = {
+    /**
+     * Bad Request
+     */
+    400: SharedErrorResponse;
+    /**
+     * Internal Server Error
+     */
+    500: SharedErrorResponse;
+    /**
+     * Service Unavailable
+     */
+    503: SharedErrorResponse;
+};
+
+export type GetBoostsByRegionListError = GetBoostsByRegionListErrors[keyof GetBoostsByRegionListErrors];
+
+export type GetBoostsByRegionListResponses = {
+    /**
+     * OK
+     */
+    200: SharedBoostListResponse;
+};
+
+export type GetBoostsByRegionListResponse = GetBoostsByRegionListResponses[keyof GetBoostsByRegionListResponses];
 
 export type GetBuildInfoData = {
     body?: never;

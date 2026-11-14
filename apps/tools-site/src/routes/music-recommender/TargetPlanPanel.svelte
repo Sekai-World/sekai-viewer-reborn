@@ -36,6 +36,7 @@
   let target = $state(getInitialInputs().target);
   let objective = $state(getInitialInputs().objective);
   let maxPlays = $state(getInitialInputs().maxPlays);
+  let maxLiveBonus = $state(getInitialInputs().maxLiveBonus);
   let allowRepeats = $state(getInitialInputs().allowRepeats);
   let selectedDifficulties = $state<string[]>(getInitialDifficulties());
   let requiredSongs = $state(getInitialInputs().requiredSongs);
@@ -72,6 +73,7 @@
     target,
     objective,
     maxPlays,
+    maxLiveBonus,
     allowRepeats,
     // Every difficulty selected means no restriction, which is how the query expresses it.
     difficulties:
@@ -88,6 +90,9 @@
   const errors = $derived({
     target: problemFields.includes("target") ? "musicRecommender.planTargetInvalid" : null,
     maxPlays: problemFields.includes("maxPlays") ? "musicRecommender.planMaxPlaysInvalid" : null,
+    maxLiveBonus: problemFields.includes("maxLiveBonus")
+      ? "musicRecommender.planMaxLiveBonusInvalid"
+      : null,
     difficulties:
       selectedDifficulties.length === 0 ? "musicRecommender.planDifficultiesRequired" : null,
     required: problemFields.some((field) => field.startsWith("required"))
@@ -95,7 +100,13 @@
       : null
   });
   const hasErrors = $derived(
-    Boolean(errors.target || errors.maxPlays || errors.difficulties || errors.required)
+    Boolean(
+      errors.target ||
+      errors.maxPlays ||
+      errors.maxLiveBonus ||
+      errors.difficulties ||
+      errors.required
+    )
   );
 
   function labelFor(target: Metric): string {
@@ -137,6 +148,12 @@
         return "musicRecommender.planTargetUnreachable";
       case "out-of-bounds":
         return "musicRecommender.planOutOfBounds";
+      case "live-bonus-limit":
+        return "musicRecommender.planLiveBonusLimit";
+      case "boost-not-in-table":
+        return "musicRecommender.planBoostNotInTable";
+      case "live-bonus-unavailable":
+        return "musicRecommender.planLiveBonusUnavailable";
       default:
         return "musicRecommender.planInvalidSettings";
     }
@@ -205,6 +222,30 @@
             class="field-error"
             id="plan-max-plays-error"
             role="alert">{translate(errors.maxPlays)}</small
+          >{/if}
+      </label>
+      <label class="field">
+        <span>{translate("musicRecommender.planMaxLiveBonus")}</span>
+        <input
+          id="plan-max-live-bonus"
+          class="input input-bordered min-h-11"
+          class:input-error={showErrors && Boolean(errors.maxLiveBonus)}
+          type="text"
+          inputmode="numeric"
+          value={maxLiveBonus}
+          oninput={(event) => (maxLiveBonus = readText(event))}
+          aria-invalid={showErrors && Boolean(errors.maxLiveBonus)}
+          aria-describedby={showErrors && errors.maxLiveBonus
+            ? "plan-max-live-bonus-hint plan-max-live-bonus-error"
+            : "plan-max-live-bonus-hint"}
+        />
+        <small class="field-hint" id="plan-max-live-bonus-hint"
+          >{translate("musicRecommender.planMaxLiveBonusHint")}</small
+        >
+        {#if showErrors && errors.maxLiveBonus}<small
+            class="field-error"
+            id="plan-max-live-bonus-error"
+            role="alert">{translate(errors.maxLiveBonus)}</small
           >{/if}
       </label>
       <label class="repeat-toggle">
@@ -316,6 +357,14 @@
             <dd>{formatNumber(plan.plan.plays)}</dd>
           </div>
           <div>
+            <dt>{translate("musicRecommender.planLiveBonus")}</dt>
+            <dd>
+              {plan.liveBonus.status === "available"
+                ? formatNumber(plan.liveBonus.total)
+                : translate("musicRecommender.planLiveBonusUnknown")}
+            </dd>
+          </div>
+          <div>
             <dt>{interpolate("musicRecommender.planTarget", { metric: resultMetricLabel })}</dt>
             <dd>{formatNumber(plan.plan.target)}</dd>
           </div>
@@ -376,6 +425,20 @@
             })}
           </li>
           <li>{translate("musicRecommender.planAssumptionDeck")}</li>
+          {#if plan.liveBonus.status === "available"}
+            <li>
+              {interpolate("musicRecommender.planAssumptionLiveBonus", {
+                count: formatNumber(plan.liveBonus.perLive)
+              })}
+            </li>
+            {#if plan.liveBonus.perLive === 0 && plan.liveBonus.limit !== null}
+              <li>{translate("musicRecommender.planAssumptionLiveBonusFree")}</li>
+            {/if}
+          {:else if plan.liveBonus.status === "not-in-table"}
+            <li>{translate("musicRecommender.planAssumptionLiveBonusNotInTable")}</li>
+          {:else}
+            <li>{translate("musicRecommender.planAssumptionLiveBonusUnavailable")}</li>
+          {/if}
           <li>{translate("musicRecommender.planAssumptionLimits")}</li>
         </ul>
       </div>

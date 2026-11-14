@@ -14,8 +14,10 @@ recommender (#381) and the data contract in
   recommender's metric control.
 - Two objectives, always chosen by the user: **fewest lives** and **least
   overshoot**.
-- **Not supported, and refused rather than approximated:** energy and time
-  objectives (semantics defined in
+- Every plan reports the **live bonus** it consumes, and a plan can be limited
+  to a maximum live bonus (see _Live bonus_).
+- **Not supported, and refused rather than approximated:** time objectives and
+  limits (semantics defined in
   [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md),
   implementation tracked in #544), modes other than Solo and Auto
   (#538), regions other than `jp`, `tw`, `en`, and `kr`, and decks or event bonuses derived
@@ -28,6 +30,7 @@ recommender (#381) and the data contract in
 | `target`              | Whole number from 1 to 100,000,000,000.                                                                              |
 | `objective`           | `fewestPlays` or `leastOvershoot`.                                                                                   |
 | `maxPlays`            | Whole number from 1 to 10,000: the most lives played, required songs included.                                       |
+| `maxLiveBonus`        | Optional whole number from 1 to 1,000,000: the most live bonus consumed. Page input only; see _Live bonus_.          |
 | `allowRepeats`        | When false, each song and difficulty is played at most once.                                                         |
 | `allowedDifficulties` | Optional limit on the difficulties used; none means all.                                                             |
 | `requiredSongs`       | Optional songs that are each played at least once.                                                                   |
@@ -88,6 +91,43 @@ cannot beat it.
   looks for one as repeats of the widest deficit plus at most four others, meeting
   in the middle over the sums of two. Without repeats, it picks each life closest to
   the average still needed and closes with an exact pair.
+
+## Live bonus
+
+Semantics: [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md),
+_Energy_. The code is `lib/plan-live-bonus.ts` and the loader
+`lib/server/music-recommender.ts`; `planTarget` itself is unchanged.
+
+- **One boost per plan.** Every live uses the boost multiplier entered with the
+  deck. Its cost is the `costBoost` of the `boosts` row whose `eventPointRate`
+  equals the multiplier, read from the master API for the page's region
+  (`lib/server/region-boosts.ts`, cached for five minutes). The table is never
+  copied into code. The list endpoint carries no data revision, so none is shown.
+- **Total.** Live bonus of a plan = lives × that cost. It is shown with every
+  plan.
+- **No "least live bonus" objective.** With one boost per plan the total is a
+  fixed multiple of the lives, so the plan with the fewest lives is the plan
+  with the least live bonus. _Fewest lives_ is that objective; a second name for
+  it would return the same plans. This changes if the planner ever chooses the
+  boost, which it does not.
+- **Limit.** `lives × cost ≤ maxLiveBonus` holds exactly when
+  `lives ≤ floor(maxLiveBonus ÷ cost)`. The loader lowers the lives limit to
+  that number when it is the smaller one and runs the same solvers, so both
+  objectives keep their guarantees and bounds under the limit. When the cost is
+  0 the limit can never bind and is ignored; the result says so.
+- **A multiplier outside the table** has no cost. Without a limit the plan is
+  still returned and its live bonus is shown as not available. With a limit the
+  request is refused (`boost-not-in-table`, naming `boostMultiplier`), because
+  the limit cannot be applied. The recommender's own multiplier input stays
+  unrestricted.
+- **A table that cannot be read** (failed request, malformed or empty answer, a
+  rate that two rows share) is treated the same way: plan without a figure, or
+  `live-bonus-unavailable` when a limit was asked for.
+- **Which limit is reported.** When the lowered lives limit is too small, the
+  reason is `live-bonus-limit`, not `plays-limit`: the tighter of the two limits
+  is named. The other one may also be too low, which shows once the first is
+  raised. A limit below the cost of one live is refused before the planner
+  runs, so it is reported ahead of any other reason.
 
 ## Bounds and complexity
 
@@ -150,15 +190,18 @@ optimal, one is returned; the others are not listed.
 
 ## Unavailable states
 
-| Reason                 | Meaning                                                                              |
-| ---------------------- | ------------------------------------------------------------------------------------ |
-| `invalid-input`        | A control or yield row is malformed; the offending fields are named.                 |
-| `no-candidates`        | No yield rows remain after the difficulty filter.                                    |
-| `required-unavailable` | A required song is not among the candidates.                                         |
-| `plays-limit`          | Required songs alone exceed the lives limit, or the target needs more lives.         |
-| `target-unreachable`   | Even every allowed song once (no repeats) falls short, or nothing is left to play.   |
-| `out-of-bounds`        | Least overshoot beyond the search bounds.                                            |
-| `yields-unavailable`   | (page only) The recommender could not calculate yields, so there is nothing to plan. |
+| Reason                   | Meaning                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `invalid-input`          | A control or yield row is malformed; the offending fields are named.                 |
+| `no-candidates`          | No yield rows remain after the difficulty filter.                                    |
+| `required-unavailable`   | A required song is not among the candidates.                                         |
+| `plays-limit`            | Required songs alone exceed the lives limit, or the target needs more lives.         |
+| `target-unreachable`     | Even every allowed song once (no repeats) falls short, or nothing is left to play.   |
+| `out-of-bounds`          | Least overshoot beyond the search bounds.                                            |
+| `yields-unavailable`     | (page only) The recommender could not calculate yields, so there is nothing to plan. |
+| `live-bonus-limit`       | (page only) The live bonus limit allows too few lives, or not even one.              |
+| `boost-not-in-table`     | (page only) A live bonus limit was set, but the multiplier is not a `boosts` row.    |
+| `live-bonus-unavailable` | (page only) A live bonus limit was set, but the boost table could not be read.       |
 
 When required songs exceed the lives limit the lives limit is reported first.
 
@@ -167,8 +210,9 @@ When required songs exceed the lives limit the lives limit is reported first.
 The planner lives on `/music-recommender` as the _Target plan_ panel. It is
 driven by query parameters, so a plan is shareable and runs on the server:
 
-`target`, `objective`, `maxPlays`, `repeats` (`true`/`false`), `difficulties`
-(comma list, empty for all), `required` (`songId:difficulty`, comma list).
+`target`, `objective`, `maxPlays`, `maxLiveBonus` (empty for no limit),
+`repeats` (`true`/`false`), `difficulties` (comma list, empty for all),
+`required` (`songId:difficulty`, comma list).
 
 - No plan parameter means no plan; the panel stays idle.
 - Some but not all of the required parameters is `invalid`, with the missing and
@@ -177,11 +221,13 @@ driven by query parameters, so a plan is shareable and runs on the server:
   (`lib/target-plan-query.ts`) before submitting, and submits together with the
   deck settings, so a plan is always made for the deck as entered.
 - Only the plan result is sent to the browser; the planner never runs there.
+- The boost table is requested only when a plan is made.
 
-A result shows the lives, target, total, overshoot, the other metric's total,
-per-song counts and subtotals, whether each song was required, the source and
-formula it is based on, and the assumptions: every live uses the entered deck
-and the recommender's per-live values, and energy and time are not planned.
+A result shows the lives, total live bonus, target, total, overshoot, the other
+metric's total, per-song counts and subtotals, whether each song was required,
+the source and formula it is based on, and the assumptions: every live uses the
+entered deck and the recommender's per-live values, what one live costs in live
+bonus (or why that is unknown), and that play time is not planned.
 
 ## Verification
 
@@ -199,17 +245,23 @@ and the recommender's per-live values, and energy and time are not planned.
   the frontier used to build a layer, and a shortcut tried at one life fewer.
 - Tests on 3,800 generated yields shaped like the real score data check a proven plan
   at the fewest possible lives, and that both search bounds refuse.
+- The live bonus limit is checked by enumeration: for every cost from 1 to 12
+  and limit from 1 to 150, the lives that fit the limit are exactly those up to
+  the lowered lives limit. Loader tests cover the total, a limit that binds, one
+  below a single live, required songs that exceed it, both objectives, no
+  repeats, Auto, a cost of 0, a multiplier outside the table, an unreadable
+  table, and the region whose table is read.
 - Component and loader tests cover input validation, the loading, idle, invalid,
   unavailable, and result states, and accessible controls.
 
 ## Out of scope
 
-- Energy, boost cost, and time objectives, and per-hour or per-energy efficiency.
+- The "shortest play time" objective and a cap on play time, which
   [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md)
-  makes these available to #544: the objectives "least live bonus" and
-  "shortest play time", and a cap on either. The time objective and cap need the
-  user's overhead per live. Natural recovery and "per day" planning stay
-  blocked.
+  makes available to #544. Both need the user's overhead per live.
+- A planner that chooses the boost, or mixes boosts within a plan.
+- Per-hour or per-energy efficiency columns. Natural recovery and "per day"
+  planning stay blocked.
 - Modes other than Solo and Auto, and regions other than `jp`, `tw`, `en`, and `kr`.
 - Heuristic or approximate plans. If one is added later it must be labelled
   as such and kept separate from the exact objectives above.

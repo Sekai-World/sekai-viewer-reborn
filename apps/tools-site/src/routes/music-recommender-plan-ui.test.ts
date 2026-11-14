@@ -88,7 +88,8 @@ const readyPlan = (): Plan => ({
     totals: { score: 130_000_000, eventPoints: 10_200 },
     overshoot: 200,
     objectiveValue: 3
-  }
+  },
+  liveBonus: { status: "available", perLive: 10, total: 30, limit: null }
 });
 
 const renderPage = (data: PageData) =>
@@ -116,6 +117,10 @@ describe("target plan panel inputs", () => {
     expect(targetInput().value).toBe("");
     expect(screen.getByLabelText("Optimize for")).toBeTruthy();
     expect((screen.getByLabelText("Maximum lives") as HTMLInputElement).value).toBe("100");
+    const maxLiveBonus = screen.getByLabelText(/Maximum live bonus/) as HTMLInputElement;
+    expect(maxLiveBonus.value).toBe("");
+    expect(maxLiveBonus.getAttribute("aria-describedby")).toBe("plan-max-live-bonus-hint");
+    expect(screen.getByText("Leave empty for no limit.").id).toBe("plan-max-live-bonus-hint");
     expect(screen.getByRole("group", { name: "Difficulties to use" })).toBeTruthy();
     expect(
       screen.getAllByRole("checkbox", { name: /easy|normal|hard|expert|master|append/ })
@@ -177,6 +182,21 @@ describe("target plan panel inputs", () => {
     expect(goto).not.toHaveBeenCalled();
   });
 
+  it("rejects a malformed live bonus limit and sends nothing", async () => {
+    renderPage(createPageData());
+    await fireEvent.input(targetInput(), { target: { value: "10000" } });
+    const maxLiveBonus = screen.getByLabelText(/Maximum live bonus/) as HTMLInputElement;
+    await fireEvent.input(maxLiveBonus, { target: { value: "1.5" } });
+
+    expect(screen.queryByText(/or leave it empty/)).toBeNull();
+    await submitPlan();
+
+    expect(goto).not.toHaveBeenCalled();
+    expect(maxLiveBonus.getAttribute("aria-invalid")).toBe("true");
+    const error = screen.getByText("Enter a whole number from 1 to 1,000,000, or leave it empty.");
+    expect(maxLiveBonus.getAttribute("aria-describedby")).toContain(error.id);
+  });
+
   it("rejects malformed required songs", async () => {
     renderPage(createPageData());
     await fireEvent.input(targetInput(), { target: { value: "5000" } });
@@ -201,6 +221,9 @@ describe("target plan panel submission", () => {
       target: { value: "leastOvershoot" }
     });
     await fireEvent.input(screen.getByLabelText("Maximum lives"), { target: { value: "25" } });
+    await fireEvent.input(screen.getByLabelText(/Maximum live bonus/), {
+      target: { value: " 120 " }
+    });
     await fireEvent.click(screen.getByRole("checkbox", { name: "easy" }));
     await fireEvent.click(screen.getByRole("checkbox", { name: "normal" }));
     await fireEvent.input(screen.getByLabelText(/Songs that must be played/), {
@@ -218,6 +241,7 @@ describe("target plan panel submission", () => {
       target: "10000",
       objective: "leastOvershoot",
       maxPlays: "25",
+      maxLiveBonus: "120",
       repeats: "true",
       difficulties: "hard,expert,master,append",
       required: "3:master"
@@ -273,7 +297,64 @@ describe("target plan panel results", () => {
     expect(within(rows[0]).getByText("Required")).toBeTruthy();
     expect(within(rows[1]).getByText("8,200")).toBeTruthy();
     expect(section.getByText(new RegExp(`formula ${JP_SOLO_FORMULA_VERSION}`))).toBeTruthy();
-    expect(section.getByText(/Energy and time are not part of the plan/)).toBeTruthy();
+    expect(section.getByText(/Play time is not part of the plan/)).toBeTruthy();
+  });
+
+  it("shows the plan's live bonus and where the cost per live comes from", () => {
+    renderPage(createPageData(readyPlan()));
+
+    const summary = planSection().querySelector("dl.plan-summary") as HTMLElement;
+    expect(within(summary).getByText("Total live bonus").nextElementSibling?.textContent).toBe(
+      "30"
+    );
+    expect(within(planSection()).getByText(/Every live is counted as 10 live bonus/)).toBeTruthy();
+    expect(within(planSection()).queryByText(/has no effect/)).toBeNull();
+  });
+
+  it("says a live bonus limit has no effect when lives cost nothing", () => {
+    renderPage(
+      createPageData({
+        ...readyPlan(),
+        liveBonus: { status: "available", perLive: 0, total: 0, limit: 50 }
+      } as Plan)
+    );
+
+    const summary = planSection().querySelector("dl.plan-summary") as HTMLElement;
+    expect(within(summary).getByText("Total live bonus").nextElementSibling?.textContent).toBe("0");
+    expect(within(planSection()).getByText(/the maximum live bonus has no effect/)).toBeTruthy();
+  });
+
+  it.each([
+    ["not-in-table", /is not one the game offers, so live bonus cannot be counted/],
+    ["unavailable", /boost table could not be loaded, so live bonus is not counted/]
+  ] as const)("shows no live bonus figure when it is %s, and says why", (status, reason) => {
+    renderPage(createPageData({ ...readyPlan(), liveBonus: { status } } as Plan));
+
+    const summary = planSection().querySelector("dl.plan-summary") as HTMLElement;
+    expect(within(summary).getByText("Total live bonus").nextElementSibling?.textContent).toBe(
+      "Not available"
+    );
+    expect(within(planSection()).getByText(reason)).toBeTruthy();
+    // The plan itself is still shown.
+    expect(within(summary).getByText("Lives").nextElementSibling?.textContent).toBe("3");
+  });
+
+  it.each([
+    ["live-bonus-limit", "The target cannot be reached within the maximum live bonus."],
+    ["boost-not-in-table", "A live bonus limit needs a boost multiplier that the game offers."],
+    ["live-bonus-unavailable", "The boost table could not be loaded"]
+  ] as const)("explains the refusal %s", (reason, message) => {
+    renderPage(
+      createPageData({
+        status: "unavailable",
+        inputs: makeDefaultPlanInputs(),
+        reason,
+        invalidFields: [],
+        bound: null
+      })
+    );
+
+    expect(within(planSection()).getByRole("alert").textContent).toContain(message);
   });
 
   it("labels a finished plan with the metric it was calculated for", () => {
@@ -385,6 +466,7 @@ describe("target plan panel results", () => {
           target: "7500",
           objective: "leastOvershoot",
           maxPlays: "12",
+          maxLiveBonus: "45",
           allowRepeats: false,
           difficulties: ["master", "append"],
           requiredSongs: "5:master"
@@ -397,6 +479,7 @@ describe("target plan panel results", () => {
       "leastOvershoot"
     );
     expect((screen.getByLabelText("Maximum lives") as HTMLInputElement).value).toBe("12");
+    expect((screen.getByLabelText(/Maximum live bonus/) as HTMLInputElement).value).toBe("45");
     expect((screen.getByRole("checkbox", { name: "master" }) as HTMLInputElement).checked).toBe(
       true
     );

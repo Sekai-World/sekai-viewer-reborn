@@ -27,6 +27,7 @@ describe("parseTargetPlanQuery", () => {
         target: "500000",
         objective: "fewestPlays",
         maxPlays: "50",
+        maxLiveBonus: "",
         allowRepeats: true,
         difficulties: [],
         requiredSongs: ""
@@ -35,10 +36,52 @@ describe("parseTargetPlanQuery", () => {
         target: 500000,
         objective: "fewestPlays",
         maxPlays: 50,
+        maxLiveBonus: null,
         allowRepeats: true,
         allowedDifficulties: null,
         requiredSongs: []
       }
+    });
+  });
+
+  it("reads an optional live bonus limit and treats a blank one as no limit", () => {
+    expect(parse(`${base}&maxLiveBonus=120`)).toMatchObject({
+      status: "ready",
+      inputs: { maxLiveBonus: "120" },
+      request: { maxLiveBonus: 120 }
+    });
+    expect(parse(`${base}&maxLiveBonus=1000000`)).toMatchObject({
+      request: { maxLiveBonus: 1_000_000 }
+    });
+    expect(parse(`${base}&maxLiveBonus=`)).toMatchObject({
+      status: "ready",
+      request: { maxLiveBonus: null }
+    });
+    expect(parse(`${base}&maxLiveBonus=%20`)).toMatchObject({
+      status: "ready",
+      request: { maxLiveBonus: null }
+    });
+  });
+
+  it.each(["0", "-5", "1.5", "1e3", "abc", "1000001"])(
+    "rejects the live bonus limit %s instead of ignoring it",
+    (value) => {
+      expect(parse(`${base}&maxLiveBonus=${value}`)).toMatchObject({
+        status: "invalid",
+        inputs: { maxLiveBonus: value },
+        invalidFields: ["maxLiveBonus"]
+      });
+    }
+  );
+
+  it("rejects a repeated live bonus limit and starts a plan request from it alone", () => {
+    expect(parse(`${base}&maxLiveBonus=10&maxLiveBonus=20`)).toMatchObject({
+      status: "invalid",
+      invalidFields: ["maxLiveBonus"]
+    });
+    expect(parse("maxLiveBonus=10")).toMatchObject({
+      status: "invalid",
+      missingFields: ["maxPlays", "objective", "repeats", "target"]
     });
   });
 
@@ -123,6 +166,7 @@ describe("buildPlanQuery", () => {
       target: " 750000 ",
       objective: "leastOvershoot" as const,
       maxPlays: "20",
+      maxLiveBonus: " 300 ",
       allowRepeats: false,
       difficulties: ["master" as const, "append" as const],
       requiredSongs: " 3:master "
@@ -135,6 +179,7 @@ describe("buildPlanQuery", () => {
         target: 750000,
         objective: "leastOvershoot",
         maxPlays: 20,
+        maxLiveBonus: 300,
         allowRepeats: false,
         allowedDifficulties: ["master", "append"],
         requiredSongs: [{ musicId: 3, difficulty: "master" }]
@@ -149,7 +194,7 @@ describe("buildPlanQuery", () => {
 
     expect(parseTargetPlanQuery(query)).toMatchObject({
       status: "ready",
-      request: { allowedDifficulties: null, requiredSongs: [] }
+      request: { allowedDifficulties: null, requiredSongs: [], maxLiveBonus: null }
     });
   });
 });

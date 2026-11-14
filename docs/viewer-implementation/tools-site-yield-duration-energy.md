@@ -77,8 +77,11 @@ multiplier.
   no score-per-energy metric. This follows from the formula, not from an
   observed live.
 - The table is read from master data at run time, with its source and revision
-  shown like the other inputs. `sekai-master-api` has no `boosts` endpoint yet;
-  adding one is a prerequisite of #544 and follows the OpenAPI/SDK workflow.
+  shown like the other inputs. `sekai-master-api` serves it as
+  `GET /api/v1/boosts/{region}/list`; the target planner reads it from there
+  ([`tools-site-target-planner.md`](tools-site-target-planner.md), _Live bonus_).
+  Known gap: the planner names the boost table as the source of the cost but
+  shows no revision, because that endpoint does not carry one.
 
 ## Duration
 
@@ -179,6 +182,16 @@ For #544, on these semantics:
 Prerequisites that #544 must meet first: a `boosts` source in
 `sekai-master-api`, and input validation that restricts the multiplier to the
 table whenever energy is used.
+
+Built so far: the planner shows each plan's live bonus and accepts a cap on it,
+reading the table from `sekai-master-api`. It has no separate "least live
+bonus" objective, because with one boost per plan that is _fewest lives_. A
+multiplier outside the table gets no live bonus figure, and a cap with it is
+refused with `boostMultiplier` named as the invalid field; that refusal is how
+the planner meets the validation prerequisite above, while per-live figures
+keep accepting any multiplier. See [`tools-site-target-planner.md`](tools-site-target-planner.md),
+_Live bonus_. The time objective, the time cap and the efficiency columns are
+not built yet.
 
 Still blocked, with the missing evidence:
 

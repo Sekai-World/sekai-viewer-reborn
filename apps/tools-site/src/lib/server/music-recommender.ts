@@ -5,6 +5,12 @@ import {
 } from "#lib/server/music-metas.js";
 import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import { withRequestTimeout } from "#lib/server/network.js";
+import { findLiveBonusPerLive, livesWithinLiveBonus } from "#lib/plan-live-bonus.js";
+import {
+  loadRegionBoosts,
+  type RegionBoostLoader,
+  type RegionBoosts
+} from "#lib/server/region-boosts.js";
 import {
   loadRegionCharts,
   type RegionChartLoader,
@@ -67,6 +73,23 @@ export type MusicRecommenderResultItem = {
   eventPoints: number;
 };
 
+/**
+ * The live bonus a plan consumes. Every live uses the boost entered with the deck, so the total
+ * is the lives times that boost's cost. `not-in-table` is a multiplier the boost table does not
+ * list; `unavailable` is a table that could not be read.
+ */
+export type PlanLiveBonus =
+  | { status: "available"; perLive: number; total: number; limit: number | null }
+  | { status: "not-in-table" }
+  | { status: "unavailable" };
+
+export type MusicRecommenderPlanUnavailableReason =
+  | PlanUnavailableReason
+  | "yields-unavailable"
+  | "live-bonus-unavailable"
+  | "boost-not-in-table"
+  | "live-bonus-limit";
+
 /** The target-plan panel's state; a plan is only attempted when its controls are in the URL. */
 export type MusicRecommenderPlanData =
   | { status: "idle"; inputs: PlanFormInputs }
@@ -79,11 +102,11 @@ export type MusicRecommenderPlanData =
   | {
       status: "unavailable";
       inputs: PlanFormInputs;
-      reason: PlanUnavailableReason | "yields-unavailable";
+      reason: MusicRecommenderPlanUnavailableReason;
       invalidFields: string[];
       bound: PlanUnavailable["bound"];
     }
-  | { status: "ready"; inputs: PlanFormInputs; plan: TargetPlan };
+  | { status: "ready"; inputs: PlanFormInputs; plan: TargetPlan; liveBonus: PlanLiveBonus };
 
 export type MusicRecommenderPageData = {
   status: "available" | "unavailable";
@@ -657,12 +680,70 @@ const planWithoutYields = (planQuery: ParsedPlanQuery): MusicRecommenderPlanData
   };
 };
 
+type BoostCost =
+  { status: "available"; perLive: number } | { status: "not-in-table" } | { status: "unavailable" };
+
+const readBoostCost = (boosts: RegionBoosts, boostMultiplier: number): BoostCost => {
+  if (boosts.status === "unavailable") return { status: "unavailable" };
+  const perLive = findLiveBonusPerLive(boosts.boosts, boostMultiplier);
+  return perLive === null ? { status: "not-in-table" } : { status: "available", perLive };
+};
+
+const planUnavailable = (
+  inputs: PlanFormInputs,
+  reason: MusicRecommenderPlanUnavailableReason,
+  invalidFields: readonly string[] = [],
+  bound: PlanUnavailable["bound"] = null
+): MusicRecommenderPlanData => ({
+  status: "unavailable",
+  inputs,
+  reason,
+  invalidFields: [...invalidFields],
+  bound
+});
+
+type LivesLimit =
+  | { status: "ok"; maxPlays: number }
+  | {
+      status: "refused";
+      reason: "live-bonus-unavailable" | "boost-not-in-table" | "live-bonus-limit";
+    };
+
+/**
+ * Turns the live bonus cap into the lives limit the planner works with. The conversion is exact
+ * (see `livesWithinLiveBonus`), so the planner's guarantees hold unchanged under the cap.
+ */
+const resolveLivesLimit = (
+  maxPlays: number,
+  maxLiveBonus: number | null,
+  cost: BoostCost
+): LivesLimit => {
+  if (maxLiveBonus === null) return { status: "ok", maxPlays };
+  if (cost.status === "unavailable") return { status: "refused", reason: "live-bonus-unavailable" };
+  if (cost.status === "not-in-table") return { status: "refused", reason: "boost-not-in-table" };
+  const lives = livesWithinLiveBonus(maxLiveBonus, cost.perLive);
+  if (lives === null) return { status: "ok", maxPlays };
+  if (lives === 0) return { status: "refused", reason: "live-bonus-limit" };
+  return { status: "ok", maxPlays: Math.min(maxPlays, lives) };
+};
+
 const planWithYields = (
-  planQuery: ParsedPlanQuery,
+  planQuery: Extract<ParsedPlanQuery, { status: "ready" }>,
   metric: MusicRecommenderMetric,
-  items: readonly JpSoloRankingItem[]
+  items: readonly JpSoloRankingItem[],
+  cost: BoostCost
 ): MusicRecommenderPlanData => {
-  if (planQuery.status !== "ready") return planWithoutYields(planQuery);
+  const { inputs } = planQuery;
+  const { maxLiveBonus, ...request } = planQuery.request;
+  const limit = resolveLivesLimit(request.maxPlays, maxLiveBonus, cost);
+  if (limit.status === "refused") {
+    // An off-table multiplier is the deck field to change, so it is named.
+    return planUnavailable(
+      inputs,
+      limit.reason,
+      limit.reason === "boost-not-in-table" ? ["boostMultiplier"] : []
+    );
+  }
 
   const yields: PlannerYield[] = items.map(({ music, score, eventPoints }) => ({
     musicId: music.musicId,
@@ -670,17 +751,26 @@ const planWithYields = (
     score,
     eventPoints
   }));
-  const result = planTarget({ yields, metric, ...planQuery.request });
-  if (result.status === "ready") {
-    return { status: "ready", inputs: planQuery.inputs, plan: result };
+  const result = planTarget({ yields, metric, ...request, maxPlays: limit.maxPlays });
+  if (result.status === "unavailable") {
+    // The tighter of the two limits is the one named; the other may still be too low.
+    const reason =
+      result.reason === "plays-limit" && limit.maxPlays < request.maxPlays
+        ? "live-bonus-limit"
+        : result.reason;
+    return planUnavailable(inputs, reason, result.invalidFields, result.bound);
   }
-  return {
-    status: "unavailable",
-    inputs: planQuery.inputs,
-    reason: result.reason,
-    invalidFields: [...result.invalidFields],
-    bound: result.bound
-  };
+
+  const liveBonus: PlanLiveBonus =
+    cost.status === "available"
+      ? {
+          status: "available",
+          perLive: cost.perLive,
+          total: result.plays * cost.perLive,
+          limit: maxLiveBonus
+        }
+      : cost;
+  return { status: "ready", inputs, plan: result, liveBonus };
 };
 
 const makeUnavailablePageData = (
@@ -708,6 +798,14 @@ const makeUnavailablePageData = (
   };
 };
 
+const defaultRegionBoostLoader: RegionBoostLoader = async (region): Promise<RegionBoosts> => {
+  try {
+    return await loadRegionBoosts(getMasterApiBaseUrl(), region);
+  } catch {
+    return { status: "unavailable" };
+  }
+};
+
 const defaultRegionChartLoader: RegionChartLoader = async (region): Promise<RegionCharts> => {
   try {
     return await loadRegionCharts(getMasterApiBaseUrl(), region);
@@ -721,7 +819,8 @@ export const loadMusicRecommenderPageData = async (
   searchParams: URLSearchParams,
   fetcher: MusicMetaFetcher,
   now: () => Date = () => new Date(),
-  loadCharts: RegionChartLoader = defaultRegionChartLoader
+  loadCharts: RegionChartLoader = defaultRegionChartLoader,
+  loadBoosts: RegionBoostLoader = defaultRegionBoostLoader
 ): Promise<MusicRecommenderPageData> => {
   const planQuery = parseTargetPlanQuery(searchParams);
   const parsedQuery = parseMusicRecommenderQuery(searchParams);
@@ -765,6 +864,20 @@ export const loadMusicRecommenderPageData = async (
     );
   }
 
+  // The boost table is only read when there is a plan to describe.
+  const plan =
+    planQuery.status === "ready"
+      ? planWithYields(
+          planQuery,
+          parsedQuery.metric,
+          ranking.items,
+          readBoostCost(
+            await loadBoosts(region ?? DEFAULT_YIELD_REGION),
+            parsedQuery.domainInputs.boostMultiplier as number
+          )
+        )
+      : planWithoutYields(planQuery);
+
   return {
     status: "available",
     source: dataset.source,
@@ -785,6 +898,6 @@ export const loadMusicRecommenderPageData = async (
     reason: null,
     missingFields: [],
     invalidFields: [],
-    plan: planWithYields(planQuery, parsedQuery.metric, ranking.items)
+    plan
   };
 };
