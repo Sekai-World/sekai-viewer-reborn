@@ -65,6 +65,10 @@ not have.
 This status is intentional. Difficulty, note count, tracker score, `eventPointIcon`,
 or an unverified duration field must not be presented as a calculated yield.
 
+The audit rows below on energy and duration record what the code held at the
+time. Their semantics were defined later (#540) in
+[`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md).
+
 ## Approved Music Meta Input for #385
 
 The consumer contract (fields, units, revision, failure states, and

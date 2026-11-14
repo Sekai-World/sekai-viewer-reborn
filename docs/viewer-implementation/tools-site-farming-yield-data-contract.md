@@ -126,7 +126,7 @@ guessed or defaulted inputs; a missing input keeps the result unavailable.
 | Raw deck power             | Manual  | Needs the user's owned cards, levels, training, and episode state. No current contract provides it.                                                                                                                              |
 | Skill rate sequence        | Manual  | Needs the user's cards, skill levels, and leader and support state, plus the slot mapping that is still an open item below.                                                                                                      |
 | Deck bonus percent         | Manual  | Master data lists the per-event pieces (`eventDeckBonuses`, `eventRarityBonusRates` by rarity and master rank, `eventCards`, `eventHonorBonuses`), but summing them needs the user's deck. No observed vector validates the sum. |
-| Boost multiplier           | Manual  | A choice the user makes for each live, not a stored value.                                                                                                                                                                       |
+| Boost multiplier           | Manual  | A choice the user makes for each live, not a stored value. Its energy cost comes from `boosts.json` (#540).                                                                                                                      |
 | `event_rate` (song figure) | Derived | Read from the validated artifact record, shown with the source, URL, and revision.                                                                                                                                               |
 
 Findings that keep the bonus input manual:
@@ -148,20 +148,20 @@ Validation requires exactly these twelve fields. Any additional field (the
 Moesekai source adds score, PT, PSPI, and cycle fields) is ignored and must not
 be shown as yield evidence.
 
-| Field               | Type                                                   | Meaning / unit                                                                           | Used by the first metric |
-| ------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ------------------------ |
-| `music_id`          | positive integer                                       | Song id.                                                                                 | key                      |
-| `difficulty`        | `easy`, `normal`, `hard`, `expert`, `master`, `append` | Difficulty.                                                                              | key                      |
-| `music_time`        | number > 0                                             | Song length. Seconds (observed values such as `123.2`; unit not independently verified). | no                       |
-| `event_rate`        | positive integer                                       | Song event-point rate in percent (`114` is ×1.14); divided by 100 in the formula.        | **yes**                  |
-| `base_score`        | number ≥ 0                                             | Base score coefficient, a multiplier on `deck_power × 4`.                                | **yes**                  |
-| `base_score_auto`   | number ≥ 0                                             | Auto base score coefficient.                                                             | no (validated only)      |
-| `skill_score_solo`  | 6 numbers ≥ 0                                          | Solo skill score coefficients, multiplied by the matching `effective_skill_rate / 100`.  | **yes**                  |
-| `skill_score_auto`  | 6 numbers ≥ 0                                          | Auto skill coefficients.                                                                 | no (validated only)      |
-| `skill_score_multi` | 6 numbers ≥ 0                                          | Multi skill coefficients.                                                                | no (validated only)      |
-| `fever_score`       | number ≥ 0                                             | Fever coefficient.                                                                       | no (validated only)      |
-| `fever_end_time`    | number ≥ 0                                             | Fever end time. Seconds (observed; unit not independently verified).                     | no (validated only)      |
-| `tap_count`         | integer ≥ 0                                            | Note count. Never used to infer yield.                                                   | no                       |
+| Field               | Type                                                   | Meaning / unit                                                                          | Used by the first metric |
+| ------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------- | ------------------------ |
+| `music_id`          | positive integer                                       | Song id.                                                                                | key                      |
+| `difficulty`        | `easy`, `normal`, `hard`, `expert`, `master`, `append` | Difficulty.                                                                             | key                      |
+| `music_time`        | number > 0                                             | Song length in seconds, without the leading filler (verified for `jp`, #540).           | no                       |
+| `event_rate`        | positive integer                                       | Song event-point rate in percent (`114` is ×1.14); divided by 100 in the formula.       | **yes**                  |
+| `base_score`        | number ≥ 0                                             | Base score coefficient, a multiplier on `deck_power × 4`.                               | **yes**                  |
+| `base_score_auto`   | number ≥ 0                                             | Auto base score coefficient.                                                            | no (validated only)      |
+| `skill_score_solo`  | 6 numbers ≥ 0                                          | Solo skill score coefficients, multiplied by the matching `effective_skill_rate / 100`. | **yes**                  |
+| `skill_score_auto`  | 6 numbers ≥ 0                                          | Auto skill coefficients.                                                                | no (validated only)      |
+| `skill_score_multi` | 6 numbers ≥ 0                                          | Multi skill coefficients.                                                               | no (validated only)      |
+| `fever_score`       | number ≥ 0                                             | Fever coefficient.                                                                      | no (validated only)      |
+| `fever_end_time`    | number ≥ 0                                             | Fever end time. Seconds (observed; unit not independently verified).                    | no (validated only)      |
+| `tap_count`         | integer ≥ 0                                            | Note count. Never used to infer yield.                                                  | no                       |
 
 Fields not used by the first metric are still validated so the revision digest
 covers the same twelve fields for every consumer and a later mode does not need
@@ -293,9 +293,13 @@ These stay blocked and are not treated as implementation-ready:
 
 - Region `cn`, songs only TW, EN, or KR has, and Multi, Challenge, Cheerful
   Carnival, and World Bloom yields.
-- Per-hour, per-energy, and cumulative planning metrics. Duration and energy
-  semantics are undefined, and the Moesekai `cycles_*`/`pt_per_hour_*` fields are
-  derived from preset teams, not personalized observations.
+- Per-hour, per-energy, and energy- or time-based planning metrics are not
+  implemented. Their semantics are defined in
+  [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md)
+  (#540) and they are built in #544. Natural recovery, "per day" figures, and a
+  default play-time overhead stay blocked there. The Moesekai
+  `cycles_*`/`pt_per_hour_*` fields are derived from preset teams, not
+  personalized observations, and remain unused.
 - Deck state derived from user data, and event/card bonus resolution from master
   data (display-oriented and partial per the validation document). See _Deck and
   Bonus Inputs_.
@@ -310,9 +314,12 @@ These stay blocked and are not treated as implementation-ready:
   other modes or regions. The page shows the content hash as `sha256:<revision>`.
 - #382 (cumulative planning) may plan only score and event-point targets from
   these per-live figures, as described in
-  [`tools-site-target-planner.md`](tools-site-target-planner.md). Its energy and
-  time objectives stay blocked until duration and energy semantics are defined
-  (#540).
+  [`tools-site-target-planner.md`](tools-site-target-planner.md). For the recommender, #540 makes three
+  efficiency figures available to #544: event points per live bonus, per minute
+  of song, and per hour of play (the last only with the user's overhead per
+  live). For the planner it makes "least live bonus" and "shortest play time"
+  available. Both are built in #544 on the semantics in
+  [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md).
 - #380 remains the gate for any mode other than JP Solo.
 
 ## Decisions and Open Items
@@ -324,6 +331,7 @@ Open:
 1. **Skill slot mapping.** The artifact has six slots per live type. The mapping
    to deck cards must be taken from the JP Solo reference by #381 and recorded
    there; this contract deliberately does not guess it.
-2. **Units of `music_time` and `fever_end_time`.** Treated as seconds from
-   observation. They do not feed the first metric, so this only matters if a
-   duration-based metric is later added.
+2. **Unit of `fever_end_time`.** Treated as seconds from observation and not
+   verified. No metric uses it. `music_time` is verified as the song length in
+   seconds for `jp`; see
+   [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md).
