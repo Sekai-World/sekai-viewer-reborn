@@ -38,7 +38,9 @@ redirect ships:
 | Region policy    | how a legacy URL without a region maps to `:region` |
 | Query parameters | preserved, dropped, or translated, per row          |
 
-## 2. Event Tracker cross-site configuration
+## 2. Cross-site link configuration
+
+### Tools site
 
 `PUBLIC_TOOLS_SITE_BASE_URL` is read at runtime by `content-site`
 (`apps/content-site/src/lib/tools-site.ts`) and exposed in the Helm chart as
@@ -51,7 +53,10 @@ redirect ships:
 | Unset, empty, or whitespace        | Hidden for every region                         |
 
 Trailing slashes on the base URL are trimmed. Entry points are the home
-current-event cards and the event detail page.
+current-event cards and the event detail page. The same base URL also drives
+the sidebar "More sites" group: Event Tracker links to `<base>/tracker/<region>`
+for the sidebar region (hidden for `cn`), and Music Recommender links to
+`<base>/music-recommender`.
 
 Launch configuration: set the value to the public tools-site origin when
 tools-site is deployed with the release; otherwise leave it empty and the
@@ -65,6 +70,32 @@ string:
 The value must be the origin where the tools-site Ingress is actually served
 (`apps.tools-site.ingress.host` plus its TLS setting), not an in-cluster
 Service address, because the link is followed by the visitor's browser.
+
+### Media lab site
+
+`PUBLIC_MEDIA_LAB_SITE_BASE_URL` is read at runtime by `content-site`
+(`apps/content-site/src/lib/media-lab-site.ts`) and exposed in the Helm chart
+as `apps.content-site.env.PUBLIC_MEDIA_LAB_SITE_BASE_URL`. Unset, empty, or
+whitespace hides every link below; trailing slashes are trimmed. Story links
+are built for every region (`jp`, `en`, `tw`, `kr`, `cn`), and content-site
+does not check that the story exists: a missing story lands on the media-lab
+not-found state.
+
+| Entry point                    | Link                                                   |
+| ------------------------------ | ------------------------------------------------------ |
+| Sidebar "More sites"           | `<base>/story-reader`, `<base>/live2d`, `<base>/chibi` |
+| Event detail page              | `<base>/story-reader/<region>/event/<eventId>-1`       |
+| Card detail page, each episode | `<base>/story-reader/<region>/card/<cardEpisodeId>`    |
+| Character detail page          | `<base>/story-reader/<region>/character/<characterId>` |
+
+The character link is hidden when the character has no profile, because the
+media-lab story resolves against `characterProfiles`. Set the value to the
+public media-lab-site origin (`apps.media-lab-site.ingress.host` plus its TLS
+setting) in the same way as the tools-site value:
+
+```bash
+--set-string apps.content-site.env.PUBLIC_MEDIA_LAB_SITE_BASE_URL=https://media.example.com
+```
 
 ## 3. Browser smoke checklist
 
@@ -115,13 +146,15 @@ Follow the chart README (`deploy/helm/sekai-viewer-reborn/README.md`) for
 install, upgrade, and rollback mechanics. In addition, before launch confirm
 and record:
 
-- **DNS**: records for `apps.content-site.ingress.host` (and tools-site host if
-  the Tracker link is enabled) point at the cluster ingress.
+- **DNS**: records for `apps.content-site.ingress.host` (and the tools-site or
+  media-lab-site host when its cross-site links are enabled) point at the
+  cluster ingress.
 - **Ingress / TLS**: the TLS Secret named by `ingress.tls.secretName` exists in
   the release namespace; `className` matches the cluster's controller.
 - **Required environment**: `SEKAI_MASTER_API_BASE_URL`, `SEKAI_API_BASE_URL`,
   `PUBLIC_REMOTE_ASSET_BASE_URL` set; `PUBLIC_SEKAI_I18N_BASE_URL` reviewed;
-  `PUBLIC_TOOLS_SITE_BASE_URL` set or intentionally empty.
+  `PUBLIC_TOOLS_SITE_BASE_URL` and `PUBLIC_MEDIA_LAB_SITE_BASE_URL` each set or
+  intentionally empty.
 - **Images**: versioned immutable tags (no `latest`), with the in-app update
   entry matching the content-site version being deployed.
 - **Rollback**: note the previous known-good revision from

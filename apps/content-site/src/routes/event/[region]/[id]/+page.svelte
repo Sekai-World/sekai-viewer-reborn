@@ -17,6 +17,7 @@
   import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
   import { formatUnitFallbackLabel } from "#lib/domain/unit-profile.js";
   import { getEventTrackerHref } from "#lib/tools-site.js";
+  import { getEventStoryReaderHref } from "#lib/media-lab-site.js";
   import { createPageTitle } from "#lib/page-title.js";
   import DiscordEmbedHead from "#lib/components/shared/DiscordEmbedHead.svelte";
   import type { PageProps } from "./$types";
@@ -76,6 +77,7 @@
   let imageUnavailableLabel = $state(getInitialI18nText("imageUnavailable"));
   let noEventLabel = $state(getInitialI18nText("noCurrentEventData"));
   let eventTrackerLabel = $state(getInitialI18nText("eventTrackerLink"));
+  let eventStoryReaderLabel = $state(getInitialI18nText("eventStoryReaderLink"));
   let eventTitlePrefix = $state(getInitialI18nText("pageTitle.eventPrefix"));
   let bannerTabLabel = $state(getInitialI18nText("assetTab.banner"));
   let titleTabLabel = $state(getInitialI18nText("eventAssetTabs.title"));
@@ -168,6 +170,7 @@
     imageUnavailableLabel = translate("imageUnavailable");
     noEventLabel = translate("noCurrentEventData");
     eventTrackerLabel = translate("eventTrackerLink");
+    eventStoryReaderLabel = translate("eventStoryReaderLink");
     eventTitlePrefix = translate("pageTitle.eventPrefix");
     bannerTabLabel = translate("assetTab.banner");
     titleTabLabel = translate("eventAssetTabs.title");
@@ -246,6 +249,7 @@
     resolve("/event/[region]/[id]/bgm/progress", { region: data.region, id: data.eventId });
   const getEventListHref = (): string => resolve("/events/[region]", { region: data.region });
   const eventTrackerHref = $derived(getEventTrackerHref(data.region, data.eventId));
+  const eventStoryReaderHref = $derived(getEventStoryReaderHref(data.region, data.eventId));
   const getEventBreadcrumbItems = (currentLabel: string) => [
     {
       label: homeLabel,
@@ -402,6 +406,8 @@
               {bannerCharacterLabel}
               {eventTrackerHref}
               {eventTrackerLabel}
+              {eventStoryReaderHref}
+              {eventStoryReaderLabel}
             />
           {/await}
 

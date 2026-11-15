@@ -16,6 +16,7 @@ export const variables = defineEnvVars({
   PUBLIC_PATREON_URL: { public: true, schema: (input) => input ?? "" },
   PUBLIC_KOFI_URL: { public: true, schema: (input) => input ?? "" },
   PUBLIC_TOOLS_SITE_BASE_URL: { public: true, schema: optionalUrl },
+  PUBLIC_MEDIA_LAB_SITE_BASE_URL: { public: true, schema: optionalUrl },
   PUBLIC_SEKAI_I18N_BASE_URL: { public: true, schema: optionalUrl },
   PUBLIC_REMOTE_ASSET_BASE_URL: {
     public: true,

@@ -207,7 +207,8 @@ When changing shared packages:
 - Public asset URL helpers require `PUBLIC_REMOTE_ASSET_BASE_URL`; the server refuses to start without it.
 - `apps/*/src/env.ts` validates URL variables at startup through `@platform/ui-shell/env-url`; see `docs/viewer-implementation/helm-deployments.md`.
 - Client/server i18n loading uses `PUBLIC_SEKAI_I18N_BASE_URL`; the default is `https://sekai-world.github.io/sekai-i18n-reborn`.
-- Cross-site Event Tracker links use the optional `PUBLIC_TOOLS_SITE_BASE_URL`; when unset, tracker entry points stay hidden. Tracker links are only rendered for jp/tw/en/kr (tools-site tracker has no cn support).
+- Cross-site Event Tracker and Music Recommender links use the optional `PUBLIC_TOOLS_SITE_BASE_URL`; when unset, those entry points stay hidden. Tracker links are only rendered for jp/tw/en/kr (tools-site tracker has no cn support).
+- Cross-site Story Reader, Live2D, and Chibi links (sidebar "More sites" plus event, card-episode, and character story deep links) use the optional `PUBLIC_MEDIA_LAB_SITE_BASE_URL`; when unset, they stay hidden. Helpers live in `apps/content-site/src/lib/tools-site.ts` and `apps/content-site/src/lib/media-lab-site.ts`.
 
 ## Shared Package: `sekai-master-api-sdk`
 

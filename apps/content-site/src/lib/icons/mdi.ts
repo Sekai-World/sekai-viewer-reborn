@@ -105,6 +105,13 @@ import slotMachineOutline from "@iconify-icons/mdi/slot-machine-outline";
 import ticketOutline from "@iconify-icons/mdi/ticket-outline";
 import diamondOutline from "@iconify-icons/mdi/diamond-outline";
 
+// ── Cross-site links ────────────────────────────────────────────────
+import bookOpenVariantOutline from "@iconify-icons/mdi/book-open-variant-outline";
+import dramaMasks from "@iconify-icons/mdi/drama-masks";
+import humanChild from "@iconify-icons/mdi/human-child";
+import chartLine from "@iconify-icons/mdi/chart-line";
+import playlistMusicOutline from "@iconify-icons/mdi/playlist-music-outline";
+
 // ── UI Shell (shared package) ───────────────────────────────────────
 import menu from "@iconify-icons/mdi/menu";
 import magnifyPlusOutline from "@iconify-icons/mdi/magnify-plus-outline";
@@ -228,3 +235,8 @@ addIcon("mdi:storefront-outline", storefrontOutline);
 addIcon("mdi:image-frame", imageFrame);
 addIcon("mdi:hammer-wrench", hammerWrench);
 addIcon("mdi:package-variant-closed", packageVariantClosed);
+addIcon("mdi:book-open-variant-outline", bookOpenVariantOutline);
+addIcon("mdi:drama-masks", dramaMasks);
+addIcon("mdi:human-child", humanChild);
+addIcon("mdi:chart-line", chartLine);
+addIcon("mdi:playlist-music-outline", playlistMusicOutline);

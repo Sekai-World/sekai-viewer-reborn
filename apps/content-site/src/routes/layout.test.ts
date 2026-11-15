@@ -14,6 +14,23 @@ type TourProps = {
 const tour = vi.hoisted(() => ({ props: null as TourProps | null }));
 const appState = vi.hoisted(() => ({ updated: { current: false } }));
 const onboardingState = vi.hoisted(() => ({ seen: false, seenVersion: null as string | null }));
+const publicEnv = vi.hoisted(() => ({
+  PUBLIC_MEDIA_LAB_SITE_BASE_URL: "",
+  PUBLIC_TOOLS_SITE_BASE_URL: ""
+}));
+
+vi.mock("$app/env/public", async (importOriginal) => {
+  const original = await importOriginal<Record<string, string>>();
+  return {
+    ...original,
+    get PUBLIC_MEDIA_LAB_SITE_BASE_URL() {
+      return publicEnv.PUBLIC_MEDIA_LAB_SITE_BASE_URL;
+    },
+    get PUBLIC_TOOLS_SITE_BASE_URL() {
+      return publicEnv.PUBLIC_TOOLS_SITE_BASE_URL;
+    }
+  };
+});
 
 vi.mock("#lib/components/OnboardingDialog.svelte", () => ({
   default: (_anchor: unknown, props: TourProps) => {
@@ -57,6 +74,8 @@ beforeEach(() => {
   appState.updated.current = false;
   onboardingState.seen = false;
   onboardingState.seenVersion = null;
+  publicEnv.PUBLIC_MEDIA_LAB_SITE_BASE_URL = "";
+  publicEnv.PUBLIC_TOOLS_SITE_BASE_URL = "";
   originalRootLanguage = document.documentElement.getAttribute("lang");
   originalRootDirection = document.documentElement.getAttribute("dir");
   localStorage.clear();
@@ -298,5 +317,52 @@ describe("deployment update prompt", () => {
     const curatedTitle = await screen.findByText("updates.notice.title");
     expect(curatedTitle.closest("section")?.getAttribute("role")).toBe("alert");
     expect(screen.queryByText("updates.deployment.title")).toBeNull();
+  });
+});
+
+describe("more sites sidebar group", () => {
+  const sidebarPanel = (): HTMLElement => document.getElementById("content-site-drawer-panel")!;
+
+  it("lists every configured sister-site entry as an external link after the other groups", async () => {
+    publicEnv.PUBLIC_MEDIA_LAB_SITE_BASE_URL = "https://media.example.test/";
+    publicEnv.PUBLIC_TOOLS_SITE_BASE_URL = "https://tools.example.test";
+    await setup(1440);
+
+    const groupRows = [...sidebarPanel().querySelectorAll('[data-sidebar-group="moreSites"]')];
+    expect(groupRows[0]?.textContent?.trim()).toBe("navigation.moreSites");
+    expect(sidebarPanel().querySelector("ul > li:last-child")).toBe(groupRows.at(-1));
+
+    const links = groupRows.flatMap((row) => [...row.querySelectorAll("a")]);
+    expect(links.map((link) => [link.textContent?.trim(), link.getAttribute("href")])).toEqual([
+      ["navigation.storyReader", "https://media.example.test/story-reader"],
+      ["navigation.live2d", "https://media.example.test/live2d"],
+      ["navigation.chibi", "https://media.example.test/chibi"],
+      ["eventTrackerLink", "https://tools.example.test/tracker/jp"],
+      ["navigation.musicRecommender", "https://tools.example.test/music-recommender"]
+    ]);
+    for (const link of links) {
+      expect(link.getAttribute("target")).toBe("_blank");
+      expect(link.getAttribute("aria-label")).toBe(
+        `${link.textContent?.trim()} (notification.opensInNewWindow)`
+      );
+    }
+  });
+
+  it("shows only the entries whose site is configured", async () => {
+    publicEnv.PUBLIC_TOOLS_SITE_BASE_URL = "https://tools.example.test";
+    await setup(1440);
+
+    const links = [...sidebarPanel().querySelectorAll('[data-sidebar-group="moreSites"] a')];
+    expect(links.map((link) => link.textContent?.trim())).toEqual([
+      "eventTrackerLink",
+      "navigation.musicRecommender"
+    ]);
+  });
+
+  it("omits the whole group when no sister site is configured", async () => {
+    await setup(1440);
+
+    expect(screen.queryByText("navigation.moreSites")).toBeNull();
+    expect(sidebarPanel().querySelector('[data-sidebar-group="moreSites"]')).toBeNull();
   });
 });

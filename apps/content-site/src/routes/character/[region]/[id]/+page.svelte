@@ -23,6 +23,7 @@
   import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
   import { createI18nTranslator, resolveStreamingMessages } from "#lib/i18n/runtime.js";
   import { createPageTitle } from "#lib/page-title.js";
+  import { getCharacterStoryReaderHref } from "#lib/media-lab-site.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -32,6 +33,9 @@
   let requestId = 0;
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const t = (key: string, fallback: string): string => translate(key, fallback);
+  // Media lab resolves character stories from characterProfiles, so a missing profile hides the link.
+  const characterStoryReaderHref = (character: CharacterDetail): string | null =>
+    character.profile ? getCharacterStoryReaderHref(data.region, data.characterId) : null;
   const listHref = (): string => resolve("/characters/[region]", { region: data.region });
   const cardsHref = (): string =>
     withCardListView(
@@ -267,6 +271,31 @@
                     </div>
                   {/each}
                 </dl>
+              {/if}
+              {#if characterStoryReaderHref(character)}
+                {@const storyLabel = t("characterStoryReaderLink", "Read character story")}
+                <div
+                  class="content-card-inset rounded-xl border-(--archive-border-default) p-3 sm:px-4"
+                >
+                  <a
+                    href={characterStoryReaderHref(character)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="group/character-story-row -m-1 flex items-center gap-3 rounded-lg p-1 outline-none transition-[background-color,color] duration-180 ease-out focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    aria-label={storyLabel}
+                  >
+                    <span
+                      class="min-w-0 flex-1 text-sm font-medium transition-colors duration-180 ease-out group-hover/character-story-row:text-primary group-focus-visible/character-story-row:text-primary"
+                    >
+                      {storyLabel}
+                    </span>
+                    <Icon
+                      icon="mdi:open-in-new"
+                      class="size-4 shrink-0 text-base-content/55 transition-colors duration-180 group-hover/character-story-row:text-primary group-focus-visible/character-story-row:text-primary"
+                      aria-hidden="true"
+                    />
+                  </a>
+                </div>
               {/if}
             </div>
           </article>

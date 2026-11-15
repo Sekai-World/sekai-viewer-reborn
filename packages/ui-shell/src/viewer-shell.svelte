@@ -3,6 +3,7 @@
   import type { Snippet } from "svelte";
   import BrandLockup from "./brand-lockup.svelte";
   import NavigationProgress from "./navigation-progress.svelte";
+  import { openInNewIcon } from "./icons";
   import type { SidebarItem } from "./viewer-shell.types";
 
   type Props = {
@@ -18,6 +19,8 @@
     closeSidebarLabel?: string;
     sidebarLabel?: string;
     sidebarItems?: SidebarItem[];
+    /** Appended to the accessible name of external sidebar links, e.g. "Opens in a new window". */
+    externalLinkLabel?: string;
     showTitle?: boolean;
     title?: string;
     titleBadge?: string;
@@ -42,6 +45,7 @@
     closeSidebarLabel = "Close navigation",
     sidebarLabel = "Navigation",
     sidebarItems = [],
+    externalLinkLabel = "",
     showTitle = true,
     title = "Sekai Viewer",
     titleBadge = "reborn",
@@ -188,8 +192,13 @@
             <li data-sidebar-group={item.groupId}>
               <a
                 href={item.href}
+                target={item.external ? "_blank" : undefined}
+                rel={item.external ? "noopener noreferrer" : undefined}
+                aria-label={item.external && externalLinkLabel
+                  ? `${item.label} (${externalLinkLabel})`
+                  : undefined}
                 aria-current={item.active ? "page" : undefined}
-                class={`grid grid-cols-[1.25rem_minmax(0,1fr)] items-center gap-3 ${item.active ? "active" : ""}`}
+                class={`grid ${item.external ? "grid-cols-[1.25rem_minmax(0,1fr)_auto]" : "grid-cols-[1.25rem_minmax(0,1fr)]"} items-center gap-3 ${item.active ? "active" : ""}`}
                 onclick={() => {
                   sidebarOpen = false;
                 }}
@@ -200,6 +209,13 @@
                   </span>
                 {/if}
                 <span class={item.icon ? "" : "col-span-2"}>{item.label}</span>
+                {#if item.external}
+                  <Icon
+                    icon={openInNewIcon}
+                    class="size-4 shrink-0 opacity-60"
+                    aria-hidden="true"
+                  />
+                {/if}
               </a>
             </li>
           {:else}

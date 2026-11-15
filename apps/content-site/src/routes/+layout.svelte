@@ -56,6 +56,8 @@
   } from "#lib/onboarding.js";
   import { getSiteUpdateForVersion, resolveSiteVersion } from "#lib/site-updates.js";
   import { DeploymentUpdateMonitor } from "#lib/deployment-update.svelte.js";
+  import { getChibiHref, getLive2dHref, getStoryReaderHref } from "#lib/media-lab-site.js";
+  import { getEventTrackerSiteHref, getMusicRecommenderHref } from "#lib/tools-site.js";
   import type { LayoutData } from "./$types";
 
   type ThemeMode = "light" | "dark" | "auto";
@@ -64,7 +66,8 @@
   type UiLocaleOption = {
     code: SupportedUiLocale;
   };
-  type SidebarGroupId = "library" | "activities" | "progression" | "mysekai" | "project";
+  type SidebarGroupId =
+    "library" | "activities" | "progression" | "mysekai" | "project" | "moreSites";
   type ContentSiteSidebarItem =
     | {
         type?: "link";
@@ -73,6 +76,7 @@
         active?: boolean;
         icon?: string;
         disabled?: boolean;
+        external?: boolean;
         groupId?: SidebarGroupId;
       }
     | {
@@ -132,6 +136,12 @@
   let activitiesLabel = $state(getInitialI18nText("navigation.activities"));
   let progressionLabel = $state(getInitialI18nText("navigation.progression"));
   let projectLabel = $state(getInitialI18nText("navigation.project"));
+  let moreSitesLabel = $state(getInitialI18nText("navigation.moreSites"));
+  let storyReaderLabel = $state(getInitialI18nText("navigation.storyReader"));
+  let live2dLabel = $state(getInitialI18nText("navigation.live2d"));
+  let chibiLabel = $state(getInitialI18nText("navigation.chibi"));
+  let eventTrackerLabel = $state(getInitialI18nText("eventTrackerLink"));
+  let musicRecommenderLabel = $state(getInitialI18nText("navigation.musicRecommender"));
   let gameNewsLabel = $state(getInitialI18nText("navigation.gameNews"));
   let charactersLabel = $state(getInitialI18nText("navigation.characters"));
   let cardsLabel = $state(getInitialI18nText("navigation.cards"));
@@ -331,6 +341,30 @@
       groupId: "project"
     }
   ]);
+  // Sister-site entries; each is hidden while its site's base URL is not configured.
+  const moreSitesItems = $derived<ContentSiteSidebarItem[]>(
+    [
+      {
+        label: storyReaderLabel,
+        href: getStoryReaderHref(),
+        icon: "mdi:book-open-variant-outline"
+      },
+      { label: live2dLabel, href: getLive2dHref(), icon: "mdi:drama-masks" },
+      { label: chibiLabel, href: getChibiHref(), icon: "mdi:human-child" },
+      {
+        label: eventTrackerLabel,
+        href: getEventTrackerSiteHref(sidebarRegion),
+        icon: "mdi:chart-line"
+      },
+      {
+        label: musicRecommenderLabel,
+        href: getMusicRecommenderHref(),
+        icon: "mdi:playlist-music-outline"
+      }
+    ].flatMap(({ href, ...item }) =>
+      href ? [{ ...item, href, external: true, groupId: "moreSites" as const }] : []
+    )
+  );
   const sidebarItems = $derived<ContentSiteSidebarItem[]>([
     navigationLinks[0],
     navigationLinks[1],
@@ -443,7 +477,13 @@
       active: page.url.pathname === resolve("updates"),
       icon: "mdi:information-outline",
       groupId: "project"
-    }
+    },
+    ...(moreSitesItems.length > 0
+      ? [
+          { type: "section" as const, label: moreSitesLabel, groupId: "moreSites" as const },
+          ...moreSitesItems
+        ]
+      : [])
   ]);
   const quickNavigationItems = $derived<ContentSiteNavigationItem[]>([
     navigationLinks[0],
@@ -690,6 +730,12 @@
     activitiesLabel = translate("navigation.activities");
     progressionLabel = translate("navigation.progression");
     projectLabel = translate("navigation.project");
+    moreSitesLabel = translate("navigation.moreSites");
+    storyReaderLabel = translate("navigation.storyReader");
+    live2dLabel = translate("navigation.live2d");
+    chibiLabel = translate("navigation.chibi");
+    eventTrackerLabel = translate("eventTrackerLink");
+    musicRecommenderLabel = translate("navigation.musicRecommender");
     gameNewsLabel = translate("navigation.gameNews");
     charactersLabel = translate("navigation.characters");
     cardsLabel = translate("navigation.cards");
@@ -1517,6 +1563,7 @@
   {navigationLoadingLabel}
   navigating={navigating.to !== null || pageLeave.leaving}
   {sidebarItems}
+  externalLinkLabel={layoutTranslate("notification.opensInNewWindow")}
   showTitle={showPageTitle}
 >
   {#snippet bottomNavigation()}

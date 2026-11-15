@@ -30,7 +30,9 @@
     endAtLabel,
     bannerCharacterLabel,
     eventTrackerHref,
-    eventTrackerLabel
+    eventTrackerLabel,
+    eventStoryReaderHref,
+    eventStoryReaderLabel
   }: {
     event: EventDetail;
     region: SupportedRegion;
@@ -49,7 +51,15 @@
     bannerCharacterLabel: string;
     eventTrackerHref: string | null;
     eventTrackerLabel: string;
+    eventStoryReaderHref: string | null;
+    eventStoryReaderLabel: string;
   } = $props();
+  const crossSiteLinks = $derived(
+    [
+      { href: eventTrackerHref, label: eventTrackerLabel },
+      { href: eventStoryReaderHref, label: eventStoryReaderLabel }
+    ].filter((link): link is { href: string; label: string } => link.href !== null)
+  );
   const getCharacterDisplayName = (char: BannerGameCharacter): string => {
     const parts = [char.firstName, char.givenName].filter(Boolean);
     return parts.length > 0 ? parts.join(" ") : String(char.id);
@@ -209,19 +219,19 @@
         </dt>
         <dd class="mt-1 text-sm font-medium">{event.assetBundleName ?? "--"}</dd>
       </div>
-      {#if eventTrackerHref}
+      {#each crossSiteLinks as link (link.href)}
         <div class="content-card-inset rounded-xl border-(--archive-border-default) p-3 sm:px-4">
           <a
-            href={eventTrackerHref}
+            href={link.href}
             target="_blank"
             rel="noopener noreferrer"
             class="group/event-tracker-row -m-1 flex items-center gap-3 rounded-lg p-1 outline-none transition-[background-color,color] duration-180 ease-out focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-            aria-label={eventTrackerLabel}
+            aria-label={link.label}
           >
             <span
               class="min-w-0 flex-1 text-sm font-medium transition-colors duration-180 ease-out group-hover/event-tracker-row:text-primary group-focus-visible/event-tracker-row:text-primary"
             >
-              {eventTrackerLabel}
+              {link.label}
             </span>
             <Icon
               icon="mdi:open-in-new"
@@ -230,7 +240,7 @@
             />
           </a>
         </div>
-      {/if}
+      {/each}
     </dl>
   </div>
 </article>

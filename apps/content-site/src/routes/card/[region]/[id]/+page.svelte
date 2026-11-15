@@ -96,6 +96,7 @@
   let costsLabel = $state(getInitialI18nText("costsLabel"));
   let rewardsLabel = $state(getInitialI18nText("rewardsLabel"));
   let noEpisodesLabel = $state(getInitialI18nText("noEpisodesLabel"));
+  let episodeStoryReaderLabel = $state(getInitialI18nText("cardEpisodeStoryReaderLink"));
   let sectionLoadFailedLabel = $state(getInitialI18nText("detailSectionLoadFailed"));
   let retryLabel = $state(getInitialI18nText("listRetry"));
   let cardRelatedEventsTitle = $state(getInitialI18nText("cardRelatedEventsTitle"));
@@ -164,6 +165,7 @@
     costsLabel = translate("costsLabel");
     rewardsLabel = translate("rewardsLabel");
     noEpisodesLabel = translate("noEpisodesLabel");
+    episodeStoryReaderLabel = translate("cardEpisodeStoryReaderLink");
     sectionLoadFailedLabel = translate("detailSectionLoadFailed");
     retryLabel = translate("listRetry");
     cardRelatedEventsTitle = translate("cardRelatedEventsTitle");
@@ -489,11 +491,13 @@
               {#await data.episodes then episodes}
                 <CardDetailEpisodesCard
                   {episodes}
+                  region={data.region}
                   title={cardEpisodesTitle}
                   {releaseConditionLabel}
                   {costsLabel}
                   {rewardsLabel}
                   {noEpisodesLabel}
+                  storyReaderLabel={episodeStoryReaderLabel}
                 />
               {:catch}
                 <article class="card content-card-shell shadow-sm">
