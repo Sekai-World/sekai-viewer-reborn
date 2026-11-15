@@ -63,7 +63,10 @@
     new Intl.NumberFormat(data.uiLocale).format(value);
 </script>
 
-<svelte:head><title>{pageTitle}</title></svelte:head>
+<svelte:head>
+  <title>{pageTitle}</title>
+  {#if payload && payload.status !== "ready"}<meta name="robots" content="noindex" />{/if}
+</svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-4 pb-6">
   <PageHeader

@@ -1,3 +1,4 @@
+import { error } from "@sveltejs/kit";
 import { dev } from "$app/env";
 import {
   getEventsByRegionByIdDetail,
@@ -8,6 +9,7 @@ import { getServerI18nText } from "#lib/i18n/runtime.js";
 import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
 import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseRouteId } from "#lib/route-id.js";
 import { loadDiscordEmbedLabels } from "#lib/server/discord-embed-labels.js";
 import {
   parseEventAggregateRelatedData,
@@ -244,22 +246,11 @@ const fetchAvailableRegions = async ({
 
 const fetchEventPayload = async ({
   aggregatePromise,
-  invalidEventIdMessage,
   failedToLoadEventDataMessage
 }: {
   aggregatePromise: Promise<EventAggregateLookup>;
-  invalidEventIdMessage: string | null;
   failedToLoadEventDataMessage: string;
 }): Promise<EventPayload> => {
-  if (invalidEventIdMessage) {
-    return {
-      event: null,
-      relatedData: null,
-      debugEventJson: null,
-      error: invalidEventIdMessage
-    };
-  }
-
   try {
     const aggregate = await aggregatePromise;
 
@@ -280,52 +271,31 @@ const fetchEventPayload = async ({
 };
 
 const fetchIsCurrentEvent = async ({
-  aggregatePromise,
-  invalidEventIdMessage
+  aggregatePromise
 }: {
   aggregatePromise: Promise<EventAggregateLookup>;
-  invalidEventIdMessage: string | null;
 }): Promise<boolean> => {
-  if (invalidEventIdMessage) {
-    return false;
-  }
-
   return (await aggregatePromise).isCurrentEvent;
 };
 
 export const load: PageServerLoad = async ({ params, url, request, cookies, fetch }) => {
-  const eventId = params.id?.trim() ?? "";
+  if (parseRouteId(params.id) === null) error(404, "Not found");
+  const eventId = params.id;
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const [
-    invalidEventIdMessage,
-    eventUnavailableInCurrentRegionMessage,
-    failedToLoadEventDataMessage
-  ] = await Promise.all([
-    getServerI18nText(uiLocale, "invalidEventId", fetch),
+  const [eventUnavailableInCurrentRegionMessage, failedToLoadEventDataMessage] = await Promise.all([
     getServerI18nText(uiLocale, "eventUnavailableInCurrentRegion", fetch),
     getServerI18nText(uiLocale, "failedToLoadEventData", fetch)
   ]);
   const region: SupportedRegion = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
-  const aggregatePromise = eventId
-    ? fetchEventAggregate(baseUrl, region, eventId)
-    : Promise.resolve({
-        region,
-        event: null,
-        relatedData: null,
-        loadFailed: false,
-        availableRegions: [region],
-        isCurrentEvent: false,
-        exists: false,
-        rawPayloadJson: null
-      } satisfies EventAggregateLookup);
+  const aggregatePromise = fetchEventAggregate(baseUrl, region, eventId);
 
   // Server-render the link preview for link-preview crawlers (no JS execution);
   // browsers keep the streaming path. The budget guard keeps slow upstream
   // responses (the event aggregate can take 20s+) from blowing Discord's
   // 10s unfurl window.
   let seo: DiscordEmbedSeo | null = null;
-  if (isSEOCrawler(request?.headers.get("user-agent")) && eventId) {
+  if (isSEOCrawler(request?.headers.get("user-agent"))) {
     const labelsPromise = loadDiscordEmbedLabels(uiLocale, fetch);
     seo = await resolveSeoWithBudget(async () => {
       const [aggregate, labels] = await Promise.all([aggregatePromise, labelsPromise]);
@@ -369,18 +339,14 @@ export const load: PageServerLoad = async ({ params, url, request, cookies, fetc
     seo,
     eventUnavailableInCurrentRegionMessage,
     failedToLoadEventDataMessage,
-    availableRegions: eventId
-      ? fetchAvailableRegions({ baseUrl, eventId, region, aggregatePromise })
-      : Promise.resolve([region] satisfies SupportedRegion[]),
+    availableRegions: fetchAvailableRegions({ baseUrl, eventId, region, aggregatePromise }),
     eventPayload: fetchEventPayload({
       aggregatePromise,
-      invalidEventIdMessage: eventId ? null : invalidEventIdMessage,
       failedToLoadEventDataMessage
     }),
     unitProfiles: fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap),
     isCurrentEvent: fetchIsCurrentEvent({
-      aggregatePromise,
-      invalidEventIdMessage: eventId ? null : invalidEventIdMessage
+      aggregatePromise
     })
   };
 };

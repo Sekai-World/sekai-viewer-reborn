@@ -1,3 +1,4 @@
+import { isHttpError } from "@sveltejs/kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -34,7 +35,6 @@ vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://asset
 import { load } from "./+page.server";
 
 const messages = {
-  invalidMusicId: "Invalid music id",
   musicUnavailableInCurrentRegion: "Music unavailable",
   failedToLoadMusicData: "Failed to load music data"
 } as const;
@@ -56,6 +56,22 @@ describe("music detail page load", () => {
     toUnitProfileMap.mockReset();
     toUnitProfileMap.mockReturnValue({});
   });
+
+  it.each(["0", "-1", "abc", "0x10", "1e2", "012", " 1", "99999999999999999999", ""])(
+    "answers 404 without an upstream call for the malformed id %j",
+    async (id) => {
+      await expect(
+        load({
+          params: { region: "jp", id },
+          cookies: { get: () => undefined },
+          fetch: vi.fn()
+        } as unknown as Parameters<typeof load>[0])
+      ).rejects.toSatisfy((e) => isHttpError(e, 404));
+      expect(getMusicsByRegionByIdDetail).not.toHaveBeenCalled();
+      expect(getMusicsRegionsByIdAvailability).not.toHaveBeenCalled();
+      expect(fetchUnitProfiles).not.toHaveBeenCalled();
+    }
+  );
 
   it("returns null seo for browsers to keep the streaming path", async () => {
     getMusicsByRegionByIdDetail.mockResolvedValue({ data: {} });

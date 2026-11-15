@@ -261,6 +261,7 @@
             `${initialText("pageTitle.virtualLivePrefix")} ${data.virtualLiveId}`
           )}</title
     >
+    {#if !payload.virtualLive}<meta name="robots" content="noindex" />{/if}
   {/await}
 </svelte:head>
 

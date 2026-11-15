@@ -1,3 +1,4 @@
+import { isHttpError } from "@sveltejs/kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { EventDetail, EventRelatedData } from "#lib/domain/event-detail.js";
 
@@ -36,7 +37,6 @@ import { load } from "./+page.server";
 import { DISCORD_SEO_BUDGET_MS } from "#lib/seo/discord-embed.js";
 
 const messages = {
-  invalidEventId: "Invalid event id",
   eventUnavailableInCurrentRegion: "Event unavailable",
   failedToLoadEventData: "Failed to load event data"
 } as const;
@@ -76,17 +76,21 @@ describe("event detail page load", () => {
     toUnitProfileMap.mockReturnValue({});
   });
 
-  it("preserves the invalid-id message and normalizes an unknown region", async () => {
-    const result = (await runLoad("invalid", "   ")) as EventPageLoadResult;
+  it.each(["0", "-1", "abc", "0x10", "1e2", "012", " 1", "99999999999999999999", ""])(
+    "answers 404 without an upstream call for the malformed id %j",
+    async (id) => {
+      await expect(runLoad("jp", id)).rejects.toSatisfy((e) => isHttpError(e, 404));
+      expect(getEventsByRegionByIdDetail).not.toHaveBeenCalled();
+      expect(getEventsRegionsByIdAvailability).not.toHaveBeenCalled();
+    }
+  );
+
+  it("normalizes an unknown region", async () => {
+    getEventsByRegionByIdDetail.mockResolvedValue({ data: {} });
+
+    const result = (await runLoad("invalid", "1")) as EventPageLoadResult;
 
     expect(result.region).toBe("jp");
-    await expect(result.eventPayload).resolves.toEqual({
-      event: null,
-      relatedData: null,
-      debugEventJson: null,
-      error: messages.invalidEventId
-    });
-    expect(getEventsByRegionByIdDetail).not.toHaveBeenCalled();
   });
 
   it.each(["error response", "request rejection"] as const)(
@@ -98,7 +102,7 @@ describe("event detail page load", () => {
         getEventsByRegionByIdDetail.mockRejectedValue(new Error("network failure"));
       }
 
-      const result = (await runLoad("invalid", "event-1")) as EventPageLoadResult;
+      const result = (await runLoad("invalid", "1")) as EventPageLoadResult;
 
       expect(result.region).toBe("jp");
       await expect(result.eventPayload).resolves.toEqual({
@@ -109,14 +113,14 @@ describe("event detail page load", () => {
       });
       expect(getEventsByRegionByIdDetail).toHaveBeenCalledWith({
         baseUrl: "https://master-api.test",
-        path: { region: "jp", id: "event-1" }
+        path: { region: "jp", id: "1" }
       });
     }
   );
   it("does not report an error when the detail API succeeds", async () => {
     getEventsByRegionByIdDetail.mockResolvedValue({ data: {} });
 
-    const result = (await runLoad("jp", "event-1")) as EventPageLoadResult;
+    const result = (await runLoad("jp", "1")) as EventPageLoadResult;
 
     await expect(result.eventPayload).resolves.toEqual({
       event: null,
@@ -156,7 +160,7 @@ describe("event detail page load", () => {
       }
     });
 
-    const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+    const result = (await runLoad("tw", "123")) as EventPageLoadResult;
 
     await expect(result.eventPayload).resolves.toMatchObject({
       error: null,
@@ -186,7 +190,7 @@ describe("event detail page load", () => {
     });
     expect(getEventsByRegionByIdHonorBonuses).toHaveBeenCalledWith({
       baseUrl: "https://master-api.test",
-      path: { region: "tw", id: "event-123" }
+      path: { region: "tw", id: "123" }
     });
   });
 
@@ -209,7 +213,7 @@ describe("event detail page load", () => {
         getEventsByRegionByIdHonorBonuses.mockRejectedValue(new Error("network failure"));
       }
 
-      const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+      const result = (await runLoad("tw", "123")) as EventPageLoadResult;
 
       await expect(result.eventPayload).resolves.toMatchObject({
         error: null,
@@ -232,7 +236,7 @@ describe("event detail page load", () => {
       }
     });
 
-    const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+    const result = (await runLoad("tw", "123")) as EventPageLoadResult;
 
     await expect(result.eventPayload).resolves.toMatchObject({
       error: null,
@@ -255,7 +259,7 @@ describe("event detail page load", () => {
     });
     getEventsByRegionByIdHonorBonuses.mockResolvedValue({ data: { items: [] } });
 
-    const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+    const result = (await runLoad("tw", "123")) as EventPageLoadResult;
 
     await expect(result.eventPayload).resolves.toMatchObject({
       error: null,
@@ -280,7 +284,7 @@ describe("event detail page load", () => {
     });
     getEventsByRegionByIdHonorBonuses.mockResolvedValue({ data: "invalid response" });
 
-    const result = (await runLoad("tw", "event-123")) as EventPageLoadResult;
+    const result = (await runLoad("tw", "123")) as EventPageLoadResult;
 
     await expect(result.eventPayload).resolves.toMatchObject({
       error: null,
@@ -365,17 +369,8 @@ describe("event detail page load", () => {
       }
     };
 
-    it("keeps the invalid-id message for a crawler with an empty id", async () => {
-      const result = await runCrawlerLoad("   ");
-
-      expect(result.seo).toBe(null);
-      await expect(result.eventPayload).resolves.toEqual({
-        event: null,
-        relatedData: null,
-        debugEventJson: null,
-        error: messages.invalidEventId
-      });
-      await expect(result.availableRegions).resolves.toEqual(["jp"]);
+    it("answers 404 for a crawler with an empty id", async () => {
+      await expect(runCrawlerLoad("")).rejects.toSatisfy((e) => isHttpError(e, 404));
       expect(getEventsByRegionByIdDetail).not.toHaveBeenCalled();
       expect(getEventsRegionsByIdAvailability).not.toHaveBeenCalled();
     });

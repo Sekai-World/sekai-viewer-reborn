@@ -1,3 +1,4 @@
+import { isHttpError } from "@sveltejs/kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -84,21 +85,26 @@ describe("character detail page load", () => {
     mocks.getUnitName.mockReturnValue(null);
   });
 
-  it("returns the normalized region with empty character state without requiring layout i18n inputs", async () => {
+  it.each(["0", "-1", "abc", "0x10", "1e2", "012", " 1", "99999999999999999999", ""])(
+    "answers 404 without an upstream call for the malformed id %j",
+    async (id) => {
+      await expect(
+        load({ params: { region: "jp", id } } as Parameters<typeof load>[0])
+      ).rejects.toSatisfy((e) => isHttpError(e, 404));
+      expect(mocks.getGameCharactersByRegionById).not.toHaveBeenCalled();
+      expect(mocks.getGameCharactersRegionsByIdAvailability).not.toHaveBeenCalled();
+      expect(mocks.fetchCharacterRankReferences).not.toHaveBeenCalled();
+      expect(mocks.fetchCharacterMissions).not.toHaveBeenCalled();
+    }
+  );
+
+  it("returns the normalized region without requiring layout i18n inputs", async () => {
     const result = (await load({
-      params: { region: "invalid", id: "   " }
+      params: { region: "invalid", id: "7" }
     } as Parameters<typeof load>[0])) as CharacterPageData;
 
     expect(result.region).toBe("jp");
-    expect(result.characterId).toBe("");
-    await expect(result.payload).resolves.toEqual({ character: null, loadFailed: false });
-    await expect(result.characterRanks).resolves.toEqual({
-      items: [],
-      loadFailed: false
-    });
-    await expect(result.characterMissions).resolves.toEqual({ items: [], loadFailed: false });
-    expect(mocks.fetchCharacterMissions).not.toHaveBeenCalled();
-    await expect(result.availableRegions).resolves.toEqual(["jp"]);
+    expect(result.characterId).toBe("7");
     expect(mocks.getMasterApiBaseUrl).toHaveBeenCalledOnce();
   });
 

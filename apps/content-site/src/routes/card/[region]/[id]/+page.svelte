@@ -356,8 +356,10 @@
           ? createPageTitle(payload.card.title, currentTranslate("navigation.cards"))
           : createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}
       </title>
+      {#if !payload.card}<meta name="robots" content="noindex" />{/if}
     {:catch}
       <title>{createPageTitle(`${pageTitlePrefix} ${data.cardId}`)}</title>
+      <meta name="robots" content="noindex" />
     {/await}
   {/if}
 </svelte:head>

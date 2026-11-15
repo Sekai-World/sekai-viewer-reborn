@@ -1,3 +1,4 @@
+import { isHttpError } from "@sveltejs/kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const server = vi.hoisted(() => ({
@@ -112,7 +113,7 @@ describe("MySekai list loaders", () => {
 });
 
 describe("MySekai detail loaders", () => {
-  it("resolves a fixture, a missing fixture, and an invalid ID", async () => {
+  it("resolves a fixture and a missing fixture", async () => {
     server.fetchMysekaiFixtureDetail.mockResolvedValueOnce({ id: 7 }).mockResolvedValueOnce(null);
 
     await expect(run(loadFixture, event({ region: "jp", id: "7" })).payload).resolves.toEqual({
@@ -123,16 +124,25 @@ describe("MySekai detail loaders", () => {
       status: "notFound",
       item: null
     });
-    await expect(run(loadFixture, event({ region: "jp", id: "x" })).payload).resolves.toEqual({
-      status: "notFound",
-      item: null
-    });
     expect(server.fetchMysekaiFixtureDetail).toHaveBeenCalledWith(
       "https://master-api.test",
       "jp",
       7
     );
   });
+
+  it.each(["0", "-1", "abc", "0x10", "1e2", "012", " 1", "99999999999999999999", ""])(
+    "answers 404 without an upstream call for the malformed id %j",
+    async (id) => {
+      for (const load of [loadFixture, loadMaterial]) {
+        await expect(
+          Promise.resolve().then(() => run(load, event({ region: "jp", id })))
+        ).rejects.toSatisfy((e) => isHttpError(e, 404));
+      }
+      expect(server.fetchMysekaiFixtureDetail).not.toHaveBeenCalled();
+      expect(server.fetchMysekaiMaterialDetail).not.toHaveBeenCalled();
+    }
+  );
 
   it("reports a failed material request as an error", async () => {
     server.fetchMysekaiMaterialDetail.mockRejectedValue(new Error("offline"));

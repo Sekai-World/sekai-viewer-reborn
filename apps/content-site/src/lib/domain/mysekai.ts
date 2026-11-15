@@ -1,3 +1,4 @@
+import { parseRouteId } from "#lib/route-id.js";
 import type {
   SharedMusicSoundTrackCategoryResponse,
   SharedMysekaiFixtureDetailResponse,
@@ -167,8 +168,8 @@ export const loadMysekaiDetail = <T>(
   rawId: string,
   fetchById: (id: number) => Promise<T | null>
 ): Promise<MysekaiDetailPayload<T>> => {
-  const id = /^\d+$/.test(rawId) ? Number(rawId) : 0;
-  if (!Number.isSafeInteger(id) || id <= 0) {
+  const id = parseRouteId(rawId);
+  if (id === null) {
     return Promise.resolve({ status: "notFound", item: null });
   }
   return fetchById(id).then(

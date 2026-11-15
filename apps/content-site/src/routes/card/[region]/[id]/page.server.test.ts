@@ -1,3 +1,4 @@
+import { isHttpError } from "@sveltejs/kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getCardsByRegionByIdDetail, getCardsRegionsByIdAvailability } = vi.hoisted(() => ({
@@ -28,7 +29,6 @@ vi.mock("$app/env/public", () => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "https://asset
 import { load } from "./+page.server";
 
 const messages = {
-  invalidCardId: "Invalid card id",
   cardUnavailableInCurrentRegion: "Card unavailable",
   failedToLoadCardData: "Failed to load card data"
 } as const;
@@ -66,16 +66,21 @@ describe("card detail page load", () => {
     toUnitProfileMap.mockReturnValue({});
   });
 
-  it("preserves the invalid-id message and normalizes an unknown region", async () => {
-    const result = (await runLoad("invalid", "   ")) as CardPageLoadResult;
+  it.each(["0", "-1", "abc", "0x10", "1e2", "012", " 1", "99999999999999999999", ""])(
+    "answers 404 without an upstream call for the malformed id %j",
+    async (id) => {
+      await expect(runLoad("jp", id)).rejects.toSatisfy((e) => isHttpError(e, 404));
+      expect(getCardsByRegionByIdDetail).not.toHaveBeenCalled();
+      expect(getCardsRegionsByIdAvailability).not.toHaveBeenCalled();
+    }
+  );
+
+  it("normalizes an unknown region", async () => {
+    getCardsByRegionByIdDetail.mockResolvedValue({ data: {} });
+
+    const result = (await runLoad("invalid", "1")) as CardPageLoadResult;
 
     expect(result.region).toBe("jp");
-    await expect(result.cardPayload).resolves.toEqual({
-      card: null,
-      debugCardJson: null,
-      error: messages.invalidCardId
-    });
-    expect(getCardsByRegionByIdDetail).not.toHaveBeenCalled();
   });
 
   it.each(["error response", "request rejection"] as const)(
@@ -87,7 +92,7 @@ describe("card detail page load", () => {
         getCardsByRegionByIdDetail.mockRejectedValue(new Error("network failure"));
       }
 
-      const result = (await runLoad("invalid", "card-1")) as CardPageLoadResult;
+      const result = (await runLoad("invalid", "1")) as CardPageLoadResult;
 
       expect(result.region).toBe("jp");
       await expect(result.cardPayload).resolves.toEqual({
@@ -97,14 +102,14 @@ describe("card detail page load", () => {
       });
       expect(getCardsByRegionByIdDetail).toHaveBeenCalledWith({
         baseUrl: "https://master-api.test",
-        path: { region: "jp", id: "card-1" }
+        path: { region: "jp", id: "1" }
       });
     }
   );
   it("does not report an error when the detail API succeeds", async () => {
     getCardsByRegionByIdDetail.mockResolvedValue({ data: {} });
 
-    const result = (await runLoad("jp", "card-1")) as CardPageLoadResult;
+    const result = (await runLoad("jp", "1")) as CardPageLoadResult;
 
     await expect(result.cardPayload).resolves.toEqual({
       card: null,
@@ -116,9 +121,9 @@ describe("card detail page load", () => {
   it("returns null seo for browsers to keep the streaming path", async () => {
     getCardsByRegionByIdDetail.mockResolvedValue({ data: {} });
 
-    const pageUrl = new URL("https://viewer.example/card/jp/card-1");
+    const pageUrl = new URL("https://viewer.example/card/jp/1");
     const result = (await load({
-      params: { region: "jp", id: "card-1" },
+      params: { region: "jp", id: "1" },
       url: pageUrl,
       request: new Request(pageUrl),
       cookies: { get: () => undefined },
