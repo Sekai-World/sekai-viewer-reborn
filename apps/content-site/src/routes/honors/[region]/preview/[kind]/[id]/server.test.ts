@@ -60,7 +60,13 @@ describe("title preview endpoint", () => {
   it.each([
     ["an unknown kind", "bonds_honor", "12"],
     ["a non-numeric id", "honor", "abc"],
-    ["a zero id", "honor", "0"]
+    ["a zero id", "honor", "0"],
+    ["a negative id", "honor", "-1"],
+    ["a hexadecimal id", "honor", "0x10"],
+    ["an exponent id", "honor", "1e2"],
+    ["an id with a leading zero", "honor", "012"],
+    ["an id with a leading space", "honor", " 12"],
+    ["a very large id", "bonds", "99999999999999999999"]
   ])("rejects %s", async (_label, kind, id) => {
     const response = await callGet("jp", kind, id);
 
