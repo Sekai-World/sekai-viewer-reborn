@@ -13,7 +13,7 @@ overrides:
   brace-expansion: 5.0.13
   "@microsoft/api-extractor": 7.60.1
   fast-uri: 4.2.3
-  postcss: 8.5.32
+  postcss: 8.5.33
   nanoid: 6.0.2
   "read-yaml-file@1": ^2.1.0
   "@changesets/parse>js-yaml": ">=4.2.0 <6.0.0"
