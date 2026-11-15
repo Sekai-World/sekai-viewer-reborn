@@ -306,6 +306,7 @@
           ? createPageTitle(payload.event.title, currentTranslate("navigation.events"))
           : createPageTitle(`${eventTitlePrefix} ${data.eventId}`)}</title
       >
+      {#if !payload.event}<meta name="robots" content="noindex" />{/if}
     {/await}
   {/if}
 </svelte:head>

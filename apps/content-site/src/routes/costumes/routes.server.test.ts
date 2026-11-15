@@ -1,3 +1,4 @@
+import { isHttpError } from "@sveltejs/kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const server = vi.hoisted(() => ({
@@ -104,15 +105,24 @@ describe("costume detail loader", () => {
     );
   });
 
-  it("reports an unknown outfit, a bad ID, and a failure", async () => {
+  it("reports an unknown outfit and a failure", async () => {
     server.fetchCostumeOutfitDetail.mockResolvedValueOnce(null);
     await expect(detail("jp", "12").payload).resolves.toEqual({ status: "notFound", item: null });
-
-    await expect(detail("jp", "abc").payload).resolves.toEqual({ status: "notFound", item: null });
 
     server.fetchCostumeOutfitDetail.mockRejectedValueOnce(new Error("offline"));
     await expect(detail("jp", "11").payload).resolves.toEqual({ status: "error", item: null });
   });
+
+  it.each(["0", "-1", "abc", "0x10", "1e2", "012", " 1", "99999999999999999999", ""])(
+    "answers 404 without an upstream call for the malformed id %j",
+    async (id) => {
+      await expect(Promise.resolve().then(() => detail("jp", id))).rejects.toSatisfy((e) =>
+        isHttpError(e, 404)
+      );
+      expect(server.fetchCostumeOutfitDetail).not.toHaveBeenCalled();
+      expect(server.fetchMissionCharacterOptions).not.toHaveBeenCalled();
+    }
+  );
 
   it("still loads when the character names fail", async () => {
     server.fetchCostumeOutfitDetail.mockResolvedValueOnce({ id: 11 });

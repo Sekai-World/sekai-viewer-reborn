@@ -1,3 +1,4 @@
+import { error } from "@sveltejs/kit";
 import { dev } from "$app/env";
 import {
   getMusicsByRegionByIdDetail,
@@ -7,6 +8,7 @@ import { getServerI18nText } from "#lib/i18n/runtime.js";
 import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
 import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseRouteId } from "#lib/route-id.js";
 import { loadDiscordEmbedLabels } from "#lib/server/discord-embed-labels.js";
 import { parseMusicDetail, type MusicDetail } from "#lib/server/music-detail.js";
 import { fetchUnitProfiles, toUnitProfileMap } from "#lib/server/unit-profiles.js";
@@ -179,16 +181,10 @@ const fetchAvailableRegions = async ({
 };
 
 const fetchMusicPayload = async ({
-  currentLookupPromise,
-  invalidMusicIdMessage
+  currentLookupPromise
 }: {
   currentLookupPromise: Promise<RegionMusicLookup>;
-  invalidMusicIdMessage: string | null;
 }): Promise<MusicPayload> => {
-  if (invalidMusicIdMessage) {
-    return { music: null, debugMusicJson: null, error: invalidMusicIdMessage };
-  }
-
   try {
     const currentLookup = await currentLookupPromise;
 
@@ -203,14 +199,10 @@ const fetchMusicPayload = async ({
 };
 
 export const load: PageServerLoad = async ({ params, url, request, cookies, fetch }) => {
-  const musicId = params.id?.trim() ?? "";
+  if (parseRouteId(params.id) === null) error(404, "Not found");
+  const musicId = params.id;
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const [
-    invalidMusicIdMessage,
-    musicUnavailableInCurrentRegionMessage,
-    failedToLoadMusicDataMessage
-  ] = await Promise.all([
-    getServerI18nText(uiLocale, "invalidMusicId", fetch),
+  const [musicUnavailableInCurrentRegionMessage, failedToLoadMusicDataMessage] = await Promise.all([
     getServerI18nText(uiLocale, "musicUnavailableInCurrentRegion", fetch),
     getServerI18nText(uiLocale, "failedToLoadMusicData", fetch)
   ]);
@@ -220,20 +212,13 @@ export const load: PageServerLoad = async ({ params, url, request, cookies, fetc
 
   const unitProfiles = await fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap);
 
-  const currentLookupPromise = musicId
-    ? fetchMusicDetail(baseUrl, region, musicId)
-    : Promise.resolve({
-        region,
-        music: null,
-        exists: false,
-        rawPayloadJson: null
-      } satisfies RegionMusicLookup);
+  const currentLookupPromise = fetchMusicDetail(baseUrl, region, musicId);
 
   // Server-render the link preview for link-preview crawlers (no JS execution);
   // browsers keep the streaming path. The budget guard keeps slow upstream
   // responses from blowing Discord's 10s unfurl window.
   let seo: DiscordEmbedSeo | null = null;
-  if (isSEOCrawler(request?.headers.get("user-agent")) && musicId) {
+  if (isSEOCrawler(request?.headers.get("user-agent"))) {
     const labelsPromise = loadDiscordEmbedLabels(uiLocale, fetch);
     seo = await resolveSeoWithBudget(async () => {
       const [lookup, labels] = await Promise.all([currentLookupPromise, labelsPromise]);
@@ -280,17 +265,14 @@ export const load: PageServerLoad = async ({ params, url, request, cookies, fetc
     seo,
     musicUnavailableInCurrentRegionMessage,
     failedToLoadMusicDataMessage,
-    availableRegions: musicId
-      ? fetchAvailableRegions({
-          baseUrl,
-          musicId,
-          region,
-          currentLookupPromise
-        })
-      : Promise.resolve([region] satisfies SupportedRegion[]),
+    availableRegions: fetchAvailableRegions({
+      baseUrl,
+      musicId,
+      region,
+      currentLookupPromise
+    }),
     musicPayload: fetchMusicPayload({
-      currentLookupPromise,
-      invalidMusicIdMessage: musicId ? null : invalidMusicIdMessage
+      currentLookupPromise
     }),
     unitProfiles
   };

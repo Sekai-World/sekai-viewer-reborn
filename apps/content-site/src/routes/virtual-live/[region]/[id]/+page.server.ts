@@ -1,3 +1,4 @@
+import { error } from "@sveltejs/kit";
 import { dev } from "$app/env";
 import {
   getMusicsByRegionById,
@@ -13,6 +14,7 @@ import { getServerI18nText } from "#lib/i18n/runtime.js";
 import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domain/regions.js";
 import { normalizeRegion, normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
 import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseRouteId } from "#lib/route-id.js";
 import {
   parseVirtualLiveDetail,
   parseVirtualLiveSetlistItems,
@@ -447,21 +449,11 @@ const fetchAvailableRegions = async ({
 
 const fetchVirtualLivePayload = async ({
   aggregatePromise,
-  invalidVirtualLiveIdMessage,
   failedToLoadVirtualLiveDataMessage
 }: {
   aggregatePromise: Promise<VirtualLiveAggregateLookup>;
-  invalidVirtualLiveIdMessage: string | null;
   failedToLoadVirtualLiveDataMessage: string;
 }): Promise<VirtualLivePayload> => {
-  if (invalidVirtualLiveIdMessage) {
-    return {
-      virtualLive: null,
-      debugVirtualLiveJson: null,
-      error: invalidVirtualLiveIdMessage
-    };
-  }
-
   try {
     const aggregate = await aggregatePromise;
 
@@ -480,30 +472,18 @@ const fetchVirtualLivePayload = async ({
 };
 
 export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
-  const virtualLiveId = params.id?.trim() ?? "";
+  if (parseRouteId(params.id) === null) error(404, "Not found");
+  const virtualLiveId = params.id;
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const [
-    invalidVirtualLiveIdMessage,
-    virtualLiveUnavailableInCurrentRegionMessage,
-    failedToLoadVirtualLiveDataMessage
-  ] = await Promise.all([
-    getServerI18nText(uiLocale, "invalidVirtualLiveId", fetch),
-    getServerI18nText(uiLocale, "virtualLiveUnavailableInCurrentRegion", fetch),
-    getServerI18nText(uiLocale, "failedToLoadVirtualLiveData", fetch)
-  ]);
+  const [virtualLiveUnavailableInCurrentRegionMessage, failedToLoadVirtualLiveDataMessage] =
+    await Promise.all([
+      getServerI18nText(uiLocale, "virtualLiveUnavailableInCurrentRegion", fetch),
+      getServerI18nText(uiLocale, "failedToLoadVirtualLiveData", fetch)
+    ]);
 
   const region: SupportedRegion = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
-  const aggregatePromise = virtualLiveId
-    ? fetchVirtualLiveAggregate(baseUrl, region, virtualLiveId)
-    : Promise.resolve({
-        region,
-        virtualLive: null,
-        loadFailed: false,
-        availableRegions: [region],
-        exists: false,
-        rawPayloadJson: null
-      } satisfies VirtualLiveAggregateLookup);
+  const aggregatePromise = fetchVirtualLiveAggregate(baseUrl, region, virtualLiveId);
 
   return {
     virtualLiveId,
@@ -511,17 +491,14 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
     regionLabel: regionLabels[region],
     virtualLiveUnavailableInCurrentRegionMessage,
     failedToLoadVirtualLiveDataMessage,
-    availableRegions: virtualLiveId
-      ? fetchAvailableRegions({
-          baseUrl,
-          virtualLiveId,
-          region,
-          aggregatePromise
-        })
-      : Promise.resolve([region] satisfies SupportedRegion[]),
+    availableRegions: fetchAvailableRegions({
+      baseUrl,
+      virtualLiveId,
+      region,
+      aggregatePromise
+    }),
     virtualLivePayload: fetchVirtualLivePayload({
       aggregatePromise,
-      invalidVirtualLiveIdMessage: virtualLiveId ? null : invalidVirtualLiveIdMessage,
       failedToLoadVirtualLiveDataMessage
     })
   };

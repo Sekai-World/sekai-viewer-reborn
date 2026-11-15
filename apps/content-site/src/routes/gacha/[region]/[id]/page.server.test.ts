@@ -1,3 +1,4 @@
+import { isHttpError } from "@sveltejs/kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getCardsByRegionById, getGachasByRegionById, getGachasRegionsByIdAvailability } =
@@ -32,10 +33,25 @@ describe("gacha detail page load", () => {
     getMasterApiBaseUrl.mockReturnValue("https://master-api.test");
   });
 
+  it.each(["0", "-1", "abc", "0x10", "1e2", "012", " 1", "99999999999999999999", ""])(
+    "answers 404 without an upstream call for the malformed id %j",
+    async (id) => {
+      await expect(
+        load({
+          params: { region: "jp", id },
+          cookies: { get: () => undefined },
+          fetch: vi.fn()
+        } as unknown as Parameters<typeof load>[0])
+      ).rejects.toSatisfy((e) => isHttpError(e, 404));
+      expect(getGachasByRegionById).not.toHaveBeenCalled();
+      expect(getGachasRegionsByIdAvailability).not.toHaveBeenCalled();
+    }
+  );
+
   it("preserves special-training metadata on pickup cards", async () => {
     getGachasByRegionById.mockResolvedValue({
       data: {
-        id: "gacha-1",
+        id: "1",
         gachaPickups: [{ cardId: "card-1", weight: 1 }]
       }
     });
@@ -52,7 +68,7 @@ describe("gacha detail page load", () => {
     });
 
     const result = (await load({
-      params: { region: "jp", id: "gacha-1" },
+      params: { region: "jp", id: "1" },
       cookies: { get: () => undefined },
       fetch: vi.fn()
     } as unknown as Parameters<typeof load>[0])) as {

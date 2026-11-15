@@ -261,8 +261,10 @@
           ? createPageTitle(payload.music.title, musicListTitle)
           : createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}
       </title>
+      {#if !payload.music}<meta name="robots" content="noindex" />{/if}
     {:catch}
       <title>{createPageTitle(`${musicTitlePrefix} ${data.musicId}`)}</title>
+      <meta name="robots" content="noindex" />
     {/await}
   {/if}
 </svelte:head>

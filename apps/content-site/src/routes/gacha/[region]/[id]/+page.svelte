@@ -329,6 +329,7 @@
         ? createPageTitle(payload.gacha.name, gachaListTitle)
         : createPageTitle(`${pageTitlePrefix} ${data.gachaId}`)}
     </title>
+    {#if !payload.gacha}<meta name="robots" content="noindex" />{/if}
   {/await}
 </svelte:head>
 

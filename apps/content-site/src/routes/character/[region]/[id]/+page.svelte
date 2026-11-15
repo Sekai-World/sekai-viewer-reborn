@@ -119,7 +119,7 @@
         : createPageTitle(
             `${t("characterPageTitlePrefix", "Character")} ${data.characterId}`
           )}</title
-    >{/await}
+    >{#if !result.character}<meta name="robots" content="noindex" />{/if}{/await}
 </svelte:head>
 
 <section use:swipeRegion class="content-page-shell gap-4 px-2">

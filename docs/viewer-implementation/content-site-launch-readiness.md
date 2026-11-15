@@ -84,8 +84,19 @@ region has no data and the page shows its availability state):
 Error states:
 
 - [ ] A non-existent ID on a detail route shows a localized not-found or error
-      state inside the site shell, not an unhandled 500.
-- [ ] An unsupported region segment does not crash the page.
+      state inside the site shell, not an unhandled 500. The response is 200
+      and the page adds `<meta name="robots" content="noindex">` once the
+      record has resolved as missing.
+- [ ] A malformed ID on a detail route (`/card/jp/abc`, `/card/jp/012`)
+      answers 404 with the site error page. Only the canonical decimal form of
+      a positive integer is an ID (`parseRouteId`,
+      `apps/content-site/src/lib/route-id.ts`).
+- [ ] An unsupported region segment (`/cards/xx`, `/card/xx/1`, `/api/home/xx`)
+      answers 404 with the site error page. The `reroute` hook
+      (`apps/content-site/src/hooks.ts`, prefixes in
+      `apps/content-site/src/lib/region-routes.ts`) routes such a path
+      nowhere, so no loader runs and no Japanese data is served under another
+      region segment.
 - [ ] A missing or unreachable API shows the site error page, not a blank page.
 
 Tracker navigation (check each case from the table in section 2):

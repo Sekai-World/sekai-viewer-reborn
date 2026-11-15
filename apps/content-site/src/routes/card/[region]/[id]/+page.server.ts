@@ -1,3 +1,4 @@
+import { error } from "@sveltejs/kit";
 import { dev } from "$app/env";
 import {
   getCardsByRegionByIdDetail,
@@ -21,6 +22,7 @@ import {
   parseCardRelatedEvents
 } from "#lib/server/card-detail.js";
 import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseRouteId } from "#lib/route-id.js";
 import { loadDiscordEmbedLabels } from "#lib/server/discord-embed-labels.js";
 import { fetchUnitProfiles, toUnitProfileMap } from "#lib/server/unit-profiles.js";
 import { getCardFullAssetURL } from "#lib/assets/index.js";
@@ -185,21 +187,11 @@ const fetchAvailableRegions = async ({
 
 const fetchCardPayload = async ({
   detailPromise,
-  invalidCardIdMessage,
   failedToLoadCardDataMessage
 }: {
   detailPromise: Promise<CardDetailFetchResult>;
-  invalidCardIdMessage: string | null;
   failedToLoadCardDataMessage: string;
 }): Promise<CardPayload> => {
-  if (invalidCardIdMessage) {
-    return {
-      card: null,
-      debugCardJson: null,
-      error: invalidCardIdMessage
-    };
-  }
-
   try {
     const detail = await detailPromise;
     return {
@@ -217,29 +209,16 @@ const fetchCardPayload = async ({
 };
 
 export const load: PageServerLoad = async ({ params, url, request, cookies, fetch }) => {
-  const cardId = params.id?.trim() ?? "";
+  if (parseRouteId(params.id) === null) error(404, "Not found");
+  const cardId = params.id;
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const [invalidCardIdMessage, cardUnavailableInCurrentRegionMessage, failedToLoadCardDataMessage] =
-    await Promise.all([
-      getServerI18nText(uiLocale, "invalidCardId", fetch),
-      getServerI18nText(uiLocale, "cardUnavailableInCurrentRegion", fetch),
-      getServerI18nText(uiLocale, "failedToLoadCardData", fetch)
-    ]);
+  const [cardUnavailableInCurrentRegionMessage, failedToLoadCardDataMessage] = await Promise.all([
+    getServerI18nText(uiLocale, "cardUnavailableInCurrentRegion", fetch),
+    getServerI18nText(uiLocale, "failedToLoadCardData", fetch)
+  ]);
   const region = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
-  const invalidMessage = cardId ? null : invalidCardIdMessage;
-  const detailPromise = cardId
-    ? fetchCardDetail({ baseUrl, region, cardId })
-    : Promise.resolve({
-        card: null,
-        cardExists: false,
-        loadFailed: false,
-        debugCardJson: null,
-        params: parseCardDetailParams(null),
-        episodes: [],
-        relatedEvents: [],
-        gachas: []
-      } satisfies CardDetailFetchResult);
+  const detailPromise = fetchCardDetail({ baseUrl, region, cardId });
 
   // Link-preview crawlers never execute JavaScript, so streaming `{#await}`
   // titles are invisible to them. Resolve the SEO bundle server-side for crawlers only;
@@ -247,7 +226,7 @@ export const load: PageServerLoad = async ({ params, url, request, cookies, fetc
   // upstream responses from blowing Discord's 10s unfurl window.
   const trained = parseTrainedParam(url?.searchParams.get("trained"));
   let seo: DiscordEmbedSeo | null = null;
-  if (isSEOCrawler(request?.headers.get("user-agent")) && cardId && !invalidMessage) {
+  if (isSEOCrawler(request?.headers.get("user-agent"))) {
     const labelsPromise = loadDiscordEmbedLabels(uiLocale, fetch);
     seo = await resolveSeoWithBudget(async () => {
       const [detail, labels] = await Promise.all([detailPromise, labelsPromise]);
@@ -298,27 +277,20 @@ export const load: PageServerLoad = async ({ params, url, request, cookies, fetc
     seo,
     cardUnavailableInCurrentRegionMessage,
     failedToLoadCardDataMessage,
-    availableRegions: cardId
-      ? fetchAvailableRegions({
-          baseUrl,
-          cardId,
-          region,
-          detailPromise
-        })
-      : Promise.resolve([region] satisfies SupportedRegion[]),
+    availableRegions: fetchAvailableRegions({
+      baseUrl,
+      cardId,
+      region,
+      detailPromise
+    }),
     cardPayload: fetchCardPayload({
       detailPromise,
-      invalidCardIdMessage: invalidMessage,
       failedToLoadCardDataMessage
     }),
-    params: invalidMessage
-      ? Promise.resolve(parseCardDetailParams(null))
-      : detailPromise.then((d) => d.params),
-    episodes: invalidMessage ? Promise.resolve([]) : detailPromise.then((d) => d.episodes),
-    relatedEvents: invalidMessage
-      ? Promise.resolve([])
-      : detailPromise.then((d) => d.relatedEvents),
-    gachas: invalidMessage ? Promise.resolve([]) : detailPromise.then((d) => d.gachas),
+    params: detailPromise.then((d) => d.params),
+    episodes: detailPromise.then((d) => d.episodes),
+    relatedEvents: detailPromise.then((d) => d.relatedEvents),
+    gachas: detailPromise.then((d) => d.gachas),
     unitProfiles: fetchUnitProfiles(baseUrl, region).then(toUnitProfileMap)
   };
 };

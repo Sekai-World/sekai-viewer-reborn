@@ -1,3 +1,4 @@
+import { error } from "@sveltejs/kit";
 import {
   getCardsByRegionById,
   getGachasByRegionById,
@@ -9,6 +10,7 @@ import { regionLabels, supportedRegions, type SupportedRegion } from "#lib/domai
 import type { GachaDetail, GachaPickup } from "#lib/domain/gacha-detail.js";
 import { parseGachaDetail } from "#lib/server/gacha-detail.js";
 import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseRouteId } from "#lib/route-id.js";
 import { parseCardDetail } from "#lib/server/card-detail.js";
 import type { PageServerLoad } from "./$types";
 
@@ -145,21 +147,11 @@ const fetchAvailableRegions = async ({
 
 const fetchGachaPayload = async ({
   baseUrl,
-  currentLookupPromise,
-  invalidGachaIdMessage
+  currentLookupPromise
 }: {
   baseUrl: string;
   currentLookupPromise: Promise<RegionGachaLookup>;
-  invalidGachaIdMessage: string | null;
 }): Promise<GachaPayload> => {
-  if (invalidGachaIdMessage) {
-    return {
-      gacha: null,
-      error: invalidGachaIdMessage,
-      pickupCards: []
-    };
-  }
-
   try {
     const enrichCard = async (
       cardId: string | null,
@@ -224,22 +216,16 @@ const fetchGachaPayload = async ({
 };
 
 export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
-  const gachaId = params.id?.trim() ?? "";
+  if (parseRouteId(params.id) === null) error(404, "Not found");
+  const gachaId = params.id;
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
-  const [
-    invalidGachaIdMessage,
-    gachaUnavailableInCurrentRegionMessage,
-    failedToLoadGachaDataMessage
-  ] = await Promise.all([
-    getServerI18nText(uiLocale, "invalidGachaId", fetch),
+  const [gachaUnavailableInCurrentRegionMessage, failedToLoadGachaDataMessage] = await Promise.all([
     getServerI18nText(uiLocale, "gachaUnavailableInCurrentRegion", fetch),
     getServerI18nText(uiLocale, "failedToLoadGachaData", fetch)
   ]);
   const region: SupportedRegion = normalizeRegion(params.region);
   const baseUrl = getMasterApiBaseUrl();
-  const currentLookupPromise = gachaId
-    ? fetchRegionGacha(baseUrl, region, gachaId)
-    : Promise.resolve({ region, gacha: null, exists: false } satisfies RegionGachaLookup);
+  const currentLookupPromise = fetchRegionGacha(baseUrl, region, gachaId);
 
   return {
     gachaId,
@@ -247,18 +233,15 @@ export const load: PageServerLoad = async ({ params, cookies, fetch }) => {
     regionLabel: regionLabels[region],
     gachaUnavailableInCurrentRegionMessage,
     failedToLoadGachaDataMessage,
-    availableRegions: gachaId
-      ? fetchAvailableRegions({
-          baseUrl,
-          gachaId,
-          region,
-          currentLookupPromise
-        })
-      : Promise.resolve([region] satisfies SupportedRegion[]),
+    availableRegions: fetchAvailableRegions({
+      baseUrl,
+      gachaId,
+      region,
+      currentLookupPromise
+    }),
     gachaPayload: fetchGachaPayload({
       baseUrl,
-      currentLookupPromise,
-      invalidGachaIdMessage: gachaId ? null : invalidGachaIdMessage
+      currentLookupPromise
     })
   };
 };

@@ -1,3 +1,4 @@
+import { isHttpError } from "@sveltejs/kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
@@ -67,7 +68,6 @@ vi.mock("#lib/server/music-detail.js", () => ({ parseMusicDetail }));
 import { load } from "./+page.server";
 
 const messages = {
-  invalidVirtualLiveId: "Invalid virtual live id",
   virtualLiveUnavailableInCurrentRegion: "Virtual live unavailable",
   failedToLoadVirtualLiveData: "Failed to load virtual live data"
 } as const;
@@ -120,16 +120,21 @@ describe("virtual live detail page load", () => {
     parseMusicDetail.mockReset();
   });
 
-  it("preserves the invalid-id message and normalizes an unknown region", async () => {
-    const result = (await runLoad("invalid", "   ")) as VirtualLivePageLoadResult;
+  it.each(["0", "-1", "abc", "0x10", "1e2", "012", " 1", "99999999999999999999", ""])(
+    "answers 404 without an upstream call for the malformed id %j",
+    async (id) => {
+      await expect(runLoad("jp", id)).rejects.toSatisfy((e) => isHttpError(e, 404));
+      expect(getVirtualLivesByRegionById).not.toHaveBeenCalled();
+      expect(getVirtualLivesRegionsByIdAvailability).not.toHaveBeenCalled();
+    }
+  );
+
+  it("normalizes an unknown region", async () => {
+    getVirtualLivesByRegionById.mockResolvedValue({ data: {} });
+
+    const result = (await runLoad("invalid", "1")) as VirtualLivePageLoadResult;
 
     expect(result.region).toBe("jp");
-    await expect(result.virtualLivePayload).resolves.toEqual({
-      virtualLive: null,
-      debugVirtualLiveJson: null,
-      error: messages.invalidVirtualLiveId
-    });
-    expect(getVirtualLivesByRegionById).not.toHaveBeenCalled();
   });
 
   it.each(["error response", "request rejection"] as const)(
@@ -141,7 +146,7 @@ describe("virtual live detail page load", () => {
         getVirtualLivesByRegionById.mockRejectedValue(new Error("network failure"));
       }
 
-      const result = (await runLoad("invalid", "virtual-live-1")) as VirtualLivePageLoadResult;
+      const result = (await runLoad("invalid", "1")) as VirtualLivePageLoadResult;
 
       expect(result.region).toBe("jp");
       await expect(result.virtualLivePayload).resolves.toEqual({
@@ -151,14 +156,14 @@ describe("virtual live detail page load", () => {
       });
       expect(getVirtualLivesByRegionById).toHaveBeenCalledWith({
         baseUrl: "https://master-api.test",
-        path: { region: "jp", id: "virtual-live-1" }
+        path: { region: "jp", id: "1" }
       });
     }
   );
   it("does not report an error when the detail API succeeds", async () => {
     getVirtualLivesByRegionById.mockResolvedValue({ data: {} });
 
-    const result = (await runLoad("jp", "virtual-live-1")) as VirtualLivePageLoadResult;
+    const result = (await runLoad("jp", "1")) as VirtualLivePageLoadResult;
 
     await expect(result.virtualLivePayload).resolves.toEqual({
       virtualLive: null,

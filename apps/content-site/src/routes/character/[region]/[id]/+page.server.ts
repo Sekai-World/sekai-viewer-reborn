@@ -1,3 +1,4 @@
+import { error } from "@sveltejs/kit";
 import {
   getCardsByRegionList,
   getGameCharactersByRegionById,
@@ -10,6 +11,7 @@ import type { SupportedRegion } from "#lib/domain/regions.js";
 import { supportedRegions } from "#lib/domain/regions.js";
 import { getPositiveInteger } from "#lib/server/catalogue-data.js";
 import { getMasterApiBaseUrl } from "#lib/server/config.js";
+import { parseRouteId } from "#lib/route-id.js";
 import {
   normalizeCharacterAvailability,
   parseRelatedCharacterCards,
@@ -98,57 +100,54 @@ const resolveAvailableRegions = async ({
 };
 
 export const load: PageServerLoad = async ({ params }) => {
+  if (parseRouteId(params.id) === null) error(404, "Not found");
   const region = normalizeRegion(params.region);
-  const characterId = params.id?.trim() ?? "";
+  const characterId = params.id;
   const baseUrl = getMasterApiBaseUrl();
 
-  const payload = characterId
-    ? Promise.all([
-        getGameCharactersByRegionById({ baseUrl, path: { region, id: characterId } }),
-        getGameCharactersByRegionByIdProfile({ baseUrl, path: { region, id: characterId } }),
-        aggregateGameCharacterUnitsByRegion(baseUrl, region, "id", "asc"),
-        fetchUnitProfiles(baseUrl, region),
-        getCardsByRegionList({
-          baseUrl,
-          path: { region },
-          query: {
-            page: 1,
-            page_size: 12,
-            character: characterId,
-            spoiler: true,
-            sort_by: "releaseAt",
-            sort_order: "desc"
-          }
-        })
-      ])
-        .then(([characterResponse, profileResponse, unitsResult, unitProfiles, cardsResponse]) => {
-          if (characterResponse.error) return { character: null, loadFailed: false as const };
-          const units = unitsResult.loadFailed ? [] : parseCharacterUnits(unitsResult.data);
-          const character = parseCharacter(characterResponse.data, units);
-          const unitName = character
-            ? getUnitName(toUnitProfileMap(unitProfiles), character.unit)
-            : null;
-          return {
-            character: character
-              ? {
-                  ...character,
-                  unitName,
-                  profile: profileResponse.error
-                    ? null
-                    : parseCharacterProfile(profileResponse.data),
-                  relatedCards: cardsResponse.error
-                    ? []
-                    : parseRelatedCharacterCards(cardsResponse.data),
-                  relatedCardTotal: cardsResponse.error
-                    ? null
-                    : parseRelatedCharacterCardTotal(cardsResponse.data)
-                }
-              : null,
-            loadFailed: false as const
-          };
-        })
-        .catch(() => ({ character: null, loadFailed: true as const }))
-    : Promise.resolve({ character: null, loadFailed: false as const });
+  const payload = Promise.all([
+    getGameCharactersByRegionById({ baseUrl, path: { region, id: characterId } }),
+    getGameCharactersByRegionByIdProfile({ baseUrl, path: { region, id: characterId } }),
+    aggregateGameCharacterUnitsByRegion(baseUrl, region, "id", "asc"),
+    fetchUnitProfiles(baseUrl, region),
+    getCardsByRegionList({
+      baseUrl,
+      path: { region },
+      query: {
+        page: 1,
+        page_size: 12,
+        character: characterId,
+        spoiler: true,
+        sort_by: "releaseAt",
+        sort_order: "desc"
+      }
+    })
+  ])
+    .then(([characterResponse, profileResponse, unitsResult, unitProfiles, cardsResponse]) => {
+      if (characterResponse.error) return { character: null, loadFailed: false as const };
+      const units = unitsResult.loadFailed ? [] : parseCharacterUnits(unitsResult.data);
+      const character = parseCharacter(characterResponse.data, units);
+      const unitName = character
+        ? getUnitName(toUnitProfileMap(unitProfiles), character.unit)
+        : null;
+      return {
+        character: character
+          ? {
+              ...character,
+              unitName,
+              profile: profileResponse.error ? null : parseCharacterProfile(profileResponse.data),
+              relatedCards: cardsResponse.error
+                ? []
+                : parseRelatedCharacterCards(cardsResponse.data),
+              relatedCardTotal: cardsResponse.error
+                ? null
+                : parseRelatedCharacterCardTotal(cardsResponse.data)
+            }
+          : null,
+        loadFailed: false as const
+      };
+    })
+    .catch(() => ({ character: null, loadFailed: true as const }));
 
   const numericCharacterId = getPositiveInteger(characterId);
   const characterRanks: Promise<CharacterRanksPayload> =
@@ -164,14 +163,12 @@ export const load: PageServerLoad = async ({ params }) => {
           .then((items) => ({ items, loadFailed: false }))
           .catch(() => ({ items: [], loadFailed: true }));
 
-  const availableRegions = characterId
-    ? resolveAvailableRegions({
-        baseUrl,
-        characterId,
-        region,
-        payloadPromise: payload
-      })
-    : Promise.resolve([region]);
+  const availableRegions = resolveAvailableRegions({
+    baseUrl,
+    characterId,
+    region,
+    payloadPromise: payload
+  });
 
   payload.catch(() => {});
   characterRanks.catch(() => {});
