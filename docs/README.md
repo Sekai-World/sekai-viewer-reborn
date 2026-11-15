@@ -26,6 +26,9 @@ Read with `AGENTS.md`; see [`instructions/README.md`](instructions/README.md).
 
 - [`media-lab/api-contract-audit.md`](media-lab/api-contract-audit.md):
   StoryReader/3D asset contract audit and data-source decision (issue #256).
+- [`media-lab/model-bundle-manifest.md`](media-lab/model-bundle-manifest.md):
+  3D model bundle manifest and region index contract, published layout, and
+  what the asset pipeline has to write (issue #262).
 - [`media-lab/chibi-player.md`](media-lab/chibi-player.md):
   Chibi (Spine 4.1) descriptor, player, viewer routes and license decision (issues #621, #622).
 

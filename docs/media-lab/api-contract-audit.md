@@ -321,12 +321,14 @@ path and mapping, not the complete `IScenarioData` action/effect surface.
 - `apps/media-lab-site/src/lib/live2d/story-document.ts` — finalized
   serializable `StoryDocumentReference` and normalized `StoryDocument` for #258;
   consumed through the media-lab browser adapter.
-- `apps/media-lab-site/src/lib/asset-viewer/model-bundle-manifest.ts` — draft
-  `ModelBundleManifest` for #262.
+- `apps/media-lab-site/src/lib/asset-viewer/model-bundle-manifest.ts` —
+  `ModelBundleManifest` and `ModelBundleIndex`, schema version 1, with
+  validation (#262). Specified in
+  [`model-bundle-manifest.md`](model-bundle-manifest.md).
 
 The `StoryDocument` contract is now consumed by the issue #258 player adapter.
-The `ModelBundleManifest` remains a type-only draft; do not build viewer code
-against it before #262 finalizes its shape.
+The `ModelBundleManifest` contract is final, but the pipeline does not publish
+manifests yet; #263 can only be verified on real data after it does.
 
 ## Open questions
 
@@ -337,10 +339,11 @@ against it before #262 finalizes its shape.
 2. Facial-motion runtime semantics: the associated catalog's `.motion3.json`
    facial files are the verified expression input for this source. No separate
    `.exp3.json` resource is expected.
-3. Upstream availability of 3D compatibility metadata (skeleton paths, bone
-   names, Avatar/Animator, BlendShape, Unity version, source bundles): the
-   asset pipeline is not in this workspace; #262 must confirm before the
-   manifest leaves draft.
+3. Upstream availability of 3D compatibility metadata: answered by #262 in
+   [`model-bundle-manifest.md`](model-bundle-manifest.md). Skeleton paths are
+   in the published Avatar file and bone and BlendShape names in the FBX; Unity
+   version and dependencies are in no published file; no Animator is
+   published.
 4. `IScenarioData`'s full action/effect surface remains defined by the legacy
    pin (`sekai-viewer@0504bee6:src/story-scenerio.d.ts`); #258 confirms a
    representative scenario and top-level validation, while broader real-data
@@ -351,8 +354,8 @@ against it before #262 finalizes its shape.
 - Gap analysis document — this file.
 - Data-source strategy decision with trade-offs — §Data-source strategy.
 - Finalized #258 `StoryDocument` contract and media-lab browser adapter —
-  §Issue #258 and §Contract status; the #262 `ModelBundleManifest` remains a
-  draft.
+  §Issue #258 and §Contract status; the `ModelBundleManifest` was finalized
+  later by #262.
 - Cross-repo workflow steps — §Data-source strategy decision, item 4.
 - Region/asset URL assumptions backed by a confirmed sample or explicit
   blocker — §Reborn asset rule and legacy comparison plus §Verification result:
