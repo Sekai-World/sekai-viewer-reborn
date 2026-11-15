@@ -45,6 +45,7 @@
     volumeLabel,
     seekLabel,
     unavailableLabel,
+    errorLabel,
     variantLabel,
     originalLabel,
     mv2dLabel,
@@ -82,6 +83,7 @@
     volumeLabel: string;
     seekLabel: string;
     unavailableLabel: string;
+    errorLabel?: string;
     variantLabel: string;
     originalLabel: string;
     mv2dLabel: string;
@@ -376,6 +378,7 @@
           {volumeLabel}
           {seekLabel}
           {unavailableLabel}
+          {errorLabel}
           {jacketUrl}
           {artist}
           fillerSec={music.fillerSec}

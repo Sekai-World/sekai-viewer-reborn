@@ -50,6 +50,7 @@
   let audioVolumeLabel = $state(getInitialI18nText("audioVolumeLabel"));
   let audioSeekLabel = $state(getInitialI18nText("audioSeekLabel"));
   let audioUnavailableLabel = $state(getInitialI18nText("audioUnavailableLabel"));
+  let audioLoadFailedLabel = $state(getInitialI18nText("audioLoadFailedLabel"));
   let audioDownloadStagePreparingLabel = $state(
     getInitialI18nText("audioDownloadStages.preparing")
   );
@@ -153,6 +154,7 @@
     audioVolumeLabel = translate("audioVolumeLabel");
     audioSeekLabel = translate("audioSeekLabel");
     audioUnavailableLabel = translate("audioUnavailableLabel");
+    audioLoadFailedLabel = translate("audioLoadFailedLabel");
     audioDownloadStagePreparingLabel = translate("audioDownloadStages.preparing");
     audioDownloadStageFetchingAudioLabel = translate("audioDownloadStages.fetchingAudio");
     audioDownloadStageFetchingCoverLabel = translate("audioDownloadStages.fetchingCover");
@@ -464,6 +466,7 @@
               volumeLabel={audioVolumeLabel}
               seekLabel={audioSeekLabel}
               unavailableLabel={audioUnavailableLabel}
+              errorLabel={audioLoadFailedLabel}
             />
           {/await}
 

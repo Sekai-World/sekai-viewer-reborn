@@ -18,6 +18,7 @@
   "audioDownloadStages.preparing": "Preparing download",
   "audioDownloadStages.ready": "Download ready",
   "audioDownloadStages.writingMetadata": "Writing metadata",
+  "audioLoadFailedLabel": "Failed to load audio.",
   "audioPauseLabel": "Pause audio",
   "audioPlayLabel": "Play audio",
   "audioSeekLabel": "Seek audio",

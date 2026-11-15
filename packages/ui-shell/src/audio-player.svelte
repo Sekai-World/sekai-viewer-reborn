@@ -43,7 +43,8 @@
     downloadCloseLabel,
     volumeLabel,
     seekLabel,
-    unavailableLabel
+    unavailableLabel,
+    errorLabel
   }: {
     src: string | null;
     title: string;
@@ -61,6 +62,8 @@
     volumeLabel: string;
     seekLabel: string;
     unavailableLabel: string;
+    /** Shown when the source fails to load; falls back to `unavailableLabel`. */
+    errorLabel?: string;
   } = $props();
 
   let howl: HowlInstance | null = null;
@@ -937,7 +940,9 @@
     class="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 rounded-box border border-dashed border-base-content/15 px-6 text-center"
   >
     <Icon icon="mdi:music-off" class="size-10 opacity-55" aria-hidden="true" />
-    <p class="text-sm font-medium opacity-75">{unavailableLabel}</p>
+    <p class="text-sm font-medium opacity-75">
+      {hasSource && hasError ? (errorLabel ?? unavailableLabel) : unavailableLabel}
+    </p>
   </div>
 {:else}
   <div class="w-full">
