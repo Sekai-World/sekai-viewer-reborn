@@ -190,8 +190,11 @@ multiplier outside the table gets no live bonus figure, and a cap with it is
 refused with `boostMultiplier` named as the invalid field; that refusal is how
 the planner meets the validation prerequisite above, while per-live figures
 keep accepting any multiplier. See [`tools-site-target-planner.md`](tools-site-target-planner.md),
-_Live bonus_. The time objective, the time cap and the efficiency columns are
-not built yet.
+_Live bonus_.
+
+It also takes the overhead per live, shows each plan's play time, and has the
+"shortest play time" objective, for `jp` and with repeats; see _Play time_ in
+the same document. The time cap and the efficiency columns are not built yet.
 
 Still blocked, with the missing evidence:
 

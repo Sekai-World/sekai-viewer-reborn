@@ -12,14 +12,14 @@ recommender (#381) and the data contract in
   entered deck; it never recalculates a yield.
 - The target is a total **score** or a total **event points**, selected by the
   recommender's metric control.
-- Two objectives, always chosen by the user: **fewest lives** and **least
-  overshoot**.
+- Three objectives, always chosen by the user: **fewest lives**, **least
+  overshoot**, and **shortest play time**.
 - Every plan reports the **live bonus** it consumes, and a plan can be limited
   to a maximum live bonus (see _Live bonus_).
-- **Not supported, and refused rather than approximated:** time objectives and
-  limits (semantics defined in
-  [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md),
-  implementation tracked in #544), modes other than Solo and Auto
+- Every `jp` plan made with an overhead per live reports its **play time** (see
+  _Play time_).
+- **Not supported, and refused rather than approximated:** a limit on play
+  time, the shortest play time without repeats or outside `jp`, modes other than Solo and Auto
   (#538), regions other than `jp`, `tw`, `en`, and `kr`, and decks or event bonuses derived
   from user data (#541).
 
@@ -28,13 +28,15 @@ recommender (#381) and the data contract in
 | Input                 | Meaning                                                                                                              |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `target`              | Whole number from 1 to 100,000,000,000.                                                                              |
-| `objective`           | `fewestPlays` or `leastOvershoot`.                                                                                   |
+| `objective`           | `fewestPlays`, `leastOvershoot`, or `shortestTime`.                                                                  |
 | `maxPlays`            | Whole number from 1 to 10,000: the most lives played, required songs included.                                       |
 | `maxLiveBonus`        | Optional whole number from 1 to 1,000,000: the most live bonus consumed. Page input only; see _Live bonus_.          |
-| `allowRepeats`        | When false, each song and difficulty is played at most once.                                                         |
+| `overhead`            | Optional whole number of seconds from 0 to 3,600 that a live takes besides its song. Page input only; no default.    |
+| `allowRepeats`        | When false, each song and difficulty is played at most once. `shortestTime` requires true.                           |
 | `allowedDifficulties` | Optional limit on the difficulties used; none means all.                                                             |
 | `requiredSongs`       | Optional songs that are each played at least once.                                                                   |
 | `yields`              | Per-live `score` and `eventPoints` for every song and difficulty, each a positive whole number up to the target cap. |
+| `yields[].time`       | Optional time of one live in tenths of a second, a whole number from 1 to 1,000,000. `shortestTime` requires it.     |
 
 Required songs are played once up front and count toward the target and the
 lives limit. When repeats are allowed they may also be played again; when not,
@@ -92,6 +94,46 @@ cannot beat it.
   in the middle over the sums of two. Without repeats, it picks each life closest to
   the average still needed and closes with an exact pair.
 
+**Shortest play time.** The least total time of the lives, using at most the
+allowed lives and repeats; among plans of that time, the largest total. The
+time of a live is a whole number (tenths of a second, see _Play time_), so the
+search in `lib/shortest-time-search.ts` tables it exactly:
+
+- **Rows worth playing.** A row is dropped when another takes no longer and
+  yields no less: swapping it out never makes a plan slower, smaller, or
+  longer in lives. What remains rises in both time and yield. On the real data
+  that is 20 to 26 rows for event points and 3 for score, out of 3,832.
+- **Table over time.** The largest total for every exact total time, filled
+  upward until one reaches `need`. That time is the optimum when lives are
+  unlimited. Two plans always exist, the fewest-lives plan and the best
+  single-song plan, so the table never has to go past the quicker of them.
+- **Table over lives and time.** When the plan found needs more lives than
+  allowed, the largest total for every number of lives and exact time is
+  tabled, layer by layer, up to the time of the fewest-lives plan, which fits
+  the limit. A plan of `k` lives takes between `k` times the quickest row and
+  `k` times the slowest, so each layer only covers that range.
+- **Required songs** are played once anyway. Their time is the same in every
+  plan, so only the remaining lives are searched.
+- **Without repeats** the objective is refused as invalid input. No exact
+  solver for it exists here, and it is not approximated.
+
+## Play time
+
+Semantics: [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md),
+_Duration_. The code is `lib/plan-play-time.ts` and the loader.
+
+- **Time of a live** = the song's `music_time` plus the `overhead` the user
+  entered, both in tenths of a second: `round(music_time × 10) + overhead × 10`.
+  Totals are summed as whole numbers and shown to the second.
+- **No default overhead.** Without one, a plan shows no play time, and
+  `shortestTime` is rejected with `overhead` named as missing. An entered 0 is
+  taken as given: song time only.
+- **`jp` only.** `music_time` was checked against JP audio only. In `tw`, `en`,
+  and `kr` a plan shows no play time, and `shortestTime` is refused
+  (`time-region-unverified`).
+- **Limits still apply.** The lives limit and the live bonus limit work under
+  `shortestTime` as under the other objectives.
+
 ## Live bonus
 
 Semantics: [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md),
@@ -139,6 +181,9 @@ _Energy_. The code is `lib/plan-live-bonus.ts` and the loader
 | Table work                          | 50,000,000      | least overshoot table  |
 | Search deficit span (`deficitSpan`) | 67,108,864      | least overshoot search |
 | Search work (`searchWork`)          | 400,000,000     | least overshoot search |
+| Time span (`timeSpan`)              | 2,500,000       | shortest time          |
+| Lives table cells (`timeCells`)     | 32,000,000      | shortest time          |
+| Time work (`timeWork`)              | 400,000,000     | shortest time          |
 
 - **Fewest lives** is `O(n)` (repeats) or `O(n log n)` (no repeats) in the number
   of song and difficulty rows, with no dependence on the size of the target.
@@ -152,6 +197,25 @@ _Energy_. The code is `lib/plan-live-bonus.ts` and the loader
   exponential in the worst case, with each node charged as 8 operations of work.
   A request beyond either search bound is answered `out-of-bounds` with the bound
   that was exceeded and by how much. Nothing else is ever returned in its place.
+
+- **Shortest time** takes `O(span × rows worth playing)` for the table over time,
+  where `span` is one more than the time of the quicker of the two known plans in
+  tenths of a second, and about 14 bytes per unit of `span`. The table over lives
+  and time has one cell per life and time in range; it takes `O(cells × rows)`
+  and one byte per cell (two from 255 rows worth playing). Beyond a bound the
+  answer is `out-of-bounds`. At the bounds a request holds about 35 MB for the
+  first table and 32 MB for the second.
+
+Shortest time, measured on the 2026-11 `music_metas.json` with three decks,
+both metrics, overheads of 0, 30, 60 and 120 s, and targets worth about 10 to
+3,000 lives of the best song (576 requests): the slowest took 0.38 s. Every
+request of up to about 100 lives was solved. With a lives limit loose enough
+not to matter, requests are solved up to the time span bound (about 69 hours
+of play). With a limit that rules the quickest plan out, requests were
+`out-of-bounds` from about 300 lives for event points and 1,000 for score;
+raising the limit until it no longer matters makes them solvable again. Real
+songs differ little in length. A constructed case with ten rows from 100 s to
+one hour per live and a limit of 42 lives took 0.7 s, the slowest seen.
 
 Measured with random targets on the 3,832 rows of the 2026-11-06 `music_metas.json`,
 with all difficulties allowed and 10,000 lives, 250 targets per row:
@@ -186,19 +250,22 @@ impossible and every combination has to be ruled out.
 Rows are ordered by song id, then difficulty (easy to append). Equal yields are
 interchangeable, so the lowest song id and difficulty is used. The same request
 returns the same plan whatever the input order. Where several plans are equally
-optimal, one is returned; the others are not listed.
+optimal, one is returned; the others are not listed. For the shortest time, equal
+rows are likewise stood in for by the lowest song id and difficulty.
 
 ## Unavailable states
 
 | Reason                   | Meaning                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------ |
 | `invalid-input`          | A control or yield row is malformed; the offending fields are named.                 |
+|                          | Also `shortestTime` without repeats, or with a row that has no time.                 |
 | `no-candidates`          | No yield rows remain after the difficulty filter.                                    |
 | `required-unavailable`   | A required song is not among the candidates.                                         |
 | `plays-limit`            | Required songs alone exceed the lives limit, or the target needs more lives.         |
 | `target-unreachable`     | Even every allowed song once (no repeats) falls short, or nothing is left to play.   |
-| `out-of-bounds`          | Least overshoot beyond the search bounds.                                            |
+| `out-of-bounds`          | Least overshoot or shortest time beyond the search bounds.                           |
 | `yields-unavailable`     | (page only) The recommender could not calculate yields, so there is nothing to plan. |
+| `time-region-unverified` | (page only) `shortestTime` outside `jp`, where song times are unverified.            |
 | `live-bonus-limit`       | (page only) The live bonus limit allows too few lives, or not even one.              |
 | `boost-not-in-table`     | (page only) A live bonus limit was set, but the multiplier is not a `boosts` row.    |
 | `live-bonus-unavailable` | (page only) A live bonus limit was set, but the boost table could not be read.       |
@@ -211,23 +278,27 @@ The planner lives on `/music-recommender` as the _Target plan_ panel. It is
 driven by query parameters, so a plan is shareable and runs on the server:
 
 `target`, `objective`, `maxPlays`, `maxLiveBonus` (empty for no limit),
-`repeats` (`true`/`false`), `difficulties` (comma list, empty for all),
+`overhead` (seconds, empty when not entered), `repeats` (`true`/`false`), `difficulties` (comma list, empty for all),
 `required` (`songId:difficulty`, comma list).
 
 - No plan parameter means no plan; the panel stays idle.
 - Some but not all of the required parameters is `invalid`, with the missing and
   invalid fields named. The recommendations still render.
+- `objective=shortestTime` without `overhead` is `invalid` with `overhead`
+  missing; with `repeats=false` it is `invalid` with `repeats` named.
 - The form validates with the same parser as the server
   (`lib/target-plan-query.ts`) before submitting, and submits together with the
   deck settings, so a plan is always made for the deck as entered.
 - Only the plan result is sent to the browser; the planner never runs there.
 - The boost table is requested only when a plan is made.
 
-A result shows the lives, total live bonus, target, total, overshoot, the other
-metric's total, per-song counts and subtotals, whether each song was required,
-the source and formula it is based on, and the assumptions: every live uses the
-entered deck and the recommender's per-live values, what one live costs in live
-bonus (or why that is unknown), and that play time is not planned.
+A result shows the lives, total live bonus, total play time, target, total,
+overshoot, the other metric's total, per-song counts and subtotals, whether each
+song was required, the source and formula it is based on, and the assumptions:
+every live uses the entered deck and the recommender's per-live values, what one
+live costs in live bonus (or why that is unknown), what one live is counted as
+in time (or why play time is unknown), and that live bonus recovery is not
+planned.
 
 ## Verification
 
@@ -251,14 +322,24 @@ bonus (or why that is unknown), and that play time is not planned.
   below a single live, required songs that exceed it, both objectives, no
   repeats, Auto, a cost of 0, a multiplier outside the table, an unreadable
   table, and the region whose table is read.
+- The shortest time is compared against exhaustive search on 6,000 seeded
+  problems directly (in several hundred of them the lives limit decides the
+  answer) and on 3,000 more through `planTarget`, with required songs and
+  difficulty filters. Both check the time and the total. Of 50
+  off-by-one and logic mutations of the search, the planner, the parser and the
+  loader, 45 fail the tests. The other 5 change only speed or which of several
+  equally good plans is returned: two keep a beaten row in the table, two break
+  ties differently, and one skips a table cell that no best plan passes through.
+- Loader tests cover play time with and without an overhead, an overhead of 0,
+  a required song's time, Auto, the lives limit, and the regions.
 - Component and loader tests cover input validation, the loading, idle, invalid,
   unavailable, and result states, and accessible controls.
 
 ## Out of scope
 
-- The "shortest play time" objective and a cap on play time, which
+- A cap on play time, and the shortest play time without repeats.
   [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md)
-  makes available to #544. Both need the user's overhead per live.
+  defines the time both would use.
 - A planner that chooses the boost, or mixes boosts within a plan.
 - Per-hour or per-energy efficiency columns. Natural recovery and "per day"
   planning stay blocked.

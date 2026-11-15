@@ -5,17 +5,18 @@ import {
   type LeastOvershootOutcome
 } from "#lib/least-overshoot-search.js";
 import { MUSIC_META_DIFFICULTIES, type MusicMetaDifficulty } from "#lib/music-recommender.js";
+import { searchShortestTime, type ShortestTimeBound } from "#lib/shortest-time-search.js";
 
 /**
  * Plans how many plays of which songs reach a cumulative score or event-point target,
  * from per-live yields that are already validated (the JP Solo recommender).
  * Every plan returned is provably optimal for its declared objective; a request the
- * exact solvers cannot cover within the bounds below is refused, never approximated.
+ * exact solvers cannot cover within their bounds is refused, never approximated.
  * See docs/viewer-implementation/tools-site-target-planner.md.
  */
 
 export type PlannerMetric = "score" | "eventPoints";
-export type PlannerObjective = "fewestPlays" | "leastOvershoot";
+export type PlannerObjective = "fewestPlays" | "leastOvershoot" | "shortestTime";
 
 /** Targets and per-play yields are capped so every sum stays a safe integer. */
 export const PLANNER_MAX_TARGET = 100_000_000_000;
@@ -23,12 +24,19 @@ export const PLANNER_MAX_PLAYS = 10_000;
 /** Least overshoot tables sums below `target + largest yield` when this fits, else searches. */
 export const PLANNER_MAX_SUM_SPAN = 5_000_000;
 export const PLANNER_MAX_WORK = 50_000_000;
+/** The longest a single live may take, in tenths of a second. */
+export const PLANNER_MAX_LIVE_TIME = 1_000_000;
 
 export type PlannerYield = Readonly<{
   musicId: number;
   difficulty: string;
   score: number;
   eventPoints: number;
+  /**
+   * How long one live takes, in tenths of a second, waiting between lives included. Needed by
+   * `shortestTime`; any plan whose lives all have one reports its total time.
+   */
+  time?: number | null;
 }>;
 
 export type PlannerSongRef = Readonly<{ musicId: number; difficulty: string }>;
@@ -64,7 +72,7 @@ export type TargetPlan = Readonly<{
   target: number;
   maxPlays: number;
   allowRepeats: boolean;
-  /** Every plan returned is optimal for the objective: fewest plays, or least overshoot. */
+  /** Every plan returned is optimal for the objective: fewest plays, least overshoot, or time. */
   optimality: "optimal";
   items: readonly PlanItem[];
   plays: number;
@@ -72,6 +80,8 @@ export type TargetPlan = Readonly<{
   total: number;
   totals: Readonly<{ score: number; eventPoints: number }>;
   overshoot: number;
+  /** Total time of the plan in tenths of a second; null when a live played has no time. */
+  time: number | null;
   objectiveValue: number;
 }>;
 
@@ -88,7 +98,7 @@ export type PlanUnavailable = Readonly<{
   reason: PlanUnavailableReason;
   invalidFields: readonly string[];
   /** For `out-of-bounds`: which bound was exceeded and by how much. */
-  bound: LeastOvershootBound | null;
+  bound: LeastOvershootBound | ShortestTimeBound | null;
 }>;
 
 export type PlanResult = TargetPlan | PlanUnavailable;
@@ -100,6 +110,7 @@ type Candidate = {
   y: number;
   score: number;
   eventPoints: number;
+  time: number | null;
 };
 
 const difficultyRank = new Map<string, number>(
@@ -122,15 +133,21 @@ const unavailable = (
 
 const compareCandidates = (left: Candidate, right: Candidate): number => left.order - right.order;
 
+const OBJECTIVES: readonly unknown[] = ["fewestPlays", "leastOvershoot", "shortestTime"];
+
 const validateScalars = (input: PlannerInput): string[] => {
   const invalid: string[] = [];
   if (input.metric !== "score" && input.metric !== "eventPoints") invalid.push("metric");
-  if (input.objective !== "fewestPlays" && input.objective !== "leastOvershoot") {
-    invalid.push("objective");
-  }
+  if (!OBJECTIVES.includes(input.objective)) invalid.push("objective");
   if (!isPositiveSafeInteger(input.target, PLANNER_MAX_TARGET)) invalid.push("target");
   if (!isPositiveSafeInteger(input.maxPlays, PLANNER_MAX_PLAYS)) invalid.push("maxPlays");
-  if (typeof input.allowRepeats !== "boolean") invalid.push("allowRepeats");
+  // The shortest time is only solved with repeats; without them it is refused, not approximated.
+  if (
+    typeof input.allowRepeats !== "boolean" ||
+    (input.objective === "shortestTime" && !input.allowRepeats)
+  ) {
+    invalid.push("allowRepeats");
+  }
   return invalid;
 };
 
@@ -154,16 +171,22 @@ const readAllowedDifficulties = (
 const readYieldRow = (
   entry: unknown,
   index: number,
-  metric: PlannerMetric,
+  input: PlannerInput,
   invalid: string[]
 ): Candidate | null => {
-  const { musicId, difficulty, score, eventPoints } = (entry ?? {}) as Partial<PlannerYield>;
+  const { metric } = input;
+  const row = (entry ?? {}) as Partial<PlannerYield>;
+  const { musicId, difficulty, score, eventPoints } = row;
+  const time = row.time ?? null;
   const path = `yields[${index}]`;
+  const isTimeMissing = time === null && input.objective === "shortestTime";
   const problems = [
     !isPositiveSafeInteger(musicId, Number.MAX_SAFE_INTEGER) && "musicId",
     !isDifficulty(difficulty) && "difficulty",
     !isPositiveSafeInteger(score, PLANNER_MAX_TARGET) && "score",
-    !isPositiveSafeInteger(eventPoints, PLANNER_MAX_TARGET) && "eventPoints"
+    !isPositiveSafeInteger(eventPoints, PLANNER_MAX_TARGET) && "eventPoints",
+    (isTimeMissing || (time !== null && !isPositiveSafeInteger(time, PLANNER_MAX_LIVE_TIME))) &&
+      "time"
   ].filter((field): field is string => field !== false);
   if (problems.length > 0) {
     invalid.push(...problems.map((field) => `${path}.${field}`));
@@ -175,7 +198,8 @@ const readYieldRow = (
     order: 0,
     y: (metric === "score" ? score : eventPoints) as number,
     score: score as number,
-    eventPoints: eventPoints as number
+    eventPoints: eventPoints as number,
+    time
   };
 };
 
@@ -192,7 +216,7 @@ const readCandidates = (
   const candidates: Candidate[] = [];
   const entries: readonly unknown[] = input.yields;
   entries.forEach((entry, index) => {
-    const candidate = readYieldRow(entry, index, input.metric, invalid);
+    const candidate = readYieldRow(entry, index, input, invalid);
     if (candidate === null) return;
     const key = songKey(candidate.musicId, candidate.difficulty);
     if (seen.has(key)) {
@@ -305,13 +329,16 @@ const buildPlan = (prepared: Prepared, freePlays: ReadonlyMap<Candidate, number>
   let total = 0;
   let score = 0;
   let eventPoints = 0;
+  let time: number | null = 0;
   for (const [candidate, count] of counts) {
     plays += count;
     total += candidate.y * count;
     score += candidate.score * count;
     eventPoints += candidate.eventPoints * count;
+    time = time === null || candidate.time === null ? null : time + candidate.time * count;
   }
   const overshoot = total - input.target;
+  const objectiveValues = { fewestPlays: plays, leastOvershoot: overshoot, shortestTime: time };
   return {
     status: "ready",
     objective: input.objective,
@@ -325,7 +352,9 @@ const buildPlan = (prepared: Prepared, freePlays: ReadonlyMap<Candidate, number>
     total,
     totals: { score, eventPoints },
     overshoot,
-    objectiveValue: input.objective === "fewestPlays" ? plays : overshoot
+    time,
+    // `shortestTime` requires a time on every row, so its value is never null.
+    objectiveValue: objectiveValues[input.objective] ?? 0
   };
 };
 
@@ -526,6 +555,22 @@ const solveLeastOvershootWithoutRepeats = (
   return counts;
 };
 
+/**
+ * Shortest time, repeats allowed: see `lib/shortest-time-search.ts`. The required songs are played
+ * anyway, so their time is the same in every plan and only the remaining lives are searched.
+ */
+const solveShortestTime = (
+  pool: readonly Candidate[],
+  need: number,
+  freeBudget: number
+): ReadonlyMap<Candidate, number> | PlanUnavailable => {
+  const rows = pool.map((candidate) => ({ time: candidate.time as number, amount: candidate.y }));
+  const outcome = searchShortestTime(rows, need, freeBudget);
+  if (outcome.status === "plays-limit") return unavailable("plays-limit");
+  if (outcome.status === "exceeded") return unavailable("out-of-bounds", [], outcome.bound);
+  return new Map([...outcome.playsByRow].map(([row, plays]) => [pool[row], plays]));
+};
+
 const isUnavailable = (
   value: ReadonlyMap<Candidate, number> | PlanUnavailable
 ): value is PlanUnavailable => !(value instanceof Map);
@@ -550,7 +595,9 @@ export const planTarget = (input: PlannerInput): PlanResult => {
   if (pool.length === 0) return unavailable("target-unreachable");
 
   let free: ReadonlyMap<Candidate, number> | PlanUnavailable;
-  if (input.objective === "fewestPlays") {
+  if (input.objective === "shortestTime") {
+    free = solveShortestTime(pool, need, freeBudget);
+  } else if (input.objective === "fewestPlays") {
     free = input.allowRepeats
       ? solveFewestPlaysWithRepeats(pool, need, freeBudget)
       : solveFewestPlaysWithoutRepeats(pool, need, freeBudget);
