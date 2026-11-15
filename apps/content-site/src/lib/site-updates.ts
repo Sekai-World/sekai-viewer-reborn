@@ -50,8 +50,22 @@ const RELEASE_0_1_2: SiteUpdate = {
   ]
 };
 
+const RELEASE_0_2_0: SiteUpdate = {
+  version: "0.2.0",
+  titleKey: "updates.release.0.2.0.title",
+  summaryKey: "updates.release.0.2.0.summary",
+  changeKeys: [
+    "updates.release.0.2.0.change.sites",
+    "updates.release.0.2.0.change.stories",
+    "updates.release.0.2.0.change.loading",
+    "updates.release.0.2.0.change.audio",
+    "updates.release.0.2.0.change.links"
+  ]
+};
+
 // Keep new releases at the beginning of this array.
 export const siteUpdates: readonly SiteUpdate[] = [
+  RELEASE_0_2_0,
   RELEASE_0_1_2,
   RELEASE_0_1_1,
   RELEASE_0_1_0,
