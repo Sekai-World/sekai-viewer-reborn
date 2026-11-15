@@ -2,6 +2,7 @@
   import Icon from "@iconify/svelte";
   import type { Snippet } from "svelte";
   import BrandLockup from "./brand-lockup.svelte";
+  import NavigationProgress from "./navigation-progress.svelte";
   import type { SidebarItem } from "./viewer-shell.types";
 
   type Props = {
@@ -22,6 +23,9 @@
     titleBadge?: string;
     /** Width cap for the centered navbar row and main content column. */
     mainWidthClass?: string;
+    /** True while a navigation is pending; drives the shared progress feedback. */
+    navigating?: boolean;
+    navigationLoadingLabel?: string;
     children?: Snippet;
   };
 
@@ -42,10 +46,14 @@
     title = "Sekai Viewer",
     titleBadge = "reborn",
     mainWidthClass = "max-w-384",
+    navigating = false,
+    navigationLoadingLabel = "Loading page",
     children
   }: Props = $props();
 
   let sidebarOpen = $state(false);
+  let navigationBusy = $state(false);
+  let navigationDimmed = $state(false);
   const sidebarPanelId = $derived(`${drawerId}-panel`);
   const mainId = $derived(`${drawerId}-main`);
 
@@ -55,6 +63,13 @@
 </script>
 
 <a class="viewer-shell-skip" href={`#${mainId}`}>{skipToMainLabel}</a>
+
+<NavigationProgress
+  active={navigating}
+  label={navigationLoadingLabel}
+  bind:busy={navigationBusy}
+  bind:dimmed={navigationDimmed}
+/>
 
 <div class:xl:drawer-open={desktopRailOpen} class="drawer min-h-dvh">
   <input
@@ -118,6 +133,8 @@
     <main
       id={mainId}
       tabindex="-1"
+      aria-busy={navigationBusy ? "true" : undefined}
+      class:viewer-shell-main-pending={navigationDimmed}
       class:viewer-shell-main-with-bottom-navigation={bottomNavigation}
       class={`viewer-shell-main mx-auto w-full ${mainWidthClass} px-3 pb-8 pt-6 md:px-6 lg:px-8`}
     >
@@ -271,6 +288,15 @@
     }
   }
 
+  /* The outgoing page fades back while a slow navigation is still pending. */
+  .viewer-shell-main {
+    transition: opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .viewer-shell-main-pending {
+    opacity: 0.6;
+  }
+
   .viewer-shell-rail {
     background: color-mix(in oklab, var(--color-base-100) 96%, var(--color-base-200));
   }
@@ -288,12 +314,14 @@
       -webkit-backdrop-filter: none;
     }
 
-    .viewer-shell-skip {
+    .viewer-shell-skip,
+    .viewer-shell-main {
       transition: none;
     }
   }
 
-  :global([data-low-motion]) .viewer-shell-skip {
+  :global([data-low-motion]) .viewer-shell-skip,
+  :global([data-low-motion]) .viewer-shell-main {
     transition: none;
   }
 </style>

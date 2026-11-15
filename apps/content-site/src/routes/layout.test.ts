@@ -22,10 +22,15 @@ vi.mock("#lib/components/OnboardingDialog.svelte", () => ({
   }
 }));
 vi.mock("$app/state", () => ({
+  navigating: { to: null },
   page: { url: new URL("http://localhost/cards/jp") },
   updated: appState.updated
 }));
-vi.mock("$app/navigation", () => ({ goto: vi.fn(), refreshAll: vi.fn() }));
+vi.mock("$app/navigation", () => ({
+  beforeNavigate: vi.fn(),
+  goto: vi.fn(),
+  refreshAll: vi.fn()
+}));
 vi.mock("$app/paths", () => ({ asset: (path: string) => path, resolve: (path: string) => path }));
 vi.mock("#lib/onboarding.js", () => ({
   readOnboardingSeen: () => onboardingState.seen,

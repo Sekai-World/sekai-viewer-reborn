@@ -1,4 +1,6 @@
 export { default as ViewerShell } from "./viewer-shell.svelte";
+export { default as NavigationProgress } from "./navigation-progress.svelte";
+export { trackPageLeave } from "./page-leave.svelte";
 export { default as BrandLockup } from "./brand-lockup.svelte";
 export { default as RegionSwitcher } from "./region-switcher.svelte";
 export { default as ImagePreviewDialog } from "./image-preview-dialog.svelte";

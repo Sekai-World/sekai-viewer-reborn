@@ -3,8 +3,8 @@
   import "#lib/icons/mdi.js";
   import { version as clientVersion } from "$app/env";
   import { asset, resolve } from "$app/paths";
-  import { goto, refreshAll } from "$app/navigation";
-  import { page, updated } from "$app/state";
+  import { beforeNavigate, goto, refreshAll } from "$app/navigation";
+  import { navigating, page, updated } from "$app/state";
   import Icon from "@iconify/svelte";
   import {
     setContentDisplaySettings,
@@ -22,7 +22,7 @@
   import MobileQuickNavigation from "#lib/components/MobileQuickNavigation.svelte";
   import OnboardingDialog from "#lib/components/OnboardingDialog.svelte";
   import SiteUpdateNotice from "#lib/components/SiteUpdateNotice.svelte";
-  import { GlobalNotificationBanner, ViewerShell } from "@platform/ui-shell";
+  import { GlobalNotificationBanner, trackPageLeave, ViewerShell } from "@platform/ui-shell";
   import { onMount, tick, type Snippet } from "svelte";
   import {
     createI18nTranslator,
@@ -125,6 +125,8 @@
   let openSidebarLabel = $state(getInitialI18nText("aria.openSidebar"));
   let closeSidebarLabel = $state(getInitialI18nText("aria.closeSidebar"));
   let skipToMainLabel = $state(getInitialI18nText("aria.skipToMainContent"));
+  let navigationLoadingLabel = $state(getInitialI18nText("aria.loadingPage"));
+  const pageLeave = trackPageLeave(beforeNavigate);
   let sidebarLabel = $state(getInitialI18nText("navigation.sidebarTitle"));
   let libraryLabel = $state(getInitialI18nText("navigation.library"));
   let activitiesLabel = $state(getInitialI18nText("navigation.activities"));
@@ -682,6 +684,7 @@
     openSidebarLabel = translate("aria.openSidebar");
     closeSidebarLabel = translate("aria.closeSidebar");
     skipToMainLabel = translate("aria.skipToMainContent");
+    navigationLoadingLabel = translate("aria.loadingPage");
     sidebarLabel = translate("navigation.sidebarTitle");
     libraryLabel = translate("navigation.library");
     activitiesLabel = translate("navigation.activities");
@@ -1511,6 +1514,8 @@
   {closeSidebarLabel}
   {skipToMainLabel}
   {sidebarLabel}
+  {navigationLoadingLabel}
+  navigating={navigating.to !== null || pageLeave.leaving}
   {sidebarItems}
   showTitle={showPageTitle}
 >

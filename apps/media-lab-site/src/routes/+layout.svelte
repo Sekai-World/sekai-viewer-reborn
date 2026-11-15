@@ -2,11 +2,16 @@
   import "../app.css";
   import "#lib/icons/mdi.js";
   import { PUBLIC_SUPPORT_PAGE_URL } from "$app/env/public";
-  import { goto, refreshAll } from "$app/navigation";
+  import { beforeNavigate, goto, refreshAll } from "$app/navigation";
   import { asset } from "$app/paths";
-  import { page } from "$app/state";
+  import { navigating, page } from "$app/state";
   import Icon from "@iconify/svelte";
-  import { GlobalNotificationBanner, ViewerShell, type SidebarItem } from "@platform/ui-shell";
+  import {
+    GlobalNotificationBanner,
+    trackPageLeave,
+    ViewerShell,
+    type SidebarItem
+  } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import {
     createI18nTranslator,
@@ -46,6 +51,7 @@
   } from "#lib/theme.js";
 
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
+  const pageLeave = trackPageLeave(beforeNavigate);
   const supportPageUrl = PUBLIC_SUPPORT_PAGE_URL?.trim();
   const regionSelection = provideRegionSelection();
   regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
@@ -290,6 +296,8 @@
   openSidebarLabel={translate("navigation.openSidebar")}
   closeSidebarLabel={translate("navigation.closeSidebar")}
   sidebarLabel={translate("navigation.sidebar")}
+  navigationLoadingLabel={translate("navigation.loadingPage")}
+  navigating={navigating.to !== null || pageLeave.leaving}
   {sidebarItems}
   desktopRailOpen={true}
   showTitle={page.url.pathname === "/"}
