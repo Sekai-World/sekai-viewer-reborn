@@ -24,8 +24,7 @@
     { id: "auto", labelKey: "musicRecommender.modeAuto", enabled: true },
     { id: "multi", labelKey: "musicRecommender.modeMulti", enabled: false },
     { id: "challenge", labelKey: "musicRecommender.modeChallenge", enabled: false },
-    { id: "cheerful-carnival", labelKey: "musicRecommender.modeCheerfulCarnival", enabled: false },
-    { id: "world-bloom", labelKey: "musicRecommender.modeWorldBloom", enabled: false }
+    { id: "cheerful-carnival", labelKey: "musicRecommender.modeCheerfulCarnival", enabled: false }
   ] as const;
   const REGIONS = [
     { id: "jp", labelKey: "region.jp" },
@@ -432,8 +431,14 @@
               value={deckBonus}
               oninput={(event) => (deckBonus = readText(event))}
               aria-invalid={Boolean(inputErrors.deckBonus)}
+              aria-describedby={inputErrors.deckBonus
+                ? "deck-bonus-hint deck-bonus-error"
+                : "deck-bonus-hint"}
             />
-            {#if inputErrors.deckBonus}<small class="field-error" role="alert"
+            <small class="field-hint" id="deck-bonus-hint"
+              >{translate("musicRecommender.deckBonusHint")}</small
+            >
+            {#if inputErrors.deckBonus}<small class="field-error" id="deck-bonus-error" role="alert"
                 >{translate(inputErrors.deckBonus)}</small
               >{/if}
           </label>
@@ -823,6 +828,11 @@
     display: grid;
     gap: 0.4rem;
     min-width: 0;
+  }
+  .field-hint {
+    color: var(--archive-text-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
   }
   .field-error {
     color: var(--color-error);

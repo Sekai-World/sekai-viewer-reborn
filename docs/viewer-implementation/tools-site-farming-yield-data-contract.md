@@ -40,11 +40,11 @@ selects one; an unknown value is rejected, never replaced by the default.
 
 ## Scope
 
-| Dimension       | Supported                                                    | Everything else                                                                                                                                |
-| --------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| Region          | `jp`, `tw`, `en`, `kr`                                       | `cn` and any other value are unsupported. TW, EN, and KR use the JP values (owner decision, see _Region Evidence_).                            |
-| Mode            | Solo, Auto                                                   | Multi, Challenge, Cheerful Carnival, World Bloom stay blocked; formula authority and vectors are in the validation document (_Mode Evidence_). |
-| Formula version | `jp-solo-community-v1` (Solo), `jp-auto-community-v1` (Auto) | Any other value is unsupported.                                                                                                                |
+| Dimension       | Supported                                                    | Everything else                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Region          | `jp`, `tw`, `en`, `kr`                                       | `cn` and any other value are unsupported. TW, EN, and KR use the JP values (owner decision, see _Region Evidence_).                                                                              |
+| Mode            | Solo, Auto                                                   | Multi, Challenge, and Cheerful Carnival stay blocked. A World Bloom live is a Solo or Auto live whose deck bonus includes the support-deck bonus. See the validation document (_Mode Evidence_). |
+| Formula version | `jp-solo-community-v1` (Solo), `jp-auto-community-v1` (Auto) | Any other value is unsupported.                                                                                                                                                                  |
 
 Records for songs that are absent from the selected region's own music list are
 not evidence that the song exists there. For `tw`, `en`, and `kr` only the
@@ -291,8 +291,8 @@ the boost.
 
 These stay blocked and are not treated as implementation-ready:
 
-- Region `cn`, songs only TW, EN, or KR has, and Multi, Challenge, Cheerful
-  Carnival, and World Bloom yields.
+- Region `cn`, songs only TW, EN, or KR has, and Multi, Challenge, and Cheerful
+  Carnival yields.
 - Per-hour, per-energy, and energy- or time-based planning metrics are not
   implemented. Their semantics are defined in
   [`tools-site-yield-duration-energy.md`](tools-site-yield-duration-energy.md)

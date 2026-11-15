@@ -435,6 +435,37 @@ describe("Auto mode (formula jp-auto-community-v1)", () => {
     });
   });
 
+  it("reproduces vector V5: a World Bloom live is a Solo or Auto live on the total deck bonus", () => {
+    // The event type does not enter the formula; the support deck bonus is part of the deck bonus.
+    const mainDeckBonus = 150;
+    const supportDeckBonus = 50;
+    const calculateWith = (mode: string, deckBonus: number) =>
+      calculateJpSoloYield(makeDataset([music1Master]), {
+        ...vectorInputs(mode),
+        deckBonus,
+        musicId: 1,
+        difficulty: "master"
+      });
+
+    expect(calculateWith("solo", mainDeckBonus + supportDeckBonus)).toMatchObject({
+      score: 1_776_928,
+      eventPoints: 642
+    });
+    expect(calculateWith("auto", mainDeckBonus + supportDeckBonus)).toMatchObject({
+      score: 1_186_323,
+      eventPoints: 543
+    });
+    // Without the support deck bonus: floor(188 x 1.14 x 2.5) and floor(159 x 1.14 x 2.5).
+    expect(calculateWith("solo", mainDeckBonus)).toMatchObject({
+      score: 1_776_928,
+      eventPoints: 535
+    });
+    expect(calculateWith("auto", mainDeckBonus)).toMatchObject({
+      score: 1_186_323,
+      eventPoints: 453
+    });
+  });
+
   it("does not let the Auto fields change a Solo result or the reverse", () => {
     const changedAuto = makeMusicMeta(1, {
       ...music1Master,

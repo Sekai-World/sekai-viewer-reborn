@@ -206,4 +206,4 @@ Still blocked, with the missing evidence:
   lives, which do not exist here.
 - **Other regions for song time.** `music_time` was checked against JP audio
   only. The boost table itself is identical in all five regions.
-- **Multi, Challenge, Cheerful Carnival and World Bloom.** #538.
+- **Multi, Challenge and Cheerful Carnival.** #538.
