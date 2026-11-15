@@ -46,6 +46,9 @@ const prefixes = [...REGION_ROUTE_PREFIXES].sort((a, b) => b.length - a.length);
  * route but names a region that is not served, or `undefined` to leave the
  * request alone. Routing such a request nowhere makes it a normal 404 instead
  * of a page of Japanese data under an arbitrary region segment.
+ *
+ * Assumes the app is served from the root: with a `paths.base`, both the
+ * prefixes and the target would need that base.
  */
 export const rerouteUnknownRegion = (pathname: string): string | undefined => {
   const prefix = prefixes.find((candidate) => pathname.startsWith(`${candidate}/`));

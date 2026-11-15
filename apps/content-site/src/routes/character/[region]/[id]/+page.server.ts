@@ -9,7 +9,6 @@ import { normalizeRegion } from "#lib/i18n/region.js";
 import type { CharacterRankReference, Mission } from "#lib/domain/mission.js";
 import type { SupportedRegion } from "#lib/domain/regions.js";
 import { supportedRegions } from "#lib/domain/regions.js";
-import { getPositiveInteger } from "#lib/server/catalogue-data.js";
 import { getMasterApiBaseUrl } from "#lib/server/config.js";
 import { parseRouteId } from "#lib/route-id.js";
 import {
@@ -100,7 +99,8 @@ const resolveAvailableRegions = async ({
 };
 
 export const load: PageServerLoad = async ({ params }) => {
-  if (parseRouteId(params.id) === null) error(404, "Not found");
+  const numericCharacterId = parseRouteId(params.id);
+  if (numericCharacterId === null) error(404, "Not found");
   const region = normalizeRegion(params.region);
   const characterId = params.id;
   const baseUrl = getMasterApiBaseUrl();
@@ -149,19 +149,20 @@ export const load: PageServerLoad = async ({ params }) => {
     })
     .catch(() => ({ character: null, loadFailed: true as const }));
 
-  const numericCharacterId = getPositiveInteger(characterId);
-  const characterRanks: Promise<CharacterRanksPayload> =
-    numericCharacterId === null
-      ? Promise.resolve({ items: [], loadFailed: false })
-      : fetchCharacterRankReferences(baseUrl, region, numericCharacterId)
-          .then((items) => ({ items, loadFailed: false }))
-          .catch(() => ({ items: [], loadFailed: true }));
-  const characterMissions: Promise<CharacterMissionsPayload> =
-    numericCharacterId === null
-      ? Promise.resolve({ items: [], loadFailed: false })
-      : fetchCharacterMissions(baseUrl, region, numericCharacterId)
-          .then((items) => ({ items, loadFailed: false }))
-          .catch(() => ({ items: [], loadFailed: true }));
+  const characterRanks: Promise<CharacterRanksPayload> = fetchCharacterRankReferences(
+    baseUrl,
+    region,
+    numericCharacterId
+  )
+    .then((items) => ({ items, loadFailed: false }))
+    .catch(() => ({ items: [], loadFailed: true }));
+  const characterMissions: Promise<CharacterMissionsPayload> = fetchCharacterMissions(
+    baseUrl,
+    region,
+    numericCharacterId
+  )
+    .then((items) => ({ items, loadFailed: false }))
+    .catch(() => ({ items: [], loadFailed: true }));
 
   const availableRegions = resolveAvailableRegions({
     baseUrl,

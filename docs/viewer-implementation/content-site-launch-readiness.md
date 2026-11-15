@@ -86,7 +86,9 @@ Error states:
 - [ ] A non-existent ID on a detail route shows a localized not-found or error
       state inside the site shell, not an unhandled 500. The response is 200
       and the page adds `<meta name="robots" content="noindex">` once the
-      record has resolved as missing.
+      record has resolved as missing. The tag is added in the browser after
+      the streamed record arrives, so check it in DevTools, not in the page
+      source. It also appears when the record failed to load.
 - [ ] A malformed ID on a detail route (`/card/jp/abc`, `/card/jp/012`)
       answers 404 with the site error page. Only the canonical decimal form of
       a positive integer is an ID (`parseRouteId`,
