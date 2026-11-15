@@ -109,5 +109,6 @@
     volumeLabel={t("audioVolumeLabel")}
     seekLabel={t("audioSeekLabel")}
     unavailableLabel={t("audioUnavailableLabel")}
+    errorLabel={t("audioLoadFailedLabel")}
   />
 </div>

@@ -5,6 +5,7 @@ import AudioPlayer from "./audio-player.svelte";
 
 type MockHowlOptions = {
   onload?: () => void;
+  onloaderror?: () => void;
   onplay?: () => void;
   onpause?: () => void;
   onstop?: () => void;
@@ -214,5 +215,37 @@ describe("AudioPlayer", () => {
     expect(frames.size).toBe(0);
     expect(range.value).toBe("45");
     unmount();
+  });
+
+  it("shows the unavailable label when there is no source", () => {
+    render(AudioPlayer, { ...playerProps, src: null, errorLabel: "Failed to load" });
+
+    expect(screen.getByText("Unavailable")).toBeTruthy();
+    expect(screen.queryByText("Failed to load")).toBeNull();
+  });
+
+  describe("when the source fails to load", () => {
+    beforeEach(() => {
+      mockedHowl.mockImplementation(function (options) {
+        currentHowl = createMockHowl(options);
+        queueMicrotask(() => options.onloaderror?.());
+        return currentHowl;
+      });
+    });
+
+    it("shows the error label instead of the unavailable label", async () => {
+      render(AudioPlayer, { ...playerProps, errorLabel: "Failed to load" });
+      await fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+      await waitFor(() => expect(screen.getByText("Failed to load")).toBeTruthy());
+      expect(screen.queryByText("Unavailable")).toBeNull();
+    });
+
+    it("falls back to the unavailable label without an error label", async () => {
+      render(AudioPlayer, playerProps);
+      await fireEvent.click(screen.getByRole("button", { name: "Play" }));
+
+      await waitFor(() => expect(screen.getByText("Unavailable")).toBeTruthy());
+    });
   });
 });

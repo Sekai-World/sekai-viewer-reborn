@@ -47,6 +47,7 @@
     volumeLabel,
     seekLabel,
     unavailableLabel,
+    errorLabel,
     jacketUrl,
     artist,
     fillerSec
@@ -73,6 +74,7 @@
     volumeLabel: string;
     seekLabel: string;
     unavailableLabel: string;
+    errorLabel?: string;
     jacketUrl?: string;
     artist?: string;
     fillerSec?: number | null;
@@ -187,6 +189,7 @@
             {volumeLabel}
             {seekLabel}
             {unavailableLabel}
+            {errorLabel}
             artworkUrl={jacketUrl}
             {artist}
           />

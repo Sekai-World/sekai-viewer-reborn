@@ -30,7 +30,8 @@
     downloadCloseLabel,
     volumeLabel,
     seekLabel,
-    unavailableLabel
+    unavailableLabel,
+    errorLabel
   }: {
     event: EventDetail;
     region: SupportedRegion;
@@ -46,6 +47,7 @@
     volumeLabel: string;
     seekLabel: string;
     unavailableLabel: string;
+    errorLabel?: string;
   } = $props();
 
   const getDownloadName = (format: "mp3" | "wav"): string =>
@@ -96,6 +98,7 @@
         {volumeLabel}
         {seekLabel}
         {unavailableLabel}
+        {errorLabel}
       />
     </div>
   </div>

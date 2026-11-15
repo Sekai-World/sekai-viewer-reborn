@@ -29,7 +29,7 @@
     releaseAtLabel,
     gachaPhraseLabel,
     audioPlayLabel,
-    audioUnavailableLabel,
+    audioLoadFailedLabel,
     unitProfiles
   }: {
     card: CardDetail;
@@ -48,7 +48,7 @@
     releaseAtLabel: string;
     gachaPhraseLabel: string;
     audioPlayLabel: string;
-    audioUnavailableLabel: string;
+    audioLoadFailedLabel: string;
     unitProfiles: Record<string, string>;
   } = $props();
 
@@ -225,7 +225,7 @@
           <VoicePlayButton
             sources={[gachaPhraseAudioUrl]}
             playLabel={audioPlayLabel}
-            errorLabel={audioUnavailableLabel}
+            errorLabel={audioLoadFailedLabel}
           />
         {/if}
       </div>
