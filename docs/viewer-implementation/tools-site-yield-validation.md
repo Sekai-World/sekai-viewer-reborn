@@ -48,19 +48,21 @@ implementing the formulas:
 Mode status is summarized below. JP Solo and Auto are enabled; Auto was enabled
 on 2026-11-03 by the owner under the same standard as Solo (community reference
 formulas and deterministic vectors, no in-game observation). #538 found a
-formula authority for the other modes (see _Mode Evidence_ below), but none is
-enabled: each still needs the owner's acceptance of reference-only evidence, and
-Multi, Cheerful Carnival, and Challenge also need inputs the recommender does
-not have.
+formula authority for the other modes (see _Mode Evidence_ below). World Bloom
+is an event type and not a live mode: its lives are Solo or Auto lives, so it
+was enabled through those two on 2026-11-15 by the owner under the same
+standard. Multi, Cheerful Carnival, and Challenge are not enabled: each still
+needs the owner's acceptance of reference-only evidence and inputs the
+recommender does not have.
 
-| Mode              | Formula authority found | Status  | What is still missing                                                                                                         |
-| ----------------- | ----------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| JP Solo           | Yes                     | Enabled | Nothing; complete runtime inputs are required from the user.                                                                  |
-| Auto              | Yes                     | Enabled | Nothing. Formula `jp-auto-community-v1`, vector V1, owner decision 2026-11-03.                                                |
-| Multi             | Yes                     | Blocked | Explicit inputs for the other players' total score and team power, and the aggregated multi skill effect. Owner acceptance.   |
-| Challenge         | Yes                     | Blocked | What the reference's challenge value measures is not stated, so it cannot be labelled an event-point yield. Owner acceptance. |
-| Cheerful Carnival | Yes                     | Blocked | The Multi inputs plus the remaining life, and a way to know the event is a Cheerful Carnival. Owner acceptance.               |
-| World Bloom       | Yes                     | Blocked | The deck bonus must include the support-deck bonus, which cannot be derived (#541); manual total only. Owner acceptance.      |
+| Mode                                 | Formula authority found | Status                   | What is still missing                                                                                                         |
+| ------------------------------------ | ----------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| JP Solo                              | Yes                     | Enabled                  | Nothing; complete runtime inputs are required from the user.                                                                  |
+| Auto                                 | Yes                     | Enabled                  | Nothing. Formula `jp-auto-community-v1`, vector V1, owner decision 2026-11-03.                                                |
+| Multi                                | Yes                     | Blocked                  | Explicit inputs for the other players' total score and team power, and the aggregated multi skill effect. Owner acceptance.   |
+| Challenge                            | Yes                     | Blocked                  | What the reference's challenge value measures is not stated, so it cannot be labelled an event-point yield. Owner acceptance. |
+| Cheerful Carnival                    | Yes                     | Blocked                  | The Multi inputs plus the remaining life, and a way to know the event is a Cheerful Carnival. Owner acceptance.               |
+| World Bloom (event type, not a mode) | Yes                     | Covered by Solo and Auto | Nothing. Played as Solo or Auto; the user enters a deck bonus that includes the support-deck bonus (#541). Vector V5.         |
 
 This status is intentional. Difficulty, note count, tracker score, `eventPointIcon`,
 or an unverified duration field must not be presented as a calculated yield.
@@ -145,10 +147,22 @@ Score, where `rate` is a sum over the six skill slots and `P` is the deck power:
 | --------------- | -------------------------------- | ------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------- |
 | Solo, Challenge | `base_score`                     | `skill_score_solo`  | Each slot's own effective rate.                                                      | `floor(rate × P × 4)`                          |
 | Auto            | `base_score_auto`                | `skill_score_auto`  | Each slot's own effective rate.                                                      | `floor(rate × P × 4)`                          |
-| Multi, Cheerful | `base_score + fever_score × 0.5` | `skill_score_multi` | One value for all six slots: leader's effect plus the other four cards' effects ÷ 5. | `floor(rate × P × 4 + 5 × 0.015 × team power)` |
+| Multi           | `base_score + fever_score × 0.5` | `skill_score_multi` | One value for all six slots: leader's effect plus the other four cards' effects ÷ 5. | `floor(rate × P × 4 + 5 × 0.015 × team power)` |
+| Cheerful        | `base_score + fever_score × 0.5` | `skill_score_multi` | Each slot's own effective rate.                                                      | `floor(rate × P × 4)`                          |
 
-For Multi and Cheerful the "team power" is the sum of the five players' deck
-power; the reference assumes `5 × P` when it is not given.
+For Multi the "team power" is the sum of the five players' deck power; the
+reference assumes `5 × P` when it is not given. Cheerful shares Multi's base
+term and skill array only: the reference applies the single aggregated skill
+value and the team-power term when the live type is Multi and at no other time
+(`live-calculator.ts`, `getSortedSkillDetails` and `getLiveDetailByDeck`).
+
+The vectors below pass the six effective rates as an explicit sequence, which
+the reference applies by position, unsorted, in every mode (it accepts a
+sequence of six whose sixth rate is above 0). Without one, Solo, Auto,
+Challenge, and Cheerful sort the cards' skills ascending with the leader in
+slot six and sort the first `cardLength` skill coefficients ascending, and
+Multi uses the aggregated value. So the aggregation is Multi's default, not
+something an explicit sequence goes through: V2 passes 232 six times.
 
 Event points, with `s` the live score, `r = event_rate / 100`, `d = 1 + deck bonus / 100`:
 
@@ -158,7 +172,7 @@ Event points, with `s` the live score, `r = event_rate / 100`, `d = 1 + deck bon
 | Multi       | `b = 110 + floor(s / 17000) + min(13, floor(other / 340000))`; `floor(b × r × d) × boost`. `other` is the other players' total score; the reference uses `4 × s` when it is not given. |
 | Cheerful    | `floor(floor(b × r × d) × (1.15 + min(max(life / 5000, 0.1), 0.2))) × boost`, with `life` the remaining life (reference default 1000). Only valid in a Cheerful Carnival event.        |
 | Challenge   | `(100 + floor(s / 20000)) × 120`. No song rate, deck bonus, or boost.                                                                                                                  |
-| World Bloom | The Solo or Multi formula, with the support-deck bonus added to the deck bonus. The chapter does not enter the formula.                                                                |
+| World Bloom | The formula of the live played (Solo, Auto, or Multi), with the support-deck bonus added to the deck bonus. The chapter does not enter the formula.                                    |
 
 Findings per mode:
 
@@ -170,15 +184,21 @@ Findings per mode:
   (leader plus a fifth of each other card). The reference substitutes `4 × s`
   and `5 × P` when they are missing. The contract forbids silent defaults, so
   each would have to be an explicit user input.
-- **Cheerful Carnival.** Multi plus the remaining life, and the formula only
-  applies in a Cheerful Carnival event, so the event type must be known.
+- **Cheerful Carnival.** The Multi event-point formula times a factor from the
+  remaining life, on a score that has Multi's base term and skill array but
+  per-slot skill rates and no team-power term. It needs the other players'
+  total score and the remaining life, and the formula only applies in a
+  Cheerful Carnival event, so the event type must be known.
 - **Challenge.** The reference returns `(100 + floor(s / 20000)) × 120` with
   the event type set to none. Nothing in the reference or the artifact says what
   this value is in the game, so it is not presented as an event-point yield.
-- **World Bloom.** No chapter-specific yield. The extra term is the support-deck
-  bonus (the reference uses 12, 20, or 25 support cards by chapter turn) and the
-  different-attribute bonus, both parts of a deck bonus that is derived from the
-  user's cards. The deck bonus therefore stays a manual total (#541).
+- **World Bloom.** No chapter-specific yield and no formula of its own. The
+  reference adds the support-deck bonus (12, 20, or 25 support cards by chapter
+  turn) to the deck bonus, which also holds the different-attribute bonus, and
+  then uses the formula of the live played. Both are derived from the user's
+  cards, so the deck bonus stays a manual total (#541): the recommender has no
+  World Bloom mode, and the deck bonus field tells the user to include the
+  support-deck bonus during a World Bloom event.
 
 Reproducible vectors follow the schema below. They use the real record of music
 1, master, from the 2026-10-30 sekai.best artifact (`event_rate` 114,
@@ -188,14 +208,15 @@ power 300,000, deck bonus 200, and effective skill rates 140, 130, 120, 110, 100
 90 applied by position. Inputs are synthetic and the expected values come from
 the reference formulas, like V0.
 
-| Vector | Mode      | Extra inputs                                                                                                                     | Score     | Event points           |
-| ------ | --------- | -------------------------------------------------------------------------------------------------------------------------------- | --------- | ---------------------- |
-| V0     | Solo      | none                                                                                                                             | 1,776,928 | 642 (3,210 at boost 5) |
-| V1     | Auto      | none                                                                                                                             | 1,186,323 | 543 (2,715 at boost 5) |
-| V2     | Multi     | Multi skill effect 232 (leader 140 + (130 + 120 + 110 + 100) ÷ 5), team power 1,500,000, other players' score 8,000,000, boost 1 | 2,483,082 | 919 (4,595 at boost 5) |
-| V2b    | Multi     | As V2 with other players' score 1,000,000                                                                                        | 2,483,082 | 882                    |
-| V3     | Challenge | none                                                                                                                             | 1,776,928 | 22,560                 |
-| V4     | Cheerful  | As V2, remaining life 1,000 / 920 / 0                                                                                            | 2,483,082 | 1,240 / 1,225 / 1,148  |
+| Vector | Mode        | Extra inputs                                                                                                                     | Score      | Event points           |
+| ------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------- | ---------------------- |
+| V0     | Solo        | none                                                                                                                             | 1,776,928  | 642 (3,210 at boost 5) |
+| V1     | Auto        | none                                                                                                                             | 1,186,323  | 543 (2,715 at boost 5) |
+| V2     | Multi       | Multi skill effect 232 (leader 140 + (130 + 120 + 110 + 100) ÷ 5), team power 1,500,000, other players' score 8,000,000, boost 1 | 2,483,082  | 919 (4,595 at boost 5) |
+| V2b    | Multi       | As V2 with other players' score 1,000,000                                                                                        | 2,483,082  | 882                    |
+| V3     | Challenge   | none                                                                                                                             | 1,776,928  | 22,560                 |
+| V4     | Cheerful    | Other players' score 8,000,000, remaining life 1,000 / 920 / 0, boost 1                                                          | 1,911,825  | 1,084 / 1,071 / 1,003  |
+| V5     | World Bloom | Deck bonus 150 plus support-deck bonus 50, entered as 200; Solo / Auto                                                           | As V0 / V1 | As V0 / V1             |
 
 Step check for V2: rate = 1.1599442522953187 + 0.16103453653628477 × 0.5 +
 2.32 × (sum of `skill_score_multi`) = 1.9754853955477398; score =
@@ -203,7 +224,19 @@ floor(1.9754853955477398 × 300000 × 4 + 5 × 0.015 × 1,500,000) = 2,483,082;
 b = 110 + floor(2,483,082 / 17000) + min(13, floor(8,000,000 / 340000)) =
 110 + 146 + 13 = 269; floor(269 × 1.14 × 3) = floor(919.98) = 919.
 
-Vectors V0 and V1 are asserted through the app's own calculation by
+Step check for V4: rate = 1.1599442522953187 + 0.16103453653628477 × 0.5 +
+(1.40, 1.30, 1.20, 1.10, 1.00, 0.90 by position × `skill_score_multi`) =
+1.59318805496165; score = floor(1.59318805496165 × 300000 × 4) = 1,911,825;
+b = 110 + floor(1,911,825 / 17000) + 13 = 110 + 112 + 13 = 235;
+floor(235 × 1.14 × 3) = floor(803.7) = 803; × 1.35 / 1.334 / 1.25, floored =
+1,084 / 1,071 / 1,003. Until 2026-11-15 this row reused V2's score, which the
+reference does not produce for a Cheerful live.
+
+`skill_score_multi` of the record is 0.03796830587347502, 0.03652851213683813,
+0.05339327757514775, 0.04202641177210418, 0.0956913878757389,
+0.05121274053578169.
+
+Vectors V0, V1, and V5 are asserted through the app's own calculation by
 `apps/tools-site/src/lib/music-recommender.test.ts`. V2 to V4 are recorded
 only; they are not wired into the app.
 
@@ -307,8 +340,8 @@ expectations for other modes from the Solo or legacy implementation.
 | V2: Multi                | Validate other-player/live-result contribution and rounding.                            | Complete multi result inputs and mode-specific boundary vectors.                                                    |
 | V3: Challenge            | Validate the dedicated challenge path and limits.                                       | Challenge result contract and mode-specific boundary vectors.                                                       |
 | V4: Cheerful Carnival    | Validate event-mode compatibility, team/bonus, other-player result, and life semantics. | Event-scoped evidence and reproducible live results for this mode.                                                  |
-| V5a: World Bloom event   | Validate ordinary event context separately from chapter metadata.                       | Event bonus/progression evidence for this mode.                                                                     |
-| V5b: World Bloom chapter | Validate whether chapter selection changes yield or only ranking context.               | Explicit chapter bonus contract or a documented no-effect result.                                                   |
+| V5a: World Bloom event   | Validate ordinary event context separately from chapter metadata.                       | Met by vector V5 and the reference analysis in _Mode Evidence_ (#538, 2026-11-15).                                  |
+| V5b: World Bloom chapter | Validate whether chapter selection changes yield or only ranking context.               | Met: the chapter does not enter the reference formula (_Mode Evidence_), a documented no-effect result.             |
 
 Each vector should be repeated for every region/event-version combination that
 will be exposed. A passing vector in one region does not authorize a formula in

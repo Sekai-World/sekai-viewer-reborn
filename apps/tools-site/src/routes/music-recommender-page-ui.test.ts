@@ -129,9 +129,20 @@ describe("music recommender UI contract", () => {
     const auto = screen.getByRole("button", { name: "Auto" });
     expect(auto.getAttribute("aria-pressed")).toBe("false");
     expect(auto).toHaveProperty("disabled", false);
-    for (const name of [/^Multi/, /^Challenge/, /^Cheerful Carnival/, /^World Bloom/]) {
+    for (const name of [/^Multi/, /^Challenge/, /^Cheerful Carnival/]) {
       expect(screen.getByRole("button", { name })).toHaveProperty("disabled", true);
     }
+  });
+
+  it("treats World Bloom as an event, not a mode: the deck bonus takes the support deck bonus", () => {
+    renderPage(createPageData());
+
+    expect(screen.queryByRole("button", { name: /World Bloom/ })).toBeNull();
+    const deckBonus = screen.getByLabelText(/^Deck bonus/);
+    const hint = document.getElementById(deckBonus.getAttribute("aria-describedby") ?? "");
+    expect(hint?.textContent).toBe(
+      "In a World Bloom event, enter the total including the support deck bonus."
+    );
   });
 
   it("recalculates in the chosen mode and keeps it in the next calculation", async () => {
