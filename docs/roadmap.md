@@ -54,7 +54,8 @@ The first supported inputs should remain separate files and preserve their
 source bundle identity:
 
 - FBX model exports with their sibling texture files.
-- Unity animation assets extracted from `model3d/motion/*` bundles.
+- Unity animation assets extracted from animation bundles such as
+  `model3d/motion/*`.
 - Model, animation, and bundle metadata needed to discover and validate
   compatibility.
 
@@ -66,21 +67,20 @@ pipeline.
 
 ### Planned — Implementation Route
 
-1. **Asset contract** — document a stable manifest for model bundles, texture
-   files, animation bundles, Unity versions, source bundle names, and any
-   compatibility identifiers. Preserve the updater's per-bundle directory
-   structure instead of relying on a flat `model.fbx` filename.
+1. **Asset contract** — done (#262): the manifest and region index are
+   specified in [`media-lab/model-bundle-manifest.md`](media-lab/model-bundle-manifest.md).
+   The updater still has to write them.
 2. **Browser model loading** — add a client-side 3D runtime to
-   `apps/media-lab-site` and establish a supported browser format. Prefer
-   glTF/GLB as a derived viewing format, while treating FBX as an ingestion
-   format; do not require the updater repository to perform model/animation
+   `apps/media-lab-site`. Load the updater's FBX export directly while that is
+   good enough (owner decision, 2026-11-15); a derived glTF/GLB format is
+   deferred. Do not require the updater repository to perform model/animation
    assembly.
 3. **Animation ingestion** — parse or pre-convert Unity `.anim` clips in a
    dedicated viewer-side or offline toolchain. Keep clips separate from model
    exports and expose their names, source bundles, and required rig/Avatar
    information.
 4. **Compatibility and binding** — match clips to models by verified skeleton
-   paths, bone names, Avatar/Animator metadata, BlendShape names, Unity version,
+   paths, bone names, Avatar metadata (no Animator is published), BlendShape names, Unity version,
    and source dependencies. Do not bind animations solely by character or file
    name.
 5. **Media lab UX** — provide model and animation selectors, a compatibility
