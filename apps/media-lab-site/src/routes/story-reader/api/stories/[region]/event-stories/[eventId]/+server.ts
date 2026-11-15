@@ -1,5 +1,6 @@
 import { error } from "@sveltejs/kit";
 import { isStoryRouteRegion } from "#lib/live2d/story-route.js";
+import { parseRouteId } from "#lib/route-id.js";
 import { fetchEventStoriesByEvent } from "#lib/story/master-data-client.server.js";
 import { buildEventStoryEpisodeLinks } from "#lib/story/story-identity.js";
 import { createStoryRegionAssetUrls } from "#lib/story/story-urls.js";
@@ -17,8 +18,8 @@ export const GET: RequestHandler = async ({ params, fetch }) => {
   if (!isStoryRouteRegion(region)) {
     error(404, "Unsupported region");
   }
-  const eventId = Number(params.eventId);
-  if (!Number.isInteger(eventId) || eventId <= 0) {
+  const eventId = parseRouteId(params.eventId);
+  if (eventId === null) {
     error(404, "Unsupported event id");
   }
 

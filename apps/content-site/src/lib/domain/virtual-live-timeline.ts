@@ -47,6 +47,3 @@ export type VirtualLiveTimelineDocument = {
 
 export const isSupportedVirtualLiveRegion = (region: string): region is SupportedRegion =>
   (supportedRegions as readonly string[]).includes(region);
-
-export const isPositiveSafeInteger = (value: unknown): value is number =>
-  typeof value === "number" && Number.isSafeInteger(value) && value > 0;

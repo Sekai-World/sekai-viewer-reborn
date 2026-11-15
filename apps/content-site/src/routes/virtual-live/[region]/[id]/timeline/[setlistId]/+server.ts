@@ -5,10 +5,7 @@ import {
   getVirtualLivesByRegionByIdSetlists
 } from "@platform/sekai-master-api-sdk";
 import { getRemoteAssetEndpointURL } from "#lib/assets/index.js";
-import {
-  isPositiveSafeInteger,
-  isSupportedVirtualLiveRegion
-} from "#lib/domain/virtual-live-timeline.js";
+import { isSupportedVirtualLiveRegion } from "#lib/domain/virtual-live-timeline.js";
 import type {
   VirtualLiveTimelineCharacter,
   VirtualLiveTimelineDocument,
@@ -16,6 +13,7 @@ import type {
 } from "#lib/domain/virtual-live-timeline.js";
 import type { SupportedRegion } from "#lib/domain/regions.js";
 import { formatCharacterName } from "#lib/domain/character.js";
+import { parseRouteId } from "#lib/route-id.js";
 import { getInternalRemoteAssetBaseUrl, getMasterApiBaseUrl } from "#lib/server/config.js";
 import {
   normalizeVirtualLiveMCScenario,
@@ -244,13 +242,9 @@ const readLimitedJson = async (response: Response): Promise<unknown> => {
 
 export const GET: RequestHandler = async ({ params, fetch }) => {
   const region = params.region?.trim() ?? "";
-  const virtualLiveId = Number(params.id);
-  const setlistId = Number(params.setlistId);
-  if (
-    !isSupportedVirtualLiveRegion(region) ||
-    !isPositiveSafeInteger(virtualLiveId) ||
-    !isPositiveSafeInteger(setlistId)
-  ) {
+  const virtualLiveId = parseRouteId(params.id);
+  const setlistId = parseRouteId(params.setlistId);
+  if (!isSupportedVirtualLiveRegion(region) || virtualLiveId === null || setlistId === null) {
     throw error(400, "Invalid timeline request");
   }
 
