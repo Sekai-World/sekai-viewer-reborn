@@ -37,6 +37,14 @@ describe("mission parameter group levels endpoint", () => {
     );
   });
 
+  it("answers 500 when the levels cannot be loaded", async () => {
+    fetchMissionParameterGroupLevels.mockRejectedValue(new Error("upstream failed"));
+
+    const response = await callGet("12");
+
+    expect(response.status).toBe(500);
+  });
+
   it.each([
     ["zero", "0"],
     ["a negative number", "-1"],
