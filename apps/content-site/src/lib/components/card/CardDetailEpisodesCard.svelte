@@ -1,21 +1,27 @@
 <script lang="ts">
   import type { CardDetailEpisode } from "#lib/domain/card-detail.js";
+  import type { SupportedRegion } from "#lib/domain/regions.js";
+  import { getCardStoryReaderHref } from "#lib/media-lab-site.js";
   import Icon from "@iconify/svelte";
 
   let {
     episodes,
+    region,
     title,
     releaseConditionLabel,
     costsLabel,
     rewardsLabel,
-    noEpisodesLabel
+    noEpisodesLabel,
+    storyReaderLabel
   }: {
     episodes: CardDetailEpisode[];
+    region: SupportedRegion;
     title: string;
     releaseConditionLabel: string;
     costsLabel: string;
     rewardsLabel: string;
     noEpisodesLabel: string;
+    storyReaderLabel: string;
   } = $props();
 </script>
 
@@ -31,6 +37,7 @@
     {#if episodes.length > 0}
       <div class="grid gap-3">
         {#each episodes as episode (episode.id)}
+          {@const storyReaderHref = getCardStoryReaderHref(region, episode.id)}
           <section class="content-card-inset rounded-xl p-3 sm:px-4">
             <div class="flex items-start justify-between gap-3">
               <h3 class="text-sm font-semibold">{episode.title}</h3>
@@ -60,6 +67,19 @@
                 {rewardsLabel}
               </p>
               <p class="mt-1 text-sm">{episode.rewards.join(", ")}</p>
+            {/if}
+
+            {#if storyReaderHref}
+              <a
+                href={storyReaderHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-ghost btn-sm mt-3 min-h-11 gap-1.5 px-2 font-medium"
+                aria-label={`${storyReaderLabel}: ${episode.title}`}
+              >
+                <Icon icon="mdi:open-in-new" class="size-4 shrink-0" aria-hidden="true" />
+                {storyReaderLabel}
+              </a>
             {/if}
           </section>
         {/each}

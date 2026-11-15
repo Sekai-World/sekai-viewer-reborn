@@ -56,8 +56,10 @@ instead of draining every pod.
 - `PUBLIC_SEKAI_I18N_BASE_URL`: defaults to
   `https://sekai-world.github.io/sekai-i18n-reborn`
 - `PUBLIC_TOOLS_SITE_BASE_URL`: optional tools-site origin for Event Tracker
-  links; empty hides them (see
+  and Music Recommender links; empty hides them (see
   [`content-site-launch-readiness.md`](content-site-launch-readiness.md))
+- `PUBLIC_MEDIA_LAB_SITE_BASE_URL`: optional media-lab-site origin for Story
+  Reader, Live2D, and Chibi links; empty hides them (same reference)
 - `PUBLIC_SUPPORT_PAGE_URL`, `PUBLIC_PATREON_URL`, `PUBLIC_KOFI_URL`: empty and
   optional
 
@@ -92,17 +94,18 @@ so the server refuses to start. `PUBLIC_PATREON_URL` and `PUBLIC_KOFI_URL` are
 not checked at startup; the support page hides anything but an HTTPS Patreon or
 Ko-fi URL.
 
-| Variable                       | Apps                                 | Scope   | When unset or empty                                                                                      |
-| ------------------------------ | ------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------- |
-| `SEKAI_MASTER_API_BASE_URL`    | content, tools, media-lab            | private | Master-data loads and endpoints return 500 and log the variable name; media-lab Live2D names are omitted |
-| `SEKAI_API_BASE_URL`           | all                                  | private | Global notices are hidden; tools-site tracker pages return 500 and log the variable name                 |
-| `SEKAI_REMOTE_ASSET_BASE_URL`  | content                              | private | Server-side asset downloads use `PUBLIC_REMOTE_ASSET_BASE_URL`                                           |
-| `PUBLIC_REMOTE_ASSET_BASE_URL` | content (required), tools, media-lab | public  | content: startup fails; tools: event banners are hidden; media-lab: `https://storage.sekai.best`         |
-| `PUBLIC_SEKAI_I18N_BASE_URL`   | content, tools                       | public  | `https://sekai-world.github.io/sekai-i18n-reborn`                                                        |
-| `PUBLIC_TOOLS_SITE_BASE_URL`   | content                              | public  | Event Tracker links are hidden                                                                           |
-| `PUBLIC_SUPPORT_PAGE_URL`      | all                                  | public  | content links to its own `/support`; the other apps hide the support link                                |
-| `PUBLIC_PATREON_URL`           | content                              | public  | Button hidden                                                                                            |
-| `PUBLIC_KOFI_URL`              | content                              | public  | Button hidden                                                                                            |
+| Variable                         | Apps                                 | Scope   | When unset or empty                                                                                      |
+| -------------------------------- | ------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------- |
+| `SEKAI_MASTER_API_BASE_URL`      | content, tools, media-lab            | private | Master-data loads and endpoints return 500 and log the variable name; media-lab Live2D names are omitted |
+| `SEKAI_API_BASE_URL`             | all                                  | private | Global notices are hidden; tools-site tracker pages return 500 and log the variable name                 |
+| `SEKAI_REMOTE_ASSET_BASE_URL`    | content                              | private | Server-side asset downloads use `PUBLIC_REMOTE_ASSET_BASE_URL`                                           |
+| `PUBLIC_REMOTE_ASSET_BASE_URL`   | content (required), tools, media-lab | public  | content: startup fails; tools: event banners are hidden; media-lab: `https://storage.sekai.best`         |
+| `PUBLIC_SEKAI_I18N_BASE_URL`     | content, tools                       | public  | `https://sekai-world.github.io/sekai-i18n-reborn`                                                        |
+| `PUBLIC_TOOLS_SITE_BASE_URL`     | content                              | public  | Event Tracker and Music Recommender links are hidden                                                     |
+| `PUBLIC_MEDIA_LAB_SITE_BASE_URL` | content                              | public  | Story Reader, Live2D, and Chibi links are hidden                                                         |
+| `PUBLIC_SUPPORT_PAGE_URL`        | all                                  | public  | content links to its own `/support`; the other apps hide the support link                                |
+| `PUBLIC_PATREON_URL`             | content                              | public  | Button hidden                                                                                            |
+| `PUBLIC_KOFI_URL`                | content                              | public  | Button hidden                                                                                            |
 
 ## Confirmed workflow
 

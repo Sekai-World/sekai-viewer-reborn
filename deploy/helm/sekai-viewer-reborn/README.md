@@ -162,13 +162,16 @@ When using this targeted form for an existing release, include the complete
 operator-owned values file as well, or use `--reuse-values` deliberately after
 reviewing the resulting values.
 
-The content site has eight default environment keys. The `SEKAI_API_BASE_URL`,
+The content site has nine default environment keys. The `SEKAI_API_BASE_URL`,
 `SEKAI_MASTER_API_BASE_URL`, and `PUBLIC_REMOTE_ASSET_BASE_URL` URL values are
 empty and must be set by the operator; `PUBLIC_SEKAI_I18N_BASE_URL` defaults to
 `https://sekai-world.github.io/sekai-i18n-reborn`. The optional
 `PUBLIC_TOOLS_SITE_BASE_URL` is the deployed tools-site origin used for Event
-Tracker links; an empty value hides them, and they are only ever shown for the
-`jp`, `tw`, `en`, and `kr` regions. The optional
+Tracker and Music Recommender links; an empty value hides them, and Event
+Tracker links are only ever shown for the `jp`, `tw`, `en`, and `kr` regions.
+The optional `PUBLIC_MEDIA_LAB_SITE_BASE_URL` is the deployed media-lab-site
+origin used for Story Reader, Live2D, and Chibi links, including the event,
+card-episode, and character story links; an empty value hides them. The optional
 `PUBLIC_SUPPORT_PAGE_URL` is a public URL used by each app's homepage support
 link; an empty value hides that link. `content-site` also accepts the public
 `PUBLIC_PATREON_URL` and `PUBLIC_KOFI_URL` for the corresponding Patreon and

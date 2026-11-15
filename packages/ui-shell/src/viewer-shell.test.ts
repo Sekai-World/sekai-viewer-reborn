@@ -106,3 +106,32 @@ it("exposes optional group metadata on section, enabled-link, and disabled-link 
   expect(rowFor("Disabled").getAttribute("data-sidebar-group")).toBe("test-group-b");
   expect(rowFor("Ungrouped").hasAttribute("data-sidebar-group")).toBe(false);
 });
+
+it("opens external sidebar links in a new window with an indicator and announced name", () => {
+  renderShell({
+    externalLinkLabel: "Opens in a new window",
+    sidebarItems: [
+      { label: "Internal", href: "/internal" },
+      { label: "Other site", href: "https://other.example.test/", external: true }
+    ]
+  });
+
+  const internal = screen.getByRole("link", { name: "Internal" });
+  expect(internal.hasAttribute("target")).toBe(false);
+  expect(internal.querySelectorAll("svg")).toHaveLength(0);
+
+  const external = screen.getByRole("link", { name: "Other site (Opens in a new window)" });
+  expect(external.getAttribute("href")).toBe("https://other.example.test/");
+  expect(external.getAttribute("target")).toBe("_blank");
+  expect(external.getAttribute("rel")).toBe("noopener noreferrer");
+  // The indicator ships inline from the shared package, so it renders without an app registry.
+  expect(external.querySelectorAll("svg")).toHaveLength(1);
+});
+
+it("keeps the visible label as the external link name when no external label is given", () => {
+  renderShell({
+    sidebarItems: [{ label: "Other site", href: "https://other.example.test/", external: true }]
+  });
+
+  expect(screen.getByRole("link", { name: "Other site" }).getAttribute("target")).toBe("_blank");
+});

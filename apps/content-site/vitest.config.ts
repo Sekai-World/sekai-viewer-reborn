@@ -86,6 +86,7 @@ export default defineConfig({
         "src/lib/region-routes.ts",
         "src/lib/honor-degree.ts",
         "src/lib/tools-site.ts",
+        "src/lib/media-lab-site.ts",
         "src/lib/support-provider-url.ts",
         "src/lib/server/music-list.ts",
         "src/lib/server/music-detail.ts",
