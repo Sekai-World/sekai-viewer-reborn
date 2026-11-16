@@ -50,9 +50,18 @@ describe("media-lab-site layout server load", () => {
     }
   });
 
-  it("falls back to the default locale for languages without this app's dictionaries", async () => {
+  it("keeps non-CJK locale cookies such as ar", async () => {
     const loadEvent = {
       cookies: { get: vi.fn().mockReturnValue("ar") },
+      fetch: vi.fn()
+    } as unknown as Parameters<typeof load>[0];
+
+    await expect(load(loadEvent)).resolves.toMatchObject({ uiLocale: "ar" });
+  });
+
+  it("falls back to the default locale for unknown locale cookies", async () => {
+    const loadEvent = {
+      cookies: { get: vi.fn().mockReturnValue("xx") },
       fetch: vi.fn()
     } as unknown as Parameters<typeof load>[0];
 

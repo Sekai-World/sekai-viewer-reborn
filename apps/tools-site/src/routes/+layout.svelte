@@ -2,7 +2,7 @@
   import "../app.css";
   import "#lib/icons/mdi.js";
   import { PUBLIC_SUPPORT_PAGE_URL } from "$app/env/public";
-  import { beforeNavigate } from "$app/navigation";
+  import { beforeNavigate, refreshAll } from "$app/navigation";
   import { asset } from "$app/paths";
   import { navigating, page } from "$app/state";
   import Icon from "@iconify/svelte";
@@ -14,6 +14,16 @@
   } from "@platform/ui-shell";
   import { onMount, type Snippet } from "svelte";
   import { createI18nTranslator, getLocalI18nMessages } from "#lib/i18n/runtime.js";
+  import {
+    getUiLocaleDirection,
+    supportedUiLocales,
+    uiLocaleNameByCode
+  } from "#lib/i18n/config.js";
+  import {
+    buildUiLocaleCookie,
+    normalizeUiLocale,
+    type SupportedUiLocale
+  } from "#lib/i18n/region.js";
   import type { LayoutData } from "./$types";
   import {
     applyDocumentTheme,
@@ -43,6 +53,7 @@
   let themeMode = $state<ThemeMode>("auto");
   let isDesktopSettingsMenuOpen = $state(false);
   let isDesktopThemeMenuOpen = $state(false);
+  let isDesktopLanguageMenuOpen = $state(false);
   let isMobileSettingsMenuOpen = $state(false);
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
   const activeRegion = $derived.by<TrackerSupportedRegion>(() => {
@@ -60,13 +71,16 @@
   const themeModes: ThemeMode[] = ["auto", "light", "dark"];
   const DESKTOP_SETTINGS_MENU_ID = "tools-site-desktop-settings-menu";
   const DESKTOP_THEME_MENU_ID = "tools-site-desktop-theme-menu";
+  const DESKTOP_LANGUAGE_MENU_ID = "tools-site-desktop-language-menu";
   const MOBILE_SETTINGS_MENU_ID = "tools-site-mobile-settings-menu";
   let mobileSettingsMenu: HTMLDivElement | null = null;
   let desktopSettingsMenu: HTMLDivElement | null = null;
   let desktopThemeMenu: HTMLDivElement | null = null;
+  let desktopLanguageMenu: HTMLDivElement | null = null;
   let mobileSettingsButton: HTMLButtonElement | null = null;
   let desktopSettingsButton: HTMLButtonElement | null = null;
   let desktopThemeButton: HTMLButtonElement | null = null;
+  let desktopLanguageButton: HTMLButtonElement | null = null;
   const getThemeModeIcon = (mode: ThemeMode): string =>
     mode === "auto"
       ? "mdi:brightness-auto"
@@ -87,6 +101,11 @@
     if (isDesktopThemeMenuOpen) {
       isDesktopThemeMenuOpen = false;
       if (focusTrigger) desktopThemeButton?.focus();
+      return true;
+    }
+    if (isDesktopLanguageMenuOpen) {
+      isDesktopLanguageMenuOpen = false;
+      if (focusTrigger) desktopLanguageButton?.focus();
       return true;
     }
     return false;
@@ -150,6 +169,15 @@
     themeMode = nextMode;
   };
 
+  // Persists the selected locale in the site cookie, then re-runs every load
+  // function so the SSR layout returns the selected locale and its messages.
+  const applyUiLocale = async (localeValue: SupportedUiLocale): Promise<void> => {
+    const nextLocale = normalizeUiLocale(localeValue);
+    if (nextLocale === data.uiLocale) return;
+    document.cookie = buildUiLocaleCookie(nextLocale);
+    await refreshAll();
+  };
+
   onMount(() => {
     themeName = normalizeThemeName(localStorage.getItem(THEME_NAME_STORAGE_KEY));
     themeMode = normalizeThemeMode(localStorage.getItem(THEME_MODE_STORAGE_KEY));
@@ -173,6 +201,10 @@
         closeIfClickedOutside(desktopThemeMenu, event.target, () => {
           isDesktopThemeMenuOpen = false;
         });
+      if (isDesktopLanguageMenuOpen)
+        closeIfClickedOutside(desktopLanguageMenu, event.target, () => {
+          isDesktopLanguageMenuOpen = false;
+        });
     };
     const handleDocumentKeydown = (event: KeyboardEvent): void => {
       if (event.key === "Escape" && closeOpenMenus(true)) {
@@ -187,6 +219,12 @@
       document.removeEventListener("click", handleDocumentClick);
       document.removeEventListener("keydown", handleDocumentKeydown);
     };
+  });
+
+  $effect(() => {
+    const locale = data.uiLocale;
+    document.documentElement.lang = locale;
+    document.documentElement.dir = getUiLocaleDirection(locale);
   });
 
   $effect(() => {
@@ -258,6 +296,39 @@
       </div>
       <div
         class="dropdown dropdown-end"
+        class:dropdown-open={isDesktopLanguageMenuOpen}
+        bind:this={desktopLanguageMenu}
+      >
+        <button
+          bind:this={desktopLanguageButton}
+          type="button"
+          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
+          aria-label={`${translate("aria.switchUiLanguage")}: ${uiLocaleNameByCode[data.uiLocale]}`}
+          aria-haspopup="dialog"
+          aria-expanded={isDesktopLanguageMenuOpen}
+          aria-controls={DESKTOP_LANGUAGE_MENU_ID}
+          title={`${translate("aria.switchUiLanguage")}: ${uiLocaleNameByCode[data.uiLocale]}`}
+          onclick={() => {
+            isDesktopLanguageMenuOpen = !isDesktopLanguageMenuOpen;
+          }}
+        >
+          <Icon icon="mdi:translate" class="size-4" aria-hidden="true" />
+        </button>
+        {#if isDesktopLanguageMenuOpen}
+          <div
+            id={DESKTOP_LANGUAGE_MENU_ID}
+            role="dialog"
+            aria-label={translate("settings.interfaceLanguage")}
+            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-6rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
+          >
+            {@render languageSelector(() => {
+              isDesktopLanguageMenuOpen = false;
+            })}
+          </div>
+        {/if}
+      </div>
+      <div
+        class="dropdown dropdown-end"
         class:dropdown-open={isDesktopThemeMenuOpen}
         bind:this={desktopThemeMenu}
       >
@@ -321,6 +392,8 @@
             {@render regionSelector()}
             <div class="my-3 h-px bg-base-content/12"></div>
             {@render themeSelector(() => {})}
+            <div class="my-3 h-px bg-base-content/12"></div>
+            {@render languageSelector(() => {})}
           </div>
         {/if}
       </div>
@@ -345,6 +418,33 @@
         </a>
       {/each}
     </div>
+  </div>
+{/snippet}
+
+{#snippet languageSelector(close: () => void)}
+  <div class="flex flex-col gap-1">
+    <span class="px-1 text-xs font-semibold opacity-70"
+      >{translate("settings.interfaceLanguage")}</span
+    >
+    <ul class="menu w-full p-0">
+      {#each supportedUiLocales as locale (locale)}
+        <li>
+          <button
+            type="button"
+            class={data.uiLocale === locale ? "menu-active font-semibold" : ""}
+            aria-current={data.uiLocale === locale ? "true" : undefined}
+            onclick={() => {
+              void applyUiLocale(locale).then(close);
+            }}
+          >
+            <span>{uiLocaleNameByCode[locale]}</span>
+            {#if data.uiLocale === locale}
+              <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
+            {/if}
+          </button>
+        </li>
+      {/each}
+    </ul>
   </div>
 {/snippet}
 

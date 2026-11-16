@@ -9,4 +9,8 @@ describe("tools-site support icon registration", () => {
   it("registers the hand-heart icon synchronously", () => {
     expect(registeredIconNames).toContain("mdi:hand-heart");
   });
+
+  it("registers the language selector icon synchronously", () => {
+    expect(registeredIconNames).toContain("mdi:translate");
+  });
 });

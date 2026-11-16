@@ -99,6 +99,95 @@ export type UiLocaleDirection = "ltr" | "rtl";
 export const getUiLocaleDirection = (localeValue: string): UiLocaleDirection =>
   rtlUiLocales.has(normalizeUiLocale(localeValue)) ? "rtl" : "ltr";
 
+/** Native display name of every shared UI locale, for language selectors. */
+export const uiLocaleNameByCode: Record<SupportedUiLocale, string> = {
+  ar: "العربية",
+  "ca-ES": "Català",
+  cs: "Čeština",
+  de: "Deutsch",
+  en: "English",
+  es: "Español",
+  "es-419": "Español (Latinoamérica)",
+  "es-MX": "Español (México)",
+  fr: "Français",
+  "he-IL": "עברית",
+  id: "Bahasa Indonesia",
+  it: "Italiano",
+  "ja-JP": "日本語",
+  "ko-KR": "한국어",
+  ms: "Bahasa Melayu",
+  nl: "Nederlands",
+  pl: "Polski",
+  "pt-BR": "Português (Brasil)",
+  pt: "Português",
+  ro: "Română",
+  ru: "Русский",
+  "sk-SK": "Slovenčina",
+  th: "ไทย",
+  tr: "Türkçe",
+  uk: "Українська",
+  "vi-VN": "Tiếng Việt",
+  yue: "粵語",
+  "zh-CN": "简体中文",
+  "zh-TW": "繁體中文"
+};
+
+const ROOT_HTML_OPEN_TAG = /<html\b(?:[^>"']|"[^"]*"|'[^']*')*>/i;
+
+const setRootHtmlAttribute = (tag: string, name: "lang" | "dir", value: string): string => {
+  const attributePattern = new RegExp(
+    String.raw`\s+${name}(?=\s|=|/?>)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?`,
+    "i"
+  );
+  const replacement = ` ${name}="${value}"`;
+
+  return attributePattern.test(tag)
+    ? tag.replace(attributePattern, replacement)
+    : tag.replace(/>$/, `${replacement}>`);
+};
+
+export type RootHtmlChunkTransform = (input: { html: string; done: boolean }) => string;
+
+/**
+ * Creates a stateful SvelteKit `transformPageChunk` that sets `lang` and `dir`
+ * on the root `<html>` tag for `localeValue`. Chunks are buffered until the root
+ * tag is complete; every later chunk passes through unchanged. If no root tag
+ * arrives by the final chunk, the buffered HTML is returned untouched.
+ */
+export const createRootHtmlLocaleTransform = (localeValue: string): RootHtmlChunkTransform => {
+  const direction = getUiLocaleDirection(localeValue);
+  let bufferedHtml = "";
+  let rootTagHandled = false;
+
+  return ({ html, done }) => {
+    if (rootTagHandled) return html;
+
+    const combinedHtml = bufferedHtml + html;
+    const rootTagMatch = ROOT_HTML_OPEN_TAG.exec(combinedHtml);
+    if (!rootTagMatch) {
+      if (done) {
+        rootTagHandled = true;
+        bufferedHtml = "";
+        return combinedHtml;
+      }
+
+      bufferedHtml = combinedHtml;
+      return "";
+    }
+
+    rootTagHandled = true;
+    bufferedHtml = "";
+    const rootTag = rootTagMatch[0];
+    const start = rootTagMatch.index;
+    const localizedRootTag = setRootHtmlAttribute(
+      setRootHtmlAttribute(rootTag, "lang", localeValue),
+      "dir",
+      direction
+    );
+    return `${combinedHtml.slice(0, start)}${localizedRootTag}${combinedHtml.slice(start + rootTag.length)}`;
+  };
+};
+
 export const resolveI18nMessageBundle = async (
   loadBundle: () => Promise<I18nMessages>,
   fallbackMessages: I18nMessages,

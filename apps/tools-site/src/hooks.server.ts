@@ -1,4 +1,15 @@
-import type { HandleServerError } from "@sveltejs/kit/hooks";
+import type { Handle, HandleServerError } from "@sveltejs/kit/hooks";
+import { createRootHtmlLocaleTransform } from "@platform/i18n-runtime";
+import { normalizeUiLocale, UI_LOCALE_COOKIE_NAME } from "#lib/i18n/region.js";
+
+// Renders the root `<html lang dir>` from the UI-locale cookie so SSR output
+// matches the selected interface language before hydration.
+export const handle: Handle = ({ event, resolve }) =>
+  resolve(event, {
+    transformPageChunk: createRootHtmlLocaleTransform(
+      normalizeUiLocale(event.cookies.get(UI_LOCALE_COOKIE_NAME))
+    )
+  });
 
 // Walks the `cause` chain like SvelteKit's default handler: Node's fetch keeps
 // the network reason (ECONNREFUSED, ENOTFOUND) in `cause`, not in the message.

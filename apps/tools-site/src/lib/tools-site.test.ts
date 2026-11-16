@@ -9,10 +9,10 @@ vi.mock("$app/env/public", () => ({
   PUBLIC_SEKAI_I18N_BASE_URL: " https://i18n.example.test/// "
 }));
 
-vi.mock("$app/env", () => ({ browser: false }));
+vi.mock("$app/env", () => ({ browser: false, dev: false }));
 
 import { repoLocaleByUiLocale, supportedUiLocales } from "#lib/i18n/config.js";
-import { DEFAULT_UI_LOCALE, normalizeUiLocale } from "#lib/i18n/region.js";
+import { buildUiLocaleCookie, DEFAULT_UI_LOCALE, normalizeUiLocale } from "#lib/i18n/region.js";
 import {
   createI18nTranslator,
   getLocalI18nMessages,
@@ -33,25 +33,34 @@ describe("tools-site region and locale helpers", () => {
 
   it("normalizes browser locale aliases and preserves supported locales", () => {
     expect(DEFAULT_UI_LOCALE).toBe("en");
-    expect(supportedUiLocales).toEqual(["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"]);
+    expect(supportedUiLocales).toHaveLength(29);
     expect(normalizeUiLocale("en-US")).toBe("en");
     expect(normalizeUiLocale("en-GB")).toBe("en");
     expect(normalizeUiLocale("zh")).toBe("zh-CN");
     expect(normalizeUiLocale("ja-JP")).toBe("ja-JP");
     expect(normalizeUiLocale("unsupported", "ko-KR")).toBe("ko-KR");
-    expect(normalizeUiLocale("fr")).toBe("en");
-    expect(normalizeUiLocale("ar")).toBe("en");
+    expect(normalizeUiLocale("fr-FR")).toBe("fr");
+    expect(normalizeUiLocale("ar")).toBe("ar");
+    expect(normalizeUiLocale("pt_br")).toBe("pt-BR");
     expect(normalizeUiLocale(undefined)).toBe("en");
   });
 
   it("maps UI locales to repository locales", () => {
-    expect(repoLocaleByUiLocale).toEqual({
+    expect(Object.keys(repoLocaleByUiLocale)).toEqual(supportedUiLocales);
+    expect(repoLocaleByUiLocale).toMatchObject({
       en: "en",
+      fr: "fr",
       "ja-JP": "ja",
       "ko-KR": "ko",
       "zh-CN": "zh-CN",
       "zh-TW": "zh-TW"
     });
+  });
+
+  it("builds a site-wide SameSite cookie for the selected locale", () => {
+    expect(buildUiLocaleCookie("ar")).toBe(
+      "tools_site_ui_locale=ar; Path=/; Max-Age=31536000; SameSite=Lax"
+    );
   });
 });
 
@@ -78,6 +87,43 @@ describe("tools-site i18n runtime", () => {
     await expect(loadI18nMessageBundle("en", ["common"])).resolves.toMatchObject({
       "navigation.home": "Home"
     });
+  });
+
+  it("requests the tools-site dictionary path and layers it over the English fallback", async () => {
+    const fetcher = vi.fn(async (input: string) => {
+      if (input.includes("/ja/tools-site/common.json")) {
+        return Response.json({ "navigation.home": "ホーム" });
+      }
+      return new Response("Not found", { status: 404 });
+    });
+
+    const messages = await loadI18nMessageBundle("ja-JP", ["common"], fetcher);
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://i18n.example.test/ja/tools-site/common.json",
+      expect.anything()
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://i18n.example.test/en/tools-site/common.json",
+      expect.anything()
+    );
+    expect(fetcher.mock.calls.some(([url]) => url.endsWith("/ja/common.json"))).toBe(false);
+    expect(messages["navigation.home"]).toBe("ホーム");
+    expect(messages["navigation.eventTracker"]).toBe(
+      getLocalI18nMessages(["common"])["navigation.eventTracker"]
+    );
+  });
+
+  it("falls back to local English when the remote dictionaries are unavailable", async () => {
+    const fetcher = vi.fn(async () => new Response("Not found", { status: 404 }));
+
+    await expect(loadI18nMessageBundle("fr", ["tracker"], fetcher)).resolves.toEqual(
+      getLocalI18nMessages(["tracker"])
+    );
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://i18n.example.test/fr/tools-site/tracker.json",
+      expect.anything()
+    );
   });
 });
 

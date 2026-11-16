@@ -1,6 +1,6 @@
-import type { HandleServerError } from "@sveltejs/kit/hooks";
+import type { Handle, HandleServerError } from "@sveltejs/kit/hooks";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { handleError } from "./hooks.server";
+import { handle, handleError } from "./hooks.server";
 
 type HandleErrorInput = Parameters<HandleServerError>[0];
 
@@ -125,5 +125,38 @@ describe("tools-site handleError", () => {
     const second = await callHandleError({ kind: "unknown", error: "boom" });
 
     expect(first?.errorId).not.toBe(second?.errorId);
+  });
+});
+
+type HandleInput = Parameters<Handle>[0];
+
+const renderWithLocaleCookie = async (localeCookie: string | undefined): Promise<string> => {
+  const event = {
+    cookies: { get: vi.fn().mockReturnValue(localeCookie) },
+    request: new Request("https://tools.example/"),
+    url: new URL("https://tools.example/")
+  } as unknown as HandleInput["event"];
+  const resolve: HandleInput["resolve"] = async (_event, options) =>
+    new Response(
+      await options?.transformPageChunk?.({
+        html: '<!doctype html><html lang="en" dir="ltr"><body></body></html>',
+        done: true
+      })
+    );
+
+  const response = await handle({ event, resolve });
+  return response.text();
+};
+
+describe("tools-site SSR document locale", () => {
+  it.each([
+    ["tools_site_ui_locale cookie ar", "ar", '<html lang="ar" dir="rtl">'],
+    ["a normalized cookie", "JA_jp", '<html lang="ja-JP" dir="ltr">'],
+    ["an unsupported cookie", "xx", '<html lang="en" dir="ltr">'],
+    ["no cookie", undefined, '<html lang="en" dir="ltr">']
+  ])("renders the root html tag for %s", async (_caseName, cookie, rootTag) => {
+    await expect(renderWithLocaleCookie(cookie)).resolves.toBe(
+      `<!doctype html>${rootTag}<body></body></html>`
+    );
   });
 });
