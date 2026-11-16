@@ -18,6 +18,7 @@
     getLocalI18nMessages,
     mediaLabI18nNamespaces
   } from "#lib/i18n/runtime.js";
+  import { getContentSiteHomeHref } from "#lib/content-site.js";
   import { registerStoryAssetCache } from "#lib/story/asset-cache-client.js";
   import {
     isActivePickerStoryTypePath,
@@ -53,6 +54,7 @@
   let { data, children }: { data: LayoutData; children: Snippet } = $props();
   const pageLeave = trackPageLeave(beforeNavigate);
   const supportPageUrl = PUBLIC_SUPPORT_PAGE_URL?.trim();
+  const contentSiteHref = getContentSiteHomeHref();
   const regionSelection = provideRegionSelection();
   regionSelection.primary = normalizePrimaryRegion(page.url.searchParams.get("region"));
   // The shell (including the sidebar's story-type labels) translates keys
@@ -172,6 +174,17 @@
       icon: "mdi:cube-outline",
       disabled: true
     },
+    ...(contentSiteHref
+      ? [
+          { type: "section" as const, label: translate("navigation.moreSites") },
+          {
+            label: translate("navigation.contentSite"),
+            href: contentSiteHref,
+            icon: "mdi:database-outline",
+            external: true
+          }
+        ]
+      : []),
     ...(supportPageUrl
       ? [
           {
@@ -297,6 +310,7 @@
   closeSidebarLabel={translate("navigation.closeSidebar")}
   sidebarLabel={translate("navigation.sidebar")}
   navigationLoadingLabel={translate("navigation.loadingPage")}
+  externalLinkLabel={translate("notification.opensInNewWindow")}
   navigating={navigating.to !== null || pageLeave.leaving}
   {sidebarItems}
   desktopRailOpen={true}

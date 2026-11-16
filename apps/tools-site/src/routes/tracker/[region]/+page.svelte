@@ -3,6 +3,7 @@
   import { resolve } from "$app/paths";
   import type { SharedEventRewardRangeResponse } from "@platform/sekai-master-api-sdk";
   import { CardThumbnail, HonorDegree, resolveCardRarityCount } from "@platform/ui-shell";
+  import { getContentSiteEventHref } from "#lib/content-site.js";
   import { getHonorAssetURL, getLeaderCardAssetURL } from "#lib/event-assets.js";
   import { selectRewardHonor } from "#lib/reward-honor.js";
   import {
@@ -245,6 +246,11 @@
     const event = isExplicitSelection ? catalog?.selectedEvent : catalog?.currentEvent;
     return event?.id === eventKey ? event : null;
   });
+
+  // Only a catalog-confirmed event gets a link; a raw `?eventId=` may not exist.
+  const contentSiteEventHref = $derived(
+    getContentSiteEventHref(data.region, selectedEvent?.id ?? null)
+  );
 
   const pickerValue = $derived(
     eventKey === null ? "" : formatEventLabel(eventKey, selectedEvent?.name)
@@ -1824,11 +1830,26 @@
             </p>{/if}
           <h2 id="tracker-results-title">{translate("tracker.rankings")}</h2>
         </div>
-        {#if isHistoricalEvent}<a class="btn btn-sm btn-outline touch-target" href={trackerPath}
-            ><Icon icon="mdi:arrow-left" aria-hidden="true" />{translate(
-              "tracker.goToCurrentEvent"
-            )}</a
-          >{/if}
+        {#if isHistoricalEvent || contentSiteEventHref}
+          <div class="flex flex-wrap items-center gap-2">
+            {#if isHistoricalEvent}<a class="btn btn-sm btn-outline touch-target" href={trackerPath}
+                ><Icon icon="mdi:arrow-left" aria-hidden="true" />{translate(
+                  "tracker.goToCurrentEvent"
+                )}</a
+              >{/if}
+            {#if contentSiteEventHref}<a
+                class="btn btn-sm btn-outline touch-target"
+                href={contentSiteEventHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${translate("tracker.viewEvent")} (${translate("notification.opensInNewWindow")})`}
+                >{translate("tracker.viewEvent")}<Icon
+                  icon="mdi:open-in-new"
+                  aria-hidden="true"
+                /></a
+              >{/if}
+          </div>
+        {/if}
       </div>
       {#if isWorldBloom}<div class="tracker-ranking-tabs-shell">
           <div class="tracker-ranking-tabs-scroll">

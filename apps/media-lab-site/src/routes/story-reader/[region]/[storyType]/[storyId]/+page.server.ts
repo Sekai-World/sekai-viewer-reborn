@@ -65,6 +65,7 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
         scenarioId: resolution.scenarioId,
         bannerUrl: resolution.bannerPath ? pageUrls.region(resolution.bannerPath) : undefined
       },
+      storySource: resolution.source,
       assetBase: getStoryAssetBase(),
       cast: document_.cast,
       rows
@@ -72,7 +73,8 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
   } catch {
     return {
       identity,
-      readerStatus: "scenario-error" as const
+      readerStatus: "scenario-error" as const,
+      storySource: resolution.source
     };
   }
 };

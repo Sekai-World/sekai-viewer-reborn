@@ -51,6 +51,8 @@ import fullscreen from "@iconify-icons/mdi/fullscreen";
 import fullscreenExit from "@iconify-icons/mdi/fullscreen-exit";
 import phoneRotateLandscape from "@iconify-icons/mdi/phone-rotate-landscape";
 import handHeart from "@iconify-icons/mdi/hand-heart";
+import databaseOutline from "@iconify-icons/mdi/database-outline";
+import openInNew from "@iconify-icons/mdi/open-in-new";
 
 addIcon("mdi:menu", menu);
 addIcon("mdi:close", close);
@@ -104,3 +106,5 @@ addIcon("mdi:fullscreen", fullscreen);
 addIcon("mdi:fullscreen-exit", fullscreenExit);
 addIcon("mdi:phone-rotate-landscape", phoneRotateLandscape);
 addIcon("mdi:hand-heart", handHeart);
+addIcon("mdi:database-outline", databaseOutline);
+addIcon("mdi:open-in-new", openInNew);

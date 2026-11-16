@@ -113,9 +113,13 @@ apps:
       pullPolicy: IfNotPresent
     # tools-site reads both API URLs for the server-side event tracker and
     # dynamic notifications. Set these empty values before deploying.
+    # PUBLIC_CONTENT_SITE_BASE_URL is optional: set it to the deployed
+    # content-site origin to show the "Sekai Viewer" sidebar link and the
+    # tracker's event link; an empty value hides them.
     env:
       SEKAI_API_BASE_URL: ""
       SEKAI_MASTER_API_BASE_URL: ""
+      PUBLIC_CONTENT_SITE_BASE_URL: ""
       PUBLIC_SUPPORT_PAGE_URL: ""
     envFrom: []
     extraEnv: []
@@ -139,10 +143,14 @@ apps:
     # media-lab-site reads SEKAI_API_BASE_URL for server-side dynamic
     # notifications. It also reads SEKAI_MASTER_API_BASE_URL for the story
     # feature (required at request time) and Live2D character names. Set these
-    # empty values before deploying.
+    # empty values before deploying. PUBLIC_CONTENT_SITE_BASE_URL is optional:
+    # set it to the deployed content-site origin to show the "Sekai Viewer"
+    # sidebar link and the Story Reader's event, card, and character links; an
+    # empty value hides them.
     env:
       SEKAI_API_BASE_URL: ""
       SEKAI_MASTER_API_BASE_URL: ""
+      PUBLIC_CONTENT_SITE_BASE_URL: ""
       PUBLIC_SUPPORT_PAGE_URL: ""
     envFrom: []
     extraEnv: []

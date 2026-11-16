@@ -294,6 +294,12 @@ export const parseStoryId = (
 // Resolution
 // ---------------------------------------------------------------------------
 
+/** The content-site record a story belongs to. */
+export interface StorySource {
+  kind: "event" | "card" | "character";
+  id: number;
+}
+
 export interface StoryResolution {
   /** Bucket-relative scenario JSON path. */
   scenarioPath: string;
@@ -305,6 +311,8 @@ export interface StoryResolution {
   episodeTitle?: string;
   /** The scenario id of the resolved episode (used for voice bundles). */
   scenarioId: string;
+  /** Set for story types whose owner has a content-site detail page. */
+  source?: StorySource;
 }
 
 /** Bucket-relative banner image for a unit story episode. */
@@ -364,7 +372,8 @@ const resolveEventIdentity = (
       bannerPath: `event_story/${eventStory.assetbundleName}/episode_image/${episode.assetbundleName}.webp`,
       chapterTitle: eventName ?? "",
       episodeTitle: episode.title,
-      scenarioId: episode.scenarioId
+      scenarioId: episode.scenarioId,
+      source: { kind: "event", id: parsed.eventId }
     }
   };
 };
@@ -382,7 +391,8 @@ const resolveCharacterIdentity = (
       isCardStory: false,
       isActionSet: false,
       episodeTitle: undefined,
-      scenarioId: profile.scenarioId
+      scenarioId: profile.scenarioId,
+      source: { kind: "character", id: parsed.characterId }
     }
   };
 };
@@ -411,7 +421,8 @@ const resolveCardIdentity = (
       isActionSet: false,
       bannerPath: `character/member_small/${assetbundleName}/card_normal.webp`,
       episodeTitle: episode.title,
-      scenarioId: episode.scenarioId
+      scenarioId: episode.scenarioId,
+      source: { kind: "card", id: episode.cardId }
     }
   };
 };

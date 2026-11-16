@@ -171,7 +171,12 @@ Tracker and Music Recommender links; an empty value hides them, and Event
 Tracker links are only ever shown for the `jp`, `tw`, `en`, and `kr` regions.
 The optional `PUBLIC_MEDIA_LAB_SITE_BASE_URL` is the deployed media-lab-site
 origin used for Story Reader, Live2D, and Chibi links, including the event,
-card-episode, and character story links; an empty value hides them. The optional
+card-episode, and character story links; an empty value hides them.
+`tools-site` and `media-lab-site` accept the optional
+`PUBLIC_CONTENT_SITE_BASE_URL`, the deployed content-site origin used for their
+links back to the content site (the "Sekai Viewer" sidebar link, the tracker's
+event link, and the Story Reader's event, card, and character links); an empty
+value hides them. The optional
 `PUBLIC_SUPPORT_PAGE_URL` is a public URL used by each app's homepage support
 link; an empty value hides that link. `content-site` also accepts the public
 `PUBLIC_PATREON_URL` and `PUBLIC_KOFI_URL` for the corresponding Patreon and

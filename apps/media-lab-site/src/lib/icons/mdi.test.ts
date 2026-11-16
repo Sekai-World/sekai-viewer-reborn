@@ -10,7 +10,7 @@ const registeredIconNames = addIcon.mock.calls.map(([name]) => name);
 
 describe("media-lab-site mdi icon registration", () => {
   it("registers all shell icons synchronously", () => {
-    expect(registeredIconNames).toHaveLength(52);
+    expect(registeredIconNames).toHaveLength(54);
     expect(registeredIconNames).toEqual([
       "mdi:menu",
       "mdi:close",
@@ -63,7 +63,9 @@ describe("media-lab-site mdi icon registration", () => {
       "mdi:fullscreen",
       "mdi:fullscreen-exit",
       "mdi:phone-rotate-landscape",
-      "mdi:hand-heart"
+      "mdi:hand-heart",
+      "mdi:database-outline",
+      "mdi:open-in-new"
     ]);
   });
 });

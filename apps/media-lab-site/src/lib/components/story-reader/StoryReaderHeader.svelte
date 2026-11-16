@@ -21,6 +21,11 @@
     switchModeLabel?: string;
     /** Longer explanation shown as the link's tooltip. */
     switchModeHint?: string;
+    /** Optional link to the story's event, card, or character on the content site. */
+    sourceHref?: string | null;
+    sourceLabel?: string;
+    /** Appended to the accessible name of the source link, e.g. "Opens in a new window". */
+    externalLinkLabel?: string;
   }
 
   let {
@@ -37,11 +42,15 @@
     bannerUrl,
     switchModeHref,
     switchModeLabel,
-    switchModeHint
+    switchModeHint,
+    sourceHref,
+    sourceLabel,
+    externalLinkLabel
   }: Props = $props();
 
   const uid = $props.id();
   const showSwitchMode = $derived(Boolean(switchModeHref && switchModeLabel));
+  const showSource = $derived(Boolean(sourceHref && sourceLabel));
   // The story's own name leads the page when master data resolved one; the
   // reader mode (kicker, or the mode title) becomes the small label above it.
   const heading = $derived(subtitle ?? title);
@@ -54,15 +63,31 @@
       <Icon icon="mdi:arrow-left" class="size-4" aria-hidden="true" />
       {backLabel}
     </a>
-    {#if showSwitchMode}
-      <a
-        class="link link-hover inline-flex items-center gap-1 text-primary"
-        href={switchModeHref}
-        title={switchModeHint}
-      >
-        <Icon icon="mdi:swap-horizontal" class="size-4" aria-hidden="true" />
-        {switchModeLabel}
-      </a>
+    {#if showSwitchMode || showSource}
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {#if showSource}
+          <a
+            class="link link-hover inline-flex items-center gap-1 text-primary"
+            href={sourceHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={externalLinkLabel ? `${sourceLabel} (${externalLinkLabel})` : undefined}
+          >
+            {sourceLabel}
+            <Icon icon="mdi:open-in-new" class="size-4" aria-hidden="true" />
+          </a>
+        {/if}
+        {#if showSwitchMode}
+          <a
+            class="link link-hover inline-flex items-center gap-1 text-primary"
+            href={switchModeHref}
+            title={switchModeHint}
+          >
+            <Icon icon="mdi:swap-horizontal" class="size-4" aria-hidden="true" />
+            {switchModeLabel}
+          </a>
+        {/if}
+      </div>
     {/if}
   </nav>
 

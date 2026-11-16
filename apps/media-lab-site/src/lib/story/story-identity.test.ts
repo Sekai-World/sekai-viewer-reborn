@@ -213,7 +213,8 @@ describe("resolveStoryIdentity", () => {
       scenarioPath: "event_story/event_34/scenario/event_34_1.asset",
       chapterTitle: "Bout for Blessing",
       episodeTitle: "Event EP1",
-      scenarioId: "event_34_1"
+      scenarioId: "event_34_1",
+      source: { kind: "event", id: 34 }
     });
   });
 
@@ -222,6 +223,7 @@ describe("resolveStoryIdentity", () => {
     expect(result.status).toBe("ok");
     if (result.status !== "ok") return;
     expect(result.resolution.scenarioPath).toBe("scenario/profile/chr1_profile.asset");
+    expect(result.resolution.source).toEqual({ kind: "character", id: 1 });
   });
 
   it("resolves a card episode as a card story", () => {
@@ -230,7 +232,9 @@ describe("resolveStoryIdentity", () => {
     if (result.status !== "ok") return;
     expect(result.resolution).toMatchObject({
       scenarioPath: "character/member/0300101/card_3001.asset",
-      isCardStory: true
+      isCardStory: true,
+      // The card id, not the card episode id from the route.
+      source: { kind: "card", id: 3001 }
     });
   });
 
@@ -269,6 +273,7 @@ describe("resolveStoryIdentity", () => {
       scenarioPath: "scenario/actionset/group18/areatalk03_266.asset",
       isActionSet: true
     });
+    expect(result.resolution.source).toBeUndefined();
   });
 
   it("flags an action set without a scenario as unsupported", () => {
