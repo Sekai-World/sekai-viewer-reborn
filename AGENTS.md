@@ -195,7 +195,7 @@ When changing shared packages:
 - After Changesets versioning, verify that the newest update-log entry's version exactly matches `apps/content-site/package.json` before building release images. Do not publish a version bump without its corresponding notes, including releases caused by shared-package changes.
 - The `/updates` page reads this curated array and its i18n keys; it does not automatically ingest Changesets, `CHANGELOG.md`, or GitHub Releases. Updating those alone does not update the in-app log.
 - Run `pnpm i18n:check` and the relevant `content-site` checks/tests; manually verify the new entry in `/updates` and the version notice with browser state from a previous version.
-- Treat missing release entries, missing copy, or version mismatches as release blockers; do not rely on the runtime fallback to show older notes for a new version. This is a release checklist requirement, not an existing automatic CI guard.
+- Treat missing release entries, missing copy, or version mismatches as release blockers; do not rely on the runtime fallback to show older notes for a new version. The unit test `apps/content-site/src/lib/site-updates.test.ts` enforces this: the package version must have an entry, entries must be newest-first, and every referenced i18n key must exist.
 - In-app onboarding, version notices, and update logs are currently implemented only in `content-site`; Changeset coverage for other consuming apps does not imply feature coverage there.
 - The new-deployment prompt (SvelteKit `updated` plus `_app/version.json`) is separate from the curated notice and takes precedence over it; see `docs/viewer-implementation/content-site-update-notices.md`.
 
