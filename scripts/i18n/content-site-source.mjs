@@ -1,4 +1,4 @@
-import { readFile, readdir, writeFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -140,13 +140,6 @@ export const namespaceForFile = (relativeFilePath) =>
 
 const readJson = async (filePath) => JSON.parse(await readFile(filePath, "utf8"));
 
-const sortRecord = (record) =>
-  Object.fromEntries(Object.entries(record).sort(([left], [right]) => left.localeCompare(right)));
-
-const writeJson = async (filePath, record) => {
-  await writeFile(filePath, `${JSON.stringify(sortRecord(record), null, 2)}\n`);
-};
-
 const listSourceFiles = async () => {
   const files = [];
 
@@ -246,37 +239,14 @@ const check = async (contentSiteNamespaces) => {
   console.log("content-site i18n source keys are complete.");
 };
 
-const sync = async (contentSiteNamespaces, targetRoot, { prune = false } = {}) => {
-  if (!targetRoot) {
-    throw new Error("Missing --target <translation-repo-path>.");
-  }
-
-  const targetEnDir = path.resolve(targetRoot, "en");
-  for (const namespace of contentSiteNamespaces) {
-    const sourcePath = path.join(sourceDir, `${namespace}.json`);
-    const targetPath = path.join(targetEnDir, `${namespace}.json`);
-    const sourceMessages = await readJson(sourcePath);
-    const targetMessages = await readJson(targetPath).catch(() => ({}));
-    await writeJson(targetPath, prune ? sourceMessages : { ...targetMessages, ...sourceMessages });
-    console.log(`Synced ${namespace}.json${prune ? " with pruning" : ""}`);
-  }
-};
-
 const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
 
 if (isMainModule) {
   const command = process.argv[2] ?? "check";
-  const targetIndex = process.argv.indexOf("--target");
-  const targetRoot = targetIndex >= 0 ? process.argv[targetIndex + 1] : undefined;
-  const prune = process.argv.includes("--prune");
-  const contentSiteNamespaces = await listContentSiteNamespaces();
 
-  if (command === "check") {
-    await check(contentSiteNamespaces);
-  } else if (command === "sync") {
-    await check(contentSiteNamespaces);
-    await sync(contentSiteNamespaces, targetRoot, { prune });
-  } else {
+  // Syncing to the translation repository lives in scripts/i18n/sync.mjs, which covers every site.
+  if (command !== "check") {
     throw new Error(`Unknown command: ${command}`);
   }
+  await check(await listContentSiteNamespaces());
 }
