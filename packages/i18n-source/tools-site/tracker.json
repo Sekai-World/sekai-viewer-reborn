@@ -133,6 +133,7 @@
   "tracker.title": "Event Tracker",
   "tracker.unavailable": "Not available",
   "tracker.userId": "User ID",
+  "tracker.viewEvent": "View event",
   "tracker.viewPastRankings": "Past rankings",
   "tracker.viewTrend": "View trend",
   "tracker.openRankDetailsAndTrend": "Open rank {rank} details and trend",

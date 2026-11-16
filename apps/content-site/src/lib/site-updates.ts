@@ -57,6 +57,7 @@ const RELEASE_0_2_0: SiteUpdate = {
   changeKeys: [
     "updates.release.0.2.0.change.sites",
     "updates.release.0.2.0.change.stories",
+    "updates.release.0.2.0.change.backLinks",
     "updates.release.0.2.0.change.loading",
     "updates.release.0.2.0.change.audio",
     "updates.release.0.2.0.change.links"

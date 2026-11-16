@@ -66,8 +66,10 @@ instead of draining every pod.
 Every app (`content-site`, `tools-site`, `media-lab-site`, `account-site`)
 declares an empty `SEKAI_API_BASE_URL` default for server-side dynamic
 notifications and an empty `PUBLIC_SUPPORT_PAGE_URL`. `tools-site` and
-`media-lab-site` also declare an empty `SEKAI_MASTER_API_BASE_URL`; those are
-the only defaults of the three non-content apps. `envFrom` and `extraEnv` can
+`media-lab-site` also declare an empty `SEKAI_MASTER_API_BASE_URL` and an empty
+optional `PUBLIC_CONTENT_SITE_BASE_URL` (the content-site origin for their links
+back to the content site; empty hides them); those are the only defaults of the
+three non-content apps. `envFrom` and `extraEnv` can
 be set per app for simple Secret/ConfigMap references and additional
 environment entries. Environment map values are rendered as quoted strings,
 including empty strings.
@@ -103,6 +105,7 @@ Ko-fi URL.
 | `PUBLIC_SEKAI_I18N_BASE_URL`     | content, tools                       | public  | `https://sekai-world.github.io/sekai-i18n-reborn`                                                        |
 | `PUBLIC_TOOLS_SITE_BASE_URL`     | content                              | public  | Event Tracker and Music Recommender links are hidden                                                     |
 | `PUBLIC_MEDIA_LAB_SITE_BASE_URL` | content                              | public  | Story Reader, Live2D, and Chibi links are hidden                                                         |
+| `PUBLIC_CONTENT_SITE_BASE_URL`   | tools, media-lab                     | public  | Links back to the content site are hidden                                                                |
 | `PUBLIC_SUPPORT_PAGE_URL`        | all                                  | public  | content links to its own `/support`; the other apps hide the support link                                |
 | `PUBLIC_PATREON_URL`             | content                              | public  | Button hidden                                                                                            |
 | `PUBLIC_KOFI_URL`                | content                              | public  | Button hidden                                                                                            |

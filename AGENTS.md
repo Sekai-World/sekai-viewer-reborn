@@ -209,6 +209,7 @@ When changing shared packages:
 - Client/server i18n loading uses `PUBLIC_SEKAI_I18N_BASE_URL`; the default is `https://sekai-world.github.io/sekai-i18n-reborn`.
 - Cross-site Event Tracker and Music Recommender links use the optional `PUBLIC_TOOLS_SITE_BASE_URL`; when unset, those entry points stay hidden. Tracker links are only rendered for jp/tw/en/kr (tools-site tracker has no cn support).
 - Cross-site Story Reader, Live2D, and Chibi links (sidebar "More sites" plus event, card-episode, and character story deep links) use the optional `PUBLIC_MEDIA_LAB_SITE_BASE_URL`; when unset, they stay hidden. Helpers live in `apps/content-site/src/lib/tools-site.ts` and `apps/content-site/src/lib/media-lab-site.ts`.
+- Links back to the content site from `tools-site` (sidebar, tracker event link) and `media-lab-site` (sidebar, Story Reader event/card/character links) use the optional `PUBLIC_CONTENT_SITE_BASE_URL`; when unset, they stay hidden. Helpers live in each app's `src/lib/content-site.ts`.
 
 ## Shared Package: `sekai-master-api-sdk`
 

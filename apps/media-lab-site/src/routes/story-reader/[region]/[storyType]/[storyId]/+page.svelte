@@ -2,6 +2,7 @@
   import Icon from "@iconify/svelte";
   import StoryReaderHeader from "#lib/components/story-reader/StoryReaderHeader.svelte";
   import StoryTextRows from "#lib/components/story-reader/StoryTextRows.svelte";
+  import { getContentSiteSourceHref } from "#lib/content-site.js";
   import { createI18nTranslator } from "#lib/i18n/runtime.js";
   import type { StoryRouteStoryType } from "#lib/live2d/story-route.js";
   import { readerBackPath } from "#lib/story/story-picker.js";
@@ -11,6 +12,12 @@
   let { data }: PageProps = $props();
 
   const translate = $derived(createI18nTranslator(data.uiLocale, data.i18nMessages));
+  const sourceHref = $derived(getContentSiteSourceHref(data.identity.region, data.storySource));
+  const sourceLabels = $derived({
+    event: translate("storyReader.source.event"),
+    card: translate("storyReader.source.card"),
+    character: translate("storyReader.source.character")
+  });
 
   const storyTypeLabels = $derived({
     unit: translate("storyReader.storyType.unit"),
@@ -74,6 +81,9 @@
     switchModeHref={`/live2d/story-reader/${data.identity.region}/${data.identity.storyType}/${data.identity.storyId}`}
     switchModeLabel={translate("storyReader.textOnly.switchToPlayer")}
     switchModeHint={translate("storyReader.textOnly.switchToPlayerHint")}
+    {sourceHref}
+    sourceLabel={data.storySource ? sourceLabels[data.storySource.kind] : undefined}
+    externalLinkLabel={translate("notification.opensInNewWindow")}
   />
 
   {#if readerReady}

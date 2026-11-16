@@ -122,7 +122,7 @@
        four from 74rem. -->
   {#if visibleSteps.length > 0}
     <ul
-      class="grid auto-cols-fr grid-flow-col grid-rows-[repeat(var(--rows-1),auto)] gap-x-8 @min-[36rem]:grid-rows-[repeat(var(--rows-2),auto)] @min-[55rem]:grid-rows-[repeat(var(--rows-3),auto)] @min-[74rem]:grid-rows-[repeat(var(--rows-4),auto)]"
+      class="grid auto-cols-fr grid-flow-col grid-rows-[repeat(var(--rows-1),auto)] gap-x-8 @xl:grid-rows-[repeat(var(--rows-2),auto)] @min-[55rem]:grid-rows-[repeat(var(--rows-3),auto)] @min-[74rem]:grid-rows-[repeat(var(--rows-4),auto)]"
       style:--rows-1={rowsFor(1)}
       style:--rows-2={rowsFor(2)}
       style:--rows-3={rowsFor(3)}

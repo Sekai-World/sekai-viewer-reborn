@@ -65,6 +65,7 @@ export const load: PageServerLoad = async ({ params, fetch, url }) => {
         scenarioId: resolution.scenarioId,
         bannerUrl: resolution.bannerPath ? pageUrls.region(resolution.bannerPath) : undefined
       },
+      storySource: resolution.source,
       assetBase: getStoryAssetBase(),
       cast: document_.cast,
       rows
