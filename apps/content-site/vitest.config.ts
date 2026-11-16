@@ -67,7 +67,11 @@ export default defineConfig({
     },
     environment: "jsdom",
     exclude: ["**/node_modules/**", "**/.svelte-kit/**", "**/dist/**", "**/build/**"],
-    include: ["src/**/*.test.ts", "../../scripts/i18n/content-site-source.test.ts"],
+    include: [
+      "src/**/*.test.ts",
+      "../../scripts/i18n/content-site-source.test.ts",
+      "../../scripts/i18n/sync.test.ts"
+    ],
     setupFiles: ["../../test/setup.js"],
     coverage: {
       include: [

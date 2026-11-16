@@ -183,7 +183,7 @@ When changing shared packages:
 - `apps/content-site/src/lib/i18n.ts` configures `@platform/i18n-runtime` to load scoped namespace files from `PUBLIC_SEKAI_I18N_BASE_URL`.
 - New `content-site` source strings must be added to the matching `packages/i18n-source/content-site/*.json` namespace; use `common.json` only for labels shared across multiple scopes and `server.json` for server-only messages.
 - `pnpm i18n:check` verifies referenced keys are present in the source files.
-- `.github/workflows/i18n-sync.yml` syncs the English source files to `Sekai-World/sekai-i18n-reborn` and opens a PR for Weblate ingestion.
+- `.github/workflows/i18n-sync.yml` syncs the English source files of every site to `Sekai-World/sekai-i18n-reborn` and opens a PR for Weblate ingestion. `content-site` syncs to `en/`; `tools-site` and `media-lab-site` sync to `en/<site>/`.
 - Reuse `createI18nTranslator`, `setI18nLocale`, `tCommon`, and `getServerI18nText` instead of adding local dictionary files.
 - Avoid introducing new hardcoded user-facing strings directly in `apps/content-site` when they should be localized.
 - Locale and region metadata live in `apps/content-site/src/lib/i18n-config.ts` and `apps/content-site/src/lib/regions.ts`.

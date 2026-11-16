@@ -2,10 +2,21 @@
 
 ## Overview
 
-`content-site` i18n strings live in `sekai-i18n-reborn`, loaded at runtime from CDN.
-Source strings are authored in `packages/i18n-source/content-site/*.json` inside
+Viewer i18n strings live in `sekai-i18n-reborn`, loaded at runtime from CDN.
+Source strings are authored in `packages/i18n-source/<site>/*.json` inside
 `sekai-viewer-reborn`, then synced to `sekai-i18n-reborn` via
 `.github/workflows/i18n-sync.yml`.
+
+| Site             | English source                        | Dictionary path in `sekai-i18n-reborn`     |
+| ---------------- | ------------------------------------- | ------------------------------------------ |
+| `content-site`   | `packages/i18n-source/content-site`   | `<locale>/<namespace>.json`                |
+| `tools-site`     | `packages/i18n-source/tools-site`     | `<locale>/tools-site/<namespace>.json`     |
+| `media-lab-site` | `packages/i18n-source/media-lab-site` | `<locale>/media-lab-site/<namespace>.json` |
+
+The sites reuse namespace names such as `common`, so every site other than
+`content-site` syncs into its own subdirectory. `content-site` stays at the
+locale root because deployed viewers already load it from there. The mapping is
+`siteSyncTargets` in `scripts/i18n/sync.mjs`; a new site needs an entry there.
 
 The `content-site` UI locale registry includes `ar`, `ca-ES`, `cs`, `de`, `en`,
 `es`, `es-419`, `es-MX`, `fr`, `he-IL`, `id`, `it`, `ja-JP`, `ko-KR`, `ms`,
@@ -24,7 +35,7 @@ direction on `content-site`.
 
 ## Translation PR Flow
 
-1. English source strings added/changed in `packages/i18n-source/content-site/*.json`.
+1. English source strings added/changed in `packages/i18n-source/<site>/*.json`.
 2. `i18n-sync.yml` bot pushes a sync PR to `Sekai-World/sekai-i18n-reborn` (branch `sync/content-site-i18n-source`).
 3. Translation PRs add translations for those English keys in the supported locale directories.
 4. Merge order does not matter — each locale PR is independent.
@@ -66,8 +77,10 @@ must match.
 
 ## Namespace Files
 
-`pnpm i18n:check` and `pnpm i18n:sync` cover every `*.json` file in
-`packages/i18n-source/content-site/`. When adding a namespace, also map its
+`pnpm i18n:sync` copies every `*.json` file of every site, and `pnpm i18n:check`
+covers every `*.json` file in `packages/i18n-source/content-site/`. The
+`tools-site` and `media-lab-site` checks use the namespace lists in their own
+`scripts/i18n/<site>-source.mjs`. When adding a namespace, also map its
 routes and components in `namespaceByRoutePattern` in
 `scripts/i18n/content-site-source.mjs`; unmapped files are checked against
 `common.json`.

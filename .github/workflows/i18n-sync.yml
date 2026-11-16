@@ -73,8 +73,8 @@ jobs:
           path: i18n
           branch: sync/content-site-i18n-source
           delete-branch: true
-          commit-message: "chore(content-site): sync i18n source strings"
-          title: "chore(content-site): sync i18n source strings"
+          commit-message: "chore: sync i18n source strings"
+          title: "chore: sync i18n source strings"
           body: |
             Automated sync from `Sekai-World/sekai-viewer-reborn`.
 
