@@ -189,8 +189,8 @@ and `media-lab-site` also declare an empty `SEKAI_MASTER_API_BASE_URL` for
 master-data reads: `tools-site` uses it for the server-side event tracker, and
 `media-lab-site` requires it for the story feature and uses it for Live2D
 character names; `account-site` has no additional API URL defaults.
-`media-lab-site` also declares `PUBLIC_SEKAI_I18N_BASE_URL` with the same
-default as `content-site`.
+`tools-site` and `media-lab-site` also declare `PUBLIC_SEKAI_I18N_BASE_URL` with
+the same default as `content-site`.
 `envFrom` and `extraEnv` are available per application for straightforward
 Secret/ConfigMap references and additional environment entries.
 

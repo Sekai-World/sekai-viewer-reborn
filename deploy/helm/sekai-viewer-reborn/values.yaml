@@ -115,12 +115,14 @@ apps:
     # dynamic notifications. Set these empty values before deploying.
     # PUBLIC_CONTENT_SITE_BASE_URL is optional: set it to the deployed
     # content-site origin to show the "Sekai Viewer" sidebar link and the
-    # tracker's event link; an empty value hides them.
+    # tracker's event link; an empty value hides them. The i18n URL is usable
+    # as-is for the default dictionary source.
     env:
       SEKAI_API_BASE_URL: ""
       SEKAI_MASTER_API_BASE_URL: ""
       PUBLIC_CONTENT_SITE_BASE_URL: ""
       PUBLIC_SUPPORT_PAGE_URL: ""
+      PUBLIC_SEKAI_I18N_BASE_URL: https://sekai-world.github.io/sekai-i18n-reborn
     envFrom: []
     extraEnv: []
     ingress:

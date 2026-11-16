@@ -296,39 +296,6 @@
       </div>
       <div
         class="dropdown dropdown-end"
-        class:dropdown-open={isDesktopLanguageMenuOpen}
-        bind:this={desktopLanguageMenu}
-      >
-        <button
-          bind:this={desktopLanguageButton}
-          type="button"
-          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
-          aria-label={`${translate("aria.switchUiLanguage")}: ${uiLocaleNameByCode[data.uiLocale]}`}
-          aria-haspopup="dialog"
-          aria-expanded={isDesktopLanguageMenuOpen}
-          aria-controls={DESKTOP_LANGUAGE_MENU_ID}
-          title={`${translate("aria.switchUiLanguage")}: ${uiLocaleNameByCode[data.uiLocale]}`}
-          onclick={() => {
-            isDesktopLanguageMenuOpen = !isDesktopLanguageMenuOpen;
-          }}
-        >
-          <Icon icon="mdi:translate" class="size-4" aria-hidden="true" />
-        </button>
-        {#if isDesktopLanguageMenuOpen}
-          <div
-            id={DESKTOP_LANGUAGE_MENU_ID}
-            role="dialog"
-            aria-label={translate("settings.interfaceLanguage")}
-            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-6rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
-          >
-            {@render languageSelector(() => {
-              isDesktopLanguageMenuOpen = false;
-            })}
-          </div>
-        {/if}
-      </div>
-      <div
-        class="dropdown dropdown-end"
         class:dropdown-open={isDesktopThemeMenuOpen}
         bind:this={desktopThemeMenu}
       >
@@ -356,6 +323,40 @@
           >
             {@render themeSelector(() => {
               isDesktopThemeMenuOpen = false;
+            })}
+          </div>
+        {/if}
+      </div>
+      <div
+        class="dropdown dropdown-end"
+        class:dropdown-open={isDesktopLanguageMenuOpen}
+        bind:this={desktopLanguageMenu}
+      >
+        <button
+          bind:this={desktopLanguageButton}
+          type="button"
+          class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
+          aria-label={`${translate("aria.switchUiLanguage")}: ${uiLocaleNameByCode[data.uiLocale]}`}
+          aria-haspopup="dialog"
+          aria-expanded={isDesktopLanguageMenuOpen}
+          aria-controls={DESKTOP_LANGUAGE_MENU_ID}
+          title={`${translate("aria.switchUiLanguage")}: ${uiLocaleNameByCode[data.uiLocale]}`}
+          onclick={() => {
+            isDesktopLanguageMenuOpen = !isDesktopLanguageMenuOpen;
+          }}
+        >
+          <Icon icon="mdi:translate" class="size-4" aria-hidden="true" />
+        </button>
+        {#if isDesktopLanguageMenuOpen}
+          <div
+            id={DESKTOP_LANGUAGE_MENU_ID}
+            role="dialog"
+            aria-label={translate("settings.interfaceLanguage")}
+            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-6rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
+          >
+            {@render languageSelector(() => {
+              isDesktopLanguageMenuOpen = false;
+              desktopLanguageButton?.focus();
             })}
           </div>
         {/if}
@@ -434,10 +435,14 @@
             class={data.uiLocale === locale ? "menu-active font-semibold" : ""}
             aria-current={data.uiLocale === locale ? "true" : undefined}
             onclick={() => {
-              void applyUiLocale(locale).then(close);
+              void applyUiLocale(locale)
+                .catch((error: unknown) => {
+                  console.error("tools-site: failed to switch the interface language", error);
+                })
+                .finally(close);
             }}
           >
-            <span>{uiLocaleNameByCode[locale]}</span>
+            <span lang={locale}>{uiLocaleNameByCode[locale]}</span>
             {#if data.uiLocale === locale}
               <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
             {/if}

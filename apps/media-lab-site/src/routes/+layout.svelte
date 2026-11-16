@@ -409,6 +409,7 @@
           >
             {@render languageSelector(() => {
               isDesktopLanguageMenuOpen = false;
+              desktopLanguageButton?.focus();
             })}
           </div>
         {/if}
@@ -505,10 +506,14 @@
             class={data.uiLocale === locale ? "menu-active font-semibold" : ""}
             aria-current={data.uiLocale === locale ? "true" : undefined}
             onclick={() => {
-              void applyUiLocale(locale).then(close);
+              void applyUiLocale(locale)
+                .catch((error: unknown) => {
+                  console.error("media-lab-site: failed to switch the interface language", error);
+                })
+                .finally(close);
             }}
           >
-            <span>{uiLocaleNameByCode[locale]}</span>
+            <span lang={locale}>{uiLocaleNameByCode[locale]}</span>
             {#if data.uiLocale === locale}
               <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
             {/if}

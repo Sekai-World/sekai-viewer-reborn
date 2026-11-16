@@ -1,10 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  createI18nTranslator,
-  getLocalI18nMessages,
-  loadI18nMessageBundle,
-  mediaLabI18nNamespaces
-} from "./runtime";
+import { createI18nTranslator, getLocalI18nMessages, mediaLabI18nNamespaces } from "./runtime";
+
+// The runtime caches dictionaries per module instance, so remote-loading tests
+// each load a fresh copy.
+const importRuntime = async () => {
+  vi.resetModules();
+  return import("./runtime");
+};
 
 describe("media-lab-site i18n runtime", () => {
   it("exposes route-aware namespaces", () => {
@@ -36,6 +38,7 @@ describe("media-lab-site i18n runtime", () => {
   });
 
   it("falls back to the local bundle when the remote dictionaries are unavailable", async () => {
+    const { loadI18nMessageBundle } = await importRuntime();
     const fetcher = vi.fn(async () => new Response("Not found", { status: 404 }));
 
     await expect(loadI18nMessageBundle("en", ["live2d"], fetcher)).resolves.toEqual(
@@ -48,6 +51,7 @@ describe("media-lab-site i18n runtime", () => {
   });
 
   it("requests the media-lab-site dictionary path and layers it over English", async () => {
+    const { loadI18nMessageBundle } = await importRuntime();
     const fetcher = vi.fn(async (input: string) =>
       input.includes("/ja/media-lab-site/common.json")
         ? Response.json({ "shell.title": "メディアラボ" })

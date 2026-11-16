@@ -13,12 +13,6 @@ vi.mock("$app/env", () => ({ browser: false, dev: false }));
 
 import { repoLocaleByUiLocale, supportedUiLocales } from "#lib/i18n/config.js";
 import { buildUiLocaleCookie, DEFAULT_UI_LOCALE, normalizeUiLocale } from "#lib/i18n/region.js";
-import {
-  createI18nTranslator,
-  getLocalI18nMessages,
-  loadI18nMessageBundle,
-  toolsSiteI18nNamespaces
-} from "#lib/i18n/runtime.js";
 import { normalizeRegion, supportedRegions, trackerSupportedRegions } from "#lib/regions.js";
 import { getMasterApiBaseUrl, getSekaiApiBaseUrl } from "#lib/server/config.js";
 
@@ -64,10 +58,24 @@ describe("tools-site region and locale helpers", () => {
   });
 });
 
+// The runtime caches dictionaries per module instance, so every test loads a fresh copy.
+const importRuntime = async () => {
+  vi.resetModules();
+  return import("#lib/i18n/runtime.js");
+};
+
+const notFoundFetcher = () => vi.fn(async () => new Response("Not found", { status: 404 }));
+
 describe("tools-site i18n runtime", () => {
   beforeEach(() => vi.restoreAllMocks());
 
   it("loads local namespace messages and translates them", async () => {
+    const {
+      createI18nTranslator,
+      getLocalI18nMessages,
+      loadI18nMessageBundle,
+      toolsSiteI18nNamespaces
+    } = await importRuntime();
     expect(toolsSiteI18nNamespaces).toEqual(["common", "server", "tracker", "music-recommender"]);
     const messages = getLocalI18nMessages(["common", "tracker"]);
 
@@ -84,12 +92,15 @@ describe("tools-site i18n runtime", () => {
     });
     const translator = createI18nTranslator("en", messages);
     expect(translator("home.title")).toBe(messages["home.title"]);
-    await expect(loadI18nMessageBundle("en", ["common"])).resolves.toMatchObject({
-      "navigation.home": "Home"
-    });
+    await expect(loadI18nMessageBundle("en", ["common"], notFoundFetcher())).resolves.toMatchObject(
+      {
+        "navigation.home": "Home"
+      }
+    );
   });
 
   it("requests the tools-site dictionary path and layers it over the English fallback", async () => {
+    const { getLocalI18nMessages, loadI18nMessageBundle } = await importRuntime();
     const fetcher = vi.fn(async (input: string) => {
       if (input.includes("/ja/tools-site/common.json")) {
         return Response.json({ "navigation.home": "ホーム" });
@@ -115,7 +126,8 @@ describe("tools-site i18n runtime", () => {
   });
 
   it("falls back to local English when the remote dictionaries are unavailable", async () => {
-    const fetcher = vi.fn(async () => new Response("Not found", { status: 404 }));
+    const { getLocalI18nMessages, loadI18nMessageBundle } = await importRuntime();
+    const fetcher = notFoundFetcher();
 
     await expect(loadI18nMessageBundle("fr", ["tracker"], fetcher)).resolves.toEqual(
       getLocalI18nMessages(["tracker"])

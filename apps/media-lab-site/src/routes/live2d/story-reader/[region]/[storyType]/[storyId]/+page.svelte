@@ -148,7 +148,7 @@
       <nav aria-label={translate("storyReader.player.nav.label")} class="grid gap-3 sm:grid-cols-2">
         {#if data.neighbors.previous}
           <a
-            class="btn h-auto justify-start gap-3 py-3 text-left btn-outline sm:col-start-1"
+            class="btn h-auto justify-start gap-3 py-3 text-start btn-outline sm:col-start-1"
             href={`/live2d/story-reader/${data.identity.region}/${data.identity.storyType}/${data.neighbors.previous.storyId}`}
             rel="prev"
           >
@@ -163,7 +163,7 @@
         {/if}
         {#if data.neighbors.next}
           <a
-            class="btn h-auto justify-end gap-3 py-3 text-right btn-outline sm:col-start-2"
+            class="btn h-auto justify-end gap-3 py-3 text-end btn-outline sm:col-start-2"
             href={`/live2d/story-reader/${data.identity.region}/${data.identity.storyType}/${data.neighbors.next.storyId}`}
             rel="next"
           >
