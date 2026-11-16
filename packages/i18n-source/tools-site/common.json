@@ -1,4 +1,5 @@
 {
+  "aria.switchUiLanguage": "Switch interface language",
   "navigation.closeSidebar": "Close sidebar",
   "navigation.explore": "Explore",
   "navigation.eventTracker": "Event Tracker",
@@ -18,6 +19,7 @@
   "region.jp": "Japanese",
   "region.kr": "Korean",
   "region.tw": "Traditional Chinese",
+  "settings.interfaceLanguage": "Language",
   "shell.badge": "Tools",
   "shell.title": "Sekai Viewer",
   "settings.region": "Game content region",
