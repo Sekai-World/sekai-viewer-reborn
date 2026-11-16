@@ -247,7 +247,10 @@
     return event?.id === eventKey ? event : null;
   });
 
-  const contentSiteEventHref = $derived(getContentSiteEventHref(data.region, eventKey));
+  // Only a catalog-confirmed event gets a link; a raw `?eventId=` may not exist.
+  const contentSiteEventHref = $derived(
+    getContentSiteEventHref(data.region, selectedEvent?.id ?? null)
+  );
 
   const pickerValue = $derived(
     eventKey === null ? "" : formatEventLabel(eventKey, selectedEvent?.name)
