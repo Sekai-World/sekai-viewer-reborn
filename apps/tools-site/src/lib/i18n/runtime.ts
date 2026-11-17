@@ -1,4 +1,4 @@
-import { browser } from "$app/env";
+import { browser, dev } from "$app/env";
 import { PUBLIC_SEKAI_I18N_BASE_URL } from "$app/env/public";
 import {
   createRemoteI18nRuntime,
@@ -51,12 +51,27 @@ const i18nRuntime = createRemoteI18nRuntime({
   toRemoteLocale: (locale) => toRepoLocale(normalizeUiLocale(locale))
 });
 
+/**
+ * tools-site dictionaries live under `<repoLocale>/tools-site/` because every
+ * site owns a `common` namespace. In dev, English resolves from the local
+ * source files so source edits show up without waiting for a dictionary sync.
+ */
+const loadRemoteMessages = (
+  locale: string,
+  namespace: I18nNamespace,
+  fetcher?: I18nFetcher
+): Promise<I18nMessages> => {
+  if (dev && toRepoLocale(normalizeUiLocale(locale)) === "en") {
+    return Promise.resolve(localSourceMessagesByNamespace[namespace]);
+  }
+  return i18nRuntime.loadMessages(locale, `tools-site/${namespace}`, fetcher);
+};
+
 const scopedI18nLoader = createScopedI18nLoader<I18nNamespace>({
   commonNamespace: "common",
   fallbackLocale: "en",
   localSourceMessagesByNamespace,
-  loadRemoteMessages: (locale, namespace, fetcher) =>
-    i18nRuntime.loadMessages(locale, namespace, fetcher),
+  loadRemoteMessages,
   normalizeLocale: normalizeUiLocale,
   toRemoteLocale: (locale) => toRepoLocale(normalizeUiLocale(locale))
 });

@@ -68,8 +68,9 @@ declares an empty `SEKAI_API_BASE_URL` default for server-side dynamic
 notifications and an empty `PUBLIC_SUPPORT_PAGE_URL`. `tools-site` and
 `media-lab-site` also declare an empty `SEKAI_MASTER_API_BASE_URL` and an empty
 optional `PUBLIC_CONTENT_SITE_BASE_URL` (the content-site origin for their links
-back to the content site; empty hides them); those are the only defaults of the
-three non-content apps. `envFrom` and `extraEnv` can
+back to the content site; empty hides them). `tools-site` and `media-lab-site`
+also declare `PUBLIC_SEKAI_I18N_BASE_URL` with the same default as
+`content-site`; those are the only defaults of the three non-content apps. `envFrom` and `extraEnv` can
 be set per app for simple Secret/ConfigMap references and additional
 environment entries. Environment map values are rendered as quoted strings,
 including empty strings.
@@ -102,7 +103,7 @@ Ko-fi URL.
 | `SEKAI_API_BASE_URL`             | all                                  | private | Global notices are hidden; tools-site tracker pages return 500 and log the variable name                 |
 | `SEKAI_REMOTE_ASSET_BASE_URL`    | content                              | private | Server-side asset downloads use `PUBLIC_REMOTE_ASSET_BASE_URL`                                           |
 | `PUBLIC_REMOTE_ASSET_BASE_URL`   | content (required), tools, media-lab | public  | content: startup fails; tools: event banners are hidden; media-lab: `https://storage.sekai.best`         |
-| `PUBLIC_SEKAI_I18N_BASE_URL`     | content, tools                       | public  | `https://sekai-world.github.io/sekai-i18n-reborn`                                                        |
+| `PUBLIC_SEKAI_I18N_BASE_URL`     | content, tools, media-lab            | public  | `https://sekai-world.github.io/sekai-i18n-reborn`                                                        |
 | `PUBLIC_TOOLS_SITE_BASE_URL`     | content                              | public  | Event Tracker and Music Recommender links are hidden                                                     |
 | `PUBLIC_MEDIA_LAB_SITE_BASE_URL` | content                              | public  | Story Reader, Live2D, and Chibi links are hidden                                                         |
 | `PUBLIC_CONTENT_SITE_BASE_URL`   | tools, media-lab                     | public  | Links back to the content site are hidden                                                                |

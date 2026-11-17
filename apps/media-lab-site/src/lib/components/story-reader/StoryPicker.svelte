@@ -895,7 +895,7 @@
       {matchCount === 0 && known ? labels.noMatch : labels.empty}
     </p>
   {:else}
-    <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[60vh]">
+    <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pe-1 lg:max-h-[60vh]">
       {#each list as group (group.key)}
         <details
           class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-200/40"
@@ -904,7 +904,7 @@
             {group.label}
             <span class="text-base-content/50">({group.items.length})</span>
           </summary>
-          <div class="collapse-content flex flex-col gap-1 pl-0">
+          <div class="collapse-content flex flex-col gap-1 ps-0">
             {#each group.items as item (item.storyId)}
               <a
                 class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-base-200"
@@ -945,7 +945,7 @@
       <div class="flex flex-col gap-4">
         <button
           type="button"
-          class="btn btn-ghost btn-sm -ml-2 self-start"
+          class="btn btn-ghost btn-sm -ms-2 self-start"
           onclick={() => (selectedEventId = null)}
         >
           <Icon icon="mdi:arrow-left" class="size-4" aria-hidden="true" />
@@ -1037,7 +1037,7 @@
             <Icon icon="mdi:clock-start" class="size-4.5" aria-hidden="true" />
             {#if eventSortBy === "startAt"}
               <span
-                class="absolute right-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
+                class="absolute inset-e-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
                 aria-hidden="true"
               >
                 <Icon
@@ -1058,7 +1058,7 @@
             <Icon icon="mdi:numeric" class="size-4.5" aria-hidden="true" />
             {#if eventSortBy === "id"}
               <span
-                class="absolute right-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
+                class="absolute inset-e-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
                 aria-hidden="true"
               >
                 <Icon
@@ -1114,7 +1114,7 @@
             {#each events as event (event.eventId)}
               <button
                 type="button"
-                class="group overflow-hidden rounded-lg border border-base-content/10 bg-base-100 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                class="group overflow-hidden rounded-lg border border-base-content/10 bg-base-100 text-start outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                 onclick={() => openEvent(event)}
               >
                 {#if event.bannerUrl}
@@ -1197,7 +1197,7 @@
         >
           {#if eventListLoadingMore}
             <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
-            <span class="ml-2 text-sm text-base-content/60">{labels.loadingMore}</span>
+            <span class="ms-2 text-sm text-base-content/60">{labels.loadingMore}</span>
           {:else}
             <span class="text-sm text-base-content/50">
               <span class="hidden sm:inline">{labels.loadMoreHint}</span>
@@ -1222,7 +1222,7 @@
             <Icon icon="mdi:clock-start" class="size-4.5" aria-hidden="true" />
             {#if cardSortBy === "releaseAt"}
               <span
-                class="absolute right-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
+                class="absolute inset-e-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
                 aria-hidden="true"
               >
                 <Icon
@@ -1243,7 +1243,7 @@
             <Icon icon="mdi:numeric" class="size-4.5" aria-hidden="true" />
             {#if cardSortBy === "id"}
               <span
-                class="absolute right-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
+                class="absolute inset-e-0.5 bottom-0.5 grid size-3 place-items-center rounded-full bg-primary-content/90 text-primary"
                 aria-hidden="true"
               >
                 <Icon
@@ -1270,7 +1270,7 @@
             {#each cards as card (card.cardId)}
               <button
                 type="button"
-                class="group flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3 text-left outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
+                class="group flex flex-col gap-2 rounded-xl border border-base-content/10 bg-base-100 p-3 text-start outline-none transition-[border-color,background-color,transform] duration-180 ease-out motion-reduce:transition-none hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 hover:border-primary/35 hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2"
                 onclick={() => openCardEpisodes(card)}
               >
                 <!-- The picker pages 12 tiles at a time, so eager loading is
@@ -1343,7 +1343,7 @@
         >
           {#if cardListLoadingMore}
             <span class="loading loading-spinner loading-sm" aria-hidden="true"></span>
-            <span class="ml-2 text-sm text-base-content/60">{labels.loadingMore}</span>
+            <span class="ms-2 text-sm text-base-content/60">{labels.loadingMore}</span>
           {:else}
             <span class="text-sm text-base-content/50">
               <span class="hidden sm:inline">{labels.loadMoreHint}</span>
@@ -1528,7 +1528,7 @@
       <div class="flex flex-col gap-4">
         <button
           type="button"
-          class="btn btn-ghost btn-sm -ml-2 self-start"
+          class="btn btn-ghost btn-sm -ms-2 self-start"
           onclick={() => (selectedUnit = null)}
         >
           <Icon icon="mdi:arrow-left" class="size-4" aria-hidden="true" />
@@ -1646,7 +1646,7 @@
           {totalMatches === 0 && groups.length > 0 ? labels.noMatch : labels.empty}
         </p>
       {:else}
-        <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pr-1 lg:max-h-[60vh]">
+        <div class="flex max-h-96 flex-col gap-2 overflow-y-auto pe-1 lg:max-h-[60vh]">
           {#each filteredGroups as group (group.key)}
             {@const singleEpisode = group.items.length === 1 ? group.items[0] : null}
             {#if singleEpisode}
@@ -1670,7 +1670,7 @@
                   {group.label}
                   <span class="text-base-content/50">({group.items.length})</span>
                 </summary>
-                <div class="collapse-content flex flex-col gap-1 pl-0">
+                <div class="collapse-content flex flex-col gap-1 ps-0">
                   {#each group.items as item (item.storyId)}
                     <a
                       class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm hover:bg-base-200"
@@ -1696,7 +1696,7 @@
         <div class="flex flex-col gap-4">
           <button
             type="button"
-            class="btn btn-ghost btn-sm -ml-2 self-start"
+            class="btn btn-ghost btn-sm -ms-2 self-start"
             onclick={() => (selectedAreaId = null)}
           >
             <Icon icon="mdi:arrow-left" class="size-4" aria-hidden="true" />
@@ -1739,7 +1739,7 @@
                 <span class="min-w-0 truncate">
                   {talk.scriptId ?? talk.scenarioId ?? `#${talk.storyId}`}
                 </span>
-                <span class="ml-auto shrink-0 font-mono text-xs text-base-content/50"
+                <span class="ms-auto shrink-0 font-mono text-xs text-base-content/50"
                   >{talk.storyId}</span
                 >
               </a>
@@ -1854,7 +1854,7 @@
             class="size-5 shrink-0 text-primary"
             aria-hidden="true"
           />
-          <span class="whitespace-normal text-left text-sm font-normal">{episode.label}</span>
+          <span class="whitespace-normal text-start text-sm font-normal">{episode.label}</span>
         </button>
       {/each}
     </div>

@@ -14,8 +14,8 @@ describe("media-lab-site ui locale region module", () => {
     expect(UI_LOCALE_COOKIE_MAX_AGE_SECONDS).toBe(31_536_000);
   });
 
-  it("keeps the current locale choices until this app has dictionaries for more languages", () => {
-    expect(supportedUiLocales).toEqual(["en", "ja-JP", "ko-KR", "zh-CN", "zh-TW"]);
+  it("offers every shared UI locale with English as the default", () => {
+    expect(supportedUiLocales).toHaveLength(29);
     expect(DEFAULT_UI_LOCALE).toBe("en");
   });
 
@@ -23,9 +23,10 @@ describe("media-lab-site ui locale region module", () => {
     expect(normalizeUiLocale("ja-JP")).toBe("ja-JP");
     expect(normalizeUiLocale("zh")).toBe("zh-CN");
     expect(normalizeUiLocale("en-US")).toBe("en");
-    expect(normalizeUiLocale("fr-FR")).toBe(DEFAULT_UI_LOCALE);
-    expect(normalizeUiLocale("ar")).toBe(DEFAULT_UI_LOCALE);
+    expect(normalizeUiLocale("fr-FR")).toBe("fr");
+    expect(normalizeUiLocale("ar")).toBe("ar");
     expect(normalizeUiLocale("JA_jp")).toBe("ja-JP");
+    expect(normalizeUiLocale("xx")).toBe(DEFAULT_UI_LOCALE);
     expect(normalizeUiLocale(undefined)).toBe(DEFAULT_UI_LOCALE);
   });
 

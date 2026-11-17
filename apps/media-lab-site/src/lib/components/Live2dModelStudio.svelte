@@ -305,7 +305,7 @@
             </span>
             <input
               id={`${uid}-motion`}
-              class="input input-bordered min-h-11 w-full min-w-0 bg-base-100 pr-11"
+              class="input input-bordered min-h-11 w-full min-w-0 bg-base-100 pe-11"
               type="text"
               autocomplete="off"
               role="combobox"
@@ -329,7 +329,7 @@
           {#if controlsEnabled && selectedMotion !== ""}
             <button
               type="button"
-              class="btn btn-circle absolute right-0 bottom-0 size-8 min-h-8 touch-target border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="btn btn-circle absolute inset-e-0 bottom-0 size-8 min-h-8 touch-target border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               aria-label={`${labels.motion} ${labels.reset}`}
               title={`${labels.motion} ${labels.reset}`}
               onpointerdown={preventOptionFocus}
@@ -354,7 +354,7 @@
                 >
                   <button
                     type="button"
-                    class={`flex min-h-11 w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors ${motionActiveIndex === index ? "bg-primary/10 text-primary" : "text-base-content hover:bg-base-content/5"}`}
+                    class={`flex min-h-11 w-full items-center rounded-lg px-3 py-2 text-start text-sm transition-colors ${motionActiveIndex === index ? "bg-primary/10 text-primary" : "text-base-content hover:bg-base-content/5"}`}
                     onpointerdown={preventOptionFocus}
                     onpointerenter={() => (motionActiveIndex = index)}
                     onclick={() => selectMotion(motion)}
@@ -384,7 +384,7 @@
             </span>
             <input
               id={`${uid}-expression`}
-              class="input input-bordered min-h-11 w-full min-w-0 bg-base-100 pr-11"
+              class="input input-bordered min-h-11 w-full min-w-0 bg-base-100 pe-11"
               type="text"
               autocomplete="off"
               role="combobox"
@@ -408,7 +408,7 @@
           {#if controlsEnabled && selectedExpression !== ""}
             <button
               type="button"
-              class="btn btn-circle absolute right-0 bottom-0 size-8 min-h-8 touch-target border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              class="btn btn-circle absolute inset-e-0 bottom-0 size-8 min-h-8 touch-target border border-current bg-transparent p-0 text-base-content/60 hover:border-current hover:bg-transparent hover:text-base-content focus-visible:border-current focus-visible:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               aria-label={`${labels.expression} ${labels.reset}`}
               title={`${labels.expression} ${labels.reset}`}
               onpointerdown={preventOptionFocus}
@@ -433,7 +433,7 @@
                 >
                   <button
                     type="button"
-                    class={`flex min-h-11 w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors ${expressionActiveIndex === index ? "bg-primary/10 text-primary" : "text-base-content hover:bg-base-content/5"}`}
+                    class={`flex min-h-11 w-full items-center rounded-lg px-3 py-2 text-start text-sm transition-colors ${expressionActiveIndex === index ? "bg-primary/10 text-primary" : "text-base-content hover:bg-base-content/5"}`}
                     onpointerdown={preventOptionFocus}
                     onpointerenter={() => (expressionActiveIndex = index)}
                     onclick={() => selectExpression(expression)}

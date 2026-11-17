@@ -14,7 +14,7 @@ export const load: LayoutServerLoad = async ({ cookies, fetch }) => {
   const uiLocale = normalizeUiLocale(cookies.get(UI_LOCALE_COOKIE_NAME));
   const localMessages = getLocalI18nMessages(mediaLabI18nNamespaces);
   const i18nMessages = await resolveI18nMessageBundle(
-    () => loadI18nMessageBundle(uiLocale, mediaLabI18nNamespaces),
+    () => loadI18nMessageBundle(uiLocale, mediaLabI18nNamespaces, fetch),
     localMessages
   );
 

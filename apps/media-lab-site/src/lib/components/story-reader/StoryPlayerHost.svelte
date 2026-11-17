@@ -673,7 +673,7 @@
         }}
       >
         <div
-          class="flex items-center justify-between gap-2 border-b border-white/15 py-1.5 pr-2 pl-3"
+          class="flex items-center justify-between gap-2 border-b border-white/15 py-1.5 ps-3 pe-2"
         >
           <h2 class="text-sm font-semibold">{labels.textLog}</h2>
           <button
@@ -791,7 +791,7 @@
             <div class="flex w-full flex-col gap-1.5">
               {#each loadPhases as phase (phase.type)}
                 <div class="flex items-center gap-2 text-xs text-base-100/80">
-                  <span class="w-20 shrink-0 truncate text-right">{phase.name}</span>
+                  <span class="w-20 shrink-0 truncate text-end">{phase.name}</span>
                   <progress
                     class="progress progress-primary h-2 grow"
                     value={phase.count}
@@ -807,19 +807,19 @@
           {/if}
           {#if scenarioProgress}
             <div class="flex w-full items-center gap-2 text-xs text-base-100/80">
-              <span class="w-20 shrink-0 truncate text-right">{labels.phaseAssets}</span>
+              <span class="w-20 shrink-0 truncate text-end">{labels.phaseAssets}</span>
               {#if scenarioProgress.totalBytes !== null}
                 <progress
                   class="progress progress-primary h-2 grow"
                   value={Math.min(scenarioProgress.loadedBytes, scenarioProgress.totalBytes)}
                   max={scenarioProgress.totalBytes}
                 ></progress>
-                <span class="w-14 shrink-0 text-right tabular-nums">
+                <span class="w-14 shrink-0 text-end tabular-nums">
                   {Math.round((scenarioProgress.loadedBytes / scenarioProgress.totalBytes) * 100)}%
                 </span>
               {:else}
                 <progress class="progress progress-primary h-2 grow" max="1"></progress>
-                <span class="w-14 shrink-0 text-right tabular-nums">
+                <span class="w-14 shrink-0 text-end tabular-nums">
                   {scenarioProgress.loadedBytes.toLocaleString()}
                 </span>
               {/if}
@@ -924,11 +924,11 @@
   {#if warnings.length > 0}
     <details class="collapse collapse-arrow rounded-xl border border-base-content/10 bg-base-100">
       <summary class="collapse-title text-sm font-semibold">
-        <span class="badge badge-warning badge-sm mr-2">{warnings.length}</span>
+        <span class="badge badge-warning badge-sm me-2">{warnings.length}</span>
         {labels.warnings}
       </summary>
       <div class="collapse-content">
-        <ul class="flex list-disc flex-col gap-1 pl-5 text-xs text-base-content/60">
+        <ul class="flex list-disc flex-col gap-1 ps-5 text-xs text-base-content/60">
           {#each warnings as warning (warning)}
             <li class="break-all">{warning}</li>
           {/each}

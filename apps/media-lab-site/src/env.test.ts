@@ -6,6 +6,7 @@ testAppEnvironment(variables, {
   public: [
     "PUBLIC_CONTENT_SITE_BASE_URL",
     "PUBLIC_REMOTE_ASSET_BASE_URL",
+    "PUBLIC_SEKAI_I18N_BASE_URL",
     "PUBLIC_SUPPORT_PAGE_URL"
   ],
   paths: ["PUBLIC_REMOTE_ASSET_BASE_URL"]

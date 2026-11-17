@@ -28,8 +28,10 @@
   import {
     DEFAULT_UI_LOCALE,
     buildUiLocaleCookie,
+    getUiLocaleDirection,
     normalizeUiLocale,
     supportedUiLocales,
+    uiLocaleNameByCode,
     type SupportedUiLocale
   } from "#lib/i18n/region.js";
   import {
@@ -70,17 +72,6 @@
   let isMobileSettingsMenuOpen = $state(false);
 
   const translate = $derived(createI18nTranslator(data.uiLocale, messages));
-
-  // Literal keys keep `pnpm i18n:check` able to verify externalization; the
-  // option set itself comes from the shared supported-locale list. The Record
-  // type fails svelte-check if the shared locale set ever changes shape.
-  const localeNames = $derived<Record<SupportedUiLocale, string>>({
-    en: translate("language.en"),
-    "ja-JP": translate("language.ja-JP"),
-    "ko-KR": translate("language.ko-KR"),
-    "zh-CN": translate("language.zh-CN"),
-    "zh-TW": translate("language.zh-TW")
-  });
 
   const themeNames: ThemeName[] = ["default", "sakura", "mint"];
   const themeModes: ThemeMode[] = ["auto", "light", "dark"];
@@ -283,6 +274,12 @@
   });
 
   $effect(() => {
+    const locale = data.uiLocale;
+    document.documentElement.lang = locale;
+    document.documentElement.dir = getUiLocaleDirection(locale);
+  });
+
+  $effect(() => {
     void Promise.resolve(data.i18nMessages).then((next) => {
       messages = { ...fallbackMessages, ...next };
     });
@@ -392,11 +389,11 @@
           bind:this={desktopLanguageButton}
           type="button"
           class="btn btn-circle btn-sm touch-target btn-outline border-base-content/20 bg-base-100/65 hover:bg-base-100"
-          aria-label={`${translate("aria.switchUiLanguage")}: ${localeNames[data.uiLocale]}`}
+          aria-label={`${translate("aria.switchUiLanguage")}: ${uiLocaleNameByCode[data.uiLocale]}`}
           aria-haspopup="dialog"
           aria-expanded={isDesktopLanguageMenuOpen}
           aria-controls={DESKTOP_LANGUAGE_MENU_ID}
-          title={`${translate("aria.switchUiLanguage")}: ${localeNames[data.uiLocale]}`}
+          title={`${translate("aria.switchUiLanguage")}: ${uiLocaleNameByCode[data.uiLocale]}`}
           onclick={() => {
             isDesktopLanguageMenuOpen = !isDesktopLanguageMenuOpen;
           }}
@@ -408,10 +405,11 @@
             id={DESKTOP_LANGUAGE_MENU_ID}
             role="dialog"
             aria-label={translate("settings.interfaceLanguage")}
-            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] overflow-hidden rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
+            class="dropdown-content z-120 mt-3 w-max max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-6rem)] overflow-x-hidden overflow-y-auto rounded-box border border-base-content/15 bg-(--archive-surface-overlay) p-2 shadow-md"
           >
             {@render languageSelector(() => {
               isDesktopLanguageMenuOpen = false;
+              desktopLanguageButton?.focus();
             })}
           </div>
         {/if}
@@ -508,10 +506,14 @@
             class={data.uiLocale === locale ? "menu-active font-semibold" : ""}
             aria-current={data.uiLocale === locale ? "true" : undefined}
             onclick={() => {
-              void applyUiLocale(locale).then(close);
+              void applyUiLocale(locale)
+                .catch((error: unknown) => {
+                  console.error("media-lab-site: failed to switch the interface language", error);
+                })
+                .finally(close);
             }}
           >
-            <span>{localeNames[locale]}</span>
+            <span lang={locale}>{uiLocaleNameByCode[locale]}</span>
             {#if data.uiLocale === locale}
               <Icon icon="mdi:check" class="size-4 opacity-80" aria-hidden="true" />
             {/if}

@@ -25,13 +25,15 @@ The `content-site` UI locale registry includes `ar`, `ca-ES`, `cs`, `de`, `en`,
 dictionary directories `ja` and `ko`; the other codes map to matching directory
 names. Locale matching ignores case and accepts `_` in place of `-`; bare `ja`,
 `ko`, and `zh` remain compatibility aliases for `ja-JP`, `ko-KR`, and `zh-CN`.
-The `tools-site` and `media-lab-site` selectors remain limited to their current
-`en`, `ja-JP`, `ko-KR`, `zh-CN`, and `zh-TW` dictionaries.
+`tools-site` and `media-lab-site` share this registry: their selectors list all
+29 locales by native name, and they load dictionaries from
+`<repoLocale>/<site>/<namespace>.json`, falling back to the local English source
+when a dictionary is missing. Each site keeps its own locale cookie.
 
 Expanding the registry does not add or copy legacy translation text. Current
 English source dictionaries remain the local fallback; add translations through
 the workflow below. Arabic and Hebrew set the document language and right-to-left
-direction on `content-site`.
+direction on every site.
 
 ## Translation PR Flow
 
