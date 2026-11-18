@@ -4,12 +4,18 @@ import { defineConfig } from "vitest/config";
 import { createSvelteKitEnvironmentAliases } from "../../test/vitest-env-aliases.mjs";
 
 const libPath = new URL("./src/lib", import.meta.url).pathname;
+const appNavigationPath = new URL("./src/lib/test/app-navigation.ts", import.meta.url).pathname;
+const appPathsPath = new URL("./src/lib/test/app-paths.ts", import.meta.url).pathname;
+const appStatePath = new URL("./src/lib/test/app-state.ts", import.meta.url).pathname;
 
 export default defineConfig({
   plugins: [svelte({ prebundleSvelteLibraries: false }), svelteTesting()],
   resolve: {
     alias: [
       { find: "#lib", replacement: libPath },
+      { find: "$app/navigation", replacement: appNavigationPath },
+      { find: "$app/paths", replacement: appPathsPath },
+      { find: "$app/state", replacement: appStatePath },
       ...createSvelteKitEnvironmentAliases(import.meta.url, { includeAppEnvironment: true })
     ],
     conditions: ["browser", "node", "module-sync"]
