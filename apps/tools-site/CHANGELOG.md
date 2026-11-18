@@ -1,5 +1,34 @@
 # @apps/tools-site
 
+## 0.3.0
+
+### Minor Changes
+
+- 51c7753: The tools site and the media lab site link back to the content site. Both sidebars gain a "More sites" group with a "Sekai Viewer" link, the Story Reader links to the event, card, or character a story belongs to, and the Event Tracker links to the tracked event. Each link appears only when the content site's address is configured. The 0.2.0 update log mentions the new links.
+- 98a935b: tools-site and media-lab-site now offer all 29 interface languages, listed by native name in the language selector, and load translations from their own dictionaries in `sekai-i18n-reborn`, falling back to English when a translation is missing. tools-site gains a language selector in the header and mobile settings menu. Both sites render the selected language and text direction on the page, so Arabic and Hebrew display right to left. `@platform/i18n-runtime` now exports the native locale names and the root `<html lang dir>` page transform that content-site already used. tools-site layout mirrors in right-to-left languages: alignment, borders, the ranking switch and directional arrows follow the reading direction.
+- 3f06485: Clicking a link now gives immediate feedback while the next page loads: a progress bar appears along the top edge after 120ms, the outgoing page dims when the wait is longer, and screen readers are told when loading takes more than a second. Navigations that finish quickly show nothing. The same bar covers cross-site links and full-page reloads until the browser replaces the page.
+- e09af57: Show the live bonus a target plan consumes and let a plan be limited to a maximum live bonus, using the boost table from the master API. Regenerate the master API SDK with the `boosts` list endpoint.
+- ad148ab: Let a target plan take the seconds a live needs besides its song, show the plan's total play time, and add a "shortest play time" objective for the JP server.
+
+### Patch Changes
+
+- 6c843c9: Audio that fails to load on content-site now says so instead of claiming there is no audio. The card page's gacha phrase voice button showed "No event BGM available" on a failed load because the `card` and `event` i18n namespaces load together and both defined `audioUnavailableLabel`; it now uses the new shared `audioLoadFailedLabel` ("Failed to load audio."), and the unused card-namespace key is removed. `AudioPlayer` gains an optional `errorLabel` for the load-failure state, so the event BGM, music preview, and virtual live setlist players show the same failure message while keeping their "no audio" text for a missing source. Other `AudioPlayer` consumers are unchanged until they pass `errorLabel`.
+- 90824f5: The content site sidebar gains a "More sites" group that links to the Story Reader, Live2D, and Chibi on the media lab site and to the Event Tracker and Music Recommender on the tools site. Event, card, and character pages link to their stories in the Story Reader. Each link appears only when its site's address is configured. Shared sidebar links can now be marked as links to another site, which opens them in a new window with an indicator icon.
+- 3268915: Music recommender: World Bloom is no longer listed as an unavailable mode. Its lives are Solo or Auto lives, and the deck bonus field now says to include the support deck bonus during a World Bloom event.
+- 65321e6: Regenerate the master API SDK with the `costume2ds` list endpoint, which the Chibi viewer will read its model list from.
+- Updated dependencies [6c843c9]
+- Updated dependencies [51c7753]
+- Updated dependencies [90824f5]
+- Updated dependencies [98a935b]
+- Updated dependencies [a9be7c9]
+- Updated dependencies [3f06485]
+- Updated dependencies [e09af57]
+- Updated dependencies [65321e6]
+  - @platform/ui-shell@0.6.0
+  - @platform/i18n-source@0.5.0
+  - @platform/i18n-runtime@0.3.0
+  - @platform/sekai-master-api-sdk@1.1.2
+
 ## 0.2.0
 
 ### Minor Changes

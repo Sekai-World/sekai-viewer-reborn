@@ -1,5 +1,17 @@
 # @platform/i18n-source
 
+## 0.5.0
+
+### Minor Changes
+
+- 51c7753: The tools site and the media lab site link back to the content site. Both sidebars gain a "More sites" group with a "Sekai Viewer" link, the Story Reader links to the event, card, or character a story belongs to, and the Event Tracker links to the tracked event. Each link appears only when the content site's address is configured. The 0.2.0 update log mentions the new links.
+- 90824f5: The content site sidebar gains a "More sites" group that links to the Story Reader, Live2D, and Chibi on the media lab site and to the Event Tracker and Music Recommender on the tools site. Event, card, and character pages link to their stories in the Story Reader. Each link appears only when its site's address is configured. Shared sidebar links can now be marked as links to another site, which opens them in a new window with an indicator icon.
+
+### Patch Changes
+
+- 6c843c9: Audio that fails to load on content-site now says so instead of claiming there is no audio. The card page's gacha phrase voice button showed "No event BGM available" on a failed load because the `card` and `event` i18n namespaces load together and both defined `audioUnavailableLabel`; it now uses the new shared `audioLoadFailedLabel` ("Failed to load audio."), and the unused card-namespace key is removed. `AudioPlayer` gains an optional `errorLabel` for the load-failure state, so the event BGM, music preview, and virtual live setlist players show the same failure message while keeping their "no audio" text for a missing source. Other `AudioPlayer` consumers are unchanged until they pass `errorLabel`.
+- a9be7c9: The tools site source dictionary gains the two labels its language selector will use. The media lab source dictionary drops its unused `language.*` keys; language names come from the shared locale registry.
+
 ## 0.4.0
 
 ### Minor Changes
