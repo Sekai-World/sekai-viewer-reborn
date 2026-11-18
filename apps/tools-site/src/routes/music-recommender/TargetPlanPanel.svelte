@@ -710,7 +710,7 @@
   .plan-table td {
     border-bottom: 1px solid var(--archive-border-subtle);
     padding: 0.8rem 0.65rem;
-    text-align: left;
+    text-align: start;
     vertical-align: middle;
   }
   .plan-table thead th {
@@ -721,7 +721,7 @@
     text-transform: uppercase;
   }
   .plan-table .numeric {
-    text-align: right;
+    text-align: end;
     font-variant-numeric: tabular-nums;
   }
   .result-value {
@@ -740,13 +740,13 @@
     font-weight: 700;
   }
   .required-badge {
-    margin-left: 0.5rem;
+    margin-inline-start: 0.5rem;
     color: var(--color-primary);
   }
   .plan-assumptions {
     display: grid;
     gap: 0.3rem;
-    padding-left: 1.1rem;
+    padding-inline-start: 1.1rem;
     color: var(--archive-text-muted);
     font-size: 0.75rem;
     line-height: 1.45;

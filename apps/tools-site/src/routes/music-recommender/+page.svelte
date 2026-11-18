@@ -920,7 +920,7 @@
   .results-table td {
     border-bottom: 1px solid var(--archive-border-subtle);
     padding: 0.9rem 0.65rem;
-    text-align: left;
+    text-align: start;
     vertical-align: middle;
   }
   .results-table thead th {
@@ -931,7 +931,7 @@
     text-transform: uppercase;
   }
   .results-table .numeric {
-    text-align: right;
+    text-align: end;
     font-variant-numeric: tabular-nums;
   }
   .rank-cell {
