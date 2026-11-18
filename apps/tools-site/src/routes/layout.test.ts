@@ -83,7 +83,7 @@ describe("tools-site language selector", () => {
     const menu = await openLanguageMenu(container);
 
     const labels = [...menu.querySelectorAll<HTMLElement>("li button > span[lang]")];
-    expect(labels).toHaveLength(29);
+    expect(labels).toHaveLength(Object.keys(uiLocaleNameByCode).length);
     const locales = labels.map((label) => label.getAttribute("lang"));
     expect(new Set(locales).size).toBe(29);
     expect(locales).toEqual(expect.arrayContaining(["en", "ja-JP", "zh-TW", "ar", "he-IL"]));
@@ -137,7 +137,9 @@ describe("tools-site language selector", () => {
     await tick();
 
     const menu = container.querySelector<HTMLElement>("#tools-site-mobile-settings-menu")!;
-    expect(menu.querySelectorAll("li button > span[lang]")).toHaveLength(29);
+    expect(menu.querySelectorAll("li button > span[lang]")).toHaveLength(
+      Object.keys(uiLocaleNameByCode).length
+    );
   });
 });
 
