@@ -67,7 +67,7 @@ body {
 
 .tools-hero::after {
   position: absolute;
-  right: -5rem;
+  inset-inline-end: -5rem;
   bottom: -8rem;
   width: 19rem;
   height: 19rem;
@@ -272,7 +272,11 @@ body {
 }
 .tracker-link-arrow {
   display: inline-block;
-  margin-left: 0.5rem;
+  margin-inline-start: 0.5rem;
+}
+/* Point the forward arrow (and its hover nudge, applied before `scale`) along the reading direction. */
+[dir="rtl"] .tracker-link-arrow {
+  scale: -1 1;
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .event-card-link {

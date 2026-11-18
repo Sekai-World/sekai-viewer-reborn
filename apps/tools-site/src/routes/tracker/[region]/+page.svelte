@@ -1833,9 +1833,11 @@
         {#if isHistoricalEvent || contentSiteEventHref}
           <div class="flex flex-wrap items-center gap-2">
             {#if isHistoricalEvent}<a class="btn btn-sm btn-outline touch-target" href={trackerPath}
-                ><Icon icon="mdi:arrow-left" aria-hidden="true" />{translate(
-                  "tracker.goToCurrentEvent"
-                )}</a
+                ><Icon
+                  icon="mdi:arrow-left"
+                  class="tracker-back-icon"
+                  aria-hidden="true"
+                />{translate("tracker.goToCurrentEvent")}</a
               >{/if}
             {#if contentSiteEventHref}<a
                 class="btn btn-sm btn-outline touch-target"
@@ -1994,7 +1996,7 @@
             <p role="alert">{translate("tracker.eventIdInvalid")}</p>
 
             <a class="btn btn-sm btn-outline touch-target" href={trackerPath}>
-              <Icon icon="mdi:arrow-left" aria-hidden="true" />
+              <Icon icon="mdi:arrow-left" class="tracker-back-icon" aria-hidden="true" />
               {translate("tracker.goToCurrentEvent")}
             </a>
           </div>
@@ -2690,7 +2692,7 @@
     gap: 0.25rem 0.75rem;
     color: var(--archive-text-muted);
     font-size: 0.78rem;
-    text-align: right;
+    text-align: end;
   }
   .tracker-refresh-action {
     flex: none;
@@ -2715,7 +2717,7 @@
     font-variant-numeric: tabular-nums;
   }
   .tracker-countdown-values small {
-    margin-left: 0;
+    margin-inline-start: 0;
     font-family: inherit;
     font-size: 0.65em;
   }
@@ -2793,7 +2795,7 @@
     font-size: 0.8rem;
     line-height: 1.2;
     overflow-wrap: anywhere;
-    text-align: right;
+    text-align: end;
   }
   .tracker-goal-fields {
     display: grid;
@@ -2941,7 +2943,8 @@
   .tracker-ladder-indicator {
     position: absolute;
     z-index: -1;
-    inset: 0.25rem 50% 0.25rem 0.25rem;
+    inset-block: 0.25rem;
+    inset-inline: 0.25rem 50%;
     border-radius: 9999px;
     background: color-mix(in srgb, var(--color-primary) 16%, var(--archive-surface-raised));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 22%, transparent);
@@ -2951,6 +2954,9 @@
   }
   .tracker-ladder-indicator-full {
     transform: translateX(100%);
+  }
+  :global([dir="rtl"]) .tracker-ladder-indicator-full {
+    transform: translateX(-100%);
   }
   .tracker-ladder-option {
     position: relative;
@@ -2976,13 +2982,13 @@
   }
   .tracker-event-combobox > input {
     width: 100%;
-    padding-right: 2.75rem;
+    padding-inline-end: 2.75rem;
     font-variant-numeric: tabular-nums;
   }
   .tracker-event-clear {
     position: absolute;
     top: 0.25rem;
-    right: 0.25rem;
+    inset-inline-end: 0.25rem;
   }
   .tracker-event-suggestions {
     position: absolute;
@@ -3075,6 +3081,10 @@
   .tracker-ranking-result-message p {
     margin: 0;
   }
+  /* The back arrow points toward the start of the reading direction. */
+  :global([dir="rtl"] .tracker-back-icon) {
+    scale: -1 1;
+  }
   .tracker-skeleton-heading {
     display: grid;
     gap: 0.5rem;
@@ -3135,19 +3145,19 @@
   }
   .tracker-table th:first-child,
   .tracker-table td:first-child {
-    border-left: 3px solid transparent;
+    border-inline-start: 3px solid transparent;
   }
   .tracker-table .tier-top th:first-child {
-    border-left-color: var(--color-error);
+    border-inline-start-color: var(--color-error);
   }
   .tracker-table .tier-elite th:first-child {
-    border-left-color: var(--color-warning);
+    border-inline-start-color: var(--color-warning);
   }
   .tracker-table .tier-high th:first-child {
-    border-left-color: var(--color-info);
+    border-inline-start-color: var(--color-info);
   }
   .tracker-table .tier-mid th:first-child {
-    border-left-color: var(--color-success);
+    border-inline-start-color: var(--color-success);
   }
   .tracker-rank-number,
   .tracker-score {
@@ -3334,7 +3344,7 @@
     border-radius: var(--radius-box);
     background: var(--archive-surface-default);
     color: inherit;
-    text-align: left;
+    text-align: start;
   }
   .tracker-ranking-card:hover,
   .tracker-ranking-card:focus-visible {
@@ -3354,7 +3364,7 @@
     position: absolute;
     z-index: 1;
     top: 0.5rem;
-    right: 0.75rem;
+    inset-inline-end: 0.75rem;
     min-height: 2rem;
     padding: 0.75rem 0.75rem;
     border: 1px solid color-mix(in srgb, var(--color-primary) 22%, var(--archive-border-subtle));
@@ -3539,7 +3549,7 @@
     }
     .tracker-freshness {
       justify-content: flex-start;
-      text-align: left;
+      text-align: start;
     }
     .tracker-refresh-action {
       min-width: 2.75rem;
