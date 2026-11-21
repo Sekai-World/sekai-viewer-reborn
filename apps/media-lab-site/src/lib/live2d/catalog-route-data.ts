@@ -49,7 +49,10 @@ export interface Live2dCatalogRouteDataResolverOptions {
 }
 
 export interface Live2dCatalogRouteDataResolver {
-  resolve(fetcher: Live2dCatalogResponseFetcher): Promise<Live2dCatalogRouteData>;
+  resolve(
+    fetcher: Live2dCatalogResponseFetcher,
+    catalogUrl?: string
+  ): Promise<Live2dCatalogRouteData>;
   invalidate(): void;
 }
 
@@ -188,15 +191,20 @@ export const createLive2dCatalogRouteDataResolver = (
   let generation = 0;
 
   const resolveFreshCatalog = (
-    fetcher: Live2dCatalogResponseFetcher
+    fetcher: Live2dCatalogResponseFetcher,
+    catalogUrl: string | undefined
   ): Promise<Live2dCatalogResolution> =>
     createLive2dCatalogResolver({
       fetchJson: createFetchJson(fetcher),
+      catalogUrl,
       maxEntries: 0,
       now
     }).resolve();
 
-  const resolve = (fetcher: Live2dCatalogResponseFetcher): Promise<Live2dCatalogRouteData> => {
+  const resolve = (
+    fetcher: Live2dCatalogResponseFetcher,
+    catalogUrl?: string
+  ): Promise<Live2dCatalogRouteData> => {
     const cached = cache;
     if (cached && cached.expiresAt > now()) {
       return Promise.resolve(
@@ -207,7 +215,7 @@ export const createLive2dCatalogRouteDataResolver = (
     if (inFlight) return inFlight;
 
     const requestGeneration = generation;
-    const request = resolveFreshCatalog(fetcher).then((resolution) => {
+    const request = resolveFreshCatalog(fetcher, catalogUrl).then((resolution) => {
       if (resolution.status === "available") {
         if (requestGeneration === generation && resolution.source === "network") {
           cache = { catalog: resolution.catalog, expiresAt: now() + ttlMs };
@@ -254,7 +262,12 @@ export const createLive2dCatalogRouteDataResolver = (
 
 const defaultRouteDataResolver = createLive2dCatalogRouteDataResolver();
 
-/** Resolves catalog data for a server load without exposing Error objects to SvelteKit. */
+/**
+ * Resolves catalog data for a server load without exposing Error objects to
+ * SvelteKit. `catalogUrl` is the fetch target; asset URLs stay relay paths.
+ * It must be constant for the process: the cache is not keyed by it.
+ */
 export const resolveLive2dCatalogRouteData = (
-  fetcher: Live2dCatalogResponseFetcher
-): Promise<Live2dCatalogRouteData> => defaultRouteDataResolver.resolve(fetcher);
+  fetcher: Live2dCatalogResponseFetcher,
+  catalogUrl?: string
+): Promise<Live2dCatalogRouteData> => defaultRouteDataResolver.resolve(fetcher, catalogUrl);

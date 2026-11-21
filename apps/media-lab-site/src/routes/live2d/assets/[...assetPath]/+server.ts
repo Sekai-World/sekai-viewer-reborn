@@ -4,6 +4,7 @@ import {
   toLive2dAssetRelayUrlFromPath,
   validateLive2dAssetPath
 } from "#lib/live2d/associated-catalog.js";
+import { getLive2dAssetUpstreamBucketUrl } from "#lib/server/remote-asset.js";
 
 const FETCH_TIMEOUT_MS = 10_000;
 const ASSET_CACHE_CONTROL = "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800";
@@ -181,7 +182,10 @@ export const GET: RequestHandler = async ({ params, request, url }) => {
     return errorResponse(404);
   }
 
-  const upstreamUrl = toLive2dAssetBucketUrlFromPath(parsedPath.asset.path);
+  const upstreamUrl = toLive2dAssetBucketUrlFromPath(
+    parsedPath.asset.path,
+    getLive2dAssetUpstreamBucketUrl()
+  );
   if (!upstreamUrl) return errorResponse(404);
 
   const fetched = await fetchUpstreamAsset(upstreamUrl, request.signal);

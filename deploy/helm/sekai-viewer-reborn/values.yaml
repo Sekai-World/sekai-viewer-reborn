@@ -149,7 +149,12 @@ apps:
     # set it to the deployed content-site origin to show the "Sekai Viewer"
     # sidebar link and the Story Reader's event, card, and character links; an
     # empty value hides them. The i18n URL is usable as-is for the default
-    # dictionary source.
+    # dictionary source. SEKAI_REMOTE_ASSET_BASE_URL is optional and private
+    # (not in the default env map): set it, for example through extraEnv, to an
+    # internal asset origin with the public `{base}/{bucket}/{key}` layout for
+    # server-side story scenario, Live2D catalog, and Live2D relay fetches;
+    # browser asset URLs keep the public origin. Unset, the server fetches from
+    # the public origin.
     env:
       SEKAI_API_BASE_URL: ""
       SEKAI_MASTER_API_BASE_URL: ""
