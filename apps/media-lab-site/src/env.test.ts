@@ -2,7 +2,7 @@ import { testAppEnvironment } from "../../../test/assert-app-environment.js";
 import { variables } from "./env.js";
 
 testAppEnvironment(variables, {
-  private: ["SEKAI_API_BASE_URL", "SEKAI_MASTER_API_BASE_URL"],
+  private: ["SEKAI_API_BASE_URL", "SEKAI_MASTER_API_BASE_URL", "SEKAI_REMOTE_ASSET_BASE_URL"],
   public: [
     "PUBLIC_CONTENT_SITE_BASE_URL",
     "PUBLIC_REMOTE_ASSET_BASE_URL",

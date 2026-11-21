@@ -123,6 +123,36 @@ describe("media-lab-site text reader route", () => {
     expect(result.assetBase).toBe("https://assets.test");
   });
 
+  it("fetches through the internal origin but returns only public media URLs", async () => {
+    const internalUrls = {
+      region: (path: string) => `http://s3.internal.test:8333/sekai-jp-assets/${path}`,
+      live2d: (path: string) => `http://s3.internal.test:8333/sekai-live2d-assets/${path}`
+    };
+    mocks.resolveStoryRoute.mockResolvedValue({
+      ...okResolution,
+      value: {
+        ...okResolution.value,
+        resolution: { ...okResolution.value.resolution, bannerPath: "story/banner.webp" },
+        urls: internalUrls
+      }
+    });
+    const result = (await load(
+      buildLoadEvent({ region: "jp", storyType: "unit", storyId: "idol-1-1" })
+    )) as LoadedText & { story?: { bannerUrl?: string } };
+
+    expect(mocks.fetchScenarioDocument).toHaveBeenCalledWith(
+      internalUrls,
+      "scenario/unitstory/bundle/mmj_01_00.asset",
+      expect.any(Function)
+    );
+    expect(result.readerStatus).toBe("ok");
+    if (result.readerStatus !== "ok") return;
+    expect(JSON.stringify(result)).not.toContain("s3.internal.test");
+    expect(result.rows[0]?.voiceUrls).toEqual(["https://assets.test/sekai-jp-assets/sound/a.mp3"]);
+    expect(result.story.bannerUrl).toBe("https://assets.test/sekai-jp-assets/story/banner.webp");
+    expect(result.assetBase).toBe("https://assets.test");
+  });
+
   it("reports scenario fetch failures without failing the request", async () => {
     mocks.resolveStoryRoute.mockResolvedValue(okResolution);
     mocks.fetchScenarioDocument.mockRejectedValue(new Error("502"));

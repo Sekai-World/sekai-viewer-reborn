@@ -4,6 +4,7 @@ import {
   toLive2dRouteModelDescriptor
 } from "#lib/live2d/catalog-route-data.js";
 import { parseModelRouteParams } from "#lib/live2d/model-route.js";
+import { getLive2dCatalogUpstreamUrl } from "#lib/server/remote-asset.js";
 import type { PageServerLoad } from "./$types";
 
 const LEGACY_MODEL_ID_PATTERN = /^[A-Za-z0-9_.-]+$/;
@@ -36,7 +37,7 @@ export const _createLive2dModelPageLoad =
       error(404, "Live2D model route not found");
     }
 
-    const catalog = await resolveCatalog(fetch);
+    const catalog = await resolveCatalog(fetch, getLive2dCatalogUpstreamUrl());
     if (catalog.status === "ready") {
       // Keep generated route IDs authoritative. The modelName lookup is only
       // a compatibility path for legacy URLs and must not select among

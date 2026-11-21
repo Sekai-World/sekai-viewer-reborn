@@ -101,7 +101,7 @@ Ko-fi URL.
 | -------------------------------- | ------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------- |
 | `SEKAI_MASTER_API_BASE_URL`      | content, tools, media-lab            | private | Master-data loads and endpoints return 500 and log the variable name; media-lab Live2D names are omitted |
 | `SEKAI_API_BASE_URL`             | all                                  | private | Global notices are hidden; tools-site tracker pages return 500 and log the variable name                 |
-| `SEKAI_REMOTE_ASSET_BASE_URL`    | content                              | private | Server-side asset downloads use `PUBLIC_REMOTE_ASSET_BASE_URL`                                           |
+| `SEKAI_REMOTE_ASSET_BASE_URL`    | content, media-lab                   | private | Server-side asset fetches use the public asset origin (see below)                                        |
 | `PUBLIC_REMOTE_ASSET_BASE_URL`   | content (required), tools, media-lab | public  | content: startup fails; tools: event banners are hidden; media-lab: `https://storage.sekai.best`         |
 | `PUBLIC_SEKAI_I18N_BASE_URL`     | content, tools, media-lab            | public  | `https://sekai-world.github.io/sekai-i18n-reborn`                                                        |
 | `PUBLIC_TOOLS_SITE_BASE_URL`     | content                              | public  | Event Tracker and Music Recommender links are hidden                                                     |
@@ -110,6 +110,13 @@ Ko-fi URL.
 | `PUBLIC_SUPPORT_PAGE_URL`        | all                                  | public  | content links to its own `/support`; the other apps hide the support link                                |
 | `PUBLIC_PATREON_URL`             | content                              | public  | Button hidden                                                                                            |
 | `PUBLIC_KOFI_URL`                | content                              | public  | Button hidden                                                                                            |
+
+`SEKAI_REMOTE_ASSET_BASE_URL` is an internal asset origin with the public host's
+`{base}/{bucket}/{key}` layout, used only for server-side fetches; URLs sent to
+the browser keep the public origin. When it is unset or empty, content-site
+downloads from `PUBLIC_REMOTE_ASSET_BASE_URL`; media-lab-site fetches story
+scenarios from `PUBLIC_REMOTE_ASSET_BASE_URL` (or its `https://storage.sekai.best`
+fallback) and the Live2D catalog and asset relay from `https://storage.sekai.best`.
 
 ## Confirmed workflow
 

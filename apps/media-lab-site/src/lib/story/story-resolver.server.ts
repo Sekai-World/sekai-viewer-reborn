@@ -16,6 +16,7 @@ import {
   fetchStoryCollections,
   type StoryCharacterTables
 } from "./master-data-client.server";
+import { getInternalRemoteAssetBaseUrl } from "#lib/server/remote-asset.js";
 import { resolveStoryNeighbors, type StoryNeighbors } from "./story-neighbors";
 
 /**
@@ -71,11 +72,14 @@ export const getStoryAssetBase = (): string =>
   stripTrailingSlashes(PUBLIC_REMOTE_ASSET_BASE_URL?.trim() || "https://storage.sekai.best");
 
 /**
- * The asset origin for server-side `fetch` calls. A relative public base
+ * The asset origin for server-side `fetch` calls: the internal asset origin
+ * when configured, otherwise the public base. A relative public base
  * (same-origin `/storage` path through the Vite dev proxy) must be qualified
  * with the request origin — Node `fetch` cannot resolve relative URLs.
  */
 export const getStoryFetchBase = (requestOrigin?: string): string => {
+  const internalBase = getInternalRemoteAssetBaseUrl();
+  if (internalBase) return internalBase;
   const base = getStoryAssetBase();
   if (!base.startsWith("/")) return base;
   return requestOrigin ? `${requestOrigin}${base}` : base;
@@ -84,6 +88,7 @@ export const getStoryFetchBase = (requestOrigin?: string): string => {
 export interface StoryRouteResolution {
   identity: StoryRouteIdentity;
   resolution: StoryResolution;
+  /** Server-fetch URLs; may use the internal asset origin. Never return them to the client. */
   urls: StoryAssetUrls;
   neighbors: StoryNeighbors;
 }

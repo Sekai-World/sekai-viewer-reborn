@@ -12,5 +12,6 @@ export const variables = defineEnvVars({
   SEKAI_MASTER_API_BASE_URL: { schema: optionalUrl },
   PUBLIC_REMOTE_ASSET_BASE_URL: { public: true, schema: envUrl({ allowPath: true }) },
   SEKAI_API_BASE_URL: { schema: optionalUrl },
+  SEKAI_REMOTE_ASSET_BASE_URL: { schema: optionalUrl },
   PUBLIC_SEKAI_I18N_BASE_URL: { public: true, schema: optionalUrl }
 });

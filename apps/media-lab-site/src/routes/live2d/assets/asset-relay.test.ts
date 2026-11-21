@@ -1,4 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const privateEnvState = vi.hoisted(() => ({ SEKAI_REMOTE_ASSET_BASE_URL: "" }));
+vi.mock("$app/env/private", () => privateEnvState);
+
 import { GET } from "./[...assetPath]/+server";
 
 type AssetGetEvent = Parameters<typeof GET>[0];
@@ -25,6 +29,7 @@ const buildEvent = (
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = "";
 });
 
 describe("Live2D asset relay route", () => {
@@ -151,6 +156,53 @@ describe("Live2D asset relay route", () => {
     await expect(response.text()).resolves.toBe("asset");
     expect(pulls).toBe(2);
     expect(upstreamFetch.mock.calls[0]?.[1]).not.toHaveProperty("headers");
+  });
+
+  it("fetches from the configured internal origin with unchanged response handling", async () => {
+    privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = " http://s3.internal.test:8333/ ";
+    const upstreamFetch = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response("asset", {
+        status: 200,
+        headers: { "content-type": "text/html", "set-cookie": "secret=1" }
+      })
+    );
+    vi.stubGlobal("fetch", upstreamFetch);
+
+    const response = await GET(
+      buildEvent(
+        "model/v1/sample/sample.model3.json",
+        {},
+        "http://evil.test/live2d/assets/model/v1/sample/sample.model3.json"
+      )
+    );
+
+    expect(upstreamFetch).toHaveBeenCalledWith(
+      "http://s3.internal.test:8333/sekai-live2d-assets/live2d/model/v1/sample/sample.model3.json",
+      { redirect: "error", signal: expect.any(AbortSignal) }
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("application/json; charset=utf-8");
+    expect(response.headers.get("cache-control")).toBe(
+      "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800"
+    );
+    expect(response.headers.get("cross-origin-resource-policy")).toBe("same-origin");
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(response.headers.get("accept-ranges")).toBe("none");
+    expect(response.headers.get("set-cookie")).toBeNull();
+    expect([...response.headers.values()].join(" ")).not.toContain("s3.internal.test");
+    await expect(response.text()).resolves.toBe("asset");
+  });
+
+  it("maps an upstream status from the internal origin like the public one", async () => {
+    privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = "http://s3.internal.test:8333";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 403 }))
+    );
+
+    const response = await GET(buildEvent("model/v1/sample/sample.model3.json"));
+
+    expect(response.status).toBe(404);
   });
 
   it.each<[number, number]>([

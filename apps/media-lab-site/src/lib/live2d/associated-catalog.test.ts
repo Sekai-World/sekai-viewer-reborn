@@ -347,6 +347,11 @@ describe("Live2D associated catalog parser", () => {
     expect(toLive2dAssetBucketUrlFromPath(assetPath)).toBe(
       "https://storage.sekai.best/sekai-live2d-assets/live2d/motion/v1/main/01_ichika/01ichika_normal/face_%20worry_01.motion3.json"
     );
+    expect(
+      toLive2dAssetBucketUrlFromPath(assetPath, "http://s3.internal.test:8333/sekai-live2d-assets/")
+    ).toBe(
+      "http://s3.internal.test:8333/sekai-live2d-assets/live2d/motion/v1/main/01_ichika/01ichika_normal/face_%20worry_01.motion3.json"
+    );
     expect(resolveLive2dAssetUrl(collabModelPath, collabModelFile)).toBe(collabModelUrl);
     expect(toLive2dAssetRelayUrlFromUpstreamUrl(collabModelUrl)).toBe(
       "/live2d/assets/model/v1/collabo/23_len/clb01_23len/23len_collabo01_t01.model3.json"
@@ -565,6 +570,18 @@ describe("Live2D associated catalog resolver", () => {
       source: "network"
     });
     expect(fetchJson).toHaveBeenCalledTimes(2);
+  });
+
+  it("fetches the catalog from a configured catalog URL", async () => {
+    const catalogUrl =
+      "http://s3.internal.test:8333/sekai-live2d-assets/live2d-associated/v1/model_list.json";
+    const fetchJson = vi.fn<Live2dCatalogFetchJson>().mockResolvedValue(sampleCatalog);
+    const resolver = createLive2dCatalogResolver({ fetchJson, catalogUrl });
+
+    const resolution = await resolver.resolve();
+
+    expect(fetchJson).toHaveBeenCalledWith(catalogUrl);
+    expect(resolution).toMatchObject({ status: "available", source: "network" });
   });
 
   it("serves the last known good catalog after an expired refresh fails", async () => {

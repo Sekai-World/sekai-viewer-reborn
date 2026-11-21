@@ -1,6 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("$app/env/private", () => ({ SEKAI_MASTER_API_BASE_URL: "", SEKAI_API_BASE_URL: "" }));
+const privateEnvState = vi.hoisted(() => ({
+  SEKAI_MASTER_API_BASE_URL: "",
+  SEKAI_API_BASE_URL: "",
+  SEKAI_REMOTE_ASSET_BASE_URL: ""
+}));
+vi.mock("$app/env/private", () => privateEnvState);
 
 import { LIVE2D_ASSOCIATED_CATALOG_URL } from "#lib/live2d/associated-catalog.js";
 import {
@@ -104,6 +109,41 @@ const getStreamedCatalog = (
   loaded: Awaited<ReturnType<typeof defaultCatalogLoad>>
 ): Promise<Live2dCatalogSummary> =>
   (loaded as unknown as { catalog: Promise<Live2dCatalogSummary> }).catalog;
+
+const INTERNAL_CATALOG_URL =
+  "http://s3.internal.test:8333/sekai-live2d-assets/live2d-associated/v1/model_list.json";
+
+describe("media-lab-site Live2D catalog route with an internal asset base", () => {
+  afterEach(() => {
+    privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = "";
+  });
+
+  it("fetches the catalog from the internal origin and returns only relay URLs", async () => {
+    privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = "http://s3.internal.test:8333/";
+    const requested: string[] = [];
+    const fetcher = async (url: string): Promise<Response> => {
+      requested.push(url);
+      return new Response(JSON.stringify(sampleCatalog));
+    };
+    const { loadCatalog, loadModel } = createRouteLoads();
+
+    const landing = await loadCatalog(buildCatalogLoadEvent(fetcher));
+    const summary = await getStreamedCatalog(landing);
+    const loaded = await loadModel(buildModelLoadEvent({ modelId: "sample-model" }, fetcher));
+
+    expect(requested).toEqual([INTERNAL_CATALOG_URL]);
+    expect(loaded).toMatchObject({
+      catalog: {
+        status: "ready",
+        model: { modelUrl: "/live2d/assets/model/sample/sample.model3.json" }
+      }
+    });
+    for (const serialized of [JSON.stringify(summary), JSON.stringify(loaded)]) {
+      expect(serialized).not.toContain("https://storage.sekai.best");
+      expect(serialized).not.toContain("s3.internal.test");
+    }
+  });
+});
 
 describe("media-lab-site Live2D catalog route", () => {
   it("resolves route data with relay URLs and separate body and facial motion arrays", async () => {

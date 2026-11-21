@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("$app/env/private", () => ({ SEKAI_MASTER_API_BASE_URL: "", SEKAI_API_BASE_URL: "" }));
+vi.mock("$app/env/private", () => ({
+  SEKAI_MASTER_API_BASE_URL: "",
+  SEKAI_API_BASE_URL: "",
+  SEKAI_REMOTE_ASSET_BASE_URL: ""
+}));
 
 import type {
   Live2dCatalogRouteData,
