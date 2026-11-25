@@ -276,8 +276,11 @@ export const validateLive2dAssetPath = (value: unknown): Live2dAssetPathValidati
   };
 };
 
-const toBucketUrl = (asset: Live2dValidatedAssetPath): string => {
-  const bucketUrl = new URL(LIVE2D_ASSET_BUCKET_URL);
+const toBucketUrl = (
+  asset: Live2dValidatedAssetPath,
+  bucketBaseUrl = LIVE2D_ASSET_BUCKET_URL
+): string => {
+  const bucketUrl = new URL(bucketBaseUrl);
   const objectKey = `${LIVE2D_ASSET_OBJECT_KEY_PREFIX}${asset.path}`;
   return new URL(`${bucketUrl.pathname}${encodeAssetPath(objectKey)}`, bucketUrl).href;
 };
@@ -285,9 +288,16 @@ const toBucketUrl = (asset: Live2dValidatedAssetPath): string => {
 const toRelayUrl = (asset: Live2dValidatedAssetPath): string =>
   `${LIVE2D_ASSET_RELAY_PREFIX}${encodeAssetPath(asset.path)}`;
 
-export const toLive2dAssetBucketUrlFromPath = (path: string): string | null => {
+/**
+ * `bucketBaseUrl` only changes the origin a server fetch goes to; it defaults
+ * to the public bucket that browser-facing URLs are compared against.
+ */
+export const toLive2dAssetBucketUrlFromPath = (
+  path: string,
+  bucketBaseUrl = LIVE2D_ASSET_BUCKET_URL
+): string | null => {
   const result = validateLive2dAssetPath(path);
-  return result.status === "ok" ? toBucketUrl(result.asset) : null;
+  return result.status === "ok" ? toBucketUrl(result.asset, bucketBaseUrl) : null;
 };
 
 export const toLive2dAssetRelayUrlFromPath = (path: string): string | null => {
@@ -604,6 +614,8 @@ export type Live2dCatalogFetchJson = (url: string) => Promise<unknown>;
 
 export interface Live2dCatalogResolverOptions {
   fetchJson: Live2dCatalogFetchJson;
+  /** The URL the catalog is fetched from; defaults to the public catalog URL. */
+  catalogUrl?: string;
   ttlMs?: number;
   maxEntries?: number;
   now?: () => number;
@@ -691,7 +703,7 @@ export const createLive2dCatalogResolver = (
   ): Promise<Live2dCatalogResolution> => {
     let payload: unknown;
     try {
-      payload = await options.fetchJson(LIVE2D_ASSOCIATED_CATALOG_URL);
+      payload = await options.fetchJson(options.catalogUrl ?? LIVE2D_ASSOCIATED_CATALOG_URL);
     } catch (error) {
       const parsedError = toError(error, "Live2D catalog request failed");
       return resolveFailure(

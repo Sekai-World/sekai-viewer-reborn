@@ -11,6 +11,7 @@ import {
   resolveLive2dCharacterData
 } from "#lib/server/live2d-characters.js";
 import type { Live2dCharacterOption } from "#lib/server/live2d-characters.js";
+import { getLive2dCatalogUpstreamUrl } from "#lib/server/remote-asset.js";
 import { normalizePrimaryRegion, type SupportedRegion } from "#lib/region-selection.svelte.js";
 import type { PageServerLoad } from "./$types";
 
@@ -28,7 +29,7 @@ export const _createLive2dCatalogPageLoad =
   ): PageServerLoad =>
   async ({ fetch, url }) => {
     const region: SupportedRegion = normalizePrimaryRegion(url?.searchParams.get("region"));
-    const routeData = resolveCatalog(fetch);
+    const routeData = resolveCatalog(fetch, getLive2dCatalogUpstreamUrl());
     // The page renders a few fields per model, so serialize the model list once
     // as a summary and stream only the character changes after resolution.
     const catalog = routeData.then(toLive2dCatalogSummary);

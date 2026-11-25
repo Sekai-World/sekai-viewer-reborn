@@ -91,6 +91,28 @@ describe("media-lab-site Live2D route data", () => {
     );
   });
 
+  it("keeps the internal fetch origin out of the story document", async () => {
+    mocks.resolveStoryRoute.mockResolvedValue({
+      ...okResolution,
+      value: {
+        ...okResolution.value,
+        urls: {
+          region: (path: string) => `http://s3.internal.test:8333/sekai-jp-assets/${path}`,
+          live2d: (path: string) => `http://s3.internal.test:8333/sekai-live2d-assets/${path}`
+        }
+      }
+    });
+    const result = await load(
+      buildLoadEvent({ region: "jp", storyType: "unit", storyId: "idol-1-1" })
+    );
+    if (!result) throw new Error("Expected story reader route data");
+
+    expect(JSON.stringify(result)).not.toContain("s3.internal.test");
+    expect(result.storyDocument?.scenario.url).toBe(
+      "https://assets.test/sekai-jp-assets/scenario/unitstory/idol-story-chapter/mmj_01_00.asset"
+    );
+  });
+
   it("passes route params through and maps unsupported outcomes", async () => {
     mocks.resolveStoryRoute.mockResolvedValue({
       status: "unsupported",

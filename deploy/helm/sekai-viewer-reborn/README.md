@@ -189,6 +189,12 @@ and `media-lab-site` also declare an empty `SEKAI_MASTER_API_BASE_URL` for
 master-data reads: `tools-site` uses it for the server-side event tracker, and
 `media-lab-site` requires it for the story feature and uses it for Live2D
 character names; `account-site` has no additional API URL defaults.
+`media-lab-site` also accepts the optional private `SEKAI_REMOTE_ASSET_BASE_URL`,
+which is not in its default `env` map: an internal asset origin with the public
+host's `{base}/{bucket}/{key}` layout, such as an in-cluster S3 gateway, used
+only for server-side story scenario, Live2D catalog, and Live2D asset relay
+fetches. Asset URLs sent to the browser keep the public origin; an empty value
+keeps server-side fetches on the public origin.
 `tools-site` and `media-lab-site` also declare `PUBLIC_SEKAI_I18N_BASE_URL` with
 the same default as `content-site`.
 `envFrom` and `extraEnv` are available per application for straightforward

@@ -1,7 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const envState = vi.hoisted(() => ({ PUBLIC_REMOTE_ASSET_BASE_URL: "" }));
 vi.mock("$app/env/public", () => envState);
+const privateEnvState = vi.hoisted(() => ({ SEKAI_REMOTE_ASSET_BASE_URL: "" }));
+vi.mock("$app/env/private", () => privateEnvState);
 
 const mdMocks = vi.hoisted(() => ({
   fetchStoryCollections: vi.fn(),
@@ -80,6 +82,60 @@ describe("getStoryAssetBase / getStoryFetchBase", () => {
     envState.PUBLIC_REMOTE_ASSET_BASE_URL = "/storage";
     expect(getStoryFetchBase("http://localhost:4103")).toBe("http://localhost:4103/storage");
     expect(getStoryFetchBase()).toBe("/storage");
+  });
+});
+
+describe("getStoryFetchBase with an internal asset base", () => {
+  let publicBase = "";
+  beforeEach(() => {
+    publicBase = envState.PUBLIC_REMOTE_ASSET_BASE_URL;
+  });
+  afterEach(() => {
+    envState.PUBLIC_REMOTE_ASSET_BASE_URL = publicBase;
+    privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = "";
+  });
+
+  it("fetches from the trimmed internal base while the public base stays unchanged", () => {
+    envState.PUBLIC_REMOTE_ASSET_BASE_URL = "/storage";
+    privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = "  http://s3.internal.test:8333//  ";
+    expect(getStoryFetchBase("http://localhost:4103")).toBe("http://s3.internal.test:8333");
+    expect(getStoryFetchBase()).toBe("http://s3.internal.test:8333");
+    expect(getStoryAssetBase()).toBe("/storage");
+  });
+
+  it("keeps today's fetch base when the internal base is blank", () => {
+    envState.PUBLIC_REMOTE_ASSET_BASE_URL = "/storage";
+    privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = "   ";
+    expect(getStoryFetchBase("http://localhost:4103")).toBe("http://localhost:4103/storage");
+  });
+
+  it("fetches the scenario document from the internal bucket and keeps references public", async () => {
+    envState.PUBLIC_REMOTE_ASSET_BASE_URL = "https://assets.test";
+    privateEnvState.SEKAI_REMOTE_ASSET_BASE_URL = "http://s3.internal.test:8333";
+    mdMocks.fetchStoryCollections.mockResolvedValue(unitCollections);
+
+    const result = await resolveStoryRoute(identity, vi.fn(), "http://localhost:4103");
+    expect(result.status).toBe("ok");
+    if (result.status !== "ok") return;
+
+    const fetchFn = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    await expect(
+      fetchScenarioDocument(result.value.urls, result.value.resolution.scenarioPath, fetchFn)
+    ).rejects.toThrow(/Failed to fetch scenario document/);
+    expect(fetchFn).toHaveBeenCalledWith(
+      `http://s3.internal.test:8333/sekai-jp-assets/${result.value.resolution.scenarioPath}`
+    );
+
+    const reference = createStoryDocumentReference({
+      identity,
+      resolution: result.value.resolution,
+      assetBase: getStoryAssetBase(),
+      voiceCharacters: []
+    });
+    expect(JSON.stringify(reference)).not.toContain("s3.internal.test");
+    expect(reference.scenario.url).toBe(
+      `https://assets.test/sekai-jp-assets/${result.value.resolution.scenarioPath}`
+    );
   });
 });
 
