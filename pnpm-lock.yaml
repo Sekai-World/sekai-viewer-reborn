@@ -482,7 +482,7 @@ importers:
         version: link:../../packages/ui-tokens
       layerchart:
         specifier: ^2.2.0
-        version: 2.12.0(svelte@5.58.0(@typescript-eslint/types@8.73.0))
+        version: 2.13.0(svelte@5.58.0(@typescript-eslint/types@8.73.0))
       write-excel-file:
         specifier: 4.1.1
         version: 4.1.1
@@ -2950,8 +2950,8 @@ packages:
   launch-editor@2.14.1:
     resolution: {integrity: sha512-QWBrQsMpH7gPr965dsKD/3cKWiNoTjpATQf++Xq63N6sKRGMwlVXz41O1IZTMfZQgBctD/K5Zt06+/I6pP6+HA==}
 
-  layerchart@2.12.0:
-    resolution: {integrity: sha512-DtBCutbCvMQQxwtTR8mdnNpFA5Gbo+v83d2xlfwQVAHXAyxEGbpx6Ci8yO+pykDtjJqK6z9lN9ABHzyEBxnbUg==}
+  layerchart@2.13.0:
+    resolution: {integrity: sha512-EE8NTCFnQL7txGM4sS1Zu/8oPZyABKyG/GemTYAowqeQmN9a2meVnmeXhmuWZqmQ87TVzcclnrOwPDGZGRv5SQ==}
     peerDependencies:
       svelte: ^5.57.0
 
@@ -5906,7 +5906,7 @@ snapshots:
       picocolors: 1.1.1
       shell-quote: 1.10.0
 
-  layerchart@2.12.0(svelte@5.58.0(@typescript-eslint/types@8.73.0)):
+  layerchart@2.13.0(svelte@5.58.0(@typescript-eslint/types@8.73.0)):
     dependencies:
       '@dagrejs/dagre': 2.0.4
       '@layerstack/svelte-actions': 1.0.1-next.20
